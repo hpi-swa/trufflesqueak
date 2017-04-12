@@ -5,6 +5,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.trufflesqueak.Chunk;
 import de.hpi.swa.trufflesqueak.exceptions.InvalidIndex;
+import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 
 public class ListObject extends SqueakObject implements TruffleObject {
     private BaseSqueakObject[] pointers;
@@ -27,4 +28,15 @@ public class ListObject extends SqueakObject implements TruffleObject {
         throw new InvalidIndex();
     }
 
+    @Override
+    public void become(BaseSqueakObject other) throws PrimitiveFailed {
+        if (other instanceof ListObject) {
+            super.become(other);
+
+            BaseSqueakObject[] pointers2 = ((ListObject) other).pointers;
+            ((ListObject) other).pointers = this.pointers;
+            this.pointers = pointers2;
+        }
+        throw new PrimitiveFailed();
+    }
 }

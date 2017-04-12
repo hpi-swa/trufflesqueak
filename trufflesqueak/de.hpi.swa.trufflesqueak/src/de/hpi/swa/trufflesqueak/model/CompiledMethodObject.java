@@ -6,10 +6,11 @@ import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.trufflesqueak.Chunk;
+import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 
 public class CompiledMethodObject extends SqueakObject implements TruffleObject {
-    private BaseSqueakObject[] literals;
-    private byte[] bytes;
+    protected BaseSqueakObject[] literals;
+    protected byte[] bytes;
 
     @Override
     public void fillin(Chunk chunk) {
@@ -31,4 +32,19 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
         return null;
     }
 
+    @Override
+    public void become(BaseSqueakObject other) throws PrimitiveFailed {
+        if (other instanceof CompiledMethodObject) {
+            super.become(other);
+
+            BaseSqueakObject[] literals2 = ((CompiledMethodObject) other).literals;
+            ((CompiledMethodObject) other).literals = this.literals;
+            this.literals = literals2;
+
+            byte[] bytes2 = ((CompiledMethodObject) other).bytes;
+            ((CompiledMethodObject) other).bytes = this.bytes;
+            this.bytes = bytes2;
+        }
+        throw new PrimitiveFailed();
+    }
 }

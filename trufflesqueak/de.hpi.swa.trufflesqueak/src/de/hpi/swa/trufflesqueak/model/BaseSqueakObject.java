@@ -2,6 +2,7 @@ package de.hpi.swa.trufflesqueak.model;
 
 import de.hpi.swa.trufflesqueak.Chunk;
 import de.hpi.swa.trufflesqueak.exceptions.InvalidIndex;
+import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 
 public abstract class BaseSqueakObject {
     @SuppressWarnings("unused")
@@ -30,4 +31,6 @@ public abstract class BaseSqueakObject {
         }
         return name;
     }
+
+    public abstract void become(BaseSqueakObject other) throws PrimitiveFailed;
 }

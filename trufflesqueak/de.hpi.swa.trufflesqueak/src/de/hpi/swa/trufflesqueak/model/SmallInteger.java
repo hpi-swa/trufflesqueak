@@ -1,6 +1,7 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import de.hpi.swa.trufflesqueak.SqueakImage;
+import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 
 public class SmallInteger extends BaseSqueakObject {
     private final int value;
@@ -17,5 +18,10 @@ public class SmallInteger extends BaseSqueakObject {
     @Override
     public BaseSqueakObject getSqClass() {
         return SqueakImage.smallIntegerClass;
+    }
+
+    @Override
+    public void become(BaseSqueakObject other) throws PrimitiveFailed {
+        throw new PrimitiveFailed();
     }
 }

@@ -1,12 +1,12 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
 
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.trufflesqueak.Chunk;
+import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 
 public class NativeObject extends SqueakObject implements TruffleObject {
     private ByteBuffer content;
@@ -29,5 +29,21 @@ public class NativeObject extends SqueakObject implements TruffleObject {
     public ForeignAccess getForeignAccess() {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    @Override
+    public void become(BaseSqueakObject other) throws PrimitiveFailed {
+        if (other instanceof NativeObject) {
+            super.become(other);
+
+            int size2 = ((NativeObject) other).size;
+            ((NativeObject) other).size = this.size;
+            this.size = size2;
+
+            ByteBuffer content2 = ((NativeObject) other).content;
+            ((NativeObject) other).content = this.content;
+            this.content = content2;
+        }
+        throw new PrimitiveFailed();
     }
 }
