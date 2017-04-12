@@ -1,0 +1,23 @@
+package de.hpi.swa.trufflesqueak.model;
+
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.TruffleObject;
+
+public final class FalseObject extends EmptyObject implements TruffleObject {
+
+    public static final FalseObject SINGLETON = new FalseObject();
+
+    private FalseObject() {
+    }
+
+    @Override
+    public String toString() {
+        return "false";
+    }
+
+    @Override
+    public ForeignAccess getForeignAccess() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+}
