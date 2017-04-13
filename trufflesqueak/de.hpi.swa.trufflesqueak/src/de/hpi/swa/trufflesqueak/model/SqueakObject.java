@@ -1,6 +1,7 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import de.hpi.swa.trufflesqueak.Chunk;
+import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 
 public abstract class SqueakObject extends BaseSqueakObject {
@@ -8,7 +9,8 @@ public abstract class SqueakObject extends BaseSqueakObject {
     private BaseSqueakObject sqClass;
 
     @Override
-    public void fillin(Chunk chunk) {
+    public void fillin(Chunk chunk, SqueakImageContext img) {
+        super.fillin(chunk, img);
         hash = chunk.getHash();
         sqClass = chunk.getSqClass();
     }
@@ -17,6 +19,8 @@ public abstract class SqueakObject extends BaseSqueakObject {
     public BaseSqueakObject getSqClass() {
         return sqClass;
     }
+
+    public abstract int size();
 
     @Override
     public void become(BaseSqueakObject other) throws PrimitiveFailed {

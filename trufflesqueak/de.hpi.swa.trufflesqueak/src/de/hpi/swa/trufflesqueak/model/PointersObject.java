@@ -4,6 +4,7 @@ import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.trufflesqueak.Chunk;
+import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.InvalidIndex;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 
@@ -16,9 +17,13 @@ public class PointersObject extends SqueakObject implements TruffleObject {
     }
 
     @Override
-    public void fillin(Chunk chunk) {
-        super.fillin(chunk);
+    public void fillin(Chunk chunk, SqueakImageContext img) {
+        super.fillin(chunk, img);
         pointers = chunk.getPointers();
+    }
+
+    public boolean isClass() {
+        return image.metaclass == getSqClass();
     }
 
     public BaseSqueakObject at0(int i) throws InvalidIndex {
@@ -46,5 +51,20 @@ public class PointersObject extends SqueakObject implements TruffleObject {
             this.pointers = pointers2;
         }
         throw new PrimitiveFailed();
+    }
+
+    public String nameAsClass() {
+        if (isClass() && size() > 6) {
+            BaseSqueakObject nameObj = pointers[6];
+            if (nameObj instanceof NativeObject) {
+                return nameObj.toString();
+            }
+        }
+        return "UnknownClass";
+    }
+
+    @Override
+    public int size() {
+        return pointers.length;
     }
 }

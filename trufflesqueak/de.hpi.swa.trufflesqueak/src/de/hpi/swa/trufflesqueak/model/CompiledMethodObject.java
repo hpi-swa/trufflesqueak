@@ -6,14 +6,19 @@ import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.trufflesqueak.Chunk;
+import de.hpi.swa.trufflesqueak.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.exceptions.InvalidIndex;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.nodes.PrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.SqueakBytecodeNode;
 
 public class CompiledMethodObject extends SqueakObject implements TruffleObject {
     protected BaseSqueakObject[] literals;
     protected byte[] bytes;
 
     @Override
-    public void fillin(Chunk chunk) {
+    public void fillin(Chunk chunk, SqueakImageContext img) {
+        super.fillin(chunk, img);
         Vector<Integer> data = chunk.data();
         int header = data.get(0) >> 1; // header is a tagged small integer
         int literalsize = header & 0x7fff;
@@ -33,6 +38,35 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
     }
 
     @Override
+    public String toString() {
+        String className = "UnknownClass";
+        String selector = "unknownSelector";
+        if (literals.length > 0) {
+            BaseSqueakObject baseSqueakObject = literals[literals.length - 1];
+            if (baseSqueakObject instanceof PointersObject) {
+                if (((PointersObject) baseSqueakObject).size() == 2) {
+                    try {
+                        baseSqueakObject = ((PointersObject) baseSqueakObject).at0(1);
+                    } catch (InvalidIndex e) {
+                        assert false;
+                    }
+                }
+                if (((PointersObject) baseSqueakObject).isClass()) {
+                    className = ((PointersObject) baseSqueakObject).nameAsClass();
+                }
+            }
+
+            if (literals.length > 1) {
+                baseSqueakObject = literals[literals.length - 2];
+                if (baseSqueakObject instanceof NativeObject) {
+                    selector = baseSqueakObject.toString();
+                }
+            }
+        }
+        return className + ">>" + selector;
+    }
+
+    @Override
     public void become(BaseSqueakObject other) throws PrimitiveFailed {
         if (other instanceof CompiledMethodObject) {
             super.become(other);
@@ -46,5 +80,20 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
             this.bytes = bytes2;
         }
         throw new PrimitiveFailed();
+    }
+
+    public PrimitiveNode getPrimitiveNode() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public SqueakBytecodeNode getBytecodeNode() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public int size() {
+        return literals.length * 4 + bytes.length;
     }
 }

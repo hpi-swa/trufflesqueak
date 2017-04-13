@@ -18,4 +18,9 @@ public class EmptyObject extends SqueakObject implements TruffleObject {
         }
         throw new PrimitiveFailed();
     }
+
+    @Override
+    public int size() {
+        return 0;
+    }
 }

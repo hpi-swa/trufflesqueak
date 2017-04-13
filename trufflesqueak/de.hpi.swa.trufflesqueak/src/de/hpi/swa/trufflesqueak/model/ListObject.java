@@ -4,6 +4,7 @@ import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.trufflesqueak.Chunk;
+import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.InvalidIndex;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 
@@ -11,8 +12,8 @@ public class ListObject extends SqueakObject implements TruffleObject {
     private BaseSqueakObject[] pointers;
 
     @Override
-    public void fillin(Chunk chunk) {
-        super.fillin(chunk);
+    public void fillin(Chunk chunk, SqueakImageContext img) {
+        super.fillin(chunk, img);
         pointers = chunk.getPointers();
     }
 
@@ -38,5 +39,10 @@ public class ListObject extends SqueakObject implements TruffleObject {
             this.pointers = pointers2;
         }
         throw new PrimitiveFailed();
+    }
+
+    @Override
+    public int size() {
+        return pointers.length;
     }
 }

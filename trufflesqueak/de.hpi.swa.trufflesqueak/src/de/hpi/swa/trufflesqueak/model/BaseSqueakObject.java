@@ -1,12 +1,16 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import de.hpi.swa.trufflesqueak.Chunk;
+import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.InvalidIndex;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 
 public abstract class BaseSqueakObject {
+    SqueakImageContext image;
+
     @SuppressWarnings("unused")
-    public void fillin(Chunk chunk) {
+    public void fillin(Chunk chunk, SqueakImageContext img) {
+        this.image = img;
     }
 
     @Override
@@ -17,19 +21,13 @@ public abstract class BaseSqueakObject {
     public abstract BaseSqueakObject getSqClass();
 
     public String getSqClassName() {
-        String name = "unknown class name";
         BaseSqueakObject cls = getSqClass();
-        if (cls instanceof PointersObject) {
-            try {
-                BaseSqueakObject nameObj = ((PointersObject) cls).at0(6);
-                if (nameObj instanceof NativeObject) {
-                    return nameObj.toString();
-                }
-            } catch (InvalidIndex e) {
-                // fall through
-            }
+        if (cls == image.metaclass) {
+            return "Metaclass";
+        } else if (cls instanceof PointersObject) {
+            return ((PointersObject) cls).nameAsClass();
         }
-        return name;
+        return "?class?";
     }
 
     public abstract void become(BaseSqueakObject other) throws PrimitiveFailed;

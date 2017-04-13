@@ -5,11 +5,6 @@ import com.oracle.truffle.api.interop.TruffleObject;
 
 public final class NilObject extends EmptyObject implements TruffleObject {
 
-    public static final NilObject SINGLETON = new NilObject();
-
-    private NilObject() {
-    }
-
     @Override
     public String toString() {
         return "nil";

@@ -1,24 +1,19 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
+import java.math.BigInteger;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.ImplicitCast;
-import com.oracle.truffle.api.dsl.TypeCheck;
 import com.oracle.truffle.api.dsl.TypeSystem;
-import de.hpi.swa.trufflesqueak.model.NilObject;
 
-import java.math.BigInteger;
+import de.hpi.swa.trufflesqueak.model.NilObject;
 
 @TypeSystem({boolean.class,
                 long.class,
                 BigInteger.class,
                 String.class,
                 NilObject.class})
-public abstract class Types {
-
-    @TypeCheck(NilObject.class)
-    public static boolean isNil(Object value) {
-        return value == NilObject.SINGLETON;
-    }
+public abstract class SqueakTypes {
 
     @ImplicitCast
     @TruffleBoundary

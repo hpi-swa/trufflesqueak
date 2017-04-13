@@ -6,6 +6,7 @@ import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.trufflesqueak.Chunk;
+import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 
 public class NativeObject extends SqueakObject implements TruffleObject {
@@ -13,8 +14,8 @@ public class NativeObject extends SqueakObject implements TruffleObject {
     private int size;
 
     @Override
-    public void fillin(Chunk chunk) {
-        super.fillin(chunk);
+    public void fillin(Chunk chunk, SqueakImageContext img) {
+        super.fillin(chunk, img);
         content = ByteBuffer.allocate((int) (chunk.size() * 4));
         byte[] bytes = chunk.getBytes();
         content.put(bytes);
@@ -45,5 +46,10 @@ public class NativeObject extends SqueakObject implements TruffleObject {
             this.content = content2;
         }
         throw new PrimitiveFailed();
+    }
+
+    @Override
+    public int size() {
+        return size;
     }
 }

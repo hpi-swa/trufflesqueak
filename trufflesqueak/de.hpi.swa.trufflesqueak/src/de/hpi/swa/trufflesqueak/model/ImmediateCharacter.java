@@ -1,6 +1,5 @@
 package de.hpi.swa.trufflesqueak.model;
 
-import de.hpi.swa.trufflesqueak.SqueakImage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 
 public class ImmediateCharacter extends BaseSqueakObject {
@@ -17,7 +16,7 @@ public class ImmediateCharacter extends BaseSqueakObject {
 
     @Override
     public BaseSqueakObject getSqClass() {
-        return SqueakImage.characterClass;
+        return image.characterClass;
     }
 
     @Override
