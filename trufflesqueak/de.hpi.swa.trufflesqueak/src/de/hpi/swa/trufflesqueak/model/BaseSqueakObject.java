@@ -20,14 +20,20 @@ public abstract class BaseSqueakObject {
 
     public abstract BaseSqueakObject getSqClass();
 
+    public boolean isClass() {
+        return false;
+    }
+
+    public String nameAsClass() {
+        return "???NotAClass";
+    }
+
     public String getSqClassName() {
-        BaseSqueakObject cls = getSqClass();
-        if (cls == image.metaclass) {
-            return "Metaclass";
-        } else if (cls instanceof PointersObject) {
-            return ((PointersObject) cls).nameAsClass();
+        if (isClass()) {
+            return nameAsClass() + " class";
+        } else {
+            return getSqClass().nameAsClass();
         }
-        return "?class?";
     }
 
     public abstract void become(BaseSqueakObject other) throws PrimitiveFailed;

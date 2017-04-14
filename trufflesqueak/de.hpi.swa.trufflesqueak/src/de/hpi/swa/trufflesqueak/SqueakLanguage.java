@@ -1,6 +1,7 @@
 package de.hpi.swa.trufflesqueak;
 
 import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.Reader;
@@ -24,9 +25,8 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
 
     @Override
     protected CallTarget parse(ParsingRequest request) throws Exception {
-        Reader reader = request.getSource().getReader();
         SqueakImageContext image = this.getContextReference().get();
-        image.fillInFrom(reader);
+        image.fillInFrom(new FileInputStream(request.getSource().getPath()));
         return Truffle.getRuntime().createCallTarget(image.getActiveContext(this));
     }
 

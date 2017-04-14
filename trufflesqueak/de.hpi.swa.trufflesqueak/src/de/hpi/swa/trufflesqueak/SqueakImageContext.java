@@ -1,9 +1,9 @@
 package de.hpi.swa.trufflesqueak;
 
 import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.Reader;
 
 import com.oracle.truffle.api.nodes.RootNode;
 
@@ -14,7 +14,6 @@ import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.SmallInteger;
-import de.hpi.swa.trufflesqueak.model.SqueakObject;
 import de.hpi.swa.trufflesqueak.model.TrueObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakMethodNode;
 
@@ -55,7 +54,7 @@ public class SqueakImageContext {
         return null;
     }
 
-    public void fillInFrom(Reader reader) throws IOException {
-        ImageReader.readImage(this, reader);
+    public void fillInFrom(FileInputStream inputStream) throws IOException {
+        ImageReader.readImage(this, inputStream);
     }
 }

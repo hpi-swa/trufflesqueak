@@ -22,8 +22,9 @@ public class PointersObject extends SqueakObject implements TruffleObject {
         pointers = chunk.getPointers();
     }
 
+    @Override
     public boolean isClass() {
-        return image.metaclass == getSqClass();
+        return image.metaclass == getSqClass().getSqClass();
     }
 
     public BaseSqueakObject at0(int i) throws InvalidIndex {
@@ -53,6 +54,7 @@ public class PointersObject extends SqueakObject implements TruffleObject {
         throw new PrimitiveFailed();
     }
 
+    @Override
     public String nameAsClass() {
         if (isClass() && size() > 6) {
             BaseSqueakObject nameObj = pointers[6];

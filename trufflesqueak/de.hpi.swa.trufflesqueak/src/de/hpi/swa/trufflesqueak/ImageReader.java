@@ -3,7 +3,6 @@ package de.hpi.swa.trufflesqueak;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.Reader;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.HashMap;
@@ -19,7 +18,7 @@ public class ImageReader {
     private static final long SLOTS_MASK = 0xFF << 56;
     private static final long OVERFLOW_SLOTS = 255;
     private static final int HIDDEN_ROOTS_CHUNK = 4; // nil, false, true, freeList, hiddenRoots
-    final Reader stream;
+    final FileInputStream stream;
     final ByteBuffer shortBuf = ByteBuffer.allocate(2);
     final ByteBuffer intBuf = ByteBuffer.allocate(4);
     final ByteBuffer longBuf = ByteBuffer.allocate(8);
@@ -41,11 +40,11 @@ public class ImageReader {
     private Vector<Chunk> chunklist;
     HashMap<Integer, Chunk> chunktable;
 
-    public ImageReader(Reader reader) throws FileNotFoundException {
+    public ImageReader(FileInputStream inputStream) throws FileNotFoundException {
         shortBuf.order(ByteOrder.LITTLE_ENDIAN);
         intBuf.order(ByteOrder.LITTLE_ENDIAN);
         longBuf.order(ByteOrder.LITTLE_ENDIAN);
-        this.stream = reader;
+        this.stream = inputStream;
         this.position = 0;
         this.chunklist = new Vector<>();
         this.chunktable = new HashMap<>();
@@ -55,7 +54,7 @@ public class ImageReader {
         assert buf.hasArray();
         this.position += buf.capacity();
         buf.rewind();
-        this.stream.read(buf.asCharBuffer().array());
+        stream.read(buf.array());
         buf.rewind();
     }
 
@@ -224,10 +223,10 @@ public class ImageReader {
         }
         // fillin objects
         for (Chunk chunk : chunklist) {
-            chunk.asObject().fillin(chunk, null);
+            chunk.asObject().fillin(chunk, image);
         }
 
-        image.metaclass = (PointersObject) image.characterClass.getSqClass();
+        image.metaclass = (PointersObject) image.characterClass.getSqClass().getSqClass();
     }
 
     BaseSqueakObject classOf(Chunk chunk) {
@@ -254,8 +253,8 @@ public class ImageReader {
         initObjects(image);
     }
 
-    public static void readImage(SqueakImageContext squeakImageContext, Reader stream) throws IOException {
-        ImageReader instance = new ImageReader(stream);
+    public static void readImage(SqueakImageContext squeakImageContext, FileInputStream inputStream) throws IOException {
+        ImageReader instance = new ImageReader(inputStream);
         instance.readImage(squeakImageContext);
     }
 }

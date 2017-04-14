@@ -1,6 +1,7 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -24,7 +25,7 @@ public class NativeObject extends SqueakObject implements TruffleObject {
 
     @Override
     public String toString() {
-        return new String(content.array());
+        return new String(Arrays.copyOfRange(content.array(), 0, size));
     }
 
     public ForeignAccess getForeignAccess() {
