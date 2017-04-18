@@ -15,7 +15,7 @@ public class SqueakMethodNode extends RootNode {
 
     public SqueakMethodNode(SqueakLanguage language, CompiledMethodObject method) {
         super(language);
-        bytecode = method.getBytecodeNode();
+        bytecode = method.getBytecodeAST();
     }
 
     @Override

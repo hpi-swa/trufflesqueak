@@ -31,7 +31,7 @@ public class Chunk {
     private final int hash;
     private final Vector<Integer> data;
 
-    Chunk(ImageReader reader, long size, int format, int classid, int hash, int pos) {
+    public Chunk(ImageReader reader, long size, int format, int classid, int hash, int pos) {
         this.reader = reader;
         this.size = size;
         this.format = format;
