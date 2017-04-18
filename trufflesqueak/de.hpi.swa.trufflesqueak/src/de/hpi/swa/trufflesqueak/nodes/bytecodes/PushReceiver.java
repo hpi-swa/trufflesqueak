@@ -24,6 +24,6 @@ public class PushReceiver extends SqueakBytecodeNode {
         } catch (FrameSlotTypeException e) {
             assert false;
         }
-        return next.executeGeneric(frame);
+        return null;
     }
 }

@@ -1,4 +1,4 @@
-package de.hpi.swa.trufflesqueak.nodes.bytecodes;
+package de.hpi.swa.trufflesqueak.nodes.bytecodes.jump;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -7,9 +7,9 @@ import de.hpi.swa.trufflesqueak.exceptions.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.nodes.SqueakBytecodeNode;
+import de.hpi.swa.trufflesqueak.nodes.UnconditionalJump;
 
-public class LongJump extends SqueakBytecodeNode {
+public class LongJump extends UnconditionalJump {
 
     public LongJump(CompiledMethodObject compiledMethodObject, int b, byte c) {
         super(compiledMethodObject);
@@ -20,6 +20,12 @@ public class LongJump extends SqueakBytecodeNode {
     public BaseSqueakObject executeGeneric(VirtualFrame frame) throws NonLocalReturn, NonVirtualReturn, ProcessSwitch {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    @Override
+    public int getTargetPC() {
+        // TODO Auto-generated method stub
+        return 0;
     }
 
 }

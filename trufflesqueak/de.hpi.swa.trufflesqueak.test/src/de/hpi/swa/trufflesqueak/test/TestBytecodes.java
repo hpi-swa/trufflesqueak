@@ -1,7 +1,5 @@
 package de.hpi.swa.trufflesqueak.test;
 
-import java.nio.ByteBuffer;
-
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
@@ -10,7 +8,6 @@ import de.hpi.swa.trufflesqueak.exceptions.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.util.Chunk;
 import junit.framework.TestCase;
 
 public class TestBytecodes extends TestCase {
