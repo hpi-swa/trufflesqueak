@@ -1,4 +1,4 @@
-package de.hpi.swa.trufflesqueak;
+package de.hpi.swa.trufflesqueak.util;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -167,6 +167,14 @@ public class Chunk {
             return format & 3;
         } else {
             return 0;
+        }
+    }
+
+    public byte getElementSize() {
+        if ((16 <= format) && (format <= 23)) {
+            return 1;
+        } else {
+            return 4;
         }
     }
 }

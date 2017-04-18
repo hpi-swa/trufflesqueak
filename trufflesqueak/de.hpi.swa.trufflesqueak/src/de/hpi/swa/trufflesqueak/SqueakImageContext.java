@@ -16,6 +16,7 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.SmallInteger;
 import de.hpi.swa.trufflesqueak.model.TrueObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakMethodNode;
+import de.hpi.swa.trufflesqueak.util.ImageReader;
 
 public class SqueakImageContext {
     public final NilObject nil = new NilObject();

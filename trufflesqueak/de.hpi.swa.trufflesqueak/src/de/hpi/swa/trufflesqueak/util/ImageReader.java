@@ -1,4 +1,4 @@
-package de.hpi.swa.trufflesqueak;
+package de.hpi.swa.trufflesqueak.util;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -8,6 +8,7 @@ import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Vector;
 
+import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.SqueakObject;
@@ -144,30 +145,19 @@ public class ImageReader {
         this.stream.close();
     }
 
-    private static int[] splitter(long param, int[] lengths) {
-        long integer = param;
-        int[] out = new int[lengths.length];
-        for (int i = 0; i < lengths.length; i++) {
-            int length = lengths[i];
-            out[i] = (int) (integer & ((1 << length) - 1));
-            integer = integer >> length;
-        }
-        return out;
-    }
-
     private Chunk readObject() throws IOException {
         int pos = position;
         assert pos % 8 == 0;
         long headerWord = nextLong();
         // 22 2 5 3 22 2 8
         // classid _ format _ hash _ size
-        int[] splitHeader = splitter(headerWord, new int[]{22, 2, 5, 3, 22, 2, 8});
+        int[] splitHeader = BitSplitter.splitter(headerWord, new int[]{22, 2, 5, 3, 22, 2, 8});
         int size = splitHeader[6];
         if (size == OVERFLOW_SLOTS) {
             size = (int) (headerWord & ~SLOTS_MASK);
             pos = position;
             headerWord = nextLong();
-            splitHeader = splitter(headerWord, new int[]{22, 2, 5, 3, 22, 2, 8});
+            splitHeader = BitSplitter.splitter(headerWord, new int[]{22, 2, 5, 3, 22, 2, 8});
             int overflowSize = splitHeader[6];
             assert overflowSize == OVERFLOW_SLOTS;
         }

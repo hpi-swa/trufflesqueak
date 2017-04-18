@@ -3,8 +3,6 @@ package de.hpi.swa.trufflesqueak.model;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
 
-import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
-
 public class EmptyObject extends SqueakObject implements TruffleObject {
     public ForeignAccess getForeignAccess() {
         // TODO Auto-generated method stub
@@ -12,11 +10,11 @@ public class EmptyObject extends SqueakObject implements TruffleObject {
     }
 
     @Override
-    public void become(BaseSqueakObject other) throws PrimitiveFailed {
+    public boolean become(BaseSqueakObject other) {
         if (other instanceof EmptyObject) {
-            super.become(other);
+            return super.become(other);
         }
-        throw new PrimitiveFailed();
+        return false;
     }
 
     @Override

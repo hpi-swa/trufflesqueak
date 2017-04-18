@@ -3,10 +3,9 @@ package de.hpi.swa.trufflesqueak.model;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
 
-import de.hpi.swa.trufflesqueak.Chunk;
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.InvalidIndex;
-import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.util.Chunk;
 
 public class PointersObject extends SqueakObject implements TruffleObject {
     private BaseSqueakObject[] pointers;
@@ -43,15 +42,16 @@ public class PointersObject extends SqueakObject implements TruffleObject {
     }
 
     @Override
-    public void become(BaseSqueakObject other) throws PrimitiveFailed {
+    public boolean become(BaseSqueakObject other) {
         if (other instanceof PointersObject) {
-            super.become(other);
-
-            BaseSqueakObject[] pointers2 = ((PointersObject) other).pointers;
-            ((PointersObject) other).pointers = this.pointers;
-            this.pointers = pointers2;
+            if (super.become(other)) {
+                BaseSqueakObject[] pointers2 = ((PointersObject) other).pointers;
+                ((PointersObject) other).pointers = this.pointers;
+                this.pointers = pointers2;
+                return true;
+            }
         }
-        throw new PrimitiveFailed();
+        return false;
     }
 
     @Override

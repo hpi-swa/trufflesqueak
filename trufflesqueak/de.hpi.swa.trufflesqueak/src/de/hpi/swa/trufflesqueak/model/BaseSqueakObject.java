@@ -1,9 +1,7 @@
 package de.hpi.swa.trufflesqueak.model;
 
-import de.hpi.swa.trufflesqueak.Chunk;
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.exceptions.InvalidIndex;
-import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.util.Chunk;
 
 public abstract class BaseSqueakObject {
     SqueakImageContext image;
@@ -36,5 +34,10 @@ public abstract class BaseSqueakObject {
         }
     }
 
-    public abstract void become(BaseSqueakObject other) throws PrimitiveFailed;
+    /**
+     * @param other The object to swap identities with
+     */
+    public boolean become(BaseSqueakObject other) {
+        return false;
+    }
 }
