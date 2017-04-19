@@ -11,6 +11,11 @@ import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 
+/**
+ * This is the base class for Squeak bytecode evaluation. Since Squeak operates on a stack, until we
+ * have a decompiler to re-create a useful AST, this also implements the access methods required to
+ * work on the frame. The hope is that Truffle/Graal can virtualize these frames most of the time...
+ */
 public abstract class SqueakBytecodeNode extends Node {
     private final CompiledMethodObject method;
     private final int index;
@@ -18,6 +23,11 @@ public abstract class SqueakBytecodeNode extends Node {
     public SqueakBytecodeNode(CompiledMethodObject cm, int idx) {
         method = cm;
         index = idx;
+    }
+
+    public int execute(VirtualFrame frame) throws NonLocalReturn, NonVirtualReturn, LocalReturn, ProcessSwitch {
+        executeGeneric(frame);
+        return index + 1;
     }
 
     public abstract void executeGeneric(VirtualFrame frame) throws NonLocalReturn, NonVirtualReturn, LocalReturn, ProcessSwitch;
@@ -86,5 +96,17 @@ public abstract class SqueakBytecodeNode extends Node {
         } catch (FrameSlotTypeException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public BaseSqueakObject getTemp(VirtualFrame frame, int idx) {
+        try {
+            return (BaseSqueakObject) frame.getObject(method.stackSlots[idx]);
+        } catch (FrameSlotTypeException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void setTemp(VirtualFrame frame, int idx, BaseSqueakObject obj) {
+        frame.setObject(method.stackSlots[idx], obj);
     }
 }

@@ -11,7 +11,7 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakBytecodeNode;
 
 public class PushClosure extends SqueakBytecodeNode {
 
-    public PushClosure(CompiledMethodObject compiledMethodObject, int idx, byte b, byte c, byte d) {
+    public PushClosure(CompiledMethodObject compiledMethodObject, int idx, int i, int j, int k) {
         super(compiledMethodObject, idx);
         // TODO Auto-generated constructor stub
     }

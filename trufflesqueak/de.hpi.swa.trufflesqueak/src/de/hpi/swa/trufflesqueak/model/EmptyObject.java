@@ -21,4 +21,19 @@ public class EmptyObject extends SqueakObject implements TruffleObject {
     public int size() {
         return 0;
     }
+
+    @Override
+    public BaseSqueakObject at0(int idx) {
+        throw new ArrayIndexOutOfBoundsException();
+    }
+
+    @Override
+    public void atput0(int idx, BaseSqueakObject obj) {
+        throw new ArrayIndexOutOfBoundsException();
+    }
+
+    @Override
+    public int instsize() {
+        return 0;
+    }
 }

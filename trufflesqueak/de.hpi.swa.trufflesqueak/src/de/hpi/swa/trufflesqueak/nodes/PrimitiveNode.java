@@ -83,13 +83,16 @@ public abstract class PrimitiveNode extends SqueakBytecodeNode {
         super(cm, idx);
     }
 
-    public static PrimitiveNode forIdx(CompiledMethodObject method, int idx) {
-        Class<? extends PrimitiveNode> primClass = primitiveClasses[idx];
+    public static PrimitiveNode forIdx(CompiledMethodObject method, int primitiveIdx, int bcIndex) {
+        if (primitiveIdx >= primitiveClasses.length) {
+            return new PrimNotSupported(method, bcIndex);
+        }
+        Class<? extends PrimitiveNode> primClass = primitiveClasses[primitiveIdx];
         if (primClass == null) {
-            return new PrimNotSupported();
+            return new PrimNotSupported(method, bcIndex);
         } else {
             try {
-                return primClass.getConstructor(CompiledMethodObject.class).newInstance(method);
+                return primClass.getConstructor(CompiledMethodObject.class, int.class).newInstance(method, bcIndex);
             } catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
                 throw new RuntimeException("Internal error in creating primitive", e);
             }

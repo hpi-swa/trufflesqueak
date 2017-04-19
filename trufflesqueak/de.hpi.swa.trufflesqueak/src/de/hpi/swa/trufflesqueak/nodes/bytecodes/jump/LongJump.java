@@ -10,7 +10,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 
 public class LongJump extends UnconditionalJump {
 
-    public LongJump(CompiledMethodObject compiledMethodObject, int idx, int b, byte c) {
+    public LongJump(CompiledMethodObject compiledMethodObject, int idx, int b, int i) {
         super(compiledMethodObject, idx);
         // TODO Auto-generated constructor stub
     }

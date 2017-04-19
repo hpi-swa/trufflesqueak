@@ -11,7 +11,7 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakBytecodeNode;
 
 public class PushNewArray extends SqueakBytecodeNode {
 
-    public PushNewArray(CompiledMethodObject compiledMethodObject, int idx, byte b) {
+    public PushNewArray(CompiledMethodObject compiledMethodObject, int idx, int i) {
         super(compiledMethodObject, idx);
         // TODO Auto-generated constructor stub
     }

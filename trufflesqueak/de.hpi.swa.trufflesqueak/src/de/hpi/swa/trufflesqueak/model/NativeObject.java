@@ -1,18 +1,16 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.exceptions.InvalidIndex;
+import de.hpi.swa.trufflesqueak.exceptions.UnwrappingError;
 import de.hpi.swa.trufflesqueak.util.Chunk;
 
 public class NativeObject extends SqueakObject implements TruffleObject {
     private ByteBuffer content;
-    private int size;
     private byte elementSize;
 
     @Override
@@ -21,13 +19,12 @@ public class NativeObject extends SqueakObject implements TruffleObject {
         content = ByteBuffer.allocate((int) (chunk.size() * 4));
         byte[] bytes = chunk.getBytes();
         content.put(bytes);
-        size = bytes.length - chunk.getPadding();
         elementSize = chunk.getElementSize();
     }
 
     @Override
     public String toString() {
-        return new String(Arrays.copyOfRange(content.array(), 0, size));
+        return new String(content.array());
     }
 
     public ForeignAccess getForeignAccess() {
@@ -35,10 +32,17 @@ public class NativeObject extends SqueakObject implements TruffleObject {
         return null;
     }
 
-    public int at0(int index) throws InvalidIndex {
-        if (index * elementSize >= content.capacity()) {
-            throw new InvalidIndex();
-        }
+    @Override
+    public BaseSqueakObject at0(int index) {
+        return new SmallInteger(getNativeAt0(index));
+    }
+
+    @Override
+    public void atput0(int index, BaseSqueakObject object) throws UnwrappingError {
+        setNativeAt0(index, object.unwrapInt());
+    }
+
+    public int getNativeAt0(int index) {
         if (elementSize == 1) {
             return content.get(index);
         } else {
@@ -47,15 +51,19 @@ public class NativeObject extends SqueakObject implements TruffleObject {
         }
     }
 
+    public void setNativeAt0(int index, int value) {
+        if (elementSize == 1) {
+            content.put(index, (byte) value);
+        } else {
+            assert elementSize == 4;
+            content.asIntBuffer().put(index, value);
+        }
+    }
+
     @Override
     public boolean become(BaseSqueakObject other) {
         if (other instanceof NativeObject) {
             if (super.become(other)) {
-
-                int size2 = ((NativeObject) other).size;
-                ((NativeObject) other).size = this.size;
-                this.size = size2;
-
                 ByteBuffer content2 = ((NativeObject) other).content;
                 ((NativeObject) other).content = this.content;
                 this.content = content2;
@@ -67,6 +75,11 @@ public class NativeObject extends SqueakObject implements TruffleObject {
 
     @Override
     public int size() {
-        return size;
+        return content.capacity() / elementSize;
+    }
+
+    @Override
+    public int instsize() {
+        return 0;
     }
 }

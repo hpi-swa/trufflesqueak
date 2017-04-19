@@ -11,9 +11,8 @@ import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.exceptions.InvalidIndex;
+import de.hpi.swa.trufflesqueak.exceptions.UnwrappingError;
 import de.hpi.swa.trufflesqueak.nodes.BytecodeSequence;
-import de.hpi.swa.trufflesqueak.nodes.SqueakBytecodeNode;
 import de.hpi.swa.trufflesqueak.util.BitSplitter;
 import de.hpi.swa.trufflesqueak.util.Chunk;
 import de.hpi.swa.trufflesqueak.util.Decompiler;
@@ -24,8 +23,8 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
     private static final String RECEIVER = "receiver";
     private static final String PC = "pc";
     private static final String STACK_POINTER = "stackPointer";
-    protected BaseSqueakObject[] literals;
-    protected byte[] bytes;
+    private BaseSqueakObject[] literals;
+    private byte[] bytes;
     private int numLiterals;
     private boolean isOptimized;
     private boolean hasPrimitive;
@@ -36,6 +35,7 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
     private boolean altInstructionSet;
     private BytecodeSequence ast;
     private FrameDescriptor frameDescriptor;
+
     public FrameSlot receiverSlot;
     public FrameSlot selfSlot;
     public FrameSlot closureSlot;
@@ -73,7 +73,7 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
 
     private void setHeader(BaseSqueakObject baseSqueakObject) {
         assert baseSqueakObject instanceof SmallInteger;
-        int hdr = ((SmallInteger) baseSqueakObject).getValue();
+        int hdr = baseSqueakObject.unsafeUnwrapInt();
         extractHeaderBits(hdr);
         prepareFrameDescriptor();
     }
@@ -132,11 +132,7 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
             BaseSqueakObject baseSqueakObject = literals[literals.length - 1];
             if (baseSqueakObject instanceof PointersObject) {
                 if (((PointersObject) baseSqueakObject).size() == 2) {
-                    try {
-                        baseSqueakObject = ((PointersObject) baseSqueakObject).at0(1);
-                    } catch (InvalidIndex e) {
-                        assert false;
-                    }
+                    baseSqueakObject = ((PointersObject) baseSqueakObject).at0(1);
                 }
                 if (((PointersObject) baseSqueakObject).isClass()) {
                     className = ((PointersObject) baseSqueakObject).nameAsClass();
@@ -175,8 +171,39 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
         return ast;
     }
 
+    public int getBytecodeOffset() {
+        return literals.length * 4;
+    }
+
     @Override
     public int size() {
         return literals.length * 4 + bytes.length;
+    }
+
+    @Override
+    public BaseSqueakObject at0(int idx) {
+        if (idx < literals.length) {
+            return literals[idx / 4];
+        } else {
+            return new SmallInteger(bytes[idx]);
+        }
+    }
+
+    @Override
+    public void atput0(int idx, BaseSqueakObject obj) throws UnwrappingError {
+        if (idx < literals.length) {
+            literals[idx / 4] = obj;
+        } else {
+            bytes[idx] = (byte) obj.unwrapInt();
+        }
+    }
+
+    public BaseSqueakObject getLiteral(int idx) {
+        return literals[idx];
+    }
+
+    @Override
+    public int instsize() {
+        return 0;
     }
 }

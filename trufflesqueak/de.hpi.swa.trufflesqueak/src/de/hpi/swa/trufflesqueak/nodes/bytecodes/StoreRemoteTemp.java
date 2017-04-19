@@ -11,7 +11,7 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakBytecodeNode;
 
 public class StoreRemoteTemp extends SqueakBytecodeNode {
 
-    public StoreRemoteTemp(CompiledMethodObject compiledMethodObject, int idx, byte b, byte c) {
+    public StoreRemoteTemp(CompiledMethodObject compiledMethodObject, int idx, int i, int j) {
         super(compiledMethodObject, idx);
         // TODO Auto-generated constructor stub
     }

@@ -11,7 +11,7 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakBytecodeNode;
 
 public class SingleExtendedSuper extends SqueakBytecodeNode {
 
-    public SingleExtendedSuper(CompiledMethodObject compiledMethodObject, int idx, byte b) {
+    public SingleExtendedSuper(CompiledMethodObject compiledMethodObject, int idx, int i) {
         super(compiledMethodObject, idx);
         // TODO Auto-generated constructor stub
     }

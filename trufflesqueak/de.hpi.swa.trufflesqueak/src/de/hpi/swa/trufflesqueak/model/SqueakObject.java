@@ -19,8 +19,6 @@ public abstract class SqueakObject extends BaseSqueakObject {
         return sqClass;
     }
 
-    public abstract int size();
-
     @Override
     public boolean become(BaseSqueakObject other) {
         if (other instanceof SqueakObject) {

@@ -11,7 +11,7 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakBytecodeNode;
 
 public class SecondExtendedSend extends SqueakBytecodeNode {
 
-    public SecondExtendedSend(CompiledMethodObject compiledMethodObject, int idx, byte b) {
+    public SecondExtendedSend(CompiledMethodObject compiledMethodObject, int idx, int i) {
         super(compiledMethodObject, idx);
         // TODO Auto-generated constructor stub
     }

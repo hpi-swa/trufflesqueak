@@ -7,7 +7,6 @@ import java.io.PrintWriter;
 
 import com.oracle.truffle.api.nodes.RootNode;
 
-import de.hpi.swa.trufflesqueak.exceptions.InvalidIndex;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.FalseObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
@@ -15,6 +14,7 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.SmallInteger;
 import de.hpi.swa.trufflesqueak.model.TrueObject;
+import de.hpi.swa.trufflesqueak.nodes.SqueakContextNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakMethodNode;
 import de.hpi.swa.trufflesqueak.util.ImageReader;
 
@@ -41,21 +41,18 @@ public class SqueakImageContext {
     }
 
     public RootNode getActiveContext(SqueakLanguage language) {
-        try {
-            PointersObject scheduler = (PointersObject) schedulerAssociation.at0(1);
-            PointersObject activeProcess = (PointersObject) scheduler.at0(1);
-            ListObject activeContext = (ListObject) activeProcess.at0(1);
-            activeProcess.atput0(1, nil);
-            SmallInteger pc = (SmallInteger) activeContext.at0(1);
-            CompiledMethodObject method = (CompiledMethodObject) activeContext.at0(3);
-            return new SqueakMethodNode(language, method);
-        } catch (InvalidIndex e) {
-            output.println("Could not find active context");
-        }
-        return null;
+        PointersObject scheduler = (PointersObject) schedulerAssociation.at0(1);
+        PointersObject activeProcess = (PointersObject) scheduler.at0(1);
+        ListObject activeContext = (ListObject) activeProcess.at0(1);
+        activeProcess.atput0(1, nil);
+        return new SqueakContextNode(language, activeContext);
     }
 
     public void fillInFrom(FileInputStream inputStream) throws IOException {
         ImageReader.readImage(this, inputStream);
+    }
+
+    public PrintWriter getOutput() {
+        return output;
     }
 }

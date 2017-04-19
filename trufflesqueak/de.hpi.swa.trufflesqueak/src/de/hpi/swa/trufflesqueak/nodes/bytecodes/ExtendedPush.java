@@ -7,18 +7,29 @@ import de.hpi.swa.trufflesqueak.exceptions.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.nodes.SqueakBytecodeNode;
 
-public class ExtendedPush extends SqueakBytecodeNode {
+public class ExtendedPush extends ExtendedAccess {
 
-    public ExtendedPush(CompiledMethodObject compiledMethodObject, int idx, byte b) {
-        super(compiledMethodObject, idx);
+    public ExtendedPush(CompiledMethodObject compiledMethodObject, int idx, int i) {
+        super(compiledMethodObject, idx, i);
     }
 
     @Override
     public void executeGeneric(VirtualFrame frame) throws NonLocalReturn, NonVirtualReturn, ProcessSwitch {
-        // TODO Auto-generated method stub
-        return;
+        switch (type) {
+            case 0:
+                push(frame, getReceiver(frame).at0(storeIdx));
+                break;
+            case 1:
+                push(frame, getTemp(frame, storeIdx));
+                break;
+            case 2:
+                push(frame, getMethod().getLiteral(storeIdx));
+                break;
+            case 3:
+                BaseSqueakObject assoc = getMethod().getLiteral(storeIdx);
+                push(frame, assoc.at0(1));
+                break;
+        }
     }
-
 }

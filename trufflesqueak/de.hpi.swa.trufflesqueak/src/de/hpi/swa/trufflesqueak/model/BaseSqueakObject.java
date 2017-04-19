@@ -1,6 +1,7 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.exceptions.UnwrappingError;
 import de.hpi.swa.trufflesqueak.util.Chunk;
 
 public abstract class BaseSqueakObject {
@@ -39,5 +40,29 @@ public abstract class BaseSqueakObject {
      */
     public boolean become(BaseSqueakObject other) {
         return false;
+    }
+
+    public abstract BaseSqueakObject at0(int idx);
+
+    public abstract void atput0(int idx, BaseSqueakObject object) throws UnwrappingError;
+
+    public abstract int size();
+
+    public abstract int instsize();
+
+    public int varsize() {
+        return size() - instsize();
+    }
+
+    public int unwrapInt() throws UnwrappingError {
+        throw new UnwrappingError();
+    }
+
+    public int unsafeUnwrapInt() {
+        try {
+            return unwrapInt();
+        } catch (UnwrappingError e) {
+            throw new RuntimeException(e);
+        }
     }
 }

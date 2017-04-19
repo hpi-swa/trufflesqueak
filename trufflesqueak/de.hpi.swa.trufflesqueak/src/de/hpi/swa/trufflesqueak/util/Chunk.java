@@ -151,6 +151,7 @@ public class Chunk {
     }
 
     public byte[] getBytes(int start) {
+        byte[] bytes = new byte[((data.size() - start) * 4) - getPadding()];
         List<Integer> subList = data.subList(start, data.size());
         ByteBuffer buf = ByteBuffer.allocate(subList.size() * 4);
         buf.order(ByteOrder.LITTLE_ENDIAN);
@@ -158,12 +159,14 @@ public class Chunk {
         for (int i : subList) {
             intBuf.put(i);
         }
-        return buf.array();
+        for (int i = 0; i < bytes.length; i++) {
+            bytes[i] = buf.get(i);
+        }
+        return bytes;
     }
 
     public int getPadding() {
-        // TODO Auto-generated method stub
-        if ((16 <= format) && (format <= 23)) {
+        if ((16 <= format) && (format <= 31)) {
             return format & 3;
         } else {
             return 0;

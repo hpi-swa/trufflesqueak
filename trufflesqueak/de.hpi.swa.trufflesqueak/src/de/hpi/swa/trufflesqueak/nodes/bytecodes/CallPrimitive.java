@@ -13,10 +13,10 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakBytecodeNode;
 public class CallPrimitive extends SqueakBytecodeNode {
     @Child private PrimitiveNode primitive;
 
-    public CallPrimitive(CompiledMethodObject compiledMethodObject, int idx, byte b, byte c) {
+    public CallPrimitive(CompiledMethodObject compiledMethodObject, int idx, int i, int j) {
         super(compiledMethodObject, idx);
-        int primitiveIdx = b + (c << 8);
-        primitive = PrimitiveNode.forIdx(compiledMethodObject, primitiveIdx);
+        int primitiveIdx = i + (j << 8);
+        primitive = PrimitiveNode.forIdx(compiledMethodObject, primitiveIdx, idx);
     }
 
     @Override

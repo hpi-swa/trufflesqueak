@@ -4,11 +4,17 @@ import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.exceptions.InvalidIndex;
 import de.hpi.swa.trufflesqueak.util.Chunk;
 
 public class PointersObject extends SqueakObject implements TruffleObject {
     private BaseSqueakObject[] pointers;
+
+    public PointersObject() {
+    }
+
+    public PointersObject(BaseSqueakObject[] ptrs) {
+        pointers = ptrs;
+    }
 
     public ForeignAccess getForeignAccess() {
         // TODO Auto-generated method stub
@@ -26,19 +32,14 @@ public class PointersObject extends SqueakObject implements TruffleObject {
         return image.metaclass == getSqClass().getSqClass();
     }
 
-    public BaseSqueakObject at0(int i) throws InvalidIndex {
-        if (i < pointers.length) {
-            return pointers[i];
-        }
-        throw new InvalidIndex();
+    @Override
+    public BaseSqueakObject at0(int i) {
+        return pointers[i];
     }
 
-    public void atput0(int i, BaseSqueakObject obj) throws InvalidIndex {
-        if (i < pointers.length) {
-            pointers[i] = obj;
-            return;
-        }
-        throw new InvalidIndex();
+    @Override
+    public void atput0(int i, BaseSqueakObject obj) {
+        pointers[i] = obj;
     }
 
     @Override
@@ -68,5 +69,10 @@ public class PointersObject extends SqueakObject implements TruffleObject {
     @Override
     public int size() {
         return pointers.length;
+    }
+
+    @Override
+    public int instsize() {
+        return size();
     }
 }

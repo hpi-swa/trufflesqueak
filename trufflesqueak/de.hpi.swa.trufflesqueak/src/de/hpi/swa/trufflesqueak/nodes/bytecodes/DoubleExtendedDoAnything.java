@@ -10,7 +10,7 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakBytecodeNode;
 
 public class DoubleExtendedDoAnything extends SqueakBytecodeNode {
 
-    public DoubleExtendedDoAnything(CompiledMethodObject compiledMethodObject, int idx, byte b, byte c) {
+    public DoubleExtendedDoAnything(CompiledMethodObject compiledMethodObject, int idx, int i, int j) {
         super(compiledMethodObject, idx);
         // TODO Auto-generated constructor stub
     }

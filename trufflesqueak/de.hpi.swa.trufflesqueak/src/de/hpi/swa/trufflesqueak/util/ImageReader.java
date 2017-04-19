@@ -3,6 +3,7 @@ package de.hpi.swa.trufflesqueak.util;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.HashMap;
@@ -40,11 +41,13 @@ public class ImageReader {
     private int position;
     private Vector<Chunk> chunklist;
     HashMap<Integer, Chunk> chunktable;
+    private PrintWriter output;
 
-    public ImageReader(FileInputStream inputStream) throws FileNotFoundException {
+    public ImageReader(FileInputStream inputStream, PrintWriter printWriter) throws FileNotFoundException {
         shortBuf.order(ByteOrder.LITTLE_ENDIAN);
         intBuf.order(ByteOrder.LITTLE_ENDIAN);
         longBuf.order(ByteOrder.LITTLE_ENDIAN);
+        this.output = printWriter;
         this.stream = inputStream;
         this.position = 0;
         this.chunklist = new Vector<>();
@@ -146,6 +149,7 @@ public class ImageReader {
     }
 
     private Chunk readObject() throws IOException {
+        log("o");
         int pos = position;
         assert pos % 8 == 0;
         long headerWord = nextLong();
@@ -182,6 +186,12 @@ public class ImageReader {
         return chunk;
     }
 
+    private void log(String string) {
+        if (output != null) {
+            // output.write(string);
+        }
+    }
+
     long wordsFor(long size) {
         // see Spur32BitMemoryManager>>smallObjectBytesForSlots:
         return size <= 1 ? 2 : size + (size & 1);
@@ -208,14 +218,19 @@ public class ImageReader {
         initPrebuiltConstant(image);
 
         // connect classes
+        output.println();
         for (Chunk chunk : chunklist) {
+            log("c");
             chunk.setSqClass(classOf(chunk));
         }
         // fillin objects
+        output.println();
         for (Chunk chunk : chunklist) {
+            log("f");
             chunk.asObject().fillin(chunk, image);
         }
 
+        output.println();
         image.metaclass = (PointersObject) image.characterClass.getSqClass().getSqClass();
     }
 
@@ -244,7 +259,7 @@ public class ImageReader {
     }
 
     public static void readImage(SqueakImageContext squeakImageContext, FileInputStream inputStream) throws IOException {
-        ImageReader instance = new ImageReader(inputStream);
+        ImageReader instance = new ImageReader(inputStream, squeakImageContext.getOutput());
         instance.readImage(squeakImageContext);
     }
 }

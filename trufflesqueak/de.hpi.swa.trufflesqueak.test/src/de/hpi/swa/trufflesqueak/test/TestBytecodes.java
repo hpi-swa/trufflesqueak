@@ -8,6 +8,7 @@ import de.hpi.swa.trufflesqueak.exceptions.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
 import junit.framework.TestCase;
 
 public class TestBytecodes extends TestCase {
@@ -23,12 +24,15 @@ public class TestBytecodes extends TestCase {
         return cm;
     }
 
-    public BaseSqueakObject run(BaseSqueakObject receiver, int... intbytes) {
+    public CompiledMethodObject makeMethod(int... intbytes) {
         byte[] bytes = new byte[intbytes.length];
         for (int i = 0; i < intbytes.length; i++) {
             bytes[i] = (byte) intbytes[i];
         }
-        CompiledMethodObject cm = makeMethod(bytes);
+        return makeMethod(bytes);
+    }
+
+    public BaseSqueakObject run(BaseSqueakObject receiver, CompiledMethodObject cm) {
         VirtualFrame frame = cm.createFrame(receiver);
         BaseSqueakObject result = null;
         try {
@@ -37,6 +41,34 @@ public class TestBytecodes extends TestCase {
             assertTrue("broken test", false);
         }
         return result;
+    }
+
+    public BaseSqueakObject run(BaseSqueakObject receiver, int... intbytes) {
+        CompiledMethodObject cm = makeMethod(intbytes);
+        return run(receiver, cm);
+    }
+
+    public void testPushReceiverVariable() {
+        BaseSqueakObject rcvr = new PointersObject(new BaseSqueakObject[]{
+                        image.nil,
+                        image.sqFalse,
+                        image.sqTrue,
+                        image.characterClass,
+                        image.metaclass,
+                        image.schedulerAssociation,
+                        image.smallIntegerClass,
+                        image.smalltalk,
+                        image.specialObjectsArray,
+        });
+        assertSame(image.nil, run(rcvr, 0, 124));
+        assertSame(image.sqFalse, run(rcvr, 1, 124));
+        assertSame(image.sqTrue, run(rcvr, 2, 124));
+        assertSame(image.characterClass, run(rcvr, 3, 124));
+        assertSame(image.metaclass, run(rcvr, 4, 124));
+        assertSame(image.schedulerAssociation, run(rcvr, 5, 124));
+        assertSame(image.smallIntegerClass, run(rcvr, 6, 124));
+        assertSame(image.smalltalk, run(rcvr, 7, 124));
+        assertSame(image.specialObjectsArray, run(rcvr, 8, 124));
     }
 
     public void testPushReceiver() {
