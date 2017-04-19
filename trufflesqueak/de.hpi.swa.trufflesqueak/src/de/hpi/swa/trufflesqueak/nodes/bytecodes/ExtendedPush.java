@@ -11,14 +11,14 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakBytecodeNode;
 
 public class ExtendedPush extends SqueakBytecodeNode {
 
-    public ExtendedPush(CompiledMethodObject compiledMethodObject, byte b) {
-        super(compiledMethodObject);
+    public ExtendedPush(CompiledMethodObject compiledMethodObject, int idx, byte b) {
+        super(compiledMethodObject, idx);
     }
 
     @Override
-    public BaseSqueakObject executeGeneric(VirtualFrame frame) throws NonLocalReturn, NonVirtualReturn, ProcessSwitch {
+    public void executeGeneric(VirtualFrame frame) throws NonLocalReturn, NonVirtualReturn, ProcessSwitch {
         // TODO Auto-generated method stub
-        return null;
+        return;
     }
 
 }

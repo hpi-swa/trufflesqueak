@@ -11,15 +11,15 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakBytecodeNode;
 
 public class PushReceiverVariable extends SqueakBytecodeNode {
 
-    public PushReceiverVariable(CompiledMethodObject cm, int i) {
-        super(cm);
+    public PushReceiverVariable(CompiledMethodObject cm, int idx, int i) {
+        super(cm, idx);
         // TODO Auto-generated constructor stub
     }
 
     @Override
-    public BaseSqueakObject executeGeneric(VirtualFrame frame) throws NonLocalReturn, NonVirtualReturn, ProcessSwitch {
+    public void executeGeneric(VirtualFrame frame) throws NonLocalReturn, NonVirtualReturn, ProcessSwitch {
         // TODO Auto-generated method stub
-        return null;
+        return;
     }
 
 }

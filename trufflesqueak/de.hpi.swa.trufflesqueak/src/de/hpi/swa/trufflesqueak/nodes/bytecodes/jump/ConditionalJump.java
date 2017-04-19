@@ -4,7 +4,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakBytecodeNode;
 
 public abstract class ConditionalJump extends Jump {
-    public ConditionalJump(CompiledMethodObject cm) {
-        super(cm);
+    public ConditionalJump(CompiledMethodObject cm, int idx) {
+        super(cm, idx);
     }
 }

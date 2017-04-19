@@ -4,14 +4,16 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
+import de.hpi.swa.trufflesqueak.exceptions.LocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
+import de.hpi.swa.trufflesqueak.exceptions.Return;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 
 public class SqueakMethodNode extends RootNode {
-    @Child SqueakBytecodeNode bytecode;
+    @Child BytecodeSequence bytecode;
 
     public SqueakMethodNode(SqueakLanguage language, CompiledMethodObject method) {
         super(language);
@@ -29,6 +31,6 @@ public class SqueakMethodNode extends RootNode {
         } catch (ProcessSwitch e) {
             // TODO: switch
         }
-        return getLanguage(SqueakLanguage.class).getContextReference().get().nil;
+        throw new RuntimeException("unimplemented exit from method");
     }
 }

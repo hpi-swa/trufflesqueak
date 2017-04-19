@@ -7,19 +7,18 @@ import de.hpi.swa.trufflesqueak.exceptions.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.nodes.UnconditionalJump;
 
 public class LongJump extends UnconditionalJump {
 
-    public LongJump(CompiledMethodObject compiledMethodObject, int b, byte c) {
-        super(compiledMethodObject);
+    public LongJump(CompiledMethodObject compiledMethodObject, int idx, int b, byte c) {
+        super(compiledMethodObject, idx);
         // TODO Auto-generated constructor stub
     }
 
     @Override
-    public BaseSqueakObject executeGeneric(VirtualFrame frame) throws NonLocalReturn, NonVirtualReturn, ProcessSwitch {
+    public void executeGeneric(VirtualFrame frame) throws NonLocalReturn, NonVirtualReturn, ProcessSwitch {
         // TODO Auto-generated method stub
-        return null;
+        return;
     }
 
     @Override

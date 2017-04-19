@@ -11,15 +11,15 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakBytecodeNode;
 
 public class UnknownBytecode extends SqueakBytecodeNode {
 
-    public UnknownBytecode(CompiledMethodObject cm) {
-        super(cm);
+    public UnknownBytecode(CompiledMethodObject cm, int idx) {
+        super(cm, idx);
         // TODO Auto-generated constructor stub
     }
 
     @Override
-    public BaseSqueakObject executeGeneric(VirtualFrame frame) throws NonLocalReturn, NonVirtualReturn, ProcessSwitch {
+    public void executeGeneric(VirtualFrame frame) throws NonLocalReturn, NonVirtualReturn, ProcessSwitch {
         // TODO Auto-generated method stub
-        return null;
+        return;
     }
 
 }

@@ -11,14 +11,14 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakBytecodeNode;
 
 public class StoreAndPopRcvr extends SqueakBytecodeNode {
 
-    public StoreAndPopRcvr(CompiledMethodObject compiledMethodObject, int i) {
-        super(compiledMethodObject);
+    public StoreAndPopRcvr(CompiledMethodObject compiledMethodObject, int idx, int i) {
+        super(compiledMethodObject, idx);
     }
 
     @Override
-    public BaseSqueakObject executeGeneric(VirtualFrame frame) throws NonLocalReturn, NonVirtualReturn, ProcessSwitch {
+    public void executeGeneric(VirtualFrame frame) throws NonLocalReturn, NonVirtualReturn, ProcessSwitch {
         // TODO Auto-generated method stub
-        return null;
+        return;
     }
 
 }

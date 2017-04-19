@@ -6,9 +6,8 @@ import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.SmallInteger;
 import de.hpi.swa.trufflesqueak.nodes.BytecodeSequence;
-import de.hpi.swa.trufflesqueak.nodes.Loop;
+import de.hpi.swa.trufflesqueak.nodes.PrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakBytecodeNode;
-import de.hpi.swa.trufflesqueak.nodes.UnconditionalJump;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.CallPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.DoubleExtendedDoAnything;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.Dup;
@@ -32,6 +31,7 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnTopFromBlock;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnTopFromMethod;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SecondExtendedSend;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.Send;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendSelector;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SingleExtendedSend;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SingleExtendedSuper;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreAndPopRcvr;
@@ -39,44 +39,11 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreAndPopRemoteTemp;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreAndPopTemp;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreRemoteTemp;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.UnknownBytecode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.Jump;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.LongJump;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.LongJumpIfFalse;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.LongJumpIfTrue;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.ShortCondJump;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.ShortJump;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimAdd;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimAt;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimAtEnd;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimAtPut;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimBitAnd;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimBitOr;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimBitShift;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimBlockCopy;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimClass;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimDiv;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimDivide;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimDo;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimEqual;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimEquivalent;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimGreaterOrEqual;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimGreaterThan;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimLessOrEqual;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimLessThan;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimMakePoint;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimMod;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimMul;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimNew;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimNewArg;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimNext;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimNextPut;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimNotEqual;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimPtX;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimPtY;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimSize;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimSub;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimValue;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimValueArg;
 
 public class Decompiler {
     private byte[] bytes;
@@ -89,50 +56,14 @@ public class Decompiler {
         bytes = bc;
     }
 
-    public SqueakBytecodeNode getAST() {
+    public BytecodeSequence getAST() {
         int index[] = {0};
         Vector<SqueakBytecodeNode> sequence = new Vector<>();
-        SqueakBytecodeNode currentNode = null;
         while (index[0] < bytes.length) {
             int idx = index[0];
-            SqueakBytecodeNode node = decodeByteAt(index);
-
-            if (node instanceof UnconditionalJump) {
-                int targetPC = ((Jump) node).getTargetPC();
-                assert targetPC < idx;
-                // backjump, we're in a loop
-
-                int conditionPC = targetPC;
-                int curIdx = targetPC;
-                while (curIdx < idx) {
-                    SqueakBytecodeNode jumpBodyNode = sequence.get(curIdx);
-                    if (jumpBodyNode instanceof Jump) {
-                        conditionPC = ((Jump) jumpBodyNode).getTargetPC();
-                        if (conditionPC > idx) {
-                            assert conditionPC == idx + 1 || conditionPC == idx + 2;
-                            // this jump would take us behind the unconditional back jump, so the
-                            // code up to here is the condition
-                            break;
-                        }
-                    }
-                }
-                SqueakBytecodeNode[] condition = sequence.subList(targetPC, conditionPC).toArray(new SqueakBytecodeNode[conditionPC - targetPC]);
-                SqueakBytecodeNode[] body = sequence.subList(conditionPC, idx).toArray(new SqueakBytecodeNode[idx - conditionPC]);
-
-                for (int j = targetPC; j < idx; j++) {
-                    sequence.setElementAt(null, j);
-                }
-                sequence.add(idx, new Loop(condition, body));
-            } else {
-                sequence.add(idx, node);
-            }
-
-            if (currentNode != null) {
-                currentNode.setNext(node);
-            }
-            currentNode = node;
+            sequence.add(idx, decodeByteAt(index));
         }
-        return new BytecodeSequence(method, sequence.toArray(new SqueakBytecodeNode[sequence.size()]));
+        return new BytecodeSequence(sequence.toArray(new SqueakBytecodeNode[sequence.size()]));
     }
 
     private SqueakBytecodeNode decodeByteAt(int[] indexRef) {
@@ -159,7 +90,7 @@ public class Decompiler {
             case 13:
             case 14:
             case 15:
-                return new PushReceiverVariable(method, b & 15);
+                return new PushReceiverVariable(method, index, b & 15);
             case 16:
             case 17:
             case 18:
@@ -176,7 +107,7 @@ public class Decompiler {
             case 29:
             case 30:
             case 31:
-                return new PushTemp(method, b & 15);
+                return new PushTemp(method, index, b & 15);
             case 32:
             case 33:
             case 34:
@@ -209,7 +140,7 @@ public class Decompiler {
             case 61:
             case 62:
             case 63:
-                return new PushLiteralConst(method, b & 31);
+                return new PushLiteralConst(method, index, b & 31);
             case 64:
             case 65:
             case 66:
@@ -242,7 +173,7 @@ public class Decompiler {
             case 93:
             case 94:
             case 95:
-                return new PushVariable(method, b & 31);
+                return new PushVariable(method, index, b & 31);
             case 96:
             case 97:
             case 98:
@@ -251,7 +182,7 @@ public class Decompiler {
             case 101:
             case 102:
             case 103:
-                return new StoreAndPopRcvr(method, b & 7);
+                return new StoreAndPopRcvr(method, index, b & 7);
             case 104:
             case 105:
             case 106:
@@ -260,71 +191,71 @@ public class Decompiler {
             case 109:
             case 110:
             case 111:
-                return new StoreAndPopTemp(method, b & 7);
+                return new StoreAndPopTemp(method, index, b & 7);
             case 112:
-                return new PushReceiver(method);
+                return new PushReceiver(method, index);
             case 113:
-                return new PushConst(method, image.sqTrue);
+                return new PushConst(method, index, image.sqTrue);
             case 114:
-                return new PushConst(method, image.sqFalse);
+                return new PushConst(method, index, image.sqFalse);
             case 115:
-                return new PushConst(method, image.nil);
+                return new PushConst(method, index, image.nil);
             case 116:
-                return new PushConst(method, new SmallInteger(-1));
+                return new PushConst(method, index, new SmallInteger(-1));
             case 117:
-                return new PushConst(method, new SmallInteger(0));
+                return new PushConst(method, index, new SmallInteger(0));
             case 118:
-                return new PushConst(method, new SmallInteger(1));
+                return new PushConst(method, index, new SmallInteger(1));
             case 119:
-                return new PushConst(method, new SmallInteger(2));
+                return new PushConst(method, index, new SmallInteger(2));
             case 120:
-                return new ReturnReceiver(method);
+                return new ReturnReceiver(method, index);
             case 121:
-                return new ReturnConst(method, image.sqTrue);
+                return new ReturnConst(method, index, image.sqTrue);
             case 122:
-                return new ReturnConst(method, image.sqFalse);
+                return new ReturnConst(method, index, image.sqFalse);
             case 123:
-                return new ReturnConst(method, image.nil);
+                return new ReturnConst(method, index, image.nil);
             case 124:
-                return new ReturnTopFromMethod(method);
+                return new ReturnTopFromMethod(method, index);
             case 125:
-                return new ReturnTopFromBlock(method);
+                return new ReturnTopFromBlock(method, index);
             case 126:
-                return new UnknownBytecode(method);
+                return new UnknownBytecode(method, index);
             case 127:
-                return new UnknownBytecode(method);
+                return new UnknownBytecode(method, index);
             case 128:
-                return new ExtendedPush(method, bytes[indexRef[0] = ++index]);
+                return new ExtendedPush(method, index, bytes[indexRef[0] = ++index]);
             case 129:
-                return new ExtendedStore(method, bytes[indexRef[0] = ++index]);
+                return new ExtendedStore(method, index, bytes[indexRef[0] = ++index]);
             case 130:
-                return new ExtendedStoreAndPop(method, bytes[indexRef[0] = ++index]);
+                return new ExtendedStoreAndPop(method, index, bytes[indexRef[0] = ++index]);
             case 131:
-                return new SingleExtendedSend(method, bytes[indexRef[0] = ++index]);
+                return new SingleExtendedSend(method, index, bytes[indexRef[0] = ++index]);
             case 132:
-                return new DoubleExtendedDoAnything(method, bytes[indexRef[0] = ++index], bytes[indexRef[0] = ++index]);
+                return new DoubleExtendedDoAnything(method, index, bytes[indexRef[0] = ++index], bytes[indexRef[0] = ++index]);
             case 133:
-                return new SingleExtendedSuper(method, bytes[indexRef[0] = ++index]);
+                return new SingleExtendedSuper(method, index, bytes[indexRef[0] = ++index]);
             case 134:
-                return new SecondExtendedSend(method, bytes[indexRef[0] = ++index]);
+                return new SecondExtendedSend(method, index, bytes[indexRef[0] = ++index]);
             case 135:
-                return new Pop(method);
+                return new Pop(method, index);
             case 136:
-                return new Dup(method);
+                return new Dup(method, index);
             case 137:
-                return new PushActiveContext(method);
+                return new PushActiveContext(method, index);
             case 138:
-                return new PushNewArray(method, bytes[indexRef[0] = ++index]);
+                return new PushNewArray(method, index, bytes[indexRef[0] = ++index]);
             case 139:
-                return new CallPrimitive(method, bytes[indexRef[0] = ++index], bytes[indexRef[0] = ++index]);
+                return new CallPrimitive(method, index, bytes[indexRef[0] = ++index], bytes[indexRef[0] = ++index]);
             case 140:
-                return new PushRemoteTemp(method, bytes[indexRef[0] = ++index], bytes[indexRef[0] = ++index]);
+                return new PushRemoteTemp(method, index, bytes[indexRef[0] = ++index], bytes[indexRef[0] = ++index]);
             case 141:
-                return new StoreRemoteTemp(method, bytes[indexRef[0] = ++index], bytes[indexRef[0] = ++index]);
+                return new StoreRemoteTemp(method, index, bytes[indexRef[0] = ++index], bytes[indexRef[0] = ++index]);
             case 142:
-                return new StoreAndPopRemoteTemp(method, bytes[indexRef[0] = ++index], bytes[indexRef[0] = ++index]);
+                return new StoreAndPopRemoteTemp(method, index, bytes[indexRef[0] = ++index], bytes[indexRef[0] = ++index]);
             case 143:
-                return new PushClosure(method, bytes[indexRef[0] = ++index], bytes[indexRef[0] = ++index], bytes[indexRef[0] = ++index]);
+                return new PushClosure(method, index, bytes[indexRef[0] = ++index], bytes[indexRef[0] = ++index], bytes[indexRef[0] = ++index]);
             case 144:
             case 145:
             case 146:
@@ -333,7 +264,7 @@ public class Decompiler {
             case 149:
             case 150:
             case 151:
-                return new ShortJump(method, b);
+                return new ShortJump(method, index, b);
             case 152:
             case 153:
             case 154:
@@ -342,7 +273,7 @@ public class Decompiler {
             case 157:
             case 158:
             case 159:
-                return new ShortCondJump(method, b);
+                return new ShortCondJump(method, index, b);
             case 160:
             case 161:
             case 162:
@@ -351,83 +282,83 @@ public class Decompiler {
             case 165:
             case 166:
             case 167:
-                return new LongJump(method, b, bytes[indexRef[0] = ++index]);
+                return new LongJump(method, index, b, bytes[indexRef[0] = ++index]);
             case 168:
             case 169:
             case 170:
             case 171:
-                return new LongJumpIfTrue(method, b, bytes[indexRef[0] = ++index]);
+                return new LongJumpIfTrue(method, index, b, bytes[indexRef[0] = ++index]);
             case 172:
             case 173:
             case 174:
             case 175:
-                return new LongJumpIfFalse(method, b, bytes[indexRef[0] = ++index]);
+                return new LongJumpIfFalse(method, index, b, bytes[indexRef[0] = ++index]);
             case 176:
-                return new PrimAdd();
+                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.ADD.index);
             case 177:
-                return new PrimSub();
+                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.SUB.index);
             case 178:
-                return new PrimLessThan();
+                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.LESSTHAN.index);
             case 179:
-                return new PrimGreaterThan();
+                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.GREATERTHAN.index);
             case 180:
-                return new PrimLessOrEqual();
+                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.LESSOREQUAL.index);
             case 181:
-                return new PrimGreaterOrEqual();
+                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.GREATEROREQUAL.index);
             case 182:
-                return new PrimEqual();
+                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.EQUAL.index);
             case 183:
-                return new PrimNotEqual();
+                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.NOTEQUAL.index);
             case 184:
-                return new PrimMul();
+                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.MULTIPLY.index);
             case 185:
-                return new PrimDivide();
+                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.DIVIDE.index);
             case 186:
-                return new PrimMod();
+                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.MOD.index);
             case 187:
-                return new PrimMakePoint();
+                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.MAKE_POINT.index);
             case 188:
-                return new PrimBitShift();
+                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.BIT_SHIFT.index);
             case 189:
-                return new PrimDiv();
+                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.DIV.index);
             case 190:
-                return new PrimBitAnd();
+                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.BIT_AND.index);
             case 191:
-                return new PrimBitOr();
+                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.BIT_OR.index);
             case 192:
-                return new PrimAt();
+                return new SendSelector(method, index, "at:");
             case 193:
-                return new PrimAtPut();
+                return new SendSelector(method, index, "at:put:");
             case 194:
-                return new PrimSize();
+                return new SendSelector(method, index, "size");
             case 195:
-                return new PrimNext();
+                return new SendSelector(method, index, "next");
             case 196:
-                return new PrimNextPut();
+                return new SendSelector(method, index, "nextPut:");
             case 197:
-                return new PrimAtEnd();
+                return new SendSelector(method, index, "atEnd");
             case 198:
-                return new PrimEquivalent();
+                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.EQUIVALENT.index);
             case 199:
-                return new PrimClass();
+                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.CLASS.index);
             case 200:
-                return new PrimBlockCopy();
+                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.BLOCK_COPY.index);
             case 201:
-                return new PrimValue();
+                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.CLOSURE_VALUE.index);
             case 202:
-                return new PrimValueArg();
+                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.CLOSURE_VALUE_WITH_ARG.index);
             case 203:
-                return new PrimDo();
+                return new SendSelector(method, index, "do:");
             case 204:
-                return new PrimNew();
+                return new SendSelector(method, index, "new");
             case 205:
-                return new PrimNewArg();
+                return new SendSelector(method, index, "new:");
             case 206:
-                return new PrimPtX();
+                return new SendSelector(method, index, "x");
             case 207:
-                return new PrimPtY();
+                return new SendSelector(method, index, "y");
             default:
-                return new Send(method, b);
+                return new Send(method, index, b);
         }
     }
 }

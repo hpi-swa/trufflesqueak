@@ -11,15 +11,15 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakBytecodeNode;
 
 public class ShortCondJump extends ConditionalJump {
 
-    public ShortCondJump(CompiledMethodObject compiledMethodObject, int b) {
-        super(compiledMethodObject);
+    public ShortCondJump(CompiledMethodObject compiledMethodObject, int idx, int b) {
+        super(compiledMethodObject, idx);
         // TODO Auto-generated constructor stub
     }
 
     @Override
-    public BaseSqueakObject executeGeneric(VirtualFrame frame) throws NonLocalReturn, NonVirtualReturn, ProcessSwitch {
+    public void executeGeneric(VirtualFrame frame) throws NonLocalReturn, NonVirtualReturn, ProcessSwitch {
         // TODO Auto-generated method stub
-        return null;
+        return;
     }
 
     @Override

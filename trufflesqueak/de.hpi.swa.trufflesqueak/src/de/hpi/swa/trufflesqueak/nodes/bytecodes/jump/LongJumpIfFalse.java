@@ -10,15 +10,15 @@ import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 
 public class LongJumpIfFalse extends ConditionalJump {
 
-    public LongJumpIfFalse(CompiledMethodObject compiledMethodObject, int b, byte c) {
-        super(compiledMethodObject);
+    public LongJumpIfFalse(CompiledMethodObject compiledMethodObject, int idx, int b, byte c) {
+        super(compiledMethodObject, idx);
         // TODO Auto-generated constructor stub
     }
 
     @Override
-    public BaseSqueakObject executeGeneric(VirtualFrame frame) throws NonLocalReturn, NonVirtualReturn, ProcessSwitch {
+    public void executeGeneric(VirtualFrame frame) throws NonLocalReturn, NonVirtualReturn, ProcessSwitch {
         // TODO Auto-generated method stub
-        return null;
+        return;
     }
 
     @Override

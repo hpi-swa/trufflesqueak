@@ -11,15 +11,15 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakBytecodeNode;
 
 public class StoreAndPopRemoteTemp extends SqueakBytecodeNode {
 
-    public StoreAndPopRemoteTemp(CompiledMethodObject compiledMethodObject, byte b, byte c) {
-        super(compiledMethodObject);
+    public StoreAndPopRemoteTemp(CompiledMethodObject compiledMethodObject, int idx, byte b, byte c) {
+        super(compiledMethodObject, idx);
         // TODO Auto-generated constructor stub
     }
 
     @Override
-    public BaseSqueakObject executeGeneric(VirtualFrame frame) throws NonLocalReturn, NonVirtualReturn, ProcessSwitch {
+    public void executeGeneric(VirtualFrame frame) throws NonLocalReturn, NonVirtualReturn, ProcessSwitch {
         // TODO Auto-generated method stub
-        return null;
+        return;
     }
 
 }

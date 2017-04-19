@@ -12,6 +12,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.InvalidIndex;
+import de.hpi.swa.trufflesqueak.nodes.BytecodeSequence;
 import de.hpi.swa.trufflesqueak.nodes.SqueakBytecodeNode;
 import de.hpi.swa.trufflesqueak.util.BitSplitter;
 import de.hpi.swa.trufflesqueak.util.Chunk;
@@ -33,7 +34,7 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
     private int numArgs;
     private int accessModifier;
     private boolean altInstructionSet;
-    private SqueakBytecodeNode ast;
+    private BytecodeSequence ast;
     private FrameDescriptor frameDescriptor;
     public FrameSlot receiverSlot;
     public FrameSlot selfSlot;
@@ -72,8 +73,13 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
 
     private void setHeader(BaseSqueakObject baseSqueakObject) {
         assert baseSqueakObject instanceof SmallInteger;
-        SmallInteger smallInt = (SmallInteger) baseSqueakObject;
-        int[] splitHeader = BitSplitter.splitter(smallInt.getValue(), new int[]{15, 1, 1, 1, 6, 4, 2, 1});
+        int hdr = ((SmallInteger) baseSqueakObject).getValue();
+        extractHeaderBits(hdr);
+        prepareFrameDescriptor();
+    }
+
+    private void extractHeaderBits(int hdr) {
+        int[] splitHeader = BitSplitter.splitter(hdr, new int[]{15, 1, 1, 1, 6, 4, 2, 1});
         numLiterals = splitHeader[0];
         isOptimized = splitHeader[1] == 1;
         hasPrimitive = splitHeader[2] == 1;
@@ -82,8 +88,10 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
         numArgs = splitHeader[5];
         accessModifier = splitHeader[6];
         altInstructionSet = splitHeader[7] == 1;
-        frameDescriptor = new FrameDescriptor(image.nil);
+    }
 
+    private void prepareFrameDescriptor() {
+        frameDescriptor = new FrameDescriptor(image.nil);
         int squeakFrameSize = 16;
         if (needsLargeFrame) {
             squeakFrameSize = 40;
@@ -163,7 +171,7 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
         return false;
     }
 
-    public SqueakBytecodeNode getBytecodeAST() {
+    public BytecodeSequence getBytecodeAST() {
         return ast;
     }
 

@@ -11,7 +11,6 @@ import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import junit.framework.TestCase;
 
 public class TestBytecodes extends TestCase {
-    private static final int CM_FORMAT = 24;
     private SqueakImageContext image;
 
     @Override
@@ -24,16 +23,44 @@ public class TestBytecodes extends TestCase {
         return cm;
     }
 
-    public void testPushReceiver() {
-        CompiledMethodObject cm = makeMethod(new byte[]{112, 124}); // pushRcvr, returnTopFromMethod
-        VirtualFrame frame = cm.createFrame(image.nil);
-        try {
-            BaseSqueakObject result = cm.getBytecodeAST().executeGeneric(frame);
-            assertSame(result, image.nil);
-        } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-            assert false;
+    public BaseSqueakObject run(BaseSqueakObject receiver, int... intbytes) {
+        byte[] bytes = new byte[intbytes.length];
+        for (int i = 0; i < intbytes.length; i++) {
+            bytes[i] = (byte) intbytes[i];
         }
+        CompiledMethodObject cm = makeMethod(bytes);
+        VirtualFrame frame = cm.createFrame(receiver);
+        BaseSqueakObject result = null;
+        try {
+            result = cm.getBytecodeAST().executeGeneric(frame);
+        } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
+            assertTrue("broken test", false);
+        }
+        return result;
+    }
+
+    public void testPushReceiver() {
+        BaseSqueakObject rcvr = image.specialObjectsArray;
+        assertSame(rcvr, run(rcvr, 112, 124));
+    }
+
+    public void testPushTrue() {
+        BaseSqueakObject rcvr = image.specialObjectsArray;
+        assertSame(image.sqTrue, run(rcvr, 113, 124));
+    }
+
+    public void testPushFalse() {
+        BaseSqueakObject rcvr = image.specialObjectsArray;
+        assertSame(image.sqFalse, run(rcvr, 114, 124));
+    }
+
+    public void testPushNil() {
+        BaseSqueakObject rcvr = image.specialObjectsArray;
+        assertSame(image.nil, run(rcvr, 115, 124));
+    }
+
+    public void testReturnReceiver() {
+        BaseSqueakObject rcvr = image.specialObjectsArray;
+        assertSame(rcvr, run(rcvr, 115, 120));
     }
 }
