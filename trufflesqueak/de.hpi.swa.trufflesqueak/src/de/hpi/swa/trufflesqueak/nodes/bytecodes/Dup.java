@@ -2,6 +2,7 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 
+import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakBytecodeNode;
 
@@ -12,8 +13,10 @@ public class Dup extends SqueakBytecodeNode {
     }
 
     @Override
-    public void executeGeneric(VirtualFrame frame) {
-        push(frame, top(frame));
+    public Object executeGeneric(VirtualFrame frame) {
+        Object top = top(frame);
+        push(frame, top);
+        return top;
     }
 
 }

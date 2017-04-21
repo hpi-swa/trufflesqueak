@@ -1,12 +1,18 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.NodeChild;
+import com.oracle.truffle.api.dsl.NodeChildren;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakBytecodeNode;
+import de.hpi.swa.trufflesqueak.nodes.helper.ReceiverNode;
 
-public class PushReceiverVariable extends SqueakBytecodeNode {
+@NodeChildren({@NodeChild(value = "receiverNode", type = ReceiverNode.class)})
+public abstract class PushReceiverVariable extends SqueakBytecodeNode {
     private int variableIndex;
 
     public PushReceiverVariable(CompiledMethodObject cm, int idx, int i) {
@@ -14,10 +20,19 @@ public class PushReceiverVariable extends SqueakBytecodeNode {
         variableIndex = i & 15;
     }
 
-    @Override
-    public void executeGeneric(VirtualFrame frame) {
-        BaseSqueakObject receiver = getReceiver(frame);
-        push(frame, receiver.at0(variableIndex));
+    @Specialization
+    public Object pushReceiver(VirtualFrame frame, BaseSqueakObject receiver) {
+        BaseSqueakObject object = receiver.at0(variableIndex);
+        push(frame, object);
+        return object;
     }
 
+    @Fallback
+    public Object pushReceiver(Object receiver) {
+        throw new RuntimeException("tried to push variable from non-object receiver");
+    }
+
+    public static PushReceiverVariable create(CompiledMethodObject method, int index, int i) {
+        return PushReceiverVariableNodeGen.create(method, index, i, new ReceiverNode(method));
+    }
 }

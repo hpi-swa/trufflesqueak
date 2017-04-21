@@ -32,9 +32,9 @@ public class TestBytecodes extends TestCase {
         return makeMethod(bytes);
     }
 
-    public BaseSqueakObject run(BaseSqueakObject receiver, CompiledMethodObject cm) {
+    public Object run(BaseSqueakObject receiver, CompiledMethodObject cm) {
         VirtualFrame frame = cm.createFrame(receiver);
-        BaseSqueakObject result = null;
+        Object result = null;
         try {
             result = cm.getBytecodeAST().executeGeneric(frame);
         } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
@@ -43,7 +43,7 @@ public class TestBytecodes extends TestCase {
         return result;
     }
 
-    public BaseSqueakObject run(BaseSqueakObject receiver, int... intbytes) {
+    public Object run(BaseSqueakObject receiver, int... intbytes) {
         CompiledMethodObject cm = makeMethod(intbytes);
         return run(receiver, cm);
     }
@@ -94,5 +94,11 @@ public class TestBytecodes extends TestCase {
     public void testReturnReceiver() {
         BaseSqueakObject rcvr = image.specialObjectsArray;
         assertSame(rcvr, run(rcvr, 115, 120));
+    }
+
+    public void testPrimEquivalentBC() {
+        BaseSqueakObject rcvr = image.specialObjectsArray;
+        assertTrue((boolean) run(rcvr, 112, 112, 198, 124));
+        assertFalse((boolean) run(rcvr, 112, 113, 198, 124));
     }
 }

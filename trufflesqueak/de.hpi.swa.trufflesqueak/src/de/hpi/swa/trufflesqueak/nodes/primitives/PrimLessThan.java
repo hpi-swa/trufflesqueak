@@ -7,19 +7,11 @@ import de.hpi.swa.trufflesqueak.exceptions.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.nodes.PrimitiveNode;
 
-public class PrimLessThan extends PrimitiveNode {
+public class PrimLessThan extends PrimitiveBinaryOperation {
 
-    public PrimLessThan(CompiledMethodObject cm, int idx) {
-        super(cm, idx);
+    public PrimLessThan(CompiledMethodObject cm) {
+        super(cm);
         // TODO Auto-generated constructor stub
     }
-
-    @Override
-    public void executeGeneric(VirtualFrame frame) throws NonLocalReturn, NonVirtualReturn, ProcessSwitch {
-        // TODO Auto-generated method stub
-        return;
-    }
-
 }

@@ -9,7 +9,7 @@ public class ImmediateCharacter extends ImmutableObject {
 
     @Override
     public String toString() {
-        return new String(new byte[]{(byte) value});
+        return new String(new byte[]{(byte) getValue()});
     }
 
     @Override
@@ -20,7 +20,7 @@ public class ImmediateCharacter extends ImmutableObject {
     @Override
     public BaseSqueakObject at0(int idx) {
         if (idx == 0) {
-            return new SmallInteger(value);
+            return new SmallInteger(getValue());
         } else {
             throw new ArrayIndexOutOfBoundsException();
         }
@@ -33,6 +33,10 @@ public class ImmediateCharacter extends ImmutableObject {
 
     @Override
     public int unwrapInt() {
+        return getValue();
+    }
+
+    public int getValue() {
         return value;
     }
 }

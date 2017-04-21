@@ -17,8 +17,8 @@ public class Send extends SqueakBytecodeNode {
     }
 
     @Override
-    public void executeGeneric(VirtualFrame frame) throws NonLocalReturn, NonVirtualReturn, ProcessSwitch {
+    public Object executeGeneric(VirtualFrame frame) throws NonLocalReturn, NonVirtualReturn, ProcessSwitch {
         // TODO Auto-generated method stub
-        return;
+        return null;
     }
 }

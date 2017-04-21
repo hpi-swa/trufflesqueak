@@ -6,7 +6,9 @@ import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.SmallInteger;
 import de.hpi.swa.trufflesqueak.nodes.BytecodeSequence;
+import de.hpi.swa.trufflesqueak.nodes.PrimitiveBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.PrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.nodes.SqueakBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.CallPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.DoubleExtendedDoAnything;
@@ -22,6 +24,7 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushLiteralConst;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushNewArray;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushReceiver;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushReceiverVariable;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushReceiverVariableNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushRemoteTemp;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushTemp;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushVariable;
@@ -39,11 +42,9 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreAndPopRemoteTemp;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreAndPopTemp;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreRemoteTemp;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.UnknownBytecode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.LongJump;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.LongJumpIfFalse;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.LongJumpIfTrue;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.ShortCondJump;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.ShortJump;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.UnconditionalJump;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.conditional.ConditionalJump;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.conditional.IfFalse;
 
 public class Decompiler {
     private byte[] bytes;
@@ -103,7 +104,7 @@ public class Decompiler {
             case 13:
             case 14:
             case 15:
-                return new PushReceiverVariable(method, index, b & 15);
+                return PushReceiverVariable.create(method, index, b & 15);
             case 16:
             case 17:
             case 18:
@@ -277,7 +278,7 @@ public class Decompiler {
             case 149:
             case 150:
             case 151:
-                return new ShortJump(method, index, b);
+                return new UnconditionalJump(method, index, b);
             case 152:
             case 153:
             case 154:
@@ -286,7 +287,7 @@ public class Decompiler {
             case 157:
             case 158:
             case 159:
-                return new ShortCondJump(method, index, b);
+                return new ConditionalJump(method, index, b);
             case 160:
             case 161:
             case 162:
@@ -295,49 +296,49 @@ public class Decompiler {
             case 165:
             case 166:
             case 167:
-                return new LongJump(method, index, b, nextByte(indexRef));
+                return new UnconditionalJump(method, index, b, nextByte(indexRef));
             case 168:
             case 169:
             case 170:
             case 171:
-                return new LongJumpIfTrue(method, index, b, nextByte(indexRef));
+                return new ConditionalJump(method, index, b, nextByte(indexRef), true);
             case 172:
             case 173:
             case 174:
             case 175:
-                return new LongJumpIfFalse(method, index, b, nextByte(indexRef));
+                return new ConditionalJump(method, index, b, nextByte(indexRef), false);
             case 176:
-                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.ADD.index, index);
+                return makePrimNode(PrimitiveNodeFactory.Primitives.ADD, index);
             case 177:
-                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.SUB.index, index);
+                return makePrimNode(PrimitiveNodeFactory.Primitives.SUB, index);
             case 178:
-                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.LESSTHAN.index, index);
+                return makePrimNode(PrimitiveNodeFactory.Primitives.LESSTHAN, index);
             case 179:
-                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.GREATERTHAN.index, index);
+                return makePrimNode(PrimitiveNodeFactory.Primitives.GREATERTHAN, index);
             case 180:
-                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.LESSOREQUAL.index, index);
+                return makePrimNode(PrimitiveNodeFactory.Primitives.LESSOREQUAL, index);
             case 181:
-                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.GREATEROREQUAL.index, index);
+                return makePrimNode(PrimitiveNodeFactory.Primitives.GREATEROREQUAL, index);
             case 182:
-                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.EQUAL.index, index);
+                return makePrimNode(PrimitiveNodeFactory.Primitives.EQUAL, index);
             case 183:
-                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.NOTEQUAL.index, index);
+                return makePrimNode(PrimitiveNodeFactory.Primitives.NOTEQUAL, index);
             case 184:
-                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.MULTIPLY.index, index);
+                return makePrimNode(PrimitiveNodeFactory.Primitives.MULTIPLY, index);
             case 185:
-                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.DIVIDE.index, index);
+                return makePrimNode(PrimitiveNodeFactory.Primitives.DIVIDE, index);
             case 186:
-                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.MOD.index, index);
+                return makePrimNode(PrimitiveNodeFactory.Primitives.MOD, index);
             case 187:
-                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.MAKE_POINT.index, index);
+                return makePrimNode(PrimitiveNodeFactory.Primitives.MAKE_POINT, index);
             case 188:
-                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.BIT_SHIFT.index, index);
+                return makePrimNode(PrimitiveNodeFactory.Primitives.BIT_SHIFT, index);
             case 189:
-                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.DIV.index, index);
+                return makePrimNode(PrimitiveNodeFactory.Primitives.DIV, index);
             case 190:
-                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.BIT_AND.index, index);
+                return makePrimNode(PrimitiveNodeFactory.Primitives.BIT_AND, index);
             case 191:
-                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.BIT_OR.index, index);
+                return makePrimNode(PrimitiveNodeFactory.Primitives.BIT_OR, index);
             case 192:
                 return new SendSelector(method, index, "at:");
             case 193:
@@ -351,15 +352,15 @@ public class Decompiler {
             case 197:
                 return new SendSelector(method, index, "atEnd");
             case 198:
-                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.EQUIVALENT.index, index);
+                return makePrimNode(PrimitiveNodeFactory.Primitives.EQUIVALENT, index);
             case 199:
-                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.CLASS.index, index);
+                return makePrimNode(PrimitiveNodeFactory.Primitives.CLASS, index);
             case 200:
-                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.BLOCK_COPY.index, index);
+                return makePrimNode(PrimitiveNodeFactory.Primitives.BLOCK_COPY, index);
             case 201:
-                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.CLOSURE_VALUE.index, index);
+                return makePrimNode(PrimitiveNodeFactory.Primitives.CLOSURE_VALUE, index);
             case 202:
-                return PrimitiveNode.forIdx(method, PrimitiveNode.Primitives.CLOSURE_VALUE_WITH_ARG.index, index);
+                return makePrimNode(PrimitiveNodeFactory.Primitives.CLOSURE_VALUE_WITH_ARG, index);
             case 203:
                 return new SendSelector(method, index, "do:");
             case 204:
@@ -373,5 +374,10 @@ public class Decompiler {
             default:
                 return new Send(method, index, b);
         }
+    }
+
+    private SqueakBytecodeNode makePrimNode(PrimitiveNodeFactory.Primitives prim, int index) {
+        PrimitiveNode primNode = PrimitiveNodeFactory.forIdx(method, prim.index);
+        return new PrimitiveBytecodeNode(method, index, primNode);
     }
 }

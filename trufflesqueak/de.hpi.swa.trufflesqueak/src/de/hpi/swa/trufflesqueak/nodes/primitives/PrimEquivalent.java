@@ -1,25 +1,34 @@
 package de.hpi.swa.trufflesqueak.nodes.primitives;
 
-import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.trufflesqueak.exceptions.NonLocalReturn;
-import de.hpi.swa.trufflesqueak.exceptions.NonVirtualReturn;
-import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.ImmediateCharacter;
+import de.hpi.swa.trufflesqueak.model.SmallInteger;
 import de.hpi.swa.trufflesqueak.nodes.PrimitiveNode;
 
-public class PrimEquivalent extends PrimitiveNode {
-
-    public PrimEquivalent(CompiledMethodObject cm, int idx) {
-        super(cm, idx);
-        // TODO Auto-generated constructor stub
+public abstract class PrimEquivalent extends PrimitiveBinaryOperation {
+    public PrimEquivalent(CompiledMethodObject cm) {
+        super(cm);
     }
 
-    @Override
-    public void executeGeneric(VirtualFrame frame) throws NonLocalReturn, NonVirtualReturn, ProcessSwitch {
-        // TODO Auto-generated method stub
-        return;
+    public static PrimitiveNode create(CompiledMethodObject cm) {
+        return PrimEquivalentNodeGen.create(cm, arg(cm, 0), arg(cm, 1));
     }
 
+    @Specialization
+    boolean equivalent(SmallInteger a, SmallInteger b) {
+        return a.getValue() == b.getValue();
+    }
+
+    @Specialization
+    boolean equivalent(ImmediateCharacter a, ImmediateCharacter b) {
+        return a.getValue() == b.getValue();
+    }
+
+    @Specialization
+    boolean equivalent(BaseSqueakObject a, BaseSqueakObject b) {
+        return a == b;
+    }
 }

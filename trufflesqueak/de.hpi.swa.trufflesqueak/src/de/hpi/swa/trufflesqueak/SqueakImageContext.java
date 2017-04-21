@@ -7,7 +7,8 @@ import java.io.PrintWriter;
 
 import com.oracle.truffle.api.nodes.RootNode;
 
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
+import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.FalseObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
@@ -15,7 +16,6 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.SmallInteger;
 import de.hpi.swa.trufflesqueak.model.TrueObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakContextNode;
-import de.hpi.swa.trufflesqueak.nodes.SqueakMethodNode;
 import de.hpi.swa.trufflesqueak.util.ImageReader;
 
 public class SqueakImageContext {
@@ -54,5 +54,17 @@ public class SqueakImageContext {
 
     public PrintWriter getOutput() {
         return output;
+    }
+
+    public BooleanObject wrapBool(boolean flag) {
+        if (flag) {
+            return sqTrue;
+        } else {
+            return sqFalse;
+        }
+    }
+
+    public BaseSqueakObject wrapInt(int i) {
+        return new SmallInteger(i);
     }
 }

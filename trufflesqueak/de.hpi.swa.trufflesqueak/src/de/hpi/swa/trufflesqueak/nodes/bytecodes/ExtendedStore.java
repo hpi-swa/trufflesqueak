@@ -15,29 +15,30 @@ public class ExtendedStore extends ExtendedAccess {
     }
 
     @Override
-    public void executeGeneric(VirtualFrame frame) throws NonLocalReturn, NonVirtualReturn, ProcessSwitch {
+    public Object executeGeneric(VirtualFrame frame) throws NonLocalReturn, NonVirtualReturn, ProcessSwitch {
+        Object top = top(frame);
         switch (type) {
             case 0:
                 try {
-                    getReceiver(frame).atput0(storeIdx, top(frame));
+                    ((BaseSqueakObject) getReceiver(frame)).atput0(storeIdx, (BaseSqueakObject) top); // FIXME
                 } catch (UnwrappingError e) {
                     throw new RuntimeException("illegal ExtendedStore bytecode: unwrapping error", e);
                 }
                 break;
             case 1:
-                setTemp(frame, storeIdx, top(frame));
+                setTemp(frame, storeIdx, top);
                 break;
             case 2:
                 throw new RuntimeException("illegal ExtendedStore bytecode: variable type 2");
             case 3:
                 BaseSqueakObject assoc = getMethod().getLiteral(storeIdx);
                 try {
-                    assoc.atput0(1, top(frame));
+                    assoc.atput0(1, (BaseSqueakObject) top); // FIXME
                 } catch (UnwrappingError e) {
                     throw new RuntimeException("illegal ExtendedStore bytecode: variable type 2", e);
                 }
                 break;
         }
-        return;
+        return top;
     }
 }

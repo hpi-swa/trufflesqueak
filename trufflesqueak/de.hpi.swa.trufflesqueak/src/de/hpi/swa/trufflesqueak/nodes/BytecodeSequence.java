@@ -7,7 +7,6 @@ import de.hpi.swa.trufflesqueak.exceptions.LocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
-import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 
 public class BytecodeSequence extends Node {
@@ -19,7 +18,7 @@ public class BytecodeSequence extends Node {
         nodes = squeakBytecodeNodes;
     }
 
-    public BaseSqueakObject executeGeneric(VirtualFrame frame, int initialPC) throws ProcessSwitch, NonLocalReturn, NonVirtualReturn {
+    public Object executeGeneric(VirtualFrame frame, int initialPC) throws ProcessSwitch, NonLocalReturn, NonVirtualReturn {
         int offset = method.getBytecodeOffset();
         int pc = initialPC - 1 - offset;
         while (pc >= 0 && pc < nodes.length) {
@@ -28,7 +27,7 @@ public class BytecodeSequence extends Node {
                 pc += 1;
             } else {
                 try {
-                    pc = node.execute(frame);
+                    pc = node.stepBytecode(frame);
                 } catch (LocalReturn e) {
                     return e.returnValue;
                 }
@@ -37,7 +36,7 @@ public class BytecodeSequence extends Node {
         throw new RuntimeException("Method did not return");
     }
 
-    public BaseSqueakObject executeGeneric(VirtualFrame frame) throws ProcessSwitch, NonLocalReturn, NonVirtualReturn {
-        return executeGeneric(frame, 0);
+    public Object executeGeneric(VirtualFrame frame) throws ProcessSwitch, NonLocalReturn, NonVirtualReturn {
+        return executeGeneric(frame, method.getBytecodeOffset() + 1);
     }
 }

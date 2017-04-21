@@ -7,7 +7,6 @@ import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
-import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 
 public class SqueakMethodNode extends RootNode {
@@ -19,7 +18,7 @@ public class SqueakMethodNode extends RootNode {
     }
 
     @Override
-    public BaseSqueakObject execute(VirtualFrame frame) {
+    public Object execute(VirtualFrame frame) {
         try {
             return bytecode.executeGeneric(frame);
         } catch (NonLocalReturn e) {

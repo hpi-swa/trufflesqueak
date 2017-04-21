@@ -15,21 +15,25 @@ public class ExtendedPush extends ExtendedAccess {
     }
 
     @Override
-    public void executeGeneric(VirtualFrame frame) throws NonLocalReturn, NonVirtualReturn, ProcessSwitch {
+    public Object executeGeneric(VirtualFrame frame) throws NonLocalReturn, NonVirtualReturn, ProcessSwitch {
+        Object obj = null;
         switch (type) {
             case 0:
-                push(frame, getReceiver(frame).at0(storeIdx));
+                obj = ((BaseSqueakObject) getReceiver(frame)).at0(storeIdx); // FIXME
                 break;
             case 1:
-                push(frame, getTemp(frame, storeIdx));
+                obj = getTemp(frame, storeIdx);
                 break;
             case 2:
-                push(frame, getMethod().getLiteral(storeIdx));
+                obj = getMethod().getLiteral(storeIdx);
                 break;
             case 3:
                 BaseSqueakObject assoc = getMethod().getLiteral(storeIdx);
-                push(frame, assoc.at0(1));
+                obj = assoc.at0(1);
                 break;
         }
+        assert obj != null;
+        push(frame, obj);
+        return obj;
     }
 }

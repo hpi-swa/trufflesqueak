@@ -11,15 +11,8 @@ import de.hpi.swa.trufflesqueak.nodes.PrimitiveNode;
 
 public class PrimNew extends PrimitiveNode {
 
-    public PrimNew(CompiledMethodObject cm, int idx) {
-        super(cm, idx);
+    public PrimNew(CompiledMethodObject cm) {
+        super(cm);
         // TODO Auto-generated constructor stub
     }
-
-    @Override
-    public void executeGeneric(VirtualFrame frame) throws NonLocalReturn, NonVirtualReturn, ProcessSwitch {
-        // TODO Auto-generated method stub
-        return;
-    }
-
 }

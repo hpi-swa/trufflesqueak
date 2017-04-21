@@ -1,24 +1,33 @@
 package de.hpi.swa.trufflesqueak.nodes.primitives;
 
-import com.oracle.truffle.api.frame.VirtualFrame;
+import java.math.BigInteger;
 
-import de.hpi.swa.trufflesqueak.exceptions.NonLocalReturn;
-import de.hpi.swa.trufflesqueak.exceptions.NonVirtualReturn;
-import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
+import com.oracle.truffle.api.dsl.Specialization;
+
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.PrimitiveNode;
 
-public class PrimAdd extends PrimitiveNode {
-
-    public PrimAdd(CompiledMethodObject cm, int idx) {
-        super(cm, idx);
-        // TODO Auto-generated constructor stub
+public class PrimAdd extends PrimitiveBinaryOperation {
+    public PrimAdd(CompiledMethodObject cm) {
+        super(cm);
     }
 
-    @Override
-    public void executeGeneric(VirtualFrame frame) throws NonLocalReturn, NonVirtualReturn, ProcessSwitch {
-        // TODO Auto-generated method stub
-        return;
+    public static PrimitiveNode create(CompiledMethodObject cm) {
+        return PrimAddNodeGen.create(cm, arg(cm, 0), arg(cm, 1));
     }
 
+    @Specialization(rewriteOn = ArithmeticException.class)
+    int add(int a, int b) {
+        return Math.addExact(a, b);
+    }
+
+    @Specialization(rewriteOn = ArithmeticException.class)
+    long add(long a, long b) {
+        return Math.addExact(a, b);
+    }
+
+    @Specialization
+    BigInteger add(BigInteger a, BigInteger b) {
+        return a.add(b);
+    }
 }
