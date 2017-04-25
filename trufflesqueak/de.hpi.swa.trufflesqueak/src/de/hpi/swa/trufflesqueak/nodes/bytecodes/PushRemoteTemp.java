@@ -7,19 +7,17 @@ import de.hpi.swa.trufflesqueak.exceptions.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.nodes.SqueakBytecodeNode;
 
-public class PushRemoteTemp extends SqueakBytecodeNode {
-
-    public PushRemoteTemp(CompiledMethodObject compiledMethodObject, int idx, int i, int j) {
-        super(compiledMethodObject, idx);
-        // TODO Auto-generated constructor stub
+public class PushRemoteTemp extends RemoteTempBytecode {
+    public PushRemoteTemp(CompiledMethodObject compiledMethodObject, int idx, int indexInArray, int indexOfArray) {
+        super(compiledMethodObject, idx, indexInArray, indexOfArray);
     }
 
     @Override
     public Object executeGeneric(VirtualFrame frame) throws NonLocalReturn, NonVirtualReturn, ProcessSwitch {
-        // TODO Auto-generated method stub
-        return null;
+        BaseSqueakObject temp = getTempArray(frame);
+        BaseSqueakObject at0 = temp.at0(indexInArray);
+        push(frame, at0);
+        return at0;
     }
-
 }

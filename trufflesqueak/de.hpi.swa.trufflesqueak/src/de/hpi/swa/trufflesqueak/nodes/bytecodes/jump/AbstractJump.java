@@ -1,7 +1,7 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes.jump;
 
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.nodes.SqueakBytecodeNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
 
 public abstract class AbstractJump extends SqueakBytecodeNode {
 

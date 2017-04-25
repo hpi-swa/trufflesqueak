@@ -1,12 +1,14 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.UnexpectedResultException;
 
 import de.hpi.swa.trufflesqueak.exceptions.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
 
 public class ExtendedPush extends ExtendedAccess {
 
@@ -19,7 +21,11 @@ public class ExtendedPush extends ExtendedAccess {
         Object obj = null;
         switch (type) {
             case 0:
-                obj = ((BaseSqueakObject) getReceiver(frame)).at0(storeIdx); // FIXME
+                try {
+                    obj = SqueakTypesGen.expectBaseSqueakObject(getReceiver(frame)).at0(storeIdx);
+                } catch (UnexpectedResultException e) {
+                    throw new RuntimeException("unexpected receiver in object access");
+                }
                 break;
             case 1:
                 obj = getTemp(frame, storeIdx);

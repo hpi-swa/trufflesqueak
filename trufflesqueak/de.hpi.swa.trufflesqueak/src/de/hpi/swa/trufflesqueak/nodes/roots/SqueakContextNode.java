@@ -1,4 +1,4 @@
-package de.hpi.swa.trufflesqueak.nodes;
+package de.hpi.swa.trufflesqueak.nodes.roots;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
@@ -45,7 +45,7 @@ public class SqueakContextNode extends RootNode {
         int sp = ctxt.at0(ContextParts.SP.ordinal()).unsafeUnwrapInt();
         BaseSqueakObject closure = ctxt.at0(ContextParts.CLOSURE.ordinal());
         BaseSqueakObject receiver = ctxt.at0(ContextParts.RECEIVER.ordinal());
-        VirtualFrame frame = method.createFrame(receiver);
+        VirtualFrame frame = method.createTestFrame(receiver);
         frame.setInt(method.pcSlot, pc);
         frame.setInt(method.stackPointerSlot, sp);
         frame.setObject(method.selfSlot, ctxt);

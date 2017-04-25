@@ -6,7 +6,6 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 
 import com.oracle.truffle.api.CallTarget;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
@@ -19,14 +18,14 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
     protected SqueakImageContext createContext(Env env) {
         BufferedReader in = new BufferedReader(new InputStreamReader(env.in()));
         PrintWriter out = new PrintWriter(env.out(), true);
-        return new SqueakImageContext(env, in, out);
+        return new SqueakImageContext(this, env, in, out);
     }
 
     @Override
     protected CallTarget parse(ParsingRequest request) throws Exception {
         SqueakImageContext image = this.getContextReference().get();
-        image.fillInFrom(new FileInputStream(request.getSource().getPath()));
-        return Truffle.getRuntime().createCallTarget(image.getActiveContext(this));
+        image.fillInFrom(new FileInputStream(request.getSource().getName()));
+        return image.getEntryPoint(image.nil, "yourself");
     }
 
     @Override

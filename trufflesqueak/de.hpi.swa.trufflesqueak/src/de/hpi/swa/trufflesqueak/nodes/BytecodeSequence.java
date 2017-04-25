@@ -8,6 +8,7 @@ import de.hpi.swa.trufflesqueak.exceptions.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
 
 public class BytecodeSequence extends Node {
     private final CompiledMethodObject method;
@@ -37,6 +38,7 @@ public class BytecodeSequence extends Node {
     }
 
     public Object executeGeneric(VirtualFrame frame) throws ProcessSwitch, NonLocalReturn, NonVirtualReturn {
+        method.enterFrame(frame);
         return executeGeneric(frame, method.getBytecodeOffset() + 1);
     }
 }

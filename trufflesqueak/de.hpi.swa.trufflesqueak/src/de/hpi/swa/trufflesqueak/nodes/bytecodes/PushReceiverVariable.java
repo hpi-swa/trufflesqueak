@@ -8,8 +8,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.nodes.SqueakBytecodeNode;
-import de.hpi.swa.trufflesqueak.nodes.helper.ReceiverNode;
+import de.hpi.swa.trufflesqueak.nodes.context.ReceiverNode;
 
 @NodeChildren({@NodeChild(value = "receiverNode", type = ReceiverNode.class)})
 public abstract class PushReceiverVariable extends SqueakBytecodeNode {
@@ -28,7 +27,7 @@ public abstract class PushReceiverVariable extends SqueakBytecodeNode {
     }
 
     @Fallback
-    public Object pushReceiver(Object receiver) {
+    public Object pushReceiver(@SuppressWarnings("unused") Object receiver) {
         throw new RuntimeException("tried to push variable from non-object receiver");
     }
 

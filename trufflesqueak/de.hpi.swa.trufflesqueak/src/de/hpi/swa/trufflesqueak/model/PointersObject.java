@@ -28,27 +28,22 @@ public class PointersObject extends SqueakObject implements TruffleObject {
     }
 
     @Override
-    public boolean isClass() {
-        return image.metaclass == getSqClass().getSqClass();
-    }
-
-    @Override
     public BaseSqueakObject at0(int i) {
-        return pointers[i];
+        return getPointers()[i];
     }
 
     @Override
     public void atput0(int i, BaseSqueakObject obj) {
-        pointers[i] = obj;
+        getPointers()[i] = obj;
     }
 
     @Override
     public boolean become(BaseSqueakObject other) {
         if (other instanceof PointersObject) {
             if (super.become(other)) {
-                BaseSqueakObject[] pointers2 = ((PointersObject) other).pointers;
-                ((PointersObject) other).pointers = this.pointers;
-                this.pointers = pointers2;
+                BaseSqueakObject[] pointers2 = ((PointersObject) other).getPointers();
+                ((PointersObject) other).pointers = this.getPointers();
+                pointers = pointers2;
                 return true;
             }
         }
@@ -56,23 +51,16 @@ public class PointersObject extends SqueakObject implements TruffleObject {
     }
 
     @Override
-    public String nameAsClass() {
-        if (isClass() && size() > 6) {
-            BaseSqueakObject nameObj = pointers[6];
-            if (nameObj instanceof NativeObject) {
-                return nameObj.toString();
-            }
-        }
-        return "UnknownClass";
-    }
-
-    @Override
     public int size() {
-        return pointers.length;
+        return getPointers().length;
     }
 
     @Override
     public int instsize() {
         return size();
+    }
+
+    public BaseSqueakObject[] getPointers() {
+        return pointers;
     }
 }

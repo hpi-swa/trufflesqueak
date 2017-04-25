@@ -12,8 +12,8 @@ import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.Pop;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendSelector;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.AbstractJump;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SendSelector;
 
 public class ConditionalJump extends AbstractJump {
     @Child private SendSelector mustBeBooleanSend;
@@ -23,7 +23,7 @@ public class ConditionalJump extends AbstractJump {
 
     private ConditionalJump(CompiledMethodObject cm, int idx, int off, SqueakNode condition) {
         super(cm, idx);
-        mustBeBooleanSend = new SendSelector(cm, idx, "mustBeBoolean");
+        mustBeBooleanSend = new SendSelector(cm, idx, cm.getImage().mustBeBoolean, 0);
         branchProfile = ConditionProfile.createCountingProfile();
         offset = off;
         branchCondition = condition;

@@ -20,6 +20,11 @@ public abstract class SqueakObject extends BaseSqueakObject {
     }
 
     @Override
+    public void setSqClass(BaseSqueakObject newCls) {
+        sqClass = newCls;
+    }
+
+    @Override
     public boolean become(BaseSqueakObject other) {
         if (other instanceof SqueakObject) {
             int hash2 = ((SqueakObject) other).hash;

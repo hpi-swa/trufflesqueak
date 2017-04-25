@@ -16,7 +16,7 @@ public class TestBytecodes extends TestCase {
 
     @Override
     public void setUp() {
-        image = new SqueakImageContext(null, null, null);
+        image = new SqueakImageContext(null, null, null, null);
     }
 
     public CompiledMethodObject makeMethod(byte[] bytes) {
@@ -33,7 +33,7 @@ public class TestBytecodes extends TestCase {
     }
 
     public Object run(BaseSqueakObject receiver, CompiledMethodObject cm) {
-        VirtualFrame frame = cm.createFrame(receiver);
+        VirtualFrame frame = cm.createTestFrame(receiver);
         Object result = null;
         try {
             result = cm.getBytecodeAST().executeGeneric(frame);

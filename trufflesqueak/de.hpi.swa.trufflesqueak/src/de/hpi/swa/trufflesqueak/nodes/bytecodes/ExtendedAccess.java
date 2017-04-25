@@ -1,7 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.nodes.SqueakBytecodeNode;
 
 public abstract class ExtendedAccess extends SqueakBytecodeNode {
     protected final byte type;

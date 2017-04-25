@@ -4,10 +4,10 @@ import java.math.BigInteger;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.ImplicitCast;
-import com.oracle.truffle.api.dsl.TypeCast;
 import com.oracle.truffle.api.dsl.TypeSystem;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
+import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.FalseObject;
 import de.hpi.swa.trufflesqueak.model.ImmediateCharacter;
@@ -27,6 +27,7 @@ import de.hpi.swa.trufflesqueak.model.TrueObject;
                 TrueObject.class,
                 SmallInteger.class,
                 ImmediateCharacter.class,
+                ClassObject.class,
                 ListObject.class,
                 PointersObject.class,
                 NativeObject.class,
@@ -85,14 +86,5 @@ public abstract class SqueakTypes {
     @ImplicitCast
     public static BaseSqueakObject asBaseSqueakObject(char value) {
         return new ImmediateCharacter(value);
-    }
-
-    @ImplicitCast
-    public static BaseSqueakObject asBaseSqueakObject(boolean value) {
-        if (value) {
-            return new TrueObject();
-        } else {
-            return new FalseObject();
-        }
     }
 }

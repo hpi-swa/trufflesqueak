@@ -14,7 +14,7 @@ public class ImmediateCharacter extends ImmutableObject {
 
     @Override
     public BaseSqueakObject getSqClass() {
-        return image.characterClass;
+        return getImage().characterClass;
     }
 
     @Override

@@ -11,11 +11,14 @@ import java.util.Vector;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
+import de.hpi.swa.trufflesqueak.model.ClassObject;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.SqueakObject;
 
 @SuppressWarnings("unused")
 public class ImageReader {
+    private static final int SPECIAL_SELECTORS_INDEX = 23;
     private static final int FREE_OBJECT_CLASS_INDEX_PUN = 0;
     private static final long SLOTS_MASK = 0xFF << 56;
     private static final long OVERFLOW_SLOTS = 255;
@@ -117,13 +120,13 @@ public class ImageReader {
         this.position += skip;
     }
 
-    void readBody() throws IOException {
+    void readBody(SqueakImageContext image) throws IOException {
         position = 0;
         int segmentEnd = firstSegmentSize;
         int currentAddressSwizzle = oldBaseAddress;
         while (this.position < segmentEnd) {
             while (this.position < segmentEnd - 16) {
-                Chunk chunk = readObject();
+                Chunk chunk = readObject(image);
                 if (chunk.classid == FREE_OBJECT_CLASS_INDEX_PUN) {
                     continue;
                 }
@@ -148,7 +151,7 @@ public class ImageReader {
         this.stream.close();
     }
 
-    private Chunk readObject() throws IOException {
+    private Chunk readObject(SqueakImageContext image) throws IOException {
         log("o");
         int pos = position;
         assert pos % 8 == 0;
@@ -170,7 +173,7 @@ public class ImageReader {
         int hash = splitHeader[4];
         assert size >= 0;
         assert 0 <= format && format <= 31;
-        Chunk chunk = new Chunk(this, size, format, classid, hash, pos);
+        Chunk chunk = new Chunk(this, image, size, format, classid, hash, pos);
         for (long i = 0; i < wordsFor(size); i++) {
             if (chunk.size() < size) {
                 chunk.append(nextInt());
@@ -205,42 +208,99 @@ public class ImageReader {
     void initPrebuiltConstant(SqueakImageContext image) {
         Chunk specialObjectsChunk = chunktable.get(specialObjectsPointer);
         specialObjectsChunk.object = image.specialObjectsArray;
+
+        // first we find the Metaclass, we need it to correctly instantiate
+        // those classes that do not have any instances. Metaclass always
+        // has instances, and all instances of Metaclass have their singleton
+        // Behavior instance, so these are all correctly initialized already
+        Chunk Array = classChunkOf(specialObjectsChunk, image);
+        Chunk Array_class = classChunkOf(Array, image);
+        Chunk Metaclass = classChunkOf(Array_class, image);
+        Metaclass.object = image.metaclass;
+
         setPrebuiltObject(0, image.nil);
         setPrebuiltObject(1, image.sqFalse);
         setPrebuiltObject(2, image.sqTrue);
         setPrebuiltObject(3, image.schedulerAssociation);
         setPrebuiltObject(5, image.smallIntegerClass);
+        setPrebuiltObject(7, image.arrayClass);
         setPrebuiltObject(8, image.smalltalk);
         setPrebuiltObject(19, image.characterClass);
+        setPrebuiltObject(20, image.doesNotUnderstand);
+        setPrebuiltObject(25, image.mustBeBoolean);
+        setPrebuiltObject(SPECIAL_SELECTORS_INDEX, image.specialSelectors);
+    }
+
+    void initPrebuiltSelectors(SqueakImageContext image) {
+        NativeObject[] specialSelectors = new NativeObject[]{
+                        image.plus, image.minus, image.lt, image.gt, image.le, image.ge,
+                        image.eq, image.ne, image.times, image.div, image.modulo, image.pointAt,
+                        image.bitShift, image.divide, image.bitAnd, image.bitOr, image.at,
+                        image.atput, image.size_, image.next, image.nextPut, image.atEnd,
+                        image.equivalent, image.klass, image.blockCopy, image.value,
+                        image.valueWithArg, image.do_, image.new_, image.newWithArg,
+                        image.x, image.y
+        };
+
+        Chunk specialObjectsChunk = chunktable.get(specialObjectsPointer);
+        Chunk specialSelectorChunk = chunktable.get(specialObjectsChunk.data().get(SPECIAL_SELECTORS_INDEX));
+
+        for (int i = 0; i < specialSelectors.length; i++) {
+            chunktable.get(specialSelectorChunk.data().get(i * 2)).object = specialSelectors[i];
+        }
     }
 
     void initObjects(SqueakImageContext image) {
         initPrebuiltConstant(image);
+        initPrebuiltSelectors(image);
 
-        // connect classes
-        output.println();
+        // connect all instances to their classes
+        output.println("Connect classes");
         for (Chunk chunk : chunklist) {
-            log("c");
-            chunk.setSqClass(classOf(chunk));
+            chunk.setSqClass(classOf(chunk, image));
         }
+
+        output.println("Instantiate classes");
+        // find all metaclasses and instantiate their singleton instances as class objects
+        for (int classtablePtr : chunklist.get(HIDDEN_ROOTS_CHUNK).data()) {
+            if (chunktable.get(classtablePtr) != null) {
+                for (int potentialClassPtr : chunktable.get(classtablePtr).data()) {
+                    Chunk metaClass = chunktable.get(potentialClassPtr);
+                    if (metaClass != null) {
+                        if (metaClass.getSqClass() == image.metaclass) {
+                            Chunk classInstance = chunktable.get(metaClass.data().lastElement());
+                            assert metaClass.data().size() == 6;
+                            metaClass.asClassObject();
+                            classInstance.asClassObject();
+                        } else {
+                            assert metaClass.getSqClass() instanceof ClassObject;
+                        }
+                    }
+                }
+            }
+        }
+
         // fillin objects
-        output.println();
+        output.println("Fillin Objects");
         for (Chunk chunk : chunklist) {
-            log("f");
             chunk.asObject().fillin(chunk, image);
         }
 
         output.println();
-        image.metaclass = (PointersObject) image.characterClass.getSqClass().getSqClass();
+
     }
 
-    BaseSqueakObject classOf(Chunk chunk) {
+    Chunk classChunkOf(Chunk chunk, SqueakImageContext image) {
         int majorIdx = majorClassIndexOf(chunk.classid);
         int minorIdx = minorClassIndexOf(chunk.classid);
         Chunk hiddenRoots = chunklist.get(HIDDEN_ROOTS_CHUNK);
         Chunk classTablePage = chunktable.get(hiddenRoots.data().get(majorIdx));
-        SqueakObject sqClass = chunktable.get(classTablePage.data().get(minorIdx)).asObject();
-        assert sqClass instanceof PointersObject;
+        return chunktable.get(classTablePage.data().get(minorIdx));
+    }
+
+    BaseSqueakObject classOf(Chunk chunk, SqueakImageContext image) {
+        SqueakObject sqClass = classChunkOf(chunk, image).asClassObject();
+        assert sqClass == image.nil || sqClass instanceof ClassObject;
         return sqClass;
     }
 
@@ -254,7 +314,7 @@ public class ImageReader {
 
     public void readImage(SqueakImageContext image) throws IOException {
         readHeader();
-        readBody();
+        readBody(image);
         initObjects(image);
     }
 

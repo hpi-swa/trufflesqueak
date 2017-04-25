@@ -6,7 +6,9 @@ import java.nio.IntBuffer;
 import java.util.List;
 import java.util.Vector;
 
+import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
+import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.EmptyObject;
 import de.hpi.swa.trufflesqueak.model.ImmediateCharacter;
@@ -30,9 +32,11 @@ public class Chunk {
     private final int format;
     private final int hash;
     private final Vector<Integer> data;
+    private final SqueakImageContext image;
 
-    public Chunk(ImageReader reader, long size, int format, int classid, int hash, int pos) {
+    public Chunk(ImageReader reader, SqueakImageContext image, long size, int format, int classid, int hash, int pos) {
         this.reader = reader;
+        this.image = image;
         this.size = size;
         this.format = format;
         this.classid = classid;
@@ -57,6 +61,14 @@ public class Chunk {
         return data;
     }
 
+    public SqueakObject asClassObject() {
+        if (object == null) {
+            assert format == 1;
+            object = new ClassObject();
+        }
+        return object;
+    }
+
     public SqueakObject asObject() {
         if (object == null) {
             if (format == 0) {
@@ -64,6 +76,8 @@ public class Chunk {
                 object = new EmptyObject();
             } else if (format == 1) {
                 // fixed pointers
+                // classes should already be instantiated at this point, check a bit
+                assert this.getSqClass() != image.metaclass && this.getSqClass().getSqClass() != image.metaclass;
                 object = new PointersObject();
             } else if (format == 2) {
                 // indexable fields
@@ -131,12 +145,12 @@ public class Chunk {
 
     private BaseSqueakObject decodePointer(int ptr) {
         if ((ptr & 3) == 0) {
-            SqueakObject obj = reader.chunktable.get(ptr).asObject();
-            if (obj == null) {
+            Chunk chunk = reader.chunktable.get(ptr);
+            if (chunk == null) {
                 System.err.println("Bogus pointer: " + ptr + ". Treating as smallint.");
                 return new SmallInteger(ptr >> 1);
             } else {
-                return obj;
+                return chunk.asObject();
             }
         } else if ((ptr & 1) == 1) {
             return new SmallInteger(ptr >> 1);

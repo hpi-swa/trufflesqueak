@@ -16,8 +16,8 @@ public class NativeObject extends SqueakObject implements TruffleObject {
     @Override
     public void fillin(Chunk chunk, SqueakImageContext img) {
         super.fillin(chunk, img);
-        content = ByteBuffer.allocate((int) (chunk.size() * 4));
         byte[] bytes = chunk.getBytes();
+        content = ByteBuffer.allocate(bytes.length);
         content.put(bytes);
         elementSize = chunk.getElementSize();
     }

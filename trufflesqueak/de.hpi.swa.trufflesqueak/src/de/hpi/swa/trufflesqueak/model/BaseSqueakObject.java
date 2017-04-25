@@ -5,11 +5,11 @@ import de.hpi.swa.trufflesqueak.exceptions.UnwrappingError;
 import de.hpi.swa.trufflesqueak.util.Chunk;
 
 public abstract class BaseSqueakObject {
-    SqueakImageContext image;
+    private SqueakImageContext image;
 
     @SuppressWarnings("unused")
     public void fillin(Chunk chunk, SqueakImageContext img) {
-        this.image = img;
+        this.setImage(img);
     }
 
     @Override
@@ -18,6 +18,10 @@ public abstract class BaseSqueakObject {
     }
 
     public abstract BaseSqueakObject getSqClass();
+
+    public void setSqClass(BaseSqueakObject newCls) {
+        throw new RuntimeException("cannot do this");
+    }
 
     public boolean isClass() {
         return false;
@@ -64,5 +68,13 @@ public abstract class BaseSqueakObject {
         } catch (UnwrappingError e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public SqueakImageContext getImage() {
+        return image;
+    }
+
+    public void setImage(SqueakImageContext image) {
+        this.image = image;
     }
 }

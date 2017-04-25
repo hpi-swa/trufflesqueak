@@ -1,38 +1,15 @@
-package de.hpi.swa.trufflesqueak.nodes;
+package de.hpi.swa.trufflesqueak.nodes.primitives;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimAdd;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimAt;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimAtPut;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimBitAnd;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimBitOr;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimBitShift;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimClass;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimDiv;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimDivide;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimEqual;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimEquivalent;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimGreaterOrEqual;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimGreaterThan;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimLessOrEqual;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimLessThan;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimMakePoint;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimMod;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimMul;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimNew;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimNewArg;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimNotEqual;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimSize;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimSub;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushReceiver;
 
 public abstract class PrimitiveNodeFactory {
-    @SuppressWarnings("unchecked") private static Class<? extends PrimitiveNode>[] primitiveClasses = new Class[573];
+    private static final int PRIM_COUNT = 574;
+    @SuppressWarnings("unchecked") private static Class<? extends PrimitiveNode>[] primitiveClasses = new Class[PRIM_COUNT + 1];
 
-    public enum Primitives {
+    public static enum Primitives {
         ADD(PrimAdd.class, 1),
         SUB(PrimSub.class, 2),
         LESSTHAN(PrimLessThan.class, 3),
@@ -70,7 +47,17 @@ public abstract class PrimitiveNodeFactory {
         //
         CLOSURE_VALUE(PrimitiveNode.class, 201),
         CLOSURE_VALUE_WITH_ARG(PrimitiveNode.class, 202),
-        ;
+        //
+        PUSH_SELF(PrimPushSelf.class, 256),
+        PUSH_TRUE(PrimPushTrue.class, 257),
+        PUSH_FALSE(PrimPushFalse.class, 258),
+        PUSH_NIL(PrimPushNil.class, 259),
+        PUSH_MINUS_ONE(PrimPushMinusOne.class, 260),
+        PUSH_ZERO(PrimPushZero.class, 261),
+        PUSH_ONE(PrimPushOne.class, 262),
+        PUSH_TWO(PrimPushTwo.class, 262),
+        //
+        LAST(PrimitiveNode.class, PRIM_COUNT);
 
         public int index;
 
@@ -78,6 +65,11 @@ public abstract class PrimitiveNodeFactory {
             index = idx;
             primitiveClasses[idx] = cls;
         }
+    }
+
+    static {
+        // Forces instantiaton of the primitives enum
+        Primitives.values();
     }
 
     public static PrimitiveNode forIdx(CompiledMethodObject method, int primitiveIdx) {
@@ -88,10 +80,14 @@ public abstract class PrimitiveNodeFactory {
         if (primClass == null) {
             return new PrimitiveNode(method);
         } else {
+            // FIXME: clean this up
             try {
-                Method foo = primClass.getMethod("create", CompiledMethodObject.class);
-                return (PrimitiveNode) foo.invoke(primClass, method);
-            } catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+                try {
+                    return (PrimitiveNode) primClass.getMethod("create", CompiledMethodObject.class).invoke(primClass, method);
+                } catch (NoSuchMethodException e) {
+                    return primClass.getConstructor(CompiledMethodObject.class).newInstance(method);
+                }
+            } catch (NoSuchMethodException | InstantiationException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
                 throw new RuntimeException("Internal error in creating primitive", e);
             }
         }

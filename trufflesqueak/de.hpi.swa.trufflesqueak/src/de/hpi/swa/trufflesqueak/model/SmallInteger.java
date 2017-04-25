@@ -14,7 +14,7 @@ public class SmallInteger extends ImmutableObject {
 
     @Override
     public BaseSqueakObject getSqClass() {
-        return image.smallIntegerClass;
+        return getImage().smallIntegerClass;
     }
 
     public int getValue() {

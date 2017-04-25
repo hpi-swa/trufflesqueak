@@ -1,9 +1,11 @@
-package de.hpi.swa.trufflesqueak.nodes;
+package de.hpi.swa.trufflesqueak.nodes.primitives;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 
+import de.hpi.swa.trufflesqueak.exceptions.LocalReturn;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.nodes.helper.Top;
+import de.hpi.swa.trufflesqueak.nodes.SqueakExecutionNode;
+import de.hpi.swa.trufflesqueak.nodes.context.Top;
 
 public class PrimitiveNode extends SqueakExecutionNode {
     public PrimitiveNode(CompiledMethodObject cm) {
@@ -15,7 +17,7 @@ public class PrimitiveNode extends SqueakExecutionNode {
     }
 
     @Override
-    public Object executeGeneric(VirtualFrame frame) {
+    public Object executeGeneric(VirtualFrame frame) throws LocalReturn {
         return null;
     }
 

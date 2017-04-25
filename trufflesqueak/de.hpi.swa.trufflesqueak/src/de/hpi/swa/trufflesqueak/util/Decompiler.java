@@ -6,10 +6,6 @@ import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.SmallInteger;
 import de.hpi.swa.trufflesqueak.nodes.BytecodeSequence;
-import de.hpi.swa.trufflesqueak.nodes.PrimitiveBytecodeNode;
-import de.hpi.swa.trufflesqueak.nodes.PrimitiveNode;
-import de.hpi.swa.trufflesqueak.nodes.PrimitiveNodeFactory;
-import de.hpi.swa.trufflesqueak.nodes.SqueakBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.CallPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.DoubleExtendedDoAnything;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.Dup;
@@ -24,7 +20,6 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushLiteralConst;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushNewArray;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushReceiver;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushReceiverVariable;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushReceiverVariableNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushRemoteTemp;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushTemp;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushVariable;
@@ -32,11 +27,7 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnConst;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnReceiver;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnTopFromBlock;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnTopFromMethod;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SecondExtendedSend;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.Send;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendSelector;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SingleExtendedSend;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SingleExtendedSuper;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreAndPopRcvr;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreAndPopRemoteTemp;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreAndPopTemp;
@@ -44,7 +35,11 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreRemoteTemp;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.UnknownBytecode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.UnconditionalJump;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.conditional.ConditionalJump;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.conditional.IfFalse;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SecondExtendedSend;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.Send;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SendSelector;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SingleExtendedSend;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SingleExtendedSuper;
 
 public class Decompiler {
     private byte[] bytes;
@@ -308,76 +303,71 @@ public class Decompiler {
             case 175:
                 return new ConditionalJump(method, index, b, nextByte(indexRef), false);
             case 176:
-                return makePrimNode(PrimitiveNodeFactory.Primitives.ADD, index);
+                return new SendSelector(method, index, image.plus, 1);
             case 177:
-                return makePrimNode(PrimitiveNodeFactory.Primitives.SUB, index);
+                return new SendSelector(method, index, image.minus, 1);
             case 178:
-                return makePrimNode(PrimitiveNodeFactory.Primitives.LESSTHAN, index);
+                return new SendSelector(method, index, image.lt, 1);
             case 179:
-                return makePrimNode(PrimitiveNodeFactory.Primitives.GREATERTHAN, index);
+                return new SendSelector(method, index, image.gt, 1);
             case 180:
-                return makePrimNode(PrimitiveNodeFactory.Primitives.LESSOREQUAL, index);
+                return new SendSelector(method, index, image.le, 1);
             case 181:
-                return makePrimNode(PrimitiveNodeFactory.Primitives.GREATEROREQUAL, index);
+                return new SendSelector(method, index, image.ge, 1);
             case 182:
-                return makePrimNode(PrimitiveNodeFactory.Primitives.EQUAL, index);
+                return new SendSelector(method, index, image.eq, 1);
             case 183:
-                return makePrimNode(PrimitiveNodeFactory.Primitives.NOTEQUAL, index);
+                return new SendSelector(method, index, image.ne, 1);
             case 184:
-                return makePrimNode(PrimitiveNodeFactory.Primitives.MULTIPLY, index);
+                return new SendSelector(method, index, image.times, 1);
             case 185:
-                return makePrimNode(PrimitiveNodeFactory.Primitives.DIVIDE, index);
+                return new SendSelector(method, index, image.divide, 1);
             case 186:
-                return makePrimNode(PrimitiveNodeFactory.Primitives.MOD, index);
+                return new SendSelector(method, index, image.modulo, 1);
             case 187:
-                return makePrimNode(PrimitiveNodeFactory.Primitives.MAKE_POINT, index);
+                return new SendSelector(method, index, image.pointAt, 1);
             case 188:
-                return makePrimNode(PrimitiveNodeFactory.Primitives.BIT_SHIFT, index);
+                return new SendSelector(method, index, image.bitShift, 1);
             case 189:
-                return makePrimNode(PrimitiveNodeFactory.Primitives.DIV, index);
+                return new SendSelector(method, index, image.div, 1);
             case 190:
-                return makePrimNode(PrimitiveNodeFactory.Primitives.BIT_AND, index);
+                return new SendSelector(method, index, image.bitAnd, 1);
             case 191:
-                return makePrimNode(PrimitiveNodeFactory.Primitives.BIT_OR, index);
+                return new SendSelector(method, index, image.bitOr, 1);
             case 192:
-                return new SendSelector(method, index, "at:");
+                return new SendSelector(method, index, image.at, 1);
             case 193:
-                return new SendSelector(method, index, "at:put:");
+                return new SendSelector(method, index, image.atput, 2);
             case 194:
-                return new SendSelector(method, index, "size");
+                return new SendSelector(method, index, image.size_, 0);
             case 195:
-                return new SendSelector(method, index, "next");
+                return new SendSelector(method, index, image.next, 0);
             case 196:
-                return new SendSelector(method, index, "nextPut:");
+                return new SendSelector(method, index, image.nextPut, 1);
             case 197:
-                return new SendSelector(method, index, "atEnd");
+                return new SendSelector(method, index, image.atEnd, 0);
             case 198:
-                return makePrimNode(PrimitiveNodeFactory.Primitives.EQUIVALENT, index);
+                return new SendSelector(method, index, image.equivalent, 1);
             case 199:
-                return makePrimNode(PrimitiveNodeFactory.Primitives.CLASS, index);
+                return new SendSelector(method, index, image.klass, 0);
             case 200:
-                return makePrimNode(PrimitiveNodeFactory.Primitives.BLOCK_COPY, index);
+                return new SendSelector(method, index, image.blockCopy, 1);
             case 201:
-                return makePrimNode(PrimitiveNodeFactory.Primitives.CLOSURE_VALUE, index);
+                return new SendSelector(method, index, image.value, 0);
             case 202:
-                return makePrimNode(PrimitiveNodeFactory.Primitives.CLOSURE_VALUE_WITH_ARG, index);
+                return new SendSelector(method, index, image.valueWithArg, 1);
             case 203:
-                return new SendSelector(method, index, "do:");
+                return new SendSelector(method, index, image.do_, 1);
             case 204:
-                return new SendSelector(method, index, "new");
+                return new SendSelector(method, index, image.new_, 0);
             case 205:
-                return new SendSelector(method, index, "new:");
+                return new SendSelector(method, index, image.newWithArg, 1);
             case 206:
-                return new SendSelector(method, index, "x");
+                return new SendSelector(method, index, image.x, 0);
             case 207:
-                return new SendSelector(method, index, "y");
+                return new SendSelector(method, index, image.y, 0);
             default:
                 return new Send(method, index, b);
         }
-    }
-
-    private SqueakBytecodeNode makePrimNode(PrimitiveNodeFactory.Primitives prim, int index) {
-        PrimitiveNode primNode = PrimitiveNodeFactory.forIdx(method, prim.index);
-        return new PrimitiveBytecodeNode(method, index, primNode);
     }
 }

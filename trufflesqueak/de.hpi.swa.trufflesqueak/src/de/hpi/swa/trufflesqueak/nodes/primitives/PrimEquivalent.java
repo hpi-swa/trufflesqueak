@@ -6,7 +6,6 @@ import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ImmediateCharacter;
 import de.hpi.swa.trufflesqueak.model.SmallInteger;
-import de.hpi.swa.trufflesqueak.nodes.PrimitiveNode;
 
 public abstract class PrimEquivalent extends PrimitiveBinaryOperation {
     public PrimEquivalent(CompiledMethodObject cm) {

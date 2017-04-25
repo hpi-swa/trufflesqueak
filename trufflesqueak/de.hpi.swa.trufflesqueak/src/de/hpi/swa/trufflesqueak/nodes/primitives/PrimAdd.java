@@ -5,7 +5,6 @@ import java.math.BigInteger;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.nodes.PrimitiveNode;
 
 public class PrimAdd extends PrimitiveBinaryOperation {
     public PrimAdd(CompiledMethodObject cm) {
