@@ -2,6 +2,7 @@ package de.hpi.swa.trufflesqueak.nodes.context;
 
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
+import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
@@ -15,7 +16,7 @@ public abstract class FrameSlotNode extends ContextAccessNode {
     }
 
     protected FrameSlot getSlot(VirtualFrame frame) {
-        return getter.getSlot(frame, getMethod());
+        return getter.getSlot(FrameUtil.getIntSafe(frame, getMethod().stackPointerSlot), getMethod());
     }
 
     protected boolean isInt(VirtualFrame frame) {
@@ -33,5 +34,4 @@ public abstract class FrameSlotNode extends ContextAccessNode {
     protected boolean isIllegal(VirtualFrame frame) {
         return getSlot(frame).getKind() == FrameSlotKind.Illegal;
     }
-
 }
