@@ -11,6 +11,6 @@ public class PrimPushNil extends PrimitiveQuickReturnNode {
 
     @Override
     Object getConstant(VirtualFrame frame) {
-        return getMethod().getImage().nil;
+        return getImage().nil;
     }
 }

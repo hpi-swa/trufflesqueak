@@ -4,7 +4,6 @@ import java.util.Vector;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.model.SmallInteger;
 import de.hpi.swa.trufflesqueak.nodes.BytecodeSequence;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.CallPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.DoubleExtendedDoAnything;
@@ -99,7 +98,7 @@ public class Decompiler {
             case 13:
             case 14:
             case 15:
-                return PushReceiverVariable.create(method, index, b & 15);
+                return new PushReceiverVariable(method, index, b & 15);
             case 16:
             case 17:
             case 18:
@@ -210,13 +209,13 @@ public class Decompiler {
             case 115:
                 return new PushConst(method, index, image.nil);
             case 116:
-                return new PushConst(method, index, new SmallInteger(-1));
+                return new PushConst(method, index, -1);
             case 117:
-                return new PushConst(method, index, new SmallInteger(0));
+                return new PushConst(method, index, 0);
             case 118:
-                return new PushConst(method, index, new SmallInteger(1));
+                return new PushConst(method, index, 1);
             case 119:
-                return new PushConst(method, index, new SmallInteger(2));
+                return new PushConst(method, index, 2);
             case 120:
                 return new ReturnReceiver(method, index);
             case 121:
@@ -230,9 +229,9 @@ public class Decompiler {
             case 125:
                 return new ReturnTopFromBlock(method, index);
             case 126:
-                return new UnknownBytecode(method, index);
+                return new UnknownBytecode(method, index, b);
             case 127:
-                return new UnknownBytecode(method, index);
+                return new UnknownBytecode(method, index, b);
             case 128:
                 return new ExtendedPush(method, index, nextByte(indexRef));
             case 129:

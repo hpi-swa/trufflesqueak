@@ -11,11 +11,9 @@ import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.EmptyObject;
-import de.hpi.swa.trufflesqueak.model.ImmediateCharacter;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
-import de.hpi.swa.trufflesqueak.model.SmallInteger;
 import de.hpi.swa.trufflesqueak.model.SqueakObject;
 
 public class Chunk {
@@ -148,15 +146,15 @@ public class Chunk {
             Chunk chunk = reader.chunktable.get(ptr);
             if (chunk == null) {
                 System.err.println("Bogus pointer: " + ptr + ". Treating as smallint.");
-                return new SmallInteger(ptr >> 1);
+                return image.wrapInt(ptr >> 1);
             } else {
                 return chunk.asObject();
             }
         } else if ((ptr & 1) == 1) {
-            return new SmallInteger(ptr >> 1);
+            return image.wrapInt(ptr >> 1);
         } else {
             assert ((ptr & 3) == 2);
-            return new ImmediateCharacter(ptr >> 2);
+            return image.wrapChar(ptr >> 2);
         }
     }
 

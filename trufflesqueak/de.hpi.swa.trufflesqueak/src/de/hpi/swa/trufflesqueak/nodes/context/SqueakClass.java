@@ -19,15 +19,15 @@ public abstract class SqueakClass extends ContextAccessNode {
     @Specialization
     public ClassObject squeakClass(boolean object) {
         if (object) {
-            return (ClassObject) getMethod().getImage().sqTrue.getSqClass();
+            return (ClassObject) getImage().sqTrue.getSqClass();
         } else {
-            return (ClassObject) getMethod().getImage().sqFalse.getSqClass();
+            return (ClassObject) getImage().sqFalse.getSqClass();
         }
     }
 
     @Specialization
-    public ClassObject squeakClass(int object) {
-        return getMethod().getImage().smallIntegerClass;
+    public ClassObject squeakClass(@SuppressWarnings("unused") int object) {
+        return getImage().smallIntegerClass;
     }
 
     @Specialization(rewriteOn = UnexpectedResultException.class)
@@ -36,7 +36,7 @@ public abstract class SqueakClass extends ContextAccessNode {
     }
 
     @Specialization
-    public BaseSqueakObject squeakClass(Object object) {
-        return getMethod().getImage().nil;
+    public BaseSqueakObject squeakClass(@SuppressWarnings("unused") Object object) {
+        return getImage().nil;
     }
 }

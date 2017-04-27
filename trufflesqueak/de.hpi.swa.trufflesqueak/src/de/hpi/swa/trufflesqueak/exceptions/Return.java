@@ -1,6 +1,8 @@
 package de.hpi.swa.trufflesqueak.exceptions;
 
-public class Return extends Exception {
+import com.oracle.truffle.api.nodes.ControlFlowException;
+
+public class Return extends ControlFlowException {
     private static final long serialVersionUID = 1L;
     public final Object returnValue;
 

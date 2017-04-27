@@ -1,17 +1,12 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
-import com.oracle.truffle.api.dsl.Fallback;
-import com.oracle.truffle.api.dsl.NodeChild;
-import com.oracle.truffle.api.dsl.NodeChildren;
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
-
-import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.nodes.context.ReceiverNode;
+import de.hpi.swa.trufflesqueak.nodes.context.ContextAccessNode;
+import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotReadNode;
+import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotWriteNode;
+import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtNodeGen;
 
-@NodeChildren({@NodeChild(value = "receiverNode", type = ReceiverNode.class)})
-public abstract class PushReceiverVariable extends SqueakBytecodeNode {
+public class PushReceiverVariable extends StackBytecodeNode {
     private int variableIndex;
 
     public PushReceiverVariable(CompiledMethodObject cm, int idx, int i) {
@@ -19,19 +14,13 @@ public abstract class PushReceiverVariable extends SqueakBytecodeNode {
         variableIndex = i & 15;
     }
 
-    @Specialization
-    public Object pushReceiver(VirtualFrame frame, BaseSqueakObject receiver) {
-        BaseSqueakObject object = receiver.at0(variableIndex);
-        push(frame, object);
-        return object;
+    public PushReceiverVariable(CompiledMethodObject cm, int i) {
+        super(cm, 0);
+        variableIndex = i;
     }
 
-    @Fallback
-    public Object pushReceiver(@SuppressWarnings("unused") Object receiver) {
-        throw new RuntimeException("tried to push variable from non-object receiver");
-    }
-
-    public static PushReceiverVariable create(CompiledMethodObject method, int index, int i) {
-        return PushReceiverVariableNodeGen.create(method, index, i, new ReceiverNode(method));
+    @Override
+    public ContextAccessNode createChild(CompiledMethodObject cm) {
+        return FrameSlotWriteNode.push(cm, ObjectAtNodeGen.create(cm, variableIndex, FrameSlotReadNode.receiver(cm)));
     }
 }

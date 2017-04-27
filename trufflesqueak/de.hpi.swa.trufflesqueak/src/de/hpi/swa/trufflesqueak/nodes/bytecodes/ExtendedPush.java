@@ -1,45 +1,30 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
-import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.UnexpectedResultException;
-
-import de.hpi.swa.trufflesqueak.exceptions.NonLocalReturn;
-import de.hpi.swa.trufflesqueak.exceptions.NonVirtualReturn;
-import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
-import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
+import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotNode;
+import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotReadNode;
+import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotWriteNode;
+import de.hpi.swa.trufflesqueak.nodes.context.MethodLiteralNode;
+import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtNodeGen;
 
 public class ExtendedPush extends ExtendedAccess {
-
     public ExtendedPush(CompiledMethodObject compiledMethodObject, int idx, int i) {
         super(compiledMethodObject, idx, i);
     }
 
     @Override
-    public Object executeGeneric(VirtualFrame frame) throws NonLocalReturn, NonVirtualReturn, ProcessSwitch {
-        Object obj = null;
+    public FrameSlotNode createChild(CompiledMethodObject cm) {
         switch (type) {
             case 0:
-                try {
-                    obj = SqueakTypesGen.expectBaseSqueakObject(getReceiver(frame)).at0(storeIdx);
-                } catch (UnexpectedResultException e) {
-                    throw new RuntimeException("unexpected receiver in object access");
-                }
-                break;
+                return FrameSlotWriteNode.push(cm, FrameSlotReadNode.receiver(cm));
             case 1:
-                obj = getTemp(frame, storeIdx);
-                break;
+                return FrameSlotWriteNode.push(cm, FrameSlotReadNode.temp(cm, storeIdx));
             case 2:
-                obj = getMethod().getLiteral(storeIdx);
-                break;
+                return FrameSlotWriteNode.push(cm, new MethodLiteralNode(cm, storeIdx));
             case 3:
-                BaseSqueakObject assoc = getMethod().getLiteral(storeIdx);
-                obj = assoc.at0(1);
-                break;
+                return FrameSlotWriteNode.push(cm, ObjectAtNodeGen.create(cm, 1, new MethodLiteralNode(cm, storeIdx)));
+            default:
+                throw new RuntimeException("unexpected type for ExtendedPush");
         }
-        assert obj != null;
-        push(frame, obj);
-        return obj;
     }
 }

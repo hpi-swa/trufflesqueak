@@ -1,5 +1,7 @@
 package de.hpi.swa.trufflesqueak.exceptions;
 
-public class ProcessSwitch extends Exception {
+import com.oracle.truffle.api.nodes.ControlFlowException;
+
+public class ProcessSwitch extends ControlFlowException {
     private static final long serialVersionUID = 1L;
 }

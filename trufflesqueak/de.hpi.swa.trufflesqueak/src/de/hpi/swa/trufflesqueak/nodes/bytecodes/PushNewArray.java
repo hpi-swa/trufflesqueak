@@ -3,35 +3,43 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
-import de.hpi.swa.trufflesqueak.exceptions.NonLocalReturn;
-import de.hpi.swa.trufflesqueak.exceptions.NonVirtualReturn;
-import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.nodes.context.ContextAccessNode;
+import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotReadNode;
+import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtPutNodeGen;
 
 public class PushNewArray extends SqueakBytecodeNode {
-    private final boolean popIntoArray;
+    @Children final ContextAccessNode[] popIntoArrayNodes;
+    @Child ContextAccessNode pushArrayNode;
     private final int arraySize;
 
-    public PushNewArray(CompiledMethodObject compiledMethodObject, int idx, int i) {
-        super(compiledMethodObject, idx);
-        arraySize = (i >> 1) & 0xFF;
-        popIntoArray = (i & 1) == 1;
+    public PushNewArray(CompiledMethodObject cm, int idx, int param) {
+        // TODO: finish
+        super(cm, idx);
+        arraySize = (param >> 1) & 0xFF;
+        if ((param & 1) == 1) {
+            popIntoArrayNodes = new ContextAccessNode[arraySize];
+            for (int i = 0; i < arraySize; i++) {
+                popIntoArrayNodes[i] = ObjectAtPutNodeGen.create(cm, i, FrameSlotReadNode.top(cm), FrameSlotReadNode.peek(cm, arraySize - i));
+            }
+        } else {
+            popIntoArrayNodes = null;
+        }
     }
 
     @Override
     @ExplodeLoop
-    public Object executeGeneric(VirtualFrame frame) throws NonLocalReturn, NonVirtualReturn, ProcessSwitch {
+    public Object executeGeneric(VirtualFrame frame) {
         BaseSqueakObject[] ptrs = new BaseSqueakObject[arraySize];
-        if (popIntoArray) {
-            for (int i = 0; i < arraySize; i++) {
-                ptrs[i] = (BaseSqueakObject) pop(frame); // FIXME
+        PointersObject ary = new PointersObject(ptrs, getImage().arrayClass);
+        if (popIntoArrayNodes != null) {
+            for (ContextAccessNode node : popIntoArrayNodes) {
+                node.executeGeneric(frame);
+                decSP(frame);
             }
         }
-        PointersObject ary = new PointersObject(ptrs);
-        ary.setSqClass(getMethod().getImage().arrayClass);
-        push(frame, ary);
         return ary;
     }
 }

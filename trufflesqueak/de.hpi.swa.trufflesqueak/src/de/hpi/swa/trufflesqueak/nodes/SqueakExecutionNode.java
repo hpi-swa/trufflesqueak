@@ -2,6 +2,7 @@ package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
+import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
@@ -28,74 +29,31 @@ public abstract class SqueakExecutionNode extends SqueakNode {
         return method;
     }
 
-    public void push(VirtualFrame frame, Object result) {
-        int sp = getSP(frame);
-        frame.setObject(method.stackSlots[sp], result);
-        setSP(frame, sp + 1);
-
-    }
-
-    public Object top(VirtualFrame frame, int offset) {
-        int sp = Math.max(0, getSP(frame) - offset - 1);
-        try {
-            return frame.getObject(method.stackSlots[sp]);
-        } catch (FrameSlotTypeException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public Object top(VirtualFrame frame) {
-        return top(frame, 0);
-    }
-
-    public Object pop(VirtualFrame frame) {
-        int sp = getSP(frame);
-        try {
-            return top(frame);
-        } finally {
-            if (sp > 0) {
-                setSP(frame, sp - 1);
-            }
-        }
-    }
-
     public int getSP(VirtualFrame frame) {
-        try {
-            return frame.getInt(method.stackPointerSlot);
-        } catch (FrameSlotTypeException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public void setSP(VirtualFrame frame, int newSP) {
-        frame.setInt(method.stackPointerSlot, newSP);
+        return FrameUtil.getIntSafe(frame, method.stackPointerSlot);
     }
 
     public int getPC(VirtualFrame frame) {
+        return FrameUtil.getIntSafe(frame, method.pcSlot);
+    }
+
+    public void decSP(VirtualFrame frame) {
+        frame.setInt(method.stackPointerSlot, Math.max(getSP(frame) - 1, 0));
+    }
+
+    public void incSP(VirtualFrame frame) {
+        frame.setInt(method.stackPointerSlot, getSP(frame) + 1);
+    }
+
+    public Object getClosure(VirtualFrame frame) {
         try {
-            return frame.getInt(method.pcSlot);
+            return frame.getObject(method.closureSlot);
         } catch (FrameSlotTypeException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public Object getReceiver(VirtualFrame frame) {
-        try {
-            return frame.getObject(method.receiverSlot);
-        } catch (FrameSlotTypeException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public Object getTemp(VirtualFrame frame, int idx) {
-        try {
-            return frame.getObject(method.stackSlots[idx]);
-        } catch (FrameSlotTypeException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public void setTemp(VirtualFrame frame, int idx, Object obj) {
-        frame.setObject(method.stackSlots[idx], obj);
+    public SqueakImageContext getImage() {
+        return getMethod().getImage();
     }
 }

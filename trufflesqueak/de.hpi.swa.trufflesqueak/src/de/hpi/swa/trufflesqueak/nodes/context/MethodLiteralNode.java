@@ -4,13 +4,16 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 
-public class ReceiverNode extends ContextAccessNode {
-    public ReceiverNode(CompiledMethodObject cm) {
+public class MethodLiteralNode extends ContextAccessNode {
+    Object literal;
+
+    public MethodLiteralNode(CompiledMethodObject cm, int idx) {
         super(cm);
+        literal = cm.getLiteral(idx);
     }
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
-        return getReceiver(frame);
+        return literal;
     }
 }

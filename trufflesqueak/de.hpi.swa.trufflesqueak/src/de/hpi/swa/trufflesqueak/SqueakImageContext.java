@@ -13,11 +13,13 @@ import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.FalseObject;
+import de.hpi.swa.trufflesqueak.model.ImmediateCharacter;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.SmallInteger;
+import de.hpi.swa.trufflesqueak.model.SqueakObject;
 import de.hpi.swa.trufflesqueak.model.TrueObject;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakContextNode;
 import de.hpi.swa.trufflesqueak.util.ImageReader;
@@ -37,6 +39,7 @@ public class SqueakImageContext {
     public final ListObject specialSelectors = new ListObject();
     public final NativeObject mustBeBoolean = new NativeObject();
     public final ClassObject metaclass = new ClassObject();
+    public final SqueakObject methodContextClass = new ClassObject();
 
     private final SqueakLanguage language;
     private final BufferedReader input;
@@ -114,11 +117,15 @@ public class SqueakImageContext {
         }
     }
 
-    public BaseSqueakObject wrapInt(int i) {
-        return new SmallInteger(i);
-    }
-
     public SqueakLanguage getLanguage() {
         return language;
+    }
+
+    public SmallInteger wrapInt(int i) {
+        return new SmallInteger(this, i);
+    }
+
+    public ImmediateCharacter wrapChar(int i) {
+        return new ImmediateCharacter(this, i);
     }
 }

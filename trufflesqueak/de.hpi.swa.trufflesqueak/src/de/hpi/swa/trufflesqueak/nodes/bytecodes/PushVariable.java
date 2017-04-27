@@ -1,25 +1,20 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
-import com.oracle.truffle.api.frame.VirtualFrame;
-
-import de.hpi.swa.trufflesqueak.exceptions.NonLocalReturn;
-import de.hpi.swa.trufflesqueak.exceptions.NonVirtualReturn;
-import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
-import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.nodes.context.ContextAccessNode;
+import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotWriteNode;
+import de.hpi.swa.trufflesqueak.nodes.context.MethodLiteralNode;
 
-public class PushVariable extends SqueakBytecodeNode {
-    private final BaseSqueakObject object;
+public class PushVariable extends StackBytecodeNode {
+    private final int literalIdx;
 
     public PushVariable(CompiledMethodObject compiledMethodObject, int idx, int i) {
         super(compiledMethodObject, idx);
-        object = compiledMethodObject.getLiteral(i & 31).at0(1);
+        literalIdx = i & 31;
     }
 
     @Override
-    public Object executeGeneric(VirtualFrame frame) throws NonLocalReturn, NonVirtualReturn, ProcessSwitch {
-        push(frame, object);
-        return object;
+    public ContextAccessNode createChild(CompiledMethodObject cm) {
+        return FrameSlotWriteNode.push(cm, new MethodLiteralNode(cm, literalIdx));
     }
-
 }

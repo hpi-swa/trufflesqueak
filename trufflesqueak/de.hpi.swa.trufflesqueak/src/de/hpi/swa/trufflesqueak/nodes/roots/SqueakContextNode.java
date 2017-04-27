@@ -1,5 +1,7 @@
 package de.hpi.swa.trufflesqueak.nodes.roots;
 
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
 
@@ -19,6 +21,8 @@ import de.hpi.swa.trufflesqueak.model.SmallInteger;
  * logic.
  */
 public class SqueakContextNode extends RootNode {
+    private static final Object[] EMPTY_ARRAY = new Object[0];
+
     private enum ContextParts {
         SENDER,
         PC,
@@ -45,13 +49,16 @@ public class SqueakContextNode extends RootNode {
         int sp = ctxt.at0(ContextParts.SP.ordinal()).unsafeUnwrapInt();
         BaseSqueakObject closure = ctxt.at0(ContextParts.CLOSURE.ordinal());
         BaseSqueakObject receiver = ctxt.at0(ContextParts.RECEIVER.ordinal());
-        VirtualFrame frame = method.createTestFrame(receiver);
+        VirtualFrame frame = Truffle.getRuntime().createVirtualFrame(EMPTY_ARRAY, method.getFrameDescriptor());
         frame.setInt(method.pcSlot, pc);
         frame.setInt(method.stackPointerSlot, sp);
         frame.setObject(method.selfSlot, ctxt);
         frame.setObject(method.closureSlot, closure);
+        method.receiverSlot.setKind(FrameSlotKind.Object);
+        frame.setObject(method.receiverSlot, receiver);
         int tempStart = ContextParts.TEMP_FRAME_START.ordinal();
         for (int i = tempStart; i < ctxt.size(); i++) {
+            method.stackSlots[i - tempStart].setKind(FrameSlotKind.Object);
             frame.setObject(method.stackSlots[i - tempStart], ctxt.at0(i));
         }
         return frame;

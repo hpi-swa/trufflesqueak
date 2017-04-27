@@ -1,6 +1,7 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 
@@ -17,9 +18,16 @@ public class PushClosure extends SqueakBytecodeNode {
     }
 
     @Override
+    @ExplodeLoop
     public Object executeGeneric(VirtualFrame frame) {
-        // TODO Auto-generated method stub
-        return null;
+        CompiledMethodObject outerMethod = getMethod();
+        int pcWithBytecodeOffset = outerMethod.getBytecodeOffset() + getIndex() + 1;
+        Object[] copiedValues = new Object[numCopied];
+        // for (int i = 0; i < numCopied; i++) {
+        // copiedValues[i] = pop(frame);
+        // }
+        return copiedValues[0];
+        // TODO: implement
     }
 
     @Override

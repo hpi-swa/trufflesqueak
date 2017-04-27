@@ -34,12 +34,16 @@ public class NativeObject extends SqueakObject implements TruffleObject {
 
     @Override
     public BaseSqueakObject at0(int index) {
-        return new SmallInteger(getNativeAt0(index));
+        return getImage().wrapInt(getNativeAt0(index));
     }
 
     @Override
     public void atput0(int index, BaseSqueakObject object) throws UnwrappingError {
         setNativeAt0(index, object.unwrapInt());
+    }
+
+    public void atput0(int index, int value) {
+        setNativeAt0(index, value);
     }
 
     public int getNativeAt0(int index) {

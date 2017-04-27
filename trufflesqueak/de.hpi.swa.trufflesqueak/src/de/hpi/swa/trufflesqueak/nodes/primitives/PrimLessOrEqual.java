@@ -1,17 +1,32 @@
 package de.hpi.swa.trufflesqueak.nodes.primitives;
 
-import com.oracle.truffle.api.frame.VirtualFrame;
+import java.math.BigInteger;
 
-import de.hpi.swa.trufflesqueak.exceptions.NonLocalReturn;
-import de.hpi.swa.trufflesqueak.exceptions.NonVirtualReturn;
-import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
-import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
+import com.oracle.truffle.api.dsl.Specialization;
+
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 
 public class PrimLessOrEqual extends PrimitiveBinaryOperation {
-
-    public PrimLessOrEqual(CompiledMethodObject cm) {
+    protected PrimLessOrEqual(CompiledMethodObject cm) {
         super(cm);
-        // TODO Auto-generated constructor stub
+    }
+
+    public static PrimitiveNode create(CompiledMethodObject cm) {
+        return PrimLessOrEqualNodeGen.create(cm, arg(cm, 0), arg(cm, 1));
+    }
+
+    @Specialization
+    boolean add(int a, int b) {
+        return a <= b;
+    }
+
+    @Specialization
+    boolean add(long a, long b) {
+        return a <= b;
+    }
+
+    @Specialization
+    boolean add(BigInteger a, BigInteger b) {
+        return a.compareTo(b) <= 0;
     }
 }

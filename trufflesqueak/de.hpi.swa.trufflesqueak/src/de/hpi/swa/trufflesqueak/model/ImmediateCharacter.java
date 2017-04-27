@@ -1,9 +1,12 @@
 package de.hpi.swa.trufflesqueak.model;
 
+import de.hpi.swa.trufflesqueak.SqueakImageContext;
+
 public class ImmediateCharacter extends ImmutableObject {
     private final int value;
 
-    public ImmediateCharacter(int i) {
+    public ImmediateCharacter(SqueakImageContext img, int i) {
+        super(img);
         value = i;
     }
 
@@ -20,7 +23,7 @@ public class ImmediateCharacter extends ImmutableObject {
     @Override
     public BaseSqueakObject at0(int idx) {
         if (idx == 0) {
-            return new SmallInteger(getValue());
+            return getImage().wrapInt(getValue());
         } else {
             throw new ArrayIndexOutOfBoundsException();
         }

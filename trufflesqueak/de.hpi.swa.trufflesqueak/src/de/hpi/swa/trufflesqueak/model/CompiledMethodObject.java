@@ -69,7 +69,7 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
     }
 
     public CompiledMethodObject(SqueakImageContext img, byte[] bc) {
-        this(img, bc, new BaseSqueakObject[]{new SmallInteger(0)});
+        this(img, bc, new BaseSqueakObject[]{img.wrapInt(0)});
     }
 
     @Override
@@ -79,7 +79,8 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
         int header = data.get(0) >> 1; // header is a tagged small integer
         int literalsize = header & 0x7fff;
         BaseSqueakObject[] ptrs = chunk.getPointers(literalsize + 1);
-        setBytesAndLiterals(ptrs, chunk.getBytes(ptrs.length));
+        literals = ptrs;
+        bytes = chunk.getBytes(ptrs.length);
     }
 
     private void decodeHeader(BaseSqueakObject baseSqueakObject) {
@@ -104,23 +105,13 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
         }
         stackSlots = new FrameSlot[squeakFrameSize];
         for (int i = 0; i < squeakFrameSize; i++) {
-            stackSlots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Object);
+            stackSlots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Illegal);
         }
         pcSlot = frameDescriptor.addFrameSlot(PC, FrameSlotKind.Int);
-        stackPointerSlot = frameDescriptor.addFrameSlot(STACK_POINTER, FrameSlotKind.Byte);
-        receiverSlot = frameDescriptor.addFrameSlot(RECEIVER, FrameSlotKind.Object);
+        stackPointerSlot = frameDescriptor.addFrameSlot(STACK_POINTER, FrameSlotKind.Int);
+        receiverSlot = frameDescriptor.addFrameSlot(RECEIVER, FrameSlotKind.Illegal);
         selfSlot = frameDescriptor.addFrameSlot(SELF, FrameSlotKind.Object);
         closureSlot = frameDescriptor.addFrameSlot(CLOSURE, FrameSlotKind.Object);
-    }
-
-    public void enterFrame(VirtualFrame frame) {
-        Object[] args = frame.getArguments();
-        frame.setObject(receiverSlot, args[0]);
-        for (int i = 0; i < args.length - 1; i++) {
-            frame.setObject(stackSlots[i], args[i + 1]);
-        }
-        frame.setInt(stackPointerSlot, numTemps);
-        frame.setInt(pcSlot, 0);
     }
 
     public VirtualFrame createTestFrame(BaseSqueakObject receiver) {
@@ -138,6 +129,9 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
     }
 
     public RootCallTarget getCallTarget() {
+        if (callTarget == null) {
+            setBytesAndLiterals(literals, bytes);
+        }
         return callTarget;
     }
 
@@ -223,7 +217,7 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
         if (idx < literals.length) {
             return literals[idx / 4];
         } else {
-            return new SmallInteger(bytes[idx]);
+            return getImage().wrapInt(bytes[idx]);
         }
     }
 
@@ -257,5 +251,13 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
     public Object compiledInClass() {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    public int getNumTemps() {
+        return numTemps;
+    }
+
+    public int getNumArgs() {
+        return numArgs;
     }
 }

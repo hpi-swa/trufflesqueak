@@ -16,6 +16,11 @@ public class PointersObject extends SqueakObject implements TruffleObject {
         pointers = ptrs;
     }
 
+    public PointersObject(BaseSqueakObject[] ptrs, BaseSqueakObject sqClass) {
+        pointers = ptrs;
+        setSqClass(sqClass);
+    }
+
     public ForeignAccess getForeignAccess() {
         // TODO Auto-generated method stub
         return null;

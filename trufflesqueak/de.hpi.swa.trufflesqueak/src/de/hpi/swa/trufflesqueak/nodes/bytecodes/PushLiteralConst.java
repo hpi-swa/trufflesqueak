@@ -1,21 +1,20 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
-import com.oracle.truffle.api.frame.VirtualFrame;
-
-import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.nodes.context.ContextAccessNode;
+import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotWriteNode;
+import de.hpi.swa.trufflesqueak.nodes.context.MethodLiteralNode;
 
-public class PushLiteralConst extends SqueakBytecodeNode {
-    private final BaseSqueakObject object;
+public class PushLiteralConst extends StackBytecodeNode {
+    private final int literalIdx;
 
     public PushLiteralConst(CompiledMethodObject compiledMethodObject, int idx, int i) {
         super(compiledMethodObject, idx);
-        object = compiledMethodObject.getLiteral(i & 31);
+        literalIdx = i & 31;
     }
 
     @Override
-    public Object executeGeneric(VirtualFrame frame) {
-        push(frame, object);
-        return object;
+    public ContextAccessNode createChild(CompiledMethodObject cm) {
+        return FrameSlotWriteNode.push(cm, new MethodLiteralNode(cm, literalIdx));
     }
 }

@@ -1,9 +1,12 @@
 package de.hpi.swa.trufflesqueak.model;
 
+import de.hpi.swa.trufflesqueak.SqueakImageContext;
+
 public class SmallInteger extends ImmutableObject {
     private final int value;
 
-    public SmallInteger(int i) {
+    public SmallInteger(SqueakImageContext image, int i) {
+        super(image);
         value = i;
     }
 

@@ -1,58 +1,31 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
-import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.UnexpectedResultException;
-
-import de.hpi.swa.trufflesqueak.exceptions.LocalReturn;
-import de.hpi.swa.trufflesqueak.exceptions.NonLocalReturn;
-import de.hpi.swa.trufflesqueak.exceptions.NonVirtualReturn;
-import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
-import de.hpi.swa.trufflesqueak.exceptions.UnwrappingError;
-import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.nodes.SqueakExecutionNode;
-import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
-import de.hpi.swa.trufflesqueak.nodes.context.Top;
-import de.hpi.swa.trufflesqueak.nodes.context.TopSqueakObject;
+import de.hpi.swa.trufflesqueak.nodes.context.ContextAccessNode;
+import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotReadNode;
+import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotWriteNode;
+import de.hpi.swa.trufflesqueak.nodes.context.MethodLiteralNode;
+import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtPutNodeGen;
 
 public class ExtendedStore extends ExtendedAccess {
-    @Child private SqueakExecutionNode topNode;
-
-    public ExtendedStore(CompiledMethodObject compiledMethodObject, int idx, int i) {
-        super(compiledMethodObject, idx, i);
-        if (type == 1) {
-            topNode = new Top(compiledMethodObject, 0);
-        } else {
-            topNode = TopSqueakObject.create(compiledMethodObject, 0);
-        }
+    public ExtendedStore(CompiledMethodObject cm, int index, int i) {
+        super(cm, index, i);
     }
 
     @Override
-    public Object executeGeneric(VirtualFrame frame) throws NonLocalReturn, NonVirtualReturn, ProcessSwitch, LocalReturn {
-        Object top = topNode.executeGeneric(frame);
+    public ContextAccessNode createChild(CompiledMethodObject cm) {
+        FrameSlotReadNode top = FrameSlotReadNode.top(cm);
         switch (type) {
             case 0:
-                try {
-                    SqueakTypesGen.expectBaseSqueakObject(getReceiver(frame)).atput0(
-                                    storeIdx, SqueakTypesGen.expectBaseSqueakObject(top));
-                } catch (UnwrappingError | UnexpectedResultException e) {
-                    throw new RuntimeException("illegal ExtendedStore bytecode: unwrapping error", e);
-                }
-                break;
+                return ObjectAtPutNodeGen.create(cm, storeIdx, FrameSlotReadNode.receiver(cm), top);
             case 1:
-                setTemp(frame, storeIdx, top);
-                break;
+                return FrameSlotWriteNode.temp(cm, storeIdx, top);
             case 2:
                 throw new RuntimeException("illegal ExtendedStore bytecode: variable type 2");
             case 3:
-                BaseSqueakObject assoc = getMethod().getLiteral(storeIdx);
-                try {
-                    assoc.atput0(1, SqueakTypesGen.expectBaseSqueakObject(top));
-                } catch (UnwrappingError | UnexpectedResultException e) {
-                    throw new RuntimeException("illegal ExtendedStore bytecode: variable type 2", e);
-                }
-                break;
+                return ObjectAtPutNodeGen.create(cm, 1, new MethodLiteralNode(cm, storeIdx), top);
+            default:
+                throw new RuntimeException("illegal ExtendedStore bytecode");
         }
-        return top;
     }
 }

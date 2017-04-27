@@ -77,14 +77,4 @@ public abstract class SqueakTypes {
     public static boolean castBoolean(@SuppressWarnings("unused") FalseObject obj) {
         return false;
     }
-
-    @ImplicitCast
-    public static BaseSqueakObject asBaseSqueakObject(int value) {
-        return new SmallInteger(value);
-    }
-
-    @ImplicitCast
-    public static BaseSqueakObject asBaseSqueakObject(char value) {
-        return new ImmediateCharacter(value);
-    }
 }

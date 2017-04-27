@@ -18,17 +18,17 @@ public abstract class IfTrue extends SqueakNode {
     }
 
     @Specialization
-    public boolean checkCondition(FalseObject cond) {
+    public boolean checkCondition(@SuppressWarnings("unused") FalseObject cond) {
         return true;
     }
 
     @Specialization
-    public boolean checkCondition(TrueObject cond) {
+    public boolean checkCondition(@SuppressWarnings("unused") TrueObject cond) {
         return false;
     }
 
     @Fallback
-    public Object checkCondition(Object cond) {
+    public Object checkCondition(@SuppressWarnings("unused") Object cond) {
         return null;
     }
 }

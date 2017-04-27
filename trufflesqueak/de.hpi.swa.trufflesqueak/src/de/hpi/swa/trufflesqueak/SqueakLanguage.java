@@ -25,7 +25,7 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
     protected CallTarget parse(ParsingRequest request) throws Exception {
         SqueakImageContext image = this.getContextReference().get();
         image.fillInFrom(new FileInputStream(request.getSource().getName()));
-        return image.getEntryPoint(image.nil, "yourself");
+        return image.getEntryPoint(image.nil, "testSum");
     }
 
     @Override
