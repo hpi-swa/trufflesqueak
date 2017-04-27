@@ -14,7 +14,12 @@ public class PrimitiveNode extends SqueakExecutionNode {
     }
 
     public static ContextAccessNode arg(CompiledMethodObject cm, int offset) {
-        return FrameSlotReadNode.peek(cm, offset);
+        if (offset == 0) {
+            return FrameSlotReadNode.receiver(cm);
+        } else {
+            assert offset >= 1;
+            return FrameSlotReadNode.peek(cm, offset - 1);
+        }
     }
 
     @Override

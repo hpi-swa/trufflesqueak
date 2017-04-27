@@ -37,12 +37,16 @@ public abstract class SqueakExecutionNode extends SqueakNode {
         return FrameUtil.getIntSafe(frame, method.pcSlot);
     }
 
-    public void decSP(VirtualFrame frame) {
-        frame.setInt(method.stackPointerSlot, Math.max(getSP(frame) - 1, 0));
+    public void decSP(VirtualFrame frame, int count) {
+        changeSP(frame, -count);
     }
 
-    public void incSP(VirtualFrame frame) {
-        frame.setInt(method.stackPointerSlot, getSP(frame) + 1);
+    public void incSP(VirtualFrame frame, int count) {
+        changeSP(frame, count);
+    }
+
+    public void changeSP(VirtualFrame frame, int count) {
+        frame.setInt(method.stackPointerSlot, Math.max(getSP(frame) + count, 0));
     }
 
     public Object getClosure(VirtualFrame frame) {

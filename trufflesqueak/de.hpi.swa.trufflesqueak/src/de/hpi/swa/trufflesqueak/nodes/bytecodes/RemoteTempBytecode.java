@@ -5,16 +5,11 @@ import de.hpi.swa.trufflesqueak.nodes.context.ContextAccessNode;
 import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotReadNode;
 
 public abstract class RemoteTempBytecode extends StackBytecodeNode {
-    protected final int indexInArray;
-    protected final int indexOfArray;
-
-    public RemoteTempBytecode(CompiledMethodObject compiledMethodObject, int idx, int indexInArray, int indexOfArray) {
-        super(compiledMethodObject, idx);
-        this.indexInArray = indexInArray;
-        this.indexOfArray = indexOfArray;
+    public RemoteTempBytecode(CompiledMethodObject cm, int idx, ContextAccessNode node, int stackEffect) {
+        super(cm, idx, node, stackEffect);
     }
 
-    protected ContextAccessNode getTempArray(CompiledMethodObject cm) {
+    protected static ContextAccessNode getTempArray(CompiledMethodObject cm, int indexOfArray) {
         return FrameSlotReadNode.temp(cm, indexOfArray);
     }
 }

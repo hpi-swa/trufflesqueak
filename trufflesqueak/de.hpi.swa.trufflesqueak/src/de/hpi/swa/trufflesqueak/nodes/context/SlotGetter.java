@@ -24,7 +24,7 @@ public class SlotGetter {
         if (slot != null) {
             return slot;
         } else {
-            int sp = FrameUtil.getIntSafe(frame, cm.stackPointerSlot) - offset - 1;
+            int sp = FrameUtil.getIntSafe(frame, cm.stackPointerSlot) - offset;
             if (sp < 0) {
                 return cm.receiverSlot;
             } else {

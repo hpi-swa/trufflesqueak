@@ -9,14 +9,14 @@ import de.hpi.swa.trufflesqueak.nodes.context.SqueakClassNodeGen;
 public class SingleExtendedSuper extends AbstractSend {
 
     public SingleExtendedSuper(CompiledMethodObject cm, int idx, int param) {
-        super(cm, idx, cm.getLiteral(param & 31), param >> 5);
-        receiverNode = FrameSlotReadNode.receiver(cm);
-        lookupClassNode = SqueakClassNodeGen.create(cm, new CompiledInClass(cm));
+        super(cm, idx, cm.getLiteral(param & 31), param >> 5,
+                        FrameSlotReadNode.receiver(cm),
+                        SqueakClassNodeGen.create(cm, new CompiledInClass(cm)));
     }
 
     public SingleExtendedSuper(CompiledMethodObject cm, int idx, BaseSqueakObject selector, int numArgs) {
-        super(cm, idx, selector, numArgs);
-        receiverNode = FrameSlotReadNode.receiver(cm);
-        lookupClassNode = SqueakClassNodeGen.create(cm, new CompiledInClass(cm));
+        super(cm, idx, selector, numArgs,
+                        FrameSlotReadNode.receiver(cm),
+                        SqueakClassNodeGen.create(cm, new CompiledInClass(cm)));
     }
 }

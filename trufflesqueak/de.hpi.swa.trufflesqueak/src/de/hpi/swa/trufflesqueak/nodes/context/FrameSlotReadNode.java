@@ -17,7 +17,7 @@ public abstract class FrameSlotReadNode extends FrameSlotNode {
     }
 
     public static FrameSlotReadNode peek(CompiledMethodObject cm, int offset) {
-        return FrameSlotReadNodeGen.create(cm, new SlotGetter(offset));
+        return FrameSlotReadNodeGen.create(cm, new SlotGetter(offset + 1));
     }
 
     public static FrameSlotReadNode top(CompiledMethodObject cm) {

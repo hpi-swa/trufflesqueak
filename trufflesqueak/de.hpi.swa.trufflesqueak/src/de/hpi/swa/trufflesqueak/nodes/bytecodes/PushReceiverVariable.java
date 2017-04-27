@@ -7,20 +7,15 @@ import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtNodeGen;
 
 public class PushReceiverVariable extends StackBytecodeNode {
-    private int variableIndex;
-
     public PushReceiverVariable(CompiledMethodObject cm, int idx, int i) {
-        super(cm, idx);
-        variableIndex = i & 15;
+        super(cm, idx, createChild(cm, i & 15), +1);
     }
 
     public PushReceiverVariable(CompiledMethodObject cm, int i) {
-        super(cm, 0);
-        variableIndex = i;
+        super(cm, 0, createChild(cm, i), +1);
     }
 
-    @Override
-    public ContextAccessNode createChild(CompiledMethodObject cm) {
+    public static ContextAccessNode createChild(CompiledMethodObject cm, int variableIndex) {
         return FrameSlotWriteNode.push(cm, ObjectAtNodeGen.create(cm, variableIndex, FrameSlotReadNode.receiver(cm)));
     }
 }

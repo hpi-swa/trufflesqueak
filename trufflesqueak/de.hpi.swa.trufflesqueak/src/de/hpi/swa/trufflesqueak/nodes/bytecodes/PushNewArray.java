@@ -37,8 +37,8 @@ public class PushNewArray extends SqueakBytecodeNode {
         if (popIntoArrayNodes != null) {
             for (ContextAccessNode node : popIntoArrayNodes) {
                 node.executeGeneric(frame);
-                decSP(frame);
             }
+            decSP(frame, arraySize);
         }
         return ary;
     }

@@ -6,11 +6,10 @@ import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotWriteNode;
 
 public class PushReceiver extends StackBytecodeNode {
     public PushReceiver(CompiledMethodObject cm, int idx) {
-        super(cm, idx);
+        super(cm, idx, createChild(cm), +1);
     }
 
-    @Override
-    public FrameSlotWriteNode createChild(CompiledMethodObject cm) {
+    public static FrameSlotWriteNode createChild(CompiledMethodObject cm) {
         return FrameSlotWriteNode.push(cm, FrameSlotReadNode.receiver(cm));
     }
 }

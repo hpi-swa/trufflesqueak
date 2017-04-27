@@ -13,7 +13,7 @@ public class ReturnTopFromMethod extends ReturnTopFromBlock {
 
     @Override
     public Object executeGeneric(VirtualFrame frame) throws LocalReturn, NonLocalReturn {
-        if (getClosure(frame) == null) {
+        if (getClosure(frame) == getImage().nil) {
             return super.executeGeneric(frame);
         } else {
             throw new NonLocalReturn(top.executeGeneric(frame), getClosure(frame));

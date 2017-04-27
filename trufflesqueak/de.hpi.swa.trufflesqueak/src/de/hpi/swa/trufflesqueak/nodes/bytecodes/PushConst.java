@@ -6,15 +6,11 @@ import de.hpi.swa.trufflesqueak.nodes.context.ContextAccessNode;
 import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotWriteNode;
 
 public class PushConst extends StackBytecodeNode {
-    private final Object constant;
-
     public PushConst(CompiledMethodObject compiledMethodObject, int idx, Object obj) {
-        super(compiledMethodObject, idx);
-        constant = obj;
+        super(compiledMethodObject, idx, createChild(compiledMethodObject, obj), +1);
     }
 
-    @Override
-    public ContextAccessNode createChild(CompiledMethodObject cm) {
+    public static ContextAccessNode createChild(CompiledMethodObject cm, Object constant) {
         return FrameSlotWriteNode.push(cm, new ConstantNode(constant));
     }
 }

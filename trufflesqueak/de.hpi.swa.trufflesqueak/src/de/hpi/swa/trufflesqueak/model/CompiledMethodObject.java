@@ -248,11 +248,6 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
         return frameDescriptor;
     }
 
-    public Object compiledInClass() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
     public int getNumTemps() {
         return numTemps;
     }

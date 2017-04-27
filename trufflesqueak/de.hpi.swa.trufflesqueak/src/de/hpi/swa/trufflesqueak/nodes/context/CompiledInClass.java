@@ -11,6 +11,6 @@ public class CompiledInClass extends ContextAccessNode {
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
-        return getMethod().compiledInClass();
+        return getMethod().getCompiledInClass();
     }
 }

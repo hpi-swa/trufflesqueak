@@ -14,7 +14,11 @@ public class UnconditionalJump extends AbstractJump {
 
     public UnconditionalJump(CompiledMethodObject cm, int idx, int bytecode, int parameter) {
         super(cm, idx);
-        offset = longJumpOffset(bytecode, parameter);
+        offset = longUnconditionalJumpOffset(bytecode, parameter) + 1;
+    }
+
+    static int longUnconditionalJumpOffset(int bc, int param) {
+        return (((bc & 7) - 4) << 8) + param;
     }
 
     @Override
@@ -24,6 +28,6 @@ public class UnconditionalJump extends AbstractJump {
 
     @Override
     public int stepBytecode(VirtualFrame frame) {
-        return getIndex() + offset + 1;
+        return getIndex() + 1 + offset;
     }
 }
