@@ -32,25 +32,25 @@ public abstract class FrameSlotWriteNode extends FrameSlotNode {
         return create(cm, cm.stackSlots[index], node);
     }
 
-    @Specialization(guards = "isInt(frame) || isIllegal(frame)")
+    @Specialization(guards = "isInt(getSlot(getSP(frame))) || isIllegal(getSlot(getSP(frame)))")
     public int writeInt(VirtualFrame frame, int value) {
-        FrameSlot slot = getSlot(frame);
+        FrameSlot slot = getSlot(getSP(frame));
         slot.setKind(FrameSlotKind.Int);
         frame.setInt(slot, value);
         return value;
     }
 
-    @Specialization(guards = "isLong(frame) || isIllegal(frame)")
+    @Specialization(guards = "isLong(getSlot(getSP(frame))) || isIllegal(getSlot(getSP(frame)))")
     public long writeLong(VirtualFrame frame, long value) {
-        FrameSlot slot = getSlot(frame);
+        FrameSlot slot = getSlot(getSP(frame));
         slot.setKind(FrameSlotKind.Long);
         frame.setLong(slot, value);
         return value;
     }
 
-    @Specialization(guards = "isBoolean(frame) || isIllegal(frame)")
+    @Specialization(guards = "isBoolean(getSlot(getSP(frame))) || isIllegal(getSlot(getSP(frame)))")
     public boolean writeBool(VirtualFrame frame, boolean value) {
-        FrameSlot slot = getSlot(frame);
+        FrameSlot slot = getSlot(getSP(frame));
         slot.setKind(FrameSlotKind.Boolean);
         frame.setBoolean(slot, value);
         return value;
@@ -58,7 +58,7 @@ public abstract class FrameSlotWriteNode extends FrameSlotNode {
 
     @Specialization(replaces = {"writeInt", "writeLong", "writeBool"})
     public Object writeObject(VirtualFrame frame, Object value) {
-        FrameSlot slot = getSlot(frame);
+        FrameSlot slot = getSlot(getSP(frame));
         slot.setKind(FrameSlotKind.Object);
         frame.setObject(slot, value);
         return value;

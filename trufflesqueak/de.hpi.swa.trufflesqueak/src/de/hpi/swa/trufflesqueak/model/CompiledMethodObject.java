@@ -3,6 +3,7 @@ package de.hpi.swa.trufflesqueak.model;
 import java.util.Vector;
 
 import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
@@ -40,12 +41,12 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
     private BytecodeSequence ast;
     private FrameDescriptor frameDescriptor;
 
-    public FrameSlot receiverSlot;
-    public FrameSlot selfSlot;
-    public FrameSlot closureSlot;
-    public FrameSlot stackPointerSlot;
-    public FrameSlot pcSlot;
-    public FrameSlot[] stackSlots;
+    @CompilationFinal public FrameSlot receiverSlot;
+    @CompilationFinal public FrameSlot selfSlot;
+    @CompilationFinal public FrameSlot closureSlot;
+    @CompilationFinal public FrameSlot stackPointerSlot;
+    @CompilationFinal public FrameSlot pcSlot;
+    @CompilationFinal(dimensions = 1) public FrameSlot[] stackSlots;
     private RootCallTarget callTarget;
     private final CyclicAssumption callTargetStable = new CyclicAssumption("Compiled method assumption");
 

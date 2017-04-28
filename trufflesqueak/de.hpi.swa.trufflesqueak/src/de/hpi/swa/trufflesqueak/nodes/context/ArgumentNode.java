@@ -14,12 +14,11 @@ public class ArgumentNode extends ContextAccessNode {
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
-        Object[] arguments = frame.getArguments();
-        if (idx == 0) {
-            if (arguments.length == 0) {
-                return getImage().nil;
-            }
+        Object[] args = frame.getArguments();
+        if (idx < args.length) {
+            return args[idx];
+        } else {
+            return getImage().nil;
         }
-        return arguments[idx];
     }
 }

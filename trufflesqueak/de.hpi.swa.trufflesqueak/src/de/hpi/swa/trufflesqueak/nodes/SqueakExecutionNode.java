@@ -1,6 +1,7 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
+import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -16,9 +17,21 @@ import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
  */
 public abstract class SqueakExecutionNode extends SqueakNode {
     private final CompiledMethodObject method;
+    private final FrameSlot stackPointerSlot;
+    private final FrameSlot pcSlot;
+    private final FrameSlot closureSlot;
 
     public SqueakExecutionNode(CompiledMethodObject cm) {
         method = cm;
+        if (cm != null) {
+            stackPointerSlot = cm.stackPointerSlot;
+            pcSlot = cm.pcSlot;
+            closureSlot = cm.closureSlot;
+        } else {
+            stackPointerSlot = null;
+            pcSlot = null;
+            closureSlot = null;
+        }
     }
 
     public ContextReference<SqueakImageContext> getContext() {
@@ -29,29 +42,29 @@ public abstract class SqueakExecutionNode extends SqueakNode {
         return method;
     }
 
-    public int getSP(VirtualFrame frame) {
-        return FrameUtil.getIntSafe(frame, method.stackPointerSlot);
+    public final int getSP(VirtualFrame frame) {
+        return FrameUtil.getIntSafe(frame, stackPointerSlot);
     }
 
-    public int getPC(VirtualFrame frame) {
-        return FrameUtil.getIntSafe(frame, method.pcSlot);
+    public final int getPC(VirtualFrame frame) {
+        return FrameUtil.getIntSafe(frame, pcSlot);
     }
 
-    public void decSP(VirtualFrame frame, int count) {
+    public final void decSP(VirtualFrame frame, int count) {
         changeSP(frame, -count);
     }
 
-    public void incSP(VirtualFrame frame, int count) {
+    public final void incSP(VirtualFrame frame, int count) {
         changeSP(frame, count);
     }
 
-    public void changeSP(VirtualFrame frame, int count) {
-        frame.setInt(method.stackPointerSlot, Math.max(getSP(frame) + count, 0));
+    public final void changeSP(VirtualFrame frame, int count) {
+        frame.setInt(stackPointerSlot, Math.max(getSP(frame) + count, 0));
     }
 
     public Object getClosure(VirtualFrame frame) {
         try {
-            return frame.getObject(method.closureSlot);
+            return frame.getObject(closureSlot);
         } catch (FrameSlotTypeException e) {
             throw new RuntimeException(e);
         }
