@@ -1,13 +1,11 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
-import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 
 /**
@@ -34,11 +32,7 @@ public abstract class SqueakExecutionNode extends SqueakNode {
         }
     }
 
-    public ContextReference<SqueakImageContext> getContext() {
-        return this.getRootNode().getLanguage(SqueakLanguage.class).getContextReference();
-    }
-
-    public CompiledMethodObject getMethod() {
+    public final CompiledMethodObject getMethod() {
         return method;
     }
 
@@ -62,7 +56,7 @@ public abstract class SqueakExecutionNode extends SqueakNode {
         frame.setInt(stackPointerSlot, Math.max(getSP(frame) + count, 0));
     }
 
-    public Object getClosure(VirtualFrame frame) {
+    public final Object getClosure(VirtualFrame frame) {
         try {
             return frame.getObject(closureSlot);
         } catch (FrameSlotTypeException e) {
@@ -70,7 +64,7 @@ public abstract class SqueakExecutionNode extends SqueakNode {
         }
     }
 
-    public SqueakImageContext getImage() {
+    public final SqueakImageContext getImage() {
         return getMethod().getImage();
     }
 }

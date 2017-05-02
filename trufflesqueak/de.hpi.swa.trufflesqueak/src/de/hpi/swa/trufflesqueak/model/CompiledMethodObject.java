@@ -3,6 +3,7 @@ package de.hpi.swa.trufflesqueak.model;
 import java.util.Vector;
 
 import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
@@ -28,14 +29,14 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
     private static final String RECEIVER = "receiver";
     private static final String PC = "pc";
     private static final String STACK_POINTER = "stackPointer";
-    private BaseSqueakObject[] literals;
+    @CompilationFinal(dimensions = 1) private BaseSqueakObject[] literals;
     private byte[] bytes;
     private int numLiterals;
     private boolean isOptimized;
     private boolean hasPrimitive;
     private boolean needsLargeFrame;
-    private int numTemps;
-    private int numArgs;
+    @CompilationFinal private int numTemps;
+    @CompilationFinal private int numArgs;
     private int accessModifier;
     private boolean altInstructionSet;
     private BytecodeSequence ast;
@@ -131,6 +132,7 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
 
     public RootCallTarget getCallTarget() {
         if (callTarget == null) {
+            CompilerDirectives.transferToInterpreter();
             setBytesAndLiterals(literals, bytes);
         }
         return callTarget;
@@ -249,11 +251,11 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
         return frameDescriptor;
     }
 
-    public int getNumTemps() {
+    public final int getNumTemps() {
         return numTemps;
     }
 
-    public int getNumArgs() {
+    public final int getNumArgs() {
         return numArgs;
     }
 }
