@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.util;
 
+import java.util.Stack;
 import java.util.Vector;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
@@ -53,14 +54,29 @@ public class Decompiler {
 
     public BytecodeSequence getAST() {
         int index[] = {0};
+        int idx = 0;
+        Stack<SqueakBytecodeNode> jumpStack = new Stack<>();
+        Stack<Integer> jumpTargetStack = new Stack<>();
         Vector<SqueakBytecodeNode> sequence = new Vector<>();
         while (index[0] < bytes.length) {
-            int idx = index[0];
             SqueakBytecodeNode node = decodeByteAt(index);
             while (sequence.size() < idx) {
                 sequence.add(null); // skip parameter bytes
             }
             sequence.add(node);
+
+            idx = index[0];
+            int jump = node.getJump();
+            if (jump > 0) {
+                jumpStack.push(node);
+                jumpTargetStack.push(idx + jump); // remember for later
+            }
+            if (!jumpTargetStack.empty() && idx == jumpTargetStack.peek()) {
+                int l = sequence.size();
+                jumpStack.pop().decompileOnSequence(sequence);
+                jumpTargetStack.pop();
+                assert sequence.size() == l; // decompilation must maintain indices
+            }
         }
         return new BytecodeSequence(method, sequence.toArray(new SqueakBytecodeNode[sequence.size()]));
     }

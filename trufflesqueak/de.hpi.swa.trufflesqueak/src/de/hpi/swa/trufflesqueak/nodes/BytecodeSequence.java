@@ -1,6 +1,8 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.exceptions.LocalReturn;
@@ -25,7 +27,7 @@ public class BytecodeSequence extends Node {
                 pc += 1;
             } else {
                 try {
-                    pc = node.stepBytecode(frame);
+                    node.executeGeneric(frame);
                 } catch (LocalReturn e) {
                     return e.returnValue;
                 }
@@ -34,7 +36,18 @@ public class BytecodeSequence extends Node {
         throw new RuntimeException("Method did not return");
     }
 
+    @ExplodeLoop
     public Object executeGeneric(VirtualFrame frame) {
-        return executeGeneric(frame, method.getBytecodeOffset() + 1);
+        CompilerAsserts.compilationConstant(nodes.length);
+        for (SqueakBytecodeNode node : nodes) {
+            if (node != null) {
+                try {
+                    node.executeGeneric(frame);
+                } catch (LocalReturn e) {
+                    return e.returnValue;
+                }
+            }
+        }
+        throw new RuntimeException("Method did not return");
     }
 }

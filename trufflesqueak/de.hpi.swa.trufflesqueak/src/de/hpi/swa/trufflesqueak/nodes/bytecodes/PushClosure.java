@@ -1,5 +1,8 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
+import java.util.List;
+import java.util.Vector;
+
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
@@ -9,6 +12,7 @@ public class PushClosure extends SqueakBytecodeNode {
     private final int blockSize;
     private final int numArgs;
     private final int numCopied;
+    private List<SqueakBytecodeNode> closureBytecodes;
 
     public PushClosure(CompiledMethodObject compiledMethodObject, int idx, int i, int j, int k) {
         super(compiledMethodObject, idx);
@@ -31,8 +35,18 @@ public class PushClosure extends SqueakBytecodeNode {
     }
 
     @Override
-    public int stepBytecode(VirtualFrame frame) {
-        executeGeneric(frame);
-        return getIndex() + blockSize + 1;
+    public int getJump() {
+        return blockSize;
+    }
+
+    @Override
+    public SqueakBytecodeNode decompileFrom(Vector<SqueakBytecodeNode> sequence) {
+        int firstClosureBC = getIndex() + 4; // skip ourselves and the param bytes
+        int lastClosureBC = firstClosureBC + blockSize;
+        closureBytecodes = sequence.subList(firstClosureBC, lastClosureBC);
+        for (int i = firstClosureBC; i < lastClosureBC; i++) {
+            sequence.set(i, null);
+        }
+        return this;
     }
 }
