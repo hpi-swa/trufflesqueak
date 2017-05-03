@@ -1,32 +1,23 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
+import java.util.Stack;
 import java.util.Vector;
 
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakExecutionNode;
+import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
 public abstract class SqueakBytecodeNode extends SqueakExecutionNode {
-    private final int index;
+    protected final int index;
 
     public SqueakBytecodeNode(CompiledMethodObject cm, int idx) {
         super(cm);
         index = idx;
     }
 
-    public int getIndex() {
-        return index;
-    }
+    abstract public void interpretOn(Stack<SqueakNode> stack, Stack<SqueakNode> sequence);
 
-    public int getJump() {
-        return 0;
-    }
-
-    public void decompileOnSequence(Vector<SqueakBytecodeNode> sequence) {
-        sequence.set(getIndex(), this.decompileFrom(sequence));
-    }
-
-    public SqueakBytecodeNode decompileFrom(@SuppressWarnings("unused") Vector<SqueakBytecodeNode> sequence) {
-        assert getJump() == 0;
-        return this;
+    public void interpretOn(Stack<SqueakNode> stack, Stack<SqueakNode> statements, Vector<SqueakBytecodeNode> sequence) {
+        interpretOn(stack, statements);
     }
 }

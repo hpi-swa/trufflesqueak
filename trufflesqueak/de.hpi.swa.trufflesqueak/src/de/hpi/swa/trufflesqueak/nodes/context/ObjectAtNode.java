@@ -5,15 +5,14 @@ import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
-@NodeChildren({@NodeChild(value = "objectNode")})
-public abstract class ObjectAtNode extends ContextAccessNode {
+@NodeChildren({@NodeChild(value = "objectNode", type = SqueakNode.class)})
+public abstract class ObjectAtNode extends SqueakNode {
     private final int index;
 
-    protected ObjectAtNode(CompiledMethodObject cm, int idx) {
-        super(cm);
-        index = idx;
+    protected ObjectAtNode(int variableIndex) {
+        index = variableIndex;
     }
 
     @Specialization

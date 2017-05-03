@@ -6,12 +6,12 @@ import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.FalseObject;
 import de.hpi.swa.trufflesqueak.model.SmallInteger;
 import de.hpi.swa.trufflesqueak.model.TrueObject;
+import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
-public abstract class MethodLiteralNode extends ContextAccessNode {
+public abstract class MethodLiteralNode extends SqueakNode {
     final Object literal;
 
     public MethodLiteralNode(CompiledMethodObject cm, int idx) {
-        super(cm);
         literal = cm.getLiteral(idx);
     }
 

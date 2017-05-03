@@ -1,44 +1,32 @@
 package de.hpi.swa.trufflesqueak.nodes.context;
 
-import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.nodes.SqueakExecutionNode;
 
-public abstract class FrameSlotNode extends ContextAccessNode {
-    protected final SlotGetter getter;
-    @CompilationFinal FrameSlot cachedSlot;
+public abstract class FrameSlotNode extends SqueakExecutionNode {
+    final FrameSlot slot;
 
-    protected FrameSlotNode(CompiledMethodObject cm, SlotGetter slotGetter) {
+    protected FrameSlotNode(CompiledMethodObject cm, FrameSlot frameSlot) {
         super(cm);
-        getter = slotGetter;
+        slot = frameSlot;
     }
 
-    protected FrameSlot getSlot(int sp) {
-        if (cachedSlot == null) {
-            CompilerDirectives.transferToInterpreter();
-            cachedSlot = getter.getSlot(sp, getMethod());
-        }
-        CompilerAsserts.compilationConstant(cachedSlot);
-        return cachedSlot;
-    }
-
-    protected boolean isInt(FrameSlot slot) {
+    protected boolean isInt() {
         return slot.getKind() == FrameSlotKind.Int;
     }
 
-    protected boolean isLong(FrameSlot slot) {
+    protected boolean isLong() {
         return slot.getKind() == FrameSlotKind.Long;
     }
 
-    protected boolean isBoolean(FrameSlot slot) {
+    protected boolean isBoolean() {
         return slot.getKind() == FrameSlotKind.Boolean;
     }
 
-    protected boolean isIllegal(FrameSlot slot) {
+    protected boolean isIllegal() {
         return slot.getKind() == FrameSlotKind.Illegal;
     }
 }

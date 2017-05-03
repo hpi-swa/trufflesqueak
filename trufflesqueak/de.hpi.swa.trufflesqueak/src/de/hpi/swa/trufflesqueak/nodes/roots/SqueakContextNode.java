@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes.roots;
 
+import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -83,7 +84,8 @@ public class SqueakContextNode extends RootNode {
             try {
                 // This will continue execution in the active context until that
                 // context returns or switches to another Squeak process.
-                method.getBytecodeAST().executeGeneric(currentFrame, pc);
+                SqueakMethodNode squeakMethodNode = new SqueakMethodNode(this.getLanguage(SqueakLanguage.class), method);
+                squeakMethodNode.executeGeneric(currentFrame, pc);
             } catch (NonLocalReturn e) {
                 // TODO: unwind context chain towards target
             } catch (NonVirtualReturn e) {

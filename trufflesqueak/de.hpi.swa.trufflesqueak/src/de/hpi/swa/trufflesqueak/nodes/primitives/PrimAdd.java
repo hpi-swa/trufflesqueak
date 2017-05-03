@@ -12,7 +12,7 @@ public class PrimAdd extends PrimitiveBinaryOperation {
     }
 
     public static PrimitiveNode create(CompiledMethodObject cm) {
-        return PrimAddNodeGen.create(cm, arg(cm, 0), arg(cm, 1));
+        return PrimAddNodeGen.create(cm, arg(0), arg(1));
     }
 
     @Specialization(rewriteOn = ArithmeticException.class)

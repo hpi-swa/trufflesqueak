@@ -13,7 +13,7 @@ public abstract class PrimEquivalent extends PrimitiveBinaryOperation {
     }
 
     public static PrimitiveNode create(CompiledMethodObject cm) {
-        return PrimEquivalentNodeGen.create(cm, arg(cm, 0), arg(cm, 1));
+        return PrimEquivalentNodeGen.create(cm, arg(0), arg(1));
     }
 
     @Specialization

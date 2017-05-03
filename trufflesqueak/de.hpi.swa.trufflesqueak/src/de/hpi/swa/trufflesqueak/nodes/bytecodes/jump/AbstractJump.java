@@ -13,6 +13,10 @@ public abstract class AbstractJump extends SqueakBytecodeNode {
         return ((code & 3) << 8) + param;
     }
 
+    static int longUnconditionalJumpOffset(int bc, int param) {
+        return (((bc & 7) - 4) << 8) + param;
+    }
+
     public AbstractJump(CompiledMethodObject cm, int idx) {
         super(cm, idx);
     }

@@ -2,13 +2,12 @@ package de.hpi.swa.trufflesqueak.nodes.context;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
-public class ArgumentNode extends ContextAccessNode {
+public class ArgumentNode extends SqueakNode {
     private final int idx;
 
-    public ArgumentNode(CompiledMethodObject cm, int index) {
-        super(cm);
+    public ArgumentNode(int index) {
         idx = index;
     }
 
@@ -18,7 +17,7 @@ public class ArgumentNode extends ContextAccessNode {
         if (idx < args.length) {
             return args[idx];
         } else {
-            return getImage().nil;
+            return null;
         }
     }
 }

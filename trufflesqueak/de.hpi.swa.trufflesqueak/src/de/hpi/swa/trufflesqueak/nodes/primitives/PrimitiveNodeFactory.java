@@ -3,7 +3,7 @@ package de.hpi.swa.trufflesqueak.nodes.primitives;
 import java.lang.reflect.InvocationTargetException;
 
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushReceiver;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReceiverNode;
 
 public abstract class PrimitiveNodeFactory {
     private static final int PRIM_COUNT = 574;

@@ -12,53 +12,54 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
 @NodeChildren({@NodeChild(value = "value", type = SqueakNode.class)})
 public abstract class FrameSlotWriteNode extends FrameSlotNode {
-    protected FrameSlotWriteNode(CompiledMethodObject cm, SlotGetter slotGetter) {
-        super(cm, slotGetter);
+    protected FrameSlotWriteNode(CompiledMethodObject cm, FrameSlot slot) {
+        super(cm, slot);
     }
 
     public static FrameSlotWriteNode argument(CompiledMethodObject cm, FrameSlot slot, int argumentIndex) {
-        return FrameSlotWriteNodeGen.create(cm, new SlotGetter(slot), new ArgumentNode(cm, argumentIndex));
+        return FrameSlotWriteNodeGen.create(cm, slot, new ArgumentNode(argumentIndex));
     }
 
-    public static FrameSlotWriteNode create(CompiledMethodObject cm, FrameSlot slot, ContextAccessNode node) {
-        return FrameSlotWriteNodeGen.create(cm, new SlotGetter(slot), node);
+    public static FrameSlotWriteNode create(CompiledMethodObject cm, FrameSlot slot, SqueakNode node) {
+        return FrameSlotWriteNodeGen.create(cm, slot, node);
     }
 
-    public static FrameSlotWriteNode push(CompiledMethodObject cm, SqueakNode node) {
-        return FrameSlotWriteNodeGen.create(cm, new SlotGetter(0), node);
-    }
-
-    public static FrameSlotWriteNode temp(CompiledMethodObject cm, int index, ContextAccessNode node) {
+    public static FrameSlotWriteNode temp(CompiledMethodObject cm, int index, SqueakNode node) {
         return create(cm, cm.stackSlots[index], node);
     }
 
-    @Specialization(guards = "isInt(getSlot(getSP(frame))) || isIllegal(getSlot(getSP(frame)))")
+    protected boolean isNullWrite(Object value) {
+        return isIllegal() && (value == null || value == getImage().nil);
+    }
+
+    @Specialization(guards = "isNullWrite(value)")
+    public Object skipNullWrite(Object value) {
+        return value;
+    }
+
+    @Specialization(guards = "isInt() || isIllegal()")
     public int writeInt(VirtualFrame frame, int value) {
-        FrameSlot slot = getSlot(getSP(frame));
         slot.setKind(FrameSlotKind.Int);
         frame.setInt(slot, value);
         return value;
     }
 
-    @Specialization(guards = "isLong(getSlot(getSP(frame))) || isIllegal(getSlot(getSP(frame)))")
+    @Specialization(guards = "isLong() || isIllegal()")
     public long writeLong(VirtualFrame frame, long value) {
-        FrameSlot slot = getSlot(getSP(frame));
         slot.setKind(FrameSlotKind.Long);
         frame.setLong(slot, value);
         return value;
     }
 
-    @Specialization(guards = "isBoolean(getSlot(getSP(frame))) || isIllegal(getSlot(getSP(frame)))")
+    @Specialization(guards = "isBoolean() || isIllegal()")
     public boolean writeBool(VirtualFrame frame, boolean value) {
-        FrameSlot slot = getSlot(getSP(frame));
         slot.setKind(FrameSlotKind.Boolean);
         frame.setBoolean(slot, value);
         return value;
     }
 
-    @Specialization(replaces = {"writeInt", "writeLong", "writeBool"})
+    @Specialization(replaces = {"skipNullWrite", "writeInt", "writeLong", "writeBool"})
     public Object writeObject(VirtualFrame frame, Object value) {
-        FrameSlot slot = getSlot(getSP(frame));
         slot.setKind(FrameSlotKind.Object);
         frame.setObject(slot, value);
         return value;

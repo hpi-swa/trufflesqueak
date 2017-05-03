@@ -17,7 +17,7 @@ import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.UnwrappingError;
-import de.hpi.swa.trufflesqueak.nodes.BytecodeSequence;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakMethodNode;
 import de.hpi.swa.trufflesqueak.util.BitSplitter;
 import de.hpi.swa.trufflesqueak.util.Chunk;
@@ -39,7 +39,7 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
     @CompilationFinal private int numArgs;
     private int accessModifier;
     private boolean altInstructionSet;
-    private BytecodeSequence ast;
+    private SqueakBytecodeNode[] ast;
     private FrameDescriptor frameDescriptor;
 
     @CompilationFinal public FrameSlot receiverSlot;
@@ -202,7 +202,7 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
         return false;
     }
 
-    public BytecodeSequence getBytecodeAST() {
+    public SqueakBytecodeNode[] getBytecodeAST() {
         return ast;
     }
 

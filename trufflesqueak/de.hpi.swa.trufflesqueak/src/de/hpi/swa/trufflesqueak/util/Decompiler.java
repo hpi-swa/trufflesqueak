@@ -5,42 +5,49 @@ import java.util.Vector;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.nodes.BytecodeSequence;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.CallPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.DoubleExtendedDoAnything;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.Dup;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.ExtendedPush;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.ExtendedStore;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.ExtendedStoreAndPop;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.Pop;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushActiveContext;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushClosure;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushConst;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushLiteralConst;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushNewArray;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushReceiver;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushReceiverVariable;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushRemoteTemp;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushTemp;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushVariable;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnConst;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnReceiver;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnTopFromBlock;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnTopFromMethod;
+import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.CallPrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.ConstantNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.DoubleExtendedDoAnythingNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.DupNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.ExtendedPushNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.ExtendedStoreAndPopNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.ExtendedStoreNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.LiteralConstantNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.LiteralVariableNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PopIntoReceiverVariableNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PopIntoTemporaryVariable;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PopNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushActiveContextNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushClosureNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushNewArrayNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushRemoteTempNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReceiverNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReceiverVariableNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnConstantNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnReceiverNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnTopFromBlockNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnTopFromMethodNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreAndPopRcvr;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreAndPopRemoteTemp;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreAndPopTemp;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreRemoteTemp;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.UnknownBytecode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreAndPopRemoteTempNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreRemoteTempNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.TemporaryVariableNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.UnknownBytecodeNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.ConditionalJump;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.UnconditionalJump;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.conditional.ConditionalJump;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SecondExtendedSend;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SecondExtendedSendNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.Send;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SendSelector;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SingleExtendedSend;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SingleExtendedSuper;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SingleExtendedSendNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SingleExtendedSuperNode;
 
+/**
+ * This class is modeled after the Squeak 6.0 Decompiler
+ *
+ * @author Tim
+ *
+ */
 public class Decompiler {
     private byte[] bytes;
     private CompiledMethodObject method;
@@ -52,33 +59,31 @@ public class Decompiler {
         bytes = bc;
     }
 
-    public BytecodeSequence getAST() {
+    public SqueakBytecodeNode[] getAST() {
         int index[] = {0};
-        int idx = 0;
-        Stack<SqueakBytecodeNode> jumpStack = new Stack<>();
-        Stack<Integer> jumpTargetStack = new Stack<>();
+
         Vector<SqueakBytecodeNode> sequence = new Vector<>();
         while (index[0] < bytes.length) {
             SqueakBytecodeNode node = decodeByteAt(index);
-            while (sequence.size() < idx) {
-                sequence.add(null); // skip parameter bytes
+            while (sequence.size() < index[0] - 1) {
+                sequence.add(null); // fill parameter byte indices
             }
             sequence.add(node);
+        }
 
-            idx = index[0];
-            int jump = node.getJump();
-            if (jump > 0) {
-                jumpStack.push(node);
-                jumpTargetStack.push(idx + jump); // remember for later
-            }
-            if (!jumpTargetStack.empty() && idx == jumpTargetStack.peek()) {
-                int l = sequence.size();
-                jumpStack.pop().decompileOnSequence(sequence);
-                jumpTargetStack.pop();
-                assert sequence.size() == l; // decompilation must maintain indices
+        Stack<SqueakNode> stack = new Stack<>();
+        Stack<SqueakNode> statements = new Stack<>();
+        for (int i = 0; i < sequence.size(); i++) {
+            SqueakBytecodeNode node = sequence.get(i);
+            if (node != null) {
+                node.interpretOn(stack, statements, sequence);
+                if (node instanceof ReturnNode) {
+                    // when we have a return on the main path, we don't need to continue
+                    break;
+                }
             }
         }
-        return new BytecodeSequence(method, sequence.toArray(new SqueakBytecodeNode[sequence.size()]));
+        return statements.toArray(new SqueakBytecodeNode[statements.size()]);
     }
 
     private int nextByte(int[] indexRef) {
@@ -114,7 +119,7 @@ public class Decompiler {
             case 13:
             case 14:
             case 15:
-                return new PushReceiverVariable(method, index, b & 15);
+                return new ReceiverVariableNode(method, index, b & 15);
             case 16:
             case 17:
             case 18:
@@ -131,7 +136,7 @@ public class Decompiler {
             case 29:
             case 30:
             case 31:
-                return new PushTemp(method, index, b & 15);
+                return new TemporaryVariableNode(method, index, b & 15);
             case 32:
             case 33:
             case 34:
@@ -164,7 +169,7 @@ public class Decompiler {
             case 61:
             case 62:
             case 63:
-                return new PushLiteralConst(method, index, b & 31);
+                return new LiteralConstantNode(method, index, b & 31);
             case 64:
             case 65:
             case 66:
@@ -197,7 +202,7 @@ public class Decompiler {
             case 93:
             case 94:
             case 95:
-                return new PushVariable(method, index, b & 31);
+                return new LiteralVariableNode(method, index, b & 31);
             case 96:
             case 97:
             case 98:
@@ -206,7 +211,7 @@ public class Decompiler {
             case 101:
             case 102:
             case 103:
-                return new StoreAndPopRcvr(method, index, b & 7);
+                return new PopIntoReceiverVariableNode(method, index, b & 7);
             case 104:
             case 105:
             case 106:
@@ -215,71 +220,72 @@ public class Decompiler {
             case 109:
             case 110:
             case 111:
-                return new StoreAndPopTemp(method, index, b & 7);
+                return new PopIntoTemporaryVariable(method, index, b & 7);
             case 112:
-                return new PushReceiver(method, index);
+                return new ReceiverNode(method, index);
             case 113:
-                return new PushConst(method, index, image.sqTrue);
+                return new ConstantNode(method, index, true);
             case 114:
-                return new PushConst(method, index, image.sqFalse);
+                return new ConstantNode(method, index, false);
             case 115:
-                return new PushConst(method, index, image.nil);
+                return new ConstantNode(method, index, null);
             case 116:
-                return new PushConst(method, index, -1);
+                return new ConstantNode(method, index, -1);
             case 117:
-                return new PushConst(method, index, 0);
+                return new ConstantNode(method, index, 0);
             case 118:
-                return new PushConst(method, index, 1);
+                return new ConstantNode(method, index, 1);
             case 119:
-                return new PushConst(method, index, 2);
+                return new ConstantNode(method, index, 2);
             case 120:
-                return new ReturnReceiver(method, index);
+                return new ReturnReceiverNode(method, index);
             case 121:
-                return new ReturnConst(method, index, image.sqTrue);
+                return new ReturnConstantNode(method, index, true);
             case 122:
-                return new ReturnConst(method, index, image.sqFalse);
+                return new ReturnConstantNode(method, index, false);
             case 123:
-                return new ReturnConst(method, index, image.nil);
+                return new ReturnConstantNode(method, index, null);
             case 124:
-                return new ReturnTopFromMethod(method, index);
+                return new ReturnTopFromMethodNode(method, index);
             case 125:
-                return new ReturnTopFromBlock(method, index);
+                return new ReturnTopFromBlockNode(method, index);
             case 126:
-                return new UnknownBytecode(method, index, b);
+                return new UnknownBytecodeNode(method, index, b);
             case 127:
-                return new UnknownBytecode(method, index, b);
+                return new UnknownBytecodeNode(method, index, b);
             case 128:
-                return new ExtendedPush(method, index, nextByte(indexRef));
+                return new ExtendedPushNode(method, index, nextByte(indexRef));
             case 129:
-                return new ExtendedStore(method, index, nextByte(indexRef));
+                return new ExtendedStoreNode(method, index, nextByte(indexRef));
             case 130:
-                return new ExtendedStoreAndPop(method, index, nextByte(indexRef));
+                return new ExtendedStoreAndPopNode(method, index, nextByte(indexRef));
             case 131:
-                return new SingleExtendedSend(method, index, nextByte(indexRef));
+                return new SingleExtendedSendNode(method, index, nextByte(indexRef));
             case 132:
-                return new DoubleExtendedDoAnything(method, index, nextByte(indexRef), nextByte(indexRef));
+                return DoubleExtendedDoAnythingNode.create(method, index, nextByte(indexRef), nextByte(indexRef));
             case 133:
-                return new SingleExtendedSuper(method, index, nextByte(indexRef));
+                int nextByte = nextByte(indexRef);
+                return new SingleExtendedSuperNode(method, index, nextByte & 31, nextByte >> 5);
             case 134:
-                return new SecondExtendedSend(method, index, nextByte(indexRef));
+                return new SecondExtendedSendNode(method, index, nextByte(indexRef));
             case 135:
-                return new Pop(method, index);
+                return new PopNode(method, index);
             case 136:
-                return new Dup(method, index);
+                return new DupNode(method, index);
             case 137:
-                return new PushActiveContext(method, index);
+                return new PushActiveContextNode(method, index);
             case 138:
-                return new PushNewArray(method, index, nextByte(indexRef));
+                return new PushNewArrayNode(method, index, nextByte(indexRef));
             case 139:
-                return new CallPrimitive(method, index, nextByte(indexRef), nextByte(indexRef));
+                return new CallPrimitiveNode(method, index, nextByte(indexRef), nextByte(indexRef));
             case 140:
-                return new PushRemoteTemp(method, index, nextByte(indexRef), nextByte(indexRef));
+                return new PushRemoteTempNode(method, index, nextByte(indexRef), nextByte(indexRef));
             case 141:
-                return new StoreRemoteTemp(method, index, nextByte(indexRef), nextByte(indexRef));
+                return new StoreRemoteTempNode(method, index, nextByte(indexRef), nextByte(indexRef));
             case 142:
-                return new StoreAndPopRemoteTemp(method, index, nextByte(indexRef), nextByte(indexRef));
+                return new StoreAndPopRemoteTempNode(method, index, nextByte(indexRef), nextByte(indexRef));
             case 143:
-                return new PushClosure(method, index, nextByte(indexRef), nextByte(indexRef), nextByte(indexRef));
+                return new PushClosureNode(method, index, nextByte(indexRef), nextByte(indexRef), nextByte(indexRef));
             case 144:
             case 145:
             case 146:
