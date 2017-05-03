@@ -20,7 +20,7 @@ public class IfThenNode extends Node {
     @Children final private SqueakNode[] elseNodes;
 
     IfThenNode(CompiledMethodObject cm, SqueakNode condition, SqueakNode[] thenBranch, SqueakNode[] elseBranch) {
-        mustBeBooleanSend = new SendSelector(cm, 0, cm.getImage().mustBeBoolean, 0);
+        mustBeBooleanSend = new SendSelector(cm, 0, cm.image.mustBeBoolean, 0);
         branchProfile = ConditionProfile.createCountingProfile();
         conditionNode = condition;
         thenNodes = thenBranch;

@@ -19,7 +19,7 @@ public class LoopRepeatingNode extends Node implements RepeatingNode {
     @Children private final SqueakNode[] bodyNodes;
 
     public LoopRepeatingNode(CompiledMethodObject cm, SqueakNode cond, SqueakNode[] body) {
-        mustBeBooleanSend = new SendSelector(cm, 0, cm.getImage().mustBeBoolean, 0);
+        mustBeBooleanSend = new SendSelector(cm, 0, cm.image.mustBeBoolean, 0);
         conditionNode = cond;
         bodyNodes = body;
     }

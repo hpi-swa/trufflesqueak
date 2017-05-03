@@ -9,15 +9,17 @@ import de.hpi.swa.trufflesqueak.util.Chunk;
 public class PointersObject extends SqueakObject implements TruffleObject {
     private BaseSqueakObject[] pointers;
 
-    public PointersObject() {
+    public PointersObject(SqueakImageContext img) {
+        super(img);
     }
 
-    public PointersObject(BaseSqueakObject[] ptrs) {
+    public PointersObject(SqueakImageContext img, BaseSqueakObject[] ptrs) {
+        this(img);
         pointers = ptrs;
     }
 
-    public PointersObject(BaseSqueakObject[] ptrs, BaseSqueakObject sqClass) {
-        pointers = ptrs;
+    public PointersObject(SqueakImageContext img, BaseSqueakObject[] ptrs, BaseSqueakObject sqClass) {
+        this(img, ptrs);
         setSqClass(sqClass);
     }
 
@@ -27,8 +29,8 @@ public class PointersObject extends SqueakObject implements TruffleObject {
     }
 
     @Override
-    public void fillin(Chunk chunk, SqueakImageContext img) {
-        super.fillin(chunk, img);
+    public void fillin(Chunk chunk) {
+        super.fillin(chunk);
         pointers = chunk.getPointers();
     }
 

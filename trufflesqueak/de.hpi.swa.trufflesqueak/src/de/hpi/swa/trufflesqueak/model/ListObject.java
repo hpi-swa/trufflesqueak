@@ -9,9 +9,13 @@ import de.hpi.swa.trufflesqueak.util.Chunk;
 public class ListObject extends SqueakObject implements TruffleObject {
     private BaseSqueakObject[] pointers;
 
+    public ListObject(SqueakImageContext img) {
+        super(img);
+    }
+
     @Override
-    public void fillin(Chunk chunk, SqueakImageContext img) {
-        super.fillin(chunk, img);
+    public void fillin(Chunk chunk) {
+        super.fillin(chunk);
         pointers = chunk.getPointers();
     }
 

@@ -16,7 +16,6 @@ public class CallPrimitiveNode extends SqueakBytecodeNode {
 
     public CallPrimitiveNode(CompiledMethodObject compiledMethodObject, int idx, int i, int j) {
         super(compiledMethodObject, idx);
-        assert idx == 0; // FIXME: for now...
         int primitiveIdx = i + (j << 8);
         primitive = PrimitiveNodeFactory.forIdx(compiledMethodObject, primitiveIdx);
     }
@@ -43,6 +42,10 @@ public class CallPrimitiveNode extends SqueakBytecodeNode {
     @Override
     public void interpretOn(Stack<SqueakNode> stack, Stack<SqueakNode> sequence) {
         // classic primitive method, takes its arguments from the frame and returns
-        sequence.push(this);
+        if (method.hasPrimitive() && index == 0) {
+            sequence.push(this);
+        } else {
+            stack.push(this);
+        }
     }
 }

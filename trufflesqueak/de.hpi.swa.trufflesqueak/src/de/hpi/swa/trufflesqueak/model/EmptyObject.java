@@ -3,7 +3,13 @@ package de.hpi.swa.trufflesqueak.model;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
 
+import de.hpi.swa.trufflesqueak.SqueakImageContext;
+
 public class EmptyObject extends SqueakObject implements TruffleObject {
+    public EmptyObject(SqueakImageContext img) {
+        super(img);
+    }
+
     public ForeignAccess getForeignAccess() {
         // TODO Auto-generated method stub
         return null;

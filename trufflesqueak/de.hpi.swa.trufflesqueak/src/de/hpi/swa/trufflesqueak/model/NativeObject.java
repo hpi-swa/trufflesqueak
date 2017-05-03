@@ -13,9 +13,13 @@ public class NativeObject extends SqueakObject implements TruffleObject {
     private ByteBuffer content;
     private byte elementSize;
 
+    public NativeObject(SqueakImageContext img) {
+        super(img);
+    }
+
     @Override
-    public void fillin(Chunk chunk, SqueakImageContext img) {
-        super.fillin(chunk, img);
+    public void fillin(Chunk chunk) {
+        super.fillin(chunk);
         byte[] bytes = chunk.getBytes();
         content = ByteBuffer.allocate(bytes.length);
         content.put(bytes);
@@ -34,7 +38,7 @@ public class NativeObject extends SqueakObject implements TruffleObject {
 
     @Override
     public BaseSqueakObject at0(int index) {
-        return getImage().wrapInt(getNativeAt0(index));
+        return image.wrapInt(getNativeAt0(index));
     }
 
     @Override

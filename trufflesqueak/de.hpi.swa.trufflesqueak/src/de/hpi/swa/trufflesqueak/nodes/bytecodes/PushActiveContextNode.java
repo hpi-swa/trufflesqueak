@@ -19,7 +19,7 @@ public class PushActiveContextNode extends SqueakBytecodeNode {
     public Object executeGeneric(VirtualFrame frame) {
         // TODO: ...
         MaterializedFrame materializedFrame = frame.materialize();
-        ContextObject contextObject = new ContextObject(materializedFrame);
+        ContextObject contextObject = new ContextObject(method.image, materializedFrame);
         // push(frame, contextObject);
         return contextObject;
     }

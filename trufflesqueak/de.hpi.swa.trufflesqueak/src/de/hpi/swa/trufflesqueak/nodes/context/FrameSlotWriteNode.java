@@ -29,7 +29,7 @@ public abstract class FrameSlotWriteNode extends FrameSlotNode {
     }
 
     protected boolean isNullWrite(Object value) {
-        return isIllegal() && (value == null || value == getImage().nil);
+        return isIllegal() && (value == null || value == method.image.nil);
     }
 
     @Specialization(guards = "isNullWrite(value)")

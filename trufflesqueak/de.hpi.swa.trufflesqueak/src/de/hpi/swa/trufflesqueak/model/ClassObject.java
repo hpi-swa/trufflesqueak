@@ -20,16 +20,20 @@ public class ClassObject extends PointersObject {
     private final CyclicAssumption methodLookupStable = new CyclicAssumption("unnamed");
     private final Set<ClassObject> subclasses = new HashSet<>();
 
+    public ClassObject(SqueakImageContext img) {
+        super(img);
+    }
+
     @Override
     public boolean isClass() {
-        assert getImage().metaclass == getSqClass() || getImage().metaclass == getSqClass().getSqClass();
+        assert image.metaclass == getSqClass() || image.metaclass == getSqClass().getSqClass();
         return true;
     }
 
     @Override
     public String nameAsClass() {
         assert isClass();
-        if (getSqClass() == getImage().metaclass) {
+        if (getSqClass() == image.metaclass) {
             // metaclasses store their singleton instance in the last field
             BaseSqueakObject classInstance = at0(getPointers().length - 1);
             if (classInstance instanceof ClassObject) {
@@ -45,8 +49,8 @@ public class ClassObject extends PointersObject {
     }
 
     @Override
-    public void fillin(Chunk chunk, SqueakImageContext ctxt) {
-        super.fillin(chunk, ctxt);
+    public void fillin(Chunk chunk) {
+        super.fillin(chunk);
         // initialize the subclasses set
         setSuperclass(getSuperclass());
     }
@@ -130,7 +134,7 @@ public class ClassObject extends PointersObject {
     }
 
     public BaseSqueakObject doesNotUnderstand() {
-        BaseSqueakObject result = lookup(getImage().doesNotUnderstand);
+        BaseSqueakObject result = lookup(image.doesNotUnderstand);
         if (result == null) {
             throw new RuntimeException("doesNotUnderstand missing!");
         }

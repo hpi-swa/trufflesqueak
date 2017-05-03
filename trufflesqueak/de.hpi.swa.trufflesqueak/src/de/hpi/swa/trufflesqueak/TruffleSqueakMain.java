@@ -13,7 +13,6 @@ import com.oracle.truffle.api.vm.PolyglotEngine.Value;
 public class TruffleSqueakMain {
     private static void executeImage(String filename, InputStream in, PrintStream out) throws RuntimeException {
         out.println("== running TruffleSqueak on " + Truffle.getRuntime().getName());
-
         Source source = Source.newBuilder(filename).mimeType(SqueakLanguage.MIME_TYPE).name(filename).interactive().build();
         PolyglotEngine engine = PolyglotEngine.newBuilder().setIn(in).setOut(out).build();
         assert engine.getLanguages().containsKey(SqueakLanguage.MIME_TYPE);

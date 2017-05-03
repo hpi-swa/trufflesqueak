@@ -9,6 +9,8 @@ import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.model.SmallInteger;
+import de.hpi.swa.trufflesqueak.nodes.roots.SqueakMethodNode;
 import junit.framework.TestCase;
 
 public class TestBytecodes extends TestCase {
@@ -32,73 +34,84 @@ public class TestBytecodes extends TestCase {
         return makeMethod(bytes);
     }
 
-    public Object run(BaseSqueakObject receiver, CompiledMethodObject cm) {
-        VirtualFrame frame = cm.createTestFrame(receiver);
+    public Object runMethod(CompiledMethodObject cm, BaseSqueakObject receiver, BaseSqueakObject... arguments) {
+        VirtualFrame frame = cm.createTestFrame(receiver, arguments);
         Object result = null;
         try {
-            result = cm.getBytecodeAST().executeGeneric(frame);
+            result = new SqueakMethodNode(null, cm).execute(frame);
         } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
             assertTrue("broken test", false);
         }
         return result;
     }
 
-    public Object run(BaseSqueakObject receiver, int... intbytes) {
+    public Object runMethod(BaseSqueakObject receiver, int... intbytes) {
+        return runMethod(receiver, new BaseSqueakObject[0], intbytes);
+    }
+
+    public Object runMethod(BaseSqueakObject receiver, BaseSqueakObject[] arguments, int... intbytes) {
         CompiledMethodObject cm = makeMethod(intbytes);
-        return run(receiver, cm);
+        return runMethod(cm, receiver, arguments);
     }
 
     public void testPushReceiverVariable() {
-        BaseSqueakObject rcvr = new PointersObject(new BaseSqueakObject[]{
-                        image.nil,
-                        image.sqFalse,
-                        image.sqTrue,
-                        image.characterClass,
-                        image.metaclass,
-                        image.schedulerAssociation,
-                        image.smallIntegerClass,
-                        image.smalltalk,
-                        image.specialObjectsArray,
-        });
-        assertSame(image.nil, run(rcvr, 0, 124));
-        assertSame(image.sqFalse, run(rcvr, 1, 124));
-        assertSame(image.sqTrue, run(rcvr, 2, 124));
-        assertSame(image.characterClass, run(rcvr, 3, 124));
-        assertSame(image.metaclass, run(rcvr, 4, 124));
-        assertSame(image.schedulerAssociation, run(rcvr, 5, 124));
-        assertSame(image.smallIntegerClass, run(rcvr, 6, 124));
-        assertSame(image.smalltalk, run(rcvr, 7, 124));
-        assertSame(image.specialObjectsArray, run(rcvr, 8, 124));
+        BaseSqueakObject rcvr = new PointersObject(
+                        image,
+                        new BaseSqueakObject[]{
+                                        image.nil,
+                                        image.sqFalse,
+                                        image.sqTrue,
+                                        image.characterClass,
+                                        image.metaclass,
+                                        image.schedulerAssociation,
+                                        image.smallIntegerClass,
+                                        image.smalltalk,
+                                        image.specialObjectsArray});
+        assertSame(image.nil, runMethod(rcvr, 0, 124));
+        assertSame(image.sqFalse, runMethod(rcvr, 1, 124));
+        assertSame(image.sqTrue, runMethod(rcvr, 2, 124));
+        assertSame(image.characterClass, runMethod(rcvr, 3, 124));
+        assertSame(image.metaclass, runMethod(rcvr, 4, 124));
+        assertSame(image.schedulerAssociation, runMethod(rcvr, 5, 124));
+        assertSame(image.smallIntegerClass, runMethod(rcvr, 6, 124));
+        assertSame(image.smalltalk, runMethod(rcvr, 7, 124));
+        assertSame(image.specialObjectsArray, runMethod(rcvr, 8, 124));
     }
 
     public void testPushReceiver() {
         BaseSqueakObject rcvr = image.specialObjectsArray;
-        assertSame(rcvr, run(rcvr, 112, 124));
+        assertSame(rcvr, runMethod(rcvr, 112, 124));
     }
 
     public void testPushTrue() {
         BaseSqueakObject rcvr = image.specialObjectsArray;
-        assertSame(image.sqTrue, run(rcvr, 113, 124));
+        assertTrue((boolean) runMethod(rcvr, 113, 124));
     }
 
     public void testPushFalse() {
         BaseSqueakObject rcvr = image.specialObjectsArray;
-        assertSame(image.sqFalse, run(rcvr, 114, 124));
+        assertFalse((boolean) runMethod(rcvr, 114, 124));
     }
 
     public void testPushNil() {
         BaseSqueakObject rcvr = image.specialObjectsArray;
-        assertSame(image.nil, run(rcvr, 115, 124));
+        assertSame(null, runMethod(rcvr, 115, 124));
     }
 
     public void testReturnReceiver() {
         BaseSqueakObject rcvr = image.specialObjectsArray;
-        assertSame(rcvr, run(rcvr, 115, 120));
+        assertSame(rcvr, runMethod(rcvr, 115, 120));
     }
 
-    public void testPrimEquivalentBC() {
+    public void testPrimEquivalent() {
         BaseSqueakObject rcvr = image.specialObjectsArray;
-        assertTrue((boolean) run(rcvr, 112, 112, 198, 124));
-        assertFalse((boolean) run(rcvr, 112, 113, 198, 124));
+        assertTrue((boolean) runPrim(110, rcvr, rcvr));
+        assertFalse((boolean) runPrim(110, rcvr, image.nil));
+    }
+
+    private Object runPrim(int primCode, BaseSqueakObject rcvr, BaseSqueakObject... arguments) {
+        CompiledMethodObject cm = makeMethod(new int[]{139, primCode & 0xFF, (primCode & 0xFF00) >> 8});
+        cm.setLiteral(0, new SmallInteger(null, 0x10000));
+        return runMethod(cm, rcvr, arguments);
     }
 }

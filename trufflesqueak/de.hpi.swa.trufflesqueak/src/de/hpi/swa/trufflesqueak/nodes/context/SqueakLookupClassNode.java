@@ -21,9 +21,9 @@ public abstract class SqueakLookupClassNode extends Node {
     @Specialization
     public ClassObject squeakClass(boolean object) {
         if (object) {
-            return (ClassObject) method.getImage().sqTrue.getSqClass();
+            return method.image.trueClass;
         } else {
-            return (ClassObject) method.getImage().sqFalse.getSqClass();
+            return method.image.falseClass;
         }
     }
 
@@ -31,14 +31,16 @@ public abstract class SqueakLookupClassNode extends Node {
         return object == null;
     }
 
+    @SuppressWarnings("unused")
     @Specialization(guards = "isNull(object)", rewriteOn = UnexpectedResultException.class)
-    public ClassObject nilClass(@SuppressWarnings("unused") Object object) throws UnexpectedResultException {
-        return SqueakTypesGen.expectClassObject(method.getImage().nil.getSqClass());
+    public ClassObject nilClass(Object object) throws UnexpectedResultException {
+        return method.image.nilClass;
     }
 
+    @SuppressWarnings("unused")
     @Specialization
-    public ClassObject squeakClass(@SuppressWarnings("unused") int object) {
-        return method.getImage().smallIntegerClass;
+    public ClassObject squeakClass(int object) {
+        return method.image.smallIntegerClass;
     }
 
     @Specialization(rewriteOn = UnexpectedResultException.class)
@@ -48,6 +50,6 @@ public abstract class SqueakLookupClassNode extends Node {
 
     @Specialization
     public BaseSqueakObject squeakClass(@SuppressWarnings("unused") Object object) {
-        return method.getImage().nil;
+        return method.image.nil;
     }
 }

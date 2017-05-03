@@ -3,7 +3,6 @@ package de.hpi.swa.trufflesqueak.nodes;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 
 /**
@@ -22,9 +21,5 @@ public abstract class SqueakExecutionNode extends SqueakNode {
         } catch (FrameSlotTypeException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public final SqueakImageContext getImage() {
-        return method.getImage();
     }
 }

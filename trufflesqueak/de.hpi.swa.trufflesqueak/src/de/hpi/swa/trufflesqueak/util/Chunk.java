@@ -62,7 +62,7 @@ public class Chunk {
     public SqueakObject asClassObject() {
         if (object == null) {
             assert format == 1;
-            object = new ClassObject();
+            object = new ClassObject(image);
         }
         return object;
     }
@@ -71,41 +71,41 @@ public class Chunk {
         if (object == null) {
             if (format == 0) {
                 // no fields
-                object = new EmptyObject();
+                object = new EmptyObject(image);
             } else if (format == 1) {
                 // fixed pointers
                 // classes should already be instantiated at this point, check a bit
                 assert this.getSqClass() != image.metaclass && this.getSqClass().getSqClass() != image.metaclass;
-                object = new PointersObject();
+                object = new PointersObject(image);
             } else if (format == 2) {
                 // indexable fields
-                object = new ListObject();
+                object = new ListObject(image);
             } else if (format == 3) {
                 // fixed and indexable fields
-                object = new ListObject();
+                object = new ListObject(image);
             } else if (format == 4) {
                 // indexable weak fields // TODO: Weak
-                object = new ListObject();
+                object = new ListObject(image);
             } else if (format == 5) {
                 // fixed weak fields // TODO: Weak
-                object = new PointersObject();
+                object = new PointersObject(image);
             } else if (format <= 8) {
                 assert false; // unused
             } else if (format == 9) {
                 // 64-bit integers
-                object = new NativeObject();
+                object = new NativeObject(image);
             } else if (format <= 11) {
                 // 32-bit integers
-                object = new NativeObject();
+                object = new NativeObject(image);
             } else if (format <= 15) {
                 // 16-bit integers
-                object = new NativeObject();
+                object = new NativeObject(image);
             } else if (format <= 23) {
                 // bytes
-                object = new NativeObject();
+                object = new NativeObject(image);
             } else if (format <= 31) {
                 // compiled methods
-                object = new CompiledMethodObject();
+                object = new CompiledMethodObject(image);
             }
         }
         return object;

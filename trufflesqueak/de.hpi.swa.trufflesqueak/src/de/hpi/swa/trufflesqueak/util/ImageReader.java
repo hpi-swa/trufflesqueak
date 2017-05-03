@@ -200,9 +200,13 @@ public class ImageReader {
         return size <= 1 ? 2 : size + (size & 1);
     }
 
-    void setPrebuiltObject(int idx, SqueakObject object) {
+    Chunk specialObjectChunk(int idx) {
         Chunk specialObjectsChunk = chunktable.get(specialObjectsPointer);
-        chunktable.get(specialObjectsChunk.data().get(idx)).object = object;
+        return chunktable.get(specialObjectsChunk.data().get(idx));
+    }
+
+    void setPrebuiltObject(int idx, SqueakObject object) {
+        specialObjectChunk(idx).object = object;
     }
 
     void initPrebuiltConstant(SqueakImageContext image) {
@@ -217,6 +221,11 @@ public class ImageReader {
         Chunk Array_class = classChunkOf(Array, image);
         Chunk Metaclass = classChunkOf(Array_class, image);
         Metaclass.object = image.metaclass;
+
+        // also cache nil, true, and false classes
+        classChunkOf(specialObjectChunk(0), image).object = image.nilClass;
+        classChunkOf(specialObjectChunk(1), image).object = image.falseClass;
+        classChunkOf(specialObjectChunk(2), image).object = image.trueClass;
 
         setPrebuiltObject(0, image.nil);
         setPrebuiltObject(1, image.sqFalse);
@@ -284,11 +293,10 @@ public class ImageReader {
         // fillin objects
         output.println("Fillin Objects");
         for (Chunk chunk : chunklist) {
-            chunk.asObject().fillin(chunk, image);
+            chunk.asObject().fillin(chunk);
         }
 
         output.println();
-
     }
 
     Chunk classChunkOf(Chunk chunk, SqueakImageContext image) {

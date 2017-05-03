@@ -51,12 +51,12 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
     private RootCallTarget callTarget;
     private final CyclicAssumption callTargetStable = new CyclicAssumption("Compiled method assumption");
 
-    public CompiledMethodObject() {
-        super();
+    public CompiledMethodObject(SqueakImageContext img) {
+        super(img);
     }
 
     public CompiledMethodObject(SqueakImageContext img, byte[] bc, BaseSqueakObject[] lits) {
-        setImage(img);
+        super(img);
         setBytesAndLiterals(lits, bc);
     }
 
@@ -65,8 +65,8 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
         bytes = bc;
         decodeHeader(literals[0]);
         prepareFrameDescriptor();
-        ast = new Decompiler(getImage(), this, bytes).getAST();
-        callTarget = Truffle.getRuntime().createCallTarget(new SqueakMethodNode(getImage().getLanguage(), this));
+        ast = new Decompiler(image, this, bytes).getAST();
+        callTarget = Truffle.getRuntime().createCallTarget(new SqueakMethodNode(image.getLanguage(), this));
         callTargetStable.invalidate();
     }
 
@@ -75,8 +75,8 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
     }
 
     @Override
-    public void fillin(Chunk chunk, SqueakImageContext img) {
-        super.fillin(chunk, img);
+    public void fillin(Chunk chunk) {
+        super.fillin(chunk);
         Vector<Integer> data = chunk.data();
         int header = data.get(0) >> 1; // header is a tagged small integer
         int literalsize = header & 0x7fff;
@@ -100,13 +100,13 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
     }
 
     private void prepareFrameDescriptor() {
-        frameDescriptor = new FrameDescriptor(getImage().nil);
+        frameDescriptor = new FrameDescriptor(image.nil);
         int squeakFrameSize = 16;
         if (needsLargeFrame) {
             squeakFrameSize = 40;
         }
         stackSlots = new FrameSlot[squeakFrameSize];
-        for (int i = 0; i < squeakFrameSize; i++) {
+        for (int i = 0; i < numTemps + numArgs; i++) {
             stackSlots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Illegal);
         }
         pcSlot = frameDescriptor.addFrameSlot(PC, FrameSlotKind.Int);
@@ -220,18 +220,18 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
         if (idx < literals.length) {
             return literals[idx / 4];
         } else {
-            return getImage().wrapInt(bytes[idx]);
+            return image.wrapInt(bytes[idx]);
         }
     }
 
     @Override
     public void atput0(int idx, BaseSqueakObject obj) throws UnwrappingError {
         if (idx < literals.length) {
-            literals[idx / 4] = obj;
+            setLiteral(idx / 4, obj);
         } else {
             bytes[idx] = (byte) obj.unwrapInt();
+            setBytesAndLiterals(literals, bytes);
         }
-        setBytesAndLiterals(literals, bytes);
     }
 
     public BaseSqueakObject getLiteral(int idx) {
@@ -240,6 +240,11 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
         } else {
             return literals[0];
         }
+    }
+
+    public void setLiteral(int i, BaseSqueakObject obj) {
+        literals[i] = obj;
+        setBytesAndLiterals(literals, bytes);
     }
 
     @Override
@@ -257,5 +262,9 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
 
     public final int getNumArgs() {
         return numArgs;
+    }
+
+    public boolean hasPrimitive() {
+        return hasPrimitive;
     }
 }

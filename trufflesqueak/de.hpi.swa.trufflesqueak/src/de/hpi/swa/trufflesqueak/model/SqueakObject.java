@@ -7,9 +7,12 @@ public abstract class SqueakObject extends BaseSqueakObject {
     private int hash;
     private BaseSqueakObject sqClass;
 
+    public SqueakObject(SqueakImageContext img) {
+        super(img);
+    }
+
     @Override
-    public void fillin(Chunk chunk, SqueakImageContext img) {
-        super.fillin(chunk, img);
+    public void fillin(Chunk chunk) {
         hash = chunk.getHash();
         sqClass = chunk.getSqClass();
     }

@@ -15,8 +15,9 @@ public abstract class DispatchNode extends Node {
     public abstract Object executeDispatch(Object method, Object[] arguments);
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"method.getCallTarget() == cachedTarget"}, assumptions = {"callTargetStable"})
+    @Specialization(guards = {"method == cachedMethod"}, assumptions = {"callTargetStable"})
     protected static Object doDirect(CompiledMethodObject method, Object[] arguments,
+                    @Cached("method") CompiledMethodObject cachedMethod,
                     @Cached("method.getCallTarget()") RootCallTarget cachedTarget,
                     @Cached("method.getCallTargetStable()") Assumption callTargetStable,
                     @Cached("create(cachedTarget)") DirectCallNode callNode) {

@@ -7,6 +7,7 @@ import java.io.PrintWriter;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
@@ -26,20 +27,23 @@ import de.hpi.swa.trufflesqueak.util.ImageReader;
 
 public class SqueakImageContext {
     // Special objects
-    public final NilObject nil = new NilObject();
-    public final FalseObject sqFalse = new FalseObject();
-    public final TrueObject sqTrue = new TrueObject();
-    public final ListObject specialObjectsArray = new ListObject();
-    public final PointersObject schedulerAssociation = new PointersObject();
-    public final ClassObject characterClass = new ClassObject();
-    public final ClassObject smallIntegerClass = new ClassObject();
-    public final ClassObject arrayClass = new ClassObject();
-    public final PointersObject smalltalk = new PointersObject();
-    public final NativeObject doesNotUnderstand = new NativeObject();
-    public final ListObject specialSelectors = new ListObject();
-    public final NativeObject mustBeBoolean = new NativeObject();
-    public final ClassObject metaclass = new ClassObject();
-    public final SqueakObject methodContextClass = new ClassObject();
+    public final NilObject nil = new NilObject(this);
+    public final FalseObject sqFalse = new FalseObject(this);
+    public final TrueObject sqTrue = new TrueObject(this);
+    public final ListObject specialObjectsArray = new ListObject(this);
+    public final PointersObject schedulerAssociation = new PointersObject(this);
+    public final ClassObject characterClass = new ClassObject(this);
+    public final ClassObject smallIntegerClass = new ClassObject(this);
+    public final ClassObject arrayClass = new ClassObject(this);
+    public final PointersObject smalltalk = new PointersObject(this);
+    public final NativeObject doesNotUnderstand = new NativeObject(this);
+    public final ListObject specialSelectors = new ListObject(this);
+    public final NativeObject mustBeBoolean = new NativeObject(this);
+    public final ClassObject metaclass = new ClassObject(this);
+    public final SqueakObject methodContextClass = new ClassObject(this);
+    public final ClassObject nilClass = new ClassObject(this);
+    public final ClassObject trueClass = new ClassObject(this);
+    public final ClassObject falseClass = new ClassObject(this);
 
     private final SqueakLanguage language;
     private final BufferedReader input;
@@ -47,38 +51,38 @@ public class SqueakImageContext {
     private final SqueakLanguage.Env env;
 
     // Special selectors
-    public final NativeObject plus = new NativeObject();
-    public final NativeObject minus = new NativeObject();
-    public final NativeObject lt = new NativeObject();
-    public final NativeObject gt = new NativeObject();
-    public final NativeObject le = new NativeObject();
-    public final NativeObject ge = new NativeObject();
-    public final NativeObject eq = new NativeObject();
-    public final NativeObject ne = new NativeObject();
-    public final NativeObject times = new NativeObject();
-    public final NativeObject modulo = new NativeObject();
-    public final NativeObject pointAt = new NativeObject();
-    public final NativeObject bitShift = new NativeObject();
-    public final NativeObject divide = new NativeObject();
-    public final NativeObject bitAnd = new NativeObject();
-    public final NativeObject bitOr = new NativeObject();
-    public final NativeObject at = new NativeObject();
-    public final NativeObject atput = new NativeObject();
-    public final NativeObject size_ = new NativeObject();
-    public final NativeObject next = new NativeObject();
-    public final NativeObject nextPut = new NativeObject();
-    public final NativeObject atEnd = new NativeObject();
-    public final NativeObject equivalent = new NativeObject();
-    public final NativeObject klass = new NativeObject();
-    public final NativeObject blockCopy = new NativeObject();
-    public final NativeObject value = new NativeObject();
-    public final NativeObject valueWithArg = new NativeObject();
-    public final NativeObject do_ = new NativeObject();
-    public final NativeObject new_ = new NativeObject();
-    public final NativeObject newWithArg = new NativeObject();
-    public final NativeObject x = new NativeObject();
-    public final NativeObject y = new NativeObject();
-    public final NativeObject div = new NativeObject();
+    public final NativeObject plus = new NativeObject(this);
+    public final NativeObject minus = new NativeObject(this);
+    public final NativeObject lt = new NativeObject(this);
+    public final NativeObject gt = new NativeObject(this);
+    public final NativeObject le = new NativeObject(this);
+    public final NativeObject ge = new NativeObject(this);
+    public final NativeObject eq = new NativeObject(this);
+    public final NativeObject ne = new NativeObject(this);
+    public final NativeObject times = new NativeObject(this);
+    public final NativeObject modulo = new NativeObject(this);
+    public final NativeObject pointAt = new NativeObject(this);
+    public final NativeObject bitShift = new NativeObject(this);
+    public final NativeObject divide = new NativeObject(this);
+    public final NativeObject bitAnd = new NativeObject(this);
+    public final NativeObject bitOr = new NativeObject(this);
+    public final NativeObject at = new NativeObject(this);
+    public final NativeObject atput = new NativeObject(this);
+    public final NativeObject size_ = new NativeObject(this);
+    public final NativeObject next = new NativeObject(this);
+    public final NativeObject nextPut = new NativeObject(this);
+    public final NativeObject atEnd = new NativeObject(this);
+    public final NativeObject equivalent = new NativeObject(this);
+    public final NativeObject klass = new NativeObject(this);
+    public final NativeObject blockCopy = new NativeObject(this);
+    public final NativeObject value = new NativeObject(this);
+    public final NativeObject valueWithArg = new NativeObject(this);
+    public final NativeObject do_ = new NativeObject(this);
+    public final NativeObject new_ = new NativeObject(this);
+    public final NativeObject newWithArg = new NativeObject(this);
+    public final NativeObject x = new NativeObject(this);
+    public final NativeObject y = new NativeObject(this);
+    public final NativeObject div = new NativeObject(this);
 
     public SqueakImageContext(SqueakLanguage squeakLanguage, SqueakLanguage.Env environ, BufferedReader in, PrintWriter out) {
         language = squeakLanguage;

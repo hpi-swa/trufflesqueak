@@ -50,6 +50,7 @@ public class AbstractSend extends SqueakBytecodeNode {
         for (int i = 0; i < argumentNodes.length; i++) {
             arguments[i + 1] = argumentNodes[i].executeGeneric(frame);
         }
+        CompilerAsserts.compilationConstant(argumentNodes.length);
         Object lookupResult = lookupNode.executeLookup(rcvrClass, selector);
         return dispatchNode.executeDispatch(lookupResult, arguments);
         // TODO: OaM

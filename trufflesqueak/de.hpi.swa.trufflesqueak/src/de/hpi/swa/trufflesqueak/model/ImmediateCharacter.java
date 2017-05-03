@@ -17,13 +17,13 @@ public class ImmediateCharacter extends ImmutableObject {
 
     @Override
     public BaseSqueakObject getSqClass() {
-        return getImage().characterClass;
+        return image.characterClass;
     }
 
     @Override
     public BaseSqueakObject at0(int idx) {
         if (idx == 0) {
-            return getImage().wrapInt(getValue());
+            return image.wrapInt(getValue());
         } else {
             throw new ArrayIndexOutOfBoundsException();
         }
