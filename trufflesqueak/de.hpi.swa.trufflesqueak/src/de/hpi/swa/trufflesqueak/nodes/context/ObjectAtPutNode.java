@@ -8,11 +8,11 @@ import de.hpi.swa.trufflesqueak.exceptions.UnwrappingError;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
-import de.hpi.swa.trufflesqueak.nodes.SqueakExecutionNode;
+import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithMethod;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
 @NodeChildren({@NodeChild(value = "objectNode", type = SqueakNode.class), @NodeChild(value = "valueNode", type = SqueakNode.class)})
-public abstract class ObjectAtPutNode extends SqueakExecutionNode {
+public abstract class ObjectAtPutNode extends SqueakNodeWithMethod {
     private final int index;
 
     protected ObjectAtPutNode(CompiledMethodObject cm, int variableIndex) {

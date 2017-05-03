@@ -8,10 +8,10 @@ import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 /**
  * This is the base class for Squeak bytecode evaluation.
  */
-public abstract class SqueakExecutionNode extends SqueakNode {
+public abstract class SqueakNodeWithMethod extends SqueakNode {
     protected final CompiledMethodObject method;
 
-    public SqueakExecutionNode(CompiledMethodObject cm) {
+    public SqueakNodeWithMethod(CompiledMethodObject cm) {
         method = cm;
     }
 

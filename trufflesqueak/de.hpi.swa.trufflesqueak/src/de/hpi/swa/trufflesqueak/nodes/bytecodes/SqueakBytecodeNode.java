@@ -4,10 +4,10 @@ import java.util.Stack;
 import java.util.Vector;
 
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.nodes.SqueakExecutionNode;
+import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithMethod;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
-public abstract class SqueakBytecodeNode extends SqueakExecutionNode {
+public abstract class SqueakBytecodeNode extends SqueakNodeWithMethod {
     protected final int index;
 
     public SqueakBytecodeNode(CompiledMethodObject cm, int idx) {

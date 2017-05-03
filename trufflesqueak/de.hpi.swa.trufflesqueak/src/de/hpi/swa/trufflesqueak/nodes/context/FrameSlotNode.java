@@ -4,9 +4,9 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.nodes.SqueakExecutionNode;
+import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithMethod;
 
-public abstract class FrameSlotNode extends SqueakExecutionNode {
+public abstract class FrameSlotNode extends SqueakNodeWithMethod {
     final FrameSlot slot;
 
     protected FrameSlotNode(CompiledMethodObject cm, FrameSlot frameSlot) {
