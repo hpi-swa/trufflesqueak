@@ -29,4 +29,8 @@ public class PushActiveContextNode extends SqueakBytecodeNode {
         stack.push(this);
     }
 
+    @Override
+    public void prettyPrintOn(StringBuilder b) {
+        b.append("thisContext");
+    }
 }

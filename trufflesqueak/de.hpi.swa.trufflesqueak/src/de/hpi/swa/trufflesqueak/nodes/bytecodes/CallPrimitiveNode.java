@@ -48,4 +48,9 @@ public class CallPrimitiveNode extends SqueakBytecodeNode {
             stack.push(this);
         }
     }
+
+    @Override
+    public void prettyPrintOn(StringBuilder b) {
+        b.append("<prim: ").append(primitive).append('>');
+    }
 }

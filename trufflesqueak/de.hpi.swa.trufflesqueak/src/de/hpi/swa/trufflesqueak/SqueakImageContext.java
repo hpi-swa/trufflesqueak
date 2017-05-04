@@ -99,7 +99,25 @@ public class SqueakImageContext {
         return Truffle.getRuntime().createCallTarget(new SqueakContextNode(language, activeContext));
     }
 
-    public CallTarget getEntryPoint(BaseSqueakObject receiver, String selector) {
+    public CallTarget getEntryPoint() {
+        String[] args = (String[]) env.getConfig().get("args");
+        BaseSqueakObject receiver = nil;
+        String selector = "testSum";
+        switch (args.length) {
+            case 1:
+                receiver = nil;
+                selector = args[0];
+            case 2:
+                switch (args[0]) {
+                    case "nil":
+                        receiver = nil;
+                        break;
+                    default:
+                        receiver = new SmallInteger(this, Integer.parseInt(args[0]));
+                }
+                selector = args[1];
+                break;
+        }
         ClassObject sqClass = (ClassObject) receiver.getSqClass();
         CompiledMethodObject lookup = (CompiledMethodObject) sqClass.lookup(selector);
         return lookup.getCallTarget();

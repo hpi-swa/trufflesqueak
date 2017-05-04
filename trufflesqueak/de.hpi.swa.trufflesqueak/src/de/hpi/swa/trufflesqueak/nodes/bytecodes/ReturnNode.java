@@ -24,4 +24,10 @@ public abstract class ReturnNode extends SqueakBytecodeNode {
     public Object executeGeneric(VirtualFrame frame) {
         throw new LocalReturn(valueNode.executeGeneric(frame));
     }
+
+    @Override
+    public void prettyPrintOn(StringBuilder b) {
+        b.append("^ ");
+        super.prettyPrintOn(b);
+    }
 }

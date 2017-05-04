@@ -6,7 +6,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
-import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtPutNodeGen;
 
 public class PopIntoReceiverVariableNode extends SqueakBytecodeNode {
@@ -21,7 +20,7 @@ public class PopIntoReceiverVariableNode extends SqueakBytecodeNode {
 
     @Override
     public void interpretOn(Stack<SqueakNode> stack, Stack<SqueakNode> statements) {
-        storeNode = ObjectAtPutNodeGen.create(method, receiverIndex, FrameSlotReadNode.receiver(method), stack.pop());
+        storeNode = ObjectAtPutNodeGen.create(method, receiverIndex, new ReceiverNode(method, index), stack.pop());
         statements.push(this);
     }
 

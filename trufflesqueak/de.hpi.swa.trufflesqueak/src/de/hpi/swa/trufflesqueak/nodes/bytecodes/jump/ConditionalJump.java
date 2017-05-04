@@ -52,12 +52,13 @@ public class ConditionalJump extends AbstractJump {
 
         // the nodes making up our branch
         int firstBranchBC = index + 1;
-        List<SqueakBytecodeNode> thenBranchNodes = sequence.subList(firstBranchBC, firstBranchBC + offset);
-        List<SqueakBytecodeNode> elseBranchNodes = null;
+        Vector<SqueakBytecodeNode> thenBranchNodes = new Vector<>(sequence.subList(firstBranchBC, firstBranchBC + offset));
+        Vector<SqueakBytecodeNode> elseBranchNodes = null;
 
         SqueakBytecodeNode lastNode = thenBranchNodes.get(thenBranchNodes.size() - 1);
         if (lastNode instanceof UnconditionalJump) {
             thenBranchNodes.remove(lastNode);
+            sequence.set(sequence.indexOf(lastNode), null);
             UnconditionalJump jumpOutNode = (UnconditionalJump) lastNode;
             if (jumpOutNode.offset < 0) {
                 // we're the condition of a loop, the unconditional back jump will jump before us
@@ -65,33 +66,40 @@ public class ConditionalJump extends AbstractJump {
                 loopNode = Truffle.getRuntime().createLoopNode(new LoopRepeatingNode(
                                 method,
                                 branchCondition,
-                                blockFrom(thenBranchNodes, sequence)));
+                                blockFrom(thenBranchNodes, sequence, new Stack<>())));
                 statements.push(this);
                 return;
             } else {
                 // else branch
                 assert jumpOutNode.offset > 0;
                 int firstElseBranchBC = firstBranchBC + offset + 1;
-                elseBranchNodes = sequence.subList(firstElseBranchBC, firstElseBranchBC + jumpOutNode.offset);
+                elseBranchNodes = new Vector<>(sequence.subList(firstElseBranchBC, firstElseBranchBC + jumpOutNode.offset));
             }
         }
+        Stack<SqueakNode> subStack = new Stack<>();
         ifThenNode = new IfThenNode(
                         method,
                         branchCondition,
-                        blockFrom(thenBranchNodes, sequence),
-                        blockFrom(elseBranchNodes, sequence));
-        stack.push(this);
+                        blockFrom(thenBranchNodes, sequence, subStack),
+                        blockFrom(elseBranchNodes, sequence, subStack));
+        if (subStack.empty()) {
+            statements.push(this);
+        } else {
+            stack.push(this);
+        }
     }
 
-    private static SqueakNode[] blockFrom(List<SqueakBytecodeNode> nodes, Vector<SqueakBytecodeNode> sequence) {
+    private static SqueakNode[] blockFrom(List<SqueakBytecodeNode> nodes, Vector<SqueakBytecodeNode> sequence, Stack<SqueakNode> subStack) {
         if (nodes == null)
             return null;
-        Stack<SqueakNode> subStack = new Stack<>();
         Stack<SqueakNode> subStatements = new Stack<>();
-        for (SqueakBytecodeNode node : nodes) {
+        for (int i = 0; i < nodes.size(); i++) {
+            SqueakBytecodeNode node = nodes.get(i);
             if (node != null) {
-                node.interpretOn(subStack, subStatements, sequence);
-                sequence.setElementAt(null, sequence.indexOf(node));
+                if (sequence.contains(node)) {
+                    node.interpretOn(subStack, subStatements, sequence);
+                    sequence.set(sequence.indexOf(node), null);
+                }
             }
         }
         return subStatements.toArray(new SqueakNode[0]);

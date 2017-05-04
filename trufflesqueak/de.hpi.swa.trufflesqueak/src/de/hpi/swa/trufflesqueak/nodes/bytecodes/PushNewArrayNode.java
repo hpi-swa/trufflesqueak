@@ -47,4 +47,18 @@ public class PushNewArrayNode extends SqueakBytecodeNode {
         }
         stack.push(this);
     }
+
+    @Override
+    public void prettyPrintOn(StringBuilder b) {
+        if (popIntoArrayNodes == null) {
+            b.append("(Array new: ").append(arraySize).append(')');
+        } else {
+            b.append('{');
+            for (SqueakNode node : popIntoArrayNodes) {
+                node.prettyPrintOn(b);
+                b.append(". ");
+            }
+            b.append('}');
+        }
+    }
 }

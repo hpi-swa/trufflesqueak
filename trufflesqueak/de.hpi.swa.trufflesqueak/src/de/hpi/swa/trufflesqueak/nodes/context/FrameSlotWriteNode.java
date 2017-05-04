@@ -64,4 +64,11 @@ public abstract class FrameSlotWriteNode extends FrameSlotNode {
         frame.setObject(slot, value);
         return value;
     }
+
+    @Override
+    public void prettyPrintOn(StringBuilder b) {
+        b.append("temp").append(slot.getIdentifier()).append(" := (");
+        super.prettyPrintOn(b);
+        b.append(')');
+    }
 }

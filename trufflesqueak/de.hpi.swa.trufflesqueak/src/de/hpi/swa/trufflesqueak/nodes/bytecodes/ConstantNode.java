@@ -24,4 +24,9 @@ public class ConstantNode extends SqueakBytecodeNode {
     public Object executeGeneric(VirtualFrame frame) {
         return constant;
     }
+
+    @Override
+    public void prettyPrintOn(StringBuilder b) {
+        b.append(constant);
+    }
 }

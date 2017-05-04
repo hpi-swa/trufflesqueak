@@ -48,4 +48,15 @@ public class LoopRepeatingNode extends Node implements RepeatingNode {
             return false;
         }
     }
+
+    public void prettyPrintOn(StringBuilder str) {
+        str.append('(');
+        conditionNode.prettyPrintOn(str);
+        str.append(") whileFalse: [");
+        for (SqueakNode node : bodyNodes) {
+            node.prettyPrintOn(str);
+            str.append('.').append('\n');
+        }
+        str.append("].");
+    }
 }

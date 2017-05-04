@@ -26,6 +26,7 @@ public abstract class DoubleExtendedDoAnythingNode {
 
     public static class StoreIntoAssociationNode extends SqueakBytecodeNode {
         private final BaseSqueakObject literal;
+        private SqueakNode valueNode;
         @Child SqueakNode storeNode;
 
         public StoreIntoAssociationNode(CompiledMethodObject cm, int idx, int literalIndex) {
@@ -35,7 +36,8 @@ public abstract class DoubleExtendedDoAnythingNode {
 
         @Override
         public void interpretOn(Stack<SqueakNode> stack, Stack<SqueakNode> sequence) {
-            storeNode = ObjectAtPutNodeGen.create(method, 1, new ConstantNode(method, index, literal), stack.pop());
+            valueNode = stack.pop();
+            storeNode = ObjectAtPutNodeGen.create(method, 1, new ConstantNode(method, index, literal), valueNode);
             stack.push(this);
         }
 
@@ -44,7 +46,6 @@ public abstract class DoubleExtendedDoAnythingNode {
             // TODO Auto-generated method stub
             return null;
         }
-
     }
 
     public static SqueakBytecodeNode create(CompiledMethodObject cm, int idx, int second, int third) {

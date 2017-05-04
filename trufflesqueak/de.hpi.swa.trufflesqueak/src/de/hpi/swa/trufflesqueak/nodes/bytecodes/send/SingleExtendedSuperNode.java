@@ -27,4 +27,14 @@ public class SingleExtendedSuperNode extends AbstractSend {
         super.interpretOn(stack, sequence);
         lookupClassNode = new SqueakLookupClassSuperNode(method);
     }
+
+    @Override
+    public void prettyPrintOn(StringBuilder b) {
+        b.append("super ").append(selector).append("@args(");
+        for (SqueakNode node : argumentNodes) {
+            node.prettyPrintOn(b);
+            b.append('.');
+        }
+        b.append(')');
+    }
 }

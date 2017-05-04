@@ -43,4 +43,9 @@ public abstract class FrameSlotReadNode extends FrameSlotNode {
     public Object readObject(VirtualFrame frame) {
         return FrameUtil.getObjectSafe(frame, slot);
     }
+
+    @Override
+    public void prettyPrintOn(StringBuilder b) {
+        b.append("temp").append(slot.getIdentifier());
+    }
 }

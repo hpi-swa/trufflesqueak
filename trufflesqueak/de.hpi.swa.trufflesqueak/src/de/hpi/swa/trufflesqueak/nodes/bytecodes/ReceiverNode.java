@@ -25,4 +25,9 @@ public class ReceiverNode extends SqueakBytecodeNode {
     public Object executeGeneric(VirtualFrame frame) {
         return receiverNode.executeGeneric(frame);
     }
+
+    @Override
+    public void prettyPrintOn(StringBuilder b) {
+        b.append("self");
+    }
 }

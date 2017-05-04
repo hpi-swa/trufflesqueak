@@ -3,7 +3,6 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes.jump;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
@@ -12,7 +11,7 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SendSelector;
 
-public class IfThenNode extends Node {
+public class IfThenNode extends SqueakNode {
     @Child private SendSelector mustBeBooleanSend;
     private ConditionProfile branchProfile;
     @Child private SqueakNode conditionNode;
@@ -27,20 +26,21 @@ public class IfThenNode extends Node {
         elseNodes = elseBranch;
     }
 
+    @Override
     @ExplodeLoop
     public Object executeGeneric(VirtualFrame frame) {
-        CompilerAsserts.compilationConstant(thenNodes.length);
-        CompilerAsserts.compilationConstant(elseNodes.length);
         try {
             Object last = null;
             if (branchProfile.profile(SqueakTypesGen.expectBoolean(conditionNode.executeGeneric(frame)))) {
                 if (elseNodes == null) {
                     return null;
                 }
+                CompilerAsserts.compilationConstant(elseNodes.length);
                 for (SqueakNode node : elseNodes) {
                     last = node.executeGeneric(frame);
                 }
             } else {
+                CompilerAsserts.compilationConstant(thenNodes.length);
                 for (SqueakNode node : thenNodes) {
                     last = node.executeGeneric(frame);
                 }
@@ -49,5 +49,22 @@ public class IfThenNode extends Node {
         } catch (UnexpectedResultException e) {
             return mustBeBooleanSend.executeGeneric(frame);
         }
+    }
+
+    @Override
+    public void prettyPrintOn(StringBuilder b) {
+        b.append('(');
+        conditionNode.prettyPrintOn(b);
+        b.append(") ifTrue: [");
+        for (SqueakNode node : thenNodes) {
+            node.prettyPrintOn(b);
+            b.append('.').append('\n');
+        }
+        b.append("] ifFalse: [");
+        for (SqueakNode node : thenNodes) {
+            node.prettyPrintOn(b);
+            b.append('.').append('\n');
+        }
+        b.append(']');
     }
 }

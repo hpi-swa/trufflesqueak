@@ -21,10 +21,10 @@ import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNodeGen;
 
 public class AbstractSend extends SqueakBytecodeNode {
-    private final BaseSqueakObject selector;
+    protected final BaseSqueakObject selector;
     @Child protected SqueakNode receiverNode;
     @Child protected SqueakLookupClassNode lookupClassNode;
-    @Children private final SqueakNode[] argumentNodes;
+    @Children protected final SqueakNode[] argumentNodes;
     @Child private LookupNode lookupNode;
     @Child private DispatchNode dispatchNode;
 
@@ -70,5 +70,17 @@ public class AbstractSend extends SqueakBytecodeNode {
             lookupNode = LookupNodeGen.create();
         }
         stack.push(this);
+    }
+
+    @Override
+    public void prettyPrintOn(StringBuilder b) {
+        b.append('(');
+        receiverNode.prettyPrintOn(b);
+        b.append(") ").append(selector).append("@args(");
+        for (SqueakNode node : argumentNodes) {
+            node.prettyPrintOn(b);
+            b.append('.');
+        }
+        b.append(')');
     }
 }

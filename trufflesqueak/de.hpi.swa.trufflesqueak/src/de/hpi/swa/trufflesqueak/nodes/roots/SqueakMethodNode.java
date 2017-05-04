@@ -70,6 +70,16 @@ public class SqueakMethodNode extends RootNode {
         }
     }
 
+    public String prettyPrint() {
+        StringBuilder str = new StringBuilder();
+        str.append(method.toString()).append('\n');
+        for (SqueakBytecodeNode node : ast) {
+            node.prettyPrintOn(str);
+            str.append('\n');
+        }
+        return str.toString();
+    }
+
     @Override
     @ExplodeLoop
     public Object execute(VirtualFrame frame) {

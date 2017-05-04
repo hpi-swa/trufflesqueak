@@ -5,7 +5,7 @@ import java.util.Stack;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
-import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotReadNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReceiverNode;
 
 public class SendSelfSelector extends AbstractSend {
     public SendSelfSelector(CompiledMethodObject cm, int idx, BaseSqueakObject selector, int numArgs) {
@@ -17,6 +17,6 @@ public class SendSelfSelector extends AbstractSend {
         super.interpretOn(stack, sequence);
         stack.push(receiverNode); // for this send, the receiver wasn't pushed on the stack, leave
                                   // what was there before
-        receiverNode = FrameSlotReadNode.receiver(method);
+        receiverNode = new ReceiverNode(method, index);
     }
 }
