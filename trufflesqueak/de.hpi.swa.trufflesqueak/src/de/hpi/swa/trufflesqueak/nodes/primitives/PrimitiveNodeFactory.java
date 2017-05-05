@@ -10,26 +10,26 @@ import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ArgumentNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimAddNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimAt;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimAtPut;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimBitAnd;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimBitOr;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimBitShift;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimAtNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimAtPutNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimBitAndNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimBitOrNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimBitShiftNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimClass;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimDiv;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimDivide;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimEqual;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimDivNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimDivideNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimEqualNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimEquivalentNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimGreaterOrEqual;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimGreaterOrEqualNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimGreaterThanNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimLessOrEqualNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimLessThan;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimLessThanNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimMakePoint;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimMod;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimMul;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimNew;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimModNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimMulNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimNewArgNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimNotEqual;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimNewNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimNotEqualNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPushFalse;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPushMinusOne;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPushNil;
@@ -39,7 +39,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPushTrue;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPushTwo;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPushZero;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimSizeNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimSub;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimSubNodeGen;
 
 public abstract class PrimitiveNodeFactory {
     private static final int PRIM_COUNT = 574;
@@ -47,33 +47,33 @@ public abstract class PrimitiveNodeFactory {
 
     public static enum Primitives {
         ADD(PrimAddNodeGen.class, 1),
-        SUB(PrimSub.class, 2),
-        LESSTHAN(PrimLessThan.class, 3),
+        SUB(PrimSubNodeGen.class, 2),
+        LESSTHAN(PrimLessThanNodeGen.class, 3),
         GREATERTHAN(PrimGreaterThanNodeGen.class, 4),
         LESSOREQUAL(PrimLessOrEqualNodeGen.class, 5),
-        GREATEROREQUAL(PrimGreaterOrEqual.class, 6),
-        EQUAL(PrimEqual.class, 7),
-        NOTEQUAL(PrimNotEqual.class, 8),
-        MULTIPLY(PrimMul.class, 9),
-        DIVIDE(PrimDivide.class, 10),
-        MOD(PrimMod.class, 11),
-        DIV(PrimDiv.class, 12),
+        GREATEROREQUAL(PrimGreaterOrEqualNodeGen.class, 6),
+        EQUAL(PrimEqualNodeGen.class, 7),
+        NOTEQUAL(PrimNotEqualNodeGen.class, 8),
+        MULTIPLY(PrimMulNodeGen.class, 9),
+        DIVIDE(PrimDivideNodeGen.class, 10),
+        MOD(PrimModNodeGen.class, 11),
+        DIV(PrimDivNodeGen.class, 12),
         //
-        BIT_AND(PrimBitAnd.class, 14),
-        BIT_OR(PrimBitOr.class, 15),
+        BIT_AND(PrimBitAndNodeGen.class, 14),
+        BIT_OR(PrimBitOrNodeGen.class, 15),
         //
-        BIT_SHIFT(PrimBitShift.class, 17),
+        BIT_SHIFT(PrimBitShiftNodeGen.class, 17),
         MAKE_POINT(PrimMakePoint.class, 18),
         //
-        AT(PrimAt.class, 60),
-        AT_PUT(PrimAtPut.class, 61),
+        AT(PrimAtNodeGen.class, 60),
+        AT_PUT(PrimAtPutNodeGen.class, 61),
         SIZE(PrimSizeNodeGen.class, 62),
         //
         NEXT(PrimitiveNode.class, 65),
         NEXT_PUT(PrimitiveNode.class, 66),
         AT_END(PrimitiveNode.class, 67),
         //
-        NEW(PrimNew.class, 70),
+        NEW(PrimNewNodeGen.class, 70),
         NEW_WITH_ARG(PrimNewArgNodeGen.class, 71),
         //
         BLOCK_COPY(PrimitiveNode.class, 80),

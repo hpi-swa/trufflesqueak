@@ -6,6 +6,7 @@ import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.LocalReturn;
+import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNode;
@@ -25,7 +26,7 @@ public class CallPrimitiveNode extends SqueakBytecodeNode {
         Object result = null;
         try {
             result = primitive.executeGeneric(frame);
-        } catch (UnsupportedSpecializationException e) {
+        } catch (UnsupportedSpecializationException | PrimitiveFailed e) {
             return null;
         }
         if (index == 0) {

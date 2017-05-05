@@ -1,18 +1,29 @@
 package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
-import com.oracle.truffle.api.frame.VirtualFrame;
+import java.math.BigInteger;
 
-import de.hpi.swa.trufflesqueak.exceptions.NonLocalReturn;
-import de.hpi.swa.trufflesqueak.exceptions.NonVirtualReturn;
-import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
-import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
+import com.oracle.truffle.api.dsl.Specialization;
+
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveBinaryOperation;
 
 public class PrimSub extends PrimitiveBinaryOperation {
-
     public PrimSub(CompiledMethodObject cm) {
         super(cm);
-        // TODO Auto-generated constructor stub
+    }
+
+    @Specialization(rewriteOn = ArithmeticException.class)
+    int sub(int a, int b) {
+        return Math.subtractExact(a, b);
+    }
+
+    @Specialization(rewriteOn = ArithmeticException.class)
+    long sub(long a, long b) {
+        return Math.addExact(a, b);
+    }
+
+    @Specialization
+    BigInteger sub(BigInteger a, BigInteger b) {
+        return a.subtract(b);
     }
 }
