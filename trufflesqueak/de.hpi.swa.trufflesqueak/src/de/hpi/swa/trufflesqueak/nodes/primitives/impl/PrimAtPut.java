@@ -26,7 +26,7 @@ public class PrimAtPut extends PrimitiveTernaryOperation {
     @Specialization
     protected BaseSqueakObject atput(BaseSqueakObject receiver, int index, BaseSqueakObject value) {
         try {
-            receiver.atput0(index, value);
+            receiver.atput0(index - 1, value);
             return value;
         } catch (UnwrappingError | ArrayIndexOutOfBoundsException e) {
             throw new PrimitiveFailed();

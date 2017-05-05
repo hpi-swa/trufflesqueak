@@ -15,7 +15,7 @@ public class PrimAt extends PrimitiveBinaryOperation {
     @Specialization
     protected BaseSqueakObject at(BaseSqueakObject receiver, int index) {
         try {
-            return receiver.at0(index);
+            return receiver.at0(index - 1);
         } catch (ArrayIndexOutOfBoundsException e) {
             throw new PrimitiveFailed();
         }
