@@ -76,10 +76,22 @@ public class AbstractSend extends SqueakBytecodeNode {
     public void prettyPrintOn(StringBuilder b) {
         b.append('(');
         receiverNode.prettyPrintOn(b);
-        b.append(") ").append(selector).append("@args(");
-        for (SqueakNode node : argumentNodes) {
-            node.prettyPrintOn(b);
-            b.append('.');
+        b.append(") ");
+        String[] splitSelector = selector.toString().split(":");
+        assert argumentNodes.length == splitSelector.length;
+        if (splitSelector.length == 1 && !splitSelector[0].matches("[A-Za-z]")) {
+            b.append(selector);
+            if (argumentNodes.length == 1) {
+                b.append(" (");
+                argumentNodes[0].prettyPrintOn(b);
+                b.append(')');
+            }
+        } else {
+            for (int i = 0; i < argumentNodes.length; i++) {
+                b.append(splitSelector[i]).append(": (");
+                argumentNodes[i].prettyPrintOn(b);
+                b.append(')');
+            }
         }
         b.append(')');
     }

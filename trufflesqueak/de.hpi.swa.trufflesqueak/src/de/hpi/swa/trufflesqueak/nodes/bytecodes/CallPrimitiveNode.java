@@ -26,16 +26,12 @@ public class CallPrimitiveNode extends SqueakBytecodeNode {
         try {
             result = primitive.executeGeneric(frame);
         } catch (UnsupportedSpecializationException e) {
-            result = null;
-        }
-        if (result == null || index != 0) {
             return null;
+        }
+        if (index == 0) {
+            throw new LocalReturn(result);
         } else {
-            if (index == 0) {
-                throw new LocalReturn(result);
-            } else {
-                return result;
-            }
+            return result;
         }
     }
 

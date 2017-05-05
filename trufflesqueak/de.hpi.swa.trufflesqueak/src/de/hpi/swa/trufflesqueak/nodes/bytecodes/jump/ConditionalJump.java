@@ -72,20 +72,27 @@ public class ConditionalJump extends AbstractJump {
             } else {
                 // else branch
                 assert jumpOutNode.offset > 0;
-                int firstElseBranchBC = firstBranchBC + offset + 1;
+                int firstElseBranchBC = firstBranchBC + offset;
                 elseBranchNodes = new Vector<>(sequence.subList(firstElseBranchBC, firstElseBranchBC + jumpOutNode.offset));
             }
         }
         Stack<SqueakNode> subStack = new Stack<>();
+        SqueakNode[] thenStatements = blockFrom(thenBranchNodes, sequence, subStack);
+        SqueakNode thenResult = subStack.empty() ? null : subStack.pop();
+        SqueakNode[] elseStatements = blockFrom(elseBranchNodes, sequence, subStack);
+        SqueakNode elseResult = subStack.empty() ? null : subStack.pop();
         ifThenNode = new IfThenNode(
                         method,
                         branchCondition,
-                        blockFrom(thenBranchNodes, sequence, subStack),
-                        blockFrom(elseBranchNodes, sequence, subStack));
-        if (subStack.empty()) {
-            statements.push(this);
-        } else {
+                        thenStatements,
+                        thenResult,
+                        elseStatements,
+                        elseResult);
+        assert subStack.empty();
+        if (thenResult != null || elseResult != null) {
             stack.push(this);
+        } else {
+            statements.push(this);
         }
     }
 
@@ -97,7 +104,17 @@ public class ConditionalJump extends AbstractJump {
             SqueakBytecodeNode node = nodes.get(i);
             if (node != null) {
                 if (sequence.contains(node)) {
+                    int size = subStatements.size();
                     node.interpretOn(subStack, subStatements, sequence);
+                    if (!subStack.empty() && subStatements.size() > size) {
+                        // some statement was discovered, but something remains on the stack.
+                        // this means the statement didn't consume everything from under itself,
+                        // and we need to insert the stack item before the last statement.
+                        // FIXME: can these asserts be wrong?
+                        assert subStatements.size() == size + 1;
+                        assert subStack.size() == 1;
+                        subStatements.insertElementAt(subStack.pop(), size);
+                    }
                     sequence.set(sequence.indexOf(node), null);
                 }
             }

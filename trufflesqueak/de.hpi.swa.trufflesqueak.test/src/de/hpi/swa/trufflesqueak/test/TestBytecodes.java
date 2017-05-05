@@ -57,6 +57,7 @@ public class TestBytecodes extends TestCase {
     public void testPushReceiverVariable() {
         BaseSqueakObject rcvr = new PointersObject(
                         image,
+                        image.arrayClass,
                         new BaseSqueakObject[]{
                                         image.nil,
                                         image.sqFalse,

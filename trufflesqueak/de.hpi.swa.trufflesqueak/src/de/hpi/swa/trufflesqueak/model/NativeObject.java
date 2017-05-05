@@ -17,6 +17,34 @@ public class NativeObject extends SqueakObject implements TruffleObject {
         super(img);
     }
 
+    public NativeObject(SqueakImageContext image, ClassObject classObject, int size, int elementSz) {
+        super(image, classObject);
+        if (elementSz == 1) {
+            setBytes(new String(new byte[size]));
+        } else {
+            assert elementSz == 4;
+            setWords(new int[size]);
+        }
+    }
+
+    public NativeObject(SqueakImageContext img, ClassObject klass, byte[] bytes) {
+        this(img, klass, bytes.length, 1);
+        content.put(bytes);
+    }
+
+    public void setBytes(String s) {
+        byte[] bytes = s.getBytes();
+        content = ByteBuffer.allocate(bytes.length);
+        content.put(bytes);
+        elementSize = 1;
+    }
+
+    public void setWords(int[] words) {
+        content = ByteBuffer.allocate(words.length * 4);
+        content.asIntBuffer().put(words);
+        elementSize = 4;
+    }
+
     @Override
     public void fillin(Chunk chunk) {
         super.fillin(chunk);

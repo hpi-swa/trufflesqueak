@@ -232,9 +232,11 @@ public class ImageReader {
         setPrebuiltObject(2, image.sqTrue);
         setPrebuiltObject(3, image.schedulerAssociation);
         setPrebuiltObject(5, image.smallIntegerClass);
+        setPrebuiltObject(6, image.stringClass);
         setPrebuiltObject(7, image.arrayClass);
         setPrebuiltObject(8, image.smalltalk);
         setPrebuiltObject(10, image.methodContextClass);
+        setPrebuiltObject(16, image.compiledMethodClass);
         setPrebuiltObject(19, image.characterClass);
         setPrebuiltObject(20, image.doesNotUnderstand);
         setPrebuiltObject(25, image.mustBeBoolean);

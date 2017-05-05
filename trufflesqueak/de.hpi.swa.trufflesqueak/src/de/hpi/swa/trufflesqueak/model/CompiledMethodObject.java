@@ -52,11 +52,11 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
     private final CyclicAssumption callTargetStable = new CyclicAssumption("Compiled method assumption");
 
     public CompiledMethodObject(SqueakImageContext img) {
-        super(img);
+        super(img, img.compiledMethodClass);
     }
 
     public CompiledMethodObject(SqueakImageContext img, byte[] bc, BaseSqueakObject[] lits) {
-        super(img);
+        this(img);
         setBytesAndLiterals(lits, bc);
     }
 
@@ -72,6 +72,10 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
 
     public CompiledMethodObject(SqueakImageContext img, byte[] bc) {
         this(img, bc, new BaseSqueakObject[]{img.wrapInt(0)});
+    }
+
+    public CompiledMethodObject(SqueakImageContext img, ClassObject klass) {
+        super(img, klass);
     }
 
     @Override

@@ -7,7 +7,6 @@ import java.io.PrintWriter;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
@@ -44,6 +43,8 @@ public class SqueakImageContext {
     public final ClassObject nilClass = new ClassObject(this);
     public final ClassObject trueClass = new ClassObject(this);
     public final ClassObject falseClass = new ClassObject(this);
+    public final ClassObject stringClass = new ClassObject(this);
+    public final ClassObject compiledMethodClass = new ClassObject(this);
 
     private final SqueakLanguage language;
     private final BufferedReader input;
@@ -83,12 +84,18 @@ public class SqueakImageContext {
     public final NativeObject x = new NativeObject(this);
     public final NativeObject y = new NativeObject(this);
     public final NativeObject div = new NativeObject(this);
+    private final CompiledMethodObject entryPoint;
+
+    private static final BaseSqueakObject[] ENTRY_POINT_LITERALS = new BaseSqueakObject[]{new SmallInteger(null, 0), null, null};
+    // Push literal 1, send literal 2 selector, return top
+    private static final byte[] ENTRY_POINT_BYTES = new byte[]{32, (byte) 209, 124};
 
     public SqueakImageContext(SqueakLanguage squeakLanguage, SqueakLanguage.Env environ, BufferedReader in, PrintWriter out) {
         language = squeakLanguage;
         env = environ;
         input = in;
         output = out;
+        entryPoint = new CompiledMethodObject(this, ENTRY_POINT_BYTES, ENTRY_POINT_LITERALS);
     }
 
     public CallTarget getActiveContext() {
@@ -113,14 +120,16 @@ public class SqueakImageContext {
                         receiver = nil;
                         break;
                     default:
-                        receiver = new SmallInteger(this, Integer.parseInt(args[0]));
+                        receiver = wrapInt(Integer.parseInt(args[0]));
                 }
                 selector = args[1];
                 break;
         }
-        ClassObject sqClass = (ClassObject) receiver.getSqClass();
-        CompiledMethodObject lookup = (CompiledMethodObject) sqClass.lookup(selector);
-        return lookup.getCallTarget();
+        ClassObject receiverClass = (ClassObject) receiver.getSqClass();
+        CompiledMethodObject lookupResult = (CompiledMethodObject) receiverClass.lookup(selector);
+        entryPoint.setLiteral(1, receiver);
+        entryPoint.setLiteral(2, lookupResult.getCompiledInSelector());
+        return entryPoint.getCallTarget();
     }
 
     public void fillInFrom(FileInputStream inputStream) throws IOException {
@@ -149,5 +158,9 @@ public class SqueakImageContext {
 
     public ImmediateCharacter wrapChar(int i) {
         return new ImmediateCharacter(this, i);
+    }
+
+    public NativeObject wrapString(String s) {
+        return new NativeObject(this, this.stringClass, s.getBytes());
     }
 }

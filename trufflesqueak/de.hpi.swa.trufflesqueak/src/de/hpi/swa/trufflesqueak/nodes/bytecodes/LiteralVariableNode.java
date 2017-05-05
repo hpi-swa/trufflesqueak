@@ -13,7 +13,7 @@ public class LiteralVariableNode extends SqueakBytecodeNode {
 
     public LiteralVariableNode(CompiledMethodObject cm, int idx, int literalIndex) {
         super(cm, idx);
-        valueNode = ObjectAtNodeGen.create(idx, new LiteralConstantNode(cm, idx, literalIndex));
+        valueNode = ObjectAtNodeGen.create(1, new LiteralConstantNode(cm, idx, literalIndex));
     }
 
     @Override

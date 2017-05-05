@@ -13,14 +13,13 @@ public class PointersObject extends SqueakObject implements TruffleObject {
         super(img);
     }
 
-    public PointersObject(SqueakImageContext img, BaseSqueakObject[] ptrs) {
-        this(img);
+    public PointersObject(SqueakImageContext img, BaseSqueakObject sqClass, BaseSqueakObject[] ptrs) {
+        super(img, sqClass);
         pointers = ptrs;
     }
 
-    public PointersObject(SqueakImageContext img, BaseSqueakObject[] ptrs, BaseSqueakObject sqClass) {
-        this(img, ptrs);
-        setSqClass(sqClass);
+    public PointersObject(SqueakImageContext image, ClassObject classObject, int size) {
+        this(image, classObject, new BaseSqueakObject[size]);
     }
 
     public ForeignAccess getForeignAccess() {

@@ -52,7 +52,11 @@ public class LoopRepeatingNode extends Node implements RepeatingNode {
     public void prettyPrintOn(StringBuilder str) {
         str.append('(');
         conditionNode.prettyPrintOn(str);
-        str.append(") whileFalse: [");
+        if (conditionNode instanceof IfTrue) {
+            str.append(") whileFalse: [");
+        } else {
+            str.append(") whileTrue: [");
+        }
         for (SqueakNode node : bodyNodes) {
             node.prettyPrintOn(str);
             str.append('.').append('\n');

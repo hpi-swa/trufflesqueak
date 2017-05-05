@@ -10,7 +10,7 @@ public abstract class PrimitiveQuickReturnNode extends PrimitiveNode {
         super(cm);
     }
 
-    abstract Object getConstant(VirtualFrame frame);
+    abstract protected Object getConstant(VirtualFrame frame);
 
     @Override
     public Object executeGeneric(VirtualFrame frame) throws LocalReturn {
