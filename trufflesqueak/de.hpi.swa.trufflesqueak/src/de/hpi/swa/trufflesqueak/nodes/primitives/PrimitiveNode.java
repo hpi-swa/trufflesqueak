@@ -5,16 +5,10 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.trufflesqueak.exceptions.LocalReturn;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithMethod;
-import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
-import de.hpi.swa.trufflesqueak.nodes.context.ArgumentNode;
 
 public class PrimitiveNode extends SqueakNodeWithMethod {
     public PrimitiveNode(CompiledMethodObject cm) {
         super(cm);
-    }
-
-    public static SqueakNode arg(int index) {
-        return new ArgumentNode(index);
     }
 
     @Override

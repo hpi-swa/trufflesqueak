@@ -1,8 +1,14 @@
 package de.hpi.swa.trufflesqueak.nodes.primitives;
 
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+
+import com.oracle.truffle.api.nodes.Node.Child;
 
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
+import de.hpi.swa.trufflesqueak.nodes.context.ArgumentNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimAddNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimAt;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimAtPut;
@@ -15,7 +21,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimDivide;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimEqual;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimEquivalentNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimGreaterOrEqual;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimGreaterThan;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimGreaterThanNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimLessOrEqualNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimLessThan;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimMakePoint;
@@ -43,7 +49,7 @@ public abstract class PrimitiveNodeFactory {
         ADD(PrimAddNodeGen.class, 1),
         SUB(PrimSub.class, 2),
         LESSTHAN(PrimLessThan.class, 3),
-        GREATERTHAN(PrimGreaterThan.class, 4),
+        GREATERTHAN(PrimGreaterThanNodeGen.class, 4),
         LESSOREQUAL(PrimLessOrEqualNodeGen.class, 5),
         GREATEROREQUAL(PrimGreaterOrEqual.class, 6),
         EQUAL(PrimEqual.class, 7),
@@ -102,10 +108,29 @@ public abstract class PrimitiveNodeFactory {
         Primitives.values();
     }
 
+    private static SqueakNode arg(int index) {
+        return new ArgumentNode(index);
+    }
+
     private static PrimitiveNode createInstance(CompiledMethodObject method, Class<? extends PrimitiveNode> primClass) {
         try {
+            int argCount = (int) Arrays.stream(primClass.getDeclaredFields()).filter(f -> f.getAnnotation(Child.class) != null).count();
+
+            Class<?>[] argTypes = new Class<?>[argCount + 1];
+            argTypes[0] = CompiledMethodObject.class;
+            for (int i = 1; i <= argCount; i++) {
+                argTypes[i] = SqueakNode.class;
+            }
+
+            Object[] args = new Object[argCount + 1];
+            args[0] = method;
+            for (int i = 1; i <= argCount; i++) {
+                args[i] = arg(i - 1);
+            }
+
             try {
-                return (PrimitiveNode) primClass.getMethod("createInstance", Class.class, CompiledMethodObject.class).invoke(primClass, primClass, method);
+                Method factoryMethod = primClass.getMethod("create", argTypes);
+                return (PrimitiveNode) factoryMethod.invoke(null, args);
             } catch (NoSuchMethodException e) {
                 return primClass.getConstructor(CompiledMethodObject.class).newInstance(method);
             }
