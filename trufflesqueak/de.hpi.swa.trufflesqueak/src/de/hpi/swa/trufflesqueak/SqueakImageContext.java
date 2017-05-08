@@ -45,6 +45,7 @@ public class SqueakImageContext {
     public final ClassObject falseClass = new ClassObject(this);
     public final ClassObject stringClass = new ClassObject(this);
     public final ClassObject compiledMethodClass = new ClassObject(this);
+    public final ClassObject blockClosureClass = new ClassObject(this);
 
     private final SqueakLanguage language;
     private final BufferedReader input;

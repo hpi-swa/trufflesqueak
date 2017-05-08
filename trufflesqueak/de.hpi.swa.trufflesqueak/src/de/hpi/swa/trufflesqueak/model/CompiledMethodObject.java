@@ -29,6 +29,7 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
     private static final String RECEIVER = "receiver";
     private static final String PC = "pc";
     private static final String STACK_POINTER = "stackPointer";
+    private static final String MARKER = "marker";
     @CompilationFinal(dimensions = 1) private BaseSqueakObject[] literals;
     private byte[] bytes;
     private int numLiterals;
@@ -48,6 +49,7 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
     @CompilationFinal public FrameSlot stackPointerSlot;
     @CompilationFinal public FrameSlot pcSlot;
     @CompilationFinal(dimensions = 1) public FrameSlot[] stackSlots;
+    @CompilationFinal public FrameSlot markerSlot;
     private RootCallTarget callTarget;
     private final CyclicAssumption callTargetStable = new CyclicAssumption("Compiled method assumption");
 
@@ -118,6 +120,7 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
         receiverSlot = frameDescriptor.addFrameSlot(RECEIVER, FrameSlotKind.Illegal);
         selfSlot = frameDescriptor.addFrameSlot(SELF, FrameSlotKind.Object);
         closureSlot = frameDescriptor.addFrameSlot(CLOSURE, FrameSlotKind.Object);
+        markerSlot = frameDescriptor.addFrameSlot(MARKER, FrameSlotKind.Object);
     }
 
     public VirtualFrame createTestFrame(BaseSqueakObject receiver) {

@@ -14,4 +14,9 @@ public class PrimGreaterOrEqual extends PrimitiveBinaryOperation {
     boolean gt(int a, int b) {
         return a >= b;
     }
+
+    @Specialization
+    boolean gt(long a, long b) {
+        return a >= b;
+    }
 }

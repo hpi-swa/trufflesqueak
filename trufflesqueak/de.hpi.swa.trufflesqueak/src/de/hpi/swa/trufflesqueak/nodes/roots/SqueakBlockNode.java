@@ -12,72 +12,66 @@ import de.hpi.swa.trufflesqueak.exceptions.LocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
+import de.hpi.swa.trufflesqueak.model.BlockClosure;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.FrameMarker;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.ConstantNode;
 import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotWriteNode;
 
-public class SqueakMethodNode extends RootNode {
-    private final CompiledMethodObject method;
-    @Child SqueakNode receiverNode;
-    @Children final SqueakNode[] argumentNodes;
-    @Children final SqueakBytecodeNode[] ast;
+public class SqueakBlockNode extends RootNode {
+    private final BlockClosure block;
+    @Children final SqueakNode[] ast;
     private final FrameSlot pcSlot;
     private final FrameSlot stackPointerSlot;
     private final FrameSlot markerSlot;
+    private final FrameSlot closureSlot;
+    @Children final SqueakNode[] argumentNodes;
+    @Child SqueakNode receiverNode;
+    @Children final SqueakNode[] copiedValuesNodes;
 
-    public SqueakMethodNode(SqueakLanguage language, CompiledMethodObject cm) {
+    public SqueakBlockNode(SqueakLanguage language, BlockClosure blk, CompiledMethodObject cm) {
         super(language, cm.getFrameDescriptor());
-        method = cm;
-        ast = method.getBytecodeAST();
-        receiverNode = FrameSlotWriteNode.argument(cm, cm.receiverSlot, 0);
-        int numArgs = method.getNumArgs();
+        block = blk;
+        ast = blk.getAST();
+        receiverNode = FrameSlotWriteNode.create(cm, cm.receiverSlot, new ConstantNode(cm, -1, block.getReceiver()));
+        int numArgs = block.getNumArgs();
         argumentNodes = new SqueakNode[numArgs];
         for (int i = 0; i < numArgs; i++) {
             argumentNodes[i] = FrameSlotWriteNode.argument(cm, cm.stackSlots[i], i + 1);
         }
-        stackPointerSlot = method.stackPointerSlot;
-        pcSlot = method.pcSlot;
-        markerSlot = method.markerSlot;
-    }
-
-    // FIXME: replace this
-    public Object executeGeneric(VirtualFrame frame, int initialPC) {
-        int offset = method.getBytecodeOffset();
-        int pc = initialPC - 1 - offset;
-        while (pc >= 0 && pc < ast.length) {
-            SqueakBytecodeNode node = ast[pc];
-            if (node == null) {
-                pc += 1;
-            } else {
-                try {
-                    node.executeGeneric(frame);
-                } catch (LocalReturn e) {
-                    return e.returnValue;
-                }
-            }
+        Object[] stack = block.getStack();
+        copiedValuesNodes = new SqueakNode[stack.length];
+        for (int i = 0; i < stack.length; i++) {
+            copiedValuesNodes[i] = FrameSlotWriteNode.temp(cm, i + numArgs, new ConstantNode(cm, -1, stack[i]));
         }
-        throw new RuntimeException("Method did not return");
+        stackPointerSlot = cm.stackPointerSlot;
+        pcSlot = cm.pcSlot;
+        markerSlot = cm.markerSlot;
+        closureSlot = cm.closureSlot;
     }
 
     @ExplodeLoop
     public void enterFrame(VirtualFrame frame) {
         CompilerDirectives.ensureVirtualized(frame);
-        frame.setInt(stackPointerSlot, method.getNumTemps());
+        frame.setInt(stackPointerSlot, block.getNumArgs() + block.varsize());
         frame.setInt(pcSlot, 0);
         frame.setObject(markerSlot, new FrameMarker());
+        frame.setObject(closureSlot, block);
         receiverNode.executeGeneric(frame);
         CompilerAsserts.compilationConstant(argumentNodes.length);
         for (SqueakNode node : argumentNodes) {
+            node.executeGeneric(frame);
+        }
+        for (SqueakNode node : copiedValuesNodes) {
             node.executeGeneric(frame);
         }
     }
 
     public String prettyPrint() {
         StringBuilder str = new StringBuilder();
-        str.append(method.toString()).append('\n');
-        for (SqueakBytecodeNode node : ast) {
+        str.append(block.toString()).append('\n');
+        for (SqueakNode node : ast) {
             node.prettyPrintOn(str);
             str.append('\n');
         }
@@ -101,6 +95,6 @@ public class SqueakMethodNode extends RootNode {
                 // TODO: switch
             }
         }
-        throw new RuntimeException("unimplemented exit from method");
+        throw new RuntimeException("unimplemented exit from block");
     }
 }

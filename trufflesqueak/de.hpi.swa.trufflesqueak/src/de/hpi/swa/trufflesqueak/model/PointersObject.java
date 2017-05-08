@@ -7,7 +7,7 @@ import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.util.Chunk;
 
 public class PointersObject extends SqueakObject implements TruffleObject {
-    private BaseSqueakObject[] pointers;
+    protected BaseSqueakObject[] pointers;
 
     public PointersObject(SqueakImageContext img) {
         super(img);

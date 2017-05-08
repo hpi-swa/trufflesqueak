@@ -14,6 +14,21 @@ public abstract class PrimEquivalent extends PrimitiveBinaryOperation {
     }
 
     @Specialization
+    boolean equivalent(int a, int b) {
+        return a == b;
+    }
+
+    @Specialization
+    boolean equivalent(long a, long b) {
+        return a == b;
+    }
+
+    @Specialization
+    boolean equivalent(boolean a, boolean b) {
+        return a == b;
+    }
+
+    @Specialization
     boolean equivalent(SmallInteger a, SmallInteger b) {
         return a.getValue() == b.getValue();
     }

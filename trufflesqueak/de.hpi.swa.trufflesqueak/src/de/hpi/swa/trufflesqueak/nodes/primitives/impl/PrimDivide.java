@@ -17,4 +17,11 @@ public class PrimDivide extends PrimitiveBinaryOperation {
             throw new PrimitiveFailed();
         return a / b;
     }
+
+    @Specialization(rewriteOn = ArithmeticException.class)
+    long divide(long a, long b) {
+        if (a % b != 0)
+            throw new PrimitiveFailed();
+        return a / b;
+    }
 }

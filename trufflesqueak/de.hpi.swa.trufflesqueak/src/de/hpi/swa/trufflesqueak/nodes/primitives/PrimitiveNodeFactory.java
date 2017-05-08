@@ -16,6 +16,8 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimBitAndNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimBitOrNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimBitShiftNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimClass;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimClosureValueNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimClosureValueWithArgsNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimDivNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimDivideNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimEqualNodeGen;
@@ -81,8 +83,10 @@ public abstract class PrimitiveNodeFactory {
         EQUIVALENT(PrimEquivalentNodeGen.class, 110),
         CLASS(PrimClass.class, 111),
         //
-        CLOSURE_VALUE(PrimitiveNode.class, 201),
-        CLOSURE_VALUE_WITH_ARG(PrimitiveNode.class, 202),
+        CLOSURE_VALUE(PrimClosureValueNodeGen.class, 201),
+        CLOSURE_VALUE_WITH_ARG(PrimClosureValueWithArgsNodeGen.class, 202),
+        //
+        UTC_MICROSECOND_CLOCK(PrimUtcClockNodeGen.class, 240),
         //
         PUSH_SELF(PrimPushSelf.class, 256),
         PUSH_TRUE(PrimPushTrue.class, 257),

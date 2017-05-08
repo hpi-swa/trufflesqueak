@@ -14,4 +14,9 @@ public class PrimNotEqual extends PrimitiveBinaryOperation {
     protected boolean neq(int a, int b) {
         return a != b;
     }
+
+    @Specialization
+    protected boolean neq(long a, long b) {
+        return a != b;
+    }
 }

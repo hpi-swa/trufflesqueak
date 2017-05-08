@@ -240,6 +240,7 @@ public class ImageReader {
         setPrebuiltObject(19, image.characterClass);
         setPrebuiltObject(20, image.doesNotUnderstand);
         setPrebuiltObject(25, image.mustBeBoolean);
+        setPrebuiltObject(36, image.blockClosureClass);
         setPrebuiltObject(SPECIAL_SELECTORS_INDEX, image.specialSelectors);
     }
 
