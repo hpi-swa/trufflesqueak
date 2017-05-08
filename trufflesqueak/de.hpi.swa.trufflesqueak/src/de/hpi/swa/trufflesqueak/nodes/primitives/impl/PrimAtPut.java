@@ -14,19 +14,19 @@ public class PrimAtPut extends PrimitiveTernaryOperation {
     }
 
     @Specialization
-    protected BaseSqueakObject atput(BaseSqueakObject receiver, int index, int value) {
-        return atput(receiver, index, method.image.wrapInt(value));
+    protected BaseSqueakObject atput(BaseSqueakObject receiver, int idx, int value) {
+        return atput(receiver, idx, method.image.wrapInt(value));
     }
 
     @Specialization
-    protected BaseSqueakObject atput(BaseSqueakObject receiver, int index, boolean value) {
-        return atput(receiver, index, method.image.wrapBool(value));
+    protected BaseSqueakObject atput(BaseSqueakObject receiver, int idx, boolean value) {
+        return atput(receiver, idx, method.image.wrapBool(value));
     }
 
     @Specialization
-    protected BaseSqueakObject atput(BaseSqueakObject receiver, int index, BaseSqueakObject value) {
+    protected BaseSqueakObject atput(BaseSqueakObject receiver, int idx, BaseSqueakObject value) {
         try {
-            receiver.atput0(index - 1, value);
+            receiver.atput0(idx - 1, value);
             return value;
         } catch (UnwrappingError | ArrayIndexOutOfBoundsException e) {
             throw new PrimitiveFailed();

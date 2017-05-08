@@ -13,11 +13,6 @@ public class PrimAdd extends PrimitiveBinaryOperation {
     }
 
     @Specialization(rewriteOn = ArithmeticException.class)
-    int add(int a, int b) {
-        return Math.addExact(a, b);
-    }
-
-    @Specialization(rewriteOn = ArithmeticException.class)
     long add(long a, long b) {
         return Math.addExact(a, b);
     }

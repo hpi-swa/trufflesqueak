@@ -11,7 +11,7 @@ public class PrimBitOr extends PrimitiveBinaryOperation {
     }
 
     @Specialization
-    protected int bitOr(int receiver, int arg) {
+    protected long bitOr(long receiver, long arg) {
         return receiver | arg;
     }
 }
