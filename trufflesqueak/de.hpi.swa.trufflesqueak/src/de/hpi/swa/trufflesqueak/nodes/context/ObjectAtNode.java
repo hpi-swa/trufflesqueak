@@ -4,6 +4,7 @@ import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
 
+import de.hpi.swa.trufflesqueak.exceptions.UnwrappingError;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
@@ -15,8 +16,13 @@ public abstract class ObjectAtNode extends SqueakNode {
         index = variableIndex;
     }
 
+    @Specialization(rewriteOn = UnwrappingError.class)
+    protected Object readInt(BaseSqueakObject object) throws UnwrappingError {
+        return object.at0(index).unwrapInt();
+    }
+
     @Specialization
-    protected Object read(BaseSqueakObject object) {
+    protected Object readObject(BaseSqueakObject object) {
         return object.at0(index);
     }
 }

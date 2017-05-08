@@ -24,12 +24,13 @@ import de.hpi.swa.trufflesqueak.util.Chunk;
 import de.hpi.swa.trufflesqueak.util.Decompiler;
 
 public class CompiledMethodObject extends SqueakObject implements TruffleObject {
-    private static final String CLOSURE = "closure";
-    private static final String SELF = "self";
-    private static final String RECEIVER = "receiver";
-    private static final String PC = "pc";
-    private static final String STACK_POINTER = "stackPointer";
-    private static final String MARKER = "marker";
+    private static final int NAMED_FRAME_SLOTS = 6;
+    public static final String CLOSURE = "closure";
+    public static final String SELF = "self";
+    public static final String RECEIVER = "receiver";
+    public static final String PC = "pc";
+    public static final String STACK_POINTER = "stackPointer";
+    public static final String MARKER = "marker";
     @CompilationFinal(dimensions = 1) private BaseSqueakObject[] literals;
     private byte[] bytes;
     private int numLiterals;
@@ -105,22 +106,54 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
         altInstructionSet = splitHeader[7] == 1;
     }
 
-    private void prepareFrameDescriptor() {
-        frameDescriptor = new FrameDescriptor(image.nil);
+    public FrameDescriptor createFrameDescriptor(int temps, int args, boolean large) {
+        FrameDescriptor fd = new FrameDescriptor(image.nil);
         int squeakFrameSize = 16;
-        if (needsLargeFrame) {
+        if (large) {
             squeakFrameSize = 40;
         }
-        stackSlots = new FrameSlot[squeakFrameSize];
-        for (int i = 0; i < numTemps + numArgs; i++) {
-            stackSlots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Illegal);
+        FrameSlot[] tempSlots = new FrameSlot[squeakFrameSize];
+        for (int i = 0; i < temps + args; i++) {
+            tempSlots[i] = fd.addFrameSlot(i, FrameSlotKind.Illegal);
         }
-        pcSlot = frameDescriptor.addFrameSlot(PC, FrameSlotKind.Int);
-        stackPointerSlot = frameDescriptor.addFrameSlot(STACK_POINTER, FrameSlotKind.Int);
-        receiverSlot = frameDescriptor.addFrameSlot(RECEIVER, FrameSlotKind.Illegal);
-        selfSlot = frameDescriptor.addFrameSlot(SELF, FrameSlotKind.Object);
-        closureSlot = frameDescriptor.addFrameSlot(CLOSURE, FrameSlotKind.Object);
-        markerSlot = frameDescriptor.addFrameSlot(MARKER, FrameSlotKind.Object);
+        fd.addFrameSlot(PC, FrameSlotKind.Int);
+        fd.addFrameSlot(STACK_POINTER, FrameSlotKind.Int);
+        fd.addFrameSlot(RECEIVER, FrameSlotKind.Illegal);
+        fd.addFrameSlot(SELF, FrameSlotKind.Object);
+        fd.addFrameSlot(CLOSURE, FrameSlotKind.Object);
+        fd.addFrameSlot(MARKER, FrameSlotKind.Object);
+        return fd;
+    }
+
+    private void prepareFrameDescriptor() {
+        frameDescriptor = createFrameDescriptor(numTemps, numArgs, needsLargeFrame);
+        stackSlots = new FrameSlot[frameDescriptor.getSize() - NAMED_FRAME_SLOTS];
+        for (FrameSlot slot : frameDescriptor.getSlots()) {
+            if (slot.getIdentifier() instanceof Integer) {
+                stackSlots[(int) slot.getIdentifier()] = slot;
+                continue;
+            }
+            switch ((String) slot.getIdentifier()) {
+                case PC:
+                    pcSlot = slot;
+                    break;
+                case STACK_POINTER:
+                    stackPointerSlot = slot;
+                    break;
+                case RECEIVER:
+                    receiverSlot = slot;
+                    break;
+                case SELF:
+                    selfSlot = slot;
+                    break;
+                case CLOSURE:
+                    closureSlot = slot;
+                    break;
+                case MARKER:
+                    markerSlot = slot;
+                    break;
+            }
+        }
     }
 
     public VirtualFrame createTestFrame(BaseSqueakObject receiver) {

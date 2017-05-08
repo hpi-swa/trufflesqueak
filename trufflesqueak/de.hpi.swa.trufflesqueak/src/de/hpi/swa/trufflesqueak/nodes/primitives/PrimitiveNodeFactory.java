@@ -42,6 +42,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPushTwo;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPushZero;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimSizeNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimSubNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimUtcClockNodeGen;
 
 public abstract class PrimitiveNodeFactory {
     private static final int PRIM_COUNT = 574;

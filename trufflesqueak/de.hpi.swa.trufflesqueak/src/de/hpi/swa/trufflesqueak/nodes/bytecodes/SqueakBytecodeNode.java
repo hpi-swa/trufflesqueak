@@ -4,9 +4,12 @@ import java.util.List;
 import java.util.Stack;
 import java.util.Vector;
 
+import com.oracle.truffle.api.dsl.TypeSystemReference;
+
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithMethod;
+import de.hpi.swa.trufflesqueak.nodes.SqueakTypes;
 
 public abstract class SqueakBytecodeNode extends SqueakNodeWithMethod {
     protected final int index;

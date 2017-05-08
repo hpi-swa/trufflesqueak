@@ -6,6 +6,7 @@ import java.util.Stack;
 import java.util.Vector;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
@@ -21,6 +22,7 @@ public class PushClosureNode extends SqueakBytecodeNode {
     @Child SqueakNode receiverNode;
     @Children final SqueakNode[] copiedValueNodes;
     @CompilationFinal(dimensions = 1) private SqueakNode[] blockNodes;
+    private final FrameDescriptor blockFrameDescriptor;
 
     public PushClosureNode(CompiledMethodObject cm, int idx, int i, int j, int k) {
         super(cm, idx);
@@ -29,6 +31,7 @@ public class PushClosureNode extends SqueakBytecodeNode {
         blockSize = (j << 8) | k;
         copiedValueNodes = new SqueakNode[numCopied];
         receiverNode = new ReceiverNode(cm, idx);
+        blockFrameDescriptor = cm.createFrameDescriptor(numArgs, numCopied, false);
     }
 
     @Override
@@ -42,7 +45,7 @@ public class PushClosureNode extends SqueakBytecodeNode {
         }
         return new BlockClosure(
                         method.image,
-                        method,
+                        blockFrameDescriptor,
                         blockNodes,
                         frameMarker,
                         numArgs,

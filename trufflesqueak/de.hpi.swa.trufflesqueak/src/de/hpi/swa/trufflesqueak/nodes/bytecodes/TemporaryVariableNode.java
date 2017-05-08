@@ -13,7 +13,12 @@ public class TemporaryVariableNode extends SqueakBytecodeNode {
 
     public TemporaryVariableNode(CompiledMethodObject cm, int idx, int tempIndex) {
         super(cm, idx);
-        tempNode = FrameSlotReadNode.create(cm, cm.stackSlots[tempIndex]);
+        if (cm.stackSlots.length <= tempIndex) {
+            // sometimes we'll decode more bytecodes than we have slots ... that's fine
+            tempNode = new UnknownBytecodeNode(cm, idx, tempIndex);
+        } else {
+            tempNode = FrameSlotReadNode.create(cm, cm.stackSlots[tempIndex]);
+        }
     }
 
     @Override

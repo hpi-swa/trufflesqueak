@@ -3,6 +3,7 @@ package de.hpi.swa.trufflesqueak.model;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.frame.FrameDescriptor;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
@@ -26,7 +27,7 @@ public class BlockClosure extends BaseSqueakObject {
     }
 
     public BlockClosure(SqueakImageContext image,
-                    CompiledMethodObject cm,
+                    FrameDescriptor fd,
                     SqueakNode[] statements,
                     Object frameMarker,
                     int numArgs,
@@ -38,7 +39,7 @@ public class BlockClosure extends BaseSqueakObject {
         argCount = numArgs;
         receiver = rcvr;
         stack = copiedValues;
-        callTarget = Truffle.getRuntime().createCallTarget(new SqueakBlockNode(image.getLanguage(), this, cm));
+        callTarget = Truffle.getRuntime().createCallTarget(new SqueakBlockNode(image.getLanguage(), this, fd));
     }
 
     @Override

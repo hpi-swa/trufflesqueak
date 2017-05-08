@@ -2,6 +2,7 @@ package de.hpi.swa.trufflesqueak.nodes.roots;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
@@ -30,25 +31,26 @@ public class SqueakBlockNode extends RootNode {
     @Child SqueakNode receiverNode;
     @Children final SqueakNode[] copiedValuesNodes;
 
-    public SqueakBlockNode(SqueakLanguage language, BlockClosure blk, CompiledMethodObject cm) {
-        super(language, cm.getFrameDescriptor());
+    public SqueakBlockNode(SqueakLanguage language, BlockClosure blk, FrameDescriptor fd) {
+        // FIXME: refactor location of fd
+        super(language, fd);
         block = blk;
         ast = blk.getAST();
-        receiverNode = FrameSlotWriteNode.create(cm, cm.receiverSlot, new ConstantNode(cm, -1, block.getReceiver()));
+        receiverNode = FrameSlotWriteNode.create(null, fd.findFrameSlot(CompiledMethodObject.RECEIVER), new ConstantNode(null, -1, block.getReceiver()));
         int numArgs = block.getNumArgs();
         argumentNodes = new SqueakNode[numArgs];
         for (int i = 0; i < numArgs; i++) {
-            argumentNodes[i] = FrameSlotWriteNode.argument(cm, cm.stackSlots[i], i + 1);
+            argumentNodes[i] = FrameSlotWriteNode.argument(null, fd.findFrameSlot(i), i + 1);
         }
         Object[] stack = block.getStack();
         copiedValuesNodes = new SqueakNode[stack.length];
         for (int i = 0; i < stack.length; i++) {
-            copiedValuesNodes[i] = FrameSlotWriteNode.temp(cm, i + numArgs, new ConstantNode(cm, -1, stack[i]));
+            copiedValuesNodes[i] = FrameSlotWriteNode.create(null, fd.findFrameSlot(i + numArgs), new ConstantNode(null, -1, stack[i]));
         }
-        stackPointerSlot = cm.stackPointerSlot;
-        pcSlot = cm.pcSlot;
-        markerSlot = cm.markerSlot;
-        closureSlot = cm.closureSlot;
+        stackPointerSlot = fd.findFrameSlot(CompiledMethodObject.STACK_POINTER);
+        pcSlot = fd.findFrameSlot(CompiledMethodObject.PC);
+        markerSlot = fd.findFrameSlot(CompiledMethodObject.MARKER);
+        closureSlot = fd.findFrameSlot(CompiledMethodObject.CLOSURE);
     }
 
     @ExplodeLoop

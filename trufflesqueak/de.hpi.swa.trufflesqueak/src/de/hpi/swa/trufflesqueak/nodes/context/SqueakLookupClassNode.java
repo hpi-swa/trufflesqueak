@@ -43,6 +43,12 @@ public abstract class SqueakLookupClassNode extends Node {
         return method.image.smallIntegerClass;
     }
 
+    @SuppressWarnings("unused")
+    @Specialization
+    public ClassObject squeakClass(long object) {
+        return method.image.smallIntegerClass;
+    }
+
     @Specialization(rewriteOn = UnexpectedResultException.class)
     public ClassObject squeakClass(BaseSqueakObject object) throws UnexpectedResultException {
         return SqueakTypesGen.expectClassObject(object.getSqClass());

@@ -5,17 +5,11 @@ import com.oracle.truffle.api.dsl.Specialization;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ImmediateCharacter;
-import de.hpi.swa.trufflesqueak.model.SmallInteger;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveBinaryOperation;
 
 public abstract class PrimEquivalent extends PrimitiveBinaryOperation {
     public PrimEquivalent(CompiledMethodObject cm) {
         super(cm);
-    }
-
-    @Specialization
-    boolean equivalent(int a, int b) {
-        return a == b;
     }
 
     @Specialization
@@ -26,11 +20,6 @@ public abstract class PrimEquivalent extends PrimitiveBinaryOperation {
     @Specialization
     boolean equivalent(boolean a, boolean b) {
         return a == b;
-    }
-
-    @Specialization
-    boolean equivalent(SmallInteger a, SmallInteger b) {
-        return a.getValue() == b.getValue();
     }
 
     @Specialization

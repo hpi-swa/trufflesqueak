@@ -1,10 +1,11 @@
-package de.hpi.swa.trufflesqueak.nodes.primitives;
+package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
 import java.time.Instant;
 
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNode;
 
 public class PrimUtcClock extends PrimitiveNode {
     // The Delta between Squeak Epoch (Jan 1st 1901) and POSIX Epoch (Jan 1st 1970)
