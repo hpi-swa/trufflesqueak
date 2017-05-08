@@ -14,10 +14,6 @@ public abstract class FrameSlotNode extends SqueakNodeWithMethod {
         slot = frameSlot;
     }
 
-    protected boolean isInt() {
-        return slot.getKind() == FrameSlotKind.Int;
-    }
-
     protected boolean isLong() {
         return slot.getKind() == FrameSlotKind.Long;
     }
