@@ -14,9 +14,13 @@ public class PrimAt extends PrimitiveBinaryOperation {
     }
 
     @Specialization(rewriteOn = UnwrappingError.class)
-    protected int intAt(BaseSqueakObject receiver, int idx) throws UnwrappingError {
+    protected long intAt(BaseSqueakObject receiver, int idx) throws UnwrappingError {
         try {
-            return receiver.at0(idx - 1).unwrapInt();
+            BaseSqueakObject at0 = receiver.at0(idx - 1);
+            if (at0 == null) {
+                throw new UnwrappingError();
+            }
+            return at0.unwrapInt();
         } catch (ArrayIndexOutOfBoundsException e) {
             throw new PrimitiveFailed();
         }

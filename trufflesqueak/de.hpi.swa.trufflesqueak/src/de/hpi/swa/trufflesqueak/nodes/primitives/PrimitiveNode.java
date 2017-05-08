@@ -11,6 +11,10 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
 
 public class PrimitiveNode extends SqueakBytecodeNode {
+    protected static boolean isNull(Object obj) {
+        return obj == null;
+    }
+
     public PrimitiveNode(CompiledMethodObject cm) {
         super(cm, -1);
     }

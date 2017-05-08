@@ -14,7 +14,7 @@ public class PrimAtPut extends PrimitiveTernaryOperation {
     }
 
     @Specialization
-    protected BaseSqueakObject atput(BaseSqueakObject receiver, int idx, int value) {
+    protected BaseSqueakObject atput(BaseSqueakObject receiver, int idx, long value) {
         return atput(receiver, idx, method.image.wrapInt(value));
     }
 
@@ -31,5 +31,11 @@ public class PrimAtPut extends PrimitiveTernaryOperation {
         } catch (UnwrappingError | ArrayIndexOutOfBoundsException e) {
             throw new PrimitiveFailed();
         }
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = "isNull(value)")
+    protected BaseSqueakObject atput(BaseSqueakObject receiver, int idx, Object value) {
+        return atput(receiver, idx, method.image.nil);
     }
 }

@@ -13,11 +13,6 @@ public class PrimLessOrEqual extends PrimitiveBinaryOperation {
     }
 
     @Specialization
-    boolean add(int a, int b) {
-        return a <= b;
-    }
-
-    @Specialization
     boolean add(long a, long b) {
         return a <= b;
     }

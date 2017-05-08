@@ -48,8 +48,4 @@ public class PrimSize extends PrimitiveUnaryOperation {
     public int size(BaseSqueakObject obj) {
         return obj.size();
     }
-
-    protected static boolean isNull(Object obj) {
-        return obj == null;
-    }
 }

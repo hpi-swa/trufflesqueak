@@ -3,9 +3,9 @@ package de.hpi.swa.trufflesqueak.model;
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 
 public class SmallInteger extends ImmutableObject {
-    private final int value;
+    private final long value;
 
-    public SmallInteger(SqueakImageContext image, int i) {
+    public SmallInteger(SqueakImageContext image, long i) {
         super(image);
         value = i;
     }
@@ -20,7 +20,7 @@ public class SmallInteger extends ImmutableObject {
         return image.smallIntegerClass;
     }
 
-    public int getValue() {
+    public long getValue() {
         return value;
     }
 
@@ -35,7 +35,7 @@ public class SmallInteger extends ImmutableObject {
     }
 
     @Override
-    public int unwrapInt() {
+    public long unwrapInt() {
         return getValue();
     }
 }

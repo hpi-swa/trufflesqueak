@@ -17,7 +17,7 @@ public abstract class MethodLiteralNode extends SqueakNode {
     }
 
     @Specialization(guards = {"isSmallInteger()"})
-    public int literalInt() {
+    public long literalInt() {
         return ((SmallInteger) literal).getValue();
     }
 

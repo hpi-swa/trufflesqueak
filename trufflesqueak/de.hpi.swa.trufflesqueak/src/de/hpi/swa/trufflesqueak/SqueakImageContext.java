@@ -153,7 +153,7 @@ public class SqueakImageContext {
         return language;
     }
 
-    public SmallInteger wrapInt(int i) {
+    public SmallInteger wrapInt(long i) {
         return new SmallInteger(this, i);
     }
 

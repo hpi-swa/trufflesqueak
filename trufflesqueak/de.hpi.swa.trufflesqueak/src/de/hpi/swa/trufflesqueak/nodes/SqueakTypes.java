@@ -4,6 +4,8 @@ import java.math.BigInteger;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.ImplicitCast;
+import com.oracle.truffle.api.dsl.TypeCast;
+import com.oracle.truffle.api.dsl.TypeCheck;
 import com.oracle.truffle.api.dsl.TypeSystem;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
@@ -37,9 +39,20 @@ import de.hpi.swa.trufflesqueak.model.TrueObject;
                 CompiledMethodObject.class,
                 BaseSqueakObject.class})
 public abstract class SqueakTypes {
+    @TypeCast(int.class)
+    public static int asInt(Object value) {
+        return value instanceof Integer ? (int) value : Math.toIntExact((long) value);
+    }
+
+    @TypeCheck(int.class)
+    public static boolean isInt(Object value) {
+        return value instanceof Integer ||
+                        (value instanceof Long && (long) value <= Integer.MAX_VALUE && (long) value >= Integer.MIN_VALUE);
+    }
+
     @ImplicitCast
     public static int castInt(SmallInteger obj) {
-        return obj.getValue();
+        return Math.toIntExact(obj.getValue());
     }
 
     @ImplicitCast

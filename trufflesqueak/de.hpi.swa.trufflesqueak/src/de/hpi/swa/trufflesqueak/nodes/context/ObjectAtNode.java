@@ -17,7 +17,7 @@ public abstract class ObjectAtNode extends SqueakNode {
     }
 
     @Specialization(rewriteOn = UnwrappingError.class)
-    protected Object readInt(BaseSqueakObject object) throws UnwrappingError {
+    protected long readInt(BaseSqueakObject object) throws UnwrappingError {
         return object.at0(index).unwrapInt();
     }
 

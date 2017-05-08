@@ -11,7 +11,7 @@ public class PrimEqual extends PrimitiveBinaryOperation {
     }
 
     @Specialization
-    protected boolean eq(int receiver, int argument) {
+    protected boolean eq(long receiver, long argument) {
         return receiver == argument;
     }
 }

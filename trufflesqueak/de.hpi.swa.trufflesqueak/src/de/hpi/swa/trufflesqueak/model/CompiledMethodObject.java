@@ -94,7 +94,7 @@ public class CompiledMethodObject extends SqueakObject implements TruffleObject 
 
     private void decodeHeader(BaseSqueakObject baseSqueakObject) {
         assert baseSqueakObject instanceof SmallInteger;
-        int hdr = baseSqueakObject.unsafeUnwrapInt();
+        int hdr = (int) baseSqueakObject.unsafeUnwrapInt();
         int[] splitHeader = BitSplitter.splitter(hdr, new int[]{15, 1, 1, 1, 6, 4, 2, 1});
         numLiterals = splitHeader[0];
         isOptimized = splitHeader[1] == 1;

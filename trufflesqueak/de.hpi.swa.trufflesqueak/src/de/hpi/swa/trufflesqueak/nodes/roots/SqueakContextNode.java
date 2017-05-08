@@ -45,8 +45,8 @@ public class SqueakContextNode extends RootNode {
     }
 
     private static VirtualFrame createFrame(CompiledMethodObject method, ListObject ctxt) {
-        int pc = ctxt.at0(ContextParts.PC.ordinal()).unsafeUnwrapInt();
-        int sp = ctxt.at0(ContextParts.SP.ordinal()).unsafeUnwrapInt();
+        int pc = (int) ctxt.at0(ContextParts.PC.ordinal()).unsafeUnwrapInt();
+        int sp = (int) ctxt.at0(ContextParts.SP.ordinal()).unsafeUnwrapInt();
         BaseSqueakObject closure = ctxt.at0(ContextParts.CLOSURE.ordinal());
         BaseSqueakObject receiver = ctxt.at0(ContextParts.RECEIVER.ordinal());
         VirtualFrame frame = Truffle.getRuntime().createVirtualFrame(EMPTY_ARRAY, method.getFrameDescriptor());
@@ -79,7 +79,7 @@ public class SqueakContextNode extends RootNode {
         while (true) {
             CompiledMethodObject method = getCurrentMethod(currentContext);
             VirtualFrame currentFrame = createFrame(method, currentContext);
-            int pc = ((SmallInteger) currentContext.at0(ContextParts.PC.ordinal())).getValue();
+            int pc = (int) ((SmallInteger) currentContext.at0(ContextParts.PC.ordinal())).getValue();
             try {
                 // This will continue execution in the active context until that
                 // context returns or switches to another Squeak process.

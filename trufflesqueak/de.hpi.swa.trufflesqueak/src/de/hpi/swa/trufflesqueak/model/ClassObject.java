@@ -203,6 +203,6 @@ public class ClassObject extends PointersObject {
     }
 
     private int getIntFormat() {
-        return getFormat().unsafeUnwrapInt();
+        return (int) getFormat().unsafeUnwrapInt();
     }
 }

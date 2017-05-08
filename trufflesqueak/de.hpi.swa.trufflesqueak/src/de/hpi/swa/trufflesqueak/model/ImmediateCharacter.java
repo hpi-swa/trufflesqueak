@@ -35,7 +35,7 @@ public class ImmediateCharacter extends ImmutableObject {
     }
 
     @Override
-    public int unwrapInt() {
+    public long unwrapInt() {
         return getValue();
     }
 

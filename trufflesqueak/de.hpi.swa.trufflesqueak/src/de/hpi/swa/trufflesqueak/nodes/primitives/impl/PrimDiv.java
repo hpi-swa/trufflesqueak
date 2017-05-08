@@ -11,11 +11,6 @@ public class PrimDiv extends PrimitiveBinaryOperation {
     }
 
     @Specialization(rewriteOn = ArithmeticException.class)
-    int div(int a, int b) {
-        return Math.floorDiv(a, b);
-    }
-
-    @Specialization(rewriteOn = ArithmeticException.class)
     long div(long a, long b) {
         return Math.floorDiv(a, b);
     }

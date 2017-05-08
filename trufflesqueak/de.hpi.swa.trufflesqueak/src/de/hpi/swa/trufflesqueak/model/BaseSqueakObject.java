@@ -47,7 +47,7 @@ public abstract class BaseSqueakObject {
         return false;
     }
 
-    public abstract BaseSqueakObject at0(int idx);
+    public abstract BaseSqueakObject at0(int l);
 
     public abstract void atput0(int idx, BaseSqueakObject object) throws UnwrappingError;
 
@@ -59,11 +59,11 @@ public abstract class BaseSqueakObject {
         return size() - instsize();
     }
 
-    public int unwrapInt() throws UnwrappingError {
+    public long unwrapInt() throws UnwrappingError {
         throw new UnwrappingError();
     }
 
-    public int unsafeUnwrapInt() {
+    public long unsafeUnwrapInt() {
         try {
             return unwrapInt();
         } catch (UnwrappingError e) {

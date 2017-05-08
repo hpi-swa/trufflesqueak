@@ -29,7 +29,7 @@ public abstract class ObjectAtPutNode extends SqueakNodeWithMethod {
     }
 
     @Specialization
-    protected Object write(BaseSqueakObject object, int value) {
+    protected Object write(BaseSqueakObject object, long value) {
         try {
             object.atput0(index, object.image.wrapInt(value));
         } catch (UnwrappingError e) {
