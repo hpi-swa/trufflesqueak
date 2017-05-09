@@ -4,7 +4,7 @@ import java.util.Stack;
 import java.util.Vector;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.CallPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ConstantNode;
@@ -49,21 +49,17 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SingleExtendedSuperNode;
  *
  */
 public class Decompiler {
-    private byte[] bytes;
-    private CompiledMethodObject method;
-    private SqueakImageContext image;
+    private CompiledCodeObject code;
 
-    public Decompiler(SqueakImageContext img, CompiledMethodObject cm, byte[] bc) {
-        image = img;
-        method = cm;
-        bytes = bc;
+    public Decompiler(CompiledCodeObject compiledCodeObject) {
+        code = compiledCodeObject;
     }
 
     public SqueakBytecodeNode[] getAST() {
         int index[] = {0};
 
         Vector<SqueakBytecodeNode> sequence = new Vector<>();
-        while (index[0] < bytes.length) {
+        while (index[0] < getBytes().length) {
             SqueakBytecodeNode node = decodeByteAt(index);
             while (sequence.size() < index[0] - 1) {
                 sequence.add(null); // fill parameter byte indices
@@ -88,10 +84,10 @@ public class Decompiler {
 
     private int nextByte(int[] indexRef) {
         int index = indexRef[0];
-        if (bytes.length <= index) {
+        if (getBytes().length <= index) {
             return 0;
         }
-        int b = bytes[index];
+        int b = getBytes()[index];
         if (b < 0) {
             b = 256 + b;
         }
@@ -119,7 +115,7 @@ public class Decompiler {
             case 13:
             case 14:
             case 15:
-                return new ReceiverVariableNode(method, index, b & 15);
+                return new ReceiverVariableNode(code, index, b & 15);
             case 16:
             case 17:
             case 18:
@@ -136,7 +132,7 @@ public class Decompiler {
             case 29:
             case 30:
             case 31:
-                return new TemporaryVariableNode(method, index, b & 15);
+                return new TemporaryVariableNode(code, index, b & 15);
             case 32:
             case 33:
             case 34:
@@ -169,7 +165,7 @@ public class Decompiler {
             case 61:
             case 62:
             case 63:
-                return new LiteralConstantNode(method, index, b & 31);
+                return new LiteralConstantNode(code, index, b & 31);
             case 64:
             case 65:
             case 66:
@@ -202,7 +198,7 @@ public class Decompiler {
             case 93:
             case 94:
             case 95:
-                return new LiteralVariableNode(method, index, b & 31);
+                return new LiteralVariableNode(code, index, b & 31);
             case 96:
             case 97:
             case 98:
@@ -211,7 +207,7 @@ public class Decompiler {
             case 101:
             case 102:
             case 103:
-                return new PopIntoReceiverVariableNode(method, index, b & 7);
+                return new PopIntoReceiverVariableNode(code, index, b & 7);
             case 104:
             case 105:
             case 106:
@@ -220,72 +216,72 @@ public class Decompiler {
             case 109:
             case 110:
             case 111:
-                return new PopIntoTemporaryVariable(method, index, b & 7);
+                return new PopIntoTemporaryVariable(code, index, b & 7);
             case 112:
-                return new ReceiverNode(method, index);
+                return new ReceiverNode(code, index);
             case 113:
-                return new ConstantNode(method, index, true);
+                return new ConstantNode(code, index, true);
             case 114:
-                return new ConstantNode(method, index, false);
+                return new ConstantNode(code, index, false);
             case 115:
-                return new ConstantNode(method, index, null);
+                return new ConstantNode(code, index, null);
             case 116:
-                return new ConstantNode(method, index, -1);
+                return new ConstantNode(code, index, -1);
             case 117:
-                return new ConstantNode(method, index, 0);
+                return new ConstantNode(code, index, 0);
             case 118:
-                return new ConstantNode(method, index, 1);
+                return new ConstantNode(code, index, 1);
             case 119:
-                return new ConstantNode(method, index, 2);
+                return new ConstantNode(code, index, 2);
             case 120:
-                return new ReturnReceiverNode(method, index);
+                return new ReturnReceiverNode(code, index);
             case 121:
-                return new ReturnConstantNode(method, index, true);
+                return new ReturnConstantNode(code, index, true);
             case 122:
-                return new ReturnConstantNode(method, index, false);
+                return new ReturnConstantNode(code, index, false);
             case 123:
-                return new ReturnConstantNode(method, index, null);
+                return new ReturnConstantNode(code, index, null);
             case 124:
-                return new ReturnTopFromMethodNode(method, index);
+                return new ReturnTopFromMethodNode(code, index);
             case 125:
-                return new ReturnTopFromBlockNode(method, index);
+                return new ReturnTopFromBlockNode(code, index);
             case 126:
-                return new UnknownBytecodeNode(method, index, b);
+                return new UnknownBytecodeNode(code, index, b);
             case 127:
-                return new UnknownBytecodeNode(method, index, b);
+                return new UnknownBytecodeNode(code, index, b);
             case 128:
-                return new ExtendedPushNode(method, index, nextByte(indexRef));
+                return new ExtendedPushNode(code, index, nextByte(indexRef));
             case 129:
-                return new ExtendedStoreNode(method, index, nextByte(indexRef));
+                return new ExtendedStoreNode(code, index, nextByte(indexRef));
             case 130:
-                return new ExtendedStoreAndPopNode(method, index, nextByte(indexRef));
+                return new ExtendedStoreAndPopNode(code, index, nextByte(indexRef));
             case 131:
-                return new SingleExtendedSendNode(method, index, nextByte(indexRef));
+                return new SingleExtendedSendNode(code, index, nextByte(indexRef));
             case 132:
-                return DoubleExtendedDoAnythingNode.create(method, index, nextByte(indexRef), nextByte(indexRef));
+                return DoubleExtendedDoAnythingNode.create(code, index, nextByte(indexRef), nextByte(indexRef));
             case 133:
                 int nextByte = nextByte(indexRef);
-                return new SingleExtendedSuperNode(method, index, nextByte & 31, nextByte >> 5);
+                return new SingleExtendedSuperNode(code, index, nextByte & 31, nextByte >> 5);
             case 134:
-                return new SecondExtendedSendNode(method, index, nextByte(indexRef));
+                return new SecondExtendedSendNode(code, index, nextByte(indexRef));
             case 135:
-                return new PopNode(method, index);
+                return new PopNode(code, index);
             case 136:
-                return new DupNode(method, index);
+                return new DupNode(code, index);
             case 137:
-                return new PushActiveContextNode(method, index);
+                return new PushActiveContextNode(code, index);
             case 138:
-                return new PushNewArrayNode(method, index, nextByte(indexRef));
+                return new PushNewArrayNode(code, index, nextByte(indexRef));
             case 139:
-                return new CallPrimitiveNode(method, index, nextByte(indexRef), nextByte(indexRef));
+                return new CallPrimitiveNode(code, index, nextByte(indexRef), nextByte(indexRef));
             case 140:
-                return new PushRemoteTempNode(method, index, nextByte(indexRef), nextByte(indexRef));
+                return new PushRemoteTempNode(code, index, nextByte(indexRef), nextByte(indexRef));
             case 141:
-                return new StoreRemoteTempNode(method, index, nextByte(indexRef), nextByte(indexRef));
+                return new StoreRemoteTempNode(code, index, nextByte(indexRef), nextByte(indexRef));
             case 142:
-                return new StoreAndPopRemoteTempNode(method, index, nextByte(indexRef), nextByte(indexRef));
+                return new StoreAndPopRemoteTempNode(code, index, nextByte(indexRef), nextByte(indexRef));
             case 143:
-                return new PushClosureNode(method, index, nextByte(indexRef), nextByte(indexRef), nextByte(indexRef));
+                return new PushClosureNode(code, index, nextByte(indexRef), nextByte(indexRef), nextByte(indexRef));
             case 144:
             case 145:
             case 146:
@@ -294,7 +290,7 @@ public class Decompiler {
             case 149:
             case 150:
             case 151:
-                return new UnconditionalJump(method, index, b);
+                return new UnconditionalJump(code, index, b);
             case 152:
             case 153:
             case 154:
@@ -303,7 +299,7 @@ public class Decompiler {
             case 157:
             case 158:
             case 159:
-                return new ConditionalJump(method, index, b);
+                return new ConditionalJump(code, index, b);
             case 160:
             case 161:
             case 162:
@@ -312,83 +308,91 @@ public class Decompiler {
             case 165:
             case 166:
             case 167:
-                return new UnconditionalJump(method, index, b, nextByte(indexRef));
+                return new UnconditionalJump(code, index, b, nextByte(indexRef));
             case 168:
             case 169:
             case 170:
             case 171:
-                return new ConditionalJump(method, index, b, nextByte(indexRef), true);
+                return new ConditionalJump(code, index, b, nextByte(indexRef), true);
             case 172:
             case 173:
             case 174:
             case 175:
-                return new ConditionalJump(method, index, b, nextByte(indexRef), false);
+                return new ConditionalJump(code, index, b, nextByte(indexRef), false);
             case 176:
-                return new SendSelector(method, index, image.plus, 1);
+                return new SendSelector(code, index, getImage().plus, 1);
             case 177:
-                return new SendSelector(method, index, image.minus, 1);
+                return new SendSelector(code, index, getImage().minus, 1);
             case 178:
-                return new SendSelector(method, index, image.lt, 1);
+                return new SendSelector(code, index, getImage().lt, 1);
             case 179:
-                return new SendSelector(method, index, image.gt, 1);
+                return new SendSelector(code, index, getImage().gt, 1);
             case 180:
-                return new SendSelector(method, index, image.le, 1);
+                return new SendSelector(code, index, getImage().le, 1);
             case 181:
-                return new SendSelector(method, index, image.ge, 1);
+                return new SendSelector(code, index, getImage().ge, 1);
             case 182:
-                return new SendSelector(method, index, image.eq, 1);
+                return new SendSelector(code, index, getImage().eq, 1);
             case 183:
-                return new SendSelector(method, index, image.ne, 1);
+                return new SendSelector(code, index, getImage().ne, 1);
             case 184:
-                return new SendSelector(method, index, image.times, 1);
+                return new SendSelector(code, index, getImage().times, 1);
             case 185:
-                return new SendSelector(method, index, image.divide, 1);
+                return new SendSelector(code, index, getImage().divide, 1);
             case 186:
-                return new SendSelector(method, index, image.modulo, 1);
+                return new SendSelector(code, index, getImage().modulo, 1);
             case 187:
-                return new SendSelector(method, index, image.pointAt, 1);
+                return new SendSelector(code, index, getImage().pointAt, 1);
             case 188:
-                return new SendSelector(method, index, image.bitShift, 1);
+                return new SendSelector(code, index, getImage().bitShift, 1);
             case 189:
-                return new SendSelector(method, index, image.div, 1);
+                return new SendSelector(code, index, getImage().div, 1);
             case 190:
-                return new SendSelector(method, index, image.bitAnd, 1);
+                return new SendSelector(code, index, getImage().bitAnd, 1);
             case 191:
-                return new SendSelector(method, index, image.bitOr, 1);
+                return new SendSelector(code, index, getImage().bitOr, 1);
             case 192:
-                return new SendSelector(method, index, image.at, 1);
+                return new SendSelector(code, index, getImage().at, 1);
             case 193:
-                return new SendSelector(method, index, image.atput, 2);
+                return new SendSelector(code, index, getImage().atput, 2);
             case 194:
-                return new SendSelector(method, index, image.size_, 0);
+                return new SendSelector(code, index, getImage().size_, 0);
             case 195:
-                return new SendSelector(method, index, image.next, 0);
+                return new SendSelector(code, index, getImage().next, 0);
             case 196:
-                return new SendSelector(method, index, image.nextPut, 1);
+                return new SendSelector(code, index, getImage().nextPut, 1);
             case 197:
-                return new SendSelector(method, index, image.atEnd, 0);
+                return new SendSelector(code, index, getImage().atEnd, 0);
             case 198:
-                return new SendSelector(method, index, image.equivalent, 1);
+                return new SendSelector(code, index, getImage().equivalent, 1);
             case 199:
-                return new SendSelector(method, index, image.klass, 0);
+                return new SendSelector(code, index, getImage().klass, 0);
             case 200:
-                return new SendSelector(method, index, image.blockCopy, 1);
+                return new SendSelector(code, index, getImage().blockCopy, 1);
             case 201:
-                return new SendSelector(method, index, image.value, 0);
+                return new SendSelector(code, index, getImage().value, 0);
             case 202:
-                return new SendSelector(method, index, image.valueWithArg, 1);
+                return new SendSelector(code, index, getImage().valueWithArg, 1);
             case 203:
-                return new SendSelector(method, index, image.do_, 1);
+                return new SendSelector(code, index, getImage().do_, 1);
             case 204:
-                return new SendSelector(method, index, image.new_, 0);
+                return new SendSelector(code, index, getImage().new_, 0);
             case 205:
-                return new SendSelector(method, index, image.newWithArg, 1);
+                return new SendSelector(code, index, getImage().newWithArg, 1);
             case 206:
-                return new SendSelector(method, index, image.x, 0);
+                return new SendSelector(code, index, getImage().x, 0);
             case 207:
-                return new SendSelector(method, index, image.y, 0);
+                return new SendSelector(code, index, getImage().y, 0);
             default:
-                return new Send(method, index, b);
+                return new Send(code, index, b);
         }
+    }
+
+    private byte[] getBytes() {
+        return code.getBytes();
+    }
+
+    private SqueakImageContext getImage() {
+        return code.image;
     }
 }

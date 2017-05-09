@@ -10,7 +10,7 @@ import de.hpi.swa.trufflesqueak.exceptions.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.SmallInteger;
 
@@ -40,11 +40,11 @@ public class SqueakContextNode extends RootNode {
         context = activeContext;
     }
 
-    private static CompiledMethodObject getCurrentMethod(ListObject context) {
-        return (CompiledMethodObject) context.at0(ContextParts.METHOD.ordinal());
+    private static CompiledCodeObject getCurrentMethod(ListObject context) {
+        return (CompiledCodeObject) context.at0(ContextParts.METHOD.ordinal());
     }
 
-    private static VirtualFrame createFrame(CompiledMethodObject method, ListObject ctxt) {
+    private static VirtualFrame createFrame(CompiledCodeObject method, ListObject ctxt) {
         int pc = (int) ctxt.at0(ContextParts.PC.ordinal()).unsafeUnwrapInt();
         int sp = (int) ctxt.at0(ContextParts.SP.ordinal()).unsafeUnwrapInt();
         BaseSqueakObject closure = ctxt.at0(ContextParts.CLOSURE.ordinal());
@@ -77,14 +77,14 @@ public class SqueakContextNode extends RootNode {
     public Object execute(VirtualFrame frame) {
         ListObject currentContext = context;
         while (true) {
-            CompiledMethodObject method = getCurrentMethod(currentContext);
+            CompiledCodeObject method = getCurrentMethod(currentContext);
             VirtualFrame currentFrame = createFrame(method, currentContext);
             int pc = (int) ((SmallInteger) currentContext.at0(ContextParts.PC.ordinal())).getValue();
             try {
                 // This will continue execution in the active context until that
                 // context returns or switches to another Squeak process.
                 SqueakMethodNode squeakMethodNode = new SqueakMethodNode(this.getLanguage(SqueakLanguage.class), method);
-                squeakMethodNode.executeGeneric(currentFrame, pc);
+                // squeakMethodNode.executeGeneric(currentFrame, pc);
             } catch (NonLocalReturn e) {
                 // TODO: unwind context chain towards target
             } catch (NonVirtualReturn e) {

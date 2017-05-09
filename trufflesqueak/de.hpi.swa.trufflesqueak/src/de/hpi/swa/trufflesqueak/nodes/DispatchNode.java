@@ -9,6 +9,7 @@ import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 
 public abstract class DispatchNode extends Node {
@@ -25,7 +26,7 @@ public abstract class DispatchNode extends Node {
     }
 
     @Specialization(replaces = "doDirect")
-    protected static Object doIndirect(CompiledMethodObject method, Object[] arguments,
+    protected static Object doIndirect(CompiledCodeObject method, Object[] arguments,
                     @Cached("create()") IndirectCallNode callNode) {
         return callNode.call(method.getCallTarget(), arguments);
     }

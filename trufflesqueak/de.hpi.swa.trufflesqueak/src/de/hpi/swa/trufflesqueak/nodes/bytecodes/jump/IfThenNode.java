@@ -6,7 +6,7 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SendSelector;
@@ -20,7 +20,7 @@ public class IfThenNode extends SqueakNode {
     @Children final private SqueakNode[] elseNodes;
     @Child private SqueakNode elseResult;
 
-    IfThenNode(CompiledMethodObject cm,
+    IfThenNode(CompiledCodeObject cm,
                     SqueakNode condition,
                     SqueakNode[] thenBranch,
                     SqueakNode thenRes,

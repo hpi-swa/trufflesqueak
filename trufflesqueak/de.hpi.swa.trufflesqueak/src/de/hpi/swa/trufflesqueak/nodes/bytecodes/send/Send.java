@@ -1,9 +1,9 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes.send;
 
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 
 public class Send extends AbstractSend {
-    public Send(CompiledMethodObject cm, int idx, int b) {
+    public Send(CompiledCodeObject cm, int idx, int b) {
         super(cm, idx, cm.getLiteral(b & 15), ((b >> 4) & 3) - 1);
     }
 }

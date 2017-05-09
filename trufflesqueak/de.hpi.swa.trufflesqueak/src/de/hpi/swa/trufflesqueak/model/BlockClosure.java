@@ -1,45 +1,42 @@
 package de.hpi.swa.trufflesqueak.model;
 
+import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.FrameInstance;
+import com.oracle.truffle.api.frame.FrameInstanceVisitor;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameUtil;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
-import de.hpi.swa.trufflesqueak.nodes.roots.SqueakBlockNode;
+import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.util.Chunk;
 
 public class BlockClosure extends BaseSqueakObject {
     private static final int BLKCLSR_OUTER_CONTEXT = 0;
-    private static final int BLKCLSR_STARTPC = 1;
+    private static final int BLKCLSR_COMPILEDBLOCK = 1;
     private static final int BLKCLSR_NUMARGS = 2;
-    private static final int BLKCLSR_SIZE = 3;
+    private static final int BLKCLSR_RECEIVER = 3;
+    private static final int BLKCLSR_SIZE = 4;
     @CompilationFinal private Object receiver;
     @CompilationFinal(dimensions = 1) private Object[] stack;
-    private Object frame;
-    private int argCount;
-    @CompilationFinal private RootCallTarget callTarget;
-    private SqueakNode[] ast;
+    @CompilationFinal private Object frameMarker;
+    @CompilationFinal private BaseSqueakObject context;
+    @CompilationFinal private CompiledBlockObject block;
 
     public BlockClosure(SqueakImageContext img) {
         super(img);
     }
 
-    public BlockClosure(SqueakImageContext image,
-                    FrameDescriptor fd,
-                    SqueakNode[] statements,
-                    Object frameMarker,
-                    int numArgs,
-                    Object rcvr,
-                    Object[] copiedValues) {
-        this(image);
-        ast = statements;
-        frame = frameMarker;
-        argCount = numArgs;
+    public BlockClosure(Object frameId, CompiledBlockObject compiledBlock, Object rcvr, Object[] copied) {
+        super(compiledBlock.image);
+        block = compiledBlock;
+        frameMarker = frameId;
         receiver = rcvr;
-        stack = copiedValues;
-        callTarget = Truffle.getRuntime().createCallTarget(new SqueakBlockNode(image.getLanguage(), this, fd));
+        stack = copied;
     }
 
     @Override
@@ -47,29 +44,53 @@ public class BlockClosure extends BaseSqueakObject {
         // FIXME
     }
 
+    private BaseSqueakObject getOrPrepareContext() {
+        if (context == null) {
+            Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Integer>() {
+                @Override
+                public Integer visitFrame(FrameInstance frameInstance) {
+                    Frame frame = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
+                    FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
+                    FrameSlot markerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.MARKER);
+                    Object marker = FrameUtil.getObjectSafe(frame, markerSlot);
+                    if (marker == frame) {
+                        context = new ContextObject(image, frame.materialize());
+                    }
+                    return null;
+                }
+            });
+        }
+        return context;
+    }
+
     @Override
     public BaseSqueakObject at0(int i) {
         switch (i) {
             case BLKCLSR_OUTER_CONTEXT:
-                return image.nil;
-            // return frame; // FIXME
-            case BLKCLSR_STARTPC:
-                return image.wrapInt(0);
+                return getOrPrepareContext();
+            case BLKCLSR_COMPILEDBLOCK:
+                return block;
             case BLKCLSR_NUMARGS:
-                return image.wrapInt(getNumArgs());
+                return image.wrapInt(block.getNumArgs());
+            case BLKCLSR_RECEIVER:
+                return (BaseSqueakObject) receiver;
             default:// FIXME
                 return (BaseSqueakObject) stack[i - BLKCLSR_SIZE];
         }
     }
 
-    public int getNumArgs() {
-        return argCount;
-    }
-
     @Override
     public void atput0(int i, BaseSqueakObject obj) {
         switch (i) {
-            default:// FIXME
+            case BLKCLSR_OUTER_CONTEXT:
+                context = obj;
+            case BLKCLSR_COMPILEDBLOCK:
+                block = (CompiledBlockObject) obj;
+            case BLKCLSR_NUMARGS:
+                throw new PrimitiveFailed();
+            case BLKCLSR_RECEIVER:
+                receiver = obj;
+            default:
                 stack[i - BLKCLSR_SIZE] = obj;
         }
     }
@@ -105,19 +126,46 @@ public class BlockClosure extends BaseSqueakObject {
         return stack.length;
     }
 
-    public RootCallTarget getCallTarget() {
-        return callTarget;
-    }
-
-    public SqueakNode[] getAST() {
-        return ast;
-    }
-
     public Object[] getStack() {
         return stack;
     }
 
     public Object getReceiver() {
         return receiver;
+    }
+
+    public RootCallTarget getCallTarget() {
+        return block.getCallTarget();
+    }
+
+    public Assumption getCallTargetStable() {
+        return block.getCallTargetStable();
+    }
+
+    public CompiledBlockObject getCompiledBlock() {
+        return block;
+    }
+
+    public Object[] getFrameArguments() {
+        return getFrameArguments(new BaseSqueakObject[0]);
+    }
+
+    public Object[] getFrameArguments(BaseSqueakObject[] pointers) {
+        if (block.getNumArgs() != pointers.length) {
+            throw new PrimitiveFailed();
+        }
+        Object[] arguments = new Object[1 /* receiver */ +
+                        pointers.length +
+                        stack.length +
+                        1 /* this */];
+        arguments[0] = getReceiver();
+        for (int i = 0; i < pointers.length; i++) {
+            arguments[1 + i] = pointers[i];
+        }
+        for (int i = 0; i < stack.length; i++) {
+            arguments[1 + pointers.length + i] = stack[i];
+        }
+        arguments[arguments.length - 1] = block;
+        return arguments;
     }
 }

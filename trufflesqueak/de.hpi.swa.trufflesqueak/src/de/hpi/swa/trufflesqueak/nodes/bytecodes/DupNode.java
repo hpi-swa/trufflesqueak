@@ -2,7 +2,7 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import java.util.Stack;
 
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
 /**
@@ -12,8 +12,8 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 public class DupNode extends UnknownBytecodeNode {
     private int statementsIdx;
 
-    public DupNode(CompiledMethodObject cm, int idx) {
-        super(cm, idx, -1);
+    public DupNode(CompiledCodeObject method, int idx) {
+        super(method, idx, -1);
     }
 
     @Override

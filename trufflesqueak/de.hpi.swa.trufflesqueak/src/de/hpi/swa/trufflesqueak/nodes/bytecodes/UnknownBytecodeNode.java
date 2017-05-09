@@ -4,14 +4,14 @@ import java.util.Stack;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
 public class UnknownBytecodeNode extends SqueakBytecodeNode {
     private final int bytecode;
 
-    public UnknownBytecodeNode(CompiledMethodObject cm, int idx, int bc) {
-        super(cm, idx);
+    public UnknownBytecodeNode(CompiledCodeObject method, int idx, int bc) {
+        super(method, idx);
         bytecode = bc;
     }
 

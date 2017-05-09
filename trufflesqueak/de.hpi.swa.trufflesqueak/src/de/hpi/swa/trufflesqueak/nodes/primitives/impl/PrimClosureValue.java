@@ -18,6 +18,6 @@ public class PrimClosureValue extends PrimitiveUnaryOperation {
 
     @Specialization
     protected Object value(BlockClosure block) {
-        return dispatch.executeBlock(block, new Object[0]);
+        return dispatch.executeBlock(block, block.getFrameArguments());
     }
 }

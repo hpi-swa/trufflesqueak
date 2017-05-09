@@ -7,7 +7,7 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.nodes.RepeatingNode;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SendSelector;
@@ -18,7 +18,7 @@ public class LoopRepeatingNode extends Node implements RepeatingNode {
     @Child private SqueakNode conditionNode;
     @Children private final SqueakNode[] bodyNodes;
 
-    public LoopRepeatingNode(CompiledMethodObject cm, SqueakNode cond, SqueakNode[] body) {
+    public LoopRepeatingNode(CompiledCodeObject cm, SqueakNode cond, SqueakNode[] body) {
         mustBeBooleanSend = new SendSelector(cm, 0, cm.image.mustBeBoolean, 0);
         conditionNode = cond;
         bodyNodes = body;

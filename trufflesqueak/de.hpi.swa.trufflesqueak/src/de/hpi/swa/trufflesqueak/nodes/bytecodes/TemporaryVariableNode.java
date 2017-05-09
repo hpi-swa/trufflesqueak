@@ -4,20 +4,20 @@ import java.util.Stack;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotReadNode;
 
 public class TemporaryVariableNode extends SqueakBytecodeNode {
     @Child SqueakNode tempNode;
 
-    public TemporaryVariableNode(CompiledMethodObject cm, int idx, int tempIndex) {
-        super(cm, idx);
-        if (cm.stackSlots.length <= tempIndex) {
+    public TemporaryVariableNode(CompiledCodeObject method, int idx, int tempIndex) {
+        super(method, idx);
+        if (method.stackSlots.length <= tempIndex) {
             // sometimes we'll decode more bytecodes than we have slots ... that's fine
-            tempNode = new UnknownBytecodeNode(cm, idx, tempIndex);
+            tempNode = new UnknownBytecodeNode(method, idx, tempIndex);
         } else {
-            tempNode = FrameSlotReadNode.create(cm, cm.stackSlots[tempIndex]);
+            tempNode = FrameSlotReadNode.create(method, method.stackSlots[tempIndex]);
         }
     }
 

@@ -6,7 +6,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
@@ -15,8 +15,8 @@ public class PushNewArrayNode extends SqueakBytecodeNode {
     @Child SqueakNode pushArrayNode;
     private final int arraySize;
 
-    public PushNewArrayNode(CompiledMethodObject cm, int idx, int param) {
-        super(cm, idx);
+    public PushNewArrayNode(CompiledCodeObject method, int idx, int param) {
+        super(method, idx);
         arraySize = param & 0b0111111;
         if ((param >> 7) == 1) {
             popIntoArrayNodes = new SqueakNode[arraySize];

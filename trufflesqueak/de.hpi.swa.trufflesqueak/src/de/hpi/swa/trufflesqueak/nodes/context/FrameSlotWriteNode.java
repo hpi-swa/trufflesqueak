@@ -7,25 +7,25 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
 @NodeChildren({@NodeChild(value = "value", type = SqueakNode.class)})
 public abstract class FrameSlotWriteNode extends FrameSlotNode {
-    protected FrameSlotWriteNode(CompiledMethodObject cm, FrameSlot slot) {
+    protected FrameSlotWriteNode(CompiledCodeObject cm, FrameSlot slot) {
         super(cm, slot);
     }
 
-    public static FrameSlotWriteNode argument(CompiledMethodObject cm, FrameSlot slot, int argumentIndex) {
+    public static FrameSlotWriteNode argument(CompiledCodeObject cm, FrameSlot slot, int argumentIndex) {
         return FrameSlotWriteNodeGen.create(cm, slot, new ArgumentNode(argumentIndex));
     }
 
-    public static FrameSlotWriteNode create(CompiledMethodObject cm, FrameSlot slot, SqueakNode node) {
+    public static FrameSlotWriteNode create(CompiledCodeObject cm, FrameSlot slot, SqueakNode node) {
         return FrameSlotWriteNodeGen.create(cm, slot, node);
     }
 
-    public static FrameSlotWriteNode temp(CompiledMethodObject cm, int index, SqueakNode node) {
-        return create(cm, cm.stackSlots[index], node);
+    public static FrameSlotWriteNode temp(CompiledCodeObject method, int index, SqueakNode node) {
+        return create(method, method.stackSlots[index], node);
     }
 
     protected boolean isNullWrite(Object value) {

@@ -2,7 +2,7 @@ package de.hpi.swa.trufflesqueak.nodes.context;
 
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.FalseObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.SmallInteger;
@@ -12,7 +12,7 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 public abstract class MethodLiteralNode extends SqueakNode {
     final Object literal;
 
-    public MethodLiteralNode(CompiledMethodObject cm, int idx) {
+    public MethodLiteralNode(CompiledCodeObject cm, int idx) {
         literal = cm.getLiteral(idx);
     }
 

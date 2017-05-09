@@ -6,6 +6,7 @@ import java.util.Arrays;
 
 import com.oracle.truffle.api.nodes.Node.Child;
 
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ArgumentNode;
@@ -141,6 +142,14 @@ public abstract class PrimitiveNodeFactory {
             }
         } catch (NoSuchMethodException | InstantiationException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
             throw new RuntimeException("Internal error in creating primitive", e);
+        }
+    }
+
+    public static PrimitiveNode forIdx(CompiledCodeObject method, int primitiveIdx) {
+        if (method instanceof CompiledMethodObject) {
+            return forIdx((CompiledMethodObject) method, primitiveIdx);
+        } else {
+            throw new RuntimeException("Primitives only supported in CompiledMethodObject");
         }
     }
 

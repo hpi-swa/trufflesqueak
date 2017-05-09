@@ -11,6 +11,7 @@ import com.oracle.truffle.api.Truffle;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.FalseObject;
 import de.hpi.swa.trufflesqueak.model.ImmediateCharacter;
@@ -85,7 +86,7 @@ public class SqueakImageContext {
     public final NativeObject x = new NativeObject(this);
     public final NativeObject y = new NativeObject(this);
     public final NativeObject div = new NativeObject(this);
-    private final CompiledMethodObject entryPoint;
+    private final CompiledCodeObject entryPoint;
 
     private static final BaseSqueakObject[] ENTRY_POINT_LITERALS = new BaseSqueakObject[]{new SmallInteger(null, 0), null, null};
     // Push literal 1, send literal 2 selector, return top
@@ -127,7 +128,7 @@ public class SqueakImageContext {
                 break;
         }
         ClassObject receiverClass = (ClassObject) receiver.getSqClass();
-        CompiledMethodObject lookupResult = (CompiledMethodObject) receiverClass.lookup(selector);
+        CompiledCodeObject lookupResult = (CompiledCodeObject) receiverClass.lookup(selector);
         entryPoint.setLiteral(1, receiver);
         entryPoint.setLiteral(2, lookupResult.getCompiledInSelector());
         return entryPoint.getCallTarget();

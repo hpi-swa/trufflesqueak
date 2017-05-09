@@ -1,18 +1,16 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Stack;
 import java.util.Vector;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
 import de.hpi.swa.trufflesqueak.model.BlockClosure;
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
 public class PushClosureNode extends SqueakBytecodeNode {
@@ -21,17 +19,16 @@ public class PushClosureNode extends SqueakBytecodeNode {
     private final int numCopied;
     @Child SqueakNode receiverNode;
     @Children final SqueakNode[] copiedValueNodes;
-    @CompilationFinal(dimensions = 1) private SqueakNode[] blockNodes;
-    private final FrameDescriptor blockFrameDescriptor;
+    private final CompiledBlockObject compiledBlock;
 
-    public PushClosureNode(CompiledMethodObject cm, int idx, int i, int j, int k) {
+    public PushClosureNode(CompiledCodeObject cm, int idx, int i, int j, int k) {
         super(cm, idx);
         numArgs = i & 0xF;
         numCopied = (i >> 4) & 0xF;
         blockSize = (j << 8) | k;
         copiedValueNodes = new SqueakNode[numCopied];
         receiverNode = new ReceiverNode(cm, idx);
-        blockFrameDescriptor = cm.createFrameDescriptor(numArgs, numCopied, false);
+        compiledBlock = new CompiledBlockObject(method, numArgs, numCopied);
     }
 
     @Override
@@ -43,12 +40,8 @@ public class PushClosureNode extends SqueakBytecodeNode {
         for (int i = 0; i < copiedValueNodes.length; i++) {
             copiedValues[i] = copiedValueNodes[i].executeGeneric(frame);
         }
-        return new BlockClosure(
-                        method.image,
-                        blockFrameDescriptor,
-                        blockNodes,
-                        frameMarker,
-                        numArgs,
+        return new BlockClosure(frameMarker,
+                        compiledBlock,
                         receiver,
                         copiedValues);
     }
@@ -64,8 +57,11 @@ public class PushClosureNode extends SqueakBytecodeNode {
         }
         int codeStart = bytecodeStart();
         int codeEnd = codeStart + blockSize;
-        List<SqueakBytecodeNode> blockCode = sequence.subList(codeStart, codeEnd);
-        blockNodes = blockFrom(blockCode, sequence, new Stack<>());
+        byte[] bytes = Arrays.copyOfRange(method.getBytes(), codeStart, codeEnd);
+        for (int i = codeStart; i < codeEnd; i++) {
+            sequence.set(i, null);
+        }
+        compiledBlock.setBytes(bytes);
         stack.push(this);
     }
 

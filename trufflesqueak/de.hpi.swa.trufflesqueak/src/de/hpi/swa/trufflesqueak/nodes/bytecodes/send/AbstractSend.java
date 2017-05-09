@@ -9,7 +9,7 @@ import com.oracle.truffle.api.nodes.UnexpectedResultException;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.DispatchNode;
 import de.hpi.swa.trufflesqueak.nodes.DispatchNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.LookupNode;
@@ -28,8 +28,8 @@ public class AbstractSend extends SqueakBytecodeNode {
     @Child private LookupNode lookupNode;
     @Child private DispatchNode dispatchNode;
 
-    public AbstractSend(CompiledMethodObject cm, int idx, BaseSqueakObject sel, int argcount) {
-        super(cm, idx);
+    public AbstractSend(CompiledCodeObject method, int idx, BaseSqueakObject sel, int argcount) {
+        super(method, idx);
         selector = sel;
         argumentNodes = new SqueakNode[argcount];
     }

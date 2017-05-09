@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
+import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -8,14 +9,17 @@ import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.BlockClosure;
+import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 
 public abstract class BlockActivationNode extends Node {
     public abstract Object executeBlock(BlockClosure block, Object[] arguments);
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"block.getCallTarget() == cachedTarget"})
+    @Specialization(guards = {"block.getCompiledBlock() == cachedCompiledBlock"}, assumptions = {"callTargetStable"})
     protected static Object doDirect(BlockClosure block, Object[] arguments,
+                    @Cached("block.getCompiledBlock()") CompiledBlockObject cachedCompiledBlock,
                     @Cached("block.getCallTarget()") RootCallTarget cachedTarget,
+                    @Cached("block.getCallTargetStable()") Assumption callTargetStable,
                     @Cached("create(cachedTarget)") DirectCallNode callNode) {
         return callNode.call(arguments);
     }

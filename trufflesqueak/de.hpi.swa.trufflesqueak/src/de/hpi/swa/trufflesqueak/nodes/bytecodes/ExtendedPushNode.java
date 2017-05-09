@@ -2,12 +2,12 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import java.util.Stack;
 
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
 public class ExtendedPushNode extends ExtendedAccess {
-    public ExtendedPushNode(CompiledMethodObject cm, int idx, int i) {
-        super(cm, idx, i);
+    public ExtendedPushNode(CompiledCodeObject method, int idx, int i) {
+        super(method, idx, i);
     }
 
     @Override

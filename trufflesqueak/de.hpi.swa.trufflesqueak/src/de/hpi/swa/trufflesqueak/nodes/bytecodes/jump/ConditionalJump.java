@@ -7,7 +7,7 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.LoopNode;
 
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
 
@@ -17,7 +17,7 @@ public class ConditionalJump extends AbstractJump {
     protected final int offset;
     private final boolean isIfTrue;
 
-    private ConditionalJump(CompiledMethodObject cm, int idx, int off, boolean condition) {
+    private ConditionalJump(CompiledCodeObject cm, int idx, int off, boolean condition) {
         super(cm, idx);
         offset = off;
         isIfTrue = condition;
@@ -25,11 +25,11 @@ public class ConditionalJump extends AbstractJump {
         ifThenNode = null;
     }
 
-    public ConditionalJump(CompiledMethodObject cm, int idx, int bytecode) {
+    public ConditionalJump(CompiledCodeObject cm, int idx, int bytecode) {
         this(cm, idx, shortJumpOffset(bytecode), false);
     }
 
-    public ConditionalJump(CompiledMethodObject cm, int idx, int bytecode, int parameter, boolean condition) {
+    public ConditionalJump(CompiledCodeObject cm, int idx, int bytecode, int parameter, boolean condition) {
         this(cm, idx + 1, longJumpOffset(bytecode, parameter), condition);
     }
 

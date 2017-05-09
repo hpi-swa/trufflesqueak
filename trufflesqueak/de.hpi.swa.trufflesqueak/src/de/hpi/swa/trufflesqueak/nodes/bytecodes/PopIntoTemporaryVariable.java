@@ -4,7 +4,7 @@ import java.util.Stack;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotWriteNode;
 
@@ -13,8 +13,8 @@ public class PopIntoTemporaryVariable extends SqueakBytecodeNode {
 
     final int tempIndex;
 
-    public PopIntoTemporaryVariable(CompiledMethodObject cm, int idx, int tempIdx) {
-        super(cm, idx);
+    public PopIntoTemporaryVariable(CompiledCodeObject method, int idx, int tempIdx) {
+        super(method, idx);
         tempIndex = tempIdx;
     }
 

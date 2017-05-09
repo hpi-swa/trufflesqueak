@@ -4,16 +4,16 @@ import java.util.Stack;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtNodeGen;
 
 public class LiteralVariableNode extends SqueakBytecodeNode {
     @Child SqueakNode valueNode;
 
-    public LiteralVariableNode(CompiledMethodObject cm, int idx, int literalIndex) {
-        super(cm, idx);
-        valueNode = ObjectAtNodeGen.create(1, new LiteralConstantNode(cm, idx, literalIndex));
+    public LiteralVariableNode(CompiledCodeObject method, int idx, int literalIndex) {
+        super(method, idx);
+        valueNode = ObjectAtNodeGen.create(1, new LiteralConstantNode(method, idx, literalIndex));
     }
 
     @Override

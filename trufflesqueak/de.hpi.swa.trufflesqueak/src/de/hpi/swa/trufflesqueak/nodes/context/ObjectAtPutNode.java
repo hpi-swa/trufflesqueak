@@ -8,7 +8,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.exceptions.UnwrappingError;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithMethod;
@@ -17,7 +17,7 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithMethod;
 public abstract class ObjectAtPutNode extends SqueakNodeWithMethod {
     private final int index;
 
-    protected ObjectAtPutNode(CompiledMethodObject cm, int variableIndex) {
+    protected ObjectAtPutNode(CompiledCodeObject cm, int variableIndex) {
         super(cm);
         index = variableIndex;
     }

@@ -11,6 +11,7 @@ import com.oracle.truffle.api.dsl.TypeSystem;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosure;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
+import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.FalseObject;
 import de.hpi.swa.trufflesqueak.model.ImmediateCharacter;
@@ -36,6 +37,7 @@ import de.hpi.swa.trufflesqueak.model.TrueObject;
                 PointersObject.class,
                 BlockClosure.class,
                 NativeObject.class,
+                CompiledBlockObject.class,
                 CompiledMethodObject.class,
                 BaseSqueakObject.class})
 public abstract class SqueakTypes {

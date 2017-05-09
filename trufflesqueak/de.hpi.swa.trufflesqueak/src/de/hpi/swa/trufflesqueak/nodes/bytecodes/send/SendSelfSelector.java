@@ -3,13 +3,13 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes.send;
 import java.util.Stack;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReceiverNode;
 
 public class SendSelfSelector extends AbstractSend {
-    public SendSelfSelector(CompiledMethodObject cm, int idx, BaseSqueakObject selector, int numArgs) {
-        super(cm, idx, selector, numArgs);
+    public SendSelfSelector(CompiledCodeObject method, int idx, BaseSqueakObject selector, int numArgs) {
+        super(method, idx, selector, numArgs);
     }
 
     @Override

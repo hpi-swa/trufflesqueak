@@ -19,6 +19,6 @@ public class PrimClosureValueWithArgs extends PrimitiveBinaryOperation {
 
     @Specialization
     protected Object value(BlockClosure block, PointersObject ary) {
-        return dispatch.executeBlock(block, ary.getPointers());
+        return dispatch.executeBlock(block, block.getFrameArguments(ary.getPointers()));
     }
 }

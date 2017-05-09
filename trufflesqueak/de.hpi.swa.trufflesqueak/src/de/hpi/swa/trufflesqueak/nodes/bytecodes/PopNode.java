@@ -4,7 +4,7 @@ import java.util.Stack;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
 /**
@@ -13,8 +13,8 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
  * its effect.
  */
 public class PopNode extends UnknownBytecodeNode {
-    public PopNode(CompiledMethodObject cm, int idx) {
-        super(cm, idx, -1);
+    public PopNode(CompiledCodeObject method, int idx) {
+        super(method, idx, -1);
     }
 
     @Override

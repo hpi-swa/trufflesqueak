@@ -4,15 +4,15 @@ import java.util.Stack;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
 public abstract class ExtendedAccess extends SqueakBytecodeNode {
     final int bytecode;
     @Child SqueakNode actualNode;
 
-    public ExtendedAccess(CompiledMethodObject cm, int index, int i) {
-        super(cm, index);
+    public ExtendedAccess(CompiledCodeObject method, int index, int i) {
+        super(method, index);
         bytecode = i;
     }
 

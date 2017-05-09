@@ -6,13 +6,13 @@ import com.oracle.truffle.api.nodes.UnexpectedResultException;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
 
 public abstract class SqueakLookupClassNode extends Node {
-    protected final CompiledMethodObject method;
+    protected final CompiledCodeObject method;
 
-    public SqueakLookupClassNode(CompiledMethodObject cm) {
+    public SqueakLookupClassNode(CompiledCodeObject cm) {
         method = cm;
     }
 

@@ -2,7 +2,7 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import java.util.Stack;
 
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotWriteNode;
@@ -10,8 +10,8 @@ import de.hpi.swa.trufflesqueak.nodes.context.MethodLiteralNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtPutNodeGen;
 
 public class ExtendedStoreNode extends ExtendedAccess {
-    public ExtendedStoreNode(CompiledMethodObject cm, int index, int i) {
-        super(cm, index, i);
+    public ExtendedStoreNode(CompiledCodeObject method, int index, int i) {
+        super(method, index, i);
     }
 
     @Override

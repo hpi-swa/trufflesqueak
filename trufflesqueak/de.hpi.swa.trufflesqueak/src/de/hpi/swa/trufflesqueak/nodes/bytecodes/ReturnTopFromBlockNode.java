@@ -2,12 +2,12 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import java.util.Stack;
 
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
 public class ReturnTopFromBlockNode extends ReturnNode {
-    public ReturnTopFromBlockNode(CompiledMethodObject cm, int idx) {
-        super(cm, idx);
+    public ReturnTopFromBlockNode(CompiledCodeObject method, int idx) {
+        super(method, idx);
     }
 
     @Override

@@ -4,17 +4,17 @@ import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 
 /**
  * This is the base class for Squeak bytecode evaluation.
  */
 @TypeSystemReference(SqueakTypes.class)
 public abstract class SqueakNodeWithMethod extends SqueakNode {
-    protected final CompiledMethodObject method;
+    protected final CompiledCodeObject method;
 
-    public SqueakNodeWithMethod(CompiledMethodObject cm) {
-        method = cm;
+    public SqueakNodeWithMethod(CompiledCodeObject method2) {
+        method = method2;
     }
 
     public final Object getClosure(VirtualFrame frame) {

@@ -7,7 +7,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.LocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
@@ -15,10 +15,10 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 public class CallPrimitiveNode extends SqueakBytecodeNode {
     @Child private PrimitiveNode primitive;
 
-    public CallPrimitiveNode(CompiledMethodObject compiledMethodObject, int idx, int i, int j) {
-        super(compiledMethodObject, idx);
+    public CallPrimitiveNode(CompiledCodeObject method, int idx, int i, int j) {
+        super(method, idx);
         int primitiveIdx = i + (j << 8);
-        primitive = PrimitiveNodeFactory.forIdx(compiledMethodObject, primitiveIdx);
+        primitive = PrimitiveNodeFactory.forIdx(method, primitiveIdx);
     }
 
     @Override

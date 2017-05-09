@@ -5,23 +5,23 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 
 public abstract class FrameSlotReadNode extends FrameSlotNode {
-    protected FrameSlotReadNode(CompiledMethodObject cm, FrameSlot frameSlot) {
+    protected FrameSlotReadNode(CompiledCodeObject cm, FrameSlot frameSlot) {
         super(cm, frameSlot);
     }
 
-    public static FrameSlotReadNode create(CompiledMethodObject cm, FrameSlot frameSlot) {
+    public static FrameSlotReadNode create(CompiledCodeObject cm, FrameSlot frameSlot) {
         return FrameSlotReadNodeGen.create(cm, frameSlot);
     }
 
-    public static FrameSlotReadNode temp(CompiledMethodObject cm, int index) {
+    public static FrameSlotReadNode temp(CompiledCodeObject cm, int index) {
         return create(cm, cm.stackSlots[index]);
     }
 
-    public static FrameSlotReadNode receiver(CompiledMethodObject cm) {
-        return create(cm, cm.receiverSlot);
+    public static FrameSlotReadNode receiver(CompiledCodeObject method) {
+        return create(method, method.receiverSlot);
     }
 
     @Specialization(guards = "isLong()")
