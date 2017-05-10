@@ -2,6 +2,7 @@ package de.hpi.swa.trufflesqueak.nodes.context;
 
 import java.math.BigInteger;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
@@ -60,8 +61,10 @@ public abstract class SqueakLookupClassNode extends Node {
         }
     }
 
-    @Specialization(rewriteOn = UnexpectedResultException.class)
-    public ClassObject squeakClass(BaseSqueakObject object) throws UnexpectedResultException {
+    @SuppressWarnings("unused")
+    @Specialization(guards = {"object.getClass() == cachedObjectClass"}, rewriteOn = UnexpectedResultException.class)
+    public ClassObject squeakClass(BaseSqueakObject object,
+                    @Cached("object.getClass()") Class<? extends BaseSqueakObject> cachedObjectClass) throws UnexpectedResultException {
         return SqueakTypesGen.expectClassObject(object.getSqClass());
     }
 
