@@ -1,5 +1,7 @@
 package de.hpi.swa.trufflesqueak.nodes.context;
 
+import java.math.BigInteger;
+
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
@@ -47,6 +49,15 @@ public abstract class SqueakLookupClassNode extends Node {
     @Specialization
     public ClassObject squeakClass(long object) {
         return method.image.smallIntegerClass;
+    }
+
+    @Specialization
+    public ClassObject squeakClass(BigInteger object) {
+        if (object.signum() >= 0) {
+            return method.image.largePositiveIntegerClass;
+        } else {
+            return method.image.largeNegativeIntegerClass;
+        }
     }
 
     @Specialization(rewriteOn = UnexpectedResultException.class)

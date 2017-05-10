@@ -1,5 +1,7 @@
 package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
+import java.math.BigInteger;
+
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
@@ -13,5 +15,10 @@ public class PrimBitOr extends PrimitiveBinaryOperation {
     @Specialization
     protected long bitOr(long receiver, long arg) {
         return receiver | arg;
+    }
+
+    @Specialization
+    protected BigInteger bitAnd(BigInteger receiver, BigInteger arg) {
+        return receiver.or(arg);
     }
 }

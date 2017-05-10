@@ -30,4 +30,9 @@ public abstract class ReturnNode extends SqueakBytecodeNode {
         b.append("^ ");
         super.prettyPrintOn(b);
     }
+
+    @Override
+    public boolean isReturn() {
+        return true;
+    }
 }

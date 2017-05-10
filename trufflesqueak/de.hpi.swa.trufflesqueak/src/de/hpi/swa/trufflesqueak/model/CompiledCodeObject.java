@@ -17,7 +17,7 @@ import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.UnwrappingError;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
+import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakMethodNode;
 import de.hpi.swa.trufflesqueak.util.BitSplitter;
 import de.hpi.swa.trufflesqueak.util.Chunk;
@@ -33,7 +33,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
     public static final String MARKER = "marker";
     // code
     protected byte[] bytes;
-    private SqueakBytecodeNode[] ast;
+    private SqueakNode[] ast;
     // frame info
     private FrameDescriptor frameDescriptor;
     @CompilationFinal public FrameSlot receiverSlot;
@@ -143,7 +143,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
         return className + ">>" + selector;
     }
 
-    public SqueakBytecodeNode[] getBytecodeAST() {
+    public SqueakNode[] getBytecodeAST() {
         return ast;
     }
 
@@ -151,7 +151,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
         return frameDescriptor;
     }
 
-    public final int getNumTemps() {
+    public int getNumTemps() {
         return numTemps;
     }
 

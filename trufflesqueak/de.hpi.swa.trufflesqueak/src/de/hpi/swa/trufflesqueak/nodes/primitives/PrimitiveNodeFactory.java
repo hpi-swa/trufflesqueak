@@ -16,9 +16,9 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimAtPutNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimBitAndNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimBitOrNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimBitShiftNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimCharacterValueNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimClass;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimClosureValueNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimClosureValueWithArgsNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimClosureValueFactory;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimDivNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimDivideNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimEqualNodeGen;
@@ -41,6 +41,8 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPushSelf;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPushTrue;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPushTwo;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPushZero;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimQuickReturnReceiverVariableNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimReplaceFromToNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimSizeNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimSubNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimUtcClockNodeGen;
@@ -69,10 +71,29 @@ public abstract class PrimitiveNodeFactory {
         BIT_SHIFT(PrimBitShiftNodeGen.class, 17),
         MAKE_POINT(PrimMakePoint.class, 18),
         //
+        LARGE_ADD(PrimAddNodeGen.class, 21),
+        LARGE_SUB(PrimSubNodeGen.class, 22),
+        LARGE_LESSTHAN(PrimLessThanNodeGen.class, 23),
+        LARGE_GREATERTHAN(PrimGreaterThanNodeGen.class, 24),
+        LARGE_LESSOREQUAL(PrimLessOrEqualNodeGen.class, 25),
+        LARGE_GREATEROREQUAL(PrimGreaterOrEqualNodeGen.class, 26),
+        LARGE_EQUAL(PrimEqualNodeGen.class, 27),
+        LARGE_NOTEQUAL(PrimNotEqualNodeGen.class, 28),
+        LARGE_MULTIPLY(PrimMulNodeGen.class, 29),
+        LARGE_DIVIDE(PrimDivideNodeGen.class, 30),
+        LARGE_MOD(PrimModNodeGen.class, 31),
+        LARGE_DIV(PrimDivNodeGen.class, 32),
+        //
+        LARGE_BIT_AND(PrimBitAndNodeGen.class, 34),
+        LARGE_BIT_OR(PrimBitOrNodeGen.class, 35),
+        //
+        LARGE_BIT_SHIFT(PrimBitShiftNodeGen.class, 37),
+        //
         AT(PrimAtNodeGen.class, 60),
         AT_PUT(PrimAtPutNodeGen.class, 61),
         SIZE(PrimSizeNodeGen.class, 62),
-        //
+        STRING_AT(PrimAtNodeGen.class, 63),
+        STRING_AT_PUT(PrimAtPutNodeGen.class, 64),
         NEXT(PrimitiveNode.class, 65),
         NEXT_PUT(PrimitiveNode.class, 66),
         AT_END(PrimitiveNode.class, 67),
@@ -82,11 +103,19 @@ public abstract class PrimitiveNodeFactory {
         //
         BLOCK_COPY(PrimitiveNode.class, 80),
         //
+        REPLACE_FROM_TO(PrimReplaceFromToNodeGen.class, 105),
+        //
         EQUIVALENT(PrimEquivalentNodeGen.class, 110),
         CLASS(PrimClass.class, 111),
         //
-        CLOSURE_VALUE(PrimClosureValueNodeGen.class, 201),
-        CLOSURE_VALUE_WITH_ARG(PrimClosureValueWithArgsNodeGen.class, 202),
+        CHARACTER_VALUE(PrimCharacterValueNodeGen.class, 170),
+        //
+        CLOSURE_VALUE(PrimClosureValueFactory.PrimClosureValue0NodeGen.class, 201),
+        CLOSURE_VALUE_(PrimClosureValueFactory.PrimClosureValue1NodeGen.class, 202),
+        CLOSURE_VALUE__(PrimClosureValueFactory.PrimClosureValue2NodeGen.class, 203),
+        CLOSURE_VALUE___(PrimClosureValueFactory.PrimClosureValue3NodeGen.class, 204),
+        CLOSURE_VALUE____(PrimClosureValueFactory.PrimClosureValue4NodeGen.class, 205),
+        CLOSURE_VALUE_ARGS(PrimClosureValueFactory.PrimClosureValueAryNodeGen.class, 206),
         //
         UTC_MICROSECOND_CLOCK(PrimUtcClockNodeGen.class, 240),
         //
@@ -156,6 +185,9 @@ public abstract class PrimitiveNodeFactory {
     public static PrimitiveNode forIdx(CompiledMethodObject method, int primitiveIdx) {
         if (primitiveIdx >= primitiveClasses.length) {
             return new PrimitiveNode(method);
+        }
+        if (primitiveIdx >= 264 && primitiveIdx <= 520) {
+            return new PrimQuickReturnReceiverVariableNode(method, primitiveIdx - 264);
         }
         Class<? extends PrimitiveNode> primClass = primitiveClasses[primitiveIdx];
         if (primClass == null) {

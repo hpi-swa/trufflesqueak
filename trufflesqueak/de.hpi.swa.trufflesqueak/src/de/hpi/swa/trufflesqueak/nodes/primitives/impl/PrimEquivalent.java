@@ -1,5 +1,7 @@
 package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
+import java.math.BigInteger;
+
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
@@ -20,6 +22,11 @@ public abstract class PrimEquivalent extends PrimitiveBinaryOperation {
     @Specialization
     boolean equivalent(boolean a, boolean b) {
         return a == b;
+    }
+
+    @Specialization
+    boolean equivalent(BigInteger a, BigInteger b) {
+        return a.equals(b);
     }
 
     @Specialization

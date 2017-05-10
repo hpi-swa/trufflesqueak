@@ -1,6 +1,7 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -20,7 +21,7 @@ public class NativeObject extends SqueakObject implements TruffleObject {
     public NativeObject(SqueakImageContext image, ClassObject classObject, int size, int elementSz) {
         super(image, classObject);
         if (elementSz == 1) {
-            setBytes(new String(new byte[size]));
+            setBytes(new byte[size]);
         } else {
             assert elementSz == 4;
             setWords(new int[size]);
@@ -29,12 +30,13 @@ public class NativeObject extends SqueakObject implements TruffleObject {
 
     public NativeObject(SqueakImageContext img, ClassObject klass, byte[] bytes) {
         this(img, klass, bytes.length, 1);
+        content.rewind();
         content.put(bytes);
     }
 
-    public void setBytes(String s) {
-        byte[] bytes = s.getBytes();
+    public void setBytes(byte[] bytes) {
         content = ByteBuffer.allocate(bytes.length);
+        content.order(ByteOrder.nativeOrder());
         content.put(bytes);
         elementSize = 1;
     }

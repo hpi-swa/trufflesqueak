@@ -4,13 +4,15 @@ import java.util.Arrays;
 
 public class CompiledBlockObject extends CompiledCodeObject {
     final CompiledCodeObject outerMethod;
+    final int numCopiedValues;
 
     public CompiledBlockObject(CompiledCodeObject method, int numArgs, int numCopied) {
         super(method.image);
         outerMethod = method;
+        numCopiedValues = numCopied;
         BaseSqueakObject[] lits = outerMethod.getLiterals();
         lits = Arrays.copyOf(lits, lits.length - 1);
-        int baseHdr = ((numArgs & 0xF) << 24) | ((numCopied & 0x3F) << 18);
+        int baseHdr = ((numArgs & 0xF) << 24) | (((outerMethod.getNumTemps() + numCopied) & 0x3F) << 18);
         lits[0] = image.wrapInt(baseHdr); // replace header
         lits[lits.length - 1] = outerMethod; // last literal is back pointer to method
         literals = lits;
@@ -27,6 +29,11 @@ public class CompiledBlockObject extends CompiledCodeObject {
     }
 
     public int getNumCopiedValues() {
-        return getNumTemps();
+        return numCopiedValues;
+    }
+
+    @Override
+    public int getNumTemps() {
+        return super.getNumTemps() + numCopiedValues;
     }
 }

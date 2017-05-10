@@ -70,7 +70,11 @@ public class IfThenNode extends SqueakNode {
     public void prettyPrintOn(StringBuilder b) {
         b.append('(');
         conditionNode.prettyPrintOn(b);
-        b.append(") ifTrue: [");
+        if (conditionNode instanceof IfTrue) {
+            b.append(") ifFalse: [");
+        } else {
+            b.append(") ifTrue: [");
+        }
         for (SqueakNode node : thenNodes) {
             node.prettyPrintOn(b);
             b.append('.').append('\n');
@@ -78,7 +82,11 @@ public class IfThenNode extends SqueakNode {
         if (thenResult != null) {
             thenResult.prettyPrintOn(b);
         }
-        b.append("] ifFalse: [");
+        if (conditionNode instanceof IfTrue) {
+            b.append(") ifTrue: [");
+        } else {
+            b.append("] ifFalse: [");
+        }
         if (elseNodes != null) {
             for (SqueakNode node : elseNodes) {
                 node.prettyPrintOn(b);

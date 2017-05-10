@@ -6,11 +6,25 @@ import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.UnwrappingError;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.ImmediateCharacter;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveTernaryOperation;
 
 public class PrimAtPut extends PrimitiveTernaryOperation {
     public PrimAtPut(CompiledMethodObject cm) {
         super(cm);
+    }
+
+    @Specialization
+    protected long atput(NativeObject receiver, int idx, int value) {
+        receiver.setNativeAt0(idx - 1, value);
+        return value;
+    }
+
+    @Specialization
+    protected ImmediateCharacter atput(NativeObject receiver, int idx, ImmediateCharacter value) {
+        receiver.setNativeAt0(idx - 1, value.getValue());
+        return value;
     }
 
     @Specialization

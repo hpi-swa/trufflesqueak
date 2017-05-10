@@ -146,26 +146,22 @@ public class BlockClosure extends BaseSqueakObject {
         return block;
     }
 
-    public Object[] getFrameArguments() {
-        return getFrameArguments(new BaseSqueakObject[0]);
-    }
-
-    public Object[] getFrameArguments(BaseSqueakObject[] pointers) {
-        if (block.getNumArgs() != pointers.length) {
+    public Object[] getFrameArguments(Object... objects) {
+        if (block.getNumArgs() != objects.length) {
             throw new PrimitiveFailed();
         }
         Object[] arguments = new Object[1 /* receiver */ +
-                        pointers.length +
+                        objects.length +
                         stack.length +
                         1 /* this */];
         arguments[0] = getReceiver();
-        for (int i = 0; i < pointers.length; i++) {
-            arguments[1 + i] = pointers[i];
+        for (int i = 0; i < objects.length; i++) {
+            arguments[1 + i] = objects[i];
         }
         for (int i = 0; i < stack.length; i++) {
-            arguments[1 + pointers.length + i] = stack[i];
+            arguments[1 + objects.length + i] = stack[i];
         }
-        arguments[arguments.length - 1] = block;
+        arguments[arguments.length - 1] = this;
         return arguments;
     }
 }

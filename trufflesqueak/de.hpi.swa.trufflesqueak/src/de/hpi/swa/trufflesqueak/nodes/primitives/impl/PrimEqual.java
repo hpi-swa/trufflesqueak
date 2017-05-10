@@ -1,5 +1,7 @@
 package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
+import java.math.BigInteger;
+
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
@@ -13,5 +15,10 @@ public class PrimEqual extends PrimitiveBinaryOperation {
     @Specialization
     protected boolean eq(long receiver, long argument) {
         return receiver == argument;
+    }
+
+    @Specialization
+    boolean divBig(BigInteger a, BigInteger b) {
+        return a.equals(b);
     }
 }

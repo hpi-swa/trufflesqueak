@@ -24,7 +24,7 @@ public class SqueakMethodNode extends RootNode {
     @Child SqueakNode receiverNode;
     @Children final SqueakNode[] argumentNodes;
     @Children final SqueakNode[] copiedValuesNodes;
-    @Children final SqueakBytecodeNode[] ast;
+    @Children final SqueakNode[] ast;
     private final FrameSlot pcSlot;
     private final FrameSlot stackPointerSlot;
     private final FrameSlot markerSlot;
@@ -82,7 +82,7 @@ public class SqueakMethodNode extends RootNode {
     public String prettyPrint() {
         StringBuilder str = new StringBuilder();
         str.append(code.toString()).append('\n');
-        for (SqueakBytecodeNode node : ast) {
+        for (SqueakNode node : ast) {
             node.prettyPrintOn(str);
             str.append('\n');
         }

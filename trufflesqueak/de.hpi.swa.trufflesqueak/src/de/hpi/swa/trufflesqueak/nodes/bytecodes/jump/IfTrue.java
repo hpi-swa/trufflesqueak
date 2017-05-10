@@ -13,17 +13,17 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 public abstract class IfTrue extends SqueakNode {
     @Specialization
     public boolean checkCondition(boolean cond) {
-        return !cond;
+        return cond;
     }
 
     @Specialization
     public boolean checkCondition(@SuppressWarnings("unused") FalseObject cond) {
-        return true;
+        return false;
     }
 
     @Specialization
     public boolean checkCondition(@SuppressWarnings("unused") TrueObject cond) {
-        return false;
+        return true;
     }
 
     @Fallback

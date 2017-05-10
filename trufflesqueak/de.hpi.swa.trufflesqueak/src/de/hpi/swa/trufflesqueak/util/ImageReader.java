@@ -236,11 +236,13 @@ public class ImageReader {
         setPrebuiltObject(7, image.arrayClass);
         setPrebuiltObject(8, image.smalltalk);
         setPrebuiltObject(10, image.methodContextClass);
+        setPrebuiltObject(13, image.largePositiveIntegerClass);
         setPrebuiltObject(16, image.compiledMethodClass);
         setPrebuiltObject(19, image.characterClass);
         setPrebuiltObject(20, image.doesNotUnderstand);
         setPrebuiltObject(25, image.mustBeBoolean);
         setPrebuiltObject(36, image.blockClosureClass);
+        setPrebuiltObject(42, image.largeNegativeIntegerClass);
         setPrebuiltObject(SPECIAL_SELECTORS_INDEX, image.specialSelectors);
     }
 

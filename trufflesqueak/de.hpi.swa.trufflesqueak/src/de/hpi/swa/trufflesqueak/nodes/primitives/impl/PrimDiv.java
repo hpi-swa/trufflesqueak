@@ -1,5 +1,7 @@
 package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
+import java.math.BigInteger;
+
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
@@ -13,5 +15,15 @@ public class PrimDiv extends PrimitiveBinaryOperation {
     @Specialization(rewriteOn = ArithmeticException.class)
     long div(long a, long b) {
         return Math.floorDiv(a, b);
+    }
+
+    @Specialization(rewriteOn = ArithmeticException.class)
+    long div(BigInteger a, BigInteger b) {
+        return a.divide(b).longValueExact();
+    }
+
+    @Specialization
+    BigInteger divBig(BigInteger a, BigInteger b) {
+        return a.divide(b);
     }
 }

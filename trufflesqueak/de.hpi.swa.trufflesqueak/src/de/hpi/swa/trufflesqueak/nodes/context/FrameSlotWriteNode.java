@@ -28,23 +28,23 @@ public abstract class FrameSlotWriteNode extends FrameSlotNode {
         return create(method, method.stackSlots[index], node);
     }
 
-    protected boolean isNullWrite(Object value) {
-        return isIllegal() && value == null;
+    protected boolean isNullWrite(VirtualFrame frame, Object value) {
+        return isIllegal(frame) && value == null;
     }
 
-    @Specialization(guards = "isNullWrite(value)")
-    public Object skipNullWrite(Object value) {
+    @Specialization(guards = "isNullWrite(frame, value)")
+    public Object skipNullWrite(@SuppressWarnings("unused") VirtualFrame frame, Object value) {
         return value;
     }
 
-    @Specialization(guards = "isLong() || isIllegal()")
+    @Specialization(guards = "isLong(frame) || isIllegal(frame)")
     public long writeLong(VirtualFrame frame, long value) {
         slot.setKind(FrameSlotKind.Long);
         frame.setLong(slot, value);
         return value;
     }
 
-    @Specialization(guards = "isBoolean() || isIllegal()")
+    @Specialization(guards = "isBoolean(frame) || isIllegal(frame)")
     public boolean writeBool(VirtualFrame frame, boolean value) {
         slot.setKind(FrameSlotKind.Boolean);
         frame.setBoolean(slot, value);

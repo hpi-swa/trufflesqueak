@@ -17,8 +17,13 @@ public class PrimSub extends PrimitiveBinaryOperation {
         return Math.subtractExact(a, b);
     }
 
+    @Specialization(rewriteOn = ArithmeticException.class)
+    long sub(BigInteger a, BigInteger b) {
+        return a.subtract(b).longValueExact();
+    }
+
     @Specialization
-    BigInteger sub(BigInteger a, BigInteger b) {
+    BigInteger subBig(BigInteger a, BigInteger b) {
         return a.subtract(b);
     }
 }

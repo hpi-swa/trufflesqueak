@@ -25,7 +25,6 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushRemoteTempNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReceiverVariableNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnConstantNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnTopFromBlockNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnTopFromMethodNode;
@@ -55,7 +54,7 @@ public class Decompiler {
         code = compiledCodeObject;
     }
 
-    public SqueakBytecodeNode[] getAST() {
+    public SqueakNode[] getAST() {
         int index[] = {0};
 
         Vector<SqueakBytecodeNode> sequence = new Vector<>();
@@ -73,13 +72,13 @@ public class Decompiler {
             SqueakBytecodeNode node = sequence.get(i);
             if (node != null) {
                 node.interpretOn(stack, statements, sequence);
-                if (node instanceof ReturnNode) {
+                if (node.isReturn()) {
                     // when we have a return on the main path, we don't need to continue
                     break;
                 }
             }
         }
-        return statements.toArray(new SqueakBytecodeNode[statements.size()]);
+        return statements.toArray(new SqueakNode[statements.size()]);
     }
 
     private int nextByte(int[] indexRef) {

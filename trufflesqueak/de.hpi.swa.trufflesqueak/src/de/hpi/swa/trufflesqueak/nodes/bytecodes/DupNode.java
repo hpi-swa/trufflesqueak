@@ -18,7 +18,10 @@ public class DupNode extends UnknownBytecodeNode {
 
     @Override
     public void interpretOn(Stack<SqueakNode> stack, Stack<SqueakNode> sequence) {
-        statementsIdx = sequence.size() - 1;
+        statementsIdx = sequence.size();
+        if (!(stack.peek() instanceof DupNode)) {
+            stack.push(this);
+        }
         stack.push(this);
     }
 

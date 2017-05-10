@@ -47,6 +47,8 @@ public class SqueakImageContext {
     public final ClassObject stringClass = new ClassObject(this);
     public final ClassObject compiledMethodClass = new ClassObject(this);
     public final ClassObject blockClosureClass = new ClassObject(this);
+    public final ClassObject largePositiveIntegerClass = new ClassObject(this);
+    public final ClassObject largeNegativeIntegerClass = new ClassObject(this);
 
     private final SqueakLanguage language;
     private final BufferedReader input;
@@ -87,6 +89,7 @@ public class SqueakImageContext {
     public final NativeObject y = new NativeObject(this);
     public final NativeObject div = new NativeObject(this);
     private final CompiledCodeObject entryPoint;
+    private int padding;
 
     private static final BaseSqueakObject[] ENTRY_POINT_LITERALS = new BaseSqueakObject[]{new SmallInteger(null, 0), null, null};
     // Push literal 1, send literal 2 selector, return top
@@ -164,5 +167,23 @@ public class SqueakImageContext {
 
     public NativeObject wrapString(String s) {
         return new NativeObject(this, this.stringClass, s.getBytes());
+    }
+
+    public void enterMethod(Object lookupResult, BaseSqueakObject selector) {
+        padding += 2;
+        for (int i = 0; i < padding; i++) {
+            System.out.print(" ");
+        }
+        System.out.print(selector);
+        System.out.print(" = ");
+        System.out.println(lookupResult);
+    }
+
+    public void leaveMethod(Object result) {
+        for (int i = 0; i < padding; i++) {
+            System.out.print(" ");
+        }
+        padding -= 2;
+        System.out.println(result);
     }
 }
