@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
@@ -17,8 +18,12 @@ public class ClassObject extends PointersObject {
     private static final int FORMAT_INDEX = 2;
     private static final int METHODDICT_INDEX = 1;
     private static final int SUPERCLASS_INDEX = 0;
-    private final CyclicAssumption methodLookupStable = new CyclicAssumption("unnamed");
     private final Set<ClassObject> subclasses = new HashSet<>();
+
+    @CompilationFinal private int instSpec;
+    @CompilationFinal private int instanceSize;
+    private final CyclicAssumption methodLookupStable = new CyclicAssumption("Class lookup stability");
+    private final CyclicAssumption classFormatStable = new CyclicAssumption("Class format stability");
 
     public ClassObject(SqueakImageContext img) {
         super(img);
@@ -68,15 +73,23 @@ public class ClassObject extends PointersObject {
     public void fillin(Chunk chunk) {
         super.fillin(chunk);
         // initialize the subclasses set
+        setFormat((int) at0(FORMAT_INDEX).unsafeUnwrapInt());
         setSuperclass(getSuperclass());
+    }
+
+    public void setFormat(int format) {
+        super.atput0(FORMAT_INDEX, image.wrapInt(format));
+        instSpec = (format >> 16) & 0x1f;
+        instanceSize = format & 0xffff;
+        classFormatStable.invalidate();
     }
 
     public void setSuperclass(BaseSqueakObject superclass) {
         BaseSqueakObject oldSuperclass = getSuperclass();
+        super.atput0(SUPERCLASS_INDEX, superclass);
         if (oldSuperclass instanceof ClassObject) {
             ((ClassObject) oldSuperclass).detachSubclass(this);
         }
-        atput0(SUPERCLASS_INDEX, superclass);
         if (superclass instanceof ClassObject) {
             ((ClassObject) superclass).attachSubclass(this);
         }
@@ -105,16 +118,27 @@ public class ClassObject extends PointersObject {
         return at0(METHODDICT_INDEX);
     }
 
-    public BaseSqueakObject getFormat() {
-        return at0(FORMAT_INDEX);
-    }
-
     public BaseSqueakObject getName() {
         return at0(NAME_INDEX);
     }
 
+    @Override
+    public void atput0(int idx, BaseSqueakObject obj) {
+        if (idx == FORMAT_INDEX && obj instanceof SmallInteger) {
+            setFormat((int) obj.unsafeUnwrapInt());
+        } else if (idx == SUPERCLASS_INDEX) {
+            setSuperclass(obj);
+        } else {
+            super.atput0(idx, obj);
+        }
+    }
+
     public Assumption getMethodLookupStable() {
         return methodLookupStable.getAssumption();
+    }
+
+    public Assumption getClassFormatStable() {
+        return classFormatStable.getAssumption();
     }
 
     // TODO: cache the methoddict in a better structure than what Squeak provides
@@ -158,21 +182,19 @@ public class ClassObject extends PointersObject {
     }
 
     public boolean isVariable() {
-        int instSpec = getInstSpec();
         return instSpec >= 2 && (instSpec <= 4 || instSpec >= 9);
     }
 
     public BaseSqueakObject newInstance() {
-        return newInstance(getInstanceSize());
+        return newInstance(instanceSize);
     }
 
     public BaseSqueakObject newInstance(int size) {
-        int instSpec = getInstSpec();
         //@formatter:off
         switch (instSpec) {
             case 1: case 2: case 3: // pointers
                 if (instancesAreClasses()) {
-                    assert size == getInstanceSize();
+                    assert size == instanceSize;
                     return new ClassObject(image, this, size);
                 } else {
                     return new PointersObject(image, this, size);
@@ -192,17 +214,5 @@ public class ClassObject extends PointersObject {
                 return new CompiledMethodObject(image, this);
         }
         //@formatter:on
-    }
-
-    private int getInstSpec() {
-        return (getIntFormat() >> 16) & 0x1f;
-    }
-
-    private int getInstanceSize() {
-        return getIntFormat() & 0xffff;
-    }
-
-    private int getIntFormat() {
-        return (int) getFormat().unsafeUnwrapInt();
     }
 }
