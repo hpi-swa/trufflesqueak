@@ -2,14 +2,17 @@ package de.hpi.swa.trufflesqueak.nodes.context;
 
 import java.math.BigInteger;
 
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
+import de.hpi.swa.trufflesqueak.model.BlockClosure;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.ImmediateCharacter;
+import de.hpi.swa.trufflesqueak.model.SmallInteger;
+import de.hpi.swa.trufflesqueak.model.SqueakObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
 
 public abstract class SqueakLookupClassNode extends Node {
@@ -61,10 +64,23 @@ public abstract class SqueakLookupClassNode extends Node {
         }
     }
 
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"object.getClass() == cachedObjectClass"}, rewriteOn = UnexpectedResultException.class)
-    public ClassObject squeakClass(BaseSqueakObject object,
-                    @Cached("object.getClass()") Class<? extends BaseSqueakObject> cachedObjectClass) throws UnexpectedResultException {
+    @Specialization
+    public ClassObject squeakClass(ImmediateCharacter ch) {
+        return (ClassObject) ch.getSqClass();
+    }
+
+    @Specialization
+    public ClassObject squeakClass(SmallInteger ch) {
+        return (ClassObject) ch.getSqClass();
+    }
+
+    @Specialization
+    public ClassObject squeakClass(BlockClosure ch) {
+        return (ClassObject) ch.getSqClass();
+    }
+
+    @Specialization(rewriteOn = UnexpectedResultException.class)
+    public ClassObject squeakClass(SqueakObject object) throws UnexpectedResultException {
         return SqueakTypesGen.expectClassObject(object.getSqClass());
     }
 
