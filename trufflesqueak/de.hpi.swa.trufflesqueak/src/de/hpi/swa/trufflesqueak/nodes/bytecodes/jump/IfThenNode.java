@@ -4,7 +4,6 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
@@ -13,7 +12,6 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SendSelector;
 
 public class IfThenNode extends SqueakNode {
     @Child private SendSelector mustBeBooleanSend;
-    private ConditionProfile branchProfile;
     @Child private SqueakNode conditionNode;
     @Children final private SqueakNode[] thenNodes;
     @Child private SqueakNode thenResult;
@@ -27,7 +25,6 @@ public class IfThenNode extends SqueakNode {
                     SqueakNode[] elseBranch,
                     SqueakNode elseRes) {
         mustBeBooleanSend = new SendSelector(cm, 0, cm.image.mustBeBoolean, 0);
-        branchProfile = ConditionProfile.createCountingProfile();
         conditionNode = condition;
         thenNodes = thenBranch;
         thenResult = thenRes;
@@ -39,7 +36,7 @@ public class IfThenNode extends SqueakNode {
     @ExplodeLoop
     public Object executeGeneric(VirtualFrame frame) {
         try {
-            if (branchProfile.profile(SqueakTypesGen.expectBoolean(conditionNode.executeGeneric(frame)))) {
+            if (SqueakTypesGen.expectBoolean(conditionNode.executeGeneric(frame))) {
                 if (elseNodes != null) {
                     CompilerAsserts.compilationConstant(elseNodes.length);
                     for (SqueakNode node : elseNodes) {
