@@ -6,7 +6,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.model.BlockClosure;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.nodes.BlockActivationNode;
 import de.hpi.swa.trufflesqueak.nodes.BlockActivationNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
@@ -89,7 +89,7 @@ public abstract class PrimClosureValue extends PrimitiveNode {
         }
 
         @Specialization
-        protected Object value(BlockClosure block, PointersObject argArray) {
+        protected Object value(BlockClosure block, ListObject argArray) {
             return dispatch.executeBlock(block, block.getFrameArguments((Object[]) argArray.getPointers()));
         }
     }

@@ -170,6 +170,8 @@ public class SqueakImageContext {
     }
 
     public void enterMethod(Object lookupResult, BaseSqueakObject selector) {
+        if (true)
+            return;
         padding += 2;
         for (int i = 0; i < padding; i++) {
             System.out.print(" ");
@@ -180,6 +182,8 @@ public class SqueakImageContext {
     }
 
     public void leaveMethod(Object result) {
+        if (true)
+            return;
         for (int i = 0; i < padding; i++) {
             System.out.print(" ");
         }

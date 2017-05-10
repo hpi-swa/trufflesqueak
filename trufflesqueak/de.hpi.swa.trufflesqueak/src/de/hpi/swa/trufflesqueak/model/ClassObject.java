@@ -11,7 +11,7 @@ import com.oracle.truffle.api.utilities.CyclicAssumption;
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.util.Chunk;
 
-public class ClassObject extends PointersObject {
+public class ClassObject extends AbstractPointersObject {
     private static final int METHODDICT_NAMES_INDEX = 2;
     private static final int METHODDICT_VALUES_INDEX = 1;
     private static final int NAME_INDEX = 6;
@@ -29,8 +29,13 @@ public class ClassObject extends PointersObject {
         super(img);
     }
 
+    public ClassObject(SqueakImageContext img, BaseSqueakObject sqClass, BaseSqueakObject[] ptrs) {
+        super(img, sqClass);
+        pointers = ptrs;
+    }
+
     public ClassObject(SqueakImageContext image, ClassObject classObject, int size) {
-        super(image, classObject, size);
+        this(image, classObject, new BaseSqueakObject[size]);
     }
 
     @Override
@@ -192,13 +197,19 @@ public class ClassObject extends PointersObject {
     public BaseSqueakObject newInstance(int size) {
         //@formatter:off
         switch (instSpec) {
-            case 1: case 2: case 3: // pointers
+            case 0: // empty objects
+                return new EmptyObject(image, this);
+            case 1:
+                assert size == instanceSize;
                 if (instancesAreClasses()) {
-                    assert size == instanceSize;
                     return new ClassObject(image, this, size);
                 } else {
                     return new PointersObject(image, this, size);
                 }
+            case 2: // indexed pointers
+                return new ListObject(image, this, size);
+            case 3: // mixed indexable and named pointers
+                return new PointersObject(image, this, size);
             case 4: case 5: // TODO: weak pointers
                 return new PointersObject(image, this, size);
             case 7: case 8:
@@ -214,5 +225,9 @@ public class ClassObject extends PointersObject {
                 return new CompiledMethodObject(image, this);
         }
         //@formatter:on
+    }
+
+    public int getBasicInstanceSize() {
+        return instanceSize;
     }
 }

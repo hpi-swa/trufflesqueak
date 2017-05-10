@@ -10,6 +10,10 @@ public class EmptyObject extends SqueakObject implements TruffleObject {
         super(img);
     }
 
+    public EmptyObject(SqueakImageContext image, ClassObject classObject) {
+        super(image, classObject);
+    }
+
     public ForeignAccess getForeignAccess() {
         // TODO Auto-generated method stub
         return null;
