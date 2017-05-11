@@ -33,6 +33,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimMulNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimNewArgNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimNewNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimNotEqualNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPerform;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPushFalse;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPushMinusOne;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPushNil;
@@ -42,6 +43,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPushTrue;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPushTwo;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPushZero;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimQuickReturnReceiverVariableNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimQuoNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimReplaceFromToNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimSizeNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimSubNodeGen;
@@ -64,7 +66,7 @@ public abstract class PrimitiveNodeFactory {
         DIVIDE(PrimDivideNodeGen.class, 10),
         MOD(PrimModNodeGen.class, 11),
         DIV(PrimDivNodeGen.class, 12),
-        //
+        QUO(PrimQuoNodeGen.class, 13),
         BIT_AND(PrimBitAndNodeGen.class, 14),
         BIT_OR(PrimBitOrNodeGen.class, 15),
         //
@@ -83,7 +85,7 @@ public abstract class PrimitiveNodeFactory {
         LARGE_DIVIDE(PrimDivideNodeGen.class, 30),
         LARGE_MOD(PrimModNodeGen.class, 31),
         LARGE_DIV(PrimDivNodeGen.class, 32),
-        //
+        LARGE_QUO(PrimQuoNodeGen.class, 33),
         LARGE_BIT_AND(PrimBitAndNodeGen.class, 34),
         LARGE_BIT_OR(PrimBitOrNodeGen.class, 35),
         //
@@ -102,6 +104,8 @@ public abstract class PrimitiveNodeFactory {
         NEW_WITH_ARG(PrimNewArgNodeGen.class, 71),
         //
         BLOCK_COPY(PrimitiveNode.class, 80),
+        //
+        PERFORM(PrimPerform.class, 83),
         //
         REPLACE_FROM_TO(PrimReplaceFromToNodeGen.class, 105),
         //
@@ -143,7 +147,7 @@ public abstract class PrimitiveNodeFactory {
         Primitives.values();
     }
 
-    private static SqueakNode arg(int index) {
+    public static SqueakNode arg(int index) {
         return new ArgumentNode(index);
     }
 

@@ -337,7 +337,7 @@ public class Decompiler {
             case 184:
                 return new SendSelector(code, index, getImage().times, 1);
             case 185:
-                return new SendSelector(code, index, getImage().divide, 1);
+                return new SendSelector(code, index, getImage().div, 1);
             case 186:
                 return new SendSelector(code, index, getImage().modulo, 1);
             case 187:
@@ -345,7 +345,7 @@ public class Decompiler {
             case 188:
                 return new SendSelector(code, index, getImage().bitShift, 1);
             case 189:
-                return new SendSelector(code, index, getImage().div, 1);
+                return new SendSelector(code, index, getImage().divide, 1);
             case 190:
                 return new SendSelector(code, index, getImage().bitAnd, 1);
             case 191:

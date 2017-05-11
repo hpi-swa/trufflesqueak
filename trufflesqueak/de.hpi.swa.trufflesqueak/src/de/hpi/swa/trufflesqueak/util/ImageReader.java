@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.util;
 
+import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -13,7 +14,6 @@ import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
-import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.SqueakObject;
 
 @SuppressWarnings("unused")
@@ -23,7 +23,7 @@ public class ImageReader {
     private static final long SLOTS_MASK = 0xFF << 56;
     private static final long OVERFLOW_SLOTS = 255;
     private static final int HIDDEN_ROOTS_CHUNK = 4; // nil, false, true, freeList, hiddenRoots
-    final FileInputStream stream;
+    final BufferedInputStream stream;
     final ByteBuffer shortBuf = ByteBuffer.allocate(2);
     final ByteBuffer intBuf = ByteBuffer.allocate(4);
     final ByteBuffer longBuf = ByteBuffer.allocate(8);
@@ -51,7 +51,7 @@ public class ImageReader {
         intBuf.order(ByteOrder.LITTLE_ENDIAN);
         longBuf.order(ByteOrder.LITTLE_ENDIAN);
         this.output = printWriter;
-        this.stream = inputStream;
+        this.stream = new BufferedInputStream(inputStream);
         this.position = 0;
         this.chunklist = new Vector<>();
         this.chunktable = new HashMap<>();

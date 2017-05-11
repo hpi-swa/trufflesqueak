@@ -25,7 +25,7 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.IfNilCheck;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNodeGen;
 
-public class AbstractSend extends SqueakBytecodeNode {
+public abstract class AbstractSend extends SqueakBytecodeNode {
     public final BaseSqueakObject selector;
     @Child public SqueakNode receiverNode;
     @Child protected SqueakLookupClassNode lookupClassNode;

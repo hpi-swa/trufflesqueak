@@ -90,6 +90,7 @@ public class SqueakImageContext {
     public final NativeObject div = new NativeObject(this);
     private final CompiledCodeObject entryPoint;
     private int padding;
+    private final boolean tracing;
 
     private static final BaseSqueakObject[] ENTRY_POINT_LITERALS = new BaseSqueakObject[]{new SmallInteger(null, 0), null, null};
     // Push literal 1, send literal 2 selector, return top
@@ -101,6 +102,7 @@ public class SqueakImageContext {
         input = in;
         output = out;
         entryPoint = new CompiledMethodObject(this, ENTRY_POINT_BYTES, ENTRY_POINT_LITERALS);
+        tracing = false;
     }
 
     public CallTarget getActiveContext() {
@@ -169,8 +171,8 @@ public class SqueakImageContext {
         return new NativeObject(this, this.stringClass, s.getBytes());
     }
 
-    public void enterMethod(Object lookupResult, BaseSqueakObject selector) {
-        if (true)
+    public void enterMethod(Object lookupResult, Object selector) {
+        if (!tracing)
             return;
         padding += 2;
         for (int i = 0; i < padding; i++) {
@@ -182,7 +184,7 @@ public class SqueakImageContext {
     }
 
     public void leaveMethod(Object result) {
-        if (true)
+        if (!tracing)
             return;
         for (int i = 0; i < padding; i++) {
             System.out.print(" ");
