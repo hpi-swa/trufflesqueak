@@ -41,15 +41,23 @@ import de.hpi.swa.trufflesqueak.model.TrueObject;
                 CompiledMethodObject.class,
                 BaseSqueakObject.class})
 public abstract class SqueakTypes {
+    /**
+     * We use unsafe narrowing from long to int. In the context of the actual Squeak VM, it is fine
+     * to overflow when users input too large values into places where we're expecting integers
+     * (examples include the at: primitives). No code with literal constants or bytecode should be
+     * wrong here.
+     *
+     * @param value
+     * @return the narrowed int value
+     */
     @TypeCast(int.class)
     public static int asInt(Object value) {
-        return value instanceof Integer ? (int) value : Math.toIntExact((long) value);
+        return value instanceof Integer ? (int) value : ((Long) value).intValue();
     }
 
     @TypeCheck(int.class)
     public static boolean isInt(Object value) {
-        return value instanceof Integer ||
-                        (value instanceof Long && (long) value <= Integer.MAX_VALUE && (long) value >= Integer.MIN_VALUE);
+        return value instanceof Integer || value instanceof Long;
     }
 
     @ImplicitCast
