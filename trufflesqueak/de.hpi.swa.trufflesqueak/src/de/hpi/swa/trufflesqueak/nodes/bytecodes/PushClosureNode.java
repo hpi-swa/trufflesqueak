@@ -1,8 +1,8 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Stack;
-import java.util.Vector;
 
 import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -17,8 +17,10 @@ public class PushClosureNode extends SqueakBytecodeNode {
     private final int blockSize;
     private final int numArgs;
     private final int numCopied;
-    @Child SqueakNode receiverNode;
-    @Children final SqueakNode[] copiedValueNodes;
+    @Child
+    SqueakNode receiverNode;
+    @Children
+    final SqueakNode[] copiedValueNodes;
     private final CompiledBlockObject compiledBlock;
 
     public PushClosureNode(CompiledCodeObject cm, int idx, int i, int j, int k) {
@@ -40,33 +42,34 @@ public class PushClosureNode extends SqueakBytecodeNode {
         for (int i = 0; i < copiedValueNodes.length; i++) {
             copiedValues[i] = copiedValueNodes[i].executeGeneric(frame);
         }
-        return new BlockClosure(frameMarker,
-                        compiledBlock,
-                        receiver,
-                        copiedValues);
-    }
-
-    private int bytecodeStart() {
-        return index + 4;
+        return new BlockClosure(frameMarker, compiledBlock, receiver, copiedValues);
     }
 
     @Override
-    public void interpretOn(Stack<SqueakNode> stack, Stack<SqueakNode> statements, Vector<SqueakBytecodeNode> sequence) {
+    public int interpretOn(Stack<SqueakNode> stack, Stack<SqueakNode> statements, List<SqueakBytecodeNode> sequence) {
         for (int i = numCopied - 1; i >= 0; i--) {
             copiedValueNodes[i] = stack.pop();
         }
-        int codeStart = bytecodeStart();
+        int codeStart = index + 4; // skip param bytes
         int codeEnd = codeStart + blockSize;
         byte[] bytes = Arrays.copyOfRange(method.getBytes(), codeStart, codeEnd);
-        for (int i = codeStart; i < codeEnd; i++) {
-            sequence.set(i, null);
-        }
         compiledBlock.setBytes(bytes);
         stack.push(this);
+        return sequence.indexOf(this) + blockSize + 1;
     }
 
     @Override
     public void interpretOn(Stack<SqueakNode> stack, Stack<SqueakNode> sequence) {
         throw new RuntimeException("should not be called");
+    }
+
+    @Override
+    public void prettyPrintOn(StringBuilder b) {
+        b.append('[');
+        for (SqueakNode node : compiledBlock.getBytecodeAST()) {
+            node.prettyPrintOn(b);
+            b.append(".\n");
+        }
+        b.append(']');
     }
 }

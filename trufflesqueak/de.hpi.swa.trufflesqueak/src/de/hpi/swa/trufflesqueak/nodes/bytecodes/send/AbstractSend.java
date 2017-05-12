@@ -27,11 +27,16 @@ import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNodeGen;
 
 public abstract class AbstractSend extends SqueakBytecodeNode {
     public final BaseSqueakObject selector;
-    @Child public SqueakNode receiverNode;
-    @Child protected SqueakLookupClassNode lookupClassNode;
-    @Children protected final SqueakNode[] argumentNodes;
-    @Child private LookupNode lookupNode;
-    @Child private DispatchNode dispatchNode;
+    @Child
+    public SqueakNode receiverNode;
+    @Child
+    protected SqueakLookupClassNode lookupClassNode;
+    @Children
+    protected final SqueakNode[] argumentNodes;
+    @Child
+    private LookupNode lookupNode;
+    @Child
+    private DispatchNode dispatchNode;
 
     public AbstractSend(CompiledCodeObject method, int idx, BaseSqueakObject sel, int argcount) {
         super(method, idx);
@@ -89,15 +94,15 @@ public abstract class AbstractSend extends SqueakBytecodeNode {
         return rcvr instanceof DupNode;
     }
 
-    private boolean isCaseMacro(SqueakNode rcvr, Vector<SqueakBytecodeNode> sequence) {
+    private boolean isCaseMacro(SqueakNode rcvr, List<SqueakBytecodeNode> sequence) {
         return isCascadeFlag(rcvr) && selector == method.image.eq && willJumpIf(sequence, false);
     }
 
-    private boolean isIfNil(SqueakNode rcvr, Vector<SqueakBytecodeNode> sequence) {
+    private boolean isIfNil(SqueakNode rcvr, List<SqueakBytecodeNode> sequence) {
         return isCascadeFlag(rcvr) && selector == method.image.equivalent && willJumpIf(sequence, false);
     }
 
-    private boolean isIfNotNil(SqueakNode rcvr, Vector<SqueakBytecodeNode> sequence) {
+    private boolean isIfNotNil(SqueakNode rcvr, List<SqueakBytecodeNode> sequence) {
         return isCascadeFlag(rcvr) && selector == method.image.equivalent && willJumpIf(sequence, true);
     }
 
@@ -105,7 +110,7 @@ public abstract class AbstractSend extends SqueakBytecodeNode {
         return isCascadeFlag(rcvr);
     }
 
-    private boolean willJumpIf(Vector<SqueakBytecodeNode> sequence, boolean flag) {
+    private boolean willJumpIf(List<SqueakBytecodeNode> sequence, boolean flag) {
         for (int i = sequence.indexOf(this) + 1; i < sequence.size(); i++) {
             SqueakBytecodeNode node = sequence.get(i);
             if (node != null) {
@@ -120,7 +125,7 @@ public abstract class AbstractSend extends SqueakBytecodeNode {
     }
 
     @Override
-    public void interpretOn(Stack<SqueakNode> stack, Stack<SqueakNode> statements, Vector<SqueakBytecodeNode> sequence) {
+    public int interpretOn(Stack<SqueakNode> stack, Stack<SqueakNode> statements, List<SqueakBytecodeNode> sequence) {
         for (int i = argumentNodes.length - 1; i >= 0; i--) {
             argumentNodes[i] = stack.pop();
         }
@@ -142,14 +147,21 @@ public abstract class AbstractSend extends SqueakBytecodeNode {
                 stack.push(this);
             } else {
                 int preCascadeStatementIdx = ((DupNode) receiverNode).getStatementsIdx();
-                List<SqueakNode> cascadedSends = new Vector<>(statements.subList(preCascadeStatementIdx, statements.size()));
+                List<SqueakNode> cascadedSends = new Vector<>(statements.subList(preCascadeStatementIdx,
+                                                                                 statements.size()));
                 statements.setSize(preCascadeStatementIdx);
                 receiverNode = stack.pop();
-                stack.push(new CascadedSend(method, index, receiverNode, selector, argumentNodes, cascadedSends.toArray(new SqueakNode[0])));
+                stack.push(new CascadedSend(method,
+                                            index,
+                                            receiverNode,
+                                            selector,
+                                            argumentNodes,
+                                            cascadedSends.toArray(new SqueakNode[0])));
             }
         } else {
             interpretOn(stack, statements);
         }
+        return sequence.indexOf(this) + 1;
     }
 
     @Override

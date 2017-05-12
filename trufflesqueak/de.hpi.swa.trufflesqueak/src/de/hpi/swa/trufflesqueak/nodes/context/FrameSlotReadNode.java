@@ -17,7 +17,8 @@ public abstract class FrameSlotReadNode extends FrameSlotNode {
     }
 
     public static FrameSlotReadNode temp(CompiledCodeObject cm, int index) {
-        return create(cm, cm.stackSlots[index]);
+        if (cm.stackSlots.length >= index) { return create(cm, cm.stackSlots[index]); }
+        return null;
     }
 
     public static FrameSlotReadNode receiver(CompiledCodeObject method) {
@@ -34,7 +35,7 @@ public abstract class FrameSlotReadNode extends FrameSlotNode {
         return FrameUtil.getBooleanSafe(frame, slot);
     }
 
-    @Specialization(replaces = {"readLong", "readBool"})
+    @Specialization(replaces = { "readLong", "readBool" })
     public Object readObject(VirtualFrame frame) {
         return FrameUtil.getObjectSafe(frame, slot);
     }

@@ -14,8 +14,9 @@ public class NativeObject extends SqueakObject implements TruffleObject {
     private ByteBuffer content;
     private byte elementSize;
 
-    public NativeObject(SqueakImageContext img) {
+    public NativeObject(SqueakImageContext img, byte elementSz) {
         super(img);
+        elementSize = elementSz;
     }
 
     public NativeObject(SqueakImageContext image, ClassObject classObject, int size, int elementSz) {
@@ -113,7 +114,7 @@ public class NativeObject extends SqueakObject implements TruffleObject {
 
     @Override
     public int size() {
-        return content.capacity() / elementSize;
+        return content.limit() / elementSize;
     }
 
     @Override

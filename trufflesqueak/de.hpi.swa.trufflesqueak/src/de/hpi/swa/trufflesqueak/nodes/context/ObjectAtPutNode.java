@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes.context;
 
+import java.math.BigInteger;
 import java.util.Vector;
 
 import com.oracle.truffle.api.dsl.NodeChild;
@@ -30,6 +31,16 @@ public abstract class ObjectAtPutNode extends SqueakNodeWithMethod {
 
     @Specialization
     protected Object write(BaseSqueakObject object, long value) {
+        try {
+            object.atput0(index, object.image.wrapInt(value));
+        } catch (UnwrappingError e) {
+            throw new RuntimeException(e);
+        }
+        return value;
+    }
+
+    @Specialization
+    protected Object write(BaseSqueakObject object, BigInteger value) {
         try {
             object.atput0(index, object.image.wrapInt(value));
         } catch (UnwrappingError e) {

@@ -34,6 +34,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimNewArgNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimNewNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimNotEqualNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPerform;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPrintArgs;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPushFalse;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPushMinusOne;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPushNil;
@@ -51,7 +52,8 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimUtcClockNodeGen;
 
 public abstract class PrimitiveNodeFactory {
     private static final int PRIM_COUNT = 574;
-    @SuppressWarnings("unchecked") private static Class<? extends PrimitiveNode>[] primitiveClasses = new Class[PRIM_COUNT + 1];
+    @SuppressWarnings("unchecked")
+    private static Class<? extends PrimitiveNode>[] primitiveClasses = new Class[PRIM_COUNT + 1];
 
     public static enum Primitives {
         ADD(PrimAddNodeGen.class, 1),
@@ -132,6 +134,8 @@ public abstract class PrimitiveNodeFactory {
         PUSH_ONE(PrimPushOne.class, 262),
         PUSH_TWO(PrimPushTwo.class, 262),
         //
+        TEST(PrimPrintArgs.class, 255),
+        //
         LAST(PrimitiveNode.class, PRIM_COUNT);
 
         public int index;
@@ -153,7 +157,9 @@ public abstract class PrimitiveNodeFactory {
 
     private static PrimitiveNode createInstance(CompiledMethodObject method, Class<? extends PrimitiveNode> primClass) {
         try {
-            int argCount = (int) Arrays.stream(primClass.getDeclaredFields()).filter(f -> f.getAnnotation(Child.class) != null).count();
+            int argCount = (int) Arrays.stream(primClass.getDeclaredFields())
+                                       .filter(f -> f.getAnnotation(Child.class) != null)
+                                       .count();
 
             Class<?>[] argTypes = new Class<?>[argCount + 1];
             argTypes[0] = CompiledMethodObject.class;
@@ -173,7 +179,12 @@ public abstract class PrimitiveNodeFactory {
             } catch (NoSuchMethodException e) {
                 return primClass.getConstructor(CompiledMethodObject.class).newInstance(method);
             }
-        } catch (NoSuchMethodException | InstantiationException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+        } catch (NoSuchMethodException
+                 | InstantiationException
+                 | SecurityException
+                 | IllegalAccessException
+                 | IllegalArgumentException
+                 | InvocationTargetException e) {
             throw new RuntimeException("Internal error in creating primitive", e);
         }
     }
@@ -187,12 +198,9 @@ public abstract class PrimitiveNodeFactory {
     }
 
     public static PrimitiveNode forIdx(CompiledMethodObject method, int primitiveIdx) {
-        if (primitiveIdx >= primitiveClasses.length) {
-            return new PrimitiveNode(method);
-        }
-        if (primitiveIdx >= 264 && primitiveIdx <= 520) {
-            return new PrimQuickReturnReceiverVariableNode(method, primitiveIdx - 264);
-        }
+        if (primitiveIdx >= primitiveClasses.length) { return new PrimitiveNode(method); }
+        if (primitiveIdx >= 264
+            && primitiveIdx <= 520) { return new PrimQuickReturnReceiverVariableNode(method, primitiveIdx - 264); }
         Class<? extends PrimitiveNode> primClass = primitiveClasses[primitiveIdx];
         if (primClass == null) {
             return new PrimitiveNode(method);

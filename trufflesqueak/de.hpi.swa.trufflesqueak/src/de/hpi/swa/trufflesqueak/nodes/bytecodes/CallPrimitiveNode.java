@@ -1,8 +1,7 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
+import java.util.List;
 import java.util.Stack;
-import java.util.Vector;
-import java.util.stream.Stream;
 
 import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -14,10 +13,10 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveQuickReturnNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimCharacterValueNodeGen;
 
 public class CallPrimitiveNode extends SqueakBytecodeNode {
-    @Child PrimitiveNode primitive;
+    @Child
+    PrimitiveNode primitive;
 
     public CallPrimitiveNode(CompiledCodeObject method, int idx, int i, int j) {
         super(method, idx);
@@ -42,7 +41,8 @@ public class CallPrimitiveNode extends SqueakBytecodeNode {
 
     @Override
     public void interpretOn(Stack<SqueakNode> stack, Stack<SqueakNode> statements) {
-        // classic primitive method, takes its arguments from the frame and returns
+        // classic primitive method, takes its arguments from the frame and
+        // returns
         if (method.hasPrimitive() && index == 0) {
             statements.push(this);
         } else {
@@ -51,20 +51,24 @@ public class CallPrimitiveNode extends SqueakBytecodeNode {
     }
 
     @Override
-    public void interpretOn(Stack<SqueakNode> stack, Stack<SqueakNode> statements, Vector<SqueakBytecodeNode> sequence) {
+    public int interpretOn(Stack<SqueakNode> stack, Stack<SqueakNode> statements, List<SqueakBytecodeNode> sequence) {
         super.interpretOn(stack, statements, sequence);
         if (index == 0) {
             for (int i = sequence.indexOf(this) + 1; i < sequence.size(); i++) {
                 SqueakBytecodeNode node = sequence.get(i);
                 if (node != null) {
                     if (node instanceof ExtendedStoreNode) {
-                        // an error code is requested, we'll handle that eventually TODO: FIXME
-                        stack.push(new ConstantNode(method, index, method.image.wrapString("prim error codes not supported")));
+                        // an error code is requested, we'll handle that
+                        // eventually TODO: FIXME
+                        stack.push(new ConstantNode(method,
+                                                    index,
+                                                    method.image.wrapString("prim error codes not supported")));
+                        break;
                     }
-                    return;
                 }
             }
         }
+        return sequence.indexOf(this) + 1;
     }
 
     @Override

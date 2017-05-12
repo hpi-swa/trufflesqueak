@@ -13,6 +13,7 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ExtendedStoreNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.LoopRepeatingNode.WhileNode;
+import de.hpi.swa.trufflesqueak.util.Decompiler;
 
 public class ConditionalJump extends AbstractJump {
     protected final int offset;
@@ -37,37 +38,66 @@ public class ConditionalJump extends AbstractJump {
         throw new RuntimeException("should not execute");
     }
 
-    private int firstBranchBC() {
-        return index + 1;
+    private int firstBranchBC(List<SqueakBytecodeNode> sequence) {
+        return sequence.indexOf(this) + 1;
     }
 
-    private int lastBranchBC() {
-        return firstBranchBC() + offset - 1;
+    private int lastBranchBC(List<SqueakBytecodeNode> sequence) {
+        return firstBranchBC(sequence) + offset - 1;
     }
 
-    private boolean isLoop(Vector<SqueakBytecodeNode> sequence) {
-        SqueakBytecodeNode lastNode = sequence.get(lastBranchBC());
-        return (lastNode instanceof UnconditionalJump &&
-                        ((UnconditionalJump) lastNode).offset < 0);
+    private boolean isLoop(List<SqueakBytecodeNode> sequence) {
+        int lastBranchBC = lastBranchBC(sequence);
+        SqueakBytecodeNode lastNode = sequence.get(lastBranchBC);
+        if (lastNode instanceof UnconditionalJump) {
+            int myIndex = sequence.indexOf(this);
+            // don't be fooled if an inner loop's return jump is simply the last
+            // code in our branch
+            return (lastBranchBC + ((UnconditionalJump) lastNode).offset + 1 < myIndex);
+        } else {
+            return false;
+        }
     }
 
-    private void interpretAsLoop(Stack<SqueakNode> stack, Stack<SqueakNode> statements, Vector<SqueakBytecodeNode> sequence) {
-        List<SqueakBytecodeNode> body = sequence.subList(firstBranchBC(), lastBranchBC());
+    private int interpretAsLoop(Stack<SqueakNode> stack,
+                                Stack<SqueakNode> statements,
+                                List<SqueakBytecodeNode> sequence) {
         // remove jump back node
-        UnconditionalJump jumpOutNode = (UnconditionalJump) sequence.get(lastBranchBC());
-        sequence.set(lastBranchBC(), null);
-        // we're the condition of a loop, the unconditional back jump will jump before us
-        assert sequence.indexOf(jumpOutNode) + jumpOutNode.offset < index;
-
+        int lastBranchBC = lastBranchBC(sequence);
+        UnconditionalJump jumpOutNode = (UnconditionalJump) sequence.get(lastBranchBC);
+        // we're the condition of a loop, the unconditional back jump will jump
+        // before us
+        int sequenceIndex = sequence.indexOf(this);
+        int firstCondBC = lastBranchBC + jumpOutNode.offset + 1;
+        assert firstCondBC < sequenceIndex;
+        // before the condition there may be other statements that are part of
+        // the condition body
         Stack<SqueakNode> subStack = new Stack<>();
-        LoopNode node = Truffle.getRuntime().createLoopNode(new LoopRepeatingNode(
-                        method,
-                        branchCondition(stack),
-                        blockFrom(body, sequence, subStack)));
+        List<SqueakBytecodeNode> conditionBody = sequence.subList(firstCondBC, sequenceIndex);
+        SqueakNode[] conditionBlock = Decompiler.blockFrom(conditionBody, subStack);
+        // the statements we got in the condition block must be removed from the
+        // outer
+        // statements
+        for (int i = 0; i < conditionBlock.length; i++) {
+            statements.pop();
+        }
+        // the condition left on the re-interpreted stack should be the same as
+        // the one on the outer stack that was interpreted before we were
+        assert !subStack.empty() && subStack.peek().getClass() == stack.peek().getClass();
+        SqueakNode condition = branchCondition(stack);
+
+        // Now we can interpret our loop body
+        List<SqueakBytecodeNode> body = sequence.subList(firstBranchBC(sequence), lastBranchBC);
+        subStack.clear();
+        SqueakNode[] bodyBlock = Decompiler.blockFrom(body, subStack);
+
+        LoopNode node = Truffle.getRuntime()
+                               .createLoopNode(new LoopRepeatingNode(method, conditionBlock, condition, bodyBlock));
         if (!stack.empty() && stack.peek() instanceof ExtendedStoreNode) {
             statements.push(stack.pop());
         }
         statements.push(new WhileNode(method, index, node));
+        return lastBranchBC + 1;
     }
 
     @SuppressWarnings("static-method")
@@ -76,84 +106,65 @@ public class ConditionalJump extends AbstractJump {
     }
 
     @Override
-    public void interpretOn(Stack<SqueakNode> stack, Stack<SqueakNode> statements, Vector<SqueakBytecodeNode> sequence) {
+    public int interpretOn(Stack<SqueakNode> stack, Stack<SqueakNode> statements, List<SqueakBytecodeNode> sequence) {
         if (isLoop(sequence)) {
-            interpretAsLoop(stack, statements, sequence);
+            return interpretAsLoop(stack, statements, sequence);
         } else if (isIfNil(stack)) {
-            interpretAsIfNil(stack, sequence);
+            return interpretAsIfNil(stack, sequence);
         } else {
-            interpretAsIfTrueIfFalse(stack, statements, sequence);
+            return interpretAsIfTrueIfFalse(stack, statements, sequence);
         }
     }
 
-    private void interpretAsIfNil(Stack<SqueakNode> stack, Vector<SqueakBytecodeNode> sequence) {
-        Vector<SqueakBytecodeNode> thenBranchNodes = new Vector<>(sequence.subList(firstBranchBC(), lastBranchBC() + 1));
+    private int interpretAsIfNil(Stack<SqueakNode> stack, List<SqueakBytecodeNode> sequence) {
+        Vector<SqueakBytecodeNode> thenBranchNodes = new Vector<>(sequence.subList(firstBranchBC(sequence),
+                                                                                   lastBranchBC(sequence) + 1));
         Stack<SqueakNode> subStack = new Stack<>();
-        SqueakNode[] thenStatements = blockFrom(thenBranchNodes, sequence, subStack);
+        SqueakNode[] thenStatements = Decompiler.blockFrom(thenBranchNodes, subStack);
         SqueakNode thenResult = subStack.empty() ? null : subStack.pop();
         stack.push(new IfNilCheck((IfNilCheck) stack.pop(), thenStatements, thenResult));
+        return lastBranchBC(sequence) + 1;
     }
 
-    private void interpretAsIfTrueIfFalse(Stack<SqueakNode> stack, Stack<SqueakNode> statements, Vector<SqueakBytecodeNode> sequence) {
+    private int interpretAsIfTrueIfFalse(Stack<SqueakNode> stack,
+                                         Stack<SqueakNode> statements,
+                                         List<SqueakBytecodeNode> sequence) {
+        int skip = lastBranchBC(sequence) + 1;
         assert offset > 0;
         SqueakNode branchCondition = branchCondition(stack);
 
         // the nodes making up our branch
-        Vector<SqueakBytecodeNode> thenBranchNodes = new Vector<>(sequence.subList(firstBranchBC(), lastBranchBC() + 1));
+        Vector<SqueakBytecodeNode> thenBranchNodes = new Vector<>(sequence.subList(firstBranchBC(sequence),
+                                                                                   lastBranchBC(sequence) + 1));
         Vector<SqueakBytecodeNode> elseBranchNodes = null;
 
         SqueakBytecodeNode lastNode = thenBranchNodes.get(thenBranchNodes.size() - 1);
-        if (lastNode instanceof UnconditionalJump) {
+        if (lastNode instanceof UnconditionalJump && ((UnconditionalJump) lastNode).offset > 0) {
             // else branch
             thenBranchNodes.remove(lastNode);
             sequence.set(sequence.indexOf(lastNode), null);
-            assert ((UnconditionalJump) lastNode).offset > 0;
-            int firstElseBranchBC = firstBranchBC() + offset;
-            elseBranchNodes = new Vector<>(sequence.subList(firstElseBranchBC, firstElseBranchBC + ((UnconditionalJump) lastNode).offset));
+            int firstElseBranchBC = firstBranchBC(sequence) + offset;
+            skip = firstElseBranchBC + ((UnconditionalJump) lastNode).offset;
+            elseBranchNodes = new Vector<>(sequence.subList(firstElseBranchBC, skip));
         }
         Stack<SqueakNode> subStack = new Stack<>();
-        SqueakNode[] thenStatements = blockFrom(thenBranchNodes, sequence, subStack);
+        SqueakNode[] thenStatements = Decompiler.blockFrom(thenBranchNodes, subStack);
         SqueakNode thenResult = subStack.empty() ? null : subStack.pop();
-        SqueakNode[] elseStatements = blockFrom(elseBranchNodes, sequence, subStack);
+        SqueakNode[] elseStatements = Decompiler.blockFrom(elseBranchNodes, subStack);
         SqueakNode elseResult = subStack.empty() ? null : subStack.pop();
         IfThenNode ifThenNode = new IfThenNode(method,
-                        branchCondition,
-                        thenStatements,
-                        thenResult,
-                        elseStatements,
-                        elseResult);
+                                               branchCondition,
+                                               thenStatements,
+                                               thenResult,
+                                               elseStatements,
+                                               elseResult);
         assert subStack.empty();
         if (thenResult != null || elseResult != null) {
             stack.push(ifThenNode);
         } else {
             statements.push(ifThenNode);
         }
-    }
-
-    private static SqueakNode[] blockFrom(List<SqueakBytecodeNode> nodes, Vector<SqueakBytecodeNode> sequence, Stack<SqueakNode> subStack) {
-        if (nodes == null)
-            return null;
-        Stack<SqueakNode> subStatements = new Stack<>();
-        for (int i = 0; i < nodes.size(); i++) {
-            SqueakBytecodeNode node = nodes.get(i);
-            if (node != null) {
-                if (sequence.contains(node)) {
-                    int size = subStatements.size();
-                    node.interpretOn(subStack, subStatements, sequence);
-                    if (!subStack.empty() && subStatements.size() > size) {
-                        // some statement was discovered, but something remains on the stack.
-                        // this means the statement didn't consume everything from under itself,
-                        // and we need to insert the stack item before the last statement.
-                        // FIXME: can these asserts be wrong?
-                        assert subStatements.size() == size + 1;
-                        assert subStack.size() == 1;
-                        subStatements.insertElementAt(subStack.pop(), size);
-                    }
-                    sequence.set(sequence.indexOf(node), null);
-                }
-            }
-        }
-        return subStatements.toArray(new SqueakNode[0]);
+        return skip;
     }
 
     private SqueakNode branchCondition(Stack<SqueakNode> stack) {

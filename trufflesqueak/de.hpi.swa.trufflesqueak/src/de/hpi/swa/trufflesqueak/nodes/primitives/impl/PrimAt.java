@@ -4,7 +4,6 @@ import java.math.BigInteger;
 
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.UnwrappingError;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
@@ -28,23 +27,13 @@ public class PrimAt extends PrimitiveBinaryOperation {
 
     @Specialization(rewriteOn = UnwrappingError.class)
     protected long intAt(BaseSqueakObject receiver, int idx) throws UnwrappingError {
-        try {
-            BaseSqueakObject at0 = receiver.at0(idx - 1);
-            if (at0 == null) {
-                throw new UnwrappingError();
-            }
-            return at0.unwrapInt();
-        } catch (ArrayIndexOutOfBoundsException e) {
-            throw new PrimitiveFailed();
-        }
+        BaseSqueakObject at0 = receiver.at0(idx - 1);
+        if (at0 == null) { throw new UnwrappingError(); }
+        return at0.unwrapInt();
     }
 
     @Specialization
     protected BaseSqueakObject at(BaseSqueakObject receiver, int idx) {
-        try {
-            return receiver.at0(idx - 1);
-        } catch (ArrayIndexOutOfBoundsException e) {
-            throw new PrimitiveFailed();
-        }
+        return receiver.at0(idx - 1);
     }
 }

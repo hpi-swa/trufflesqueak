@@ -11,6 +11,7 @@ import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.EmptyObject;
+import de.hpi.swa.trufflesqueak.model.LargeInteger;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -32,7 +33,13 @@ public class Chunk {
     private final Vector<Integer> data;
     private final SqueakImageContext image;
 
-    public Chunk(ImageReader reader, SqueakImageContext image, long size, int format, int classid, int hash, int pos) {
+    public Chunk(ImageReader reader,
+            SqueakImageContext image,
+            long size,
+            int format,
+            int classid,
+            int hash,
+            int pos) {
         this.reader = reader;
         this.image = image;
         this.size = size;
@@ -74,8 +81,10 @@ public class Chunk {
                 object = new EmptyObject(image);
             } else if (format == 1) {
                 // fixed pointers
-                // classes should already be instantiated at this point, check a bit
-                assert this.getSqClass() != image.metaclass && this.getSqClass().getSqClass() != image.metaclass;
+                // classes should already be instantiated at this point, check a
+                // bit
+                assert this.getSqClass() != image.metaclass
+                       && this.getSqClass().getSqClass() != image.metaclass;
                 object = new PointersObject(image);
             } else if (format == 2) {
                 // indexable fields
@@ -93,16 +102,21 @@ public class Chunk {
                 assert false; // unused
             } else if (format == 9) {
                 // 64-bit integers
-                object = new NativeObject(image);
+                object = new NativeObject(image, (byte) 8);
             } else if (format <= 11) {
                 // 32-bit integers
-                object = new NativeObject(image);
+                object = new NativeObject(image, (byte) 4);
             } else if (format <= 15) {
                 // 16-bit integers
-                object = new NativeObject(image);
+                object = new NativeObject(image, (byte) 2);
             } else if (format <= 23) {
                 // bytes
-                object = new NativeObject(image);
+                if (this.getSqClass() == image.largePositiveIntegerClass
+                    || this.getSqClass() == image.largeNegativeIntegerClass) {
+                    object = new LargeInteger(image);
+                } else {
+                    object = new NativeObject(image, (byte) 1);
+                }
             } else if (format <= 31) {
                 // compiled methods
                 object = new CompiledMethodObject(image);
@@ -145,7 +159,8 @@ public class Chunk {
         if ((ptr & 3) == 0) {
             Chunk chunk = reader.chunktable.get(ptr);
             if (chunk == null) {
-                System.err.println("Bogus pointer: " + ptr + ". Treating as smallint.");
+                System.err.println("Bogus pointer: " + ptr
+                                   + ". Treating as smallint.");
                 return image.wrapInt(ptr >> 1);
             } else {
                 return chunk.asObject();

@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.math.BigInteger;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.Truffle;
@@ -15,6 +16,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.FalseObject;
 import de.hpi.swa.trufflesqueak.model.ImmediateCharacter;
+import de.hpi.swa.trufflesqueak.model.LargeInteger;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
@@ -36,9 +38,9 @@ public class SqueakImageContext {
     public final ClassObject smallIntegerClass = new ClassObject(this);
     public final ClassObject arrayClass = new ClassObject(this);
     public final PointersObject smalltalk = new PointersObject(this);
-    public final NativeObject doesNotUnderstand = new NativeObject(this);
+    public final NativeObject doesNotUnderstand = new NativeObject(this, (byte) 1);
     public final ListObject specialSelectors = new ListObject(this);
-    public final NativeObject mustBeBoolean = new NativeObject(this);
+    public final NativeObject mustBeBoolean = new NativeObject(this, (byte) 1);
     public final ClassObject metaclass = new ClassObject(this);
     public final SqueakObject methodContextClass = new ClassObject(this);
     public final ClassObject nilClass = new ClassObject(this);
@@ -56,53 +58,56 @@ public class SqueakImageContext {
     private final SqueakLanguage.Env env;
 
     // Special selectors
-    public final NativeObject plus = new NativeObject(this);
-    public final NativeObject minus = new NativeObject(this);
-    public final NativeObject lt = new NativeObject(this);
-    public final NativeObject gt = new NativeObject(this);
-    public final NativeObject le = new NativeObject(this);
-    public final NativeObject ge = new NativeObject(this);
-    public final NativeObject eq = new NativeObject(this);
-    public final NativeObject ne = new NativeObject(this);
-    public final NativeObject times = new NativeObject(this);
-    public final NativeObject modulo = new NativeObject(this);
-    public final NativeObject pointAt = new NativeObject(this);
-    public final NativeObject bitShift = new NativeObject(this);
-    public final NativeObject divide = new NativeObject(this);
-    public final NativeObject bitAnd = new NativeObject(this);
-    public final NativeObject bitOr = new NativeObject(this);
-    public final NativeObject at = new NativeObject(this);
-    public final NativeObject atput = new NativeObject(this);
-    public final NativeObject size_ = new NativeObject(this);
-    public final NativeObject next = new NativeObject(this);
-    public final NativeObject nextPut = new NativeObject(this);
-    public final NativeObject atEnd = new NativeObject(this);
-    public final NativeObject equivalent = new NativeObject(this);
-    public final NativeObject klass = new NativeObject(this);
-    public final NativeObject blockCopy = new NativeObject(this);
-    public final NativeObject value = new NativeObject(this);
-    public final NativeObject valueWithArg = new NativeObject(this);
-    public final NativeObject do_ = new NativeObject(this);
-    public final NativeObject new_ = new NativeObject(this);
-    public final NativeObject newWithArg = new NativeObject(this);
-    public final NativeObject x = new NativeObject(this);
-    public final NativeObject y = new NativeObject(this);
-    public final NativeObject div = new NativeObject(this);
+    public final NativeObject plus = new NativeObject(this, (byte) 1);
+    public final NativeObject minus = new NativeObject(this, (byte) 1);
+    public final NativeObject lt = new NativeObject(this, (byte) 1);
+    public final NativeObject gt = new NativeObject(this, (byte) 1);
+    public final NativeObject le = new NativeObject(this, (byte) 1);
+    public final NativeObject ge = new NativeObject(this, (byte) 1);
+    public final NativeObject eq = new NativeObject(this, (byte) 1);
+    public final NativeObject ne = new NativeObject(this, (byte) 1);
+    public final NativeObject times = new NativeObject(this, (byte) 1);
+    public final NativeObject modulo = new NativeObject(this, (byte) 1);
+    public final NativeObject pointAt = new NativeObject(this, (byte) 1);
+    public final NativeObject bitShift = new NativeObject(this, (byte) 1);
+    public final NativeObject divide = new NativeObject(this, (byte) 1);
+    public final NativeObject bitAnd = new NativeObject(this, (byte) 1);
+    public final NativeObject bitOr = new NativeObject(this, (byte) 1);
+    public final NativeObject at = new NativeObject(this, (byte) 1);
+    public final NativeObject atput = new NativeObject(this, (byte) 1);
+    public final NativeObject size_ = new NativeObject(this, (byte) 1);
+    public final NativeObject next = new NativeObject(this, (byte) 1);
+    public final NativeObject nextPut = new NativeObject(this, (byte) 1);
+    public final NativeObject atEnd = new NativeObject(this, (byte) 1);
+    public final NativeObject equivalent = new NativeObject(this, (byte) 1);
+    public final NativeObject klass = new NativeObject(this, (byte) 1);
+    public final NativeObject blockCopy = new NativeObject(this, (byte) 1);
+    public final NativeObject value = new NativeObject(this, (byte) 1);
+    public final NativeObject valueWithArg = new NativeObject(this, (byte) 1);
+    public final NativeObject do_ = new NativeObject(this, (byte) 1);
+    public final NativeObject new_ = new NativeObject(this, (byte) 1);
+    public final NativeObject newWithArg = new NativeObject(this, (byte) 1);
+    public final NativeObject x = new NativeObject(this, (byte) 1);
+    public final NativeObject y = new NativeObject(this, (byte) 1);
+    public final NativeObject div = new NativeObject(this, (byte) 1);
     private final CompiledCodeObject entryPoint;
     private int padding;
-    private final boolean tracing;
+    private final boolean tracing = false;
 
-    private static final BaseSqueakObject[] ENTRY_POINT_LITERALS = new BaseSqueakObject[]{new SmallInteger(null, 0), null, null};
+    private static final BaseSqueakObject[] ENTRY_POINT_LITERALS = new BaseSqueakObject[] { new SmallInteger(null, 0),
+            null, null };
     // Push literal 1, send literal 2 selector, return top
-    private static final byte[] ENTRY_POINT_BYTES = new byte[]{32, (byte) 209, 124};
+    private static final byte[] ENTRY_POINT_BYTES = new byte[] { 32, (byte) 209, 124 };
 
-    public SqueakImageContext(SqueakLanguage squeakLanguage, SqueakLanguage.Env environ, BufferedReader in, PrintWriter out) {
+    public SqueakImageContext(SqueakLanguage squeakLanguage,
+            SqueakLanguage.Env environ,
+            BufferedReader in,
+            PrintWriter out) {
         language = squeakLanguage;
         env = environ;
         input = in;
         output = out;
         entryPoint = new CompiledMethodObject(this, ENTRY_POINT_BYTES, ENTRY_POINT_LITERALS);
-        tracing = false;
     }
 
     public CallTarget getActiveContext() {
@@ -118,19 +123,19 @@ public class SqueakImageContext {
         BaseSqueakObject receiver = nil;
         String selector = "testSum";
         switch (args.length) {
-            case 1:
+        case 1:
+            receiver = nil;
+            selector = args[0];
+        case 2:
+            switch (args[0]) {
+            case "nil":
                 receiver = nil;
-                selector = args[0];
-            case 2:
-                switch (args[0]) {
-                    case "nil":
-                        receiver = nil;
-                        break;
-                    default:
-                        receiver = wrapInt(Integer.parseInt(args[0]));
-                }
-                selector = args[1];
                 break;
+            default:
+                receiver = wrapInt(Integer.parseInt(args[0]));
+            }
+            selector = args[1];
+            break;
         }
         ClassObject receiverClass = (ClassObject) receiver.getSqClass();
         CompiledCodeObject lookupResult = (CompiledCodeObject) receiverClass.lookup(selector);
@@ -163,6 +168,10 @@ public class SqueakImageContext {
         return new SmallInteger(this, i);
     }
 
+    public BaseSqueakObject wrapInt(BigInteger i) {
+        return new LargeInteger(this, i);
+    }
+
     public ImmediateCharacter wrapChar(int i) {
         return new ImmediateCharacter(this, i);
     }
@@ -172,8 +181,7 @@ public class SqueakImageContext {
     }
 
     public void enterMethod(Object lookupResult, Object selector) {
-        if (!tracing)
-            return;
+        if (!tracing) return;
         padding += 2;
         for (int i = 0; i < padding; i++) {
             System.out.print(" ");
@@ -184,8 +192,7 @@ public class SqueakImageContext {
     }
 
     public void leaveMethod(Object result) {
-        if (!tracing)
-            return;
+        if (!tracing) return;
         for (int i = 0; i < padding; i++) {
             System.out.print(" ");
         }
