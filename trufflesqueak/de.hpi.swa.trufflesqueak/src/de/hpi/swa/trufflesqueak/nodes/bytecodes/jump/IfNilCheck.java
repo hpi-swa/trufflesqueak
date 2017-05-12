@@ -49,5 +49,14 @@ public class IfNilCheck extends SqueakNodeWithMethod {
         return nilOrObject;
     }
 
-    // TODO: pretty print
+    @Override
+    public void prettyPrintOn(StringBuilder str) {
+        checkNode.prettyPrintOn(str);
+        str.append(runIfNil ? " ifNil: [" : " ifNotNil: [");
+        for (SqueakNode node : statements) {
+            node.prettyPrintOn(str);
+            str.append(".\n");
+        }
+        str.append("]");
+    }
 }
