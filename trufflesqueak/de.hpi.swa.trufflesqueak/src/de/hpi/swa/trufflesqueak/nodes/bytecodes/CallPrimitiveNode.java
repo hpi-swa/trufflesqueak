@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Stack;
 
@@ -15,8 +16,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveQuickReturnNode;
 
 public class CallPrimitiveNode extends SqueakBytecodeNode {
-    @Child
-    PrimitiveNode primitive;
+    @Child PrimitiveNode primitive;
 
     public CallPrimitiveNode(CompiledCodeObject method, int idx, int i, int j) {
         super(method, idx);
@@ -30,6 +30,9 @@ public class CallPrimitiveNode extends SqueakBytecodeNode {
         try {
             result = primitive.executeGeneric(frame);
         } catch (UnsupportedSpecializationException | PrimitiveFailed e) {
+            method.image.debugPrint("Primitive failed: ", method);
+            method.image.debugPrint(frame.getArguments());
+            method.image.debugPrint(Arrays.stream(frame.getArguments()).map(Object::getClass).toArray());
             return null;
         }
         if (index == 0) {
@@ -60,9 +63,8 @@ public class CallPrimitiveNode extends SqueakBytecodeNode {
                     if (node instanceof ExtendedStoreNode) {
                         // an error code is requested, we'll handle that
                         // eventually TODO: FIXME
-                        stack.push(new ConstantNode(method,
-                                                    index,
-                                                    method.image.wrapString("prim error codes not supported")));
+                        stack.push(new ConstantNode(method, index,
+                                        method.image.wrapString("prim error codes not supported")));
                         break;
                     }
                 }

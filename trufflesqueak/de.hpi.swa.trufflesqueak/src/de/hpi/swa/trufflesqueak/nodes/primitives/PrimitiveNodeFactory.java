@@ -55,6 +55,7 @@ public abstract class PrimitiveNodeFactory {
     @SuppressWarnings("unchecked")
     private static Class<? extends PrimitiveNode>[] primitiveClasses = new Class[PRIM_COUNT + 1];
 
+    //@formatter:off
     public static enum Primitives {
         ADD(PrimAddNodeGen.class, 1),
         SUB(PrimSubNodeGen.class, 2),
@@ -109,7 +110,7 @@ public abstract class PrimitiveNodeFactory {
         //
         PERFORM(PrimPerform.class, 83),
         //
-        REPLACE_FROM_TO(PrimReplaceFromToNodeGen.class, 105),
+        REPLACE_FROM_TO(PrimReplaceFromToNodeGen.class, 105), 
         //
         EQUIVALENT(PrimEquivalentNodeGen.class, 110),
         CLASS(PrimClass.class, 111),

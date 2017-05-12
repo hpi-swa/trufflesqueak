@@ -5,8 +5,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.math.BigInteger;
+import java.util.Arrays;
 
 import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
@@ -94,15 +96,13 @@ public class SqueakImageContext {
     private int padding;
     private final boolean tracing = false;
 
-    private static final BaseSqueakObject[] ENTRY_POINT_LITERALS = new BaseSqueakObject[] { new SmallInteger(null, 0),
-            null, null };
+    private static final BaseSqueakObject[] ENTRY_POINT_LITERALS = new BaseSqueakObject[]{new SmallInteger(null, 0),
+                    null, null};
     // Push literal 1, send literal 2 selector, return top
-    private static final byte[] ENTRY_POINT_BYTES = new byte[] { 32, (byte) 209, 124 };
+    private static final byte[] ENTRY_POINT_BYTES = new byte[]{32, (byte) 209, 124};
 
-    public SqueakImageContext(SqueakLanguage squeakLanguage,
-            SqueakLanguage.Env environ,
-            BufferedReader in,
-            PrintWriter out) {
+    public SqueakImageContext(SqueakLanguage squeakLanguage, SqueakLanguage.Env environ, BufferedReader in,
+                    PrintWriter out) {
         language = squeakLanguage;
         env = environ;
         input = in;
@@ -123,19 +123,19 @@ public class SqueakImageContext {
         BaseSqueakObject receiver = nil;
         String selector = "testSum";
         switch (args.length) {
-        case 1:
-            receiver = nil;
-            selector = args[0];
-        case 2:
-            switch (args[0]) {
-            case "nil":
+            case 1:
                 receiver = nil;
+                selector = args[0];
+            case 2:
+                switch (args[0]) {
+                    case "nil":
+                        receiver = nil;
+                        break;
+                    default:
+                        receiver = wrapInt(Integer.parseInt(args[0]));
+                }
+                selector = args[1];
                 break;
-            default:
-                receiver = wrapInt(Integer.parseInt(args[0]));
-            }
-            selector = args[1];
-            break;
         }
         ClassObject receiverClass = (ClassObject) receiver.getSqClass();
         CompiledCodeObject lookupResult = (CompiledCodeObject) receiverClass.lookup(selector);
@@ -180,8 +180,14 @@ public class SqueakImageContext {
         return new NativeObject(this, this.stringClass, s.getBytes());
     }
 
+    @TruffleBoundary
+    public void debugPrint(Object... strs) {
+        System.out.println(Arrays.stream(strs).map(o -> o.toString() + " ").reduce("", String::concat));
+    }
+
     public void enterMethod(Object lookupResult, Object selector) {
-        if (!tracing) return;
+        if (!tracing)
+            return;
         padding += 2;
         for (int i = 0; i < padding; i++) {
             System.out.print(" ");
@@ -192,7 +198,8 @@ public class SqueakImageContext {
     }
 
     public void leaveMethod(Object result) {
-        if (!tracing) return;
+        if (!tracing)
+            return;
         for (int i = 0; i < padding; i++) {
             System.out.print(" ");
         }
