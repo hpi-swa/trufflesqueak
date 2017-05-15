@@ -41,15 +41,13 @@ public class LargeInteger extends SqueakObject {
 
     @Override
     public BaseSqueakObject at0(int l) {
-        return image.wrapInt(getBytes()[l]);
+        return image.wrapInt(byteAt0(integer.abs(), l));
     }
 
     @Override
     public void atput0(int idx, BaseSqueakObject object) throws UnwrappingError {
         byte b = (byte) object.unwrapInt();
-        byte[] bytes = getBytes();
-        bytes[idx] = b;
-        setBytes(bytes);
+        setBytesNative(byteAtPut0(integer, idx, b));
     }
 
     private void setBytes(byte[] bytes) {
@@ -58,6 +56,10 @@ public class LargeInteger extends SqueakObject {
         for (int i = 0; i < bytes.length; i++) {
             bigEndianBytes[bytes.length - i] = bytes[i];
         }
+        setBytesNative(bigEndianBytes);
+    }
+
+    private void setBytesNative(byte[] bigEndianBytes) {
         integer = new BigInteger(bigEndianBytes);
         if (isNegative()) {
             integer = integer.negate();
@@ -65,13 +67,7 @@ public class LargeInteger extends SqueakObject {
     }
 
     public byte[] getBytes() {
-        byte[] bytes;
-        if (isNegative()) {
-            bytes = integer.negate().toByteArray();
-        } else {
-            bytes = integer.toByteArray();
-        }
-        return bytes;
+        return getSqueakBytes(integer);
     }
 
     private boolean isNegative() {
@@ -80,7 +76,7 @@ public class LargeInteger extends SqueakObject {
 
     @Override
     public int size() {
-        return getBytes().length;
+        return byteSize(integer);
     }
 
     @Override
@@ -90,5 +86,33 @@ public class LargeInteger extends SqueakObject {
 
     public BigInteger getValue() {
         return integer;
+    }
+
+    public static long byteAt0(BigInteger receiver, int idx) {
+        byte[] byteArray = receiver.toByteArray();
+        return byteArray[byteArray.length - idx - 1] & 0xFF;
+    }
+
+    public static byte[] byteAtPut0(BigInteger receiver, int idx, long value) {
+        byte[] bytes = receiver.toByteArray();
+        bytes[bytes.length - idx - 1] = (byte) value;
+        return bytes;
+    }
+
+    public static byte[] getSqueakBytes(BigInteger repl) {
+        byte[] bytes;
+        // squeak large integers are unsigned, hence the abs call
+        bytes = repl.abs().toByteArray();
+        // the image expects little endian byte order
+        for (int i = 0; i < bytes.length / 2; i++) {
+            byte b = bytes[i];
+            bytes[i] = bytes[bytes.length - i - 1];
+            bytes[bytes.length - i - 1] = b;
+        }
+        return bytes;
+    }
+
+    public static int byteSize(BigInteger i) {
+        return (i.abs().bitLength() + 7) / 8;
     }
 }

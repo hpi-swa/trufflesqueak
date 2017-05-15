@@ -94,7 +94,9 @@ public class SqueakImageContext {
     public final NativeObject div = new NativeObject(this, (byte) 1);
     private final CompiledCodeObject entryPoint;
     private int padding;
-    private final boolean tracing = false;
+    private final SqueakConfig config;
+    private final boolean tracing;
+    private final boolean verbose;
 
     private static final BaseSqueakObject[] ENTRY_POINT_LITERALS = new BaseSqueakObject[]{new SmallInteger(null, 0),
                     null, null};
@@ -108,6 +110,9 @@ public class SqueakImageContext {
         input = in;
         output = out;
         entryPoint = new CompiledMethodObject(this, ENTRY_POINT_BYTES, ENTRY_POINT_LITERALS);
+        config = (SqueakConfig) env.getConfig().get("config");
+        verbose = config.isVerbose();
+        tracing = config.isTracing();
     }
 
     public CallTarget getActiveContext() {
@@ -119,24 +124,8 @@ public class SqueakImageContext {
     }
 
     public CallTarget getEntryPoint() {
-        String[] args = (String[]) env.getConfig().get("args");
-        BaseSqueakObject receiver = nil;
-        String selector = "testSum";
-        switch (args.length) {
-            case 1:
-                receiver = nil;
-                selector = args[0];
-            case 2:
-                switch (args[0]) {
-                    case "nil":
-                        receiver = nil;
-                        break;
-                    default:
-                        receiver = wrapInt(Integer.parseInt(args[0]));
-                }
-                selector = args[1];
-                break;
-        }
+        BaseSqueakObject receiver = config.getReceiver(this);
+        String selector = config.getSelector();
         ClassObject receiverClass = (ClassObject) receiver.getSqClass();
         CompiledCodeObject lookupResult = (CompiledCodeObject) receiverClass.lookup(selector);
         entryPoint.setLiteral(1, receiver);
@@ -186,6 +175,8 @@ public class SqueakImageContext {
 
     @TruffleBoundary
     public void debugPrint(Object... strs) {
+        if (!verbose)
+            return;
         System.out.println(Arrays.stream(strs).map(o -> o.toString() + " ").reduce("", String::concat));
     }
 

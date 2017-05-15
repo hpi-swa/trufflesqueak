@@ -5,6 +5,7 @@ import java.math.BigInteger;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.LargeInteger;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveQuinaryOperation;
@@ -26,8 +27,7 @@ public class PrimReplaceFromToNode extends PrimitiveQuinaryOperation {
     @Specialization
     Object replace(NativeObject rcvr, int start, int stop, BigInteger repl, int replStart) {
         int repOff = replStart - start;
-        // Squeak LargeIntegers are unsigned
-        byte[] bytes = repl.abs().toByteArray();
+        byte[] bytes = LargeInteger.getSqueakBytes(repl);
         for (int i = start - 1; i < stop; i++) {
             rcvr.setNativeAt0(i, bytes[repOff + i]);
         }

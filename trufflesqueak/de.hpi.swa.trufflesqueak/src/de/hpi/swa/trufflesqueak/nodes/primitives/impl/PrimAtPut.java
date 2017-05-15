@@ -1,5 +1,7 @@
 package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
+import java.math.BigInteger;
+
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
@@ -7,12 +9,19 @@ import de.hpi.swa.trufflesqueak.exceptions.UnwrappingError;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ImmediateCharacter;
+import de.hpi.swa.trufflesqueak.model.LargeInteger;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveTernaryOperation;
 
 public class PrimAtPut extends PrimitiveTernaryOperation {
     public PrimAtPut(CompiledMethodObject cm) {
         super(cm);
+    }
+
+    @Specialization
+    protected long atput(BigInteger receiver, int idx, int value) {
+        LargeInteger.byteAtPut0(receiver, idx, value);
+        return value;
     }
 
     @Specialization

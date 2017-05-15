@@ -23,8 +23,9 @@ public class PrimPrintArgs extends PrimitiveNode {
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
-        for (Object o : frame.getArguments()) {
-            debugPrint(o);
+        Object[] arguments = frame.getArguments();
+        for (int i = 1; i < arguments.length; i++) {
+            debugPrint(arguments[i]);
         }
         return null;
     }

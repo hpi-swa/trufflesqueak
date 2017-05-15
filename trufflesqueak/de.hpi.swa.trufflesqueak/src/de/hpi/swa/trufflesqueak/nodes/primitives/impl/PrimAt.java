@@ -7,6 +7,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import de.hpi.swa.trufflesqueak.exceptions.UnwrappingError;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.LargeInteger;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveBinaryOperation;
 
@@ -17,7 +18,7 @@ public class PrimAt extends PrimitiveBinaryOperation {
 
     @Specialization
     protected long intAt(BigInteger receiver, int idx) {
-        return receiver.toByteArray()[idx - 1] & 0xFF;
+        return LargeInteger.byteAt0(receiver, idx - 1);
     }
 
     @Specialization

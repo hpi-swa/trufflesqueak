@@ -6,6 +6,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.LargeInteger;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveUnaryOperation;
 
 public class PrimSize extends PrimitiveUnaryOperation {
@@ -40,7 +41,7 @@ public class PrimSize extends PrimitiveUnaryOperation {
 
     @Specialization
     public long size(BigInteger i) {
-        return i.toByteArray().length;
+        return LargeInteger.byteSize(i);
     }
 
     @Specialization
