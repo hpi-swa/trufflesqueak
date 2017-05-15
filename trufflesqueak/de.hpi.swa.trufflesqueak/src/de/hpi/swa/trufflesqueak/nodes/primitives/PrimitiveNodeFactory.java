@@ -3,7 +3,10 @@ package de.hpi.swa.trufflesqueak.nodes.primitives;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.Node.Child;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -19,6 +22,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimBitShiftNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimCharacterValueNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimClass;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimClosureValueFactory;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimDigitDivNegativeNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimDivNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimDivideNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimEqualNodeGen;
@@ -32,6 +36,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimModNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimMulNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimNewArgNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimNewNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimNormalizeNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimNotEqualNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPerform;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPrintArgs;
@@ -52,11 +57,10 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimUtcClockNodeGen;
 
 public abstract class PrimitiveNodeFactory {
     private static final int PRIM_COUNT = 574;
-    @SuppressWarnings("unchecked")
-    private static Class<? extends PrimitiveNode>[] primitiveClasses = new Class[PRIM_COUNT + 1];
+    @SuppressWarnings("unchecked") private static Class<? extends PrimitiveNode>[] indexPrims = new Class[PRIM_COUNT + 1];
+    private static Map<String, Map<String, Class<? extends PrimitiveNode>>> namedPrims = new HashMap<>();
 
-    //@formatter:off
-    public static enum Primitives {
+    public static enum IndexedPrimitives {
         ADD(PrimAddNodeGen.class, 1),
         SUB(PrimSubNodeGen.class, 2),
         LESSTHAN(PrimLessThanNodeGen.class, 3),
@@ -110,10 +114,12 @@ public abstract class PrimitiveNodeFactory {
         //
         PERFORM(PrimPerform.class, 83),
         //
-        REPLACE_FROM_TO(PrimReplaceFromToNodeGen.class, 105), 
+        REPLACE_FROM_TO(PrimReplaceFromToNodeGen.class, 105),
         //
         EQUIVALENT(PrimEquivalentNodeGen.class, 110),
         CLASS(PrimClass.class, 111),
+        //
+        EXTERNAL_CALL(PrimCall.class, 117),
         //
         CHARACTER_VALUE(PrimCharacterValueNodeGen.class, 170),
         //
@@ -135,21 +141,38 @@ public abstract class PrimitiveNodeFactory {
         PUSH_ONE(PrimPushOne.class, 262),
         PUSH_TWO(PrimPushTwo.class, 262),
         //
-        TEST(PrimPrintArgs.class, 255),
-        //
         LAST(PrimitiveNode.class, PRIM_COUNT);
 
-        public int index;
+        IndexedPrimitives(Class<? extends PrimitiveNode> cls, int idx) {
+            indexPrims[idx] = cls;
+        }
+    }
 
-        Primitives(Class<? extends PrimitiveNode> cls, int idx) {
-            index = idx;
-            primitiveClasses[idx] = cls;
+    public static enum NamedPrimitives {
+        LARGE_ADD(PrimAddNodeGen.class, "LargeIntegers", "primDigitAdd"),
+        LARGE_SUB(PrimSubNodeGen.class, "LargeIntegers", "primDigitSubtract"),
+        LARGE_MUL(PrimMulNodeGen.class, "LargeIntegers", "primDigitMultiplyNegative"),
+        LARGE_DIV(PrimDigitDivNegativeNodeGen.class, "LargeIntegers", "primDigitDivNegative"),
+        LARGE_BIT_AND(PrimBitAndNodeGen.class, "LargeIntegers", "primDigitBitAnd"),
+        LARGE_BIT_OR(PrimBitOrNodeGen.class, "LargeIntegers", "primDigitBitOr"),
+        LARGE_BIT_SHIFT(PrimBitShiftNodeGen.class, "LargeIntegers", "primDigitBitShiftMagnitude"),
+        LARGE_POS_NORMALIZE(PrimNormalizeNodeGen.class, "LargeIntegers", "primNormalizePositive"),
+        LARGE_NEG_NORMALIZE(PrimNormalizeNodeGen.class, "LargeIntegers", "primNormalizeNegative"),
+        //
+        TRUFFLE_PRINT(PrimPrintArgs.class, "TruffleSqueak", "debugPrint"),
+        //
+        LAST(PrimitiveNode.class, "nil", "nil");
+
+        NamedPrimitives(Class<? extends PrimitiveNode> cls, String modulename, String functionname) {
+            namedPrims.putIfAbsent(modulename, new HashMap<>());
+            namedPrims.get(modulename).put(functionname, cls);
         }
     }
 
     static {
         // Forces instantiaton of the primitives enum
-        Primitives.values();
+        IndexedPrimitives.values();
+        NamedPrimitives.values();
     }
 
     public static SqueakNode arg(int index) {
@@ -157,10 +180,11 @@ public abstract class PrimitiveNodeFactory {
     }
 
     private static PrimitiveNode createInstance(CompiledMethodObject method, Class<? extends PrimitiveNode> primClass) {
+        if (primClass == null) {
+            return new PrimitiveNode(method);
+        }
         try {
-            int argCount = (int) Arrays.stream(primClass.getDeclaredFields())
-                                       .filter(f -> f.getAnnotation(Child.class) != null)
-                                       .count();
+            int argCount = (int) Arrays.stream(primClass.getDeclaredFields()).filter(f -> f.getAnnotation(Child.class) != null).count();
 
             Class<?>[] argTypes = new Class<?>[argCount + 1];
             argTypes[0] = CompiledMethodObject.class;
@@ -181,11 +205,11 @@ public abstract class PrimitiveNodeFactory {
                 return primClass.getConstructor(CompiledMethodObject.class).newInstance(method);
             }
         } catch (NoSuchMethodException
-                 | InstantiationException
-                 | SecurityException
-                 | IllegalAccessException
-                 | IllegalArgumentException
-                 | InvocationTargetException e) {
+                        | InstantiationException
+                        | SecurityException
+                        | IllegalAccessException
+                        | IllegalArgumentException
+                        | InvocationTargetException e) {
             throw new RuntimeException("Internal error in creating primitive", e);
         }
     }
@@ -198,15 +222,20 @@ public abstract class PrimitiveNodeFactory {
         }
     }
 
+    @TruffleBoundary
     public static PrimitiveNode forIdx(CompiledMethodObject method, int primitiveIdx) {
-        if (primitiveIdx >= primitiveClasses.length) { return new PrimitiveNode(method); }
-        if (primitiveIdx >= 264
-            && primitiveIdx <= 520) { return new PrimQuickReturnReceiverVariableNode(method, primitiveIdx - 264); }
-        Class<? extends PrimitiveNode> primClass = primitiveClasses[primitiveIdx];
-        if (primClass == null) {
+        if (primitiveIdx >= indexPrims.length) {
             return new PrimitiveNode(method);
-        } else {
-            return createInstance(method, primClass);
+        } else if (primitiveIdx >= 264 && primitiveIdx <= 520) {
+            return new PrimQuickReturnReceiverVariableNode(method, primitiveIdx - 264);
         }
+        Class<? extends PrimitiveNode> primClass = indexPrims[primitiveIdx];
+        return createInstance(method, primClass);
+    }
+
+    @TruffleBoundary
+    public static PrimitiveNode forName(CompiledMethodObject method, String modulename, String functionname) {
+        Class<? extends PrimitiveNode> primClass = namedPrims.getOrDefault(modulename, new HashMap<>()).get(functionname);
+        return createInstance(method, primClass);
     }
 }

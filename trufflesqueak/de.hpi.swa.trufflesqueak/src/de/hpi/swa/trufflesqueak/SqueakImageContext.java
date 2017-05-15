@@ -180,6 +180,10 @@ public class SqueakImageContext {
         return new NativeObject(this, this.stringClass, s.getBytes());
     }
 
+    public ListObject wrapArray(BaseSqueakObject... elements) {
+        return new ListObject(this, arrayClass, elements);
+    }
+
     @TruffleBoundary
     public void debugPrint(Object... strs) {
         System.out.println(Arrays.stream(strs).map(o -> o.toString() + " ").reduce("", String::concat));

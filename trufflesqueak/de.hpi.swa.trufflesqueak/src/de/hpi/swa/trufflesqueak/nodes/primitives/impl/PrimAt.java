@@ -17,7 +17,7 @@ public class PrimAt extends PrimitiveBinaryOperation {
 
     @Specialization
     protected long intAt(BigInteger receiver, int idx) {
-        return receiver.toByteArray()[idx];
+        return receiver.toByteArray()[idx - 1] & 0xFF;
     }
 
     @Specialization
@@ -28,7 +28,9 @@ public class PrimAt extends PrimitiveBinaryOperation {
     @Specialization(rewriteOn = UnwrappingError.class)
     protected long intAt(BaseSqueakObject receiver, int idx) throws UnwrappingError {
         BaseSqueakObject at0 = receiver.at0(idx - 1);
-        if (at0 == null) { throw new UnwrappingError(); }
+        if (at0 == null) {
+            throw new UnwrappingError();
+        }
         return at0.unwrapInt();
     }
 

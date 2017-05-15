@@ -13,39 +13,38 @@ public class PrimSize extends PrimitiveUnaryOperation {
         super(cm);
     }
 
-    @Specialization
-    public int size(@SuppressWarnings("unused") boolean o) {
+    @Specialization(guards = "isNull(obj)")
+    public long size(@SuppressWarnings("unused") Object obj) {
         return 0;
     }
 
     @Specialization
-    public int size(@SuppressWarnings("unused") int o) {
+    public long size(@SuppressWarnings("unused") boolean o) {
         return 0;
     }
 
     @Specialization
-    public int size(@SuppressWarnings("unused") double o) {
+    public long size(@SuppressWarnings("unused") int o) {
+        return 0;
+    }
+
+    @Specialization
+    public long size(@SuppressWarnings("unused") double o) {
         return 2; // Float in words
     }
 
     @Specialization
-    public int size(String s) {
+    public long size(String s) {
         return s.getBytes().length;
     }
 
     @Specialization
-    public int size(BigInteger i) {
-        int bitCount = i.bitCount();
-        return (int) Math.round(Math.ceil(bitCount / 8.0)); // Large*Integer in bytes
-    }
-
-    @Specialization(guards = "isNull(obj)")
-    public int size(@SuppressWarnings("unused") Object obj) {
-        return 0;
+    public long size(BigInteger i) {
+        return i.toByteArray().length;
     }
 
     @Specialization
-    public int size(BaseSqueakObject obj) {
+    public long size(BaseSqueakObject obj) {
         return obj.size();
     }
 }

@@ -7,7 +7,6 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
 public class PushNewArrayNode extends SqueakBytecodeNode {
@@ -35,7 +34,7 @@ public class PushNewArrayNode extends SqueakBytecodeNode {
                 ptrs[i] = (BaseSqueakObject) popIntoArrayNodes[i].executeGeneric(frame);
             }
         }
-        return new ListObject(method.image, method.image.arrayClass, ptrs);
+        return method.image.wrapArray(ptrs);
     }
 
     @Override

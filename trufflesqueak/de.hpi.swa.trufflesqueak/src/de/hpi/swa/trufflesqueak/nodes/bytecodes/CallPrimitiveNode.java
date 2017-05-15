@@ -29,7 +29,9 @@ public class CallPrimitiveNode extends SqueakBytecodeNode {
         Object result = null;
         try {
             result = primitive.executeGeneric(frame);
-        } catch (UnsupportedSpecializationException | PrimitiveFailed e) {
+        } catch (UnsupportedSpecializationException
+                        | PrimitiveFailed
+                        | IndexOutOfBoundsException e) {
             method.image.debugPrint("Primitive failed: ", method);
             method.image.debugPrint(frame.getArguments());
             method.image.debugPrint(Arrays.stream(frame.getArguments()).map(Object::getClass).toArray());

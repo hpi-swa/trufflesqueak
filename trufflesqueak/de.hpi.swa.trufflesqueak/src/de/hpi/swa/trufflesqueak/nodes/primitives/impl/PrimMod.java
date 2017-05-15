@@ -19,11 +19,20 @@ public class PrimMod extends PrimitiveBinaryOperation {
 
     @Specialization(rewriteOn = ArithmeticException.class)
     long mod(BigInteger a, BigInteger b) {
-        return a.mod(b).longValueExact();
+        return doBigModulo(a, b).longValueExact();
     }
 
-    @Specialization(rewriteOn = ArithmeticException.class)
+    @Specialization
     BigInteger modBig(BigInteger a, BigInteger b) {
-        return a.mod(b);
+        return doBigModulo(a, b);
+    }
+
+    private static BigInteger doBigModulo(BigInteger a, BigInteger b) {
+        BigInteger mod = a.mod(b.abs());
+        if (a.signum() + b.signum() <= 0) {
+            return mod.negate();
+        } else {
+            return mod;
+        }
     }
 }

@@ -81,21 +81,37 @@ public class NativeObject extends SqueakObject implements TruffleObject {
         setNativeAt0(index, value);
     }
 
-    public int getNativeAt0(int index) {
-        if (elementSize == 1) {
-            return content.get(index);
-        } else {
-            assert elementSize == 4;
-            return content.asIntBuffer().get(index);
+    public long getNativeAt0(int index) {
+        switch (elementSize) {
+            case 1:
+                return content.get(index) & 0xFF;
+            case 2:
+                return content.asShortBuffer().get(index) & 0xFFFF;
+            case 4:
+                return content.asIntBuffer().get(index) & 0xFFFFFFFF;
+            case 8:
+                return content.asLongBuffer().get(index);
+            default:
+                throw new RuntimeException("invalid native object size");
         }
     }
 
-    public void setNativeAt0(int index, int value) {
-        if (elementSize == 1) {
-            content.put(index, (byte) value);
-        } else {
-            assert elementSize == 4;
-            content.asIntBuffer().put(index, value);
+    public void setNativeAt0(int index, long value) {
+        switch (elementSize) {
+            case 1:
+                content.put(index, (byte) value);
+                break;
+            case 2:
+                content.asShortBuffer().put(index, (short) value);
+                break;
+            case 4:
+                content.asIntBuffer().put(index, (int) value);
+                break;
+            case 8:
+                content.asLongBuffer().put(index, value);
+                break;
+            default:
+                throw new RuntimeException("invalid native object size");
         }
     }
 
@@ -120,5 +136,9 @@ public class NativeObject extends SqueakObject implements TruffleObject {
     @Override
     public int instsize() {
         return 0;
+    }
+
+    public byte[] getBytes() {
+        return content.array();
     }
 }
