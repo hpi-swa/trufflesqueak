@@ -8,6 +8,7 @@ import java.math.BigInteger;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 
@@ -151,6 +152,22 @@ public class SqueakImageContext {
         } else {
             return sqFalse;
         }
+    }
+
+    public BaseSqueakObject wrap(Object obj) {
+        CompilerAsserts.neverPartOfCompilation("Only used in testing");
+        if (obj instanceof Integer) {
+            return wrap(((Integer) obj).intValue());
+        } else if (obj instanceof Long) {
+            return wrap((long) obj);
+        } else if (obj instanceof BigInteger) {
+            return wrap((BigInteger) obj);
+        } else if (obj instanceof String) {
+            return wrap((String) obj);
+        } else if (obj instanceof BaseSqueakObject[]) {
+            return wrap((BaseSqueakObject[]) obj);
+        }
+        throw new RuntimeException("Don't know how to wrap " + obj);
     }
 
     public SmallInteger wrap(long i) {

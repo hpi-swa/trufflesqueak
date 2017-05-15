@@ -4,7 +4,6 @@ import java.math.BigInteger;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
-import de.hpi.swa.trufflesqueak.model.PointersObject;
 
 public class TestPrimitives extends TestSqueak {
     public void testPrimEquivalent() {
@@ -42,13 +41,28 @@ public class TestPrimitives extends TestSqueak {
 
     public void testAdd() {
         Object[] calcs = new Object[]{
-                        Integer.MAX_VALUE, Integer.MAX_VALUE, 2 * Integer.MAX_VALUE,
+                        Integer.MAX_VALUE, Integer.MAX_VALUE, 2 * (long) Integer.MAX_VALUE,
                         Long.MAX_VALUE, Long.MAX_VALUE, BigInteger.valueOf(Long.MAX_VALUE).multiply(BigInteger.valueOf(2)),
+                        BigInteger.valueOf(Long.MAX_VALUE), Long.MIN_VALUE, BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.valueOf(Long.MIN_VALUE)),
         };
-        for (int i = 0; i < calcs.length + 2; i += 3) {
+        for (int i = 0; i < calcs.length; i += 3) {
             BaseSqueakObject rcvr = image.wrap(calcs[i]);
             BaseSqueakObject arg = image.wrap(calcs[i + 1]);
             assertEquals(runPrim(1, rcvr, arg), calcs[i + 2]);
+        }
+    }
+
+    public void testSub() {
+        Object[] calcs = new Object[]{
+                        Integer.MAX_VALUE, Integer.MAX_VALUE, (long) 0,
+                        Long.MAX_VALUE, Long.MAX_VALUE, (long) 0,
+                        Long.MIN_VALUE, 1, BigInteger.valueOf(Long.MIN_VALUE).subtract(BigInteger.ONE),
+                        BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE), 1, Long.MAX_VALUE,
+        };
+        for (int i = 0; i < calcs.length; i += 3) {
+            BaseSqueakObject rcvr = image.wrap(calcs[i]);
+            BaseSqueakObject arg = image.wrap(calcs[i + 1]);
+            assertEquals(runPrim(2, rcvr, arg), calcs[i + 2]);
         }
     }
 }
