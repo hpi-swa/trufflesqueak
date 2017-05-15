@@ -65,8 +65,7 @@ public abstract class TestSqueak extends TestCase {
 
     protected Object runPrim(int primCode, BaseSqueakObject rcvr, BaseSqueakObject... arguments) {
         CompiledCodeObject cm = makeMethod(new int[]{139, primCode & 0xFF, (primCode & 0xFF00) >> 8});
-        cm.setLiteral(0, new SmallInteger(null, 0x10000));
+        cm.setLiteral(0, image.wrap(0x10000));
         return runMethod(cm, rcvr, arguments);
     }
-
 }

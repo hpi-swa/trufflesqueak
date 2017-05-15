@@ -38,12 +38,12 @@ public class PrimAtPut extends PrimitiveTernaryOperation {
 
     @Specialization
     protected BaseSqueakObject atput(BaseSqueakObject receiver, int idx, long value) {
-        return atput(receiver, idx, method.image.wrapInt(value));
+        return atput(receiver, idx, method.image.wrap(value));
     }
 
     @Specialization
     protected BaseSqueakObject atput(BaseSqueakObject receiver, int idx, boolean value) {
-        return atput(receiver, idx, method.image.wrapBool(value));
+        return atput(receiver, idx, method.image.wrap(value));
     }
 
     @Specialization

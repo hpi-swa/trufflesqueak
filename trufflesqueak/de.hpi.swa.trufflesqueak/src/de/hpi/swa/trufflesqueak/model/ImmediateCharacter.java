@@ -23,7 +23,7 @@ public class ImmediateCharacter extends ImmutableObject {
     @Override
     public BaseSqueakObject at0(int idx) {
         if (idx == 0) {
-            return image.wrapInt(getValue());
+            return image.wrap(getValue());
         } else {
             throw new ArrayIndexOutOfBoundsException();
         }

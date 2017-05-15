@@ -16,38 +16,10 @@ public class TruffleSqueakMain {
         out.println("== running TruffleSqueak on " + Truffle.getRuntime().getName());
         Source source = Source.newBuilder(filename).mimeType(SqueakLanguage.MIME_TYPE).name(filename).interactive().build();
         Builder builder = PolyglotEngine.newBuilder().setIn(in).setOut(out);
-        extractConfig(builder, args);
+        builder.config(SqueakLanguage.MIME_TYPE, "config", new SqueakConfig(args));
         PolyglotEngine engine = builder.build();
         assert engine.getLanguages().containsKey(SqueakLanguage.MIME_TYPE);
         engine.eval(source);
-    }
-
-    private static void extractConfig(Builder builder, String[] args) {
-        SqueakConfig squeakConfig = new SqueakConfig();
-        for (int i = 0; i < args.length; i++) {
-            switch (args[i]) {
-                case "--verbose":
-                case "-v":
-                    squeakConfig.setVerbose(true);
-                    break;
-                case "--trace":
-                case "-t":
-                    squeakConfig.setTracing(true);
-                    break;
-                case "--receiver":
-                case "-r":
-                    squeakConfig.setReceiver(args[++i]);
-                    break;
-                case "--method":
-                case "-m":
-                    squeakConfig.setSelector(args[++i]);
-                    break;
-                case "--":
-                    squeakConfig.setRestArgs(Arrays.copyOfRange(args, i + 1, args.length));
-                    return;
-            }
-        }
-        builder.config(SqueakLanguage.MIME_TYPE, "config", squeakConfig);
     }
 
     public static void main(String[] args) throws RuntimeException {

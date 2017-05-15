@@ -20,6 +20,11 @@ public abstract class BaseSqueakObject {
 
     public abstract BaseSqueakObject getSqClass();
 
+    /**
+     * Set the class of this object to newCls. Not possible for all objects.
+     * 
+     * @param newCls
+     */
     public void setSqClass(BaseSqueakObject newCls) {
         throw new RuntimeException("cannot do this");
     }

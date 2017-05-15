@@ -106,9 +106,14 @@ public abstract class PrimitiveNodeFactory {
         NEXT(PrimitiveNode.class, 65),
         NEXT_PUT(PrimitiveNode.class, 66),
         AT_END(PrimitiveNode.class, 67),
+        OBJECT_AT(PrimAtNodeGen.class, 68),
+        OBJECT_AT_PUT(PrimAtPutNodeGen.class, 69),
         //
         NEW(PrimNewNodeGen.class, 70),
         NEW_WITH_ARG(PrimNewArgNodeGen.class, 71),
+        //
+        INST_VAR_AT(PrimAtNodeGen.class, 73),
+        INST_VAR_AT_PUT(PrimAtPutNodeGen.class, 74),
         //
         BLOCK_COPY(PrimitiveNode.class, 80),
         //
@@ -120,6 +125,12 @@ public abstract class PrimitiveNodeFactory {
         CLASS(PrimClass.class, 111),
         //
         EXTERNAL_CALL(PrimCall.class, 117),
+        //
+        SHORT_AT(PrimAtNodeGen.class, 143),
+        SHORT_AT_PUT(PrimAtPutNodeGen.class, 144),
+        //
+        INTEGER_AT(PrimAtNodeGen.class, 143),
+        INTEGER_AT_PUT(PrimAtPutNodeGen.class, 144),
         //
         CHARACTER_VALUE(PrimCharacterValueNodeGen.class, 170),
         //

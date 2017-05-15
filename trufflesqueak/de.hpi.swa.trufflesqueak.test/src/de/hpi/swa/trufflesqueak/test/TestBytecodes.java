@@ -1,9 +1,7 @@
 package de.hpi.swa.trufflesqueak.test;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
-import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
 
 public class TestBytecodes extends TestSqueak {
     public void testPushReceiverVariable() {

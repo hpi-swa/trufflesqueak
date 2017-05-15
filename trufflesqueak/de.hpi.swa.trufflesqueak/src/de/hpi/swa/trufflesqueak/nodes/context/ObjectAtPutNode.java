@@ -32,7 +32,7 @@ public abstract class ObjectAtPutNode extends SqueakNodeWithMethod {
     @Specialization
     protected Object write(BaseSqueakObject object, long value) {
         try {
-            object.atput0(index, object.image.wrapInt(value));
+            object.atput0(index, object.image.wrap(value));
         } catch (UnwrappingError e) {
             throw new RuntimeException(e);
         }
@@ -42,7 +42,7 @@ public abstract class ObjectAtPutNode extends SqueakNodeWithMethod {
     @Specialization
     protected Object write(BaseSqueakObject object, BigInteger value) {
         try {
-            object.atput0(index, object.image.wrapInt(value));
+            object.atput0(index, object.image.wrap(value));
         } catch (UnwrappingError e) {
             throw new RuntimeException(e);
         }

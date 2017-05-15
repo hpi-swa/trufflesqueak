@@ -95,8 +95,6 @@ public class SqueakImageContext {
     private final CompiledCodeObject entryPoint;
     private int padding;
     private final SqueakConfig config;
-    private final boolean tracing;
-    private final boolean verbose;
 
     private static final BaseSqueakObject[] ENTRY_POINT_LITERALS = new BaseSqueakObject[]{new SmallInteger(null, 0),
                     null, null};
@@ -110,9 +108,11 @@ public class SqueakImageContext {
         input = in;
         output = out;
         entryPoint = new CompiledMethodObject(this, ENTRY_POINT_BYTES, ENTRY_POINT_LITERALS);
-        config = (SqueakConfig) env.getConfig().get("config");
-        verbose = config.isVerbose();
-        tracing = config.isTracing();
+        if (env != null) {
+            config = (SqueakConfig) env.getConfig().get("config");
+        } else {
+            config = new SqueakConfig(new String[0]);
+        }
     }
 
     public CallTarget getActiveContext() {
@@ -141,7 +141,11 @@ public class SqueakImageContext {
         return output;
     }
 
-    public BooleanObject wrapBool(boolean flag) {
+    public SqueakLanguage getLanguage() {
+        return language;
+    }
+
+    public BooleanObject wrap(boolean flag) {
         if (flag) {
             return sqTrue;
         } else {
@@ -149,15 +153,11 @@ public class SqueakImageContext {
         }
     }
 
-    public SqueakLanguage getLanguage() {
-        return language;
-    }
-
-    public SmallInteger wrapInt(long i) {
+    public SmallInteger wrap(long i) {
         return new SmallInteger(this, i);
     }
 
-    public BaseSqueakObject wrapInt(BigInteger i) {
+    public BaseSqueakObject wrap(BigInteger i) {
         return new LargeInteger(this, i);
     }
 
@@ -165,40 +165,42 @@ public class SqueakImageContext {
         return new ImmediateCharacter(this, i);
     }
 
-    public NativeObject wrapString(String s) {
+    public NativeObject wrap(String s) {
         return new NativeObject(this, this.stringClass, s.getBytes());
     }
 
-    public ListObject wrapArray(BaseSqueakObject... elements) {
+    public ListObject wrap(BaseSqueakObject[] elements) {
         return new ListObject(this, arrayClass, elements);
     }
 
     @TruffleBoundary
     public void debugPrint(Object... strs) {
-        if (!verbose)
+        if (!config.isVerbose())
             return;
-        System.out.println(Arrays.stream(strs).map(o -> o.toString() + " ").reduce("", String::concat));
+        output.println(Arrays.stream(strs).map(o -> o.toString() + " ").reduce("", String::concat));
     }
 
+    @TruffleBoundary
     public void enterMethod(Object lookupResult, Object selector) {
-        if (!tracing)
+        if (!config.isTracing())
             return;
         padding += 2;
         for (int i = 0; i < padding; i++) {
-            System.out.print(" ");
+            output.print(" ");
         }
-        System.out.print(selector);
-        System.out.print(" = ");
-        System.out.println(lookupResult);
+        output.print(selector);
+        output.print(" = ");
+        output.println(lookupResult);
     }
 
+    @TruffleBoundary
     public void leaveMethod(Object result) {
-        if (!tracing)
+        if (!config.isTracing())
             return;
         for (int i = 0; i < padding; i++) {
-            System.out.print(" ");
+            output.print(" ");
         }
         padding -= 2;
-        System.out.println(result);
+        output.println(result);
     }
 }

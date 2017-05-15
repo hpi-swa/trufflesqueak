@@ -66,7 +66,7 @@ public class CallPrimitiveNode extends SqueakBytecodeNode {
                         // an error code is requested, we'll handle that
                         // eventually TODO: FIXME
                         stack.push(new ConstantNode(method, index,
-                                        method.image.wrapString("prim error codes not supported")));
+                                        method.image.wrap("prim error codes not supported")));
                         break;
                     }
                 }

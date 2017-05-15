@@ -13,7 +13,7 @@ public class CompiledBlockObject extends CompiledCodeObject {
         BaseSqueakObject[] lits = outerMethod.getLiterals();
         lits = Arrays.copyOf(lits, lits.length - 1);
         int baseHdr = ((numArgs & 0xF) << 24) | (((outerMethod.getNumTemps() + numCopied) & 0x3F) << 18);
-        lits[0] = image.wrapInt(baseHdr); // replace header
+        lits[0] = image.wrap(baseHdr); // replace header
         lits[lits.length - 1] = outerMethod; // last literal is back pointer to method
         literals = lits;
     }

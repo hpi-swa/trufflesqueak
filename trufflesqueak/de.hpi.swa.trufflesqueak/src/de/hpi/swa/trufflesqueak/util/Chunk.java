@@ -161,12 +161,12 @@ public class Chunk {
             if (chunk == null) {
                 System.err.println("Bogus pointer: " + ptr
                                    + ". Treating as smallint.");
-                return image.wrapInt(ptr >> 1);
+                return image.wrap(ptr >> 1);
             } else {
                 return chunk.asObject();
             }
         } else if ((ptr & 1) == 1) {
-            return image.wrapInt(ptr >> 1);
+            return image.wrap(ptr >> 1);
         } else {
             assert ((ptr & 3) == 2);
             return image.wrapChar(ptr >> 2);

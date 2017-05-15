@@ -69,7 +69,7 @@ public class NativeObject extends SqueakObject implements TruffleObject {
 
     @Override
     public BaseSqueakObject at0(int index) {
-        return image.wrapInt(getNativeAt0(index));
+        return image.wrap(getNativeAt0(index));
     }
 
     @Override

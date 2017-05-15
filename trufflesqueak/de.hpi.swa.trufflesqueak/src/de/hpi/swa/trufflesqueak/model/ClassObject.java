@@ -83,7 +83,7 @@ public class ClassObject extends AbstractPointersObject {
     }
 
     public void setFormat(int format) {
-        super.atput0(FORMAT_INDEX, image.wrapInt(format));
+        super.atput0(FORMAT_INDEX, image.wrap(format));
         instSpec = (format >> 16) & 0x1f;
         instanceSize = format & 0xffff;
         classFormatStable.invalidate();

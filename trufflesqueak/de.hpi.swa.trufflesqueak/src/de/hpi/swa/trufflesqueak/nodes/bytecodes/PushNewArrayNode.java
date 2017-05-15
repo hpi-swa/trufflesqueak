@@ -34,7 +34,7 @@ public class PushNewArrayNode extends SqueakBytecodeNode {
                 ptrs[i] = (BaseSqueakObject) popIntoArrayNodes[i].executeGeneric(frame);
             }
         }
-        return method.image.wrapArray(ptrs);
+        return method.image.wrap(ptrs);
     }
 
     @Override

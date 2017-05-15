@@ -1,55 +1,77 @@
 package de.hpi.swa.trufflesqueak;
 
+import java.util.Arrays;
+
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 
 public class SqueakConfig {
-    private boolean verbose = false;
-    private boolean tracing = false;
-    private String receiver = "nil";
-    private String selector = "yourself";
-    private String[] restArgs = new String[0];
+    private final boolean verbose;
+    private final boolean tracing;
+    private final String receiver;
+    private final String selector;
+    private final String[] restArgs;
+
+    @SuppressWarnings("hiding")
+    public SqueakConfig(String[] args) {
+        boolean verbose = false;
+        boolean tracing = false;
+        String receiver = "nil";
+        String selector = "yourself";
+        String[] restArgs = null;
+
+        for (int i = 0; i < args.length; i++) {
+            switch (args[i]) {
+                case "--verbose":
+                case "-v":
+                    verbose = true;
+                    break;
+                case "--trace":
+                case "-t":
+                    tracing = true;
+                    break;
+                case "--receiver":
+                case "-r":
+                    receiver = args[++i];
+                    break;
+                case "--method":
+                case "-m":
+                    selector = args[++i];
+                    break;
+                case "--":
+                    restArgs = Arrays.copyOfRange(args, i + 1, args.length);
+                    i = args.length;
+                    break;
+            }
+        }
+
+        this.verbose = verbose;
+        this.tracing = tracing;
+        this.receiver = receiver;
+        this.selector = selector;
+        this.restArgs = restArgs;
+    }
 
     public boolean isVerbose() {
         return verbose;
-    }
-
-    public void setVerbose(boolean verbose) {
-        this.verbose = verbose;
     }
 
     public boolean isTracing() {
         return tracing;
     }
 
-    public void setTracing(boolean tracing) {
-        this.tracing = tracing;
-    }
-
     public BaseSqueakObject getReceiver(SqueakImageContext img) {
         if (receiver.equals("nil")) {
             return img.nil;
         } else {
-            return img.wrapInt(Integer.parseInt(receiver));
+            return img.wrap(Integer.parseInt(receiver));
         }
-    }
-
-    public void setReceiver(String receiver) {
-        this.receiver = receiver;
     }
 
     public String getSelector() {
         return selector;
     }
 
-    public void setSelector(String selector) {
-        this.selector = selector;
-    }
-
     public String[] getRestArgs() {
         return restArgs;
-    }
-
-    public void setRestArgs(String[] restArgs) {
-        this.restArgs = restArgs;
     }
 }

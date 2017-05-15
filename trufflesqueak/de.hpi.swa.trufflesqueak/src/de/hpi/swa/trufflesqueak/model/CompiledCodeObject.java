@@ -160,7 +160,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
     }
 
     public void setHeader(int hdr) {
-        setLiteral(0, image.wrapInt(hdr));
+        setLiteral(0, image.wrap(hdr));
     }
 
     public void setBytes(byte[] bc) {
@@ -240,7 +240,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
         if (idx < literals.length) {
             return literals[idx / 4];
         } else {
-            return image.wrapInt(bytes[idx]);
+            return image.wrap(bytes[idx]);
         }
     }
 

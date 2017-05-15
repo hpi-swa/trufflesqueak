@@ -71,7 +71,7 @@ public class BlockClosure extends BaseSqueakObject {
             case BLKCLSR_COMPILEDBLOCK:
                 return block;
             case BLKCLSR_NUMARGS:
-                return image.wrapInt(block.getNumArgs());
+                return image.wrap(block.getNumArgs());
             case BLKCLSR_RECEIVER:
                 return (BaseSqueakObject) receiver;
             default:// FIXME

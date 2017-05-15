@@ -41,7 +41,7 @@ public class LargeInteger extends SqueakObject {
 
     @Override
     public BaseSqueakObject at0(int l) {
-        return image.wrapInt(byteAt0(integer.abs(), l));
+        return image.wrap(byteAt0(integer.abs(), l));
     }
 
     @Override
