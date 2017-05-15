@@ -2,16 +2,20 @@ package de.hpi.swa.trufflesqueak.test;
 
 import java.math.BigInteger;
 
+import org.junit.Test;
+
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 
 public class TestPrimitives extends TestSqueak {
+    @Test
     public void testPrimEquivalent() {
         BaseSqueakObject rcvr = image.specialObjectsArray;
         assertTrue((boolean) runPrim(110, rcvr, rcvr));
         assertFalse((boolean) runPrim(110, rcvr, image.nil));
     }
 
+    @Test
     public void testPrimReplaceFromTo() {
         BaseSqueakObject rcvr = new ListObject(
                         image,
@@ -39,6 +43,7 @@ public class TestPrimitives extends TestSqueak {
         }
     }
 
+    @Test
     public void testAdd() {
         Object[] calcs = new Object[]{
                         Integer.MAX_VALUE, Integer.MAX_VALUE, 2 * (long) Integer.MAX_VALUE,
@@ -52,6 +57,7 @@ public class TestPrimitives extends TestSqueak {
         }
     }
 
+    @Test
     public void testSub() {
         Object[] calcs = new Object[]{
                         Integer.MAX_VALUE, Integer.MAX_VALUE, (long) 0,

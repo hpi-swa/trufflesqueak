@@ -1,5 +1,7 @@
 package de.hpi.swa.trufflesqueak.test;
 
+import org.junit.Test;
+
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ConstantNode;
@@ -10,6 +12,7 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.CascadedSend;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SendSelector;
 
 public class TestDecompile extends TestSqueak {
+    @Test
     public void testIfNil() {
         // (1 ifNil: [true]) class
         // pushConstant: 1, dup, pushConstant: nil, send: ==, jumpFalse: 24, pop, pushConstant:
@@ -24,6 +27,7 @@ public class TestDecompile extends TestSqueak {
         assertSame(send.receiverNode.getClass(), IfNilCheck.class);
     }
 
+    @Test
     public void testIfNotNil() {
         // (1 ifNotNil: [true]) class
         // pushConstant: 1, pushConstant: nil, send: ==, jumpFalse: 23, pushConstant: nil, jumpTo:
@@ -38,6 +42,7 @@ public class TestDecompile extends TestSqueak {
         assertSame(send.receiverNode.getClass(), IfThenNode.class);
     }
 
+    @Test
     public void testIfNotNilDo() {
         // (1 ifNotNil: [:o | o class]) class
         // pushConstant: 1, storeIntoTemp: 0, pushConstant: nil, send: ==, jumpFalse: 25,
@@ -52,6 +57,7 @@ public class TestDecompile extends TestSqueak {
         assertSame(send.receiverNode.getClass(), IfThenNode.class);
     }
 
+    @Test
     public void testCascade() {
         // 1 value; size; class
         // pushConstant: 1, dup, send: value, pop, dup, send: size, pop, send: class, pop,

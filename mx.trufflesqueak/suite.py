@@ -37,7 +37,7 @@ suite = {
       "dependencies" : ["de.hpi.swa.trufflesqueak","mx:JUNIT"],
       "checkstyle" : "de.hpi.swa.trufflesqueak.test",
       "javaCompliance" : "1.8",
-      "workingSets" : "Truffle,Python",
+      "workingSets" : "Truffle,Python,Test",
     },
 
   },
@@ -68,6 +68,19 @@ suite = {
         ],
 
       "sourcesPath" : "trufflesqueak.src.zip",
+    },
+
+    "TruffleSqueak_TEST" : {
+      "subDir" : "trufflesqueak",
+      "javaCompliance" : "1.8",
+      "dependencies" : [
+        "de.hpi.swa.trufflesqueak.test",
+      ],
+      "exclude" : ["mx:JUNIT"],
+      "distDependencies" : [
+        "truffle:TRUFFLE_API",
+        "truffle:TRUFFLE_DSL_PROCESSOR",
+      ],
     },
   },
 }

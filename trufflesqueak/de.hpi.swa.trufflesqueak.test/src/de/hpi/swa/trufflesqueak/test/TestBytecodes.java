@@ -1,9 +1,12 @@
 package de.hpi.swa.trufflesqueak.test;
 
+import org.junit.Test;
+
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 
 public class TestBytecodes extends TestSqueak {
+    @Test
     public void testPushReceiverVariable() {
         BaseSqueakObject rcvr = new PointersObject(
                         image,
@@ -29,26 +32,31 @@ public class TestBytecodes extends TestSqueak {
         assertSame(image.specialObjectsArray, runMethod(rcvr, 8, 124));
     }
 
+    @Test
     public void testPushReceiver() {
         BaseSqueakObject rcvr = image.specialObjectsArray;
         assertSame(rcvr, runMethod(rcvr, 112, 124));
     }
 
+    @Test
     public void testPushTrue() {
         BaseSqueakObject rcvr = image.specialObjectsArray;
         assertTrue((boolean) runMethod(rcvr, 113, 124));
     }
 
+    @Test
     public void testPushFalse() {
         BaseSqueakObject rcvr = image.specialObjectsArray;
         assertFalse((boolean) runMethod(rcvr, 114, 124));
     }
 
+    @Test
     public void testPushNil() {
         BaseSqueakObject rcvr = image.specialObjectsArray;
         assertSame(null, runMethod(rcvr, 115, 124));
     }
 
+    @Test
     public void testReturnReceiver() {
         BaseSqueakObject rcvr = image.specialObjectsArray;
         assertSame(rcvr, runMethod(rcvr, 115, 120));
