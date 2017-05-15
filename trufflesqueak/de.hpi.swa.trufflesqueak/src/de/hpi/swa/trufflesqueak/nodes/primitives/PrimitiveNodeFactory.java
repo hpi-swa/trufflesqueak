@@ -139,7 +139,7 @@ public abstract class PrimitiveNodeFactory {
         PUSH_MINUS_ONE(PrimPushMinusOne.class, 260),
         PUSH_ZERO(PrimPushZero.class, 261),
         PUSH_ONE(PrimPushOne.class, 262),
-        PUSH_TWO(PrimPushTwo.class, 262),
+        PUSH_TWO(PrimPushTwo.class, 263),
         //
         LAST(PrimitiveNode.class, PRIM_COUNT);
 
