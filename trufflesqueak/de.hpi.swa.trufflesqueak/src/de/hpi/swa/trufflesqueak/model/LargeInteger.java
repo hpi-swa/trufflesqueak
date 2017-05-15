@@ -53,7 +53,12 @@ public class LargeInteger extends SqueakObject {
     }
 
     private void setBytes(byte[] bytes) {
-        integer = new BigInteger(bytes);
+        byte[] bigEndianBytes = new byte[bytes.length + 1];
+        bigEndianBytes[0] = 0;
+        for (int i = 0; i < bytes.length; i++) {
+            bigEndianBytes[bytes.length - i] = bytes[i];
+        }
+        integer = new BigInteger(bigEndianBytes);
         if (isNegative()) {
             integer = integer.negate();
         }
