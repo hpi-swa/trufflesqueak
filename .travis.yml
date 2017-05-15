@@ -4,6 +4,7 @@ jdk:
 install:
   - cd ..; git clone git://github.com/graalvm/mx.git; cd -
 before_script:
+  - ../mx/mx -n sforceimports
   - ../mx/mx -n build
 script:
   - ../mx/mx -n unittest --verbose --regex trufflesqueak
