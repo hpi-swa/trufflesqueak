@@ -283,4 +283,14 @@ public abstract class CompiledCodeObject extends SqueakObject {
     public BaseSqueakObject[] getLiterals() {
         return literals;
     }
+
+    public String prettyPrint() {
+        StringBuilder str = new StringBuilder();
+        str.append(toString()).append('\n');
+        for (SqueakNode node : ast) {
+            node.prettyPrintOn(str);
+            str.append('\n');
+        }
+        return str.toString();
+    }
 }

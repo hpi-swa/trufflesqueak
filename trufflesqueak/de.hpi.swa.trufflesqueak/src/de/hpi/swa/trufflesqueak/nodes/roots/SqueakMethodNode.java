@@ -79,13 +79,7 @@ public class SqueakMethodNode extends RootNode {
     }
 
     public String prettyPrint() {
-        StringBuilder str = new StringBuilder();
-        str.append(code.toString()).append('\n');
-        for (SqueakNode node : ast) {
-            node.prettyPrintOn(str);
-            str.append('\n');
-        }
-        return str.toString();
+        return code.prettyPrint();
     }
 
     @Override
