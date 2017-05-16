@@ -6,6 +6,8 @@ import java.util.Vector;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.instrumentation.Instrumentable;
+import com.oracle.truffle.api.instrumentation.StandardTags;
 
 import de.hpi.swa.trufflesqueak.exceptions.UnwrappingError;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
@@ -14,9 +16,15 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithMethod;
 
+@Instrumentable(factory = ObjectAtPutNodeWrapper.class)
 @NodeChildren({@NodeChild(value = "objectNode", type = SqueakNode.class), @NodeChild(value = "valueNode", type = SqueakNode.class)})
 public abstract class ObjectAtPutNode extends SqueakNodeWithMethod {
     private final int index;
+
+    public ObjectAtPutNode(ObjectAtPutNode original) {
+        super(original.method);
+        index = original.index;
+    }
 
     protected ObjectAtPutNode(CompiledCodeObject cm, int variableIndex) {
         super(cm);
@@ -78,5 +86,10 @@ public abstract class ObjectAtPutNode extends SqueakNodeWithMethod {
         b.append(") at: ").append(index).append(" put: (");
         myChildren.get(1).prettyPrintOn(b);
         b.append(')');
+    }
+
+    @Override
+    protected boolean isTaggedWith(Class<?> tag) {
+        return tag == StandardTags.StatementTag.class;
     }
 }

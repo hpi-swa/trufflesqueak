@@ -14,18 +14,15 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.AbstractSend;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SendSelector;
 
 @NodeInfo(shortName = "loop")
 public class LoopRepeatingNode extends Node implements RepeatingNode {
-    @Child
-    private SendSelector mustBeBooleanSend;
-    @Children
-    private final SqueakNode[] conditionBodyNodes;
-    @Child
-    private SqueakNode conditionNode;
-    @Children
-    private final SqueakNode[] bodyNodes;
+    @Child private AbstractSend mustBeBooleanSend;
+    @Children private final SqueakNode[] conditionBodyNodes;
+    @Child private SqueakNode conditionNode;
+    @Children private final SqueakNode[] bodyNodes;
 
     public LoopRepeatingNode(CompiledCodeObject cm, SqueakNode[] conditionBody, SqueakNode cond, SqueakNode[] body) {
         mustBeBooleanSend = new SendSelector(cm, 0, cm.image.mustBeBoolean, 0);
@@ -45,7 +42,8 @@ public class LoopRepeatingNode extends Node implements RepeatingNode {
         } catch (UnexpectedResultException e) {
             try {
                 jumpOut = SqueakTypesGen.expectBoolean(mustBeBooleanSend.executeGeneric(frame));
-            } catch (UnexpectedResultException e1) {}
+            } catch (UnexpectedResultException e1) {
+            }
         }
         return jumpOut;
     }
@@ -82,8 +80,7 @@ public class LoopRepeatingNode extends Node implements RepeatingNode {
     }
 
     public static class WhileNode extends SqueakBytecodeNode {
-        @Child
-        LoopNode loop;
+        @Child LoopNode loop;
 
         public WhileNode(CompiledCodeObject method, int idx, LoopNode node) {
             super(method, idx);
@@ -91,7 +88,8 @@ public class LoopRepeatingNode extends Node implements RepeatingNode {
         }
 
         @Override
-        public void interpretOn(Stack<SqueakNode> stack, Stack<SqueakNode> sequence) {}
+        public void interpretOn(Stack<SqueakNode> stack, Stack<SqueakNode> sequence) {
+        }
 
         @Override
         public Object executeGeneric(VirtualFrame frame) {

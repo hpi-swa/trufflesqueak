@@ -1,9 +1,12 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.source.SourceSection;
 
+import de.hpi.swa.trufflesqueak.instrumentation.SqueakSource;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 
 /**
@@ -12,6 +15,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 @TypeSystemReference(SqueakTypes.class)
 public abstract class SqueakNodeWithMethod extends SqueakNode {
     protected final CompiledCodeObject method;
+    @CompilationFinal protected SourceSection sourceSection;
 
     public SqueakNodeWithMethod(CompiledCodeObject method2) {
         method = method2;
@@ -23,5 +27,13 @@ public abstract class SqueakNodeWithMethod extends SqueakNode {
         } catch (FrameSlotTypeException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public SourceSection getSourceSection() {
+        if (sourceSection == null) {
+            sourceSection = SqueakSource.build(method, this);
+        }
+        return sourceSection;
     }
 }

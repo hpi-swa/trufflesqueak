@@ -22,6 +22,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimBitShiftNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimCharacterValueNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimClass;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimClosureValueFactory;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimDebugger;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimDigitDivNegativeNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimDivNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimDivideNodeGen;
@@ -171,6 +172,7 @@ public abstract class PrimitiveNodeFactory {
         LARGE_NEG_NORMALIZE(PrimNormalizeNodeGen.class, "LargeIntegers", "primNormalizeNegative"),
         //
         TRUFFLE_PRINT(PrimPrintArgs.class, "TruffleSqueak", "debugPrint"),
+        TRUFFLE_DEBUG(PrimDebugger.class, "TruffleSqueak", "debugger"),
         //
         LAST(PrimitiveNode.class, "nil", "nil");
 

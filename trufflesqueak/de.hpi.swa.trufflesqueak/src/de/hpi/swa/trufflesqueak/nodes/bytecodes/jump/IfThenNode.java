@@ -8,10 +8,11 @@ import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.AbstractSend;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SendSelector;
 
 public class IfThenNode extends SqueakNode {
-    @Child private SendSelector mustBeBooleanSend;
+    @Child private AbstractSend mustBeBooleanSend;
     @Child private SqueakNode conditionNode;
     @Children final private SqueakNode[] thenNodes;
     @Child private SqueakNode thenResult;
