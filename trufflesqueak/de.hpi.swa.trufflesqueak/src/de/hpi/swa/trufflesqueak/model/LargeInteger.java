@@ -115,4 +115,9 @@ public class LargeInteger extends SqueakObject {
     public static int byteSize(BigInteger i) {
         return (i.abs().bitLength() + 7) / 8;
     }
+
+    @Override
+    public String toString() {
+        return integer.toString();
+    }
 }

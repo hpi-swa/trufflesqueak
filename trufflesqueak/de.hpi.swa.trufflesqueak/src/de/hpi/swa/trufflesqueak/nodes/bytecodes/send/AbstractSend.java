@@ -187,6 +187,7 @@ public abstract class AbstractSend extends SqueakBytecodeNode {
         if (splitSelector.length == 1 && !splitSelector[0].matches("[A-Za-z]")) {
             b.append(selector);
             if (argumentNodes.length == 1) {
+                b.append(' ');
                 argumentNodes[0].prettyPrintWithParensOn(b);
             }
         } else {
@@ -199,6 +200,11 @@ public abstract class AbstractSend extends SqueakBytecodeNode {
 
     @Override
     protected boolean isTaggedWith(Class<?> tag) {
-        return tag == StandardTags.StatementTag.class || tag == StandardTags.CallTag.class || tag == StandardTags.RootTag.class;
+        if (tag == StandardTags.StatementTag.class) {
+            return getSourceSection().isAvailable();
+        } else if (tag == StandardTags.CallTag.class) {
+            return true;
+        }
+        return false;
     }
 }
