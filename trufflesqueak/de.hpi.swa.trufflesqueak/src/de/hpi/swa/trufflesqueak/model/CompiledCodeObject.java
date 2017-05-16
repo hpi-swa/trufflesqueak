@@ -296,4 +296,6 @@ public abstract class CompiledCodeObject extends SqueakObject {
         str.dedent();
         return str.build();
     }
+
+    abstract public CompiledMethodObject getMethod();
 }

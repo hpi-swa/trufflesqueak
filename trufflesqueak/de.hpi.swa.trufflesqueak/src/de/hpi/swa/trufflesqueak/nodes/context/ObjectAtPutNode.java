@@ -3,6 +3,7 @@ package de.hpi.swa.trufflesqueak.nodes.context;
 import java.math.BigInteger;
 import java.util.Vector;
 
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -71,6 +72,14 @@ public abstract class ObjectAtPutNode extends SqueakNodeWithMethod {
             object.atput0(index, value);
         } catch (UnwrappingError e) {
             throw new RuntimeException(e);
+        }
+        return value;
+    }
+
+    @Specialization(rewriteOn = UnwrappingError.class)
+    protected Object write(BaseSqueakObject object, Object value) throws UnwrappingError {
+        if (value == null) {
+            object.atput0(index, method.image.nil);
         }
         return value;
     }

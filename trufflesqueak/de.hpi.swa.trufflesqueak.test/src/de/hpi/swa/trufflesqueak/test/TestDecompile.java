@@ -77,4 +77,24 @@ public class TestDecompile extends TestSqueak {
         assertSame(send.selector, image.value);
         assertSame(send.receiverNode.getClass(), ConstantNode.class);
     }
+
+    @Test
+    public void testNestedClosure() {
+        CompiledCodeObject cm = makeMethod(0x11, 0x43, 0xd2, 0xe1, 0x8f, 0x01, 0x00, 0x0c,
+                        0x10, 0x24, 0xe1, 0x8f, 0x01, 0x00, 0x03,
+                        0x10, 0xd5, 0x7d,
+                        0xe0, 0x7d,
+                        0xe0, 0x68, 0x78);
+        // tokens := (aString findTokens: Character cr) collect: [:line| (line findTokens: ',')
+        // collect: [:t| t asInteger]].
+        // pushTemp: 1, pushLit: Character, send: cr, send: findTokens:, closureNumCopied: 0
+        // numArgs: 1 bytes 45 to 56
+        // pushTemp: 0, pushConstant: ',', send: findTokens:, closureNumCopied: 0 numArgs: 1 bytes
+        // 52 to 54
+        // pushTemp: 0, send: asInteger, blockReturn
+        // send: collect:, blockReturn
+        // send: collect:, popIntoTemp: 0, returnSelf
+        SqueakNode[] bytecodeAST = cm.getBytecodeAST();
+        assertEquals(bytecodeAST.length, 2);
+    }
 }

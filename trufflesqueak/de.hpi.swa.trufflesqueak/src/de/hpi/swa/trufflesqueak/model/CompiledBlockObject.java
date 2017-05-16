@@ -3,12 +3,12 @@ package de.hpi.swa.trufflesqueak.model;
 import java.util.Arrays;
 
 public class CompiledBlockObject extends CompiledCodeObject {
-    final CompiledCodeObject outerMethod;
+    final CompiledMethodObject outerMethod;
     final int numCopiedValues;
 
     public CompiledBlockObject(CompiledCodeObject method, int numArgs, int numCopied) {
         super(method.image);
-        outerMethod = method;
+        outerMethod = method.getMethod();
         numCopiedValues = numCopied;
         BaseSqueakObject[] lits = outerMethod.getLiterals();
         lits = Arrays.copyOf(lits, lits.length - 1);
@@ -35,5 +35,10 @@ public class CompiledBlockObject extends CompiledCodeObject {
     @Override
     public int getNumTemps() {
         return super.getNumTemps() + numCopiedValues;
+    }
+
+    @Override
+    public CompiledMethodObject getMethod() {
+        return outerMethod;
     }
 }

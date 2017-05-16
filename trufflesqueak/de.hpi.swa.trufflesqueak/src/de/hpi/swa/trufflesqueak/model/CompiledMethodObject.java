@@ -15,7 +15,7 @@ public class CompiledMethodObject extends CompiledCodeObject implements TruffleO
     }
 
     public CompiledMethodObject(SqueakImageContext img, byte[] bc) {
-        this(img, bc, new BaseSqueakObject[]{img.wrap(0)});
+        this(img, bc, new BaseSqueakObject[]{img.wrap(0), null, null});
     }
 
     public CompiledMethodObject(SqueakImageContext img, ClassObject klass) {
@@ -53,5 +53,10 @@ public class CompiledMethodObject extends CompiledCodeObject implements TruffleO
             return (ClassObject) baseSqueakObject;
         }
         return null;
+    }
+
+    @Override
+    public CompiledMethodObject getMethod() {
+        return this;
     }
 }
