@@ -97,8 +97,12 @@ public class SqueakImageContext {
     private int padding;
     private final SqueakConfig config;
 
-    private static final BaseSqueakObject[] ENTRY_POINT_LITERALS = new BaseSqueakObject[]{new SmallInteger(null, 0),
-                    null, null};
+    private static final BaseSqueakObject[] ENTRY_POINT_LITERALS = new BaseSqueakObject[]{
+                    new SmallInteger(null, 0),
+                    null, new NativeObject(null, null, "SendSelector".getBytes()),
+                    new NativeObject(null, null, "TruffleSqueakEntryPoint".getBytes()), // selector
+                    null // compiled in class
+    };
     // Push literal 1, send literal 2 selector, return top
     private static final byte[] ENTRY_POINT_BYTES = new byte[]{32, (byte) 209, 124};
 
