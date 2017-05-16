@@ -6,13 +6,10 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.instrumentation.Instrumentable;
-import com.oracle.truffle.api.instrumentation.StandardTags;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
-@Instrumentable(factory = FrameSlotWriteNodeWrapper.class)
 @NodeChildren({@NodeChild(value = "value", type = SqueakNode.class)})
 public abstract class FrameSlotWriteNode extends FrameSlotNode {
     public FrameSlotWriteNode(FrameSlotWriteNode original) {
@@ -70,10 +67,5 @@ public abstract class FrameSlotWriteNode extends FrameSlotNode {
         b.append("temp").append(slot.getIdentifier()).append(" := (");
         super.prettyPrintOn(b);
         b.append(')');
-    }
-
-    @Override
-    protected boolean isTaggedWith(Class<?> tag) {
-        return tag == StandardTags.StatementTag.class;
     }
 }
