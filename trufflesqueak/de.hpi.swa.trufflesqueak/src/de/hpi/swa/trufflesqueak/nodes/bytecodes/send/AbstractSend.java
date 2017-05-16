@@ -11,6 +11,7 @@ import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 
+import de.hpi.swa.trufflesqueak.instrumentation.SourceStringBuilder;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -173,28 +174,27 @@ public abstract class AbstractSend extends SqueakBytecodeNode {
         stack.push(this);
     }
 
+    protected void prettyPrintReceiverOn(SourceStringBuilder b) {
+        receiverNode.prettyPrintWithParensOn(b);
+        b.append(' ');
+    }
+
     @Override
-    public void prettyPrintOn(StringBuilder b) {
-        b.append('(');
-        receiverNode.prettyPrintOn(b);
-        b.append(") ");
+    public void prettyPrintOn(SourceStringBuilder b) {
+        prettyPrintReceiverOn(b);
         String[] splitSelector = selector.toString().split(":");
         assert argumentNodes.length == splitSelector.length;
         if (splitSelector.length == 1 && !splitSelector[0].matches("[A-Za-z]")) {
             b.append(selector);
             if (argumentNodes.length == 1) {
-                b.append(" (");
-                argumentNodes[0].prettyPrintOn(b);
-                b.append(')');
+                argumentNodes[0].prettyPrintWithParensOn(b);
             }
         } else {
             for (int i = 0; i < argumentNodes.length; i++) {
-                b.append(splitSelector[i]).append(": (");
-                argumentNodes[i].prettyPrintOn(b);
-                b.append(')');
+                b.append(splitSelector[i]).append(": ");
+                argumentNodes[i].prettyPrintWithParensOn(b);
             }
         }
-        b.append(')');
     }
 
     @Override

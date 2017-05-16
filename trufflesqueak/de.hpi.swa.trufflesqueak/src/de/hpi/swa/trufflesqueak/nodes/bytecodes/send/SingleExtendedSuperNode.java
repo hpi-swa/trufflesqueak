@@ -2,6 +2,7 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes.send;
 
 import java.util.Stack;
 
+import de.hpi.swa.trufflesqueak.instrumentation.SourceStringBuilder;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNode;
@@ -29,12 +30,7 @@ public class SingleExtendedSuperNode extends AbstractSend {
     }
 
     @Override
-    public void prettyPrintOn(StringBuilder b) {
-        b.append("super ").append(selector).append("@args(");
-        for (SqueakNode node : argumentNodes) {
-            node.prettyPrintOn(b);
-            b.append('.');
-        }
-        b.append(')');
+    public void prettyPrintReceiverOn(SourceStringBuilder b) {
+        b.append("super ");
     }
 }

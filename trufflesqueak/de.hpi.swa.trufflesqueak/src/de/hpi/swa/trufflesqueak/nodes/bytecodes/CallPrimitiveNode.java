@@ -9,6 +9,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.LocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.instrumentation.SourceStringBuilder;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNode;
@@ -76,7 +77,7 @@ public class CallPrimitiveNode extends SqueakBytecodeNode {
     }
 
     @Override
-    public void prettyPrintOn(StringBuilder b) {
+    public void prettyPrintOn(SourceStringBuilder b) {
         b.append("<prim: ").append(primitive).append('>');
     }
 

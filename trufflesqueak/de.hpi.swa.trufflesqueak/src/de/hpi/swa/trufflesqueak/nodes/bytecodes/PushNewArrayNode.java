@@ -1,10 +1,12 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
+import java.util.Arrays;
 import java.util.Stack;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
+import de.hpi.swa.trufflesqueak.instrumentation.SourceStringBuilder;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
@@ -48,15 +50,15 @@ public class PushNewArrayNode extends SqueakBytecodeNode {
     }
 
     @Override
-    public void prettyPrintOn(StringBuilder b) {
+    public void prettyPrintOn(SourceStringBuilder b) {
         if (popIntoArrayNodes == null) {
-            b.append("(Array new: ").append(arraySize).append(')');
+            b.append("Array new: ").append(arraySize);
         } else {
             b.append('{');
-            for (SqueakNode node : popIntoArrayNodes) {
-                node.prettyPrintOn(b);
+            Arrays.stream(popIntoArrayNodes).forEach(n -> {
+                n.prettyPrintOn(b);
                 b.append(". ");
-            }
+            });
             b.append('}');
         }
     }

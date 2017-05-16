@@ -17,6 +17,7 @@ import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.UnwrappingError;
+import de.hpi.swa.trufflesqueak.instrumentation.SourceStringBuilder;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakMethodNode;
 import de.hpi.swa.trufflesqueak.util.BitSplitter;
@@ -285,12 +286,14 @@ public abstract class CompiledCodeObject extends SqueakObject {
     }
 
     public String prettyPrint() {
-        StringBuilder str = new StringBuilder();
+        SourceStringBuilder str = new SourceStringBuilder();
         str.append(toString()).append('\n');
+        str.indent();
         for (SqueakNode node : ast) {
             node.prettyPrintOn(str);
-            str.append('\n');
+            str.append(".").newline();
         }
-        return str.toString();
+        str.dedent();
+        return str.build();
     }
 }

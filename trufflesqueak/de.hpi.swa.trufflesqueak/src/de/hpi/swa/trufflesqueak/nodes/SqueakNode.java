@@ -6,13 +6,14 @@ import com.oracle.truffle.api.instrumentation.InstrumentableFactory.WrapperNode;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.trufflesqueak.instrumentation.SourceStringBuilder;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.LoopRepeatingNode;
 
 @TypeSystemReference(SqueakTypes.class)
 public abstract class SqueakNode extends Node {
     public abstract Object executeGeneric(VirtualFrame frame);
 
-    public void prettyPrintOn(StringBuilder str) {
+    public void prettyPrintOn(SourceStringBuilder str) {
         getChildren().forEach(node -> {
             if (node instanceof WrapperNode) {
                 // no op
@@ -26,9 +27,20 @@ public abstract class SqueakNode extends Node {
         });
     }
 
+    public void prettyPrintWithParensOn(SourceStringBuilder str) {
+        str.append('(');
+        prettyPrintOn(str);
+        str.append(')');
+    }
+
+    public void prettyPrintStatementOn(SourceStringBuilder str) {
+        prettyPrintOn(str);
+        str.append('.').newline();
+    }
+
     public String prettyPrint() {
-        StringBuilder stringBuilder = new StringBuilder();
+        SourceStringBuilder stringBuilder = new SourceStringBuilder();
         prettyPrintOn(stringBuilder);
-        return stringBuilder.toString();
+        return stringBuilder.build();
     }
 }

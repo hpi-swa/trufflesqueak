@@ -2,6 +2,7 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import java.util.Stack;
 
+import de.hpi.swa.trufflesqueak.instrumentation.SourceStringBuilder;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
@@ -14,5 +15,10 @@ public class ReturnTopFromBlockNode extends ReturnNode {
     public void interpretOn(Stack<SqueakNode> stack, Stack<SqueakNode> statements) {
         valueNode = stack.pop();
         super.interpretOn(stack, statements);
+    }
+
+    @Override
+    public void prettyPrintOn(SourceStringBuilder b) {
+        valueNode.prettyPrintOn(b);
     }
 }

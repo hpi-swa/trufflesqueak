@@ -1,10 +1,13 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes.jump;
 
+import java.util.Arrays;
+
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 
+import de.hpi.swa.trufflesqueak.instrumentation.SourceStringBuilder;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
@@ -64,36 +67,28 @@ public class IfThenNode extends SqueakNode {
         return null;
     }
 
+    private static void prettyPrintBranchOn(SourceStringBuilder b, String selector, SqueakNode[] branch, SqueakNode result) {
+        if (branch == null && result == null)
+            return;
+        b.append(selector).append(" [").newline().indent();
+        if (branch != null)
+            Arrays.stream(branch).forEach(n -> n.prettyPrintStatementOn(b));
+        if (result != null)
+            result.prettyPrintStatementOn(b);
+        b.dedent().append(']');
+    }
+
     @Override
-    public void prettyPrintOn(StringBuilder b) {
-        b.append('(');
-        conditionNode.prettyPrintOn(b);
+    public void prettyPrintOn(SourceStringBuilder b) {
+        conditionNode.prettyPrintWithParensOn(b);
+        b.newline().indent();
         if (conditionNode instanceof IfTrue) {
-            b.append(") ifFalse: [");
+            prettyPrintBranchOn(b, "ifFalse:", thenNodes, thenResult);
+            prettyPrintBranchOn(b, "ifTrue:", elseNodes, elseResult);
         } else {
-            b.append(") ifTrue: [");
+            prettyPrintBranchOn(b, "ifTrue:", thenNodes, thenResult);
+            prettyPrintBranchOn(b, "ifFalse:", elseNodes, elseResult);
         }
-        for (SqueakNode node : thenNodes) {
-            node.prettyPrintOn(b);
-            b.append('.').append('\n');
-        }
-        if (thenResult != null) {
-            thenResult.prettyPrintOn(b);
-        }
-        if (conditionNode instanceof IfTrue) {
-            b.append(") ifTrue: [");
-        } else {
-            b.append("] ifFalse: [");
-        }
-        if (elseNodes != null) {
-            for (SqueakNode node : elseNodes) {
-                node.prettyPrintOn(b);
-                b.append('.').append('\n');
-            }
-        }
-        if (elseResult != null) {
-            elseResult.prettyPrintOn(b);
-        }
-        b.append(']');
+        b.dedent();
     }
 }

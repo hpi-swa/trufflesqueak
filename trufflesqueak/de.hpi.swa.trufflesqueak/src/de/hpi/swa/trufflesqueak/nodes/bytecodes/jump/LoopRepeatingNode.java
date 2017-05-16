@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes.jump;
 
+import java.util.Arrays;
 import java.util.Stack;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -10,6 +11,7 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.nodes.RepeatingNode;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 
+import de.hpi.swa.trufflesqueak.instrumentation.SourceStringBuilder;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
@@ -60,23 +62,19 @@ public class LoopRepeatingNode extends Node implements RepeatingNode {
         }
     }
 
-    public void prettyPrintOn(StringBuilder str) {
-        str.append('[');
-        for (SqueakNode node : conditionBodyNodes) {
-            node.prettyPrintOn(str);
-            str.append('.').append('\n');
-        }
-        conditionNode.prettyPrintOn(str);
+    public void prettyPrintOn(SourceStringBuilder str) {
+        str.append('[').newline().indent();
+        Arrays.stream(conditionBodyNodes).forEach(n -> n.prettyPrintStatementOn(str));
+        conditionNode.prettyPrintStatementOn(str);
+        str.dedent();
         if (conditionNode instanceof IfTrue) {
             str.append("] whileFalse: [");
         } else {
             str.append("] whileTrue: [");
         }
-        for (SqueakNode node : bodyNodes) {
-            node.prettyPrintOn(str);
-            str.append('.').append('\n');
-        }
-        str.append("].");
+        str.newline().indent();
+        Arrays.stream(bodyNodes).forEach(n -> n.prettyPrintStatementOn(str));
+        str.dedent().append("]");
     }
 
     public static class WhileNode extends SqueakBytecodeNode {

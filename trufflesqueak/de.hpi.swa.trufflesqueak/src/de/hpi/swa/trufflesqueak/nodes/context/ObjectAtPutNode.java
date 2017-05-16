@@ -8,6 +8,7 @@ import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.exceptions.UnwrappingError;
+import de.hpi.swa.trufflesqueak.instrumentation.SourceStringBuilder;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -75,13 +76,11 @@ public abstract class ObjectAtPutNode extends SqueakNodeWithMethod {
     }
 
     @Override
-    public void prettyPrintOn(StringBuilder b) {
+    public void prettyPrintOn(SourceStringBuilder b) {
         Vector<SqueakNode> myChildren = new Vector<>();
         getChildren().forEach(node -> myChildren.add((SqueakNode) node));
-        b.append('(');
-        myChildren.get(0).prettyPrintOn(b);
-        b.append(") at: ").append(index).append(" put: (");
-        myChildren.get(1).prettyPrintOn(b);
-        b.append(')');
+        myChildren.get(0).prettyPrintWithParensOn(b);
+        b.append(" at: ").append(index).append(" put: ");
+        myChildren.get(1).prettyPrintWithParensOn(b);
     }
 }
