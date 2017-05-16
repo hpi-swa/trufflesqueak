@@ -29,7 +29,7 @@ public class SourceStringBuilder {
     }
 
     public SourceStringBuilder append(Object obj) {
-        sb.append(obj.toString());
+        sb.append(obj);
         return this;
     }
 
