@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Stack;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
 import de.hpi.swa.trufflesqueak.instrumentation.SourceStringBuilder;
@@ -61,5 +62,13 @@ public class PushNewArrayNode extends SqueakBytecodeNode {
             });
             b.append('}');
         }
+    }
+
+    @Override
+    protected boolean isTaggedWith(Class<?> tag) {
+        if (tag == StandardTags.StatementTag.class) {
+            return getSourceSection().isAvailable();
+        }
+        return false;
     }
 }

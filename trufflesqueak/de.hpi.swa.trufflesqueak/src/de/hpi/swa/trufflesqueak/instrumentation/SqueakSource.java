@@ -28,10 +28,22 @@ public class SqueakSource {
             String sourceStr = method.prettyPrint();
             Source source = getSource(method.toString(), sourceStr);
             String nodeStr = squeakNodeWithMethod.prettyPrint();
-            int indexOf = Math.max(0, sourceStr.indexOf(nodeStr));
-            return source.createSection(indexOf, nodeStr.length());
+            int indexOf = sourceStr.indexOf(nodeStr);
+            if (indexOf < 0) {
+                return source.createUnavailableSection();
+            } else {
+                SourceSection createSection = source.createSection(indexOf, nodeStr.length());
+                System.out.println(createSection.getCode());
+                return createSection;
+            }
         } catch (NullPointerException e) {
-            return noSource.createUnavailableSection();
+            System.err.println("Failed to get source for " + squeakNodeWithMethod + " in " + method);
+            e.printStackTrace(System.err);
+            return noSource();
         }
+    }
+
+    public static SourceSection noSource() {
+        return noSource.createUnavailableSection();
     }
 }

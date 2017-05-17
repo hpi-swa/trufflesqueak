@@ -16,12 +16,11 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.AbstractSend;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SendSelector;
 
 @NodeInfo(shortName = "loop")
 public class LoopRepeatingNode extends Node implements RepeatingNode {
-    @Child private AbstractSend mustBeBooleanSend;
+    @Child private SqueakNode mustBeBooleanSend;
     @Children private final SqueakNode[] conditionBodyNodes;
     @Child private SqueakNode conditionNode;
     @Children private final SqueakNode[] bodyNodes;

@@ -3,19 +3,31 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 import java.util.List;
 import java.util.Stack;
 
+import com.oracle.truffle.api.instrumentation.Instrumentable;
+
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithMethod;
 
+@Instrumentable(factory = SqueakBytecodeNodeWrapper.class)
 public abstract class SqueakBytecodeNode extends SqueakNodeWithMethod {
     protected final int index;
+
+    protected SqueakBytecodeNode(SqueakBytecodeNode original) {
+        super(original.method);
+        index = original.index;
+        sourceSection = original.getSourceSection();
+    }
 
     public SqueakBytecodeNode(CompiledCodeObject method, int idx) {
         super(method);
         index = idx;
     }
 
-    abstract public void interpretOn(Stack<SqueakNode> stack, Stack<SqueakNode> sequence);
+    @SuppressWarnings("unused")
+    public void interpretOn(Stack<SqueakNode> stack, Stack<SqueakNode> sequence) {
+        throw new RuntimeException("my subclass should implement interpretOn");
+    }
 
     /**
      * Decompile this instruction into an AST node, given the current stack and statements already

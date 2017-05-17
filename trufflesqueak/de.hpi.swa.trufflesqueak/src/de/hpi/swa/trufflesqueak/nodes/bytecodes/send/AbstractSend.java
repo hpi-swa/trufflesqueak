@@ -6,7 +6,6 @@ import java.util.Vector;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.instrumentation.Instrumentable;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
@@ -28,7 +27,6 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.IfNilCheck;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNodeGen;
 
-@Instrumentable(factory = AbstractSendWrapper.class)
 public abstract class AbstractSend extends SqueakBytecodeNode {
     public final BaseSqueakObject selector;
     @Child public SqueakNode receiverNode;
@@ -36,12 +34,6 @@ public abstract class AbstractSend extends SqueakBytecodeNode {
     @Children protected final SqueakNode[] argumentNodes;
     @Child private LookupNode lookupNode;
     @Child private DispatchNode dispatchNode;
-
-    public AbstractSend() {
-        super(null, -1);
-        selector = null;
-        argumentNodes = null;
-    }
 
     public AbstractSend(CompiledCodeObject method, int idx, BaseSqueakObject sel, int argcount) {
         super(method, idx);
@@ -200,11 +192,6 @@ public abstract class AbstractSend extends SqueakBytecodeNode {
 
     @Override
     protected boolean isTaggedWith(Class<?> tag) {
-        if (tag == StandardTags.StatementTag.class) {
-            return getSourceSection().isAvailable();
-        } else if (tag == StandardTags.CallTag.class) {
-            return true;
-        }
-        return false;
+        return ((tag == StandardTags.StatementTag.class) || (tag == StandardTags.CallTag.class)) && getSourceSection().isAvailable();
     }
 }

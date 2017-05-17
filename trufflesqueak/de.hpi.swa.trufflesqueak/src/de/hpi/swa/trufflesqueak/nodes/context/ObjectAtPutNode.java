@@ -3,7 +3,6 @@ package de.hpi.swa.trufflesqueak.nodes.context;
 import java.math.BigInteger;
 import java.util.Vector;
 
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;

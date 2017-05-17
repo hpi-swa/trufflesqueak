@@ -6,6 +6,7 @@ import java.util.Stack;
 
 import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.StandardTags.StatementTag;
 
 import de.hpi.swa.trufflesqueak.exceptions.LocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
@@ -84,5 +85,10 @@ public class CallPrimitiveNode extends SqueakBytecodeNode {
     @Override
     public boolean isReturn() {
         return primitive instanceof PrimitiveQuickReturnNode;
+    }
+
+    @Override
+    protected boolean isTaggedWith(Class<?> tag) {
+        return tag == StatementTag.class;
     }
 }
