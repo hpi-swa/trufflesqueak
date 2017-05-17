@@ -42,4 +42,9 @@ public class ImmediateCharacter extends ImmutableObject {
     public int getValue() {
         return value;
     }
+
+    @Override
+    public int squeakHash() {
+        return value;
+    }
 }

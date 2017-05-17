@@ -3,6 +3,7 @@ package de.hpi.swa.trufflesqueak.nodes.roots;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.RootNode;
@@ -92,7 +93,13 @@ public class SqueakMethodNode extends RootNode {
             } catch (LocalReturn e) {
                 return e.returnValue;
             } catch (NonLocalReturn e) {
-                // TODO: unwind context chain towards target
+                Object targetMarker = e.getTarget();
+                Object frameMarker = FrameUtil.getObjectSafe(frame, markerSlot);
+                if (targetMarker == frameMarker) {
+                    return e.returnValue;
+                } else {
+                    throw e;
+                }
             } catch (NonVirtualReturn e) {
                 // TODO: unwind context chain towards e.targetContext
             } catch (ProcessSwitch e) {

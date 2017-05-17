@@ -38,4 +38,9 @@ public class SmallInteger extends ImmutableObject {
     public long unwrapInt() {
         return getValue();
     }
+
+    @Override
+    public int squeakHash() {
+        return (int) getValue();
+    }
 }

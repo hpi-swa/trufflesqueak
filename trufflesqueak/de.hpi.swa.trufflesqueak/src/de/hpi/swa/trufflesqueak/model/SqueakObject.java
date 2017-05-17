@@ -9,10 +9,12 @@ public abstract class SqueakObject extends BaseSqueakObject {
 
     public SqueakObject(SqueakImageContext img) {
         super(img);
+        hash = 0;
     }
 
     public SqueakObject(SqueakImageContext img, BaseSqueakObject klass) {
         super(img);
+        hash = 0;
         sqClass = klass;
     }
 
@@ -45,5 +47,14 @@ public abstract class SqueakObject extends BaseSqueakObject {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public int squeakHash() {
+        if (hash != 0) {
+            return hash;
+        } else {
+            return super.hashCode();
+        }
     }
 }

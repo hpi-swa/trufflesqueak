@@ -22,7 +22,7 @@ public abstract class BaseSqueakObject {
 
     /**
      * Set the class of this object to newCls. Not possible for all objects.
-     * 
+     *
      * @param newCls
      */
     public void setSqClass(BaseSqueakObject newCls) {
@@ -59,6 +59,8 @@ public abstract class BaseSqueakObject {
     public abstract int size();
 
     public abstract int instsize();
+
+    public abstract int squeakHash();
 
     public int varsize() {
         return size() - instsize();
