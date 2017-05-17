@@ -5,7 +5,7 @@ import java.util.Arrays;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
-import de.hpi.swa.trufflesqueak.instrumentation.SourceStringBuilder;
+import de.hpi.swa.trufflesqueak.instrumentation.PrettyPrintVisitor;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithMethod;
@@ -53,10 +53,10 @@ public class IfNilCheck extends SqueakNodeWithMethod {
     }
 
     @Override
-    public void prettyPrintOn(SourceStringBuilder str) {
-        checkNode.prettyPrintWithParensOn(str);
+    public void prettyPrintOn(PrettyPrintVisitor str) {
+        str.visitWithParens(checkNode);
         str.newline().indent().append(runIfNil ? " ifNil: [" : " ifNotNil: [");
-        Arrays.stream(statements).forEach(n -> n.prettyPrintStatementOn(str));
+        Arrays.stream(statements).forEach(n -> str.visitStatement(n));
         str.dedent().append("]");
     }
 }

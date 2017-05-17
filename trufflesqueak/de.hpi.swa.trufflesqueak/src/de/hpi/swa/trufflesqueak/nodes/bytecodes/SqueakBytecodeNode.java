@@ -16,7 +16,7 @@ public abstract class SqueakBytecodeNode extends SqueakNodeWithMethod {
     protected SqueakBytecodeNode(SqueakBytecodeNode original) {
         super(original.method);
         index = original.index;
-        sourceSection = original.getSourceSection();
+        setSourceSection(original.getSourceSection());
     }
 
     public SqueakBytecodeNode(CompiledCodeObject method, int idx) {

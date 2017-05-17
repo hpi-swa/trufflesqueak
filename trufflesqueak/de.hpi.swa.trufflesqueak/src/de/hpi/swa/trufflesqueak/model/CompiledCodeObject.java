@@ -13,11 +13,14 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.UnwrappingError;
-import de.hpi.swa.trufflesqueak.instrumentation.SourceStringBuilder;
+import de.hpi.swa.trufflesqueak.instrumentation.PrettyPrintVisitor;
+import de.hpi.swa.trufflesqueak.instrumentation.SourceVisitor;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakMethodNode;
 import de.hpi.swa.trufflesqueak.util.BitSplitter;
@@ -35,6 +38,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
     // code
     protected byte[] bytes;
     private SqueakNode[] ast;
+    Source source;
     // frame info
     private FrameDescriptor frameDescriptor;
     @CompilationFinal public FrameSlot receiverSlot;
@@ -76,8 +80,14 @@ public abstract class CompiledCodeObject extends SqueakObject {
         decodeHeader();
         prepareFrameDescriptor();
         ast = new Decompiler(this).getAST();
+        source = Source.newBuilder(prettyPrint()).mimeType(SqueakLanguage.MIME_TYPE).name(toString()).build();
+        visitAST(new SourceVisitor(source));
         callTarget = Truffle.getRuntime().createCallTarget(new SqueakMethodNode(image.getLanguage(), this));
         callTargetStable.invalidate();
+    }
+
+    public Source getSource() {
+        return source;
     }
 
     private void prepareFrameDescriptor() {
@@ -286,15 +296,19 @@ public abstract class CompiledCodeObject extends SqueakObject {
     }
 
     public String prettyPrint() {
-        SourceStringBuilder str = new SourceStringBuilder();
-        str.append(toString()).append('\n');
-        str.indent();
-        for (SqueakNode node : ast) {
-            node.prettyPrintOn(str);
-            str.append(".").newline();
-        }
-        str.dedent();
+        PrettyPrintVisitor str = new PrettyPrintVisitor();
+        visitAST(str);
         return str.build();
+    }
+
+    void visitAST(PrettyPrintVisitor visitor) {
+        visitor.append(toString()).append('\n');
+        visitor.indent();
+        for (SqueakNode node : ast) {
+            visitor.visit(node);
+            visitor.append(".").newline();
+        }
+        visitor.dedent();
     }
 
     abstract public CompiledMethodObject getMethod();

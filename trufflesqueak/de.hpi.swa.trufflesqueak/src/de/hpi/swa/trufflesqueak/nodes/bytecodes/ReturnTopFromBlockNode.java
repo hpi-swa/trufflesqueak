@@ -2,7 +2,7 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import java.util.Stack;
 
-import de.hpi.swa.trufflesqueak.instrumentation.SourceStringBuilder;
+import de.hpi.swa.trufflesqueak.instrumentation.PrettyPrintVisitor;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
@@ -18,7 +18,7 @@ public class ReturnTopFromBlockNode extends ReturnNode {
     }
 
     @Override
-    public void prettyPrintOn(SourceStringBuilder b) {
-        valueNode.prettyPrintOn(b);
+    public void prettyPrintOn(PrettyPrintVisitor b) {
+        b.visit(valueNode);
     }
 }

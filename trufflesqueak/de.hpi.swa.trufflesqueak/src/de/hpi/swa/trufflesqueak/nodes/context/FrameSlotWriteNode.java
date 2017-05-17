@@ -7,7 +7,7 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.trufflesqueak.instrumentation.SourceStringBuilder;
+import de.hpi.swa.trufflesqueak.instrumentation.PrettyPrintVisitor;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
@@ -64,7 +64,7 @@ public abstract class FrameSlotWriteNode extends FrameSlotNode {
     }
 
     @Override
-    public void prettyPrintOn(SourceStringBuilder b) {
+    public void prettyPrintOn(PrettyPrintVisitor b) {
         b.append("t").append(slot.getIdentifier()).append(" := ");
         super.prettyPrintOn(b);
     }

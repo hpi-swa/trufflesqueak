@@ -6,26 +6,27 @@ import java.util.Stack;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.LoopNode;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.nodes.RepeatingNode;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 
-import de.hpi.swa.trufflesqueak.instrumentation.SourceStringBuilder;
+import de.hpi.swa.trufflesqueak.instrumentation.PrettyPrintVisitor;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
+import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithMethod;
 import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SendSelector;
 
 @NodeInfo(shortName = "loop")
-public class LoopRepeatingNode extends Node implements RepeatingNode {
+public class LoopRepeatingNode extends SqueakNodeWithMethod implements RepeatingNode {
     @Child private SqueakNode mustBeBooleanSend;
     @Children private final SqueakNode[] conditionBodyNodes;
     @Child private SqueakNode conditionNode;
     @Children private final SqueakNode[] bodyNodes;
 
     public LoopRepeatingNode(CompiledCodeObject cm, SqueakNode[] conditionBody, SqueakNode cond, SqueakNode[] body) {
+        super(cm);
         mustBeBooleanSend = new SendSelector(cm, 0, cm.image.mustBeBoolean, 0);
         conditionBodyNodes = conditionBody;
         conditionNode = cond;
@@ -61,10 +62,11 @@ public class LoopRepeatingNode extends Node implements RepeatingNode {
         }
     }
 
-    public void prettyPrintOn(SourceStringBuilder str) {
+    @Override
+    public void prettyPrintOn(PrettyPrintVisitor str) {
         str.append('[').newline().indent();
-        Arrays.stream(conditionBodyNodes).forEach(n -> n.prettyPrintStatementOn(str));
-        conditionNode.prettyPrintStatementOn(str);
+        Arrays.stream(conditionBodyNodes).forEach(n -> str.visitStatement(n));
+        str.visitStatement(conditionNode);
         str.dedent();
         if (conditionNode instanceof IfTrue) {
             str.append("] whileFalse: [");
@@ -72,7 +74,7 @@ public class LoopRepeatingNode extends Node implements RepeatingNode {
             str.append("] whileTrue: [");
         }
         str.newline().indent();
-        Arrays.stream(bodyNodes).forEach(n -> n.prettyPrintStatementOn(str));
+        Arrays.stream(bodyNodes).forEach(n -> str.visitStatement(n));
         str.dedent().append("]");
     }
 
@@ -93,5 +95,10 @@ public class LoopRepeatingNode extends Node implements RepeatingNode {
             loop.executeLoop(frame);
             return null;
         }
+    }
+
+    @Override
+    public Object executeGeneric(VirtualFrame frame) {
+        throw new RuntimeException("should not run");
     }
 }

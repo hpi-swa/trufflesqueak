@@ -7,10 +7,11 @@ import java.util.Stack;
 import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags.StatementTag;
+import com.oracle.truffle.api.source.SourceSection;
 
 import de.hpi.swa.trufflesqueak.exceptions.LocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
-import de.hpi.swa.trufflesqueak.instrumentation.SourceStringBuilder;
+import de.hpi.swa.trufflesqueak.instrumentation.PrettyPrintVisitor;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNode;
@@ -78,7 +79,7 @@ public class CallPrimitiveNode extends SqueakBytecodeNode {
     }
 
     @Override
-    public void prettyPrintOn(SourceStringBuilder b) {
+    public void prettyPrintOn(PrettyPrintVisitor b) {
         b.append("<prim: ").append(primitive).append('>');
     }
 
@@ -90,5 +91,11 @@ public class CallPrimitiveNode extends SqueakBytecodeNode {
     @Override
     protected boolean isTaggedWith(Class<?> tag) {
         return tag == StatementTag.class;
+    }
+
+    @Override
+    public void setSourceSection(SourceSection section) {
+        super.setSourceSection(section);
+        primitive.setSourceSection(section);
     }
 }

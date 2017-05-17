@@ -4,7 +4,7 @@ import java.util.Stack;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.trufflesqueak.instrumentation.SourceStringBuilder;
+import de.hpi.swa.trufflesqueak.instrumentation.PrettyPrintVisitor;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotReadNode;
@@ -28,7 +28,7 @@ public class ReceiverNode extends SqueakBytecodeNode {
     }
 
     @Override
-    public void prettyPrintOn(SourceStringBuilder b) {
+    public void prettyPrintOn(PrettyPrintVisitor b) {
         b.append("self");
     }
 }

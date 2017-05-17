@@ -7,7 +7,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
-import de.hpi.swa.trufflesqueak.instrumentation.SourceStringBuilder;
+import de.hpi.swa.trufflesqueak.instrumentation.PrettyPrintVisitor;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
@@ -51,16 +51,13 @@ public class PushNewArrayNode extends SqueakBytecodeNode {
     }
 
     @Override
-    public void prettyPrintOn(SourceStringBuilder b) {
+    public void prettyPrintOn(PrettyPrintVisitor b) {
         if (popIntoArrayNodes == null) {
             b.append("Array new: ").append(arraySize);
         } else {
-            b.append('{');
-            Arrays.stream(popIntoArrayNodes).forEach(n -> {
-                n.prettyPrintOn(b);
-                b.append(". ");
-            });
-            b.append('}');
+            b.append('{').newline().indent();
+            Arrays.stream(popIntoArrayNodes).forEach(n -> b.visitStatement(n));
+            b.dedent().append('}');
         }
     }
 

@@ -7,13 +7,14 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 
-import de.hpi.swa.trufflesqueak.instrumentation.SourceStringBuilder;
+import de.hpi.swa.trufflesqueak.instrumentation.PrettyPrintVisitor;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
+import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithMethod;
 import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SendSelector;
 
-public class IfThenNode extends SqueakNode {
+public class IfThenNode extends SqueakNodeWithMethod {
     @Child private SqueakNode mustBeBooleanSend;
     @Child private SqueakNode conditionNode;
     @Children final private SqueakNode[] thenNodes;
@@ -27,6 +28,7 @@ public class IfThenNode extends SqueakNode {
                     SqueakNode thenRes,
                     SqueakNode[] elseBranch,
                     SqueakNode elseRes) {
+        super(cm);
         mustBeBooleanSend = new SendSelector(cm, 0, cm.image.mustBeBoolean, 0);
         conditionNode = condition;
         thenNodes = thenBranch;
@@ -66,20 +68,20 @@ public class IfThenNode extends SqueakNode {
         return null;
     }
 
-    private static void prettyPrintBranchOn(SourceStringBuilder b, String selector, SqueakNode[] branch, SqueakNode result) {
+    private static void prettyPrintBranchOn(PrettyPrintVisitor b, String selector, SqueakNode[] branch, SqueakNode result) {
         if (branch == null && result == null)
             return;
         b.append(selector).append(" [").newline().indent();
         if (branch != null)
-            Arrays.stream(branch).forEach(n -> n.prettyPrintStatementOn(b));
+            Arrays.stream(branch).forEach(n -> b.visitStatement(n));
         if (result != null)
-            result.prettyPrintStatementOn(b);
+            b.visitStatement(result);
         b.dedent().append(']');
     }
 
     @Override
-    public void prettyPrintOn(SourceStringBuilder b) {
-        conditionNode.prettyPrintWithParensOn(b);
+    public void prettyPrintOn(PrettyPrintVisitor b) {
+        b.visitWithParens(conditionNode);
         b.newline().indent();
         if (conditionNode instanceof IfTrue) {
             prettyPrintBranchOn(b, "ifFalse:", thenNodes, thenResult);

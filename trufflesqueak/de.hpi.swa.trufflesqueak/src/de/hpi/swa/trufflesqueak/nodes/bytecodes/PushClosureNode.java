@@ -8,7 +8,7 @@ import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
-import de.hpi.swa.trufflesqueak.instrumentation.SourceStringBuilder;
+import de.hpi.swa.trufflesqueak.instrumentation.PrettyPrintVisitor;
 import de.hpi.swa.trufflesqueak.model.BlockClosure;
 import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -63,9 +63,9 @@ public class PushClosureNode extends SqueakBytecodeNode {
     }
 
     @Override
-    public void prettyPrintOn(SourceStringBuilder b) {
+    public void prettyPrintOn(PrettyPrintVisitor b) {
         b.append('[').newline().indent();
-        Arrays.stream(compiledBlock.getBytecodeAST()).forEach(n -> n.prettyPrintStatementOn(b));
+        Arrays.stream(compiledBlock.getBytecodeAST()).forEach(n -> b.visitStatement(n));
         b.dedent().append(']');
     }
 }

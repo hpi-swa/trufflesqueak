@@ -2,18 +2,19 @@ package de.hpi.swa.trufflesqueak.nodes.context;
 
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.trufflesqueak.instrumentation.SourceStringBuilder;
+import de.hpi.swa.trufflesqueak.instrumentation.PrettyPrintVisitor;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.FalseObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.SmallInteger;
 import de.hpi.swa.trufflesqueak.model.TrueObject;
-import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
+import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithMethod;
 
-public abstract class MethodLiteralNode extends SqueakNode {
+public abstract class MethodLiteralNode extends SqueakNodeWithMethod {
     final Object literal;
 
     public MethodLiteralNode(CompiledCodeObject cm, int idx) {
+        super(cm);
         literal = cm.getLiteral(idx);
     }
 
@@ -41,7 +42,7 @@ public abstract class MethodLiteralNode extends SqueakNode {
     }
 
     @Override
-    public void prettyPrintOn(SourceStringBuilder b) {
+    public void prettyPrintOn(PrettyPrintVisitor b) {
         if (literal instanceof PointersObject && ((PointersObject) literal).size() == 2) {
             b.append(((PointersObject) literal).at0(0));
         } else {
