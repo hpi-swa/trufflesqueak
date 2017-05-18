@@ -41,6 +41,6 @@ public class SmallInteger extends ImmutableObject {
 
     @Override
     public int squeakHash() {
-        return (int) getValue();
+        return (int) value;
     }
 }

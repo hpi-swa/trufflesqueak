@@ -51,10 +51,9 @@ public abstract class SqueakObject extends BaseSqueakObject {
 
     @Override
     public int squeakHash() {
-        if (hash != 0) {
-            return hash;
-        } else {
-            return super.hashCode();
+        if (hash == 0) {
+            hash = super.squeakHash();
         }
+        return hash;
     }
 }

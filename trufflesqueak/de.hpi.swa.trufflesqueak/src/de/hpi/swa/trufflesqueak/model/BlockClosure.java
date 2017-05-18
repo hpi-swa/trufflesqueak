@@ -168,9 +168,4 @@ public class BlockClosure extends BaseSqueakObject {
     public Object getFrameMarker() {
         return frameMarker;
     }
-
-    @Override
-    public int squeakHash() {
-        return super.hashCode();
-    }
 }

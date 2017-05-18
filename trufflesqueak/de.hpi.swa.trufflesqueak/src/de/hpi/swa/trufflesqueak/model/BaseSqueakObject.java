@@ -5,6 +5,7 @@ import de.hpi.swa.trufflesqueak.exceptions.UnwrappingError;
 import de.hpi.swa.trufflesqueak.util.Chunk;
 
 public abstract class BaseSqueakObject {
+    protected static final int IDENTITY_HASH_MASK = 0x400000 - 1;
     public final SqueakImageContext image;
 
     public BaseSqueakObject(SqueakImageContext img) {
@@ -60,7 +61,9 @@ public abstract class BaseSqueakObject {
 
     public abstract int instsize();
 
-    public abstract int squeakHash();
+    public int squeakHash() {
+        return hashCode() & IDENTITY_HASH_MASK;
+    }
 
     public int varsize() {
         return size() - instsize();
