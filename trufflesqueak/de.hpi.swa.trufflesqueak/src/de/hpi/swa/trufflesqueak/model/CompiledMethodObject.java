@@ -26,7 +26,9 @@ public class CompiledMethodObject extends CompiledCodeObject implements TruffleO
     public NativeObject getCompiledInSelector() {
         if (literals.length > 1) {
             BaseSqueakObject lit = literals[literals.length - 2];
-            if (lit instanceof NativeObject) {
+            if (lit == null) {
+                return null;
+            } else if (lit instanceof NativeObject) {
                 return (NativeObject) lit;
             } else if (lit.size() >= 2) {
                 lit = lit.at0(1);

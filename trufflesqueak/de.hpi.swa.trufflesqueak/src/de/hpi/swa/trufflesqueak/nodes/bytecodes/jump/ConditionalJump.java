@@ -60,8 +60,8 @@ public class ConditionalJump extends AbstractJump {
     }
 
     private int interpretAsLoop(Stack<SqueakNode> stack,
-                                Stack<SqueakNode> statements,
-                                List<SqueakBytecodeNode> sequence) {
+                    Stack<SqueakNode> statements,
+                    List<SqueakBytecodeNode> sequence) {
         // remove jump back node
         int lastBranchBC = lastBranchBC(sequence);
         UnconditionalJump jumpOutNode = (UnconditionalJump) sequence.get(lastBranchBC);
@@ -91,8 +91,7 @@ public class ConditionalJump extends AbstractJump {
         subStack.clear();
         SqueakNode[] bodyBlock = Decompiler.blockFrom(body, subStack);
 
-        LoopNode node = Truffle.getRuntime()
-                               .createLoopNode(new LoopRepeatingNode(method, conditionBlock, condition, bodyBlock));
+        LoopNode node = Truffle.getRuntime().createLoopNode(new LoopRepeatingNode(method, conditionBlock, condition, bodyBlock));
         if (!stack.empty() && stack.peek() instanceof ExtendedStoreNode) {
             statements.push(stack.pop());
         }
@@ -118,7 +117,7 @@ public class ConditionalJump extends AbstractJump {
 
     private int interpretAsIfNil(Stack<SqueakNode> stack, List<SqueakBytecodeNode> sequence) {
         Vector<SqueakBytecodeNode> thenBranchNodes = new Vector<>(sequence.subList(firstBranchBC(sequence),
-                                                                                   lastBranchBC(sequence) + 1));
+                        lastBranchBC(sequence) + 1));
         Stack<SqueakNode> subStack = new Stack<>();
         SqueakNode[] thenStatements = Decompiler.blockFrom(thenBranchNodes, subStack);
         SqueakNode thenResult = subStack.empty() ? null : subStack.pop();
@@ -127,22 +126,21 @@ public class ConditionalJump extends AbstractJump {
     }
 
     private int interpretAsIfTrueIfFalse(Stack<SqueakNode> stack,
-                                         Stack<SqueakNode> statements,
-                                         List<SqueakBytecodeNode> sequence) {
+                    Stack<SqueakNode> statements,
+                    List<SqueakBytecodeNode> sequence) {
         int skip = lastBranchBC(sequence) + 1;
         assert offset > 0;
         SqueakNode branchCondition = branchCondition(stack);
 
         // the nodes making up our branch
         Vector<SqueakBytecodeNode> thenBranchNodes = new Vector<>(sequence.subList(firstBranchBC(sequence),
-                                                                                   lastBranchBC(sequence) + 1));
+                        lastBranchBC(sequence) + 1));
         Vector<SqueakBytecodeNode> elseBranchNodes = null;
 
         SqueakBytecodeNode lastNode = thenBranchNodes.get(thenBranchNodes.size() - 1);
         if (lastNode instanceof UnconditionalJump && ((UnconditionalJump) lastNode).offset > 0) {
             // else branch
             thenBranchNodes.remove(lastNode);
-            sequence.set(sequence.indexOf(lastNode), null);
             int firstElseBranchBC = firstBranchBC(sequence) + offset;
             skip = firstElseBranchBC + ((UnconditionalJump) lastNode).offset;
             elseBranchNodes = new Vector<>(sequence.subList(firstElseBranchBC, skip));
@@ -153,11 +151,11 @@ public class ConditionalJump extends AbstractJump {
         SqueakNode[] elseStatements = Decompiler.blockFrom(elseBranchNodes, subStack);
         SqueakNode elseResult = subStack.empty() ? null : subStack.pop();
         IfThenNode ifThenNode = new IfThenNode(method,
-                                               branchCondition,
-                                               thenStatements,
-                                               thenResult,
-                                               elseStatements,
-                                               elseResult);
+                        branchCondition,
+                        thenStatements,
+                        thenResult,
+                        elseStatements,
+                        elseResult);
         assert subStack.empty();
         if (thenResult != null || elseResult != null) {
             stack.push(ifThenNode);

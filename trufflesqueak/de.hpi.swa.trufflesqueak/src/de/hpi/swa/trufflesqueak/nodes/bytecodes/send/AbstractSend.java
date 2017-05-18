@@ -174,7 +174,6 @@ public abstract class AbstractSend extends SqueakBytecodeNode {
     public void prettyPrintOn(PrettyPrintVisitor b) {
         prettyPrintReceiverOn(b);
         String[] splitSelector = selector.toString().split(":");
-        assert argumentNodes.length == splitSelector.length;
         if (splitSelector.length == 1 && !splitSelector[0].matches("[A-Za-z]")) {
             b.append(' ').append(selector);
             if (argumentNodes.length == 1) {
@@ -182,6 +181,7 @@ public abstract class AbstractSend extends SqueakBytecodeNode {
                 b.visitWithParens(argumentNodes[0]);
             }
         } else {
+            assert argumentNodes.length == splitSelector.length;
             for (int i = 0; i < argumentNodes.length; i++) {
                 b.append(' ').append(splitSelector[i]).append(": ");
                 b.visitWithParens(argumentNodes[i]);

@@ -9,7 +9,6 @@ import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.model.SmallInteger;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakMethodNode;
 import junit.framework.TestCase;
 
@@ -28,10 +27,20 @@ public abstract class TestSqueak extends TestCase {
     @Override
     public void setUp() {
         image = new SqueakImageContext(null, null, null, null);
+        image.at.setBytes("at:".getBytes());
+        image.equivalent.setBytes("==".getBytes());
+        image.klass.setBytes("class".getBytes());
+        image.div.setBytes("/".getBytes());
+        image.divide.setBytes("//".getBytes());
+        image.plus.setBytes("+".getBytes());
+        image.eq.setBytes("=".getBytes());
+        image.modulo.setBytes("\\\\".getBytes());
+        image.value.setBytes("value".getBytes());
+        image.size_.setBytes("size".getBytes());
     }
 
     public CompiledCodeObject makeMethod(byte[] bytes) {
-        CompiledCodeObject cm = new CompiledMethodObject(image, bytes);
+        CompiledCodeObject cm = new CompiledMethodObject(image, bytes, new BaseSqueakObject[]{image.wrap(68419598), null, null});
         return cm;
     }
 

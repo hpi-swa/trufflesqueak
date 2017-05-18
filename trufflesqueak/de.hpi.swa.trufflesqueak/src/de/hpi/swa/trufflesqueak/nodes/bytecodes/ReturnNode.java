@@ -28,8 +28,7 @@ public abstract class ReturnNode extends SqueakBytecodeNode {
 
     @Override
     public void prettyPrintOn(PrettyPrintVisitor b) {
-        b.append("^ ");
-        b.visit(valueNode);
+        b.append("^ ").visit(valueNode);
     }
 
     @Override
