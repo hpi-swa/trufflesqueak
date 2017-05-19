@@ -15,6 +15,10 @@ public abstract class FrameSlotNode extends SqueakNodeWithMethod {
         slot = frameSlot;
     }
 
+    protected boolean isInt(@SuppressWarnings("unused") VirtualFrame frame) {
+        return slot.getKind() == FrameSlotKind.Int;
+    }
+
     /**
      * @param frame Required so that Truffle doesn't consider the method as pure
      */

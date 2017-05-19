@@ -42,6 +42,13 @@ public abstract class FrameSlotWriteNode extends FrameSlotNode {
         return value;
     }
 
+    @Specialization(guards = "isInt(frame) || isIllegal(frame)")
+    public long writeInt(VirtualFrame frame, int value) {
+        slot.setKind(FrameSlotKind.Int);
+        frame.setInt(slot, value);
+        return value;
+    }
+
     @Specialization(guards = "isLong(frame) || isIllegal(frame)")
     public long writeLong(VirtualFrame frame, long value) {
         slot.setKind(FrameSlotKind.Long);

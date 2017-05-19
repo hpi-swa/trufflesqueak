@@ -26,13 +26,27 @@ public class PrimAt extends PrimitiveBinaryOperation {
         return receiver.getNativeAt0(idx - 1);
     }
 
-    @Specialization(rewriteOn = UnwrappingError.class)
-    protected long intAt(BaseSqueakObject receiver, int idx) throws UnwrappingError {
-        BaseSqueakObject at0 = receiver.at0(idx - 1);
+    @Specialization(rewriteOn = {UnwrappingError.class, ArithmeticException.class})
+    protected int intAt(BaseSqueakObject receiver, int idx) throws UnwrappingError {
+        return safeObject(receiver, idx - 1).unwrapInt();
+    }
+
+    @Specialization(rewriteOn = {UnwrappingError.class, ArithmeticException.class})
+    protected long longAt(BaseSqueakObject receiver, int idx) throws UnwrappingError {
+        return safeObject(receiver, idx - 1).unwrapLong();
+    }
+
+    @Specialization(rewriteOn = {UnwrappingError.class})
+    protected BigInteger bigIntAt(BaseSqueakObject receiver, int idx) throws UnwrappingError {
+        return safeObject(receiver, idx - 1).unwrapBigInt();
+    }
+
+    private static BaseSqueakObject safeObject(BaseSqueakObject o, int idx) throws UnwrappingError {
+        BaseSqueakObject at0 = o.at0(idx);
         if (at0 == null) {
             throw new UnwrappingError();
         }
-        return at0.unwrapInt();
+        return at0;
     }
 
     @Specialization

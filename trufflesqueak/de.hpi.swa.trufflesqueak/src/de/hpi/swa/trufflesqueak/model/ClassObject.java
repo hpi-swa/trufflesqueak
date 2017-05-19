@@ -78,7 +78,7 @@ public class ClassObject extends AbstractPointersObject {
     public void fillin(Chunk chunk) {
         super.fillin(chunk);
         // initialize the subclasses set
-        setFormat((int) at0(FORMAT_INDEX).unsafeUnwrapInt());
+        setFormat(at0(FORMAT_INDEX).unsafeUnwrapInt());
         setSuperclass(getSuperclass());
     }
 
@@ -130,7 +130,7 @@ public class ClassObject extends AbstractPointersObject {
     @Override
     public void atput0(int idx, BaseSqueakObject obj) {
         if (idx == FORMAT_INDEX && obj instanceof SmallInteger) {
-            setFormat((int) obj.unsafeUnwrapInt());
+            setFormat(obj.unsafeUnwrapInt());
         } else if (idx == SUPERCLASS_INDEX) {
             setSuperclass(obj);
         } else {

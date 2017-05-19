@@ -14,6 +14,11 @@ public class PrimIdentityHash extends PrimitiveUnaryOperation {
     }
 
     @Specialization
+    int hashInt(int obj) {
+        return obj;
+    }
+
+    @Specialization
     int hashLong(long obj) {
         return (int) obj;
     }

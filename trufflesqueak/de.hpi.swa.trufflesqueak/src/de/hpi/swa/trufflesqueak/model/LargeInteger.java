@@ -46,7 +46,7 @@ public class LargeInteger extends SqueakObject {
 
     @Override
     public void atput0(int idx, BaseSqueakObject object) throws UnwrappingError {
-        byte b = (byte) object.unwrapInt();
+        byte b = (byte) object.unwrapLong();
         setBytesNative(byteAtPut0(integer, idx, b));
     }
 
@@ -119,5 +119,20 @@ public class LargeInteger extends SqueakObject {
     @Override
     public String toString() {
         return integer.toString();
+    }
+
+    @Override
+    public int unwrapInt() throws UnwrappingError, ArithmeticException {
+        return getValue().intValueExact();
+    }
+
+    @Override
+    public long unwrapLong() throws UnwrappingError, ArithmeticException {
+        return getValue().longValueExact();
+    }
+
+    @Override
+    public BigInteger unwrapBigInt() throws UnwrappingError {
+        return getValue();
     }
 }

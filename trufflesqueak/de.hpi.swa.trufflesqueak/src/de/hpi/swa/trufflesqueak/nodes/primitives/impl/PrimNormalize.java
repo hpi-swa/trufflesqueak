@@ -15,8 +15,18 @@ public class PrimNormalize extends PrimitiveUnaryOperation {
     }
 
     @Specialization
+    int normalizeInt(int o) {
+        return o;
+    }
+
+    @Specialization
     long normalizeLong(long o) {
         return o;
+    }
+
+    @Specialization(rewriteOn = ArithmeticException.class)
+    int normalizeInt(BigInteger o) {
+        return o.intValueExact();
     }
 
     @Specialization(rewriteOn = ArithmeticException.class)
@@ -27,6 +37,11 @@ public class PrimNormalize extends PrimitiveUnaryOperation {
     @Specialization
     BigInteger normalizeBig(BigInteger o) {
         return o;
+    }
+
+    @Specialization(rewriteOn = ArithmeticException.class)
+    int normalizeInt(NativeObject o) {
+        return bigIntFromNative(o).intValueExact();
     }
 
     @Specialization(rewriteOn = ArithmeticException.class)

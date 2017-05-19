@@ -13,8 +13,23 @@ public class PrimMod extends PrimitiveBinaryOperation {
     }
 
     @Specialization
+    int mod(int a, int b) {
+        return a % b;
+    }
+
+    @Specialization(rewriteOn = ArithmeticException.class)
+    int modInt(long a, long b) {
+        return Math.toIntExact(a % b);
+    }
+
+    @Specialization
     long mod(long a, long b) {
         return a % b;
+    }
+
+    @Specialization(rewriteOn = ArithmeticException.class)
+    int modInt(BigInteger a, BigInteger b) {
+        return doBigModulo(a, b).intValueExact();
     }
 
     @Specialization(rewriteOn = ArithmeticException.class)

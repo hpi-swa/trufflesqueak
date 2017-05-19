@@ -17,8 +17,23 @@ public class PrimBitShift extends PrimitiveBinaryOperation {
     }
 
     @Specialization(guards = {"arg <= 0"})
-    protected long bitShiftRightPrim(long receiver, int arg) {
+    protected int bitShiftRightInt(int receiver, int arg) {
         return receiver >> -arg;
+    }
+
+    @Specialization(guards = {"arg <= 0"}, rewriteOn = ArithmeticException.class)
+    protected int bitShiftRightInt(long receiver, int arg) {
+        return Math.toIntExact(receiver >> -arg);
+    }
+
+    @Specialization(guards = {"arg <= 0"})
+    protected long bitShiftRightLong(long receiver, int arg) {
+        return receiver >> -arg;
+    }
+
+    @Specialization(guards = {"arg <= 0"}, rewriteOn = ArithmeticException.class)
+    protected int bitShiftRightInt(BigInteger receiver, int arg) {
+        return receiver.shiftRight(-arg).intValueExact();
     }
 
     @Specialization(guards = {"arg <= 0"}, rewriteOn = ArithmeticException.class)
@@ -27,8 +42,13 @@ public class PrimBitShift extends PrimitiveBinaryOperation {
     }
 
     @Specialization(guards = {"arg <= 0"})
-    protected BigInteger bitShiftRight(BigInteger receiver, int arg) {
+    protected BigInteger bitShiftRightBig(BigInteger receiver, int arg) {
         return receiver.shiftRight(-arg);
+    }
+
+    @Specialization(guards = {"arg > 0"}, rewriteOn = ArithmeticException.class)
+    protected int bitShiftLeftInt(BigInteger receiver, int arg) {
+        return receiver.shiftLeft(arg).intValueExact();
     }
 
     @Specialization(guards = {"arg > 0"}, rewriteOn = ArithmeticException.class)
@@ -39,15 +59,6 @@ public class PrimBitShift extends PrimitiveBinaryOperation {
     @Specialization(guards = {"arg > 0"})
     protected BigInteger bitShiftLeft(BigInteger receiver, int arg) {
         return receiver.shiftLeft(arg);
-    }
-
-    @Specialization(replaces = {"bitShiftRight", "bitShiftLeft"})
-    protected BigInteger bitShift(BigInteger receiver, int arg) {
-        if (arg < 0) {
-            return receiver.shiftRight(-arg);
-        } else {
-            return receiver.shiftLeft(arg);
-        }
     }
 
     @Specialization(rewriteOn = ArithmeticException.class)

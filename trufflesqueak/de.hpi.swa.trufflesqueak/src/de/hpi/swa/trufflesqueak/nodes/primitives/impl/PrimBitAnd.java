@@ -13,6 +13,11 @@ public class PrimBitAnd extends PrimitiveBinaryOperation {
     }
 
     @Specialization
+    protected int bitAnd(int receiver, int arg) {
+        return receiver & arg;
+    }
+
+    @Specialization
     protected long bitAnd(long receiver, long arg) {
         return receiver & arg;
     }

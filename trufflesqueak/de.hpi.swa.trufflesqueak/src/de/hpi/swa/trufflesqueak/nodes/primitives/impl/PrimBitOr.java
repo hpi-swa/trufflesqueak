@@ -13,6 +13,11 @@ public class PrimBitOr extends PrimitiveBinaryOperation {
     }
 
     @Specialization
+    protected int bitOr(int receiver, int arg) {
+        return receiver | arg;
+    }
+
+    @Specialization
     protected long bitOr(long receiver, long arg) {
         return receiver | arg;
     }

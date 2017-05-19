@@ -13,12 +13,17 @@ public class PrimMul extends PrimitiveBinaryOperation {
     }
 
     @Specialization(rewriteOn = ArithmeticException.class)
-    long mod(long a, long b) {
+    int mul(int a, int b) {
+        return Math.multiplyExact(a, b);
+    }
+
+    @Specialization(rewriteOn = ArithmeticException.class)
+    long mul(long a, long b) {
         return Math.multiplyExact(a, b);
     }
 
     @Specialization
-    BigInteger mod(BigInteger a, BigInteger b) {
+    BigInteger mul(BigInteger a, BigInteger b) {
         return a.multiply(b);
     }
 }

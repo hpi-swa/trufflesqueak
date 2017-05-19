@@ -112,11 +112,11 @@ public abstract class CompiledCodeObject extends SqueakObject {
         return createTestFrame(receiver, new BaseSqueakObject[]{});
     }
 
-    public VirtualFrame createTestFrame(BaseSqueakObject receiver, BaseSqueakObject[] arguments) {
+    public VirtualFrame createTestFrame(Object receiver, Object[] arguments) {
         Object[] args = new Object[arguments.length + 1];
         int i = 0;
         args[i++] = receiver;
-        for (BaseSqueakObject o : arguments) {
+        for (Object o : arguments) {
             args[i++] = o;
         }
         return Truffle.getRuntime().createVirtualFrame(args, frameDescriptor);
@@ -209,7 +209,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
     public int getHeader() {
         BaseSqueakObject baseSqueakObject = literals[0];
         assert baseSqueakObject instanceof SmallInteger;
-        int hdr = (int) baseSqueakObject.unsafeUnwrapInt();
+        int hdr = baseSqueakObject.unsafeUnwrapInt();
         return hdr;
     }
 
@@ -260,7 +260,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
         if (idx < literals.length) {
             setLiteral(idx / 4, obj);
         } else {
-            bytes[idx] = (byte) obj.unwrapInt();
+            bytes[idx] = (byte) obj.unwrapLong();
             setBytesAndLiterals(literals, bytes);
         }
     }

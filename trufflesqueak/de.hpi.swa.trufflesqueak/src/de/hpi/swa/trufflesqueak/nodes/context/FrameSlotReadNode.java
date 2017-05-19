@@ -28,6 +28,17 @@ public abstract class FrameSlotReadNode extends FrameSlotNode {
         return create(method, method.receiverSlot);
     }
 
+    @Specialization(guards = "isInt(frame)")
+    public long readInt(VirtualFrame frame) {
+        return FrameUtil.getIntSafe(frame, slot);
+    }
+
+    @Specialization(guards = "isLong(frame)", rewriteOn = ArithmeticException.class)
+    public int readLongAsInt(VirtualFrame frame) {
+        long longSafe = FrameUtil.getLongSafe(frame, slot);
+        return Math.toIntExact(longSafe);
+    }
+
     @Specialization(guards = "isLong(frame)")
     public long readLong(VirtualFrame frame) {
         return FrameUtil.getLongSafe(frame, slot);

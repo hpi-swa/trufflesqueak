@@ -1,5 +1,7 @@
 package de.hpi.swa.trufflesqueak.model;
 
+import java.math.BigInteger;
+
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 
 public class SmallInteger extends ImmutableObject {
@@ -35,8 +37,18 @@ public class SmallInteger extends ImmutableObject {
     }
 
     @Override
-    public long unwrapInt() {
+    public int unwrapInt() {
+        return Math.toIntExact(getValue());
+    }
+
+    @Override
+    public long unwrapLong() {
         return getValue();
+    }
+
+    @Override
+    public BigInteger unwrapBigInt() {
+        return BigInteger.valueOf(getValue());
     }
 
     @Override

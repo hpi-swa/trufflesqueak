@@ -33,7 +33,6 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimGreaterThanNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimIdentityHashNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimLessOrEqualNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimLessThanNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimMakePoint;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimModNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimMulNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimNewArgNodeGen;
@@ -80,7 +79,6 @@ public abstract class PrimitiveNodeFactory {
         BIT_OR(PrimBitOrNodeGen.class, 15),
         //
         BIT_SHIFT(PrimBitShiftNodeGen.class, 17),
-        MAKE_POINT(PrimMakePoint.class, 18),
         //
         LARGE_ADD(PrimAddNodeGen.class, 21),
         LARGE_SUB(PrimSubNodeGen.class, 22),

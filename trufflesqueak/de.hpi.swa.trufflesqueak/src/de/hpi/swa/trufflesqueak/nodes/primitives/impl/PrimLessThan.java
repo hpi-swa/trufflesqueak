@@ -13,6 +13,11 @@ public class PrimLessThan extends PrimitiveBinaryOperation {
     }
 
     @Specialization
+    boolean lt(int a, int b) {
+        return a < b;
+    }
+
+    @Specialization
     boolean lt(long a, long b) {
         return a < b;
     }

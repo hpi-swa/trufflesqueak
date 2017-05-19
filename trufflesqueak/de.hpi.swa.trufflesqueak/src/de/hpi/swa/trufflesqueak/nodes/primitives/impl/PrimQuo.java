@@ -12,18 +12,33 @@ public class PrimQuo extends PrimitiveBinaryOperation {
         super(cm);
     }
 
-    @Specialization(rewriteOn = ArithmeticException.class)
-    long div(long a, long b) {
+    @Specialization
+    int quo(int a, int b) {
         return a / b;
     }
 
     @Specialization(rewriteOn = ArithmeticException.class)
-    long div(BigInteger a, BigInteger b) {
+    int quoInt(long a, long b) {
+        return Math.toIntExact(a / b);
+    }
+
+    @Specialization
+    long quo(long a, long b) {
+        return a / b;
+    }
+
+    @Specialization(rewriteOn = ArithmeticException.class)
+    int quoInt(BigInteger a, BigInteger b) {
+        return a.divide(b).intValueExact();
+    }
+
+    @Specialization(rewriteOn = ArithmeticException.class)
+    long quo(BigInteger a, BigInteger b) {
         return a.divide(b).longValueExact();
     }
 
     @Specialization
-    BigInteger divBig(BigInteger a, BigInteger b) {
+    BigInteger quoBig(BigInteger a, BigInteger b) {
         return a.divide(b);
     }
 }

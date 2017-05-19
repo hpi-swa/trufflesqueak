@@ -14,6 +14,22 @@ public class PrimDivide extends PrimitiveBinaryOperation {
     }
 
     @Specialization(rewriteOn = ArithmeticException.class)
+    int divide(int a, int b) {
+        if (a % b != 0) {
+            throw new PrimitiveFailed();
+        }
+        return a / b;
+    }
+
+    @Specialization(rewriteOn = ArithmeticException.class)
+    long divideInt(long a, long b) {
+        if (a % b != 0) {
+            throw new PrimitiveFailed();
+        }
+        return Math.toIntExact(a / b);
+    }
+
+    @Specialization(rewriteOn = ArithmeticException.class)
     long divide(long a, long b) {
         if (a % b != 0) {
             throw new PrimitiveFailed();
@@ -22,7 +38,15 @@ public class PrimDivide extends PrimitiveBinaryOperation {
     }
 
     @Specialization(rewriteOn = ArithmeticException.class)
-    long div(BigInteger a, BigInteger b) {
+    int divdideInt(BigInteger a, BigInteger b) {
+        if (a.mod(b.abs()).compareTo(BigInteger.ZERO) != 0) {
+            throw new PrimitiveFailed();
+        }
+        return a.divide(b).intValueExact();
+    }
+
+    @Specialization(rewriteOn = ArithmeticException.class)
+    long divide(BigInteger a, BigInteger b) {
         if (a.mod(b.abs()).compareTo(BigInteger.ZERO) != 0) {
             throw new PrimitiveFailed();
         }

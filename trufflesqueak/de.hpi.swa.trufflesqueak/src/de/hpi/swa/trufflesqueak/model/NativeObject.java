@@ -74,7 +74,7 @@ public class NativeObject extends SqueakObject implements TruffleObject {
 
     @Override
     public void atput0(int index, BaseSqueakObject object) throws UnwrappingError {
-        setNativeAt0(index, (int) object.unwrapInt());
+        setNativeAt0(index, (int) object.unwrapLong());
     }
 
     public void atput0(int index, int value) {

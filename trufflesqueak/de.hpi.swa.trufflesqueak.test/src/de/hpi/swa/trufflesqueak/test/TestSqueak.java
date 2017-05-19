@@ -52,7 +52,7 @@ public abstract class TestSqueak extends TestCase {
         return makeMethod(bytes);
     }
 
-    public Object runMethod(CompiledCodeObject cm, BaseSqueakObject receiver, BaseSqueakObject... arguments) {
+    public Object runMethod(CompiledCodeObject cm, Object receiver, Object... arguments) {
         VirtualFrame frame = cm.createTestFrame(receiver, arguments);
         Object result = null;
         try {
@@ -67,12 +67,12 @@ public abstract class TestSqueak extends TestCase {
         return runMethod(receiver, new BaseSqueakObject[0], intbytes);
     }
 
-    public Object runMethod(BaseSqueakObject receiver, BaseSqueakObject[] arguments, int... intbytes) {
+    public Object runMethod(BaseSqueakObject receiver, Object[] arguments, int... intbytes) {
         CompiledCodeObject cm = makeMethod(intbytes);
         return runMethod(cm, receiver, arguments);
     }
 
-    protected Object runPrim(int primCode, BaseSqueakObject rcvr, BaseSqueakObject... arguments) {
+    protected Object runPrim(int primCode, Object rcvr, Object... arguments) {
         CompiledCodeObject cm = makeMethod(new int[]{139, primCode & 0xFF, (primCode & 0xFF00) >> 8});
         cm.setLiteral(0, image.wrap(0x10000));
         return runMethod(cm, rcvr, arguments);
