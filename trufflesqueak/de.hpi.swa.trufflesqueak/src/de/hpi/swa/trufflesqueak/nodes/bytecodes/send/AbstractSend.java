@@ -76,14 +76,7 @@ public abstract class AbstractSend extends SqueakBytecodeNode {
         }
         CompilerAsserts.compilationConstant(argumentNodes.length);
         Object lookupResult = lookupNode.executeLookup(rcvrClass, selector);
-        Object result = null;
-        try {
-            method.image.enterMethod(lookupResult, selector);
-            result = dispatchNode.executeDispatch(lookupResult, arguments);
-            return result;
-        } finally {
-            method.image.leaveMethod(result);
-        }
+        return dispatchNode.executeDispatch(lookupResult, arguments);
     }
 
     @SuppressWarnings("static-method")

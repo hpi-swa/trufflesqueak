@@ -5,11 +5,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.math.BigInteger;
-import java.util.Arrays;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
@@ -95,7 +93,7 @@ public class SqueakImageContext {
     public final NativeObject div = new NativeObject(this, (byte) 1);
     private final CompiledCodeObject entryPoint;
     private int padding;
-    private final SqueakConfig config;
+    public final SqueakConfig config;
 
     private static final BaseSqueakObject[] ENTRY_POINT_LITERALS = new BaseSqueakObject[]{
                     new SmallInteger(null, 0),
@@ -192,36 +190,5 @@ public class SqueakImageContext {
 
     public ListObject wrap(BaseSqueakObject[] elements) {
         return new ListObject(this, arrayClass, elements);
-    }
-
-    @TruffleBoundary
-    public void debugPrint(Object... strs) {
-        if (!config.isVerbose())
-            return;
-        output.println(Arrays.stream(strs).map(o -> o.toString() + " ").reduce("", String::concat));
-    }
-
-    @TruffleBoundary
-    public void enterMethod(Object lookupResult, Object selector) {
-        if (!config.isTracing())
-            return;
-        padding += 2;
-        for (int i = 0; i < padding; i++) {
-            output.print(" ");
-        }
-        output.print(selector);
-        output.print(" = ");
-        output.println(lookupResult);
-    }
-
-    @TruffleBoundary
-    public void leaveMethod(Object result) {
-        if (!config.isTracing())
-            return;
-        for (int i = 0; i < padding; i++) {
-            output.print(" ");
-        }
-        padding -= 2;
-        output.println(result);
     }
 }

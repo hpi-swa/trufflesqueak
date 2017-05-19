@@ -18,6 +18,9 @@ public class PrimitiveNode extends SqueakNodeWithMethod {
 
     @Override
     public Object executeGeneric(VirtualFrame frame) throws LocalReturn {
+        if (method.image.config.isVerbose()) {
+            System.out.println("Primitive not yet written: " + method.toString());
+        }
         throw new PrimitiveFailed();
     }
 }

@@ -1,6 +1,5 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Stack;
 
@@ -29,21 +28,13 @@ public class CallPrimitiveNode extends SqueakBytecodeNode {
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
-        Object result = null;
+        assert index == 0;
         try {
-            result = primitive.executeGeneric(frame);
+            throw new LocalReturn(primitive.executeGeneric(frame));
         } catch (UnsupportedSpecializationException
                         | PrimitiveFailed
                         | IndexOutOfBoundsException e) {
-            method.image.debugPrint("Primitive failed: ", method);
-            method.image.debugPrint(frame.getArguments());
-            method.image.debugPrint(Arrays.stream(frame.getArguments()).map(Object::getClass).toArray());
             return null;
-        }
-        if (index == 0) {
-            throw new LocalReturn(result);
-        } else {
-            return result;
         }
     }
 

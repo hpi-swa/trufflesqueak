@@ -47,13 +47,6 @@ public class PrimPerform extends PrimitiveNode {
         Object[] newArguments = Arrays.copyOfRange(args, 1, args.length);
         newArguments[0] = receiver; // the second argument was the selector, put the receiver here
         Object lookupResult = lookupNode.executeLookup(rcvrClass, selector);
-        Object result = null;
-        try {
-            method.image.enterMethod(lookupResult, selector);
-            result = dispatchNode.executeDispatch(lookupResult, newArguments);
-            return result;
-        } finally {
-            method.image.leaveMethod(result);
-        }
+        return dispatchNode.executeDispatch(lookupResult, newArguments);
     }
 }
