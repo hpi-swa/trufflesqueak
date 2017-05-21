@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Vector;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.EmptyObject;
@@ -18,10 +17,10 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.SqueakObject;
 
 public class Chunk {
-    SqueakObject object;
+    Object object;
 
-    private BaseSqueakObject sqClass;
-    private BaseSqueakObject[] pointers;
+    private ClassObject sqClass;
+    private Object[] pointers;
 
     final int classid;
     final int pos;
@@ -34,12 +33,12 @@ public class Chunk {
     private final SqueakImageContext image;
 
     public Chunk(ImageReader reader,
-            SqueakImageContext image,
-            long size,
-            int format,
-            int classid,
-            int hash,
-            int pos) {
+                    SqueakImageContext image,
+                    long size,
+                    int format,
+                    int classid,
+                    int hash,
+                    int pos) {
         this.reader = reader;
         this.image = image;
         this.size = size;
@@ -70,11 +69,13 @@ public class Chunk {
         if (object == null) {
             assert format == 1;
             object = new ClassObject(image);
+        } else if (object == ImageReader.NIL_OBJECT_PLACEHOLDER) {
+            return null;
         }
-        return object;
+        return (ClassObject) object;
     }
 
-    public SqueakObject asObject() {
+    public Object asObject() {
         if (object == null) {
             if (format == 0) {
                 // no fields
@@ -83,8 +84,7 @@ public class Chunk {
                 // fixed pointers
                 // classes should already be instantiated at this point, check a
                 // bit
-                assert this.getSqClass() != image.metaclass
-                       && this.getSqClass().getSqClass() != image.metaclass;
+                assert this.getSqClass() != image.metaclass && (this.getSqClass() == null || this.getSqClass().getSqClass() != image.metaclass);
                 object = new PointersObject(image);
             } else if (format == 2) {
                 // indexable fields
@@ -111,8 +111,7 @@ public class Chunk {
                 object = new NativeObject(image, (byte) 2);
             } else if (format <= 23) {
                 // bytes
-                if (this.getSqClass() == image.largePositiveIntegerClass
-                    || this.getSqClass() == image.largeNegativeIntegerClass) {
+                if (this.getSqClass() == image.largePositiveIntegerClass || this.getSqClass() == image.largeNegativeIntegerClass) {
                     object = new LargeInteger(image);
                 } else {
                     object = new NativeObject(image, (byte) 1);
@@ -122,7 +121,11 @@ public class Chunk {
                 object = new CompiledMethodObject(image);
             }
         }
-        return object;
+        if (object == ImageReader.NIL_OBJECT_PLACEHOLDER) {
+            return null;
+        } else {
+            return object;
+        }
     }
 
     public long getSize() {
@@ -133,21 +136,21 @@ public class Chunk {
         return hash;
     }
 
-    public BaseSqueakObject getSqClass() {
+    public ClassObject getSqClass() {
         return sqClass;
     }
 
-    public void setSqClass(BaseSqueakObject baseSqueakObject) {
+    public void setSqClass(ClassObject baseSqueakObject) {
         this.sqClass = baseSqueakObject;
     }
 
-    public BaseSqueakObject[] getPointers() {
+    public Object[] getPointers() {
         return getPointers(data.size());
     }
 
-    public BaseSqueakObject[] getPointers(int end) {
+    public Object[] getPointers(int end) {
         if (pointers == null) {
-            pointers = new BaseSqueakObject[end];
+            pointers = new Object[end];
             for (int i = 0; i < end; i++) {
                 pointers[i] = decodePointer(data.get(i));
             }
@@ -155,21 +158,20 @@ public class Chunk {
         return pointers;
     }
 
-    private BaseSqueakObject decodePointer(int ptr) {
+    private Object decodePointer(int ptr) {
         if ((ptr & 3) == 0) {
             Chunk chunk = reader.chunktable.get(ptr);
             if (chunk == null) {
-                System.err.println("Bogus pointer: " + ptr
-                                   + ". Treating as smallint.");
+                System.err.println("Bogus pointer: " + ptr + ". Treating as smallint.");
                 return image.wrap(ptr >> 1);
             } else {
                 return chunk.asObject();
             }
         } else if ((ptr & 1) == 1) {
-            return image.wrap(ptr >> 1);
+            return (int) (ptr >> 1);
         } else {
             assert ((ptr & 3) == 2);
-            return image.wrapChar(ptr >> 2);
+            return (int) (ptr >> 2);
         }
     }
 

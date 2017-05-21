@@ -11,7 +11,7 @@ public class TestBytecodes extends TestSqueak {
         BaseSqueakObject rcvr = new PointersObject(
                         image,
                         image.arrayClass,
-                        new BaseSqueakObject[]{
+                        new Object[]{
                                         image.nil,
                                         image.sqFalse,
                                         image.sqTrue,

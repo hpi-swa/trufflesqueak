@@ -9,8 +9,8 @@ public class ListObject extends AbstractPointersObject implements TruffleObject 
         super(img);
     }
 
-    public ListObject(SqueakImageContext img, ClassObject klass, BaseSqueakObject[] ptrs) {
-        super(img, klass, ptrs);
+    public ListObject(SqueakImageContext img, ClassObject klass, Object[] objects) {
+        super(img, klass, objects);
     }
 
     public ListObject(SqueakImageContext image, ClassObject classObject, int size) {
@@ -19,6 +19,6 @@ public class ListObject extends AbstractPointersObject implements TruffleObject 
 
     @Override
     public int instsize() {
-        return ((ClassObject) getSqClass()).getBasicInstanceSize();
+        return getSqClass().getBasicInstanceSize();
     }
 }

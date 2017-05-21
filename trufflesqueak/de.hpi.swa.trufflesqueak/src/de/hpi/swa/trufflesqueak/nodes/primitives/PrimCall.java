@@ -9,12 +9,12 @@ public abstract class PrimCall extends PrimitiveNode {
     }
 
     public static PrimitiveNode create(CompiledMethodObject cm) {
-        BaseSqueakObject descriptor = cm.getLiteral(0);
-        if (descriptor.size() < 2) {
-            return new PrimitiveNode(cm);
+        Object descriptor = cm.getLiteral(0);
+        if (descriptor instanceof BaseSqueakObject && ((BaseSqueakObject) descriptor).size() >= 2) {
+            String modulename = ((BaseSqueakObject) descriptor).at0(0).toString();
+            String functionname = ((BaseSqueakObject) descriptor).at0(1).toString();
+            return PrimitiveNodeFactory.forName(cm, modulename, functionname);
         }
-        String modulename = descriptor.at0(0).toString();
-        String functionname = descriptor.at0(1).toString();
-        return PrimitiveNodeFactory.forName(cm, modulename, functionname);
+        return new PrimitiveNode(cm);
     }
 }

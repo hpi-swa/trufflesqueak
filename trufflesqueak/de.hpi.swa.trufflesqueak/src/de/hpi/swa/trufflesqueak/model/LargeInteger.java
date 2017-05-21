@@ -3,7 +3,6 @@ package de.hpi.swa.trufflesqueak.model;
 import java.math.BigInteger;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.exceptions.UnwrappingError;
 import de.hpi.swa.trufflesqueak.util.Chunk;
 
 public class LargeInteger extends SqueakObject {
@@ -13,7 +12,7 @@ public class LargeInteger extends SqueakObject {
         super(img);
     }
 
-    public LargeInteger(SqueakImageContext img, BaseSqueakObject klass) {
+    public LargeInteger(SqueakImageContext img, ClassObject klass) {
         super(img, klass);
     }
 
@@ -27,7 +26,7 @@ public class LargeInteger extends SqueakObject {
         integer = i;
     }
 
-    public LargeInteger(SqueakImageContext img, BaseSqueakObject klass, byte[] bytes) {
+    public LargeInteger(SqueakImageContext img, ClassObject klass, byte[] bytes) {
         this(img, klass);
         setBytes(bytes);
     }
@@ -40,17 +39,17 @@ public class LargeInteger extends SqueakObject {
     }
 
     @Override
-    public BaseSqueakObject at0(int l) {
-        return image.wrap(byteAt0(integer.abs(), l));
+    public Object at0(int l) {
+        return byteAt0(integer.abs(), l);
     }
 
     @Override
-    public void atput0(int idx, BaseSqueakObject object) throws UnwrappingError {
-        byte b = (byte) object.unwrapLong();
+    public void atput0(int idx, Object object) {
+        byte b = (byte) object;
         setBytesNative(byteAtPut0(integer, idx, b));
     }
 
-    private void setBytes(byte[] bytes) {
+    public void setBytes(byte[] bytes) {
         byte[] bigEndianBytes = new byte[bytes.length + 1];
         bigEndianBytes[0] = 0;
         for (int i = 0; i < bytes.length; i++) {
@@ -121,18 +120,15 @@ public class LargeInteger extends SqueakObject {
         return integer.toString();
     }
 
-    @Override
-    public int unwrapInt() throws UnwrappingError, ArithmeticException {
+    public BigInteger unwrapBigInt() {
+        return getValue();
+    }
+
+    public int unwrapInt() throws ArithmeticException {
         return getValue().intValueExact();
     }
 
-    @Override
-    public long unwrapLong() throws UnwrappingError, ArithmeticException {
+    public long unwrapLong() throws ArithmeticException {
         return getValue().longValueExact();
-    }
-
-    @Override
-    public BigInteger unwrapBigInt() throws UnwrappingError {
-        return getValue();
     }
 }

@@ -8,7 +8,6 @@ import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
 import de.hpi.swa.trufflesqueak.instrumentation.PrettyPrintVisitor;
-import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
@@ -30,11 +29,10 @@ public class PushNewArrayNode extends SqueakBytecodeNode {
     @Override
     @ExplodeLoop
     public Object executeGeneric(VirtualFrame frame) {
-        BaseSqueakObject[] ptrs = new BaseSqueakObject[arraySize];
+        Object[] ptrs = new Object[arraySize];
         if (popIntoArrayNodes != null) {
             for (int i = 0; i < arraySize; i++) {
-                // TODO: FIXME: popping primitive values into an array
-                ptrs[i] = (BaseSqueakObject) popIntoArrayNodes[i].executeGeneric(frame);
+                ptrs[i] = popIntoArrayNodes[i].executeGeneric(frame);
             }
         }
         return method.image.wrap(ptrs);

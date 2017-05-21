@@ -2,8 +2,6 @@ package de.hpi.swa.trufflesqueak;
 
 import java.util.Arrays;
 
-import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
-
 public class SqueakConfig {
     private final boolean verbose;
     private final boolean tracing;
@@ -59,11 +57,11 @@ public class SqueakConfig {
         return tracing;
     }
 
-    public BaseSqueakObject getReceiver(SqueakImageContext img) {
+    public Object getReceiver() {
         if (receiver.equals("nil")) {
-            return img.nil;
+            return null;
         } else {
-            return img.wrap(Integer.parseInt(receiver));
+            return Integer.parseInt(receiver);
         }
     }
 

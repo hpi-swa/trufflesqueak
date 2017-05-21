@@ -11,13 +11,13 @@ import java.util.HashMap;
 import java.util.Vector;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.SqueakObject;
 
 @SuppressWarnings("unused")
 public class ImageReader {
+    public static final Object NIL_OBJECT_PLACEHOLDER = new Object();
     private static final int SPECIAL_SELECTORS_INDEX = 23;
     private static final int FREE_OBJECT_CLASS_INDEX_PUN = 0;
     private static final long SLOTS_MASK = 0xFF << 56;
@@ -205,7 +205,7 @@ public class ImageReader {
         return chunktable.get(specialObjectsChunk.data().get(idx));
     }
 
-    void setPrebuiltObject(int idx, SqueakObject object) {
+    void setPrebuiltObject(int idx, Object object) {
         specialObjectChunk(idx).object = object;
     }
 
@@ -227,7 +227,7 @@ public class ImageReader {
         classChunkOf(specialObjectChunk(1), image).object = image.falseClass;
         classChunkOf(specialObjectChunk(2), image).object = image.trueClass;
 
-        setPrebuiltObject(0, image.nil);
+        setPrebuiltObject(0, NIL_OBJECT_PLACEHOLDER);
         setPrebuiltObject(1, image.sqFalse);
         setPrebuiltObject(2, image.sqTrue);
         setPrebuiltObject(3, image.schedulerAssociation);
@@ -287,8 +287,6 @@ public class ImageReader {
                             assert metaClass.data().size() == 6;
                             metaClass.asClassObject();
                             classInstance.asClassObject();
-                        } else {
-                            assert metaClass.getSqClass() instanceof ClassObject;
                         }
                     }
                 }
@@ -298,7 +296,10 @@ public class ImageReader {
         // fillin objects
         output.println("Fillin Objects");
         for (Chunk chunk : chunklist) {
-            chunk.asObject().fillin(chunk);
+            Object chunkObject = chunk.asObject();
+            if (chunkObject instanceof SqueakObject) {
+                ((SqueakObject) chunkObject).fillin(chunk);
+            }
         }
 
         output.println();
@@ -312,10 +313,8 @@ public class ImageReader {
         return chunktable.get(classTablePage.data().get(minorIdx));
     }
 
-    BaseSqueakObject classOf(Chunk chunk, SqueakImageContext image) {
-        SqueakObject sqClass = classChunkOf(chunk, image).asClassObject();
-        assert sqClass == image.nil || sqClass instanceof ClassObject;
-        return sqClass;
+    ClassObject classOf(Chunk chunk, SqueakImageContext image) {
+        return (ClassObject) classChunkOf(chunk, image).asClassObject();
     }
 
     int majorClassIndexOf(int classid) {

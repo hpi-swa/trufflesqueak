@@ -7,7 +7,6 @@ import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.exceptions.UnwrappingError;
 import de.hpi.swa.trufflesqueak.util.Chunk;
 
 public class NativeObject extends SqueakObject implements TruffleObject {
@@ -68,13 +67,13 @@ public class NativeObject extends SqueakObject implements TruffleObject {
     }
 
     @Override
-    public BaseSqueakObject at0(int index) {
-        return image.wrap(getNativeAt0(index));
+    public Object at0(int index) {
+        return getNativeAt0(index);
     }
 
     @Override
-    public void atput0(int index, BaseSqueakObject object) throws UnwrappingError {
-        setNativeAt0(index, (int) object.unwrapLong());
+    public void atput0(int index, Object object) {
+        setNativeAt0(index, (int) object);
     }
 
     public void atput0(int index, int value) {

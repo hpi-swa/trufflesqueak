@@ -33,12 +33,12 @@ public class EmptyObject extends SqueakObject implements TruffleObject {
     }
 
     @Override
-    public BaseSqueakObject at0(int idx) {
+    public Object at0(int idx) {
         throw new ArrayIndexOutOfBoundsException();
     }
 
     @Override
-    public void atput0(int idx, BaseSqueakObject obj) {
+    public void atput0(int idx, Object obj) {
         throw new ArrayIndexOutOfBoundsException();
     }
 

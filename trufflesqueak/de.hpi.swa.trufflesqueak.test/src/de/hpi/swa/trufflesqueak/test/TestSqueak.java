@@ -40,7 +40,7 @@ public abstract class TestSqueak extends TestCase {
     }
 
     public CompiledCodeObject makeMethod(byte[] bytes) {
-        CompiledCodeObject cm = new CompiledMethodObject(image, bytes, new BaseSqueakObject[]{image.wrap(68419598), null, null});
+        CompiledCodeObject cm = new CompiledMethodObject(image, bytes, new Object[]{68419598, null, null});
         return cm;
     }
 
@@ -74,7 +74,7 @@ public abstract class TestSqueak extends TestCase {
 
     protected Object runPrim(int primCode, Object rcvr, Object... arguments) {
         CompiledCodeObject cm = makeMethod(new int[]{139, primCode & 0xFF, (primCode & 0xFF00) >> 8});
-        cm.setLiteral(0, image.wrap(0x10000));
+        cm.setLiteral(0, 0x10000);
         return runMethod(cm, rcvr, arguments);
     }
 }

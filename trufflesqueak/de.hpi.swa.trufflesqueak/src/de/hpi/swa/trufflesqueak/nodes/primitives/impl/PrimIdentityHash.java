@@ -14,22 +14,27 @@ public class PrimIdentityHash extends PrimitiveUnaryOperation {
     }
 
     @Specialization
-    int hashInt(int obj) {
+    int hash(char obj) {
         return obj;
     }
 
     @Specialization
-    int hashLong(long obj) {
+    int hash(int obj) {
+        return obj;
+    }
+
+    @Specialization
+    int hash(long obj) {
         return (int) obj;
     }
 
     @Specialization
-    int hashLong(BigInteger obj) {
+    int hash(BigInteger obj) {
         return obj.hashCode();
     }
 
     @Specialization
-    int hashObject(BaseSqueakObject obj) {
+    int hash(BaseSqueakObject obj) {
         return obj.squeakHash();
     }
 }

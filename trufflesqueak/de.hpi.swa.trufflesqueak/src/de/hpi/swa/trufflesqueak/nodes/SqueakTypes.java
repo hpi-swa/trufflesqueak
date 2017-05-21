@@ -11,26 +11,17 @@ import de.hpi.swa.trufflesqueak.model.BlockClosure;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.model.FalseObject;
-import de.hpi.swa.trufflesqueak.model.ImmediateCharacter;
 import de.hpi.swa.trufflesqueak.model.LargeInteger;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
-import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
-import de.hpi.swa.trufflesqueak.model.SmallInteger;
-import de.hpi.swa.trufflesqueak.model.TrueObject;
 
 @TypeSystem({boolean.class,
+                char.class,
                 int.class,
                 long.class,
                 BigInteger.class,
                 String.class,
-                NilObject.class,
-                FalseObject.class,
-                TrueObject.class,
-                SmallInteger.class,
-                ImmediateCharacter.class,
                 LargeInteger.class,
                 ClassObject.class,
                 ListObject.class,
@@ -56,5 +47,10 @@ public abstract class SqueakTypes {
     @TruffleBoundary
     public static BigInteger castBigInteger(long value) {
         return BigInteger.valueOf(value);
+    }
+
+    @ImplicitCast
+    public static BigInteger castBigInteger(LargeInteger value) {
+        return value.getValue();
     }
 }

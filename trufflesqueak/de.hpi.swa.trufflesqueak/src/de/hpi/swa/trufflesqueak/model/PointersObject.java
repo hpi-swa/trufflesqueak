@@ -9,8 +9,8 @@ public class PointersObject extends AbstractPointersObject implements TruffleObj
         super(img);
     }
 
-    public PointersObject(SqueakImageContext img, BaseSqueakObject sqClass, BaseSqueakObject[] ptrs) {
-        super(img, sqClass, ptrs);
+    public PointersObject(SqueakImageContext img, ClassObject sqClass, Object[] objects) {
+        super(img, sqClass, objects);
     }
 
     public PointersObject(SqueakImageContext image, ClassObject classObject, int size) {

@@ -6,14 +6,14 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
-import de.hpi.swa.trufflesqueak.nodes.context.MethodLiteralNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.context.MethodLiteralNode;
 
 public class LiteralConstantNode extends SqueakBytecodeNode {
     @Child SqueakNode literalNode;
 
     public LiteralConstantNode(CompiledCodeObject method, int idx, int literalIdx) {
         super(method, idx);
-        literalNode = MethodLiteralNodeGen.create(method, literalIdx);
+        literalNode = new MethodLiteralNode(method, literalIdx);
     }
 
     @Override

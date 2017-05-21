@@ -7,23 +7,23 @@ import de.hpi.swa.trufflesqueak.util.Chunk;
 
 public abstract class AbstractPointersObject extends SqueakObject {
 
-    protected BaseSqueakObject[] pointers;
+    protected Object[] pointers;
 
     public AbstractPointersObject(SqueakImageContext img) {
         super(img);
     }
 
-    public AbstractPointersObject(SqueakImageContext img, BaseSqueakObject klass) {
+    public AbstractPointersObject(SqueakImageContext img, ClassObject klass) {
         super(img, klass);
     }
 
-    public AbstractPointersObject(SqueakImageContext img, BaseSqueakObject sqClass, BaseSqueakObject[] ptrs) {
+    public AbstractPointersObject(SqueakImageContext img, ClassObject sqClass, Object[] ptrs) {
         this(img, sqClass);
         pointers = ptrs;
     }
 
     public AbstractPointersObject(SqueakImageContext img, ClassObject classObject, int size) {
-        this(img, classObject, new BaseSqueakObject[size]);
+        this(img, classObject, new Object[size]);
     }
 
     public ForeignAccess getForeignAccess() {
@@ -38,12 +38,12 @@ public abstract class AbstractPointersObject extends SqueakObject {
     }
 
     @Override
-    public BaseSqueakObject at0(int i) {
+    public Object at0(int i) {
         return getPointers()[i];
     }
 
     @Override
-    public void atput0(int i, BaseSqueakObject obj) {
+    public void atput0(int i, Object obj) {
         getPointers()[i] = obj;
     }
 
@@ -51,7 +51,7 @@ public abstract class AbstractPointersObject extends SqueakObject {
     public boolean become(BaseSqueakObject other) {
         if (other instanceof AbstractPointersObject) {
             if (super.become(other)) {
-                BaseSqueakObject[] pointers2 = ((PointersObject) other).getPointers();
+                Object[] pointers2 = ((PointersObject) other).getPointers();
                 ((PointersObject) other).pointers = this.getPointers();
                 pointers = pointers2;
                 return true;
@@ -70,7 +70,7 @@ public abstract class AbstractPointersObject extends SqueakObject {
         return size();
     }
 
-    public BaseSqueakObject[] getPointers() {
+    public Object[] getPointers() {
         return pointers;
     }
 

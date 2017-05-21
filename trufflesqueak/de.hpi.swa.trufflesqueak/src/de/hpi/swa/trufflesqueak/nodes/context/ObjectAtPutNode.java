@@ -7,7 +7,6 @@ import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.trufflesqueak.exceptions.UnwrappingError;
 import de.hpi.swa.trufflesqueak.instrumentation.PrettyPrintVisitor;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -31,55 +30,31 @@ public abstract class ObjectAtPutNode extends SqueakNodeWithMethod {
 
     @Specialization
     protected Object write(NativeObject object, int value) {
+        object.setNativeAt0(index, value);
+        return value;
+    }
+
+    @Specialization
+    protected Object write(BaseSqueakObject object, int value) {
         object.atput0(index, value);
         return value;
     }
 
     @Specialization
     protected Object write(BaseSqueakObject object, long value) {
-        try {
-            object.atput0(index, object.image.wrap(value));
-        } catch (UnwrappingError e) {
-            throw new RuntimeException(e);
-        }
+        object.atput0(index, value);
         return value;
     }
 
     @Specialization
     protected Object write(BaseSqueakObject object, BigInteger value) {
-        try {
-            object.atput0(index, object.image.wrap(value));
-        } catch (UnwrappingError e) {
-            throw new RuntimeException(e);
-        }
+        object.atput0(index, object.image.wrap(value));
         return value;
     }
 
     @Specialization
-    protected Object write(BaseSqueakObject object, boolean value) {
-        try {
-            object.atput0(index, value ? method.image.sqTrue : method.image.sqFalse);
-        } catch (UnwrappingError e) {
-            throw new RuntimeException(e);
-        }
-        return value;
-    }
-
-    @Specialization
-    protected Object write(BaseSqueakObject object, BaseSqueakObject value) {
-        try {
-            object.atput0(index, value);
-        } catch (UnwrappingError e) {
-            throw new RuntimeException(e);
-        }
-        return value;
-    }
-
-    @Specialization(rewriteOn = UnwrappingError.class)
-    protected Object write(BaseSqueakObject object, Object value) throws UnwrappingError {
-        if (value == null) {
-            object.atput0(index, method.image.nil);
-        }
+    protected Object write(BaseSqueakObject object, Object value) {
+        object.atput0(index, value);
         return value;
     }
 

@@ -24,7 +24,7 @@ public class BlockClosure extends BaseSqueakObject {
     @CompilationFinal private Object receiver;
     @CompilationFinal(dimensions = 1) private Object[] stack;
     @CompilationFinal private Object frameMarker;
-    @CompilationFinal private BaseSqueakObject context;
+    @CompilationFinal private Object context;
     @CompilationFinal private CompiledBlockObject block;
 
     public BlockClosure(SqueakImageContext img) {
@@ -44,7 +44,7 @@ public class BlockClosure extends BaseSqueakObject {
         // FIXME
     }
 
-    private BaseSqueakObject getOrPrepareContext() {
+    private Object getOrPrepareContext() {
         if (context == null) {
             Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Integer>() {
                 @Override
@@ -64,23 +64,23 @@ public class BlockClosure extends BaseSqueakObject {
     }
 
     @Override
-    public BaseSqueakObject at0(int i) {
+    public Object at0(int i) {
         switch (i) {
             case BLKCLSR_OUTER_CONTEXT:
                 return getOrPrepareContext();
             case BLKCLSR_COMPILEDBLOCK:
                 return block;
             case BLKCLSR_NUMARGS:
-                return image.wrap(block.getNumArgs());
+                return block.getNumArgs();
             case BLKCLSR_RECEIVER:
-                return (BaseSqueakObject) receiver;
+                return receiver;
             default:// FIXME
-                return (BaseSqueakObject) stack[i - BLKCLSR_SIZE];
+                return stack[i - BLKCLSR_SIZE];
         }
     }
 
     @Override
-    public void atput0(int i, BaseSqueakObject obj) {
+    public void atput0(int i, Object obj) {
         switch (i) {
             case BLKCLSR_OUTER_CONTEXT:
                 context = obj;
@@ -107,7 +107,7 @@ public class BlockClosure extends BaseSqueakObject {
     }
 
     @Override
-    public BaseSqueakObject getSqClass() {
+    public ClassObject getSqClass() {
         return image.blockClosureClass;
     }
 

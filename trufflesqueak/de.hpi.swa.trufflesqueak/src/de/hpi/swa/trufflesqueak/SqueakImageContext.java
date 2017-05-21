@@ -11,28 +11,22 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.Truffle;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
-import de.hpi.swa.trufflesqueak.model.BooleanObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.model.FalseObject;
-import de.hpi.swa.trufflesqueak.model.ImmediateCharacter;
 import de.hpi.swa.trufflesqueak.model.LargeInteger;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
-import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
-import de.hpi.swa.trufflesqueak.model.SmallInteger;
 import de.hpi.swa.trufflesqueak.model.SqueakObject;
-import de.hpi.swa.trufflesqueak.model.TrueObject;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakContextNode;
 import de.hpi.swa.trufflesqueak.util.ImageReader;
 
 public class SqueakImageContext {
     // Special objects
-    public final NilObject nil = new NilObject(this);
-    public final FalseObject sqFalse = new FalseObject(this);
-    public final TrueObject sqTrue = new TrueObject(this);
+    public final Object nil = null;
+    public final boolean sqFalse = false;
+    public final boolean sqTrue = true;
     public final ListObject specialObjectsArray = new ListObject(this);
     public final PointersObject schedulerAssociation = new PointersObject(this);
     public final ClassObject characterClass = new ClassObject(this);
@@ -92,11 +86,10 @@ public class SqueakImageContext {
     public final NativeObject y = new NativeObject(this, (byte) 1);
     public final NativeObject div = new NativeObject(this, (byte) 1);
     private final CompiledCodeObject entryPoint;
-    private int padding;
     public final SqueakConfig config;
 
-    private static final BaseSqueakObject[] ENTRY_POINT_LITERALS = new BaseSqueakObject[]{
-                    new SmallInteger(null, 0),
+    private static final Object[] ENTRY_POINT_LITERALS = new Object[]{
+                    0,
                     null, new NativeObject(null, null, "SendSelector".getBytes()),
                     new NativeObject(null, null, "TruffleSqueakEntryPoint".getBytes()), // selector
                     null // compiled in class
@@ -122,14 +115,17 @@ public class SqueakImageContext {
         PointersObject scheduler = (PointersObject) schedulerAssociation.at0(1);
         PointersObject activeProcess = (PointersObject) scheduler.at0(1);
         ListObject activeContext = (ListObject) activeProcess.at0(1);
-        activeProcess.atput0(1, nil);
+        activeProcess.atput0(1, null);
         return Truffle.getRuntime().createCallTarget(new SqueakContextNode(language, activeContext));
     }
 
     public CallTarget getEntryPoint() {
-        BaseSqueakObject receiver = config.getReceiver(this);
+        Object receiver = config.getReceiver();
         String selector = config.getSelector();
-        ClassObject receiverClass = (ClassObject) receiver.getSqClass();
+        ClassObject receiverClass = nilClass;
+        if (receiver instanceof Integer) {
+            receiverClass = smallIntegerClass;
+        }
         CompiledCodeObject lookupResult = (CompiledCodeObject) receiverClass.lookup(selector);
         entryPoint.setLiteral(1, receiver);
         entryPoint.setLiteral(2, lookupResult.getCompiledInSelector());
@@ -148,47 +144,27 @@ public class SqueakImageContext {
         return language;
     }
 
-    public BooleanObject wrap(boolean flag) {
-        if (flag) {
-            return sqTrue;
-        } else {
-            return sqFalse;
-        }
-    }
-
     public BaseSqueakObject wrap(Object obj) {
-        CompilerAsserts.neverPartOfCompilation("Only used in testing");
-        if (obj instanceof Integer) {
-            return wrap(((Integer) obj).intValue());
-        } else if (obj instanceof Long) {
-            return wrap((long) obj);
-        } else if (obj instanceof BigInteger) {
+        CompilerAsserts.neverPartOfCompilation();
+        if (obj instanceof BigInteger) {
             return wrap((BigInteger) obj);
         } else if (obj instanceof String) {
             return wrap((String) obj);
-        } else if (obj instanceof BaseSqueakObject[]) {
-            return wrap((BaseSqueakObject[]) obj);
+        } else if (obj instanceof Object[]) {
+            return wrap((Object[]) obj);
         }
         throw new RuntimeException("Don't know how to wrap " + obj);
-    }
-
-    public SmallInteger wrap(long i) {
-        return new SmallInteger(this, i);
     }
 
     public BaseSqueakObject wrap(BigInteger i) {
         return new LargeInteger(this, i);
     }
 
-    public ImmediateCharacter wrapChar(int i) {
-        return new ImmediateCharacter(this, i);
-    }
-
     public NativeObject wrap(String s) {
         return new NativeObject(this, this.stringClass, s.getBytes());
     }
 
-    public ListObject wrap(BaseSqueakObject[] elements) {
+    public ListObject wrap(Object[] elements) {
         return new ListObject(this, arrayClass, elements);
     }
 }

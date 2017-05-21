@@ -6,12 +6,9 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 
-import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosure;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.ImmediateCharacter;
-import de.hpi.swa.trufflesqueak.model.SmallInteger;
 import de.hpi.swa.trufflesqueak.model.SqueakObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
 
@@ -38,12 +35,6 @@ public abstract class SqueakLookupClassNode extends Node {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "isNull(object)", rewriteOn = UnexpectedResultException.class)
-    public ClassObject nilClass(Object object) throws UnexpectedResultException {
-        return method.image.nilClass;
-    }
-
-    @SuppressWarnings("unused")
     @Specialization
     public ClassObject squeakClass(int object) {
         return method.image.smallIntegerClass;
@@ -52,6 +43,12 @@ public abstract class SqueakLookupClassNode extends Node {
     @SuppressWarnings("unused")
     @Specialization
     public ClassObject squeakClass(long object) {
+        return method.image.smallIntegerClass;
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization
+    public ClassObject squeakClass(char object) {
         return method.image.smallIntegerClass;
     }
 
@@ -65,18 +62,8 @@ public abstract class SqueakLookupClassNode extends Node {
     }
 
     @Specialization
-    public ClassObject squeakClass(ImmediateCharacter ch) {
-        return (ClassObject) ch.getSqClass();
-    }
-
-    @Specialization
-    public ClassObject squeakClass(SmallInteger ch) {
-        return (ClassObject) ch.getSqClass();
-    }
-
-    @Specialization
     public ClassObject squeakClass(BlockClosure ch) {
-        return (ClassObject) ch.getSqClass();
+        return ch.getSqClass();
     }
 
     @Specialization(rewriteOn = UnexpectedResultException.class)
@@ -84,8 +71,9 @@ public abstract class SqueakLookupClassNode extends Node {
         return SqueakTypesGen.expectClassObject(object.getSqClass());
     }
 
-    @Specialization
-    public BaseSqueakObject squeakClass(@SuppressWarnings("unused") Object object) {
-        return method.image.nil;
+    @SuppressWarnings("unused")
+    @Specialization(guards = "isNull(object)")
+    public ClassObject nilClass(Object object) {
+        return method.image.nilClass;
     }
 }

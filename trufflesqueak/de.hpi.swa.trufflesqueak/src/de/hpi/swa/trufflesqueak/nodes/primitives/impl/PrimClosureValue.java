@@ -90,7 +90,7 @@ public abstract class PrimClosureValue extends PrimitiveNode {
 
         @Specialization
         protected Object value(BlockClosure block, ListObject argArray) {
-            return dispatch.executeBlock(block, block.getFrameArguments((Object[]) argArray.getPointers()));
+            return dispatch.executeBlock(block, block.getFrameArguments(argArray.getPointers()));
         }
     }
 }

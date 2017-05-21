@@ -1,9 +1,6 @@
 package de.hpi.swa.trufflesqueak.model;
 
-import java.math.BigInteger;
-
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.exceptions.UnwrappingError;
 import de.hpi.swa.trufflesqueak.util.Chunk;
 
 public abstract class BaseSqueakObject {
@@ -21,14 +18,14 @@ public abstract class BaseSqueakObject {
         return "a " + getSqClassName();
     }
 
-    public abstract BaseSqueakObject getSqClass();
+    public abstract ClassObject getSqClass();
 
     /**
      * Set the class of this object to newCls. Not possible for all objects.
      *
      * @param newCls
      */
-    public void setSqClass(BaseSqueakObject newCls) {
+    public void setSqClass(ClassObject newCls) {
         throw new RuntimeException("cannot do this");
     }
 
@@ -55,9 +52,9 @@ public abstract class BaseSqueakObject {
         return false;
     }
 
-    public abstract BaseSqueakObject at0(int l);
+    public abstract Object at0(int l);
 
-    public abstract void atput0(int idx, BaseSqueakObject object) throws UnwrappingError;
+    public abstract void atput0(int idx, Object object);
 
     public abstract int size();
 
@@ -69,25 +66,5 @@ public abstract class BaseSqueakObject {
 
     public int varsize() {
         return size() - instsize();
-    }
-
-    public int unwrapInt() throws UnwrappingError {
-        throw new UnwrappingError();
-    }
-
-    public long unwrapLong() throws UnwrappingError {
-        throw new UnwrappingError();
-    }
-
-    public BigInteger unwrapBigInt() throws UnwrappingError {
-        throw new UnwrappingError();
-    }
-
-    public int unsafeUnwrapInt() {
-        try {
-            return unwrapInt();
-        } catch (UnwrappingError e) {
-            throw new RuntimeException(e);
-        }
     }
 }

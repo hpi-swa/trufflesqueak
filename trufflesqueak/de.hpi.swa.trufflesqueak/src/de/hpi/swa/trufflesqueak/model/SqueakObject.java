@@ -5,14 +5,14 @@ import de.hpi.swa.trufflesqueak.util.Chunk;
 
 public abstract class SqueakObject extends BaseSqueakObject {
     private int hash;
-    private BaseSqueakObject sqClass;
+    private ClassObject sqClass;
 
     public SqueakObject(SqueakImageContext img) {
         super(img);
         hash = 0;
     }
 
-    public SqueakObject(SqueakImageContext img, BaseSqueakObject klass) {
+    public SqueakObject(SqueakImageContext img, ClassObject klass) {
         super(img);
         hash = 0;
         sqClass = klass;
@@ -25,12 +25,12 @@ public abstract class SqueakObject extends BaseSqueakObject {
     }
 
     @Override
-    public BaseSqueakObject getSqClass() {
+    public ClassObject getSqClass() {
         return sqClass;
     }
 
     @Override
-    public void setSqClass(BaseSqueakObject newCls) {
+    public void setSqClass(ClassObject newCls) {
         sqClass = newCls;
     }
 
@@ -41,7 +41,7 @@ public abstract class SqueakObject extends BaseSqueakObject {
             ((SqueakObject) other).hash = this.hash;
             this.hash = hash2;
 
-            BaseSqueakObject sqClass2 = ((SqueakObject) other).sqClass;
+            ClassObject sqClass2 = ((SqueakObject) other).sqClass;
             ((SqueakObject) other).sqClass = this.sqClass;
             this.sqClass = sqClass2;
             return true;

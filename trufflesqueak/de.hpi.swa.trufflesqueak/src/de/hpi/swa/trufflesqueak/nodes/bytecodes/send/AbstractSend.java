@@ -11,7 +11,6 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 
 import de.hpi.swa.trufflesqueak.instrumentation.PrettyPrintVisitor;
-import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.DispatchNode;
@@ -28,14 +27,14 @@ import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNodeGen;
 
 public abstract class AbstractSend extends SqueakBytecodeNode {
-    public final BaseSqueakObject selector;
+    public final Object selector;
     @Child public SqueakNode receiverNode;
     @Child protected SqueakLookupClassNode lookupClassNode;
     @Children protected final SqueakNode[] argumentNodes;
     @Child private LookupNode lookupNode;
     @Child private DispatchNode dispatchNode;
 
-    public AbstractSend(CompiledCodeObject method, int idx, BaseSqueakObject sel, int argcount) {
+    public AbstractSend(CompiledCodeObject method, int idx, Object sel, int argcount) {
         super(method, idx);
         selector = sel;
         argumentNodes = new SqueakNode[argcount];
@@ -44,7 +43,7 @@ public abstract class AbstractSend extends SqueakBytecodeNode {
         lookupNode = LookupNodeGen.create();
     }
 
-    protected AbstractSend(CompiledCodeObject method, int idx, BaseSqueakObject sel, SqueakNode[] argNodes) {
+    protected AbstractSend(CompiledCodeObject method, int idx, Object sel, SqueakNode[] argNodes) {
         super(method, idx);
         selector = sel;
         argumentNodes = argNodes;

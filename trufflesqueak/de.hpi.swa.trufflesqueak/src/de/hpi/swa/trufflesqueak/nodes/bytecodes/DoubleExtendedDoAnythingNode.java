@@ -4,7 +4,6 @@ import java.util.Stack;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SendSelfSelector;
@@ -25,7 +24,7 @@ public abstract class DoubleExtendedDoAnythingNode {
     }
 
     public static class StoreIntoAssociationNode extends SqueakBytecodeNode {
-        private final BaseSqueakObject literal;
+        private final Object literal;
         private SqueakNode valueNode;
         @Child SqueakNode storeNode;
 

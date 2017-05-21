@@ -29,13 +29,13 @@ public class ClassObject extends AbstractPointersObject {
         super(img);
     }
 
-    public ClassObject(SqueakImageContext img, BaseSqueakObject sqClass, BaseSqueakObject[] ptrs) {
+    public ClassObject(SqueakImageContext img, ClassObject sqClass, Object[] ptrs) {
         super(img, sqClass);
         pointers = ptrs;
     }
 
     public ClassObject(SqueakImageContext image, ClassObject classObject, int size) {
-        this(image, classObject, new BaseSqueakObject[size]);
+        this(image, classObject, new Object[size]);
     }
 
     @Override
@@ -49,12 +49,12 @@ public class ClassObject extends AbstractPointersObject {
         assert isClass();
         if (isAMetaclass()) {
             // metaclasses store their singleton instance in the last field
-            BaseSqueakObject classInstance = at0(getPointers().length - 1);
+            Object classInstance = at0(getPointers().length - 1);
             if (classInstance instanceof ClassObject) {
                 return "Metaclass (" + ((ClassObject) classInstance).getName() + ")";
             }
         } else {
-            BaseSqueakObject nameObj = getName();
+            Object nameObj = getName();
             if (nameObj instanceof NativeObject) {
                 return nameObj.toString();
             }
@@ -78,19 +78,19 @@ public class ClassObject extends AbstractPointersObject {
     public void fillin(Chunk chunk) {
         super.fillin(chunk);
         // initialize the subclasses set
-        setFormat(at0(FORMAT_INDEX).unsafeUnwrapInt());
+        setFormat((int) at0(FORMAT_INDEX));
         setSuperclass(getSuperclass());
     }
 
     public void setFormat(int format) {
-        super.atput0(FORMAT_INDEX, image.wrap(format));
+        super.atput0(FORMAT_INDEX, format);
         instSpec = (format >> 16) & 0x1f;
         instanceSize = format & 0xffff;
         classFormatStable.invalidate();
     }
 
-    public void setSuperclass(BaseSqueakObject superclass) {
-        BaseSqueakObject oldSuperclass = getSuperclass();
+    public void setSuperclass(Object superclass) {
+        Object oldSuperclass = getSuperclass();
         super.atput0(SUPERCLASS_INDEX, superclass);
         if (oldSuperclass instanceof ClassObject) {
             ((ClassObject) oldSuperclass).detachSubclass(this);
@@ -115,22 +115,22 @@ public class ClassObject extends AbstractPointersObject {
         subclasses.remove(classObject);
     }
 
-    public BaseSqueakObject getSuperclass() {
+    public Object getSuperclass() {
         return at0(SUPERCLASS_INDEX);
     }
 
-    public BaseSqueakObject getMethodDict() {
+    public Object getMethodDict() {
         return at0(METHODDICT_INDEX);
     }
 
-    public BaseSqueakObject getName() {
+    public Object getName() {
         return at0(NAME_INDEX);
     }
 
     @Override
-    public void atput0(int idx, BaseSqueakObject obj) {
-        if (idx == FORMAT_INDEX && obj instanceof SmallInteger) {
-            setFormat(obj.unsafeUnwrapInt());
+    public void atput0(int idx, Object obj) {
+        if (idx == FORMAT_INDEX) {
+            setFormat((int) obj);
         } else if (idx == SUPERCLASS_INDEX) {
             setSuperclass(obj);
         } else {
@@ -148,16 +148,18 @@ public class ClassObject extends AbstractPointersObject {
 
     // TODO: cache the methoddict in a better structure than what Squeak provides
     // ... or use the Squeak hash to decide where to put stuff
-    public BaseSqueakObject lookup(Predicate<BaseSqueakObject> test) {
-        BaseSqueakObject lookupClass = this;
+    public Object lookup(Predicate<Object> test) {
+        Object lookupClass = this;
         while (lookupClass instanceof ClassObject) {
-            BaseSqueakObject methodDict = ((ClassObject) lookupClass).getMethodDict();
+            Object methodDict = ((ClassObject) lookupClass).getMethodDict();
             if (methodDict instanceof ListObject) {
-                BaseSqueakObject values = methodDict.at0(METHODDICT_VALUES_INDEX);
-                for (int i = METHODDICT_NAMES_INDEX; i < methodDict.size(); i++) {
-                    BaseSqueakObject methodSelector = methodDict.at0(i);
-                    if (test.test(methodSelector)) {
-                        return values.at0(i - METHODDICT_NAMES_INDEX);
+                Object values = ((ListObject) methodDict).at0(METHODDICT_VALUES_INDEX);
+                if (values instanceof BaseSqueakObject) {
+                    for (int i = METHODDICT_NAMES_INDEX; i < ((BaseSqueakObject) methodDict).size(); i++) {
+                        Object methodSelector = ((BaseSqueakObject) methodDict).at0(i);
+                        if (test.test(methodSelector)) {
+                            return ((BaseSqueakObject) values).at0(i - METHODDICT_NAMES_INDEX);
+                        }
                     }
                 }
             }
@@ -166,20 +168,20 @@ public class ClassObject extends AbstractPointersObject {
         return null;
     }
 
-    public BaseSqueakObject lookup(BaseSqueakObject selector) {
-        BaseSqueakObject result = lookup(methodSelector -> methodSelector == selector);
+    public Object lookup(Object selector) {
+        Object result = lookup(methodSelector -> methodSelector == selector);
         if (result == null) {
             return doesNotUnderstand();
         }
         return result;
     }
 
-    public BaseSqueakObject lookup(String selector) {
-        return lookup(methodSelector -> methodSelector.toString().equals(selector));
+    public Object lookup(String selector) {
+        return lookup(methodSelector -> methodSelector != null && methodSelector.toString().equals(selector));
     }
 
-    public BaseSqueakObject doesNotUnderstand() {
-        BaseSqueakObject result = lookup(image.doesNotUnderstand);
+    public Object doesNotUnderstand() {
+        Object result = lookup(image.doesNotUnderstand);
         if (result == null) {
             throw new RuntimeException("doesNotUnderstand missing!");
         }
@@ -218,7 +220,6 @@ public class ClassObject extends AbstractPointersObject {
                 // TODO: Float
                 return new NativeObject(image, this, size, 4);
             case 16: case 17: case 18: case 19: case 20: case 21: case 22: case 23:
-                // TODO: LPI & LNI
                 return new NativeObject(image, this, size, 1);
             default:
                 // FIXME: ignore the size?

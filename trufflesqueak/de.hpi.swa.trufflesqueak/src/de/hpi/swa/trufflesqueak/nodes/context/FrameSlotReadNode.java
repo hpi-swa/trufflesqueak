@@ -29,7 +29,7 @@ public abstract class FrameSlotReadNode extends FrameSlotNode {
     }
 
     @Specialization(guards = "isInt(frame)")
-    public long readInt(VirtualFrame frame) {
+    public int readInt(VirtualFrame frame) {
         return FrameUtil.getIntSafe(frame, slot);
     }
 

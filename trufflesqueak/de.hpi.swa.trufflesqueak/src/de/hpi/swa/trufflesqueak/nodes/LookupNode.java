@@ -17,11 +17,11 @@ public abstract class LookupNode extends Node {
     @SuppressWarnings("unused")
     @Specialization(limit = "LOOKUP_CACHE_SIZE", guards = {"sqClass == cachedSqClass",
                     "selector == cachedSelector"}, assumptions = {"methodLookupStable"})
-    protected static BaseSqueakObject doDirect(ClassObject sqClass, BaseSqueakObject selector,
+    protected static Object doDirect(ClassObject sqClass, BaseSqueakObject selector,
                     @Cached("sqClass") ClassObject cachedSqClass,
                     @Cached("selector") BaseSqueakObject cachedSelector,
                     @Cached("cachedSqClass.getMethodLookupStable()") Assumption methodLookupStable,
-                    @Cached("cachedSqClass.lookup(cachedSelector)") BaseSqueakObject cachedMethod) {
+                    @Cached("cachedSqClass.lookup(cachedSelector)") Object cachedMethod) {
         return cachedMethod;
     }
 

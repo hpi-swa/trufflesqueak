@@ -9,10 +9,8 @@ import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
-import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
-import de.hpi.swa.trufflesqueak.model.SmallInteger;
 
 /**
  * This class implements the global interpreter loop. It creates frames to execute from context
@@ -45,10 +43,10 @@ public class SqueakContextNode extends RootNode {
     }
 
     private static VirtualFrame createFrame(CompiledCodeObject method, ListObject ctxt) {
-        int pc = ctxt.at0(ContextParts.PC.ordinal()).unsafeUnwrapInt();
-        int sp = ctxt.at0(ContextParts.SP.ordinal()).unsafeUnwrapInt();
-        BaseSqueakObject closure = ctxt.at0(ContextParts.CLOSURE.ordinal());
-        BaseSqueakObject receiver = ctxt.at0(ContextParts.RECEIVER.ordinal());
+        int pc = (int) ctxt.at0(ContextParts.PC.ordinal());
+        int sp = (int) ctxt.at0(ContextParts.SP.ordinal());
+        Object closure = ctxt.at0(ContextParts.CLOSURE.ordinal());
+        Object receiver = ctxt.at0(ContextParts.RECEIVER.ordinal());
         VirtualFrame frame = Truffle.getRuntime().createVirtualFrame(EMPTY_ARRAY, method.getFrameDescriptor());
         frame.setInt(method.pcSlot, pc);
         frame.setInt(method.stackPointerSlot, sp);
@@ -65,7 +63,7 @@ public class SqueakContextNode extends RootNode {
     }
 
     private static ListObject getSender(ListObject context) {
-        BaseSqueakObject sender = context.at0(ContextParts.SENDER.ordinal());
+        Object sender = context.at0(ContextParts.SENDER.ordinal());
         if (sender instanceof ListObject) {
             return (ListObject) sender;
         } else {
@@ -79,7 +77,7 @@ public class SqueakContextNode extends RootNode {
         while (true) {
             CompiledCodeObject method = getCurrentMethod(currentContext);
             VirtualFrame currentFrame = createFrame(method, currentContext);
-            int pc = (int) ((SmallInteger) currentContext.at0(ContextParts.PC.ordinal())).getValue();
+            int pc = (int) currentContext.at0(ContextParts.PC.ordinal());
             try {
                 // This will continue execution in the active context until that
                 // context returns or switches to another Squeak process.

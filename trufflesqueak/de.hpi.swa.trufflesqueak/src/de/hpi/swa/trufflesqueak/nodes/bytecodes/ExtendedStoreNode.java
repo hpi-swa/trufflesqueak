@@ -6,7 +6,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotWriteNode;
-import de.hpi.swa.trufflesqueak.nodes.context.MethodLiteralNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.context.MethodLiteralNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtPutNodeGen;
 
 public class ExtendedStoreNode extends ExtendedAccess {
@@ -25,7 +25,7 @@ public class ExtendedStoreNode extends ExtendedAccess {
             case 2:
                 throw new RuntimeException("illegal ExtendedStore bytecode: variable type 2");
             case 3:
-                return ObjectAtPutNodeGen.create(method, 1, MethodLiteralNodeGen.create(method, idx), top);
+                return ObjectAtPutNodeGen.create(method, 1, new MethodLiteralNode(method, idx), top);
             default:
                 throw new RuntimeException("illegal ExtendedStore bytecode");
         }

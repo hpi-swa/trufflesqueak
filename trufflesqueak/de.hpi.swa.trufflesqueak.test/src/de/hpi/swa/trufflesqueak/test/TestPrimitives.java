@@ -20,7 +20,7 @@ public class TestPrimitives extends TestSqueak {
         BaseSqueakObject rcvr = new ListObject(
                         image,
                         image.arrayClass,
-                        new BaseSqueakObject[]{
+                        new Object[]{
                                         image.nil,
                                         image.sqFalse,
                                         image.sqTrue,
@@ -30,7 +30,8 @@ public class TestPrimitives extends TestSqueak {
                                         image.smallIntegerClass,
                                         image.smalltalk,
                                         image.specialObjectsArray});
-        for (int i = 0; i < 8; i++) {
+        assertSame(rcvr.at0(0), null);
+        for (int i = 1; i < 8; i++) {
             assertNotSame(rcvr.at0(i), null);
         }
         Object result = runPrim(105, rcvr, 1, 6, new ListObject(image, image.nilClass, 10), 1);

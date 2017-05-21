@@ -9,13 +9,13 @@ public class CompiledMethodObject extends CompiledCodeObject implements TruffleO
         super(img);
     }
 
-    public CompiledMethodObject(SqueakImageContext img, byte[] bc, BaseSqueakObject[] lits) {
+    public CompiledMethodObject(SqueakImageContext img, byte[] bc, Object[] lits) {
         this(img);
         setBytesAndLiterals(lits, bc);
     }
 
     public CompiledMethodObject(SqueakImageContext img, byte[] bc) {
-        this(img, bc, new BaseSqueakObject[]{img.wrap(0), null, null});
+        this(img, bc, new Object[]{0, null, null});
     }
 
     public CompiledMethodObject(SqueakImageContext img, ClassObject klass) {
@@ -25,13 +25,13 @@ public class CompiledMethodObject extends CompiledCodeObject implements TruffleO
     @Override
     public NativeObject getCompiledInSelector() {
         if (literals.length > 1) {
-            BaseSqueakObject lit = literals[literals.length - 2];
+            Object lit = literals[literals.length - 2];
             if (lit == null) {
                 return null;
             } else if (lit instanceof NativeObject) {
                 return (NativeObject) lit;
-            } else if (lit.size() >= 2) {
-                lit = lit.at0(1);
+            } else if ((lit instanceof BaseSqueakObject) && ((BaseSqueakObject) lit).size() >= 2) {
+                lit = ((BaseSqueakObject) lit).at0(1);
                 if (lit instanceof NativeObject) {
                     return (NativeObject) lit;
                 }
@@ -45,7 +45,7 @@ public class CompiledMethodObject extends CompiledCodeObject implements TruffleO
         if (literals.length == 0) {
             return null;
         }
-        BaseSqueakObject baseSqueakObject = literals[literals.length - 1];
+        Object baseSqueakObject = literals[literals.length - 1];
         if (baseSqueakObject instanceof PointersObject) {
             if (((PointersObject) baseSqueakObject).size() == 2) {
                 baseSqueakObject = ((PointersObject) baseSqueakObject).at0(1);
