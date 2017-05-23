@@ -13,14 +13,14 @@ public class PrimStringAtPut extends PrimitiveTernaryOperation {
 
     @Specialization
     char atput(NativeObject obj, int idx, char value) {
-        obj.setNativeAt0(idx, value);
+        obj.setNativeAt0(idx - 1, value);
         return value;
     }
 
     @Specialization
     char atput(NativeObject obj, int idx, int value) {
         char charValue = (char) ((Integer) value).byteValue();
-        obj.setNativeAt0(idx, charValue);
+        obj.setNativeAt0(idx - 1, charValue);
         return charValue;
     }
 }
