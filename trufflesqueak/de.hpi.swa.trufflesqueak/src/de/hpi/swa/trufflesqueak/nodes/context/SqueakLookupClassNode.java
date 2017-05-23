@@ -49,7 +49,7 @@ public abstract class SqueakLookupClassNode extends Node {
     @SuppressWarnings("unused")
     @Specialization
     public ClassObject squeakClass(char object) {
-        return method.image.smallIntegerClass;
+        return method.image.characterClass;
     }
 
     @Specialization
