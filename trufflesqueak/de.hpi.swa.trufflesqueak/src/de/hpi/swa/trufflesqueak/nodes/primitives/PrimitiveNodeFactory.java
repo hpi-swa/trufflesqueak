@@ -22,6 +22,8 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimBitShiftNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimCharacterValueNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimClass;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimClosureValueFactory;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimCompiledCodeAtNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimCompiledCodeAtPutNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimDebugger;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimDigitDivNegativeNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimDivNodeGen;
@@ -31,6 +33,8 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimEquivalentNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimGreaterOrEqualNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimGreaterThanNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimIdentityHashNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimIndexAtNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimIndexAtPutNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimLessOrEqualNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimLessThanNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimModNodeGen;
@@ -53,6 +57,8 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimQuickReturnReceiverVar
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimQuoNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimReplaceFromToNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimSizeNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimStringAtNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimStringAtPutNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimSubNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimUtcClockNodeGen;
 
@@ -98,21 +104,21 @@ public abstract class PrimitiveNodeFactory {
         //
         LARGE_BIT_SHIFT(PrimBitShiftNodeGen.class, 37),
         //
-        AT(PrimAtNodeGen.class, 60),
-        AT_PUT(PrimAtPutNodeGen.class, 61),
+        AT(PrimIndexAtNodeGen.class, 60), // 1-indexed after named inst vars
+        AT_PUT(PrimIndexAtPutNodeGen.class, 61),
         SIZE(PrimSizeNodeGen.class, 62),
-        STRING_AT(PrimAtNodeGen.class, 63),
-        STRING_AT_PUT(PrimAtPutNodeGen.class, 64),
+        STRING_AT(PrimStringAtNodeGen.class, 63), // 1-indexed return a character
+        STRING_AT_PUT(PrimStringAtPutNodeGen.class, 64),
         NEXT(PrimitiveNode.class, 65),
         NEXT_PUT(PrimitiveNode.class, 66),
         AT_END(PrimitiveNode.class, 67),
-        OBJECT_AT(PrimAtNodeGen.class, 68),
-        OBJECT_AT_PUT(PrimAtPutNodeGen.class, 69),
+        OBJECT_AT(PrimCompiledCodeAtNodeGen.class, 68), // 1-indexed directly into literal array
+        OBJECT_AT_PUT(PrimCompiledCodeAtPutNodeGen.class, 69),
         //
         NEW(PrimNewNodeGen.class, 70),
         NEW_WITH_ARG(PrimNewArgNodeGen.class, 71),
         //
-        INST_VAR_AT(PrimAtNodeGen.class, 73),
+        INST_VAR_AT(PrimAtNodeGen.class, 73), // 1-indexed
         INST_VAR_AT_PUT(PrimAtPutNodeGen.class, 74),
         IDENTITY_HASH(PrimIdentityHashNodeGen.class, 75),
         //
@@ -127,14 +133,19 @@ public abstract class PrimitiveNodeFactory {
         //
         EXTERNAL_CALL(PrimCall.class, 117),
         //
-        SHORT_AT(PrimAtNodeGen.class, 143),
+        SHORT_AT(PrimAtNodeGen.class, 143), // 1-indexed from start
         SHORT_AT_PUT(PrimAtPutNodeGen.class, 144),
         //
-        INTEGER_AT(PrimAtNodeGen.class, 143),
-        INTEGER_AT_PUT(PrimAtPutNodeGen.class, 144),
+        INTEGER_AT(PrimAtNodeGen.class, 165), // 1-indexed from start
+        INTEGER_AT_PUT(PrimAtPutNodeGen.class, 166),
         //
         CHARACTER_VALUE(PrimCharacterValueNodeGen.class, 170),
         IMMEDIATE_HASH(PrimIdentityHashNodeGen.class, 171),
+        //
+        SLOT_AT(PrimAtNodeGen.class, 173),
+        SLOT_AT_PUT(PrimAtPutNodeGen.class, 174),
+        //
+        BEHAVIOR_HASH(PrimIdentityHashNodeGen.class, 175),
         //
         CLOSURE_VALUE(PrimClosureValueFactory.PrimClosureValue0NodeGen.class, 201),
         CLOSURE_VALUE_(PrimClosureValueFactory.PrimClosureValue1NodeGen.class, 202),

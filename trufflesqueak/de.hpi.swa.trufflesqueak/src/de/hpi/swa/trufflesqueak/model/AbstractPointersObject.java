@@ -67,7 +67,7 @@ public abstract class AbstractPointersObject extends SqueakObject {
 
     @Override
     public int instsize() {
-        return size();
+        return getSqClass().getBasicInstanceSize();
     }
 
     public Object[] getPointers() {

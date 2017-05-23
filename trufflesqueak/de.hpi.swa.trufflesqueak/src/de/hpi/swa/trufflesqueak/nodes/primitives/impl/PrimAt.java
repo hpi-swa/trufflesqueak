@@ -40,7 +40,7 @@ public class PrimAt extends PrimitiveBinaryOperation {
     }
 
     @Specialization(rewriteOn = ArithmeticException.class)
-    protected int intAt(NativeObject receiver, int idx) {
+    protected int intAt(NativeObject receiver, int idx) throws ArithmeticException {
         return Math.toIntExact(receiver.getNativeAt0(idx - 1));
     }
 
