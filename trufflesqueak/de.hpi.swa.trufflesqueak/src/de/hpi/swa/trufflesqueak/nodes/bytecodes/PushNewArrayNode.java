@@ -1,6 +1,5 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
-import java.util.Arrays;
 import java.util.Stack;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -12,9 +11,9 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
 public class PushNewArrayNode extends SqueakBytecodeNode {
-    @Children final SqueakNode[] popIntoArrayNodes;
+    @Children public final SqueakNode[] popIntoArrayNodes;
     @Child SqueakNode pushArrayNode;
-    private final int arraySize;
+    public final int arraySize;
 
     public PushNewArrayNode(CompiledCodeObject method, int idx, int param) {
         super(method, idx);
@@ -49,14 +48,8 @@ public class PushNewArrayNode extends SqueakBytecodeNode {
     }
 
     @Override
-    public void prettyPrintOn(PrettyPrintVisitor b) {
-        if (popIntoArrayNodes == null) {
-            b.append("Array new: ").append(arraySize);
-        } else {
-            b.append('{').newline().indent();
-            Arrays.stream(popIntoArrayNodes).forEach(n -> b.visitStatement(n));
-            b.dedent().append('}');
-        }
+    public void accept(PrettyPrintVisitor b) {
+        b.visit(this);
     }
 
     @Override

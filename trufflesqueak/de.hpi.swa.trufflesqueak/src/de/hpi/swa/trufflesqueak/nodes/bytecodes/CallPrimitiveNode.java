@@ -70,8 +70,8 @@ public class CallPrimitiveNode extends SqueakBytecodeNode {
     }
 
     @Override
-    public void prettyPrintOn(PrettyPrintVisitor b) {
-        b.append("<prim: ").append(primitive).append('>');
+    public void accept(PrettyPrintVisitor b) {
+        b.visit(primitive);
     }
 
     @Override

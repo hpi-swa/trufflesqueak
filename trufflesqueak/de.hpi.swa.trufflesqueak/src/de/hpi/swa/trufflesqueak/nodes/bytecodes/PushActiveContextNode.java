@@ -31,7 +31,7 @@ public class PushActiveContextNode extends SqueakBytecodeNode {
     }
 
     @Override
-    public void prettyPrintOn(PrettyPrintVisitor b) {
-        b.append("thisContext");
+    public void accept(PrettyPrintVisitor b) {
+        b.visit(this);
     }
 }

@@ -11,8 +11,8 @@ import de.hpi.swa.trufflesqueak.instrumentation.PrettyPrintVisitor;
 public abstract class SqueakNode extends Node {
     public abstract Object executeGeneric(VirtualFrame frame);
 
-    public void prettyPrintOn(PrettyPrintVisitor str) {
-        getChildren().forEach(node -> str.visit(node));
+    public void accept(PrettyPrintVisitor visitor) {
+        visitor.visit(this);
     }
 
     /**

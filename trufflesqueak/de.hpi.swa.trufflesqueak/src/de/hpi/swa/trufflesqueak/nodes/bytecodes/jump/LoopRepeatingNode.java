@@ -1,6 +1,5 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes.jump;
 
-import java.util.Arrays;
 import java.util.Stack;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -21,9 +20,9 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SendSelector;
 @NodeInfo(shortName = "loop")
 public class LoopRepeatingNode extends SqueakNodeWithMethod implements RepeatingNode {
     @Child private SqueakNode mustBeBooleanSend;
-    @Children private final SqueakNode[] conditionBodyNodes;
-    @Child private SqueakNode conditionNode;
-    @Children private final SqueakNode[] bodyNodes;
+    @Children public final SqueakNode[] conditionBodyNodes;
+    @Child public SqueakNode conditionNode;
+    @Children public final SqueakNode[] bodyNodes;
 
     public LoopRepeatingNode(CompiledCodeObject cm, SqueakNode[] conditionBody, SqueakNode cond, SqueakNode[] body) {
         super(cm);
@@ -63,19 +62,8 @@ public class LoopRepeatingNode extends SqueakNodeWithMethod implements Repeating
     }
 
     @Override
-    public void prettyPrintOn(PrettyPrintVisitor str) {
-        str.append('[').newline().indent();
-        Arrays.stream(conditionBodyNodes).forEach(n -> str.visitStatement(n));
-        str.visitStatement(conditionNode);
-        str.dedent();
-        if (conditionNode instanceof IfTrue) {
-            str.append("] whileFalse: [");
-        } else {
-            str.append("] whileTrue: [");
-        }
-        str.newline().indent();
-        Arrays.stream(bodyNodes).forEach(n -> str.visitStatement(n));
-        str.dedent().append("]");
+    public void accept(PrettyPrintVisitor str) {
+        str.visit(this);
     }
 
     public static class WhileNode extends SqueakBytecodeNode {

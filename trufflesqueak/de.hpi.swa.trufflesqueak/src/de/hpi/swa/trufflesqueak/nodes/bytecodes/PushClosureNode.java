@@ -20,7 +20,7 @@ public class PushClosureNode extends SqueakBytecodeNode {
     private final int numCopied;
     @Child SqueakNode receiverNode;
     @Children final SqueakNode[] copiedValueNodes;
-    private final CompiledBlockObject compiledBlock;
+    public final CompiledBlockObject compiledBlock;
 
     public PushClosureNode(CompiledCodeObject cm, int idx, int i, int j, int k) {
         super(cm, idx);
@@ -63,9 +63,7 @@ public class PushClosureNode extends SqueakBytecodeNode {
     }
 
     @Override
-    public void prettyPrintOn(PrettyPrintVisitor b) {
-        b.append('[').newline().indent();
-        Arrays.stream(compiledBlock.getBytecodeAST()).forEach(n -> b.visitStatement(n));
-        b.dedent().append(']');
+    public void accept(PrettyPrintVisitor b) {
+        b.visit(this);
     }
 }

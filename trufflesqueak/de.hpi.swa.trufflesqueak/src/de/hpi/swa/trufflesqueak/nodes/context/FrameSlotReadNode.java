@@ -55,7 +55,7 @@ public abstract class FrameSlotReadNode extends FrameSlotNode {
     }
 
     @Override
-    public void prettyPrintOn(PrettyPrintVisitor b) {
-        b.append("t").append(slot.getIdentifier());
+    public void accept(PrettyPrintVisitor b) {
+        b.visit(this);
     }
 }

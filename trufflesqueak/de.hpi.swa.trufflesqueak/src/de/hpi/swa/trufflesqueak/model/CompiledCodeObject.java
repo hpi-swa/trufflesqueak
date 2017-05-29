@@ -80,7 +80,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
         prepareFrameDescriptor();
         ast = new Decompiler(this).getAST();
         source = Source.newBuilder(prettyPrint()).mimeType(SqueakLanguage.MIME_TYPE).name(toString()).build();
-        visitAST(new SourceVisitor(source));
+        new SourceVisitor(source).visit(this);
         callTarget = Truffle.getRuntime().createCallTarget(new SqueakMethodNode(image.getLanguage(), this));
         callTargetStable.invalidate();
     }
@@ -296,18 +296,8 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     public String prettyPrint() {
         PrettyPrintVisitor str = new PrettyPrintVisitor();
-        visitAST(str);
+        str.visit(this);
         return str.build();
-    }
-
-    void visitAST(PrettyPrintVisitor visitor) {
-        visitor.append(toString()).append('\n');
-        visitor.indent();
-        for (SqueakNode node : ast) {
-            visitor.visit(node);
-            visitor.append(".").newline();
-        }
-        visitor.dedent();
     }
 
     abstract public CompiledMethodObject getMethod();

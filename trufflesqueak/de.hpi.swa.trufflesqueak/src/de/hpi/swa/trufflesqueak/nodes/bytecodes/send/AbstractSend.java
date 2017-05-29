@@ -30,7 +30,7 @@ public abstract class AbstractSend extends SqueakBytecodeNode {
     public final Object selector;
     @Child public SqueakNode receiverNode;
     @Child protected SqueakLookupClassNode lookupClassNode;
-    @Children protected final SqueakNode[] argumentNodes;
+    @Children public final SqueakNode[] argumentNodes;
     @Child private LookupNode lookupNode;
     @Child private DispatchNode dispatchNode;
 
@@ -158,27 +158,9 @@ public abstract class AbstractSend extends SqueakBytecodeNode {
         stack.push(this);
     }
 
-    protected void prettyPrintReceiverOn(PrettyPrintVisitor b) {
-        b.visitWithParens(receiverNode);
-    }
-
     @Override
-    public void prettyPrintOn(PrettyPrintVisitor b) {
-        prettyPrintReceiverOn(b);
-        String[] splitSelector = selector.toString().split(":");
-        if (splitSelector.length == 1 && !splitSelector[0].matches("[A-Za-z]")) {
-            b.append(' ').append(selector);
-            if (argumentNodes.length == 1) {
-                b.append(' ');
-                b.visitWithParens(argumentNodes[0]);
-            }
-        } else {
-            assert argumentNodes.length == splitSelector.length;
-            for (int i = 0; i < argumentNodes.length; i++) {
-                b.append(' ').append(splitSelector[i]).append(": ");
-                b.visitWithParens(argumentNodes[i]);
-            }
-        }
+    public void accept(PrettyPrintVisitor b) {
+        b.visit(this);
     }
 
     @Override

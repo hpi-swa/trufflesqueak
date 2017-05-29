@@ -28,7 +28,7 @@ public class ReceiverNode extends SqueakBytecodeNode {
     }
 
     @Override
-    public void prettyPrintOn(PrettyPrintVisitor b) {
-        b.append("self");
+    public void accept(PrettyPrintVisitor b) {
+        b.visit(this);
     }
 }

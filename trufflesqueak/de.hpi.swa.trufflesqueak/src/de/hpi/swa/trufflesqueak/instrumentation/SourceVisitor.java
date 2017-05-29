@@ -13,7 +13,7 @@ public class SourceVisitor extends PrettyPrintVisitor {
 
     @Override
     void visitSqueakNode(SqueakNode node) {
-        int pos = length() - 1;
+        int pos = Math.max(0, length() - 1);
         super.visitSqueakNode(node);
         node.setSourceSection(source.createSection(pos, length() - pos - 1));
     }

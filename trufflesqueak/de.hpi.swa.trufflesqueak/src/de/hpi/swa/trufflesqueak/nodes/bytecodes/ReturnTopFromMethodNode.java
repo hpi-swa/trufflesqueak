@@ -3,7 +3,6 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.NonLocalReturn;
-import de.hpi.swa.trufflesqueak.instrumentation.PrettyPrintVisitor;
 import de.hpi.swa.trufflesqueak.model.BlockClosure;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 
@@ -19,10 +18,5 @@ public class ReturnTopFromMethodNode extends ReturnTopFromBlockNode {
         } else {
             throw new NonLocalReturn(valueNode.executeGeneric(frame), ((BlockClosure) getClosure(frame)).getFrameMarker());
         }
-    }
-
-    @Override
-    public void prettyPrintOn(PrettyPrintVisitor b) {
-        b.append("^ ").visit(valueNode);
     }
 }

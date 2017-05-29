@@ -1,7 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes.context;
 
 import java.math.BigInteger;
-import java.util.Vector;
 
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.NodeChildren;
@@ -16,7 +15,7 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithMethod;
 
 @NodeChildren({@NodeChild(value = "objectNode", type = SqueakNode.class), @NodeChild(value = "valueNode", type = SqueakNode.class)})
 public abstract class ObjectAtPutNode extends SqueakNodeWithMethod {
-    private final int index;
+    public final int index;
 
     public ObjectAtPutNode(ObjectAtPutNode original) {
         super(original.method);
@@ -59,11 +58,7 @@ public abstract class ObjectAtPutNode extends SqueakNodeWithMethod {
     }
 
     @Override
-    public void prettyPrintOn(PrettyPrintVisitor b) {
-        Vector<SqueakNode> myChildren = new Vector<>();
-        getChildren().forEach(node -> myChildren.add((SqueakNode) node));
-        b.visitWithParens(myChildren.get(0));
-        b.append(" at: ").append(index).append(" put: ");
-        b.visitWithParens(myChildren.get(1));
+    public void accept(PrettyPrintVisitor b) {
+        b.visit(this);
     }
 }

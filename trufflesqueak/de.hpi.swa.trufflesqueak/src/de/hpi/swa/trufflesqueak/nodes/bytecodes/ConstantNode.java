@@ -9,7 +9,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
 public class ConstantNode extends SqueakBytecodeNode {
-    private final Object constant;
+    public final Object constant;
 
     public ConstantNode(CompiledCodeObject method, int idx, Object obj) {
         super(method, idx);
@@ -27,7 +27,7 @@ public class ConstantNode extends SqueakBytecodeNode {
     }
 
     @Override
-    public void prettyPrintOn(PrettyPrintVisitor b) {
-        b.append(constant);
+    public void accept(PrettyPrintVisitor b) {
+        b.visit(this);
     }
 }

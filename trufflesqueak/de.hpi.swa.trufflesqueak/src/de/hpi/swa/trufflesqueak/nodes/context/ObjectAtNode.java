@@ -10,7 +10,7 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
 @NodeChildren({@NodeChild(value = "objectNode", type = SqueakNode.class)})
 public abstract class ObjectAtNode extends SqueakNode {
-    private final int index;
+    public final int index;
 
     protected ObjectAtNode(int variableIndex) {
         index = variableIndex;
@@ -22,8 +22,7 @@ public abstract class ObjectAtNode extends SqueakNode {
     }
 
     @Override
-    public void prettyPrintOn(PrettyPrintVisitor str) {
-        super.prettyPrintOn(str);
-        str.append(" instVarAt: ").append(index);
+    public void accept(PrettyPrintVisitor str) {
+        str.visit(this);
     }
 }

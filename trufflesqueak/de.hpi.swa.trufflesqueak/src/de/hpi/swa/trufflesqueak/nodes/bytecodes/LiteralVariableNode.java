@@ -4,12 +4,13 @@ import java.util.Stack;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 
+import de.hpi.swa.trufflesqueak.instrumentation.PrettyPrintVisitor;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtNodeGen;
 
 public class LiteralVariableNode extends SqueakBytecodeNode {
-    @Child SqueakNode valueNode;
+    @Child public SqueakNode valueNode;
 
     public LiteralVariableNode(CompiledCodeObject method, int idx, int literalIndex) {
         super(method, idx);
@@ -24,5 +25,10 @@ public class LiteralVariableNode extends SqueakBytecodeNode {
     @Override
     public Object executeGeneric(VirtualFrame frame) {
         return valueNode.executeGeneric(frame);
+    }
+
+    @Override
+    public void accept(PrettyPrintVisitor visitor) {
+        visitor.visit(this);
     }
 }

@@ -4,11 +4,10 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.instrumentation.PrettyPrintVisitor;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithMethod;
 
 public class MethodLiteralNode extends SqueakNodeWithMethod {
-    final Object literal;
+    public final Object literal;
 
     public MethodLiteralNode(CompiledCodeObject cm, int idx) {
         super(cm);
@@ -21,11 +20,7 @@ public class MethodLiteralNode extends SqueakNodeWithMethod {
     }
 
     @Override
-    public void prettyPrintOn(PrettyPrintVisitor b) {
-        if (literal instanceof PointersObject && ((PointersObject) literal).size() == 2) {
-            b.append(((PointersObject) literal).at0(0));
-        } else {
-            b.append(literal);
-        }
+    public void accept(PrettyPrintVisitor b) {
+        b.visit(this);
     }
 }

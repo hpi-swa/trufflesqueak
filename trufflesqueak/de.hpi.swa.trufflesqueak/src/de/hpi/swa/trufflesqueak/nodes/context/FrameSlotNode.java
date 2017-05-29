@@ -8,7 +8,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithMethod;
 
 public abstract class FrameSlotNode extends SqueakNodeWithMethod {
-    final FrameSlot slot;
+    public final FrameSlot slot;
 
     protected FrameSlotNode(CompiledCodeObject cm, FrameSlot frameSlot) {
         super(cm);
