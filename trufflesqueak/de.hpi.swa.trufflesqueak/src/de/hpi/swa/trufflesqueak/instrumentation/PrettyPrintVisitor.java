@@ -45,7 +45,7 @@ public class PrettyPrintVisitor implements NodeVisitor {
             visitSqueakNode((SqueakNode) node);
             return false;
         } else if (node instanceof LoopNode) {
-            return true;
+            return visit((Node) ((LoopNode) node).getRepeatingNode());
         } else {
             append(node);
             return false;

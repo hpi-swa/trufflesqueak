@@ -52,6 +52,12 @@ public abstract class SqueakLookupClassNode extends Node {
         return method.image.characterClass;
     }
 
+    @SuppressWarnings("unused")
+    @Specialization
+    public ClassObject squeakClass(double object) {
+        return method.image.floatClass;
+    }
+
     @Specialization
     public ClassObject squeakClass(BigInteger object) {
         if (object.signum() >= 0) {

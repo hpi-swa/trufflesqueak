@@ -47,9 +47,9 @@ public class ImageReader {
     private PrintWriter output;
 
     public ImageReader(FileInputStream inputStream, PrintWriter printWriter) throws FileNotFoundException {
-        shortBuf.order(ByteOrder.LITTLE_ENDIAN);
-        intBuf.order(ByteOrder.LITTLE_ENDIAN);
-        longBuf.order(ByteOrder.LITTLE_ENDIAN);
+        shortBuf.order(ByteOrder.nativeOrder());
+        intBuf.order(ByteOrder.nativeOrder());
+        longBuf.order(ByteOrder.nativeOrder());
         this.output = printWriter;
         this.stream = new BufferedInputStream(inputStream);
         this.position = 0;
@@ -235,6 +235,7 @@ public class ImageReader {
         setPrebuiltObject(6, image.stringClass);
         setPrebuiltObject(7, image.arrayClass);
         setPrebuiltObject(8, image.smalltalk);
+        setPrebuiltObject(9, image.floatClass);
         setPrebuiltObject(10, image.methodContextClass);
         setPrebuiltObject(13, image.largePositiveIntegerClass);
         setPrebuiltObject(16, image.compiledMethodClass);

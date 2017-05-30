@@ -75,6 +75,17 @@ public class Chunk {
         return (ClassObject) object;
     }
 
+    public Object asFloatObject() {
+        assert format == 10 || format == 11;
+        ByteBuffer buf = ByteBuffer.allocate(8); // 2 * 32 bit
+        buf.order(ByteOrder.nativeOrder());
+        buf.put(getBytes());
+        buf.rewind();
+        long low = buf.asIntBuffer().get(0);
+        long high = buf.asIntBuffer().get(1);
+        return Double.longBitsToDouble(high << 32 | low);
+    }
+
     public Object asObject() {
         if (object == null) {
             if (format == 0) {
@@ -105,7 +116,11 @@ public class Chunk {
                 object = new NativeObject(image, (byte) 8);
             } else if (format <= 11) {
                 // 32-bit integers
-                object = new NativeObject(image, (byte) 4);
+                if (this.getSqClass() == image.floatClass) {
+                    object = asFloatObject();
+                } else {
+                    object = new NativeObject(image, (byte) 4);
+                }
             } else if (format <= 15) {
                 // 16-bit integers
                 object = new NativeObject(image, (byte) 2);
@@ -183,7 +198,7 @@ public class Chunk {
         byte[] bytes = new byte[((data.size() - start) * 4) - getPadding()];
         List<Integer> subList = data.subList(start, data.size());
         ByteBuffer buf = ByteBuffer.allocate(subList.size() * 4);
-        buf.order(ByteOrder.LITTLE_ENDIAN);
+        buf.order(ByteOrder.nativeOrder());
         IntBuffer intBuf = buf.asIntBuffer();
         for (int i : subList) {
             intBuf.put(i);
@@ -197,6 +212,12 @@ public class Chunk {
     public int getPadding() {
         if ((16 <= format) && (format <= 31)) {
             return format & 3;
+        } else if (format == 11) {
+            // 32-bit words with 1 word padding
+            return 4;
+        } else if ((12 <= format) && (format <= 15)) {
+            // 16-bit words with 2, 4, or 6 bytes padding
+            return (format & 3) * 2;
         } else {
             return 0;
         }

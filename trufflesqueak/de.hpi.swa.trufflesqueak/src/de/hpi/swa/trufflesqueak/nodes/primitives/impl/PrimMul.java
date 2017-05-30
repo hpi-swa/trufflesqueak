@@ -26,4 +26,9 @@ public class PrimMul extends PrimitiveBinaryOperation {
     BigInteger mul(BigInteger a, BigInteger b) {
         return a.multiply(b);
     }
+
+    @Specialization
+    double mul(double a, double b) {
+        return a * b;
+    }
 }

@@ -21,6 +21,7 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
                 int.class,
                 long.class,
                 BigInteger.class,
+                double.class,
                 String.class,
                 LargeInteger.class,
                 ClassObject.class,
@@ -52,5 +53,25 @@ public abstract class SqueakTypes {
     @ImplicitCast
     public static BigInteger castBigInteger(LargeInteger value) {
         return value.getValue();
+    }
+
+    @ImplicitCast
+    public static double castDouble(int obj) {
+        return obj;
+    }
+
+    @ImplicitCast
+    public static double castDouble(long obj) {
+        return obj;
+    }
+
+    @ImplicitCast
+    public static double castDouble(BigInteger obj) {
+        return obj.doubleValue();
+    }
+
+    @ImplicitCast
+    public static double castDouble(LargeInteger obj) {
+        return obj.getValue().doubleValue();
     }
 }

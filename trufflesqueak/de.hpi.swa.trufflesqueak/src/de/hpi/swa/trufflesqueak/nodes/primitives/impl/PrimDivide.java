@@ -60,4 +60,9 @@ public class PrimDivide extends PrimitiveBinaryOperation {
         }
         return a.divide(b);
     }
+
+    @Specialization
+    double div(double a, double b) {
+        return a / b;
+    }
 }

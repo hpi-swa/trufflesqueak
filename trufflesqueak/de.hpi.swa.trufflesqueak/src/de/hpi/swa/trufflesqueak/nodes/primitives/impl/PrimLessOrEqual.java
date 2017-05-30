@@ -13,17 +13,22 @@ public class PrimLessOrEqual extends PrimitiveBinaryOperation {
     }
 
     @Specialization
-    boolean add(int a, int b) {
+    boolean le(int a, int b) {
         return a <= b;
     }
 
     @Specialization
-    boolean add(long a, long b) {
+    boolean le(long a, long b) {
         return a <= b;
     }
 
     @Specialization
-    boolean add(BigInteger a, BigInteger b) {
+    boolean le(BigInteger a, BigInteger b) {
         return a.compareTo(b) <= 0;
+    }
+
+    @Specialization
+    boolean le(double a, double b) {
+        return a <= b;
     }
 }

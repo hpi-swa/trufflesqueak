@@ -46,10 +46,12 @@ public class SqueakImageContext {
     public final ClassObject blockClosureClass = new ClassObject(this);
     public final ClassObject largePositiveIntegerClass = new ClassObject(this);
     public final ClassObject largeNegativeIntegerClass = new ClassObject(this);
+    public final ClassObject floatClass = new ClassObject(this);
 
     private final SqueakLanguage language;
     private final BufferedReader input;
     private final PrintWriter output;
+    private final PrintWriter error;
     private final SqueakLanguage.Env env;
 
     // Special selectors
@@ -98,11 +100,12 @@ public class SqueakImageContext {
     private static final byte[] ENTRY_POINT_BYTES = new byte[]{32, (byte) 209, 124};
 
     public SqueakImageContext(SqueakLanguage squeakLanguage, SqueakLanguage.Env environ, BufferedReader in,
-                    PrintWriter out) {
+                    PrintWriter out, PrintWriter err) {
         language = squeakLanguage;
         env = environ;
         input = in;
         output = out;
+        error = err;
         entryPoint = new CompiledMethodObject(this, ENTRY_POINT_BYTES, ENTRY_POINT_LITERALS);
         if (env != null) {
             config = (SqueakConfig) env.getConfig().get("config");
@@ -140,6 +143,10 @@ public class SqueakImageContext {
         return output;
     }
 
+    public PrintWriter getError() {
+        return error;
+    }
+
     public SqueakLanguage getLanguage() {
         return language;
     }
@@ -164,7 +171,7 @@ public class SqueakImageContext {
         return new NativeObject(this, this.stringClass, s.getBytes());
     }
 
-    public ListObject wrap(Object[] elements) {
+    public ListObject wrap(Object... elements) {
         return new ListObject(this, arrayClass, elements);
     }
 }

@@ -13,17 +13,22 @@ public class PrimGreaterOrEqual extends PrimitiveBinaryOperation {
     }
 
     @Specialization
-    boolean gt(int a, int b) {
+    boolean ge(int a, int b) {
         return a >= b;
     }
 
     @Specialization
-    boolean gt(long a, long b) {
+    boolean ge(long a, long b) {
         return a >= b;
     }
 
     @Specialization
-    boolean gt(BigInteger a, BigInteger b) {
+    boolean ge(BigInteger a, BigInteger b) {
         return a.compareTo(b) >= 0;
+    }
+
+    @Specialization
+    boolean ge(double a, double b) {
+        return a >= b;
     }
 }

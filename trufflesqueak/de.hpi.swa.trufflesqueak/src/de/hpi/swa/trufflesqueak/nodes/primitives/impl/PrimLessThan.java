@@ -26,4 +26,9 @@ public class PrimLessThan extends PrimitiveBinaryOperation {
     boolean lt(BigInteger a, BigInteger b) {
         return a.compareTo(b) < 0;
     }
+
+    @Specialization
+    boolean lt(double a, double b) {
+        return a < b;
+    }
 }

@@ -31,4 +31,9 @@ public class PrimAdd extends PrimitiveBinaryOperation {
     BigInteger add(BigInteger a, BigInteger b) {
         return a.add(b);
     }
+
+    @Specialization
+    double add(double a, double b) {
+        return a + b;
+    }
 }

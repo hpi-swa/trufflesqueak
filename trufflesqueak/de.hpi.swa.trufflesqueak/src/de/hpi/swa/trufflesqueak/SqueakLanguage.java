@@ -22,7 +22,8 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
     protected SqueakImageContext createContext(Env env) {
         BufferedReader in = new BufferedReader(new InputStreamReader(env.in()));
         PrintWriter out = new PrintWriter(env.out(), true);
-        return new SqueakImageContext(this, env, in, out);
+        PrintWriter err = new PrintWriter(env.err(), true);
+        return new SqueakImageContext(this, env, in, out, err);
     }
 
     @Override

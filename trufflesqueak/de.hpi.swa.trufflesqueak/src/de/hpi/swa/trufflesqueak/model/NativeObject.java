@@ -2,6 +2,7 @@ package de.hpi.swa.trufflesqueak.model;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.CharBuffer;
 
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -139,5 +140,13 @@ public class NativeObject extends SqueakObject implements TruffleObject {
 
     public byte[] getBytes() {
         return content.array();
+    }
+
+    public CharBuffer getCharBuffer() {
+        return content.asCharBuffer();
+    }
+
+    public byte getElementSize() {
+        return elementSize;
     }
 }

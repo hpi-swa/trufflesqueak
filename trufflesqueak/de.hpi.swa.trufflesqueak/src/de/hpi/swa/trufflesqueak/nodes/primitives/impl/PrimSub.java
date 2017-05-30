@@ -41,4 +41,9 @@ public class PrimSub extends PrimitiveBinaryOperation {
     BigInteger subBig(BigInteger a, BigInteger b) {
         return a.subtract(b);
     }
+
+    @Specialization
+    double sub(double a, double b) {
+        return a - b;
+    }
 }

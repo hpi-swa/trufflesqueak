@@ -26,7 +26,7 @@ public abstract class TestSqueak extends TestCase {
 
     @Override
     public void setUp() {
-        image = new SqueakImageContext(null, null, null, null);
+        image = new SqueakImageContext(null, null, null, null, null);
         image.at.setBytes("at:".getBytes());
         image.equivalent.setBytes("==".getBytes());
         image.klass.setBytes("class".getBytes());

@@ -13,17 +13,22 @@ public class PrimNotEqual extends PrimitiveBinaryOperation {
     }
 
     @Specialization
-    protected boolean neq(int a, int b) {
+    boolean neq(int a, int b) {
         return a != b;
     }
 
     @Specialization
-    protected boolean neq(long a, long b) {
+    boolean neq(long a, long b) {
         return a != b;
     }
 
     @Specialization
-    protected boolean neq(BigInteger a, BigInteger b) {
+    boolean neq(BigInteger a, BigInteger b) {
         return !a.equals(b);
+    }
+
+    @Specialization
+    boolean neq(double a, double b) {
+        return a != b;
     }
 }

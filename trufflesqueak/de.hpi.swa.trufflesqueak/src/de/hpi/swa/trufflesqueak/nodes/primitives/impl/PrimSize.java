@@ -30,8 +30,8 @@ public class PrimSize extends PrimitiveUnaryOperation {
     }
 
     @Specialization
-    public int size(@SuppressWarnings("unused") double o) {
-        return 2; // Float in words
+    public int size(@SuppressWarnings("unused") long o) {
+        return 0;
     }
 
     @Specialization
@@ -42,6 +42,11 @@ public class PrimSize extends PrimitiveUnaryOperation {
     @Specialization
     public int size(BigInteger i) {
         return LargeInteger.byteSize(i);
+    }
+
+    @Specialization
+    public int size(@SuppressWarnings("unused") double o) {
+        return 2; // Float in words
     }
 
     @Specialization

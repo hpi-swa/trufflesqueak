@@ -26,4 +26,9 @@ public class PrimGreaterThan extends PrimitiveBinaryOperation {
     boolean gt(BigInteger a, BigInteger b) {
         return a.compareTo(b) > 0;
     }
+
+    @Specialization
+    boolean gt(double a, double b) {
+        return a > b;
+    }
 }

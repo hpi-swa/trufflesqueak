@@ -23,7 +23,12 @@ public class PrimEqual extends PrimitiveBinaryOperation {
     }
 
     @Specialization
-    boolean divBig(BigInteger a, BigInteger b) {
+    boolean eq(BigInteger a, BigInteger b) {
         return a.equals(b);
+    }
+
+    @Specialization
+    boolean eq(double a, double b) {
+        return a == b;
     }
 }
