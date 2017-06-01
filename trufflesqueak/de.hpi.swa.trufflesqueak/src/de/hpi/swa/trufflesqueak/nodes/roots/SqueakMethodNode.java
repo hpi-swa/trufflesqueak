@@ -108,4 +108,9 @@ public class SqueakMethodNode extends RootNode {
         }
         throw new RuntimeException("unimplemented exit from activation");
     }
+
+    @Override
+    public String toString() {
+        return code.toString();
+    }
 }
