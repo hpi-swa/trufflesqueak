@@ -44,6 +44,11 @@ public abstract class FrameSlotReadNode extends FrameSlotNode {
         return FrameUtil.getLongSafe(frame, slot);
     }
 
+    @Specialization(guards = "isDouble(frame)")
+    public double readDouble(VirtualFrame frame) {
+        return FrameUtil.getDoubleSafe(frame, slot);
+    }
+
     @Specialization(guards = "isBoolean(frame)")
     public boolean readBool(VirtualFrame frame) {
         return FrameUtil.getBooleanSafe(frame, slot);

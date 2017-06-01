@@ -56,6 +56,13 @@ public abstract class FrameSlotWriteNode extends FrameSlotNode {
         return value;
     }
 
+    @Specialization(guards = "isDouble(frame) || isIllegal(frame)")
+    public double writeDouble(VirtualFrame frame, double value) {
+        slot.setKind(FrameSlotKind.Double);
+        frame.setDouble(slot, value);
+        return value;
+    }
+
     @Specialization(guards = "isBoolean(frame) || isIllegal(frame)")
     public boolean writeBool(VirtualFrame frame, boolean value) {
         slot.setKind(FrameSlotKind.Boolean);

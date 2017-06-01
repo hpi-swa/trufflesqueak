@@ -26,6 +26,10 @@ public abstract class FrameSlotNode extends SqueakNodeWithMethod {
         return slot.getKind() == FrameSlotKind.Long;
     }
 
+    protected boolean isDouble(@SuppressWarnings("unused") VirtualFrame frame) {
+        return slot.getKind() == FrameSlotKind.Double;
+    }
+
     protected boolean isBoolean(@SuppressWarnings("unused") VirtualFrame frame) {
         return slot.getKind() == FrameSlotKind.Boolean;
     }
