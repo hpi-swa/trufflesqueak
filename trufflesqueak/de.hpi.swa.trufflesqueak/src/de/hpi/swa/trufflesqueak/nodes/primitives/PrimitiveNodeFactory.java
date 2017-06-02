@@ -38,6 +38,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimExpNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimFileSizeNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimFileStdioHandles;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimFileWriteNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimFloatExponentNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimFloatTimesTwoPowerNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimFloatTruncatedNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimGreaterOrEqualNodeGen;
@@ -131,6 +132,7 @@ public abstract class PrimitiveNodeFactory {
         FLOAT_DIVIDE(PrimDivideNodeGen.class, 50),
         FLOAT_TRUNCATED(PrimFloatTruncatedNodeGen.class, 51),
         //
+        FLOAT_EXPONENT(PrimFloatExponentNodeGen.class, 53),
         FLOAT_LDEXP(PrimFloatTimesTwoPowerNodeGen.class, 54),
         FLOAT_SQUARE_ROOT(PrimSquareRootNodeGen.class, 55),
         FLOAT_SIN(PrimSinNodeGen.class, 56),
