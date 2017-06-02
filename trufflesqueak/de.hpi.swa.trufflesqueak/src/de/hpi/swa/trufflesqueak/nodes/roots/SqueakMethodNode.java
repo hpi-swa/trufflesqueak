@@ -32,7 +32,7 @@ public class SqueakMethodNode extends RootNode {
         this(language, cc, true);
     }
 
-    public SqueakMethodNode(SqueakLanguage language, CompiledCodeObject cc, boolean hasReceiver) {
+    protected SqueakMethodNode(SqueakLanguage language, CompiledCodeObject cc, boolean hasReceiver) {
         super(language, cc.getFrameDescriptor());
         code = cc;
         ast = cc.getBytecodeAST();

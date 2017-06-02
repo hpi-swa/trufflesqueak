@@ -20,6 +20,7 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.SqueakObject;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakContextNode;
+import de.hpi.swa.trufflesqueak.nodes.roots.SqueakMainNode;
 import de.hpi.swa.trufflesqueak.util.ImageReader;
 
 public class SqueakImageContext {
@@ -132,7 +133,8 @@ public class SqueakImageContext {
         CompiledCodeObject lookupResult = (CompiledCodeObject) receiverClass.lookup(selector);
         entryPoint.setLiteral(1, receiver);
         entryPoint.setLiteral(2, lookupResult.getCompiledInSelector());
-        return entryPoint.getMainCallTarget();
+        entryPoint.getCallTarget();
+        return Truffle.getRuntime().createCallTarget(new SqueakMainNode(getLanguage(), entryPoint, false));
     }
 
     public void fillInFrom(FileInputStream inputStream) throws IOException {
