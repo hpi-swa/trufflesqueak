@@ -39,6 +39,18 @@ public class PrimAt extends PrimitiveBinaryOperation {
         return LargeInteger.byteAt0(receiver, idx - 1);
     }
 
+    @Specialization
+    protected long at(double receiver, int idx) {
+        long doubleBits = Double.doubleToLongBits(receiver);
+        if (idx == 1) {
+            return 0xFFFFFFFF & (doubleBits >> 32);
+        } else if (idx == 2) {
+            return 0xFFFFFFFF & doubleBits;
+        } else {
+            throw new PrimitiveFailed();
+        }
+    }
+
     @Specialization(rewriteOn = ArithmeticException.class)
     protected int intAt(NativeObject receiver, int idx) throws ArithmeticException {
         return Math.toIntExact(receiver.getNativeAt0(idx - 1));
