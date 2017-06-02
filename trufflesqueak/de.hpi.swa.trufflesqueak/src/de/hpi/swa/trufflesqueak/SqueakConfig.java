@@ -36,6 +36,7 @@ public class SqueakConfig {
                     selector = args[++i];
                     break;
                 case "--":
+                case "--args":
                     restArgs = Arrays.copyOfRange(args, i + 1, args.length);
                     i = args.length;
                     break;
