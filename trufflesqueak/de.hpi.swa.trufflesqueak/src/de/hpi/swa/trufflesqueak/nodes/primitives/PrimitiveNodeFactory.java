@@ -64,6 +64,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPushTrue;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPushTwo;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPushZero;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimQuickReturnReceiverVariableNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimQuit;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimQuoNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimReplaceFromToNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimSinNodeGen;
@@ -160,6 +161,8 @@ public abstract class PrimitiveNodeFactory {
         //
         EQUIVALENT(PrimEquivalentNodeGen.class, 110),
         CLASS(PrimClassNodeGen.class, 111),
+        //
+        QUIT(PrimQuit.class, 113),
         //
         EXTERNAL_CALL(PrimCall.class, 117),
         //

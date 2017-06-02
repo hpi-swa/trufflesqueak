@@ -10,6 +10,7 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.api.vm.PolyglotEngine.Builder;
+import com.oracle.truffle.api.vm.PolyglotEngine.Value;
 
 public class TruffleSqueakMain {
     private static void executeImage(String filename, InputStream in, PrintStream out, String... args) throws RuntimeException {
@@ -19,7 +20,10 @@ public class TruffleSqueakMain {
         builder.config(SqueakLanguage.MIME_TYPE, "config", new SqueakConfig(args));
         PolyglotEngine engine = builder.build();
         assert engine.getLanguages().containsKey(SqueakLanguage.MIME_TYPE);
-        engine.eval(source);
+        Value result = engine.eval(source);
+        if (result.get() instanceof Integer) {
+            System.exit((int) result.get());
+        }
     }
 
     public static void main(String[] args) throws RuntimeException {
