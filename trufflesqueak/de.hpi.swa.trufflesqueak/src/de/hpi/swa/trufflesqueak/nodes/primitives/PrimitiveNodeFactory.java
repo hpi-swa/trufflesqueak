@@ -16,6 +16,7 @@ import de.hpi.swa.trufflesqueak.nodes.context.ArgumentNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ArgumentProfileNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimAddNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimArcTanNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimAsFloatNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimAtNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimAtPutNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimBitAndNodeGen;
@@ -117,6 +118,7 @@ public abstract class PrimitiveNodeFactory {
         LARGE_BIT_XOR(PrimBitXorNodeGen.class, 36),
         LARGE_BIT_SHIFT(PrimBitShiftNodeGen.class, 37),
         //
+        AS_FLOAT(PrimAsFloatNodeGen.class, 40),
         FLOAT_ADD(PrimAddNodeGen.class, 41),
         FLOAT_SUB(PrimSubNodeGen.class, 42),
         FLOAT_LESSTHAN(PrimLessThanNodeGen.class, 43),
