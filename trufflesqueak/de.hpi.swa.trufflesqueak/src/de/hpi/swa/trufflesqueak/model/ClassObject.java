@@ -6,6 +6,7 @@ import java.util.function.Predicate;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
@@ -180,6 +181,7 @@ public class ClassObject extends AbstractPointersObject {
         return lookup(methodSelector -> methodSelector != null && methodSelector.toString().equals(selector));
     }
 
+    @TruffleBoundary
     public Object doesNotUnderstand() {
         Object result = lookup(image.doesNotUnderstand);
         if (result == null) {
