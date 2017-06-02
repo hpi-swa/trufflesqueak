@@ -2,6 +2,9 @@ package de.hpi.swa.trufflesqueak.model;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotKind;
+
 public class CompiledBlockObject extends CompiledCodeObject {
     final CompiledMethodObject outerMethod;
     final int numCopiedValues;
@@ -40,5 +43,19 @@ public class CompiledBlockObject extends CompiledCodeObject {
     @Override
     public CompiledMethodObject getMethod() {
         return outerMethod;
+    }
+
+    /**
+     * We override this, because the old inline compiled blocks in Squeak 5 and 6 make it very hard
+     * to determine the correct number of temps that will be used. This way, for blocks we allow for
+     * more temps on demand (but at least the required frame size has to be correct)
+     */
+    @Override
+    public FrameSlot getStackSlot(int i) {
+        FrameSlot slot = stackSlots[i];
+        if (slot == null) {
+            slot = stackSlots[i] = getFrameDescriptor().addFrameSlot(i, FrameSlotKind.Illegal);
+        }
+        return slot;
     }
 }

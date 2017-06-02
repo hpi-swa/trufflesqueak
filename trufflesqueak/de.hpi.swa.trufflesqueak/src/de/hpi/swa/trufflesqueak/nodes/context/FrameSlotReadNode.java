@@ -18,8 +18,8 @@ public abstract class FrameSlotReadNode extends FrameSlotNode {
     }
 
     public static FrameSlotReadNode temp(CompiledCodeObject cm, int index) {
-        if (cm.stackSlots.length >= index) {
-            return create(cm, cm.stackSlots[index]);
+        if (cm.getNumStackSlots() >= index) {
+            return create(cm, cm.getStackSlot(index));
         }
         return null;
     }

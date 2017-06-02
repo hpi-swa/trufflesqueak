@@ -56,8 +56,8 @@ public class SqueakContextNode extends RootNode {
         frame.setObject(method.receiverSlot, receiver);
         int tempStart = ContextParts.TEMP_FRAME_START.ordinal();
         for (int i = tempStart; i < ctxt.size(); i++) {
-            method.stackSlots[i - tempStart].setKind(FrameSlotKind.Object);
-            frame.setObject(method.stackSlots[i - tempStart], ctxt.at0(i));
+            method.getStackSlot(i - tempStart).setKind(FrameSlotKind.Object);
+            frame.setObject(method.getStackSlot(i - tempStart), ctxt.at0(i));
         }
         return frame;
     }

@@ -44,7 +44,7 @@ public class SqueakMethodNode extends RootNode {
             argumentNodes = new SqueakNode[numArgs];
         }
         for (int i = 0; i < numArgs; i++) {
-            argumentNodes[i + 1] = FrameSlotWriteNode.argument(cc, cc.stackSlots[i], i + 1);
+            argumentNodes[i + 1] = FrameSlotWriteNode.argument(cc, cc.getStackSlot(i), i + 1);
         }
         if (cc instanceof CompiledBlockObject) {
             int numCopiedValues = ((CompiledBlockObject) cc).getNumCopiedValues();
@@ -52,7 +52,7 @@ public class SqueakMethodNode extends RootNode {
             for (int i = 0; i < numCopiedValues; i++) {
                 copiedValuesNodes[i] = FrameSlotWriteNode.argument(
                                 cc,
-                                cc.stackSlots[i + numArgs],
+                                cc.getStackSlot(i + numArgs),
                                 1 + numArgs + i);
             }
             copiedValuesNodes[copiedValuesNodes.length - 1] = FrameSlotWriteNode.argument(

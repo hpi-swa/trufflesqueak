@@ -30,7 +30,7 @@ public abstract class FrameSlotWriteNode extends FrameSlotNode {
     }
 
     public static FrameSlotWriteNode temp(CompiledCodeObject method, int index, SqueakNode node) {
-        return create(method, method.stackSlots[index], node);
+        return create(method, method.getStackSlot(index), node);
     }
 
     protected boolean isNullWrite(VirtualFrame frame, Object value) {

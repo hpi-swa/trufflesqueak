@@ -45,7 +45,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
     @CompilationFinal public FrameSlot closureSlot;
     @CompilationFinal public FrameSlot stackPointerSlot;
     @CompilationFinal public FrameSlot pcSlot;
-    @CompilationFinal(dimensions = 1) public FrameSlot[] stackSlots;
+    @CompilationFinal(dimensions = 1) FrameSlot[] stackSlots;
     @CompilationFinal public FrameSlot markerSlot;
     private RootCallTarget callTarget;
     private final CyclicAssumption callTargetStable = new CyclicAssumption("Compiled method assumption");
@@ -174,6 +174,14 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     public final int getNumArgs() {
         return numArgs;
+    }
+
+    public FrameSlot getStackSlot(int i) {
+        return stackSlots[i];
+    }
+
+    public int getNumStackSlots() {
+        return stackSlots.length;
     }
 
     public void setHeader(int hdr) {
