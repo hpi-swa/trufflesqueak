@@ -13,6 +13,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ArgumentNode;
+import de.hpi.swa.trufflesqueak.nodes.context.ArgumentProfileNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimAddNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimArcTanNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimAtNodeGen;
@@ -22,7 +23,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimBitOrNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimBitShiftNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimBitXorNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimCharacterValueNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimClass;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimClassNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimClosureValueFactory;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimCompiledCodeAtNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimCompiledCodeAtPutNodeGen;
@@ -158,7 +159,7 @@ public abstract class PrimitiveNodeFactory {
         REPLACE_FROM_TO(PrimReplaceFromToNodeGen.class, 105),
         //
         EQUIVALENT(PrimEquivalentNodeGen.class, 110),
-        CLASS(PrimClass.class, 111),
+        CLASS(PrimClassNodeGen.class, 111),
         //
         EXTERNAL_CALL(PrimCall.class, 117),
         //
@@ -234,7 +235,7 @@ public abstract class PrimitiveNodeFactory {
     }
 
     public static SqueakNode arg(int index) {
-        return new ArgumentNode(index);
+        return new ArgumentProfileNode(new ArgumentNode(index));
     }
 
     private static PrimitiveNode createInstance(CompiledMethodObject method, Class<? extends PrimitiveNode> primClass) {

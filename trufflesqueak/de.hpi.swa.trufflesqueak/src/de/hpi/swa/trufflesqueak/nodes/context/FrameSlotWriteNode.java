@@ -22,7 +22,7 @@ public abstract class FrameSlotWriteNode extends FrameSlotNode {
     }
 
     public static FrameSlotWriteNode argument(CompiledCodeObject cm, FrameSlot slot, int argumentIndex) {
-        return FrameSlotWriteNodeGen.create(cm, slot, new ArgumentNode(argumentIndex));
+        return FrameSlotWriteNodeGen.create(cm, slot, new ArgumentProfileNode(new ArgumentNode(argumentIndex)));
     }
 
     public static FrameSlotWriteNode create(CompiledCodeObject cm, FrameSlot slot, SqueakNode node) {

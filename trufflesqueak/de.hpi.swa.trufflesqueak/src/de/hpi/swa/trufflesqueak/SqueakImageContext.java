@@ -132,7 +132,7 @@ public class SqueakImageContext {
         CompiledCodeObject lookupResult = (CompiledCodeObject) receiverClass.lookup(selector);
         entryPoint.setLiteral(1, receiver);
         entryPoint.setLiteral(2, lookupResult.getCompiledInSelector());
-        return entryPoint.getCallTarget();
+        return entryPoint.getMainCallTarget();
     }
 
     public void fillInFrom(FileInputStream inputStream) throws IOException {

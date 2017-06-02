@@ -129,6 +129,13 @@ public abstract class CompiledCodeObject extends SqueakObject {
         return callTarget;
     }
 
+    public RootCallTarget getMainCallTarget() {
+        callTarget = null;
+        callTarget = getCallTarget();
+        callTarget = Truffle.getRuntime().createCallTarget(new SqueakMethodNode(image.getLanguage(), this, false));
+        return callTarget;
+    }
+
     public Assumption getCallTargetStable() {
         return callTargetStable.getAssumption();
     }

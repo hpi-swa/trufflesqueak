@@ -14,10 +14,6 @@ public class ArgumentNode extends SqueakNode {
     @Override
     public Object executeGeneric(VirtualFrame frame) {
         Object[] args = frame.getArguments();
-        if (idx < args.length) {
-            return args[idx];
-        } else {
-            return null;
-        }
+        return args[idx];
     }
 }

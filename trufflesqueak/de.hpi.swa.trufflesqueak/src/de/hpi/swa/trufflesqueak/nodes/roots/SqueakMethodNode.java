@@ -21,7 +21,6 @@ import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotWriteNode;
 
 public class SqueakMethodNode extends RootNode {
     private final CompiledCodeObject code;
-    @Child SqueakNode receiverNode;
     @Children final SqueakNode[] argumentNodes;
     @Children final SqueakNode[] copiedValuesNodes;
     @Children final SqueakNode[] ast;
@@ -30,14 +29,22 @@ public class SqueakMethodNode extends RootNode {
     private final FrameSlot markerSlot;
 
     public SqueakMethodNode(SqueakLanguage language, CompiledCodeObject cc) {
+        this(language, cc, true);
+    }
+
+    public SqueakMethodNode(SqueakLanguage language, CompiledCodeObject cc, boolean hasReceiver) {
         super(language, cc.getFrameDescriptor());
         code = cc;
         ast = cc.getBytecodeAST();
-        receiverNode = FrameSlotWriteNode.argument(cc, cc.receiverSlot, 0);
         int numArgs = cc.getNumArgs();
-        argumentNodes = new SqueakNode[numArgs];
+        if (hasReceiver) {
+            argumentNodes = new SqueakNode[numArgs + 1];
+            argumentNodes[0] = FrameSlotWriteNode.argument(cc, cc.receiverSlot, 0);
+        } else {
+            argumentNodes = new SqueakNode[numArgs];
+        }
         for (int i = 0; i < numArgs; i++) {
-            argumentNodes[i] = FrameSlotWriteNode.argument(cc, cc.stackSlots[i], 1 + i);
+            argumentNodes[i + 1] = FrameSlotWriteNode.argument(cc, cc.stackSlots[i], i + 1);
         }
         if (cc instanceof CompiledBlockObject) {
             int numCopiedValues = ((CompiledBlockObject) cc).getNumCopiedValues();
@@ -67,7 +74,6 @@ public class SqueakMethodNode extends RootNode {
         frame.setInt(stackPointerSlot, code.getNumTemps());
         frame.setInt(pcSlot, 0);
         frame.setObject(markerSlot, new FrameMarker());
-        receiverNode.executeGeneric(frame);
         CompilerAsserts.compilationConstant(argumentNodes.length);
         for (SqueakNode node : argumentNodes) {
             node.executeGeneric(frame);
