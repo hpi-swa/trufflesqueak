@@ -20,6 +20,7 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushNewArrayNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnTopFromBlockNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnTopFromMethodNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.IfNilCheck;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.IfThenNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.IfTrue;
@@ -92,6 +93,8 @@ public class PrettyPrintVisitor implements NodeVisitor {
 
     public void visit(ReturnNode node) {
         if (!(node instanceof ReturnTopFromBlockNode)) {
+            append("^ ");
+        } else if (node instanceof ReturnTopFromMethodNode) {
             append("^ ");
         }
         NodeUtil.forEachChild(node, this);

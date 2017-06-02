@@ -64,7 +64,7 @@ public abstract class TestSqueak extends TestCase {
     }
 
     public Object runMethod(BaseSqueakObject receiver, int... intbytes) {
-        return runMethod(receiver, new BaseSqueakObject[0], intbytes);
+        return runMethod(receiver, new BaseSqueakObject[4], intbytes);
     }
 
     public Object runMethod(BaseSqueakObject receiver, Object[] arguments, int... intbytes) {
