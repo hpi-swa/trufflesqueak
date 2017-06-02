@@ -10,6 +10,11 @@ public class PrimFloatTruncated extends PrimitiveUnaryOperation {
         super(cm);
     }
 
+    @Specialization(rewriteOn = ArithmeticException.class)
+    int truncateToInt(double receiver) {
+        return Math.toIntExact((long) Math.floor(receiver));
+    }
+
     @Specialization
     long truncate(double receiver) {
         return (long) Math.floor(receiver);
