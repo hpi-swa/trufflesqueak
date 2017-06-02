@@ -54,9 +54,14 @@ public abstract class FrameSlotReadNode extends FrameSlotNode {
         return FrameUtil.getBooleanSafe(frame, slot);
     }
 
-    @Specialization(replaces = {"readLong", "readBool"})
+    @Specialization(guards = "isObject(frame)")
     public Object readObject(VirtualFrame frame) {
         return FrameUtil.getObjectSafe(frame, slot);
+    }
+
+    @Specialization(guards = "isIllegal(frame)")
+    public Object readIllegal(@SuppressWarnings("unused") VirtualFrame frame) {
+        return null;
     }
 
     @Override

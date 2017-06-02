@@ -70,7 +70,7 @@ public abstract class FrameSlotWriteNode extends FrameSlotNode {
         return value;
     }
 
-    @Specialization(replaces = {"skipNullWrite", "writeLong", "writeBool"})
+    @Specialization(replaces = {"skipNullWrite", "writeInt", "writeLong", "writeDouble", "writeBool"})
     public Object writeObject(VirtualFrame frame, Object value) {
         slot.setKind(FrameSlotKind.Object);
         frame.setObject(slot, value);

@@ -37,4 +37,8 @@ public abstract class FrameSlotNode extends SqueakNodeWithMethod {
     protected boolean isIllegal(@SuppressWarnings("unused") VirtualFrame frame) {
         return slot.getKind() == FrameSlotKind.Illegal;
     }
+
+    protected boolean isObject(@SuppressWarnings("unused") VirtualFrame frame) {
+        return slot.getKind() == FrameSlotKind.Object;
+    }
 }
