@@ -81,8 +81,8 @@ public class Chunk {
         buf.order(ByteOrder.nativeOrder());
         buf.put(getBytes());
         buf.rewind();
-        long low = buf.asIntBuffer().get(0);
-        long high = buf.asIntBuffer().get(1);
+        long low = Integer.toUnsignedLong(buf.asIntBuffer().get(0));
+        long high = Integer.toUnsignedLong(buf.asIntBuffer().get(1));
         return Double.longBitsToDouble(high << 32 | low);
     }
 
