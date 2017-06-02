@@ -75,6 +75,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimSquareRootNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimStringAtNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimStringAtPutNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimSubNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimSystemAttributeNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimUtcClockNodeGen;
 
 public abstract class PrimitiveNodeFactory {
@@ -172,6 +173,8 @@ public abstract class PrimitiveNodeFactory {
         //
         SHORT_AT(PrimAtNodeGen.class, 143), // 1-indexed from start
         SHORT_AT_PUT(PrimAtPutNodeGen.class, 144),
+        //
+        SYSTEM_ATTR(PrimSystemAttributeNodeGen.class, 149),
         //
         INTEGER_AT(PrimAtNodeGen.class, 165), // 1-indexed from start
         INTEGER_AT_PUT(PrimAtPutNodeGen.class, 166),
