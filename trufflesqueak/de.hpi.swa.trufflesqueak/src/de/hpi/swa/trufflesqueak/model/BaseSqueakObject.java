@@ -60,6 +60,8 @@ public abstract class BaseSqueakObject {
 
     public abstract int instsize();
 
+    public abstract BaseSqueakObject shallowCopy();
+
     public int squeakHash() {
         return hashCode() & IDENTITY_HASH_MASK;
     }

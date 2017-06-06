@@ -72,6 +72,11 @@ public abstract class CompiledCodeObject extends SqueakObject {
         super(img, klass);
     }
 
+    protected CompiledCodeObject(CompiledCodeObject original) {
+        this(original.image, original.getSqClass());
+        setBytesAndLiterals(original.literals, original.bytes);
+    }
+
     @TruffleBoundary
     protected void setBytesAndLiterals(Object[] lits, byte[] bc) {
         literals = lits;

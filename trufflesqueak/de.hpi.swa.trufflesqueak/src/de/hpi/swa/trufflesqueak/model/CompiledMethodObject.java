@@ -22,6 +22,10 @@ public class CompiledMethodObject extends CompiledCodeObject implements TruffleO
         super(img, klass);
     }
 
+    private CompiledMethodObject(CompiledMethodObject compiledMethodObject) {
+        super(compiledMethodObject);
+    }
+
     @Override
     public NativeObject getCompiledInSelector() {
         if (literals.length > 1) {
@@ -60,5 +64,10 @@ public class CompiledMethodObject extends CompiledCodeObject implements TruffleO
     @Override
     public CompiledMethodObject getMethod() {
         return this;
+    }
+
+    @Override
+    public BaseSqueakObject shallowCopy() {
+        return new CompiledMethodObject(this);
     }
 }

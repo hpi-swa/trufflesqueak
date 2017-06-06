@@ -16,11 +16,20 @@ public class WriteableContextObject extends AbstractPointersObject implements Ac
         }
     }
 
+    private WriteableContextObject(WriteableContextObject original) {
+        super(original.image, original.getSqClass(), original.getPointers().clone());
+    }
+
     public void atContextPut0(int i, Object obj) {
         atput0(i, obj);
     }
 
     public Object getFrameMarker() {
         return this;
+    }
+
+    @Override
+    public BaseSqueakObject shallowCopy() {
+        return new WriteableContextObject(this);
     }
 }

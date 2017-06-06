@@ -131,4 +131,9 @@ public class LargeInteger extends SqueakObject {
     public long unwrapLong() throws ArithmeticException {
         return getValue().longValueExact();
     }
+
+    @Override
+    public BaseSqueakObject shallowCopy() {
+        return new LargeInteger(image, integer);
+    }
 }

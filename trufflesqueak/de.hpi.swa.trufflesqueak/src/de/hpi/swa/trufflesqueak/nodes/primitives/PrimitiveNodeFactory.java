@@ -70,6 +70,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimQuickReturnReceiverVar
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimQuit;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimQuoNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimReplaceFromToNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimShallowCopyNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimSinNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimSizeNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimSquareRootNodeGen;
@@ -175,6 +176,7 @@ public abstract class PrimitiveNodeFactory {
         SHORT_AT(PrimAtNodeGen.class, 143), // 1-indexed from start
         SHORT_AT_PUT(PrimAtPutNodeGen.class, 144),
         //
+        SHALLOW_COPY(PrimShallowCopyNodeGen.class, 148),
         SYSTEM_ATTR(PrimSystemAttributeNodeGen.class, 149),
         //
         INTEGER_AT(PrimAtNodeGen.class, 165), // 1-indexed from start
@@ -196,6 +198,9 @@ public abstract class PrimitiveNodeFactory {
         CLOSURE_VALUE___(PrimClosureValueFactory.PrimClosureValue3NodeGen.class, 204),
         CLOSURE_VALUE____(PrimClosureValueFactory.PrimClosureValue4NodeGen.class, 205),
         CLOSURE_VALUE_ARGS(PrimClosureValueFactory.PrimClosureValueAryNodeGen.class, 206),
+        //
+        CONTEXT_AT(PrimIndexAtNodeGen.class, 210),
+        CONTEXT_AT_PUT(PrimIndexAtPutNodeGen.class, 211),
         //
         UTC_MICROSECOND_CLOCK(PrimUtcClockNodeGen.class, 240),
         //

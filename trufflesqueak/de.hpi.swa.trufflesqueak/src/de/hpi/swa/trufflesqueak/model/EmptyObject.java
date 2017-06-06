@@ -46,4 +46,9 @@ public class EmptyObject extends SqueakObject implements TruffleObject {
     public int instsize() {
         return 0;
     }
+
+    @Override
+    public BaseSqueakObject shallowCopy() {
+        return new EmptyObject(image, getSqClass());
+    }
 }

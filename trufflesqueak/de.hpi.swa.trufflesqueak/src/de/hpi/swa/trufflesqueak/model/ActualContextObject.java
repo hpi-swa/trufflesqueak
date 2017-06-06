@@ -15,4 +15,6 @@ public interface ActualContextObject {
     public int size();
 
     public Object getFrameMarker();
+
+    public BaseSqueakObject shallowCopy();
 }

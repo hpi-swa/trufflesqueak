@@ -29,6 +29,13 @@ public class NativeObject extends SqueakObject implements TruffleObject {
         }
     }
 
+    private NativeObject(NativeObject original) {
+        this(original.image, original.elementSize);
+        setSqClass(original.getSqClass());
+        setBytes(original.getBytes());
+        elementSize = original.elementSize;
+    }
+
     public NativeObject(SqueakImageContext img, ClassObject klass, byte[] bytes) {
         this(img, klass, bytes.length, 1);
         content.rewind();
@@ -148,5 +155,10 @@ public class NativeObject extends SqueakObject implements TruffleObject {
 
     public byte getElementSize() {
         return elementSize;
+    }
+
+    @Override
+    public BaseSqueakObject shallowCopy() {
+        return new NativeObject(this);
     }
 }

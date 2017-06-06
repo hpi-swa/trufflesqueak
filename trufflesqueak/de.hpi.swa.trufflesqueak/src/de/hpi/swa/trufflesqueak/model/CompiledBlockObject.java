@@ -21,6 +21,12 @@ public class CompiledBlockObject extends CompiledCodeObject {
         literals = lits;
     }
 
+    private CompiledBlockObject(CompiledBlockObject original) {
+        super(original);
+        outerMethod = original.outerMethod;
+        numCopiedValues = original.numCopiedValues;
+    }
+
     @Override
     public NativeObject getCompiledInSelector() {
         return outerMethod.getCompiledInSelector();
@@ -57,5 +63,10 @@ public class CompiledBlockObject extends CompiledCodeObject {
             slot = stackSlots[i] = getFrameDescriptor().addFrameSlot(i, FrameSlotKind.Illegal);
         }
         return slot;
+    }
+
+    @Override
+    public BaseSqueakObject shallowCopy() {
+        return new CompiledBlockObject(this);
     }
 }

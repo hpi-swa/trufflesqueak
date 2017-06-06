@@ -73,5 +73,4 @@ public abstract class AbstractPointersObject extends SqueakObject {
     public Object[] getPointers() {
         return pointers;
     }
-
 }

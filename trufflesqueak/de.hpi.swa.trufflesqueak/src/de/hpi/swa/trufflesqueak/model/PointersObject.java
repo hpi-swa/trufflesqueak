@@ -16,4 +16,9 @@ public class PointersObject extends AbstractPointersObject implements TruffleObj
     public PointersObject(SqueakImageContext image, ClassObject classObject, int size) {
         super(image, classObject, size);
     }
+
+    @Override
+    public BaseSqueakObject shallowCopy() {
+        return new PointersObject(image, getSqClass(), getPointers().clone());
+    }
 }

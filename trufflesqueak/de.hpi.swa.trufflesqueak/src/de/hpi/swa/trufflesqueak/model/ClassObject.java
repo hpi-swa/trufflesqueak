@@ -30,6 +30,12 @@ public class ClassObject extends AbstractPointersObject {
         super(img);
     }
 
+    private ClassObject(ClassObject original) {
+        this(original.image, original.getSqClass(), original.pointers);
+        instSpec = original.instSpec;
+        instanceSize = original.instanceSize;
+    }
+
     public ClassObject(SqueakImageContext img, ClassObject sqClass, Object[] ptrs) {
         super(img, sqClass);
         pointers = ptrs;
@@ -232,5 +238,10 @@ public class ClassObject extends AbstractPointersObject {
 
     public int getBasicInstanceSize() {
         return instanceSize;
+    }
+
+    @Override
+    public BaseSqueakObject shallowCopy() {
+        return new ClassObject(this);
     }
 }

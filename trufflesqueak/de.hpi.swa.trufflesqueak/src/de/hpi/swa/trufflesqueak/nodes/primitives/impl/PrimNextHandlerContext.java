@@ -69,6 +69,10 @@ public class PrimNextHandlerContext extends PrimitiveUnaryOperation {
                 FrameSlot methodSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.METHOD);
                 if (methodSlot != null) {
                     method.image.getOutput().println(FrameUtil.getObjectSafe(current, methodSlot));
+                    for (Object arg : current.getArguments()) {
+                        method.image.getOutput().append("   ");
+                        method.image.getOutput().println(arg);
+                    }
                 }
                 return null;
             }

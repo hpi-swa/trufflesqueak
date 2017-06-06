@@ -39,6 +39,11 @@ public class BlockClosure extends BaseSqueakObject {
         stack = copied;
     }
 
+    private BlockClosure(BlockClosure original) {
+        this(original.frameMarker, original.block, original.receiver, original.stack);
+        context = original.context;
+    }
+
     @Override
     public void fillin(Chunk chunk) {
         // FIXME
@@ -168,5 +173,10 @@ public class BlockClosure extends BaseSqueakObject {
 
     public Object getFrameMarker() {
         return frameMarker;
+    }
+
+    @Override
+    public BaseSqueakObject shallowCopy() {
+        return new BlockClosure(this);
     }
 }

@@ -75,7 +75,8 @@ public class ContextObject extends BaseSqueakObject {
 
     @Override
     public int instsize() {
-        return ContextPartConstants.TEMP_FRAME_START;
+        // the receiver is part of the "variable part", because it is on the stack in Squeak
+        return ContextPartConstants.TEMP_FRAME_START - 1;
     }
 
     public void step() {
@@ -85,5 +86,10 @@ public class ContextObject extends BaseSqueakObject {
 
     public Object getFrameMarker() {
         return actualContext.getFrameMarker();
+    }
+
+    @Override
+    public BaseSqueakObject shallowCopy() {
+        return actualContext.shallowCopy();
     }
 }
