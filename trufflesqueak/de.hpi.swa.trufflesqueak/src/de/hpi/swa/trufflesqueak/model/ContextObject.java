@@ -1,14 +1,89 @@
 package de.hpi.swa.trufflesqueak.model;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.exceptions.NonVirtualContextModification;
+import de.hpi.swa.trufflesqueak.util.Chunk;
 
-public class ContextObject extends AbstractPointersObject {
-    private MaterializedFrame frame;
+public class ContextObject extends BaseSqueakObject {
+    private ActualContextObject actualContext;
 
-    public ContextObject(SqueakImageContext img, MaterializedFrame materializedFrame) {
+    private ContextObject(SqueakImageContext img, ActualContextObject context) {
         super(img);
-        frame = materializedFrame;
+        actualContext = context;
+    }
+
+    public static ContextObject createReadOnlyContextObject(SqueakImageContext img, Frame virtualFrame) {
+        MaterializedFrame frame = virtualFrame.materialize();
+        FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
+        FrameSlot selfSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SELF);
+        ContextObject contextObject = (ContextObject) FrameUtil.getObjectSafe(frame, selfSlot);
+        if (contextObject == null) {
+            contextObject = new ContextObject(img, new ReadOnlyContextObject(img, frame));
+            frame.setObject(selfSlot, contextObject);
+        }
+        return contextObject;
+    }
+
+    public static ContextObject createWriteableContextObject(SqueakImageContext img) {
+        return new ContextObject(img, new WriteableContextObject(img));
+    }
+
+    @Override
+    public void fillin(Chunk chunk) {
+        assert actualContext instanceof WriteableContextObject;
+        actualContext.fillin(chunk);
+    }
+
+    @Override
+    public ClassObject getSqClass() {
+        return image.methodContextClass;
+    }
+
+    @Override
+    public Object at0(int l) {
+        return actualContext.at0(l);
+    }
+
+    @Override
+    public void atput0(int idx, Object object) {
+        try {
+            actualContext.atContextPut0(idx, object);
+        } catch (NonVirtualContextModification e) {
+            beWriteable();
+            actualContext.atput0(idx, object);
+        }
+    }
+
+    private void beWriteable() {
+        if (actualContext instanceof ReadOnlyContextObject) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            actualContext = new WriteableContextObject(image, (ReadOnlyContextObject) actualContext);
+        }
+    }
+
+    @Override
+    public int size() {
+        return actualContext.size();
+    }
+
+    @Override
+    public int instsize() {
+        return ContextPartConstants.TEMP_FRAME_START;
+    }
+
+    public void step() {
+        beWriteable();
+        throw new RuntimeException("stepping in context not implemented yet");
+    }
+
+    public Object getFrameMarker() {
+        return actualContext.getFrameMarker();
     }
 }

@@ -24,9 +24,8 @@ public class SqueakMethodNode extends RootNode {
     @Children final SqueakNode[] argumentNodes;
     @Children final SqueakNode[] copiedValuesNodes;
     @Children final SqueakNode[] ast;
-    private final FrameSlot pcSlot;
-    private final FrameSlot stackPointerSlot;
     private final FrameSlot markerSlot;
+    private final FrameSlot methodSlot;
 
     public SqueakMethodNode(SqueakLanguage language, CompiledCodeObject cc) {
         this(language, cc, true);
@@ -63,17 +62,15 @@ public class SqueakMethodNode extends RootNode {
         } else {
             copiedValuesNodes = null;
         }
-        stackPointerSlot = cc.stackPointerSlot;
-        pcSlot = cc.pcSlot;
         markerSlot = cc.markerSlot;
+        methodSlot = cc.methodSlot;
     }
 
     @ExplodeLoop
     public void enterFrame(VirtualFrame frame) {
         CompilerDirectives.ensureVirtualized(frame);
-        frame.setInt(stackPointerSlot, code.getNumTemps());
-        frame.setInt(pcSlot, 0);
         frame.setObject(markerSlot, new FrameMarker());
+        frame.setObject(methodSlot, code);
         CompilerAsserts.compilationConstant(argumentNodes.length);
         for (SqueakNode node : argumentNodes) {
             node.executeGeneric(frame);

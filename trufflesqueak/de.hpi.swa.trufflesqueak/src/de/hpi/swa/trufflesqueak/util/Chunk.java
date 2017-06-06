@@ -9,6 +9,7 @@ import java.util.Vector;
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.EmptyObject;
 import de.hpi.swa.trufflesqueak.model.LargeInteger;
 import de.hpi.swa.trufflesqueak.model.ListObject;
@@ -101,8 +102,12 @@ public class Chunk {
                 // indexable fields
                 object = new ListObject(image);
             } else if (format == 3) {
-                // fixed and indexable fields
-                object = new ListObject(image);
+                if (this.getSqClass() == image.methodContextClass) {
+                    object = ContextObject.createWriteableContextObject(image);
+                } else {
+                    // fixed and indexable fields
+                    object = new ListObject(image);
+                }
             } else if (format == 4) {
                 // indexable weak fields // TODO: Weak
                 object = new ListObject(image);

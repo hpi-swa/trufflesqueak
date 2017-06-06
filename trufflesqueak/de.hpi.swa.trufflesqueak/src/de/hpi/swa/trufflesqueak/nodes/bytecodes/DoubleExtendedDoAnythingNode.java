@@ -55,7 +55,7 @@ public abstract class DoubleExtendedDoAnythingNode {
             case 1:
                 return new SingleExtendedSuperNode(method, idx, third, second & 31);
             case 2:
-                return new ReceiverNode(method, idx);
+                return new ReceiverVariableNode(method, idx, third);
             case 3:
                 return new LiteralConstantNode(method, idx, third);
             case 4:

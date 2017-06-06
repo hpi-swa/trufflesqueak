@@ -14,11 +14,11 @@ import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.LargeInteger;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
-import de.hpi.swa.trufflesqueak.model.SqueakObject;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakContextNode;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakMainNode;
 import de.hpi.swa.trufflesqueak.util.ImageReader;
@@ -38,7 +38,7 @@ public class SqueakImageContext {
     public final ListObject specialSelectors = new ListObject(this);
     public final NativeObject mustBeBoolean = new NativeObject(this, (byte) 1);
     public final ClassObject metaclass = new ClassObject(this);
-    public final SqueakObject methodContextClass = new ClassObject(this);
+    public final ClassObject methodContextClass = new ClassObject(this);
     public final ClassObject nilClass = new ClassObject(this);
     public final ClassObject trueClass = new ClassObject(this);
     public final ClassObject falseClass = new ClassObject(this);
@@ -118,7 +118,7 @@ public class SqueakImageContext {
     public CallTarget getActiveContext() {
         PointersObject scheduler = (PointersObject) schedulerAssociation.at0(1);
         PointersObject activeProcess = (PointersObject) scheduler.at0(1);
-        ListObject activeContext = (ListObject) activeProcess.at0(1);
+        ContextObject activeContext = (ContextObject) activeProcess.at0(1);
         activeProcess.atput0(1, null);
         return Truffle.getRuntime().createCallTarget(new SqueakContextNode(language, activeContext));
     }

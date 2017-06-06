@@ -34,6 +34,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
     public static final String PC = "pc";
     public static final String STACK_POINTER = "stackPointer";
     public static final String MARKER = "marker";
+    public static final String METHOD = "method";
     // code
     protected byte[] bytes;
     private SqueakNode[] ast;
@@ -43,10 +44,9 @@ public abstract class CompiledCodeObject extends SqueakObject {
     @CompilationFinal public FrameSlot receiverSlot;
     @CompilationFinal public FrameSlot selfSlot;
     @CompilationFinal public FrameSlot closureSlot;
-    @CompilationFinal public FrameSlot stackPointerSlot;
-    @CompilationFinal public FrameSlot pcSlot;
     @CompilationFinal(dimensions = 1) FrameSlot[] stackSlots;
     @CompilationFinal public FrameSlot markerSlot;
+    @CompilationFinal public FrameSlot methodSlot;
     private RootCallTarget callTarget;
     private final CyclicAssumption callTargetStable = new CyclicAssumption("Compiled method assumption");
     // header info and data
@@ -99,12 +99,11 @@ public abstract class CompiledCodeObject extends SqueakObject {
         for (int i = 0; i < numTemps + numArgs; i++) {
             stackSlots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Illegal);
         }
-        pcSlot = frameDescriptor.addFrameSlot(PC, FrameSlotKind.Int);
-        stackPointerSlot = frameDescriptor.addFrameSlot(STACK_POINTER, FrameSlotKind.Int);
         receiverSlot = frameDescriptor.addFrameSlot(RECEIVER, FrameSlotKind.Illegal);
         selfSlot = frameDescriptor.addFrameSlot(SELF, FrameSlotKind.Object);
         closureSlot = frameDescriptor.addFrameSlot(CLOSURE, FrameSlotKind.Object);
         markerSlot = frameDescriptor.addFrameSlot(MARKER, FrameSlotKind.Object);
+        methodSlot = frameDescriptor.addFrameSlot(METHOD, FrameSlotKind.Object);
     }
 
     public VirtualFrame createTestFrame(Object receiver) {
@@ -292,6 +291,14 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     public boolean hasPrimitive() {
         return hasPrimitive;
+    }
+
+    public int primitiveIndex() {
+        if (hasPrimitive() && bytes.length >= 3) {
+            return Byte.toUnsignedInt(bytes[1]) + (Byte.toUnsignedInt(bytes[2]) << 8);
+        } else {
+            return 0;
+        }
     }
 
     public byte[] getBytes() {

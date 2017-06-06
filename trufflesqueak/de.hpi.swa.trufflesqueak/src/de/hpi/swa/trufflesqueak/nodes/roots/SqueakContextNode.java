@@ -1,16 +1,17 @@
 package de.hpi.swa.trufflesqueak.nodes.roots;
 
-import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
+import de.hpi.swa.trufflesqueak.exceptions.LocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.ListObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.ContextPartConstants;
+import de.hpi.swa.trufflesqueak.model.ReadOnlyContextObject;
 
 /**
  * This class implements the global interpreter loop. It creates frames to execute from context
@@ -19,53 +20,21 @@ import de.hpi.swa.trufflesqueak.model.ListObject;
  * logic.
  */
 public class SqueakContextNode extends RootNode {
-    private static final Object[] EMPTY_ARRAY = new Object[0];
+    private ContextObject context;
 
-    private enum ContextParts {
-        SENDER,
-        PC,
-        SP,
-        METHOD,
-        CLOSURE,
-        RECEIVER,
-        TEMP_FRAME_START,
-    }
-
-    private ListObject context;
-
-    public SqueakContextNode(SqueakLanguage language, ListObject activeContext) {
+    public SqueakContextNode(SqueakLanguage language, ContextObject activeContext) {
         super(language);
         context = activeContext;
     }
 
-    private static CompiledCodeObject getCurrentMethod(ListObject context) {
-        return (CompiledCodeObject) context.at0(ContextParts.METHOD.ordinal());
+    private static CompiledCodeObject getCurrentMethod(ContextObject currentContext) {
+        return (CompiledCodeObject) currentContext.at0(ContextPartConstants.METHOD);
     }
 
-    private static VirtualFrame createFrame(CompiledCodeObject method, ListObject ctxt) {
-        int pc = (int) ctxt.at0(ContextParts.PC.ordinal());
-        int sp = (int) ctxt.at0(ContextParts.SP.ordinal());
-        Object closure = ctxt.at0(ContextParts.CLOSURE.ordinal());
-        Object receiver = ctxt.at0(ContextParts.RECEIVER.ordinal());
-        VirtualFrame frame = Truffle.getRuntime().createVirtualFrame(EMPTY_ARRAY, method.getFrameDescriptor());
-        frame.setInt(method.pcSlot, pc);
-        frame.setInt(method.stackPointerSlot, sp);
-        frame.setObject(method.selfSlot, ctxt);
-        frame.setObject(method.closureSlot, closure);
-        method.receiverSlot.setKind(FrameSlotKind.Object);
-        frame.setObject(method.receiverSlot, receiver);
-        int tempStart = ContextParts.TEMP_FRAME_START.ordinal();
-        for (int i = tempStart; i < ctxt.size(); i++) {
-            method.getStackSlot(i - tempStart).setKind(FrameSlotKind.Object);
-            frame.setObject(method.getStackSlot(i - tempStart), ctxt.at0(i));
-        }
-        return frame;
-    }
-
-    private static ListObject getSender(ListObject context) {
-        Object sender = context.at0(ContextParts.SENDER.ordinal());
-        if (sender instanceof ListObject) {
-            return (ListObject) sender;
+    private static ContextObject getSender(ContextObject context) {
+        Object sender = context.at0(ContextPartConstants.SENDER);
+        if (sender instanceof ContextObject) {
+            return (ContextObject) sender;
         } else {
             throw new RuntimeException("sender chain ended");
         }
@@ -73,16 +42,16 @@ public class SqueakContextNode extends RootNode {
 
     @Override
     public Object execute(VirtualFrame frame) {
-        ListObject currentContext = context;
+        ContextObject currentContext = context;
         while (true) {
             CompiledCodeObject method = getCurrentMethod(currentContext);
-            VirtualFrame currentFrame = createFrame(method, currentContext);
-            int pc = (int) currentContext.at0(ContextParts.PC.ordinal());
+            int pc = (int) currentContext.at0(ContextPartConstants.PC);
             try {
                 // This will continue execution in the active context until that
                 // context returns or switches to another Squeak process.
-                SqueakMethodNode squeakMethodNode = new SqueakMethodNode(this.getLanguage(SqueakLanguage.class), method);
-                // squeakMethodNode.executeGeneric(currentFrame, pc);
+                currentContext.step();
+            } catch (LocalReturn e) {
+                currentContext = getSender(currentContext);
             } catch (NonLocalReturn e) {
                 // TODO: unwind context chain towards target
             } catch (NonVirtualReturn e) {

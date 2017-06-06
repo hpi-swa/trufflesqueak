@@ -53,6 +53,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimModNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimMulNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimNewArgNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimNewNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimNextHandlerContextNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimNormalizeNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimNotEqualNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPerform;
@@ -186,6 +187,8 @@ public abstract class PrimitiveNodeFactory {
         SLOT_AT_PUT(PrimAtPutNodeGen.class, 174),
         //
         BEHAVIOR_HASH(PrimIdentityHashNodeGen.class, 175),
+        //
+        NEXT_HANDLER_CONTEXT(PrimNextHandlerContextNodeGen.class, 197),
         //
         CLOSURE_VALUE(PrimClosureValueFactory.PrimClosureValue0NodeGen.class, 201),
         CLOSURE_VALUE_(PrimClosureValueFactory.PrimClosureValue1NodeGen.class, 202),

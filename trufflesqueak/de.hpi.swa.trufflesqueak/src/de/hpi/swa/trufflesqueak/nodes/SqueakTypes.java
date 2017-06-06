@@ -11,6 +11,7 @@ import de.hpi.swa.trufflesqueak.model.BlockClosure;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.ReadOnlyContextObject;
 import de.hpi.swa.trufflesqueak.model.LargeInteger;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -25,6 +26,7 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
                 String.class,
                 LargeInteger.class,
                 ClassObject.class,
+                ReadOnlyContextObject.class,
                 ListObject.class,
                 PointersObject.class,
                 BlockClosure.class,

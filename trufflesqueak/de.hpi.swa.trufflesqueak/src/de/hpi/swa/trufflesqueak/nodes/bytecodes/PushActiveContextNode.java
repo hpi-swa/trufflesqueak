@@ -2,7 +2,6 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import java.util.Stack;
 
-import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.instrumentation.PrettyPrintVisitor;
@@ -18,11 +17,7 @@ public class PushActiveContextNode extends SqueakBytecodeNode {
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
-        // TODO: ...
-        MaterializedFrame materializedFrame = frame.materialize();
-        ContextObject contextObject = new ContextObject(method.image, materializedFrame);
-        // push(frame, contextObject);
-        return contextObject;
+        return ContextObject.createReadOnlyContextObject(method.image, frame);
     }
 
     @Override

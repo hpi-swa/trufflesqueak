@@ -20,10 +20,10 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveQuickReturnNode;
 public class CallPrimitiveNode extends SqueakBytecodeNode {
     @Child PrimitiveNode primitive;
 
+    @SuppressWarnings("unused")
     public CallPrimitiveNode(CompiledCodeObject method, int idx, int i, int j) {
         super(method, idx);
-        int primitiveIdx = i + (j << 8);
-        primitive = PrimitiveNodeFactory.forIdx(method, primitiveIdx);
+        primitive = PrimitiveNodeFactory.forIdx(method, method.primitiveIndex());
     }
 
     @Override
