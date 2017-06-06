@@ -1,10 +1,8 @@
 language: java
 jdk:
   - oraclejdk8
-install:
-  - cd ..; git clone git://github.com/graalvm/mx.git; cd -
 before_script:
-  - ../mx/mx -n sforceimports
-  - ../mx/mx -n build
+  - mx/mx -n sforceimports
+  - mx/mx -n build
 script:
-  - ../mx/mx -n unittest --verbose --regex trufflesqueak
+  - mx/mx -n unittest --verbose --regex trufflesqueak

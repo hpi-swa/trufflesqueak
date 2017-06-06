@@ -1,0 +1,3 @@
+[submodule "mx"]
+	path = mx
+	url = git://github.com/graalvm/mx.git
