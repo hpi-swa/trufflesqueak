@@ -187,9 +187,8 @@ public class ClassObject extends AbstractPointersObject {
         return lookup(methodSelector -> methodSelector != null && methodSelector.toString().equals(selector));
     }
 
-    @TruffleBoundary
     public Object doesNotUnderstand() {
-        Object result = lookup(image.doesNotUnderstand);
+        Object result = lookup(methodSelector -> methodSelector == image.doesNotUnderstand);
         if (result == null) {
             throw new RuntimeException("doesNotUnderstand missing!");
         }
