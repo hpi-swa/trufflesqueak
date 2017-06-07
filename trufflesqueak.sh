@@ -34,4 +34,4 @@ else
     done
 fi
 
-echo $JAVACMD $JAVA_ARGS -cp $CLASSPATH de.hpi.swa.trufflesqueak.TruffleSqueakMain $PROGRAM_ARGS
+$JAVACMD $JAVA_ARGS -cp $CLASSPATH de.hpi.swa.trufflesqueak.TruffleSqueakMain $PROGRAM_ARGS
