@@ -2,3 +2,6 @@
 *src_gen*
 /trufflesqueak/de.hpi.swa.trufflesqueak/nbproject/private/
 /trufflesqueak/de.hpi.swa.trufflesqueak.test/nbproject/private/
+.idea
+mxbuild
+*.pyc

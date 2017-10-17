@@ -109,7 +109,8 @@ public class SqueakImageContext {
         error = err;
         entryPoint = new CompiledMethodObject(this, ENTRY_POINT_BYTES, ENTRY_POINT_LITERALS);
         if (env != null) {
-            config = (SqueakConfig) env.getConfig().get("config");
+            String[] applicationArguments = env.getApplicationArguments();
+            config = new SqueakConfig(applicationArguments);
         } else {
             config = new SqueakConfig(new String[0]);
         }

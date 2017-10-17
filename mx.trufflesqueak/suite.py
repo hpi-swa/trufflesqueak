@@ -24,8 +24,10 @@ suite = {
       "subDir" : "trufflesqueak",
       "sourceDirs" : ["src"],
       "dependencies" : [
-                "truffle:TRUFFLE_API",
-                "truffle:TRUFFLE_DSL_PROCESSOR",
+          "truffle:TRUFFLE_API",
+          "truffle:TRUFFLE_DSL_PROCESSOR",
+          "sdk:GRAAL_SDK",
+          "sdk:LAUNCHER_COMMON",
       ],
       "checkstyle" : "de.hpi.swa.trufflesqueak",
       "javaCompliance" : "1.8",

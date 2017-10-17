@@ -1,41 +1,73 @@
 package de.hpi.swa.trufflesqueak;
 
-import java.io.InputStream;
-import java.io.PrintStream;
-import java.util.Arrays;
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.swing.JFileChooser;
 
-import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.api.vm.PolyglotEngine;
-import com.oracle.truffle.api.vm.PolyglotEngine.Builder;
-import com.oracle.truffle.api.vm.PolyglotEngine.Value;
+import org.graalvm.launcher.AbstractLanguageLauncher;
+import org.graalvm.options.OptionCategory;
 
-public class TruffleSqueakMain {
-    private static void executeImage(String filename, InputStream in, PrintStream out, String... args) throws RuntimeException {
-        out.println("== running TruffleSqueak on " + Truffle.getRuntime().getName());
-        Source source = Source.newBuilder(filename).mimeType(SqueakLanguage.MIME_TYPE).name(filename).interactive().build();
-        Builder builder = PolyglotEngine.newBuilder().setIn(in).setOut(out);
-        builder.config(SqueakLanguage.MIME_TYPE, "config", new SqueakConfig(args));
-        PolyglotEngine engine = builder.build();
-        assert engine.getLanguages().containsKey(SqueakLanguage.MIME_TYPE);
-        Value result = engine.eval(source);
-        if (result.get() instanceof Integer) {
-            System.exit((int) result.get());
-        }
+import com.oracle.truffle.api.Truffle;
+
+public class TruffleSqueakMain extends AbstractLanguageLauncher {
+    private static void executeImage(String... args) throws RuntimeException {
+        System.out.println("== running TruffleSqueak on " + Truffle.getRuntime().getName());
+        new TruffleSqueakMain().launch(args);
     }
 
     public static void main(String[] args) throws RuntimeException {
         if (args.length >= 1) {
-            executeImage(args[0], System.in, System.out, Arrays.copyOfRange(args, 1, args.length));
+            executeImage(args);
         } else {
             JFileChooser squeakImageChooser = new JFileChooser();
             int result = squeakImageChooser.showOpenDialog(null);
             if (result == JFileChooser.APPROVE_OPTION) {
-                executeImage(squeakImageChooser.getSelectedFile().getAbsolutePath(),
-                                System.in, System.out, args);
+                executeImage(squeakImageChooser.getSelectedFile().getAbsolutePath());
             }
         }
+    }
+
+    private SqueakConfig config;
+    private String imagepath;
+
+    @Override
+    protected List<String> preprocessArguments(List<String> arguments, Map<String, String> polyglotOptions) {
+        imagepath = arguments.get(0);
+        config = new SqueakConfig(arguments.subList(1, arguments.size()).toArray(new String[0]));
+        return config.getUnrecognized();
+    }
+
+    @Override
+    protected void launch(org.graalvm.polyglot.Context.Builder contextBuilder) {
+        contextBuilder.arguments("squeak", config.toStringArgs());
+        try (org.graalvm.polyglot.Context ctx = contextBuilder.build()) {
+            Object result = ctx.eval(org.graalvm.polyglot.Source.newBuilder("squeak", new File(imagepath)).build());
+            System.out.println(result);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    protected String getLanguageId() {
+        return "squeak";
+    }
+
+    @Override
+    protected void printHelp(OptionCategory maxCategory) {
+        System.out.println("squeak <image> [-r <receiver>] [-m <method>] [-t|--trace] [-v|--verbose] [--|--args <image args>]");
+    }
+
+    @Override
+    protected void collectArguments(Set<String> options) {
+        options.add("-r");
+        options.add("-m");
+        options.add("--trace");
+        options.add("--verbose");
+        options.add("--args");
     }
 }

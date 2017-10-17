@@ -15,27 +15,24 @@ def squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
     if not env:
         env = os.environ
 
-    check_vm_env = env.get('GRAALPYTHON_MUST_USE_GRAAL', False)
-    if check_vm_env:
-        if check_vm_env == '1':
-            check_vm(must_be_jvmci=True)
-        elif check_vm_env == '0':
-            check_vm()
+    # check_vm_env = env.get('GRAALPYTHON_MUST_USE_GRAAL', False)
+    # if check_vm_env:
+    #     if check_vm_env == '1':
+    #         check_vm(must_be_jvmci=True)
+    #     elif check_vm_env == '0':
+    #         check_vm()
 
     vm_args, squeak_args = mx.extract_VM_args(args, useDoubleDash=False, defaultAllVMArgs=False)
 
     classpath = ["de.hpi.swa.trufflesqueak"]
-    if mx.suite("tools-enterprise", fatalIfMissing=False):
-        classpath.append("tools-enterprise:CHROMEINSPECTOR")
-    vm_args = ['-cp', mx.classpath(classpath)]
+    USES_GRAAL = mx.suite("compiler", fatalIfMissing=False)
+    vm_args = ['-cp', mx.classpath(classpath) + ':/Users/fniephaus/bin/graalvm-0.28.2/jre/tools/chromeinspector/chromeinspector.jar']
 
     if not jdk:
-        jdk = mx.get_jdk()
+        jdk = mx.get_jdk(tag='jvmci')
 
     vm_args += [
-        # '-XX:+UseJVMCICompiler',
-        # '-Djvmci.Compiler=graal',
-        # '-Dgraal.TraceTruffleCompilation=true',
+        '-Dgraal.TraceTruffleCompilation=true',
         # '-Dgraal.Dump=',
         # '-Dgraal.MethodFilter=Truffle.*',
         # '-XX:CompileCommand=print,*OptimizedCallTarget.callRoot',
@@ -45,6 +42,12 @@ def squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
         # '-Dgraal.TraceTrufflePerformanceWarnings=true',
         # '-Dgraal.TruffleCompilationExceptionsArePrinted=true',
     ]
+    if USES_GRAAL:
+        vm_args += [
+            '-XX:+UseJVMCICompiler',
+            '-Djvmci.Compiler=graal',
+            '-Djvmci.class.path.append=' + mx.classpath('compiler:GRAAL', jdk=jdk)
+        ]
 
     # default: assertion checking is enabled
     if extra_vm_args is None or '-da' not in extra_vm_args:

@@ -1,6 +1,8 @@
 package de.hpi.swa.trufflesqueak;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class SqueakConfig {
     private final boolean verbose;
@@ -8,6 +10,7 @@ public class SqueakConfig {
     private final String receiver;
     private final String selector;
     private final String[] restArgs;
+    private final List<String> unrecognized = new ArrayList<>();
 
     @SuppressWarnings("hiding")
     public SqueakConfig(String[] args) {
@@ -40,6 +43,8 @@ public class SqueakConfig {
                     restArgs = Arrays.copyOfRange(args, i + 1, args.length);
                     i = args.length;
                     break;
+                default:
+                    unrecognized.add(args[i]);
             }
         }
 
@@ -48,6 +53,34 @@ public class SqueakConfig {
         this.receiver = receiver;
         this.selector = selector;
         this.restArgs = restArgs;
+    }
+
+    public String[] toStringArgs() {
+        List<String> sb = new ArrayList<>();
+        if (verbose) {
+            sb.add("-v");
+        }
+        if (tracing) {
+            sb.add("-t");
+        }
+        if (receiver != null) {
+            sb.add("-r");
+            sb.add(receiver.toString());
+        }
+        if (selector != null) {
+            sb.add("-m");
+            sb.add(selector.toString());
+        }
+        if (restArgs != null) {
+            for (String s : restArgs) {
+                sb.add(s);
+            }
+        }
+        return sb.toArray(new String[0]);
+    }
+
+    public List<String> getUnrecognized() {
+        return unrecognized;
     }
 
     public boolean isVerbose() {
