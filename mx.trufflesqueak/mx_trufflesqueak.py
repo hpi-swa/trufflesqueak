@@ -26,7 +26,7 @@ def squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
 
     classpath = ["de.hpi.swa.trufflesqueak"]
     USES_GRAAL = mx.suite("compiler", fatalIfMissing=False)
-    vm_args = ['-cp', mx.classpath(classpath) + ':/Users/fniephaus/bin/graalvm-0.28.2/jre/tools/chromeinspector/chromeinspector.jar']
+    vm_args = ['-cp', mx.classpath(classpath) + ':./chromeinspector.jar']
 
     if not jdk:
         jdk = mx.get_jdk(tag='jvmci')
