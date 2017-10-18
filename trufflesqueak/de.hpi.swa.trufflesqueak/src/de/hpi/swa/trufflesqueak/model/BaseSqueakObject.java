@@ -1,9 +1,11 @@
 package de.hpi.swa.trufflesqueak.model;
 
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.TruffleObject;
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.util.Chunk;
 
-public abstract class BaseSqueakObject {
+public abstract class BaseSqueakObject implements TruffleObject {
     protected static final int IDENTITY_HASH_MASK = 0x400000 - 1;
     public final SqueakImageContext image;
 
@@ -11,6 +13,10 @@ public abstract class BaseSqueakObject {
         image = img;
     }
 
+    public static boolean isInstance(TruffleObject obj) {
+        return obj instanceof BaseSqueakObject;
+    }
+    
     public abstract void fillin(Chunk chunk);
 
     @Override
@@ -68,5 +74,10 @@ public abstract class BaseSqueakObject {
 
     public int varsize() {
         return size() - instsize();
+    }
+    
+    @Override
+    public ForeignAccess getForeignAccess() {
+        return BaseSqueakObjectMessageResolutionForeign.ACCESS;
     }
 }
