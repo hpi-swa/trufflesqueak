@@ -1,18 +1,20 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
-import java.util.Stack;
+import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
-public class ExtendedStoreAndPopNode extends ExtendedStoreNode {
-    public ExtendedStoreAndPopNode(CompiledCodeObject method, int idx, int i) {
-        super(method, idx, i);
+public class ExtendedStoreAndPopNode extends SqueakBytecodeNode {
+    @Child SqueakBytecodeNode storeNode;
+
+    public ExtendedStoreAndPopNode(CompiledCodeObject code, int idx, int i) {
+        super(code, idx);
+        storeNode = ExtendedStoreNode.create(code, idx, i);
     }
 
     @Override
-    public void interpretOn(Stack<SqueakNode> stack, Stack<SqueakNode> statements) {
-        super.interpretOn(stack, statements);
-        statements.add(stack.pop());
+    public Object executeGeneric(VirtualFrame frame) {
+        storeNode.executeGeneric(frame);
+        return pop(frame);
     }
 }

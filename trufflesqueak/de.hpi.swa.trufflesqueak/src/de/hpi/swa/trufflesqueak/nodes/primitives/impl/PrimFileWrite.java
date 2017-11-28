@@ -9,8 +9,8 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveQuinaryOperation;
 
 public class PrimFileWrite extends PrimitiveQuinaryOperation {
-    public PrimFileWrite(CompiledMethodObject cm) {
-        super(cm);
+    public PrimFileWrite(CompiledMethodObject code) {
+        super(code);
     }
 
     @Specialization
@@ -23,12 +23,12 @@ public class PrimFileWrite extends PrimitiveQuinaryOperation {
         int byteEnd = Math.min(start - 1 + count, chars.length()) * elementSize;
         switch (fd) {
             case 1:
-                method.image.getOutput().append(chars, byteStart, byteEnd);
-                method.image.getOutput().flush();
+                code.image.getOutput().append(chars, byteStart, byteEnd);
+                code.image.getOutput().flush();
                 break;
             case 2:
-                method.image.getError().append(chars, byteStart, byteEnd);
-                method.image.getError().flush();
+                code.image.getError().append(chars, byteStart, byteEnd);
+                code.image.getError().flush();
                 break;
             default:
                 throw new PrimitiveFailed();

@@ -6,7 +6,6 @@ import java.util.function.Predicate;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;

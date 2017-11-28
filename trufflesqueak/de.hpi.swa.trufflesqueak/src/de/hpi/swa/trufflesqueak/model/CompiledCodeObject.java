@@ -17,14 +17,10 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.SqueakLanguage;
-import de.hpi.swa.trufflesqueak.instrumentation.PrettyPrintVisitor;
-import de.hpi.swa.trufflesqueak.instrumentation.SourceVisitor;
-import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.BytecodeSequenceNode;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakMethodNode;
 import de.hpi.swa.trufflesqueak.util.BitSplitter;
 import de.hpi.swa.trufflesqueak.util.Chunk;
-import de.hpi.swa.trufflesqueak.util.Decompiler;
 
 public abstract class CompiledCodeObject extends SqueakObject {
     // constants
@@ -36,17 +32,16 @@ public abstract class CompiledCodeObject extends SqueakObject {
     public static final String MARKER = "marker";
     public static final String METHOD = "method";
     // code
-    protected byte[] bytes;
-    private SqueakNode[] ast;
+    protected BytecodeSequenceNode bytesNode;
     Source source;
     // frame info
     private FrameDescriptor frameDescriptor;
-    @CompilationFinal public FrameSlot receiverSlot;
     @CompilationFinal public FrameSlot selfSlot;
     @CompilationFinal public FrameSlot closureSlot;
-    @CompilationFinal(dimensions = 1) FrameSlot[] stackSlots;
+    @CompilationFinal(dimensions = 1) public FrameSlot[] stackSlots;
     @CompilationFinal public FrameSlot markerSlot;
     @CompilationFinal public FrameSlot methodSlot;
+    @CompilationFinal public FrameSlot stackPointerSlot;
     private RootCallTarget callTarget;
     private final CyclicAssumption callTargetStable = new CyclicAssumption("Compiled method assumption");
     // header info and data
@@ -74,18 +69,31 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     protected CompiledCodeObject(CompiledCodeObject original) {
         this(original.image, original.getSqClass());
-        setBytesAndLiterals(original.literals, original.bytes);
+        setBytecodeSequenceAndLiterals(original.literals, original.bytesNode);
+    }
+
+    protected void setBytecodeSequenceAndLiterals(Object[] lits, BytecodeSequenceNode bNode) {
+        literals = lits;
+        bytesNode = bNode;
+        updateAndInvalidateCallTargets();
+    }
+
+    // This creates a new BytecodeSequenceNode
+    protected void setBytesAndLiterals(Object[] lits, byte[] bc) {
+        literals = lits;
+        createBytesNode(bc);
+        updateAndInvalidateCallTargets();
+    }
+
+    private void createBytesNode(byte[] bc) {
+        bytesNode = new BytecodeSequenceNode(bc, this);
+        bytesNode.initialize();
     }
 
     @TruffleBoundary
-    protected void setBytesAndLiterals(Object[] lits, byte[] bc) {
-        literals = lits;
-        bytes = bc;
+    protected void updateAndInvalidateCallTargets() {
         decodeHeader();
         prepareFrameDescriptor();
-        ast = new Decompiler(this).getAST();
-        source = Source.newBuilder(prettyPrint()).mimeType(SqueakLanguage.MIME_TYPE).name(toString()).build();
-        new SourceVisitor(source).visit(this);
         callTarget = Truffle.getRuntime().createCallTarget(new SqueakMethodNode(image.getLanguage(), this));
         callTargetStable.invalidate();
     }
@@ -94,21 +102,24 @@ public abstract class CompiledCodeObject extends SqueakObject {
         return source;
     }
 
+    private int frameSize() {
+        if (needsLargeFrame) {
+            return 40;
+        }
+        return 16;
+    }
+
     private void prepareFrameDescriptor() {
         frameDescriptor = new FrameDescriptor(null);
-        int squeakFrameSize = 16;
-        if (needsLargeFrame) {
-            squeakFrameSize = 40;
-        }
-        stackSlots = new FrameSlot[squeakFrameSize];
+        stackSlots = new FrameSlot[frameSize()];
         for (int i = 0; i < numTemps + numArgs; i++) {
             stackSlots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Illegal);
         }
-        receiverSlot = frameDescriptor.addFrameSlot(RECEIVER, FrameSlotKind.Illegal);
         selfSlot = frameDescriptor.addFrameSlot(SELF, FrameSlotKind.Object);
         closureSlot = frameDescriptor.addFrameSlot(CLOSURE, FrameSlotKind.Object);
         markerSlot = frameDescriptor.addFrameSlot(MARKER, FrameSlotKind.Object);
         methodSlot = frameDescriptor.addFrameSlot(METHOD, FrameSlotKind.Object);
+        stackPointerSlot = frameDescriptor.addFrameSlot(STACK_POINTER, FrameSlotKind.Int);
     }
 
     public VirtualFrame createTestFrame(Object receiver) {
@@ -128,7 +139,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
     public RootCallTarget getCallTarget() {
         if (callTarget == null) {
             CompilerDirectives.transferToInterpreter();
-            setBytesAndLiterals(literals, bytes);
+            setBytecodeSequenceAndLiterals(literals, bytesNode);
         }
         return callTarget;
     }
@@ -155,10 +166,6 @@ public abstract class CompiledCodeObject extends SqueakObject {
             selector = selectorObj.toString();
         }
         return className + ">>" + selector;
-    }
-
-    public SqueakNode[] getBytecodeAST() {
-        return ast;
     }
 
     public FrameDescriptor getFrameDescriptor() {
@@ -190,7 +197,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
     }
 
     public void setLiterals(Object[] lits) {
-        setBytesAndLiterals(lits, bytes);
+        setBytecodeSequenceAndLiterals(lits, bytesNode);
     }
 
     @Override
@@ -201,7 +208,8 @@ public abstract class CompiledCodeObject extends SqueakObject {
         int literalsize = header & 0x7fff;
         Object[] ptrs = chunk.getPointers(literalsize + 1);
         literals = ptrs;
-        bytes = chunk.getBytes(ptrs.length);
+        prepareFrameDescriptor();
+        createBytesNode(chunk.getBytes(ptrs.length));
     }
 
     void decodeHeader() {
@@ -239,9 +247,9 @@ public abstract class CompiledCodeObject extends SqueakObject {
         if (other instanceof CompiledMethodObject) {
             if (super.become(other)) {
                 Object[] literals2 = ((CompiledCodeObject) other).literals;
-                byte[] bytes2 = ((CompiledCodeObject) other).bytes;
-                ((CompiledCodeObject) other).setBytesAndLiterals(literals, bytes);
-                this.setBytesAndLiterals(literals2, bytes2);
+                BytecodeSequenceNode bytes2 = ((CompiledCodeObject) other).bytesNode;
+                ((CompiledCodeObject) other).setBytecodeSequenceAndLiterals(literals, bytesNode);
+                this.setBytecodeSequenceAndLiterals(literals2, bytes2);
                 return true;
             }
         }
@@ -254,7 +262,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     @Override
     public int size() {
-        return literals.length * 4 + bytes.length;
+        return literals.length * 4 + bytesNode.getBytes().length;
     }
 
     @Override
@@ -262,7 +270,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
         if (idx < literals.length) {
             return literals[idx / 4];
         } else {
-            return Byte.toUnsignedInt(bytes[idx]);
+            return Byte.toUnsignedInt(bytesNode.getBytes()[idx]);
         }
     }
 
@@ -271,8 +279,9 @@ public abstract class CompiledCodeObject extends SqueakObject {
         if (idx < literals.length) {
             setLiteral(idx / 4, obj);
         } else {
-            bytes[idx] = (byte) obj;
-            setBytesAndLiterals(literals, bytes);
+            byte[] bc = bytesNode.getBytes();
+            bc[idx] = (byte) obj;
+            setBytesAndLiterals(literals, bc);
         }
     }
 
@@ -286,7 +295,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     public void setLiteral(int i, Object obj) {
         literals[i] = obj;
-        setBytesAndLiterals(literals, bytes);
+        setBytecodeSequenceAndLiterals(literals, bytesNode);
     }
 
     @Override
@@ -299,6 +308,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
     }
 
     public int primitiveIndex() {
+        byte[] bytes = bytesNode.getBytes();
         if (hasPrimitive() && bytes.length >= 3) {
             return Byte.toUnsignedInt(bytes[1]) + (Byte.toUnsignedInt(bytes[2]) << 8);
         } else {
@@ -306,18 +316,12 @@ public abstract class CompiledCodeObject extends SqueakObject {
         }
     }
 
-    public byte[] getBytes() {
-        return bytes;
+    public BytecodeSequenceNode getBytecodeNode() {
+        return bytesNode;
     }
 
     public Object[] getLiterals() {
         return literals;
-    }
-
-    public String prettyPrint() {
-        PrettyPrintVisitor str = new PrettyPrintVisitor();
-        str.visit(this);
-        return str.build();
     }
 
     abstract public CompiledMethodObject getMethod();

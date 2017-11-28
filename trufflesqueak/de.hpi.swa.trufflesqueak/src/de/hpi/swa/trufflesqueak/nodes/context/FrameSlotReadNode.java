@@ -5,28 +5,16 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.trufflesqueak.instrumentation.PrettyPrintVisitor;
-import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-
 public abstract class FrameSlotReadNode extends FrameSlotNode {
-    protected FrameSlotReadNode(CompiledCodeObject cm, FrameSlot frameSlot) {
-        super(cm, frameSlot);
+    protected FrameSlotReadNode(FrameSlot frameSlot) {
+        super(frameSlot);
     }
 
-    public static FrameSlotReadNode create(CompiledCodeObject cm, FrameSlot frameSlot) {
-        return FrameSlotReadNodeGen.create(cm, frameSlot);
+    public static FrameSlotReadNode create(FrameSlot frameSlot) {
+        return FrameSlotReadNodeGen.create(frameSlot);
     }
 
-    public static FrameSlotReadNode temp(CompiledCodeObject cm, int index) {
-        if (cm.getNumStackSlots() >= index) {
-            return create(cm, cm.getStackSlot(index));
-        }
-        return null;
-    }
-
-    public static FrameSlotReadNode receiver(CompiledCodeObject method) {
-        return create(method, method.receiverSlot);
-    }
+    public abstract Object executeRead(VirtualFrame frame);
 
     @Specialization(guards = "isInt(frame)")
     public int readInt(VirtualFrame frame) {
@@ -62,10 +50,5 @@ public abstract class FrameSlotReadNode extends FrameSlotNode {
     @Specialization(guards = "isIllegal(frame)")
     public Object readIllegal(@SuppressWarnings("unused") VirtualFrame frame) {
         return null;
-    }
-
-    @Override
-    public void accept(PrettyPrintVisitor b) {
-        b.visit(this);
     }
 }

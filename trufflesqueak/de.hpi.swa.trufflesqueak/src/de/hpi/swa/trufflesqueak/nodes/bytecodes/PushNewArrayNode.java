@@ -1,12 +1,9 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
-import java.util.Stack;
-
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
-import de.hpi.swa.trufflesqueak.instrumentation.PrettyPrintVisitor;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
@@ -34,22 +31,7 @@ public class PushNewArrayNode extends SqueakBytecodeNode {
                 ptrs[i] = popIntoArrayNodes[i].executeGeneric(frame);
             }
         }
-        return method.image.wrap(ptrs);
-    }
-
-    @Override
-    public void interpretOn(Stack<SqueakNode> stack, Stack<SqueakNode> sequence) {
-        if (popIntoArrayNodes != null) {
-            for (int i = 0; i < arraySize; i++) {
-                popIntoArrayNodes[i] = stack.pop();
-            }
-        }
-        stack.push(this);
-    }
-
-    @Override
-    public void accept(PrettyPrintVisitor b) {
-        b.visit(this);
+        return code.image.wrap(ptrs);
     }
 
     @Override

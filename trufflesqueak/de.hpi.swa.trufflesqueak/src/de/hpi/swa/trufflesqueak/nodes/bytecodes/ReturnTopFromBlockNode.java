@@ -1,18 +1,21 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
-import java.util.Stack;
+import com.oracle.truffle.api.frame.VirtualFrame;
 
+import de.hpi.swa.trufflesqueak.exceptions.LocalReturn;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
 public class ReturnTopFromBlockNode extends ReturnNode {
+    @Child SqueakNode valueNode;
+
     public ReturnTopFromBlockNode(CompiledCodeObject method, int idx) {
         super(method, idx);
+        valueNode = new PopNode(code, idx);
     }
 
     @Override
-    public void interpretOn(Stack<SqueakNode> stack, Stack<SqueakNode> statements) {
-        valueNode = stack.pop();
-        super.interpretOn(stack, statements);
+    public Object executeGeneric(VirtualFrame frame) {
+        throw new LocalReturn(valueNode.executeGeneric(frame));
     }
 }

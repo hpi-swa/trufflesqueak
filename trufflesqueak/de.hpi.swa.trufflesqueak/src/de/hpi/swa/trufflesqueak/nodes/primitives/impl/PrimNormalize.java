@@ -10,8 +10,8 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveUnaryOperation;
 
 public class PrimNormalize extends PrimitiveUnaryOperation {
-    public PrimNormalize(CompiledMethodObject cm) {
-        super(cm);
+    public PrimNormalize(CompiledMethodObject code) {
+        super(code);
     }
 
     @Specialization
@@ -55,6 +55,6 @@ public class PrimNormalize extends PrimitiveUnaryOperation {
     }
 
     private BigInteger bigIntFromNative(NativeObject o) {
-        return new LargeInteger(method.image, o.getSqClass(), o.getBytes()).getValue();
+        return new LargeInteger(code.image, o.getSqClass(), o.getBytes()).getValue();
     }
 }

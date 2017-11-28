@@ -14,17 +14,17 @@ public class NativeObject extends SqueakObject implements TruffleObject {
     private ByteBuffer content;
     private byte elementSize;
 
-    public NativeObject(SqueakImageContext img, byte elementSz) {
+    public NativeObject(SqueakImageContext img, byte elementSize) {
         super(img);
-        elementSize = elementSz;
+        this.elementSize = elementSize;
     }
 
-    public NativeObject(SqueakImageContext image, ClassObject classObject, int size, int elementSz) {
+    public NativeObject(SqueakImageContext image, ClassObject classObject, int size, int elementSize) {
         super(image, classObject);
-        if (elementSz == 1) {
+        if (elementSize == 1) {
             setBytes(new byte[size]);
         } else {
-            assert elementSz == 4;
+            assert elementSize == 4;
             setWords(new int[size]);
         }
     }

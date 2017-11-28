@@ -1,7 +1,5 @@
 package de.hpi.swa.trufflesqueak.model;
 
-import java.util.Arrays;
-
 import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;

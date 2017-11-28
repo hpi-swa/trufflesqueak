@@ -11,11 +11,11 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNode;
 @Instrumentable(factory = PrimDebuggerWrapper.class)
 public class PrimDebugger extends PrimitiveNode {
     protected PrimDebugger(PrimDebugger pm) {
-        super((CompiledMethodObject) pm.method);
+        super((CompiledMethodObject) pm.code);
     }
 
-    public PrimDebugger(CompiledMethodObject cm) {
-        super(cm);
+    public PrimDebugger(CompiledMethodObject code) {
+        super(code);
     }
 
     @Override

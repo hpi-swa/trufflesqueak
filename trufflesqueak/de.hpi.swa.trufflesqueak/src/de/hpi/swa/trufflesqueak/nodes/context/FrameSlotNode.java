@@ -3,15 +3,12 @@ package de.hpi.swa.trufflesqueak.nodes.context;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
 
-import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithMethod;
-
-public abstract class FrameSlotNode extends SqueakNodeWithMethod {
+public abstract class FrameSlotNode extends Node {
     public final FrameSlot slot;
 
-    protected FrameSlotNode(CompiledCodeObject cm, FrameSlot frameSlot) {
-        super(cm);
+    protected FrameSlotNode(FrameSlot frameSlot) {
         slot = frameSlot;
     }
 

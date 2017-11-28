@@ -11,7 +11,6 @@ import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.ContextPartConstants;
-import de.hpi.swa.trufflesqueak.model.ReadOnlyContextObject;
 
 /**
  * This class implements the global interpreter loop. It creates frames to execute from context

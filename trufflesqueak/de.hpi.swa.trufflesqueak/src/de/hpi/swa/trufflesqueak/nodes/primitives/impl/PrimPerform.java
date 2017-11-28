@@ -25,9 +25,9 @@ public class PrimPerform extends PrimitiveNode {
     @Child private LookupNode lookupNode;
     @Child private DispatchNode dispatchNode;
 
-    public PrimPerform(CompiledMethodObject cm) {
-        super(cm);
-        lookupClassNode = SqueakLookupClassNodeGen.create(method);
+    public PrimPerform(CompiledMethodObject code) {
+        super(code);
+        lookupClassNode = SqueakLookupClassNodeGen.create(code);
         dispatchNode = DispatchNodeGen.create();
         lookupNode = LookupNodeGen.create();
     }

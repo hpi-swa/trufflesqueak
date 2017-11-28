@@ -1,36 +1,23 @@
 package de.hpi.swa.trufflesqueak.nodes.context;
 
-import com.oracle.truffle.api.dsl.NodeChild;
-import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.trufflesqueak.instrumentation.PrettyPrintVisitor;
-import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
+import de.hpi.swa.trufflesqueak.nodes.WriteNode;
 
-@NodeChildren({@NodeChild(value = "value", type = SqueakNode.class)})
-public abstract class FrameSlotWriteNode extends FrameSlotNode {
+public abstract class FrameSlotWriteNode extends FrameSlotNode implements WriteNode {
     public FrameSlotWriteNode(FrameSlotWriteNode original) {
-        super(original.method, original.slot);
+        super(original.slot);
     }
 
-    protected FrameSlotWriteNode(CompiledCodeObject cm, FrameSlot slot) {
-        super(cm, slot);
+    protected FrameSlotWriteNode(FrameSlot slot) {
+        super(slot);
     }
 
-    public static FrameSlotWriteNode argument(CompiledCodeObject cm, FrameSlot slot, int argumentIndex) {
-        return FrameSlotWriteNodeGen.create(cm, slot, new ArgumentProfileNode(new ArgumentNode(argumentIndex)));
-    }
-
-    public static FrameSlotWriteNode create(CompiledCodeObject cm, FrameSlot slot, SqueakNode node) {
-        return FrameSlotWriteNodeGen.create(cm, slot, node);
-    }
-
-    public static FrameSlotWriteNode temp(CompiledCodeObject method, int index, SqueakNode node) {
-        return create(method, method.getStackSlot(index), node);
+    public static FrameSlotWriteNode create(FrameSlot slot) {
+        return FrameSlotWriteNodeGen.create(slot);
     }
 
     protected boolean isNullWrite(VirtualFrame frame, Object value) {
@@ -75,10 +62,5 @@ public abstract class FrameSlotWriteNode extends FrameSlotNode {
         slot.setKind(FrameSlotKind.Object);
         frame.setObject(slot, value);
         return value;
-    }
-
-    @Override
-    public void accept(PrettyPrintVisitor b) {
-        b.visit(this);
     }
 }

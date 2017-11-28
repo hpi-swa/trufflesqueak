@@ -3,19 +3,18 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes.jump;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
-import de.hpi.swa.trufflesqueak.instrumentation.PrettyPrintVisitor;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
-import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithMethod;
+import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithCode;
 
-public class IfNilCheck extends SqueakNodeWithMethod {
+public class IfNilCheck extends SqueakNodeWithCode {
     @Child public SqueakNode checkNode;
     @Children public final SqueakNode[] statements;
     @Child public SqueakNode result;
     public final boolean runIfNil;
 
-    public IfNilCheck(CompiledCodeObject cc, SqueakNode pop, boolean ifNil) {
-        super(cc);
+    public IfNilCheck(CompiledCodeObject code, SqueakNode pop, boolean ifNil) {
+        super(code);
         checkNode = pop;
         runIfNil = ifNil;
         statements = null;
@@ -23,7 +22,7 @@ public class IfNilCheck extends SqueakNodeWithMethod {
     }
 
     public IfNilCheck(IfNilCheck base, SqueakNode[] altNodes, SqueakNode altResult) {
-        super(base.method);
+        super(base.code);
         checkNode = base.checkNode;
         runIfNil = base.runIfNil;
         statements = altNodes;
@@ -35,7 +34,7 @@ public class IfNilCheck extends SqueakNodeWithMethod {
     public Object executeGeneric(VirtualFrame frame) {
         assert statements != null || result != null;
         Object nilOrObject = checkNode.executeGeneric(frame);
-        if (runIfNil == (nilOrObject == null || nilOrObject == method.image.nil)) {
+        if (runIfNil == (nilOrObject == null || nilOrObject == code.image.nil)) {
             if (statements != null) {
                 for (SqueakNode node : statements) {
                     node.executeGeneric(frame);
@@ -48,10 +47,5 @@ public class IfNilCheck extends SqueakNodeWithMethod {
             }
         }
         return nilOrObject;
-    }
-
-    @Override
-    public void accept(PrettyPrintVisitor v) {
-        v.visit(this);
     }
 }

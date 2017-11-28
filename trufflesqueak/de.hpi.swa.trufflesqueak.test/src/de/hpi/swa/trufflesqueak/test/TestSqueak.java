@@ -40,8 +40,13 @@ public abstract class TestSqueak extends TestCase {
     }
 
     public CompiledCodeObject makeMethod(byte[] bytes) {
-        CompiledCodeObject cm = new CompiledMethodObject(image, bytes, new Object[]{68419598, null, null});
-        return cm;
+        // Always add three literals...
+        return makeMethod(bytes, new Object[]{68419598, null, null});
+    }
+
+    public CompiledCodeObject makeMethod(byte[] bytes, Object[] literals) {
+        // Always add three literals...
+        return new CompiledMethodObject(image, bytes, literals);
     }
 
     public CompiledCodeObject makeMethod(int... intbytes) {
@@ -52,11 +57,11 @@ public abstract class TestSqueak extends TestCase {
         return makeMethod(bytes);
     }
 
-    public Object runMethod(CompiledCodeObject cm, Object receiver, Object... arguments) {
-        VirtualFrame frame = cm.createTestFrame(receiver, arguments);
+    public Object runMethod(CompiledCodeObject code, Object receiver, Object... arguments) {
+        VirtualFrame frame = code.createTestFrame(receiver, arguments);
         Object result = null;
         try {
-            result = new SqueakMethodNode(null, cm).execute(frame);
+            result = new SqueakMethodNode(null, code).execute(frame);
         } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
             assertTrue("broken test", false);
         }

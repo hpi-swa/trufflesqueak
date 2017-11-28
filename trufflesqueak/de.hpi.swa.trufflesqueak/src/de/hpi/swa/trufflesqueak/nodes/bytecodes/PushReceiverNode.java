@@ -3,16 +3,15 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.ContextObject;
 
-public class PushActiveContextNode extends SqueakBytecodeNode {
+public class PushReceiverNode extends SqueakBytecodeNode {
 
-    public PushActiveContextNode(CompiledCodeObject code, int idx) {
+    public PushReceiverNode(CompiledCodeObject code, int idx) {
         super(code, idx);
     }
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
-        return ContextObject.createReadOnlyContextObject(code.image, frame);
+        return push(frame, receiver(frame));
     }
 }

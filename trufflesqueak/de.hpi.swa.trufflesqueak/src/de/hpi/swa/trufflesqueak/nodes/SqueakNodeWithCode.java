@@ -12,17 +12,17 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
  * This is the base class for Squeak bytecode evaluation.
  */
 @TypeSystemReference(SqueakTypes.class)
-public abstract class SqueakNodeWithMethod extends SqueakNode {
+public abstract class SqueakNodeWithCode extends SqueakNode {
     @CompilationFinal SourceSection sourceSection;
-    protected final CompiledCodeObject method;
+    protected final CompiledCodeObject code;
 
-    public SqueakNodeWithMethod(CompiledCodeObject method2) {
-        method = method2;
+    public SqueakNodeWithCode(CompiledCodeObject code) {
+        this.code = code;
     }
 
     public final Object getClosure(VirtualFrame frame) {
         try {
-            return frame.getObject(method.closureSlot);
+            return frame.getObject(code.closureSlot);
         } catch (FrameSlotTypeException e) {
             throw new RuntimeException(e);
         }

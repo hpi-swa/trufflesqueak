@@ -14,10 +14,10 @@ import de.hpi.swa.trufflesqueak.model.SqueakObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
 
 public abstract class SqueakLookupClassNode extends Node {
-    protected final CompiledCodeObject method;
+    protected final CompiledCodeObject code;
 
-    public SqueakLookupClassNode(CompiledCodeObject cm) {
-        method = cm;
+    public SqueakLookupClassNode(CompiledCodeObject code) {
+        this.code = code;
     }
 
     public abstract Object executeLookup(Object receiver);
@@ -25,9 +25,9 @@ public abstract class SqueakLookupClassNode extends Node {
     @Specialization
     public ClassObject squeakClass(boolean object) {
         if (object) {
-            return method.image.trueClass;
+            return code.image.trueClass;
         } else {
-            return method.image.falseClass;
+            return code.image.falseClass;
         }
     }
 
@@ -38,33 +38,33 @@ public abstract class SqueakLookupClassNode extends Node {
     @SuppressWarnings("unused")
     @Specialization
     public ClassObject squeakClass(int object) {
-        return method.image.smallIntegerClass;
+        return code.image.smallIntegerClass;
     }
 
     @SuppressWarnings("unused")
     @Specialization
     public ClassObject squeakClass(long object) {
-        return method.image.smallIntegerClass;
+        return code.image.smallIntegerClass;
     }
 
     @SuppressWarnings("unused")
     @Specialization
     public ClassObject squeakClass(char object) {
-        return method.image.characterClass;
+        return code.image.characterClass;
     }
 
     @SuppressWarnings("unused")
     @Specialization
     public ClassObject squeakClass(double object) {
-        return method.image.floatClass;
+        return code.image.floatClass;
     }
 
     @Specialization
     public ClassObject squeakClass(BigInteger object) {
         if (object.signum() >= 0) {
-            return method.image.largePositiveIntegerClass;
+            return code.image.largePositiveIntegerClass;
         } else {
-            return method.image.largeNegativeIntegerClass;
+            return code.image.largeNegativeIntegerClass;
         }
     }
 
@@ -75,7 +75,7 @@ public abstract class SqueakLookupClassNode extends Node {
 
     @Specialization
     public ClassObject squeakClass(@SuppressWarnings("unused") ContextObject ch) {
-        return method.image.methodContextClass;
+        return code.image.methodContextClass;
     }
 
     @Specialization(rewriteOn = UnexpectedResultException.class)
@@ -86,6 +86,6 @@ public abstract class SqueakLookupClassNode extends Node {
     @SuppressWarnings("unused")
     @Specialization(guards = "isNull(object)")
     public ClassObject nilClass(Object object) {
-        return method.image.nilClass;
+        return code.image.nilClass;
     }
 }

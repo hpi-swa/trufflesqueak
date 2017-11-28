@@ -1,14 +1,11 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
-import java.util.Stack;
-
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SendSelfSelector;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SingleExtendedSuperNode;
-import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtPutNodeGen;
 
 public abstract class DoubleExtendedDoAnythingNode {
     public static class StoreIntoReceiverVariableNode extends PopIntoReceiverVariableNode {
@@ -16,11 +13,6 @@ public abstract class DoubleExtendedDoAnythingNode {
             super(method, idx, receiverIdx);
         }
 
-        @Override
-        public void interpretOn(Stack<SqueakNode> stack, Stack<SqueakNode> statements) {
-            super.interpretOn(stack, statements);
-            stack.push(statements.pop());
-        }
     }
 
     public static class StoreIntoAssociationNode extends SqueakBytecodeNode {
@@ -31,13 +23,6 @@ public abstract class DoubleExtendedDoAnythingNode {
         public StoreIntoAssociationNode(CompiledCodeObject method, int idx, int literalIndex) {
             super(method, idx);
             literal = method.getLiteral(literalIndex);
-        }
-
-        @Override
-        public void interpretOn(Stack<SqueakNode> stack, Stack<SqueakNode> sequence) {
-            valueNode = stack.pop();
-            storeNode = ObjectAtPutNodeGen.create(method, 1, new ConstantNode(method, index, literal), valueNode);
-            stack.push(this);
         }
 
         @Override
@@ -55,11 +40,11 @@ public abstract class DoubleExtendedDoAnythingNode {
             case 1:
                 return new SingleExtendedSuperNode(method, idx, third, second & 31);
             case 2:
-                return new ReceiverVariableNode(method, idx, third);
+                return new PushReceiverVariableNode(method, idx, third);
             case 3:
-                return new LiteralConstantNode(method, idx, third);
+                return new PushLiteralConstantNode(method, idx, third);
             case 4:
-                return new LiteralVariableNode(method, idx, third);
+                return new PushLiteralVariableNode(method, idx, third);
             case 5:
                 return new StoreIntoReceiverVariableNode(method, idx, third);
             case 6:

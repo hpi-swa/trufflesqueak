@@ -1,7 +1,5 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes.send;
 
-import java.util.Stack;
-
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
@@ -10,15 +8,16 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
 public class CascadedSend extends AbstractSend {
     private final boolean isLast;
+    private final SqueakNode receiverNode;
 
-    public CascadedSend(CompiledCodeObject method, int idx, SqueakNode receiver, Object selector, SqueakNode[] argNodes, SqueakNode[] cascadedSends) {
-        super(method, idx, selector, argNodes);
+    public CascadedSend(CompiledCodeObject code, int idx, SqueakNode receiver, Object selector, SqueakNode[] argNodes, SqueakNode[] cascadedSends) {
+        super(code, idx, selector, argNodes);
         isLast = true;
         receiverNode = sendToCascade(receiver, cascadedSends);
     }
 
-    private CascadedSend(CompiledCodeObject method, int idx, SqueakNode receiver, Object selector, SqueakNode[] argNodes) {
-        super(method, idx, selector, argNodes);
+    private CascadedSend(CompiledCodeObject code, int idx, SqueakNode receiver, Object selector, SqueakNode[] argNodes) {
+        super(code, idx, selector, argNodes);
         isLast = false;
         receiverNode = receiver;
     }
@@ -27,21 +26,16 @@ public class CascadedSend extends AbstractSend {
         SqueakNode lastReceiver = receiver;
         for (SqueakNode node : cascadedSends) {
             AbstractSend send = (AbstractSend) node;
-            lastReceiver = new CascadedSend(method, index, lastReceiver, send.selector, send.argumentNodes);
+            lastReceiver = new CascadedSend(code, successorOffset, lastReceiver, send.selector, send.argumentNodes);
         }
         return lastReceiver;
-    }
-
-    @Override
-    public void interpretOn(Stack<SqueakNode> stack, Stack<SqueakNode> sequence) {
-        throw new RuntimeException("not used");
     }
 
     @Override
     @ExplodeLoop
     public Object executeGeneric(VirtualFrame frame) {
         Object receiver = receiverNode.executeGeneric(frame);
-        Object sendResult = executeSend(frame, receiver);
+        Object sendResult = executeSend(frame, receiver(frame));
         if (isLast) {
             // we're the last, return the message result
             return sendResult;

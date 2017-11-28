@@ -19,8 +19,8 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveUnaryOperation;
 public class PrimNextHandlerContext extends PrimitiveUnaryOperation {
     private static final int EXCEPTION_HANDLER_MARKER = 199;
 
-    public PrimNextHandlerContext(CompiledMethodObject cm) {
-        super(cm);
+    public PrimNextHandlerContext(CompiledMethodObject code) {
+        super(code);
     }
 
     @Specialization
@@ -60,7 +60,7 @@ public class PrimNextHandlerContext extends PrimitiveUnaryOperation {
 
     @TruffleBoundary
     private void printException() {
-        method.image.getOutput().println("=== Unhandled Error ===");
+        code.image.getOutput().println("=== Unhandled Error ===");
         Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Object>() {
             @Override
             public Object visitFrame(FrameInstance frameInstance) {
@@ -68,10 +68,10 @@ public class PrimNextHandlerContext extends PrimitiveUnaryOperation {
                 FrameDescriptor frameDescriptor = current.getFrameDescriptor();
                 FrameSlot methodSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.METHOD);
                 if (methodSlot != null) {
-                    method.image.getOutput().println(FrameUtil.getObjectSafe(current, methodSlot));
+                    code.image.getOutput().println(FrameUtil.getObjectSafe(current, methodSlot));
                     for (Object arg : current.getArguments()) {
-                        method.image.getOutput().append("   ");
-                        method.image.getOutput().println(arg);
+                        code.image.getOutput().append("   ");
+                        code.image.getOutput().println(arg);
                     }
                 }
                 return null;

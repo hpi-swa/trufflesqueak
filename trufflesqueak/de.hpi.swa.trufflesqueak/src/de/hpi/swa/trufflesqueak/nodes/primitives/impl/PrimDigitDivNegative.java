@@ -9,15 +9,15 @@ import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveBinaryOperation;
 
 public class PrimDigitDivNegative extends PrimitiveBinaryOperation {
-    public PrimDigitDivNegative(CompiledMethodObject cm) {
-        super(cm);
+    public PrimDigitDivNegative(CompiledMethodObject code) {
+        super(code);
     }
 
     @Specialization
     ListObject div(BigInteger rcvr, BigInteger arg) {
         BigInteger[] divRem = rcvr.divideAndRemainder(arg);
-        return method.image.wrap(new Object[]{
-                        method.image.wrap(divRem[0]),
-                        method.image.wrap(divRem[1])});
+        return code.image.wrap(new Object[]{
+                        code.image.wrap(divRem[0]),
+                        code.image.wrap(divRem[1])});
     }
 }

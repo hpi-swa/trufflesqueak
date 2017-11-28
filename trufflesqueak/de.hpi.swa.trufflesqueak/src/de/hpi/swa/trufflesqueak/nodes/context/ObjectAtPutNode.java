@@ -6,24 +6,24 @@ import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.trufflesqueak.instrumentation.PrettyPrintVisitor;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
-import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithMethod;
+import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithCode;
+import de.hpi.swa.trufflesqueak.nodes.WriteNode;
 
 @NodeChildren({@NodeChild(value = "objectNode", type = SqueakNode.class), @NodeChild(value = "valueNode", type = SqueakNode.class)})
-public abstract class ObjectAtPutNode extends SqueakNodeWithMethod {
+public abstract class ObjectAtPutNode extends SqueakNodeWithCode implements WriteNode {
     public final int index;
 
     public ObjectAtPutNode(ObjectAtPutNode original) {
-        super(original.method);
+        super(original.code);
         index = original.index;
     }
 
-    protected ObjectAtPutNode(CompiledCodeObject cm, int variableIndex) {
-        super(cm);
+    protected ObjectAtPutNode(CompiledCodeObject code, int variableIndex) {
+        super(code);
         index = variableIndex;
     }
 
@@ -57,8 +57,7 @@ public abstract class ObjectAtPutNode extends SqueakNodeWithMethod {
         return value;
     }
 
-    @Override
-    public void accept(PrettyPrintVisitor b) {
-        b.visit(this);
+    public static WriteNode create(CompiledCodeObject code, int idx, SqueakNode node) {
+        return ObjectAtPutNodeGen.create(code, idx, node);
     }
 }

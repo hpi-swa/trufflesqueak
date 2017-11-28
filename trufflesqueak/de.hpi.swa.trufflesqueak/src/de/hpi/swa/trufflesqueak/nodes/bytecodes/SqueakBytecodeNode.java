@@ -1,53 +1,108 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
-import java.util.List;
-import java.util.Stack;
-
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.Instrumentable;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
-import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithMethod;
+import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithCode;
+import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotReadNode;
+import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotWriteNode;
 
 @Instrumentable(factory = SqueakBytecodeNodeWrapper.class)
-public abstract class SqueakBytecodeNode extends SqueakNodeWithMethod {
+public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
     protected final int index;
+    protected final int successorOffset;
+    @Child FrameSlotReadNode readNode;
+    @Child FrameSlotWriteNode writeNode;
+    @Child FrameSlotReadNode spNode;
 
     protected SqueakBytecodeNode(SqueakBytecodeNode original) {
-        super(original.method);
+        super(original.code);
         index = original.index;
+        successorOffset = original.successorOffset;
         setSourceSection(original.getSourceSection());
     }
 
-    public SqueakBytecodeNode(CompiledCodeObject method, int idx) {
-        super(method);
+    public SqueakBytecodeNode(CompiledCodeObject code, int idx) {
+        super(code);
         index = idx;
-    }
-
-    @SuppressWarnings("unused")
-    public void interpretOn(Stack<SqueakNode> stack, Stack<SqueakNode> sequence) {
-        throw new RuntimeException("my subclass should implement interpretOn");
-    }
-
-    /**
-     * Decompile this instruction into an AST node, given the current stack and statements already
-     * decompiled. The sequence represents the sequence of nodes generated directly from each method
-     * bytecode. This method should return the next index into this sequence at which to continue
-     * decompilation. For most bytecode nodes this will be their own index + 1, but jumps and
-     * closures interpret some of the following nodes in the sequence directly, and thus the caller
-     * should skip over those nodes.
-     *
-     * @param stack
-     * @param statements
-     * @param sequence
-     * @return the next index into sequence at which the caller should continue decompiling
-     */
-    public int interpretOn(Stack<SqueakNode> stack, Stack<SqueakNode> statements, List<SqueakBytecodeNode> sequence) {
-        interpretOn(stack, statements);
-        return sequence.indexOf(this) + 1;
+        successorOffset = 1;
     }
 
     public boolean isReturn() {
         return false;
+    }
+
+    public int executeInt(VirtualFrame frame) {
+        executeVoid(frame);
+        return successorOffset;
+    }
+
+    public void executeVoid(VirtualFrame frame) {
+        executeGeneric(frame);
+    }
+
+    private FrameSlotReadNode getStackPointerNode() {
+        if (spNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            spNode = FrameSlotReadNode.create(code.stackPointerSlot);
+        }
+        return spNode;
+    }
+
+    private FrameSlotReadNode getReadNode(FrameSlot slot) {
+        if (readNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            readNode = FrameSlotReadNode.create(slot);
+        }
+        return readNode;
+    }
+
+    private FrameSlotWriteNode getWriteNode(FrameSlot slot) {
+        if (writeNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            writeNode = FrameSlotWriteNode.create(slot);
+        }
+        return writeNode;
+    }
+
+    protected Object pop(VirtualFrame frame) {
+        int sp = stackPointer(frame);
+        frame.setInt(code.stackPointerSlot, sp - 1);
+        return getReadNode(code.stackSlots[sp - 1]).executeRead(frame);
+    }
+
+    protected Object push(VirtualFrame frame, Object value) {
+        int sp = stackPointer(frame);
+        getWriteNode(code.stackSlots[sp]).executeWrite(frame, value);
+        frame.setInt(code.stackPointerSlot, sp + 1);
+        return code.image.nil;
+    }
+
+    protected Object top(VirtualFrame frame) {
+        return top(frame, stackPointer(frame));
+    }
+
+    protected Object top(VirtualFrame frame, int idx) {
+        return getReadNode(code.stackSlots[idx]).executeRead(frame);
+    }
+
+    protected Object peek(VirtualFrame frame, int idx) {
+        int sp = stackPointer(frame);
+        return getReadNode(code.stackSlots[sp - idx]).executeRead(frame);
+    }
+
+    protected int stackPointer(VirtualFrame frame) {
+        return (int) getStackPointerNode().executeRead(frame);
+    }
+
+    protected Object receiver(VirtualFrame frame) {
+        return top(frame, 0);
+    }
+
+    protected int getIndex() {
+        return successorOffset - 1;
     }
 }

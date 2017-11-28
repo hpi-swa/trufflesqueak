@@ -252,8 +252,8 @@ public abstract class PrimitiveNodeFactory {
         NamedPrimitives.values();
     }
 
-    public static SqueakNode arg(int index) {
-        return new ArgumentProfileNode(new ArgumentNode(index));
+    public static SqueakNode arg(CompiledCodeObject code, int index) {
+        return new ArgumentProfileNode(new ArgumentNode(code, index));
     }
 
     private static PrimitiveNode createInstance(CompiledMethodObject method, Class<? extends PrimitiveNode> primClass) {
@@ -272,7 +272,7 @@ public abstract class PrimitiveNodeFactory {
             Object[] args = new Object[argCount + 1];
             args[0] = method;
             for (int i = 1; i <= argCount; i++) {
-                args[i] = arg(i - 1);
+                args[i] = arg(method, i - 1);
             }
 
             try {

@@ -4,21 +4,21 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithMethod;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
 
-public class PrimitiveNode extends SqueakNodeWithMethod {
+public class PrimitiveNode extends SqueakBytecodeNode {
     protected static boolean isNull(Object obj) {
         return obj == null;
     }
 
-    public PrimitiveNode(CompiledMethodObject cm) {
-        super(cm);
+    public PrimitiveNode(CompiledMethodObject code) {
+        super(code, 0);
     }
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
-        if (method.image.config.isVerbose()) {
-            System.out.println("Primitive not yet written: " + method.toString());
+        if (code.image.config.isVerbose()) {
+            System.out.println("Primitive not yet written: " + code.toString());
         }
         throw new PrimitiveFailed();
     }

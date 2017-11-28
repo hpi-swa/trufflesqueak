@@ -4,7 +4,6 @@ import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.trufflesqueak.instrumentation.PrettyPrintVisitor;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
@@ -21,8 +20,13 @@ public abstract class ObjectAtNode extends SqueakNode {
         return object.at0(index);
     }
 
-    @Override
-    public void accept(PrettyPrintVisitor str) {
-        str.visit(this);
+    public abstract Object executeWith(Object value);
+
+    public static ObjectAtNode create(int i) {
+        return create(i, null);
+    }
+
+    public static ObjectAtNode create(int i, SqueakNode object) {
+        return ObjectAtNodeGen.create(i, object);
     }
 }

@@ -6,12 +6,12 @@ import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNode;
 
 public class PrimFileStdioHandles extends PrimitiveNode {
-    public PrimFileStdioHandles(CompiledMethodObject cm) {
-        super(cm);
+    public PrimFileStdioHandles(CompiledMethodObject code) {
+        super(code);
     }
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
-        return method.image.wrap(0, 1, 2);
+        return code.image.wrap(0, 1, 2);
     }
 }

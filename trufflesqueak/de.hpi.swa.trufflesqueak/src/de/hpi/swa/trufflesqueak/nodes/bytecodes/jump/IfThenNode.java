@@ -5,14 +5,13 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 
-import de.hpi.swa.trufflesqueak.instrumentation.PrettyPrintVisitor;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
-import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithMethod;
+import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithCode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SendSelector;
 
-public class IfThenNode extends SqueakNodeWithMethod {
+public class IfThenNode extends SqueakNodeWithCode {
     @Child private SqueakNode mustBeBooleanSend;
     @Child public SqueakNode conditionNode;
     @Children public final SqueakNode[] thenNodes;
@@ -64,10 +63,5 @@ public class IfThenNode extends SqueakNodeWithMethod {
             return mustBeBooleanSend.executeGeneric(frame);
         }
         return null;
-    }
-
-    @Override
-    public void accept(PrettyPrintVisitor b) {
-        b.visit(this);
     }
 }

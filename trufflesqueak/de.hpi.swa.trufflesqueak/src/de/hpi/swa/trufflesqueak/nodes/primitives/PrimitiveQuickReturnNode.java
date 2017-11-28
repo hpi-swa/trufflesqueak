@@ -6,8 +6,8 @@ import de.hpi.swa.trufflesqueak.exceptions.LocalReturn;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 
 public abstract class PrimitiveQuickReturnNode extends PrimitiveNode {
-    public PrimitiveQuickReturnNode(CompiledMethodObject cm) {
-        super(cm);
+    public PrimitiveQuickReturnNode(CompiledMethodObject code) {
+        super(code);
     }
 
     abstract protected Object getConstant(VirtualFrame frame);

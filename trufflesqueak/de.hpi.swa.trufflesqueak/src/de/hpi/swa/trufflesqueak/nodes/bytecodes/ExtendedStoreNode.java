@@ -1,39 +1,44 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
-import java.util.Stack;
+import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
-import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotReadNode;
+import de.hpi.swa.trufflesqueak.nodes.WriteNode;
+import de.hpi.swa.trufflesqueak.nodes.context.FrameReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.context.MethodLiteralNode;
-import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtPutNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtPutNode;
 
 public class ExtendedStoreNode extends ExtendedAccess {
-    public ExtendedStoreNode(CompiledCodeObject method, int index, int i) {
-        super(method, index, i);
+    private ExtendedStoreNode() {
     }
 
-    @Override
-    public SqueakNode createActualNode(int idx, int type, Stack<SqueakNode> stack) {
-        SqueakNode top = stack.pop();
-        switch (type) {
-            case 0:
-                return ObjectAtPutNodeGen.create(method, idx, FrameSlotReadNode.receiver(method), top);
-            case 1:
-                return FrameSlotWriteNode.temp(method, idx, top);
-            case 2:
-                throw new RuntimeException("illegal ExtendedStore bytecode: variable type 2");
-            case 3:
-                return ObjectAtPutNodeGen.create(method, 1, new MethodLiteralNode(method, idx), top);
-            default:
-                throw new RuntimeException("illegal ExtendedStore bytecode");
+    private static class StoreIntoNode extends SqueakBytecodeNode {
+        @Child WriteNode node;
+
+        StoreIntoNode(CompiledCodeObject code, int idx, WriteNode writeNode) {
+            super(code, idx);
+            node = writeNode;
+        }
+
+        @Override
+        public Object executeGeneric(VirtualFrame frame) {
+            return node.executeWrite(frame, top(frame));
         }
     }
 
-    @Override
-    public void interpretOn(Stack<SqueakNode> stack, Stack<SqueakNode> statements) {
-        super.interpretOn(stack, statements);
-        stack.add(this);
+    public static SqueakBytecodeNode create(CompiledCodeObject code, int idx, int i) {
+        switch (extractType(i)) {
+            case 0:
+                return new StoreIntoNode(code, idx, ObjectAtPutNode.create(code, idx, new FrameReceiverNode(code)));
+            case 1:
+                return new StoreIntoNode(code, idx, FrameSlotWriteNode.create(code.getStackSlot(idx)));
+            case 2:
+                throw new RuntimeException("illegal ExtendedStore bytecode: variable type 2");
+            case 3:
+                return new StoreIntoNode(code, idx, ObjectAtPutNode.create(code, 1, new MethodLiteralNode(code, idx)));
+            default:
+                throw new RuntimeException("illegal ExtendedStore bytecode");
+        }
     }
 }
