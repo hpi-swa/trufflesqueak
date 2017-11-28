@@ -7,3 +7,12 @@ mxbuild
 *.pyc
 *.jar
 *.src.zip
+*.prefs
+.classpath
+.factorypath
+.project
+*.launch
+*.sources
+.pydevproject
+workingsets.xml
+env
