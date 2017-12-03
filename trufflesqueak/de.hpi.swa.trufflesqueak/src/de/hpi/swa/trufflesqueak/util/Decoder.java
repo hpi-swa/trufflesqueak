@@ -29,11 +29,11 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreAndPopRemoteTempNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreRemoteTempNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.UnknownBytecodeNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.ConditionalJump;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.UnconditionalJump;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.ConditionalJumpNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.UnconditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SecondExtendedSendNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.Send;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SendSelector;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SendNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SendSelectorNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SingleExtendedSendNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SingleExtendedSuperNode;
 
@@ -162,81 +162,81 @@ public class Decoder {
             case 143:
                 return new PushClosureNode(code, successorIndex, nextByte(), nextByte(), nextByte());
             case 144: case 145: case 146: case 147: case 148: case 149: case 150: case 151:
-                return new UnconditionalJump(code, successorIndex, b);
+                return new UnconditionalJumpNode(code, successorIndex, b);
             case 152: case 153: case 154: case 155: case 156: case 157: case 158: case 159:
-                return new ConditionalJump(code, successorIndex, b);
+                return new ConditionalJumpNode(code, successorIndex, b);
             case 160: case 161: case 162: case 163: case 164: case 165: case 166: case 167:
-                return new UnconditionalJump(code, successorIndex, b, nextByte());
+                return new UnconditionalJumpNode(code, successorIndex, b, nextByte());
             case 168: case 169: case 170: case 171:
-                return new ConditionalJump(code, successorIndex, b, nextByte(), true);
+                return new ConditionalJumpNode(code, successorIndex, b, nextByte(), true);
             case 172: case 173: case 174: case 175:
-                return new ConditionalJump(code, successorIndex, b, nextByte(), false);
+                return new ConditionalJumpNode(code, successorIndex, b, nextByte(), false);
             case 176:
-                return new SendSelector(code, successorIndex, getImage().plus, 1);
+                return new SendSelectorNode(code, successorIndex, getImage().plus, 1);
             case 177:
-                return new SendSelector(code, successorIndex, getImage().minus, 1);
+                return new SendSelectorNode(code, successorIndex, getImage().minus, 1);
             case 178:
-                return new SendSelector(code, successorIndex, getImage().lt, 1);
+                return new SendSelectorNode(code, successorIndex, getImage().lt, 1);
             case 179:
-                return new SendSelector(code, successorIndex, getImage().gt, 1);
+                return new SendSelectorNode(code, successorIndex, getImage().gt, 1);
             case 180:
-                return new SendSelector(code, successorIndex, getImage().le, 1);
+                return new SendSelectorNode(code, successorIndex, getImage().le, 1);
             case 181:
-                return new SendSelector(code, successorIndex, getImage().ge, 1);
+                return new SendSelectorNode(code, successorIndex, getImage().ge, 1);
             case 182:
-                return new SendSelector(code, successorIndex, getImage().eq, 1);
+                return new SendSelectorNode(code, successorIndex, getImage().eq, 1);
             case 183:
-                return new SendSelector(code, successorIndex, getImage().ne, 1);
+                return new SendSelectorNode(code, successorIndex, getImage().ne, 1);
             case 184:
-                return new SendSelector(code, successorIndex, getImage().times, 1);
+                return new SendSelectorNode(code, successorIndex, getImage().times, 1);
             case 185:
-                return new SendSelector(code, successorIndex, getImage().div, 1);
+                return new SendSelectorNode(code, successorIndex, getImage().div, 1);
             case 186:
-                return new SendSelector(code, successorIndex, getImage().modulo, 1);
+                return new SendSelectorNode(code, successorIndex, getImage().modulo, 1);
             case 187:
-                return new SendSelector(code, successorIndex, getImage().pointAt, 1);
+                return new SendSelectorNode(code, successorIndex, getImage().pointAt, 1);
             case 188:
-                return new SendSelector(code, successorIndex, getImage().bitShift, 1);
+                return new SendSelectorNode(code, successorIndex, getImage().bitShift, 1);
             case 189:
-                return new SendSelector(code, successorIndex, getImage().divide, 1);
+                return new SendSelectorNode(code, successorIndex, getImage().divide, 1);
             case 190:
-                return new SendSelector(code, successorIndex, getImage().bitAnd, 1);
+                return new SendSelectorNode(code, successorIndex, getImage().bitAnd, 1);
             case 191:
-                return new SendSelector(code, successorIndex, getImage().bitOr, 1);
+                return new SendSelectorNode(code, successorIndex, getImage().bitOr, 1);
             case 192:
-                return new SendSelector(code, successorIndex, getImage().at, 1);
+                return new SendSelectorNode(code, successorIndex, getImage().at, 1);
             case 193:
-                return new SendSelector(code, successorIndex, getImage().atput, 2);
+                return new SendSelectorNode(code, successorIndex, getImage().atput, 2);
             case 194:
-                return new SendSelector(code, successorIndex, getImage().size_, 0);
+                return new SendSelectorNode(code, successorIndex, getImage().size_, 0);
             case 195:
-                return new SendSelector(code, successorIndex, getImage().next, 0);
+                return new SendSelectorNode(code, successorIndex, getImage().next, 0);
             case 196:
-                return new SendSelector(code, successorIndex, getImage().nextPut, 1);
+                return new SendSelectorNode(code, successorIndex, getImage().nextPut, 1);
             case 197:
-                return new SendSelector(code, successorIndex, getImage().atEnd, 0);
+                return new SendSelectorNode(code, successorIndex, getImage().atEnd, 0);
             case 198:
-                return new SendSelector(code, successorIndex, getImage().equivalent, 1);
+                return new SendSelectorNode(code, successorIndex, getImage().equivalent, 1);
             case 199:
-                return new SendSelector(code, successorIndex, getImage().klass, 0);
+                return new SendSelectorNode(code, successorIndex, getImage().klass, 0);
             case 200:
-                return new SendSelector(code, successorIndex, getImage().blockCopy, 1);
+                return new SendSelectorNode(code, successorIndex, getImage().blockCopy, 1);
             case 201:
-                return new SendSelector(code, successorIndex, getImage().value, 0);
+                return new SendSelectorNode(code, successorIndex, getImage().value, 0);
             case 202:
-                return new SendSelector(code, successorIndex, getImage().valueWithArg, 1);
+                return new SendSelectorNode(code, successorIndex, getImage().valueWithArg, 1);
             case 203:
-                return new SendSelector(code, successorIndex, getImage().do_, 1);
+                return new SendSelectorNode(code, successorIndex, getImage().do_, 1);
             case 204:
-                return new SendSelector(code, successorIndex, getImage().new_, 0);
+                return new SendSelectorNode(code, successorIndex, getImage().new_, 0);
             case 205:
-                return new SendSelector(code, successorIndex, getImage().newWithArg, 1);
+                return new SendSelectorNode(code, successorIndex, getImage().newWithArg, 1);
             case 206:
-                return new SendSelector(code, successorIndex, getImage().x, 0);
+                return new SendSelectorNode(code, successorIndex, getImage().x, 0);
             case 207:
-                return new SendSelector(code, successorIndex, getImage().y, 0);
+                return new SendSelectorNode(code, successorIndex, getImage().y, 0);
             default:
-                return new Send(code, successorIndex, b);
+                return new SendNode(code, successorIndex, b);
         }
         //@formatter:on
     }

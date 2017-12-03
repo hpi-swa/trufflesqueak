@@ -12,8 +12,8 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.DupNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PopNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushConstantNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnReceiverNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.ConditionalJump;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SendSelector;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.ConditionalJumpNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SendSelectorNode;
 
 public class TestDecoder extends TestSqueak {
     @Test
@@ -29,14 +29,14 @@ public class TestDecoder extends TestSqueak {
         assertSame(DupNode.class, childIterator.next().getClass());
         assertSame(PushConstantNode.class, childIterator.next().getClass());
 
-        SendSelector send = (SendSelector) childIterator.next();
+        SendSelectorNode send = (SendSelectorNode) childIterator.next();
         assertSame(image.equivalent, send.selector);
 
-        assertSame(ConditionalJump.class, childIterator.next().getClass());
+        assertSame(ConditionalJumpNode.class, childIterator.next().getClass());
         assertSame(PopNode.class, childIterator.next().getClass());
         assertSame(PushConstantNode.class, childIterator.next().getClass());
 
-        send = (SendSelector) childIterator.next();
+        send = (SendSelectorNode) childIterator.next();
         assertSame(image.klass, send.selector);
 
         assertSame(PopNode.class, childIterator.next().getClass());

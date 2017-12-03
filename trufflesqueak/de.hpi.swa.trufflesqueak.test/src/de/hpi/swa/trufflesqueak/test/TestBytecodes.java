@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -17,6 +19,8 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakMethodNode;
 
 public class TestBytecodes extends TestSqueak {
+    @Rule public ExpectedException exceptions = ExpectedException.none();
+
     @Test
     public void testPushReceiverVariables() {
         Object[] expectedResults = getTestObjects(16);
@@ -25,6 +29,8 @@ public class TestBytecodes extends TestSqueak {
             assertSame(expectedResults[i], runMethod(rcvr, i, 124));
         }
     }
+
+// TODO: testPushTemporaryVariables()
 
     @Test
     public void testPushLiteralConstants() {
@@ -65,7 +71,7 @@ public class TestBytecodes extends TestSqueak {
     }
 
     @Test
-    public void testPopIntoReceiverVariables() {
+    public void testStoreAndPopReceiverVariables() {
         int numberOfBytecodes = 8;
         PointersObject rcvr = new PointersObject(image, image.arrayClass, new Object[numberOfBytecodes]);
         for (int i = 0; i < numberOfBytecodes; i++) {
@@ -78,27 +84,67 @@ public class TestBytecodes extends TestSqueak {
     }
 
     @Test
-    public void testPopIntoTemporaryVariables() {
+    public void testStoreAndPopTemporaryVariables() {
+        // | tempA |
+        // tempA := true.
+        // ^ tempA
+        PointersObject rcvr = getTestObject();
+        assertSame(image.sqTrue, runMethod(rcvr, 0x71, 0x68, 0x10, 0x7C));
 
+    }
+
+    @Test
+    public void testPushReceiver() {
+        BaseSqueakObject rcvr = image.specialObjectsArray;
+        assertSame(rcvr, runMethod(rcvr, 112, 124));
     }
 
     @Test
     public void testPushConstants() {
         BaseSqueakObject rcvr = image.specialObjectsArray;
-        Object[] expectedResults = {rcvr, true, false, image.nil, -1, 0, 1, 2};
+        Object[] expectedResults = {true, false, image.nil, -1, 0, 1, 2};
         for (int i = 0; i < expectedResults.length; i++) {
-            assertSame(expectedResults[i], runMethod(rcvr, 112 + i, 124));
+            assertSame(expectedResults[i], runMethod(rcvr, 113 + i, 124));
         }
+    }
+
+    @Test
+    public void testReturnReceiver() {
+        BaseSqueakObject rcvr = image.specialObjectsArray;
+        assertSame(rcvr, runMethod(rcvr, 120));
     }
 
     @Test
     public void testReturnConstants() {
         BaseSqueakObject rcvr = image.specialObjectsArray;
-        Object[] expectedResults = {rcvr, true, false, image.nil};
+        Object[] expectedResults = {true, false, image.nil};
         for (int i = 0; i < expectedResults.length; i++) {
-            assertSame(expectedResults[i], runMethod(rcvr, 120 + i));
+            assertSame(expectedResults[i], runMethod(rcvr, 121 + i));
         }
     }
+
+    @Test
+    public void testUnknownBytecodes() {
+        BaseSqueakObject rcvr = image.specialObjectsArray;
+        int bytecode;
+        for (int i = 0; i < 1; i++) {
+            bytecode = 126 + i;
+            try {
+                runMethod(rcvr, bytecode);
+                assertTrue("Exception expected", false);
+            } catch (RuntimeException e) {
+                assertEquals("Unknown/uninterpreted bytecode " + bytecode, e.getMessage());
+            }
+        }
+    }
+
+    // TODO: testExtendedPushes()
+    // TODO: testExtendedStores()
+    // TODO: testExtendedStoreAndPop()
+    // TODO: testSingleExtendedSend()
+    // TODO: testDoubleExtendedDoAnything()
+    // TODO: testSingleExtendedSuper()
+    // TODO: testSecondExtendedSend()
 
     @Test
     public void testPop() {
@@ -113,6 +159,15 @@ public class TestBytecodes extends TestSqueak {
         // push true, dup, dup, pop, pop, return top
         assertSame(runMethod(rcvr, 113, 136, 136, 135, 135, 124), image.sqTrue);
     }
+    // TODO: testPushActiveContext()
+    // TODO: testPushNewArray()
+    // TODO: testCallPrimitive()
+    // TODO: testPushRemoteTemp()
+    // TODO: testStoreRemoteTemp()
+    // TODO: testStoreAndPopRemoteTemp()
+    // TODO: testPushClosure()
+    // TODO: testUnconditionalJump()
+    // TODO: testConditionalJump()
 
 // primAdd requires methodDict of LargeInteger
 // @Test
@@ -121,6 +176,9 @@ public class TestBytecodes extends TestSqueak {
 // // push 1, push 1, primAdd, return top
 // assertSame(runMethod(rcvr, 118, 118, 176, 124), 2);
 // }
+
+    // TODO: testSendSelector()
+    // TODO: testSend()
 
     private Object[] getTestObjects(int n) {
         List<Object> list = new ArrayList<>();

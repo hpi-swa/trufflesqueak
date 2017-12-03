@@ -13,14 +13,14 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNode;
 
-public abstract class AbstractSend extends SqueakBytecodeNode {
+public abstract class AbstractSendNode extends SqueakBytecodeNode {
     public final Object selector;
     public final int argumentCount;
     @Child protected SqueakLookupClassNode lookupClassNode;
     @Child private LookupNode lookupNode;
     @Child private DispatchNode dispatchNode;
 
-    public AbstractSend(CompiledCodeObject code, int idx, Object sel, int argcount) {
+    public AbstractSendNode(CompiledCodeObject code, int idx, Object sel, int argcount) {
         super(code, idx);
         selector = sel;
         argumentCount = argcount;
