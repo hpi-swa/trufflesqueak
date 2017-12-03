@@ -27,7 +27,7 @@ public class BytecodeSequenceNode extends Node {
     public Object executeGeneric(VirtualFrame frame) {
         int pc = 0;
         while (pc >= 0 && pc < children.length) {
-            pc += children[pc].executeInt(frame);
+            pc = children[pc].executeInt(frame);
         }
         throw new RuntimeException("Method did not return");
     }

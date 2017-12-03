@@ -13,7 +13,6 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.PopNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushConstantNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.ConditionalJump;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.IfNilCheck;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SendSelector;
 
 public class TestDecoder extends TestSqueak {

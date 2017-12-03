@@ -36,7 +36,8 @@ public abstract class CompiledCodeObject extends SqueakObject {
     Source source;
     // frame info
     private FrameDescriptor frameDescriptor;
-    @CompilationFinal public FrameSlot selfSlot;
+    @CompilationFinal public FrameSlot receiverSlot;
+    @CompilationFinal public FrameSlot thisContextSlot;
     @CompilationFinal public FrameSlot closureSlot;
     @CompilationFinal(dimensions = 1) public FrameSlot[] stackSlots;
     @CompilationFinal public FrameSlot markerSlot;
@@ -65,6 +66,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     public CompiledCodeObject(SqueakImageContext img, ClassObject klass) {
         super(img, klass);
+        prepareFrameDescriptor();
     }
 
     protected CompiledCodeObject(CompiledCodeObject original) {
@@ -112,10 +114,11 @@ public abstract class CompiledCodeObject extends SqueakObject {
     private void prepareFrameDescriptor() {
         frameDescriptor = new FrameDescriptor(null);
         stackSlots = new FrameSlot[frameSize()];
-        for (int i = 0; i < numTemps + numArgs; i++) {
+        for (int i = 0; i < stackSlots.length; i++) {
             stackSlots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Illegal);
         }
-        selfSlot = frameDescriptor.addFrameSlot(SELF, FrameSlotKind.Object);
+        receiverSlot = frameDescriptor.addFrameSlot(RECEIVER, FrameSlotKind.Object);
+        thisContextSlot = frameDescriptor.addFrameSlot(SELF, FrameSlotKind.Object);
         closureSlot = frameDescriptor.addFrameSlot(CLOSURE, FrameSlotKind.Object);
         markerSlot = frameDescriptor.addFrameSlot(MARKER, FrameSlotKind.Object);
         methodSlot = frameDescriptor.addFrameSlot(METHOD, FrameSlotKind.Object);
@@ -181,6 +184,9 @@ public abstract class CompiledCodeObject extends SqueakObject {
     }
 
     public FrameSlot getStackSlot(int i) {
+        if (i >= stackSlots.length) { // This is fine, ignore for decoder
+            return stackSlots[0];
+        }
         return stackSlots[i];
     }
 
@@ -208,7 +214,6 @@ public abstract class CompiledCodeObject extends SqueakObject {
         int literalsize = header & 0x7fff;
         Object[] ptrs = chunk.getPointers(literalsize + 1);
         literals = ptrs;
-        prepareFrameDescriptor();
         createBytesNode(chunk.getBytes(ptrs.length));
     }
 

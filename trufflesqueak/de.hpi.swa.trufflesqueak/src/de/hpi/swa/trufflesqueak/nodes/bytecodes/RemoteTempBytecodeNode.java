@@ -6,18 +6,14 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotReadNode;
 
 public abstract class RemoteTempBytecodeNode extends SqueakBytecodeNode {
-    @Child FrameSlotReadNode execNode;
+    @Child FrameSlotReadNode getTempArrayNode;
 
-    public RemoteTempBytecodeNode(CompiledCodeObject code, int idx) {
-        super(code, idx);
+    public RemoteTempBytecodeNode(CompiledCodeObject code, int index, int indexOfArray) {
+        super(code, index);
+        getTempArrayNode = FrameSlotReadNode.create(code.getStackSlot(indexOfArray));
     }
 
-    @Override
-    public Object executeGeneric(VirtualFrame frame) {
-        return execNode.executeRead(frame);
-    }
-
-    protected static FrameSlotReadNode getTempArray(CompiledCodeObject code, int indexOfArray) {
-        return FrameSlotReadNode.create(code.getStackSlot(indexOfArray));
+    protected Object getTempArray(VirtualFrame frame) {
+        return getTempArrayNode.executeRead(frame);
     }
 }

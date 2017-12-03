@@ -135,7 +135,7 @@ public class SqueakImageContext {
         entryPoint.setLiteral(1, receiver);
         entryPoint.setLiteral(2, lookupResult.getCompiledInSelector());
         entryPoint.getCallTarget();
-        return Truffle.getRuntime().createCallTarget(new SqueakMainNode(getLanguage(), entryPoint, false));
+        return Truffle.getRuntime().createCallTarget(new SqueakMainNode(getLanguage(), entryPoint));
     }
 
     public void fillInFrom(FileInputStream inputStream) throws IOException {
@@ -156,7 +156,9 @@ public class SqueakImageContext {
 
     public BaseSqueakObject wrap(Object obj) {
         CompilerAsserts.neverPartOfCompilation();
-        if (obj instanceof BigInteger) {
+        if (obj instanceof Integer) {
+            return wrap(BigInteger.valueOf(((Integer) obj).intValue()));
+        } else if (obj instanceof BigInteger) {
             return wrap((BigInteger) obj);
         } else if (obj instanceof String) {
             return wrap((String) obj);

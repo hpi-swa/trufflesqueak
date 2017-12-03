@@ -9,9 +9,9 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveQuickReturnNode;
 public class PrimQuickReturnReceiverVariableNode extends PrimitiveQuickReturnNode {
     @Child PushReceiverVariableNode actual;
 
-    public PrimQuickReturnReceiverVariableNode(CompiledMethodObject cm, int variableIdx) {
-        super(cm);
-        actual = new PushReceiverVariableNode(cm, -1, variableIdx);
+    public PrimQuickReturnReceiverVariableNode(CompiledMethodObject code, int variableIdx) {
+        super(code);
+        actual = new PushReceiverVariableNode(code, -1, variableIdx);
     }
 
     @Override

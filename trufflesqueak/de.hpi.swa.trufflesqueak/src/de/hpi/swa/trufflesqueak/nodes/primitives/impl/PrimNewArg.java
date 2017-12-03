@@ -13,8 +13,8 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveBinaryOperation;
 public class PrimNewArg extends PrimitiveBinaryOperation {
     final static int NEW_CACHE_SIZE = 3;
 
-    public PrimNewArg(CompiledMethodObject cm) {
-        super(cm);
+    public PrimNewArg(CompiledMethodObject code) {
+        super(code);
     }
 
     @SuppressWarnings("unused")

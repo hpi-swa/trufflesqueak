@@ -21,4 +21,9 @@ public class ListObject extends AbstractPointersObject implements TruffleObject 
     public BaseSqueakObject shallowCopy() {
         return new ListObject(image, getSqClass(), getPointers().clone());
     }
+
+    @Override
+    public String toString() {
+        return String.format("ListObject: %s", getSqClass());
+    }
 }

@@ -12,8 +12,8 @@ public class PushNewArrayNode extends SqueakBytecodeNode {
     @Child SqueakNode pushArrayNode;
     public final int arraySize;
 
-    public PushNewArrayNode(CompiledCodeObject method, int idx, int param) {
-        super(method, idx);
+    public PushNewArrayNode(CompiledCodeObject code, int index, int param) {
+        super(code, index);
         arraySize = param & 0b0111111;
         if ((param >> 7) == 1) {
             popIntoArrayNodes = new SqueakNode[arraySize];

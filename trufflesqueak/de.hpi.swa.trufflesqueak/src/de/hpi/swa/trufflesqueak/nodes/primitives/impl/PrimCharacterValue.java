@@ -8,8 +8,8 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveBinaryOperation;
 
 public class PrimCharacterValue extends PrimitiveBinaryOperation {
 
-    public PrimCharacterValue(CompiledMethodObject cm) {
-        super(cm);
+    public PrimCharacterValue(CompiledMethodObject code) {
+        super(code);
     }
 
     @Specialization

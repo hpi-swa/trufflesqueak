@@ -9,8 +9,8 @@ public class ReturnConstantNode extends ReturnNode {
 
     private final Object constant;
 
-    public ReturnConstantNode(CompiledCodeObject code, int idx, Object obj) {
-        super(code, idx);
+    public ReturnConstantNode(CompiledCodeObject code, int index, Object obj) {
+        super(code, index);
         constant = obj;
     }
 

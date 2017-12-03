@@ -36,4 +36,8 @@ public abstract class DispatchNode extends Node {
     protected static Object fail(Object method, Object[] arguments) {
         throw new RuntimeException("failed to lookup generic selector object on generic class");
     }
+
+    public static DispatchNode create() {
+        return DispatchNodeGen.create();
+    }
 }

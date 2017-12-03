@@ -171,7 +171,7 @@ public abstract class PrimitiveNodeFactory {
         //
         QUIT(PrimQuit.class, 113),
         //
-        EXTERNAL_CALL(PrimCall.class, 117),
+        EXTERNAL_CALL(AbstractPrimitiveCallNode.class, 117),
         //
         SHORT_AT(PrimAtNodeGen.class, 143), // 1-indexed from start
         SHORT_AT_PUT(PrimAtPutNodeGen.class, 144),

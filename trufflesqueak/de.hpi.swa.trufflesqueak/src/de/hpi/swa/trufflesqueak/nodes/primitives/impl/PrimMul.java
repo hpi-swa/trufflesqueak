@@ -8,8 +8,8 @@ import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveBinaryOperation;
 
 public class PrimMul extends PrimitiveBinaryOperation {
-    public PrimMul(CompiledMethodObject cm) {
-        super(cm);
+    public PrimMul(CompiledMethodObject code) {
+        super(code);
     }
 
     @Specialization(rewriteOn = ArithmeticException.class)

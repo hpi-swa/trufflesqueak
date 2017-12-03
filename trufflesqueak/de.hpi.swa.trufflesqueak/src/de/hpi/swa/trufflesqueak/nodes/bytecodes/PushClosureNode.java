@@ -17,13 +17,13 @@ public class PushClosureNode extends SqueakBytecodeNode {
     @Children final SqueakNode[] copiedValueNodes;
     public final CompiledBlockObject compiledBlock;
 
-    public PushClosureNode(CompiledCodeObject code, int idx, int i, int j, int k) {
-        super(code, idx);
+    public PushClosureNode(CompiledCodeObject code, int index, int i, int j, int k) {
+        super(code, index);
         numArgs = i & 0xF;
         numCopied = (i >> 4) & 0xF;
         blockSize = (j << 8) | k;
         copiedValueNodes = new SqueakNode[numCopied];
-        receiverNode = new PushReceiverNode(code, idx);
+        receiverNode = new PushReceiverNode(code, -1);
         compiledBlock = new CompiledBlockObject(code, numArgs, numCopied);
     }
 

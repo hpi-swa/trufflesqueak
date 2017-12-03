@@ -9,9 +9,9 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 public class ReturnTopFromBlockNode extends ReturnNode {
     @Child SqueakNode valueNode;
 
-    public ReturnTopFromBlockNode(CompiledCodeObject method, int idx) {
-        super(method, idx);
-        valueNode = new PopNode(code, idx);
+    public ReturnTopFromBlockNode(CompiledCodeObject code, int index) {
+        super(code, index);
+        valueNode = new PopNode(code, -1);
     }
 
     @Override

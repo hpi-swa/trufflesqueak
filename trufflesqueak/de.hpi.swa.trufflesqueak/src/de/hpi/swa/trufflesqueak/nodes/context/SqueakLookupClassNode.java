@@ -88,4 +88,8 @@ public abstract class SqueakLookupClassNode extends Node {
     public ClassObject nilClass(Object object) {
         return code.image.nilClass;
     }
+
+    public static SqueakLookupClassNode create(CompiledCodeObject code) {
+        return SqueakLookupClassNodeGen.create(code);
+    }
 }

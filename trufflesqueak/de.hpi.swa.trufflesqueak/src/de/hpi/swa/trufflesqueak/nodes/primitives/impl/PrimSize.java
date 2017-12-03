@@ -10,8 +10,8 @@ import de.hpi.swa.trufflesqueak.model.LargeInteger;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveUnaryOperation;
 
 public class PrimSize extends PrimitiveUnaryOperation {
-    public PrimSize(CompiledMethodObject cm) {
-        super(cm);
+    public PrimSize(CompiledMethodObject code) {
+        super(code);
     }
 
     @Specialization(guards = "isNull(obj)")

@@ -6,8 +6,8 @@ import de.hpi.swa.trufflesqueak.exceptions.LocalReturn;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 
 public class ReturnReceiverNode extends ReturnNode {
-    public ReturnReceiverNode(CompiledCodeObject code, int idx) {
-        super(code, idx);
+    public ReturnReceiverNode(CompiledCodeObject code, int index) {
+        super(code, index);
     }
 
     @Override

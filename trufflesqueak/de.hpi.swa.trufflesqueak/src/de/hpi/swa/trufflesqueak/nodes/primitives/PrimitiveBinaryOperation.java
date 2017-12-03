@@ -9,7 +9,7 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 @NodeChildren({@NodeChild(value = "receiver", type = SqueakNode.class),
                 @NodeChild(value = "argument", type = SqueakNode.class)})
 public class PrimitiveBinaryOperation extends PrimitiveNode {
-    public PrimitiveBinaryOperation(CompiledMethodObject cm) {
-        super(cm);
+    public PrimitiveBinaryOperation(CompiledMethodObject code) {
+        super(code);
     }
 }

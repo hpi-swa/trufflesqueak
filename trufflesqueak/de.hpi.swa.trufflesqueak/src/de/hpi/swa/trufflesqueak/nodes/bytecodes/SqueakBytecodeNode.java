@@ -12,23 +12,20 @@ import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotWriteNode;
 
 @Instrumentable(factory = SqueakBytecodeNodeWrapper.class)
 public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
-    protected final int index;
-    protected final int successorOffset;
+    protected final int successorIndex;
     @Child FrameSlotReadNode readNode;
     @Child FrameSlotWriteNode writeNode;
     @Child FrameSlotReadNode spNode;
 
     protected SqueakBytecodeNode(SqueakBytecodeNode original) {
         super(original.code);
-        index = original.index;
-        successorOffset = original.successorOffset;
+        successorIndex = original.successorIndex;
         setSourceSection(original.getSourceSection());
     }
 
-    public SqueakBytecodeNode(CompiledCodeObject code, int idx) {
+    public SqueakBytecodeNode(CompiledCodeObject code, int successsorIndex) {
         super(code);
-        index = idx;
-        successorOffset = 1;
+        this.successorIndex = successsorIndex;
     }
 
     public boolean isReturn() {
@@ -36,8 +33,11 @@ public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
     }
 
     public int executeInt(VirtualFrame frame) {
+        if (successorIndex <= 0) {
+            throw new RuntimeException("Inner nodes are not allowed to be executed here");
+        }
         executeVoid(frame);
-        return successorOffset;
+        return successorIndex;
     }
 
     public void executeVoid(VirtualFrame frame) {
@@ -56,7 +56,10 @@ public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
         if (readNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             readNode = FrameSlotReadNode.create(slot);
+        } else if (readNode.slot != slot) {
+            throw new RuntimeException("Currently, only one slot can be written");
         }
+
         return readNode;
     }
 
@@ -64,6 +67,8 @@ public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
         if (writeNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             writeNode = FrameSlotWriteNode.create(slot);
+        } else if (writeNode.slot != slot) {
+            throw new RuntimeException("Currently, only one slot can be written");
         }
         return writeNode;
     }
@@ -82,7 +87,7 @@ public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
     }
 
     protected Object top(VirtualFrame frame) {
-        return top(frame, stackPointer(frame));
+        return peek(frame, 0);
     }
 
     protected Object top(VirtualFrame frame, int idx) {
@@ -99,10 +104,10 @@ public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
     }
 
     protected Object receiver(VirtualFrame frame) {
-        return top(frame, 0);
+        return getReadNode(code.receiverSlot).executeRead(frame);
     }
 
     protected int getIndex() {
-        return successorOffset - 1;
+        return successorIndex - 1;
     }
 }

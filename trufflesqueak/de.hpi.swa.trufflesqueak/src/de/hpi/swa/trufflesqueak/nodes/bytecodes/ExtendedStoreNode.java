@@ -16,8 +16,8 @@ public class ExtendedStoreNode extends ExtendedAccess {
     private static class StoreIntoNode extends SqueakBytecodeNode {
         @Child WriteNode node;
 
-        StoreIntoNode(CompiledCodeObject code, int idx, WriteNode writeNode) {
-            super(code, idx);
+        StoreIntoNode(CompiledCodeObject code, int index, WriteNode writeNode) {
+            super(code, index);
             node = writeNode;
         }
 
@@ -27,16 +27,16 @@ public class ExtendedStoreNode extends ExtendedAccess {
         }
     }
 
-    public static SqueakBytecodeNode create(CompiledCodeObject code, int idx, int i) {
+    public static SqueakBytecodeNode create(CompiledCodeObject code, int index, int i) {
         switch (extractType(i)) {
             case 0:
-                return new StoreIntoNode(code, idx, ObjectAtPutNode.create(code, idx, new FrameReceiverNode(code)));
+                return new StoreIntoNode(code, index, ObjectAtPutNode.create(index, new FrameReceiverNode(code)));
             case 1:
-                return new StoreIntoNode(code, idx, FrameSlotWriteNode.create(code.getStackSlot(idx)));
+                return new StoreIntoNode(code, index, FrameSlotWriteNode.create(code.getStackSlot(index)));
             case 2:
-                throw new RuntimeException("illegal ExtendedStore bytecode: variable type 2");
+                return new UnknownBytecodeNode(code, index, -1);
             case 3:
-                return new StoreIntoNode(code, idx, ObjectAtPutNode.create(code, 1, new MethodLiteralNode(code, idx)));
+                return new StoreIntoNode(code, index, ObjectAtPutNode.create(1, new MethodLiteralNode(code, index)));
             default:
                 throw new RuntimeException("illegal ExtendedStore bytecode");
         }

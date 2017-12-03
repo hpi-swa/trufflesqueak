@@ -7,8 +7,8 @@ import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 
 public abstract class PrimIndexAtPut extends PrimAtPut {
-    public PrimIndexAtPut(CompiledMethodObject cm) {
-        super(cm);
+    public PrimIndexAtPut(CompiledMethodObject code) {
+        super(code);
     }
 
     @Override

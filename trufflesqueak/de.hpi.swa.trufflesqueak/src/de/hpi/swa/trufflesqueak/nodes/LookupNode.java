@@ -35,4 +35,8 @@ public abstract class LookupNode extends Node {
     protected static Object fail(Object sqClass, Object selector) {
         throw new RuntimeException("failed to lookup generic selector object on generic class");
     }
+
+    public static LookupNode create() {
+        return LookupNodeGen.create();
+    }
 }

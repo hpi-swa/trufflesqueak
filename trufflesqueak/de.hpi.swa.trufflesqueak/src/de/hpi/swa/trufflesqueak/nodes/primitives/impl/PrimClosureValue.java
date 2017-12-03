@@ -15,8 +15,8 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNode;
 public abstract class PrimClosureValue extends PrimitiveNode {
     @Child protected BlockActivationNode dispatch;
 
-    public PrimClosureValue(CompiledMethodObject cm) {
-        super(cm);
+    public PrimClosureValue(CompiledMethodObject code) {
+        super(code);
         dispatch = BlockActivationNodeGen.create();
     }
 

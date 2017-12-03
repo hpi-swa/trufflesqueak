@@ -11,9 +11,9 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveBinaryOperation;
 public class PrimBitShift extends PrimitiveBinaryOperation {
     @Child PrimNormalize normalizeNode;
 
-    public PrimBitShift(CompiledMethodObject cm) {
-        super(cm);
-        normalizeNode = new PrimNormalize(cm);
+    public PrimBitShift(CompiledMethodObject code) {
+        super(code);
+        normalizeNode = new PrimNormalize(code);
     }
 
     @Specialization(guards = {"arg <= 0"})

@@ -7,8 +7,8 @@ import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNode;
 
 public class PrimQuit extends PrimitiveNode {
-    public PrimQuit(CompiledMethodObject cm) {
-        super(cm);
+    public PrimQuit(CompiledMethodObject code) {
+        super(code);
     }
 
     @Override

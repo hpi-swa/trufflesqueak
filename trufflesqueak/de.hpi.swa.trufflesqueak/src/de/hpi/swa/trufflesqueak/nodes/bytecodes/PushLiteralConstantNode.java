@@ -9,9 +9,9 @@ import de.hpi.swa.trufflesqueak.nodes.context.MethodLiteralNode;
 public class PushLiteralConstantNode extends SqueakBytecodeNode {
     @Child SqueakNode literalNode;
 
-    public PushLiteralConstantNode(CompiledCodeObject code, int idx, int literalIdx) {
-        super(code, idx);
-        literalNode = new MethodLiteralNode(code, literalIdx);
+    public PushLiteralConstantNode(CompiledCodeObject code, int index, int literalIndex) {
+        super(code, index);
+        literalNode = new MethodLiteralNode(code, literalIndex);
     }
 
     @Override

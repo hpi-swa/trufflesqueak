@@ -11,20 +11,20 @@ public class ConditionalJump extends AbstractJump {
     protected final int offset;
     public final Boolean isIfTrue;
 
-    private ConditionalJump(CompiledCodeObject cm, int idx, int off, boolean condition) {
-        super(cm, idx);
-        alternativeSuccessorIndex = idx + off;
+    private ConditionalJump(CompiledCodeObject code, int index, int off, boolean condition) {
+        super(code, index);
+        alternativeSuccessorIndex = index + off;
         offset = off;
         isIfTrue = condition;
-        popNode = new PopNode(cm, idx);
+        popNode = new PopNode(code, -1);
     }
 
-    public ConditionalJump(CompiledCodeObject cm, int idx, int bytecode) {
-        this(cm, idx, shortJumpOffset(bytecode), false);
+    public ConditionalJump(CompiledCodeObject code, int index, int bytecode) {
+        this(code, index, shortJumpOffset(bytecode), false);
     }
 
-    public ConditionalJump(CompiledCodeObject cm, int idx, int bytecode, int parameter, boolean condition) {
-        this(cm, idx + 1, longJumpOffset(bytecode, parameter), condition);
+    public ConditionalJump(CompiledCodeObject code, int index, int bytecode, int parameter, boolean condition) {
+        this(code, index + 1, longJumpOffset(bytecode, parameter), condition);
     }
 
     @Override
@@ -32,7 +32,7 @@ public class ConditionalJump extends AbstractJump {
         if (popNode.executeGeneric(frame) == isIfTrue) {
             return alternativeSuccessorIndex;
         } else {
-            return successorOffset;
+            return successorIndex;
         }
     }
 

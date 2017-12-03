@@ -7,8 +7,13 @@ import de.hpi.swa.trufflesqueak.exceptions.SqueakExit;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 
 public class SqueakMainNode extends SqueakMethodNode {
-    public SqueakMainNode(SqueakLanguage language, CompiledCodeObject cc, boolean hasReceiver) {
-        super(language, cc, hasReceiver);
+    public SqueakMainNode(SqueakLanguage language, CompiledCodeObject code) {
+        super(language, code);
+    }
+
+    @Override
+    public void enterFrame(VirtualFrame frame) {
+        initializeSlots(frame);
     }
 
     @Override

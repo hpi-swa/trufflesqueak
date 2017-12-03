@@ -12,8 +12,8 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveUnaryOperation;
 public class PrimNew extends PrimitiveUnaryOperation {
     final static int NEW_CACHE_SIZE = 3;
 
-    public PrimNew(CompiledMethodObject cm) {
-        super(cm);
+    public PrimNew(CompiledMethodObject code) {
+        super(code);
     }
 
     @SuppressWarnings("unused")

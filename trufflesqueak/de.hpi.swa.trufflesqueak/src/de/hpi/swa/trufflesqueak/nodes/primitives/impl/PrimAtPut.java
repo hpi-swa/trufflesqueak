@@ -15,8 +15,8 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveTernaryOperation;
 
 public class PrimAtPut extends PrimitiveTernaryOperation {
-    public PrimAtPut(CompiledMethodObject cm) {
-        super(cm);
+    public PrimAtPut(CompiledMethodObject code) {
+        super(code);
     }
 
     @Specialization

@@ -8,11 +8,10 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SendSelfSelector;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SingleExtendedSuperNode;
 
 public abstract class DoubleExtendedDoAnythingNode {
-    public static class StoreIntoReceiverVariableNode extends PopIntoReceiverVariableNode {
+    public static class StoreIntoReceiverVariableNode extends StoreAndPopReceiverVariableNode {
         public StoreIntoReceiverVariableNode(CompiledCodeObject method, int idx, int receiverIdx) {
             super(method, idx, receiverIdx);
         }
-
     }
 
     public static class StoreIntoAssociationNode extends SqueakBytecodeNode {
@@ -20,9 +19,9 @@ public abstract class DoubleExtendedDoAnythingNode {
         private SqueakNode valueNode;
         @Child SqueakNode storeNode;
 
-        public StoreIntoAssociationNode(CompiledCodeObject method, int idx, int literalIndex) {
-            super(method, idx);
-            literal = method.getLiteral(literalIndex);
+        public StoreIntoAssociationNode(CompiledCodeObject code, int idx, int literalIndex) {
+            super(code, idx);
+            literal = code.getLiteral(literalIndex);
         }
 
         @Override
@@ -32,27 +31,27 @@ public abstract class DoubleExtendedDoAnythingNode {
         }
     }
 
-    public static SqueakBytecodeNode create(CompiledCodeObject method, int idx, int second, int third) {
+    public static SqueakBytecodeNode create(CompiledCodeObject code, int index, int second, int third) {
         int opType = second >> 5;
         switch (opType) {
             case 0:
-                return new SendSelfSelector(method, idx, method.getLiteral(third), second & 31);
+                return new SendSelfSelector(code, index, code.getLiteral(third), second & 31);
             case 1:
-                return new SingleExtendedSuperNode(method, idx, third, second & 31);
+                return new SingleExtendedSuperNode(code, index, third, second & 31);
             case 2:
-                return new PushReceiverVariableNode(method, idx, third);
+                return new PushReceiverVariableNode(code, index, third);
             case 3:
-                return new PushLiteralConstantNode(method, idx, third);
+                return new PushLiteralConstantNode(code, index, third);
             case 4:
-                return new PushLiteralVariableNode(method, idx, third);
+                return new PushLiteralVariableNode(code, index, third);
             case 5:
-                return new StoreIntoReceiverVariableNode(method, idx, third);
+                return new StoreIntoReceiverVariableNode(code, index, third);
             case 6:
-                return new PopIntoReceiverVariableNode(method, idx, third);
+                return new StoreAndPopReceiverVariableNode(code, index, third);
             case 7:
-                return new StoreIntoAssociationNode(method, idx, third);
+                return new StoreIntoAssociationNode(code, index, third);
             default:
-                return new UnknownBytecodeNode(method, idx, second);
+                return new UnknownBytecodeNode(code, index, second);
         }
     }
 }

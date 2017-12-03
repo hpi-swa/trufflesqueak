@@ -7,8 +7,8 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 public class PushConstantNode extends SqueakBytecodeNode {
     public final Object constant;
 
-    public PushConstantNode(CompiledCodeObject code, int idx, Object obj) {
-        super(code, idx);
+    public PushConstantNode(CompiledCodeObject code, int index, Object obj) {
+        super(code, index);
         constant = obj;
     }
 

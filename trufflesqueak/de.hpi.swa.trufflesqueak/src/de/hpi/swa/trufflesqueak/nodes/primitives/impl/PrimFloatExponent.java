@@ -6,8 +6,8 @@ import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveUnaryOperation;
 
 public class PrimFloatExponent extends PrimitiveUnaryOperation {
-    public PrimFloatExponent(CompiledMethodObject cm) {
-        super(cm);
+    public PrimFloatExponent(CompiledMethodObject code) {
+        super(code);
     }
 
     @Specialization

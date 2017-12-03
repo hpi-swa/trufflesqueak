@@ -7,8 +7,8 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 public class UnknownBytecodeNode extends SqueakBytecodeNode {
     private final int bytecode;
 
-    public UnknownBytecodeNode(CompiledCodeObject method, int idx, int bc) {
-        super(method, idx);
+    public UnknownBytecodeNode(CompiledCodeObject code, int index, int bc) {
+        super(code, index);
         bytecode = bc;
     }
 

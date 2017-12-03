@@ -8,8 +8,8 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNode;
 
 public class PrimPrintArgs extends PrimitiveNode {
-    public PrimPrintArgs(CompiledMethodObject cm) {
-        super(cm);
+    public PrimPrintArgs(CompiledMethodObject code) {
+        super(code);
     }
 
     @TruffleBoundary

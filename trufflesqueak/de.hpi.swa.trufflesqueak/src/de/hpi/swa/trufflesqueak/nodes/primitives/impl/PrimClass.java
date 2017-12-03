@@ -10,9 +10,9 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveUnaryOperation;
 public abstract class PrimClass extends PrimitiveUnaryOperation {
     @Child SqueakLookupClassNode node;
 
-    public PrimClass(CompiledMethodObject cm) {
-        super(cm);
-        node = SqueakLookupClassNodeGen.create(cm);
+    public PrimClass(CompiledMethodObject code) {
+        super(code);
+        node = SqueakLookupClassNodeGen.create(code);
     }
 
     @Specialization

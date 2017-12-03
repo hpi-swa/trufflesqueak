@@ -13,8 +13,8 @@ public class PrimUtcClock extends PrimitiveNode {
     private final long SEC2USEC = 1000 * 1000;
     private final long USEC2NANO = 1000;
 
-    public PrimUtcClock(CompiledMethodObject cm) {
-        super(cm);
+    public PrimUtcClock(CompiledMethodObject code) {
+        super(code);
     }
 
     @Specialization

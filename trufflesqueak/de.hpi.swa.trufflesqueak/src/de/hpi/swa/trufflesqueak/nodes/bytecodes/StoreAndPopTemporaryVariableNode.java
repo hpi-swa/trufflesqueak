@@ -6,14 +6,14 @@ import com.oracle.truffle.api.instrumentation.StandardTags;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
-public class PopIntoReceiverVariableNode extends SqueakBytecodeNode {
+public class StoreAndPopTemporaryVariableNode extends SqueakBytecodeNode {
     @Child SqueakNode storeNode;
 
-    final int receiverIndex;
+    final int tempIndex;
 
-    public PopIntoReceiverVariableNode(CompiledCodeObject method, int idx, int receiverIdx) {
-        super(method, idx);
-        receiverIndex = receiverIdx;
+    public StoreAndPopTemporaryVariableNode(CompiledCodeObject code, int index, int tempIdx) {
+        super(code, index);
+        tempIndex = tempIdx;
     }
 
     @Override

@@ -6,8 +6,8 @@ import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveBinaryOperation;
 
 public class PrimFloatTimesTwoPower extends PrimitiveBinaryOperation {
-    public PrimFloatTimesTwoPower(CompiledMethodObject cm) {
-        super(cm);
+    public PrimFloatTimesTwoPower(CompiledMethodObject code) {
+        super(code);
     }
 
     @Specialization

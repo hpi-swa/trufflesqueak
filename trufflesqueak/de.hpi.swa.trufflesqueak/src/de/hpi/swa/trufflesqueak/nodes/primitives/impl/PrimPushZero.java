@@ -6,8 +6,8 @@ import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveQuickReturnNode;
 
 public class PrimPushZero extends PrimitiveQuickReturnNode {
-    public PrimPushZero(CompiledMethodObject cm) {
-        super(cm);
+    public PrimPushZero(CompiledMethodObject code) {
+        super(code);
     }
 
     @Override

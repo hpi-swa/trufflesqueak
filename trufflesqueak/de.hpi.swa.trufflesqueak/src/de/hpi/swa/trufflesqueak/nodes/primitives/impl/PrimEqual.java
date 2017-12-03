@@ -8,8 +8,8 @@ import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveBinaryOperation;
 
 public class PrimEqual extends PrimitiveBinaryOperation {
-    public PrimEqual(CompiledMethodObject cm) {
-        super(cm);
+    public PrimEqual(CompiledMethodObject code) {
+        super(code);
     }
 
     @Specialization

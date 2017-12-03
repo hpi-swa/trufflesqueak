@@ -6,8 +6,8 @@ import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveUnaryOperation;
 
 public class PrimArcTan extends PrimitiveUnaryOperation {
-    public PrimArcTan(CompiledMethodObject cm) {
-        super(cm);
+    public PrimArcTan(CompiledMethodObject code) {
+        super(code);
     }
 
     @Specialization

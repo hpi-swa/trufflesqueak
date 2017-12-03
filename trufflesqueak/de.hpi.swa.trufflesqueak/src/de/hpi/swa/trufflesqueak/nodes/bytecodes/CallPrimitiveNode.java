@@ -15,21 +15,20 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveQuickReturnNode;
 public class CallPrimitiveNode extends SqueakBytecodeNode {
     @Child PrimitiveNode primitive;
 
-    @SuppressWarnings("unused")
-    public CallPrimitiveNode(CompiledCodeObject method, int idx, int i, int j) {
-        super(method, idx);
-        primitive = PrimitiveNodeFactory.forIdx(method, method.primitiveIndex());
+    public CallPrimitiveNode(CompiledCodeObject code, int index) {
+        super(code, index);
+        primitive = PrimitiveNodeFactory.forIdx(code, code.primitiveIndex());
     }
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
-        assert successorOffset == 0;
+        assert getIndex() == 0;
         try {
             throw new LocalReturn(primitive.executeGeneric(frame));
         } catch (UnsupportedSpecializationException
                         | PrimitiveFailed
                         | IndexOutOfBoundsException e) {
-            return null;
+            return code.image.nil;
         }
     }
 

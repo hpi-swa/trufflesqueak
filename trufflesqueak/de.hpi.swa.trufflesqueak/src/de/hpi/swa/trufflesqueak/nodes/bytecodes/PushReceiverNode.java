@@ -6,8 +6,8 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 
 public class PushReceiverNode extends SqueakBytecodeNode {
 
-    public PushReceiverNode(CompiledCodeObject code, int idx) {
-        super(code, idx);
+    public PushReceiverNode(CompiledCodeObject code, int index) {
+        super(code, index);
     }
 
     @Override
