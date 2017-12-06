@@ -5,7 +5,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveUnaryOperation;
 
-public class PrimLogN extends PrimitiveUnaryOperation {
+public abstract class PrimLogN extends PrimitiveUnaryOperation {
     public PrimLogN(CompiledMethodObject code) {
         super(code);
     }

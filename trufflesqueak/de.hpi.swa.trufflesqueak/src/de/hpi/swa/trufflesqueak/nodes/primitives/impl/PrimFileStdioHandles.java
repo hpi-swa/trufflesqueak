@@ -5,7 +5,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNode;
 
-public class PrimFileStdioHandles extends PrimitiveNode {
+public abstract class PrimFileStdioHandles extends PrimitiveNode {
     public PrimFileStdioHandles(CompiledMethodObject code) {
         super(code);
     }

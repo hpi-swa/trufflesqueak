@@ -6,7 +6,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveTernaryOperation;
 
-public class PrimStringAtPut extends PrimitiveTernaryOperation {
+public abstract class PrimStringAtPut extends PrimitiveTernaryOperation {
     public PrimStringAtPut(CompiledMethodObject code) {
         super(code);
     }

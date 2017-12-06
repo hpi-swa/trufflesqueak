@@ -16,8 +16,8 @@ import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.FrameMarker;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ArgumentNode;
-import de.hpi.swa.trufflesqueak.nodes.context.ReceiverWriteNode;
 
 public class SqueakMethodNode extends RootNode {
     protected final CompiledCodeObject code;
@@ -27,19 +27,19 @@ public class SqueakMethodNode extends RootNode {
     public SqueakMethodNode(SqueakLanguage language, CompiledCodeObject code) {
         super(language, code.getFrameDescriptor());
         this.code = code;
-        int numArgs = code.getNumArgs();
-        argumentNodes = new SqueakNode[numArgs + 1];
-        argumentNodes[0] = new ReceiverWriteNode(code);
-        for (int i = 1; i <= numArgs; i++) {
-            argumentNodes[i] = new ArgumentNode(code, i);
+        int numRcvrAndArgs = 1 + code.getNumArgs();
+        argumentNodes = new SqueakNode[numRcvrAndArgs];
+        argumentNodes[0] = new PushReceiverNode(code, -1);
+        for (int i = 1; i < numRcvrAndArgs; i++) {
+            argumentNodes[i] = new ArgumentNode(code, i - 1);
         }
         if (code instanceof CompiledBlockObject) {
             int numCopiedValues = ((CompiledBlockObject) code).getNumCopiedValues();
             copiedValuesNodes = new SqueakNode[numCopiedValues + 1];
             for (int i = 0; i < numCopiedValues; i++) {
-                copiedValuesNodes[i] = new ArgumentNode(code, 1 + numArgs + i);
+                copiedValuesNodes[i] = new ArgumentNode(code, numRcvrAndArgs + i);
             }
-            copiedValuesNodes[copiedValuesNodes.length - 1] = new ArgumentNode(code, 1 + numArgs + numCopiedValues);
+            copiedValuesNodes[copiedValuesNodes.length - 1] = new ArgumentNode(code, numRcvrAndArgs + numCopiedValues);
 
         } else {
             copiedValuesNodes = null;
@@ -60,7 +60,7 @@ public class SqueakMethodNode extends RootNode {
                 node.executeGeneric(frame);
             }
         }
-        frame.setInt(code.stackPointerSlot, code.getNumTemps());
+        frame.setInt(code.stackPointerSlot, code.getNumTemps() + 1); // +1 for receiver
     }
 
     private boolean isClosure() {

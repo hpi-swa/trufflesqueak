@@ -8,7 +8,7 @@ import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveUnaryOperation;
 
-public class PrimIdentityHash extends PrimitiveUnaryOperation {
+public abstract class PrimIdentityHash extends PrimitiveUnaryOperation {
     public PrimIdentityHash(CompiledMethodObject code) {
         super(code);
     }

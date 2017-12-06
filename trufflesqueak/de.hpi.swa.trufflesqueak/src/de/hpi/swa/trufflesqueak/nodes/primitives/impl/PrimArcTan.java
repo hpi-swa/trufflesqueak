@@ -5,7 +5,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveUnaryOperation;
 
-public class PrimArcTan extends PrimitiveUnaryOperation {
+public abstract class PrimArcTan extends PrimitiveUnaryOperation {
     public PrimArcTan(CompiledMethodObject code) {
         super(code);
     }

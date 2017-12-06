@@ -15,7 +15,7 @@ import de.hpi.swa.trufflesqueak.model.LargeInteger;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveBinaryOperation;
 
-public class PrimAt extends PrimitiveBinaryOperation {
+public abstract class PrimAt extends PrimitiveBinaryOperation {
     public PrimAt(CompiledMethodObject code) {
         super(code);
     }

@@ -11,8 +11,8 @@ public class TestPrimitives extends TestSqueak {
     @Test
     public void testPrimEquivalent() {
         BaseSqueakObject rcvr = image.specialObjectsArray;
-        assertTrue((boolean) runPrim(110, rcvr, rcvr));
-        assertFalse((boolean) runPrim(110, rcvr, image.nil));
+        assertTrue((boolean) runBinaryPrimitive(110, rcvr, rcvr));
+        assertFalse((boolean) runBinaryPrimitive(110, rcvr, image.nil));
     }
 
     @Test
@@ -34,7 +34,7 @@ public class TestPrimitives extends TestSqueak {
         for (int i = 1; i < 8; i++) {
             assertNotSame(rcvr.at0(i), null);
         }
-        Object result = runPrim(105, rcvr, 1, 6, new ListObject(image, image.nilClass, 10), 1);
+        Object result = runQuinaryPrimitive(105, rcvr, 1, 6, new ListObject(image, image.nilClass, 10), 1);
         assertSame(result, rcvr);
         for (int i = 0; i < 6; i++) {
             assertSame(rcvr.at0(i), null);
@@ -52,7 +52,7 @@ public class TestPrimitives extends TestSqueak {
                         BigInteger.valueOf(Long.MAX_VALUE), Long.MIN_VALUE, BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.valueOf(Long.MIN_VALUE)),
         };
         for (int i = 0; i < calcs.length; i += 3) {
-            assertEquals(runPrim(1, calcs[i], calcs[i + 1]), calcs[i + 2]);
+            assertEquals(runBinaryPrimitive(1, calcs[i], calcs[i + 1]), calcs[i + 2]);
         }
     }
 
@@ -68,7 +68,7 @@ public class TestPrimitives extends TestSqueak {
                         BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE), 1, Long.MAX_VALUE,
         };
         for (int i = 0; i < calcs.length; i += 3) {
-            assertEquals(runPrim(2, calcs[i], calcs[i + 1]), calcs[i + 2]);
+            assertEquals(runBinaryPrimitive(2, calcs[i], calcs[i + 1]), calcs[i + 2]);
         }
     }
 }

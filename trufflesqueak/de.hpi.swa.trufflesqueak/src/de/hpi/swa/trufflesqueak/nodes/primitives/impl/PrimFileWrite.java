@@ -8,7 +8,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveQuinaryOperation;
 
-public class PrimFileWrite extends PrimitiveQuinaryOperation {
+public abstract class PrimFileWrite extends PrimitiveQuinaryOperation {
     public PrimFileWrite(CompiledMethodObject code) {
         super(code);
     }

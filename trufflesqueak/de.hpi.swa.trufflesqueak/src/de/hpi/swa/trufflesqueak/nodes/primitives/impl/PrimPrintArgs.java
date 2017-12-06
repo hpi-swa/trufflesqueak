@@ -7,7 +7,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNode;
 
-public class PrimPrintArgs extends PrimitiveNode {
+public abstract class PrimPrintArgs extends PrimitiveNode {
     public PrimPrintArgs(CompiledMethodObject code) {
         super(code);
     }

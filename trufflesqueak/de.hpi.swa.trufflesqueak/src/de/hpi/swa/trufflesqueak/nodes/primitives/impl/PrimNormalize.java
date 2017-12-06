@@ -9,7 +9,7 @@ import de.hpi.swa.trufflesqueak.model.LargeInteger;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveUnaryOperation;
 
-public class PrimNormalize extends PrimitiveUnaryOperation {
+public abstract class PrimNormalize extends PrimitiveUnaryOperation {
     public PrimNormalize(CompiledMethodObject code) {
         super(code);
     }

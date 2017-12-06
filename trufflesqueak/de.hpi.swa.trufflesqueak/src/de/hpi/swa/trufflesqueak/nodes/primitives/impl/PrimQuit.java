@@ -6,7 +6,7 @@ import de.hpi.swa.trufflesqueak.exceptions.SqueakExit;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNode;
 
-public class PrimQuit extends PrimitiveNode {
+public abstract class PrimQuit extends PrimitiveNode {
     public PrimQuit(CompiledMethodObject code) {
         super(code);
     }

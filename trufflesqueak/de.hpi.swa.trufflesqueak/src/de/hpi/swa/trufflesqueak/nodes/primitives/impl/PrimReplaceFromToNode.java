@@ -10,7 +10,7 @@ import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveQuinaryOperation;
 
-public class PrimReplaceFromToNode extends PrimitiveQuinaryOperation {
+public abstract class PrimReplaceFromToNode extends PrimitiveQuinaryOperation {
     public PrimReplaceFromToNode(CompiledMethodObject code) {
         super(code);
     }

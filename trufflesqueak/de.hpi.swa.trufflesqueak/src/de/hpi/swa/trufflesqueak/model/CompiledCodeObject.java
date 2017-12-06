@@ -130,13 +130,9 @@ public abstract class CompiledCodeObject extends SqueakObject {
     }
 
     public VirtualFrame createTestFrame(Object receiver, Object[] arguments) {
-        Object[] args = new Object[arguments.length + 1];
-        int i = 0;
-        args[i++] = receiver;
-        for (Object o : arguments) {
-            args[i++] = o;
-        }
-        return Truffle.getRuntime().createVirtualFrame(args, frameDescriptor);
+        VirtualFrame frame = Truffle.getRuntime().createVirtualFrame(arguments, frameDescriptor);
+        frame.setObject(receiverSlot, receiver);
+        return frame;
     }
 
     public RootCallTarget getCallTarget() {

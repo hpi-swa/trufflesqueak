@@ -5,7 +5,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveUnaryOperation;
 
-public class PrimAsFloat extends PrimitiveUnaryOperation {
+public abstract class PrimAsFloat extends PrimitiveUnaryOperation {
     public PrimAsFloat(CompiledMethodObject code) {
         super(code);
     }

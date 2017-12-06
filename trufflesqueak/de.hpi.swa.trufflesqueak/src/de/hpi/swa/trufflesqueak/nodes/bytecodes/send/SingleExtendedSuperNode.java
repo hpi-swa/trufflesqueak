@@ -18,4 +18,8 @@ public class SingleExtendedSuperNode extends AbstractSendNode {
     public SingleExtendedSuperNode(CompiledCodeObject code, int index, int selectorLiteralIdx, int numArgs) {
         super(code, index, code.getLiteral(selectorLiteralIdx), numArgs);
     }
+
+    public SingleExtendedSuperNode(CompiledCodeObject code, int index, int rawByte) {
+        this(code, index, rawByte & 31, rawByte >> 5);
+    }
 }

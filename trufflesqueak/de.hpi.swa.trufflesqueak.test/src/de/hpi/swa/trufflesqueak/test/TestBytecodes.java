@@ -168,15 +168,6 @@ public class TestBytecodes extends TestSqueak {
     // TODO: testPushClosure()
     // TODO: testUnconditionalJump()
     // TODO: testConditionalJump()
-
-// primAdd requires methodDict of LargeInteger
-// @Test
-// public void testPrimAdd() {
-// BaseSqueakObject rcvr = getTestObject();
-// // push 1, push 1, primAdd, return top
-// assertSame(runMethod(rcvr, 118, 118, 176, 124), 2);
-// }
-
     // TODO: testSendSelector()
     // TODO: testSend()
 

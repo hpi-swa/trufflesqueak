@@ -15,6 +15,10 @@ public class ArgumentNode extends SqueakBytecodeNode {
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
-        return push(frame, frame.getArguments()[argumentIndex]);
+        try {
+            return push(frame, frame.getArguments()[argumentIndex]);
+        } catch (IndexOutOfBoundsException e) {
+            throw new RuntimeException("Tried to access arg #" + argumentIndex + ", but there are only " + frame.getArguments().length + " in total.");
+        }
     }
 }

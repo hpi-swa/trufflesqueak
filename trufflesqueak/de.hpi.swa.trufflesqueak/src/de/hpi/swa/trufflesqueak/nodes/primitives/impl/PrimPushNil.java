@@ -5,7 +5,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveQuickReturnNode;
 
-public class PrimPushNil extends PrimitiveQuickReturnNode {
+public abstract class PrimPushNil extends PrimitiveQuickReturnNode {
     public PrimPushNil(CompiledMethodObject code) {
         super(code);
     }

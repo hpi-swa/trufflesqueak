@@ -7,7 +7,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveBinaryOperation;
 
-public class PrimMul extends PrimitiveBinaryOperation {
+public abstract class PrimMul extends PrimitiveBinaryOperation {
     public PrimMul(CompiledMethodObject code) {
         super(code);
     }

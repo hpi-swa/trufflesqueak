@@ -18,7 +18,7 @@ import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNode;
 
-public class PrimPerform extends PrimitiveNode {
+public abstract class PrimPerform extends PrimitiveNode {
     @Child public SqueakNode receiverNode;
     @Child public SqueakNode selectorNode;
     @Child protected SqueakLookupClassNode lookupClassNode;

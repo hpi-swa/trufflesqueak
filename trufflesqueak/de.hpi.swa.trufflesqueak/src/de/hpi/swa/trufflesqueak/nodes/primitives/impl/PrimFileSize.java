@@ -6,7 +6,7 @@ import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveBinaryOperation;
 
-public class PrimFileSize extends PrimitiveBinaryOperation {
+public abstract class PrimFileSize extends PrimitiveBinaryOperation {
     public PrimFileSize(CompiledMethodObject code) {
         super(code);
     }

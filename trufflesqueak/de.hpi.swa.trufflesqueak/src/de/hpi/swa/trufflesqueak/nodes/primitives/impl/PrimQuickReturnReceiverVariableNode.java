@@ -6,7 +6,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushReceiverVariableNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveQuickReturnNode;
 
-public class PrimQuickReturnReceiverVariableNode extends PrimitiveQuickReturnNode {
+public abstract class PrimQuickReturnReceiverVariableNode extends PrimitiveQuickReturnNode {
     @Child PushReceiverVariableNode actual;
 
     public PrimQuickReturnReceiverVariableNode(CompiledMethodObject code, int variableIdx) {

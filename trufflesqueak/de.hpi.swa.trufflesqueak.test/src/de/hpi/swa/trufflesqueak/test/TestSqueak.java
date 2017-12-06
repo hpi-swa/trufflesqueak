@@ -49,12 +49,16 @@ public abstract class TestSqueak extends TestCase {
         return new CompiledMethodObject(image, bytes, literals);
     }
 
-    public CompiledCodeObject makeMethod(int... intbytes) {
+    public CompiledCodeObject makeMethod(Object[] literals, int... intbytes) {
         byte[] bytes = new byte[intbytes.length];
         for (int i = 0; i < intbytes.length; i++) {
             bytes[i] = (byte) intbytes[i];
         }
-        return makeMethod(bytes);
+        return makeMethod(bytes, literals);
+    }
+
+    public CompiledCodeObject makeMethod(int... intbytes) {
+        return makeMethod(new Object[]{68419598}, intbytes);
     }
 
     public Object runMethod(CompiledCodeObject code, Object receiver, Object... arguments) {
@@ -77,9 +81,16 @@ public abstract class TestSqueak extends TestCase {
         return runMethod(cm, receiver, arguments);
     }
 
-    protected Object runPrim(int primCode, Object rcvr, Object... arguments) {
-        CompiledCodeObject cm = makeMethod(new int[]{139, primCode & 0xFF, (primCode & 0xFF00) >> 8});
-        cm.setLiteral(0, 0x10000);
+    protected Object runBinaryPrimitive(int primCode, Object rcvr, Object... arguments) {
+        return runPrim(new Object[]{17104899}, primCode, rcvr, arguments);
+    }
+
+    protected Object runQuinaryPrimitive(int primCode, Object rcvr, Object... arguments) {
+        return runPrim(new Object[]{68222979}, primCode, rcvr, arguments);
+    }
+
+    protected Object runPrim(Object[] literals, int primCode, Object rcvr, Object... arguments) {
+        CompiledCodeObject cm = makeMethod(literals, new int[]{139, primCode & 0xFF, (primCode & 0xFF00) >> 8, 124});
         return runMethod(cm, rcvr, arguments);
     }
 }

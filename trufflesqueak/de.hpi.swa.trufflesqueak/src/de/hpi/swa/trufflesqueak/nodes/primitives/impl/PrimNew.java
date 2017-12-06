@@ -9,7 +9,7 @@ import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveUnaryOperation;
 
-public class PrimNew extends PrimitiveUnaryOperation {
+public abstract class PrimNew extends PrimitiveUnaryOperation {
     final static int NEW_CACHE_SIZE = 3;
 
     public PrimNew(CompiledMethodObject code) {
