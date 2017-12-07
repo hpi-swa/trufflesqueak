@@ -90,7 +90,7 @@ public abstract class TestSqueak extends TestCase {
     }
 
     protected Object runPrim(Object[] literals, int primCode, Object rcvr, Object... arguments) {
-        CompiledCodeObject cm = makeMethod(literals, new int[]{139, primCode & 0xFF, (primCode & 0xFF00) >> 8, 124});
+        CompiledCodeObject cm = makeMethod(literals, new int[]{139, primCode & 0xFF, (primCode & 0xFF00) >> 8});
         return runMethod(cm, rcvr, arguments);
     }
 }

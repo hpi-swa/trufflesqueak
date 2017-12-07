@@ -8,9 +8,9 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithCode;
 public class MethodLiteralNode extends SqueakNodeWithCode {
     public final Object literal;
 
-    public MethodLiteralNode(CompiledCodeObject cm, int idx) {
-        super(cm);
-        literal = cm.getLiteral(idx);
+    public MethodLiteralNode(CompiledCodeObject code, int index) {
+        super(code);
+        literal = code.getLiteral(index);
     }
 
     @Override

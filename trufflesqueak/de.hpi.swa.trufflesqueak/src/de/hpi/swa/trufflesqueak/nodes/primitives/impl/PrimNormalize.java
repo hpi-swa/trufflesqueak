@@ -7,11 +7,17 @@ import com.oracle.truffle.api.dsl.Specialization;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.LargeInteger;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
+import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtPutNode;
+import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtPutNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveUnaryOperation;
 
 public abstract class PrimNormalize extends PrimitiveUnaryOperation {
     public PrimNormalize(CompiledMethodObject code) {
         super(code);
+    }
+
+    public static PrimNormalize create(int idx) {
+        return PrimNormalizeNodeGen.create(idx);
     }
 
     @Specialization

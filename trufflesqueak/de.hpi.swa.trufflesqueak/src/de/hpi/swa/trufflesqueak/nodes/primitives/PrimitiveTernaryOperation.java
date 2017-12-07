@@ -18,7 +18,7 @@ public abstract class PrimitiveTernaryOperation extends PrimitiveNode {
     @Override
     public final Object executeGeneric(VirtualFrame frame) {
         Object[] args = popN(frame, 3);
-        return push(frame, executeGeneric(args[2], args[1], args[0]));
+        return executeGeneric(args[2], args[1], args[0]);
     }
 
     public abstract Object executeGeneric(Object receiver, Object arg1, Object arg2);

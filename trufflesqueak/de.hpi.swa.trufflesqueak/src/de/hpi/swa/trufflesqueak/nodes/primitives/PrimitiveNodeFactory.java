@@ -256,9 +256,9 @@ public abstract class PrimitiveNodeFactory {
         return new ArgumentProfileNode(new ArgumentNode(code, index));
     }
 
-    private static PrimitiveNode createInstance(CompiledMethodObject method, Class<? extends PrimitiveNode> primClass) {
+    private static PrimitiveNode createInstance(CompiledMethodObject code, Class<? extends PrimitiveNode> primClass) {
         if (primClass == null) {
-            return new PrimitiveNode(method);
+            return new PrimitiveNode(code);
         }
         try {
             int argCount = (int) Arrays.stream(primClass.getDeclaredFields()).filter(f -> f.getAnnotation(Child.class) != null).count();
@@ -270,17 +270,17 @@ public abstract class PrimitiveNodeFactory {
             }
 
             Object[] args = new Object[argCount + 1];
-            args[0] = method;
-            args[1] = new PushReceiverNode(method, -1);
+            args[0] = code;
+            args[1] = new PushReceiverNode(code, -1);
             for (int i = 2; i <= argCount; i++) {
-                args[i] = arg(method, i - 2);
+                args[i] = arg(code, i - 2);
             }
 
             try {
                 Method factoryMethod = primClass.getMethod("create", argTypes);
                 return (PrimitiveNode) factoryMethod.invoke(null, args);
             } catch (NoSuchMethodException e) {
-                return primClass.getConstructor(CompiledMethodObject.class).newInstance(method);
+                return primClass.getConstructor(CompiledMethodObject.class).newInstance(code);
             }
         } catch (NoSuchMethodException
                         | InstantiationException
@@ -292,24 +292,24 @@ public abstract class PrimitiveNodeFactory {
         }
     }
 
-    public static PrimitiveNode forIdx(CompiledCodeObject method, int primitiveIdx) {
-        if (method instanceof CompiledMethodObject) {
-            return forIdx((CompiledMethodObject) method, primitiveIdx);
+    public static PrimitiveNode forIdx(CompiledCodeObject code, int primitiveIdx) {
+        if (code instanceof CompiledMethodObject) {
+            return forIdx((CompiledMethodObject) code, primitiveIdx);
         } else {
             throw new RuntimeException("Primitives only supported in CompiledMethodObject");
         }
     }
 
     @TruffleBoundary
-    public static PrimitiveNode forIdx(CompiledMethodObject method, int primitiveIdx) {
+    public static PrimitiveNode forIdx(CompiledMethodObject code, int primitiveIdx) {
         if (primitiveIdx >= indexPrims.length) {
-            return new PrimitiveNode(method);
+            return new PrimitiveNode(code);
         } else if (primitiveIdx >= 264 && primitiveIdx <= 520) {
             // TODO(fniephaus): fix
             // return new PrimQuickReturnReceiverVariableNode(method, primitiveIdx - 264);
         }
         Class<? extends PrimitiveNode> primClass = indexPrims[primitiveIdx];
-        return createInstance(method, primClass);
+        return createInstance(code, primClass);
     }
 
     @TruffleBoundary

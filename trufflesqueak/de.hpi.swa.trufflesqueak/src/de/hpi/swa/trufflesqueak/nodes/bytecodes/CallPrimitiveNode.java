@@ -1,9 +1,12 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
+import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags.StatementTag;
 import com.oracle.truffle.api.source.SourceSection;
 
+import de.hpi.swa.trufflesqueak.exceptions.LocalReturn;
+import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
@@ -22,15 +25,13 @@ public class CallPrimitiveNode extends SqueakBytecodeNode {
     @Override
     public Object executeGeneric(VirtualFrame frame) {
         assert successorIndex == 3; // two skipped bytes plus next
-        primitive.executeGeneric(frame);
-        return code.image.nil;
-// try {
-// throw new LocalReturn();
-// } catch (UnsupportedSpecializationException
-// | PrimitiveFailed
-// | IndexOutOfBoundsException e) {
-// return code.image.nil;
-// }
+        try {
+            throw new LocalReturn(primitive.executeGeneric(frame));
+        } catch (UnsupportedSpecializationException
+                        | PrimitiveFailed
+                        | IndexOutOfBoundsException e) {
+            return code.image.nil;
+        }
     }
 
     @Override
