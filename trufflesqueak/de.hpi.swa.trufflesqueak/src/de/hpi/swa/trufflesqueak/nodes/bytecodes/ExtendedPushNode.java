@@ -6,16 +6,17 @@ public class ExtendedPushNode extends ExtendedAccess {
     private ExtendedPushNode() {
     }
 
-    public static SqueakBytecodeNode create(CompiledCodeObject code, int index, int i) {
-        switch (extractType(i)) {
+    public static SqueakBytecodeNode create(CompiledCodeObject code, int index, int nextByte) {
+        int variableIndex = variableIndex(nextByte);
+        switch (variableType(nextByte)) {
             case 0:
-                return new PushReceiverNode(code, index);
+                return new PushReceiverVariableNode(code, index, variableIndex);
             case 1:
-                return new PushTemporaryVariableNode(code, index, extractIndex(i));
+                return new PushTemporaryVariableNode(code, index, variableIndex);
             case 2:
-                return new PushLiteralConstantNode(code, index, extractIndex(i));
+                return new PushLiteralConstantNode(code, index, variableIndex);
             case 3:
-                return new PushLiteralVariableNode(code, index, extractIndex(i));
+                return new PushLiteralVariableNode(code, index, variableIndex);
             default:
                 throw new RuntimeException("unexpected type for ExtendedPush");
         }

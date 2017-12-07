@@ -8,9 +8,9 @@ import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtNode;
 public class PushReceiverVariableNode extends SqueakBytecodeNode {
     @Child ObjectAtNode fetchNode;
 
-    public PushReceiverVariableNode(CompiledCodeObject code, int index, int i) {
+    public PushReceiverVariableNode(CompiledCodeObject code, int index, int varIndex) {
         super(code, index);
-        fetchNode = ObjectAtNode.create(i);
+        fetchNode = ObjectAtNode.create(varIndex);
     }
 
     @Override

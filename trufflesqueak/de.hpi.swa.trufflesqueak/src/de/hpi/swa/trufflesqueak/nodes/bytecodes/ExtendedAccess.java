@@ -4,11 +4,11 @@ public abstract class ExtendedAccess extends Object {
     protected ExtendedAccess() {
     }
 
-    protected static byte extractIndex(int i) {
+    protected static byte variableIndex(int i) {
         return (byte) (i & 63);
     }
 
-    protected static byte extractType(int i) {
+    protected static byte variableType(int i) {
         return (byte) ((i >> 6) & 3);
     }
 }

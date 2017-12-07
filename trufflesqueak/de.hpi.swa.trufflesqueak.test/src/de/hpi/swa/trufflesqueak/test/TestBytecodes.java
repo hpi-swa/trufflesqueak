@@ -90,7 +90,6 @@ public class TestBytecodes extends TestSqueak {
         // ^ tempA
         PointersObject rcvr = getTestObject();
         assertSame(image.sqTrue, runMethod(rcvr, 0x71, 0x68, 0x10, 0x7C));
-
     }
 
     @Test
@@ -138,9 +137,80 @@ public class TestBytecodes extends TestSqueak {
         }
     }
 
-    // TODO: testExtendedPushes()
+    @Test
+    public void testExtendedPushReceiverVariables() {
+        Object[] expectedResults = getTestObjects(64);
+        BaseSqueakObject rcvr = new PointersObject(image, image.arrayClass, expectedResults);
+        for (int i = 0; i < expectedResults.length; i++) {
+            assertSame(expectedResults[i], runMethod(rcvr, 128, i, 124));
+        }
+    }
+
+    // TODO: testExtendedPushTemporaryVariables
+
+    @Test
+    public void testExtendedPushLiteralConstants() {
+        Object[] expectedResults = getTestObjects(64);
+        List<Object> literalsList = new ArrayList<>(Arrays.asList(new Object[]{68419598}));
+        literalsList.addAll(Arrays.asList(expectedResults));
+        BaseSqueakObject rcvr = image.specialObjectsArray;
+        for (int i = 0; i < expectedResults.length; i++) {
+            CompiledCodeObject code = makeMethod(new byte[]{(byte) 128, (byte) (128 + i), 124}, literalsList.toArray());
+            VirtualFrame frame = code.createTestFrame(rcvr, new BaseSqueakObject[4]);
+            try {
+                Object result = new SqueakMethodNode(null, code).execute(frame);
+                assertSame(expectedResults[i], result);
+            } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
+                assertTrue("broken test", false);
+            }
+        }
+    }
+
+    @Test
+    public void testExtendedPushLiteralVariables() {
+        Object[] expectedResults = getTestObjects(64);
+        List<Object> literalsList = new ArrayList<>(Arrays.asList(new Object[]{68419598}));
+        literalsList.addAll(Arrays.asList(expectedResults));
+        BaseSqueakObject rcvr = image.specialObjectsArray;
+        for (int i = 0; i < 32; i++) {
+            CompiledCodeObject code = makeMethod(new byte[]{(byte) 128, (byte) (192 + i), 124}, literalsList.toArray());
+            VirtualFrame frame = code.createTestFrame(rcvr, new BaseSqueakObject[4]);
+            try {
+                Object result = new SqueakMethodNode(null, code).execute(frame);
+                assertSame(image.sqFalse, result);
+            } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
+                assertTrue("broken test", false);
+            }
+        }
+    }
     // TODO: testExtendedStores()
-    // TODO: testExtendedStoreAndPop()
+
+    @Test
+    public void testExtendedStoreReceiverVariables() {
+        int numberOfBytecodes = 64;
+        PointersObject rcvr = new PointersObject(image, image.arrayClass, new Object[numberOfBytecodes]);
+        for (int i = 0; i < numberOfBytecodes; i++) {
+            int pushBC = i % 2 == 0 ? 113 : 114;
+            boolean pushValue = i % 2 == 0 ? image.sqTrue : image.sqFalse;
+            // push value; storeTopIntoReceiver; return top
+            assertSame(pushValue, runMethod(rcvr, pushBC, 129, i, 124));
+            assertSame(pushValue, rcvr.getPointers()[i]);
+        }
+    }
+
+    @Test
+    public void testExtendedStoreAndPopReceiverVariables() {
+        int numberOfBytecodes = 64;
+        PointersObject rcvr = new PointersObject(image, image.arrayClass, new Object[numberOfBytecodes]);
+        for (int i = 0; i < numberOfBytecodes; i++) {
+            int pushBC = i % 2 == 0 ? 113 : 114;
+            boolean pushValue = i % 2 == 0 ? image.sqTrue : image.sqFalse;
+            // push value; popIntoReceiver; push true; return top
+            assertSame(image.sqTrue, runMethod(rcvr, pushBC, 130, i, 113, 124));
+            assertSame(pushValue, rcvr.getPointers()[i]);
+        }
+    }
+
     // TODO: testSingleExtendedSend()
     // TODO: testDoubleExtendedDoAnything()
     // TODO: testSingleExtendedSuper()

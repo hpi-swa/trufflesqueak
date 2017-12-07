@@ -136,7 +136,7 @@ public class Decoder {
             case 129:
                 return ExtendedStoreNode.create(code, nextIndex(1), nextByte());
             case 130:
-                return new ExtendedStoreAndPopNode(code, nextIndex(1), nextByte());
+                return ExtendedStoreAndPopNode.create(code, nextIndex(1), nextByte());
             case 131:
                 return new SingleExtendedSendNode(code, nextIndex(1), nextByte());
             case 132:
