@@ -37,13 +37,13 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SendSelectorNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SingleExtendedSendNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SingleExtendedSuperNode;
 
-public class Decoder {
+public class SqueakBytecodeDecoder {
 
     private CompiledCodeObject code;
     private int currentIndex = 0;
     private byte[] bc;
 
-    public Decoder(byte[] bc, CompiledCodeObject code) {
+    public SqueakBytecodeDecoder(byte[] bc, CompiledCodeObject code) {
         this.bc = bc;
         this.code = code;
     }

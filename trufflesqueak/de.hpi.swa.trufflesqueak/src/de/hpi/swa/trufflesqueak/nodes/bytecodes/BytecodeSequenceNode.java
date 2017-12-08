@@ -5,7 +5,7 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.util.Decoder;
+import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
 public class BytecodeSequenceNode extends Node {
     private final CompiledCodeObject code;
@@ -20,7 +20,7 @@ public class BytecodeSequenceNode extends Node {
     }
 
     public void initialize() {
-        new Decoder(bytes, code).decode(children);
+        new SqueakBytecodeDecoder(bytes, code).decode(children);
     }
 
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.FULL_EXPLODE_UNTIL_RETURN)
