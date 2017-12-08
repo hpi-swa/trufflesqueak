@@ -11,11 +11,8 @@ public class StoreAndPopTemporaryVariableNode extends SqueakBytecodeNode {
 
     public StoreAndPopTemporaryVariableNode(CompiledCodeObject code, int index, int tempIndex) {
         super(code, index);
-        if (code.getNumStackSlots() <= tempIndex) {
-            // sometimes we'll decode more bytecodes than we have slots ... that's fine
-        } else {
-            tempNode = FrameSlotWriteNode.create(code.getStackSlot(tempIndex));
-        }
+        assert code.getNumStackSlots() > tempIndex;
+        tempNode = FrameSlotWriteNode.create(code.getStackSlot(tempIndex));
     }
 
     @Override

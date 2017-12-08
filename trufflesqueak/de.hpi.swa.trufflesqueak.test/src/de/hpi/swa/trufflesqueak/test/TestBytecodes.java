@@ -16,6 +16,8 @@ import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotReadNode;
+import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakMethodNode;
 
 public class TestBytecodes extends TestSqueak {
@@ -30,7 +32,22 @@ public class TestBytecodes extends TestSqueak {
         }
     }
 
-// TODO: testPushTemporaryVariables()
+    @Test
+    public void testPushTemporaryVariables() {
+        Object[] literals = new Object[]{2097154, image.nil, image.nil}; // header with numTemp=8
+        BaseSqueakObject rcvr = image.specialObjectsArray;
+        for (int i = 0; i < 8; i++) {
+            // push true, popIntoTemp i, pushTemp i, returnTop
+            CompiledCodeObject code = makeMethod(new byte[]{113, (byte) (104 + i), (byte) (16 + i), 124}, literals);
+            VirtualFrame frame = code.createTestFrame(rcvr, new BaseSqueakObject[4]);
+            try {
+                Object result = new SqueakMethodNode(null, code).execute(frame);
+                assertSame(image.sqTrue, result);
+            } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
+                assertTrue("broken test", false);
+            }
+        }
+    }
 
     @Test
     public void testPushLiteralConstants() {
@@ -88,8 +105,8 @@ public class TestBytecodes extends TestSqueak {
         // | tempA |
         // tempA := true.
         // ^ tempA
-        PointersObject rcvr = getTestObject();
-        assertSame(image.sqTrue, runMethod(rcvr, 0x71, 0x68, 0x10, 0x7C));
+// PointersObject rcvr = getTestObject();
+// assertSame(image.sqTrue, runMethod(rcvr, 0x71, 0x68, 0x10, 0x7C));
     }
 
     @Test
@@ -145,8 +162,6 @@ public class TestBytecodes extends TestSqueak {
             assertSame(expectedResults[i], runMethod(rcvr, 128, i, 124));
         }
     }
-
-    // TODO: testExtendedPushTemporaryVariables
 
     @Test
     public void testExtendedPushLiteralConstants() {
@@ -208,6 +223,24 @@ public class TestBytecodes extends TestSqueak {
             // push value; popIntoReceiver; push true; return top
             assertSame(image.sqTrue, runMethod(rcvr, pushBC, 130, i, 113, 124));
             assertSame(pushValue, rcvr.getPointers()[i]);
+        }
+    }
+
+    @Test
+    public void testExtendedStoreAndPopTemporaryVariables() {
+        Object[] literals = new Object[]{14548994, image.nil, image.nil}; // header with numTemp=55
+        BaseSqueakObject rcvr = image.specialObjectsArray;
+        for (int i = 0; i < 64; i++) {
+            CompiledCodeObject code = makeMethod(new byte[]{113, (byte) 130, (byte) (64 + i), 121}, literals);
+            VirtualFrame frame = code.createTestFrame(rcvr, new BaseSqueakObject[4]);
+            try {
+                Object result = new SqueakMethodNode(null, code).execute(frame);
+                assertSame(image.sqTrue, result);
+                FrameSlotReadNode tempNode = FrameSlotReadNode.create(code.getStackSlot(i));
+                assertSame(image.sqTrue, tempNode.executeRead(frame));
+            } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
+                assertTrue("broken test", false);
+            }
         }
     }
 

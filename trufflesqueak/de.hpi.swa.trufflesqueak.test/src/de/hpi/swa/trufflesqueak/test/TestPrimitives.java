@@ -30,17 +30,17 @@ public class TestPrimitives extends TestSqueak {
                                         image.smallIntegerClass,
                                         image.smalltalk,
                                         image.specialObjectsArray});
-        assertSame(rcvr.at0(0), null);
+        assertSame(rcvr.at0(0), image.nil);
         for (int i = 1; i < 8; i++) {
-            assertNotSame(rcvr.at0(i), null);
+            assertNotSame(rcvr.at0(i), image.nil);
         }
         Object result = runQuinaryPrimitive(105, rcvr, 1, 6, new ListObject(image, image.nilClass, 10), 1);
         assertSame(result, rcvr);
         for (int i = 0; i < 6; i++) {
-            assertSame(rcvr.at0(i), null);
+            assertSame(null, rcvr.at0(i));
         }
         for (int i = 7; i < 8; i++) {
-            assertNotSame(rcvr.at0(i), null);
+            assertNotSame(null, rcvr.at0(i));
         }
     }
 

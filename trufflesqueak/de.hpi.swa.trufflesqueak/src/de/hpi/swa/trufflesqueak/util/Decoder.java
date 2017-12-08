@@ -106,7 +106,7 @@ public class Decoder {
             case 114:
                 return new PushConstantNode(code, nextIndex(0), false);
             case 115:
-                return new PushConstantNode(code, nextIndex(0), null);
+                return new PushConstantNode(code, nextIndex(0), code.image.nil);
             case 116:
                 return new PushConstantNode(code, nextIndex(0), -1);
             case 117:
@@ -122,7 +122,7 @@ public class Decoder {
             case 122:
                 return new ReturnConstantNode(code, nextIndex(0), false);
             case 123:
-                return new ReturnConstantNode(code, nextIndex(0), null);
+                return new ReturnConstantNode(code, nextIndex(0), code.image.nil);
             case 124:
                 return new ReturnTopFromMethodNode(code, nextIndex(0));
             case 125:

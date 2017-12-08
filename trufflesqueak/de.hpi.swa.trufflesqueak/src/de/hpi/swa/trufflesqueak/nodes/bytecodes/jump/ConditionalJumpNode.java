@@ -3,11 +3,9 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes.jump;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.PopNode;
 
 public class ConditionalJumpNode extends AbstractJump {
     private final int alternativeSuccessorIndex;
-    @Child PopNode popNode;
     protected final int offset;
     public final Boolean isIfTrue;
 
@@ -16,7 +14,6 @@ public class ConditionalJumpNode extends AbstractJump {
         alternativeSuccessorIndex = index + off;
         offset = off;
         isIfTrue = condition;
-        popNode = new PopNode(code, -1);
     }
 
     public ConditionalJumpNode(CompiledCodeObject code, int index, int bytecode) {
@@ -29,7 +26,7 @@ public class ConditionalJumpNode extends AbstractJump {
 
     @Override
     public int executeInt(VirtualFrame frame) {
-        if (popNode.executeGeneric(frame) == isIfTrue) {
+        if (pop(frame) == isIfTrue) {
             return alternativeSuccessorIndex;
         } else {
             return successorIndex;

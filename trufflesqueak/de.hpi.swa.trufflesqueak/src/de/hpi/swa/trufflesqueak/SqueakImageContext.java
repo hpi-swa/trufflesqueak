@@ -18,6 +18,7 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.LargeInteger;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
+import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakContextNode;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakMainNode;
@@ -25,7 +26,7 @@ import de.hpi.swa.trufflesqueak.util.ImageReader;
 
 public class SqueakImageContext {
     // Special objects
-    public final Object nil = null;
+    public final Object nil = new NilObject();
     public final boolean sqFalse = false;
     public final boolean sqTrue = true;
     public final ListObject specialObjectsArray = new ListObject(this);

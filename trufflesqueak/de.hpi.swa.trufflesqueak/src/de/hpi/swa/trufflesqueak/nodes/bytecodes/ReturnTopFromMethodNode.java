@@ -13,7 +13,7 @@ public class ReturnTopFromMethodNode extends ReturnTopFromBlockNode {
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
-        if (getClosure(frame) == code.image.nil) {
+        if (getClosure(frame) == null) {
             return super.executeGeneric(frame);
         } else {
             throw new NonLocalReturn(pop(frame), ((BlockClosure) getClosure(frame)).getFrameMarker());

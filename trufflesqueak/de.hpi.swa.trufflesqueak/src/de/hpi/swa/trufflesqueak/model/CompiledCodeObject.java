@@ -95,7 +95,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
     @TruffleBoundary
     protected void updateAndInvalidateCallTargets() {
         decodeHeader();
-        prepareFrameDescriptor();
+// prepareFrameDescriptor();
         callTarget = Truffle.getRuntime().createCallTarget(new SqueakMethodNode(image.getLanguage(), this));
         callTargetStable.invalidate();
     }
@@ -106,14 +106,14 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     private int frameSize() {
         if (needsLargeFrame) {
-            return 40;
+            return 56;
         }
         return 16;
     }
 
     private void prepareFrameDescriptor() {
         frameDescriptor = new FrameDescriptor(null);
-        stackSlots = new FrameSlot[frameSize()];
+        stackSlots = new FrameSlot[frameSize() + 100]; // TODO: + class inst size
         for (int i = 0; i < stackSlots.length; i++) {
             stackSlots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Illegal);
         }

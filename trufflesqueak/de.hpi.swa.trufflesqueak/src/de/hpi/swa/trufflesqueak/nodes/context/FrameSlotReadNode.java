@@ -49,6 +49,6 @@ public abstract class FrameSlotReadNode extends FrameSlotNode {
 
     @Specialization(guards = "isIllegal(frame)")
     public Object readIllegal(@SuppressWarnings("unused") VirtualFrame frame) {
-        return null;
+        throw new RuntimeException("Accessing illegal Frame slot");
     }
 }

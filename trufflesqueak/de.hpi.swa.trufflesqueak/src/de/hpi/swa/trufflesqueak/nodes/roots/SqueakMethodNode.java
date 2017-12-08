@@ -60,7 +60,6 @@ public class SqueakMethodNode extends RootNode {
                 node.executeGeneric(frame);
             }
         }
-        frame.setInt(code.stackPointerSlot, code.getNumTemps() + 1); // +1 for receiver
     }
 
     private boolean isClosure() {
@@ -96,7 +95,7 @@ public class SqueakMethodNode extends RootNode {
     }
 
     protected void initializeSlots(VirtualFrame frame) {
-        frame.setInt(code.stackPointerSlot, 0);
+        frame.setInt(code.stackPointerSlot, code.getNumTemps());
         frame.setObject(code.markerSlot, new FrameMarker());
         frame.setObject(code.methodSlot, code);
     }
