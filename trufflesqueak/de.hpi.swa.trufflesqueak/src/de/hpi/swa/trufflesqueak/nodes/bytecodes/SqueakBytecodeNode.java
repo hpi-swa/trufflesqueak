@@ -58,7 +58,9 @@ public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
             readNode = FrameSlotReadNode.create(slot);
         } else if (readNode.slot != slot) {
             // throw new RuntimeException("Currently, only one slot can be read");
-            System.err.println("Tried to read from multiple slots");
+            if (code.image.config.isVerbose()) {
+                System.out.println("Tried to read to multiple slots");
+            }
             return FrameSlotReadNode.create(slot);
         }
 
@@ -71,7 +73,9 @@ public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
             writeNode = FrameSlotWriteNode.create(slot);
         } else if (writeNode.slot != slot) {
             // throw new RuntimeException("Currently, only one slot can be written");
-            System.err.println("Tried to write to multiple slots");
+            if (code.image.config.isVerbose()) {
+                System.out.println("Tried to write to multiple slots");
+            }
             return FrameSlotWriteNode.create(slot);
         }
         return writeNode;

@@ -8,18 +8,16 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
 public class BytecodeSequenceNode extends Node {
-    private final CompiledCodeObject code;
     private final byte[] bytes;
     @Children final SqueakBytecodeNode[] children;
 
-    public BytecodeSequenceNode(byte[] bc, CompiledCodeObject co) {
+    public BytecodeSequenceNode(byte[] bc) {
         super();
-        code = co;
         bytes = bc;
         children = new SqueakBytecodeNode[bc.length];
     }
 
-    public void initialize() {
+    public void initialize(CompiledCodeObject code) {
         new SqueakBytecodeDecoder(bytes, code).decode(children);
     }
 
@@ -34,6 +32,10 @@ public class BytecodeSequenceNode extends Node {
 
     public byte[] getBytes() {
         return bytes;
+    }
+
+    public void setByte(int index, byte value) {
+        bytes[index] = value;
     }
 
 }

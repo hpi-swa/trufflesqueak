@@ -13,11 +13,7 @@ public class CompiledMethodObject extends CompiledCodeObject implements TruffleO
         this(img);
         literals = lits;
         decodeHeader();
-        setBytesAndLiterals(lits, bc);
-    }
-
-    public CompiledMethodObject(SqueakImageContext img, byte[] bc) {
-        this(img, bc, new Object[]{0, null, null});
+        initializeBytesNode(bc);
     }
 
     public CompiledMethodObject(SqueakImageContext img, ClassObject klass) {

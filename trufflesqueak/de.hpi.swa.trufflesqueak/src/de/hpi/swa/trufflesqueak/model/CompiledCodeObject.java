@@ -60,13 +60,13 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     abstract public ClassObject getCompiledInClass();
 
-    public CompiledCodeObject(SqueakImageContext img) {
-        this(img, img.compiledMethodClass);
-    }
-
     public CompiledCodeObject(SqueakImageContext img, ClassObject klass) {
         super(img, klass);
         prepareFrameDescriptor();
+    }
+
+    public CompiledCodeObject(SqueakImageContext img) {
+        this(img, img.compiledMethodClass);
     }
 
     protected CompiledCodeObject(CompiledCodeObject original) {
@@ -80,24 +80,9 @@ public abstract class CompiledCodeObject extends SqueakObject {
         updateAndInvalidateCallTargets();
     }
 
-    // This creates a new BytecodeSequenceNode
-    protected void setBytesAndLiterals(Object[] lits, byte[] bc) {
-        literals = lits;
-        createBytesNode(bc);
-        updateAndInvalidateCallTargets();
-    }
-
-    private void createBytesNode(byte[] bc) {
-        bytesNode = new BytecodeSequenceNode(bc, this);
-        bytesNode.initialize();
-    }
-
-    @TruffleBoundary
-    protected void updateAndInvalidateCallTargets() {
-        decodeHeader();
-// prepareFrameDescriptor();
-        callTarget = Truffle.getRuntime().createCallTarget(new SqueakMethodNode(image.getLanguage(), this));
-        callTargetStable.invalidate();
+    protected void initializeBytesNode(byte[] bc) {
+        bytesNode = new BytecodeSequenceNode(bc);
+        bytesNode.initialize(this);
     }
 
     public Source getSource() {
@@ -138,9 +123,15 @@ public abstract class CompiledCodeObject extends SqueakObject {
     public RootCallTarget getCallTarget() {
         if (callTarget == null) {
             CompilerDirectives.transferToInterpreter();
-            setBytecodeSequenceAndLiterals(literals, bytesNode);
+            updateAndInvalidateCallTargets();
         }
         return callTarget;
+    }
+
+    @TruffleBoundary
+    protected void updateAndInvalidateCallTargets() {
+        callTarget = Truffle.getRuntime().createCallTarget(new SqueakMethodNode(image.getLanguage(), this));
+        callTargetStable.invalidate();
     }
 
     public Assumption getCallTargetStable() {
@@ -190,18 +181,6 @@ public abstract class CompiledCodeObject extends SqueakObject {
         return stackSlots.length;
     }
 
-    public void setHeader(int hdr) {
-        setLiteral(0, hdr);
-    }
-
-    public void setBytes(byte[] bc) {
-        setBytesAndLiterals(literals, bc);
-    }
-
-    public void setLiterals(Object[] lits) {
-        setBytecodeSequenceAndLiterals(lits, bytesNode);
-    }
-
     @Override
     public void fillin(Chunk chunk) {
         super.fillin(chunk);
@@ -209,8 +188,10 @@ public abstract class CompiledCodeObject extends SqueakObject {
         int header = data.get(0) >> 1; // header is a tagged small integer
         int literalsize = header & 0x7fff;
         Object[] ptrs = chunk.getPointers(literalsize + 1);
+        assert literals == null;
         literals = ptrs;
-        createBytesNode(chunk.getBytes(ptrs.length));
+        assert bytesNode == null;
+        initializeBytesNode(chunk.getBytes(ptrs.length));
     }
 
     void decodeHeader() {
@@ -231,16 +212,6 @@ public abstract class CompiledCodeObject extends SqueakObject {
         assert object instanceof Integer;
         int hdr = (int) object;
         return hdr;
-    }
-
-    public void setNumArgs(int num) {
-        int hdrWithoutArgs = getHeader() & ~(0xF << 24);
-        setHeader((num & 0xF << 24) | hdrWithoutArgs);
-    }
-
-    public void setNumTemps(int num) {
-        int hdrWithoutTemps = getHeader() & ~(0x3F << 18);
-        setHeader((num & 0x3F << 18) | hdrWithoutTemps);
     }
 
     @Override
@@ -280,9 +251,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
         if (idx < literals.length) {
             setLiteral(idx / 4, obj);
         } else {
-            byte[] bc = bytesNode.getBytes();
-            bc[idx] = (byte) obj;
-            setBytesAndLiterals(literals, bc);
+            bytesNode.setByte(idx, (byte) obj);
         }
     }
 
@@ -295,8 +264,8 @@ public abstract class CompiledCodeObject extends SqueakObject {
     }
 
     public void setLiteral(int i, Object obj) {
+        assert i > 0; // first lit is header
         literals[i] = obj;
-        setBytecodeSequenceAndLiterals(literals, bytesNode);
     }
 
     @Override

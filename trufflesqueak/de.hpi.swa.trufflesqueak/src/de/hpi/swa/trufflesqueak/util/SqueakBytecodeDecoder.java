@@ -39,9 +39,9 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SingleExtendedSuperNode;
 
 public class SqueakBytecodeDecoder {
 
-    private CompiledCodeObject code;
+    private final CompiledCodeObject code;
     private int currentIndex = 0;
-    private byte[] bc;
+    private final byte[] bc;
 
     public SqueakBytecodeDecoder(byte[] bc, CompiledCodeObject code) {
         this.bc = bc;

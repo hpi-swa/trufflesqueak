@@ -95,7 +95,7 @@ public class SqueakMethodNode extends RootNode {
     }
 
     protected void initializeSlots(VirtualFrame frame) {
-        frame.setInt(code.stackPointerSlot, code.getNumTemps());
+        frame.setInt(code.stackPointerSlot, code.getNumTemps() + 1); // +1 -> sp points to next empty position
         frame.setObject(code.markerSlot, new FrameMarker());
         frame.setObject(code.methodSlot, code);
     }
