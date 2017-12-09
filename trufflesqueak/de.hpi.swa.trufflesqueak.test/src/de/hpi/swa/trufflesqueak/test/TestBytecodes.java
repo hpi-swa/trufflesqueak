@@ -208,7 +208,6 @@ public class TestBytecodes extends TestSqueak {
             }
         }
     }
-    // TODO: testExtendedStores()
 
     @Test
     public void testExtendedStoreReceiverVariables() {
@@ -329,7 +328,6 @@ public class TestBytecodes extends TestSqueak {
     // TODO: testSingleExtendedSend()
     // TODO: testDoubleExtendedDoAnything()
     // TODO: testSingleExtendedSuper()
-    // TODO: testSecondExtendedSend()
 
     @Test
     public void testPop() {

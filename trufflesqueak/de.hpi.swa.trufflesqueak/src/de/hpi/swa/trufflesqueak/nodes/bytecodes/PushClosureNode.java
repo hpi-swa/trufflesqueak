@@ -36,6 +36,6 @@ public class PushClosureNode extends SqueakBytecodeNode {
         for (int i = 0; i < copiedValueNodes.length; i++) {
             copiedValues[i] = copiedValueNodes[i].executeGeneric(frame);
         }
-        return new BlockClosure(frameMarker, compiledBlock, receiver, copiedValues);
+        return push(frame, new BlockClosure(frameMarker, compiledBlock, receiver, copiedValues));
     }
 }
