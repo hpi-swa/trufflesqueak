@@ -13,7 +13,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushReceiverNode;
-import de.hpi.swa.trufflesqueak.nodes.context.ArgumentNode;
+import de.hpi.swa.trufflesqueak.nodes.context.PushArgumentNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ArgumentProfileNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimAddNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimArcTanNodeGen;
@@ -253,7 +253,7 @@ public abstract class PrimitiveNodeFactory {
     }
 
     public static SqueakNode arg(CompiledCodeObject code, int index) {
-        return new ArgumentProfileNode(new ArgumentNode(code, index));
+        return new ArgumentProfileNode(new PushArgumentNode(code, index));
     }
 
     private static PrimitiveNode createInstance(CompiledMethodObject code, Class<? extends PrimitiveNode> primClass) {

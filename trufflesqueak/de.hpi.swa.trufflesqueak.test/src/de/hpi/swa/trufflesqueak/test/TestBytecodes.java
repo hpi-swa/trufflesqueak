@@ -160,13 +160,13 @@ public class TestBytecodes extends TestSqueak {
         Object[] literals = new Object[]{14548994}; // header with numTemp=55
         BaseSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < 55; i++) {
-            CompiledCodeObject code = makeMethod(new byte[]{(byte) 128, (byte) (64 + i), 124}, literals);
+            // push true, popIntoTemp i, pushTemp i, returnTop
+            CompiledCodeObject code = makeMethod(new byte[]{113, (byte) 130, (byte) (64 + i), (byte) 128, (byte) (64 + i), 124}, literals);
             VirtualFrame frame = code.createTestFrame(rcvr, new BaseSqueakObject[4]);
-            Object tempValue = i % 2 == 0 ? image.sqTrue : image.sqFalse;
-            setTempValue(i, code, frame, tempValue);
+            SqueakMethodNode method = new SqueakMethodNode(null, code);
             try {
-                Object result = new SqueakMethodNode(null, code).execute(frame);
-                assertSame(tempValue, result);
+                assertSame(image.sqTrue, method.execute(frame));
+                assertSame(image.sqTrue, getTempValue(i, code, frame));
             } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
                 assertTrue("broken test", false);
             }
@@ -357,11 +357,6 @@ public class TestBytecodes extends TestSqueak {
     private static Object getTempValue(int index, CompiledCodeObject code, VirtualFrame frame) {
         FrameSlotReadNode tempNode = FrameSlotReadNode.create(code.getStackSlot(index));
         return tempNode.executeRead(frame);
-    }
-
-    private static void setTempValue(int index, CompiledCodeObject code, VirtualFrame frame, Object value) {
-        FrameSlotWriteNode tempNode = FrameSlotWriteNode.create(code.getStackSlot(index));
-        tempNode.executeWrite(frame, value);
     }
 
     private Object[] getTestObjects(int n) {

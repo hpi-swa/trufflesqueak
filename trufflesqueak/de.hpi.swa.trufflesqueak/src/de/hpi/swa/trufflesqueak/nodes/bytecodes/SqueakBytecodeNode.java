@@ -84,7 +84,7 @@ public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
     protected Object pop(VirtualFrame frame) {
         int sp = stackPointer(frame);
         frame.setInt(code.stackPointerSlot, sp - 1);
-        return getReadNode(code.stackSlots[sp - 1]).executeRead(frame);
+        return getReadNode(code.stackSlots[sp]).executeRead(frame);
     }
 
     protected Object[] popN(VirtualFrame frame, int n) {
@@ -92,15 +92,15 @@ public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
         frame.setInt(code.stackPointerSlot, sp - n);
         Object[] result = new Object[n];
         for (int i = 0; i < n; i++) {
-            result[i] = getReadNode(code.stackSlots[sp - 1 - i]).executeRead(frame);
+            result[i] = getReadNode(code.stackSlots[sp - i]).executeRead(frame);
         }
         return result;
     }
 
     protected Object push(VirtualFrame frame, Object value) {
-        int sp = stackPointer(frame);
-        getWriteNode(code.stackSlots[sp]).executeWrite(frame, value);
-        frame.setInt(code.stackPointerSlot, sp + 1);
+        int newSP = stackPointer(frame) + 1;
+        getWriteNode(code.stackSlots[newSP]).executeWrite(frame, value);
+        frame.setInt(code.stackPointerSlot, newSP);
         return code.image.nil;
     }
 
@@ -110,7 +110,7 @@ public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
 
     protected Object peek(VirtualFrame frame, int idx) {
         int sp = stackPointer(frame);
-        return getReadNode(code.stackSlots[sp - 1 - idx]).executeRead(frame);
+        return getReadNode(code.stackSlots[sp - idx]).executeRead(frame);
     }
 
     protected int stackPointer(VirtualFrame frame) {
