@@ -11,6 +11,7 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
+import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.source.Source;
@@ -292,6 +293,22 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     public Object[] getLiterals() {
         return literals;
+    }
+
+    public int getStackPointer(VirtualFrame frame) {
+        try {
+            return frame.getInt(stackPointerSlot);
+        } catch (FrameSlotTypeException e) {
+            throw new RuntimeException("Unable to retrieve stack pointer");
+        }
+    }
+
+    public void setStackPointer(VirtualFrame frame, int value) {
+        frame.setInt(stackPointerSlot, value);
+    }
+
+    public void adjustStackPointer(VirtualFrame frame, int offset) {
+        setStackPointer(frame, getStackPointer(frame) + offset);
     }
 
     abstract public CompiledMethodObject getMethod();

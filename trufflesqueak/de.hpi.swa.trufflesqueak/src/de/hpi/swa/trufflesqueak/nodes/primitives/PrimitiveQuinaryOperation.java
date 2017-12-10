@@ -17,7 +17,7 @@ public abstract class PrimitiveQuinaryOperation extends PrimitiveNode {
 
     @Override
     public final Object executeGeneric(VirtualFrame frame) {
-        Object[] args = popN(frame, 5);
+        Object[] args = topN(frame, 5);
         return executeGeneric(args[4], args[3], args[2], args[1], args[0]);
     }
 

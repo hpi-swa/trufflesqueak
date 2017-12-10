@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.test;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -18,7 +19,6 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ExtendedStoreNode;
 import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotReadNode;
-import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakMethodNode;
 
 public class TestBytecodes extends TestSqueak {
@@ -344,7 +344,24 @@ public class TestBytecodes extends TestSqueak {
     }
     // TODO: testPushActiveContext()
     // TODO: testPushNewArray()
-    // TODO: testCallPrimitive()
+
+    @Test
+    public void testCallPrimitive() {
+        BaseSqueakObject rcvr = image.wrap(1);
+        assertEquals(BigInteger.valueOf(2), runBinaryPrimitive(1, rcvr, rcvr));
+    }
+
+    @Test
+    public void testCallPrimitiveFailure() {
+        int primCode = 1;
+        BaseSqueakObject rcvr = image.wrap(1);
+        BaseSqueakObject arg = image.specialObjectsArray;
+        CompiledCodeObject cm = makeMethod(new Object[]{17104899},
+                        // callPrimitive 1, pop, returnTop
+                        new int[]{139, primCode & 0xFF, (primCode & 0xFF00) >> 8, 135, 124});
+        assertEquals(rcvr, runMethod(cm, rcvr, arg));
+    }
+
     // TODO: testPushRemoteTemp()
     // TODO: testStoreRemoteTemp()
     // TODO: testStoreAndPopRemoteTemp()

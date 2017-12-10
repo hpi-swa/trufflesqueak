@@ -15,7 +15,7 @@ public abstract class PrimitiveUnaryOperation extends PrimitiveNode {
 
     @Override
     public final Object executeGeneric(VirtualFrame frame) {
-        return executeGeneric(pop(frame));
+        return executeGeneric(top(frame));
     }
 
     public abstract Object executeGeneric(Object receiver);

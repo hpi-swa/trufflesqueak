@@ -25,13 +25,16 @@ public class CallPrimitiveNode extends SqueakBytecodeNode {
     @Override
     public Object executeGeneric(VirtualFrame frame) {
         assert successorIndex == 3; // two skipped bytes plus next
+        Object result;
         try {
-            throw new LocalReturn(primitive.executeGeneric(frame));
+            result = primitive.executeGeneric(frame);
         } catch (UnsupportedSpecializationException
                         | PrimitiveFailed
                         | IndexOutOfBoundsException e) {
             return code.image.nil;
         }
+        code.adjustStackPointer(frame, -1 - code.getNumArgs()); // quick pop rcvr + args
+        throw new LocalReturn(result);
     }
 
     @Override
