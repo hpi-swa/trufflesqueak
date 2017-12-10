@@ -21,7 +21,7 @@ public class ConditionalJumpNode extends AbstractJump {
     }
 
     public ConditionalJumpNode(CompiledCodeObject code, int index, int bytecode, int parameter, boolean condition) {
-        this(code, index + 1, longJumpOffset(bytecode, parameter), condition);
+        this(code, index, longJumpOffset(bytecode, parameter), condition);
     }
 
     @Override

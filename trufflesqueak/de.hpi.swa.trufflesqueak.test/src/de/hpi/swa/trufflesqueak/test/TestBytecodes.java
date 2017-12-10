@@ -340,7 +340,7 @@ public class TestBytecodes extends TestSqueak {
     public void testDup() {
         BaseSqueakObject rcvr = image.wrap(1);
         // push true, dup, dup, pop, pop, return top
-        assertSame(runMethod(rcvr, 113, 136, 136, 135, 135, 124), image.sqTrue);
+        assertSame(image.sqTrue, runMethod(rcvr, 113, 136, 136, 135, 135, 124));
     }
     // TODO: testPushActiveContext()
     // TODO: testPushNewArray()
@@ -349,8 +349,73 @@ public class TestBytecodes extends TestSqueak {
     // TODO: testStoreRemoteTemp()
     // TODO: testStoreAndPopRemoteTemp()
     // TODO: testPushClosure()
-    // TODO: testUnconditionalJump()
-    // TODO: testConditionalJump()
+
+    @Test
+    public void testUnconditionalJump() {
+        // 18 <90+x> jump: x
+        // ...
+        // x <75> pushConstant: 0
+        // x+1 <7C> returnTop
+        BaseSqueakObject rcvr = image.specialObjectsArray;
+        for (int i = 0; i < 8; i++) {
+            int length = 4 + i;
+            int[] intBytes = new int[length];
+            intBytes[0] = 0x90 + i;
+            intBytes[length - 2] = 0x75;
+            intBytes[length - 1] = 0x7C;
+            assertSame(0, runMethod(rcvr, intBytes));
+        }
+
+        // long jumpForward
+        // ...
+        // 40 <75> pushConstant: 0
+        // 41 <7C> returnTop
+        for (int i = 0; i < 4; i++) {
+            int bytecode = 164 + i;
+            int gap = (((bytecode & 7) - 4) << 8) + 20;
+            int length = 4 + gap;
+            int[] intBytes = new int[length];
+            intBytes[0] = bytecode;
+            intBytes[1] = 20;
+            intBytes[length - 2] = 0x75;
+            intBytes[length - 1] = 0x7C;
+            assertSame(0, runMethod(rcvr, intBytes));
+        }
+    }
+
+    @Test
+    public void testConditionalJump() {
+        // 17 <71/72> pushConstant: true/false
+        // 18 <99> jumpFalse: 21
+        // 19 <76> pushConstant: 1
+        // 20 <7C> returnTop
+        // 21 <75> pushConstant: 0
+        // 22 <7C> returnTop
+        BaseSqueakObject rcvr = image.specialObjectsArray;
+        assertSame(1, runMethod(rcvr, 113, 0x99, 0x76, 0x7C, 0x75, 0x7C));
+        assertSame(0, runMethod(rcvr, 114, 0x99, 0x76, 0x7C, 0x75, 0x7C));
+
+        // 17 <71> pushConstant: true
+        // 18 <A8 14> jumpTrue: 40
+        // ...
+        // 40 <75> pushConstant: 0
+        // 41 <7C> returnTop
+        assertSame(0, runMethod(rcvr, 113, 168, 0x14,
+                        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                        0x75, 0x7C));
+
+        // 17 <72> pushConstant: false
+        // 18 <AC 14> jumpFalse: 40
+        // ...
+        // 40 <75> pushConstant: 0
+        // 41 <7C> returnTop
+        assertSame(0, runMethod(rcvr, 114, 172, 0x14,
+                        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                        0x75, 0x7C));
+    }
+
     // TODO: testSendSelector()
     // TODO: testSend()
 

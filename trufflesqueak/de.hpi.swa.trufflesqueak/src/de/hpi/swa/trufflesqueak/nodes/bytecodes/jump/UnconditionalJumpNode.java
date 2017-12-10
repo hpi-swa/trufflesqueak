@@ -1,18 +1,22 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes.jump;
 
-import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.UnknownBytecodeNode;
+import com.oracle.truffle.api.frame.VirtualFrame;
 
-public class UnconditionalJumpNode extends UnknownBytecodeNode {
-    protected final int offset;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
+
+public class UnconditionalJumpNode extends SqueakBytecodeNode {
 
     public UnconditionalJumpNode(CompiledCodeObject code, int index, int bytecode) {
-        super(code, index, bytecode);
-        offset = AbstractJump.shortJumpOffset(bytecode);
+        super(code, index + AbstractJump.shortJumpOffset(bytecode));
     }
 
     public UnconditionalJumpNode(CompiledCodeObject code, int index, int bytecode, int parameter) {
-        super(code, index, bytecode);
-        offset = AbstractJump.longUnconditionalJumpOffset(bytecode, parameter);
+        super(code, index + AbstractJump.longUnconditionalJumpOffset(bytecode, parameter));
+    }
+
+    @Override
+    public Object executeGeneric(VirtualFrame frame) {
+        return code.image.nil; // Do nothing
     }
 }
