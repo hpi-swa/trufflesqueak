@@ -10,7 +10,7 @@ public abstract class RemoteTempBytecodeNode extends SqueakBytecodeNode {
 
     public RemoteTempBytecodeNode(CompiledCodeObject code, int index, int indexOfArray) {
         super(code, index);
-        getTempArrayNode = FrameSlotReadNode.create(code.getStackSlot(indexOfArray));
+        getTempArrayNode = FrameSlotReadNode.create(code.getTempSlot(indexOfArray));
     }
 
     protected Object getTempArray(VirtualFrame frame) {

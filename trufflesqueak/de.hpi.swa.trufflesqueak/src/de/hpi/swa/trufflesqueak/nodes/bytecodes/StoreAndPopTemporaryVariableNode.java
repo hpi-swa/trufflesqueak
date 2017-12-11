@@ -12,7 +12,7 @@ public class StoreAndPopTemporaryVariableNode extends SqueakBytecodeNode {
     public StoreAndPopTemporaryVariableNode(CompiledCodeObject code, int index, int tempIndex) {
         super(code, index);
         assert code.getNumStackSlots() > tempIndex;
-        tempNode = FrameSlotWriteNode.create(code.getStackSlot(tempIndex));
+        tempNode = FrameSlotWriteNode.create(code.getTempSlot(tempIndex));
     }
 
     @Override

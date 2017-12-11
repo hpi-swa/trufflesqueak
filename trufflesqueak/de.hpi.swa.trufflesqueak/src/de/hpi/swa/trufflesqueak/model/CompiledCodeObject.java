@@ -37,7 +37,6 @@ public abstract class CompiledCodeObject extends SqueakObject {
     Source source;
     // frame info
     private FrameDescriptor frameDescriptor;
-    @CompilationFinal public FrameSlot receiverSlot;
     @CompilationFinal public FrameSlot thisContextSlot;
     @CompilationFinal public FrameSlot closureSlot;
     @CompilationFinal(dimensions = 1) public FrameSlot[] stackSlots;
@@ -104,7 +103,6 @@ public abstract class CompiledCodeObject extends SqueakObject {
         for (int i = 0; i < stackSlots.length; i++) {
             stackSlots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Illegal);
         }
-        receiverSlot = frameDescriptor.addFrameSlot(RECEIVER, FrameSlotKind.Object);
         thisContextSlot = frameDescriptor.addFrameSlot(SELF, FrameSlotKind.Object);
         closureSlot = frameDescriptor.addFrameSlot(CLOSURE, FrameSlotKind.Object);
         markerSlot = frameDescriptor.addFrameSlot(MARKER, FrameSlotKind.Object);
@@ -176,11 +174,19 @@ public abstract class CompiledCodeObject extends SqueakObject {
         return numArgs;
     }
 
+    public int getNumCopiedValues() {
+        return 0;
+    }
+
     public FrameSlot getStackSlot(int i) {
         if (i >= stackSlots.length) { // This is fine, ignore for decoder
             return stackSlots[0];
         }
         return stackSlots[i];
+    }
+
+    public FrameSlot getTempSlot(int index) {
+        return getStackSlot(1 + this.getNumArgs() + this.getNumCopiedValues() + index);
     }
 
     public int getNumStackSlots() {

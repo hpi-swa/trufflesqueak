@@ -16,8 +16,8 @@ public abstract class PrimitiveBinaryOperation extends PrimitiveNode {
 
     @Override
     public final Object executeGeneric(VirtualFrame frame) {
-        Object[] args = topN(frame, 2);
-        return executeGeneric(args[1], args[0]);
+        Object[] args = bottomN(frame, 2);
+        return executeGeneric(args[0], args[1]);
     }
 
     public abstract Object executeGeneric(Object receiver, Object argument);

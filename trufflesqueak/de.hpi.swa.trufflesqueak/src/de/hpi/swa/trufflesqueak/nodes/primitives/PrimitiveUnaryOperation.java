@@ -9,13 +9,13 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
 @NodeChildren({@NodeChild(value = "receiver", type = SqueakNode.class)})
 public abstract class PrimitiveUnaryOperation extends PrimitiveNode {
-    public PrimitiveUnaryOperation(CompiledMethodObject cm) {
-        super(cm);
+    public PrimitiveUnaryOperation(CompiledMethodObject code) {
+        super(code);
     }
 
     @Override
     public final Object executeGeneric(VirtualFrame frame) {
-        return executeGeneric(top(frame));
+        return executeGeneric(receiver(frame));
     }
 
     public abstract Object executeGeneric(Object receiver);

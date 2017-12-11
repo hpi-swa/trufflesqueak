@@ -35,7 +35,7 @@ public class ExtendedStoreNode extends ExtendedAccess {
             case 0:
                 return new StoreTopIntoNode(code, index, ObjectAtPutNode.create(variableIndex, new FrameReceiverNode(code)));
             case 1:
-                return new StoreTopIntoNode(code, index, FrameSlotWriteNode.create(code.getStackSlot(variableIndex)));
+                return new StoreTopIntoNode(code, index, FrameSlotWriteNode.create(code.getTempSlot(variableIndex)));
             case 2:
                 return new UnknownBytecodeNode(code, index, -1);
             case 3:

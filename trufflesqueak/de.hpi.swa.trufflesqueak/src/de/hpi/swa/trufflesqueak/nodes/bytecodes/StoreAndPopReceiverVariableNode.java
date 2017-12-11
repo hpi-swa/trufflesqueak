@@ -5,15 +5,15 @@ import com.oracle.truffle.api.instrumentation.StandardTags;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.WriteNode;
+import de.hpi.swa.trufflesqueak.nodes.context.FrameReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtPutNode;
-import de.hpi.swa.trufflesqueak.nodes.context.ReceiverReadNode;
 
 public class StoreAndPopReceiverVariableNode extends SqueakBytecodeNode {
     @Child WriteNode storeNode;
 
     public StoreAndPopReceiverVariableNode(CompiledCodeObject code, int index, int receiverIndex) {
         super(code, index);
-        storeNode = ObjectAtPutNode.create(receiverIndex, new ReceiverReadNode(code));
+        storeNode = ObjectAtPutNode.create(receiverIndex, new FrameReceiverNode(code));
     }
 
     @Override

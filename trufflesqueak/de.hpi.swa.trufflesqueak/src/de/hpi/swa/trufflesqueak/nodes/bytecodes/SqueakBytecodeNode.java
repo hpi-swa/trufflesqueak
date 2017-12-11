@@ -117,6 +117,14 @@ public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
         return result;
     }
 
+    protected Object[] bottomN(VirtualFrame frame, int n) {
+        Object[] result = new Object[n];
+        for (int i = 0; i < n; i++) {
+            result[i] = getReadNode(code.stackSlots[i]).executeRead(frame);
+        }
+        return result;
+    }
+
     protected Object peek(VirtualFrame frame, int idx) {
         int sp = stackPointer(frame);
         return getReadNode(code.stackSlots[sp - idx]).executeRead(frame);
@@ -127,6 +135,6 @@ public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
     }
 
     protected Object receiver(VirtualFrame frame) {
-        return getReadNode(code.receiverSlot).executeRead(frame);
+        return getReadNode(code.stackSlots[0]).executeRead(frame);
     }
 }

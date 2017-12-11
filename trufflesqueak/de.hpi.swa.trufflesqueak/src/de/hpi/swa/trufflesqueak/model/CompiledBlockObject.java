@@ -37,6 +37,7 @@ public class CompiledBlockObject extends CompiledCodeObject {
         return outerMethod.getCompiledInClass();
     }
 
+    @Override
     public int getNumCopiedValues() {
         return numCopiedValues;
     }
@@ -52,9 +53,9 @@ public class CompiledBlockObject extends CompiledCodeObject {
     }
 
     /**
-     * We override this, because the old inline compiled blocks in Squeak 5 and 6 make it very hard
-     * to determine the correct number of temps that will be used. This way, for blocks we allow for
-     * more temps on demand (but at least the required frame size has to be correct)
+     * We override this, because the old inline compiled blocks in Squeak 5 and 6 make it very hard to
+     * determine the correct number of temps that will be used. This way, for blocks we allow for more
+     * temps on demand (but at least the required frame size has to be correct)
      */
     @Override
     public FrameSlot getStackSlot(int i) {
@@ -68,5 +69,9 @@ public class CompiledBlockObject extends CompiledCodeObject {
     @Override
     public BaseSqueakObject shallowCopy() {
         return new CompiledBlockObject(this);
+    }
+
+    public void initializeWithBytes(byte[] bytes) {
+        initializeBytesNode(bytes);
     }
 }

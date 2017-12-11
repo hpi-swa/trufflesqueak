@@ -13,7 +13,7 @@ public class PushTemporaryVariableNode extends SqueakBytecodeNode {
         if (code.getNumStackSlots() <= tempIndex) {
             // sometimes we'll decode more bytecodes than we have slots ... that's fine
         } else {
-            tempNode = FrameSlotReadNode.create(code.getStackSlot(tempIndex));
+            tempNode = FrameSlotReadNode.create(code.getTempSlot(tempIndex));
         }
     }
 
