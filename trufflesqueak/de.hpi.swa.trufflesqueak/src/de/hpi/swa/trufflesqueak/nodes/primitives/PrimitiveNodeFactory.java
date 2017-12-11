@@ -12,9 +12,8 @@ import com.oracle.truffle.api.nodes.Node.Child;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushReceiverNode;
-import de.hpi.swa.trufflesqueak.nodes.context.PushArgumentNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ArgumentProfileNode;
+import de.hpi.swa.trufflesqueak.nodes.context.PushArgumentNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimAddNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimArcTanNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimAsFloatNodeGen;
@@ -59,14 +58,15 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimNormalizeNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimNotEqualNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPerform;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPrintArgs;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPushFalse;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPushMinusOne;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPushNil;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPushOne;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPushSelf;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPushTrue;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPushTwo;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPushZero;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimQuickReturnFalse;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimQuickReturnMinusOne;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimQuickReturnNil;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimQuickReturnOne;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimQuickReturnReceiverVariableNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimQuickReturnSelf;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimQuickReturnTrue;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimQuickReturnTwo;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimQuickReturnZero;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimQuit;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimQuoNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimReplaceFromToNodeGen;
@@ -204,14 +204,14 @@ public abstract class PrimitiveNodeFactory {
         //
         UTC_MICROSECOND_CLOCK(PrimUtcClockNodeGen.class, 240),
         //
-        PUSH_SELF(PrimPushSelf.class, 256),
-        PUSH_TRUE(PrimPushTrue.class, 257),
-        PUSH_FALSE(PrimPushFalse.class, 258),
-        PUSH_NIL(PrimPushNil.class, 259),
-        PUSH_MINUS_ONE(PrimPushMinusOne.class, 260),
-        PUSH_ZERO(PrimPushZero.class, 261),
-        PUSH_ONE(PrimPushOne.class, 262),
-        PUSH_TWO(PrimPushTwo.class, 263),
+        PUSH_SELF(PrimQuickReturnSelf.class, 256),
+        PUSH_TRUE(PrimQuickReturnTrue.class, 257),
+        PUSH_FALSE(PrimQuickReturnFalse.class, 258),
+        PUSH_NIL(PrimQuickReturnNil.class, 259),
+        PUSH_MINUS_ONE(PrimQuickReturnMinusOne.class, 260),
+        PUSH_ZERO(PrimQuickReturnZero.class, 261),
+        PUSH_ONE(PrimQuickReturnOne.class, 262),
+        PUSH_TWO(PrimQuickReturnTwo.class, 263),
         //
         LAST(PrimitiveNode.class, PRIM_COUNT);
 
@@ -271,9 +271,8 @@ public abstract class PrimitiveNodeFactory {
 
             Object[] args = new Object[argCount + 1];
             args[0] = code;
-            args[1] = new PushReceiverNode(code, -1);
-            for (int i = 2; i <= argCount; i++) {
-                args[i] = arg(code, i - 2);
+            for (int i = 1; i <= argCount; i++) {
+                args[i] = arg(code, i - 1);
             }
 
             try {
@@ -305,8 +304,7 @@ public abstract class PrimitiveNodeFactory {
         if (primitiveIdx >= indexPrims.length) {
             return new PrimitiveNode(code);
         } else if (primitiveIdx >= 264 && primitiveIdx <= 520) {
-            // TODO(fniephaus): fix
-            // return new PrimQuickReturnReceiverVariableNode(method, primitiveIdx - 264);
+            return new PrimQuickReturnReceiverVariableNode(code, primitiveIdx - 264);
         }
         Class<? extends PrimitiveNode> primClass = indexPrims[primitiveIdx];
         return createInstance(code, primClass);

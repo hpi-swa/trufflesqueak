@@ -31,23 +31,21 @@ public abstract class AbstractSendNode extends SqueakBytecodeNode {
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
-        return executeSend(frame);
+        return push(frame, executeSend(frame));
         // TODO: Object as Method
     }
 
     @ExplodeLoop
     public Object executeSend(VirtualFrame frame) {
-        Object receiver = receiver(frame);
+        Object[] rcvrAndArgs = popN(frame, argumentCount + 1);
         ClassObject rcvrClass;
         try {
-            rcvrClass = SqueakTypesGen.expectClassObject(lookupClassNode.executeLookup(receiver));
+            rcvrClass = SqueakTypesGen.expectClassObject(lookupClassNode.executeLookup(rcvrAndArgs[0]));
         } catch (UnexpectedResultException e) {
             throw new RuntimeException("receiver has no class");
         }
-        Object[] arguments = popN(frame, argumentCount + 1);
-        assert arguments[argumentCount] == receiver;
         Object lookupResult = lookupNode.executeLookup(rcvrClass, selector);
-        return dispatchNode.executeDispatch(lookupResult, arguments);
+        return dispatchNode.executeDispatch(lookupResult, rcvrAndArgs);
     }
 
     @Override

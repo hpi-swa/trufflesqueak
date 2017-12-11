@@ -3,19 +3,20 @@ package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushReceiverVariableNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveQuickReturnNode;
+import de.hpi.swa.trufflesqueak.nodes.context.ReturnReceiverVariableNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNode;
 
-public abstract class PrimQuickReturnReceiverVariableNode extends PrimitiveQuickReturnNode {
-    @Child PushReceiverVariableNode actual;
+public class PrimQuickReturnReceiverVariableNode extends PrimitiveNode {
+    @Child ReturnReceiverVariableNode actual;
 
     public PrimQuickReturnReceiverVariableNode(CompiledMethodObject code, int variableIdx) {
         super(code);
-        actual = new PushReceiverVariableNode(code, -1, variableIdx);
+        actual = new ReturnReceiverVariableNode(code, -1, variableIdx);
     }
 
     @Override
-    protected Object getConstant(VirtualFrame frame) {
+    public Object executeGeneric(VirtualFrame frame) {
         return actual.executeGeneric(frame);
     }
+
 }

@@ -90,14 +90,18 @@ public class BlockClosure extends BaseSqueakObject {
         switch (i) {
             case BLKCLSR_OUTER_CONTEXT:
                 context = obj;
+			break;
             case BLKCLSR_COMPILEDBLOCK:
                 block = (CompiledBlockObject) obj;
+			break;
             case BLKCLSR_NUMARGS:
                 throw new PrimitiveFailed();
             case BLKCLSR_RECEIVER:
                 receiver = obj;
+			break;
             default:
                 stack[i - BLKCLSR_SIZE] = obj;
+			break;
         }
     }
 

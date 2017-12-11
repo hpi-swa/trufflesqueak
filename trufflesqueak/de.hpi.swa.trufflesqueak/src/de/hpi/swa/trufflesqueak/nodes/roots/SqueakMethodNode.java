@@ -19,28 +19,38 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.context.PushArgumentNode;
 import de.hpi.swa.trufflesqueak.nodes.context.PushNilNode;
+import de.hpi.swa.trufflesqueak.nodes.context.StoreReceiverFromArgumentsNode;
 
 public class SqueakMethodNode extends RootNode {
     protected final CompiledCodeObject code;
     @Children final SqueakNode[] initStackNodes;
+    @Child StoreReceiverFromArgumentsNode storeReceiverNode;
 
     public SqueakMethodNode(SqueakLanguage language, CompiledCodeObject code) {
+        this(language, code, true);
+    }
+
+    public SqueakMethodNode(SqueakLanguage language, CompiledCodeObject code, boolean hasReceiver) {
         super(language, code.getFrameDescriptor());
         this.code = code;
+        int numRcvr = hasReceiver ? 1 : 0;
         int numTemps = code.getNumTemps();
         int numArgs = code.getNumArgs();
         int numCopiedValues = 0;
         if (code instanceof CompiledBlockObject) {
             numCopiedValues = ((CompiledBlockObject) code).getNumCopiedValues();
         }
-        initStackNodes = new SqueakNode[numTemps + 1 + numArgs + numCopiedValues];
+        initStackNodes = new SqueakNode[numTemps + numRcvr + numArgs + numCopiedValues];
         for (int i = 0; i < numTemps; i++) {
             initStackNodes[i] = new PushNilNode(code);
         }
-        initStackNodes[numTemps] = new PushReceiverNode(code, -1);
-        int offset = numTemps + 1;
+        if (hasReceiver) {
+            storeReceiverNode = new StoreReceiverFromArgumentsNode(code);
+            initStackNodes[numTemps] = new PushReceiverNode(code, -1);
+        }
+        int offset = numTemps + numRcvr;
         for (int i = 0; i < numArgs; i++) {
-            initStackNodes[offset + i] = new PushArgumentNode(code, i);
+            initStackNodes[offset + i] = new PushArgumentNode(code, i + numRcvr);
         }
         offset = offset + numArgs;
         for (int i = 0; i < numCopiedValues; i++) {
@@ -52,6 +62,9 @@ public class SqueakMethodNode extends RootNode {
     public void enterFrame(VirtualFrame frame) {
         CompilerDirectives.ensureVirtualized(frame);
         initializeSlots(frame);
+        if (storeReceiverNode != null) {
+            storeReceiverNode.executeGeneric(frame);
+        }
         CompilerAsserts.compilationConstant(initStackNodes.length);
         for (SqueakNode node : initStackNodes) {
             node.executeGeneric(frame);

@@ -7,8 +7,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.LargeInteger;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
-import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtPutNode;
-import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtPutNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveUnaryOperation;
 
 public abstract class PrimNormalize extends PrimitiveUnaryOperation {
@@ -16,8 +15,8 @@ public abstract class PrimNormalize extends PrimitiveUnaryOperation {
         super(code);
     }
 
-    public static PrimNormalize create(int idx) {
-        return PrimNormalizeNodeGen.create(idx);
+    public static PrimNormalize create(CompiledMethodObject code) {
+        return PrimNormalizeNodeGen.create(code, new ReturnReceiverNode(code, -1));
     }
 
     @Specialization

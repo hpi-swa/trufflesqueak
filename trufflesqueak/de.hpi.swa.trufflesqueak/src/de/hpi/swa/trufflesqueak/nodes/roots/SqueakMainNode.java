@@ -8,12 +8,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 
 public class SqueakMainNode extends SqueakMethodNode {
     public SqueakMainNode(SqueakLanguage language, CompiledCodeObject code) {
-        super(language, code);
-    }
-
-    @Override
-    public void enterFrame(VirtualFrame frame) {
-        initializeSlots(frame);
+        super(language, code, false);
     }
 
     @Override

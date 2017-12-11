@@ -188,10 +188,10 @@ public class Chunk {
                 return chunk.asObject();
             }
         } else if ((ptr & 1) == 1) {
-            return (int) (ptr >> 1);
+			return ptr >> 1;
         } else {
             assert ((ptr & 3) == 2);
-            return (int) (ptr >> 2);
+			return ptr >> 2;
         }
     }
 

@@ -5,13 +5,13 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNode;
 
-public class PrimFileStdioHandles extends PrimitiveNode {
-    public PrimFileStdioHandles(CompiledMethodObject code) {
+public class PrimQuickReturnZero extends PrimitiveNode {
+    public PrimQuickReturnZero(CompiledMethodObject code) {
         super(code);
     }
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
-        return code.image.wrap(0, 1, 2);
+        return 0;
     }
 }

@@ -77,6 +77,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     protected void setBytecodeSequenceAndLiterals(Object[] lits, BytecodeSequenceNode bNode) {
         literals = lits;
+        decodeHeader();
         bytesNode = bNode;
         updateAndInvalidateCallTargets();
     }
@@ -116,9 +117,13 @@ public abstract class CompiledCodeObject extends SqueakObject {
     }
 
     public VirtualFrame createTestFrame(Object receiver, Object[] arguments) {
-        VirtualFrame frame = Truffle.getRuntime().createVirtualFrame(arguments, frameDescriptor);
-        frame.setObject(receiverSlot, receiver);
-        return frame;
+        Object[] args = new Object[arguments.length + 1];
+        int i = 0;
+        args[i++] = receiver;
+        for (Object o : arguments) {
+            args[i++] = o;
+        }
+        return Truffle.getRuntime().createVirtualFrame(args, frameDescriptor);
     }
 
     public RootCallTarget getCallTarget() {
@@ -191,6 +196,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
         Object[] ptrs = chunk.getPointers(literalsize + 1);
         assert literals == null;
         literals = ptrs;
+        decodeHeader();
         assert bytesNode == null;
         initializeBytesNode(chunk.getBytes(ptrs.length));
     }

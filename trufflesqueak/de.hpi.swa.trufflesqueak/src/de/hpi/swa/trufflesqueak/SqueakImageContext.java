@@ -89,17 +89,7 @@ public class SqueakImageContext {
     public final NativeObject x = new NativeObject(this, (byte) 1);
     public final NativeObject y = new NativeObject(this, (byte) 1);
     public final NativeObject div = new NativeObject(this, (byte) 1);
-    private final CompiledCodeObject entryPoint;
     public final SqueakConfig config;
-
-    private static final Object[] ENTRY_POINT_LITERALS = new Object[]{
-                    0,
-                    null, new NativeObject(null, null, "SendSelector".getBytes()),
-                    new NativeObject(null, null, "TruffleSqueakEntryPoint".getBytes()), // selector
-                    null // compiled in class
-    };
-    // Push literal 1, send literal 2 selector, return top
-    private static final byte[] ENTRY_POINT_BYTES = new byte[]{32, (byte) 209, 124};
 
     public SqueakImageContext(SqueakLanguage squeakLanguage, SqueakLanguage.Env environ, BufferedReader in,
                     PrintWriter out, PrintWriter err) {
@@ -108,7 +98,6 @@ public class SqueakImageContext {
         input = in;
         output = out;
         error = err;
-        entryPoint = new CompiledMethodObject(this, ENTRY_POINT_BYTES, ENTRY_POINT_LITERALS);
         if (env != null) {
             String[] applicationArguments = env.getApplicationArguments();
             config = new SqueakConfig(applicationArguments);
@@ -133,9 +122,13 @@ public class SqueakImageContext {
             receiverClass = smallIntegerClass;
         }
         CompiledCodeObject lookupResult = (CompiledCodeObject) receiverClass.lookup(selector);
-        entryPoint.setLiteral(1, receiver);
-        entryPoint.setLiteral(2, lookupResult.getCompiledInSelector());
-        entryPoint.getCallTarget();
+        // Push literal 1, send literal 2 selector, return top
+        byte[] bytes = new byte[]{32, (byte) 209, 124};
+        Object[] literals = new Object[]{
+                        0, receiver, lookupResult.getCompiledInSelector(), // selector
+                        null // compiled in class
+        };
+        CompiledCodeObject entryPoint = new CompiledMethodObject(this, bytes, literals);
         return Truffle.getRuntime().createCallTarget(new SqueakMainNode(getLanguage(), entryPoint));
     }
 

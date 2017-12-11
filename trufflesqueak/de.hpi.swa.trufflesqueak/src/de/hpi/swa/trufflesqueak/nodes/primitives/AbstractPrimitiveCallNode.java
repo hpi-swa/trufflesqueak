@@ -9,11 +9,15 @@ public abstract class AbstractPrimitiveCallNode extends PrimitiveNode {
     }
 
     public static PrimitiveNode create(CompiledMethodObject code) {
-        Object descriptor = code.getLiteral(0);
-        if (descriptor instanceof BaseSqueakObject && ((BaseSqueakObject) descriptor).size() >= 2) {
-            String modulename = ((BaseSqueakObject) descriptor).at0(0).toString();
-            String functionname = ((BaseSqueakObject) descriptor).at0(1).toString();
-            return PrimitiveNodeFactory.forName(code, modulename, functionname);
+        BaseSqueakObject descriptor = code.getLiteral(0) instanceof BaseSqueakObject ? (BaseSqueakObject) code.getLiteral(0) : null;
+        if (descriptor != null && descriptor.getSqClass() != null && descriptor.size() >= 2) {
+            Object descriptorAt0 = descriptor.at0(0);
+            Object descriptorAt1 = descriptor.at0(1);
+            if (descriptorAt0 != null && descriptorAt1 != null) {
+                String modulename = descriptorAt0.toString();
+                String functionname = descriptorAt1.toString();
+                return PrimitiveNodeFactory.forName(code, modulename, functionname);
+            }
         }
         return new PrimitiveNode(code);
     }

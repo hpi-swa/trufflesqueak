@@ -18,7 +18,7 @@ import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNode;
 
-public abstract class PrimPerform extends PrimitiveNode {
+public class PrimPerform extends PrimitiveNode {
     @Child public SqueakNode receiverNode;
     @Child public SqueakNode selectorNode;
     @Child protected SqueakLookupClassNode lookupClassNode;
@@ -35,18 +35,15 @@ public abstract class PrimPerform extends PrimitiveNode {
     @Override
     @ExplodeLoop
     public Object executeGeneric(VirtualFrame frame) {
-        Object[] args = frame.getArguments();
-        Object receiver = args[0];
+        Object[] rcvrAndArgs = topN(frame, code.getNumArgs() + 1);
         ClassObject rcvrClass;
         try {
-            rcvrClass = SqueakTypesGen.expectClassObject(lookupClassNode.executeLookup(receiver));
+            rcvrClass = SqueakTypesGen.expectClassObject(lookupClassNode.executeLookup(rcvrAndArgs[0]));
         } catch (UnexpectedResultException e) {
             throw new RuntimeException("receiver has no class");
         }
-        Object selector = args[1];
-        Object[] newArguments = Arrays.copyOfRange(args, 1, args.length);
-        newArguments[0] = receiver; // the second argument was the selector, put the receiver here
+        Object selector = rcvrAndArgs[2];
         Object lookupResult = lookupNode.executeLookup(rcvrClass, selector);
-        return dispatchNode.executeDispatch(lookupResult, newArguments);
+        return dispatchNode.executeDispatch(lookupResult, rcvrAndArgs);
     }
 }

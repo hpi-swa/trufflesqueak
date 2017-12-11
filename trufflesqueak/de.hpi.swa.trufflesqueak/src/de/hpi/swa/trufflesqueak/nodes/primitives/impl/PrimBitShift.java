@@ -13,8 +13,8 @@ public abstract class PrimBitShift extends PrimitiveBinaryOperation {
 
     public PrimBitShift(CompiledMethodObject code) {
         super(code);
-        // TODO(fniephaus): fix?
-        normalizeNode = PrimNormalize.create(-1);
+        // TODO(fniephaus): fixed?
+        normalizeNode = PrimNormalize.create(code);
     }
 
     @Specialization(guards = {"arg <= 0"})

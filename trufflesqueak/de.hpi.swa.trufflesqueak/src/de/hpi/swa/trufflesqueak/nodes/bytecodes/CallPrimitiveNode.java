@@ -10,7 +10,6 @@ import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveQuickReturnNode;
 
 public class CallPrimitiveNode extends SqueakBytecodeNode {
     @Child PrimitiveNode primitive;
@@ -35,11 +34,6 @@ public class CallPrimitiveNode extends SqueakBytecodeNode {
         }
         code.adjustStackPointer(frame, -1 - code.getNumArgs()); // quick pop rcvr + args
         throw new LocalReturn(result);
-    }
-
-    @Override
-    public boolean isReturn() {
-        return primitive instanceof PrimitiveQuickReturnNode;
     }
 
     @Override
