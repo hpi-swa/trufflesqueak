@@ -37,7 +37,7 @@ public abstract class AbstractSendNode extends SqueakBytecodeNode {
 
     @ExplodeLoop
     public Object executeSend(VirtualFrame frame) {
-        Object[] rcvrAndArgs = popN(frame, argumentCount + 1);
+        Object[] rcvrAndArgs = popNReversed(frame, 1 + argumentCount);
         ClassObject rcvrClass;
         try {
             rcvrClass = SqueakTypesGen.expectClassObject(lookupClassNode.executeLookup(rcvrAndArgs[0]));

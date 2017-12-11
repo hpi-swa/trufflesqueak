@@ -1,7 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -21,7 +20,7 @@ public class BytecodeSequenceNode extends Node {
         new SqueakBytecodeDecoder(bytes, code).decode(children);
     }
 
-    @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.FULL_EXPLODE_UNTIL_RETURN)
+// @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.FULL_EXPLODE)
     public Object executeGeneric(VirtualFrame frame) {
         int pc = 0;
         while (pc >= 0 && pc < children.length) {

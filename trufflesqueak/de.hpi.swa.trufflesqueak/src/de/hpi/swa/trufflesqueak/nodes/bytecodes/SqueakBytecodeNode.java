@@ -52,7 +52,7 @@ public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
         return spNode;
     }
 
-    private FrameSlotReadNode getReadNode(FrameSlot slot) {
+    protected FrameSlotReadNode getReadNode(FrameSlot slot) {
         if (readNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             readNode = FrameSlotReadNode.create(slot);
@@ -93,6 +93,16 @@ public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
         Object[] result = new Object[n];
         for (int i = 0; i < n; i++) {
             result[i] = getReadNode(code.stackSlots[sp - i]).executeRead(frame);
+        }
+        return result;
+    }
+
+    protected Object[] popNReversed(VirtualFrame frame, int n) {
+        int sp = stackPointer(frame);
+        frame.setInt(code.stackPointerSlot, sp - n);
+        Object[] result = new Object[n];
+        for (int i = 0; i < n; i++) {
+            result[n - 1 - i] = getReadNode(code.stackSlots[sp - i]).executeRead(frame);
         }
         return result;
     }
