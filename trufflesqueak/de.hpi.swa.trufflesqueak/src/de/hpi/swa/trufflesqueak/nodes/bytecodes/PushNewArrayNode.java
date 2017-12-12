@@ -8,30 +8,26 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
 public class PushNewArrayNode extends SqueakBytecodeNode {
-    @Children public final SqueakNode[] popIntoArrayNodes;
     @Child SqueakNode pushArrayNode;
+    public final boolean popValues;
     public final int arraySize;
 
     public PushNewArrayNode(CompiledCodeObject code, int index, int param) {
         super(code, index);
-        arraySize = param & 0b0111111;
-        if ((param >> 7) == 1) {
-            popIntoArrayNodes = new SqueakNode[arraySize];
-        } else {
-            popIntoArrayNodes = null;
-        }
+        arraySize = param & 127;
+        popValues = param > 127;
     }
 
     @Override
     @ExplodeLoop
     public Object executeGeneric(VirtualFrame frame) {
-        Object[] ptrs = new Object[arraySize];
-        if (popIntoArrayNodes != null) {
-            for (int i = 0; i < arraySize; i++) {
-                ptrs[i] = popIntoArrayNodes[i].executeGeneric(frame);
-            }
+        Object[] array;
+        if (popValues) {
+            array = popNReversed(frame, arraySize);
+        } else {
+            array = new Object[arraySize];
         }
-        return push(frame, code.image.wrap(ptrs));
+        return push(frame, code.image.wrap(array));
     }
 
     @Override

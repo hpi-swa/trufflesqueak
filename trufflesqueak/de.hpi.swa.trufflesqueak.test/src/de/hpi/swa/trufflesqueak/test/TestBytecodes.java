@@ -16,6 +16,7 @@ import de.hpi.swa.trufflesqueak.exceptions.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ExtendedStoreNode;
 import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotReadNode;
@@ -342,11 +343,37 @@ public class TestBytecodes extends TestSqueak {
 	@Test
 	public void testDup() {
 		BaseSqueakObject rcvr = image.wrap(1);
-		// push true, dup, dup, pop, pop, return top
+		// push true, dup, dup, pop, pop, returnTop
 		assertSame(image.sqTrue, runMethod(rcvr, 113, 136, 136, 135, 135, 124));
 	}
 	// TODO: testPushActiveContext()
-	// TODO: testPushNewArray()
+
+	@Test
+	public void testPushNewArray() {
+		BaseSqueakObject rcvr = image.specialObjectsArray;
+		// pushNewArray (size 127), returnTop
+		Object result = runMethod(rcvr, 138, 127, 124);
+		assertTrue(result instanceof ListObject);
+		ListObject resultList = ((ListObject) result);
+		assertEquals(127, resultList.size());
+
+		// pushNewArray and pop
+		int arraySize = 100;
+		int[] intbytes = new int[arraySize + 3];
+		for (int i = 0; i < arraySize; i++) {
+			intbytes[i] = i % 2 == 0 ? 113 : 114; // push true or false
+		}
+		intbytes[arraySize] = 138; // pushNewArray
+		intbytes[arraySize + 1] = 128 + arraySize; // pop, size 127
+		intbytes[arraySize + 2] = 124; // returnTop
+		result = runMethod(rcvr, intbytes);
+		assertTrue(result instanceof ListObject);
+		resultList = ((ListObject) result);
+		assertEquals(arraySize, resultList.size());
+		for (int i = 0; i < arraySize; i++) {
+			assertEquals(i % 2 == 0 ? image.sqTrue : image.sqFalse, resultList.at0(i));
+		}
+	}
 
 	@Test
 	public void testCallPrimitive() {
