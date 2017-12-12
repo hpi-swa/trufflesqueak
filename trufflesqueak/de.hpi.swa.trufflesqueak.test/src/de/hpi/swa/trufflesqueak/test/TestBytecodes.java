@@ -392,9 +392,67 @@ public class TestBytecodes extends TestSqueak {
 		assertEquals(rcvr, runMethod(cm, rcvr, arg));
 	}
 
-	// TODO: testPushRemoteTemp()
-	// TODO: testStoreRemoteTemp()
-	// TODO: testStoreAndPopRemoteTemp()
+	@Test
+	public void testPushRemoteTemp() {
+		Object[] literals = new Object[] { 2097154, image.nil, image.nil }; // header with numTemp=8
+		BaseSqueakObject rcvr = image.specialObjectsArray;
+		// push true, pushNewArray (size 1 and pop), popIntoTemp 2, pushRemoteTemp
+		// (at(0), temp 2), returnTop
+		CompiledCodeObject code = makeMethod(
+				new byte[] { 113, (byte) 138, (byte) (128 + 1), (byte) (104 + 2), (byte) (140), 0, 2, 124 }, literals);
+		VirtualFrame frame = code.createTestFrame(rcvr, new BaseSqueakObject[4]);
+		try {
+			Object result = new SqueakMethodNode(null, code).execute(frame);
+			assertSame(image.sqTrue, result);
+		} catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
+			assertTrue("broken test", false);
+		}
+	}
+
+	@Test
+	public void testStoreRemoteTemp() {
+		Object[] literals = new Object[] { 2097154, image.nil, image.nil }; // header with numTemp=8
+		BaseSqueakObject rcvr = image.specialObjectsArray;
+		// pushNewArray (size 2), popIntoTemp 3, push true, push false,
+		// storeIntoRemoteTemp (0, temp 3), storeIntoRemoteTemp (1, temp 3), pushTemp 3,
+		// returnTop
+		CompiledCodeObject code = makeMethod(new byte[] { (byte) 138, (byte) (2), (byte) (104 + 3), 113, 114,
+				(byte) 141, 0, 3, (byte) 141, 1, 3, 19, 124 }, literals);
+		VirtualFrame frame = code.createTestFrame(rcvr, new BaseSqueakObject[4]);
+		try {
+			Object result = new SqueakMethodNode(null, code).execute(frame);
+			assertTrue(result instanceof ListObject);
+			ListObject resultList = ((ListObject) result);
+			assertEquals(2, resultList.size());
+			assertEquals(image.sqFalse, resultList.at0(0));
+			assertEquals(image.sqFalse, resultList.at0(1));
+		} catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
+			assertTrue("broken test", false);
+		}
+	}
+
+	@Test
+	public void testStoreAndPopRemoteTemp() {
+		Object[] literals = new Object[] { 2097154, image.nil, image.nil }; // header with numTemp=8
+		BaseSqueakObject rcvr = image.specialObjectsArray;
+		// pushNewArray (size 2), popIntoTemp 3, push true, push false,
+		// storeIntoRemoteTemp (0, temp 3), storeIntoRemoteTemp (1, temp 3), pushTemp 3,
+		// returnTop
+		CompiledCodeObject code = makeMethod(new byte[] { (byte) 138, (byte) (2), (byte) (104 + 3), 113, 114,
+				(byte) 142, 0, 3, (byte) 142, 1, 3, 19, 124 }, literals);
+		VirtualFrame frame = code.createTestFrame(rcvr, new BaseSqueakObject[4]);
+		try {
+			Object result = new SqueakMethodNode(null, code).execute(frame);
+			assertTrue(result instanceof ListObject);
+			ListObject resultList = ((ListObject) result);
+			assertEquals(2, resultList.size());
+			assertEquals(image.sqFalse, resultList.at0(0));
+			assertEquals(image.sqTrue, resultList.at0(1));
+		} catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
+			assertTrue("broken test", false);
+		}
+	}
+
 	// TODO: testPushClosure()
 
 	@Test

@@ -12,6 +12,7 @@ public class StoreAndPopRemoteTempNode extends StoreRemoteTempNode {
     @Override
     public Object executeGeneric(VirtualFrame frame) {
         super.executeGeneric(frame);
-        return pop(frame);
+        pop(frame);
+        return code.image.nil;
     }
 }
