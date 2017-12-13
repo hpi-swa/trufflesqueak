@@ -387,8 +387,8 @@ public class TestBytecodes extends TestSqueak {
 		BaseSqueakObject rcvr = image.wrap(1);
 		BaseSqueakObject arg = image.specialObjectsArray;
 		CompiledCodeObject cm = makeMethod(new Object[] { 17104899 }, // numTemps=1
-				// callPrimitive 1, pop(temp1), pop(arg), returnTop
-				new int[] { 139, primCode & 0xFF, (primCode & 0xFF00) >> 8, 135, 135, 124 });
+				// callPrimitive 1, pop, returnTop
+				new int[] { 139, primCode & 0xFF, (primCode & 0xFF00) >> 8, 135, 124 });
 		assertEquals(rcvr, runMethod(cm, rcvr, arg));
 	}
 

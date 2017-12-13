@@ -19,6 +19,7 @@ public class CompiledBlockObject extends CompiledCodeObject {
         lits[0] = baseHdr; // replace header
         lits[lits.length - 1] = outerMethod; // last literal is back pointer to method
         literals = lits;
+        decodeHeader();
     }
 
     private CompiledBlockObject(CompiledBlockObject original) {

@@ -1,9 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
-import com.oracle.truffle.api.frame.VirtualFrame;
-
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SendSelfSelector;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SingleExtendedSuperNode;
 
@@ -11,23 +8,6 @@ public abstract class DoubleExtendedDoAnythingNode {
     public static class StoreIntoReceiverVariableNode extends StoreAndPopReceiverVariableNode {
         public StoreIntoReceiverVariableNode(CompiledCodeObject method, int idx, int receiverIdx) {
             super(method, idx, receiverIdx);
-        }
-    }
-
-    public static class StoreIntoAssociationNode extends SqueakBytecodeNode {
-        private final Object literal;
-        private SqueakNode valueNode;
-        @Child SqueakNode storeNode;
-
-        public StoreIntoAssociationNode(CompiledCodeObject code, int idx, int literalIndex) {
-            super(code, idx);
-            literal = code.getLiteral(literalIndex);
-        }
-
-        @Override
-        public Object executeGeneric(VirtualFrame frame) {
-            // TODO Auto-generated method stub
-            return null;
         }
     }
 

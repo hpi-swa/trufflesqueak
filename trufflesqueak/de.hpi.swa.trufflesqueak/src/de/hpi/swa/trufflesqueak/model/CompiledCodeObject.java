@@ -17,6 +17,7 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.BytecodeSequenceNode;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakMethodNode;
 import de.hpi.swa.trufflesqueak.util.BitSplitter;
@@ -86,6 +87,9 @@ public abstract class CompiledCodeObject extends SqueakObject {
     }
 
     public Source getSource() {
+        if (source == null) {
+            source = Source.newBuilder(bytesNode.getBytes().toString()).mimeType(SqueakLanguage.MIME_TYPE).name(toString()).build();
+        }
         return source;
     }
 
@@ -185,7 +189,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
     }
 
     public FrameSlot getTempSlot(int index) {
-        return getStackSlot(1 + this.getNumArgs() + this.getNumCopiedValues() + index);
+        return getStackSlot(1 + index);
     }
 
     public int getNumStackSlots() {

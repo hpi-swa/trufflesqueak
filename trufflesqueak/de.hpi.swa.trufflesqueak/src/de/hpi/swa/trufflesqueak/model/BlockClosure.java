@@ -22,7 +22,7 @@ public class BlockClosure extends BaseSqueakObject {
     private static final int BLKCLSR_RECEIVER = 3;
     private static final int BLKCLSR_SIZE = 4;
     @CompilationFinal private Object receiver;
-    @CompilationFinal(dimensions = 1) private Object[] stack;
+    @CompilationFinal(dimensions = 1) private Object[] copied;
     @CompilationFinal private Object frameMarker;
     @CompilationFinal private Object context;
     @CompilationFinal private CompiledBlockObject block;
@@ -31,16 +31,16 @@ public class BlockClosure extends BaseSqueakObject {
         super(img);
     }
 
-    public BlockClosure(Object frameId, CompiledBlockObject compiledBlock, Object rcvr, Object[] copied) {
+    public BlockClosure(Object frameId, CompiledBlockObject compiledBlock, Object receiver, Object[] copied) {
         super(compiledBlock.image);
         block = compiledBlock;
         frameMarker = frameId;
-        receiver = rcvr;
-        stack = copied;
+        this.receiver = receiver;
+        this.copied = copied;
     }
 
     private BlockClosure(BlockClosure original) {
-        this(original.frameMarker, original.block, original.receiver, original.stack);
+        this(original.frameMarker, original.block, original.receiver, original.copied);
         context = original.context;
     }
 
@@ -81,7 +81,7 @@ public class BlockClosure extends BaseSqueakObject {
             case BLKCLSR_RECEIVER:
                 return receiver;
             default:// FIXME
-                return stack[i - BLKCLSR_SIZE];
+                return copied[i - BLKCLSR_SIZE];
         }
     }
 
@@ -90,27 +90,27 @@ public class BlockClosure extends BaseSqueakObject {
         switch (i) {
             case BLKCLSR_OUTER_CONTEXT:
                 context = obj;
-			break;
+                break;
             case BLKCLSR_COMPILEDBLOCK:
                 block = (CompiledBlockObject) obj;
-			break;
+                break;
             case BLKCLSR_NUMARGS:
                 throw new PrimitiveFailed();
             case BLKCLSR_RECEIVER:
                 receiver = obj;
-			break;
+                break;
             default:
-                stack[i - BLKCLSR_SIZE] = obj;
-			break;
+                copied[i - BLKCLSR_SIZE] = obj;
+                break;
         }
     }
 
     @Override
     public boolean become(BaseSqueakObject other) {
         if (other instanceof BlockClosure && super.become(other)) {
-            Object[] stack2 = stack;
-            stack = ((BlockClosure) other).stack;
-            ((BlockClosure) other).stack = stack2;
+            Object[] stack2 = copied;
+            copied = ((BlockClosure) other).copied;
+            ((BlockClosure) other).copied = stack2;
             return true;
         }
         return false;
@@ -133,11 +133,11 @@ public class BlockClosure extends BaseSqueakObject {
 
     @Override
     public int varsize() {
-        return stack.length;
+        return copied.length;
     }
 
     public Object[] getStack() {
-        return stack;
+        return copied;
     }
 
     public Object getReceiver() {
@@ -162,14 +162,14 @@ public class BlockClosure extends BaseSqueakObject {
         }
         Object[] arguments = new Object[1 /* receiver */ +
                         objects.length +
-                        stack.length +
+                        copied.length +
                         1 /* this */];
         arguments[0] = getReceiver();
         for (int i = 0; i < objects.length; i++) {
             arguments[1 + i] = objects[i];
         }
-        for (int i = 0; i < stack.length; i++) {
-            arguments[1 + objects.length + i] = stack[i];
+        for (int i = 0; i < copied.length; i++) {
+            arguments[1 + objects.length + i] = copied[i];
         }
         arguments[arguments.length - 1] = this;
         return arguments;

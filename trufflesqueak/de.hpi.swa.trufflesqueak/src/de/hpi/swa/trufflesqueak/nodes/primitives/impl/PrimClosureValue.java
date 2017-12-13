@@ -3,6 +3,7 @@ package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.BlockClosure;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
@@ -20,11 +21,18 @@ public abstract class PrimClosureValue extends PrimitiveNode {
         dispatch = BlockActivationNodeGen.create();
     }
 
-    @NodeChildren({@NodeChild(value = "r", type = SqueakNode.class)})
+    @NodeChildren({@NodeChild(value = "receiver", type = SqueakNode.class)})
     public static abstract class PrimClosureValue0 extends PrimClosureValue {
         public PrimClosureValue0(CompiledMethodObject method2) {
             super(method2);
         }
+
+        @Override
+        public final Object executeGeneric(VirtualFrame frame) {
+            return executeGeneric(receiver(frame));
+        }
+
+        public abstract Object executeGeneric(Object receiver);
 
         @Specialization
         protected Object value(BlockClosure block) {
@@ -32,11 +40,19 @@ public abstract class PrimClosureValue extends PrimitiveNode {
         }
     }
 
-    @NodeChildren({@NodeChild(value = "r", type = SqueakNode.class), @NodeChild(value = "a1", type = SqueakNode.class)})
+    @NodeChildren({@NodeChild(value = "receiver", type = SqueakNode.class), @NodeChild(value = "arg1", type = SqueakNode.class)})
     public static abstract class PrimClosureValue1 extends PrimClosureValue {
         public PrimClosureValue1(CompiledMethodObject method2) {
             super(method2);
         }
+
+        @Override
+        public final Object executeGeneric(VirtualFrame frame) {
+            Object[] args = bottomN(frame, 2);
+            return executeGeneric(args[0], args[1]);
+        }
+
+        public abstract Object executeGeneric(Object receiver, Object arg1);
 
         @Specialization
         protected Object value(BlockClosure block, Object arg) {
@@ -44,11 +60,19 @@ public abstract class PrimClosureValue extends PrimitiveNode {
         }
     }
 
-    @NodeChildren({@NodeChild(value = "r", type = SqueakNode.class), @NodeChild(value = "a1", type = SqueakNode.class), @NodeChild(value = "a2", type = SqueakNode.class)})
+    @NodeChildren({@NodeChild(value = "receiver", type = SqueakNode.class), @NodeChild(value = "arg1", type = SqueakNode.class), @NodeChild(value = "arg2", type = SqueakNode.class)})
     public static abstract class PrimClosureValue2 extends PrimClosureValue {
         public PrimClosureValue2(CompiledMethodObject method2) {
             super(method2);
         }
+
+        @Override
+        public final Object executeGeneric(VirtualFrame frame) {
+            Object[] args = bottomN(frame, 3);
+            return executeGeneric(args[0], args[1], args[2]);
+        }
+
+        public abstract Object executeGeneric(Object receiver, Object arg1, Object arg2);
 
         @Specialization
         protected Object value(BlockClosure block, Object arg1, Object arg2) {
@@ -56,12 +80,20 @@ public abstract class PrimClosureValue extends PrimitiveNode {
         }
     }
 
-    @NodeChildren({@NodeChild(value = "r", type = SqueakNode.class), @NodeChild(value = "a1", type = SqueakNode.class), @NodeChild(value = "a2", type = SqueakNode.class),
-                    @NodeChild(value = "a3", type = SqueakNode.class)})
+    @NodeChildren({@NodeChild(value = "receiver", type = SqueakNode.class), @NodeChild(value = "arg1", type = SqueakNode.class), @NodeChild(value = "arg2", type = SqueakNode.class),
+                    @NodeChild(value = "arg3", type = SqueakNode.class)})
     public static abstract class PrimClosureValue3 extends PrimClosureValue {
         public PrimClosureValue3(CompiledMethodObject method2) {
             super(method2);
         }
+
+        @Override
+        public final Object executeGeneric(VirtualFrame frame) {
+            Object[] args = bottomN(frame, 4);
+            return executeGeneric(args[0], args[1], args[2], args[3]);
+        }
+
+        public abstract Object executeGeneric(Object receiver, Object arg1, Object arg2, Object arg3);
 
         @Specialization
         protected Object value(BlockClosure block, Object arg1, Object arg2, Object arg3) {
@@ -69,12 +101,20 @@ public abstract class PrimClosureValue extends PrimitiveNode {
         }
     }
 
-    @NodeChildren({@NodeChild(value = "r", type = SqueakNode.class), @NodeChild(value = "a1", type = SqueakNode.class), @NodeChild(value = "a2", type = SqueakNode.class),
-                    @NodeChild(value = "a3", type = SqueakNode.class), @NodeChild(value = "a4", type = SqueakNode.class)})
+    @NodeChildren({@NodeChild(value = "receiver", type = SqueakNode.class), @NodeChild(value = "arg1", type = SqueakNode.class), @NodeChild(value = "arg2", type = SqueakNode.class),
+                    @NodeChild(value = "arg3", type = SqueakNode.class), @NodeChild(value = "arg4", type = SqueakNode.class)})
     public static abstract class PrimClosureValue4 extends PrimClosureValue {
         public PrimClosureValue4(CompiledMethodObject method2) {
             super(method2);
         }
+
+        @Override
+        public final Object executeGeneric(VirtualFrame frame) {
+            Object[] args = bottomN(frame, 5);
+            return executeGeneric(args[0], args[1], args[2], args[3], args[4]);
+        }
+
+        public abstract Object executeGeneric(Object receiver, Object arg1, Object arg2, Object arg3, Object arg4);
 
         @Specialization
         protected Object value(BlockClosure block, Object arg1, Object arg2, Object arg3, Object arg4) {
@@ -82,11 +122,20 @@ public abstract class PrimClosureValue extends PrimitiveNode {
         }
     }
 
-    @NodeChildren({@NodeChild(value = "r", type = SqueakNode.class), @NodeChild(value = "ary", type = SqueakNode.class)})
+    @NodeChildren({@NodeChild(value = "receiver", type = SqueakNode.class), @NodeChild(value = "argArray", type = SqueakNode.class)})
     public static abstract class PrimClosureValueAry extends PrimClosureValue {
         public PrimClosureValueAry(CompiledMethodObject method2) {
             super(method2);
         }
+
+        @Override
+        public final Object executeGeneric(VirtualFrame frame) {
+            // TODO: check this axctually works
+            Object[] args = bottomN(frame, 2);
+            return executeGeneric(args[0], args[1]);
+        }
+
+        public abstract Object executeGeneric(Object receiver, Object argArray);
 
         @Specialization
         protected Object value(BlockClosure block, ListObject argArray) {
