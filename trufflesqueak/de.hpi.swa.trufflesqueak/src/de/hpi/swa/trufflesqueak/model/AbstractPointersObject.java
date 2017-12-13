@@ -24,6 +24,10 @@ public abstract class AbstractPointersObject extends SqueakObject {
 
     public AbstractPointersObject(SqueakImageContext img, ClassObject classObject, int size) {
         this(img, classObject, new Object[size]);
+        // Initialize pointers with nil
+        for (int i = 0; i < pointers.length; i++) {
+            pointers[i] = image.nil;
+        }
     }
 
     public ForeignAccess getForeignAccess() {

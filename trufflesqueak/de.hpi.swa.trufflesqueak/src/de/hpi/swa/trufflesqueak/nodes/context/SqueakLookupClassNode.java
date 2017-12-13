@@ -10,6 +10,7 @@ import de.hpi.swa.trufflesqueak.model.BlockClosure;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.SqueakObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
 
@@ -32,7 +33,7 @@ public abstract class SqueakLookupClassNode extends Node {
     }
 
     protected static boolean isNull(Object object) {
-        return object == null;
+        return object instanceof NilObject;
     }
 
     @SuppressWarnings("unused")

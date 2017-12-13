@@ -1,5 +1,7 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes.send;
 
+import com.oracle.truffle.api.frame.VirtualFrame;
+
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNode;
 
@@ -21,5 +23,11 @@ public class SingleExtendedSuperNode extends AbstractSendNode {
 
     public SingleExtendedSuperNode(CompiledCodeObject code, int index, int rawByte) {
         this(code, index, rawByte & 31, rawByte >> 5);
+    }
+
+    @Override
+    public Object executeSend(VirtualFrame frame) {
+        lookupClassNode = new SqueakLookupClassSuperNode(code);
+        return super.executeSend(frame);
     }
 }
