@@ -8,7 +8,6 @@ import de.hpi.swa.trufflesqueak.exceptions.LocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
-import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.ContextPartConstants;
 
@@ -26,9 +25,9 @@ public class SqueakContextNode extends RootNode {
         context = activeContext;
     }
 
-    private static CompiledCodeObject getCurrentMethod(ContextObject currentContext) {
-        return (CompiledCodeObject) currentContext.at0(ContextPartConstants.METHOD);
-    }
+// private static CompiledCodeObject getCurrentMethod(ContextObject currentContext) {
+// return (CompiledCodeObject) currentContext.at0(ContextPartConstants.METHOD);
+// }
 
     private static ContextObject getSender(ContextObject context) {
         Object sender = context.at0(ContextPartConstants.SENDER);
@@ -43,8 +42,8 @@ public class SqueakContextNode extends RootNode {
     public Object execute(VirtualFrame frame) {
         ContextObject currentContext = context;
         while (true) {
-            CompiledCodeObject method = getCurrentMethod(currentContext);
-            int pc = (int) currentContext.at0(ContextPartConstants.PC);
+// CompiledCodeObject method = getCurrentMethod(currentContext);
+// int pc = (int) currentContext.at0(ContextPartConstants.PC);
             try {
                 // This will continue execution in the active context until that
                 // context returns or switches to another Squeak process.

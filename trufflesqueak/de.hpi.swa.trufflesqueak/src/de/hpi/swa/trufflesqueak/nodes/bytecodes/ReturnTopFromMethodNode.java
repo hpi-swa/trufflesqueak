@@ -19,4 +19,9 @@ public class ReturnTopFromMethodNode extends ReturnTopFromBlockNode {
             throw new NonLocalReturn(pop(frame), ((BlockClosure) getClosure(frame)).getFrameMarker());
         }
     }
+
+    @Override
+    public String toString() {
+        return "returnTop";
+    }
 }

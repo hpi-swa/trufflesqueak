@@ -15,4 +15,9 @@ public class ReturnTopFromBlockNode extends ReturnNode {
     public Object executeGeneric(VirtualFrame frame) {
         throw new LocalReturn(pop(frame));
     }
+
+    @Override
+    public String toString() {
+        return "blockReturn";
+    }
 }

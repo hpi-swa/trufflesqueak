@@ -17,8 +17,8 @@ public abstract class AbstractJump extends SqueakBytecodeNode {
         return (((bc & 7) - 4) << 8) + param;
     }
 
-    public AbstractJump(CompiledCodeObject code, int index) {
-        super(code, index);
+    public AbstractJump(CompiledCodeObject code, int index, int numBytecodes) {
+        super(code, index, numBytecodes);
     }
 
 }

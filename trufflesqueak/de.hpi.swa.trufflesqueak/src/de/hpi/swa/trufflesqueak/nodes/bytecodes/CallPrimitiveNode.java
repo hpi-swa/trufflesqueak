@@ -15,8 +15,8 @@ public class CallPrimitiveNode extends SqueakBytecodeNode {
     @Child PrimitiveNode primitive;
 
     @SuppressWarnings("unused")
-    public CallPrimitiveNode(CompiledCodeObject code, int index, int unusedA, int unusedB) {
-        super(code, index);
+    public CallPrimitiveNode(CompiledCodeObject code, int index, int numBytecodes, int unusedA, int unusedB) {
+        super(code, index, numBytecodes);
         primitive = PrimitiveNodeFactory.forIdx(code, code.primitiveIndex());
         // the unused two bytes are skipped but belong to this bytecode
     }
@@ -31,6 +31,11 @@ public class CallPrimitiveNode extends SqueakBytecodeNode {
                         | IndexOutOfBoundsException e) {
             return code.image.nil;
         }
+    }
+
+    @Override
+    public String toString() {
+        return "callPrimitive: " + code.primitiveIndex();
     }
 
     @Override

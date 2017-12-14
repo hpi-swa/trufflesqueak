@@ -2,7 +2,6 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags;
-import com.oracle.truffle.api.nodes.ExplodeLoop;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
@@ -12,14 +11,13 @@ public class PushNewArrayNode extends SqueakBytecodeNode {
     public final boolean popValues;
     public final int arraySize;
 
-    public PushNewArrayNode(CompiledCodeObject code, int index, int param) {
-        super(code, index);
+    public PushNewArrayNode(CompiledCodeObject code, int index, int numBytecodes, int param) {
+        super(code, index, numBytecodes);
         arraySize = param & 127;
         popValues = param > 127;
     }
 
     @Override
-    @ExplodeLoop
     public Object executeGeneric(VirtualFrame frame) {
         Object[] array;
         if (popValues) {
@@ -28,6 +26,11 @@ public class PushNewArrayNode extends SqueakBytecodeNode {
             array = new Object[arraySize];
         }
         return push(frame, code.image.wrap(array));
+    }
+
+    @Override
+    public String toString() {
+        return String.format("push: (Array new: %d)", arraySize);
     }
 
     @Override

@@ -8,8 +8,8 @@ import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtNode;
 public class PushRemoteTempNode extends RemoteTempBytecodeNode {
     @Child ObjectAtNode readTempNode;
 
-    public PushRemoteTempNode(CompiledCodeObject code, int index, int indexInArray, int indexOfArray) {
-        super(code, index, indexOfArray);
+    public PushRemoteTempNode(CompiledCodeObject code, int index, int numBytecodes, int indexInArray, int indexOfArray) {
+        super(code, index, numBytecodes, indexInArray, indexOfArray);
         readTempNode = ObjectAtNode.create(indexInArray);
     }
 
@@ -17,4 +17,10 @@ public class PushRemoteTempNode extends RemoteTempBytecodeNode {
     public Object executeGeneric(VirtualFrame frame) {
         return push(frame, readTempNode.executeWith(getTempArray(frame)));
     }
+
+    @Override
+    public String toString() {
+        return String.format("pushTemp: %d inVectorAt: %d", indexInArray, indexOfArray);
+    }
+
 }

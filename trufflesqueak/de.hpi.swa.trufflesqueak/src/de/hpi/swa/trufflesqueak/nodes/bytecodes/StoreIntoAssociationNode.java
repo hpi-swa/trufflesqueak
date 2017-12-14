@@ -10,8 +10,8 @@ import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtPutNode;
 public class StoreIntoAssociationNode extends SqueakBytecodeNode {
     @Child WriteNode node;
 
-    StoreIntoAssociationNode(CompiledCodeObject code, int index, int variableIndex) {
-        super(code, index);
+    StoreIntoAssociationNode(CompiledCodeObject code, int index, int numBytecodes, int variableIndex) {
+        super(code, index, numBytecodes);
         node = ObjectAtPutNode.create(1, new MethodLiteralNode(code, variableIndex));
     }
 

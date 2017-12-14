@@ -18,4 +18,9 @@ public class ReturnConstantNode extends ReturnNode {
     public Object executeGeneric(VirtualFrame frame) {
         throw new LocalReturn(constant);
     }
+
+    @Override
+    public String toString() {
+        return "return: " + constant.toString();
+    }
 }

@@ -9,19 +9,19 @@ public class ConditionalJumpNode extends AbstractJump {
     protected final int offset;
     public final Boolean isIfTrue;
 
-    private ConditionalJumpNode(CompiledCodeObject code, int index, int off, boolean condition) {
-        super(code, index);
-        alternativeSuccessorIndex = index + off;
+    private ConditionalJumpNode(CompiledCodeObject code, int index, int numBytecodes, int off, boolean condition) {
+        super(code, index, numBytecodes);
+        alternativeSuccessorIndex = index + numBytecodes + off;
         offset = off;
         isIfTrue = condition;
     }
 
-    public ConditionalJumpNode(CompiledCodeObject code, int index, int bytecode) {
-        this(code, index, shortJumpOffset(bytecode), false);
+    public ConditionalJumpNode(CompiledCodeObject code, int index, int numBytecodes, int bytecode) {
+        this(code, index, numBytecodes, shortJumpOffset(bytecode), false);
     }
 
-    public ConditionalJumpNode(CompiledCodeObject code, int index, int bytecode, int parameter, boolean condition) {
-        this(code, index, longJumpOffset(bytecode, parameter), condition);
+    public ConditionalJumpNode(CompiledCodeObject code, int index, int numBytecodes, int bytecode, int parameter, boolean condition) {
+        this(code, index, numBytecodes, longJumpOffset(bytecode, parameter), condition);
     }
 
     @Override
@@ -34,12 +34,16 @@ public class ConditionalJumpNode extends AbstractJump {
     }
 
     @Override
-    public void executeVoid(VirtualFrame frame) {
-        throw new RuntimeException("ConditionalJumps cannot step");
+    public Object executeGeneric(VirtualFrame frame) {
+        throw new RuntimeException("ConditionalJumps cannot be executed");
     }
 
     @Override
-    public Object executeGeneric(VirtualFrame frame) {
-        throw new RuntimeException("ConditionalJumps cannot be executed");
+    public String toString() {
+        if (isIfTrue) {
+            return "jumpTrue: " + offset;
+        } else {
+            return "jumpFalse: " + offset;
+        }
     }
 }

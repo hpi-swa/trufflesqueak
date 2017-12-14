@@ -4,6 +4,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.Instrumentable;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithCode;
@@ -12,6 +13,7 @@ import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotWriteNode;
 
 @Instrumentable(factory = SqueakBytecodeNodeWrapper.class)
 public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
+    protected final int numBytecodes;
     protected final int successorIndex;
     @Child FrameSlotReadNode readNode;
     @Child FrameSlotWriteNode writeNode;
@@ -19,17 +21,19 @@ public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
 
     protected SqueakBytecodeNode(SqueakBytecodeNode original) {
         super(original.code);
+        numBytecodes = original.numBytecodes;
         successorIndex = original.successorIndex;
         setSourceSection(original.getSourceSection());
     }
 
-    public SqueakBytecodeNode(CompiledCodeObject code, int index) {
+    public SqueakBytecodeNode(CompiledCodeObject code, int index, int numBytecodes) {
         super(code);
-        this.successorIndex = index;
+        this.numBytecodes = numBytecodes;
+        this.successorIndex = index + numBytecodes;
     }
 
-    public boolean isReturn() {
-        return false;
+    public SqueakBytecodeNode(CompiledCodeObject code, int index) {
+        this(code, index, 1);
     }
 
     public int executeInt(VirtualFrame frame) {
@@ -42,6 +46,18 @@ public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
 
     public void executeVoid(VirtualFrame frame) {
         executeGeneric(frame);
+    }
+
+    public int getSuccessorIndex() {
+        return successorIndex;
+    }
+
+    public int getNumBytecodes() {
+        return numBytecodes;
+    }
+
+    public int getIndex() {
+        return successorIndex - numBytecodes;
     }
 
     private FrameSlotReadNode getStackPointerNode() {
@@ -87,6 +103,7 @@ public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
         return getReadNode(code.stackSlots[sp]).executeRead(frame);
     }
 
+    @ExplodeLoop
     protected Object[] popN(VirtualFrame frame, int n) {
         int sp = stackPointer(frame);
         frame.setInt(code.stackPointerSlot, sp - n);
@@ -97,6 +114,7 @@ public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
         return result;
     }
 
+    @ExplodeLoop
     protected Object[] popNReversed(VirtualFrame frame, int n) {
         int sp = stackPointer(frame);
         frame.setInt(code.stackPointerSlot, sp - n);
@@ -118,6 +136,7 @@ public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
         return peek(frame, 0);
     }
 
+    @ExplodeLoop
     protected Object[] topN(VirtualFrame frame, int n) {
         int sp = stackPointer(frame);
         Object[] result = new Object[n];
@@ -127,6 +146,7 @@ public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
         return result;
     }
 
+    @ExplodeLoop
     protected Object[] bottomN(VirtualFrame frame, int n) {
         Object[] result = new Object[n];
         for (int i = 0; i < n; i++) {

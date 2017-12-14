@@ -7,9 +7,13 @@ import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotReadNode;
 
 public abstract class RemoteTempBytecodeNode extends SqueakBytecodeNode {
     @Child FrameSlotReadNode getTempArrayNode;
+    protected final int indexOfArray;
+    protected final int indexInArray;
 
-    public RemoteTempBytecodeNode(CompiledCodeObject code, int index, int indexOfArray) {
-        super(code, index);
+    public RemoteTempBytecodeNode(CompiledCodeObject code, int index, int numBytecodes, int indexInArray, int indexOfArray) {
+        super(code, index, numBytecodes);
+        this.indexOfArray = indexOfArray;
+        this.indexInArray = indexInArray;
         getTempArrayNode = FrameSlotReadNode.create(code.getTempSlot(indexOfArray));
     }
 

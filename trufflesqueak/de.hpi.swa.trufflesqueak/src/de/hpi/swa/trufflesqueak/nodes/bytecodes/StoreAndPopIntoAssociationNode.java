@@ -6,8 +6,8 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 
 public class StoreAndPopIntoAssociationNode extends StoreIntoAssociationNode {
 
-    StoreAndPopIntoAssociationNode(CompiledCodeObject code, int index, int variableIndex) {
-        super(code, index, variableIndex);
+    StoreAndPopIntoAssociationNode(CompiledCodeObject code, int index, int numBytecodes, int variableIndex) {
+        super(code, index, numBytecodes, variableIndex);
     }
 
     @Override

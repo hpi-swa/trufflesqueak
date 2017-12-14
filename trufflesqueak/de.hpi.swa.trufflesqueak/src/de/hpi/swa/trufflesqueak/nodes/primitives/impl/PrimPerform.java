@@ -1,7 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 
 import de.hpi.swa.trufflesqueak.model.ClassObject;
@@ -31,7 +30,6 @@ public class PrimPerform extends PrimitiveNode {
     }
 
     @Override
-    @ExplodeLoop
     public Object executeGeneric(VirtualFrame frame) {
         Object[] rcvrAndArgs = bottomN(frame, 1 + code.getNumArgs());
         ClassObject rcvrClass;

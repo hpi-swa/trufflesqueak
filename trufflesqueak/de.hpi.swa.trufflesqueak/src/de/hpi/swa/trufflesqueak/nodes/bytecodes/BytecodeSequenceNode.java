@@ -20,7 +20,7 @@ public class BytecodeSequenceNode extends Node {
         new SqueakBytecodeDecoder(bytes, code).decode(children);
     }
 
-// @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.FULL_EXPLODE)
+// @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.FULL_EXPLODE_UNTIL_RETURN)
     public Object executeGeneric(VirtualFrame frame) {
         int pc = 0;
         while (pc >= 0 && pc < children.length) {

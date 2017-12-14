@@ -7,9 +7,11 @@ import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotReadNode;
 
 public class PushTemporaryVariableNode extends SqueakBytecodeNode {
     @Child FrameSlotReadNode tempNode;
+    private final int tempIndex;
 
-    public PushTemporaryVariableNode(CompiledCodeObject code, int idx, int tempIndex) {
-        super(code, idx);
+    public PushTemporaryVariableNode(CompiledCodeObject code, int index, int numBytecodes, int tempIndex) {
+        super(code, index, numBytecodes);
+        this.tempIndex = tempIndex;
         if (code.getNumStackSlots() <= tempIndex) {
             // sometimes we'll decode more bytecodes than we have slots ... that's fine
         } else {
@@ -20,5 +22,10 @@ public class PushTemporaryVariableNode extends SqueakBytecodeNode {
     @Override
     public Object executeGeneric(VirtualFrame frame) {
         return push(frame, tempNode.executeRead(frame));
+    }
+
+    @Override
+    public String toString() {
+        return "pushTemp: " + this.tempIndex;
     }
 }

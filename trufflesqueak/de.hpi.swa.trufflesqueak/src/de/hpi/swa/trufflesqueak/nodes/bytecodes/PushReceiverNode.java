@@ -14,4 +14,9 @@ public class PushReceiverNode extends SqueakBytecodeNode {
     public Object executeGeneric(VirtualFrame frame) {
         return push(frame, receiver(frame));
     }
+
+    @Override
+    public String toString() {
+        return "self";
+    }
 }

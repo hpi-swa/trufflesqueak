@@ -14,4 +14,9 @@ public class ReturnReceiverNode extends ReturnNode {
     public Object executeGeneric(VirtualFrame frame) {
         throw new LocalReturn(receiver(frame));
     }
+
+    @Override
+    public String toString() {
+        return "returnSelf";
+    }
 }

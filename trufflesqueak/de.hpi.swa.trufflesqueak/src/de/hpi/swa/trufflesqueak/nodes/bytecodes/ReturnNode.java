@@ -6,9 +6,4 @@ public abstract class ReturnNode extends SqueakBytecodeNode {
     public ReturnNode(CompiledCodeObject code, int index) {
         super(code, index);
     }
-
-    @Override
-    public boolean isReturn() {
-        return true;
-    }
 }

@@ -5,8 +5,8 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 
 public class StoreAndPopRemoteTempNode extends StoreRemoteTempNode {
-    public StoreAndPopRemoteTempNode(CompiledCodeObject code, int index, int indexInArray, int indexOfArray) {
-        super(code, index, indexInArray, indexOfArray);
+    public StoreAndPopRemoteTempNode(CompiledCodeObject code, int index, int numBytecodes, int indexInArray, int indexOfArray) {
+        super(code, index, numBytecodes, indexInArray, indexOfArray);
     }
 
     @Override

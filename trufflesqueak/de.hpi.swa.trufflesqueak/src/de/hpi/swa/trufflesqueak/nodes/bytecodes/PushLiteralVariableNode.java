@@ -9,14 +9,21 @@ import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtNode;
 
 public class PushLiteralVariableNode extends SqueakBytecodeNode {
     @Child public SqueakNode valueNode;
+    private final int literalIndex;
 
-    public PushLiteralVariableNode(CompiledCodeObject code, int index, int literalIndex) {
-        super(code, index);
+    public PushLiteralVariableNode(CompiledCodeObject code, int index, int numBytecodes, int literalIndex) {
+        super(code, index, numBytecodes);
+        this.literalIndex = literalIndex;
         valueNode = ObjectAtNode.create(1, new LiteralConstantNode(code, index, literalIndex));
     }
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
         return push(frame, valueNode.executeGeneric(frame));
+    }
+
+    @Override
+    public String toString() {
+        return "pushLit: " + literalIndex;
     }
 }

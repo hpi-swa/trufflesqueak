@@ -8,11 +8,13 @@ import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotWriteNode;
 
 public class StoreAndPopTemporaryVariableNode extends SqueakBytecodeNode {
     @Child FrameSlotWriteNode tempNode;
+    private final int tempIndex;
 
-    public StoreAndPopTemporaryVariableNode(CompiledCodeObject code, int index, int tempIndex) {
-        super(code, index);
+    public StoreAndPopTemporaryVariableNode(CompiledCodeObject code, int index, int numBytecodes, int tempIndex) {
+        super(code, index, numBytecodes);
         assert code.getNumStackSlots() > tempIndex;
-        tempNode = FrameSlotWriteNode.create(code.getTempSlot(tempIndex));
+        this.tempIndex = tempIndex;
+        this.tempNode = FrameSlotWriteNode.create(code.getTempSlot(tempIndex));
     }
 
     @Override
@@ -26,5 +28,10 @@ public class StoreAndPopTemporaryVariableNode extends SqueakBytecodeNode {
             return getSourceSection().isAvailable();
         }
         return false;
+    }
+
+    @Override
+    public String toString() {
+        return "popIntoTemp: " + tempIndex;
     }
 }

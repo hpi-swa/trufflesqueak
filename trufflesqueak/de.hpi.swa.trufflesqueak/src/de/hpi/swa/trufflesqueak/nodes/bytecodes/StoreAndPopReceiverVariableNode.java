@@ -11,8 +11,8 @@ import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtPutNode;
 public class StoreAndPopReceiverVariableNode extends SqueakBytecodeNode {
     @Child WriteNode storeNode;
 
-    public StoreAndPopReceiverVariableNode(CompiledCodeObject code, int index, int receiverIndex) {
-        super(code, index);
+    public StoreAndPopReceiverVariableNode(CompiledCodeObject code, int index, int numBytecodes, int receiverIndex) {
+        super(code, index, numBytecodes);
         storeNode = ObjectAtPutNode.create(receiverIndex, new FrameReceiverNode(code));
     }
 

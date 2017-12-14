@@ -1,8 +1,6 @@
 package de.hpi.swa.trufflesqueak;
 
-import java.io.BufferedReader;
 import java.io.FileInputStream;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 
 import com.oracle.truffle.api.CallTarget;
@@ -20,10 +18,9 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
 
     @Override
     protected SqueakImageContext createContext(Env env) {
-        BufferedReader in = new BufferedReader(new InputStreamReader(env.in()));
         PrintWriter out = new PrintWriter(env.out(), true);
         PrintWriter err = new PrintWriter(env.err(), true);
-        return new SqueakImageContext(this, env, in, out, err);
+        return new SqueakImageContext(this, env, out, err);
     }
 
     @Override

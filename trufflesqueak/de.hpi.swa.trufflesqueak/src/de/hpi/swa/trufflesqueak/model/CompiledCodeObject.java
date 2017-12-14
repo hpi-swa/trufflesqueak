@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.model;
 
+import java.util.Iterator;
 import java.util.Vector;
 
 import com.oracle.truffle.api.Assumption;
@@ -13,12 +14,16 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.BytecodeSequenceNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushClosureNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnTopFromBlockNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakMethodNode;
 import de.hpi.swa.trufflesqueak.util.BitSplitter;
 import de.hpi.swa.trufflesqueak.util.Chunk;
@@ -88,9 +93,49 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     public Source getSource() {
         if (source == null) {
-            source = Source.newBuilder(bytesNode.getBytes().toString()).mimeType(SqueakLanguage.MIME_TYPE).name(toString()).build();
+            source = Source.newBuilder(generateSourceString()).mimeType(SqueakLanguage.MIME_TYPE).name(toString()).build();
         }
         return source;
+    }
+
+    private String generateSourceString() {
+        StringBuilder sb = new StringBuilder();
+        int i = 0;
+        int indent = 0;
+        byte[] bytes = bytesNode.getBytes();
+        Iterator<Node> childrenIterator = bytesNode.getChildren().iterator();
+        while (childrenIterator.hasNext()) {
+            Node node = childrenIterator.next();
+            if (!(node instanceof SqueakBytecodeNode)) {
+                continue;
+            }
+            for (int j = 0; j < indent; j++) {
+                sb.append(" ");
+            }
+            SqueakBytecodeNode sqNode = (SqueakBytecodeNode) node;
+            int numBytecodes = sqNode.getNumBytecodes();
+            sb.append("<");
+            for (int j = i; j < i + numBytecodes; j++) {
+                if (j > i) {
+                    sb.append(" ");
+                }
+                sb.append(String.format("%02X", bytes[j]));
+            }
+            sb.append("> ");
+            sb.append(sqNode.toString());
+            if (childrenIterator.hasNext()) {
+                sb.append("\n");
+            }
+
+            if (node instanceof PushClosureNode) {
+                indent++;
+            } else if (node instanceof ReturnTopFromBlockNode) {
+                indent--;
+            }
+
+            i += numBytecodes;
+        }
+        return sb.toString();
     }
 
     private int frameSize() {
@@ -102,7 +147,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     private void prepareFrameDescriptor() {
         frameDescriptor = new FrameDescriptor(null);
-        stackSlots = new FrameSlot[frameSize() + 100]; // TODO: + class inst size
+        stackSlots = new FrameSlot[frameSize() + 90]; // TODO: + class inst size
         for (int i = 0; i < stackSlots.length; i++) {
             stackSlots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Illegal);
         }

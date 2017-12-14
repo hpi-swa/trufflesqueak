@@ -16,4 +16,9 @@ public class PushConstantNode extends SqueakBytecodeNode {
     public Object executeGeneric(VirtualFrame frame) {
         return push(frame, constant);
     }
+
+    @Override
+    public String toString() {
+        return "pushConstant: " + constant.toString();
+    }
 }

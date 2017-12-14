@@ -18,8 +18,8 @@ public class ExtendedStoreNode extends ExtendedAccess {
     private static class StoreTopIntoNode extends SqueakBytecodeNode {
         @Child WriteNode node;
 
-        StoreTopIntoNode(CompiledCodeObject code, int index, WriteNode writeNode) {
-            super(code, index);
+        StoreTopIntoNode(CompiledCodeObject code, int index, int numBytecodes, WriteNode writeNode) {
+            super(code, index, numBytecodes);
             node = writeNode;
         }
 
@@ -29,17 +29,17 @@ public class ExtendedStoreNode extends ExtendedAccess {
         }
     }
 
-    public static SqueakBytecodeNode create(CompiledCodeObject code, int index, int nextByte) {
+    public static SqueakBytecodeNode create(CompiledCodeObject code, int index, int numBytecodes, int nextByte) {
         int variableIndex = variableIndex(nextByte);
         switch (variableType(nextByte)) {
             case 0:
-                return new StoreTopIntoNode(code, index, ObjectAtPutNode.create(variableIndex, new FrameReceiverNode(code)));
+                return new StoreTopIntoNode(code, index, numBytecodes, ObjectAtPutNode.create(variableIndex, new FrameReceiverNode(code)));
             case 1:
-                return new StoreTopIntoNode(code, index, FrameSlotWriteNode.create(code.getTempSlot(variableIndex)));
+                return new StoreTopIntoNode(code, index, numBytecodes, FrameSlotWriteNode.create(code.getTempSlot(variableIndex)));
             case 2:
-                return new UnknownBytecodeNode(code, index, -1);
+                return new UnknownBytecodeNode(code, index, numBytecodes, nextByte);
             case 3:
-                return new StoreTopIntoNode(code, index, ObjectAtPutNode.create(ASSOCIATION_VALUE, new MethodLiteralNode(code, variableIndex)));
+                return new StoreTopIntoNode(code, index, numBytecodes, ObjectAtPutNode.create(ASSOCIATION_VALUE, new MethodLiteralNode(code, variableIndex)));
             default:
                 throw new RuntimeException("illegal ExtendedStore bytecode");
         }

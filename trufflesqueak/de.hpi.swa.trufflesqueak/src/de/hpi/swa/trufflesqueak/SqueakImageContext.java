@@ -1,6 +1,5 @@
 package de.hpi.swa.trufflesqueak;
 
-import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -51,7 +50,6 @@ public class SqueakImageContext {
     public final ClassObject floatClass = new ClassObject(this);
 
     private final SqueakLanguage language;
-    private final BufferedReader input;
     private final PrintWriter output;
     private final PrintWriter error;
     private final SqueakLanguage.Env env;
@@ -91,11 +89,10 @@ public class SqueakImageContext {
     public final NativeObject div = new NativeObject(this, (byte) 1);
     public final SqueakConfig config;
 
-    public SqueakImageContext(SqueakLanguage squeakLanguage, SqueakLanguage.Env environ, BufferedReader in,
+    public SqueakImageContext(SqueakLanguage squeakLanguage, SqueakLanguage.Env environ,
                     PrintWriter out, PrintWriter err) {
         language = squeakLanguage;
         env = environ;
-        input = in;
         output = out;
         error = err;
         if (env != null) {
