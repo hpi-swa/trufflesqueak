@@ -5,7 +5,7 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SendSelfSelector;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SingleExtendedSuperNode;
 
 public abstract class DoubleExtendedDoAnythingNode {
-    public static class StoreIntoReceiverVariableNode extends StoreAndPopReceiverVariableNode {
+    public static class StoreIntoReceiverVariableNode extends PopIntoReceiverVariableNode {
         public StoreIntoReceiverVariableNode(CompiledCodeObject method, int idx, int numBytecodes, int receiverIdx) {
             super(method, idx, numBytecodes, receiverIdx);
         }
@@ -27,7 +27,7 @@ public abstract class DoubleExtendedDoAnythingNode {
             case 5:
                 return new StoreIntoReceiverVariableNode(code, index, numBytecodes, third);
             case 6:
-                return new StoreAndPopReceiverVariableNode(code, index, numBytecodes, third);
+                return new PopIntoReceiverVariableNode(code, index, numBytecodes, third);
             case 7:
                 return new StoreIntoAssociationNode(code, index, numBytecodes, third);
             default:

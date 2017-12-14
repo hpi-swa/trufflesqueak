@@ -5,11 +5,11 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotReadNode;
 
-public class PushTemporaryVariableNode extends SqueakBytecodeNode {
+public class PushTempNode extends SqueakBytecodeNode {
     @Child FrameSlotReadNode tempNode;
     private final int tempIndex;
 
-    public PushTemporaryVariableNode(CompiledCodeObject code, int index, int numBytecodes, int tempIndex) {
+    public PushTempNode(CompiledCodeObject code, int index, int numBytecodes, int tempIndex) {
         super(code, index, numBytecodes);
         this.tempIndex = tempIndex;
         if (code.getNumStackSlots() <= tempIndex) {

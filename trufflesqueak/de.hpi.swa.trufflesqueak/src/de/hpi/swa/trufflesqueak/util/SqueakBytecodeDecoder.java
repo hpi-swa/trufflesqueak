@@ -18,16 +18,16 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushNewArrayNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushReceiverVariableNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushRemoteTempNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushTemporaryVariableNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushTempNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnConstantNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnTopFromBlockNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnTopFromMethodNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreAndPopReceiverVariableNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreAndPopRemoteTempNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreAndPopTemporaryVariableNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreRemoteTempNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PopIntoReceiverVariableNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PopIntoRemoteTempNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PopIntoTempNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreIntoRemoteTempNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.UnknownBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.ConditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.UnconditionalJumpNode;
@@ -81,7 +81,7 @@ public class SqueakBytecodeDecoder {
                 return new PushReceiverVariableNode(code, index, 1, b & 15);
             case 16: case 17: case 18: case 19: case 20: case 21: case 22: case 23:
             case 24: case 25: case 26: case 27: case 28: case 29: case 30: case 31:
-                return new PushTemporaryVariableNode(code, index, 1, b & 15);
+                return new PushTempNode(code, index, 1, b & 15);
             case 32: case 33: case 34: case 35: case 36: case 37: case 38: case 39:
             case 40: case 41: case 42: case 43: case 44: case 45: case 46: case 47:
             case 48: case 49: case 50: case 51: case 52: case 53: case 54: case 55:
@@ -93,9 +93,9 @@ public class SqueakBytecodeDecoder {
             case 88: case 89: case 90: case 91: case 92: case 93: case 94: case 95:
                 return new PushLiteralVariableNode(code, index, 1, b & 31);
             case 96: case 97: case 98: case 99: case 100: case 101: case 102: case 103:
-                return new StoreAndPopReceiverVariableNode(code, index, 1, b & 7);
+                return new PopIntoReceiverVariableNode(code, index, 1, b & 7);
             case 104: case 105: case 106: case 107: case 108: case 109: case 110: case 111:
-                return new StoreAndPopTemporaryVariableNode(code, index, 1, b & 7);
+                return new PopIntoTempNode(code, index, 1, b & 7);
             case 112:
                 return new PushReceiverNode(code, index);
             case 113:
@@ -155,9 +155,9 @@ public class SqueakBytecodeDecoder {
             case 140:
                 return new PushRemoteTempNode(code, index, 3, nextByte(), nextByte());
             case 141:
-                return new StoreRemoteTempNode(code, index, 3, nextByte(), nextByte());
+                return new StoreIntoRemoteTempNode(code, index, 3, nextByte(), nextByte());
             case 142:
-                return new StoreAndPopRemoteTempNode(code, index, 3, nextByte(), nextByte());
+                return new PopIntoRemoteTempNode(code, index, 3, nextByte(), nextByte());
             case 143:
                 return new PushClosureNode(code, index, 4, nextByte(), nextByte(), nextByte());
             case 144: case 145: case 146: case 147: case 148: case 149: case 150: case 151:

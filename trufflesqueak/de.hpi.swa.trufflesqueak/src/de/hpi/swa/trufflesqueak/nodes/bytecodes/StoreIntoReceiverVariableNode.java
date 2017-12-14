@@ -7,16 +7,23 @@ import de.hpi.swa.trufflesqueak.nodes.WriteNode;
 import de.hpi.swa.trufflesqueak.nodes.context.FrameReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtPutNode;
 
-public class StoreAndPopReceiverVariableNode extends SqueakBytecodeNode {
+public class StoreIntoReceiverVariableNode extends SqueakBytecodeNode {
     @Child WriteNode storeNode;
+    protected final int receiverIndex;
 
-    public StoreAndPopReceiverVariableNode(CompiledCodeObject code, int index, int numBytecodes, int receiverIndex) {
+    public StoreIntoReceiverVariableNode(CompiledCodeObject code, int index, int numBytecodes, int receiverIndex) {
         super(code, index, numBytecodes);
+        this.receiverIndex = receiverIndex;
         storeNode = ObjectAtPutNode.create(receiverIndex, new FrameReceiverNode(code));
     }
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
-        return storeNode.executeWrite(frame, pop(frame));
+        return storeNode.executeWrite(frame, top(frame));
+    }
+
+    @Override
+    public String toString() {
+        return "storeIntoRcvr: " + receiverIndex;
     }
 }

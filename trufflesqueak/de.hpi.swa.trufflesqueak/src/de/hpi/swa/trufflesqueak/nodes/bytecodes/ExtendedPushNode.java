@@ -12,7 +12,7 @@ public class ExtendedPushNode extends ExtendedAccess {
             case 0:
                 return new PushReceiverVariableNode(code, index, numBytecodes, variableIndex);
             case 1:
-                return new PushTemporaryVariableNode(code, index, numBytecodes, variableIndex);
+                return new PushTempNode(code, index, numBytecodes, variableIndex);
             case 2:
                 return new PushLiteralConstantNode(code, index, numBytecodes, variableIndex);
             case 3:

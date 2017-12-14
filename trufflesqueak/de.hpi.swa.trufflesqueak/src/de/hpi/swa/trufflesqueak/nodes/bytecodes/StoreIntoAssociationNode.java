@@ -8,15 +8,23 @@ import de.hpi.swa.trufflesqueak.nodes.context.MethodLiteralNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtPutNode;
 
 public class StoreIntoAssociationNode extends SqueakBytecodeNode {
-    @Child WriteNode node;
+    @Child WriteNode storeNode;
+    public static final int ASSOCIATION_VALUE = 1;
+    protected final int variableIndex;
 
     StoreIntoAssociationNode(CompiledCodeObject code, int index, int numBytecodes, int variableIndex) {
         super(code, index, numBytecodes);
-        node = ObjectAtPutNode.create(1, new MethodLiteralNode(code, variableIndex));
+        this.variableIndex = variableIndex;
+        storeNode = ObjectAtPutNode.create(ASSOCIATION_VALUE, new MethodLiteralNode(code, variableIndex));
     }
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
-        return node.executeWrite(frame, top(frame));
+        return storeNode.executeWrite(frame, top(frame));
+    }
+
+    @Override
+    public String toString() {
+        return "storeIntoLit: " + variableIndex;
     }
 }
