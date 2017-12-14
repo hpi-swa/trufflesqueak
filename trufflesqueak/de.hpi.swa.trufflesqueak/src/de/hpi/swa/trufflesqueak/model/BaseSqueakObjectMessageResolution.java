@@ -10,14 +10,15 @@ import de.hpi.swa.trufflesqueak.SqueakImageContext;
 
 @MessageResolution(receiverType = BaseSqueakObject.class)
 public class BaseSqueakObjectMessageResolution {
-    
+
     @Resolve(message = "WRITE")
     public abstract static class BaseSqueakObjectWriteNode extends Node {
+        @SuppressWarnings("unused")
         public Object access(Object receiver, Object name, Object value) {
             throw new RuntimeException("not yet implemented");
         }
     }
-    
+
     @Resolve(message = "READ")
     public abstract static class BaseSqueakObjectReadNode extends Node {
         public Object access(Object receiver, int index) {
@@ -27,7 +28,7 @@ public class BaseSqueakObjectMessageResolution {
             }
             throw UnknownIdentifierException.raise("cannot read on " + receiver.getClass().toString());
         }
-        
+
         public Object access(Object receiver, String name) {
             System.err.println("Object>>READ " + receiver.toString() + " " + name);
             if (name.equals("a")) {
@@ -40,14 +41,14 @@ public class BaseSqueakObjectMessageResolution {
             throw UnknownIdentifierException.raise("foo");
         }
     }
-    
+
     @Resolve(message = "HAS_SIZE")
     public abstract static class BaseSqueakObjectHasSizeNode extends Node {
         public Object access(Object receiver) {
             return (receiver instanceof AbstractPointersObject);
         }
     }
-    
+
     @Resolve(message = "GET_SIZE")
     public abstract static class BaseSqueakObjectGetSizeNode extends Node {
         public Object access(Object receiver) {
@@ -59,16 +60,16 @@ public class BaseSqueakObjectMessageResolution {
             return 0;
         }
     }
-    
-    
+
     @Resolve(message = "INVOKE")
     public abstract static class BaseSqueakObjectInvokeNode extends Node {
+        @SuppressWarnings("unused")
         public Object access(Object receiver, String name, Object[] arguments) {
             System.err.println("Object>>INVOKE " + receiver.toString() + " " + name.toString());
             return "BaseSqueakObjectInvokeNode";
         }
     }
-    
+
     @Resolve(message = "KEY_INFO")
     public abstract static class BaseSqueakObjectPropertyInfoNode extends Node {
         public int access(Object receiver, Object name) {
@@ -76,13 +77,14 @@ public class BaseSqueakObjectMessageResolution {
             return 0;
         }
     }
-    
+
     @Resolve(message = "KEYS")
     public abstract static class BaseSqueakObjectPropertiesNode extends Node {
         public Object access(BaseSqueakObject receiver) {
             System.err.println("BaseSqueakObject>>KEYS " + receiver.getClass().toString() + " " + receiver.toString());
-            return new ListObject(SqueakImageContext.SINGLETON, SqueakImageContext.SINGLETON.arrayClass, new Object[] {"a", "b", "c"});
+            return new ListObject(SqueakImageContext.SINGLETON, SqueakImageContext.SINGLETON.arrayClass, new Object[]{"a", "b", "c"});
         }
+
         public Object access(Object receiver) {
             System.err.println("Object>>KEYS " + receiver.toString());
             return receiver;

@@ -1,7 +1,5 @@
 package de.hpi.swa.trufflesqueak.model;
 
-import com.oracle.truffle.api.interop.ForeignAccess;
-
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.util.Chunk;
 
@@ -28,11 +26,6 @@ public abstract class AbstractPointersObject extends SqueakObject {
         for (int i = 0; i < pointers.length; i++) {
             pointers[i] = image.nil;
         }
-    }
-
-    public ForeignAccess getForeignAccess() {
-        // TODO Auto-generated method stub
-        return null;
     }
 
     @Override
