@@ -119,7 +119,9 @@ public abstract class CompiledCodeObject extends SqueakObject {
                 if (j > i) {
                     sb.append(" ");
                 }
-                sb.append(String.format("%02X", bytes[j]));
+                if (j < bytes.length) {
+                    sb.append(String.format("%02X", bytes[j]));
+                }
             }
             sb.append("> ");
             sb.append(sqNode.toString());

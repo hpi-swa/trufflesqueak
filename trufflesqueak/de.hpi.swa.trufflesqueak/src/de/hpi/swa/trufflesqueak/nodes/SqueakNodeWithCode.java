@@ -35,6 +35,9 @@ public abstract class SqueakNodeWithCode extends SqueakNode {
 
     @Override
     public SourceSection getSourceSection() {
+        if (sourceSection == null) {
+            sourceSection = code.getSource().createSection(1);
+        }
         return sourceSection;
     }
 }

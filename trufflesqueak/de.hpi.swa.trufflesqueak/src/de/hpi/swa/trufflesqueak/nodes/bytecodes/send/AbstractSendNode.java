@@ -48,6 +48,6 @@ public abstract class AbstractSendNode extends SqueakBytecodeNode {
 
     @Override
     protected boolean isTaggedWith(Class<?> tag) {
-        return ((tag == StandardTags.StatementTag.class) || (tag == StandardTags.CallTag.class)) && getSourceSection().isAvailable();
+        return ((tag == StandardTags.StatementTag.class) || (tag == StandardTags.CallTag.class));
     }
 }

@@ -2,7 +2,6 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.instrumentation.StandardTags.StatementTag;
 import com.oracle.truffle.api.source.SourceSection;
 
 import de.hpi.swa.trufflesqueak.exceptions.LocalReturn;
@@ -36,11 +35,6 @@ public class CallPrimitiveNode extends SqueakBytecodeNode {
     @Override
     public String toString() {
         return "callPrimitive: " + code.primitiveIndex();
-    }
-
-    @Override
-    protected boolean isTaggedWith(Class<?> tag) {
-        return tag == StatementTag.class;
     }
 
     @Override

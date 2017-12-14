@@ -16,3 +16,4 @@ mxbuild
 .pydevproject
 workingsets.xml
 env
+*.cfg

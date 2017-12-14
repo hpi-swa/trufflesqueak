@@ -4,18 +4,20 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.Instrumentable;
+import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithCode;
 import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotWriteNode;
+import de.hpi.swa.trufflesqueak.nodes.context.FrameStackReadNode;
 
 @Instrumentable(factory = SqueakBytecodeNodeWrapper.class)
 public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
     protected final int numBytecodes;
     protected final int successorIndex;
-    @Child FrameSlotReadNode readNode;
+    @Child FrameStackReadNode readNode;
     @Child FrameSlotWriteNode writeNode;
     @Child FrameSlotReadNode spNode;
 
@@ -63,23 +65,16 @@ public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
     private FrameSlotReadNode getStackPointerNode() {
         if (spNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            spNode = FrameSlotReadNode.create(code.stackPointerSlot);
+            spNode = insert(FrameSlotReadNode.create(code.stackPointerSlot));
         }
         return spNode;
     }
 
-    protected FrameSlotReadNode getReadNode(FrameSlot slot) {
+    protected FrameStackReadNode getReadNode() {
         if (readNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            readNode = FrameSlotReadNode.create(slot);
-        } else if (readNode.slot != slot) {
-            // throw new RuntimeException("Currently, only one slot can be read");
-            if (code.image.config.isVerbose()) {
-                System.out.println("Tried to read to multiple slots");
-            }
-            return FrameSlotReadNode.create(slot);
+            readNode = insert(FrameStackReadNode.create());
         }
-
         return readNode;
     }
 
@@ -100,7 +95,7 @@ public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
     protected Object pop(VirtualFrame frame) {
         int sp = stackPointer(frame);
         frame.setInt(code.stackPointerSlot, sp - 1);
-        return getReadNode(code.stackSlots[sp]).executeRead(frame);
+        return getReadNode().execute(frame, sp);
     }
 
     @ExplodeLoop
@@ -109,7 +104,7 @@ public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
         frame.setInt(code.stackPointerSlot, sp - n);
         Object[] result = new Object[n];
         for (int i = 0; i < n; i++) {
-            result[i] = getReadNode(code.stackSlots[sp - i]).executeRead(frame);
+            result[i] = getReadNode().execute(frame, sp - i);
         }
         return result;
     }
@@ -120,7 +115,7 @@ public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
         frame.setInt(code.stackPointerSlot, sp - n);
         Object[] result = new Object[n];
         for (int i = 0; i < n; i++) {
-            result[n - 1 - i] = getReadNode(code.stackSlots[sp - i]).executeRead(frame);
+            result[n - 1 - i] = getReadNode().execute(frame, sp - i);
         }
         return result;
     }
@@ -141,7 +136,7 @@ public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
         int sp = stackPointer(frame);
         Object[] result = new Object[n];
         for (int i = 0; i < n; i++) {
-            result[i] = getReadNode(code.stackSlots[sp - i]).executeRead(frame);
+            result[i] = getReadNode().execute(frame, sp - i);
         }
         return result;
     }
@@ -150,14 +145,14 @@ public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
     protected Object[] bottomN(VirtualFrame frame, int n) {
         Object[] result = new Object[n];
         for (int i = 0; i < n; i++) {
-            result[i] = getReadNode(code.stackSlots[i]).executeRead(frame);
+            result[i] = getReadNode().execute(frame, i);
         }
         return result;
     }
 
     protected Object peek(VirtualFrame frame, int idx) {
         int sp = stackPointer(frame);
-        return getReadNode(code.stackSlots[sp - idx]).executeRead(frame);
+        return getReadNode().execute(frame, sp - idx);
     }
 
     protected int stackPointer(VirtualFrame frame) {
@@ -165,6 +160,11 @@ public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
     }
 
     protected Object receiver(VirtualFrame frame) {
-        return getReadNode(code.stackSlots[0]).executeRead(frame);
+        return getReadNode().execute(frame, 0);
+    }
+
+    @Override
+    protected boolean isTaggedWith(Class<?> tag) {
+        return tag == StandardTags.StatementTag.class;
     }
 }

@@ -1,7 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.instrumentation.StandardTags;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
@@ -31,13 +30,5 @@ public class PushNewArrayNode extends SqueakBytecodeNode {
     @Override
     public String toString() {
         return String.format("push: (Array new: %d)", arraySize);
-    }
-
-    @Override
-    protected boolean isTaggedWith(Class<?> tag) {
-        if (tag == StandardTags.StatementTag.class) {
-            return getSourceSection().isAvailable();
-        }
-        return false;
     }
 }
