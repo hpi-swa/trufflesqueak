@@ -17,3 +17,4 @@ mxbuild
 workingsets.xml
 env
 *.cfg
+trufflesqueak/de.hpi.swa.trufflesqueak/dumps

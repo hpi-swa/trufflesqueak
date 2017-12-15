@@ -2,6 +2,7 @@ package de.hpi.swa.trufflesqueak.model;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 
@@ -62,6 +63,7 @@ public class CompiledBlockObject extends CompiledCodeObject {
     public FrameSlot getStackSlot(int i) {
         FrameSlot slot = stackSlots[i];
         if (slot == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             slot = stackSlots[i] = getFrameDescriptor().addFrameSlot(i, FrameSlotKind.Illegal);
         }
         return slot;

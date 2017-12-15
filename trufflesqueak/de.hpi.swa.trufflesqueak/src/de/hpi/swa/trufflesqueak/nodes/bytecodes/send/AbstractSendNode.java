@@ -11,6 +11,7 @@ import de.hpi.swa.trufflesqueak.nodes.LookupNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNode;
+import de.hpi.swa.trufflesqueak.nodes.context.stack.PopNReversedStackNode;
 
 public abstract class AbstractSendNode extends SqueakBytecodeNode {
     public final Object selector;
@@ -18,6 +19,7 @@ public abstract class AbstractSendNode extends SqueakBytecodeNode {
     @Child protected SqueakLookupClassNode lookupClassNode;
     @Child private LookupNode lookupNode;
     @Child private DispatchNode dispatchNode;
+    @Child private PopNReversedStackNode popNReversedNode;
 
     public AbstractSendNode(CompiledCodeObject code, int index, int numBytecodes, Object sel, int argcount) {
         super(code, index, numBytecodes);
@@ -26,6 +28,7 @@ public abstract class AbstractSendNode extends SqueakBytecodeNode {
         lookupClassNode = SqueakLookupClassNode.create(code);
         dispatchNode = DispatchNode.create();
         lookupNode = LookupNode.create();
+        popNReversedNode = new PopNReversedStackNode(code, 1 + argumentCount);
     }
 
     @Override
@@ -35,7 +38,7 @@ public abstract class AbstractSendNode extends SqueakBytecodeNode {
     }
 
     public Object executeSend(VirtualFrame frame) {
-        Object[] rcvrAndArgs = popNReversed(frame, 1 + argumentCount);
+        Object[] rcvrAndArgs = popNReversedNode.execute(frame);
         ClassObject rcvrClass;
         try {
             rcvrClass = SqueakTypesGen.expectClassObject(lookupClassNode.executeLookup(rcvrAndArgs[0]));

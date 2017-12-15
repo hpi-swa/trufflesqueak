@@ -6,18 +6,21 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
+import de.hpi.swa.trufflesqueak.nodes.context.stack.BottomNStackNode;
 
 @NodeChildren({@NodeChild(value = "receiver", type = SqueakNode.class),
                 @NodeChild(value = "arg1", type = SqueakNode.class),
                 @NodeChild(value = "arg2", type = SqueakNode.class)})
 public abstract class PrimitiveTernaryOperation extends PrimitiveNode {
-    public PrimitiveTernaryOperation(CompiledMethodObject cm) {
-        super(cm);
+    @Child BottomNStackNode bottomNNode = new BottomNStackNode(3);
+
+    public PrimitiveTernaryOperation(CompiledMethodObject code) {
+        super(code);
     }
 
     @Override
     public final Object executeGeneric(VirtualFrame frame) {
-        Object[] args = bottomN(frame, 3);
+        Object[] args = bottomNNode.execute(frame);
         return executeGeneric(args[0], args[1], args[2]);
     }
 

@@ -4,15 +4,18 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.nodes.context.stack.PopStackNode;
 
 public class ConditionalJumpNode extends AbstractJump {
     @CompilationFinal private final int alternativeSuccessorIndex;
-    private final Boolean isIfTrue;
+    @CompilationFinal private final Boolean isIfTrue;
+    @Child private PopStackNode popNode;
 
     private ConditionalJumpNode(CompiledCodeObject code, int index, int numBytecodes, int offset, boolean condition) {
         super(code, index, numBytecodes, offset);
         alternativeSuccessorIndex = index + numBytecodes + offset;
         isIfTrue = condition;
+        popNode = new PopStackNode(code);
     }
 
     public ConditionalJumpNode(CompiledCodeObject code, int index, int numBytecodes, int bytecode) {
@@ -25,7 +28,7 @@ public class ConditionalJumpNode extends AbstractJump {
 
     @Override
     public int executeInt(VirtualFrame frame) {
-        if (pop(frame) == isIfTrue) {
+        if (popNode.execute(frame) == isIfTrue) {
             return alternativeSuccessorIndex;
         } else {
             return successorIndex;

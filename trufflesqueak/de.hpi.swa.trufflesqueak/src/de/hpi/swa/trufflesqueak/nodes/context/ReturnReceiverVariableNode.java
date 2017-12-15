@@ -4,10 +4,10 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
-import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtNode;
 
 public class ReturnReceiverVariableNode extends SqueakBytecodeNode {
     @Child ObjectAtNode fetchNode;
+    @Child ReceiverNode receiverNode = new ReceiverNode();
 
     public ReturnReceiverVariableNode(CompiledCodeObject code, int index, int varIndex) {
         super(code, index);
@@ -16,6 +16,6 @@ public class ReturnReceiverVariableNode extends SqueakBytecodeNode {
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
-        return fetchNode.executeWith(receiver(frame));
+        return fetchNode.executeWith(receiverNode.execute(frame));
     }
 }

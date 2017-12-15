@@ -11,6 +11,8 @@ import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.nodes.BlockActivationNode;
 import de.hpi.swa.trufflesqueak.nodes.BlockActivationNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
+import de.hpi.swa.trufflesqueak.nodes.context.ReceiverNode;
+import de.hpi.swa.trufflesqueak.nodes.context.stack.BottomNStackNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNode;
 
 public abstract class PrimClosureValue extends PrimitiveNode {
@@ -23,13 +25,15 @@ public abstract class PrimClosureValue extends PrimitiveNode {
 
     @NodeChildren({@NodeChild(value = "receiver", type = SqueakNode.class)})
     public static abstract class PrimClosureValue0 extends PrimClosureValue {
+        @Child ReceiverNode receiverNode = new ReceiverNode();
+
         public PrimClosureValue0(CompiledMethodObject method2) {
             super(method2);
         }
 
         @Override
         public final Object executeGeneric(VirtualFrame frame) {
-            return executeGeneric(receiver(frame));
+            return executeGeneric(receiverNode.execute(frame));
         }
 
         public abstract Object executeGeneric(Object receiver);
@@ -42,13 +46,15 @@ public abstract class PrimClosureValue extends PrimitiveNode {
 
     @NodeChildren({@NodeChild(value = "receiver", type = SqueakNode.class), @NodeChild(value = "arg1", type = SqueakNode.class)})
     public static abstract class PrimClosureValue1 extends PrimClosureValue {
+        @Child BottomNStackNode bottomNNode = new BottomNStackNode(2);
+
         public PrimClosureValue1(CompiledMethodObject method2) {
             super(method2);
         }
 
         @Override
         public final Object executeGeneric(VirtualFrame frame) {
-            Object[] args = bottomN(frame, 2);
+            Object[] args = bottomNNode.execute(frame);
             return executeGeneric(args[0], args[1]);
         }
 
@@ -62,13 +68,15 @@ public abstract class PrimClosureValue extends PrimitiveNode {
 
     @NodeChildren({@NodeChild(value = "receiver", type = SqueakNode.class), @NodeChild(value = "arg1", type = SqueakNode.class), @NodeChild(value = "arg2", type = SqueakNode.class)})
     public static abstract class PrimClosureValue2 extends PrimClosureValue {
+        @Child BottomNStackNode bottomNNode = new BottomNStackNode(3);
+
         public PrimClosureValue2(CompiledMethodObject method2) {
             super(method2);
         }
 
         @Override
         public final Object executeGeneric(VirtualFrame frame) {
-            Object[] args = bottomN(frame, 3);
+            Object[] args = bottomNNode.execute(frame);
             return executeGeneric(args[0], args[1], args[2]);
         }
 
@@ -83,13 +91,15 @@ public abstract class PrimClosureValue extends PrimitiveNode {
     @NodeChildren({@NodeChild(value = "receiver", type = SqueakNode.class), @NodeChild(value = "arg1", type = SqueakNode.class), @NodeChild(value = "arg2", type = SqueakNode.class),
                     @NodeChild(value = "arg3", type = SqueakNode.class)})
     public static abstract class PrimClosureValue3 extends PrimClosureValue {
+        @Child BottomNStackNode bottomNNode = new BottomNStackNode(4);
+
         public PrimClosureValue3(CompiledMethodObject method2) {
             super(method2);
         }
 
         @Override
         public final Object executeGeneric(VirtualFrame frame) {
-            Object[] args = bottomN(frame, 4);
+            Object[] args = bottomNNode.execute(frame);
             return executeGeneric(args[0], args[1], args[2], args[3]);
         }
 
@@ -104,13 +114,15 @@ public abstract class PrimClosureValue extends PrimitiveNode {
     @NodeChildren({@NodeChild(value = "receiver", type = SqueakNode.class), @NodeChild(value = "arg1", type = SqueakNode.class), @NodeChild(value = "arg2", type = SqueakNode.class),
                     @NodeChild(value = "arg3", type = SqueakNode.class), @NodeChild(value = "arg4", type = SqueakNode.class)})
     public static abstract class PrimClosureValue4 extends PrimClosureValue {
+        @Child BottomNStackNode bottomNNode = new BottomNStackNode(5);
+
         public PrimClosureValue4(CompiledMethodObject method2) {
             super(method2);
         }
 
         @Override
         public final Object executeGeneric(VirtualFrame frame) {
-            Object[] args = bottomN(frame, 5);
+            Object[] args = bottomNNode.execute(frame);
             return executeGeneric(args[0], args[1], args[2], args[3], args[4]);
         }
 
@@ -124,14 +136,16 @@ public abstract class PrimClosureValue extends PrimitiveNode {
 
     @NodeChildren({@NodeChild(value = "receiver", type = SqueakNode.class), @NodeChild(value = "argArray", type = SqueakNode.class)})
     public static abstract class PrimClosureValueAry extends PrimClosureValue {
+        @Child BottomNStackNode bottomNNode = new BottomNStackNode(2);
+
         public PrimClosureValueAry(CompiledMethodObject method2) {
             super(method2);
         }
 
         @Override
         public final Object executeGeneric(VirtualFrame frame) {
-            // TODO: check this axctually works
-            Object[] args = bottomN(frame, 2);
+            // TODO: check this actually works
+            Object[] args = bottomNNode.execute(frame);
             return executeGeneric(args[0], args[1]);
         }
 

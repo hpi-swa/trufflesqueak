@@ -18,7 +18,7 @@ import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.store.StoreIntoAssociationNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.store.AbstractStoreIntoAssociationNode;
 import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotReadNode;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakMethodNode;
 
@@ -266,7 +266,7 @@ public class TestBytecodes extends TestSqueak {
 				Object result = new SqueakMethodNode(null, code).execute(frame);
 				assertSame(image.sqTrue, result);
 				PointersObject literal = (PointersObject) code.getLiteral(i);
-				assertSame(image.sqTrue, literal.getPointers()[StoreIntoAssociationNode.ASSOCIATION_VALUE]);
+				assertSame(image.sqTrue, literal.getPointers()[AbstractStoreIntoAssociationNode.ASSOCIATION_VALUE]);
 			} catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
 				assertTrue("broken test", false);
 			}
@@ -322,7 +322,7 @@ public class TestBytecodes extends TestSqueak {
 				Object result = new SqueakMethodNode(null, code).execute(frame);
 				assertSame(rcvr, result);
 				PointersObject literal = (PointersObject) code.getLiteral(i);
-				assertSame(image.sqTrue, literal.getPointers()[StoreIntoAssociationNode.ASSOCIATION_VALUE]);
+				assertSame(image.sqTrue, literal.getPointers()[AbstractStoreIntoAssociationNode.ASSOCIATION_VALUE]);
 			} catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
 				assertTrue("broken test", false);
 			}

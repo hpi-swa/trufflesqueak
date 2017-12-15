@@ -7,6 +7,7 @@ import de.hpi.swa.trufflesqueak.model.BlockClosure;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 
 public class ReturnTopFromMethodNode extends ReturnTopFromBlockNode {
+
     public ReturnTopFromMethodNode(CompiledCodeObject code, int idx) {
         super(code, idx);
     }
@@ -16,7 +17,7 @@ public class ReturnTopFromMethodNode extends ReturnTopFromBlockNode {
         if (getClosure(frame) == null) {
             return super.executeGeneric(frame);
         } else {
-            throw new NonLocalReturn(pop(frame), ((BlockClosure) getClosure(frame)).getFrameMarker());
+            throw new NonLocalReturn(popNode.execute(frame), ((BlockClosure) getClosure(frame)).getFrameMarker());
         }
     }
 

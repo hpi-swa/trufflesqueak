@@ -3,20 +3,19 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes.store;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.RemoteTempBytecodeNode;
-import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtPutNode;
+import de.hpi.swa.trufflesqueak.nodes.context.stack.TopStackNode;
 
-public class StoreIntoRemoteTempNode extends RemoteTempBytecodeNode {
-    @Child ObjectAtPutNode storeNode;
+public class StoreIntoRemoteTempNode extends AbstractStoreIntoRemoteTempNode {
+    @Child private TopStackNode topNode;
 
     public StoreIntoRemoteTempNode(CompiledCodeObject code, int index, int numBytecodes, int indexInArray, int indexOfArray) {
         super(code, index, numBytecodes, indexInArray, indexOfArray);
-        storeNode = ObjectAtPutNode.create(indexInArray);
+        topNode = new TopStackNode(code);
     }
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
-        return storeNode.executeWrite(getTempArray(frame), top(frame));
+        return storeNode.executeWrite(getTempArray(frame), topNode.execute(frame));
     }
 
     @Override

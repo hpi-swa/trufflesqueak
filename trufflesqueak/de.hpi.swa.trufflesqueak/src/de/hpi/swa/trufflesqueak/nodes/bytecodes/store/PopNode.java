@@ -4,16 +4,19 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.UnknownBytecodeNode;
+import de.hpi.swa.trufflesqueak.nodes.context.stack.PopStackNode;
 
 public class PopNode extends UnknownBytecodeNode {
+    @Child private PopStackNode popNode;
 
     public PopNode(CompiledCodeObject code, int index, int numBytecodes) {
         super(code, index, numBytecodes, -1);
+        popNode = new PopStackNode(code);
     }
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
-        return pop(frame);
+        return popNode.execute(frame);
     }
 
     @Override

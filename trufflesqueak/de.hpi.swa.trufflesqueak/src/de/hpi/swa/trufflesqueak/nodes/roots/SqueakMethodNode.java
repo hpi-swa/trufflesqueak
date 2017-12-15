@@ -17,6 +17,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.FrameMarker;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.BytecodeSequenceNode;
 import de.hpi.swa.trufflesqueak.nodes.context.PushArgumentNode;
 import de.hpi.swa.trufflesqueak.nodes.context.PushNilNode;
 
@@ -25,6 +26,7 @@ public class SqueakMethodNode extends RootNode {
     @Children final SqueakNode[] rcvrAndArgsNodes;
     @Children final SqueakNode[] copiedValuesNodes;
     @Children final SqueakNode[] tempNodes;
+    @Child BytecodeSequenceNode bytecodeNode;
 
     public SqueakMethodNode(SqueakLanguage language, CompiledCodeObject code) {
         this(language, code, true);
@@ -65,11 +67,13 @@ public class SqueakMethodNode extends RootNode {
             node.executeGeneric(frame);
         }
         if (copiedValuesNodes != null) {
+            CompilerAsserts.compilationConstant(copiedValuesNodes.length);
             for (SqueakNode node : copiedValuesNodes) {
                 node.executeGeneric(frame);
             }
             frame.setInt(code.closureSlot, 1 + code.getNumArgs() + code.getNumCopiedValues());
         }
+        CompilerAsserts.compilationConstant(tempNodes.length);
         for (SqueakNode node : tempNodes) {
             node.executeGeneric(frame);
         }
@@ -79,7 +83,7 @@ public class SqueakMethodNode extends RootNode {
     public Object execute(VirtualFrame frame) {
         enterFrame(frame);
         try {
-            code.getBytecodeNode().executeGeneric(frame);
+            getBytecodeNode().executeGeneric(frame);
         } catch (LocalReturn e) {
             return e.returnValue;
         } catch (NonLocalReturn e) {
@@ -98,8 +102,21 @@ public class SqueakMethodNode extends RootNode {
         throw new RuntimeException("unimplemented exit from activation");
     }
 
+    private BytecodeSequenceNode getBytecodeNode() {
+        if (bytecodeNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            bytecodeNode = code.getBytecodeNode();
+        }
+        return bytecodeNode;
+    }
+
     @Override
     public String toString() {
+        return code.toString();
+    }
+
+    @Override
+    public String getName() {
         return code.toString();
     }
 

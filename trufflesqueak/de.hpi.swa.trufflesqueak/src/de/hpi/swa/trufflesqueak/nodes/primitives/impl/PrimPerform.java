@@ -13,6 +13,7 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.context.stack.BottomNStackNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNode;
 
 public class PrimPerform extends PrimitiveNode {
@@ -21,17 +22,19 @@ public class PrimPerform extends PrimitiveNode {
     @Child protected SqueakLookupClassNode lookupClassNode;
     @Child private LookupNode lookupNode;
     @Child private DispatchNode dispatchNode;
+    @Child BottomNStackNode bottomNNode;
 
     public PrimPerform(CompiledMethodObject code) {
         super(code);
         lookupClassNode = SqueakLookupClassNodeGen.create(code);
         dispatchNode = DispatchNodeGen.create();
         lookupNode = LookupNodeGen.create();
+        bottomNNode = new BottomNStackNode(1 + code.getNumArgs());
     }
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
-        Object[] rcvrAndArgs = bottomN(frame, 1 + code.getNumArgs());
+        Object[] rcvrAndArgs = bottomNNode.execute(frame);
         ClassObject rcvrClass;
         try {
             rcvrClass = SqueakTypesGen.expectClassObject(lookupClassNode.executeLookup(rcvrAndArgs[0]));

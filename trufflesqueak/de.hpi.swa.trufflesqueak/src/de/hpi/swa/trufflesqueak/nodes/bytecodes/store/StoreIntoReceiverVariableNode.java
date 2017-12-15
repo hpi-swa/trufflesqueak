@@ -3,24 +3,19 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes.store;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.nodes.WriteNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
-import de.hpi.swa.trufflesqueak.nodes.context.FrameReceiverNode;
-import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtPutNode;
+import de.hpi.swa.trufflesqueak.nodes.context.stack.TopStackNode;
 
-public class StoreIntoReceiverVariableNode extends SqueakBytecodeNode {
-    @Child WriteNode storeNode;
-    protected final int receiverIndex;
+public class StoreIntoReceiverVariableNode extends AbstractStoreIntoReceiverVariableNode {
+    @Child private TopStackNode topNode;
 
     public StoreIntoReceiverVariableNode(CompiledCodeObject code, int index, int numBytecodes, int receiverIndex) {
-        super(code, index, numBytecodes);
-        this.receiverIndex = receiverIndex;
-        storeNode = ObjectAtPutNode.create(receiverIndex, new FrameReceiverNode(code));
+        super(code, index, numBytecodes, receiverIndex);
+        topNode = new TopStackNode(code);
     }
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
-        return storeNode.executeWrite(frame, top(frame));
+        return storeNode.executeWrite(frame, topNode.execute(frame));
     }
 
     @Override
