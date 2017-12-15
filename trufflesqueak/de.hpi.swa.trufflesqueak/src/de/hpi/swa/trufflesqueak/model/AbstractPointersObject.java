@@ -1,5 +1,7 @@
 package de.hpi.swa.trufflesqueak.model;
 
+import java.util.Arrays;
+
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.util.Chunk;
 
@@ -22,10 +24,7 @@ public abstract class AbstractPointersObject extends SqueakObject {
 
     public AbstractPointersObject(SqueakImageContext img, ClassObject classObject, int size) {
         this(img, classObject, new Object[size]);
-        // Initialize pointers with nil
-        for (int i = 0; i < pointers.length; i++) {
-            pointers[i] = image.nil;
-        }
+        Arrays.fill(pointers, image.nil); // Initialize pointers with nil
     }
 
     @Override
