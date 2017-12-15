@@ -43,7 +43,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
     @CompilationFinal protected BytecodeSequenceNode bytecodeSequenceNode;
     Source source;
     // frame info
-    private FrameDescriptor frameDescriptor;
+    @CompilationFinal private FrameDescriptor frameDescriptor;
     @CompilationFinal public FrameSlot thisContextSlot;
     @CompilationFinal public FrameSlot closureSlot;
     @CompilationFinal(dimensions = 1) public FrameSlot[] stackSlots;
@@ -57,8 +57,8 @@ public abstract class CompiledCodeObject extends SqueakObject {
     @CompilationFinal protected int numArgs;
     @SuppressWarnings("unused") private int numLiterals;
     @SuppressWarnings("unused") private boolean isOptimized;
-    protected boolean hasPrimitive;
-    boolean needsLargeFrame;
+    @CompilationFinal private boolean hasPrimitive;
+    @CompilationFinal private boolean needsLargeFrame;
     @CompilationFinal int numTemps;
     @SuppressWarnings("unused") private int accessModifier;
     @SuppressWarnings("unused") private boolean altInstructionSet;

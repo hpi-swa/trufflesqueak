@@ -1,6 +1,7 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.Instrumentable;
@@ -15,8 +16,8 @@ import de.hpi.swa.trufflesqueak.nodes.context.FrameStackReadNode;
 
 @Instrumentable(factory = SqueakBytecodeNodeWrapper.class)
 public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
-    protected final int numBytecodes;
-    protected final int successorIndex;
+    @CompilationFinal protected final int numBytecodes;
+    @CompilationFinal protected final int successorIndex;
     @Child FrameStackReadNode readNode;
     @Child FrameSlotWriteNode writeNode;
     @Child FrameSlotReadNode spNode;

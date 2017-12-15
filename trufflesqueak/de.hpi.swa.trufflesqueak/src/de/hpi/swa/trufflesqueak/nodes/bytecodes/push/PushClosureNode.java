@@ -2,6 +2,7 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes.push;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -11,10 +12,10 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
 
 public class PushClosureNode extends SqueakBytecodeNode {
-    private final int blockSize;
-    private final int numArgs;
-    private final int numCopied;
-    public final CompiledBlockObject compiledBlock;
+    @CompilationFinal private final int blockSize;
+    @CompilationFinal private final int numArgs;
+    @CompilationFinal private final int numCopied;
+    @CompilationFinal private final CompiledBlockObject compiledBlock;
 
     public PushClosureNode(CompiledCodeObject code, int index, int numBytecodes, int i, int j, int k) {
         super(code, index, numBytecodes);
