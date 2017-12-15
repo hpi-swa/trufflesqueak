@@ -14,7 +14,7 @@ public abstract class PrimSize extends PrimitiveUnaryOperation {
         super(code);
     }
 
-    @Specialization(guards = "isNull(obj)")
+    @Specialization(guards = "isNil(obj)")
     public int size(@SuppressWarnings("unused") char obj) {
         return 0;
     }

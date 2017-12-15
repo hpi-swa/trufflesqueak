@@ -4,11 +4,12 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
 
 public class PrimitiveNode extends SqueakBytecodeNode {
-    protected static boolean isNull(Object obj) {
-        return obj == null;
+    protected static boolean isNil(Object obj) {
+        return obj instanceof NilObject;
     }
 
     public PrimitiveNode(CompiledMethodObject code) {

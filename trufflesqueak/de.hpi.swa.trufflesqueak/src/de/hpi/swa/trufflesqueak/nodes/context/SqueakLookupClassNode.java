@@ -32,7 +32,7 @@ public abstract class SqueakLookupClassNode extends Node {
         }
     }
 
-    protected static boolean isNull(Object object) {
+    protected static boolean isNil(Object object) {
         return object instanceof NilObject;
     }
 
@@ -85,7 +85,7 @@ public abstract class SqueakLookupClassNode extends Node {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "isNull(object)")
+    @Specialization(guards = "isNil(object)")
     public ClassObject nilClass(Object object) {
         return code.image.nilClass;
     }
