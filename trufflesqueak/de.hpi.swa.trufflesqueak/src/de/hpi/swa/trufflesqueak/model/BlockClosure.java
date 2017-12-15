@@ -16,11 +16,14 @@ import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.util.Chunk;
 
 public class BlockClosure extends BaseSqueakObject {
-    private static final int BLKCLSR_OUTER_CONTEXT = 0;
-    private static final int BLKCLSR_COMPILEDBLOCK = 1;
-    private static final int BLKCLSR_NUMARGS = 2;
-    private static final int BLKCLSR_RECEIVER = 3;
-    private static final int BLKCLSR_SIZE = 4;
+    private static class BLKCLSR {
+        public static final byte OUTER_CONTEXT = 0;
+        public static final byte COMPILEDBLOCK = 1;
+        public static final byte NUMARGS = 2;
+        public static final byte RECEIVER = 3;
+        public static final byte SIZE = 4;
+    }
+
     @CompilationFinal private Object receiver;
     @CompilationFinal(dimensions = 1) private Object[] copied;
     @CompilationFinal private Object frameMarker;
@@ -56,7 +59,7 @@ public class BlockClosure extends BaseSqueakObject {
                 public Object visitFrame(FrameInstance frameInstance) {
                     Frame frame = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
                     FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-                    FrameSlot markerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.MARKER);
+                    FrameSlot markerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.MARKER);
                     Object marker = FrameUtil.getObjectSafe(frame, markerSlot);
                     if (marker == frame) {
                         context = ContextObject.createReadOnlyContextObject(image, frame);
@@ -72,35 +75,35 @@ public class BlockClosure extends BaseSqueakObject {
     @Override
     public Object at0(int i) {
         switch (i) {
-            case BLKCLSR_OUTER_CONTEXT:
+            case BLKCLSR.OUTER_CONTEXT:
                 return getOrPrepareContext();
-            case BLKCLSR_COMPILEDBLOCK:
+            case BLKCLSR.COMPILEDBLOCK:
                 return block;
-            case BLKCLSR_NUMARGS:
+            case BLKCLSR.NUMARGS:
                 return block.getNumArgs();
-            case BLKCLSR_RECEIVER:
+            case BLKCLSR.RECEIVER:
                 return receiver;
             default:// FIXME
-                return copied[i - BLKCLSR_SIZE];
+                return copied[i - BLKCLSR.SIZE];
         }
     }
 
     @Override
     public void atput0(int i, Object obj) {
         switch (i) {
-            case BLKCLSR_OUTER_CONTEXT:
+            case BLKCLSR.OUTER_CONTEXT:
                 context = obj;
                 break;
-            case BLKCLSR_COMPILEDBLOCK:
+            case BLKCLSR.COMPILEDBLOCK:
                 block = (CompiledBlockObject) obj;
                 break;
-            case BLKCLSR_NUMARGS:
+            case BLKCLSR.NUMARGS:
                 throw new PrimitiveFailed();
-            case BLKCLSR_RECEIVER:
+            case BLKCLSR.RECEIVER:
                 receiver = obj;
                 break;
             default:
-                copied[i - BLKCLSR_SIZE] = obj;
+                copied[i - BLKCLSR.SIZE] = obj;
                 break;
         }
     }
@@ -128,7 +131,7 @@ public class BlockClosure extends BaseSqueakObject {
 
     @Override
     public int instsize() {
-        return BLKCLSR_SIZE;
+        return BLKCLSR.SIZE;
     }
 
     @Override

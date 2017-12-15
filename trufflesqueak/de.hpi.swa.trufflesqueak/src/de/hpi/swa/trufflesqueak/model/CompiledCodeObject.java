@@ -28,14 +28,17 @@ import de.hpi.swa.trufflesqueak.util.BitSplitter;
 import de.hpi.swa.trufflesqueak.util.Chunk;
 
 public abstract class CompiledCodeObject extends SqueakObject {
-    // constants
-    public static final String CLOSURE = "closure";
-    public static final String SELF = "self";
-    public static final String RECEIVER = "receiver";
-    public static final String PC = "pc";
-    public static final String STACK_POINTER = "stackPointer";
-    public static final String MARKER = "marker";
-    public static final String METHOD = "method";
+    public static class SLOT_IDENTIFIER {
+        public static final byte CLOSURE = 0;
+        public static final byte SELF = 1;
+        public static final byte RECEIVER = 2;
+        public static final byte PC = 3;
+        public static final byte STACK_POINTER = 4;
+        public static final byte MARKER = 5;
+        public static final byte METHOD = 6;
+        public static final byte SWITCH = 7;
+    }
+
     // code
     @CompilationFinal protected BytecodeSequenceNode bytecodeSequenceNode;
     Source source;
@@ -152,11 +155,11 @@ public abstract class CompiledCodeObject extends SqueakObject {
         for (int i = 0; i < stackSlots.length; i++) {
             stackSlots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Illegal);
         }
-        thisContextSlot = frameDescriptor.addFrameSlot(SELF, FrameSlotKind.Object);
-        closureSlot = frameDescriptor.addFrameSlot(CLOSURE, FrameSlotKind.Object);
-        markerSlot = frameDescriptor.addFrameSlot(MARKER, FrameSlotKind.Object);
-        methodSlot = frameDescriptor.addFrameSlot(METHOD, FrameSlotKind.Object);
-        stackPointerSlot = frameDescriptor.addFrameSlot(STACK_POINTER, FrameSlotKind.Int);
+        thisContextSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.SELF, FrameSlotKind.Object);
+        closureSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.CLOSURE, FrameSlotKind.Object);
+        markerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.MARKER, FrameSlotKind.Object);
+        methodSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.METHOD, FrameSlotKind.Object);
+        stackPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.STACK_POINTER, FrameSlotKind.Int);
     }
 
     public VirtualFrame createTestFrame(Object receiver) {

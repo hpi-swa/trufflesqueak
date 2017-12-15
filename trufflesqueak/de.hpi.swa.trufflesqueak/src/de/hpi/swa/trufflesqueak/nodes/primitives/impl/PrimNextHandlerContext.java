@@ -33,8 +33,8 @@ public abstract class PrimNextHandlerContext extends PrimitiveUnaryOperation {
             public Object visitFrame(FrameInstance frameInstance) {
                 Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
                 FrameDescriptor frameDescriptor = current.getFrameDescriptor();
-                FrameSlot methodSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.METHOD);
-                FrameSlot markerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.MARKER);
+                FrameSlot methodSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.METHOD);
+                FrameSlot markerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.MARKER);
                 if (methodSlot != null && markerSlot != null) {
                     Object frameMethod = FrameUtil.getObjectSafe(current, methodSlot);
                     Object frameMarker = FrameUtil.getObjectSafe(current, markerSlot);
@@ -66,7 +66,7 @@ public abstract class PrimNextHandlerContext extends PrimitiveUnaryOperation {
             public Object visitFrame(FrameInstance frameInstance) {
                 Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
                 FrameDescriptor frameDescriptor = current.getFrameDescriptor();
-                FrameSlot methodSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.METHOD);
+                FrameSlot methodSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.METHOD);
                 if (methodSlot != null) {
                     code.image.getOutput().println(FrameUtil.getObjectSafe(current, methodSlot));
                     for (Object arg : current.getArguments()) {

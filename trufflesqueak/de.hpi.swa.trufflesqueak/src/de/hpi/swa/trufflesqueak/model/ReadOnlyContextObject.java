@@ -35,10 +35,10 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
         super(img);
         frame = materializedFrame;
         frameDescriptor = frame.getFrameDescriptor();
-        methodSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.METHOD);
-        markerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.MARKER);
-        closureSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.CLOSURE);
-        rcvrSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.RECEIVER);
+        methodSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.METHOD);
+        markerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.MARKER);
+        closureSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.CLOSURE);
+        rcvrSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.RECEIVER);
         pc = 0;
         stackPointer = getMethod().getNumStackSlots(); // we assume that at this point, we have our
                                                        // temps and args initialized
@@ -120,7 +120,7 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
                 public Object visitFrame(FrameInstance frameInstance) {
                     Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
                     FrameDescriptor currentFD = current.getFrameDescriptor();
-                    FrameSlot currentMarkerSlot = currentFD.findFrameSlot(CompiledCodeObject.MARKER);
+                    FrameSlot currentMarkerSlot = currentFD.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.MARKER);
                     if (foundMyself) {
                         sender = ContextObject.createReadOnlyContextObject(image, current);
                         return sender;

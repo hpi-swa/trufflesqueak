@@ -22,7 +22,7 @@ public class ContextObject extends BaseSqueakObject {
     public static ContextObject createReadOnlyContextObject(SqueakImageContext img, Frame virtualFrame) {
         MaterializedFrame frame = virtualFrame.materialize();
         FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-        FrameSlot selfSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SELF);
+        FrameSlot selfSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.SELF);
         ContextObject contextObject = (ContextObject) FrameUtil.getObjectSafe(frame, selfSlot);
         if (contextObject == null) {
             contextObject = new ContextObject(img, new ReadOnlyContextObject(img, frame));
