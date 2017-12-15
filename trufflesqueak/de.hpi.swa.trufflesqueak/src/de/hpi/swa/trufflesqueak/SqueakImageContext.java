@@ -25,7 +25,7 @@ import de.hpi.swa.trufflesqueak.util.ImageReader;
 
 public class SqueakImageContext {
     public static SqueakImageContext SINGLETON;
-    
+
     // Special objects
     public final Object nil = new NilObject();
     public final boolean sqFalse = false;
@@ -129,6 +129,7 @@ public class SqueakImageContext {
                         null // compiled in class
         };
         CompiledCodeObject entryPoint = new CompiledMethodObject(this, bytes, literals);
+        output.println(String.format("Starting to evaluate %s >> %s:\n", receiver, selector));
         return Truffle.getRuntime().createCallTarget(new SqueakMainNode(getLanguage(), entryPoint));
     }
 

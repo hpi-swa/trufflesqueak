@@ -271,12 +271,12 @@ public class ImageReader {
         initPrebuiltSelectors(image);
 
         // connect all instances to their classes
-        output.println("Connect classes");
+        output.println("Connect classes...");
         for (Chunk chunk : chunklist) {
             chunk.setSqClass(classOf(chunk, image));
         }
 
-        output.println("Instantiate classes");
+        output.println("Instantiate classes...");
         // find all metaclasses and instantiate their singleton instances as class objects
         for (int classtablePtr : chunklist.get(HIDDEN_ROOTS_CHUNK).data()) {
             if (chunktable.get(classtablePtr) != null) {
@@ -295,15 +295,13 @@ public class ImageReader {
         }
 
         // fillin objects
-        output.println("Fillin Objects");
+        output.println("Fillin Objects...");
         for (Chunk chunk : chunklist) {
             Object chunkObject = chunk.asObject();
             if (chunkObject instanceof SqueakObject) {
                 ((SqueakObject) chunkObject).fillin(chunk);
             }
         }
-
-        output.println();
     }
 
     Chunk classChunkOf(Chunk chunk, SqueakImageContext image) {

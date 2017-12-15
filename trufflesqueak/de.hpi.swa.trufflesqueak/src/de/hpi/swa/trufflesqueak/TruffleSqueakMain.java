@@ -15,7 +15,7 @@ import com.oracle.truffle.api.Truffle;
 
 public class TruffleSqueakMain extends AbstractLanguageLauncher {
     private static void executeImage(String... args) throws RuntimeException {
-        System.out.println("== running TruffleSqueak on " + Truffle.getRuntime().getName());
+        System.out.println(String.format("== Running TruffleSqueak on %s ==", Truffle.getRuntime().getName()));
         new TruffleSqueakMain().launch(args);
     }
 
