@@ -12,6 +12,7 @@ public class TestSource extends TestSqueak {
 		CompiledCodeObject code = makeMethod(
 				new byte[] { 0x70, 0x68, 0x10, (byte) 0x8F, 0x10, 0x00, 0x02, 0x10, 0x7D, (byte) 0xC9, 0x7C },
 				literals);
+        CharSequence source = code.getSource().getCharacters();
 		//@formatter:off
 		assertEquals(
             "<70> self\n" + 
@@ -21,7 +22,7 @@ public class TestSource extends TestSqueak {
 			" <10> pushTemp: 0\n" + 
 			" <7D> blockReturn\n" + 
 			"<C9> send: value\n" + 
-			"<7C> returnTop", code.getSource().getCharacters());
+			"<7C> returnTop", source);
 		//@formatter:on
 	}
 }

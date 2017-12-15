@@ -17,16 +17,17 @@ import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.FrameMarker;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.BytecodeSequenceNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.context.PushArgumentNode;
 import de.hpi.swa.trufflesqueak.nodes.context.PushNilNode;
+import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
 public class SqueakMethodNode extends RootNode {
     protected final CompiledCodeObject code;
-    @Children final SqueakNode[] rcvrAndArgsNodes;
-    @Children final SqueakNode[] copiedValuesNodes;
-    @Children final SqueakNode[] tempNodes;
-    @Child BytecodeSequenceNode bytecodeNode;
+    @Children private final SqueakNode[] rcvrAndArgsNodes;
+    @Children private final SqueakNode[] copiedValuesNodes;
+    @Children private final SqueakNode[] tempNodes;
+    @Children private final SqueakBytecodeNode[] bytecodeNodes;
 
     public SqueakMethodNode(SqueakLanguage language, CompiledCodeObject code) {
         this(language, code, true);
@@ -56,6 +57,7 @@ public class SqueakMethodNode extends RootNode {
         for (int i = 0; i < numTemps; i++) {
             tempNodes[i] = new PushNilNode(code);
         }
+        bytecodeNodes = new SqueakBytecodeDecoder(code).decode();
     }
 
     @ExplodeLoop
@@ -83,7 +85,7 @@ public class SqueakMethodNode extends RootNode {
     public Object execute(VirtualFrame frame) {
         enterFrame(frame);
         try {
-            getBytecodeNode().executeGeneric(frame);
+            executeLoop(frame);
         } catch (LocalReturn e) {
             return e.returnValue;
         } catch (NonLocalReturn e) {
@@ -102,12 +104,16 @@ public class SqueakMethodNode extends RootNode {
         throw new RuntimeException("unimplemented exit from activation");
     }
 
-    private BytecodeSequenceNode getBytecodeNode() {
-        if (bytecodeNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            bytecodeNode = new BytecodeSequenceNode(code);
+    @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.MERGE_EXPLODE)
+    private void executeLoop(VirtualFrame frame) {
+        int pc = 0;
+        CompilerAsserts.compilationConstant(bytecodeNodes.length);
+        while (pc >= 0 && pc < bytecodeNodes.length) {
+            CompilerAsserts.partialEvaluationConstant(bytecodeNodes[pc]);
+            pc = bytecodeNodes[pc].executeInt(frame);
         }
-        return bytecodeNode;
+        CompilerDirectives.transferToInterpreter();
+        throw new RuntimeException("Method did not return");
     }
 
     @Override

@@ -1,6 +1,5 @@
 package de.hpi.swa.trufflesqueak.model;
 
-import java.util.Iterator;
 import java.util.Vector;
 
 import com.oracle.truffle.api.Assumption;
@@ -13,19 +12,18 @@ import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.BytecodeSequenceNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.push.PushClosureNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.returns.ReturnTopFromBlockNode;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakMethodNode;
 import de.hpi.swa.trufflesqueak.util.BitSplitter;
 import de.hpi.swa.trufflesqueak.util.Chunk;
+import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
 public abstract class CompiledCodeObject extends SqueakObject {
     public static class SLOT_IDENTIFIER {
@@ -96,20 +94,18 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     private String generateSourceString() {
         StringBuilder sb = new StringBuilder();
-        int i = 0;
         int indent = 0;
         // TODO: is a new BytecodeSequenceNode needed here?
-        Iterator<Node> childrenIterator = new BytecodeSequenceNode(this).getChildren().iterator();
-        while (childrenIterator.hasNext()) {
-            Node node = childrenIterator.next();
-            if (!(node instanceof SqueakBytecodeNode)) {
+        SqueakBytecodeNode[] bytecodeNodes = new SqueakBytecodeDecoder(this).decode();
+        for (int i = 0; i < bytecodeNodes.length; i++) {
+            SqueakBytecodeNode node = bytecodeNodes[i];
+            if (node == null) {
                 continue;
             }
             for (int j = 0; j < indent; j++) {
                 sb.append(" ");
             }
-            SqueakBytecodeNode sqNode = (SqueakBytecodeNode) node;
-            int numBytecodes = sqNode.getNumBytecodes();
+            int numBytecodes = node.getNumBytecodes();
             sb.append("<");
             for (int j = i; j < i + numBytecodes; j++) {
                 if (j > i) {
@@ -120,8 +116,8 @@ public abstract class CompiledCodeObject extends SqueakObject {
                 }
             }
             sb.append("> ");
-            sb.append(sqNode.toString());
-            if (childrenIterator.hasNext()) {
+            sb.append(node.toString());
+            if (i < bytecodeNodes.length - 1) {
                 sb.append("\n");
             }
 
@@ -130,8 +126,6 @@ public abstract class CompiledCodeObject extends SqueakObject {
             } else if (node instanceof ReturnTopFromBlockNode) {
                 indent--;
             }
-
-            i += numBytecodes;
         }
         return sb.toString();
     }
