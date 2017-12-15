@@ -7,9 +7,4 @@ public class SendSelectorNode extends AbstractSendNode {
     public SendSelectorNode(CompiledCodeObject code, int index, int numBytecodes, BaseSqueakObject sel, int argcount) {
         super(code, index, numBytecodes, sel, argcount);
     }
-
-    @Override
-    public String toString() {
-        return "send: " + selector.toString();
-    }
 }

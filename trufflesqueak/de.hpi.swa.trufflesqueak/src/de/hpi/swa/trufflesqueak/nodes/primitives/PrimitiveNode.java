@@ -5,15 +5,15 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
+import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithCode;
 
-public class PrimitiveNode extends SqueakBytecodeNode {
+public class PrimitiveNode extends SqueakNodeWithCode {
     protected static boolean isNil(Object obj) {
         return obj instanceof NilObject;
     }
 
     public PrimitiveNode(CompiledMethodObject code) {
-        super(code, 0);
+        super(code);
     }
 
     @Override

@@ -12,12 +12,12 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 
 public class CallPrimitiveNode extends SqueakBytecodeNode {
-    @Child PrimitiveNode primitive;
+    @Child PrimitiveNode primitiveNode;
 
     @SuppressWarnings("unused")
     public CallPrimitiveNode(CompiledCodeObject code, int index, int numBytecodes, int unusedA, int unusedB) {
         super(code, index, numBytecodes);
-        primitive = PrimitiveNodeFactory.forIdx(code, code.primitiveIndex());
+        primitiveNode = PrimitiveNodeFactory.forIdx(code, code.primitiveIndex());
         // the unused two bytes are skipped but belong to this bytecode
     }
 
@@ -25,7 +25,7 @@ public class CallPrimitiveNode extends SqueakBytecodeNode {
     public Object executeGeneric(VirtualFrame frame) {
         assert successorIndex == 3; // two skipped bytes plus next
         try {
-            throw new LocalReturn(primitive.executeGeneric(frame));
+            throw new LocalReturn(primitiveNode.executeGeneric(frame));
         } catch (UnsupportedSpecializationException
                         | PrimitiveFailed
                         | IndexOutOfBoundsException e) {
@@ -46,6 +46,6 @@ public class CallPrimitiveNode extends SqueakBytecodeNode {
     @Override
     public void setSourceSection(SourceSection section) {
         super.setSourceSection(section);
-        primitive.setSourceSection(section);
+        primitiveNode.setSourceSection(section);
     }
 }

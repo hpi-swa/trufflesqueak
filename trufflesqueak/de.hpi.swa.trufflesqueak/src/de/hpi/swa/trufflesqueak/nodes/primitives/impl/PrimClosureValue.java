@@ -3,7 +3,6 @@ package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.BlockClosure;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
@@ -31,13 +30,6 @@ public abstract class PrimClosureValue extends PrimitiveNode {
             super(method2);
         }
 
-        @Override
-        public final Object executeGeneric(VirtualFrame frame) {
-            return executeGeneric(receiverNode.execute(frame));
-        }
-
-        public abstract Object executeGeneric(Object receiver);
-
         @Specialization
         protected Object value(BlockClosure block) {
             return dispatch.executeBlock(block, block.getFrameArguments());
@@ -51,14 +43,6 @@ public abstract class PrimClosureValue extends PrimitiveNode {
         public PrimClosureValue1(CompiledMethodObject method2) {
             super(method2);
         }
-
-        @Override
-        public final Object executeGeneric(VirtualFrame frame) {
-            Object[] args = bottomNNode.execute(frame);
-            return executeGeneric(args[0], args[1]);
-        }
-
-        public abstract Object executeGeneric(Object receiver, Object arg1);
 
         @Specialization
         protected Object value(BlockClosure block, Object arg) {
@@ -74,14 +58,6 @@ public abstract class PrimClosureValue extends PrimitiveNode {
             super(method2);
         }
 
-        @Override
-        public final Object executeGeneric(VirtualFrame frame) {
-            Object[] args = bottomNNode.execute(frame);
-            return executeGeneric(args[0], args[1], args[2]);
-        }
-
-        public abstract Object executeGeneric(Object receiver, Object arg1, Object arg2);
-
         @Specialization
         protected Object value(BlockClosure block, Object arg1, Object arg2) {
             return dispatch.executeBlock(block, block.getFrameArguments(arg1, arg2));
@@ -95,12 +71,6 @@ public abstract class PrimClosureValue extends PrimitiveNode {
 
         public PrimClosureValue3(CompiledMethodObject method2) {
             super(method2);
-        }
-
-        @Override
-        public final Object executeGeneric(VirtualFrame frame) {
-            Object[] args = bottomNNode.execute(frame);
-            return executeGeneric(args[0], args[1], args[2], args[3]);
         }
 
         public abstract Object executeGeneric(Object receiver, Object arg1, Object arg2, Object arg3);
@@ -120,14 +90,6 @@ public abstract class PrimClosureValue extends PrimitiveNode {
             super(method2);
         }
 
-        @Override
-        public final Object executeGeneric(VirtualFrame frame) {
-            Object[] args = bottomNNode.execute(frame);
-            return executeGeneric(args[0], args[1], args[2], args[3], args[4]);
-        }
-
-        public abstract Object executeGeneric(Object receiver, Object arg1, Object arg2, Object arg3, Object arg4);
-
         @Specialization
         protected Object value(BlockClosure block, Object arg1, Object arg2, Object arg3, Object arg4) {
             return dispatch.executeBlock(block, block.getFrameArguments(arg1, arg2, arg3, arg4));
@@ -141,15 +103,6 @@ public abstract class PrimClosureValue extends PrimitiveNode {
         public PrimClosureValueAry(CompiledMethodObject method2) {
             super(method2);
         }
-
-        @Override
-        public final Object executeGeneric(VirtualFrame frame) {
-            // TODO: check this actually works
-            Object[] args = bottomNNode.execute(frame);
-            return executeGeneric(args[0], args[1]);
-        }
-
-        public abstract Object executeGeneric(Object receiver, Object argArray);
 
         @Specialization
         protected Object value(BlockClosure block, ListObject argArray) {

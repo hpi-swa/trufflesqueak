@@ -18,6 +18,15 @@ public class PrimDebugger extends PrimitiveNode {
         super(code);
     }
 
+    @SuppressWarnings("unused")
+    public int executeInt(VirtualFrame frame) {
+        return -1;
+    }
+
+    @SuppressWarnings("unused")
+    public void executeVoid(VirtualFrame frame) {
+    }
+
     @Override
     public Object executeGeneric(VirtualFrame frame) {
         throw new PrimitiveFailed();

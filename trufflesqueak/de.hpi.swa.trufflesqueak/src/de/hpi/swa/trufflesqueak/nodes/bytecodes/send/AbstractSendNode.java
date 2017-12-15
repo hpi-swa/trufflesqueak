@@ -53,6 +53,11 @@ public abstract class AbstractSendNode extends SqueakBytecodeNode {
     }
 
     @Override
+    public String toString() {
+        return "send: " + selector.toString();
+    }
+
+    @Override
     protected boolean isTaggedWith(Class<?> tag) {
         return ((tag == StandardTags.StatementTag.class) || (tag == StandardTags.CallTag.class));
     }

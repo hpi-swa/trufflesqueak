@@ -23,4 +23,9 @@ public class SingleExtendedSuperNode extends AbstractSendNode {
     public SingleExtendedSuperNode(CompiledCodeObject code, int index, int numBytecodes, int rawByte) {
         this(code, index, numBytecodes, rawByte & 31, rawByte >> 5);
     }
+
+    @Override
+    public String toString() {
+        return "sendSuper: " + selector.toString();
+    }
 }
