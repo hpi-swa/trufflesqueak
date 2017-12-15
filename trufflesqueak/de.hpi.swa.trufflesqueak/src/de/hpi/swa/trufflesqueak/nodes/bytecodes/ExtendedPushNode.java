@@ -1,6 +1,10 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.push.PushLiteralConstantNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.push.PushLiteralVariableNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.push.PushReceiverVariableNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.push.PushTempNode;
 
 public class ExtendedPushNode extends ExtendedAccess {
     private ExtendedPushNode() {

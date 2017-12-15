@@ -9,11 +9,11 @@ import com.oracle.truffle.api.nodes.Node;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.BytecodeSequenceNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.DupNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.PopNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushConstantNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.ConditionalJumpNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.push.PushConstantNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.returns.ReturnReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SendSelectorNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.store.PopNode;
 
 public class TestDecoder extends TestSqueak {
 	@Test

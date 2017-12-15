@@ -1,6 +1,9 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.store.PopIntoAssociationNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.store.PopIntoReceiverVariableNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.store.PopIntoTempNode;
 
 public class ExtendedStoreAndPopNode extends ExtendedAccess {
     private ExtendedStoreAndPopNode() {

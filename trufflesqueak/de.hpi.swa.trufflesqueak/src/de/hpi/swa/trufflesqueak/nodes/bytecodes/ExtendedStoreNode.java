@@ -1,6 +1,9 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.store.StoreIntoAssociationNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.store.StoreIntoReceiverVariableNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.store.StoreIntoTempNode;
 
 public class ExtendedStoreNode extends ExtendedAccess {
 

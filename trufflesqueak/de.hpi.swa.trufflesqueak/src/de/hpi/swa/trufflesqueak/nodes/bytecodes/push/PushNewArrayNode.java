@@ -1,9 +1,10 @@
-package de.hpi.swa.trufflesqueak.nodes.bytecodes;
+package de.hpi.swa.trufflesqueak.nodes.bytecodes.push;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
 
 public class PushNewArrayNode extends SqueakBytecodeNode {
     @Child SqueakNode pushArrayNode;

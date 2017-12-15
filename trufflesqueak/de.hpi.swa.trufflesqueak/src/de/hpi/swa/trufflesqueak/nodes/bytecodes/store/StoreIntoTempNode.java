@@ -1,8 +1,9 @@
-package de.hpi.swa.trufflesqueak.nodes.bytecodes;
+package de.hpi.swa.trufflesqueak.nodes.bytecodes.store;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotWriteNode;
 
 public class StoreIntoTempNode extends SqueakBytecodeNode {

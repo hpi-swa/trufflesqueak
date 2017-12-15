@@ -1,9 +1,10 @@
-package de.hpi.swa.trufflesqueak.nodes.bytecodes;
+package de.hpi.swa.trufflesqueak.nodes.bytecodes.store;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.WriteNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.context.FrameReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtPutNode;
 

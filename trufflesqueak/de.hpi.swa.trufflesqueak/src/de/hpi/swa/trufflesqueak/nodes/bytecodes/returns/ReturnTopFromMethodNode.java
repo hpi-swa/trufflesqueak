@@ -1,4 +1,4 @@
-package de.hpi.swa.trufflesqueak.nodes.bytecodes;
+package de.hpi.swa.trufflesqueak.nodes.bytecodes.returns;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 

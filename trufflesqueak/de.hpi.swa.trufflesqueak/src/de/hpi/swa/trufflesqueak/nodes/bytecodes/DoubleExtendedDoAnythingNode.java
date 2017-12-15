@@ -1,8 +1,13 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.push.PushLiteralConstantNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.push.PushLiteralVariableNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.push.PushReceiverVariableNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SendSelfSelector;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SingleExtendedSuperNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.store.PopIntoReceiverVariableNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.store.StoreIntoAssociationNode;
 
 public abstract class DoubleExtendedDoAnythingNode {
     public static class StoreIntoReceiverVariableNode extends PopIntoReceiverVariableNode {

@@ -18,7 +18,7 @@ import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreIntoAssociationNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.store.StoreIntoAssociationNode;
 import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotReadNode;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakMethodNode;
 
