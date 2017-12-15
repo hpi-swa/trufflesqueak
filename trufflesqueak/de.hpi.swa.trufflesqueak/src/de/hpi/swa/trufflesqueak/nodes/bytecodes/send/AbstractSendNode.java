@@ -12,6 +12,7 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PopNReversedStackNode;
+import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
 
 public abstract class AbstractSendNode extends SqueakBytecodeNode {
     public final Object selector;
@@ -20,6 +21,7 @@ public abstract class AbstractSendNode extends SqueakBytecodeNode {
     @Child private LookupNode lookupNode;
     @Child private DispatchNode dispatchNode;
     @Child private PopNReversedStackNode popNReversedNode;
+    @Child private PushStackNode pushNode;
 
     public AbstractSendNode(CompiledCodeObject code, int index, int numBytecodes, Object sel, int argcount) {
         super(code, index, numBytecodes);
@@ -28,12 +30,13 @@ public abstract class AbstractSendNode extends SqueakBytecodeNode {
         lookupClassNode = SqueakLookupClassNode.create(code);
         dispatchNode = DispatchNode.create();
         lookupNode = LookupNode.create();
+        pushNode = new PushStackNode(code);
         popNReversedNode = new PopNReversedStackNode(code, 1 + argumentCount);
     }
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
-        return push(frame, executeSend(frame));
+        return pushNode.executeWrite(frame, executeSend(frame));
         // TODO: Object as Method
     }
 

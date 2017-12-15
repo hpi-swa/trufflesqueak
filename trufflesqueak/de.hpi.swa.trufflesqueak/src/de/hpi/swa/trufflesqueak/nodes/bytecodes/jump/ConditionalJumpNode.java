@@ -7,13 +7,11 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PopStackNode;
 
 public class ConditionalJumpNode extends AbstractJump {
-    @CompilationFinal private final int alternativeSuccessorIndex;
     @CompilationFinal private final Boolean isIfTrue;
     @Child private PopStackNode popNode;
 
     private ConditionalJumpNode(CompiledCodeObject code, int index, int numBytecodes, int offset, boolean condition) {
         super(code, index, numBytecodes, offset);
-        alternativeSuccessorIndex = index + numBytecodes + offset;
         isIfTrue = condition;
         popNode = new PopStackNode(code);
     }
@@ -29,7 +27,7 @@ public class ConditionalJumpNode extends AbstractJump {
     @Override
     public int executeInt(VirtualFrame frame) {
         if (popNode.execute(frame) == isIfTrue) {
-            return alternativeSuccessorIndex;
+            return successorIndex + offset;
         } else {
             return successorIndex;
         }
