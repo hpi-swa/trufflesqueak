@@ -105,7 +105,7 @@ public class SqueakMethodNode extends RootNode {
     private BytecodeSequenceNode getBytecodeNode() {
         if (bytecodeNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            bytecodeNode = code.getBytecodeNode();
+            bytecodeNode = new BytecodeSequenceNode(code);
         }
         return bytecodeNode;
     }

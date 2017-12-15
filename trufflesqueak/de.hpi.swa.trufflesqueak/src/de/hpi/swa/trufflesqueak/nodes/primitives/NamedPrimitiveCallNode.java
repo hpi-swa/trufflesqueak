@@ -3,9 +3,9 @@ package de.hpi.swa.trufflesqueak.nodes.primitives;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 
-public abstract class AbstractPrimitiveCallNode extends PrimitiveNode {
-    private AbstractPrimitiveCallNode() {
-        super(null);
+public class NamedPrimitiveCallNode extends PrimitiveNode {
+    private NamedPrimitiveCallNode(CompiledMethodObject code) {
+        super(code);
     }
 
     public static PrimitiveNode create(CompiledMethodObject code) {

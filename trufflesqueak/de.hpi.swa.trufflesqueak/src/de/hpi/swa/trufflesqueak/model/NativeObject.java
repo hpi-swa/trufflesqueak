@@ -65,9 +65,6 @@ public class NativeObject extends SqueakObject implements TruffleObject {
 
     @Override
     public String toString() {
-        if (content == null) {
-            return "Unfilled NativeObject";
-        }
         return new String(content.array());
     }
 

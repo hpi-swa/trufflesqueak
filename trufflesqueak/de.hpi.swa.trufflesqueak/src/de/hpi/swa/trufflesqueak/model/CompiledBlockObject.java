@@ -10,16 +10,16 @@ public class CompiledBlockObject extends CompiledCodeObject {
     final CompiledMethodObject outerMethod;
     final int numCopiedValues;
 
-    public CompiledBlockObject(CompiledCodeObject method, int numArgs, int numCopied) {
-        super(method.image);
-        outerMethod = method.getMethod();
+    public CompiledBlockObject(CompiledCodeObject code, int numArgs, int numCopied) {
+        super(code.image);
+        outerMethod = code.getMethod();
         numCopiedValues = numCopied;
-        Object[] lits = outerMethod.getLiterals();
-        lits = Arrays.copyOf(lits, lits.length - 1);
+        Object[] outerLiterals = outerMethod.getLiterals();
+        outerLiterals = Arrays.copyOf(outerLiterals, outerLiterals.length - 1);
         int baseHdr = ((numArgs & 0xF) << 24) | (((outerMethod.getNumTemps() + numCopied) & 0x3F) << 18);
-        lits[0] = baseHdr; // replace header
-        lits[lits.length - 1] = outerMethod; // last literal is back pointer to method
-        literals = lits;
+        outerLiterals[0] = baseHdr; // replace header
+        outerLiterals[outerLiterals.length - 1] = outerMethod; // last literal is back pointer to method
+        this.literals = outerLiterals;
         decodeHeader();
     }
 
@@ -74,7 +74,7 @@ public class CompiledBlockObject extends CompiledCodeObject {
         return new CompiledBlockObject(this);
     }
 
-    public void initializeWithBytes(byte[] bytes) {
-        initializeBytesNode(bytes);
+    public void setBytes(byte[] bytes) {
+        this.bytes = bytes;
     }
 }

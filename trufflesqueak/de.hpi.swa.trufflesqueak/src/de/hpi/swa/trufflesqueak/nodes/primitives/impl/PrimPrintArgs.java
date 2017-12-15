@@ -12,6 +12,10 @@ public class PrimPrintArgs extends PrimitiveNode {
         super(code);
     }
 
+    public static PrimPrintArgs create(CompiledMethodObject code) {
+        return new PrimPrintArgs(code);
+    }
+
     @TruffleBoundary
     private static void debugPrint(Object o) {
         if (o instanceof NativeObject) {
@@ -27,6 +31,6 @@ public class PrimPrintArgs extends PrimitiveNode {
         for (int i = 1; i < arguments.length; i++) {
             debugPrint(arguments[i]);
         }
-        return null;
+        return code.image.nil;
     }
 }

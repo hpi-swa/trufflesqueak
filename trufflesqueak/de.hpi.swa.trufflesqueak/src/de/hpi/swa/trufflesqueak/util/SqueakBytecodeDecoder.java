@@ -43,14 +43,19 @@ public class SqueakBytecodeDecoder {
     private int currentIndex = 0;
     private final byte[] bc;
 
-    public SqueakBytecodeDecoder(byte[] bc, CompiledCodeObject code) {
-        this.bc = bc;
+    public SqueakBytecodeDecoder(CompiledCodeObject code) {
         this.code = code;
+        this.bc = code.getBytes();
     }
 
-    public SqueakBytecodeNode[] decode(SqueakBytecodeNode[] nodes) {
+    public SqueakBytecodeNode[] decode() {
+        SqueakBytecodeNode[] nodes = new SqueakBytecodeNode[bc.length];
+        int i = 1;
         while (currentIndex < bc.length) {
-            nodes[currentIndex] = decodeNextByte();
+            int index = currentIndex;
+            nodes[index] = decodeNextByte();
+            nodes[index].lineNumber = i;
+            i++;
         }
         return nodes;
     }

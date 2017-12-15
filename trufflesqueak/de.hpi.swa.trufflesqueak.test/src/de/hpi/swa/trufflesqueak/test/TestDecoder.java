@@ -22,8 +22,8 @@ public class TestDecoder extends TestSqueak {
 		// pushConstant: 1, dup, pushConstant: nil, send: ==, jumpFalse: 24, pop,
 		// pushConstant: true, send: class, pop, returnSelf
 		int[] bytes = { 0x76, 0x88, 0x73, 0xc6, 0x99, 0x87, 0x71, 0xc7, 0x87, 0x78 };
-		CompiledCodeObject cm = makeMethod(bytes);
-		BytecodeSequenceNode bytecodeSequence = cm.getBytecodeNode();
+		CompiledCodeObject code = makeMethod(bytes);
+		BytecodeSequenceNode bytecodeSequence = new BytecodeSequenceNode(code);
 		Iterator<Node> childIterator = bytecodeSequence.getChildren().iterator();
 		assertSame(PushConstantNode.class, childIterator.next().getClass());
 		assertSame(DupNode.class, childIterator.next().getClass());

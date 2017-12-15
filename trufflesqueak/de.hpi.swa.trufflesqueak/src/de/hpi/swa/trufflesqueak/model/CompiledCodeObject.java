@@ -39,8 +39,6 @@ public abstract class CompiledCodeObject extends SqueakObject {
         public static final byte SWITCH = 7;
     }
 
-    // code
-    @CompilationFinal protected BytecodeSequenceNode bytecodeSequenceNode;
     Source source;
     // frame info
     @CompilationFinal private FrameDescriptor frameDescriptor;
@@ -54,6 +52,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
     private final CyclicAssumption callTargetStable = new CyclicAssumption("Compiled method assumption");
     // header info and data
     @CompilationFinal(dimensions = 1) protected Object[] literals;
+    @CompilationFinal(dimensions = 1) protected byte[] bytes;
     @CompilationFinal protected int numArgs;
     @SuppressWarnings("unused") private int numLiterals;
     @SuppressWarnings("unused") private boolean isOptimized;
@@ -78,19 +77,14 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     protected CompiledCodeObject(CompiledCodeObject original) {
         this(original.image, original.getSqClass());
-        setBytecodeSequenceAndLiterals(original.literals, original.bytecodeSequenceNode);
+        setLiteralsAndBytes(original.literals, original.bytes);
     }
 
-    protected void setBytecodeSequenceAndLiterals(Object[] lits, BytecodeSequenceNode bNode) {
-        literals = lits;
+    protected void setLiteralsAndBytes(Object[] literals, byte[] bytes) {
+        this.literals = literals;
         decodeHeader();
-        bytecodeSequenceNode = bNode;
+        this.bytes = bytes;
         updateAndInvalidateCallTargets();
-    }
-
-    protected void initializeBytesNode(byte[] bc) {
-        bytecodeSequenceNode = new BytecodeSequenceNode(bc);
-        bytecodeSequenceNode.initialize(this);
     }
 
     public Source getSource() {
@@ -104,8 +98,8 @@ public abstract class CompiledCodeObject extends SqueakObject {
         StringBuilder sb = new StringBuilder();
         int i = 0;
         int indent = 0;
-        byte[] bytes = bytecodeSequenceNode.getBytes();
-        Iterator<Node> childrenIterator = bytecodeSequenceNode.getChildren().iterator();
+        // TODO: is a new BytecodeSequenceNode needed here?
+        Iterator<Node> childrenIterator = new BytecodeSequenceNode(this).getChildren().iterator();
         while (childrenIterator.hasNext()) {
             Node node = childrenIterator.next();
             if (!(node instanceof SqueakBytecodeNode)) {
@@ -250,8 +244,8 @@ public abstract class CompiledCodeObject extends SqueakObject {
         assert literals == null;
         literals = ptrs;
         decodeHeader();
-        assert bytecodeSequenceNode == null;
-        initializeBytesNode(chunk.getBytes(ptrs.length));
+        assert bytes == null;
+        bytes = chunk.getBytes(ptrs.length);
     }
 
     void decodeHeader() {
@@ -279,9 +273,9 @@ public abstract class CompiledCodeObject extends SqueakObject {
         if (other instanceof CompiledMethodObject) {
             if (super.become(other)) {
                 Object[] literals2 = ((CompiledCodeObject) other).literals;
-                BytecodeSequenceNode bytes2 = ((CompiledCodeObject) other).bytecodeSequenceNode;
-                ((CompiledCodeObject) other).setBytecodeSequenceAndLiterals(literals, bytecodeSequenceNode);
-                this.setBytecodeSequenceAndLiterals(literals2, bytes2);
+                byte[] bytes2 = ((CompiledCodeObject) other).bytes;
+                ((CompiledCodeObject) other).setLiteralsAndBytes(literals, bytes);
+                this.setLiteralsAndBytes(literals2, bytes2);
                 return true;
             }
         }
@@ -294,7 +288,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     @Override
     public int size() {
-        return literals.length * 4 + bytecodeSequenceNode.getBytes().length;
+        return literals.length * 4 + bytes.length;
     }
 
     @Override
@@ -302,7 +296,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
         if (idx < literals.length) {
             return literals[idx / 4];
         } else {
-            return Byte.toUnsignedInt(bytecodeSequenceNode.getBytes()[idx]);
+            return Byte.toUnsignedInt(bytes[idx]);
         }
     }
 
@@ -311,7 +305,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
         if (idx < literals.length) {
             setLiteral(idx / 4, obj);
         } else {
-            bytecodeSequenceNode.setByte(idx, (byte) obj);
+            bytes[idx] = (byte) obj;
         }
     }
 
@@ -338,7 +332,6 @@ public abstract class CompiledCodeObject extends SqueakObject {
     }
 
     public int primitiveIndex() {
-        byte[] bytes = bytecodeSequenceNode.getBytes();
         if (hasPrimitive() && bytes.length >= 3) {
             return Byte.toUnsignedInt(bytes[1]) + (Byte.toUnsignedInt(bytes[2]) << 8);
         } else {
@@ -346,12 +339,12 @@ public abstract class CompiledCodeObject extends SqueakObject {
         }
     }
 
-    public BytecodeSequenceNode getBytecodeNode() {
-        return bytecodeSequenceNode;
-    }
-
     public Object[] getLiterals() {
         return literals;
+    }
+
+    public byte[] getBytes() {
+        return bytes;
     }
 
     abstract public CompiledMethodObject getMethod();
