@@ -16,7 +16,7 @@ public abstract class BaseSqueakObject implements TruffleObject {
     public static boolean isInstance(TruffleObject obj) {
         return obj instanceof BaseSqueakObject;
     }
-    
+
     public abstract void fillin(Chunk chunk);
 
     @Override
@@ -75,7 +75,7 @@ public abstract class BaseSqueakObject implements TruffleObject {
     public int varsize() {
         return size() - instsize();
     }
-    
+
     @Override
     public ForeignAccess getForeignAccess() {
         return BaseSqueakObjectMessageResolutionForeign.ACCESS;

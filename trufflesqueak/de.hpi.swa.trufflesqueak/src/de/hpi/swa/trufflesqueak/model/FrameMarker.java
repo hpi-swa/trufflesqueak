@@ -35,12 +35,12 @@ public final class FrameMarker extends BaseSqueakObject {
 
     @Override
     public int size() {
-        throw new UnsupportedOperationException("Not supported yet."); // To change body of generated methods, choose Tools | Templates.
+        return 0;
     }
 
     @Override
     public int instsize() {
-        throw new UnsupportedOperationException("Not supported yet."); // To change body of generated methods, choose Tools | Templates.
+        return 0;
     }
 
     @Override
@@ -52,5 +52,4 @@ public final class FrameMarker extends BaseSqueakObject {
     public BaseSqueakObject shallowCopy() {
         throw new UnsupportedOperationException("Not supported yet."); // To change body of generated methods, choose Tools | Templates.
     }
-
 }
