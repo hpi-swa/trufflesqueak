@@ -16,8 +16,8 @@ public class PushActiveContextNode extends SqueakBytecodeNode {
     }
 
     @Override
-    public Object executeGeneric(VirtualFrame frame) {
-        return pushNode.executeWrite(frame, ContextObject.createReadOnlyContextObject(code.image, frame));
+    public void executeVoid(VirtualFrame frame) {
+        pushNode.executeWrite(frame, ContextObject.createReadOnlyContextObject(code.image, frame));
     }
 
     @Override

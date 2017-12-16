@@ -3,14 +3,14 @@ package de.hpi.swa.trufflesqueak.nodes.context;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
+import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithCode;
 
-public class ReturnReceiverVariableNode extends SqueakBytecodeNode {
+public class ReturnReceiverVariableNode extends SqueakNodeWithCode {
     @Child private ObjectAtNode fetchNode;
     @Child private ReceiverNode receiverNode = new ReceiverNode();
 
-    public ReturnReceiverVariableNode(CompiledCodeObject code, int index, int varIndex) {
-        super(code, index);
+    public ReturnReceiverVariableNode(CompiledCodeObject code, int varIndex) {
+        super(code);
         fetchNode = ObjectAtNode.create(varIndex);
     }
 

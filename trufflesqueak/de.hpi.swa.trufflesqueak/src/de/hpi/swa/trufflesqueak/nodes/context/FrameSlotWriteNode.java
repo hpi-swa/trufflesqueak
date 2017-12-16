@@ -20,43 +20,38 @@ public abstract class FrameSlotWriteNode extends FrameSlotNode implements WriteN
         return isIllegal(frame) && value == null;
     }
 
+    @SuppressWarnings("unused")
     @Specialization(guards = "isNullWrite(frame, value)")
-    public Object skipNullWrite(@SuppressWarnings("unused") VirtualFrame frame, Object value) {
-        return value;
+    public void skipNullWrite(VirtualFrame frame, Object value) {
     }
 
     @Specialization(guards = "isInt(frame) || isIllegal(frame)")
-    public long writeInt(VirtualFrame frame, int value) {
+    public void writeInt(VirtualFrame frame, int value) {
         slot.setKind(FrameSlotKind.Int);
         frame.setInt(slot, value);
-        return value;
     }
 
     @Specialization(guards = "isLong(frame) || isIllegal(frame)")
-    public long writeLong(VirtualFrame frame, long value) {
+    public void writeLong(VirtualFrame frame, long value) {
         slot.setKind(FrameSlotKind.Long);
         frame.setLong(slot, value);
-        return value;
     }
 
     @Specialization(guards = "isDouble(frame) || isIllegal(frame)")
-    public double writeDouble(VirtualFrame frame, double value) {
+    public void writeDouble(VirtualFrame frame, double value) {
         slot.setKind(FrameSlotKind.Double);
         frame.setDouble(slot, value);
-        return value;
     }
 
     @Specialization(guards = "isBoolean(frame) || isIllegal(frame)")
-    public boolean writeBool(VirtualFrame frame, boolean value) {
+    public void writeBool(VirtualFrame frame, boolean value) {
         slot.setKind(FrameSlotKind.Boolean);
         frame.setBoolean(slot, value);
-        return value;
     }
 
     @Specialization(replaces = {"skipNullWrite", "writeInt", "writeLong", "writeDouble", "writeBool"})
-    public Object writeObject(VirtualFrame frame, Object value) {
+    public void writeObject(VirtualFrame frame, Object value) {
         slot.setKind(FrameSlotKind.Object);
         frame.setObject(slot, value);
-        return value;
     }
 }

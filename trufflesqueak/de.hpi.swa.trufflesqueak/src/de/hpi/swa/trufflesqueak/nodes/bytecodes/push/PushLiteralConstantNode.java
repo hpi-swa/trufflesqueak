@@ -22,8 +22,8 @@ public class PushLiteralConstantNode extends SqueakBytecodeNode {
     }
 
     @Override
-    public Object executeGeneric(VirtualFrame frame) {
-        return pushNode.executeWrite(frame, literalNode.executeGeneric(frame));
+    public void executeVoid(VirtualFrame frame) {
+        pushNode.executeWrite(frame, literalNode.executeGeneric(frame));
     }
 
     @Override

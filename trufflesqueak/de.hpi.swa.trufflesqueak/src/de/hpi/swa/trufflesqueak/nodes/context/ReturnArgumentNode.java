@@ -3,13 +3,13 @@ package de.hpi.swa.trufflesqueak.nodes.context;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
+import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithCode;
 
-public class ReturnArgumentNode extends SqueakBytecodeNode {
+public class ReturnArgumentNode extends SqueakNodeWithCode {
     private final int argumentIndex;
 
     public ReturnArgumentNode(CompiledCodeObject code, int index) {
-        super(code, -1);
+        super(code);
         argumentIndex = index;
     }
 

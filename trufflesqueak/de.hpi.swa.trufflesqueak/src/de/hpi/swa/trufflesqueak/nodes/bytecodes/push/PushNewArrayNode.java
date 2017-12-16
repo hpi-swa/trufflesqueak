@@ -21,14 +21,14 @@ public class PushNewArrayNode extends SqueakBytecodeNode {
     }
 
     @Override
-    public Object executeGeneric(VirtualFrame frame) {
+    public void executeVoid(VirtualFrame frame) {
         Object[] array;
         if (popNReversedNode != null) {
             array = popNReversedNode.execute(frame);
         } else {
             array = new Object[arraySize];
         }
-        return pushNode.executeWrite(frame, code.image.wrap(array));
+        pushNode.executeWrite(frame, code.image.wrap(array));
     }
 
     @Override

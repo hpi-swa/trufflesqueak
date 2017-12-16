@@ -19,12 +19,12 @@ public class PushLiteralVariableNode extends SqueakBytecodeNode {
         super(code, index, numBytecodes);
         this.literalIndex = literalIndex;
         pushNode = new PushStackNode(code);
-        valueNode = ObjectAtNode.create(1, new LiteralConstantNode(code, index, literalIndex));
+        valueNode = ObjectAtNode.create(1, new LiteralConstantNode(code, literalIndex));
     }
 
     @Override
-    public Object executeGeneric(VirtualFrame frame) {
-        return pushNode.executeWrite(frame, valueNode.executeGeneric(frame));
+    public void executeVoid(VirtualFrame frame) {
+        pushNode.executeWrite(frame, valueNode.executeGeneric(frame));
     }
 
     @Override

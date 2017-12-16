@@ -17,8 +17,8 @@ public class PushReceiverNode extends SqueakBytecodeNode {
     }
 
     @Override
-    public Object executeGeneric(VirtualFrame frame) {
-        return pushNode.executeWrite(frame, receiverNode.execute(frame));
+    public void executeVoid(VirtualFrame frame) {
+        pushNode.executeWrite(frame, receiverNode.execute(frame));
     }
 
     @Override

@@ -14,8 +14,8 @@ public class StoreIntoTempNode extends AbstractStoreIntoTempNode {
     }
 
     @Override
-    public Object executeGeneric(VirtualFrame frame) {
-        return storeNode.executeWrite(frame, topNode.execute(frame));
+    public void executeVoid(VirtualFrame frame) {
+        storeNode.executeWrite(frame, topNode.execute(frame));
     }
 
     @Override

@@ -14,8 +14,8 @@ public class PopIntoAssociationNode extends AbstractStoreIntoAssociationNode {
     }
 
     @Override
-    public Object executeGeneric(VirtualFrame frame) {
-        return storeNode.executeWrite(frame, popNode.execute(frame));
+    public void executeVoid(VirtualFrame frame) {
+        storeNode.executeWrite(frame, popNode.execute(frame));
     }
 
     @Override

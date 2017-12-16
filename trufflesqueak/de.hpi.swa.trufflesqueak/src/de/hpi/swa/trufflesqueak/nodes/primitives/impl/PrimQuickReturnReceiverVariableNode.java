@@ -11,7 +11,7 @@ public class PrimQuickReturnReceiverVariableNode extends PrimitiveNode {
 
     public PrimQuickReturnReceiverVariableNode(CompiledMethodObject code, int variableIdx) {
         super(code);
-        actual = new ReturnReceiverVariableNode(code, -1, variableIdx);
+        actual = new ReturnReceiverVariableNode(code, variableIdx);
     }
 
     @Override

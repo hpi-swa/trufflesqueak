@@ -14,8 +14,8 @@ public class StoreIntoRemoteTempNode extends AbstractStoreIntoRemoteTempNode {
     }
 
     @Override
-    public Object executeGeneric(VirtualFrame frame) {
-        return storeNode.executeWrite(getTempArray(frame), topNode.execute(frame));
+    public void executeVoid(VirtualFrame frame) {
+        storeNode.executeWrite(getTempArray(frame), topNode.execute(frame));
     }
 
     @Override

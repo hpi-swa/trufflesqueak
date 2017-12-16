@@ -14,8 +14,8 @@ public class PopIntoRemoteTempNode extends AbstractStoreIntoRemoteTempNode {
     }
 
     @Override
-    public Object executeGeneric(VirtualFrame frame) {
-        return storeNode.executeWrite(getTempArray(frame), popNode.execute(frame));
+    public void executeVoid(VirtualFrame frame) {
+        storeNode.executeWrite(getTempArray(frame), popNode.execute(frame));
     }
 
     @Override

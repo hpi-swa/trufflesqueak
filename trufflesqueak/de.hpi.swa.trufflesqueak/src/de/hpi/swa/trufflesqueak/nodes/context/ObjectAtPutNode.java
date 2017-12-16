@@ -59,11 +59,11 @@ public abstract class ObjectAtPutNode extends SqueakNode implements WriteNode {
         return ObjectAtPutNodeGen.create(idx, null, null);
     }
 
-    public final Object executeWrite(VirtualFrame frame, Object value) {
-        return executeWrite(getObjectNode().executeGeneric(frame), value);
+    public final void executeWrite(VirtualFrame frame, Object value) {
+        executeWrite(getObjectNode().executeGeneric(frame), value);
     }
 
     protected abstract SqueakNode getObjectNode();
 
-    public abstract Object executeWrite(Object target, Object value);
+    public abstract void executeWrite(Object target, Object value);
 }

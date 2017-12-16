@@ -23,14 +23,13 @@ public class CallPrimitiveNode extends SqueakBytecodeNode {
     }
 
     @Override
-    public Object executeGeneric(VirtualFrame frame) {
+    public void executeVoid(VirtualFrame frame) {
         CompilerAsserts.compilationConstant(index);
         try {
             throw new LocalReturn(primitiveNode.executeGeneric(frame));
         } catch (UnsupportedSpecializationException
                         | PrimitiveFailed
                         | IndexOutOfBoundsException e) {
-            return code.image.nil;
         }
     }
 

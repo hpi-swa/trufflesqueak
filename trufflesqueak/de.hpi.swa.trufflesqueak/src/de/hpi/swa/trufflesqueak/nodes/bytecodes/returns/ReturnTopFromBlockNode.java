@@ -15,7 +15,7 @@ public class ReturnTopFromBlockNode extends ReturnNode {
     }
 
     @Override
-    public Object executeGeneric(VirtualFrame frame) {
+    public void executeVoid(VirtualFrame frame) {
         throw new LocalReturn(popNode.execute(frame));
     }
 

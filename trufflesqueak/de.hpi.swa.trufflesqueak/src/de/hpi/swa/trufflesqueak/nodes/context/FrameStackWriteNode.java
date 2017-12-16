@@ -25,6 +25,7 @@ public abstract class FrameStackWriteNode extends Node {
                     @Cached("index") int cachedIndex,
                     @Cached("getFrameSlotForIndex(frame, index)") FrameSlot slot,
                     @Cached("create(slot)") FrameSlotWriteNode writeNode) {
-        return writeNode.executeWrite(frame, value);
+        writeNode.executeWrite(frame, value);
+        return null;
     }
 }

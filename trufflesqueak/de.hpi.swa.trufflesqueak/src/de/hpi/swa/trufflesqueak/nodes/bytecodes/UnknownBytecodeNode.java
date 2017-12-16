@@ -13,7 +13,7 @@ public class UnknownBytecodeNode extends SqueakBytecodeNode {
     }
 
     @Override
-    public Object executeGeneric(VirtualFrame frame) {
+    public void executeVoid(VirtualFrame frame) {
         throw new RuntimeException("Unknown/uninterpreted bytecode " + bytecode);
     }
 

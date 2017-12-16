@@ -17,8 +17,8 @@ public class DupNode extends UnknownBytecodeNode {
     }
 
     @Override
-    public Object executeGeneric(VirtualFrame frame) {
-        return pushNode.executeWrite(frame, topNode.execute(frame));
+    public void executeVoid(VirtualFrame frame) {
+        pushNode.executeWrite(frame, topNode.execute(frame));
     }
 
     @Override

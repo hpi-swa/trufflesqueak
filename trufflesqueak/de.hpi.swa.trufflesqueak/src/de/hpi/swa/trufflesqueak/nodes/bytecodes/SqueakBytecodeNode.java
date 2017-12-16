@@ -44,8 +44,11 @@ public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
         return 0;
     }
 
-    public void executeVoid(VirtualFrame frame) {
-        executeGeneric(frame);
+    public abstract void executeVoid(VirtualFrame frame);
+
+    @Override
+    public Object executeGeneric(VirtualFrame frame) {
+        throw new RuntimeException("Should call executeVoid instead");
     }
 
     public int getNumBytecodes() {

@@ -15,7 +15,7 @@ public class PushNilNode extends SqueakBytecodeNode {
     }
 
     @Override
-    public Object executeGeneric(VirtualFrame frame) {
-        return pushNode.executeWrite(frame, code.image.nil);
+    public void executeVoid(VirtualFrame frame) {
+        pushNode.executeWrite(frame, code.image.nil);
     }
 }

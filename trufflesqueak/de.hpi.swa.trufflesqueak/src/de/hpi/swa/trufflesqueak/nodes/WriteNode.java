@@ -5,5 +5,5 @@ import com.oracle.truffle.api.nodes.NodeInterface;
 
 public interface WriteNode extends NodeInterface {
 
-    public abstract Object executeWrite(VirtualFrame frame, Object value);
+    public abstract void executeWrite(VirtualFrame frame, Object value);
 }

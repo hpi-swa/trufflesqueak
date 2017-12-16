@@ -36,8 +36,8 @@ public abstract class AbstractSendNode extends SqueakBytecodeNode {
     }
 
     @Override
-    public Object executeGeneric(VirtualFrame frame) {
-        return pushNode.executeWrite(frame, executeSend(frame));
+    public void executeVoid(VirtualFrame frame) {
+        pushNode.executeWrite(frame, executeSend(frame));
         // TODO: Object as Method
     }
 

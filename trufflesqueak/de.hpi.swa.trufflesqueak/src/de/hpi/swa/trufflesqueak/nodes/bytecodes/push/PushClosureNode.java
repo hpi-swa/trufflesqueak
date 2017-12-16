@@ -35,14 +35,14 @@ public class PushClosureNode extends SqueakBytecodeNode {
     }
 
     @Override
-    public Object executeGeneric(VirtualFrame frame) {
+    public void executeVoid(VirtualFrame frame) {
         Object frameMarker = FrameUtil.getObjectSafe(frame, code.markerSlot);
         Object[] copiedValues = popNReversedNode.execute(frame);
         int codeStart = index + numBytecodes;
         int codeEnd = codeStart + blockSize;
         byte[] bytes = Arrays.copyOfRange(code.getBytes(), codeStart, codeEnd);
         compiledBlock.setBytes(bytes);
-        return pushNode.executeWrite(frame, new BlockClosure(frameMarker, compiledBlock, receiverNode.execute(frame), copiedValues));
+        pushNode.executeWrite(frame, new BlockClosure(frameMarker, compiledBlock, receiverNode.execute(frame), copiedValues));
     }
 
     @Override

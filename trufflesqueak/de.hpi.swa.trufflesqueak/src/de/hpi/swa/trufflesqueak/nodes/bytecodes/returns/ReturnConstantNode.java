@@ -1,13 +1,13 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes.returns;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.LocalReturn;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 
 public class ReturnConstantNode extends ReturnNode {
-
-    private final Object constant;
+    @CompilationFinal private final Object constant;
 
     public ReturnConstantNode(CompiledCodeObject code, int index, Object obj) {
         super(code, index);
@@ -15,7 +15,7 @@ public class ReturnConstantNode extends ReturnNode {
     }
 
     @Override
-    public Object executeGeneric(VirtualFrame frame) {
+    public void executeVoid(VirtualFrame frame) {
         throw new LocalReturn(constant);
     }
 

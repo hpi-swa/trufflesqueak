@@ -18,8 +18,8 @@ public class PushRemoteTempNode extends RemoteTempBytecodeNode {
     }
 
     @Override
-    public Object executeGeneric(VirtualFrame frame) {
-        return pushNode.executeWrite(frame, readTempNode.executeWith(getTempArray(frame)));
+    public void executeVoid(VirtualFrame frame) {
+        pushNode.executeWrite(frame, readTempNode.executeWith(getTempArray(frame)));
     }
 
     @Override
