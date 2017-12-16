@@ -1,6 +1,7 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags.StatementTag;
@@ -14,12 +15,12 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 
 public class CallPrimitiveNode extends SqueakBytecodeNode {
     @Child private PrimitiveNode primitiveNode;
+    @CompilationFinal private final int primitiveIndex;
 
-    @SuppressWarnings("unused")
-    public CallPrimitiveNode(CompiledCodeObject code, int index, int numBytecodes, int unusedA, int unusedB) {
+    public CallPrimitiveNode(CompiledCodeObject code, int index, int numBytecodes, int byte1, int byte2) {
         super(code, index, numBytecodes);
-        primitiveNode = PrimitiveNodeFactory.forIdx(code, code.primitiveIndex());
-        // the unused two bytes are skipped but belong to this bytecode
+        primitiveIndex = code.hasPrimitive() ? byte1 + (byte2 << 8) : 0;
+        primitiveNode = PrimitiveNodeFactory.forIdx(code, primitiveIndex);
     }
 
     @Override
@@ -35,7 +36,7 @@ public class CallPrimitiveNode extends SqueakBytecodeNode {
 
     @Override
     public String toString() {
-        return "callPrimitive: " + code.primitiveIndex();
+        return "callPrimitive: " + primitiveIndex;
     }
 
     @Override
