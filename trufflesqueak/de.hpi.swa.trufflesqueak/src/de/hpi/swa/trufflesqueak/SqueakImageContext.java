@@ -24,8 +24,6 @@ import de.hpi.swa.trufflesqueak.nodes.roots.SqueakMainNode;
 import de.hpi.swa.trufflesqueak.util.ImageReader;
 
 public class SqueakImageContext {
-    public static SqueakImageContext SINGLETON;
-
     // Special objects
     public final Object nil = new NilObject();
     public final boolean sqFalse = false;
@@ -93,7 +91,6 @@ public class SqueakImageContext {
 
     public SqueakImageContext(SqueakLanguage squeakLanguage, SqueakLanguage.Env environ,
                     PrintWriter out, PrintWriter err) {
-        SINGLETON = this;
         language = squeakLanguage;
         env = environ;
         output = out;

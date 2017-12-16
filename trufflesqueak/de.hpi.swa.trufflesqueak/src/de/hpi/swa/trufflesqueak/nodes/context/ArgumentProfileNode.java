@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes.context;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
@@ -12,10 +13,10 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
 @NodeInfo(cost = NodeCost.NONE)
 public class ArgumentProfileNode extends SqueakNode {
-    @Child SqueakNode argumentNode;
-    private final ConditionProfile objectProfile = ConditionProfile.createBinaryProfile();
-    private final ValueProfile primitiveProfile = PrimitiveValueProfile.createEqualityProfile();
-    private final ValueProfile classProfile = ValueProfile.createClassProfile();
+    @Child private SqueakNode argumentNode;
+    @CompilationFinal private final ConditionProfile objectProfile = ConditionProfile.createBinaryProfile();
+    @CompilationFinal private final ValueProfile primitiveProfile = PrimitiveValueProfile.createEqualityProfile();
+    @CompilationFinal private final ValueProfile classProfile = ValueProfile.createClassProfile();
 
     public ArgumentProfileNode(SqueakNode argNode) {
         argumentNode = argNode;

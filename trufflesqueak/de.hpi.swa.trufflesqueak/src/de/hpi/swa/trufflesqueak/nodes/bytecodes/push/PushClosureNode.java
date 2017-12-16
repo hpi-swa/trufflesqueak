@@ -21,7 +21,7 @@ public class PushClosureNode extends SqueakBytecodeNode {
     @CompilationFinal private final CompiledBlockObject compiledBlock;
     @Child private PopNReversedStackNode popNReversedNode;
     @Child private PushStackNode pushNode;
-    @Child ReceiverNode receiverNode = new ReceiverNode();
+    @Child private ReceiverNode receiverNode = new ReceiverNode();
 
     public PushClosureNode(CompiledCodeObject code, int index, int numBytecodes, int i, int j, int k) {
         super(code, index, numBytecodes);

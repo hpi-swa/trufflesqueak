@@ -81,7 +81,7 @@ public class BaseSqueakObjectMessageResolution {
     public abstract static class BaseSqueakObjectPropertiesNode extends Node {
         @TruffleBoundary
         private static Object obtainKeys(BaseSqueakObject receiver) {
-            return JavaInterop.asTruffleObject(new int[]{5, 6, 7});
+            return JavaInterop.asTruffleObject(receiver.toString());
         }
 
         public Object access(BaseSqueakObject receiver) {

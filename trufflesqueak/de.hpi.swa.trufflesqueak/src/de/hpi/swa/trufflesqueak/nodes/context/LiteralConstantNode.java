@@ -7,7 +7,7 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
 
 public class LiteralConstantNode extends SqueakBytecodeNode {
-    @Child SqueakNode literalNode;
+    @Child private SqueakNode literalNode;
 
     public LiteralConstantNode(CompiledCodeObject method, int idx, int literalIdx) {
         super(method, idx);

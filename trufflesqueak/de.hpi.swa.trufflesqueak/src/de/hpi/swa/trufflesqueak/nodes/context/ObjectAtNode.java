@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes.context;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -9,7 +10,7 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
 @NodeChildren({@NodeChild(value = "objectNode", type = SqueakNode.class)})
 public abstract class ObjectAtNode extends SqueakNode {
-    public final int index;
+    @CompilationFinal private final int index;
 
     protected ObjectAtNode(int variableIndex) {
         index = variableIndex;

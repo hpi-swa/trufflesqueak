@@ -23,7 +23,7 @@ import de.hpi.swa.trufflesqueak.nodes.context.PushNilNode;
 import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
 public class SqueakMethodNode extends RootNode {
-    protected final CompiledCodeObject code;
+    private final CompiledCodeObject code;
     @Children private final SqueakNode[] rcvrAndArgsNodes;
     @Children private final SqueakNode[] copiedValuesNodes;
     @Children private final SqueakNode[] tempNodes;
@@ -61,7 +61,7 @@ public class SqueakMethodNode extends RootNode {
     }
 
     @ExplodeLoop
-    public void enterFrame(VirtualFrame frame) {
+    private void enterFrame(VirtualFrame frame) {
         CompilerDirectives.ensureVirtualized(frame);
         initializeSlots(frame);
         CompilerAsserts.compilationConstant(rcvrAndArgsNodes.length);
@@ -109,7 +109,7 @@ public class SqueakMethodNode extends RootNode {
         int pc = 0;
         CompilerAsserts.compilationConstant(bytecodeNodes.length);
         while (pc >= 0 && pc < bytecodeNodes.length) {
-            CompilerAsserts.partialEvaluationConstant(bytecodeNodes[pc]);
+            CompilerAsserts.partialEvaluationConstant(pc);
             pc = bytecodeNodes[pc].executeInt(frame);
         }
         CompilerDirectives.transferToInterpreter();
@@ -126,7 +126,7 @@ public class SqueakMethodNode extends RootNode {
         return code.toString();
     }
 
-    protected void initializeSlots(VirtualFrame frame) {
+    private void initializeSlots(VirtualFrame frame) {
         frame.setInt(code.stackPointerSlot, -1);
         frame.setObject(code.markerSlot, new FrameMarker());
         frame.setObject(code.methodSlot, code);

@@ -8,10 +8,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.trufflesqueak.nodes.WriteNode;
 
 public abstract class FrameSlotWriteNode extends FrameSlotNode implements WriteNode {
-    public FrameSlotWriteNode(FrameSlotWriteNode original) {
-        super(original.slot);
-    }
-
     protected FrameSlotWriteNode(FrameSlot slot) {
         super(slot);
     }

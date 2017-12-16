@@ -120,18 +120,6 @@ public class LargeInteger extends SqueakObject {
         return integer.toString();
     }
 
-    public BigInteger unwrapBigInt() {
-        return getValue();
-    }
-
-    public int unwrapInt() throws ArithmeticException {
-        return getValue().intValueExact();
-    }
-
-    public long unwrapLong() throws ArithmeticException {
-        return getValue().longValueExact();
-    }
-
     @Override
     public BaseSqueakObject shallowCopy() {
         return new LargeInteger(image, integer);

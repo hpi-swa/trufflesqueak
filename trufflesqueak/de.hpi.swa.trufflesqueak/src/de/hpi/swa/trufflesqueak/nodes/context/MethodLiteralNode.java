@@ -1,12 +1,13 @@
 package de.hpi.swa.trufflesqueak.nodes.context;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithCode;
 
 public class MethodLiteralNode extends SqueakNodeWithCode {
-    public final Object literal;
+    @CompilationFinal private final Object literal;
 
     public MethodLiteralNode(CompiledCodeObject code, int index) {
         super(code);

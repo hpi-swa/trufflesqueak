@@ -11,7 +11,7 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithCode;
 
 @Instrumentable(factory = SqueakBytecodeNodeWrapper.class)
 public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
-    @CompilationFinal protected final int numBytecodes;
+    @CompilationFinal private final int numBytecodes;
     @CompilationFinal protected final int successorIndex;
     @CompilationFinal private SourceSection sourceSection;
     public int lineNumber = 1;

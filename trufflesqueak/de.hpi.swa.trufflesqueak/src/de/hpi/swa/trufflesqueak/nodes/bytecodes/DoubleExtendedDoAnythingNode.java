@@ -10,7 +10,7 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.store.PopIntoReceiverVariableNod
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.store.StoreIntoAssociationNode;
 
 public abstract class DoubleExtendedDoAnythingNode {
-    public static class StoreIntoReceiverVariableNode extends PopIntoReceiverVariableNode {
+    private static class StoreIntoReceiverVariableNode extends PopIntoReceiverVariableNode {
         public StoreIntoReceiverVariableNode(CompiledCodeObject method, int idx, int numBytecodes, int receiverIdx) {
             super(method, idx, numBytecodes, receiverIdx);
         }

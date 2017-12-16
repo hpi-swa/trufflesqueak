@@ -14,10 +14,6 @@ public class PrimDebugger extends PrimitiveNode {
         super((CompiledMethodObject) pm.code);
     }
 
-    public PrimDebugger(CompiledMethodObject code) {
-        super(code);
-    }
-
     @SuppressWarnings("unused")
     public int executeInt(VirtualFrame frame) {
         return -1;

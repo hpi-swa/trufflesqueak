@@ -78,10 +78,6 @@ public class NativeObject extends SqueakObject implements TruffleObject {
         setNativeAt0(index, (int) object);
     }
 
-    public void atput0(int index, int value) {
-        setNativeAt0(index, value);
-    }
-
     public long getNativeAt0(int index) {
         switch (elementSize) {
             case 1:

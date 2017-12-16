@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes.send;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
@@ -15,8 +16,8 @@ import de.hpi.swa.trufflesqueak.nodes.context.stack.PopNReversedStackNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
 
 public abstract class AbstractSendNode extends SqueakBytecodeNode {
-    public final Object selector;
-    public final int argumentCount;
+    @CompilationFinal protected final Object selector;
+    @CompilationFinal private final int argumentCount;
     @Child protected SqueakLookupClassNode lookupClassNode;
     @Child private LookupNode lookupNode;
     @Child private DispatchNode dispatchNode;
@@ -40,7 +41,7 @@ public abstract class AbstractSendNode extends SqueakBytecodeNode {
         // TODO: Object as Method
     }
 
-    public Object executeSend(VirtualFrame frame) {
+    private Object executeSend(VirtualFrame frame) {
         Object[] rcvrAndArgs = popNReversedNode.execute(frame);
         ClassObject rcvrClass;
         try {
@@ -55,6 +56,10 @@ public abstract class AbstractSendNode extends SqueakBytecodeNode {
     @Override
     public String toString() {
         return "send: " + selector.toString();
+    }
+
+    public Object getSelector() {
+        return selector;
     }
 
     @Override

@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes.push;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -11,8 +12,8 @@ import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
 
 public class PushLiteralVariableNode extends SqueakBytecodeNode {
     @Child private PushStackNode pushNode;
-    @Child public SqueakNode valueNode;
-    private final int literalIndex;
+    @Child private SqueakNode valueNode;
+    @CompilationFinal private final int literalIndex;
 
     public PushLiteralVariableNode(CompiledCodeObject code, int index, int numBytecodes, int literalIndex) {
         super(code, index, numBytecodes);

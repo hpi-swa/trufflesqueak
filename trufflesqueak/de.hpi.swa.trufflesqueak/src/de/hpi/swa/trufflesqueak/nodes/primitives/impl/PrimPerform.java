@@ -9,7 +9,6 @@ import de.hpi.swa.trufflesqueak.nodes.DispatchNode;
 import de.hpi.swa.trufflesqueak.nodes.DispatchNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.LookupNode;
 import de.hpi.swa.trufflesqueak.nodes.LookupNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNodeGen;
@@ -17,12 +16,10 @@ import de.hpi.swa.trufflesqueak.nodes.context.stack.BottomNStackNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNode;
 
 public class PrimPerform extends PrimitiveNode {
-    @Child public SqueakNode receiverNode;
-    @Child public SqueakNode selectorNode;
-    @Child protected SqueakLookupClassNode lookupClassNode;
+    @Child private SqueakLookupClassNode lookupClassNode;
     @Child private LookupNode lookupNode;
     @Child private DispatchNode dispatchNode;
-    @Child BottomNStackNode bottomNNode;
+    @Child private BottomNStackNode bottomNNode;
 
     public PrimPerform(CompiledMethodObject code) {
         super(code);

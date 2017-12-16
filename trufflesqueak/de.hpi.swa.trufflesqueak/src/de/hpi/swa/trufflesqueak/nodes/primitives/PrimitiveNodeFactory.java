@@ -85,7 +85,7 @@ public abstract class PrimitiveNodeFactory {
     @SuppressWarnings("unchecked") private static Class<? extends PrimitiveNode>[] indexPrims = new Class[PRIM_COUNT + 1];
     private static Map<String, Map<String, Class<? extends PrimitiveNode>>> namedPrims = new HashMap<>();
 
-    public static enum IndexedPrimitives {
+    private static enum IndexedPrimitives {
         ADD(PrimAddNodeGen.class, 1),
         SUB(PrimSubNodeGen.class, 2),
         LESSTHAN(PrimLessThanNodeGen.class, 3),
@@ -220,7 +220,7 @@ public abstract class PrimitiveNodeFactory {
         }
     }
 
-    public static enum NamedPrimitives {
+    private static enum NamedPrimitives {
         LARGE_ADD(PrimAddNodeGen.class, "LargeIntegers", "primDigitAdd"),
         LARGE_SUB(PrimSubNodeGen.class, "LargeIntegers", "primDigitSubtract"),
         LARGE_MUL(PrimMulNodeGen.class, "LargeIntegers", "primDigitMultiplyNegative"),
@@ -252,7 +252,7 @@ public abstract class PrimitiveNodeFactory {
         NamedPrimitives.values();
     }
 
-    public static SqueakNode arg(CompiledCodeObject code, int index) {
+    private static SqueakNode arg(CompiledCodeObject code, int index) {
         return new ArgumentProfileNode(new ReturnArgumentNode(code, index));
     }
 
@@ -300,7 +300,7 @@ public abstract class PrimitiveNodeFactory {
     }
 
     @TruffleBoundary
-    public static PrimitiveNode forIdx(CompiledMethodObject code, int primitiveIdx) {
+    private static PrimitiveNode forIdx(CompiledMethodObject code, int primitiveIdx) {
         if (primitiveIdx >= indexPrims.length) {
             return new PrimitiveNode(code);
         } else if (primitiveIdx >= 264 && primitiveIdx <= 520) {

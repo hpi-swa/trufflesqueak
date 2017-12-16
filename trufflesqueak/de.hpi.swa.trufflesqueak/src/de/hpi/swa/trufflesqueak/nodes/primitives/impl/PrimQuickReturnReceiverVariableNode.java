@@ -7,7 +7,7 @@ import de.hpi.swa.trufflesqueak.nodes.context.ReturnReceiverVariableNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNode;
 
 public class PrimQuickReturnReceiverVariableNode extends PrimitiveNode {
-    @Child ReturnReceiverVariableNode actual;
+    private @Child ReturnReceiverVariableNode actual;
 
     public PrimQuickReturnReceiverVariableNode(CompiledMethodObject code, int variableIdx) {
         super(code);

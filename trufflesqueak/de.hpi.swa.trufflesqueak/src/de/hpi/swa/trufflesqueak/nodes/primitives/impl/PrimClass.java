@@ -8,7 +8,7 @@ import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveUnaryOperation;
 
 public abstract class PrimClass extends PrimitiveUnaryOperation {
-    @Child SqueakLookupClassNode node;
+    private @Child SqueakLookupClassNode node;
 
     public PrimClass(CompiledMethodObject code) {
         super(code);

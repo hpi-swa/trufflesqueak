@@ -11,7 +11,6 @@ import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameUtil;
 
-import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.util.Chunk;
 
@@ -29,10 +28,6 @@ public class BlockClosure extends BaseSqueakObject {
     @CompilationFinal private Object frameMarker;
     @CompilationFinal private Object context;
     @CompilationFinal private CompiledBlockObject block;
-
-    public BlockClosure(SqueakImageContext img) {
-        super(img);
-    }
 
     public BlockClosure(Object frameId, CompiledBlockObject compiledBlock, Object receiver, Object[] copied) {
         super(compiledBlock.image);

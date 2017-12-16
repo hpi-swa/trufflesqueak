@@ -35,12 +35,12 @@ public class ClassObject extends AbstractPointersObject {
         instanceSize = original.instanceSize;
     }
 
-    public ClassObject(SqueakImageContext img, ClassObject sqClass, Object[] ptrs) {
+    private ClassObject(SqueakImageContext img, ClassObject sqClass, Object[] ptrs) {
         super(img, sqClass);
         pointers = ptrs;
     }
 
-    public ClassObject(SqueakImageContext image, ClassObject classObject, int size) {
+    private ClassObject(SqueakImageContext image, ClassObject classObject, int size) {
         this(image, classObject, new Object[size]);
     }
 
@@ -154,7 +154,7 @@ public class ClassObject extends AbstractPointersObject {
 
     // TODO: cache the methoddict in a better structure than what Squeak provides
     // ... or use the Squeak hash to decide where to put stuff
-    public Object lookup(Predicate<Object> test) {
+    private Object lookup(Predicate<Object> test) {
         Object lookupClass = this;
         while (lookupClass instanceof ClassObject) {
             Object methodDict = ((ClassObject) lookupClass).getMethodDict();
@@ -186,7 +186,7 @@ public class ClassObject extends AbstractPointersObject {
         return lookup(methodSelector -> methodSelector != null && methodSelector.toString().equals(selector));
     }
 
-    public Object doesNotUnderstand() {
+    private Object doesNotUnderstand() {
         Object result = lookup(methodSelector -> methodSelector == image.doesNotUnderstand);
         if (result == null) {
             throw new RuntimeException("doesNotUnderstand missing!");

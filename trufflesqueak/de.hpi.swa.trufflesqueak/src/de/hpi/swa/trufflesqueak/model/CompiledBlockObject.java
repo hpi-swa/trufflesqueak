@@ -3,12 +3,13 @@ package de.hpi.swa.trufflesqueak.model;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 
 public class CompiledBlockObject extends CompiledCodeObject {
-    final CompiledMethodObject outerMethod;
-    final int numCopiedValues;
+    @CompilationFinal private final CompiledMethodObject outerMethod;
+    @CompilationFinal private final int numCopiedValues;
 
     public CompiledBlockObject(CompiledCodeObject code, int numArgs, int numCopied) {
         super(code.image);

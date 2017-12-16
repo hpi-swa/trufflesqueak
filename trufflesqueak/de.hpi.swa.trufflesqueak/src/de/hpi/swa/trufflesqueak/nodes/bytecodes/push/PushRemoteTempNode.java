@@ -9,7 +9,7 @@ import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
 
 public class PushRemoteTempNode extends RemoteTempBytecodeNode {
     @Child private PushStackNode pushNode;
-    @Child ObjectAtNode readTempNode;
+    @Child private ObjectAtNode readTempNode;
 
     public PushRemoteTempNode(CompiledCodeObject code, int index, int numBytecodes, int indexInArray, int indexOfArray) {
         super(code, index, numBytecodes, indexInArray, indexOfArray);

@@ -4,7 +4,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNode;
 
 public class SingleExtendedSuperNode extends AbstractSendNode {
-    public static class SqueakLookupClassSuperNode extends SqueakLookupClassNode {
+    private static class SqueakLookupClassSuperNode extends SqueakLookupClassNode {
         public SqueakLookupClassSuperNode(CompiledCodeObject code) {
             super(code);
         }

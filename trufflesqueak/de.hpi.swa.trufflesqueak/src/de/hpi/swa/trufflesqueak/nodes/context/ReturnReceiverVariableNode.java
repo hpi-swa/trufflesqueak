@@ -6,8 +6,8 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
 
 public class ReturnReceiverVariableNode extends SqueakBytecodeNode {
-    @Child ObjectAtNode fetchNode;
-    @Child ReceiverNode receiverNode = new ReceiverNode();
+    @Child private ObjectAtNode fetchNode;
+    @Child private ReceiverNode receiverNode = new ReceiverNode();
 
     public ReturnReceiverVariableNode(CompiledCodeObject code, int index, int varIndex) {
         super(code, index);

@@ -9,7 +9,7 @@ import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
 
 public class PushReceiverNode extends SqueakBytecodeNode {
     @Child private PushStackNode pushNode;
-    @Child ReceiverNode receiverNode = new ReceiverNode();
+    @Child private ReceiverNode receiverNode = new ReceiverNode();
 
     public PushReceiverNode(CompiledCodeObject code, int index) {
         super(code, index);

@@ -4,13 +4,11 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PopNReversedStackNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
 
 public class PushNewArrayNode extends SqueakBytecodeNode {
-    @Child SqueakNode pushArrayNode;
     @Child private PushStackNode pushNode;
     @Child private PopNReversedStackNode popNReversedNode;
     @CompilationFinal private final int arraySize;

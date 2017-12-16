@@ -12,7 +12,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 
 public class CallPrimitiveNode extends SqueakBytecodeNode {
-    @Child PrimitiveNode primitiveNode;
+    private @Child PrimitiveNode primitiveNode;
 
     @SuppressWarnings("unused")
     public CallPrimitiveNode(CompiledCodeObject code, int index, int numBytecodes, int unusedA, int unusedB) {

@@ -6,7 +6,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
 
 public class FrameReceiverNode extends SqueakBytecodeNode {
-    @Child ReceiverNode receiverNode = new ReceiverNode();
+    private @Child ReceiverNode receiverNode = new ReceiverNode();
 
     public FrameReceiverNode(CompiledCodeObject code) {
         super(code, 0);

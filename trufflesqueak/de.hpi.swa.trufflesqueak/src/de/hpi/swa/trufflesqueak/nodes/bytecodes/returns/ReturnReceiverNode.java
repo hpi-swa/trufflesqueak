@@ -7,7 +7,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.context.ReceiverNode;
 
 public class ReturnReceiverNode extends ReturnNode {
-    @Child ReceiverNode receiverNode = new ReceiverNode();
+    @Child private ReceiverNode receiverNode = new ReceiverNode();
 
     public ReturnReceiverNode(CompiledCodeObject code, int index) {
         super(code, index);

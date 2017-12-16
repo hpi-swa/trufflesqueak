@@ -9,7 +9,7 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveBinaryOperation;
 
 public abstract class PrimBitShift extends PrimitiveBinaryOperation {
-    @Child PrimNormalize normalizeNode;
+    @Child private PrimNormalize normalizeNode;
 
     public PrimBitShift(CompiledMethodObject code) {
         super(code);

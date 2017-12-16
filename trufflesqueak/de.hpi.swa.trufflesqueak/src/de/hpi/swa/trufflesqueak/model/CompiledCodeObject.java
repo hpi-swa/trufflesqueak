@@ -30,14 +30,12 @@ public abstract class CompiledCodeObject extends SqueakObject {
         public static final byte CLOSURE = 0;
         public static final byte SELF = 1;
         public static final byte RECEIVER = 2;
-        public static final byte PC = 3;
-        public static final byte STACK_POINTER = 4;
-        public static final byte MARKER = 5;
-        public static final byte METHOD = 6;
-        public static final byte SWITCH = 7;
+        public static final byte STACK_POINTER = 3;
+        public static final byte MARKER = 4;
+        public static final byte METHOD = 5;
     }
 
-    Source source;
+    private Source source;
     // frame info
     @CompilationFinal private FrameDescriptor frameDescriptor;
     @CompilationFinal public FrameSlot thisContextSlot;
@@ -51,12 +49,12 @@ public abstract class CompiledCodeObject extends SqueakObject {
     // header info and data
     @CompilationFinal(dimensions = 1) protected Object[] literals;
     @CompilationFinal(dimensions = 1) protected byte[] bytes;
-    @CompilationFinal protected int numArgs;
+    @CompilationFinal private int numArgs;
     @SuppressWarnings("unused") private int numLiterals;
     @SuppressWarnings("unused") private boolean isOptimized;
     @CompilationFinal private boolean hasPrimitive;
     @CompilationFinal private boolean needsLargeFrame;
-    @CompilationFinal int numTemps;
+    private @CompilationFinal int numTemps;
     @SuppressWarnings("unused") private int accessModifier;
     @SuppressWarnings("unused") private boolean altInstructionSet;
 
@@ -78,7 +76,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
         setLiteralsAndBytes(original.literals, original.bytes);
     }
 
-    protected void setLiteralsAndBytes(Object[] literals, byte[] bytes) {
+    private void setLiteralsAndBytes(Object[] literals, byte[] bytes) {
         this.literals = literals;
         decodeHeader();
         this.bytes = bytes;
@@ -173,7 +171,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
     }
 
     @TruffleBoundary
-    protected void updateAndInvalidateCallTargets() {
+    private void updateAndInvalidateCallTargets() {
         callTarget = Truffle.getRuntime().createCallTarget(new SqueakMethodNode(image.getLanguage(), this));
         callTargetStable.invalidate();
     }
@@ -321,12 +319,8 @@ public abstract class CompiledCodeObject extends SqueakObject {
         return 0;
     }
 
-    public boolean hasPrimitive() {
-        return hasPrimitive;
-    }
-
     public int primitiveIndex() {
-        if (hasPrimitive() && bytes.length >= 3) {
+        if (hasPrimitive && bytes.length >= 3) {
             return Byte.toUnsignedInt(bytes[1]) + (Byte.toUnsignedInt(bytes[2]) << 8);
         } else {
             return 0;

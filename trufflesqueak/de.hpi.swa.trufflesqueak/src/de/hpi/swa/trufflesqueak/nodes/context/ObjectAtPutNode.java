@@ -2,6 +2,7 @@ package de.hpi.swa.trufflesqueak.nodes.context;
 
 import java.math.BigInteger;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.NodeChildren;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -14,11 +15,7 @@ import de.hpi.swa.trufflesqueak.nodes.WriteNode;
 
 @NodeChildren({@NodeChild(value = "objectNode", type = SqueakNode.class), @NodeChild(value = "valueNode", type = SqueakNode.class)})
 public abstract class ObjectAtPutNode extends SqueakNode implements WriteNode {
-    public final int index;
-
-    public ObjectAtPutNode(ObjectAtPutNode original) {
-        index = original.index;
-    }
+    @CompilationFinal private final int index;
 
     protected ObjectAtPutNode(int variableIndex) {
         index = variableIndex;

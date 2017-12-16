@@ -6,7 +6,7 @@ import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.util.Chunk;
 
 public abstract class BaseSqueakObject implements TruffleObject {
-    protected static final int IDENTITY_HASH_MASK = 0x400000 - 1;
+    private static final int IDENTITY_HASH_MASK = 0x400000 - 1;
     public final SqueakImageContext image;
 
     public BaseSqueakObject(SqueakImageContext img) {

@@ -13,7 +13,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
  */
 @TypeSystemReference(SqueakTypes.class)
 public abstract class SqueakNodeWithCode extends SqueakNode {
-    @CompilationFinal SourceSection sourceSection;
+    @CompilationFinal private SourceSection sourceSection;
     protected final CompiledCodeObject code;
 
     public SqueakNodeWithCode(CompiledCodeObject code) {

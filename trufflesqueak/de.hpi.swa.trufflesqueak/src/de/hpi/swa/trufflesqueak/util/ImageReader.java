@@ -23,10 +23,10 @@ public class ImageReader {
     private static final long SLOTS_MASK = 0xFF << 56;
     private static final long OVERFLOW_SLOTS = 255;
     private static final int HIDDEN_ROOTS_CHUNK = 4; // nil, false, true, freeList, hiddenRoots
-    final BufferedInputStream stream;
-    final ByteBuffer shortBuf = ByteBuffer.allocate(2);
-    final ByteBuffer intBuf = ByteBuffer.allocate(4);
-    final ByteBuffer longBuf = ByteBuffer.allocate(8);
+    private final BufferedInputStream stream;
+    private final ByteBuffer shortBuf = ByteBuffer.allocate(2);
+    private final ByteBuffer intBuf = ByteBuffer.allocate(4);
+    private final ByteBuffer longBuf = ByteBuffer.allocate(8);
     private int headerSize;
     private int endOfMemory;
     private int oldBaseAddress;
@@ -57,7 +57,7 @@ public class ImageReader {
         this.chunktable = new HashMap<>();
     }
 
-    void nextInto(ByteBuffer buf) throws IOException {
+    private void nextInto(ByteBuffer buf) throws IOException {
         assert buf.hasArray();
         this.position += buf.capacity();
         buf.rewind();
@@ -65,28 +65,28 @@ public class ImageReader {
         buf.rewind();
     }
 
-    short nextShort() throws IOException {
+    private short nextShort() throws IOException {
         nextInto(shortBuf);
         return shortBuf.getShort();
     }
 
-    int nextInt() throws IOException {
+    private int nextInt() throws IOException {
         nextInto(intBuf);
         return intBuf.getInt();
     }
 
-    long nextLong() throws IOException {
+    private long nextLong() throws IOException {
         nextInto(longBuf);
         return longBuf.getLong();
     }
 
-    int readVersion() throws IOException {
+    private int readVersion() throws IOException {
         int version = nextInt();
         assert version == 0x00001979;
         return version;
     }
 
-    void readBaseHeader() throws IOException {
+    private void readBaseHeader() throws IOException {
         headerSize = nextInt();
         endOfMemory = nextInt();
         oldBaseAddress = nextInt();
@@ -97,7 +97,7 @@ public class ImageReader {
         extraVMMemory = nextInt();
     }
 
-    void readSpurHeader() throws IOException {
+    private void readSpurHeader() throws IOException {
         numStackPages = nextShort();
         cogCodeSize = nextShort();
         edenBytes = nextInt();
@@ -107,20 +107,20 @@ public class ImageReader {
         freeOldSpace = nextInt();
     }
 
-    void readHeader() throws IOException {
+    private void readHeader() throws IOException {
         readVersion();
         readBaseHeader();
         readSpurHeader();
         skipToBody();
     }
 
-    void skipToBody() throws IOException {
+    private void skipToBody() throws IOException {
         int skip = headerSize - this.position;
         this.stream.skip(skip);
         this.position += skip;
     }
 
-    void readBody(SqueakImageContext image) throws IOException {
+    private void readBody(SqueakImageContext image) throws IOException {
         position = 0;
         int segmentEnd = firstSegmentSize;
         int currentAddressSwizzle = oldBaseAddress;
@@ -195,21 +195,21 @@ public class ImageReader {
         }
     }
 
-    long wordsFor(long size) {
+    private static long wordsFor(long size) {
         // see Spur32BitMemoryManager>>smallObjectBytesForSlots:
         return size <= 1 ? 2 : size + (size & 1);
     }
 
-    Chunk specialObjectChunk(int idx) {
+    private Chunk specialObjectChunk(int idx) {
         Chunk specialObjectsChunk = chunktable.get(specialObjectsPointer);
         return chunktable.get(specialObjectsChunk.data().get(idx));
     }
 
-    void setPrebuiltObject(int idx, Object object) {
+    private void setPrebuiltObject(int idx, Object object) {
         specialObjectChunk(idx).object = object;
     }
 
-    void initPrebuiltConstant(SqueakImageContext image) {
+    private void initPrebuiltConstant(SqueakImageContext image) {
         Chunk specialObjectsChunk = chunktable.get(specialObjectsPointer);
         specialObjectsChunk.object = image.specialObjectsArray;
 
@@ -247,7 +247,7 @@ public class ImageReader {
         setPrebuiltObject(SPECIAL_SELECTORS_INDEX, image.specialSelectors);
     }
 
-    void initPrebuiltSelectors(SqueakImageContext image) {
+    private void initPrebuiltSelectors(SqueakImageContext image) {
         NativeObject[] specialSelectors = new NativeObject[]{
                         image.plus, image.minus, image.lt, image.gt, image.le, image.ge,
                         image.eq, image.ne, image.times, image.div, image.modulo, image.pointAt,
@@ -266,7 +266,7 @@ public class ImageReader {
         }
     }
 
-    void initObjects(SqueakImageContext image) {
+    private void initObjects(SqueakImageContext image) {
         initPrebuiltConstant(image);
         initPrebuiltSelectors(image);
 
@@ -303,7 +303,7 @@ public class ImageReader {
         }
     }
 
-    Chunk classChunkOf(Chunk chunk, SqueakImageContext image) {
+    private Chunk classChunkOf(Chunk chunk, SqueakImageContext image) {
         int majorIdx = majorClassIndexOf(chunk.classid);
         int minorIdx = minorClassIndexOf(chunk.classid);
         Chunk hiddenRoots = chunklist.get(HIDDEN_ROOTS_CHUNK);
@@ -311,19 +311,19 @@ public class ImageReader {
         return chunktable.get(classTablePage.data().get(minorIdx));
     }
 
-    ClassObject classOf(Chunk chunk, SqueakImageContext image) {
+    private ClassObject classOf(Chunk chunk, SqueakImageContext image) {
         return (ClassObject) classChunkOf(chunk, image).asClassObject();
     }
 
-    int majorClassIndexOf(int classid) {
+    private static int majorClassIndexOf(int classid) {
         return classid >> 10;
     }
 
-    int minorClassIndexOf(int classid) {
+    private static int minorClassIndexOf(int classid) {
         return classid & ((1 << 10) - 1);
     }
 
-    public void readImage(SqueakImageContext image) throws IOException {
+    private void readImage(SqueakImageContext image) throws IOException {
         readHeader();
         readBody(image);
         initObjects(image);
