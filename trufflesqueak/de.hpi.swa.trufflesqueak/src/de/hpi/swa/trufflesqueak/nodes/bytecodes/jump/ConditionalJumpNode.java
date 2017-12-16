@@ -8,31 +8,38 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PopStackNode;
 
-public class ConditionalJumpNode extends AbstractJump {
+public class ConditionalJumpNode extends UnconditionalJumpNode {
     public static final int FALSE_SUCCESSOR = 0;
     public static final int TRUE_SUCCESSOR = 1;
     @CompilationFinal private final Boolean isIfTrue;
     @Child private PopStackNode popNode;
     @CompilationFinal(dimensions = 1) private final long[] successorExecutionCount;
 
-    private ConditionalJumpNode(CompiledCodeObject code, int index, int numBytecodes, int offset, boolean condition) {
-        super(code, index, numBytecodes, offset);
-        isIfTrue = condition;
+    public ConditionalJumpNode(CompiledCodeObject code, int index, int numBytecodes, int bytecode) {
+        super(code, index, numBytecodes, bytecode);
+        isIfTrue = false;
         popNode = new PopStackNode(code);
-        successors[1] = index + numBytecodes + offset;
         successorExecutionCount = new long[2];
     }
 
-    public ConditionalJumpNode(CompiledCodeObject code, int index, int numBytecodes, int bytecode) {
-        this(code, index, numBytecodes, shortJumpOffset(bytecode), false);
-    }
-
     public ConditionalJumpNode(CompiledCodeObject code, int index, int numBytecodes, int bytecode, int parameter, boolean condition) {
-        this(code, index, numBytecodes, longJumpOffset(bytecode, parameter), condition);
+        super(code, index, numBytecodes, bytecode, parameter);
+        isIfTrue = condition;
+        popNode = new PopStackNode(code);
+        successorExecutionCount = new long[2];
     }
 
     public boolean executeCondition(VirtualFrame frame) {
         return popNode.execute(frame) == isIfTrue;
+    }
+
+    public int getNoJumpSuccessor() {
+        return index + numBytecodes;
+    }
+
+    @Override
+    protected int longJumpOffset(int bytecode, int parameter) {
+        return ((bytecode & 3) << 8) + parameter;
     }
 
     /*

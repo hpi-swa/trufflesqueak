@@ -28,7 +28,6 @@ public class PushClosureNode extends SqueakBytecodeNode {
         this.numArgs = i & 0xF;
         this.numCopied = (i >> 4) & 0xF;
         this.blockSize = (j << 8) | k;
-        successors[0] = index + numBytecodes + blockSize;
         this.compiledBlock = new CompiledBlockObject(code, numArgs, numCopied);
         pushNode = new PushStackNode(code);
         popNReversedNode = new PopNReversedStackNode(code, numCopied);
@@ -44,6 +43,12 @@ public class PushClosureNode extends SqueakBytecodeNode {
         byte[] bytes = Arrays.copyOfRange(code.getBytes(), codeStart, codeEnd);
         compiledBlock.setBytes(bytes);
         pushNode.executeWrite(frame, new BlockClosure(frameMarker, compiledBlock, receiverNode.execute(frame), copiedValues));
+    }
+
+    @Override
+    public int executeInt(VirtualFrame frame) {
+        executeVoid(frame);
+        return index + numBytecodes + blockSize;
     }
 
     @Override

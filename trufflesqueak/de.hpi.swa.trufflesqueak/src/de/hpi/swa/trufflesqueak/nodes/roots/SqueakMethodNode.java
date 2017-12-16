@@ -84,43 +84,45 @@ public class SqueakMethodNode extends RootNode {
         int pc = 0;
         int backJumpCounter = 0;
         try {
-            outer: while (pc >= 0) {
+            while (pc >= 0) {
                 CompilerAsserts.partialEvaluationConstant(pc);
                 SqueakBytecodeNode node = bytecodeNodes[pc];
-                int[] successors = node.getSuccessors();
                 if (node instanceof ConditionalJumpNode) {
                     ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
                     boolean condition = jumpNode.executeCondition(frame);
                     if (CompilerDirectives.injectBranchProbability(jumpNode.getBranchProbability(ConditionalJumpNode.TRUE_SUCCESSOR), condition)) {
+                        int successor = jumpNode.getJumpSuccessor();
                         if (CompilerDirectives.inInterpreter()) {
                             jumpNode.increaseBranchProbability(ConditionalJumpNode.TRUE_SUCCESSOR);
-                            if (successors[ConditionalJumpNode.TRUE_SUCCESSOR] <= pc) {
+                            if (successor <= pc) {
                                 backJumpCounter++;
                             }
                         }
-                        pc = successors[ConditionalJumpNode.TRUE_SUCCESSOR];
-                        continue outer;
+                        pc = successor;
+                        continue;
                     } else {
+                        int successor = jumpNode.getNoJumpSuccessor();
                         if (CompilerDirectives.inInterpreter()) {
                             jumpNode.increaseBranchProbability(ConditionalJumpNode.FALSE_SUCCESSOR);
-                            if (successors[ConditionalJumpNode.FALSE_SUCCESSOR] <= pc) {
+                            if (successor <= pc) {
                                 backJumpCounter++;
                             }
                         }
-                        pc = successors[ConditionalJumpNode.FALSE_SUCCESSOR];
-                        continue outer;
+                        pc = successor;
+                        continue;
                     }
                 } else if (node instanceof UnconditionalJumpNode) {
+                    int successor = ((UnconditionalJumpNode) node).getJumpSuccessor();
                     if (CompilerDirectives.inInterpreter()) {
-                        if (successors[0] <= pc) {
+                        if (successor <= pc) {
                             backJumpCounter++;
                         }
                     }
-                    pc = successors[0];
-                    continue outer;
+                    pc = successor;
+                    continue;
                 } else {
-                    int successor = node.executeInt(frame);
-                    pc = successors[successor];
+                    pc = node.executeInt(frame);
+                    continue;
                 }
             }
         } finally {
