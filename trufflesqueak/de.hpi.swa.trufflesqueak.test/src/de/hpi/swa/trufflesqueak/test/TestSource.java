@@ -9,7 +9,6 @@ public class TestSource extends TestSqueak {
     @Test
     public void testSource() {
         Object[] literals = new Object[]{14548994, image.nil, image.nil}; // header with numTemp=55
-        // push true, push 1; storeIntoTemp i, quickReturnTop
         CompiledCodeObject code = makeMethod(
                         new byte[]{0x70, 0x68, 0x10, (byte) 0x8F, 0x10, 0x00, 0x02, 0x10, 0x7D, (byte) 0xC9, 0x7C},
                         literals);
