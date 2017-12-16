@@ -27,7 +27,8 @@ public abstract class AbstractJump extends SqueakBytecodeNode {
     }
 
     @Override
-    public abstract int executeInt(VirtualFrame frame);
+    public void executeVoid(VirtualFrame frame) {
+    }
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {

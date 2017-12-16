@@ -31,6 +31,7 @@ public class PushClosureNode extends SqueakBytecodeNode {
         this.compiledBlock = new CompiledBlockObject(code, numArgs, numCopied);
         pushNode = new PushStackNode(code);
         popNReversedNode = new PopNReversedStackNode(code, numCopied);
+        successors[0] = successorIndex + blockSize;
     }
 
     @Override
@@ -42,15 +43,6 @@ public class PushClosureNode extends SqueakBytecodeNode {
         byte[] bytes = Arrays.copyOfRange(code.getBytes(), codeStart, codeEnd);
         compiledBlock.setBytes(bytes);
         return pushNode.executeWrite(frame, new BlockClosure(frameMarker, compiledBlock, receiverNode.execute(frame), copiedValues));
-    }
-
-    @Override
-    public int executeInt(VirtualFrame frame) {
-        if (successorIndex < 0) {
-            throw new RuntimeException("Inner nodes are not allowed to be executed here");
-        }
-        executeVoid(frame);
-        return successorIndex + blockSize; // jump over block
     }
 
     @Override

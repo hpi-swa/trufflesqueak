@@ -13,6 +13,7 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithCode;
 public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
     @CompilationFinal private final int numBytecodes;
     @CompilationFinal protected final int successorIndex;
+    @CompilationFinal(dimensions = 1) protected final int[] successors;
     @CompilationFinal private SourceSection sourceSection;
     public int lineNumber = 1;
 
@@ -20,6 +21,7 @@ public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
         super(original.code);
         numBytecodes = original.numBytecodes;
         successorIndex = original.successorIndex;
+        successors = original.successors;
         setSourceSection(original.getSourceSection());
     }
 
@@ -27,6 +29,7 @@ public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
         super(code);
         this.numBytecodes = numBytecodes;
         this.successorIndex = index + numBytecodes;
+        this.successors = new int[]{index + numBytecodes, -1};
     }
 
     public SqueakBytecodeNode(CompiledCodeObject code, int index) {
@@ -34,11 +37,11 @@ public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
     }
 
     public int executeInt(VirtualFrame frame) {
-        if (successorIndex < 0) {
-            throw new RuntimeException("Inner nodes are not allowed to be executed here");
-        }
+// if (successorIndex < 0) {
+// throw new RuntimeException("Inner nodes are not allowed to be executed here");
+// }
         executeVoid(frame);
-        return successorIndex;
+        return 0;
     }
 
     public void executeVoid(VirtualFrame frame) {
@@ -60,5 +63,9 @@ public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
     @Override
     protected boolean isTaggedWith(Class<?> tag) {
         return tag == StandardTags.StatementTag.class;
+    }
+
+    public int[] getSuccessors() {
+        return successors;
     }
 }

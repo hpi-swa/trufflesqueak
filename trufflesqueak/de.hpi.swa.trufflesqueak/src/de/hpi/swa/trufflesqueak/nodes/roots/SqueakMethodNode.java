@@ -106,14 +106,23 @@ public class SqueakMethodNode extends RootNode {
 
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.MERGE_EXPLODE)
     private void executeLoop(VirtualFrame frame) {
-        int pc = 0;
         CompilerAsserts.compilationConstant(bytecodeNodes.length);
-        while (pc >= 0 && pc < bytecodeNodes.length) {
-            CompilerAsserts.partialEvaluationConstant(pc);
-            pc = bytecodeNodes[pc].executeInt(frame);
+        int ip = 0;
+        outer: while (true) {
+            CompilerAsserts.partialEvaluationConstant(ip);
+            CompilerAsserts.partialEvaluationConstant(bytecodeNodes[ip]);
+            SqueakBytecodeNode node = bytecodeNodes[ip];
+            int successor = node.executeInt(frame);
+            int[] successors = node.getSuccessors();
+            for (int i = 0; i < successors.length; i++) {
+                if (i == successor) {
+                    ip = successors[i];
+                    continue outer;
+                }
+            }
+            CompilerDirectives.transferToInterpreter();
+            throw new RuntimeException("Method did not return");
         }
-        CompilerDirectives.transferToInterpreter();
-        throw new RuntimeException("Method did not return");
     }
 
     @Override
