@@ -33,6 +33,15 @@ public class ConditionalJumpNode extends UnconditionalJumpNode {
         return popNode.execute(frame) == isIfTrue;
     }
 
+    @Override
+    public int executeInt(VirtualFrame frame) {
+        if (executeCondition(frame)) {
+            return getJumpSuccessor();
+        } else {
+            return getNoJumpSuccessor();
+        }
+    }
+
     public int getNoJumpSuccessor() {
         return index + numBytecodes;
     }

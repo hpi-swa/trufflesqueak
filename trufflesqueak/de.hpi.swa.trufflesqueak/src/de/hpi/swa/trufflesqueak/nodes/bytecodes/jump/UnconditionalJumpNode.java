@@ -32,6 +32,11 @@ public class UnconditionalJumpNode extends SqueakBytecodeNode {
     }
 
     @Override
+    public int executeInt(VirtualFrame frame) {
+        return getJumpSuccessor();
+    }
+
+    @Override
     public void executeVoid(VirtualFrame frame) {
         throw new RuntimeException("Jumps cannot be executed like other bytecode nodes");
     }
