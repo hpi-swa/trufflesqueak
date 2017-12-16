@@ -37,9 +37,9 @@ public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
     }
 
     public int executeInt(VirtualFrame frame) {
-// if (successorIndex < 0) {
-// throw new RuntimeException("Inner nodes are not allowed to be executed here");
-// }
+        if (index < 0) {
+            throw new RuntimeException("Inner nodes are not allowed to be executed here");
+        }
         executeVoid(frame);
         return 0;
     }

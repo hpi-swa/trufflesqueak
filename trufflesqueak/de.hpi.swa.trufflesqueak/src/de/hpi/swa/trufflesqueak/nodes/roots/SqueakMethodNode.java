@@ -6,6 +6,7 @@ import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
@@ -17,6 +18,8 @@ import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.FrameMarker;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.ConditionalJumpNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.UnconditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.InitializeStackNode;
 import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
@@ -53,7 +56,7 @@ public class SqueakMethodNode extends RootNode {
     public Object execute(VirtualFrame frame) {
         enterFrame(frame);
         try {
-            executeLoop(frame);
+            return executeLoop(frame);
         } catch (LocalReturn e) {
             return e.returnValue;
         } catch (NonLocalReturn e) {
@@ -72,25 +75,60 @@ public class SqueakMethodNode extends RootNode {
         throw new RuntimeException("unimplemented exit from activation");
     }
 
+    /*
+     * Inspired by Sulong's LLVMDispatchBasicBlockNode (https://goo.gl/4LMzfX).
+     */
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.MERGE_EXPLODE)
-    private void executeLoop(VirtualFrame frame) {
+    private Object executeLoop(VirtualFrame frame) {
         CompilerAsserts.compilationConstant(bytecodeNodes.length);
         int pc = 0;
-        outer: while (true) {
-            CompilerAsserts.partialEvaluationConstant(pc);
-            CompilerAsserts.partialEvaluationConstant(bytecodeNodes[pc]);
-            SqueakBytecodeNode node = bytecodeNodes[pc];
-            int successor = node.executeInt(frame);
-            int[] successors = node.getSuccessors();
-            for (int i = 0; i < successors.length; i++) {
-                if (i == successor) {
-                    pc = successors[i];
+        int backJumpCounter = 0;
+        try {
+            outer: while (pc >= 0) {
+                CompilerAsserts.partialEvaluationConstant(pc);
+                SqueakBytecodeNode node = bytecodeNodes[pc];
+                int[] successors = node.getSuccessors();
+                if (node instanceof ConditionalJumpNode) {
+                    ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
+                    boolean condition = jumpNode.executeCondition(frame);
+                    if (CompilerDirectives.injectBranchProbability(jumpNode.getBranchProbability(ConditionalJumpNode.TRUE_SUCCESSOR), condition)) {
+                        if (CompilerDirectives.inInterpreter()) {
+                            jumpNode.increaseBranchProbability(ConditionalJumpNode.TRUE_SUCCESSOR);
+                            if (successors[ConditionalJumpNode.TRUE_SUCCESSOR] <= pc) {
+                                backJumpCounter++;
+                            }
+                        }
+                        pc = successors[ConditionalJumpNode.TRUE_SUCCESSOR];
+                        continue outer;
+                    } else {
+                        if (CompilerDirectives.inInterpreter()) {
+                            jumpNode.increaseBranchProbability(ConditionalJumpNode.FALSE_SUCCESSOR);
+                            if (successors[ConditionalJumpNode.FALSE_SUCCESSOR] <= pc) {
+                                backJumpCounter++;
+                            }
+                        }
+                        pc = successors[ConditionalJumpNode.FALSE_SUCCESSOR];
+                        continue outer;
+                    }
+                } else if (node instanceof UnconditionalJumpNode) {
+                    if (CompilerDirectives.inInterpreter()) {
+                        if (successors[0] <= pc) {
+                            backJumpCounter++;
+                        }
+                    }
+                    pc = successors[0];
                     continue outer;
+                } else {
+                    int successor = node.executeInt(frame);
+                    pc = successors[successor];
                 }
             }
-            CompilerDirectives.transferToInterpreter();
-            throw new RuntimeException("Method did not return");
+        } finally {
+            assert backJumpCounter >= 0;
+            LoopNode.reportLoopCount(this, backJumpCounter);
         }
+        CompilerDirectives.transferToInterpreter();
+        throw new RuntimeException("Method did not return");
     }
 
     @Override

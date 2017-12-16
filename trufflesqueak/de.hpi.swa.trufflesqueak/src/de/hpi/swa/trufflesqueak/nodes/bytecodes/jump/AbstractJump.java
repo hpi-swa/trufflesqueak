@@ -28,10 +28,6 @@ public abstract class AbstractJump extends SqueakBytecodeNode {
 
     @Override
     public void executeVoid(VirtualFrame frame) {
-    }
-
-    @Override
-    public Object executeGeneric(VirtualFrame frame) {
-        throw new RuntimeException("Jumps cannot be executed");
+        throw new RuntimeException("Jumps cannot be executed like other bytecode nodes");
     }
 }
