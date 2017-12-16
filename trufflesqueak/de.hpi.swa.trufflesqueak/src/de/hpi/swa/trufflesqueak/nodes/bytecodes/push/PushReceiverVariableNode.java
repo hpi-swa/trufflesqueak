@@ -12,7 +12,7 @@ import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
 public class PushReceiverVariableNode extends SqueakBytecodeNode {
     @Child private ObjectAtNode fetchNode;
     @Child private PushStackNode pushNode;
-    @Child private ReceiverNode receiverNode = new ReceiverNode();
+    @Child private ReceiverNode receiverNode;
     @CompilationFinal private final int variableIndex;
 
     public PushReceiverVariableNode(CompiledCodeObject code, int index, int numBytecodes, int varIndex) {
@@ -20,6 +20,7 @@ public class PushReceiverVariableNode extends SqueakBytecodeNode {
         variableIndex = varIndex;
         fetchNode = ObjectAtNode.create(varIndex);
         pushNode = new PushStackNode(code);
+        receiverNode = new ReceiverNode(code);
     }
 
     @Override

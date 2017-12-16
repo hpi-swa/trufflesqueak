@@ -17,16 +17,13 @@ import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.FrameMarker;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
-import de.hpi.swa.trufflesqueak.nodes.context.PushArgumentNode;
-import de.hpi.swa.trufflesqueak.nodes.context.stack.AdjustStackNode;
+import de.hpi.swa.trufflesqueak.nodes.context.stack.InitializeStackNode;
 import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
 public class SqueakMethodNode extends RootNode {
     private final CompiledCodeObject code;
-    @Children private final SqueakBytecodeNode[] rcvrAndArgsNodes;
-    @Children private final SqueakBytecodeNode[] copiedValuesNodes;
+    @Child private InitializeStackNode initStackNode;
     @Children private final SqueakBytecodeNode[] bytecodeNodes;
-    @Child private AdjustStackNode adjustForTempNode;
 
     public SqueakMethodNode(SqueakLanguage language, CompiledCodeObject code) {
         this(language, code, true);
@@ -37,41 +34,18 @@ public class SqueakMethodNode extends RootNode {
         this.code = code;
         int numRcvr = hasReceiver ? 1 : 0;
         int numArgs = code.getNumArgs();
-        rcvrAndArgsNodes = new SqueakBytecodeNode[numRcvr + numArgs];
-        for (int i = 0; i < numRcvr + numArgs; i++) {
-            rcvrAndArgsNodes[i] = new PushArgumentNode(code, i);
-        }
-        if (code instanceof CompiledBlockObject) {
-            int numCopiedValues = code.getNumCopiedValues();
-            copiedValuesNodes = new SqueakBytecodeNode[numCopiedValues];
-            for (int i = 0; i < numCopiedValues; i++) {
-                copiedValuesNodes[i] = new PushArgumentNode(code, numRcvr + numArgs + i);
-            }
-        } else {
-            copiedValuesNodes = null;
-        }
+        int numCopiedValues = code.getNumCopiedValues();
         int numTemps = Math.max(code.getNumTemps() - numArgs, 0);
-        adjustForTempNode = numTemps > 0 ? new AdjustStackNode(code, numTemps) : null;
+        initStackNode = new InitializeStackNode(code, numRcvr + numArgs + numCopiedValues, numTemps);
         bytecodeNodes = new SqueakBytecodeDecoder(code).decode();
     }
 
-    @ExplodeLoop
     private void enterFrame(VirtualFrame frame) {
         CompilerDirectives.ensureVirtualized(frame);
         initializeSlots(frame);
-        CompilerAsserts.compilationConstant(rcvrAndArgsNodes.length);
-        for (SqueakBytecodeNode node : rcvrAndArgsNodes) {
-            node.executeVoid(frame);
-        }
-        if (copiedValuesNodes != null) {
-            CompilerAsserts.compilationConstant(copiedValuesNodes.length);
-            for (SqueakBytecodeNode node : copiedValuesNodes) {
-                node.executeVoid(frame);
-            }
+        initStackNode.executeVoid(frame);
+        if (code instanceof CompiledBlockObject) {
             frame.setInt(code.closureSlot, 1 + code.getNumArgs() + code.getNumCopiedValues());
-        }
-        if (adjustForTempNode != null) {
-            adjustForTempNode.executeVoid(frame);
         }
     }
 

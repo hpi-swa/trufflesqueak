@@ -7,10 +7,11 @@ import de.hpi.swa.trufflesqueak.nodes.context.ReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNode;
 
 public class PrimQuickReturnSelf extends PrimitiveNode {
-    @Child private ReceiverNode receiverNode = new ReceiverNode();
+    @Child private ReceiverNode receiverNode;
 
     public PrimQuickReturnSelf(CompiledMethodObject code) {
         super(code);
+        receiverNode = new ReceiverNode(code);
     }
 
     @Override

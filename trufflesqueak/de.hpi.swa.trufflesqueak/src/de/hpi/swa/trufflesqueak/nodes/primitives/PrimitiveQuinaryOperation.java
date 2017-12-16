@@ -11,9 +11,10 @@ import de.hpi.swa.trufflesqueak.nodes.context.stack.BottomNStackNode;
                 @NodeChild(value = "arg2", type = SqueakNode.class), @NodeChild(value = "arg3", type = SqueakNode.class),
                 @NodeChild(value = "arg4", type = SqueakNode.class)})
 public class PrimitiveQuinaryOperation extends PrimitiveNode {
-    @Child BottomNStackNode bottomNNode = new BottomNStackNode(5);
+    @Child BottomNStackNode bottomNNode;
 
     public PrimitiveQuinaryOperation(CompiledMethodObject code) {
         super(code);
+        bottomNNode = new BottomNStackNode(code, 5);
     }
 }

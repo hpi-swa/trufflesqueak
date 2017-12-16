@@ -21,17 +21,18 @@ public class PushClosureNode extends SqueakBytecodeNode {
     @CompilationFinal private final CompiledBlockObject compiledBlock;
     @Child private PopNReversedStackNode popNReversedNode;
     @Child private PushStackNode pushNode;
-    @Child private ReceiverNode receiverNode = new ReceiverNode();
+    @Child private ReceiverNode receiverNode;
 
     public PushClosureNode(CompiledCodeObject code, int index, int numBytecodes, int i, int j, int k) {
         super(code, index, numBytecodes);
         this.numArgs = i & 0xF;
         this.numCopied = (i >> 4) & 0xF;
         this.blockSize = (j << 8) | k;
+        successors[0] = index + numBytecodes + blockSize;
         this.compiledBlock = new CompiledBlockObject(code, numArgs, numCopied);
         pushNode = new PushStackNode(code);
         popNReversedNode = new PopNReversedStackNode(code, numCopied);
-        successors[0] = index + numBytecodes + blockSize;
+        receiverNode = new ReceiverNode(code);
     }
 
     @Override

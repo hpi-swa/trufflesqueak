@@ -26,7 +26,7 @@ public class PrimPerform extends PrimitiveNode {
         lookupClassNode = SqueakLookupClassNodeGen.create(code);
         dispatchNode = DispatchNodeGen.create();
         lookupNode = LookupNodeGen.create();
-        bottomNNode = new BottomNStackNode(1 + code.getNumArgs());
+        bottomNNode = new BottomNStackNode(code, 1 + code.getNumArgs());
     }
 
     @Override

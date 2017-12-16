@@ -24,10 +24,11 @@ public abstract class PrimClosureValue extends PrimitiveNode {
 
     @NodeChildren({@NodeChild(value = "receiver", type = SqueakNode.class)})
     public static abstract class PrimClosureValue0 extends PrimClosureValue {
-        @Child ReceiverNode receiverNode = new ReceiverNode();
+        @Child ReceiverNode receiverNode;
 
-        public PrimClosureValue0(CompiledMethodObject method2) {
-            super(method2);
+        public PrimClosureValue0(CompiledMethodObject method) {
+            super(method);
+            receiverNode = new ReceiverNode(method);
         }
 
         @Specialization
@@ -38,10 +39,11 @@ public abstract class PrimClosureValue extends PrimitiveNode {
 
     @NodeChildren({@NodeChild(value = "receiver", type = SqueakNode.class), @NodeChild(value = "arg1", type = SqueakNode.class)})
     public static abstract class PrimClosureValue1 extends PrimClosureValue {
-        @Child BottomNStackNode bottomNNode = new BottomNStackNode(2);
+        @Child BottomNStackNode bottomNNode;
 
-        public PrimClosureValue1(CompiledMethodObject method2) {
-            super(method2);
+        public PrimClosureValue1(CompiledMethodObject method) {
+            super(method);
+            bottomNNode = new BottomNStackNode(method, 2);
         }
 
         @Specialization
@@ -52,10 +54,11 @@ public abstract class PrimClosureValue extends PrimitiveNode {
 
     @NodeChildren({@NodeChild(value = "receiver", type = SqueakNode.class), @NodeChild(value = "arg1", type = SqueakNode.class), @NodeChild(value = "arg2", type = SqueakNode.class)})
     public static abstract class PrimClosureValue2 extends PrimClosureValue {
-        @Child BottomNStackNode bottomNNode = new BottomNStackNode(3);
+        @Child BottomNStackNode bottomNNode;
 
-        public PrimClosureValue2(CompiledMethodObject method2) {
-            super(method2);
+        public PrimClosureValue2(CompiledMethodObject method) {
+            super(method);
+            bottomNNode = new BottomNStackNode(method, 3);
         }
 
         @Specialization
@@ -67,10 +70,11 @@ public abstract class PrimClosureValue extends PrimitiveNode {
     @NodeChildren({@NodeChild(value = "receiver", type = SqueakNode.class), @NodeChild(value = "arg1", type = SqueakNode.class), @NodeChild(value = "arg2", type = SqueakNode.class),
                     @NodeChild(value = "arg3", type = SqueakNode.class)})
     public static abstract class PrimClosureValue3 extends PrimClosureValue {
-        @Child BottomNStackNode bottomNNode = new BottomNStackNode(4);
+        @Child BottomNStackNode bottomNNode;
 
-        public PrimClosureValue3(CompiledMethodObject method2) {
-            super(method2);
+        public PrimClosureValue3(CompiledMethodObject method) {
+            super(method);
+            bottomNNode = new BottomNStackNode(method, 4);
         }
 
         public abstract Object executeGeneric(Object receiver, Object arg1, Object arg2, Object arg3);
@@ -84,10 +88,11 @@ public abstract class PrimClosureValue extends PrimitiveNode {
     @NodeChildren({@NodeChild(value = "receiver", type = SqueakNode.class), @NodeChild(value = "arg1", type = SqueakNode.class), @NodeChild(value = "arg2", type = SqueakNode.class),
                     @NodeChild(value = "arg3", type = SqueakNode.class), @NodeChild(value = "arg4", type = SqueakNode.class)})
     public static abstract class PrimClosureValue4 extends PrimClosureValue {
-        @Child BottomNStackNode bottomNNode = new BottomNStackNode(5);
+        @Child BottomNStackNode bottomNNode;
 
-        public PrimClosureValue4(CompiledMethodObject method2) {
-            super(method2);
+        public PrimClosureValue4(CompiledMethodObject method) {
+            super(method);
+            bottomNNode = new BottomNStackNode(method, 5);
         }
 
         @Specialization
@@ -98,10 +103,11 @@ public abstract class PrimClosureValue extends PrimitiveNode {
 
     @NodeChildren({@NodeChild(value = "receiver", type = SqueakNode.class), @NodeChild(value = "argArray", type = SqueakNode.class)})
     public static abstract class PrimClosureValueAry extends PrimClosureValue {
-        @Child BottomNStackNode bottomNNode = new BottomNStackNode(2);
+        @Child BottomNStackNode bottomNNode;
 
-        public PrimClosureValueAry(CompiledMethodObject method2) {
-            super(method2);
+        public PrimClosureValueAry(CompiledMethodObject method) {
+            super(method);
+            bottomNNode = new BottomNStackNode(method, 2);
         }
 
         @Specialization

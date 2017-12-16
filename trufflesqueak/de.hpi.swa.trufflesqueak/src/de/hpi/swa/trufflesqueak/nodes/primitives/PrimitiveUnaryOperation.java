@@ -9,9 +9,10 @@ import de.hpi.swa.trufflesqueak.nodes.context.ReceiverNode;
 
 @NodeChildren({@NodeChild(value = "receiver", type = SqueakNode.class)})
 public class PrimitiveUnaryOperation extends PrimitiveNode {
-    @Child ReceiverNode receiverNode = new ReceiverNode();
+    @Child ReceiverNode receiverNode;
 
     public PrimitiveUnaryOperation(CompiledMethodObject code) {
         super(code);
+        receiverNode = new ReceiverNode(code);
     }
 }

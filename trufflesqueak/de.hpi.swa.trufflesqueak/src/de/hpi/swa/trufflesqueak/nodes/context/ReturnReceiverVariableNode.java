@@ -7,11 +7,12 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithCode;
 
 public class ReturnReceiverVariableNode extends SqueakNodeWithCode {
     @Child private ObjectAtNode fetchNode;
-    @Child private ReceiverNode receiverNode = new ReceiverNode();
+    @Child private ReceiverNode receiverNode;
 
     public ReturnReceiverVariableNode(CompiledCodeObject code, int varIndex) {
         super(code);
         fetchNode = ObjectAtNode.create(varIndex);
+        receiverNode = new ReceiverNode(code);
     }
 
     @Override
