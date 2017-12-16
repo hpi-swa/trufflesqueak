@@ -17,13 +17,10 @@ import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.push.PushClosureNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.returns.ReturnTopFromBlockNode;
+import de.hpi.swa.trufflesqueak.instrumentation.CompiledCodeObjectPrinter;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakMethodNode;
 import de.hpi.swa.trufflesqueak.util.BitSplitter;
 import de.hpi.swa.trufflesqueak.util.Chunk;
-import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
 public abstract class CompiledCodeObject extends SqueakObject {
     public static class SLOT_IDENTIFIER {
@@ -85,47 +82,9 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     public Source getSource() {
         if (source == null) {
-            source = Source.newBuilder(generateSourceString()).mimeType(SqueakLanguage.MIME_TYPE).name(toString()).build();
+            source = Source.newBuilder(CompiledCodeObjectPrinter.getString(this)).mimeType(SqueakLanguage.MIME_TYPE).name(toString()).build();
         }
         return source;
-    }
-
-    private String generateSourceString() {
-        StringBuilder sb = new StringBuilder();
-        int indent = 0;
-        // TODO: is a new BytecodeSequenceNode needed here?
-        SqueakBytecodeNode[] bytecodeNodes = new SqueakBytecodeDecoder(this).decode();
-        for (int i = 0; i < bytecodeNodes.length; i++) {
-            SqueakBytecodeNode node = bytecodeNodes[i];
-            if (node == null) {
-                continue;
-            }
-            for (int j = 0; j < indent; j++) {
-                sb.append(" ");
-            }
-            int numBytecodes = node.getNumBytecodes();
-            sb.append("<");
-            for (int j = i; j < i + numBytecodes; j++) {
-                if (j > i) {
-                    sb.append(" ");
-                }
-                if (j < bytes.length) {
-                    sb.append(String.format("%02X", bytes[j]));
-                }
-            }
-            sb.append("> ");
-            sb.append(node.toString());
-            if (i < bytecodeNodes.length - 1) {
-                sb.append("\n");
-            }
-
-            if (node instanceof PushClosureNode) {
-                indent++;
-            } else if (node instanceof ReturnTopFromBlockNode) {
-                indent--;
-            }
-        }
-        return sb.toString();
     }
 
     private int frameSize() {
@@ -136,8 +95,8 @@ public abstract class CompiledCodeObject extends SqueakObject {
     }
 
     private void prepareFrameDescriptor() {
-        frameDescriptor = new FrameDescriptor(null);
-        stackSlots = new FrameSlot[frameSize() + 90]; // TODO: + class inst size
+        frameDescriptor = new FrameDescriptor(image.nil);
+        stackSlots = new FrameSlot[frameSize() + getSqClass().getBasicInstanceSize()];
         for (int i = 0; i < stackSlots.length; i++) {
             stackSlots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Illegal);
         }

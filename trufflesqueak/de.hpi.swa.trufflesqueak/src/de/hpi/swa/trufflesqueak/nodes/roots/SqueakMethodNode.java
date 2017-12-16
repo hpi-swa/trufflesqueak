@@ -18,15 +18,15 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.FrameMarker;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.context.PushArgumentNode;
-import de.hpi.swa.trufflesqueak.nodes.context.PushNilNode;
+import de.hpi.swa.trufflesqueak.nodes.context.stack.AdjustStackNode;
 import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
 public class SqueakMethodNode extends RootNode {
     private final CompiledCodeObject code;
     @Children private final SqueakBytecodeNode[] rcvrAndArgsNodes;
     @Children private final SqueakBytecodeNode[] copiedValuesNodes;
-    @Children private final SqueakBytecodeNode[] tempNodes;
     @Children private final SqueakBytecodeNode[] bytecodeNodes;
+    @Child private AdjustStackNode adjustForTempNode;
 
     public SqueakMethodNode(SqueakLanguage language, CompiledCodeObject code) {
         this(language, code, true);
@@ -50,12 +50,8 @@ public class SqueakMethodNode extends RootNode {
         } else {
             copiedValuesNodes = null;
         }
-        // TODO: faster to raise stackpointer without actually pushing
         int numTemps = Math.max(code.getNumTemps() - numArgs, 0);
-        tempNodes = new SqueakBytecodeNode[numTemps];
-        for (int i = 0; i < numTemps; i++) {
-            tempNodes[i] = new PushNilNode(code);
-        }
+        adjustForTempNode = numTemps > 0 ? new AdjustStackNode(code, numTemps) : null;
         bytecodeNodes = new SqueakBytecodeDecoder(code).decode();
     }
 
@@ -74,9 +70,8 @@ public class SqueakMethodNode extends RootNode {
             }
             frame.setInt(code.closureSlot, 1 + code.getNumArgs() + code.getNumCopiedValues());
         }
-        CompilerAsserts.compilationConstant(tempNodes.length);
-        for (SqueakBytecodeNode node : tempNodes) {
-            node.executeVoid(frame);
+        if (adjustForTempNode != null) {
+            adjustForTempNode.executeVoid(frame);
         }
     }
 

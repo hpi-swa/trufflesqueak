@@ -13,10 +13,9 @@ public class PushStackNode extends AbstractStackNode {
         writeNode = FrameStackWriteNode.create();
     }
 
-    public Object executeWrite(VirtualFrame frame, Object value) {
+    public void executeWrite(VirtualFrame frame, Object value) {
         int newSP = stackPointer(frame) + 1;
         writeNode.execute(frame, newSP, value);
         frame.setInt(code.stackPointerSlot, newSP);
-        return code.image.nil;
     }
 }

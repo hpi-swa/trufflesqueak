@@ -10,87 +10,103 @@ import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakMethodNode;
+import de.hpi.swa.trufflesqueak.util.Chunk;
 import junit.framework.TestCase;
 
 public abstract class TestSqueak extends TestCase {
 
-	protected SqueakImageContext image;
+    protected SqueakImageContext image;
 
-	public TestSqueak() {
-		super();
-	}
+    public TestSqueak() {
+        super();
+    }
 
-	public TestSqueak(String name) {
-		super(name);
-	}
+    public TestSqueak(String name) {
+        super(name);
+    }
 
-	@Override
-	public void setUp() {
-		image = new SqueakImageContext(null, null, null, null);
-		image.at.setBytes("at:".getBytes());
-		image.equivalent.setBytes("==".getBytes());
-		image.klass.setBytes("class".getBytes());
-		image.div.setBytes("/".getBytes());
-		image.divide.setBytes("//".getBytes());
-		image.plus.setBytes("+".getBytes());
-		image.eq.setBytes("=".getBytes());
-		image.modulo.setBytes("\\\\".getBytes());
-		image.value.setBytes("value".getBytes());
-		image.size_.setBytes("size".getBytes());
-	}
+    private class DummyChunk extends Chunk {
 
-	public CompiledCodeObject makeMethod(byte[] bytes) {
-		// Always add three literals...
-		return makeMethod(bytes, new Object[] { 68419598, null, null });
-	}
+        public DummyChunk(int format) {
+            super(null, null, 0, format, 0, 0, 0);
+        }
 
-	public CompiledCodeObject makeMethod(byte[] bytes, Object[] literals) {
-		// Always add three literals...
-		return new CompiledMethodObject(image, bytes, literals);
-	}
+        @Override
+        public Object[] getPointers() {
+            Object[] pointers = new Object[6];
+            pointers[2] = format; // FORMAT_INDEX
+            return pointers;
+        }
+    }
 
-	public CompiledCodeObject makeMethod(Object[] literals, int... intbytes) {
-		byte[] bytes = new byte[intbytes.length];
-		for (int i = 0; i < intbytes.length; i++) {
-			bytes[i] = (byte) intbytes[i];
-		}
-		return makeMethod(bytes, literals);
-	}
+    @Override
+    public void setUp() {
+        image = new SqueakImageContext(null, null, null, null);
+        image.at.setBytes("at:".getBytes());
+        image.equivalent.setBytes("==".getBytes());
+        image.klass.setBytes("class".getBytes());
+        image.div.setBytes("/".getBytes());
+        image.divide.setBytes("//".getBytes());
+        image.plus.setBytes("+".getBytes());
+        image.eq.setBytes("=".getBytes());
+        image.modulo.setBytes("\\\\".getBytes());
+        image.value.setBytes("value".getBytes());
+        image.size_.setBytes("size".getBytes());
+        image.compiledMethodClass.fillin(new DummyChunk(100)); // sets instanceSize to 100
+    }
 
-	public CompiledCodeObject makeMethod(int... intbytes) {
-		return makeMethod(new Object[] { 68419598 }, intbytes);
-	}
+    public CompiledCodeObject makeMethod(byte[] bytes) {
+        // Always add three literals...
+        return makeMethod(bytes, new Object[]{68419598, null, null});
+    }
 
-	public Object runMethod(CompiledCodeObject code, Object receiver, Object... arguments) {
-		VirtualFrame frame = code.createTestFrame(receiver, arguments);
-		Object result = null;
-		try {
-			result = new SqueakMethodNode(null, code).execute(frame);
-		} catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
-			assertTrue("broken test", false);
-		}
-		return result;
-	}
+    public CompiledCodeObject makeMethod(byte[] bytes, Object[] literals) {
+        // Always add three literals...
+        return new CompiledMethodObject(image, bytes, literals);
+    }
 
-	public Object runMethod(BaseSqueakObject receiver, int... intbytes) {
-		return runMethod(receiver, new BaseSqueakObject[4], intbytes);
-	}
+    public CompiledCodeObject makeMethod(Object[] literals, int... intbytes) {
+        byte[] bytes = new byte[intbytes.length];
+        for (int i = 0; i < intbytes.length; i++) {
+            bytes[i] = (byte) intbytes[i];
+        }
+        return makeMethod(bytes, literals);
+    }
 
-	public Object runMethod(BaseSqueakObject receiver, Object[] arguments, int... intbytes) {
-		CompiledCodeObject cm = makeMethod(intbytes);
-		return runMethod(cm, receiver, arguments);
-	}
+    public CompiledCodeObject makeMethod(int... intbytes) {
+        return makeMethod(new Object[]{68419598}, intbytes);
+    }
 
-	protected Object runBinaryPrimitive(int primCode, Object rcvr, Object... arguments) {
-		return runPrim(new Object[] { 17104899 }, primCode, rcvr, arguments);
-	}
+    public Object runMethod(CompiledCodeObject code, Object receiver, Object... arguments) {
+        VirtualFrame frame = code.createTestFrame(receiver, arguments);
+        Object result = null;
+        try {
+            result = new SqueakMethodNode(null, code).execute(frame);
+        } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
+            assertTrue("broken test", false);
+        }
+        return result;
+    }
 
-	protected Object runQuinaryPrimitive(int primCode, Object rcvr, Object... arguments) {
-		return runPrim(new Object[] { 68222979 }, primCode, rcvr, arguments);
-	}
+    public Object runMethod(BaseSqueakObject receiver, int... intbytes) {
+        return runMethod(receiver, new BaseSqueakObject[4], intbytes);
+    }
 
-	protected Object runPrim(Object[] literals, int primCode, Object rcvr, Object... arguments) {
-		CompiledCodeObject cm = makeMethod(literals, new int[] { 139, primCode & 0xFF, (primCode & 0xFF00) >> 8 });
-		return runMethod(cm, rcvr, arguments);
-	}
+    public Object runMethod(BaseSqueakObject receiver, Object[] arguments, int... intbytes) {
+        CompiledCodeObject cm = makeMethod(intbytes);
+        return runMethod(cm, receiver, arguments);
+    }
+
+    protected Object runBinaryPrimitive(int primCode, Object rcvr, Object... arguments) {
+        return runPrim(new Object[]{17104899}, primCode, rcvr, arguments);
+    }
+
+    protected Object runQuinaryPrimitive(int primCode, Object rcvr, Object... arguments) {
+        return runPrim(new Object[]{68222979}, primCode, rcvr, arguments);
+    }
+
+    protected Object runPrim(Object[] literals, int primCode, Object rcvr, Object... arguments) {
+        CompiledCodeObject cm = makeMethod(literals, new int[]{139, primCode & 0xFF, (primCode & 0xFF00) >> 8});
+        return runMethod(cm, rcvr, arguments);
+    }
 }

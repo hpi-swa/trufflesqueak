@@ -14,7 +14,6 @@ public class TopStackNode extends AbstractStackNode {
     }
 
     public Object execute(VirtualFrame frame) {
-        int sp = stackPointer(frame);
-        return readNode.execute(frame, sp);
+        return readNode.execute(frame, stackPointer(frame));
     }
 }

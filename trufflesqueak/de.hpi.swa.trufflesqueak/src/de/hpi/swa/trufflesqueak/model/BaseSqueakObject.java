@@ -3,6 +3,7 @@ package de.hpi.swa.trufflesqueak.model;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.instrumentation.BaseSqueakObjectMessageResolutionForeign;
 import de.hpi.swa.trufflesqueak.util.Chunk;
 
 public abstract class BaseSqueakObject implements TruffleObject {

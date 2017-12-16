@@ -67,4 +67,17 @@ public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
     public int[] getSuccessors() {
         return successors;
     }
+
+    @Override
+    public void setSourceSection(SourceSection section) {
+        sourceSection = section;
+    }
+
+    @Override
+    public SourceSection getSourceSection() {
+        if (sourceSection == null) {
+            sourceSection = code.getSource().createSection(lineNumber);
+        }
+        return sourceSection;
+    }
 }

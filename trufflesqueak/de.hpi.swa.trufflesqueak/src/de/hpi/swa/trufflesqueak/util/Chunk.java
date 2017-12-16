@@ -28,7 +28,7 @@ public class Chunk {
 
     private final long size;
     private final ImageReader reader;
-    private final int format;
+    protected final int format;
     private final int hash;
     private final Vector<Integer> data;
     private final SqueakImageContext image;

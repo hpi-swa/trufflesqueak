@@ -1,4 +1,4 @@
-package de.hpi.swa.trufflesqueak.model;
+package de.hpi.swa.trufflesqueak.instrumentation;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.MessageResolution;
@@ -6,6 +6,9 @@ import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.Node;
+
+import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
+import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 
 // refer to com.oracle.truffle.api.interop.Message for documentation
 
