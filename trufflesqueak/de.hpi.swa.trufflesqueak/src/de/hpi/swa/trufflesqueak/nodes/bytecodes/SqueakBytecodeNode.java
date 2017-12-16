@@ -11,24 +11,24 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithCode;
 
 @Instrumentable(factory = SqueakBytecodeNodeWrapper.class)
 public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
-    @CompilationFinal private final int numBytecodes;
-    @CompilationFinal protected final int successorIndex;
+    @CompilationFinal protected final int numBytecodes;
+    @CompilationFinal protected final int index;
     @CompilationFinal(dimensions = 1) protected final int[] successors;
     @CompilationFinal private SourceSection sourceSection;
     public int lineNumber = 1;
 
     protected SqueakBytecodeNode(SqueakBytecodeNode original) {
         super(original.code);
+        index = original.index;
         numBytecodes = original.numBytecodes;
-        successorIndex = original.successorIndex;
         successors = original.successors;
         setSourceSection(original.getSourceSection());
     }
 
     public SqueakBytecodeNode(CompiledCodeObject code, int index, int numBytecodes) {
         super(code);
+        this.index = index;
         this.numBytecodes = numBytecodes;
-        this.successorIndex = index + numBytecodes;
         this.successors = new int[]{index + numBytecodes, -1};
     }
 
@@ -48,16 +48,12 @@ public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
         executeGeneric(frame);
     }
 
-    public int getSuccessorIndex() {
-        return successorIndex;
-    }
-
     public int getNumBytecodes() {
         return numBytecodes;
     }
 
     public int getIndex() {
-        return successorIndex - numBytecodes;
+        return index;
     }
 
     @Override

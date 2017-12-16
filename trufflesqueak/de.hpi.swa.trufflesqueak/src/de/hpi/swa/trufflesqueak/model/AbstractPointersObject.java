@@ -35,12 +35,12 @@ public abstract class AbstractPointersObject extends SqueakObject {
 
     @Override
     public Object at0(int i) {
-        return getPointers()[i];
+        return pointers[i];
     }
 
     @Override
     public void atput0(int i, Object obj) {
-        getPointers()[i] = obj;
+        pointers[i] = obj;
     }
 
     @Override
@@ -58,7 +58,7 @@ public abstract class AbstractPointersObject extends SqueakObject {
 
     @Override
     public int size() {
-        return getPointers().length;
+        return pointers.length;
     }
 
     @Override

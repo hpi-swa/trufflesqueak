@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags.StatementTag;
@@ -12,7 +13,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 
 public class CallPrimitiveNode extends SqueakBytecodeNode {
-    private @Child PrimitiveNode primitiveNode;
+    @Child private PrimitiveNode primitiveNode;
 
     @SuppressWarnings("unused")
     public CallPrimitiveNode(CompiledCodeObject code, int index, int numBytecodes, int unusedA, int unusedB) {
@@ -23,7 +24,7 @@ public class CallPrimitiveNode extends SqueakBytecodeNode {
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
-        assert successorIndex == 3; // two skipped bytes plus next
+        CompilerAsserts.compilationConstant(index);
         try {
             throw new LocalReturn(primitiveNode.executeGeneric(frame));
         } catch (UnsupportedSpecializationException

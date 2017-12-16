@@ -107,16 +107,16 @@ public class SqueakMethodNode extends RootNode {
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.MERGE_EXPLODE)
     private void executeLoop(VirtualFrame frame) {
         CompilerAsserts.compilationConstant(bytecodeNodes.length);
-        int ip = 0;
+        int pc = 0;
         outer: while (true) {
-            CompilerAsserts.partialEvaluationConstant(ip);
-            CompilerAsserts.partialEvaluationConstant(bytecodeNodes[ip]);
-            SqueakBytecodeNode node = bytecodeNodes[ip];
+            CompilerAsserts.partialEvaluationConstant(pc);
+            CompilerAsserts.partialEvaluationConstant(bytecodeNodes[pc]);
+            SqueakBytecodeNode node = bytecodeNodes[pc];
             int successor = node.executeInt(frame);
             int[] successors = node.getSuccessors();
             for (int i = 0; i < successors.length; i++) {
                 if (i == successor) {
-                    ip = successors[i];
+                    pc = successors[i];
                     continue outer;
                 }
             }

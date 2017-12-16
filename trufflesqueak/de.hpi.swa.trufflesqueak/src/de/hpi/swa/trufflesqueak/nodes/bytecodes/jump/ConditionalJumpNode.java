@@ -14,7 +14,7 @@ public class ConditionalJumpNode extends AbstractJump {
         super(code, index, numBytecodes, offset);
         isIfTrue = condition;
         popNode = new PopStackNode(code);
-        successors[1] = successorIndex + offset;
+        successors[1] = index + numBytecodes + offset;
     }
 
     public ConditionalJumpNode(CompiledCodeObject code, int index, int numBytecodes, int bytecode) {

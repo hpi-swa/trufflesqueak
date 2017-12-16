@@ -6,12 +6,12 @@ public class UnconditionalJumpNode extends AbstractJump {
 
     public UnconditionalJumpNode(CompiledCodeObject code, int index, int numBytecodes, int bytecode) {
         super(code, index, numBytecodes, shortJumpOffset(bytecode));
-        successors[0] = successorIndex + offset;
+        successors[0] = index + numBytecodes + offset;
     }
 
     public UnconditionalJumpNode(CompiledCodeObject code, int index, int numBytecodes, int bytecode, int parameter) {
         super(code, index, numBytecodes, longUnconditionalJumpOffset(bytecode, parameter));
-        successors[0] = successorIndex + offset;
+        successors[0] = index + numBytecodes + offset;
     }
 
     @Override
