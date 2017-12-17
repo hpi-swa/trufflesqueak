@@ -1,5 +1,7 @@
 package de.hpi.swa.trufflesqueak.test;
 
+import static org.junit.Assert.assertArrayEquals;
+
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,6 +17,8 @@ import de.hpi.swa.trufflesqueak.exceptions.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
+import de.hpi.swa.trufflesqueak.model.BlockClosure;
+import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -443,7 +447,25 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
         }
     }
 
-    // TODO: testPushClosure()
+    @Test
+    public void testPushClosure() {
+        // ^ [ :arg1 :arg2 | arg1 + arg2 ]
+        Object[] literals = new Object[]{2, image.nil, image.nil};
+        BaseSqueakObject rcvr = image.wrap(1);
+        CompiledCodeObject code = makeMethod(literals, 0x8F, 0x02, 0x00, 0x04, 0x10, 0x11, 0xB0, 0x7D, 0x7C);
+        VirtualFrame frame = code.createTestFrame(rcvr, new BaseSqueakObject[4]);
+        try {
+            Object result = new SqueakMethodNode(null, code).execute(frame);
+            assertTrue(result instanceof BlockClosure);
+            CompiledBlockObject block = ((BlockClosure) result).getCompiledBlock();
+            assertEquals(2, block.getNumArgs());
+            assertEquals(0, block.getNumCopiedValues());
+            assertEquals(0, block.getNumTemps());
+            assertArrayEquals(new byte[]{0x10, 0x11, (byte) 0xB0, 0x7D}, block.getBytes());
+        } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
+            assertTrue("broken test", false);
+        }
+    }
 
     @Test
     public void testUnconditionalJump() {
