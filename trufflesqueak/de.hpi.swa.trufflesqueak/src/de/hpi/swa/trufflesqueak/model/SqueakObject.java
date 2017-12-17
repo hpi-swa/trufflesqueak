@@ -8,8 +8,7 @@ public abstract class SqueakObject extends BaseSqueakObject {
     private ClassObject sqClass;
 
     public SqueakObject(SqueakImageContext img) {
-        super(img);
-        hash = 0;
+        this(img, null);
     }
 
     public SqueakObject(SqueakImageContext img, ClassObject klass) {

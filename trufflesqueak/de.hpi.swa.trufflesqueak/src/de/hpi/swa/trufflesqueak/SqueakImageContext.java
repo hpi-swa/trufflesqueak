@@ -25,7 +25,7 @@ import de.hpi.swa.trufflesqueak.util.SqueakImageReader;
 
 public class SqueakImageContext {
     // Special objects
-    public final Object nil = new NilObject();
+    public final NilObject nil = new NilObject(this);
     public final boolean sqFalse = false;
     public final boolean sqTrue = true;
     public final ListObject specialObjectsArray = new ListObject(this);

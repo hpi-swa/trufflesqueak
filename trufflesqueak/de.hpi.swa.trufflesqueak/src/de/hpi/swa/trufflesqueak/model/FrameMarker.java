@@ -20,7 +20,7 @@ public final class FrameMarker extends BaseSqueakObject {
 
     @Override
     public ClassObject getSqClass() {
-        throw new UnsupportedOperationException("Not supported yet."); // To change body of generated methods, choose Tools | Templates.
+        return null;
     }
 
     @Override

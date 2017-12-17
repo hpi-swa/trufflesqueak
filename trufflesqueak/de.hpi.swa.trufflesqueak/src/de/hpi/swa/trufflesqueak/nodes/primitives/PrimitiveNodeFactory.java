@@ -15,6 +15,7 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameArgumentNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameArgumentProfileNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimAddNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimAllInstancesNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimArcTanNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimAsFloatNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimAtNodeGen;
@@ -51,6 +52,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimMulNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimNewArgNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimNewNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimNextHandlerContextNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimNextInstanceNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimNormalizeNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimNotEqualNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPerform;
@@ -61,6 +63,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimReplaceFromToNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimShallowCopyNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimSinNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimSizeNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimSomeInstanceNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimSquareRootNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimStringAtNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimStringAtPutNodeGen;
@@ -134,7 +137,6 @@ public abstract class PrimitiveNodeFactory {
         FLOAT_MULTIPLY(PrimMulNodeGen.class, 49),
         FLOAT_DIVIDE(PrimDivideNodeGen.class, 50),
         FLOAT_TRUNCATED(PrimFloatTruncatedNodeGen.class, 51),
-        //
         FLOAT_EXPONENT(PrimFloatExponentNodeGen.class, 53),
         FLOAT_LDEXP(PrimFloatTimesTwoPowerNodeGen.class, 54),
         FLOAT_SQUARE_ROOT(PrimSquareRootNodeGen.class, 55),
@@ -142,6 +144,7 @@ public abstract class PrimitiveNodeFactory {
         FLOAT_ARCTAN(PrimArcTanNodeGen.class, 57),
         FLOAT_LOG_N(PrimLogNNodeGen.class, 58),
         FLOAT_EXP(PrimExpNodeGen.class, 59),
+        //
         AT(PrimIndexAtNodeGen.class, 60), // 1-indexed after named inst vars
         AT_PUT(PrimIndexAtPutNodeGen.class, 61),
         SIZE(PrimSizeNodeGen.class, 62),
@@ -159,6 +162,8 @@ public abstract class PrimitiveNodeFactory {
         INST_VAR_AT(PrimAtNodeGen.class, 73), // 1-indexed
         INST_VAR_AT_PUT(PrimAtPutNodeGen.class, 74),
         IDENTITY_HASH(PrimIdentityHashNodeGen.class, 75),
+        SOME_INSTANCE(PrimSomeInstanceNodeGen.class, 77),
+        NEXT_INSTANCE(PrimNextInstanceNodeGen.class, 78),
         //
         BLOCK_COPY(PrimitiveNode.class, 80),
         //
@@ -189,6 +194,7 @@ public abstract class PrimitiveNodeFactory {
         SLOT_AT_PUT(PrimAtPutNodeGen.class, 174),
         //
         BEHAVIOR_HASH(PrimIdentityHashNodeGen.class, 175),
+        ALL_INSTANCES(PrimAllInstancesNodeGen.class, 177),
         //
         NEXT_HANDLER_CONTEXT(PrimNextHandlerContextNodeGen.class, 197),
         //
