@@ -42,16 +42,38 @@ public abstract class AbstractSqueakTestCase extends TestCase {
     @Override
     public void setUp() {
         image = new SqueakImageContext(null, null, null, null);
-        image.at.setBytes("at:".getBytes());
-        image.equivalent.setBytes("==".getBytes());
-        image.klass.setBytes("class".getBytes());
-        image.div.setBytes("/".getBytes());
-        image.divide.setBytes("//".getBytes());
-        image.plus.setBytes("+".getBytes());
-        image.eq.setBytes("=".getBytes());
-        image.modulo.setBytes("\\\\".getBytes());
+        image.plus.setBytes("plus".getBytes());
+        image.minus.setBytes("minus".getBytes());
+        image.lt.setBytes("lt".getBytes());
+        image.gt.setBytes("gt".getBytes());
+        image.le.setBytes("le".getBytes());
+        image.ge.setBytes("ge".getBytes());
+        image.eq.setBytes("eq".getBytes());
+        image.ne.setBytes("ne".getBytes());
+        image.times.setBytes("times".getBytes());
+        image.div.setBytes("div".getBytes());
+        image.modulo.setBytes("modulo".getBytes());
+        image.pointAt.setBytes("pointAt".getBytes());
+        image.bitShift.setBytes("bitShift".getBytes());
+        image.divide.setBytes("divide".getBytes());
+        image.bitAnd.setBytes("bitAnd".getBytes());
+        image.bitOr.setBytes("bitOr".getBytes());
+        image.at.setBytes("at".getBytes());
+        image.atput.setBytes("atput".getBytes());
+        image.size_.setBytes("size_".getBytes());
+        image.next.setBytes("next".getBytes());
+        image.nextPut.setBytes("nextPut".getBytes());
+        image.atEnd.setBytes("atEnd".getBytes());
+        image.equivalent.setBytes("equivalent".getBytes());
+        image.klass.setBytes("klass".getBytes());
+        image.blockCopy.setBytes("blockCopy".getBytes());
         image.value.setBytes("value".getBytes());
-        image.size_.setBytes("size".getBytes());
+        image.valueWithArg.setBytes("valueWithArg".getBytes());
+        image.do_.setBytes("do_".getBytes());
+        image.new_.setBytes("new_".getBytes());
+        image.newWithArg.setBytes("newWithArg".getBytes());
+        image.x.setBytes("x".getBytes());
+        image.y.setBytes("y".getBytes());
         image.compiledMethodClass.fillin(new DummyChunk(100)); // sets instanceSize to 100
     }
 

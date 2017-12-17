@@ -39,9 +39,9 @@ public class CompiledCodeObjectPrinter {
             if (i < bytecodeNodes.length - 1) {
                 sb.append("\n");
             }
-            if (node instanceof PushClosureNode) {
+            if (node.getClass().equals(PushClosureNode.class)) {
                 indent++;
-            } else if (node instanceof ReturnTopFromBlockNode) {
+            } else if (node.getClass().equals(ReturnTopFromBlockNode.class)) {
                 indent--;
             }
             index++;
