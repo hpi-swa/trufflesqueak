@@ -1,4 +1,4 @@
-package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
+package de.hpi.swa.trufflesqueak.nodes.primitives.impl.file;
 
 import com.oracle.truffle.api.dsl.Specialization;
 

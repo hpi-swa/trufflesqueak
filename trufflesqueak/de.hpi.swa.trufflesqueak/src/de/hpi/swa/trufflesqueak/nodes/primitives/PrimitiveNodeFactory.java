@@ -12,8 +12,8 @@ import com.oracle.truffle.api.nodes.Node.Child;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
-import de.hpi.swa.trufflesqueak.nodes.context.ArgumentProfileNode;
-import de.hpi.swa.trufflesqueak.nodes.context.ReturnArgumentNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameArgumentNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameArgumentProfileNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimAddNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimArcTanNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimAsFloatNodeGen;
@@ -35,9 +35,6 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimDivideNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimEqualNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimEquivalentNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimExpNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimFileSizeNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimFileStdioHandles;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimFileWriteNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimFloatExponentNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimFloatTimesTwoPowerNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimFloatTruncatedNodeGen;
@@ -58,15 +55,6 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimNormalizeNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimNotEqualNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPerform;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimPrintArgs;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimQuickReturnFalse;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimQuickReturnMinusOne;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimQuickReturnNil;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimQuickReturnOne;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimQuickReturnReceiverVariableNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimQuickReturnSelf;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimQuickReturnTrue;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimQuickReturnTwo;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimQuickReturnZero;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimQuit;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimQuoNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimReplaceFromToNodeGen;
@@ -79,6 +67,18 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimStringAtPutNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimSubNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimSystemAttributeNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.PrimUtcClockNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.file.PrimFileSizeNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.file.PrimFileStdioHandles;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.file.PrimFileWriteNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.quickreturn.PrimQuickReturnFalse;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.quickreturn.PrimQuickReturnMinusOne;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.quickreturn.PrimQuickReturnNil;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.quickreturn.PrimQuickReturnOne;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.quickreturn.PrimQuickReturnReceiverVariableNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.quickreturn.PrimQuickReturnSelf;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.quickreturn.PrimQuickReturnTrue;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.quickreturn.PrimQuickReturnTwo;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.quickreturn.PrimQuickReturnZero;
 
 public abstract class PrimitiveNodeFactory {
     private static final int PRIM_COUNT = 574;
@@ -252,10 +252,6 @@ public abstract class PrimitiveNodeFactory {
         NamedPrimitives.values();
     }
 
-    private static SqueakNode arg(CompiledCodeObject code, int index) {
-        return new ArgumentProfileNode(new ReturnArgumentNode(code, index));
-    }
-
     private static PrimitiveNode createInstance(CompiledMethodObject code, Class<? extends PrimitiveNode> primClass) {
         if (primClass == null) {
             return new PrimitiveNode(code);
@@ -272,7 +268,7 @@ public abstract class PrimitiveNodeFactory {
             Object[] args = new Object[argCount + 1];
             args[0] = code;
             for (int i = 1; i <= argCount; i++) {
-                args[i] = arg(code, i - 1);
+                args[i] = new FrameArgumentProfileNode(new FrameArgumentNode(i - 1));
             }
 
             try {

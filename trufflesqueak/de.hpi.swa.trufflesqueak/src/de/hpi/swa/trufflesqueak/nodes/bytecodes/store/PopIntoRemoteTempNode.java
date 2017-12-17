@@ -15,11 +15,11 @@ public class PopIntoRemoteTempNode extends AbstractStoreIntoRemoteTempNode {
 
     @Override
     public void executeVoid(VirtualFrame frame) {
-        storeNode.executeWrite(getTempArray(frame), popNode.execute(frame));
+        storeNode.executeWrite(frame, popNode.execute(frame));
     }
 
     @Override
-    public String toString() {
-        return String.format("popIntoTemp: %d inVectorAt: %d", indexInArray, indexOfArray);
+    protected String getTypeName() {
+        return "pop";
     }
 }

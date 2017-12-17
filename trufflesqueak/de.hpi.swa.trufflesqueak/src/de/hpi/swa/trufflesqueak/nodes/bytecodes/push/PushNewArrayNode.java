@@ -4,19 +4,15 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PopNReversedStackNode;
-import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
 
-public class PushNewArrayNode extends SqueakBytecodeNode {
-    @Child private PushStackNode pushNode;
+public class PushNewArrayNode extends AbstractPushNode {
     @Child private PopNReversedStackNode popNReversedNode;
     @CompilationFinal private final int arraySize;
 
     public PushNewArrayNode(CompiledCodeObject code, int index, int numBytecodes, int param) {
         super(code, index, numBytecodes);
         arraySize = param & 127;
-        pushNode = new PushStackNode(code);
         popNReversedNode = param > 127 ? new PopNReversedStackNode(code, arraySize) : null;
     }
 

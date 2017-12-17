@@ -2,7 +2,7 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes.store;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
-import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotWriteNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotWriteNode;
 
 public abstract class AbstractStoreIntoTempNode extends SqueakBytecodeNode {
     @Child FrameSlotWriteNode storeNode;

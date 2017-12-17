@@ -5,7 +5,7 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.nodes.context.FrameSlotReadNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
 
 public class BottomNStackNode extends Node {
     @Children private final FrameSlotReadNode[] readNodes;

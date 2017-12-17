@@ -1,4 +1,4 @@
-package de.hpi.swa.trufflesqueak.nodes.context;
+package de.hpi.swa.trufflesqueak.nodes.context.frame;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameSlot;

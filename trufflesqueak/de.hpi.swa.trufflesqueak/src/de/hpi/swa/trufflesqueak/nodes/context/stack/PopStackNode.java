@@ -3,7 +3,7 @@ package de.hpi.swa.trufflesqueak.nodes.context.stack;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.nodes.context.FrameStackReadNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 
 public class PopStackNode extends AbstractStackNode {
     @Child private FrameStackReadNode readNode;

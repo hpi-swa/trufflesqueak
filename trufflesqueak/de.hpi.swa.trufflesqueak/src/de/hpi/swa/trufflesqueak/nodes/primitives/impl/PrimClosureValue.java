@@ -10,7 +10,7 @@ import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.nodes.BlockActivationNode;
 import de.hpi.swa.trufflesqueak.nodes.BlockActivationNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
-import de.hpi.swa.trufflesqueak.nodes.context.ReceiverNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.BottomNStackNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNode;
 
@@ -24,11 +24,11 @@ public abstract class PrimClosureValue extends PrimitiveNode {
 
     @NodeChildren({@NodeChild(value = "receiver", type = SqueakNode.class)})
     public static abstract class PrimClosureValue0 extends PrimClosureValue {
-        @Child ReceiverNode receiverNode;
+        @Child FrameReceiverNode receiverNode;
 
         public PrimClosureValue0(CompiledMethodObject method) {
             super(method);
-            receiverNode = new ReceiverNode(method);
+            receiverNode = new FrameReceiverNode(method);
         }
 
         @Specialization

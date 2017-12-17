@@ -4,7 +4,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.push.PushLiteralConstantNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.push.PushLiteralVariableNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.push.PushReceiverVariableNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.push.PushTempNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.push.PushTemporaryLocationNode;
 
 public class ExtendedPushNode extends ExtendedAccess {
     private ExtendedPushNode() {
@@ -16,7 +16,7 @@ public class ExtendedPushNode extends ExtendedAccess {
             case 0:
                 return new PushReceiverVariableNode(code, index, numBytecodes, variableIndex);
             case 1:
-                return new PushTempNode(code, index, numBytecodes, variableIndex);
+                return new PushTemporaryLocationNode(code, index, numBytecodes, variableIndex);
             case 2:
                 return new PushLiteralConstantNode(code, index, numBytecodes, variableIndex);
             case 3:

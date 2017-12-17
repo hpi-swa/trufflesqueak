@@ -4,14 +4,13 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
-import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithCode;
 
-public class LiteralConstantNode extends SqueakNodeWithCode {
+public class LiteralConstantNode extends SqueakNode {
     @Child private SqueakNode literalNode;
 
-    public LiteralConstantNode(CompiledCodeObject code, int literalIdx) {
-        super(code);
-        literalNode = new MethodLiteralNode(code, literalIdx);
+    public LiteralConstantNode(CompiledCodeObject code, int literalIndex) {
+        super();
+        literalNode = new MethodLiteralNode(code, literalIndex);
     }
 
     @Override

@@ -15,11 +15,11 @@ public class StoreIntoRemoteTempNode extends AbstractStoreIntoRemoteTempNode {
 
     @Override
     public void executeVoid(VirtualFrame frame) {
-        storeNode.executeWrite(getTempArray(frame), topNode.execute(frame));
+        storeNode.executeWrite(frame, topNode.execute(frame));
     }
 
     @Override
-    public String toString() {
-        return String.format("storeIntoTemp: %d inVectorAt: %d", indexInArray, indexOfArray);
+    protected String getTypeName() {
+        return "store";
     }
 }

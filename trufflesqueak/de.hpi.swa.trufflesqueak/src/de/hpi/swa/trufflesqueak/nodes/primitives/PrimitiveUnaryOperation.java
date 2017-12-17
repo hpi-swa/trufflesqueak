@@ -5,14 +5,14 @@ import com.oracle.truffle.api.dsl.NodeChildren;
 
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
-import de.hpi.swa.trufflesqueak.nodes.context.ReceiverNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameReceiverNode;
 
 @NodeChildren({@NodeChild(value = "receiver", type = SqueakNode.class)})
 public class PrimitiveUnaryOperation extends PrimitiveNode {
-    @Child ReceiverNode receiverNode;
+    @Child FrameReceiverNode receiverNode;
 
     public PrimitiveUnaryOperation(CompiledMethodObject code) {
         super(code);
-        receiverNode = new ReceiverNode(code);
+        receiverNode = new FrameReceiverNode(code);
     }
 }

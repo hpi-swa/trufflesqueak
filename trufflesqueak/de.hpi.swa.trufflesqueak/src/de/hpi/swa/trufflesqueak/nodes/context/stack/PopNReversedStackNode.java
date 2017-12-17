@@ -5,7 +5,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.nodes.context.FrameStackReadNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 
 public class PopNReversedStackNode extends AbstractStackNode {
     @Child private FrameStackReadNode readNode;

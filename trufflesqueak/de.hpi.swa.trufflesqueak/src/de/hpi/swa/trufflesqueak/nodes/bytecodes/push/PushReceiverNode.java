@@ -3,23 +3,19 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes.push;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
-import de.hpi.swa.trufflesqueak.nodes.context.ReceiverNode;
-import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameReceiverNode;
 
-public class PushReceiverNode extends SqueakBytecodeNode {
-    @Child private PushStackNode pushNode;
-    @Child private ReceiverNode receiverNode;
+public class PushReceiverNode extends AbstractPushNode {
+    @Child private FrameReceiverNode receiverNode;
 
     public PushReceiverNode(CompiledCodeObject code, int index) {
         super(code, index);
-        pushNode = new PushStackNode(code);
-        receiverNode = new ReceiverNode(code);
+        receiverNode = new FrameReceiverNode(code);
     }
 
     @Override
     public void executeVoid(VirtualFrame frame) {
-        pushNode.executeWrite(frame, receiverNode.execute(frame));
+        pushNode.executeWrite(frame, receiverNode.executeGeneric(frame));
     }
 
     @Override

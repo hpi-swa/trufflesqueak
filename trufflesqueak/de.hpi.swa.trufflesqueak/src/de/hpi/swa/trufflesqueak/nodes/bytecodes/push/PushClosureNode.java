@@ -9,19 +9,16 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.trufflesqueak.model.BlockClosure;
 import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
-import de.hpi.swa.trufflesqueak.nodes.context.ReceiverNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PopNReversedStackNode;
-import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
 
-public class PushClosureNode extends SqueakBytecodeNode {
+public class PushClosureNode extends AbstractPushNode {
     @CompilationFinal private final int blockSize;
     @CompilationFinal private final int numArgs;
     @CompilationFinal private final int numCopied;
     @CompilationFinal private final CompiledBlockObject compiledBlock;
     @Child private PopNReversedStackNode popNReversedNode;
-    @Child private PushStackNode pushNode;
-    @Child private ReceiverNode receiverNode;
+    @Child private FrameReceiverNode receiverNode;
 
     public PushClosureNode(CompiledCodeObject code, int index, int numBytecodes, int i, int j, int k) {
         super(code, index, numBytecodes);
@@ -29,9 +26,8 @@ public class PushClosureNode extends SqueakBytecodeNode {
         this.numCopied = (i >> 4) & 0xF;
         this.blockSize = (j << 8) | k;
         this.compiledBlock = new CompiledBlockObject(code, numArgs, numCopied);
-        pushNode = new PushStackNode(code);
         popNReversedNode = new PopNReversedStackNode(code, numCopied);
-        receiverNode = new ReceiverNode(code);
+        receiverNode = new FrameReceiverNode(code);
     }
 
     @Override
@@ -42,7 +38,7 @@ public class PushClosureNode extends SqueakBytecodeNode {
         int codeEnd = codeStart + blockSize;
         byte[] bytes = Arrays.copyOfRange(code.getBytes(), codeStart, codeEnd);
         compiledBlock.setBytes(bytes);
-        pushNode.executeWrite(frame, new BlockClosure(frameMarker, compiledBlock, receiverNode.execute(frame), copiedValues));
+        pushNode.executeWrite(frame, new BlockClosure(frameMarker, compiledBlock, receiverNode.executeGeneric(frame), copiedValues));
     }
 
     @Override

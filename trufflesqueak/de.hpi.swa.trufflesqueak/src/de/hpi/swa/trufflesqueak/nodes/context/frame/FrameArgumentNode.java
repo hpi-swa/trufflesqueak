@@ -1,16 +1,15 @@
-package de.hpi.swa.trufflesqueak.nodes.context;
+package de.hpi.swa.trufflesqueak.nodes.context.frame;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithCode;
+import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
-public class ReturnArgumentNode extends SqueakNodeWithCode {
+public class FrameArgumentNode extends SqueakNode {
     private final int argumentIndex;
 
-    public ReturnArgumentNode(CompiledCodeObject code, int index) {
-        super(code);
-        argumentIndex = index;
+    public FrameArgumentNode(int argumentIndex) {
+        super();
+        this.argumentIndex = argumentIndex;
     }
 
     @Override
