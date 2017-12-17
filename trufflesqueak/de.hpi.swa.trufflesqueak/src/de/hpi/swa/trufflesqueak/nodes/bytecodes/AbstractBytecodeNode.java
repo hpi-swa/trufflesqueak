@@ -9,7 +9,7 @@ import com.oracle.truffle.api.source.SourceSection;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithCode;
 
-@Instrumentable(factory = SqueakBytecodeNodeWrapper.class)
+@Instrumentable(factory = AbstractBytecodeNodeWrapper.class)
 public abstract class AbstractBytecodeNode extends SqueakNodeWithCode {
     @CompilationFinal protected final int numBytecodes;
     @CompilationFinal protected final int index;
