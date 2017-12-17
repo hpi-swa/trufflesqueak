@@ -1,7 +1,7 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import de.hpi.swa.trufflesqueak.exceptions.NonVirtualContextModification;
-import de.hpi.swa.trufflesqueak.util.Chunk;
+import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public interface ActualContextObject {
     public Object at0(int l);
@@ -10,7 +10,7 @@ public interface ActualContextObject {
 
     public void atContextPut0(int i, Object obj) throws NonVirtualContextModification;
 
-    public void fillin(Chunk chunk);
+    public void fillin(SqueakImageChunk chunk);
 
     public int size();
 

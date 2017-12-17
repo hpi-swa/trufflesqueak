@@ -17,7 +17,7 @@ import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.FrameMarker;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.ConditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.UnconditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.InitializeStackNode;
@@ -26,7 +26,7 @@ import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 public class SqueakMethodNode extends RootNode {
     private final CompiledCodeObject code;
     @Child private InitializeStackNode initStackNode;
-    @Children private final SqueakBytecodeNode[] bytecodeNodes;
+    @Children private final AbstractBytecodeNode[] bytecodeNodes;
 
     public SqueakMethodNode(SqueakLanguage language, CompiledCodeObject code) {
         this(language, code, true);
@@ -86,7 +86,7 @@ public class SqueakMethodNode extends RootNode {
         try {
             while (pc >= 0) {
                 CompilerAsserts.partialEvaluationConstant(pc);
-                SqueakBytecodeNode node = bytecodeNodes[pc];
+                AbstractBytecodeNode node = bytecodeNodes[pc];
                 if (node instanceof ConditionalJumpNode) {
                     ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
                     boolean condition = jumpNode.executeCondition(frame);

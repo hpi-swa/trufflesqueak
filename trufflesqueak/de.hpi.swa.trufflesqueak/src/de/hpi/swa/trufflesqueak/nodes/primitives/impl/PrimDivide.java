@@ -6,9 +6,9 @@ import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveBinaryOperation;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeBinary;
 
-public abstract class PrimDivide extends PrimitiveBinaryOperation {
+public abstract class PrimDivide extends PrimitiveNodeBinary {
     public PrimDivide(CompiledMethodObject code) {
         super(code);
     }

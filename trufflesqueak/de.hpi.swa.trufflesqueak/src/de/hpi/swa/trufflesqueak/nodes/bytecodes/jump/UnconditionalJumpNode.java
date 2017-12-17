@@ -4,9 +4,9 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 
-public class UnconditionalJumpNode extends SqueakBytecodeNode {
+public class UnconditionalJumpNode extends AbstractBytecodeNode {
     @CompilationFinal protected final int offset;
 
     public UnconditionalJumpNode(CompiledCodeObject code, int index, int numBytecodes, int bytecode) {

@@ -14,9 +14,9 @@ import de.hpi.swa.trufflesqueak.exceptions.SqueakExit;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveUnaryOperation;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeUnary;
 
-public abstract class PrimNextHandlerContext extends PrimitiveUnaryOperation {
+public abstract class PrimNextHandlerContext extends PrimitiveNodeUnary {
     private static final int EXCEPTION_HANDLER_MARKER = 199;
 
     public PrimNextHandlerContext(CompiledMethodObject code) {

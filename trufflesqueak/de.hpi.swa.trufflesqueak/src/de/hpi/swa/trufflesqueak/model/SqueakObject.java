@@ -1,7 +1,7 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.util.Chunk;
+import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public abstract class SqueakObject extends BaseSqueakObject {
     private int hash;
@@ -19,7 +19,7 @@ public abstract class SqueakObject extends BaseSqueakObject {
     }
 
     @Override
-    public void fillin(Chunk chunk) {
+    public void fillin(SqueakImageChunk chunk) {
         hash = chunk.getHash();
         sqClass = chunk.getSqClass();
     }

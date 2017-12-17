@@ -2,12 +2,12 @@ package de.hpi.swa.trufflesqueak.test;
 
 import org.junit.Test;
 
-import de.hpi.swa.trufflesqueak.util.Chunk;
+import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
-public class TestImageReading extends TestSqueak {
+public class SqueakImageReadingTest extends AbstractSqueakTestCase {
     @Test
     public void testFloatDecoding() {
-        Chunk chunk = new Chunk(
+        SqueakImageChunk chunk = new SqueakImageChunk(
                         null,
                         image,
                         2, // 2 words

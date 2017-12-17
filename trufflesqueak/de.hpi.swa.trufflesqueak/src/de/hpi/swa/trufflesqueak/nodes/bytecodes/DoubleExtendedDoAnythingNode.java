@@ -16,7 +16,7 @@ public abstract class DoubleExtendedDoAnythingNode {
         }
     }
 
-    public static SqueakBytecodeNode create(CompiledCodeObject code, int index, int numBytecodes, int second, int third) {
+    public static AbstractBytecodeNode create(CompiledCodeObject code, int index, int numBytecodes, int second, int third) {
         int opType = second >> 5;
         switch (opType) {
             case 0:

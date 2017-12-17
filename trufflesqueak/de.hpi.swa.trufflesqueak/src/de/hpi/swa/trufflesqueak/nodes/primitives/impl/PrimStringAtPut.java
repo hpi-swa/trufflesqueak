@@ -4,9 +4,9 @@ import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveTernaryOperation;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeTernary;
 
-public abstract class PrimStringAtPut extends PrimitiveTernaryOperation {
+public abstract class PrimStringAtPut extends PrimitiveNodeTernary {
     public PrimStringAtPut(CompiledMethodObject code) {
         super(code);
     }

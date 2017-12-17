@@ -3,7 +3,7 @@ package de.hpi.swa.trufflesqueak.model;
 import java.util.Arrays;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.util.Chunk;
+import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public abstract class AbstractPointersObject extends SqueakObject {
 
@@ -28,7 +28,7 @@ public abstract class AbstractPointersObject extends SqueakObject {
     }
 
     @Override
-    public void fillin(Chunk chunk) {
+    public void fillin(SqueakImageChunk chunk) {
         super.fillin(chunk);
         pointers = chunk.getPointers();
     }

@@ -3,9 +3,9 @@ package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveBinaryOperation;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeBinary;
 
-public abstract class PrimFloatTimesTwoPower extends PrimitiveBinaryOperation {
+public abstract class PrimFloatTimesTwoPower extends PrimitiveNodeBinary {
     public PrimFloatTimesTwoPower(CompiledMethodObject code) {
         super(code);
     }

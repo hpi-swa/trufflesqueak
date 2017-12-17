@@ -21,7 +21,7 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakContextNode;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakMainNode;
-import de.hpi.swa.trufflesqueak.util.ImageReader;
+import de.hpi.swa.trufflesqueak.util.SqueakImageReader;
 
 public class SqueakImageContext {
     // Special objects
@@ -131,7 +131,7 @@ public class SqueakImageContext {
     }
 
     public void fillInFrom(FileInputStream inputStream) throws IOException {
-        ImageReader.readImage(this, inputStream);
+        SqueakImageReader.readImage(this, inputStream);
     }
 
     public PrintWriter getOutput() {

@@ -10,12 +10,12 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.DispatchNode;
 import de.hpi.swa.trufflesqueak.nodes.LookupNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PopNReversedStackNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
 
-public abstract class AbstractSendNode extends SqueakBytecodeNode {
+public abstract class AbstractSendNode extends AbstractBytecodeNode {
     @CompilationFinal protected final Object selector;
     @CompilationFinal private final int argumentCount;
     @Child protected SqueakLookupClassNode lookupClassNode;

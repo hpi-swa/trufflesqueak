@@ -6,9 +6,9 @@ import com.oracle.truffle.api.dsl.Specialization;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveQuinaryOperation;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeQuinary;
 
-public abstract class PrimFileWrite extends PrimitiveQuinaryOperation {
+public abstract class PrimFileWrite extends PrimitiveNodeQuinary {
     public PrimFileWrite(CompiledMethodObject code) {
         super(code);
     }

@@ -7,9 +7,9 @@ import com.oracle.truffle.api.dsl.Specialization;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveUnaryOperation;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeUnary;
 
-public abstract class PrimNew extends PrimitiveUnaryOperation {
+public abstract class PrimNew extends PrimitiveNodeUnary {
     final static int NEW_CACHE_SIZE = 3;
 
     public PrimNew(CompiledMethodObject code) {

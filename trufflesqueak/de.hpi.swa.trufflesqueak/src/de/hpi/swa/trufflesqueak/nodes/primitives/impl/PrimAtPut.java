@@ -12,9 +12,9 @@ import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.EmptyObject;
 import de.hpi.swa.trufflesqueak.model.LargeInteger;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveTernaryOperation;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeTernary;
 
-public abstract class PrimAtPut extends PrimitiveTernaryOperation {
+public abstract class PrimAtPut extends PrimitiveNodeTernary {
     public PrimAtPut(CompiledMethodObject code) {
         super(code);
     }

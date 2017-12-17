@@ -3,9 +3,9 @@ package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveUnaryOperation;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeUnary;
 
-public abstract class PrimFloatTruncated extends PrimitiveUnaryOperation {
+public abstract class PrimFloatTruncated extends PrimitiveNodeUnary {
     public PrimFloatTruncated(CompiledMethodObject code) {
         super(code);
     }

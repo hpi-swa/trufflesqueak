@@ -4,7 +4,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 
-public class UnknownBytecodeNode extends SqueakBytecodeNode {
+public class UnknownBytecodeNode extends AbstractBytecodeNode {
     private final int bytecode;
 
     public UnknownBytecodeNode(CompiledCodeObject code, int index, int numBytecodes, int bc) {

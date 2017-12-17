@@ -8,12 +8,13 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.BottomNStackNode;
 
 @NodeChildren({@NodeChild(value = "receiver", type = SqueakNode.class),
-                @NodeChild(value = "argument", type = SqueakNode.class)})
-public class PrimitiveBinaryOperation extends PrimitiveNode {
+                @NodeChild(value = "arg1", type = SqueakNode.class),
+                @NodeChild(value = "arg2", type = SqueakNode.class)})
+public class PrimitiveNodeTernary extends PrimitiveNode {
     @Child BottomNStackNode bottomNNode;
 
-    public PrimitiveBinaryOperation(CompiledMethodObject code) {
+    public PrimitiveNodeTernary(CompiledMethodObject code) {
         super(code);
-        bottomNNode = new BottomNStackNode(code, 2);
+        bottomNNode = new BottomNStackNode(code, 3);
     }
 }

@@ -9,7 +9,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.util.Chunk;
+import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public class ClassObject extends AbstractPointersObject {
     private static final int METHODDICT_NAMES_INDEX = 2;
@@ -81,7 +81,7 @@ public class ClassObject extends AbstractPointersObject {
     }
 
     @Override
-    public void fillin(Chunk chunk) {
+    public void fillin(SqueakImageChunk chunk) {
         super.fillin(chunk);
         // initialize the subclasses set
         setFormat((int) at0(FORMAT_INDEX));

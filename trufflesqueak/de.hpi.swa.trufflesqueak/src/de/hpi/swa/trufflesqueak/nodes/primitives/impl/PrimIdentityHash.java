@@ -6,9 +6,9 @@ import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveUnaryOperation;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeUnary;
 
-public abstract class PrimIdentityHash extends PrimitiveUnaryOperation {
+public abstract class PrimIdentityHash extends PrimitiveNodeUnary {
     public PrimIdentityHash(CompiledMethodObject code) {
         super(code);
     }

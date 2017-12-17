@@ -20,7 +20,7 @@ import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.instrumentation.CompiledCodeObjectPrinter;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakMethodNode;
 import de.hpi.swa.trufflesqueak.util.BitSplitter;
-import de.hpi.swa.trufflesqueak.util.Chunk;
+import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public abstract class CompiledCodeObject extends SqueakObject {
     public static class SLOT_IDENTIFIER {
@@ -186,7 +186,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
     }
 
     @Override
-    public void fillin(Chunk chunk) {
+    public void fillin(SqueakImageChunk chunk) {
         super.fillin(chunk);
         Vector<Integer> data = chunk.data();
         int header = data.get(0) >> 1; // header is a tagged small integer

@@ -7,7 +7,7 @@ import org.junit.Test;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 
-public class TestPrimitives extends TestSqueak {
+public class SqueakPrimitiveTest extends AbstractSqueakTestCase {
 	@Test
 	public void testPrimEquivalent() {
 		BaseSqueakObject rcvr = image.specialObjectsArray;

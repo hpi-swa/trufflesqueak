@@ -8,7 +8,8 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.DupNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ExtendedPushNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ExtendedStoreAndPopNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ExtendedStoreNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PopNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.UnknownBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.ConditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.UnconditionalJumpNode;
@@ -34,7 +35,6 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SingleExtendedSuperNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.store.PopIntoReceiverVariableNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.store.PopIntoRemoteTempNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.store.PopIntoTemporaryLocationNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.store.PopNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.store.StoreIntoRemoteTempNode;
 
 public class SqueakBytecodeDecoder {
@@ -48,8 +48,8 @@ public class SqueakBytecodeDecoder {
         this.bc = code.getBytes();
     }
 
-    public SqueakBytecodeNode[] decode() {
-        SqueakBytecodeNode[] nodes = new SqueakBytecodeNode[bc.length];
+    public AbstractBytecodeNode[] decode() {
+        AbstractBytecodeNode[] nodes = new AbstractBytecodeNode[bc.length];
         int i = 1;
         while (currentIndex < bc.length) {
             int index = currentIndex;
@@ -76,7 +76,7 @@ public class SqueakBytecodeDecoder {
         return b;
     }
 
-    private SqueakBytecodeNode decodeNextByte() {
+    private AbstractBytecodeNode decodeNextByte() {
         int index = currentIndex;
         int b = nextByte();
         //@formatter:off

@@ -10,7 +10,7 @@ public class ExtendedPushNode extends ExtendedAccess {
     private ExtendedPushNode() {
     }
 
-    public static SqueakBytecodeNode create(CompiledCodeObject code, int index, int numBytecodes, int nextByte) {
+    public static AbstractBytecodeNode create(CompiledCodeObject code, int index, int numBytecodes, int nextByte) {
         int variableIndex = variableIndex(nextByte);
         switch (variableType(nextByte)) {
             case 0:

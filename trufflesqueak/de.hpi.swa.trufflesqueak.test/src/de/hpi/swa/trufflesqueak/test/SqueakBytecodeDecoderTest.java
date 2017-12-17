@@ -4,15 +4,15 @@ import org.junit.Test;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.DupNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PopNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.ConditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.push.PushConstantNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.returns.ReturnReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SendSelectorNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.store.PopNode;
 import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
-public class TestDecoder extends TestSqueak {
+public class SqueakBytecodeDecoderTest extends AbstractSqueakTestCase {
     @Test
     public void testIfNil() {
         // (1 ifNil: [true]) class
@@ -20,7 +20,7 @@ public class TestDecoder extends TestSqueak {
         // pushConstant: true, send: class, pop, returnSelf
         int[] bytes = {0x76, 0x88, 0x73, 0xc6, 0x99, 0x87, 0x71, 0xc7, 0x87, 0x78};
         CompiledCodeObject code = makeMethod(bytes);
-        SqueakBytecodeNode[] bytecodeNodes = new SqueakBytecodeDecoder(code).decode();
+        AbstractBytecodeNode[] bytecodeNodes = new SqueakBytecodeDecoder(code).decode();
         assertEquals(bytes.length, bytecodeNodes.length);
         assertSame(PushConstantNode.class, bytecodeNodes[0].getClass());
         assertSame(DupNode.class, bytecodeNodes[1].getClass());

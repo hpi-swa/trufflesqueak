@@ -8,9 +8,9 @@ import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveBinaryOperation;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeBinary;
 
-public abstract class PrimNewArg extends PrimitiveBinaryOperation {
+public abstract class PrimNewArg extends PrimitiveNodeBinary {
     final static int NEW_CACHE_SIZE = 3;
 
     public PrimNewArg(CompiledMethodObject code) {

@@ -8,9 +8,9 @@ import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.LargeInteger;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveQuinaryOperation;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeQuinary;
 
-public abstract class PrimReplaceFromToNode extends PrimitiveQuinaryOperation {
+public abstract class PrimReplaceFromToNode extends PrimitiveNodeQuinary {
     public PrimReplaceFromToNode(CompiledMethodObject code) {
         super(code);
     }

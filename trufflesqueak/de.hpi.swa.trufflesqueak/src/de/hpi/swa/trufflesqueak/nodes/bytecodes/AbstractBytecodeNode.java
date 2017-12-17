@@ -10,26 +10,26 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithCode;
 
 @Instrumentable(factory = SqueakBytecodeNodeWrapper.class)
-public abstract class SqueakBytecodeNode extends SqueakNodeWithCode {
+public abstract class AbstractBytecodeNode extends SqueakNodeWithCode {
     @CompilationFinal protected final int numBytecodes;
     @CompilationFinal protected final int index;
     @CompilationFinal private SourceSection sourceSection;
     public int lineNumber = 1;
 
-    protected SqueakBytecodeNode(SqueakBytecodeNode original) {
+    protected AbstractBytecodeNode(AbstractBytecodeNode original) {
         super(original.code);
         index = original.index;
         numBytecodes = original.numBytecodes;
         setSourceSection(original.getSourceSection());
     }
 
-    public SqueakBytecodeNode(CompiledCodeObject code, int index, int numBytecodes) {
+    public AbstractBytecodeNode(CompiledCodeObject code, int index, int numBytecodes) {
         super(code);
         this.index = index;
         this.numBytecodes = numBytecodes;
     }
 
-    public SqueakBytecodeNode(CompiledCodeObject code, int index) {
+    public AbstractBytecodeNode(CompiledCodeObject code, int index) {
         this(code, index, 1);
     }
 

@@ -10,22 +10,22 @@ import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakMethodNode;
-import de.hpi.swa.trufflesqueak.util.Chunk;
+import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 import junit.framework.TestCase;
 
-public abstract class TestSqueak extends TestCase {
+public abstract class AbstractSqueakTestCase extends TestCase {
 
     protected SqueakImageContext image;
 
-    public TestSqueak() {
+    public AbstractSqueakTestCase() {
         super();
     }
 
-    public TestSqueak(String name) {
+    public AbstractSqueakTestCase(String name) {
         super(name);
     }
 
-    private class DummyChunk extends Chunk {
+    private class DummyChunk extends SqueakImageChunk {
 
         public DummyChunk(int format) {
             super(null, null, 0, format, 0, 0, 0);

@@ -5,9 +5,9 @@ import java.math.BigInteger;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveBinaryOperation;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeBinary;
 
-public abstract class PrimBitOr extends PrimitiveBinaryOperation {
+public abstract class PrimBitOr extends PrimitiveNodeBinary {
     public PrimBitOr(CompiledMethodObject code) {
         super(code);
     }

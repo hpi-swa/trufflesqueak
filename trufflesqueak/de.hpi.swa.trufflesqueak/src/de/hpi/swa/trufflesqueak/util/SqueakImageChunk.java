@@ -17,7 +17,7 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.SqueakObject;
 
-public class Chunk {
+public class SqueakImageChunk {
     Object object;
 
     private ClassObject sqClass;
@@ -27,13 +27,13 @@ public class Chunk {
     final int pos;
 
     private final long size;
-    private final ImageReader reader;
+    private final SqueakImageReader reader;
     protected final int format;
     private final int hash;
     private final Vector<Integer> data;
     private final SqueakImageContext image;
 
-    public Chunk(ImageReader reader,
+    public SqueakImageChunk(SqueakImageReader reader,
                     SqueakImageContext image,
                     long size,
                     int format,
@@ -70,7 +70,7 @@ public class Chunk {
         if (object == null) {
             assert format == 1;
             object = new ClassObject(image);
-        } else if (object == ImageReader.NIL_OBJECT_PLACEHOLDER) {
+        } else if (object == SqueakImageReader.NIL_OBJECT_PLACEHOLDER) {
             return null;
         }
         return (ClassObject) object;
@@ -141,7 +141,7 @@ public class Chunk {
                 object = new CompiledMethodObject(image);
             }
         }
-        if (object == ImageReader.NIL_OBJECT_PLACEHOLDER) {
+        if (object == SqueakImageReader.NIL_OBJECT_PLACEHOLDER) {
             return null;
         } else {
             return object;
@@ -180,7 +180,7 @@ public class Chunk {
 
     private Object decodePointer(int ptr) {
         if ((ptr & 3) == 0) {
-            Chunk chunk = reader.chunktable.get(ptr);
+            SqueakImageChunk chunk = reader.chunktable.get(ptr);
             if (chunk == null) {
                 System.err.println("Bogus pointer: " + ptr + ". Treating as smallint.");
                 return image.wrap(ptr >> 1);

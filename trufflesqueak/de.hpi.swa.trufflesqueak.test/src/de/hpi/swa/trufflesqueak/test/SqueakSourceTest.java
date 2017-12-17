@@ -5,7 +5,7 @@ import org.junit.Test;
 import de.hpi.swa.trufflesqueak.instrumentation.CompiledCodeObjectPrinter;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 
-public class TestSource extends TestSqueak {
+public class SqueakSourceTest extends AbstractSqueakTestCase {
     @Test
     public void testSource() {
         Object[] literals = new Object[]{14548994, image.nil, image.nil}; // header with numTemp=55

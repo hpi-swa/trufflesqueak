@@ -13,7 +13,7 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameUtil;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
-import de.hpi.swa.trufflesqueak.util.Chunk;
+import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public class BlockClosure extends BaseSqueakObject {
     private static class BLKCLSR {
@@ -44,7 +44,7 @@ public class BlockClosure extends BaseSqueakObject {
     }
 
     @Override
-    public void fillin(Chunk chunk) {
+    public void fillin(SqueakImageChunk chunk) {
         // FIXME
     }
 

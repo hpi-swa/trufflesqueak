@@ -12,7 +12,7 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.NonVirtualContextModification;
-import de.hpi.swa.trufflesqueak.util.Chunk;
+import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 /**
  * A ReadOnlyContextObject is backed by a MaterializedFrame. Even though the frame is materialized,
@@ -145,7 +145,7 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
     }
 
     @Override
-    public void fillin(Chunk chunk) {
+    public void fillin(SqueakImageChunk chunk) {
         throw new RuntimeException("should not implement");
     }
 

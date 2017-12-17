@@ -3,7 +3,7 @@ package de.hpi.swa.trufflesqueak.model;
 import java.math.BigInteger;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.util.Chunk;
+import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public class LargeInteger extends SqueakObject {
     private BigInteger integer;
@@ -32,7 +32,7 @@ public class LargeInteger extends SqueakObject {
     }
 
     @Override
-    public void fillin(Chunk chunk) {
+    public void fillin(SqueakImageChunk chunk) {
         super.fillin(chunk);
         byte[] bytes = chunk.getBytes();
         setBytes(bytes);

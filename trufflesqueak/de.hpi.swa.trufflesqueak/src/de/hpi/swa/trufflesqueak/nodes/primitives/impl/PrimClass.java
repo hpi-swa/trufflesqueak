@@ -5,9 +5,9 @@ import com.oracle.truffle.api.dsl.Specialization;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveUnaryOperation;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeUnary;
 
-public abstract class PrimClass extends PrimitiveUnaryOperation {
+public abstract class PrimClass extends PrimitiveNodeUnary {
     private @Child SqueakLookupClassNode node;
 
     public PrimClass(CompiledMethodObject code) {

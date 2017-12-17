@@ -1,7 +1,7 @@
 package de.hpi.swa.trufflesqueak.instrumentation;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.push.PushClosureNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.returns.ReturnTopFromBlockNode;
 import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
@@ -14,9 +14,9 @@ public class CompiledCodeObjectPrinter {
         int indent = 0;
         byte[] bytes = code.getBytes();
         // TODO: is a new BytecodeSequenceNode needed here?
-        SqueakBytecodeNode[] bytecodeNodes = new SqueakBytecodeDecoder(code).decode();
+        AbstractBytecodeNode[] bytecodeNodes = new SqueakBytecodeDecoder(code).decode();
         for (int i = 0; i < bytecodeNodes.length; i++) {
-            SqueakBytecodeNode node = bytecodeNodes[i];
+            AbstractBytecodeNode node = bytecodeNodes[i];
             if (node == null) {
                 continue;
             }

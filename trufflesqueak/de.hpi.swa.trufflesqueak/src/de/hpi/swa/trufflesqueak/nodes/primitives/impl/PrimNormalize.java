@@ -8,9 +8,9 @@ import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.LargeInteger;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.returns.ReturnReceiverNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveUnaryOperation;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeUnary;
 
-public abstract class PrimNormalize extends PrimitiveUnaryOperation {
+public abstract class PrimNormalize extends PrimitiveNodeUnary {
     public PrimNormalize(CompiledMethodObject code) {
         super(code);
     }

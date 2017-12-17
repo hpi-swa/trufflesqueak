@@ -4,11 +4,11 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SqueakBytecodeNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
 
-public class PushTemporaryLocationNode extends SqueakBytecodeNode {
+public class PushTemporaryLocationNode extends AbstractBytecodeNode {
     @Child private PushStackNode pushNode;
     @Child private FrameSlotReadNode tempNode;
     @CompilationFinal private final int tempIndex;

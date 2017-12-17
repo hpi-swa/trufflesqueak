@@ -13,7 +13,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 
-public class CallPrimitiveNode extends SqueakBytecodeNode {
+public class CallPrimitiveNode extends AbstractBytecodeNode {
     @Child private PrimitiveNode primitiveNode;
     @CompilationFinal private final int primitiveIndex;
 
