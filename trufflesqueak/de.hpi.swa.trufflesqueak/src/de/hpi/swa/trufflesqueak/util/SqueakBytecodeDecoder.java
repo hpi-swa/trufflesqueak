@@ -6,7 +6,7 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.CallPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.DoubleExtendedDoAnythingNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.DupNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ExtendedPushNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.ExtendedStoreAndPopNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.ExtendedPopNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ExtendedStoreNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PopNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
@@ -138,7 +138,7 @@ public class SqueakBytecodeDecoder {
             case 129:
                 return ExtendedStoreNode.create(code, index, 2, nextByte());
             case 130:
-                return ExtendedStoreAndPopNode.create(code, index, 2, nextByte());
+                return ExtendedPopNode.create(code, index, 2, nextByte());
             case 131:
                 return new SingleExtendedSendNode(code, index, 2, nextByte());
             case 132:

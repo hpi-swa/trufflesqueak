@@ -5,8 +5,8 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.store.PopIntoAssociationNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.store.PopIntoReceiverVariableNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.store.PopIntoTemporaryLocationNode;
 
-public class ExtendedStoreAndPopNode extends ExtendedAccess {
-    private ExtendedStoreAndPopNode() {
+public class ExtendedPopNode extends ExtendedAccess {
+    private ExtendedPopNode() {
     }
 
     public static AbstractBytecodeNode create(CompiledCodeObject code, int index, int numBytecodes, int nextByte) {
