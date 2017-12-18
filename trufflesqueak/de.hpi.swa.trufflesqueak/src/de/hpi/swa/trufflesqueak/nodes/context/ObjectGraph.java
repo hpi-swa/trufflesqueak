@@ -2,6 +2,7 @@ package de.hpi.swa.trufflesqueak.nodes.context;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
@@ -17,9 +18,17 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 
 public class ObjectGraph {
     private final CompiledCodeObject code;
+    private final HashSet<BaseSqueakObject> classesWithNoInstances;
 
     public ObjectGraph(CompiledCodeObject code) {
         this.code = code;
+        // TODO: BlockContext missing.
+        BaseSqueakObject[] classes = new BaseSqueakObject[]{code.image.smallIntegerClass, code.image.characterClass, code.image.floatClass};
+        classesWithNoInstances = new HashSet<>(Arrays.asList(classes));
+    }
+
+    public HashSet<BaseSqueakObject> getClassesWithNoInstances() {
+        return classesWithNoInstances;
     }
 
     public List<BaseSqueakObject> allInstances(ClassObject classObj) {

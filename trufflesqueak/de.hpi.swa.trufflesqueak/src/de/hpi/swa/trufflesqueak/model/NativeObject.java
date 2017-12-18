@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.CharBuffer;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
@@ -78,6 +79,7 @@ public class NativeObject extends SqueakObject implements TruffleObject {
         setNativeAt0(index, (int) object);
     }
 
+    @TruffleBoundary
     public long getNativeAt0(int index) {
         switch (elementSize) {
             case 1:
@@ -93,6 +95,7 @@ public class NativeObject extends SqueakObject implements TruffleObject {
         }
     }
 
+    @TruffleBoundary
     public void setNativeAt0(int index, long value) {
         switch (elementSize) {
             case 1:

@@ -17,6 +17,16 @@ public abstract class PrimNextInstance extends PrimitiveNodeUnary {
         objectGraph = new ObjectGraph(code);
     }
 
+    protected boolean hasNoInstances(BaseSqueakObject sqObject) {
+        return objectGraph.getClassesWithNoInstances().contains(sqObject.getSqClass());
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = "hasNoInstances(sqObject)")
+    BaseSqueakObject noInstances(BaseSqueakObject sqObject) {
+        return code.image.nil;
+    }
+
     @Specialization
     BaseSqueakObject someInstance(BaseSqueakObject sqObject) {
         List<BaseSqueakObject> instances = objectGraph.allInstances(sqObject.getSqClass());

@@ -376,7 +376,7 @@ public abstract class PrimitiveNodeFactory {
         // TODO: FILE_SET_POSITION(PrimFileWriteNodeGen.class, "FilePlugin", "primitiveFileSetPosition"),
         FILE_SIZE(PrimFileSizeNodeGen.class, "FilePlugin", "primitiveFileSize"),
         FILE_STDIO_HANDLES(PrimFileStdioHandles.class, "FilePlugin", "primitiveFileStdioHandles"),
-        FILE_WRITE(PrimFileStdioHandles.class, "FilePlugin", "primitiveFileWrite"),
+        FILE_WRITE(PrimFileWriteNodeGen.class, "FilePlugin", "primitiveFileWrite"),
         // TODO: FILE_TRUNCATE(PrimFileStdioHandles.class, "FilePlugin", "primitiveFileTruncate"),
         // TODO: FDIR_SET_MAC(PrimFileStdioHandles.class, "FilePlugin",
         // "primitiveDirectorySetMacTypeAndCreator"),

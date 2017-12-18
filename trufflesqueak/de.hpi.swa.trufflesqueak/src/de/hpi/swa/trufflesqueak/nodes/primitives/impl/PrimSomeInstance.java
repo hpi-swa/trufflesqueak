@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
@@ -18,27 +19,32 @@ public abstract class PrimSomeInstance extends PrimitiveNodeUnary {
         objectGraph = new ObjectGraph(code);
     }
 
+    protected boolean isSmallIntegerClass(ClassObject classObject) {
+        return classObject.equals(code.image.smallIntegerClass);
+    }
+
     protected boolean isClassObject(ClassObject classObject) {
-        return classObject.isClass() && !classObject.equals(code.image.smallIntegerClass);
+        return classObject.isClass();
     }
 
     @SuppressWarnings("unused")
-    protected boolean isIllegal(BaseSqueakObject obj) {
-        return true;
+    @Specialization(guards = "isSmallIntegerClass(classObject)")
+    ListObject allInstances(ClassObject classObject) {
+        throw new PrimitiveFailed();
     }
 
-    @Specialization(guards = "isClassObject(classObj)")
-    BaseSqueakObject someInstance(ClassObject classObj) {
+    @Specialization(guards = "isClassObject(classObject)")
+    BaseSqueakObject someInstance(ClassObject classObject) {
         try {
-            return objectGraph.someInstance(classObj).get(0);
+            return objectGraph.someInstance(classObject).get(0);
         } catch (IndexOutOfBoundsException e) {
             throw new PrimitiveFailed();
         }
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "isIllegal(obj)")
-    ListObject allInstances(BaseSqueakObject obj) {
+    @Fallback
+    ListObject allInstances(Object object) {
         throw new PrimitiveFailed();
     }
 }

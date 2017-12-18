@@ -38,7 +38,6 @@ def squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
         # '-XX:CompileCommand=print,*OptimizedCallTarget.callRoot',
         # '-XX:CompileCommand=exclude,*OptimizedCallTarget.callRoot',
         # '-Dgraal.TruffleBackgroundCompilation=false',
-        # '-Dgraal.TruffleCompileImmediately=true',
         # '-Dgraal.TraceTrufflePerformanceWarnings=true',
         # '-Dgraal.TruffleCompilationExceptionsArePrinted=true',
     ]

@@ -2,6 +2,7 @@ package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
 import java.math.BigInteger;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
@@ -28,6 +29,7 @@ public class PrimAdd extends PrimitiveNodeBinary {
     }
 
     @Specialization
+    @TruffleBoundary
     BigInteger add(BigInteger a, BigInteger b) {
         return a.add(b);
     }
