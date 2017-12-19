@@ -11,10 +11,10 @@ import com.oracle.truffle.api.instrumentation.StandardTags;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 
-@TruffleLanguage.Registration(name = "Squeak", version = "0.1", mimeType = SqueakLanguage.MIME_TYPE)
+@TruffleLanguage.Registration(name = "SqueakSmalltalk", version = "0.1", mimeType = SqueakLanguage.MIME_TYPE)
 @ProvidedTags({StandardTags.CallTag.class, StandardTags.RootTag.class, StandardTags.StatementTag.class, DebuggerTags.AlwaysHalt.class})
 public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
-    public static final String MIME_TYPE = "application/x-squeak";
+    public static final String MIME_TYPE = "application/x-squeak-smalltalk";
 
     @Override
     protected SqueakImageContext createContext(Env env) {

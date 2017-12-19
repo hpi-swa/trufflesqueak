@@ -10,17 +10,23 @@ import com.oracle.truffle.api.source.SourceSection;
 import de.hpi.swa.trufflesqueak.exceptions.LocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNode;
+import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 
 public class CallPrimitiveNode extends AbstractBytecodeNode {
-    @Child private PrimitiveNode primitiveNode;
+    @Child private AbstractPrimitiveNode primitiveNode;
     @CompilationFinal private final int primitiveIndex;
 
     public CallPrimitiveNode(CompiledCodeObject code, int index, int numBytecodes, int byte1, int byte2) {
         super(code, index, numBytecodes);
         primitiveIndex = code.hasPrimitive() ? byte1 + (byte2 << 8) : 0;
-        primitiveNode = PrimitiveNodeFactory.forIdx(code, primitiveIndex);
+        if (code instanceof CompiledMethodObject) {
+            primitiveNode = PrimitiveNodeFactory.forIdx((CompiledMethodObject) code, primitiveIndex);
+        } else {
+            throw new RuntimeException("Primitives only supported in CompiledMethodObject");
+        }
+
     }
 
     @Override

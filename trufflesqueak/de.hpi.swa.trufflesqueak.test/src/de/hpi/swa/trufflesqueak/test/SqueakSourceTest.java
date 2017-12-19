@@ -26,7 +26,7 @@ public class SqueakSourceTest extends AbstractSqueakTestCase {
 
     @Test
     public void testSourceAllBytecodes() {
-        Object[] literals = new Object[]{14548994, 21, 42, 63}; // header with numTemp=55
+        Object[] literals = new Object[]{17104899, 21, 42, 63};
         CompiledCodeObject code = makeMethod(literals,
         //@formatter:off
             15, 31, 63, 95, 96, 97, 98, 99, 103, 111, 112, 113, 114, 115, 116,
@@ -42,7 +42,7 @@ public class SqueakSourceTest extends AbstractSqueakTestCase {
             136,
             137,
             138, 31,
-            139, 31, 63,
+            139, 31, 0,
             140, 31, 63,
             141, 31, 63,
             142, 31, 63,
@@ -61,7 +61,7 @@ public class SqueakSourceTest extends AbstractSqueakTestCase {
         assertEquals(
             "1 <0F> pushRcvr: 15\n" +
             "2 <1F> pushTemp: 15\n" +
-            "3 <3F> pushConstant: 14548994\n" +
+            "3 <3F> pushConstant: 17104899\n" +
             "4 <5F> pushLit: 31\n" +
             "5 <60> popIntoRcvr: 0\n" +
             "6 <61> popIntoRcvr: 1\n" +
@@ -87,15 +87,15 @@ public class SqueakSourceTest extends AbstractSqueakTestCase {
             "26 <80 1F> pushRcvr: 31\n" +
             "27 <81 1F> storeIntoRcvr: 31\n" +
             "28 <82 1F> popIntoRcvr: 31\n" +
-            "29 <83 1F> send: 14548994\n" +
-            "30 <84 1F 3F> send: 14548994\n" +
-            "31 <85 1F> sendSuper: 14548994\n" +
-            "32 <86 1F> send: 14548994\n" +
+            "29 <83 1F> send: 17104899\n" +
+            "30 <84 1F 3F> send: 17104899\n" +
+            "31 <85 1F> sendSuper: 17104899\n" +
+            "32 <86 1F> send: 17104899\n" +
             "33 <87> pop\n" +
             "34 <88> dup\n" +
             "35 <89> pushThisContext:\n" +
             "36 <8A 1F> push: (Array new: 31)\n" +
-            "37 <8B 1F 3F> callPrimitive: 0\n" +
+            "37 <8B 1F 00> callPrimitive: 31\n" +
             "38 <8C 1F 3F> pushTemp: 31 inVectorAt: 63\n" +
             "39 <8D 1F 3F> storeIntoTemp: 31 inVectorAt: 63\n" +
             "40 <8E 1F 3F> popIntoTemp: 31 inVectorAt: 63\n" +

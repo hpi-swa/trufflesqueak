@@ -312,7 +312,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
         }
         BaseSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < 64; i++) {
-            // push true, storeIntoLiteral i, returnTop
+            // push true, popIntoLiteral i, returnTop
             CompiledCodeObject code = makeMethod(literalsList.toArray(), 113, 130, 192 + i, 124);
             VirtualFrame frame = code.createTestFrame(rcvr, new BaseSqueakObject[4]);
             try {

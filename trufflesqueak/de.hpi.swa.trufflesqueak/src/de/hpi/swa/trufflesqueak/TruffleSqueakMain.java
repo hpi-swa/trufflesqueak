@@ -43,9 +43,9 @@ public class TruffleSqueakMain extends AbstractLanguageLauncher {
 
     @Override
     protected void launch(org.graalvm.polyglot.Context.Builder contextBuilder) {
-        contextBuilder.arguments("squeak", config.toStringArgs());
+        contextBuilder.arguments("squeaksmalltalk", config.toStringArgs());
         try (org.graalvm.polyglot.Context ctx = contextBuilder.build()) {
-            Object result = ctx.eval(org.graalvm.polyglot.Source.newBuilder("squeak", new File(imagepath)).build());
+            Object result = ctx.eval(org.graalvm.polyglot.Source.newBuilder("squeaksmalltalk", new File(imagepath)).build());
             System.out.println(result);
         } catch (IOException e) {
             e.printStackTrace();
@@ -54,7 +54,7 @@ public class TruffleSqueakMain extends AbstractLanguageLauncher {
 
     @Override
     protected String getLanguageId() {
-        return "squeak";
+        return "squeaksmalltalk";
     }
 
     @Override

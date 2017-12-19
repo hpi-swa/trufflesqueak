@@ -35,7 +35,7 @@ public class SqueakMethodNode extends RootNode {
     public SqueakMethodNode(SqueakLanguage language, CompiledCodeObject code, boolean hasReceiver) {
         super(language, code.getFrameDescriptor());
         this.code = code;
-        int numRcvr = hasReceiver ? 1 : 0;
+        int numRcvr = hasReceiver ? 1 : 0; // TODO fixme only entry point
         int numArgs = code.getNumArgs();
         int numCopiedValues = code.getNumCopiedValues();
         int numTemps = Math.max(code.getNumTemps() - numArgs, 0);

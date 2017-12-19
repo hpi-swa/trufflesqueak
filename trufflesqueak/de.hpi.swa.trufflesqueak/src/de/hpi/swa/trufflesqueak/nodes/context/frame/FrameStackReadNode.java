@@ -14,6 +14,7 @@ public abstract class FrameStackReadNode extends Node {
     public abstract Object execute(VirtualFrame frame, int stackIndex);
 
     protected FrameSlot getFrameSlotForIndex(VirtualFrame frame, int index) {
+        assert index >= 0;
         return frame.getFrameDescriptor().findFrameSlot(index);
     }
 
