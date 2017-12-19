@@ -1,46 +1,13 @@
 package de.hpi.swa.trufflesqueak.model;
 
-import de.hpi.swa.trufflesqueak.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.TruffleObject;
 
-public final class FrameMarker extends BaseSqueakObject {
+import de.hpi.swa.trufflesqueak.instrumentation.BaseSqueakObjectMessageResolutionForeign;
 
-    public FrameMarker(SqueakImageContext img) {
-        super(img);
-    }
+public final class FrameMarker implements TruffleObject {
 
     public FrameMarker() {
-        this(null);
-    }
-
-    @Override
-    public void fillin(SqueakImageChunk chunk) {
-        throw new UnsupportedOperationException("Not supported yet."); // To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public ClassObject getSqClass() {
-        return null;
-    }
-
-    @Override
-    public Object at0(int l) {
-        throw new UnsupportedOperationException("Not supported yet."); // To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void atput0(int idx, Object object) {
-        throw new UnsupportedOperationException("Not supported yet."); // To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public int size() {
-        return 0;
-    }
-
-    @Override
-    public int instsize() {
-        return 0;
     }
 
     @Override
@@ -48,8 +15,7 @@ public final class FrameMarker extends BaseSqueakObject {
         return "aFrameMarker";
     }
 
-    @Override
-    public BaseSqueakObject shallowCopy() {
-        throw new UnsupportedOperationException("Not supported yet."); // To change body of generated methods, choose Tools | Templates.
+    public ForeignAccess getForeignAccess() {
+        return BaseSqueakObjectMessageResolutionForeign.ACCESS;
     }
 }

@@ -29,26 +29,21 @@ public class SqueakMethodNode extends RootNode {
     @Children private final AbstractBytecodeNode[] bytecodeNodes;
 
     public SqueakMethodNode(SqueakLanguage language, CompiledCodeObject code) {
-        this(language, code, true);
-    }
-
-    public SqueakMethodNode(SqueakLanguage language, CompiledCodeObject code, boolean hasReceiver) {
         super(language, code.getFrameDescriptor());
         this.code = code;
-        int numRcvr = hasReceiver ? 1 : 0; // TODO fixme only entry point
         int numArgs = code.getNumArgs();
-        int numCopiedValues = code.getNumCopiedValues();
         int numTemps = Math.max(code.getNumTemps() - numArgs, 0);
-        initStackNode = new InitializeStackNode(code, numRcvr + numArgs + numCopiedValues, numTemps);
+        initStackNode = new InitializeStackNode(code, numTemps);
         bytecodeNodes = new SqueakBytecodeDecoder(code).decode();
     }
 
     private void enterFrame(VirtualFrame frame) {
         CompilerDirectives.ensureVirtualized(frame);
-        initializeSlots(frame);
+        frame.setObject(code.markerSlot, new FrameMarker());
+        frame.setObject(code.methodSlot, code);
         initStackNode.executeVoid(frame);
         if (code instanceof CompiledBlockObject) {
-            frame.setInt(code.closureSlot, 1 + code.getNumArgs() + code.getNumCopiedValues());
+            frame.setInt(code.closureSlot, 1 + code.getNumArgs() + code.getNumCopiedValues()); // rcvr + args + copied
         }
     }
 
@@ -141,12 +136,6 @@ public class SqueakMethodNode extends RootNode {
     @Override
     public String getName() {
         return code.toString();
-    }
-
-    private void initializeSlots(VirtualFrame frame) {
-        frame.setInt(code.stackPointerSlot, -1);
-        frame.setObject(code.markerSlot, new FrameMarker());
-        frame.setObject(code.methodSlot, code);
     }
 
     @Override

@@ -6,10 +6,14 @@ import java.io.PrintWriter;
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.debug.DebuggerTags;
+import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.instrumentation.ProvidedTags;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
+import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.FrameMarker;
+import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNode;
 
 @TruffleLanguage.Registration(name = "SqueakSmalltalk", version = "0.1", mimeType = SqueakLanguage.MIME_TYPE)
 @ProvidedTags({StandardTags.CallTag.class, StandardTags.RootTag.class, StandardTags.StatementTag.class, DebuggerTags.AlwaysHalt.class})
@@ -39,6 +43,18 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
     protected Object findExportedSymbol(SqueakImageContext context, String globalName, boolean onlyExplicit) {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    @Override
+    protected Object findMetaObject(SqueakImageContext context, Object value) {
+        if (value instanceof FrameMarker) {
+            return context.nilClass;
+        }
+        try {
+            return SqueakLookupClassNode.create(new CompiledMethodObject(context)).executeLookup(value);
+        } catch (UnsupportedSpecializationException e) {
+            return null;
+        }
     }
 
     @Override

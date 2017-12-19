@@ -9,12 +9,10 @@ import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode;
 
 public class InitializeStackNode extends AbstractStackNode {
     @Child private FrameStackWriteNode writeNode;
-    @CompilationFinal private final int numArgs;
     @CompilationFinal private final int numTemps;
 
-    public InitializeStackNode(CompiledCodeObject code, int numArgs, int numTemps) {
+    public InitializeStackNode(CompiledCodeObject code, int numTemps) {
         super(code);
-        this.numArgs = numArgs;
         this.numTemps = numTemps;
         writeNode = FrameStackWriteNode.create();
     }
@@ -22,10 +20,9 @@ public class InitializeStackNode extends AbstractStackNode {
     @ExplodeLoop
     public void executeVoid(VirtualFrame frame) {
         Object[] arguments = frame.getArguments();
-        int sp = stackPointer(frame);
         for (int i = 0; i < arguments.length; i++) {
-            writeNode.execute(frame, sp + 1 + i, arguments[i]);
+            writeNode.execute(frame, i, arguments[i]);
         }
-        frame.setInt(code.stackPointerSlot, sp + numArgs + numTemps);
+        frame.setInt(code.stackPointerSlot, arguments.length - 1 + numTemps);
     }
 }

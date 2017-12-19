@@ -1,7 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes.send;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.debug.DebuggerTags;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
@@ -65,9 +64,6 @@ public abstract class AbstractSendNode extends AbstractBytecodeNode {
 
     @Override
     protected boolean isTaggedWith(Class<?> tag) {
-        if (selector.toString().equals("halt") && tag == DebuggerTags.AlwaysHalt.class) {
-            return true;
-        }
         return ((tag == StandardTags.StatementTag.class) || (tag == StandardTags.CallTag.class));
     }
 }

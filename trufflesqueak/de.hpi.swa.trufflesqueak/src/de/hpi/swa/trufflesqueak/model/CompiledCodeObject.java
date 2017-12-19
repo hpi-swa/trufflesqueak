@@ -11,7 +11,6 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
@@ -105,20 +104,6 @@ public abstract class CompiledCodeObject extends SqueakObject {
         markerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.MARKER, FrameSlotKind.Object);
         methodSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.METHOD, FrameSlotKind.Object);
         stackPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.STACK_POINTER, FrameSlotKind.Int);
-    }
-
-    public VirtualFrame createTestFrame(Object receiver) {
-        return createTestFrame(receiver, new Object[]{});
-    }
-
-    public VirtualFrame createTestFrame(Object receiver, Object[] arguments) {
-        Object[] args = new Object[arguments.length + 1];
-        int i = 0;
-        args[i++] = receiver;
-        for (Object o : arguments) {
-            args[i++] = o;
-        }
-        return Truffle.getRuntime().createVirtualFrame(args, frameDescriptor);
     }
 
     public RootCallTarget getCallTarget() {
@@ -244,10 +229,10 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     @Override
     public Object at0(int idx) {
-        if (idx < literals.length) {
+        if (idx < literals.length * 4) {
             return literals[idx / 4];
         } else {
-            return Byte.toUnsignedInt(bytes[idx]);
+            return Byte.toUnsignedInt(bytes[idx - literals.length * 4]);
         }
     }
 

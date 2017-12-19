@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.test;
 
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
@@ -100,7 +101,7 @@ public abstract class AbstractSqueakTestCase extends TestCase {
     }
 
     public Object runMethod(CompiledCodeObject code, Object receiver, Object... arguments) {
-        VirtualFrame frame = code.createTestFrame(receiver, arguments);
+        VirtualFrame frame = createTestFrame(code, receiver, arguments);
         Object result = null;
         try {
             result = new SqueakMethodNode(null, code).execute(frame);
@@ -130,5 +131,19 @@ public abstract class AbstractSqueakTestCase extends TestCase {
     protected Object runPrim(Object[] literals, int primCode, Object rcvr, Object... arguments) {
         CompiledCodeObject cm = makeMethod(literals, new int[]{139, primCode & 0xFF, (primCode & 0xFF00) >> 8});
         return runMethod(cm, rcvr, arguments);
+    }
+
+    public VirtualFrame createTestFrame(CompiledCodeObject code, Object receiver) {
+        return createTestFrame(code, receiver, new Object[]{});
+    }
+
+    public VirtualFrame createTestFrame(CompiledCodeObject code, Object receiver, Object[] arguments) {
+        Object[] args = new Object[arguments.length + 1];
+        int i = 0;
+        args[i++] = receiver;
+        for (Object o : arguments) {
+            args[i++] = o;
+        }
+        return Truffle.getRuntime().createVirtualFrame(args, code.getFrameDescriptor());
     }
 }

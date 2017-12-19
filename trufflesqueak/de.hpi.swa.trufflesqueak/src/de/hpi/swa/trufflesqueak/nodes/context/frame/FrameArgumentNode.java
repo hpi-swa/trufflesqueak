@@ -14,10 +14,6 @@ public class FrameArgumentNode extends SqueakNode {
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
-        try {
-            return frame.getArguments()[argumentIndex];
-        } catch (IndexOutOfBoundsException e) {
-            throw new RuntimeException("Tried to access arg #" + argumentIndex + ", but there are only " + frame.getArguments().length + " in total.");
-        }
+        return frame.getArguments()[argumentIndex];
     }
 }
