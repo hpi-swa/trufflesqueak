@@ -15,7 +15,7 @@ public class PopNode extends UnknownBytecodeNode {
 
     @Override
     public void executeVoid(VirtualFrame frame) {
-        popNode.execute(frame);
+        popNode.executeGeneric(frame);
     }
 
     @Override

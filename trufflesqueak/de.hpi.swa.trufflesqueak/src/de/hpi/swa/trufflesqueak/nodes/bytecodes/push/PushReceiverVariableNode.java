@@ -15,13 +15,12 @@ public class PushReceiverVariableNode extends AbstractPushNode {
     public PushReceiverVariableNode(CompiledCodeObject code, int index, int numBytecodes, int varIndex) {
         super(code, index, numBytecodes);
         variableIndex = varIndex;
-        fetchNode = ObjectAtNode.create(varIndex);
-        receiverNode = new FrameReceiverNode(code);
+        fetchNode = ObjectAtNode.create(varIndex, new FrameReceiverNode(code));
     }
 
     @Override
     public void executeVoid(VirtualFrame frame) {
-        pushNode.executeWrite(frame, fetchNode.executeWith(receiverNode.executeGeneric(frame)));
+        pushNode.executeWrite(frame, fetchNode.executeGeneric(frame));
     }
 
     @Override

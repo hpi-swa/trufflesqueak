@@ -13,7 +13,8 @@ public class TopStackNode extends AbstractStackNode {
         readNode = FrameStackReadNode.create();
     }
 
-    public Object execute(VirtualFrame frame) {
+    @Override
+    public Object executeGeneric(VirtualFrame frame) {
         return readNode.execute(frame, stackPointer(frame));
     }
 }

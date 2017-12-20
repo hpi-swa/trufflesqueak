@@ -4,12 +4,11 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.context.LiteralConstantNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtNode;
 
 public class PushLiteralVariableNode extends AbstractPushNode {
-    @Child private SqueakNode valueNode;
+    @Child private ObjectAtNode valueNode;
     @CompilationFinal private final int literalIndex;
 
     public PushLiteralVariableNode(CompiledCodeObject code, int index, int numBytecodes, int literalIndex) {

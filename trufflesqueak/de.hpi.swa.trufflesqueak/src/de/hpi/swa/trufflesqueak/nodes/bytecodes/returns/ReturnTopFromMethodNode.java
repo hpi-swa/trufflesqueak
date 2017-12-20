@@ -17,7 +17,7 @@ public class ReturnTopFromMethodNode extends ReturnTopFromBlockNode {
         if (getClosure(frame) == code.image.nil) {
             return super.executeGeneric(frame);
         } else {
-            throw new NonLocalReturn(popNode.execute(frame), ((BlockClosure) getClosure(frame)).getFrameMarker());
+            throw new NonLocalReturn(popNode.executeGeneric(frame), ((BlockClosure) getClosure(frame)).getFrameMarker());
         }
     }
 

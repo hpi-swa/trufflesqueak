@@ -15,7 +15,7 @@ public class PopIntoTemporaryLocationNode extends AbstractStoreIntoTempNode {
 
     @Override
     public void executeVoid(VirtualFrame frame) {
-        storeNode.executeWrite(frame, popNode.execute(frame));
+        storeNode.executeWrite(frame, popNode.executeGeneric(frame));
     }
 
     @Override

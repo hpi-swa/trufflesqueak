@@ -30,7 +30,7 @@ public class ConditionalJumpNode extends UnconditionalJumpNode {
     }
 
     public boolean executeCondition(VirtualFrame frame) {
-        return popNode.execute(frame) == isIfTrue;
+        return popNode.executeGeneric(frame) == isIfTrue;
     }
 
     @Override

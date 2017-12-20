@@ -13,7 +13,8 @@ public class PopStackNode extends AbstractStackNode {
         readNode = FrameStackReadNode.create();
     }
 
-    public Object execute(VirtualFrame frame) {
+    @Override
+    public Object executeGeneric(VirtualFrame frame) {
         int sp = stackPointer(frame);
         frame.setInt(code.stackPointerSlot, sp - 1);
         return readNode.execute(frame, sp);

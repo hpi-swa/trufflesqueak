@@ -5,16 +5,17 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.trufflesqueak.nodes.WriteNode;
-
-public abstract class FrameSlotWriteNode extends FrameSlotNode implements WriteNode {
-    protected FrameSlotWriteNode(FrameSlot slot) {
-        super(slot);
-    }
+public abstract class FrameSlotWriteNode extends FrameSlotNode {
 
     public static FrameSlotWriteNode create(FrameSlot slot) {
         return FrameSlotWriteNodeGen.create(slot);
     }
+
+    protected FrameSlotWriteNode(FrameSlot slot) {
+        super(slot);
+    }
+
+    public abstract void executeWrite(VirtualFrame frame, Object value);
 
     protected boolean isNullWrite(VirtualFrame frame, Object value) {
         return isIllegal(frame) && value == null;

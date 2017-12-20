@@ -1,16 +1,22 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes.push;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.nodes.context.RemoteTemporaryLocationNode;
+import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameTemporaryNode;
 
 public class PushRemoteTempNode extends AbstractPushNode {
-    @Child private RemoteTemporaryLocationNode remoteTempNode;
+    @Child private ObjectAtNode remoteTempNode;
+    @CompilationFinal private final int indexInArray;
+    @CompilationFinal private final int indexOfArray;
 
     public PushRemoteTempNode(CompiledCodeObject code, int index, int numBytecodes, int indexInArray, int indexOfArray) {
         super(code, index, numBytecodes);
-        remoteTempNode = new RemoteTemporaryLocationNode(code, indexInArray, indexOfArray);
+        this.indexInArray = indexInArray;
+        this.indexOfArray = indexOfArray;
+        remoteTempNode = ObjectAtNode.create(indexInArray, new FrameTemporaryNode(code, indexOfArray));
     }
 
     @Override
@@ -20,7 +26,7 @@ public class PushRemoteTempNode extends AbstractPushNode {
 
     @Override
     public String toString() {
-        return String.format("pushTemp: %d inVectorAt: %d", remoteTempNode.getIndexInArray(), remoteTempNode.getIndexOfArray());
+        return String.format("pushTemp: %d inVectorAt: %d", this.indexInArray, this.indexOfArray);
     }
 
 }
