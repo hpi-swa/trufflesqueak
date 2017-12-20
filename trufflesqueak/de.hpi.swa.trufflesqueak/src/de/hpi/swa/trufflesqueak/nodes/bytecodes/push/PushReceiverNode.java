@@ -6,11 +6,10 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameReceiverNode;
 
 public class PushReceiverNode extends AbstractPushNode {
-    @Child private FrameReceiverNode receiverNode;
+    @Child private FrameReceiverNode receiverNode = new FrameReceiverNode();
 
     public PushReceiverNode(CompiledCodeObject code, int index) {
         super(code, index);
-        receiverNode = new FrameReceiverNode(code);
     }
 
     @Override

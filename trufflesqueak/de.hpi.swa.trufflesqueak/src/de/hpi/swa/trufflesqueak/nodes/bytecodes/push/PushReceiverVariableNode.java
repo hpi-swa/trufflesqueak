@@ -9,13 +9,12 @@ import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameReceiverNode;
 
 public class PushReceiverVariableNode extends AbstractPushNode {
     @Child private ObjectAtNode fetchNode;
-    @Child private FrameReceiverNode receiverNode;
     @CompilationFinal private final int variableIndex;
 
     public PushReceiverVariableNode(CompiledCodeObject code, int index, int numBytecodes, int varIndex) {
         super(code, index, numBytecodes);
         variableIndex = varIndex;
-        fetchNode = ObjectAtNode.create(varIndex, new FrameReceiverNode(code));
+        fetchNode = ObjectAtNode.create(varIndex, new FrameReceiverNode());
     }
 
     @Override

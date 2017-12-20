@@ -18,7 +18,7 @@ public class PushClosureNode extends AbstractPushNode {
     @CompilationFinal private final int numCopied;
     @CompilationFinal private final CompiledBlockObject compiledBlock;
     @Child private PopNReversedStackNode popNReversedNode;
-    @Child private FrameReceiverNode receiverNode;
+    @Child private FrameReceiverNode receiverNode = new FrameReceiverNode();
 
     public PushClosureNode(CompiledCodeObject code, int index, int numBytecodes, int i, int j, int k) {
         super(code, index, numBytecodes);
@@ -27,7 +27,6 @@ public class PushClosureNode extends AbstractPushNode {
         this.blockSize = (j << 8) | k;
         this.compiledBlock = new CompiledBlockObject(code, numArgs, numCopied);
         popNReversedNode = new PopNReversedStackNode(code, numCopied);
-        receiverNode = new FrameReceiverNode(code);
     }
 
     @Override

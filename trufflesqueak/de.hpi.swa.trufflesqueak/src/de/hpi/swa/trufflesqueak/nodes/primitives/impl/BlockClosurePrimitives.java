@@ -107,13 +107,12 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @GenerateNodeFactory
     @SqueakPrimitive(index = 201)
     public static abstract class PrimClosureValue0Node extends AbstractClosureValuePrimitiveNode {
+        @Child FrameReceiverNode receiverNode = new FrameReceiverNode();
         @Child protected BlockActivationNode dispatch;
-        @Child FrameReceiverNode receiverNode;
 
         public PrimClosureValue0Node(CompiledMethodObject method) {
             super(method);
             dispatch = BlockActivationNodeGen.create();
-            receiverNode = new FrameReceiverNode(method);
         }
 
         @Specialization

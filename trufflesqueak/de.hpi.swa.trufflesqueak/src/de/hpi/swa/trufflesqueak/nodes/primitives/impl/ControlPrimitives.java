@@ -183,11 +183,10 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 256)
     public static abstract class PrimQuickReturnSelfNode extends AbstractPrimitiveNode {
-        @Child private FrameReceiverNode receiverNode;
+        @Child private FrameReceiverNode receiverNode = new FrameReceiverNode();
 
         public PrimQuickReturnSelfNode(CompiledMethodObject method) {
             super(method);
-            receiverNode = new FrameReceiverNode(code);
         }
 
         @Specialization
@@ -293,7 +292,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         public PrimQuickReturnReceiverVariableNode(CompiledMethodObject method, int variableIndex) {
             super(method);
-            receiverVariableNode = ObjectAtNode.create(variableIndex, new FrameReceiverNode(code));
+            receiverVariableNode = ObjectAtNode.create(variableIndex, new FrameReceiverNode());
         }
 
         public static PrimQuickReturnReceiverVariableNode create(CompiledMethodObject method, int variableIndex) {

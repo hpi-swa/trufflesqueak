@@ -202,7 +202,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
         public PrimBitShiftNode(CompiledMethodObject method) {
             super(method);
-            normalizeNode = PrimNormalizeNodeFactory.create(method, new SqueakNode[]{new FrameReceiverNode(method)});
+            normalizeNode = PrimNormalizeNodeFactory.create(method, new SqueakNode[]{new FrameReceiverNode()});
         }
 
         @Specialization(guards = {"arg <= 0"})
