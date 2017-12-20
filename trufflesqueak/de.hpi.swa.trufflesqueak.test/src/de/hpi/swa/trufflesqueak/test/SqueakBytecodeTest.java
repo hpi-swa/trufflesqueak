@@ -481,7 +481,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
     public void testCallPrimitiveFailure() {
         int primCode = 1;
         BaseSqueakObject rcvr = image.wrap(1);
-        CompiledCodeObject cm = makeMethod(new Object[]{17104899}, // numTemps=1
+        CompiledCodeObject cm = makeMethod(new Object[]{65538},
                         // callPrimitive 1, returnTop
                         139, primCode & 0xFF, (primCode & 0xFF00) >> 8, 124);
         assertEquals(rcvr, runMethod(cm, rcvr));

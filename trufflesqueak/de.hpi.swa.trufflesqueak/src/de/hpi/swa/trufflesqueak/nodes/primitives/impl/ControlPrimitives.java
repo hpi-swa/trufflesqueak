@@ -23,8 +23,8 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
 import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtNode;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameReceiverAndArgumentsNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameReceiverNode;
-import de.hpi.swa.trufflesqueak.nodes.context.stack.BottomNStackNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
@@ -66,14 +66,14 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Child private SqueakLookupClassNode lookupClassNode;
         @Child private LookupNode lookupNode;
         @Child private DispatchNode dispatchNode;
-        @Child private BottomNStackNode bottomNNode;
+        @Child private FrameReceiverAndArgumentsNode rcvrAndArgsNode;
 
         public PrimPerformNode(CompiledMethodObject method) {
             super(method);
             lookupClassNode = SqueakLookupClassNodeGen.create(code);
             dispatchNode = DispatchNodeGen.create();
             lookupNode = LookupNodeGen.create();
-            bottomNNode = new BottomNStackNode(code, 1 + code.getNumArgs());
+            rcvrAndArgsNode = new FrameReceiverAndArgumentsNode();
         }
 
         @Specialization

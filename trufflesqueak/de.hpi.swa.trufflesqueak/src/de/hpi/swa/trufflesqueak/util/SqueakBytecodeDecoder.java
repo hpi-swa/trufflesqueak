@@ -2,14 +2,12 @@ package de.hpi.swa.trufflesqueak.util;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.CallPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.DoubleExtendedDoAnythingNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.DupNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.ExtendedPushNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.ExtendedPopNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.ExtendedStoreNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.ExtendedBytecodes;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PopNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.UnknownBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.ConditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.UnconditionalJumpNode;
@@ -134,11 +132,11 @@ public class SqueakBytecodeDecoder {
             case 127:
                 return new UnknownBytecodeNode(code, index, 1, b);
             case 128:
-                return ExtendedPushNode.create(code, index, 2, nextByte());
+                return ExtendedBytecodes.createPush(code, index, 2, nextByte());
             case 129:
-                return ExtendedStoreNode.create(code, index, 2, nextByte());
+                return ExtendedBytecodes.createStoreInto(code, index, 2, nextByte());
             case 130:
-                return ExtendedPopNode.create(code, index, 2, nextByte());
+                return ExtendedBytecodes.createPopInto(code, index, 2, nextByte());
             case 131:
                 return new SingleExtendedSendNode(code, index, 2, nextByte());
             case 132:
