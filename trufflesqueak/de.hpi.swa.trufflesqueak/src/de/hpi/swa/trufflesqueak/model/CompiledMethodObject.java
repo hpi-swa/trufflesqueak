@@ -1,10 +1,8 @@
 package de.hpi.swa.trufflesqueak.model;
 
-import com.oracle.truffle.api.interop.TruffleObject;
-
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 
-public class CompiledMethodObject extends CompiledCodeObject implements TruffleObject {
+public class CompiledMethodObject extends CompiledCodeObject {
     public CompiledMethodObject(SqueakImageContext img) {
         super(img);
     }

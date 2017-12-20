@@ -7,7 +7,6 @@ public class NilObject extends BaseSqueakObject {
 
     public NilObject(SqueakImageContext img) {
         super(img);
-        // TODO Auto-generated constructor stub
     }
 
     @Override

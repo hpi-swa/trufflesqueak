@@ -1,10 +1,8 @@
 package de.hpi.swa.trufflesqueak.model;
 
-import com.oracle.truffle.api.interop.TruffleObject;
-
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 
-public class PointersObject extends AbstractPointersObject implements TruffleObject {
+public class PointersObject extends AbstractPointersObject {
     public PointersObject(SqueakImageContext img) {
         super(img);
     }
