@@ -74,18 +74,18 @@ public class SqueakImageContext {
     public final SpecialSelector bitOr = new SpecialSelector(this, 1, 1, 15);
     public final SpecialSelector at = new SpecialSelector(this, 1, 1/* , 63 */);
     public final SpecialSelector atput = new SpecialSelector(this, 1, 2/* , 64 */);
-    public final SpecialSelector size_ = new SpecialSelector(this, 1, 0);
+    public final SpecialSelector size_ = new SpecialSelector(this, 1, 0/* , 62 */);
     public final SpecialSelector next = new SpecialSelector(this, 1, 0);
     public final SpecialSelector nextPut = new SpecialSelector(this, 1, 1);
     public final SpecialSelector atEnd = new SpecialSelector(this, 1, 0);
     public final SpecialSelector equivalent = new SpecialSelector(this, 1, 1, 110);
-    public final SpecialSelector klass = new SpecialSelector(this, 1, 0);
+    public final SpecialSelector klass = new SpecialSelector(this, 1, 0, 111);
     public final SpecialSelector blockCopy = new SpecialSelector(this, 1, 1);
-    public final SpecialSelector value = new SpecialSelector(this, 1, 0);
-    public final SpecialSelector valueWithArg = new SpecialSelector(this, 1, 1);
+    public final SpecialSelector value = new SpecialSelector(this, 1, 0, 201);
+    public final SpecialSelector valueWithArg = new SpecialSelector(this, 1, 1, 202);
     public final SpecialSelector do_ = new SpecialSelector(this, 1, 1);
-    public final SpecialSelector new_ = new SpecialSelector(this, 1, 0/* , 70 */);
-    public final SpecialSelector newWithArg = new SpecialSelector(this, 1, 1/* , 71 */);
+    public final SpecialSelector new_ = new SpecialSelector(this, 1, 0);
+    public final SpecialSelector newWithArg = new SpecialSelector(this, 1, 1);
     public final SpecialSelector x = new SpecialSelector(this, 1, 0);
     public final SpecialSelector y = new SpecialSelector(this, 1, 0);
 

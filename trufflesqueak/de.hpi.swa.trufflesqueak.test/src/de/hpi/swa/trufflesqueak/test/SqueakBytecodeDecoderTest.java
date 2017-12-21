@@ -9,7 +9,7 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.PopNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.ConditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.push.PushConstantNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.returns.ReturnReceiverNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SendSelectorNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.EagerSendSpecialSelectorNode;
 import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
 public class SqueakBytecodeDecoderTest extends AbstractSqueakTestCase {
@@ -26,14 +26,15 @@ public class SqueakBytecodeDecoderTest extends AbstractSqueakTestCase {
         assertSame(DupNode.class, bytecodeNodes[1].getClass());
         assertSame(PushConstantNode.class, bytecodeNodes[2].getClass());
 
-        assertEquals("send: equivalent", bytecodeNodes[3].toString());
+        EagerSendSpecialSelectorNode send = (EagerSendSpecialSelectorNode) bytecodeNodes[3];
+        assertSame(image.equivalent, send.getSpecialSelector());
 
         assertSame(ConditionalJumpNode.class, bytecodeNodes[4].getClass());
         assertSame(PopNode.class, bytecodeNodes[5].getClass());
         assertSame(PushConstantNode.class, bytecodeNodes[6].getClass());
 
-        SendSelectorNode send = (SendSelectorNode) bytecodeNodes[7];
-        assertSame(image.klass, send.getSelector());
+        send = (EagerSendSpecialSelectorNode) bytecodeNodes[7];
+        assertSame(image.klass, send.getSpecialSelector());
 
         assertSame(PopNode.class, bytecodeNodes[8].getClass());
         assertSame(ReturnReceiverNode.class, bytecodeNodes[9].getClass());

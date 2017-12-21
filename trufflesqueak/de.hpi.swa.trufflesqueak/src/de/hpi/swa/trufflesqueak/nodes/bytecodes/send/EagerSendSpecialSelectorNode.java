@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes.send;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
@@ -45,6 +46,7 @@ public class EagerSendSpecialSelectorNode extends AbstractBytecodeNode {
             frame.setInt(code.stackPointerSlot, frame.getInt(code.stackPointerSlot) - 1 - specialSelector.getNumArguments());
             pushStackNode.executeWrite(frame, result);
         } catch (PrimitiveFailed | ArithmeticException | UnsupportedSpecializationException | FrameSlotTypeException e) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             replace(getFallbackNode(code, index, specialSelector)).executeVoid(frame);
         }
     }
@@ -56,5 +58,9 @@ public class EagerSendSpecialSelectorNode extends AbstractBytecodeNode {
     @Override
     public String toString() {
         return "send: " + specialSelector.toString();
+    }
+
+    public Object getSpecialSelector() {
+        return specialSelector;
     }
 }
