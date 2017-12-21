@@ -115,11 +115,11 @@ public class SqueakSourceTest extends AbstractSqueakTestCase {
             "54 <B6> send: eq\n" +
             "55 <B7> send: ne\n" +
             "56 <B8> send: times\n" +
-            "57 <B9> send: div\n" +
+            "57 <B9> send: divide\n" +
             "58 <BA> send: modulo\n" +
             "59 <BB> send: pointAt\n" +
             "60 <BC> send: bitShift\n" +
-            "61 <BD> send: divide\n" +
+            "61 <BD> send: floorDivide\n" +
             "62 <BE> send: bitAnd\n" +
             "63 <BF> send: bitOr\n" +
             "64 <C0> send: at\n" +
