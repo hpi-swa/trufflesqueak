@@ -23,12 +23,15 @@ public class ContextObject extends BaseSqueakObject {
         MaterializedFrame frame = virtualFrame.materialize();
         FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
         FrameSlot selfSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.SELF);
-        ContextObject contextObject = (ContextObject) FrameUtil.getObjectSafe(frame, selfSlot);
-        if (contextObject == null) {
-            contextObject = new ContextObject(img, new ReadOnlyContextObject(img, frame));
-            frame.setObject(selfSlot, contextObject);
+        Object contextObject = FrameUtil.getObjectSafe(frame, selfSlot);
+        if (contextObject instanceof ContextObject) {
+            return (ContextObject) contextObject;
+        } else if (contextObject instanceof NilObject) {
+            ContextObject newContextObject = new ContextObject(img, new ReadOnlyContextObject(img, frame));
+            frame.setObject(selfSlot, newContextObject);
+            return newContextObject;
         }
-        return contextObject;
+        throw new RuntimeException("Unexpected state");
     }
 
     public static ContextObject createWriteableContextObject(SqueakImageContext img) {

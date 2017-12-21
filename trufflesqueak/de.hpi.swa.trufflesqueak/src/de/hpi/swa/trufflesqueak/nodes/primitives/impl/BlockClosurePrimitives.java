@@ -50,7 +50,6 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         Object findNext(ContextObject receiver) {
             Object handlerContext = Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Object>() {
                 final Object marker = receiver.getFrameMarker();
-                boolean foundSelf = false;
 
                 @Override
                 public Object visitFrame(FrameInstance frameInstance) {
@@ -61,14 +60,9 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                     if (methodSlot != null && markerSlot != null) {
                         Object frameMethod = FrameUtil.getObjectSafe(current, methodSlot);
                         Object frameMarker = FrameUtil.getObjectSafe(current, markerSlot);
-                        if (frameMarker == marker) {
-                            foundSelf = true;
-                        }
-                        if (foundSelf) {
-                            if (frameMethod instanceof CompiledCodeObject) {
-                                if (((CompiledCodeObject) frameMethod).primitiveIndex() == EXCEPTION_HANDLER_MARKER) {
-                                    return frameMethod;
-                                }
+                        if (frameMarker == marker && frameMethod instanceof CompiledCodeObject) {
+                            if (((CompiledCodeObject) frameMethod).primitiveIndex() == EXCEPTION_HANDLER_MARKER) {
+                                return frameMethod;
                             }
                         }
                     }
