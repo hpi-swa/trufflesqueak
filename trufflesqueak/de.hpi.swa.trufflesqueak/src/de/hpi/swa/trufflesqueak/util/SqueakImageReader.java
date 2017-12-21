@@ -248,19 +248,10 @@ public class SqueakImageReader {
     }
 
     private void initPrebuiltSelectors(SqueakImageContext image) {
-        NativeObject[] specialSelectors = new NativeObject[]{
-                        image.plus, image.minus, image.lt, image.gt, image.le, image.ge,
-                        image.eq, image.ne, image.times, image.div, image.modulo, image.pointAt,
-                        image.bitShift, image.divide, image.bitAnd, image.bitOr, image.at,
-                        image.atput, image.size_, image.next, image.nextPut, image.atEnd,
-                        image.equivalent, image.klass, image.blockCopy, image.value,
-                        image.valueWithArg, image.do_, image.new_, image.newWithArg,
-                        image.x, image.y
-        };
-
         SqueakImageChunk specialObjectsChunk = chunktable.get(specialObjectsPointer);
         SqueakImageChunk specialSelectorChunk = chunktable.get(specialObjectsChunk.data().get(SPECIAL_SELECTORS_INDEX));
 
+        NativeObject[] specialSelectors = image.nativeSpecialSelectors;
         for (int i = 0; i < specialSelectors.length; i++) {
             chunktable.get(specialSelectorChunk.data().get(i * 2)).object = specialSelectors[i];
         }

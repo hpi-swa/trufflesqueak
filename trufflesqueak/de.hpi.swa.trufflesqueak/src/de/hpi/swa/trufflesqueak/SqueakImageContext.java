@@ -87,6 +87,13 @@ public class SqueakImageContext {
     public final NativeObject x = new NativeObject(this, (byte) 1);
     public final NativeObject y = new NativeObject(this, (byte) 1);
     public final NativeObject div = new NativeObject(this, (byte) 1);
+
+    public final NativeObject[] nativeSpecialSelectors = new NativeObject[]{
+                    plus, minus, lt, gt, le, ge, eq, ne, times, div, modulo, pointAt, bitShift,
+                    divide, bitAnd, bitOr, at, atput, size_, next, nextPut, atEnd, equivalent,
+                    klass, blockCopy, value, valueWithArg, do_, new_, newWithArg, x, y
+    };
+
     public final SqueakConfig config;
 
     public SqueakImageContext(SqueakLanguage squeakLanguage, SqueakLanguage.Env environ,

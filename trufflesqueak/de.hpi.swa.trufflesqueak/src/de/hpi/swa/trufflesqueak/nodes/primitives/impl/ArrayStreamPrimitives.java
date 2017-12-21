@@ -27,8 +27,8 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {60, 210}, numArguments = 2)
-    public static abstract class PrimIndexAtNode extends PrimAtNode {
-        public PrimIndexAtNode(CompiledMethodObject method) {
+    public static abstract class PrimBasicAtNode extends PrimAtNode {
+        public PrimBasicAtNode(CompiledMethodObject method) {
             super(method);
         }
 
@@ -47,8 +47,8 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {61, 211}, numArguments = 3)
-    public static abstract class PrimIndexAtPutNode extends PrimAtPutNode {
-        public PrimIndexAtPutNode(CompiledMethodObject method) {
+    public static abstract class PrimBasicAtPutNode extends PrimAtPutNode {
+        public PrimBasicAtPutNode(CompiledMethodObject method) {
             super(method);
         }
 

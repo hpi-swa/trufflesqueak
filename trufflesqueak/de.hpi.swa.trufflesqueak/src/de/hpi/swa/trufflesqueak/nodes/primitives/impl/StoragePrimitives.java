@@ -33,8 +33,8 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 68, numArguments = 2)
-    public static abstract class PrimObjectAtNode extends AbstractPrimitiveNode {
-        public PrimObjectAtNode(CompiledMethodObject method) {
+    public static abstract class PrimCompiledMethodObjectAtNode extends AbstractPrimitiveNode {
+        public PrimCompiledMethodObjectAtNode(CompiledMethodObject method) {
             super(method);
         }
 
@@ -46,8 +46,8 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 69, numArguments = 3)
-    public static abstract class PrimObjectAtPutNode extends AbstractPrimitiveNode {
-        public PrimObjectAtPutNode(CompiledMethodObject method) {
+    public static abstract class PrimCompiledMethodObjectAtPutNode extends AbstractPrimitiveNode {
+        public PrimCompiledMethodObjectAtPutNode(CompiledMethodObject method) {
             super(method);
         }
 

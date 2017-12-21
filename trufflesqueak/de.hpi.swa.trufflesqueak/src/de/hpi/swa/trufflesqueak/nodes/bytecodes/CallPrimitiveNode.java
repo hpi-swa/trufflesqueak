@@ -22,7 +22,7 @@ public class CallPrimitiveNode extends AbstractBytecodeNode {
         super(code, index, numBytecodes);
         primitiveIndex = code.hasPrimitive() ? byte1 + (byte2 << 8) : 0;
         if (code instanceof CompiledMethodObject) {
-            primitiveNode = PrimitiveNodeFactory.forIdx((CompiledMethodObject) code, primitiveIndex);
+            primitiveNode = PrimitiveNodeFactory.forIndex((CompiledMethodObject) code, primitiveIndex);
         } else {
             throw new RuntimeException("Primitives only supported in CompiledMethodObject");
         }
