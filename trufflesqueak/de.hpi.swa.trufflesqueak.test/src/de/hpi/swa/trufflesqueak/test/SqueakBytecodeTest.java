@@ -45,7 +45,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
         for (int i = 0; i < 8; i++) {
             // push true, popIntoTemp i, pushTemp i, returnTop
             CompiledCodeObject code = makeMethod(literals, 113, 104 + i, 16 + i, 124);
-            VirtualFrame frame = createTestFrame(code, rcvr, new BaseSqueakObject[4]);
+            VirtualFrame frame = createTestFrame(code, rcvr, new BaseSqueakObject[0]);
             try {
                 Object result = new SqueakMethodNode(null, code).execute(frame);
                 assertSame(image.sqTrue, result);
@@ -64,7 +64,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
         BaseSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < expectedResults.length; i++) {
             CompiledCodeObject code = makeMethod(literalsList.toArray(), bytecodeStart + i, 124);
-            VirtualFrame frame = createTestFrame(code, rcvr, new BaseSqueakObject[4]);
+            VirtualFrame frame = createTestFrame(code, rcvr, new BaseSqueakObject[0]);
             try {
                 Object result = new SqueakMethodNode(null, code).execute(frame);
                 assertSame(expectedResults[i], result);
@@ -83,7 +83,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
         BaseSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < 32; i++) {
             CompiledCodeObject code = makeMethod(literalsList.toArray(), bytecodeStart + i, 124);
-            VirtualFrame frame = createTestFrame(code, rcvr, new BaseSqueakObject[4]);
+            VirtualFrame frame = createTestFrame(code, rcvr, new BaseSqueakObject[0]);
             try {
                 Object result = new SqueakMethodNode(null, code).execute(frame);
                 assertSame(image.sqFalse, result);
@@ -169,7 +169,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
         for (int i = 0; i < 55; i++) {
             // push true, popIntoTemp i, pushTemp i, returnTop
             CompiledCodeObject code = makeMethod(literals, 113, 130, 64 + i, 128, 64 + i, 124);
-            VirtualFrame frame = createTestFrame(code, rcvr, new BaseSqueakObject[4]);
+            VirtualFrame frame = createTestFrame(code, rcvr, new BaseSqueakObject[0]);
             SqueakMethodNode method = new SqueakMethodNode(null, code);
             try {
                 assertSame(image.sqTrue, method.execute(frame));
@@ -188,7 +188,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
         BaseSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < expectedResults.length; i++) {
             CompiledCodeObject code = makeMethod(literalsList.toArray(), 128, 128 + i, 124);
-            VirtualFrame frame = createTestFrame(code, rcvr, new BaseSqueakObject[4]);
+            VirtualFrame frame = createTestFrame(code, rcvr, new BaseSqueakObject[0]);
             try {
                 Object result = new SqueakMethodNode(null, code).execute(frame);
                 assertSame(expectedResults[i], result);
@@ -206,7 +206,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
         BaseSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < expectedResults.length; i++) {
             CompiledCodeObject code = makeMethod(literalsList.toArray(), 128, 192 + i, 124);
-            VirtualFrame frame = createTestFrame(code, rcvr, new BaseSqueakObject[4]);
+            VirtualFrame frame = createTestFrame(code, rcvr, new BaseSqueakObject[0]);
             try {
                 Object result = new SqueakMethodNode(null, code).execute(frame);
                 assertSame(image.sqFalse, result);
@@ -236,7 +236,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
         for (int i = 0; i < 55; i++) {
             // push true, push 1, storeIntoTemp i, pop, returnTop
             CompiledCodeObject code = makeMethod(literals, 113, 118, 129, 64 + i, 135, 124);
-            VirtualFrame frame = createTestFrame(code, rcvr, new BaseSqueakObject[4]);
+            VirtualFrame frame = createTestFrame(code, rcvr, new BaseSqueakObject[0]);
             try {
                 Object result = new SqueakMethodNode(null, code).execute(frame);
                 assertSame(image.sqTrue, result);
@@ -259,7 +259,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
         for (int i = 0; i < 64; i++) {
             // push true, storeIntoLiteral i, returnTop
             CompiledCodeObject code = makeMethod(literalsList.toArray(), 113, 129, 192 + i, 124);
-            VirtualFrame frame = createTestFrame(code, rcvr, new BaseSqueakObject[4]);
+            VirtualFrame frame = createTestFrame(code, rcvr, new BaseSqueakObject[0]);
             try {
                 Object result = new SqueakMethodNode(null, code).execute(frame);
                 assertSame(image.sqTrue, result);
@@ -291,7 +291,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
         for (int i = 0; i < 55; i++) {
             // push true, push 1; storeIntoTemp i, quickReturnTop
             CompiledCodeObject code = makeMethod(literals, 113, 118, 130, 64 + i, 124);
-            VirtualFrame frame = createTestFrame(code, rcvr, new BaseSqueakObject[4]);
+            VirtualFrame frame = createTestFrame(code, rcvr, new BaseSqueakObject[0]);
             try {
                 Object result = new SqueakMethodNode(null, code).execute(frame);
                 assertSame(image.sqTrue, result);
@@ -347,7 +347,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
         BaseSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < expectedResults.length; i++) {
             CompiledCodeObject code = makeMethod(literalsList.toArray(), 132, 96, i, 124);
-            VirtualFrame frame = createTestFrame(code, rcvr, new BaseSqueakObject[4]);
+            VirtualFrame frame = createTestFrame(code, rcvr, new BaseSqueakObject[0]);
             try {
                 Object result = new SqueakMethodNode(null, code).execute(frame);
                 assertSame(expectedResults[i], result);
@@ -365,7 +365,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
         BaseSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < expectedResults.length; i++) {
             CompiledCodeObject code = makeMethod(literalsList.toArray(), 132, 128, i, 124);
-            VirtualFrame frame = createTestFrame(code, rcvr, new BaseSqueakObject[4]);
+            VirtualFrame frame = createTestFrame(code, rcvr, new BaseSqueakObject[0]);
             try {
                 Object result = new SqueakMethodNode(null, code).execute(frame);
                 assertSame(image.sqFalse, result);
@@ -414,7 +414,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
         for (int i = 0; i < numberOfAssociations; i++) {
             // push true, storeIntoLiteral i, returnTop
             CompiledCodeObject code = makeMethod(literalsList.toArray(), 113, 132, 224, i, 124);
-            VirtualFrame frame = createTestFrame(code, rcvr, new BaseSqueakObject[4]);
+            VirtualFrame frame = createTestFrame(code, rcvr, new BaseSqueakObject[0]);
             try {
                 Object result = new SqueakMethodNode(null, code).execute(frame);
                 assertSame(image.sqTrue, result);
