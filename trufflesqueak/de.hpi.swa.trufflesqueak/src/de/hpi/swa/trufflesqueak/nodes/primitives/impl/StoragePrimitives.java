@@ -103,9 +103,9 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(replaces = "newWithArgDirect")
         BaseSqueakObject newWithArg(ClassObject receiver, int size) {
             if (size == 0)
-                return null;
+                return code.image.nil;
             if (!receiver.isVariable())
-                return null;
+                return code.image.nil;
             return receiver.newInstance(size);
         }
     }

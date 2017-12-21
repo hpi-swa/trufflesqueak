@@ -94,7 +94,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
                 if (restArgs.length > idx - 2) {
                     return code.image.wrap(restArgs[idx - 2]);
                 } else {
-                    return null;
+                    return code.image.nil;
                 }
             }
             switch (idx) {
@@ -103,7 +103,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
                 case 1002:
                     return code.image.wrap(System.getProperty("java.version"));
             }
-            return null;
+            return code.image.nil;
         }
     }
 
