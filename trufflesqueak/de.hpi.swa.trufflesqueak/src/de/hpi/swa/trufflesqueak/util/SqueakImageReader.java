@@ -251,7 +251,7 @@ public class SqueakImageReader {
         SqueakImageChunk specialObjectsChunk = chunktable.get(specialObjectsPointer);
         SqueakImageChunk specialSelectorChunk = chunktable.get(specialObjectsChunk.data().get(SPECIAL_SELECTORS_INDEX));
 
-        NativeObject[] specialSelectors = image.nativeSpecialSelectors;
+        NativeObject[] specialSelectors = image.specialSelectorsArray;
         for (int i = 0; i < specialSelectors.length; i++) {
             chunktable.get(specialSelectorChunk.data().get(i * 2)).object = specialSelectors[i];
         }

@@ -19,6 +19,7 @@ import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.model.SpecialSelector;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakContextNode;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakMainNode;
 import de.hpi.swa.trufflesqueak.util.SqueakImageReader;
@@ -55,40 +56,40 @@ public class SqueakImageContext {
     private final SqueakLanguage.Env env;
 
     // Special selectors
-    public final NativeObject plus = new NativeObject(this, (byte) 1);
-    public final NativeObject minus = new NativeObject(this, (byte) 1);
-    public final NativeObject lt = new NativeObject(this, (byte) 1);
-    public final NativeObject gt = new NativeObject(this, (byte) 1);
-    public final NativeObject le = new NativeObject(this, (byte) 1);
-    public final NativeObject ge = new NativeObject(this, (byte) 1);
-    public final NativeObject eq = new NativeObject(this, (byte) 1);
-    public final NativeObject ne = new NativeObject(this, (byte) 1);
-    public final NativeObject times = new NativeObject(this, (byte) 1);
-    public final NativeObject modulo = new NativeObject(this, (byte) 1);
-    public final NativeObject pointAt = new NativeObject(this, (byte) 1);
-    public final NativeObject bitShift = new NativeObject(this, (byte) 1);
-    public final NativeObject divide = new NativeObject(this, (byte) 1);
-    public final NativeObject bitAnd = new NativeObject(this, (byte) 1);
-    public final NativeObject bitOr = new NativeObject(this, (byte) 1);
-    public final NativeObject at = new NativeObject(this, (byte) 1);
-    public final NativeObject atput = new NativeObject(this, (byte) 1);
-    public final NativeObject size_ = new NativeObject(this, (byte) 1);
-    public final NativeObject next = new NativeObject(this, (byte) 1);
-    public final NativeObject nextPut = new NativeObject(this, (byte) 1);
-    public final NativeObject atEnd = new NativeObject(this, (byte) 1);
-    public final NativeObject equivalent = new NativeObject(this, (byte) 1);
-    public final NativeObject klass = new NativeObject(this, (byte) 1);
-    public final NativeObject blockCopy = new NativeObject(this, (byte) 1);
-    public final NativeObject value = new NativeObject(this, (byte) 1);
-    public final NativeObject valueWithArg = new NativeObject(this, (byte) 1);
-    public final NativeObject do_ = new NativeObject(this, (byte) 1);
-    public final NativeObject new_ = new NativeObject(this, (byte) 1);
-    public final NativeObject newWithArg = new NativeObject(this, (byte) 1);
-    public final NativeObject x = new NativeObject(this, (byte) 1);
-    public final NativeObject y = new NativeObject(this, (byte) 1);
-    public final NativeObject div = new NativeObject(this, (byte) 1);
+    public final SpecialSelector plus = new SpecialSelector(this, 1, 1, 1);
+    public final SpecialSelector minus = new SpecialSelector(this, 1, 1, 2);
+    public final SpecialSelector lt = new SpecialSelector(this, 1, 1, 3);
+    public final SpecialSelector gt = new SpecialSelector(this, 1, 1, 4);
+    public final SpecialSelector le = new SpecialSelector(this, 1, 1, 5);
+    public final SpecialSelector ge = new SpecialSelector(this, 1, 1, 6);
+    public final SpecialSelector eq = new SpecialSelector(this, 1, 1, 7);
+    public final SpecialSelector ne = new SpecialSelector(this, 1, 1, 8);
+    public final SpecialSelector times = new SpecialSelector(this, 1, 1, 9);
+    public final SpecialSelector div = new SpecialSelector(this, 1, 1, 10);
+    public final SpecialSelector modulo = new SpecialSelector(this, 1, 1, 11);
+    public final SpecialSelector pointAt = new SpecialSelector(this, 1, 1);
+    public final SpecialSelector bitShift = new SpecialSelector(this, 1, 1);
+    public final SpecialSelector divide = new SpecialSelector(this, 1, 1);
+    public final SpecialSelector bitAnd = new SpecialSelector(this, 1, 1);
+    public final SpecialSelector bitOr = new SpecialSelector(this, 1, 1);
+    public final SpecialSelector at = new SpecialSelector(this, 1, 1);
+    public final SpecialSelector atput = new SpecialSelector(this, 1, 2);
+    public final SpecialSelector size_ = new SpecialSelector(this, 1, 0);
+    public final SpecialSelector next = new SpecialSelector(this, 1, 0);
+    public final SpecialSelector nextPut = new SpecialSelector(this, 1, 1);
+    public final SpecialSelector atEnd = new SpecialSelector(this, 1, 0);
+    public final SpecialSelector equivalent = new SpecialSelector(this, 1, 1);
+    public final SpecialSelector klass = new SpecialSelector(this, 1, 0);
+    public final SpecialSelector blockCopy = new SpecialSelector(this, 1, 1);
+    public final SpecialSelector value = new SpecialSelector(this, 1, 0);
+    public final SpecialSelector valueWithArg = new SpecialSelector(this, 1, 1);
+    public final SpecialSelector do_ = new SpecialSelector(this, 1, 1);
+    public final SpecialSelector new_ = new SpecialSelector(this, 1, 0);
+    public final SpecialSelector newWithArg = new SpecialSelector(this, 1, 1);
+    public final SpecialSelector x = new SpecialSelector(this, 1, 0);
+    public final SpecialSelector y = new SpecialSelector(this, 1, 0);
 
-    public final NativeObject[] nativeSpecialSelectors = new NativeObject[]{
+    public final SpecialSelector[] specialSelectorsArray = new SpecialSelector[]{
                     plus, minus, lt, gt, le, ge, eq, ne, times, div, modulo, pointAt, bitShift,
                     divide, bitAnd, bitOr, at, atput, size_, next, nextPut, atEnd, equivalent,
                     klass, blockCopy, value, valueWithArg, do_, new_, newWithArg, x, y
