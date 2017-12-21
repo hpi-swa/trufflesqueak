@@ -14,7 +14,9 @@ public abstract class FrameStackWriteNode extends Node {
     public abstract Object execute(VirtualFrame frame, int stackIndex, Object value);
 
     protected FrameSlot getFrameSlotForIndex(VirtualFrame frame, int index) {
-        return frame.getFrameDescriptor().findFrameSlot(index);
+        FrameSlot slot = frame.getFrameDescriptor().findFrameSlot(index);
+        assert slot != null;
+        return slot;
     }
 
     protected static final int SQUEAK_MAX_STACK_SIZE = 200;

@@ -17,13 +17,14 @@ public abstract class FrameSlotWriteNode extends FrameSlotNode {
 
     public abstract void executeWrite(VirtualFrame frame, Object value);
 
-    protected boolean isNullWrite(VirtualFrame frame, Object value) {
-        return isIllegal(frame) && value == null;
+    protected boolean isNullWrite(Object value) {
+        return value == null;
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "isNullWrite(frame, value)")
-    public void skipNullWrite(VirtualFrame frame, Object value) {
+    @Specialization(guards = "isNullWrite(value)")
+    public void failOnNullWrite(VirtualFrame frame, Object value) {
+        throw new RuntimeException("Should never write null to a frame slot");
     }
 
     @Specialization(guards = "isInt(frame) || isIllegal(frame)")
@@ -50,7 +51,7 @@ public abstract class FrameSlotWriteNode extends FrameSlotNode {
         frame.setBoolean(slot, value);
     }
 
-    @Specialization(replaces = {"skipNullWrite", "writeInt", "writeLong", "writeDouble", "writeBool"})
+    @Specialization(replaces = {"failOnNullWrite", "writeInt", "writeLong", "writeDouble", "writeBool"})
     public void writeObject(VirtualFrame frame, Object value) {
         slot.setKind(FrameSlotKind.Object);
         frame.setObject(slot, value);

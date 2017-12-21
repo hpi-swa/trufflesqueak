@@ -22,13 +22,13 @@ import de.hpi.swa.trufflesqueak.util.BitSplitter;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public abstract class CompiledCodeObject extends SqueakObject {
-    public static class SLOT_IDENTIFIER {
-        public static final byte CLOSURE = 0;
-        public static final byte SELF = 1;
-        public static final byte RECEIVER = 2;
-        public static final byte STACK_POINTER = 3;
-        public static final byte MARKER = 4;
-        public static final byte METHOD = 5;
+    public static enum SLOT_IDENTIFIER {
+        CLOSURE,
+        SELF,
+        RECEIVER,
+        STACK_POINTER,
+        MARKER,
+        METHOD
     }
 
     private Source source;
@@ -93,9 +93,10 @@ public abstract class CompiledCodeObject extends SqueakObject {
         return 16;
     }
 
+    @TruffleBoundary
     private void prepareFrameDescriptor() {
         frameDescriptor = new FrameDescriptor(image.nil);
-        stackSlots = new FrameSlot[frameSize() + getSqClass().getBasicInstanceSize()];
+        stackSlots = new FrameSlot[frameSize() + 1 + getSqClass().getBasicInstanceSize()]; // TODO +1 for receiver?
         for (int i = 0; i < stackSlots.length; i++) {
             stackSlots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Illegal);
         }
@@ -163,7 +164,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
     }
 
     public FrameSlot getTempSlot(int index) {
-        return getStackSlot(1 + index);
+        return getStackSlot(1 + index); // 1 -> receiver
     }
 
     public int getNumStackSlots() {

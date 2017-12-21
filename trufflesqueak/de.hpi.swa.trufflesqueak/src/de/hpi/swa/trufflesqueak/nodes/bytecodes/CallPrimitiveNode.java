@@ -13,6 +13,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitives.PrimitiveFailedNode;
 
 public class CallPrimitiveNode extends AbstractBytecodeNode {
     @Child private AbstractPrimitiveNode primitiveNode;
@@ -20,9 +21,14 @@ public class CallPrimitiveNode extends AbstractBytecodeNode {
 
     public CallPrimitiveNode(CompiledCodeObject code, int index, int numBytecodes, int byte1, int byte2) {
         super(code, index, numBytecodes);
-        primitiveIndex = code.hasPrimitive() ? byte1 + (byte2 << 8) : 0;
         if (code instanceof CompiledMethodObject) {
-            primitiveNode = PrimitiveNodeFactory.forIndex((CompiledMethodObject) code, primitiveIndex);
+            if (!code.hasPrimitive()) {
+                primitiveIndex = 0;
+                primitiveNode = PrimitiveFailedNode.create((CompiledMethodObject) code);
+            } else {
+                primitiveIndex = byte1 + (byte2 << 8);
+                primitiveNode = PrimitiveNodeFactory.forIndex((CompiledMethodObject) code, primitiveIndex);
+            }
         } else {
             throw new RuntimeException("Primitives only supported in CompiledMethodObject");
         }

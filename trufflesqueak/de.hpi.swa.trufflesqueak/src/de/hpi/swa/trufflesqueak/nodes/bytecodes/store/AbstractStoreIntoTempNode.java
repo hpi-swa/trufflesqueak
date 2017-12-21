@@ -10,7 +10,6 @@ public abstract class AbstractStoreIntoTempNode extends AbstractBytecodeNode {
 
     public AbstractStoreIntoTempNode(CompiledCodeObject code, int index, int numBytecodes, int tempIndex) {
         super(code, index, numBytecodes);
-        assert code.getNumStackSlots() > tempIndex;
         this.tempIndex = tempIndex;
         this.storeNode = FrameSlotWriteNode.create(code.getTempSlot(tempIndex));
     }
