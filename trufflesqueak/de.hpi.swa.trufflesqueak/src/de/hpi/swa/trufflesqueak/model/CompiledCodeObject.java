@@ -22,6 +22,9 @@ import de.hpi.swa.trufflesqueak.util.BitSplitter;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public abstract class CompiledCodeObject extends SqueakObject {
+    private static final int FRAME_SIZE_SMALL = 16;
+    private static final int FRAME_SIZE_LARGE = 56;
+
     public static enum SLOT_IDENTIFIER {
         CLOSURE,
         SELF,
@@ -60,7 +63,6 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     public CompiledCodeObject(SqueakImageContext img, ClassObject klass) {
         super(img, klass);
-        prepareFrameDescriptor();
     }
 
     public CompiledCodeObject(SqueakImageContext img) {
@@ -86,17 +88,12 @@ public abstract class CompiledCodeObject extends SqueakObject {
         return source;
     }
 
-    private int frameSize() {
-        if (needsLargeFrame) {
-            return 56;
-        }
-        return 16;
-    }
-
     @TruffleBoundary
-    private void prepareFrameDescriptor() {
+    protected void prepareFrameDescriptor() {
         frameDescriptor = new FrameDescriptor(image.nil);
-        stackSlots = new FrameSlot[frameSize() + 1 + getSqClass().getBasicInstanceSize() - getNumArgsAndCopiedValues()]; // TODO +1 for receiver?
+        int frameSize = needsLargeFrame ? FRAME_SIZE_LARGE : FRAME_SIZE_SMALL;
+        int numStackSlots = frameSize + getSqClass().getBasicInstanceSize();
+        stackSlots = new FrameSlot[numStackSlots];
         for (int i = 0; i < stackSlots.length; i++) {
             stackSlots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Illegal);
         }
@@ -200,6 +197,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
         numArgs = splitHeader[5];
         accessModifier = splitHeader[6];
         altInstructionSet = splitHeader[7] == 1;
+        prepareFrameDescriptor();
     }
 
     public int getHeader() {
