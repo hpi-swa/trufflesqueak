@@ -52,11 +52,11 @@ public abstract class AbstractSqueakTestCase extends TestCase {
         image.eq.setBytes("eq".getBytes());
         image.ne.setBytes("ne".getBytes());
         image.times.setBytes("times".getBytes());
-        image.div.setBytes("div".getBytes());
+        image.divide.setBytes("divide".getBytes());
         image.modulo.setBytes("modulo".getBytes());
         image.pointAt.setBytes("pointAt".getBytes());
         image.bitShift.setBytes("bitShift".getBytes());
-        image.divide.setBytes("divide".getBytes());
+        image.floorDivide.setBytes("floorDivide".getBytes());
         image.bitAnd.setBytes("bitAnd".getBytes());
         image.bitOr.setBytes("bitOr".getBytes());
         image.at.setBytes("at".getBytes());

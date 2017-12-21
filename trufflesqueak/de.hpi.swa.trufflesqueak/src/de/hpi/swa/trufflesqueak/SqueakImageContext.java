@@ -65,33 +65,33 @@ public class SqueakImageContext {
     public final SpecialSelector eq = new SpecialSelector(this, 1, 1, 7);
     public final SpecialSelector ne = new SpecialSelector(this, 1, 1, 8);
     public final SpecialSelector times = new SpecialSelector(this, 1, 1, 9);
-    public final SpecialSelector div = new SpecialSelector(this, 1, 1, 10);
+    public final SpecialSelector divide = new SpecialSelector(this, 1, 1, 10);
     public final SpecialSelector modulo = new SpecialSelector(this, 1, 1, 11);
     public final SpecialSelector pointAt = new SpecialSelector(this, 1, 1);
-    public final SpecialSelector bitShift = new SpecialSelector(this, 1, 1);
-    public final SpecialSelector divide = new SpecialSelector(this, 1, 1);
-    public final SpecialSelector bitAnd = new SpecialSelector(this, 1, 1);
-    public final SpecialSelector bitOr = new SpecialSelector(this, 1, 1);
-    public final SpecialSelector at = new SpecialSelector(this, 1, 1);
-    public final SpecialSelector atput = new SpecialSelector(this, 1, 2);
+    public final SpecialSelector bitShift = new SpecialSelector(this, 1, 1, 17);
+    public final SpecialSelector floorDivide = new SpecialSelector(this, 1, 1, 12);
+    public final SpecialSelector bitAnd = new SpecialSelector(this, 1, 1, 14);
+    public final SpecialSelector bitOr = new SpecialSelector(this, 1, 1, 15);
+    public final SpecialSelector at = new SpecialSelector(this, 1, 1/* , 63 */);
+    public final SpecialSelector atput = new SpecialSelector(this, 1, 2/* , 64 */);
     public final SpecialSelector size_ = new SpecialSelector(this, 1, 0);
     public final SpecialSelector next = new SpecialSelector(this, 1, 0);
     public final SpecialSelector nextPut = new SpecialSelector(this, 1, 1);
     public final SpecialSelector atEnd = new SpecialSelector(this, 1, 0);
-    public final SpecialSelector equivalent = new SpecialSelector(this, 1, 1);
+    public final SpecialSelector equivalent = new SpecialSelector(this, 1, 1, 110);
     public final SpecialSelector klass = new SpecialSelector(this, 1, 0);
     public final SpecialSelector blockCopy = new SpecialSelector(this, 1, 1);
     public final SpecialSelector value = new SpecialSelector(this, 1, 0);
     public final SpecialSelector valueWithArg = new SpecialSelector(this, 1, 1);
     public final SpecialSelector do_ = new SpecialSelector(this, 1, 1);
-    public final SpecialSelector new_ = new SpecialSelector(this, 1, 0);
-    public final SpecialSelector newWithArg = new SpecialSelector(this, 1, 1);
+    public final SpecialSelector new_ = new SpecialSelector(this, 1, 0/* , 70 */);
+    public final SpecialSelector newWithArg = new SpecialSelector(this, 1, 1/* , 71 */);
     public final SpecialSelector x = new SpecialSelector(this, 1, 0);
     public final SpecialSelector y = new SpecialSelector(this, 1, 0);
 
     public final SpecialSelector[] specialSelectorsArray = new SpecialSelector[]{
-                    plus, minus, lt, gt, le, ge, eq, ne, times, div, modulo, pointAt, bitShift,
-                    divide, bitAnd, bitOr, at, atput, size_, next, nextPut, atEnd, equivalent,
+                    plus, minus, lt, gt, le, ge, eq, ne, times, divide, modulo, pointAt, bitShift,
+                    floorDivide, bitAnd, bitOr, at, atput, size_, next, nextPut, atEnd, equivalent,
                     klass, blockCopy, value, valueWithArg, do_, new_, newWithArg, x, y
     };
 
@@ -122,16 +122,13 @@ public class SqueakImageContext {
     public CallTarget getEntryPoint() {
         Object receiver = config.getReceiver();
         String selector = config.getSelector();
-        ClassObject receiverClass = nilClass;
-        if (receiver instanceof Integer) {
-            receiverClass = smallIntegerClass;
-        }
+        ClassObject receiverClass = receiver instanceof Integer ? smallIntegerClass : nilClass;
         CompiledCodeObject lookupResult = (CompiledCodeObject) receiverClass.lookup(selector);
         // Push literal 1, send literal 2 selector, return top
         byte[] bytes = new byte[]{32, (byte) 209, 124};
         Object[] literals = new Object[]{
                         0, receiver, lookupResult.getCompiledInSelector(), // selector
-                        null // compiled in class
+                        receiverClass // compiled in class
         };
         CompiledCodeObject entryPoint = new CompiledMethodObject(this, bytes, literals);
         output.println(String.format("Starting to evaluate %s >> %s:\n", receiver, selector));

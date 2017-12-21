@@ -24,7 +24,7 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.returns.ReturnConstantNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.returns.ReturnReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.returns.ReturnTopFromBlockNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.returns.ReturnTopFromMethodNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.EagerSendSelectorNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.EagerSendSpecialSelectorNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SecondExtendedSendNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SendLiteralSelectorNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.SingleExtendedSendNode;
@@ -172,7 +172,7 @@ public class SqueakBytecodeDecoder {
             case 184: case 185: case 186: case 187: case 188: case 189: case 190: case 191:
             case 192: case 193: case 194: case 195: case 196: case 197: case 198: case 199:
             case 200: case 201: case 202: case 203: case 204: case 205: case 206: case 207:
-                return EagerSendSelectorNode.create(code, index, b - 176);
+                return EagerSendSpecialSelectorNode.create(code, index, b - 176);
             case 208: case 209: case 210: case 211: case 212: case 213: case 214: case 215:
             case 216: case 217: case 218: case 219: case 220: case 221: case 222: case 223:
                 return SendLiteralSelectorNode.create(code, index, 1, b & 0xF, 0);

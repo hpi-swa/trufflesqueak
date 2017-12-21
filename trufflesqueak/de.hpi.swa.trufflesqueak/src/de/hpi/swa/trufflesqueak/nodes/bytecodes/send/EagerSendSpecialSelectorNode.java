@@ -14,7 +14,7 @@ import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 
-public class EagerSendSelectorNode extends AbstractBytecodeNode {
+public class EagerSendSpecialSelectorNode extends AbstractBytecodeNode {
     @CompilationFinal private final SpecialSelector specialSelector;
     @Child private AbstractPrimitiveNode primitiveNode;
     @Child private PushStackNode pushStackNode;
@@ -24,12 +24,12 @@ public class EagerSendSelectorNode extends AbstractBytecodeNode {
         if (code instanceof CompiledMethodObject && specialSelector.getPrimitiveIndex() > 0) {
             AbstractPrimitiveNode primitiveNode;
             primitiveNode = PrimitiveNodeFactory.forSpecialSelector((CompiledMethodObject) code, specialSelector);
-            return new EagerSendSelectorNode(code, index, specialSelector, primitiveNode);
+            return new EagerSendSpecialSelectorNode(code, index, specialSelector, primitiveNode);
         }
         return getFallbackNode(code, index, specialSelector);
     }
 
-    public EagerSendSelectorNode(CompiledCodeObject code, int index, SpecialSelector specialSelector, AbstractPrimitiveNode primitiveNode) {
+    public EagerSendSpecialSelectorNode(CompiledCodeObject code, int index, SpecialSelector specialSelector, AbstractPrimitiveNode primitiveNode) {
         super(code, index);
         this.pushStackNode = new PushStackNode(code);
         this.specialSelector = specialSelector;
@@ -43,8 +43,10 @@ public class EagerSendSelectorNode extends AbstractBytecodeNode {
             // Success! Manipulate the sp to quick pop receiver and arguments and push result.
             frame.setInt(code.stackPointerSlot, frame.getInt(code.stackPointerSlot) - 1 - specialSelector.getNumArguments());
             pushStackNode.executeWrite(frame, result);
-        } catch (PrimitiveFailed | UnsupportedSpecializationException | FrameSlotTypeException e) {
-            replace(getFallbackNode(code, index, specialSelector));
+        } catch (UnsupportedSpecializationException e) {
+            replace(getFallbackNode(code, index, specialSelector)).executeVoid(frame);
+        } catch (PrimitiveFailed | ArithmeticException | FrameSlotTypeException e) {
+            replace(getFallbackNode(code, index, specialSelector)).executeVoid(frame);
         }
     }
 

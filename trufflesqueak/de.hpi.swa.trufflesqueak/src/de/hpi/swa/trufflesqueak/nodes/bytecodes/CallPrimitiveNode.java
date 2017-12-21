@@ -36,6 +36,7 @@ public class CallPrimitiveNode extends AbstractBytecodeNode {
             throw new LocalReturn(primitiveNode.executeGeneric(frame));
         } catch (UnsupportedSpecializationException
                         | PrimitiveFailed
+                        | ArithmeticException
                         | IndexOutOfBoundsException e) {
         }
     }
