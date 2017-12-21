@@ -43,9 +43,7 @@ public class EagerSendSpecialSelectorNode extends AbstractBytecodeNode {
             // Success! Manipulate the sp to quick pop receiver and arguments and push result.
             frame.setInt(code.stackPointerSlot, frame.getInt(code.stackPointerSlot) - 1 - specialSelector.getNumArguments());
             pushStackNode.executeWrite(frame, result);
-        } catch (UnsupportedSpecializationException e) {
-            replace(getFallbackNode(code, index, specialSelector)).executeVoid(frame);
-        } catch (PrimitiveFailed | ArithmeticException | FrameSlotTypeException e) {
+        } catch (PrimitiveFailed | ArithmeticException | UnsupportedSpecializationException | FrameSlotTypeException e) {
             replace(getFallbackNode(code, index, specialSelector)).executeVoid(frame);
         }
     }

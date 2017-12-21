@@ -7,7 +7,6 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
@@ -197,49 +196,31 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(rewriteOn = ArithmeticException.class)
         int divide(int a, int b) {
-            if (a % b != 0) {
-                throw new PrimitiveFailed();
-            }
             return a / b;
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
         long divideInt(long a, long b) {
-            if (a % b != 0) {
-                throw new PrimitiveFailed();
-            }
             return Math.toIntExact(a / b);
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
         long divide(long a, long b) {
-            if (a % b != 0) {
-                throw new PrimitiveFailed();
-            }
             return a / b;
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
         int divdideInt(BigInteger a, BigInteger b) {
-            if (a.mod(b.abs()).compareTo(BigInteger.ZERO) != 0) {
-                throw new PrimitiveFailed();
-            }
             return a.divide(b).intValueExact();
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
         long divide(BigInteger a, BigInteger b) {
-            if (a.mod(b.abs()).compareTo(BigInteger.ZERO) != 0) {
-                throw new PrimitiveFailed();
-            }
             return a.divide(b).longValueExact();
         }
 
         @Specialization
         BigInteger divBig(BigInteger a, BigInteger b) {
-            if (a.mod(b.abs()).compareTo(BigInteger.ZERO) != 0) {
-                throw new PrimitiveFailed();
-            }
             return a.divide(b);
         }
 
@@ -305,25 +286,16 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(rewriteOn = ArithmeticException.class)
         int div(int a, int b) {
-            if (a == Integer.MIN_VALUE && b == -1) {
-                throw new ArithmeticException();
-            }
             return Math.floorDiv(a, b);
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
         int divInt(long a, long b) {
-            if (a == Long.MIN_VALUE && b == -1) {
-                throw new ArithmeticException();
-            }
             return Math.toIntExact(Math.floorDiv(a, b));
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
         long div(long a, long b) {
-            if (a == Long.MIN_VALUE && b == -1) {
-                throw new ArithmeticException();
-            }
             return Math.floorDiv(a, b);
         }
 
