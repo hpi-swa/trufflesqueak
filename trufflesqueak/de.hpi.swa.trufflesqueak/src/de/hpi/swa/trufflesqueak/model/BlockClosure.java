@@ -50,7 +50,7 @@ public class BlockClosure extends BaseSqueakObject {
 
     private Object getOrPrepareContext() {
         if (context == null) {
-            return Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Object>() {
+            Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Object>() {
                 @Override
                 public Object visitFrame(FrameInstance frameInstance) {
                     Frame frame = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
@@ -64,6 +64,9 @@ public class BlockClosure extends BaseSqueakObject {
                     return null;
                 }
             });
+            if (context == null) {
+                throw new RuntimeException("Unable to find context");
+            }
         }
         return context;
     }
@@ -162,8 +165,8 @@ public class BlockClosure extends BaseSqueakObject {
         }
         Object[] arguments = new Object[1 /* receiver */ +
                         objects.length +
-                        copied.length +
-                        1 /* this */];
+                        copied.length // +
+        /* 1 */ /* this */];
         arguments[0] = getReceiver();
         for (int i = 0; i < objects.length; i++) {
             arguments[1 + i] = objects[i];
@@ -171,7 +174,7 @@ public class BlockClosure extends BaseSqueakObject {
         for (int i = 0; i < copied.length; i++) {
             arguments[1 + objects.length + i] = copied[i];
         }
-        arguments[arguments.length - 1] = this;
+// arguments[arguments.length - 1] = this;
         return arguments;
     }
 

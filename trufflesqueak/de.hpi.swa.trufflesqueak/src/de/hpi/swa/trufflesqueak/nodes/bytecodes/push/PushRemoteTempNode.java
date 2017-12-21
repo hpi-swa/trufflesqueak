@@ -5,7 +5,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameTemporaryNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameTemporaryReadNode;
 
 public class PushRemoteTempNode extends AbstractPushNode {
     @Child private ObjectAtNode remoteTempNode;
@@ -16,7 +16,7 @@ public class PushRemoteTempNode extends AbstractPushNode {
         super(code, index, numBytecodes);
         this.indexInArray = indexInArray;
         this.indexOfArray = indexOfArray;
-        remoteTempNode = ObjectAtNode.create(indexInArray, new FrameTemporaryNode(code, indexOfArray));
+        remoteTempNode = ObjectAtNode.create(indexInArray, FrameTemporaryReadNode.create(code, indexOfArray));
     }
 
     @Override

@@ -5,7 +5,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtPutNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameTemporaryNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameTemporaryReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.AbstractStackNode;
 
 public abstract class AbstractStoreIntoRemoteTempNode extends AbstractBytecodeNode {
@@ -17,7 +17,7 @@ public abstract class AbstractStoreIntoRemoteTempNode extends AbstractBytecodeNo
         super(code, index, numBytecodes);
         this.indexInArray = indexInArray;
         this.indexOfArray = indexOfArray;
-        storeNode = ObjectAtPutNode.create(indexInArray, new FrameTemporaryNode(code, indexOfArray), getValueNode());
+        storeNode = ObjectAtPutNode.create(indexInArray, FrameTemporaryReadNode.create(code, indexOfArray), getValueNode());
     }
 
     protected abstract AbstractStackNode getValueNode();

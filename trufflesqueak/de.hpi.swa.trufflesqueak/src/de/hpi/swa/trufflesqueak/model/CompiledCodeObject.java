@@ -96,7 +96,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
     @TruffleBoundary
     private void prepareFrameDescriptor() {
         frameDescriptor = new FrameDescriptor(image.nil);
-        stackSlots = new FrameSlot[frameSize() + 1 + getSqClass().getBasicInstanceSize()]; // TODO +1 for receiver?
+        stackSlots = new FrameSlot[frameSize() + 1 + getSqClass().getBasicInstanceSize() - getNumArgsAndCopiedValues()]; // TODO +1 for receiver?
         for (int i = 0; i < stackSlots.length; i++) {
             stackSlots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Illegal);
         }
@@ -156,15 +156,19 @@ public abstract class CompiledCodeObject extends SqueakObject {
         return 0;
     }
 
+    public int getNumArgsAndCopiedValues() {
+        return numArgs + getNumCopiedValues();
+    }
+
     public FrameSlot getStackSlot(int i) {
         if (i >= stackSlots.length) { // This is fine, ignore for decoder
-            return stackSlots[0];
+            return null;
         }
         return stackSlots[i];
     }
 
-    public FrameSlot getTempSlot(int index) {
-        return getStackSlot(1 + index); // 1 -> receiver
+    public int convertTempIndexToStackIndex(int tempIndex) {
+        return tempIndex - getNumArgsAndCopiedValues();
     }
 
     public int getNumStackSlots() {

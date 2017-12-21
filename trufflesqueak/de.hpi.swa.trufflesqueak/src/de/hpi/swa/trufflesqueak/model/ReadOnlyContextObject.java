@@ -112,7 +112,7 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
 
     private Object getSender() {
         if (sender == null) {
-            return Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Object>() {
+            Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Object>() {
                 boolean foundMyself = false;
                 Object marker = FrameUtil.getObjectSafe(frame, markerSlot);
 
@@ -130,6 +130,9 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
                     return null;
                 }
             });
+            if (sender == null) {
+                throw new RuntimeException("Unable to find sender");
+            }
         }
         return sender;
     }

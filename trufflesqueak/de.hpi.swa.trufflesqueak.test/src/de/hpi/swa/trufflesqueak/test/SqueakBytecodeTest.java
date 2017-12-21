@@ -23,7 +23,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.store.AbstractStoreIntoAssociationNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameTemporaryReadNode;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakMethodNode;
 
 public class SqueakBytecodeTest extends AbstractSqueakTestCase {
@@ -630,8 +630,8 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
     // TODO: testSendSelector()
     // TODO: testSend()
 
-    private static Object getTempValue(int index, CompiledCodeObject code, VirtualFrame frame) {
-        return FrameSlotReadNode.create(code.getTempSlot(index)).executeRead(frame);
+    private static Object getTempValue(int tempIndex, CompiledCodeObject code, VirtualFrame frame) {
+        return FrameTemporaryReadNode.create(code, tempIndex).executeGeneric(frame);
     }
 
     private Object[] getTestObjects(int n) {

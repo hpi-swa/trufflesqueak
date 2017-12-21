@@ -20,20 +20,15 @@ import de.hpi.swa.trufflesqueak.model.FrameMarker;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.ConditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.UnconditionalJumpNode;
-import de.hpi.swa.trufflesqueak.nodes.context.stack.InitializeStackNode;
 import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
 public class SqueakMethodNode extends RootNode {
     private final CompiledCodeObject code;
-    @Child private InitializeStackNode initStackNode;
     @Children private final AbstractBytecodeNode[] bytecodeNodes;
 
     public SqueakMethodNode(SqueakLanguage language, CompiledCodeObject code) {
         super(language, code.getFrameDescriptor());
         this.code = code;
-        int numArgs = code.getNumArgs();
-        int numTemps = Math.max(code.getNumTemps() - numArgs, 0);
-        initStackNode = new InitializeStackNode(code, numTemps);
         bytecodeNodes = new SqueakBytecodeDecoder(code).decode();
     }
 
@@ -41,9 +36,11 @@ public class SqueakMethodNode extends RootNode {
         CompilerDirectives.ensureVirtualized(frame);
         frame.setObject(code.markerSlot, new FrameMarker());
         frame.setObject(code.methodSlot, code);
-        initStackNode.executeVoid(frame);
+        // sp points to the last temp slot
+        int sp = code.getNumTemps() - 1;
+        frame.setInt(code.stackPointerSlot, sp);
         if (code instanceof CompiledBlockObject) {
-            frame.setInt(code.closureSlot, 1 + code.getNumArgs() + code.getNumCopiedValues()); // rcvr + args + copied
+            frame.setInt(code.closureSlot, 1 + code.getNumCopiedValues()); // rcvr + args + copied
         }
     }
 
