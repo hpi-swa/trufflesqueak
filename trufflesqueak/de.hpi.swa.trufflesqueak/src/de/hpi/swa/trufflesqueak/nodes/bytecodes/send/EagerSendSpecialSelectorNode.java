@@ -23,7 +23,8 @@ public class EagerSendSpecialSelectorNode extends AbstractBytecodeNode {
         SpecialSelector specialSelector = code.image.specialSelectorsArray[selectorIndex];
         if (code instanceof CompiledMethodObject && specialSelector.getPrimitiveIndex() > 0) {
             AbstractPrimitiveNode primitiveNode;
-            primitiveNode = PrimitiveNodeFactory.forSpecialSelector((CompiledMethodObject) code, specialSelector);
+            primitiveNode = PrimitiveNodeFactory.forSpecialSelector((CompiledMethodObject) code,
+                            specialSelector);
             return new EagerSendSpecialSelectorNode(code, index, specialSelector, primitiveNode);
         }
         return getFallbackNode(code, index, specialSelector);

@@ -157,7 +157,6 @@ public class BlockClosure extends BaseSqueakObject {
 
     public Object[] getFrameArguments(Object... objects) {
         CompilerAsserts.compilationConstant(objects.length);
-        CompilerAsserts.compilationConstant(copied.length);
         if (block.getNumArgs() != objects.length) {
             throw new PrimitiveFailed();
         }

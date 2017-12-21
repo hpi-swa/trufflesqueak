@@ -279,8 +279,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {12, 32}, numArguments = 2)
-    public static abstract class PrimDivNode extends AbstractPrimitiveNode {
-        public PrimDivNode(CompiledMethodObject method) {
+    public static abstract class PrimFloorDivideNode extends AbstractPrimitiveNode {
+        public PrimFloorDivideNode(CompiledMethodObject method) {
             super(method);
         }
 

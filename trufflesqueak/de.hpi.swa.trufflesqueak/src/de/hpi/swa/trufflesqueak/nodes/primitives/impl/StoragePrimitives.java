@@ -259,7 +259,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 75)
+    @SqueakPrimitive(indices = {75, 171, 175})
     public static abstract class PrimIdentityHashNode extends AbstractPrimitiveNode {
         public PrimIdentityHashNode(CompiledMethodObject method) {
             super(method);
