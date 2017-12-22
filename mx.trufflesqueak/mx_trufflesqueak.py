@@ -1,28 +1,12 @@
-from argparse import ArgumentParser
-import re
 import os
-import sys
-import subprocess
-import urllib2
 import mx
-import mx_benchmark
-import mx_gate
-from mx_gate import Task
-from mx_unittest import unittest
 
 
 def squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
-    if not env:
-        env = os.environ
+    env = env if env else os.environ
 
-    # check_vm_env = env.get('GRAALPYTHON_MUST_USE_GRAAL', False)
-    # if check_vm_env:
-    #     if check_vm_env == '1':
-    #         check_vm(must_be_jvmci=True)
-    #     elif check_vm_env == '0':
-    #         check_vm()
-
-    vm_args, squeak_args = mx.extract_VM_args(args, useDoubleDash=False, defaultAllVMArgs=False)
+    vm_args, squeak_args = mx.extract_VM_args(
+        args, useDoubleDash=False, defaultAllVMArgs=False)
 
     classpath = ["de.hpi.swa.trufflesqueak"]
     USES_GRAAL = mx.suite("compiler", fatalIfMissing=False)
@@ -41,11 +25,13 @@ def squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
         # '-Dgraal.TraceTrufflePerformanceWarnings=true',
         # '-Dgraal.TruffleCompilationExceptionsArePrinted=true',
     ]
+
     if USES_GRAAL:
+        graal_path = mx.classpath('compiler:GRAAL', jdk=jdk)
         vm_args += [
             '-XX:+UseJVMCICompiler',
             '-Djvmci.Compiler=graal',
-            '-Djvmci.class.path.append=' + mx.classpath('compiler:GRAAL', jdk=jdk)
+            '-Djvmci.class.path.append=%s' % graal_path
         ]
 
     # default: assertion checking is enabled
