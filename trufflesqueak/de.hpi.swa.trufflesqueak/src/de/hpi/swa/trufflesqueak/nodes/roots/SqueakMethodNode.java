@@ -38,6 +38,7 @@ public class SqueakMethodNode extends RootNode {
         frame.setObject(code.methodSlot, code);
         // sp points to the last temp slot
         int sp = code.getNumTemps() - 1;
+        assert sp >= -1;
         frame.setInt(code.stackPointerSlot, sp);
         if (code instanceof CompiledBlockObject) {
             frame.setInt(code.closureSlot, 1 + code.getNumCopiedValues()); // rcvr + args + copied

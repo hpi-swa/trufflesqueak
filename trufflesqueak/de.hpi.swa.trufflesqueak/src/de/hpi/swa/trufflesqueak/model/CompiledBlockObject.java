@@ -17,7 +17,7 @@ public class CompiledBlockObject extends CompiledCodeObject {
         numCopiedValues = numCopied;
         Object[] outerLiterals = outerMethod.getLiterals();
         outerLiterals = Arrays.copyOf(outerLiterals, outerLiterals.length - 1);
-        int baseHdr = ((numArgs & 0xF) << 24) | (((outerMethod.getNumTemps() + numCopied) & 0x3F) << 18);
+        int baseHdr = ((numArgs & 0xF) << 24) | ((numCopied & 0x3F) << 18);
         outerLiterals[0] = baseHdr; // replace header
         outerLiterals[outerLiterals.length - 1] = outerMethod; // last literal is back pointer to method
         this.literals = outerLiterals;
