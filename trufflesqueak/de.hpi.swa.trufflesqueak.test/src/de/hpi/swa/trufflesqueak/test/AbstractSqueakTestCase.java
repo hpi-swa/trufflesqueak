@@ -134,7 +134,7 @@ public abstract class AbstractSqueakTestCase extends TestCase {
     }
 
     public VirtualFrame createTestFrame(CompiledCodeObject code, Object receiver) {
-        return createTestFrame(code, receiver, new Object[]{});
+        return createTestFrame(code, receiver, new BaseSqueakObject[]{});
     }
 
     public VirtualFrame createTestFrame(CompiledCodeObject code, Object receiver, Object[] arguments) {
