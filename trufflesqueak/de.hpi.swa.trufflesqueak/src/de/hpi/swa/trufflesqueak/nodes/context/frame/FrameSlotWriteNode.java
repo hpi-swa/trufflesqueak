@@ -17,43 +17,85 @@ public abstract class FrameSlotWriteNode extends FrameSlotNode {
 
     public abstract void executeWrite(VirtualFrame frame, Object value);
 
-    protected boolean isNullWrite(Object value) {
-        return value == null;
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = "isNullWrite(value)")
-    public void failOnNullWrite(VirtualFrame frame, Object value) {
-        throw new RuntimeException("Should never write null to a frame slot");
-    }
-
-    @Specialization(guards = "isInt(frame) || isIllegal(frame)")
+    @Specialization(guards = "isIntSlot(value)")
     public void writeInt(VirtualFrame frame, int value) {
-        slot.setKind(FrameSlotKind.Int);
         frame.setInt(slot, value);
     }
 
-    @Specialization(guards = "isLong(frame) || isIllegal(frame)")
+    @Specialization(guards = "isLongSlot(value)")
     public void writeLong(VirtualFrame frame, long value) {
-        slot.setKind(FrameSlotKind.Long);
         frame.setLong(slot, value);
     }
 
-    @Specialization(guards = "isDouble(frame) || isIllegal(frame)")
+    @Specialization(guards = "isDoubleSlot(value)")
     public void writeDouble(VirtualFrame frame, double value) {
-        slot.setKind(FrameSlotKind.Double);
         frame.setDouble(slot, value);
     }
 
-    @Specialization(guards = "isBoolean(frame) || isIllegal(frame)")
+    @Specialization(guards = "isBooleanSlot(value)")
     public void writeBool(VirtualFrame frame, boolean value) {
-        slot.setKind(FrameSlotKind.Boolean);
         frame.setBoolean(slot, value);
     }
 
-    @Specialization(replaces = {"failOnNullWrite", "writeInt", "writeLong", "writeDouble", "writeBool"})
+    @Specialization(replaces = {"writeInt", "writeLong", "writeDouble", "writeBool"})
     public void writeObject(VirtualFrame frame, Object value) {
-        slot.setKind(FrameSlotKind.Object);
+        assert value != null;
         frame.setObject(slot, value);
+    }
+
+    // uses `value` to make sure guard is not converted to assertion
+    protected boolean isIntSlot(@SuppressWarnings("unused") int value) {
+        if (slot.getKind() == FrameSlotKind.Int) {
+            return true;
+        }
+        if (slot.getKind() == FrameSlotKind.Illegal) {
+            slot.setKind(FrameSlotKind.Int);
+            return true;
+        }
+        return false;
+    }
+
+    protected boolean isLongSlot(@SuppressWarnings("unused") long value) {
+        if (slot.getKind() == FrameSlotKind.Long) {
+            return true;
+        }
+        if (slot.getKind() == FrameSlotKind.Illegal) {
+            slot.setKind(FrameSlotKind.Long);
+            return true;
+        }
+        return false;
+    }
+
+    protected boolean isDoubleSlot(@SuppressWarnings("unused") double value) {
+        if (slot.getKind() == FrameSlotKind.Double) {
+            return true;
+        }
+        if (slot.getKind() == FrameSlotKind.Illegal) {
+            slot.setKind(FrameSlotKind.Double);
+            return true;
+        }
+        return false;
+    }
+
+    protected boolean isBooleanSlot(@SuppressWarnings("unused") boolean value) {
+        if (slot.getKind() == FrameSlotKind.Boolean) {
+            return true;
+        }
+        if (slot.getKind() == FrameSlotKind.Illegal) {
+            slot.setKind(FrameSlotKind.Boolean);
+            return true;
+        }
+        return false;
+    }
+
+    protected boolean isObjectSlot(@SuppressWarnings("unused") Object value) {
+        if (slot.getKind() == FrameSlotKind.Object) {
+            return true;
+        }
+        if (slot.getKind() == FrameSlotKind.Illegal) {
+            slot.setKind(FrameSlotKind.Object);
+            return true;
+        }
+        return false;
     }
 }

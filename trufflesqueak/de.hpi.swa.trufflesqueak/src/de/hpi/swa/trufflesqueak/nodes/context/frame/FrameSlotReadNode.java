@@ -2,6 +2,7 @@ package de.hpi.swa.trufflesqueak.nodes.context.frame;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -49,6 +50,31 @@ public abstract class FrameSlotReadNode extends FrameSlotNode {
 
     @Specialization(guards = "isIllegal(frame)")
     public Object readIllegal(@SuppressWarnings("unused") VirtualFrame frame) {
-        return null;
+        throw new RuntimeException("Trying to read from illegal slot");
     }
+
+    protected boolean isInt(VirtualFrame frame) {
+        return frame.isInt(slot);
+    }
+
+    protected boolean isLong(VirtualFrame frame) {
+        return frame.isLong(slot);
+    }
+
+    protected boolean isDouble(VirtualFrame frame) {
+        return frame.isDouble(slot);
+    }
+
+    protected boolean isBoolean(VirtualFrame frame) {
+        return frame.isBoolean(slot);
+    }
+
+    protected boolean isObject(VirtualFrame frame) {
+        return frame.isObject(slot);
+    }
+
+    protected boolean isIllegal(@SuppressWarnings("unused") VirtualFrame frame) {
+        return slot.getKind() == FrameSlotKind.Illegal;
+    }
+
 }
