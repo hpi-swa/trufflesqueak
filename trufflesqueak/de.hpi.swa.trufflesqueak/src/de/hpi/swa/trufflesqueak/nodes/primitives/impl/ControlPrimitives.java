@@ -14,6 +14,7 @@ import de.hpi.swa.trufflesqueak.exceptions.SqueakExit;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.DispatchNode;
 import de.hpi.swa.trufflesqueak.nodes.DispatchNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.LookupNode;
@@ -31,6 +32,9 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitivesFactory.PrimQuickReturnReceiverVariableNodeFactory;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitivesFactory.PrimitiveFailedNodeFactory;
+import de.hpi.swa.trufflesqueak.util.Constants.BLOCK_CONTEXT;
+import de.hpi.swa.trufflesqueak.util.Constants.CONTEXT;
+import de.hpi.swa.trufflesqueak.util.Constants.SPECIAL_OBJECT_INDEX;
 
 public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -57,6 +61,31 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 System.out.println("Primitive not yet written: " + code.toString());
             }
             throw new PrimitiveFailed();
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 80, numArguments = 2)
+    public static abstract class PrimBlockCopyNode extends AbstractPrimitiveNode {
+        public PrimBlockCopyNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        BaseSqueakObject doCopy(PointersObject receiver, int argCount) { // TODO: fixme
+            PointersObject context = receiver;
+            if (context.at0(CONTEXT.METHOD) instanceof Integer) {
+                context = (PointersObject) context.at0(BLOCK_CONTEXT.HOME);
+            }
+            ClassObject blockContextClass = (ClassObject) code.image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.ClassBlockContext);
+            BaseSqueakObject newBlock = blockContextClass.newInstance(context.size() + context.instsize());
+            newBlock.atput0(BLOCK_CONTEXT.INITIAL_PC, -1); // TODO: calculate pc
+            newBlock.atput0(CONTEXT.INSTRUCTION_POINTER, -1);
+            newBlock.atput0(CONTEXT.STACKPOINTER, 0);
+            newBlock.atput0(BLOCK_CONTEXT.ARGUMENT_COUNT, argCount);
+            newBlock.atput0(BLOCK_CONTEXT.HOME, context);
+            newBlock.atput0(CONTEXT.SENDER, code.image.nil); // claim not needed; just initialized
+            return newBlock;
         }
     }
 
