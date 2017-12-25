@@ -58,6 +58,12 @@ public class Constants {
         public static final int ClassWeakFinalizer = 55;
     }
 
+    public static final class CONTEXT_PART {
+        public static final int SENDER_INDEX = 0;
+        public static final int PC_INDEX = 1;
+        public static final int STACKP_INDEX = 2;
+    }
+
     public static final class POINT_LAYOUT {
         public static final int SIZE = 2;
         public static final int X = 0;

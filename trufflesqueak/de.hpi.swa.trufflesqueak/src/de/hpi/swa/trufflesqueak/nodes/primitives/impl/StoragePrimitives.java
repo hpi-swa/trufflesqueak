@@ -19,10 +19,12 @@ import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.EmptyObject;
 import de.hpi.swa.trufflesqueak.model.LargeInteger;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.context.ObjectGraph;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.trufflesqueak.util.Constants.CONTEXT_PART;
 
 public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -301,6 +303,20 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         int hash(BaseSqueakObject obj) {
             return obj.squeakHash();
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 76, numArguments = 2)
+    public static abstract class PrimStoreStackPointerNode extends AbstractPrimitiveNode {
+        public PrimStoreStackPointerNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        BaseSqueakObject store(PointersObject receiver, int value) {
+            receiver.atput0(CONTEXT_PART.STACKP_INDEX, value);
+            return receiver;
         }
     }
 
