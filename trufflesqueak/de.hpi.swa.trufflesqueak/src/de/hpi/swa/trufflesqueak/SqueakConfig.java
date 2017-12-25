@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class SqueakConfig {
+    private final String imagePath;
     private final boolean verbose;
     private final boolean tracing;
     private final String receiver;
@@ -14,13 +15,14 @@ public class SqueakConfig {
 
     @SuppressWarnings("hiding")
     public SqueakConfig(String[] args) {
+        this.imagePath = args[0];
         boolean verbose = false;
         boolean tracing = false;
         String receiver = "nil";
         String selector = "yourself";
         String[] restArgs = null;
 
-        for (int i = 0; i < args.length; i++) {
+        for (int i = 1; i < args.length; i++) {
             switch (args[i]) {
                 case "--verbose":
                 case "-v":
@@ -57,6 +59,7 @@ public class SqueakConfig {
 
     public String[] toStringArgs() {
         List<String> sb = new ArrayList<>();
+        sb.add(imagePath);
         if (verbose) {
             sb.add("-v");
         }
@@ -89,6 +92,10 @@ public class SqueakConfig {
 
     public boolean isTracing() {
         return tracing;
+    }
+
+    public String getImagePath() {
+        return imagePath;
     }
 
     public Object getReceiver() {

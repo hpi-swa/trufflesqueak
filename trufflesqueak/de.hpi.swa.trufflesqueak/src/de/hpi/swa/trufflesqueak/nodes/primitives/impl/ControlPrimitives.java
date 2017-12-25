@@ -158,6 +158,19 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(index = 114)
+    public static abstract class PrimExitToDebuggerNode extends AbstractPrimitiveNode {
+        public PrimExitToDebuggerNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        public Object debugger(@SuppressWarnings("unused") VirtualFrame frame) {
+            throw new RuntimeException("EXIT TO DEBUGGER");
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(index = 117, numArguments = 0)
     public static abstract class NamedPrimitiveCallNode extends AbstractPrimitiveNode {
         public NamedPrimitiveCallNode(CompiledMethodObject method) {

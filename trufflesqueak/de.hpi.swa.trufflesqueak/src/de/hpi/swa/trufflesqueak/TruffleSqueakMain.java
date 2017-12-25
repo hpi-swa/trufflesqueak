@@ -32,12 +32,10 @@ public class TruffleSqueakMain extends AbstractLanguageLauncher {
     }
 
     private SqueakConfig config;
-    private String imagepath;
 
     @Override
     protected List<String> preprocessArguments(List<String> arguments, Map<String, String> polyglotOptions) {
-        imagepath = arguments.get(0);
-        config = new SqueakConfig(arguments.subList(1, arguments.size()).toArray(new String[0]));
+        config = new SqueakConfig(arguments.toArray(new String[0]));
         return config.getUnrecognized();
     }
 
@@ -45,7 +43,7 @@ public class TruffleSqueakMain extends AbstractLanguageLauncher {
     protected void launch(org.graalvm.polyglot.Context.Builder contextBuilder) {
         contextBuilder.arguments("squeaksmalltalk", config.toStringArgs());
         try (org.graalvm.polyglot.Context ctx = contextBuilder.build()) {
-            Object result = ctx.eval(org.graalvm.polyglot.Source.newBuilder("squeaksmalltalk", new File(imagepath)).build());
+            Object result = ctx.eval(org.graalvm.polyglot.Source.newBuilder("squeaksmalltalk", new File(config.getImagePath())).build());
             System.out.println(result);
         } catch (IOException e) {
             e.printStackTrace();

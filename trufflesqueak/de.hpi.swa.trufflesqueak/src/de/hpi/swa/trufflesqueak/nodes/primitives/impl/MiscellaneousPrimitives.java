@@ -67,6 +67,20 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(index = 121)
+    public static abstract class PrimImageNameNode extends AbstractPrimitiveNode {
+
+        public PrimImageNameNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        BaseSqueakObject get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
+            return code.image.wrap(code.image.config.getImagePath());
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(index = 148)
     public static abstract class PrimShallowCopyNode extends AbstractPrimitiveNode {
         public PrimShallowCopyNode(CompiledMethodObject method) {
