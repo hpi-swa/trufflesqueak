@@ -169,6 +169,8 @@ public class SqueakImageContext {
             return wrap(BigInteger.valueOf(((Integer) obj).intValue()));
         } else if (obj instanceof BigInteger) {
             return wrap((BigInteger) obj);
+        } else if (obj instanceof Long) {
+            return wrap(BigInteger.valueOf((long) obj).intValue());
         } else if (obj instanceof String) {
             return wrap((String) obj);
         } else if (obj instanceof Object[]) {
