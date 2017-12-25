@@ -82,6 +82,10 @@ public abstract class BaseSqueakObject implements TruffleObject {
         return getSqClass().equals(image.specialObjectsArray.at0(index));
     }
 
+    public boolean isSpecialClassAt(int index) {
+        return this.equals(image.specialObjectsArray.at0(index));
+    }
+
     @Override
     public ForeignAccess getForeignAccess() {
         return BaseSqueakObjectMessageResolutionForeign.ACCESS;

@@ -62,6 +62,16 @@ public class CompiledMethodObject extends CompiledCodeObject {
         return this;
     }
 
+    public void setHeader(int header) {
+        literals = new Object[]{header};
+        decodeHeader();
+        literals = new Object[1 + numLiterals];
+        literals[0] = header;
+        for (int i = 1; i < literals.length; i++) {
+            literals[i] = image.nil;
+        }
+    }
+
     @Override
     public BaseSqueakObject shallowCopy() {
         return new CompiledMethodObject(this);

@@ -47,7 +47,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
     @CompilationFinal(dimensions = 1) protected Object[] literals;
     @CompilationFinal(dimensions = 1) protected byte[] bytes;
     @CompilationFinal private int numArgs;
-    @SuppressWarnings("unused") private int numLiterals;
+    protected int numLiterals;
     @SuppressWarnings("unused") private boolean isOptimized;
     @CompilationFinal private boolean hasPrimitive;
     @CompilationFinal private boolean needsLargeFrame;
@@ -285,9 +285,4 @@ public abstract class CompiledCodeObject extends SqueakObject {
     }
 
     abstract public CompiledMethodObject getMethod();
-
-    public void setHeader(int header) {
-        atput0(0, header);
-        decodeHeader();
-    }
 }

@@ -25,6 +25,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.util.Constants.CONTEXT_PART;
+import de.hpi.swa.trufflesqueak.util.Constants.SPECIAL_OBJECT_INDEX;
 
 public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -354,6 +355,26 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             } catch (IndexOutOfBoundsException e) {
                 return code.image.nil;
             }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 79, numArguments = 3)
+    public static abstract class PrimNewMethodNode extends AbstractPrimitiveNode {
+
+        public PrimNewMethodNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        protected boolean isCompiledMethodClass(ClassObject receiver) {
+            return receiver.isSpecialClassAt(SPECIAL_OBJECT_INDEX.ClassCompiledMethod);
+        }
+
+        @Specialization(guards = "isCompiledMethodClass(receiver)")
+        BaseSqueakObject newMethod(ClassObject receiver, int bytecodeCount, int header) {
+            CompiledMethodObject newMethod = (CompiledMethodObject) receiver.newInstance(bytecodeCount);
+            newMethod.setHeader(header);
+            return newMethod;
         }
     }
 
