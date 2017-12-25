@@ -42,7 +42,27 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 102, numArguments = 5)
+    @SqueakPrimitive(index = 101)
+    public static abstract class PrimBeCursorNode extends AbstractPrimitiveNode {
+
+        public PrimBeCursorNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        BaseSqueakObject beCursor(PointersObject receiver) {
+            // TODO: display the cursor
+            return receiver;
+        }
+
+        @Specialization
+        boolean fail(@SuppressWarnings("unused") BaseSqueakObject receiver) {
+            throw new PrimitiveFailed();
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 102)
     public static abstract class PrimBeDisplayNode extends AbstractPrimitiveNode {
 
         public PrimBeDisplayNode(CompiledMethodObject method) {
@@ -157,6 +177,27 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         BaseSqueakObject get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
             return code.image.wrap(code.image.display.getButtons());
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 127, numArguments = 5)
+    public static abstract class PrimDrawRectNode extends AbstractPrimitiveNode {
+
+        public PrimDrawRectNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        BaseSqueakObject get(BaseSqueakObject receiver, int left, int right, int top, int bottom) {
+            if (receiver != code.image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.TheDisplay)) {
+                return code.image.nil;
+            }
+            if (!((left <= right) && (top <= bottom))) {
+                return code.image.nil;
+            }
+            code.image.display.drawRect(left, right, top, bottom);
+            return receiver;
         }
     }
 }

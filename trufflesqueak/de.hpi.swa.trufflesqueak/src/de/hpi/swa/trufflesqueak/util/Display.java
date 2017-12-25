@@ -139,6 +139,12 @@ public class Display extends BaseDisplay {
     }
 
     @Override
+    public void drawRect(int left, int right, int top, int bottom) {
+// Graphics g = bufferStrategy.getDrawGraphics();
+// TODO: implement drawRect
+    }
+
+    @Override
     public Dimension getSize() {
         return frame.getSize();
     }

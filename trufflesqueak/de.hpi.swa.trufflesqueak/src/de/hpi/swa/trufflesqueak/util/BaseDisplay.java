@@ -4,6 +4,10 @@ import java.awt.Dimension;
 import java.awt.Point;
 
 public class BaseDisplay {
+    @SuppressWarnings("unused")
+    public void drawRect(int left, int right, int top, int bottom) {
+    }
+
     public Dimension getSize() {
         return new Dimension(0, 0);
     }
