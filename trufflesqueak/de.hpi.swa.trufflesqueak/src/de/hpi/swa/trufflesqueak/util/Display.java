@@ -145,6 +145,11 @@ public class Display extends BaseDisplay {
     }
 
     @Override
+    public void forceUpdate() {
+        // TODO: implement force update
+    }
+
+    @Override
     public Dimension getSize() {
         return frame.getSize();
     }

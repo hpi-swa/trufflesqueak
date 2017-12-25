@@ -22,4 +22,7 @@ public class BaseDisplay {
 
     public void setFullscreen(@SuppressWarnings("unused") boolean enable) {
     }
+
+    public void forceUpdate() {
+    }
 }

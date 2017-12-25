@@ -194,6 +194,20 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(index = 231)
+    public static abstract class PrimForceDisplayUpdateNode extends AbstractPrimitiveNode {
+        public PrimForceDisplayUpdateNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        BaseSqueakObject doForceUpdate(BaseSqueakObject receiver) {
+            code.image.display.forceUpdate();
+            return receiver;
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(index = 233, numArguments = 2)
     public static abstract class PrimSetFullScreenNode extends AbstractPrimitiveNode {
         public PrimSetFullScreenNode(CompiledMethodObject method) {
