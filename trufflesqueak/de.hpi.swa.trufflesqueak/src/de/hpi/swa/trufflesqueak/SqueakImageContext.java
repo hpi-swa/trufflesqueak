@@ -25,7 +25,11 @@ import de.hpi.swa.trufflesqueak.model.SpecialSelector;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakContextNode;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakMainNode;
 import de.hpi.swa.trufflesqueak.util.BaseDisplay;
+import de.hpi.swa.trufflesqueak.util.Constants.ASSOCIATION;
+import de.hpi.swa.trufflesqueak.util.Constants.CONTEXT;
 import de.hpi.swa.trufflesqueak.util.Constants.POINT_LAYOUT;
+import de.hpi.swa.trufflesqueak.util.Constants.PROCESS;
+import de.hpi.swa.trufflesqueak.util.Constants.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.util.Constants.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.trufflesqueak.util.Display;
 import de.hpi.swa.trufflesqueak.util.SqueakImageReader;
@@ -134,17 +138,28 @@ public class SqueakImageContext {
     public CallTarget getEntryPoint() {
         Object receiver = config.getReceiver();
         String selector = config.getSelector();
-        ClassObject receiverClass = receiver instanceof Integer ? smallIntegerClass : nilClass;
-        CompiledCodeObject lookupResult = (CompiledCodeObject) receiverClass.lookup(selector);
-        // Push literal 1, send literal 2 selector, return top
-        byte[] bytes = new byte[]{32, (byte) 209, 124};
-        Object[] literals = new Object[]{
-                        0, receiver, lookupResult.getCompiledInSelector(), // selector
-                        receiverClass // compiled in class
-        };
-        CompiledCodeObject entryPoint = new CompiledMethodObject(this, bytes, literals);
-        output.println(String.format("Starting to evaluate %s >> %s:\n", receiver, selector));
-        return Truffle.getRuntime().createCallTarget(new SqueakMainNode(getLanguage(), entryPoint));
+        SqueakMainNode mainNode;
+        if (selector != null) {
+            ClassObject receiverClass = receiver instanceof Integer ? smallIntegerClass : nilClass;
+            CompiledCodeObject lookupResult = (CompiledCodeObject) receiverClass.lookup(selector);
+            // Push literal 1, send literal 2 selector, return top
+            byte[] bytes = new byte[]{32, (byte) 209, 124};
+            Object[] literals = new Object[]{
+                            0, receiver, lookupResult.getCompiledInSelector(), // selector
+                            receiverClass // compiled in class
+            };
+            CompiledCodeObject entryPoint = new CompiledMethodObject(this, bytes, literals);
+            output.println(String.format("Starting to evaluate %s >> %s:\n", receiver, selector));
+            mainNode = new SqueakMainNode(getLanguage(), entryPoint);
+        } else {
+            display.open();
+            PointersObject scheduler = (PointersObject) schedulerAssociation.at0(ASSOCIATION.VALUE);
+            PointersObject process = (PointersObject) scheduler.at0(PROCESS_SCHEDULER.ACTIVE_PROCESS);
+            ContextObject activeContext = (ContextObject) process.at0(PROCESS.SUSPENDED_CONTEXT);
+            CompiledCodeObject code = (CompiledCodeObject) activeContext.at0(CONTEXT.METHOD);
+            mainNode = new SqueakMainNode(getLanguage(), code, activeContext);
+        }
+        return Truffle.getRuntime().createCallTarget(mainNode);
     }
 
     public void fillInFrom(FileInputStream inputStream) throws IOException {

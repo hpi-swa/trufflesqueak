@@ -19,12 +19,10 @@ import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.instrumentation.CompiledCodeObjectPrinter;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakMethodNode;
 import de.hpi.swa.trufflesqueak.util.BitSplitter;
+import de.hpi.swa.trufflesqueak.util.Constants.CONTEXT;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public abstract class CompiledCodeObject extends SqueakObject {
-    private static final int FRAME_SIZE_SMALL = 16;
-    private static final int FRAME_SIZE_LARGE = 56;
-
     public static enum SLOT_IDENTIFIER {
         CLOSURE,
         SELF,
@@ -91,7 +89,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
     @TruffleBoundary
     protected void prepareFrameDescriptor() {
         frameDescriptor = new FrameDescriptor(image.nil);
-        int frameSize = needsLargeFrame ? FRAME_SIZE_LARGE : FRAME_SIZE_SMALL;
+        int frameSize = needsLargeFrame ? CONTEXT.LARGE_FRAMESIZE : CONTEXT.SMALL_FRAMESIZE;
         int numStackSlots = frameSize + getSqClass().getBasicInstanceSize();
         stackSlots = new FrameSlot[numStackSlots];
         for (int i = 0; i < stackSlots.length; i++) {
@@ -287,4 +285,9 @@ public abstract class CompiledCodeObject extends SqueakObject {
     }
 
     abstract public CompiledMethodObject getMethod();
+
+    public void setHeader(int header) {
+        atput0(0, header);
+        decodeHeader();
+    }
 }

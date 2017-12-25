@@ -22,9 +22,9 @@ import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.store.AbstractStoreIntoAssociationNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameTemporaryReadNode;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakMethodNode;
+import de.hpi.swa.trufflesqueak.util.Constants.ASSOCIATION;
 
 public class SqueakBytecodeTest extends AbstractSqueakTestCase {
     @Rule public ExpectedException exceptions = ExpectedException.none();
@@ -264,7 +264,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
                 Object result = new SqueakMethodNode(null, code).execute(frame);
                 assertSame(image.sqTrue, result);
                 PointersObject literal = (PointersObject) code.getLiteral(i);
-                assertSame(image.sqTrue, literal.getPointers()[AbstractStoreIntoAssociationNode.ASSOCIATION_VALUE]);
+                assertSame(image.sqTrue, literal.getPointers()[ASSOCIATION.VALUE]);
             } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
                 assertTrue("broken test", false);
             }
@@ -319,7 +319,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
                 Object result = new SqueakMethodNode(null, code).execute(frame);
                 assertSame(rcvr, result);
                 PointersObject literal = (PointersObject) code.getLiteral(i);
-                assertSame(image.sqTrue, literal.getPointers()[AbstractStoreIntoAssociationNode.ASSOCIATION_VALUE]);
+                assertSame(image.sqTrue, literal.getPointers()[ASSOCIATION.VALUE]);
             } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
                 assertTrue("broken test", false);
             }
@@ -419,7 +419,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
                 Object result = new SqueakMethodNode(null, code).execute(frame);
                 assertSame(image.sqTrue, result);
                 PointersObject literal = (PointersObject) code.getLiteral(i);
-                assertSame(image.sqTrue, literal.getPointers()[AbstractStoreIntoAssociationNode.ASSOCIATION_VALUE]);
+                assertSame(image.sqTrue, literal.getPointers()[ASSOCIATION.VALUE]);
             } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
                 assertTrue("broken test", false);
             }

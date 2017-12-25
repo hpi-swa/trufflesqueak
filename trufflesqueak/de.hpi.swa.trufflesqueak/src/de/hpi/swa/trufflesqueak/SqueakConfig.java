@@ -19,7 +19,7 @@ public class SqueakConfig {
         boolean verbose = false;
         boolean tracing = false;
         String receiver = "nil";
-        String selector = "yourself";
+        String selector = null;
         String[] restArgs = null;
 
         for (int i = 1; i < args.length; i++) {

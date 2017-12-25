@@ -47,9 +47,6 @@ public class Display extends BaseDisplay {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();
         frame.setResizable(true);
-        frame.setVisible(true);
-
-        canvas.requestFocus();
     }
 
     private static class SqueakMouseListener implements MouseListener {
@@ -150,6 +147,12 @@ public class Display extends BaseDisplay {
     @Override
     public void forceUpdate() {
         // TODO: implement force update
+    }
+
+    @Override
+    public void open() {
+        frame.setVisible(true);
+        canvas.requestFocus();
     }
 
     @Override

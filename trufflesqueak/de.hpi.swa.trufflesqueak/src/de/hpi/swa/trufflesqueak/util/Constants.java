@@ -58,6 +58,30 @@ public class Constants {
         public static final int ClassWeakFinalizer = 55;
     }
 
+    public static final class ASSOCIATION {
+        public static final int KEY = 0;
+        public static final int VALUE = 1;
+    }
+
+    public static final class BLOCK_CONTEXT {
+        public static final int CALLER = 0;
+        public static final int ARGUMENT_COUNT = 3;
+        public static final int INITIAL_PC = 4;
+        public static final int HOME = 5;
+    }
+
+    public static final class CONTEXT {
+        public static final int SENDER = 0;
+        public static final int INSTRUCTION_POINTER = 1;
+        public static final int STACKPOINTER = 2;
+        public static final int METHOD = 3;
+        public static final int CLOSURE = 4;
+        public static final int RECEIVER = 5;
+        public static final int TEMP_FRAME_START = 6;
+        public static final int SMALL_FRAMESIZE = 16;
+        public static final int LARGE_FRAMESIZE = 56;
+    }
+
     public static final class CONTEXT_PART {
         public static final int SENDER_INDEX = 0;
         public static final int PC_INDEX = 1;
@@ -68,6 +92,17 @@ public class Constants {
         public static final int SIZE = 2;
         public static final int X = 0;
         public static final int Y = 1;
+    }
+
+    public static final class PROCESS_SCHEDULER {
+        public static final int PROCESS_LISTS = 0;
+        public static final int ACTIVE_PROCESS = 1;
+    }
+
+    public static final class PROCESS {
+        public static final int SUSPENDED_CONTEXT = 1;
+        public static final int PRIORITY = 2;
+        public static final int LIST = 3;
     }
 
     public static final class MOUSE_BUTTON {

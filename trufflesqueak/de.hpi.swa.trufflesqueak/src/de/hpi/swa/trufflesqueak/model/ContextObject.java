@@ -6,9 +6,12 @@ import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.NonVirtualContextModification;
+import de.hpi.swa.trufflesqueak.util.Constants.BLOCK_CONTEXT;
+import de.hpi.swa.trufflesqueak.util.Constants.CONTEXT;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public class ContextObject extends BaseSqueakObject {
@@ -84,6 +87,19 @@ public class ContextObject extends BaseSqueakObject {
 
     public void step() {
         beWriteable();
+    }
+
+    public Object execute(VirtualFrame frame) {
+        beWriteable();
+        Object method = at0(CONTEXT.METHOD);
+        CompiledCodeObject code;
+        if (method instanceof Integer) { // if the method field is an integer, activeContex is a block context
+            ContextObject homeContext = (ContextObject) at0(BLOCK_CONTEXT.HOME);
+            code = (CompiledCodeObject) homeContext.at0(CONTEXT.METHOD);
+        } else {
+            code = (CompiledCodeObject) method;
+        }
+        // decode receiver, pc, and sp...
         throw new RuntimeException("stepping in context not implemented yet");
     }
 

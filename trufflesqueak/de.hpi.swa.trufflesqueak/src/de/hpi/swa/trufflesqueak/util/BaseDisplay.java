@@ -33,4 +33,7 @@ public class BaseDisplay {
     public int peekKey() {
         return 0;
     }
+
+    public void open() {
+    }
 }
