@@ -12,6 +12,7 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.NonVirtualContextModification;
+import de.hpi.swa.trufflesqueak.util.Constants.CONTEXT;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 /**
@@ -47,20 +48,20 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
     @Override
     public Object at0(int i) {
         switch (i) {
-            case ContextPartConstants.SENDER:
+            case CONTEXT.SENDER:
                 return getSender();
-            case ContextPartConstants.PC:
+            case CONTEXT.INSTRUCTION_POINTER:
                 return pc;
-            case ContextPartConstants.SP:
+            case CONTEXT.STACKPOINTER:
                 return stackPointer + 1;
-            case ContextPartConstants.METHOD:
+            case CONTEXT.METHOD:
                 return getMethod();
-            case ContextPartConstants.CLOSURE:
+            case CONTEXT.CLOSURE:
                 return getClosure();
-            case ContextPartConstants.RECEIVER:
+            case CONTEXT.RECEIVER:
                 return getReceiver();
             default:
-                return getTemp(i - ContextPartConstants.TEMP_FRAME_START);
+                return getTemp(i - CONTEXT.TEMP_FRAME_START);
         }
     }
 
@@ -139,11 +140,11 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
 
     public void atContextPut0(int i, Object obj) throws NonVirtualContextModification {
         switch (i) {
-            case ContextPartConstants.RECEIVER:
+            case CONTEXT.RECEIVER:
                 frame.setObject(rcvrSlot, obj);
                 break;
             default:
-                setTemp(i - ContextPartConstants.TEMP_FRAME_START, obj);
+                setTemp(i - CONTEXT.TEMP_FRAME_START, obj);
         }
     }
 
@@ -159,12 +160,12 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
 
     @Override
     public int size() {
-        return stackPointer + ContextPartConstants.TEMP_FRAME_START;
+        return stackPointer + CONTEXT.TEMP_FRAME_START;
     }
 
     @Override
     public int instsize() {
-        return ContextPartConstants.RECEIVER;
+        return CONTEXT.RECEIVER;
     }
 
     @Override

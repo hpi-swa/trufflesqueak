@@ -82,7 +82,7 @@ public class ContextObject extends BaseSqueakObject {
     @Override
     public int instsize() {
         // the receiver is part of the "variable part", because it is on the stack in Squeak
-        return ContextPartConstants.TEMP_FRAME_START - 1;
+        return CONTEXT.TEMP_FRAME_START - 1;
     }
 
     public void step() {

@@ -9,7 +9,7 @@ import de.hpi.swa.trufflesqueak.exceptions.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
-import de.hpi.swa.trufflesqueak.model.ContextPartConstants;
+import de.hpi.swa.trufflesqueak.util.Constants.CONTEXT;
 
 /**
  * This class implements the global interpreter loop. It creates frames to execute from context
@@ -30,7 +30,7 @@ public class SqueakContextNode extends RootNode {
 // }
 
     private static ContextObject getSender(ContextObject context) {
-        Object sender = context.at0(ContextPartConstants.SENDER);
+        Object sender = context.at0(CONTEXT.SENDER);
         if (sender instanceof ContextObject) {
             return (ContextObject) sender;
         } else {
