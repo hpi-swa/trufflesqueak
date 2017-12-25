@@ -15,7 +15,7 @@ public class SqueakConfig {
 
     @SuppressWarnings("hiding")
     public SqueakConfig(String[] args) {
-        this.imagePath = args[0];
+        this.imagePath = args.length > 0 ? args[0] : "unknown";
         boolean verbose = false;
         boolean tracing = false;
         String receiver = "nil";
