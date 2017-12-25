@@ -19,4 +19,7 @@ public class BaseDisplay {
     public Point getMousePosition() {
         return new Point(0, 0);
     }
+
+    public void setFullscreen(@SuppressWarnings("unused") boolean enable) {
+    }
 }

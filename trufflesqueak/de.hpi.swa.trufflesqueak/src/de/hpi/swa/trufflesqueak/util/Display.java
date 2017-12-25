@@ -158,4 +158,15 @@ public class Display extends BaseDisplay {
     public Point getMousePosition() {
         return mousePosition;
     }
+
+    @Override
+    public void setFullscreen(boolean enable) {
+        if (enable) {
+            frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+            frame.setUndecorated(true);
+        } else {
+            frame.setExtendedState(JFrame.NORMAL);
+            frame.setUndecorated(false);
+        }
+    }
 }

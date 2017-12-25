@@ -194,6 +194,20 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(index = 233, numArguments = 2)
+    public static abstract class PrimSetFullScreenNode extends AbstractPrimitiveNode {
+        public PrimSetFullScreenNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        BaseSqueakObject doFullScreen(BaseSqueakObject receiver, boolean enable) {
+            code.image.display.setFullscreen(enable);
+            return receiver;
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(index = 256)
     public static abstract class PrimQuickReturnSelfNode extends AbstractPrimitiveNode {
         @Child private FrameReceiverNode receiverNode = new FrameReceiverNode();
