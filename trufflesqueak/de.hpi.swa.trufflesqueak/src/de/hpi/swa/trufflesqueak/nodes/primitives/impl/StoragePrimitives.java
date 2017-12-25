@@ -32,6 +32,19 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(index = 18, numArguments = 2)
+    public static abstract class PrimMakePointNode extends AbstractPrimitiveNode {
+        public PrimMakePointNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        Object makePoint(int xPos, int yPos) {
+            return code.image.newPoint(xPos, yPos);
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(index = 68, numArguments = 2)
     public static abstract class PrimCompiledMethodObjectAtNode extends AbstractPrimitiveNode {
         public PrimCompiledMethodObjectAtNode(CompiledMethodObject method) {
@@ -329,6 +342,21 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(index = 129)
+    public static abstract class PrimSpecialObjectsArrayNode extends AbstractPrimitiveNode {
+
+        public PrimSpecialObjectsArrayNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        BaseSqueakObject get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
+            return code.image.specialObjectsArray;
+        }
+
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(index = 170, numArguments = 2)
     public static abstract class PrimCharacterValueNode extends AbstractPrimitiveNode {
 
@@ -337,7 +365,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected char value(@SuppressWarnings("unused") BaseSqueakObject ignored, char value) {
+        protected char value(@SuppressWarnings("unused") BaseSqueakObject receiver, char value) {
             return value;
         }
 

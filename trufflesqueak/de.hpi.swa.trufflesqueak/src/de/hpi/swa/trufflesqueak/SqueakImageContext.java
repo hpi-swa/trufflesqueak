@@ -1,5 +1,7 @@
 package de.hpi.swa.trufflesqueak;
 
+import java.awt.Dimension;
+import java.awt.Point;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -22,6 +24,10 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.SpecialSelector;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakContextNode;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakMainNode;
+import de.hpi.swa.trufflesqueak.util.BaseDisplay;
+import de.hpi.swa.trufflesqueak.util.Constants.POINT_LAYOUT;
+import de.hpi.swa.trufflesqueak.util.Constants.SPECIAL_OBJECT_INDEX;
+import de.hpi.swa.trufflesqueak.util.Display;
 import de.hpi.swa.trufflesqueak.util.SqueakImageReader;
 
 public class SqueakImageContext {
@@ -96,6 +102,7 @@ public class SqueakImageContext {
     };
 
     public final SqueakConfig config;
+    public final BaseDisplay display;
 
     public SqueakImageContext(SqueakLanguage squeakLanguage, SqueakLanguage.Env environ,
                     PrintWriter out, PrintWriter err) {
@@ -108,6 +115,11 @@ public class SqueakImageContext {
             config = new SqueakConfig(applicationArguments);
         } else {
             config = new SqueakConfig(new String[0]);
+        }
+        if (config.getSelector() == null) {
+            display = new Display();
+        } else {
+            display = new BaseDisplay();
         }
     }
 
@@ -175,5 +187,21 @@ public class SqueakImageContext {
 
     public ListObject wrap(Object... elements) {
         return new ListObject(this, arrayClass, elements);
+    }
+
+    public PointersObject wrap(Point point) {
+        return newPoint((int) point.getX(), (int) point.getY());
+    }
+
+    public PointersObject wrap(Dimension dimension) {
+        return newPoint((int) dimension.getWidth(), (int) dimension.getHeight());
+    }
+
+    public PointersObject newPoint(int xPos, int yPos) {
+        ClassObject pointClass = (ClassObject) specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.ClassPoint);
+        PointersObject newPoint = (PointersObject) pointClass.newInstance(POINT_LAYOUT.SIZE);
+        newPoint.atput0(POINT_LAYOUT.X, xPos);
+        newPoint.atput0(POINT_LAYOUT.Y, yPos);
+        return newPoint;
     }
 }

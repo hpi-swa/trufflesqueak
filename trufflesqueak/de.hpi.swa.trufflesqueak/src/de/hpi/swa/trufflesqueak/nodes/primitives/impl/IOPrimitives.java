@@ -9,13 +9,16 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.LargeInteger;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.trufflesqueak.util.Constants.SPECIAL_OBJECT_INDEX;
 
 public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -33,10 +36,29 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        Object replace(@SuppressWarnings("unused") VirtualFrame frame) {
-            throw new PrimitiveFailed();
+        Object mousePoint(@SuppressWarnings("unused") VirtualFrame frame) {
+            return code.image.wrap(code.image.display.getMousePosition());
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 102, numArguments = 5)
+    public static abstract class PrimBeDisplayNode extends AbstractPrimitiveNode {
+
+        public PrimBeDisplayNode(CompiledMethodObject method) {
+            super(method);
         }
 
+        @Specialization
+        boolean beDisplay(PointersObject receiver) {
+            code.image.specialObjectsArray.atput0(SPECIAL_OBJECT_INDEX.TheDisplay, receiver);
+            return true;
+        }
+
+        @Specialization
+        boolean fail(@SuppressWarnings("unused") BaseSqueakObject receiver) {
+            throw new PrimitiveFailed();
+        }
     }
 
     @GenerateNodeFactory
@@ -110,4 +132,31 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 106)
+    public static abstract class PrimScreenSizeNode extends AbstractPrimitiveNode {
+
+        public PrimScreenSizeNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        BaseSqueakObject get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
+            return code.image.wrap(code.image.display.getSize());
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 107)
+    public static abstract class PrimMouseButtonsNode extends AbstractPrimitiveNode {
+
+        public PrimMouseButtonsNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        BaseSqueakObject get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
+            return code.image.wrap(code.image.display.getButtons());
+        }
+    }
 }
