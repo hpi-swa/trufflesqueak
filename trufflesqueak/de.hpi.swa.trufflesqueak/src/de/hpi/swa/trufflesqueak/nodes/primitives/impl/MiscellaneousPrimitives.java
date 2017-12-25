@@ -18,6 +18,7 @@ import de.hpi.swa.trufflesqueak.nodes.context.ObjectGraph;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.trufflesqueak.util.Constants.SPECIAL_OBJECT_INDEX;
 
 public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -77,6 +78,51 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         BaseSqueakObject get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
             return code.image.wrap(code.image.config.getImagePath());
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 124, numArguments = 2)
+    public static abstract class PrimLowSpaceSemaphoreNode extends AbstractPrimitiveNode {
+
+        public PrimLowSpaceSemaphoreNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        BaseSqueakObject get(BaseSqueakObject receiver, BaseSqueakObject semaphore) {
+            code.image.registerSemaphore(semaphore, SPECIAL_OBJECT_INDEX.TheLowSpaceSemaphore);
+            return receiver;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 125, numArguments = 2)
+    public static abstract class PrimSetLowSpaceThresholdNode extends AbstractPrimitiveNode {
+
+        public PrimSetLowSpaceThresholdNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        BaseSqueakObject get(BaseSqueakObject receiver, @SuppressWarnings("unused") int numBytes) {
+            // TODO: do something with numBytes
+            return receiver;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 134, numArguments = 2)
+    public static abstract class PrimInterruptSemaphoreNode extends AbstractPrimitiveNode {
+
+        public PrimInterruptSemaphoreNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        BaseSqueakObject get(BaseSqueakObject receiver, BaseSqueakObject semaphore) {
+            code.image.registerSemaphore(semaphore, SPECIAL_OBJECT_INDEX.TheInterruptSemaphore);
+            return receiver;
         }
     }
 

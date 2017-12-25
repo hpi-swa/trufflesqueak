@@ -208,4 +208,8 @@ public class SqueakImageContext {
         newPoint.atput0(POINT_LAYOUT.Y, yPos);
         return newPoint;
     }
+
+    public void registerSemaphore(BaseSqueakObject semaphore, int index) {
+        specialObjectsArray.atput0(index, semaphore.isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassSemaphore) ? semaphore : nil);
+    }
 }
