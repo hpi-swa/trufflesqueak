@@ -8,6 +8,8 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -23,6 +25,7 @@ public class Display extends BaseDisplay {
     private Point mousePosition = new Point(0, 0);
     private int buttons = 0;
     public int modifiers;
+    public Deque<Integer> keys = new ArrayDeque<>();
 
     public Display() {
         frame = new JFrame("TruffleSqueak");
@@ -116,7 +119,7 @@ public class Display extends BaseDisplay {
         }
 
         public void keyTyped(KeyEvent e) {
-            // TODO Auto-generated method stub
+            display.keys.add(e.getKeyCode());
         }
 
         public void keyPressed(KeyEvent e) {
@@ -173,5 +176,15 @@ public class Display extends BaseDisplay {
             frame.setExtendedState(JFrame.NORMAL);
             frame.setUndecorated(false);
         }
+    }
+
+    @Override
+    public int nextKey() {
+        return keys.pop();
+    }
+
+    @Override
+    public int peekKey() {
+        return keys.peek();
     }
 }

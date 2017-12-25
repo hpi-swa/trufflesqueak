@@ -25,4 +25,12 @@ public class BaseDisplay {
 
     public void forceUpdate() {
     }
+
+    public int nextKey() {
+        return 0;
+    }
+
+    public int peekKey() {
+        return 0;
+    }
 }

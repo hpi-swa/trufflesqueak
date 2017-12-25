@@ -81,21 +81,6 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {130, 131})
-    public static abstract class PrimFullGCNode extends AbstractPrimitiveNode {
-
-        public PrimFullGCNode(CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization
-        BaseSqueakObject get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
-            System.gc();
-            return code.image.wrap(Runtime.getRuntime().freeMemory());
-        }
-    }
-
-    @GenerateNodeFactory
     @SqueakPrimitive(index = 148)
     public static abstract class PrimShallowCopyNode extends AbstractPrimitiveNode {
         public PrimShallowCopyNode(CompiledMethodObject method) {

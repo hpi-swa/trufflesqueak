@@ -145,6 +145,20 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(index = 112)
+    public static abstract class PrimBytesLeftNode extends AbstractPrimitiveNode {
+
+        public PrimBytesLeftNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        BaseSqueakObject get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
+            return code.image.wrap(Runtime.getRuntime().freeMemory());
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(index = 113)
     public static abstract class PrimQuitNode extends AbstractPrimitiveNode {
         public PrimQuitNode(CompiledMethodObject method) {
@@ -190,6 +204,21 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 }
             }
             return replace(PrimitiveFailedNode.create((CompiledMethodObject) code)).executeGeneric(frame);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = {130, 131})
+    public static abstract class PrimFullGCNode extends AbstractPrimitiveNode {
+
+        public PrimFullGCNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        BaseSqueakObject get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
+            System.gc();
+            return code.image.wrap(Runtime.getRuntime().freeMemory());
         }
     }
 

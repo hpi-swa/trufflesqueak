@@ -170,6 +170,34 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(index = 108)
+    public static abstract class PrimKeyboardNextNode extends AbstractPrimitiveNode {
+
+        public PrimKeyboardNextNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        BaseSqueakObject get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
+            return code.image.wrap(code.image.display.nextKey());
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 109)
+    public static abstract class PrimKeyboardPeekNode extends AbstractPrimitiveNode {
+
+        public PrimKeyboardPeekNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        BaseSqueakObject get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
+            return code.image.wrap(code.image.display.peekKey());
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(index = 127, numArguments = 5)
     public static abstract class PrimDrawRectNode extends AbstractPrimitiveNode {
 

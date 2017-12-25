@@ -175,6 +175,8 @@ public class SqueakImageContext {
             return wrap((String) obj);
         } else if (obj instanceof Object[]) {
             return wrap((Object[]) obj);
+        } else if (obj == null) {
+            return nil;
         }
         throw new RuntimeException("Don't know how to wrap " + obj);
     }
