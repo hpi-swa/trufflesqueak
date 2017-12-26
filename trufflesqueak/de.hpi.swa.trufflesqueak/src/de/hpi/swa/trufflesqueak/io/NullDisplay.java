@@ -1,39 +1,47 @@
-package de.hpi.swa.trufflesqueak.util;
+package de.hpi.swa.trufflesqueak.io;
 
 import java.awt.Dimension;
 import java.awt.Point;
 
-public class BaseDisplay {
-    @SuppressWarnings("unused")
+public class NullDisplay extends AbstractDisplay {
+    @Override
     public void drawRect(int left, int right, int top, int bottom) {
     }
 
+    @Override
     public Dimension getSize() {
         return new Dimension(0, 0);
     }
 
+    @Override
     public int getButtons() {
         return 0;
     }
 
+    @Override
     public Point getMousePosition() {
         return new Point(0, 0);
     }
 
-    public void setFullscreen(@SuppressWarnings("unused") boolean enable) {
+    @Override
+    public void setFullscreen(boolean enable) {
     }
 
+    @Override
     public void forceUpdate() {
     }
 
+    @Override
     public int nextKey() {
         return 0;
     }
 
+    @Override
     public int peekKey() {
         return 0;
     }
 
+    @Override
     public void open() {
     }
 }

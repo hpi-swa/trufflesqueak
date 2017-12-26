@@ -1,4 +1,4 @@
-package de.hpi.swa.trufflesqueak.util;
+package de.hpi.swa.trufflesqueak.io;
 
 import java.awt.Canvas;
 import java.awt.Dimension;
@@ -17,7 +17,7 @@ import javax.swing.JPanel;
 import de.hpi.swa.trufflesqueak.util.Constants.KEYBOARD_MODIFIER;
 import de.hpi.swa.trufflesqueak.util.Constants.MOUSE_BUTTON;
 
-public class Display extends BaseDisplay {
+public class Display extends AbstractDisplay {
     private JFrame frame;
     private Canvas canvas;
 // private BufferStrategy bufferStrategy;

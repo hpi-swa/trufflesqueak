@@ -11,6 +11,9 @@ import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.Truffle;
 
+import de.hpi.swa.trufflesqueak.io.AbstractDisplay;
+import de.hpi.swa.trufflesqueak.io.Display;
+import de.hpi.swa.trufflesqueak.io.NullDisplay;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -24,14 +27,12 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.SpecialSelector;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakContextNode;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakMainNode;
-import de.hpi.swa.trufflesqueak.util.BaseDisplay;
 import de.hpi.swa.trufflesqueak.util.Constants.ASSOCIATION;
 import de.hpi.swa.trufflesqueak.util.Constants.CONTEXT;
 import de.hpi.swa.trufflesqueak.util.Constants.POINT_LAYOUT;
 import de.hpi.swa.trufflesqueak.util.Constants.PROCESS;
 import de.hpi.swa.trufflesqueak.util.Constants.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.util.Constants.SPECIAL_OBJECT_INDEX;
-import de.hpi.swa.trufflesqueak.util.Display;
 import de.hpi.swa.trufflesqueak.util.SqueakImageReader;
 
 public class SqueakImageContext {
@@ -106,7 +107,7 @@ public class SqueakImageContext {
     };
 
     public final SqueakConfig config;
-    public final BaseDisplay display;
+    public final AbstractDisplay display;
 
     public SqueakImageContext(SqueakLanguage squeakLanguage, SqueakLanguage.Env environ,
                     PrintWriter out, PrintWriter err) {
@@ -120,11 +121,11 @@ public class SqueakImageContext {
             if (config.getSelector() == null) {
                 display = new Display();
             } else {
-                display = new BaseDisplay();
+                display = new NullDisplay();
             }
         } else { // testing
             config = new SqueakConfig(new String[0]);
-            display = new BaseDisplay();
+            display = new NullDisplay();
         }
     }
 
