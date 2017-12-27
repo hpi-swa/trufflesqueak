@@ -28,6 +28,10 @@ public class WriteableContextObject extends AbstractPointersObject implements Ac
         return this;
     }
 
+    public void initializePointers(int size) {
+        this.pointers = new Object[size];
+    }
+
     @Override
     public BaseSqueakObject shallowCopy() {
         return new WriteableContextObject(this);

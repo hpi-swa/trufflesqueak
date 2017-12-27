@@ -26,9 +26,8 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.SpecialSelector;
 import de.hpi.swa.trufflesqueak.nodes.roots.SqueakContextNode;
-import de.hpi.swa.trufflesqueak.nodes.roots.SqueakMainNode;
+import de.hpi.swa.trufflesqueak.nodes.roots.SqueakMethodNode;
 import de.hpi.swa.trufflesqueak.util.Constants.ASSOCIATION;
-import de.hpi.swa.trufflesqueak.util.Constants.CONTEXT;
 import de.hpi.swa.trufflesqueak.util.Constants.POINT_LAYOUT;
 import de.hpi.swa.trufflesqueak.util.Constants.PROCESS;
 import de.hpi.swa.trufflesqueak.util.Constants.PROCESS_SCHEDULER;
@@ -130,38 +129,28 @@ public class SqueakImageContext {
     }
 
     public CallTarget getActiveContext() {
-        PointersObject scheduler = (PointersObject) schedulerAssociation.at0(1);
-        PointersObject activeProcess = (PointersObject) scheduler.at0(1);
-        ContextObject activeContext = (ContextObject) activeProcess.at0(1);
-        activeProcess.atput0(1, null);
+        display.open();
+        PointersObject scheduler = (PointersObject) schedulerAssociation.at0(ASSOCIATION.VALUE);
+        PointersObject activeProcess = (PointersObject) scheduler.at0(PROCESS_SCHEDULER.ACTIVE_PROCESS);
+        ContextObject activeContext = (ContextObject) activeProcess.at0(PROCESS.SUSPENDED_CONTEXT);
+        activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, nil);
         return Truffle.getRuntime().createCallTarget(new SqueakContextNode(language, activeContext));
     }
 
-    public CallTarget getEntryPoint() {
+    public CallTarget getCustomContext() {
         Object receiver = config.getReceiver();
         String selector = config.getSelector();
-        SqueakMainNode mainNode;
-        if (selector != null) {
-            ClassObject receiverClass = receiver instanceof Integer ? smallIntegerClass : nilClass;
-            CompiledCodeObject lookupResult = (CompiledCodeObject) receiverClass.lookup(selector);
-            // Push literal 1, send literal 2 selector, return top
-            byte[] bytes = new byte[]{32, (byte) 209, 124};
-            Object[] literals = new Object[]{
-                            0, receiver, lookupResult.getCompiledInSelector(), // selector
-                            receiverClass // compiled in class
-            };
-            CompiledCodeObject entryPoint = new CompiledMethodObject(this, bytes, literals);
-            output.println(String.format("Starting to evaluate %s >> %s:\n", receiver, selector));
-            mainNode = new SqueakMainNode(getLanguage(), entryPoint);
-        } else {
-            display.open();
-            PointersObject scheduler = (PointersObject) schedulerAssociation.at0(ASSOCIATION.VALUE);
-            PointersObject process = (PointersObject) scheduler.at0(PROCESS_SCHEDULER.ACTIVE_PROCESS);
-            ContextObject activeContext = (ContextObject) process.at0(PROCESS.SUSPENDED_CONTEXT);
-            CompiledCodeObject code = (CompiledCodeObject) activeContext.at0(CONTEXT.METHOD);
-            mainNode = new SqueakMainNode(getLanguage(), code, activeContext);
-        }
-        return Truffle.getRuntime().createCallTarget(mainNode);
+        ClassObject receiverClass = receiver instanceof Integer ? smallIntegerClass : nilClass;
+        CompiledCodeObject lookupResult = (CompiledCodeObject) receiverClass.lookup(selector);
+        // Push literal 1, send literal 2 selector, return top
+        byte[] bytes = new byte[]{32, (byte) 209, 124};
+        Object[] literals = new Object[]{
+                        0, receiver, lookupResult.getCompiledInSelector(), // selector
+                        receiverClass // compiled in class
+        };
+        CompiledCodeObject code = new CompiledMethodObject(this, bytes, literals);
+        output.println(String.format("Starting to evaluate %s >> %s:\n", receiver, selector));
+        return Truffle.getRuntime().createCallTarget(new SqueakMethodNode(getLanguage(), code));
     }
 
     public void fillInFrom(FileInputStream inputStream) throws IOException {

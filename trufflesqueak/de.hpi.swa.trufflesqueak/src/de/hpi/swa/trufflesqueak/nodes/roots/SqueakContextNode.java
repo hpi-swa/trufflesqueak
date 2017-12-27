@@ -1,13 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes.roots;
 
-import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.RootNode;
-
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
-import de.hpi.swa.trufflesqueak.exceptions.LocalReturn;
-import de.hpi.swa.trufflesqueak.exceptions.NonLocalReturn;
-import de.hpi.swa.trufflesqueak.exceptions.NonVirtualReturn;
-import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.util.Constants.CONTEXT;
 
@@ -17,17 +10,26 @@ import de.hpi.swa.trufflesqueak.util.Constants.CONTEXT;
  * is in the Image and continue running. This is also the node that handles the process switching
  * logic.
  */
-public class SqueakContextNode extends RootNode {
+public class SqueakContextNode extends SqueakMethodNode {
     private ContextObject context;
 
     public SqueakContextNode(SqueakLanguage language, ContextObject activeContext) {
-        super(language);
+        super(language, activeContext.getCodeObject());
         context = activeContext;
     }
 
-// private static CompiledCodeObject getCurrentMethod(ContextObject currentContext) {
-// return (CompiledCodeObject) currentContext.at0(ContextPartConstants.METHOD);
-// }
+    @Override
+    protected int initialPC() {
+        int rawPC = (int) context.at0(CONTEXT.INSTRUCTION_POINTER);
+        return rawPC - context.size() * 4 - 1;
+    }
+
+    @Override
+    protected int initialSP() {
+        return super.initialSP();
+        // TODO: probably needs to be adjusted
+        // return (int) context.at0(CONTEXT.STACKPOINTER);
+    }
 
     private static ContextObject getSender(ContextObject context) {
         Object sender = context.at0(CONTEXT.SENDER);
@@ -35,29 +37,6 @@ public class SqueakContextNode extends RootNode {
             return (ContextObject) sender;
         } else {
             throw new RuntimeException("sender chain ended");
-        }
-    }
-
-    @Override
-    public Object execute(VirtualFrame frame) {
-        ContextObject currentContext = context;
-        while (true) {
-// CompiledCodeObject method = getCurrentMethod(currentContext);
-// int pc = (int) currentContext.at0(ContextPartConstants.PC);
-            try {
-                // This will continue execution in the active context until that
-                // context returns or switches to another Squeak process.
-                currentContext.step();
-            } catch (LocalReturn e) {
-                currentContext = getSender(currentContext);
-            } catch (NonLocalReturn e) {
-                // TODO: unwind context chain towards target
-            } catch (NonVirtualReturn e) {
-                // TODO: unwind context chain towards e.targetContext
-            } catch (ProcessSwitch e) {
-                // TODO: switch
-            }
-            throw new RuntimeException("unimplemented exit from method");
         }
     }
 }

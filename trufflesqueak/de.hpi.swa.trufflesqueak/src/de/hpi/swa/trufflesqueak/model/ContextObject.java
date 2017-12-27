@@ -6,7 +6,6 @@ import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.MaterializedFrame;
-import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.NonVirtualContextModification;
@@ -41,10 +40,24 @@ public class ContextObject extends BaseSqueakObject {
         return new ContextObject(img, new WriteableContextObject(img));
     }
 
+    public static ContextObject createNewContextObject(CompiledCodeObject code) {
+        ContextObject context = createWriteableContextObject(code.image);
+        context.initializePointers(CONTEXT.TEMP_FRAME_START);
+        context.atput0(CONTEXT.INSTRUCTION_POINTER, code.getBytecodeOffset() + 1);
+        context.atput0(CONTEXT.STACKPOINTER, 0);
+        context.atput0(CONTEXT.METHOD, code);
+        return context;
+    }
+
     @Override
     public void fillin(SqueakImageChunk chunk) {
         assert actualContext instanceof WriteableContextObject;
         actualContext.fillin(chunk);
+    }
+
+    public void initializePointers(int size) {
+        assert actualContext instanceof WriteableContextObject;
+        ((WriteableContextObject) actualContext).initializePointers(size);
     }
 
     @Override
@@ -89,18 +102,14 @@ public class ContextObject extends BaseSqueakObject {
         beWriteable();
     }
 
-    public Object execute(VirtualFrame frame) {
-        beWriteable();
+    public CompiledCodeObject getCodeObject() {
         Object method = at0(CONTEXT.METHOD);
-        CompiledCodeObject code;
         if (method instanceof Integer) { // if the method field is an integer, activeContex is a block context
             ContextObject homeContext = (ContextObject) at0(BLOCK_CONTEXT.HOME);
-            code = (CompiledCodeObject) homeContext.at0(CONTEXT.METHOD);
+            return (CompiledCodeObject) homeContext.at0(CONTEXT.METHOD);
         } else {
-            code = (CompiledCodeObject) method;
+            return (CompiledCodeObject) method;
         }
-        // decode receiver, pc, and sp...
-        throw new RuntimeException("stepping in context not implemented yet");
     }
 
     public Object getFrameMarker() {

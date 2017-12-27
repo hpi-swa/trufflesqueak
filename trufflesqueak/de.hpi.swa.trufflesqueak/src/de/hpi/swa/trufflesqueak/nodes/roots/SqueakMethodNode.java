@@ -14,6 +14,7 @@ import de.hpi.swa.trufflesqueak.exceptions.LocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakExit;
 import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.FrameMarker;
@@ -37,7 +38,7 @@ public class SqueakMethodNode extends RootNode {
         frame.setObject(code.markerSlot, new FrameMarker());
         frame.setObject(code.methodSlot, code);
         // sp points to the last temp slot
-        int sp = code.getNumTemps() - 1;
+        int sp = initialSP();
         assert sp >= -1;
         frame.setInt(code.stackPointerSlot, sp);
         if (code instanceof CompiledBlockObject) {
@@ -64,6 +65,8 @@ public class SqueakMethodNode extends RootNode {
             // TODO: unwind context chain towards e.targetContext
         } catch (ProcessSwitch e) {
             // TODO: switch
+        } catch (SqueakExit e) {
+            return e.code;
         }
         throw new RuntimeException("unimplemented exit from activation");
     }
@@ -72,9 +75,9 @@ public class SqueakMethodNode extends RootNode {
      * Inspired by Sulong's LLVMDispatchBasicBlockNode (https://goo.gl/4LMzfX).
      */
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.MERGE_EXPLODE)
-    private Object executeLoop(VirtualFrame frame) {
+    protected Object executeLoop(VirtualFrame frame) {
         CompilerAsserts.compilationConstant(bytecodeNodes.length);
-        int pc = 0;
+        int pc = initialPC();
         int backJumpCounter = 0;
         try {
             while (pc >= 0) {
@@ -124,6 +127,15 @@ public class SqueakMethodNode extends RootNode {
         }
         CompilerDirectives.transferToInterpreter();
         throw new RuntimeException("Method did not return");
+    }
+
+    protected int initialPC() {
+        return 0;
+    }
+
+    protected int initialSP() {
+        // sp points to the last temp slot
+        return code.getNumTemps() - 1;
     }
 
     @Override
