@@ -142,7 +142,7 @@ public class SqueakImageChunk {
             }
         }
         if (object == SqueakImageReader.NIL_OBJECT_PLACEHOLDER) {
-            return null;
+            return image.nil;
         } else {
             return object;
         }

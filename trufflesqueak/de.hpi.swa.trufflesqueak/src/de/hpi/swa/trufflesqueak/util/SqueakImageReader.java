@@ -11,9 +11,9 @@ import java.util.HashMap;
 import java.util.Vector;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
-import de.hpi.swa.trufflesqueak.model.SqueakObject;
 
 @SuppressWarnings("unused")
 public class SqueakImageReader {
@@ -288,8 +288,8 @@ public class SqueakImageReader {
         output.println("Filling in objects...");
         for (SqueakImageChunk chunk : chunklist) {
             Object chunkObject = chunk.asObject();
-            if (chunkObject instanceof SqueakObject) {
-                ((SqueakObject) chunkObject).fillin(chunk);
+            if (chunkObject instanceof BaseSqueakObject) {
+                ((BaseSqueakObject) chunkObject).fillin(chunk);
             }
         }
     }
