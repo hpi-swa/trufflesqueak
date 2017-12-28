@@ -14,9 +14,6 @@ import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.LocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.NonVirtualReturn;
-import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
-import de.hpi.swa.trufflesqueak.exceptions.SqueakExit;
-import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
@@ -32,18 +29,8 @@ public class MethodContextNode extends RootNode {
     @CompilationFinal private final CompiledCodeObject code;
     @Children private final AbstractBytecodeNode[] bytecodeNodes;
 
-    public static MethodContextNode create(SqueakLanguage language, ContextObject context) {
-        return new MethodContextNode(language, context, context.getCodeObject());
-    }
-
-    public static MethodContextNode create(SqueakLanguage language, CompiledCodeObject code, BaseSqueakObject senderContext) {
-        ContextObject newContext = ContextObject.createWriteableContextObject(code.image);
-        newContext.initializePointers(code.frameSize());
-        newContext.atput0(CONTEXT.METHOD, code);
-        newContext.atput0(CONTEXT.SENDER, senderContext);
-        newContext.atput0(CONTEXT.INSTRUCTION_POINTER, code.getBytecodeOffset() + 1);
-        newContext.atput0(CONTEXT.STACKPOINTER, code.getNumTemps() - 1); // sp points to the last temp slot
-        return new MethodContextNode(language, newContext, code);
+    public static MethodContextNode create(SqueakLanguage language, ContextObject context, CompiledCodeObject code) {
+        return new MethodContextNode(language, context, code);
     }
 
     public MethodContextNode(SqueakLanguage language, ContextObject context, CompiledCodeObject code) {
@@ -83,10 +70,6 @@ public class MethodContextNode extends RootNode {
             }
         } catch (NonVirtualReturn e) {
             // TODO: unwind context chain towards e.targetContext
-        } catch (ProcessSwitch e) {
-            // TODO: switch
-        } catch (SqueakExit e) {
-            return e.code;
         }
         throw new RuntimeException("unimplemented exit from activation");
     }
@@ -151,12 +134,15 @@ public class MethodContextNode extends RootNode {
 
     protected int initialPC() {
         int rawPC = (int) context.at0(CONTEXT.INSTRUCTION_POINTER);
+        if (rawPC < 0) {
+            return 0;
+        }
         return rawPC - code.getBytecodeOffset() - 1;
     }
 
     protected int initialSP() {
-        // TODO: probably needs to be adjusted
-        return (int) context.at0(CONTEXT.STACKPOINTER);
+        // no need to read context.at0(CONTEXT.STACKPOINTER)
+        return code.getNumTemps() - 1;
     }
 
     private static ContextObject getSender(ContextObject context) {

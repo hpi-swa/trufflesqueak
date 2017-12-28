@@ -12,7 +12,7 @@ public class ProcessSwitch extends ControlFlowException {
         this.context = context;
     }
 
-    public ContextObject getContext() {
+    public ContextObject getNewContext() {
         return context;
     }
 }

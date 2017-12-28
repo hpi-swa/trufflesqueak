@@ -29,7 +29,6 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
     @CompilationFinal private final FrameSlot rcvrSlot;
     @CompilationFinal private final FrameSlot markerSlot;
     @CompilationFinal private final FrameDescriptor frameDescriptor;
-    @CompilationFinal private final int pc;
     @CompilationFinal private final int stackPointer;
     @CompilationFinal private Object sender;
 
@@ -41,9 +40,7 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
         markerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.MARKER);
         closureSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.CLOSURE);
         rcvrSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.RECEIVER);
-        pc = 0;
-        stackPointer = getMethod().getNumStackSlots(); // we assume that at this point, we have our
-                                                       // temps and args initialized
+        stackPointer = getMethod().getNumTemps() - 1;
     }
 
     @Override
@@ -52,9 +49,9 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
             case CONTEXT.SENDER:
                 return getSender();
             case CONTEXT.INSTRUCTION_POINTER:
-                return pc;
+                return -1;
             case CONTEXT.STACKPOINTER:
-                return stackPointer + 1;
+                return stackPointer;
             case CONTEXT.METHOD:
                 return getMethod();
             case CONTEXT.CLOSURE:
@@ -120,7 +117,7 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
 
                 @Override
                 public Object visitFrame(FrameInstance frameInstance) {
-                    Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
+                    Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
                     FrameDescriptor currentFD = current.getFrameDescriptor();
                     FrameSlot currentMarkerSlot = currentFD.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.MARKER);
                     if (foundMyself) {

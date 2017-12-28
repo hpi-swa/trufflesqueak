@@ -90,10 +90,6 @@ public class ContextObject extends BaseSqueakObject {
         return CONTEXT.TEMP_FRAME_START - 1;
     }
 
-    public void step() {
-        beWriteable();
-    }
-
     public CompiledCodeObject getCodeObject() {
         Object method = at0(CONTEXT.METHOD);
         if (method instanceof Integer) { // if the method field is an integer, activeContex is a block context
@@ -111,5 +107,16 @@ public class ContextObject extends BaseSqueakObject {
     @Override
     public BaseSqueakObject shallowCopy() {
         return actualContext.shallowCopy();
+    }
+
+    public Object[] getFrameArguments() {
+        CompiledMethodObject method = (CompiledMethodObject) actualContext.at0(CONTEXT.METHOD);
+        int numArgs = method.getNumArgs();
+        Object[] arguments = new Object[1 + numArgs];
+        arguments[0] = actualContext.at0(CONTEXT.RECEIVER);
+        for (int i = 1; i < numArgs; i++) {
+            arguments[i] = actualContext.at0(CONTEXT.TEMP_FRAME_START + i);
+        }
+        return arguments;
     }
 }
