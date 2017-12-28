@@ -19,14 +19,33 @@ import de.hpi.swa.trufflesqueak.util.Constants.MOUSE_BUTTON;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class Display extends AbstractDisplay {
-    private JFrame frame;
-    private Canvas canvas;
+    private JFrame frame = new JFrame("TruffleSqueak");
+    private Canvas canvas = new Canvas();
 // private BufferStrategy bufferStrategy;
 
     private Point mousePosition = new Point(0, 0);
     private int buttons = 0;
     public int modifiers;
     public Deque<Integer> keys = new ArrayDeque<>();
+
+    public Display() {
+        canvas.setBounds(0, 0, 800, 600);
+        canvas.setIgnoreRepaint(true);
+        canvas.createBufferStrategy(1);
+        canvas.addMouseListener(new SqueakMouseListener(this));
+        canvas.addMouseMotionListener(new SqueakMouseMotionListener(this));
+        canvas.addKeyListener(new SqueakKeyListener(this));
+        // bufferStrategy = canvas.getBufferStrategy();
+
+        JPanel panel = (JPanel) frame.getContentPane();
+        panel.setPreferredSize(new Dimension(800, 600));
+        panel.setLayout(null);
+        panel.add(canvas);
+
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.pack();
+        frame.setResizable(true);
+    }
 
     private static class SqueakMouseListener implements MouseListener {
         private Display display;
@@ -132,27 +151,7 @@ public class Display extends AbstractDisplay {
 
     @Override
     public void open() {
-        if (frame == null) {
-            frame = new JFrame("TruffleSqueak");
-
-            canvas = new Canvas();
-            canvas.setBounds(0, 0, 400, 300);
-            canvas.setIgnoreRepaint(true);
-            canvas.createBufferStrategy(1);
-            canvas.addMouseListener(new SqueakMouseListener(this));
-            canvas.addMouseMotionListener(new SqueakMouseMotionListener(this));
-            canvas.addKeyListener(new SqueakKeyListener(this));
-            // bufferStrategy = canvas.getBufferStrategy();
-
-            JPanel panel = (JPanel) frame.getContentPane();
-            panel.setPreferredSize(new Dimension(400, 300));
-            panel.setLayout(null);
-            panel.add(canvas);
-
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.pack();
-            frame.setResizable(true);
-
+        if (!frame.isVisible()) {
             frame.setVisible(true);
             canvas.requestFocus();
         }
