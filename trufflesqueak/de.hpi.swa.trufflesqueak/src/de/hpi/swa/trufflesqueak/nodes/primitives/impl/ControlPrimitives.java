@@ -14,6 +14,7 @@ import de.hpi.swa.trufflesqueak.exceptions.SqueakExit;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.DispatchNode;
 import de.hpi.swa.trufflesqueak.nodes.DispatchNodeGen;
@@ -24,7 +25,6 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
 import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtNode;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameReceiverAndArgumentsNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
@@ -92,33 +92,64 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @GenerateNodeFactory
-    @SqueakPrimitive(index = 83)
-    public static abstract class PrimPerformNode extends AbstractPrimitiveNode {
-        @Child private SqueakLookupClassNode lookupClassNode;
-        @Child private LookupNode lookupNode;
-        @Child private DispatchNode dispatchNode;
-        @Child private FrameReceiverAndArgumentsNode rcvrAndArgsNode;
+    private static abstract class AbstractPerformPrimitiveNode extends AbstractPrimitiveNode {
+        @Child protected SqueakLookupClassNode lookupClassNode;
+        @Child protected LookupNode lookupNode = LookupNodeGen.create();
+        @Child protected DispatchNode dispatchNode = DispatchNodeGen.create();
 
-        public PrimPerformNode(CompiledMethodObject method) {
+        public AbstractPerformPrimitiveNode(CompiledMethodObject method) {
             super(method);
             lookupClassNode = SqueakLookupClassNodeGen.create(code);
-            dispatchNode = DispatchNodeGen.create();
-            lookupNode = LookupNodeGen.create();
-            rcvrAndArgsNode = new FrameReceiverAndArgumentsNode();
         }
 
-        @Specialization
-        public Object perform(@SuppressWarnings("unused") VirtualFrame frame, Object[] rcvrAndArgs) {
-            ClassObject rcvrClass;
+        protected ClassObject lookup(Object receiver) {
             try {
-                rcvrClass = SqueakTypesGen.expectClassObject(lookupClassNode.executeLookup(rcvrAndArgs[0]));
+                return SqueakTypesGen.expectClassObject(lookupClassNode.executeLookup(receiver));
             } catch (UnexpectedResultException e) {
                 throw new RuntimeException("receiver has no class");
             }
-            Object selector = rcvrAndArgs[2];
+        }
+
+        protected Object dispatch(Object receiver, Object selector, ListObject arguments, ClassObject rcvrClass) {
             Object lookupResult = lookupNode.executeLookup(rcvrClass, selector);
+            Object[] rcvrAndArgs;
+            if (arguments != null) {
+                int numArgs = arguments.size();
+                rcvrAndArgs = new Object[1 + numArgs];
+                rcvrAndArgs[0] = receiver;
+                for (int i = 0; i < numArgs; i++) {
+                    rcvrAndArgs[1 + i] = arguments.at0(i);
+                }
+            } else {
+                rcvrAndArgs = new Object[]{receiver};
+            }
             return dispatchNode.executeDispatch(lookupResult, rcvrAndArgs);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 83, numArguments = 2)
+    public static abstract class PrimPerformNode extends AbstractPerformPrimitiveNode {
+        public PrimPerformNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        public Object perform(Object receiver, Object selector) {
+            return dispatch(receiver, selector, null, lookup(receiver));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 84, numArguments = 3)
+    public static abstract class PrimPerformWithArgumentsNode extends AbstractPerformPrimitiveNode {
+        public PrimPerformWithArgumentsNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        public Object perform(Object receiver, Object selector, ListObject arguments) {
+            return dispatch(receiver, selector, arguments, lookup(receiver));
         }
     }
 
@@ -209,6 +240,20 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 return oldList;
             }
             throw new RuntimeException("Failed to suspend process: " + receiver.toString());
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 100, numArguments = 4)
+    public static abstract class PrimPerformWithArgumentsInSuperclassNode extends AbstractPerformPrimitiveNode {
+
+        public PrimPerformWithArgumentsInSuperclassNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        public Object perform(Object receiver, Object selector, ListObject arguments, ClassObject superClass) {
+            return dispatch(receiver, selector, arguments, superClass);
         }
     }
 
