@@ -40,7 +40,7 @@ public class MainContextNode extends RootNode {
     @Override
     public Object execute(VirtualFrame frame) {
         ContextObject activeContext = initialContext;
-        frame.setObject(code.methodSlot, code);
+        frame.setObject(code.thisContextSlot, activeContext);
         while (true) {
             try {
                 return dispatchNode.executeDispatch(code, activeContext.getFrameArguments());

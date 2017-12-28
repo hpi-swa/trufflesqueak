@@ -27,7 +27,7 @@ import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 public abstract class CompiledCodeObject extends SqueakObject {
     public static enum SLOT_IDENTIFIER {
         CLOSURE,
-        SELF,
+        THIS_CONTEXT,
         RECEIVER,
         STACK_POINTER,
         MARKER,
@@ -100,7 +100,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
         for (int i = 0; i < stackSlots.length; i++) {
             stackSlots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Illegal);
         }
-        thisContextSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.SELF, FrameSlotKind.Object);
+        thisContextSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.THIS_CONTEXT, FrameSlotKind.Object);
         closureSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.CLOSURE, FrameSlotKind.Object);
         markerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.MARKER, FrameSlotKind.Object);
         methodSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.METHOD, FrameSlotKind.Object);

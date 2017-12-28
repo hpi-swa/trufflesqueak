@@ -20,7 +20,7 @@ public class ContextObject extends BaseSqueakObject {
     public static ContextObject createReadOnlyContextObject(SqueakImageContext img, Frame virtualFrame) {
         MaterializedFrame frame = virtualFrame.materialize();
         FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-        FrameSlot selfSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.SELF);
+        FrameSlot selfSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.THIS_CONTEXT);
         Object contextObject = FrameUtil.getObjectSafe(frame, selfSlot);
         if (contextObject instanceof ContextObject) {
             return (ContextObject) contextObject;
@@ -112,10 +112,10 @@ public class ContextObject extends BaseSqueakObject {
     public Object[] getFrameArguments() {
         CompiledMethodObject method = (CompiledMethodObject) actualContext.at0(CONTEXT.METHOD);
         int numArgs = method.getNumArgs();
-        Object[] arguments = new Object[1 + numArgs];
-        arguments[0] = actualContext.at0(CONTEXT.RECEIVER);
-        for (int i = 1; i < numArgs; i++) {
-            arguments[i] = actualContext.at0(CONTEXT.TEMP_FRAME_START + i);
+        Object[] arguments = new Object[numArgs];
+        // arguments[0] = actualContext.at0(CONTEXT.RECEIVER);
+        for (int i = 0; i < numArgs; i++) {
+            arguments[i] = actualContext.at0(CONTEXT.TEMP_FRAME_START + 1 + i);
         }
         return arguments;
     }
