@@ -8,7 +8,9 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.source.Source;
@@ -17,7 +19,7 @@ import com.oracle.truffle.api.utilities.CyclicAssumption;
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.instrumentation.CompiledCodeObjectPrinter;
-import de.hpi.swa.trufflesqueak.nodes.roots.SqueakMethodNode;
+import de.hpi.swa.trufflesqueak.nodes.MethodContextNode;
 import de.hpi.swa.trufflesqueak.util.BitSplitter;
 import de.hpi.swa.trufflesqueak.util.Constants.CONTEXT;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
@@ -86,11 +88,14 @@ public abstract class CompiledCodeObject extends SqueakObject {
         return source;
     }
 
+    public int frameSize() {
+        return needsLargeFrame ? CONTEXT.LARGE_FRAMESIZE : CONTEXT.SMALL_FRAMESIZE;
+    }
+
     @TruffleBoundary
     protected void prepareFrameDescriptor() {
         frameDescriptor = new FrameDescriptor(image.nil);
-        int frameSize = needsLargeFrame ? CONTEXT.LARGE_FRAMESIZE : CONTEXT.SMALL_FRAMESIZE;
-        int numStackSlots = frameSize + getSqClass().getBasicInstanceSize();
+        int numStackSlots = frameSize() + getSqClass().getBasicInstanceSize();
         stackSlots = new FrameSlot[numStackSlots];
         for (int i = 0; i < stackSlots.length; i++) {
             stackSlots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Illegal);
@@ -112,7 +117,9 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     @TruffleBoundary
     private void updateAndInvalidateCallTargets() {
-        callTarget = Truffle.getRuntime().createCallTarget(new SqueakMethodNode(image.getLanguage(), this));
+        Frame frame = Truffle.getRuntime().getCurrentFrame().getFrame(FrameInstance.FrameAccess.READ_ONLY);
+        ContextObject activeContext = ContextObject.createReadOnlyContextObject(image, frame);
+        callTarget = Truffle.getRuntime().createCallTarget(MethodContextNode.create(image.getLanguage(), this, activeContext));
         callTargetStable.invalidate();
     }
 

@@ -1,6 +1,7 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -14,12 +15,7 @@ import de.hpi.swa.trufflesqueak.util.Constants.CONTEXT;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public class ContextObject extends BaseSqueakObject {
-    private ActualContextObject actualContext;
-
-    private ContextObject(SqueakImageContext img, ActualContextObject context) {
-        super(img);
-        actualContext = context;
-    }
+    @CompilationFinal private ActualContextObject actualContext;
 
     public static ContextObject createReadOnlyContextObject(SqueakImageContext img, Frame virtualFrame) {
         MaterializedFrame frame = virtualFrame.materialize();
@@ -40,13 +36,9 @@ public class ContextObject extends BaseSqueakObject {
         return new ContextObject(img, new WriteableContextObject(img));
     }
 
-    public static ContextObject createNewContextObject(CompiledCodeObject code) {
-        ContextObject context = createWriteableContextObject(code.image);
-        context.initializePointers(CONTEXT.TEMP_FRAME_START);
-        context.atput0(CONTEXT.INSTRUCTION_POINTER, code.getBytecodeOffset() + 1);
-        context.atput0(CONTEXT.STACKPOINTER, 0);
-        context.atput0(CONTEXT.METHOD, code);
-        return context;
+    private ContextObject(SqueakImageContext img, ActualContextObject context) {
+        super(img);
+        actualContext = context;
     }
 
     @Override

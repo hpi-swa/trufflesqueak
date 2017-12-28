@@ -1,7 +1,8 @@
-package de.hpi.swa.trufflesqueak.nodes.roots;
+package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags;
@@ -15,21 +16,40 @@ import de.hpi.swa.trufflesqueak.exceptions.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakExit;
+import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.FrameMarker;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.ConditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.UnconditionalJumpNode;
+import de.hpi.swa.trufflesqueak.util.Constants.CONTEXT;
 import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
-public class SqueakMethodNode extends RootNode {
-    private final CompiledCodeObject code;
+public class MethodContextNode extends RootNode {
+    @CompilationFinal private final ContextObject context;
+    @CompilationFinal private final CompiledCodeObject code;
     @Children private final AbstractBytecodeNode[] bytecodeNodes;
 
-    public SqueakMethodNode(SqueakLanguage language, CompiledCodeObject code) {
+    public static MethodContextNode create(SqueakLanguage language, ContextObject context) {
+        return new MethodContextNode(language, context, context.getCodeObject());
+    }
+
+    public static MethodContextNode create(SqueakLanguage language, CompiledCodeObject code, BaseSqueakObject senderContext) {
+        ContextObject newContext = ContextObject.createWriteableContextObject(code.image);
+        newContext.initializePointers(code.frameSize());
+        newContext.atput0(CONTEXT.METHOD, code);
+        newContext.atput0(CONTEXT.SENDER, senderContext);
+        newContext.atput0(CONTEXT.INSTRUCTION_POINTER, code.getBytecodeOffset() + 1);
+        newContext.atput0(CONTEXT.STACKPOINTER, code.getNumTemps() - 1); // sp points to the last temp slot
+        return new MethodContextNode(language, newContext, code);
+    }
+
+    public MethodContextNode(SqueakLanguage language, ContextObject context, CompiledCodeObject code) {
         super(language, code.getFrameDescriptor());
         this.code = code;
+        this.context = context;
         bytecodeNodes = new SqueakBytecodeDecoder(code).decode();
     }
 
@@ -130,12 +150,22 @@ public class SqueakMethodNode extends RootNode {
     }
 
     protected int initialPC() {
-        return 0;
+        int rawPC = (int) context.at0(CONTEXT.INSTRUCTION_POINTER);
+        return rawPC - code.getBytecodeOffset() - 1;
     }
 
     protected int initialSP() {
-        // sp points to the last temp slot
-        return code.getNumTemps() - 1;
+        // TODO: probably needs to be adjusted
+        return (int) context.at0(CONTEXT.STACKPOINTER);
+    }
+
+    private static ContextObject getSender(ContextObject context) {
+        Object sender = context.at0(CONTEXT.SENDER);
+        if (sender instanceof ContextObject) {
+            return (ContextObject) sender;
+        } else {
+            throw new RuntimeException("sender chain ended");
+        }
     }
 
     @Override

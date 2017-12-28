@@ -25,8 +25,7 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.SpecialSelector;
-import de.hpi.swa.trufflesqueak.nodes.roots.SqueakContextNode;
-import de.hpi.swa.trufflesqueak.nodes.roots.SqueakMethodNode;
+import de.hpi.swa.trufflesqueak.nodes.MethodContextNode;
 import de.hpi.swa.trufflesqueak.util.Constants.ASSOCIATION;
 import de.hpi.swa.trufflesqueak.util.Constants.POINT_LAYOUT;
 import de.hpi.swa.trufflesqueak.util.Constants.PROCESS;
@@ -134,7 +133,7 @@ public class SqueakImageContext {
         PointersObject activeProcess = (PointersObject) scheduler.at0(PROCESS_SCHEDULER.ACTIVE_PROCESS);
         ContextObject activeContext = (ContextObject) activeProcess.at0(PROCESS.SUSPENDED_CONTEXT);
         activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, nil);
-        return Truffle.getRuntime().createCallTarget(new SqueakContextNode(language, activeContext));
+        return Truffle.getRuntime().createCallTarget(MethodContextNode.create(language, activeContext));
     }
 
     public CallTarget getCustomContext() {
@@ -150,7 +149,7 @@ public class SqueakImageContext {
         };
         CompiledCodeObject code = new CompiledMethodObject(this, bytes, literals);
         output.println(String.format("Starting to evaluate %s >> %s:\n", receiver, selector));
-        return Truffle.getRuntime().createCallTarget(new SqueakMethodNode(getLanguage(), code));
+        return Truffle.getRuntime().createCallTarget(MethodContextNode.create(getLanguage(), code, nil));
     }
 
     public void fillInFrom(FileInputStream inputStream) throws IOException {

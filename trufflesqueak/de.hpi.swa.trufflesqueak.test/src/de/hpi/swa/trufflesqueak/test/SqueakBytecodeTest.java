@@ -22,8 +22,8 @@ import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.nodes.MethodContextNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameTemporaryReadNode;
-import de.hpi.swa.trufflesqueak.nodes.roots.SqueakMethodNode;
 import de.hpi.swa.trufflesqueak.util.Constants.ASSOCIATION;
 
 public class SqueakBytecodeTest extends AbstractSqueakTestCase {
@@ -47,7 +47,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
             CompiledCodeObject code = makeMethod(literals, 113, 104 + i, 16 + i, 124);
             VirtualFrame frame = createTestFrame(code, rcvr);
             try {
-                Object result = new SqueakMethodNode(null, code).execute(frame);
+                Object result = createContext(code).execute(frame);
                 assertSame(image.sqTrue, result);
             } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
                 assertTrue("broken test", false);
@@ -66,7 +66,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
             CompiledCodeObject code = makeMethod(literalsList.toArray(), bytecodeStart + i, 124);
             VirtualFrame frame = createTestFrame(code, rcvr);
             try {
-                Object result = new SqueakMethodNode(null, code).execute(frame);
+                Object result = createContext(code).execute(frame);
                 assertSame(expectedResults[i], result);
             } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
                 assertTrue("broken test", false);
@@ -85,7 +85,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
             CompiledCodeObject code = makeMethod(literalsList.toArray(), bytecodeStart + i, 124);
             VirtualFrame frame = createTestFrame(code, rcvr);
             try {
-                Object result = new SqueakMethodNode(null, code).execute(frame);
+                Object result = createContext(code).execute(frame);
                 assertSame(image.sqFalse, result);
             } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
                 assertTrue("broken test", false);
@@ -170,7 +170,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
             // push true, popIntoTemp i, pushTemp i, returnTop
             CompiledCodeObject code = makeMethod(literals, 113, 130, 64 + i, 128, 64 + i, 124);
             VirtualFrame frame = createTestFrame(code, rcvr);
-            SqueakMethodNode method = new SqueakMethodNode(null, code);
+            MethodContextNode method = createContext(code);
             try {
                 assertSame(image.sqTrue, method.execute(frame));
                 assertSame(image.sqTrue, getTempValue(i, code, frame));
@@ -190,7 +190,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
             CompiledCodeObject code = makeMethod(literalsList.toArray(), 128, 128 + i, 124);
             VirtualFrame frame = createTestFrame(code, rcvr);
             try {
-                Object result = new SqueakMethodNode(null, code).execute(frame);
+                Object result = createContext(code).execute(frame);
                 assertSame(expectedResults[i], result);
             } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
                 assertTrue("broken test", false);
@@ -208,7 +208,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
             CompiledCodeObject code = makeMethod(literalsList.toArray(), 128, 192 + i, 124);
             VirtualFrame frame = createTestFrame(code, rcvr);
             try {
-                Object result = new SqueakMethodNode(null, code).execute(frame);
+                Object result = createContext(code).execute(frame);
                 assertSame(image.sqFalse, result);
             } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
                 assertTrue("broken test", false);
@@ -238,7 +238,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
             CompiledCodeObject code = makeMethod(literals, 113, 118, 129, 64 + i, 135, 124);
             VirtualFrame frame = createTestFrame(code, rcvr);
             try {
-                Object result = new SqueakMethodNode(null, code).execute(frame);
+                Object result = createContext(code).execute(frame);
                 assertSame(image.sqTrue, result);
                 assertSame(1, getTempValue(i, code, frame));
             } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
@@ -261,7 +261,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
             CompiledCodeObject code = makeMethod(literalsList.toArray(), 113, 129, 192 + i, 124);
             VirtualFrame frame = createTestFrame(code, rcvr);
             try {
-                Object result = new SqueakMethodNode(null, code).execute(frame);
+                Object result = createContext(code).execute(frame);
                 assertSame(image.sqTrue, result);
                 PointersObject literal = (PointersObject) code.getLiteral(i);
                 assertSame(image.sqTrue, literal.getPointers()[ASSOCIATION.VALUE]);
@@ -293,7 +293,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
             CompiledCodeObject code = makeMethod(literals, 113, 118, 130, 64 + i, 124);
             VirtualFrame frame = createTestFrame(code, rcvr);
             try {
-                Object result = new SqueakMethodNode(null, code).execute(frame);
+                Object result = createContext(code).execute(frame);
                 assertSame(image.sqTrue, result);
                 assertSame(1, getTempValue(i, code, frame));
             } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
@@ -316,7 +316,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
             CompiledCodeObject code = makeMethod(literalsList.toArray(), 113, 130, 192 + i, 124);
             VirtualFrame frame = createTestFrame(code, rcvr);
             try {
-                Object result = new SqueakMethodNode(null, code).execute(frame);
+                Object result = createContext(code).execute(frame);
                 assertSame(rcvr, result);
                 PointersObject literal = (PointersObject) code.getLiteral(i);
                 assertSame(image.sqTrue, literal.getPointers()[ASSOCIATION.VALUE]);
@@ -349,7 +349,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
             CompiledCodeObject code = makeMethod(literalsList.toArray(), 132, 96, i, 124);
             VirtualFrame frame = createTestFrame(code, rcvr);
             try {
-                Object result = new SqueakMethodNode(null, code).execute(frame);
+                Object result = createContext(code).execute(frame);
                 assertSame(expectedResults[i], result);
             } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
                 assertTrue("broken test", false);
@@ -367,7 +367,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
             CompiledCodeObject code = makeMethod(literalsList.toArray(), 132, 128, i, 124);
             VirtualFrame frame = createTestFrame(code, rcvr);
             try {
-                Object result = new SqueakMethodNode(null, code).execute(frame);
+                Object result = createContext(code).execute(frame);
                 assertSame(image.sqFalse, result);
             } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
                 assertTrue("broken test", false);
@@ -416,7 +416,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
             CompiledCodeObject code = makeMethod(literalsList.toArray(), 113, 132, 224, i, 124);
             VirtualFrame frame = createTestFrame(code, rcvr);
             try {
-                Object result = new SqueakMethodNode(null, code).execute(frame);
+                Object result = createContext(code).execute(frame);
                 assertSame(image.sqTrue, result);
                 PointersObject literal = (PointersObject) code.getLiteral(i);
                 assertSame(image.sqTrue, literal.getPointers()[ASSOCIATION.VALUE]);
@@ -496,7 +496,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
         CompiledCodeObject code = makeMethod(literals, 113, 138, 128 + 1, 104 + 2, 140, 0, 2, 124);
         VirtualFrame frame = createTestFrame(code, rcvr);
         try {
-            Object result = new SqueakMethodNode(null, code).execute(frame);
+            Object result = createContext(code).execute(frame);
             assertSame(image.sqTrue, result);
         } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
             assertTrue("broken test", false);
@@ -513,7 +513,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
         CompiledCodeObject code = makeMethod(literals, 138, 2, 104 + 3, 113, 114, 141, 0, 3, 141, 1, 3, 19, 124);
         VirtualFrame frame = createTestFrame(code, rcvr);
         try {
-            Object result = new SqueakMethodNode(null, code).execute(frame);
+            Object result = createContext(code).execute(frame);
             assertTrue(result instanceof ListObject);
             ListObject resultList = ((ListObject) result);
             assertEquals(2, resultList.size());
@@ -534,7 +534,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
         CompiledCodeObject code = makeMethod(literals, 138, 2, 104 + 3, 113, 114, 142, 0, 3, 142, 1, 3, 19, 124);
         VirtualFrame frame = createTestFrame(code, rcvr);
         try {
-            Object result = new SqueakMethodNode(null, code).execute(frame);
+            Object result = createContext(code).execute(frame);
             assertTrue(result instanceof ListObject);
             ListObject resultList = ((ListObject) result);
             assertEquals(2, resultList.size());
@@ -552,7 +552,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
         BaseSqueakObject rcvr = image.wrap(1);
         CompiledCodeObject code = makeMethod(literals, 0x8F, 0x02, 0x00, 0x04, 0x10, 0x11, 0xB0, 0x7D, 0x7C);
         VirtualFrame frame = createTestFrame(code, rcvr);
-        Object result = new SqueakMethodNode(null, code).execute(frame);
+        Object result = createContext(code).execute(frame);
         assertTrue(result instanceof BlockClosure);
         CompiledBlockObject block = ((BlockClosure) result).getCompiledBlock();
         assertEquals(2, block.getNumArgs());

@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.model;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
@@ -22,15 +23,15 @@ import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
  * represented in an execution.
  */
 public class ReadOnlyContextObject extends BaseSqueakObject implements ActualContextObject {
-    private final MaterializedFrame frame;
-    private final FrameSlot methodSlot;
-    private final FrameSlot closureSlot;
-    private final FrameSlot rcvrSlot;
-    private final FrameSlot markerSlot;
-    private final FrameDescriptor frameDescriptor;
-    private final int pc;
-    private final int stackPointer;
-    private Object sender;
+    @CompilationFinal private final MaterializedFrame frame;
+    @CompilationFinal private final FrameSlot methodSlot;
+    @CompilationFinal private final FrameSlot closureSlot;
+    @CompilationFinal private final FrameSlot rcvrSlot;
+    @CompilationFinal private final FrameSlot markerSlot;
+    @CompilationFinal private final FrameDescriptor frameDescriptor;
+    @CompilationFinal private final int pc;
+    @CompilationFinal private final int stackPointer;
+    @CompilationFinal private Object sender;
 
     public ReadOnlyContextObject(SqueakImageContext img, MaterializedFrame materializedFrame) {
         super(img);

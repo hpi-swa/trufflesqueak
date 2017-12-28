@@ -2,12 +2,13 @@ package de.hpi.swa.trufflesqueak.model;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public abstract class AbstractPointersObject extends SqueakObject {
-
-    protected Object[] pointers;
+    @CompilationFinal(dimensions = 1) protected Object[] pointers;
 
     public AbstractPointersObject(SqueakImageContext img) {
         super(img);

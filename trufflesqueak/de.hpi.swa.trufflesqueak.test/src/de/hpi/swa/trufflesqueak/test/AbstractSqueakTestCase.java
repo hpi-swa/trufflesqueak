@@ -10,7 +10,7 @@ import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.nodes.roots.SqueakMethodNode;
+import de.hpi.swa.trufflesqueak.nodes.MethodContextNode;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 import junit.framework.TestCase;
 
@@ -104,11 +104,15 @@ public abstract class AbstractSqueakTestCase extends TestCase {
         VirtualFrame frame = createTestFrame(code, receiver, arguments);
         Object result = null;
         try {
-            result = new SqueakMethodNode(null, code).execute(frame);
+            result = createContext(code).execute(frame);
         } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
             assertTrue("broken test", false);
         }
         return result;
+    }
+
+    protected MethodContextNode createContext(CompiledCodeObject code) {
+        return MethodContextNode.create(null, code, code.image.nil);
     }
 
     public Object runMethod(BaseSqueakObject receiver, int... intbytes) {
