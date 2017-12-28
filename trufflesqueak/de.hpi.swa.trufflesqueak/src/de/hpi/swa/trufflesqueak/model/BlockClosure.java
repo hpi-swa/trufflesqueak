@@ -53,11 +53,11 @@ public class BlockClosure extends BaseSqueakObject {
             Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Object>() {
                 @Override
                 public Object visitFrame(FrameInstance frameInstance) {
-                    Frame frame = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
+                    Frame frame = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
                     FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
                     FrameSlot markerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.MARKER);
                     Object marker = FrameUtil.getObjectSafe(frame, markerSlot);
-                    if (marker == frame) {
+                    if (marker == frameMarker) {
                         context = ContextObject.createReadOnlyContextObject(image, frame);
                         return context;
                     }
