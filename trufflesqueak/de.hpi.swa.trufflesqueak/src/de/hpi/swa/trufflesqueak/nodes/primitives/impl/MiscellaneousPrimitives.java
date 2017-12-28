@@ -220,4 +220,17 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 254, numArguments = 2) // TODO: can have 0-2 arguments
+    public static abstract class PrimVMParametersNode extends AbstractPrimitiveNode {
+        public PrimVMParametersNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected Object doTwoArguments(Object receiver, Object argument) {
+            return code.image.wrap(0); // fake result
+        }
+    }
 }
