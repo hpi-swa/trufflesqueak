@@ -128,7 +128,6 @@ public class SqueakImageContext {
     }
 
     public CallTarget getActiveContext() {
-        display.open();
         PointersObject activeProcess = ProcessManager.getInstance().activeProcess();
         ContextObject activeContext = (ContextObject) activeProcess.at0(PROCESS.SUSPENDED_CONTEXT);
         activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, nil);

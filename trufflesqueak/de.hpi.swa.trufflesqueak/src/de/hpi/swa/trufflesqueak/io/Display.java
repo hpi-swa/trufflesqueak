@@ -16,6 +16,7 @@ import javax.swing.JPanel;
 
 import de.hpi.swa.trufflesqueak.util.Constants.KEYBOARD_MODIFIER;
 import de.hpi.swa.trufflesqueak.util.Constants.MOUSE_BUTTON;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class Display extends AbstractDisplay {
     private JFrame frame;
@@ -26,28 +27,6 @@ public class Display extends AbstractDisplay {
     private int buttons = 0;
     public int modifiers;
     public Deque<Integer> keys = new ArrayDeque<>();
-
-    public Display() {
-        frame = new JFrame("TruffleSqueak");
-
-        canvas = new Canvas();
-        canvas.setBounds(0, 0, 400, 300);
-        canvas.setIgnoreRepaint(true);
-        canvas.createBufferStrategy(1);
-        canvas.addMouseListener(new SqueakMouseListener(this));
-        canvas.addMouseMotionListener(new SqueakMouseMotionListener(this));
-        canvas.addKeyListener(new SqueakKeyListener(this));
-// bufferStrategy = canvas.getBufferStrategy();
-
-        JPanel panel = (JPanel) frame.getContentPane();
-        panel.setPreferredSize(new Dimension(400, 300));
-        panel.setLayout(null);
-        panel.add(canvas);
-
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.pack();
-        frame.setResizable(true);
-    }
 
     private static class SqueakMouseListener implements MouseListener {
         private Display display;
@@ -142,17 +121,41 @@ public class Display extends AbstractDisplay {
     public void drawRect(int left, int right, int top, int bottom) {
 // Graphics g = bufferStrategy.getDrawGraphics();
 // TODO: implement drawRect
+        throw new NotImplementedException();
     }
 
     @Override
     public void forceUpdate() {
         // TODO: implement force update
+        throw new NotImplementedException();
     }
 
     @Override
     public void open() {
-        frame.setVisible(true);
-        canvas.requestFocus();
+        if (frame == null) {
+            frame = new JFrame("TruffleSqueak");
+
+            canvas = new Canvas();
+            canvas.setBounds(0, 0, 400, 300);
+            canvas.setIgnoreRepaint(true);
+            canvas.createBufferStrategy(1);
+            canvas.addMouseListener(new SqueakMouseListener(this));
+            canvas.addMouseMotionListener(new SqueakMouseMotionListener(this));
+            canvas.addKeyListener(new SqueakKeyListener(this));
+            // bufferStrategy = canvas.getBufferStrategy();
+
+            JPanel panel = (JPanel) frame.getContentPane();
+            panel.setPreferredSize(new Dimension(400, 300));
+            panel.setLayout(null);
+            panel.add(canvas);
+
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.pack();
+            frame.setResizable(true);
+
+            frame.setVisible(true);
+            canvas.requestFocus();
+        }
     }
 
     @Override

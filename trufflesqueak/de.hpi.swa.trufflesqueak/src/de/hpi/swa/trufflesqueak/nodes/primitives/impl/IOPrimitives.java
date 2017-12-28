@@ -65,6 +65,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         boolean beDisplay(PointersObject receiver) {
+            code.image.display.open();
             code.image.specialObjectsArray.atput0(SPECIAL_OBJECT_INDEX.TheDisplay, receiver);
             return true;
         }
