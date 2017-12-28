@@ -415,4 +415,41 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             return (char) value;
         }
     }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 173, numArguments = 2)
+    public static abstract class PrimSlotAtNode extends AbstractPrimitiveNode {
+
+        public PrimSlotAtNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected Object value(BaseSqueakObject receiver, int index) {
+            try {
+                return receiver.at0(index);
+            } catch (ArrayIndexOutOfBoundsException e) {
+                throw new PrimitiveFailed();
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 174, numArguments = 3)
+    public static abstract class PrimSlotAtPutNode extends AbstractPrimitiveNode {
+
+        public PrimSlotAtPutNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected Object value(BaseSqueakObject receiver, int index, Object value) {
+            try {
+                receiver.atput0(index, value);
+                return value;
+            } catch (ArrayIndexOutOfBoundsException e) {
+                throw new PrimitiveFailed();
+            }
+        }
+    }
 }
