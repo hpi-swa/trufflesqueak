@@ -111,8 +111,12 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         BaseSqueakObject newWithArgDirect(ClassObject receiver, int size,
                         @Cached("receiver") ClassObject cachedReceiver,
                         @Cached("cachedReceiver.getClassFormatStable()") Assumption classFormatStable) {
-            if (size == 0 || !cachedReceiver.isVariable())
+            if (!cachedReceiver.isVariable() && size != 0) {
                 throw new PrimitiveFailed();
+            }
+            if (size < 0) {
+                throw new PrimitiveFailed();
+            }
             return cachedReceiver.newInstance(size);
         }
 
