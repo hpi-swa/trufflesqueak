@@ -37,7 +37,10 @@ public abstract class AbstractSendNode extends AbstractBytecodeNode {
 
     @Override
     public void executeVoid(VirtualFrame frame) {
-        pushNode.executeWrite(frame, executeSend(frame));
+        Object result = executeSend(frame);
+        if (result != null) { // primitive produced no result
+            pushNode.executeWrite(frame, result);
+        }
         // TODO: Object as Method
     }
 

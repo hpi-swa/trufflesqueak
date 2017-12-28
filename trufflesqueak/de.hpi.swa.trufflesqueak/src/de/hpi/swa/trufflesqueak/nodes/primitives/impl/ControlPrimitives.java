@@ -307,6 +307,20 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(index = 115, numArguments = 2)
+    public static abstract class PrimChangeClassNode extends AbstractPrimitiveNode {
+        public PrimChangeClassNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        public Object changeClass(BaseSqueakObject receiver, BaseSqueakObject argument) {
+            receiver.setSqClass(argument.getSqClass());
+            return null;
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(index = 117, numArguments = 0)
     public static abstract class NamedPrimitiveCallNode extends AbstractPrimitiveNode {
         public NamedPrimitiveCallNode(CompiledMethodObject method) {
