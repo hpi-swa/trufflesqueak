@@ -27,7 +27,6 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractClosureValuePrimitiveNo
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitives.PrimitiveFailedNode;
 
 public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -99,7 +98,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 201)
+    @SqueakPrimitive(indices = {201, 221})
     public static abstract class PrimClosureValue0Node extends AbstractClosureValuePrimitiveNode {
         @Child FrameReceiverNode receiverNode = new FrameReceiverNode();
         @Child protected BlockActivationNode dispatch;
@@ -172,7 +171,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 206, numArguments = 2)
+    @SqueakPrimitive(indices = {206, 222}, numArguments = 2)
     public static abstract class PrimClosureValueAryNode extends AbstractClosureValuePrimitiveNode {
 
         public PrimClosureValueAryNode(CompiledMethodObject method) {
@@ -187,9 +186,14 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 212)
-    public static abstract class PrimContextSizeNode extends PrimitiveFailedNode {
+    public static abstract class PrimContextSizeNode extends AbstractPrimitiveNode {
         public PrimContextSizeNode(CompiledMethodObject method) {
             super(method);
+        }
+
+        @Specialization
+        int doSize(ContextObject receiver) {
+            return receiver.size();
         }
     }
 }
