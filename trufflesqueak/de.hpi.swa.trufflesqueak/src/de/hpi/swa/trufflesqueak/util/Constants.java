@@ -88,7 +88,20 @@ public class Constants {
         public static final int STACKP_INDEX = 2;
     }
 
-    public static final class POINT_LAYOUT {
+    public static final class LINK {
+        public static final int NEXT_LINK = 0;
+    }
+
+    public static final class LINKED_LIST {
+        public static final int FIRST_LINK = 0;
+        public static final int LAST_LINK = 1;
+    }
+
+    public static final class SEMAPHORE {
+        public static final int EXCESS_SIGNALS = 2;
+    }
+
+    public static final class POINT {
         public static final int SIZE = 2;
         public static final int X = 0;
         public static final int Y = 1;

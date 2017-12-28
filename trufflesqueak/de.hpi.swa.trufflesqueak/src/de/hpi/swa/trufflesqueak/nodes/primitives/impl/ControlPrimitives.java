@@ -34,7 +34,10 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitivesFactory.P
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitivesFactory.PrimitiveFailedNodeFactory;
 import de.hpi.swa.trufflesqueak.util.Constants.BLOCK_CONTEXT;
 import de.hpi.swa.trufflesqueak.util.Constants.CONTEXT;
+import de.hpi.swa.trufflesqueak.util.Constants.PROCESS;
+import de.hpi.swa.trufflesqueak.util.Constants.SEMAPHORE;
 import de.hpi.swa.trufflesqueak.util.Constants.SPECIAL_OBJECT_INDEX;
+import de.hpi.swa.trufflesqueak.util.ProcessManager;
 
 public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -116,6 +119,96 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             Object selector = rcvrAndArgs[2];
             Object lookupResult = lookupNode.executeLookup(rcvrClass, selector);
             return dispatchNode.executeDispatch(lookupResult, rcvrAndArgs);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 85)
+    public static abstract class PrimSignalNode extends AbstractPrimitiveNode {
+        public PrimSignalNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        protected boolean isSemaphore(PointersObject receiver) {
+            return receiver.isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassSemaphore);
+        }
+
+        @Specialization(guards = "isSemaphore(receiver)")
+        BaseSqueakObject doSignal(PointersObject receiver) {
+            ProcessManager manager = ProcessManager.getInstance();
+            if (manager.isEmptyList(receiver)) {
+                // no process is waiting on this semaphore
+                receiver.atput0(SEMAPHORE.EXCESS_SIGNALS, (int) receiver.at0(SEMAPHORE.EXCESS_SIGNALS) + 1);
+            } else {
+                manager.resumeProcess(manager.removeFirstLinkOfList(receiver));
+            }
+            return receiver;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 86)
+    public static abstract class PrimWaitNode extends AbstractPrimitiveNode {
+        public PrimWaitNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        protected boolean isSemaphore(PointersObject receiver) {
+            return receiver.isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassSemaphore);
+        }
+
+        @Specialization(guards = "isSemaphore(receiver)")
+        BaseSqueakObject doWait(PointersObject receiver) {
+            int excessSignals = (int) receiver.at0(SEMAPHORE.EXCESS_SIGNALS);
+            if (excessSignals > 0)
+                receiver.atput0(SEMAPHORE.EXCESS_SIGNALS, excessSignals - 1);
+            else {
+                ProcessManager manager = ProcessManager.getInstance();
+                manager.linkProcessToList(manager.activeProcess(), receiver);
+                manager.transferTo(manager.wakeHighestPriority());
+            }
+            return receiver;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 87)
+    public static abstract class PrimResumeNode extends AbstractPrimitiveNode {
+        public PrimResumeNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        BaseSqueakObject doResume(PointersObject receiver) {
+            ProcessManager manager = ProcessManager.getInstance();
+            manager.resumeProcess(receiver);
+            return receiver;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 88)
+    public static abstract class PrimSuspendNode extends AbstractPrimitiveNode {
+        public PrimSuspendNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        BaseSqueakObject doSuspend(PointersObject receiver) {
+            ProcessManager manager = ProcessManager.getInstance();
+            if (receiver.equals(manager.activeProcess())) {
+                // popNandPush(1, code.image.nil);
+                manager.transferTo(manager.wakeHighestPriority());
+            } else {
+                BaseSqueakObject oldList = (BaseSqueakObject) receiver.at0(PROCESS.LIST);
+                if (oldList.equals(code.image.nil)) {
+                    throw new PrimitiveFailed();
+                }
+                manager.removeProcessFromList(receiver, oldList);
+                receiver.atput0(PROCESS.LIST, code.image.nil);
+                return oldList;
+            }
+            throw new RuntimeException("Failed to suspend process: " + receiver.toString());
         }
     }
 

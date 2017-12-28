@@ -26,12 +26,11 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.SpecialSelector;
 import de.hpi.swa.trufflesqueak.nodes.MethodContextNode;
-import de.hpi.swa.trufflesqueak.util.Constants.ASSOCIATION;
-import de.hpi.swa.trufflesqueak.util.Constants.POINT_LAYOUT;
+import de.hpi.swa.trufflesqueak.util.Constants.POINT;
 import de.hpi.swa.trufflesqueak.util.Constants.PROCESS;
-import de.hpi.swa.trufflesqueak.util.Constants.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.util.Constants.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.trufflesqueak.util.SqueakImageReader;
+import de.hpi.swa.trufflesqueak.util.ProcessManager;
 
 public class SqueakImageContext {
     // Special objects
@@ -125,12 +124,12 @@ public class SqueakImageContext {
             config = new SqueakConfig(new String[0]);
             display = new NullDisplay();
         }
+        ProcessManager.initialize(this);
     }
 
     public CallTarget getActiveContext() {
         display.open();
-        PointersObject scheduler = (PointersObject) schedulerAssociation.at0(ASSOCIATION.VALUE);
-        PointersObject activeProcess = (PointersObject) scheduler.at0(PROCESS_SCHEDULER.ACTIVE_PROCESS);
+        PointersObject activeProcess = ProcessManager.getInstance().activeProcess();
         ContextObject activeContext = (ContextObject) activeProcess.at0(PROCESS.SUSPENDED_CONTEXT);
         activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, nil);
         return Truffle.getRuntime().createCallTarget(MethodContextNode.create(language, activeContext));
@@ -208,9 +207,9 @@ public class SqueakImageContext {
 
     public PointersObject newPoint(int xPos, int yPos) {
         ClassObject pointClass = (ClassObject) specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.ClassPoint);
-        PointersObject newPoint = (PointersObject) pointClass.newInstance(POINT_LAYOUT.SIZE);
-        newPoint.atput0(POINT_LAYOUT.X, xPos);
-        newPoint.atput0(POINT_LAYOUT.Y, yPos);
+        PointersObject newPoint = (PointersObject) pointClass.newInstance(POINT.SIZE);
+        newPoint.atput0(POINT.X, xPos);
+        newPoint.atput0(POINT.Y, yPos);
         return newPoint;
     }
 
