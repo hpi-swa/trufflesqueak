@@ -218,4 +218,19 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return receiver;
         }
     }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 133)
+    public static abstract class PrimSetInterruptKeyNode extends AbstractPrimitiveNode {
+
+        public PrimSetInterruptKeyNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        BaseSqueakObject set(BaseSqueakObject receiver) {
+            // TODO: interrupt key is obsolete in image, but maybe still needed in the vm?
+            return receiver;
+        }
+    }
 }
