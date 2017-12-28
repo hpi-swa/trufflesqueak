@@ -1,5 +1,7 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes.push;
 
+import java.util.Arrays;
+
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -23,6 +25,7 @@ public class PushNewArrayNode extends AbstractPushNode {
             array = popNReversedNode.execute(frame);
         } else {
             array = new Object[arraySize];
+            Arrays.fill(array, code.image.nil); // Initialize with nil
         }
         pushNode.executeWrite(frame, code.image.wrap(array));
     }
