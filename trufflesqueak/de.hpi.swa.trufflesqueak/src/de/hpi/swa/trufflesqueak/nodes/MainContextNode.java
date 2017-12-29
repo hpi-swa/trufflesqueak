@@ -47,6 +47,7 @@ public class MainContextNode extends RootNode {
             } catch (ProcessSwitch e) {
                 activeContext = e.getNewContext();
             } catch (SqueakExit e) {
+                code.image.display.close();
                 return e.code;
             }
         }

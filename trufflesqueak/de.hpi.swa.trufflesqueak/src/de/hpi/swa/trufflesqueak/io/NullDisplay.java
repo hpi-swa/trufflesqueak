@@ -44,4 +44,8 @@ public class NullDisplay extends AbstractDisplay {
     @Override
     public void open() {
     }
+
+    @Override
+    public void close() {
+    }
 }

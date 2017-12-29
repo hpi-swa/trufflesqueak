@@ -158,6 +158,12 @@ public class Display extends AbstractDisplay {
     }
 
     @Override
+    public void close() {
+        frame.setVisible(false);
+        frame.dispose();
+    }
+
+    @Override
     public Dimension getSize() {
         return frame.getSize();
     }

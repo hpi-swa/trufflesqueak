@@ -21,4 +21,6 @@ public abstract class AbstractDisplay {
     public abstract int peekKey();
 
     public abstract void open();
+
+    public abstract void close();
 }
