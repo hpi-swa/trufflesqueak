@@ -10,6 +10,9 @@ import javax.swing.JFileChooser;
 
 import org.graalvm.launcher.AbstractLanguageLauncher;
 import org.graalvm.options.OptionCategory;
+import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Source;
+import org.graalvm.polyglot.Source.Builder;
 
 import com.oracle.truffle.api.Truffle;
 
@@ -40,11 +43,12 @@ public class TruffleSqueakMain extends AbstractLanguageLauncher {
     }
 
     @Override
-    protected void launch(org.graalvm.polyglot.Context.Builder contextBuilder) {
+    protected void launch(Context.Builder contextBuilder) {
         contextBuilder.arguments("squeaksmalltalk", config.toStringArgs());
-        try (org.graalvm.polyglot.Context ctx = contextBuilder.build()) {
-            Object result = ctx.eval(org.graalvm.polyglot.Source.newBuilder("squeaksmalltalk", new File(config.getImagePath())).build());
-            System.out.println(result);
+        try (Context ctx = contextBuilder.build()) {
+            Builder sourceBuilder = Source.newBuilder("squeaksmalltalk", new File(config.getImagePath()));
+            sourceBuilder.interactive(true);
+            ctx.eval(sourceBuilder.build());
         } catch (IOException e) {
             e.printStackTrace();
         }
