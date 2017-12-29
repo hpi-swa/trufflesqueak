@@ -1,6 +1,7 @@
 package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -221,16 +222,31 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 254, numArguments = 2) // TODO: can have 0-2 arguments
+    @SqueakPrimitive(index = 254, variableArguments = true)
     public static abstract class PrimVMParametersNode extends AbstractPrimitiveNode {
         public PrimVMParametersNode(CompiledMethodObject method) {
             super(method);
         }
 
-        @SuppressWarnings("unused")
         @Specialization
-        protected Object doTwoArguments(Object receiver, Object argument) {
-            return code.image.wrap(0); // fake result
+        protected Object doTwoArguments(Object[] rcvrAndArgs) {
+            int numRcvrAndArgs = rcvrAndArgs.length;
+            Object[] vmParameters = new Object[71];
+            Arrays.fill(vmParameters, code.image.wrap(0));
+            if (numRcvrAndArgs == 1) {
+                return code.image.wrap(vmParameters);
+            }
+            int index;
+            try {
+                index = (int) rcvrAndArgs[1];
+            } catch (ClassCastException e) {
+                throw new PrimitiveFailed();
+            }
+            if (numRcvrAndArgs <= 3) {
+                // when two args are provided, do nothing and return old value
+                return vmParameters[index];
+            }
+            throw new PrimitiveFailed();
         }
     }
 }

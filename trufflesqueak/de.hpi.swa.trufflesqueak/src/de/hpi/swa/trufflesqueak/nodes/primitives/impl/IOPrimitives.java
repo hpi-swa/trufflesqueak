@@ -41,7 +41,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 101)
+    @SqueakPrimitive(index = 101, variableArguments = true)
     public static abstract class PrimBeCursorNode extends AbstractPrimitiveNode {
 
         public PrimBeCursorNode(CompiledMethodObject method) {
@@ -49,9 +49,9 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        BaseSqueakObject beCursor(PointersObject receiver) {
-            // TODO: display the cursor
-            return receiver;
+        Object beCursor(Object[] rcvrAndArgs) {
+            // TODO: display the cursor, mask is optional argument
+            return rcvrAndArgs[0];
         }
     }
 

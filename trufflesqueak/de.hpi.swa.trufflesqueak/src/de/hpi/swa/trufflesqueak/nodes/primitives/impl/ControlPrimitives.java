@@ -25,6 +25,7 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
 import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtNode;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameReceiverAndArgumentsNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
@@ -110,16 +111,19 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        protected Object dispatch(Object receiver, Object selector, ListObject arguments, ClassObject rcvrClass) {
+        protected Object dispatch(Object receiver, Object selector, Object arguments, ClassObject rcvrClass) {
             Object lookupResult = lookupNode.executeLookup(rcvrClass, selector);
             Object[] rcvrAndArgs;
-            if (arguments != null) {
-                int numArgs = arguments.size();
+            if (arguments instanceof ListObject) {
+                ListObject list = (ListObject) arguments;
+                int numArgs = list.size();
                 rcvrAndArgs = new Object[1 + numArgs];
                 rcvrAndArgs[0] = receiver;
                 for (int i = 0; i < numArgs; i++) {
-                    rcvrAndArgs[1 + i] = arguments.at0(i);
+                    rcvrAndArgs[1 + i] = list.at0(i);
                 }
+            } else if (arguments != null) {
+                rcvrAndArgs = new Object[]{receiver, arguments};
             } else {
                 rcvrAndArgs = new Object[]{receiver};
             }
@@ -128,15 +132,27 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 83, numArguments = 2)
+    @SqueakPrimitive(index = 83, variableArguments = true)
     public static abstract class PrimPerformNode extends AbstractPerformPrimitiveNode {
+        @Child private FrameReceiverAndArgumentsNode rcvrAndArgsNode = new FrameReceiverAndArgumentsNode();
+
         public PrimPerformNode(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        public Object perform(Object receiver, Object selector) {
-            return dispatch(receiver, selector, null, lookup(receiver));
+        public Object perform(Object[] rcvrAndArgs) {
+            int numRcvrAndArgs = rcvrAndArgs.length;
+            if (numRcvrAndArgs != 2 && numRcvrAndArgs != 3) {
+                throw new PrimitiveFailed();
+            }
+            Object receiver = rcvrAndArgs[0];
+            Object selector = rcvrAndArgs[1];
+            ClassObject rcvrClass = lookup(receiver);
+            if (numRcvrAndArgs == 2) {
+                return dispatch(receiver, selector, null, rcvrClass);
+            }
+            return dispatch(receiver, selector, rcvrAndArgs[2], rcvrClass);
         }
     }
 
@@ -366,7 +382,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 117, numArguments = 0)
+    @SqueakPrimitive(index = 117, variableArguments = true)
     public static abstract class NamedPrimitiveCallNode extends AbstractPrimitiveNode {
         public NamedPrimitiveCallNode(CompiledMethodObject method) {
             super(method);
