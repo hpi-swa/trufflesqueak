@@ -397,7 +397,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 if (descriptorAt0 != null && descriptorAt1 != null) {
                     String modulename = descriptorAt0.toString();
                     String functionname = descriptorAt1.toString();
-                    replace(PrimitiveNodeFactory.forName((CompiledMethodObject) code, modulename, functionname)).executeGeneric(frame);
+                    return replace(PrimitiveNodeFactory.forName((CompiledMethodObject) code, modulename, functionname)).executeGeneric(frame);
                 }
             }
             return replace(PrimitiveFailedNode.create((CompiledMethodObject) code)).executeGeneric(frame);
