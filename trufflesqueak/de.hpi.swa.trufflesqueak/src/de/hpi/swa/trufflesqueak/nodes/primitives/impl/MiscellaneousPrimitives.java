@@ -149,20 +149,34 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         @TruffleBoundary
-        public Object getSystemAttribute(@SuppressWarnings("unused") Object image, int idx) {
-            if (idx >= 2 && idx <= 1000) {
+        public Object getSystemAttribute(@SuppressWarnings("unused") Object image, int index) {
+            if (index == 0) {
+                String separator = System.getProperty("file.separator");
+                return code.image.wrap(System.getProperty("java.home") + separator + "bin" + separator + "java");
+            } else if (index == 1) {
+                return code.image.wrap(code.image.config.getImagePath());
+            }
+            if (index >= 2 && index <= 1000) {
                 String[] restArgs = code.image.config.getRestArgs();
-                if (restArgs.length > idx - 2) {
-                    return code.image.wrap(restArgs[idx - 2]);
+                if (restArgs.length > index - 2) {
+                    return code.image.wrap(restArgs[index - 2]);
                 } else {
                     return code.image.nil;
                 }
             }
-            switch (idx) {
+            switch (index) {
                 case 1001:
-                    return code.image.wrap("java");
+                    return code.image.wrap(code.image.os.getSqOSName());
                 case 1002:
+                    return code.image.wrap(System.getProperty("os.version"));
+                case 1003:
+                    return code.image.wrap("intel");
+                case 1004:
                     return code.image.wrap(System.getProperty("java.version"));
+                case 1201:
+                    if (code.image.os.isMacOS()) {
+                        return code.image.wrap("255");
+                    }
             }
             return code.image.nil;
         }
