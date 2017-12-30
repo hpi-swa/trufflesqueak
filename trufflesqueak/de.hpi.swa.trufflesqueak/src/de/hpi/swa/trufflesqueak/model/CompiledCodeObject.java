@@ -254,11 +254,12 @@ public abstract class CompiledCodeObject extends SqueakObject {
         }
     }
 
-    public Object getLiteral(int idx) {
-        if (literals.length > idx + 1) {
-            return literals[idx + 1];
+    public Object getLiteral(int index) {
+        int literalIndex = 1 + index; // skip header
+        if (literalIndex < literals.length) {
+            return literals[literalIndex];
         } else {
-            return literals[0];
+            return literals[0]; // for decoder
         }
     }
 
