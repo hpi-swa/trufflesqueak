@@ -55,8 +55,9 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        Object literalAt(CompiledCodeObject receiver, int idx) {
-            return receiver.getLiteral(idx - 1);
+        Object literalAt(CompiledCodeObject receiver, int index) {
+            // Use getLiterals() instead of getLiteral(i), the latter skips the header.
+            return receiver.getLiterals()[index - 1];
         }
     }
 
@@ -68,8 +69,8 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        Object setLiteral(CompiledCodeObject cc, int idx, Object value) {
-            cc.setLiteral(idx, value);
+        Object setLiteral(CompiledCodeObject code, int index, Object value) {
+            code.setLiteral(index, value);
             return value;
         }
     }
