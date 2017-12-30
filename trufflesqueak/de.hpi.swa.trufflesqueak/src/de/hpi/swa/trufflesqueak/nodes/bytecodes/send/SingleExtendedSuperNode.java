@@ -15,8 +15,8 @@ public class SingleExtendedSuperNode extends AbstractSendNode {
         }
     }
 
-    public SingleExtendedSuperNode(CompiledCodeObject code, int index, int numBytecodes, int selectorLiteralIdx, int numArgs) {
-        super(code, index, numBytecodes, code.getLiteral(selectorLiteralIdx), numArgs);
+    public SingleExtendedSuperNode(CompiledCodeObject code, int index, int numBytecodes, int literalIndex, int numArgs) {
+        super(code, index, numBytecodes, code.getLiteral(literalIndex), numArgs);
         lookupClassNode = new SqueakLookupClassSuperNode(code);
     }
 
