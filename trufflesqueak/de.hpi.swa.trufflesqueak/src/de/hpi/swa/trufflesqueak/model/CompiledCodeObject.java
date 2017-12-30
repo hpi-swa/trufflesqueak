@@ -28,7 +28,6 @@ public abstract class CompiledCodeObject extends SqueakObject {
     public static enum SLOT_IDENTIFIER {
         CLOSURE,
         THIS_CONTEXT,
-        RECEIVER,
         STACK_POINTER,
         MARKER,
         METHOD

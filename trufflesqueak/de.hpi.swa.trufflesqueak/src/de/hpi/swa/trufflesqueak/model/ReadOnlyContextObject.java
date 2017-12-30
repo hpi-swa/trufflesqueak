@@ -26,10 +26,10 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
     @CompilationFinal private final MaterializedFrame frame;
     @CompilationFinal private final FrameSlot methodSlot;
     @CompilationFinal private final FrameSlot closureSlot;
-    @CompilationFinal private final FrameSlot rcvrSlot;
     @CompilationFinal private final FrameSlot markerSlot;
     @CompilationFinal private final FrameDescriptor frameDescriptor;
     @CompilationFinal private final int stackPointer;
+    @CompilationFinal private Object receiver;
     @CompilationFinal private Object sender;
 
     public ReadOnlyContextObject(SqueakImageContext img, MaterializedFrame materializedFrame) {
@@ -39,7 +39,7 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
         methodSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.METHOD);
         markerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.MARKER);
         closureSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.CLOSURE);
-        rcvrSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.RECEIVER);
+        receiver = frame.getArguments()[0];
         stackPointer = getMethod().getNumTemps() - 1;
     }
 
@@ -57,7 +57,7 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
             case CONTEXT.CLOSURE:
                 return getClosure();
             case CONTEXT.RECEIVER:
-                return getReceiver();
+                return receiver;
             default:
                 return getTemp(i - CONTEXT.TEMP_FRAME_START);
         }
@@ -95,10 +95,6 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
             frame.setObject(frameSlot, o);
         }
         throw new NonVirtualContextModification();
-    }
-
-    private Object getReceiver() {
-        return FrameUtil.getObjectSafe(frame, rcvrSlot);
     }
 
     private Object getClosure() {
@@ -139,7 +135,7 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
     public void atContextPut0(int i, Object obj) throws NonVirtualContextModification {
         switch (i) {
             case CONTEXT.RECEIVER:
-                frame.setObject(rcvrSlot, obj);
+                receiver = obj;
                 break;
             default:
                 setTemp(i - CONTEXT.TEMP_FRAME_START, obj);
