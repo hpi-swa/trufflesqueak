@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes.plugins;
 
+import java.io.File;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -86,6 +87,21 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         // TODO: double, long, BigInteger
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(name = "primitiveDirectoryDelimitor")
+    public static abstract class PrimDirectoryDelimiterNode extends AbstractPrimitiveNode {
+
+        public PrimDirectoryDelimiterNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        Object get(@SuppressWarnings("unused") Object receiver) {
+            return code.image.wrap(File.separatorChar);
+        }
+
     }
 
 }
