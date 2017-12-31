@@ -63,6 +63,14 @@ public class Constants {
         public static final int VALUE = 1;
     }
 
+    public static final class BLOCK_CLOSURE {
+        public static final byte OUTER_CONTEXT = 0;
+        public static final byte COMPILEDBLOCK = 1;
+        public static final byte NUMARGS = 2;
+        public static final byte RECEIVER = 3;
+        public static final byte SIZE = 4;
+    }
+
     public static final class BLOCK_CONTEXT {
         public static final int CALLER = 0;
         public static final int ARGUMENT_COUNT = 3;

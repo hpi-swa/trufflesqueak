@@ -13,17 +13,10 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameUtil;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.util.Constants.BLOCK_CLOSURE;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public class BlockClosure extends BaseSqueakObject {
-    private static class BLKCLSR {
-        public static final byte OUTER_CONTEXT = 0;
-        public static final byte COMPILEDBLOCK = 1;
-        public static final byte NUMARGS = 2;
-        public static final byte RECEIVER = 3;
-        public static final byte SIZE = 4;
-    }
-
     @CompilationFinal private Object receiver;
     @CompilationFinal(dimensions = 1) private Object[] copied;
     @CompilationFinal private Object frameMarker;
@@ -74,35 +67,35 @@ public class BlockClosure extends BaseSqueakObject {
     @Override
     public Object at0(int i) {
         switch (i) {
-            case BLKCLSR.OUTER_CONTEXT:
+            case BLOCK_CLOSURE.OUTER_CONTEXT:
                 return getOrPrepareContext();
-            case BLKCLSR.COMPILEDBLOCK:
+            case BLOCK_CLOSURE.COMPILEDBLOCK:
                 return block;
-            case BLKCLSR.NUMARGS:
+            case BLOCK_CLOSURE.NUMARGS:
                 return block.getNumArgs();
-            case BLKCLSR.RECEIVER:
+            case BLOCK_CLOSURE.RECEIVER:
                 return receiver;
             default:// FIXME
-                return copied[i - BLKCLSR.SIZE];
+                return copied[i - BLOCK_CLOSURE.SIZE];
         }
     }
 
     @Override
     public void atput0(int i, Object obj) {
         switch (i) {
-            case BLKCLSR.OUTER_CONTEXT:
+            case BLOCK_CLOSURE.OUTER_CONTEXT:
                 context = obj;
                 break;
-            case BLKCLSR.COMPILEDBLOCK:
+            case BLOCK_CLOSURE.COMPILEDBLOCK:
                 block = (CompiledBlockObject) obj;
                 break;
-            case BLKCLSR.NUMARGS:
+            case BLOCK_CLOSURE.NUMARGS:
                 throw new PrimitiveFailed();
-            case BLKCLSR.RECEIVER:
+            case BLOCK_CLOSURE.RECEIVER:
                 receiver = obj;
                 break;
             default:
-                copied[i - BLKCLSR.SIZE] = obj;
+                copied[i - BLOCK_CLOSURE.SIZE] = obj;
                 break;
         }
     }
@@ -130,7 +123,7 @@ public class BlockClosure extends BaseSqueakObject {
 
     @Override
     public int instsize() {
-        return BLKCLSR.SIZE;
+        return BLOCK_CLOSURE.SIZE;
     }
 
     @Override
