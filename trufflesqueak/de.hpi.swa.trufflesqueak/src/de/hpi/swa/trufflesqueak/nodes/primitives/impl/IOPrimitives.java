@@ -1,5 +1,7 @@
 package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
+import java.awt.DisplayMode;
+import java.awt.GraphicsEnvironment;
 import java.math.BigInteger;
 import java.util.List;
 
@@ -152,7 +154,8 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         BaseSqueakObject get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
-            return code.image.wrap(code.image.display.getSize());
+            DisplayMode displayMode = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDisplayMode();
+            return code.image.newPoint(displayMode.getWidth(), displayMode.getHeight());
         }
     }
 
