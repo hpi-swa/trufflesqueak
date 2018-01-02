@@ -15,7 +15,6 @@ import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
-import de.hpi.swa.trufflesqueak.nodes.context.ObjectGraph;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
@@ -31,11 +30,9 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 77)
     public static abstract class PrimSomeInstanceNode extends AbstractPrimitiveNode {
-        private final ObjectGraph objectGraph;
 
         public PrimSomeInstanceNode(CompiledMethodObject method) {
             super(method);
-            objectGraph = new ObjectGraph(code);
         }
 
         protected boolean isSmallIntegerClass(ClassObject classObject) {
@@ -55,7 +52,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "isClassObject(classObject)")
         BaseSqueakObject someInstance(ClassObject classObject) {
             try {
-                return objectGraph.someInstance(classObject).get(0);
+                return code.image.objects.someInstance(classObject).get(0);
             } catch (IndexOutOfBoundsException e) {
                 throw new PrimitiveFailed();
             }
@@ -185,15 +182,13 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 177)
     public static abstract class PrimAllInstancesNode extends AbstractPrimitiveNode {
-        private final ObjectGraph objectGraph;
 
         public PrimAllInstancesNode(CompiledMethodObject method) {
             super(method);
-            objectGraph = new ObjectGraph(code);
         }
 
         protected boolean hasNoInstances(ClassObject classObject) {
-            return objectGraph.getClassesWithNoInstances().contains(classObject);
+            return code.image.objects.getClassesWithNoInstances().contains(classObject);
         }
 
         @SuppressWarnings("unused")
@@ -204,7 +199,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         ListObject allInstances(ClassObject classObject) {
-            return code.image.wrap(objectGraph.allInstances(classObject).toArray());
+            return code.image.wrap(code.image.objects.allInstances(classObject).toArray());
         }
 
         @SuppressWarnings("unused")

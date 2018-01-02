@@ -8,27 +8,34 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+
+import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosure;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
-import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 
 public class ObjectGraph {
-    private final CompiledCodeObject code;
-    private final HashSet<BaseSqueakObject> classesWithNoInstances;
+    @CompilationFinal private final HashSet<BaseSqueakObject> classesWithNoInstances;
+    @CompilationFinal private final ListObject specialObjectsArray;
 
-    public ObjectGraph(CompiledCodeObject code) {
-        this.code = code;
+    public ObjectGraph(SqueakImageContext image) {
+        specialObjectsArray = image.specialObjectsArray;
         // TODO: BlockContext missing.
-        BaseSqueakObject[] classes = new BaseSqueakObject[]{code.image.smallIntegerClass, code.image.characterClass, code.image.floatClass};
+        BaseSqueakObject[] classes = new BaseSqueakObject[]{image.smallIntegerClass, image.characterClass, image.floatClass};
         classesWithNoInstances = new HashSet<>(Arrays.asList(classes));
     }
 
     public HashSet<BaseSqueakObject> getClassesWithNoInstances() {
         return classesWithNoInstances;
+    }
+
+    public List<BaseSqueakObject> allInstances() {
+        return traceInstances(null, false);
     }
 
     public List<BaseSqueakObject> allInstances(ClassObject classObj) {
@@ -43,13 +50,13 @@ public class ObjectGraph {
         List<BaseSqueakObject> result = new ArrayList<>();
         Set<BaseSqueakObject> seen = new HashSet<>(1000000);
         Deque<BaseSqueakObject> pending = new ArrayDeque<>(256);
-        pending.add(code.image.specialObjectsArray);
+        pending.add(specialObjectsArray);
         while (!pending.isEmpty()) {
             BaseSqueakObject currentObject = pending.pop();
             if (!seen.contains(currentObject)) {
                 seen.add(currentObject);
                 ClassObject sqClass = currentObject.getSqClass();
-                if (classObj.equals(sqClass)) {
+                if (classObj == null || classObj.equals(sqClass)) {
                     result.add(currentObject);
                     if (isSomeInstance) {
                         break;

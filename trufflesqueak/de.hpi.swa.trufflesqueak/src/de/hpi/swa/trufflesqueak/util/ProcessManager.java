@@ -14,19 +14,9 @@ import de.hpi.swa.trufflesqueak.util.Constants.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.util.Constants.SPECIAL_OBJECT_INDEX;
 
 public class ProcessManager {
-    private static ProcessManager instance;
+    @CompilationFinal private final SqueakImageContext image;
 
-    public static ProcessManager getInstance() {
-        return instance;
-    }
-
-    public static void initialize(SqueakImageContext img) {
-        instance = new ProcessManager(img);
-    }
-
-    private final SqueakImageContext image;
-
-    private ProcessManager(SqueakImageContext image) {
+    public ProcessManager(SqueakImageContext image) {
         this.image = image;
     }
 

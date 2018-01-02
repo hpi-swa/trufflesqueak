@@ -20,7 +20,6 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.EmptyObject;
 import de.hpi.swa.trufflesqueak.model.LargeInteger;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
-import de.hpi.swa.trufflesqueak.nodes.context.ObjectGraph;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
@@ -329,15 +328,13 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 78)
     public static abstract class PrimNextInstanceNode extends AbstractPrimitiveNode {
-        private final ObjectGraph objectGraph;
 
         public PrimNextInstanceNode(CompiledMethodObject method) {
             super(method);
-            objectGraph = new ObjectGraph(code);
         }
 
         protected boolean hasNoInstances(BaseSqueakObject sqObject) {
-            return objectGraph.getClassesWithNoInstances().contains(sqObject.getSqClass());
+            return code.image.objects.getClassesWithNoInstances().contains(sqObject.getSqClass());
         }
 
         @SuppressWarnings("unused")
@@ -348,7 +345,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         BaseSqueakObject someInstance(BaseSqueakObject sqObject) {
-            List<BaseSqueakObject> instances = objectGraph.allInstances(sqObject.getSqClass());
+            List<BaseSqueakObject> instances = code.image.objects.allInstances(sqObject.getSqClass());
             int index;
             try {
                 index = instances.indexOf(sqObject);

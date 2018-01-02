@@ -26,6 +26,7 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.SpecialSelector;
 import de.hpi.swa.trufflesqueak.nodes.MainContextNode;
+import de.hpi.swa.trufflesqueak.nodes.context.ObjectGraph;
 import de.hpi.swa.trufflesqueak.util.Constants.POINT;
 import de.hpi.swa.trufflesqueak.util.Constants.PROCESS;
 import de.hpi.swa.trufflesqueak.util.Constants.SPECIAL_OBJECT_INDEX;
@@ -106,7 +107,9 @@ public class SqueakImageContext {
 
     public final SqueakConfig config;
     public final AbstractDisplay display;
+    public final ObjectGraph objects = new ObjectGraph(this);
     public final OSDetector os = new OSDetector();
+    public final ProcessManager process = new ProcessManager(this);
 
     public SqueakImageContext(SqueakLanguage squeakLanguage, SqueakLanguage.Env environ,
                     PrintWriter out, PrintWriter err) {
@@ -126,11 +129,10 @@ public class SqueakImageContext {
             config = new SqueakConfig(new String[0]);
             display = new NullDisplay();
         }
-        ProcessManager.initialize(this);
     }
 
     public CallTarget getActiveContext() {
-        PointersObject activeProcess = ProcessManager.getInstance().activeProcess();
+        PointersObject activeProcess = process.activeProcess();
         ContextObject activeContext = (ContextObject) activeProcess.at0(PROCESS.SUSPENDED_CONTEXT);
         activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, nil);
         return Truffle.getRuntime().createCallTarget(MainContextNode.create(language, activeContext));
