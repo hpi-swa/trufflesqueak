@@ -8,7 +8,6 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
@@ -160,15 +159,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected boolean eq(int receiver, NativeObject argument) {
-            // TODO: Characters are sometimes wrapped in NativeObject, sometimes not.
-            return receiver == argument.getNativeAt0(0);
-        }
-
-        @Specialization
-        protected boolean eq(NativeObject receiver, int argument) {
-            // TODO: Characters are sometimes wrapped in NativeObject, sometimes not.
-            return receiver.getNativeAt0(0) == argument;
+        protected boolean eq(char receiver, char argument) {
+            return receiver == argument;
         }
     }
 
@@ -197,6 +189,11 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         boolean neq(double a, double b) {
             return a != b;
+        }
+
+        @Specialization
+        protected boolean eq(char receiver, char argument) {
+            return receiver != argument;
         }
     }
 

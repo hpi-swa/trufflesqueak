@@ -191,7 +191,7 @@ public class SqueakImageChunk {
             return ptr >> 1;
         } else {
             assert ((ptr & 3) == 2);
-            return ptr >> 2;
+            return (char) (ptr >> 2);
         }
     }
 

@@ -194,8 +194,8 @@ public class SqueakImageContext {
         return new NativeObject(this, this.stringClass, s.getBytes());
     }
 
-    public NativeObject wrap(char character) {
-        return new NativeObject(this, this.characterClass, new byte[]{(byte) character});
+    public char wrap(char character) {
+        return character;
     }
 
     public ListObject wrap(Object... elements) {
