@@ -14,7 +14,7 @@ import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameUtil;
 
-import de.hpi.swa.trufflesqueak.exceptions.SqueakExit;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakQuit;
 import de.hpi.swa.trufflesqueak.model.BlockClosure;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
@@ -93,7 +93,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                     return null;
                 }
             });
-            throw new SqueakExit(1);
+            throw new SqueakQuit(1);
         }
     }
 

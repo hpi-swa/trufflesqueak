@@ -6,32 +6,32 @@ import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
-import de.hpi.swa.trufflesqueak.exceptions.SqueakExit;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakQuit;
+import de.hpi.swa.trufflesqueak.exceptions.TopLevelReturn;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.util.Constants.CONTEXT;
 
-public class MainContextNode extends RootNode {
+public class TopLevelContextNode extends RootNode {
     @CompilationFinal private final DispatchNode dispatchNode = DispatchNode.create();
     @CompilationFinal private final CompiledCodeObject code;
     @CompilationFinal private final ContextObject initialContext;
 
-    public static MainContextNode create(SqueakLanguage language, ContextObject context) {
-        return new MainContextNode(language, context, context.getCodeObject());
+    public static TopLevelContextNode create(SqueakLanguage language, ContextObject context) {
+        return new TopLevelContextNode(language, context, context.getCodeObject());
     }
 
-    public static MethodContextNode create(SqueakLanguage language, CompiledCodeObject code, BaseSqueakObject senderContext) {
-        ContextObject newContext = ContextObject.createWriteableContextObject(code.image);
-        newContext.initializePointers(code.frameSize());
+    public static TopLevelContextNode create(SqueakLanguage language, CompiledCodeObject code, BaseSqueakObject senderContext) {
+        ContextObject newContext = ContextObject.createWriteableContextObject(code.image, code.frameSize());
         newContext.atput0(CONTEXT.METHOD, code);
         newContext.atput0(CONTEXT.SENDER, senderContext);
         newContext.atput0(CONTEXT.INSTRUCTION_POINTER, code.getBytecodeOffset() + 1);
         // newContext.atput0(CONTEXT.STACKPOINTER, 0); // not needed
-        return new MethodContextNode(language, newContext, code);
+        return new TopLevelContextNode(language, newContext, code);
     }
 
-    private MainContextNode(SqueakLanguage language, ContextObject context, CompiledCodeObject code) {
+    private TopLevelContextNode(SqueakLanguage language, ContextObject context, CompiledCodeObject code) {
         super(language, code.getFrameDescriptor());
         this.code = code;
         this.initialContext = context;
@@ -39,18 +39,29 @@ public class MainContextNode extends RootNode {
 
     @Override
     public Object execute(VirtualFrame frame) {
+        try {
+            executeLoop(frame);
+        } catch (TopLevelReturn e) {
+            return e.returnValue;
+        } catch (SqueakQuit e) {
+            System.out.println("Squeak is quitting...");
+            System.exit(e.getExitCode());
+        } finally {
+            code.image.display.close();
+        }
+        throw new RuntimeException("Top level context did not return");
+    }
+
+    public Object executeLoop(VirtualFrame frame) {
         ContextObject activeContext = initialContext;
-        frame.setObject(code.thisContextSlot, activeContext);
         while (true) {
+            frame.setObject(code.thisContextSlot, activeContext);
+            activeContext.setNewActiveContext();
             try {
                 return dispatchNode.executeDispatch(code, activeContext.getFrameArguments());
             } catch (ProcessSwitch e) {
                 activeContext = e.getNewContext();
-            } catch (SqueakExit e) {
-                code.image.display.close();
-                return e.code;
             }
         }
-
     }
 }

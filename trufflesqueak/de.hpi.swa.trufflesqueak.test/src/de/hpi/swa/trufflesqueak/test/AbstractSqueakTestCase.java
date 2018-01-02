@@ -10,8 +10,9 @@ import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.nodes.MainContextNode;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.nodes.MethodContextNode;
+import de.hpi.swa.trufflesqueak.util.Constants.CONTEXT;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 import junit.framework.TestCase;
 
@@ -113,7 +114,11 @@ public abstract class AbstractSqueakTestCase extends TestCase {
     }
 
     protected MethodContextNode createContext(CompiledCodeObject code) {
-        return MainContextNode.create(null, code, code.image.nil);
+        ContextObject testContext = ContextObject.createWriteableContextObject(code.image, code.frameSize());
+        testContext.atput0(CONTEXT.METHOD, code);
+        testContext.atput0(CONTEXT.SENDER, code.image.nil);
+        testContext.atput0(CONTEXT.INSTRUCTION_POINTER, code.getBytecodeOffset() + 1);
+        return new MethodContextNode(null, testContext, code);
     }
 
     public Object runMethod(BaseSqueakObject receiver, int... intbytes) {

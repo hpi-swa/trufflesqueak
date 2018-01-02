@@ -10,7 +10,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
-import de.hpi.swa.trufflesqueak.exceptions.SqueakExit;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakQuit;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
@@ -182,7 +182,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "isSemaphore(receiver)")
         BaseSqueakObject doSignal(PointersObject receiver) {
-            ProcessManager manager = ProcessManager.getInstance();
+            ProcessManager manager = code.image.process;
             if (manager.isEmptyList(receiver)) {
                 // no process is waiting on this semaphore
                 receiver.atput0(SEMAPHORE.EXCESS_SIGNALS, (int) receiver.at0(SEMAPHORE.EXCESS_SIGNALS) + 1);
@@ -210,7 +210,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             if (excessSignals > 0)
                 receiver.atput0(SEMAPHORE.EXCESS_SIGNALS, excessSignals - 1);
             else {
-                ProcessManager manager = ProcessManager.getInstance();
+                ProcessManager manager = code.image.process;
                 manager.linkProcessToList(manager.activeProcess(), receiver);
                 manager.transferTo(manager.wakeHighestPriority());
             }
@@ -226,9 +226,8 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        BaseSqueakObject doResume(PointersObject receiver) {
-            ProcessManager manager = ProcessManager.getInstance();
-            manager.resumeProcess(receiver);
+        BaseSqueakObject doResume(VirtualFrame frame, PointersObject receiver) {
+            ProcessManager manager = code.image.process;
             return receiver;
         }
     }
@@ -242,7 +241,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         BaseSqueakObject doSuspend(PointersObject receiver) {
-            ProcessManager manager = ProcessManager.getInstance();
+            ProcessManager manager = code.image.process;
             if (receiver.equals(manager.activeProcess())) {
                 // popNandPush(1, code.image.nil);
                 manager.transferTo(manager.wakeHighestPriority());
@@ -342,15 +341,21 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 113)
+    @SqueakPrimitive(index = 113, variableArguments = true)
     public static abstract class PrimQuitNode extends AbstractPrimitiveNode {
         public PrimQuitNode(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        public Object quit(@SuppressWarnings("unused") VirtualFrame frame) {
-            throw new SqueakExit(0);
+        public Object quit(Object[] rcvrAndArgs) {
+            int errorCode;
+            try {
+                errorCode = rcvrAndArgs.length > 1 ? (int) rcvrAndArgs[1] : 0;
+            } catch (ClassCastException e) {
+                errorCode = 1;
+            }
+            throw new SqueakQuit(errorCode);
         }
     }
 

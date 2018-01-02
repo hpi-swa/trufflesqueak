@@ -29,10 +29,6 @@ public class MethodContextNode extends RootNode {
     @CompilationFinal private final CompiledCodeObject code;
     @Children private final AbstractBytecodeNode[] bytecodeNodes;
 
-    public static MethodContextNode create(SqueakLanguage language, ContextObject context, CompiledCodeObject code) {
-        return new MethodContextNode(language, context, code);
-    }
-
     public MethodContextNode(SqueakLanguage language, ContextObject context, CompiledCodeObject code) {
         super(language, code.getFrameDescriptor());
         this.code = code;
