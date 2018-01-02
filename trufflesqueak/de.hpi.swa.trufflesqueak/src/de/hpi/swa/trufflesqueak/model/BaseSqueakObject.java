@@ -90,4 +90,8 @@ public abstract class BaseSqueakObject implements TruffleObject {
     public ForeignAccess getForeignAccess() {
         return BaseSqueakObjectMessageResolutionForeign.ACCESS;
     }
+
+    @SuppressWarnings("unused")
+    public void pointersBecomeOneWay(Object[] pointers, Object[] pointers2) {
+    }
 }

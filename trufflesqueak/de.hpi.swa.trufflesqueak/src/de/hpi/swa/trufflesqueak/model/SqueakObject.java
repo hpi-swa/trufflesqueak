@@ -36,13 +36,13 @@ public abstract class SqueakObject extends BaseSqueakObject {
     @Override
     public boolean become(BaseSqueakObject other) {
         if (other instanceof SqueakObject) {
-            int hash2 = ((SqueakObject) other).hash;
+            int otherHash = ((SqueakObject) other).hash;
             ((SqueakObject) other).hash = this.hash;
-            this.hash = hash2;
+            this.hash = otherHash;
 
-            ClassObject sqClass2 = ((SqueakObject) other).sqClass;
+            ClassObject otherSqClass = ((SqueakObject) other).sqClass;
             ((SqueakObject) other).sqClass = this.sqClass;
-            this.sqClass = sqClass2;
+            this.sqClass = otherSqClass;
             return true;
         }
         return false;
@@ -54,5 +54,9 @@ public abstract class SqueakObject extends BaseSqueakObject {
             hash = super.squeakHash();
         }
         return hash;
+    }
+
+    public void setSqueakHash(int hash) {
+        this.hash = hash;
     }
 }

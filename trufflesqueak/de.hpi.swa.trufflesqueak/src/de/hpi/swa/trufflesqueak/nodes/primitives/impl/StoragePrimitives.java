@@ -1,6 +1,7 @@
 package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
 import java.math.BigInteger;
+import java.util.Iterator;
 import java.util.List;
 
 import com.oracle.truffle.api.Assumption;
@@ -19,7 +20,9 @@ import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.EmptyObject;
 import de.hpi.swa.trufflesqueak.model.LargeInteger;
+import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
@@ -127,6 +130,52 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             if (!receiver.isVariable())
                 return code.image.nil;
             return receiver.newInstance(size);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 72, numArguments = 2)
+    public static abstract class PrimArrayBecome extends AbstractPrimitiveNode {
+        public PrimArrayBecome(CompiledMethodObject method) {
+            // TODO: this primitive does not correctly perform a one way become yet, FIXME!
+            super(method);
+        }
+
+        @Specialization
+        BaseSqueakObject arrayBecome(ListObject receiver, ListObject argument) {
+            if (receiver.size() != argument.size()) {
+                throw new PrimitiveFailed("bad argument");
+            }
+            List<BaseSqueakObject> instances = getInstancesArray();
+            for (Iterator<BaseSqueakObject> iterator = instances.iterator(); iterator.hasNext();) {
+                BaseSqueakObject instance = iterator.next();
+                if (instance != null && instance.getSqClass() != null) {
+                    instance.pointersBecomeOneWay(receiver.getPointers(), argument.getPointers());
+                }
+            }
+            return receiver;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        BaseSqueakObject arrayBecome(Object receiver, ListObject argument) {
+            throw new PrimitiveFailed("bad receiver");
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        BaseSqueakObject arrayBecome(ListObject receiver, Object argument) {
+            throw new PrimitiveFailed("bad argument");
+        }
+
+        private List<BaseSqueakObject> getInstancesArray() {
+            PointersObject activeProcess = code.image.process.activeProcess();
+            // TODO: activeProcess.storeSuspendedContext(frame)
+            try {
+                return code.image.objects.allInstances();
+            } finally {
+                // TODO: activeProcess.storeSuspendedContext(code.image.nil)
+            }
         }
     }
 

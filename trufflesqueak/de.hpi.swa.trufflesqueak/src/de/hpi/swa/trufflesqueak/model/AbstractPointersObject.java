@@ -58,6 +58,31 @@ public abstract class AbstractPointersObject extends SqueakObject {
     }
 
     @Override
+    public void pointersBecomeOneWay(Object[] fromPointers, Object[] toPointers) {
+        int index;
+        Object[] newPointers = pointers.clone();
+        for (int i = 0; i < fromPointers.length; i++) {
+            Object fromPointer = fromPointers[i];
+            index = -1;
+            for (int j = 0; j < pointers.length; j++) {
+                if (pointers[j].equals(fromPointer)) {
+                    index = j;
+                    break;
+                }
+            }
+            if (index < 0) {
+                continue;
+            }
+            Object toPointer = toPointers[i];
+            newPointers[index] = toPointer;
+            if (fromPointer instanceof BaseSqueakObject && toPointer instanceof SqueakObject) {
+                ((SqueakObject) toPointer).setSqueakHash(((BaseSqueakObject) fromPointer).squeakHash());
+            }
+        }
+        pointers = newPointers;
+    }
+
+    @Override
     public int size() {
         return pointers.length;
     }
