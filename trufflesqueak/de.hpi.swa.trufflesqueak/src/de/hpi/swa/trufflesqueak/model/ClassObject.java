@@ -217,11 +217,17 @@ public class ClassObject extends AbstractPointersObject {
             case 2: // indexed pointers
                 return new ListObject(image, this, size);
             case 3: // mixed indexable and named pointers
+                if (this == image.methodContextClass) {
+                    return ContextObject.createWriteableContextObject(image, size);
+                } else {
                 return new PointersObject(image, this, size);
-            case 4: case 5: // TODO: weak pointers
+                }
+            case 4: // TODO: weak pointers
+                return new ListObject(image, this, size);
+            case 5: // TODO: weak pointers
                 return new PointersObject(image, this, size);
             case 7: case 8:
-                throw new RuntimeException("tried to instantiate invalid class");
+                throw new RuntimeException("tried to instantiate an immediate");
             case 9: case 10: case 11: case 12: case 13: case 14: case 15:
                 // TODO: Float
                 return new NativeObject(image, this, size, 4);
