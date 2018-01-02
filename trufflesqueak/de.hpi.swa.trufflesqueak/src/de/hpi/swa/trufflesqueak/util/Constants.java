@@ -78,6 +78,13 @@ public class Constants {
         public static final int HOME = 5;
     }
 
+    public static final class CLOSURE {
+        public static final int OUTER_CONTEXT = 0;
+        public static final int START_PC = 1;
+        public static final int NUM_ARGS = 2;
+        public static final int FIRST_COPIED_VALUE = 3;
+    }
+
     public static final class CONTEXT {
         public static final int SENDER = 0;
         public static final int INSTRUCTION_POINTER = 1;

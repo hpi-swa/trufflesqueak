@@ -20,20 +20,21 @@ public class ContextObject extends BaseSqueakObject {
     public static ContextObject createReadOnlyContextObject(SqueakImageContext img, Frame virtualFrame) {
         MaterializedFrame frame = virtualFrame.materialize();
         FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-        FrameSlot selfSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.THIS_CONTEXT);
-        Object contextObject = FrameUtil.getObjectSafe(frame, selfSlot);
-        if (contextObject instanceof ContextObject) {
-            return (ContextObject) contextObject;
-        } else if (contextObject instanceof NilObject) {
-            ContextObject newContextObject = new ContextObject(img, new ReadOnlyContextObject(img, frame));
-            frame.setObject(selfSlot, newContextObject);
-            return newContextObject;
+        FrameSlot thisContextSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.THIS_CONTEXT);
+        ContextObject contextObject = (ContextObject) FrameUtil.getObjectSafe(frame, thisContextSlot);
+        if (contextObject == null) {
+            contextObject = new ContextObject(img, new ReadOnlyContextObject(img, frame));
+            frame.setObject(thisContextSlot, contextObject);
         }
-        throw new RuntimeException("Unexpected state");
+        return contextObject;
     }
 
     public static ContextObject createWriteableContextObject(SqueakImageContext img) {
         return new ContextObject(img, new WriteableContextObject(img));
+    }
+
+    public static ContextObject createWriteableContextObject(SqueakImageContext img, int size) {
+        return new ContextObject(img, new WriteableContextObject(img, size));
     }
 
     private ContextObject(SqueakImageContext img, ActualContextObject context) {
@@ -45,11 +46,6 @@ public class ContextObject extends BaseSqueakObject {
     public void fillin(SqueakImageChunk chunk) {
         assert actualContext instanceof WriteableContextObject;
         actualContext.fillin(chunk);
-    }
-
-    public void initializePointers(int size) {
-        assert actualContext instanceof WriteableContextObject;
-        ((WriteableContextObject) actualContext).initializePointers(size);
     }
 
     @Override
@@ -95,6 +91,8 @@ public class ContextObject extends BaseSqueakObject {
         if (method instanceof Integer) { // if the method field is an integer, activeContex is a block context
             ContextObject homeContext = (ContextObject) at0(BLOCK_CONTEXT.HOME);
             return (CompiledCodeObject) homeContext.at0(CONTEXT.METHOD);
+        } else if (method instanceof BlockClosure) {
+            return ((BlockClosure) method).getCompiledBlock();
         } else {
             return (CompiledCodeObject) method;
         }
@@ -110,12 +108,16 @@ public class ContextObject extends BaseSqueakObject {
     }
 
     public Object[] getFrameArguments() {
-        CompiledMethodObject method = (CompiledMethodObject) actualContext.at0(CONTEXT.METHOD);
-        int numArgs = method.getNumArgs();
-        Object[] arguments = new Object[numArgs];
-        // arguments[0] = actualContext.at0(CONTEXT.RECEIVER);
+        int numArgs = getCodeObject().getNumArgsAndCopiedValues();
+        Object[] arguments = new Object[1 + numArgs];
+        Object method = at0(CONTEXT.METHOD);
+        if (method instanceof BlockClosure) {
+            arguments[0] = ((BlockClosure) method).getReceiver();
+        } else {
+            arguments[0] = actualContext.at0(CONTEXT.RECEIVER);
+        }
         for (int i = 0; i < numArgs; i++) {
-            arguments[i] = actualContext.at0(CONTEXT.TEMP_FRAME_START + 1 + i);
+            arguments[1 + i] = actualContext.at0(CONTEXT.TEMP_FRAME_START + i);
         }
         return arguments;
     }

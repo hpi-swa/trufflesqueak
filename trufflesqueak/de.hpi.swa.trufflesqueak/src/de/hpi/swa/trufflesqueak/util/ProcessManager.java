@@ -1,11 +1,18 @@
 package de.hpi.swa.trufflesqueak.util;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotTypeException;
+import com.oracle.truffle.api.frame.VirtualFrame;
+
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.util.Constants.ASSOCIATION;
 import de.hpi.swa.trufflesqueak.util.Constants.LINK;
@@ -39,13 +46,13 @@ public class ProcessManager {
         return first;
     }
 
-    public void resumeProcess(BaseSqueakObject newProcess) {
+    public void resumeProcess(VirtualFrame frame, BaseSqueakObject newProcess) {
         BaseSqueakObject activeProcess = activeProcess();
         int activePriority = (int) activeProcess.at0(PROCESS.PRIORITY);
         int newPriority = (int) newProcess.at0(PROCESS.PRIORITY);
         if (newPriority > activePriority) {
             this.putToSleep(activeProcess);
-            this.transferTo(newProcess);
+            this.transferTo(frame, activeProcess, newProcess);
         } else {
             this.putToSleep(newProcess);
         }
@@ -63,25 +70,32 @@ public class ProcessManager {
     public void putToSleep(BaseSqueakObject process) {
         // Save the given process on the scheduler process list for its priority.
         int priority = (int) process.at0(PROCESS.PRIORITY);
-        PointersObject processLists = (PointersObject) this.getScheduler().at0(PROCESS_SCHEDULER.PROCESS_LISTS);
+        ListObject processLists = (ListObject) this.getScheduler().at0(PROCESS_SCHEDULER.PROCESS_LISTS);
         PointersObject processList = (PointersObject) processLists.at0(priority - 1);
         linkProcessToList(process, processList);
     }
 
-    public void transferTo(BaseSqueakObject newProcess) {
+    public void transferTo(VirtualFrame frame, BaseSqueakObject activeProcess, BaseSqueakObject newProcess) {
+        FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
+        FrameSlot thisContextSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.THIS_CONTEXT);
+        ContextObject thisContext;
+        try {
+            thisContext = (ContextObject) frame.getObject(thisContextSlot);
+        } catch (FrameSlotTypeException e) {
+            throw new RuntimeException("Unable to find thisContext");
+        }
         // Record a process to be awakened on the next interpreter cycle.
-        PointersObject sched = getScheduler();
-        PointersObject activeProcess = (PointersObject) sched.at0(PROCESS_SCHEDULER.ACTIVE_PROCESS);
-        sched.atput0(PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
-        activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, activeProcess.at0(PROCESS.SUSPENDED_CONTEXT));
+        getScheduler().atput0(PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
+        activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, thisContext);
+        ContextObject newActiveContext = (ContextObject) newProcess.at0(PROCESS.SUSPENDED_CONTEXT);
         newProcess.atput0(PROCESS.SUSPENDED_CONTEXT, image.nil);
-        throw new ProcessSwitch((ContextObject) newProcess.at0(PROCESS.SUSPENDED_CONTEXT));
+        throw new ProcessSwitch(newActiveContext);
     }
 
     public BaseSqueakObject wakeHighestPriority() {
         // Return the highest priority process that is ready to run.
         // Note: It is a fatal VM error if there is no runnable process.
-        PointersObject schedLists = (PointersObject) this.getScheduler().at0(PROCESS_SCHEDULER.PROCESS_LISTS);
+        ListObject schedLists = (ListObject) this.getScheduler().at0(PROCESS_SCHEDULER.PROCESS_LISTS);
         int p = schedLists.size() - 1;  // index of last indexable field
         BaseSqueakObject processList;
         do {

@@ -76,8 +76,8 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        BaseSqueakObject doCopy(PointersObject receiver, int argCount) { // TODO: fixme
-            PointersObject context = receiver;
+        BaseSqueakObject doCopy(BaseSqueakObject receiver, int argCount) { // TODO: fixme
+            PointersObject context = (PointersObject) receiver;
             if (context.at0(CONTEXT.METHOD) instanceof Integer) {
                 context = (PointersObject) context.at0(BLOCK_CONTEXT.HOME);
             }
@@ -181,13 +181,13 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "isSemaphore(receiver)")
-        BaseSqueakObject doSignal(PointersObject receiver) {
+        BaseSqueakObject doSignal(VirtualFrame frame, PointersObject receiver) {
             ProcessManager manager = code.image.process;
             if (manager.isEmptyList(receiver)) {
                 // no process is waiting on this semaphore
                 receiver.atput0(SEMAPHORE.EXCESS_SIGNALS, (int) receiver.at0(SEMAPHORE.EXCESS_SIGNALS) + 1);
             } else {
-                manager.resumeProcess(manager.removeFirstLinkOfList(receiver));
+                manager.resumeProcess(frame, manager.removeFirstLinkOfList(receiver));
             }
             return receiver;
         }
@@ -205,14 +205,15 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "isSemaphore(receiver)")
-        BaseSqueakObject doWait(PointersObject receiver) {
+        BaseSqueakObject doWait(VirtualFrame frame, PointersObject receiver) {
             int excessSignals = (int) receiver.at0(SEMAPHORE.EXCESS_SIGNALS);
             if (excessSignals > 0)
                 receiver.atput0(SEMAPHORE.EXCESS_SIGNALS, excessSignals - 1);
             else {
                 ProcessManager manager = code.image.process;
-                manager.linkProcessToList(manager.activeProcess(), receiver);
-                manager.transferTo(manager.wakeHighestPriority());
+                PointersObject activeProcess = manager.activeProcess();
+                manager.linkProcessToList(activeProcess, receiver);
+                manager.transferTo(frame, activeProcess, manager.wakeHighestPriority());
             }
             return receiver;
         }
@@ -228,6 +229,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         BaseSqueakObject doResume(VirtualFrame frame, PointersObject receiver) {
             ProcessManager manager = code.image.process;
+            manager.resumeProcess(frame, receiver);
             return receiver;
         }
     }
@@ -240,11 +242,12 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        BaseSqueakObject doSuspend(PointersObject receiver) {
+        BaseSqueakObject doSuspend(VirtualFrame frame, PointersObject receiver) {
             ProcessManager manager = code.image.process;
-            if (receiver.equals(manager.activeProcess())) {
+            PointersObject activeProcess = manager.activeProcess();
+            if (receiver.equals(activeProcess)) {
                 // popNandPush(1, code.image.nil);
-                manager.transferTo(manager.wakeHighestPriority());
+                manager.transferTo(frame, activeProcess, manager.wakeHighestPriority());
             } else {
                 BaseSqueakObject oldList = (BaseSqueakObject) receiver.at0(PROCESS.LIST);
                 if (oldList.equals(code.image.nil)) {

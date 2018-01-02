@@ -21,6 +21,7 @@ import de.hpi.swa.trufflesqueak.model.FrameMarker;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.ConditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.UnconditionalJumpNode;
+import de.hpi.swa.trufflesqueak.util.Constants.CLOSURE;
 import de.hpi.swa.trufflesqueak.util.Constants.CONTEXT;
 import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
@@ -40,6 +41,7 @@ public class MethodContextNode extends RootNode {
         CompilerDirectives.ensureVirtualized(frame);
         frame.setObject(code.markerSlot, new FrameMarker());
         frame.setObject(code.methodSlot, code);
+        frame.setObject(code.thisContextSlot, context);
         // sp points to the last temp slot
         int sp = initialSP();
         assert sp >= -1;
@@ -53,7 +55,7 @@ public class MethodContextNode extends RootNode {
     public Object execute(VirtualFrame frame) {
         enterFrame(frame);
         try {
-            return executeLoop(frame);
+            return executeBytecode(frame);
         } catch (LocalReturn e) {
             return e.returnValue;
         } catch (NonLocalReturn e) {
@@ -74,7 +76,7 @@ public class MethodContextNode extends RootNode {
      * Inspired by Sulong's LLVMDispatchBasicBlockNode (https://goo.gl/4LMzfX).
      */
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.MERGE_EXPLODE)
-    protected Object executeLoop(VirtualFrame frame) {
+    protected Object executeBytecode(VirtualFrame frame) {
         CompilerAsserts.compilationConstant(bytecodeNodes.length);
         int pc = initialPC();
         int backJumpCounter = 0;
@@ -129,11 +131,11 @@ public class MethodContextNode extends RootNode {
     }
 
     protected int initialPC() {
-        int rawPC = (int) context.at0(CONTEXT.INSTRUCTION_POINTER);
-        if (rawPC < 0) {
-            return 0;
+        Object pcObject = context.at0(CONTEXT.INSTRUCTION_POINTER);
+        if (pcObject instanceof CompiledBlockObject) {
+            return (int) ((CompiledBlockObject) pcObject).at0(CLOSURE.START_PC);
         }
-        return rawPC - code.getBytecodeOffset() - 1;
+        return (int) pcObject - code.getBytecodeOffset() - 1;
     }
 
     protected int initialSP() {
@@ -141,7 +143,7 @@ public class MethodContextNode extends RootNode {
         return code.getNumTemps() - 1;
     }
 
-    private static ContextObject getSender(ContextObject context) {
+    private ContextObject getSender() {
         Object sender = context.at0(CONTEXT.SENDER);
         if (sender instanceof ContextObject) {
             return (ContextObject) sender;

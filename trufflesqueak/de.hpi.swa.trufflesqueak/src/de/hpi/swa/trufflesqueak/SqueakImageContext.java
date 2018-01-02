@@ -146,12 +146,12 @@ public class SqueakImageContext {
         // Push literal 1, send literal 2 selector, return top
         byte[] bytes = new byte[]{32, (byte) 209, 124};
         Object[] literals = new Object[]{
-                        0, receiver, lookupResult.getCompiledInSelector(), // selector
-                        receiverClass // compiled in class
+                        0, receiver, lookupResult.getCompiledInSelector(),
+                        lookupResult.getCompiledInClass()
         };
         CompiledCodeObject code = new CompiledMethodObject(this, bytes, literals);
         output.println(String.format("Starting to evaluate %s >> %s:\n", receiver, selector));
-        return Truffle.getRuntime().createCallTarget(TopLevelContextNode.create(getLanguage(), code, nil));
+        return Truffle.getRuntime().createCallTarget(TopLevelContextNode.create(getLanguage(), receiver, lookupResult, nil));
     }
 
     public void fillInFrom(FileInputStream inputStream) throws IOException {

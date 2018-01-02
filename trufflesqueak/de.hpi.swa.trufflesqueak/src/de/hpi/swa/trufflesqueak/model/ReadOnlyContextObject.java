@@ -26,11 +26,12 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
     @CompilationFinal private final MaterializedFrame frame;
     @CompilationFinal private final FrameSlot methodSlot;
     @CompilationFinal private final FrameSlot closureSlot;
+    @CompilationFinal private final FrameSlot stackPointerSlot;
     @CompilationFinal private final FrameSlot markerSlot;
     @CompilationFinal private final FrameDescriptor frameDescriptor;
-    @CompilationFinal private final int stackPointer;
     @CompilationFinal private Object receiver;
     @CompilationFinal private Object sender;
+    @CompilationFinal private int pc = -1;
 
     public ReadOnlyContextObject(SqueakImageContext img, MaterializedFrame materializedFrame) {
         super(img);
@@ -39,8 +40,8 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
         methodSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.METHOD);
         markerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.MARKER);
         closureSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.CLOSURE);
+        stackPointerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.STACK_POINTER);
         receiver = frame.getArguments()[0];
-        stackPointer = getMethod().getNumTemps() - 1;
     }
 
     @Override
@@ -49,9 +50,9 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
             case CONTEXT.SENDER:
                 return getSender();
             case CONTEXT.INSTRUCTION_POINTER:
-                return -1;
+                return getPC();
             case CONTEXT.STACKPOINTER:
-                return stackPointer;
+                return getStackPointer();
             case CONTEXT.METHOD:
                 return getMethod();
             case CONTEXT.CLOSURE:
@@ -67,7 +68,7 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
         if (i < 0) {
             return null;
         }
-        if (i < stackPointer) {
+        if (i < getStackPointer()) {
             FrameSlot frameSlot = frameDescriptor.findFrameSlot(i);
             if (frameSlot.getKind().equals(FrameSlotKind.Boolean)) {
                 return FrameUtil.getBooleanSafe(frame, frameSlot);
@@ -89,7 +90,7 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
     }
 
     private void setTemp(int i, Object o) throws NonVirtualContextModification {
-        if (i >= 0 && i < stackPointer) {
+        if (i >= 0 && i < getStackPointer()) {
             FrameSlot frameSlot = frameDescriptor.findFrameSlot(i);
             frameSlot.setKind(FrameSlotKind.Object);
             frame.setObject(frameSlot, o);
@@ -99,6 +100,17 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
 
     private Object getClosure() {
         return FrameUtil.getObjectSafe(frame, closureSlot);
+    }
+
+    private int getPC() {
+        if (pc == -1) {
+            pc = getMethod().getBytecodeOffset() + 1;
+        }
+        return pc;
+    }
+
+    private int getStackPointer() {
+        return FrameUtil.getIntSafe(frame, stackPointerSlot);
     }
 
     private CompiledCodeObject getMethod() {
@@ -154,7 +166,7 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
 
     @Override
     public int size() {
-        return stackPointer + CONTEXT.TEMP_FRAME_START;
+        return getStackPointer() + CONTEXT.TEMP_FRAME_START;
     }
 
     @Override

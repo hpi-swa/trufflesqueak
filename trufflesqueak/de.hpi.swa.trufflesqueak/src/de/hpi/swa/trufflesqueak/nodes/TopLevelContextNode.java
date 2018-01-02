@@ -22,11 +22,12 @@ public class TopLevelContextNode extends RootNode {
         return new TopLevelContextNode(language, context, context.getCodeObject());
     }
 
-    public static TopLevelContextNode create(SqueakLanguage language, CompiledCodeObject code, BaseSqueakObject senderContext) {
+    public static TopLevelContextNode create(SqueakLanguage language, Object receiver, CompiledCodeObject code, BaseSqueakObject senderContext) {
         ContextObject newContext = ContextObject.createWriteableContextObject(code.image, code.frameSize());
-        newContext.atput0(CONTEXT.METHOD, code);
-        newContext.atput0(CONTEXT.SENDER, senderContext);
         newContext.atput0(CONTEXT.INSTRUCTION_POINTER, code.getBytecodeOffset() + 1);
+        newContext.atput0(CONTEXT.METHOD, code);
+        newContext.atput0(CONTEXT.RECEIVER, receiver);
+        newContext.atput0(CONTEXT.SENDER, senderContext);
         // newContext.atput0(CONTEXT.STACKPOINTER, 0); // not needed
         return new TopLevelContextNode(language, newContext, code);
     }
@@ -56,9 +57,8 @@ public class TopLevelContextNode extends RootNode {
         ContextObject activeContext = initialContext;
         while (true) {
             frame.setObject(code.thisContextSlot, activeContext);
-            activeContext.setNewActiveContext();
             try {
-                return dispatchNode.executeDispatch(code, activeContext.getFrameArguments());
+                return dispatchNode.executeDispatch(activeContext.getCodeObject(), activeContext.getFrameArguments());
             } catch (ProcessSwitch e) {
                 activeContext = e.getNewContext();
             }

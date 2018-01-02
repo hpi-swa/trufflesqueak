@@ -117,9 +117,18 @@ public abstract class CompiledCodeObject extends SqueakObject {
     @TruffleBoundary
     private void updateAndInvalidateCallTargets() {
         Frame frame = Truffle.getRuntime().getCurrentFrame().getFrame(FrameInstance.FrameAccess.MATERIALIZE);
-        ContextObject activeContext;
-        activeContext = ContextObject.createReadOnlyContextObject(image, frame);
-        callTarget = Truffle.getRuntime().createCallTarget(MethodContextNode.create(image.getLanguage(), activeContext, this));
+        ContextObject activeContext = ContextObject.createReadOnlyContextObject(image, frame);
+        ContextObject newContext;
+        if (frame.getArguments().length == 0) {
+            newContext = activeContext; // activeContext has not been execute in MethodContextNode yet
+        } else {
+            newContext = ContextObject.createWriteableContextObject(image, frameSize());
+            newContext.atput0(CONTEXT.METHOD, this);
+            newContext.atput0(CONTEXT.SENDER, activeContext);
+            newContext.atput0(CONTEXT.INSTRUCTION_POINTER, getBytecodeOffset() + 1);
+            newContext.atput0(CONTEXT.RECEIVER, activeContext.at0(CONTEXT.RECEIVER));
+        }
+        callTarget = Truffle.getRuntime().createCallTarget(new MethodContextNode(image.getLanguage(), newContext, this));
         callTargetStable.invalidate();
     }
 

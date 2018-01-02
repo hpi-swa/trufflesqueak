@@ -1,5 +1,7 @@
 package de.hpi.swa.trufflesqueak.model;
 
+import java.util.Arrays;
+
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 
 public class WriteableContextObject extends AbstractPointersObject implements ActualContextObject {
@@ -7,11 +9,15 @@ public class WriteableContextObject extends AbstractPointersObject implements Ac
         super(img);
     }
 
-    public WriteableContextObject(SqueakImageContext img, ReadOnlyContextObject actualContext) {
+    public WriteableContextObject(SqueakImageContext img, int size) {
         this(img);
-        int size = actualContext.size();
         pointers = new Object[size];
-        for (int i = 0; i < size; i++) {
+        Arrays.fill(pointers, img.nil);
+    }
+
+    public WriteableContextObject(SqueakImageContext img, ReadOnlyContextObject actualContext) {
+        this(img, actualContext.size());
+        for (int i = 0; i < actualContext.size(); i++) {
             pointers[i] = actualContext.at0(i);
         }
     }
@@ -26,10 +32,6 @@ public class WriteableContextObject extends AbstractPointersObject implements Ac
 
     public Object getFrameMarker() {
         return this;
-    }
-
-    public void initializePointers(int size) {
-        this.pointers = new Object[size];
     }
 
     @Override
