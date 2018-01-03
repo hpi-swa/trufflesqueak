@@ -26,8 +26,8 @@ public class WriteableContextObject extends AbstractPointersObject implements Ac
         super(original.image, original.getSqClass(), original.getPointers().clone());
     }
 
-    public void atContextPut0(int i, Object obj) {
-        atput0(i, obj);
+    public void atContextPut0(int index, Object value) {
+        atput0(index, value);
     }
 
     public Object getFrameMarker() {

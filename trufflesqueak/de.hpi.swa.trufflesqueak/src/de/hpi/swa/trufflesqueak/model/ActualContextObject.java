@@ -6,9 +6,9 @@ import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 public interface ActualContextObject {
     public Object at0(int l);
 
-    public void atput0(int idx, Object object);
+    public void atput0(int index, Object value);
 
-    public void atContextPut0(int i, Object obj) throws NonVirtualContextModification;
+    public void atContextPut0(int index, Object value) throws NonVirtualContextModification;
 
     public void fillin(SqueakImageChunk chunk);
 

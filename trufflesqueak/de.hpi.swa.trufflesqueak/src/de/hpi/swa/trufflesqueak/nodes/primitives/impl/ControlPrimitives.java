@@ -458,15 +458,13 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 256)
     public static abstract class PrimQuickReturnSelfNode extends AbstractPrimitiveNode {
-        @Child private FrameReceiverNode receiverNode = new FrameReceiverNode();
-
         public PrimQuickReturnSelfNode(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        public Object returnValue(VirtualFrame frame) {
-            return receiverNode.executeGeneric(frame);
+        public Object returnValue(Object receiver) {
+            return receiver;
         }
     }
 
@@ -478,7 +476,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        public Object returnValue(@SuppressWarnings("unused") VirtualFrame frame) {
+        public Object returnValue(@SuppressWarnings("unused") Object receiver) {
             return code.image.sqTrue;
         }
     }
@@ -491,7 +489,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        public Object returnValue(@SuppressWarnings("unused") VirtualFrame frame) {
+        public Object returnValue(@SuppressWarnings("unused") Object receiver) {
             return code.image.sqFalse;
         }
     }
@@ -504,7 +502,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        public Object returnValue(@SuppressWarnings("unused") VirtualFrame frame) {
+        public Object returnValue(@SuppressWarnings("unused") Object receiver) {
             return code.image.nil;
         }
     }
