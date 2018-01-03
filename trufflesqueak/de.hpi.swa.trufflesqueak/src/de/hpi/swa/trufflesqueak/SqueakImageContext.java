@@ -11,9 +11,6 @@ import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.Truffle;
 
-import de.hpi.swa.trufflesqueak.io.AbstractDisplay;
-import de.hpi.swa.trufflesqueak.io.Display;
-import de.hpi.swa.trufflesqueak.io.NullDisplay;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -27,6 +24,9 @@ import de.hpi.swa.trufflesqueak.model.SpecialSelector;
 import de.hpi.swa.trufflesqueak.nodes.TopLevelContextNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ObjectGraph;
 import de.hpi.swa.trufflesqueak.util.Constants.SPECIAL_OBJECT_INDEX;
+import de.hpi.swa.trufflesqueak.util.Display.AbstractDisplay;
+import de.hpi.swa.trufflesqueak.util.Display.JavaDisplay;
+import de.hpi.swa.trufflesqueak.util.Display.NullDisplay;
 import de.hpi.swa.trufflesqueak.util.KnownClasses.CONTEXT;
 import de.hpi.swa.trufflesqueak.util.KnownClasses.POINT;
 import de.hpi.swa.trufflesqueak.util.KnownClasses.PROCESS;
@@ -121,7 +121,7 @@ public class SqueakImageContext {
             String[] applicationArguments = env.getApplicationArguments();
             config = new SqueakConfig(applicationArguments);
             if (config.getSelector() == null) {
-                display = new Display();
+                display = new JavaDisplay();
             } else {
                 display = new NullDisplay();
             }
