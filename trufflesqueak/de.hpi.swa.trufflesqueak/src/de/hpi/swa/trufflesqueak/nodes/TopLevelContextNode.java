@@ -1,9 +1,12 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
 
+import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakQuit;
@@ -14,8 +17,7 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.util.KnownClasses.CONTEXT;
 
 public class TopLevelContextNode extends RootNode {
-    @CompilationFinal private final DispatchNode dispatchNode = DispatchNode.create();
-    @CompilationFinal private final CompiledCodeObject code;
+    @CompilationFinal private final SqueakImageContext image;
     @CompilationFinal private final ContextObject initialContext;
 
     public static TopLevelContextNode create(SqueakLanguage language, ContextObject context) {
@@ -34,31 +36,31 @@ public class TopLevelContextNode extends RootNode {
 
     private TopLevelContextNode(SqueakLanguage language, ContextObject context, CompiledCodeObject code) {
         super(language, code.getFrameDescriptor());
-        this.code = code;
+        this.image = code.image;
         this.initialContext = context;
     }
 
     @Override
     public Object execute(VirtualFrame frame) {
         try {
-            executeLoop(frame);
+            executeLoop();
         } catch (TopLevelReturn e) {
             return e.returnValue;
         } catch (SqueakQuit e) {
             System.out.println("Squeak is quitting...");
             System.exit(e.getExitCode());
         } finally {
-            code.image.display.close();
+            image.display.close();
         }
         throw new RuntimeException("Top level context did not return");
     }
 
-    public Object executeLoop(VirtualFrame frame) {
+    public void executeLoop() {
         ContextObject activeContext = initialContext;
         while (true) {
-            frame.setObject(code.thisContextSlot, activeContext);
             try {
-                return dispatchNode.executeDispatch(activeContext.getCodeObject(), activeContext.getFrameArguments());
+                RootCallTarget target = Truffle.getRuntime().createCallTarget(new MethodContextNode(image.getLanguage(), activeContext, activeContext.getCodeObject()));
+                target.call(activeContext.getFrameArguments());
             } catch (ProcessSwitch e) {
                 activeContext = e.getNewContext();
             }
