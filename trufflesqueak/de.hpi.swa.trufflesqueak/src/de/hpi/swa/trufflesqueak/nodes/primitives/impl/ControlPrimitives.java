@@ -33,11 +33,11 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitivesFactory.PrimQuickReturnReceiverVariableNodeFactory;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitivesFactory.PrimitiveFailedNodeFactory;
-import de.hpi.swa.trufflesqueak.util.Constants.BLOCK_CONTEXT;
-import de.hpi.swa.trufflesqueak.util.Constants.CONTEXT;
-import de.hpi.swa.trufflesqueak.util.Constants.PROCESS;
-import de.hpi.swa.trufflesqueak.util.Constants.SEMAPHORE;
 import de.hpi.swa.trufflesqueak.util.Constants.SPECIAL_OBJECT_INDEX;
+import de.hpi.swa.trufflesqueak.util.KnownClasses.BLOCK_CONTEXT;
+import de.hpi.swa.trufflesqueak.util.KnownClasses.CONTEXT;
+import de.hpi.swa.trufflesqueak.util.KnownClasses.PROCESS;
+import de.hpi.swa.trufflesqueak.util.KnownClasses.SEMAPHORE;
 import de.hpi.swa.trufflesqueak.util.ProcessManager;
 
 public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {

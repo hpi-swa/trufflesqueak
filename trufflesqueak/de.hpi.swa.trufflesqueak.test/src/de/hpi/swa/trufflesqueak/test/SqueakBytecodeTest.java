@@ -24,7 +24,7 @@ import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.MethodContextNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameTemporaryReadNode;
-import de.hpi.swa.trufflesqueak.util.Constants.ASSOCIATION;
+import de.hpi.swa.trufflesqueak.util.KnownClasses.ASSOCIATION;
 
 public class SqueakBytecodeTest extends AbstractSqueakTestCase {
     @Rule public ExpectedException exceptions = ExpectedException.none();

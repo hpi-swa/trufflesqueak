@@ -1,6 +1,6 @@
 package de.hpi.swa.trufflesqueak.util;
 
-public class Constants {
+public final class Constants {
     public static final class SPECIAL_OBJECT_INDEX {
         public static final int NilObject = 0;
         public static final int FalseObject = 1;
@@ -56,81 +56,6 @@ public class Constants {
         public static final int InvokeCallbackSelector = 53;
         public static final int ClassUnsafeAlien = 54;
         public static final int ClassWeakFinalizer = 55;
-    }
-
-    public static final class ASSOCIATION {
-        public static final int KEY = 0;
-        public static final int VALUE = 1;
-    }
-
-    public static final class BLOCK_CLOSURE {
-        public static final byte OUTER_CONTEXT = 0;
-        public static final byte COMPILEDBLOCK = 1;
-        public static final byte NUMARGS = 2;
-        public static final byte RECEIVER = 3;
-        public static final byte SIZE = 4;
-    }
-
-    public static final class BLOCK_CONTEXT {
-        public static final int CALLER = 0;
-        public static final int ARGUMENT_COUNT = 3;
-        public static final int INITIAL_PC = 4;
-        public static final int HOME = 5;
-    }
-
-    public static final class CLOSURE {
-        public static final int OUTER_CONTEXT = 0;
-        public static final int START_PC = 1;
-        public static final int NUM_ARGS = 2;
-        public static final int FIRST_COPIED_VALUE = 3;
-    }
-
-    public static final class CONTEXT {
-        public static final int SENDER = 0;
-        public static final int INSTRUCTION_POINTER = 1;
-        public static final int STACKPOINTER = 2;
-        public static final int METHOD = 3;
-        public static final int CLOSURE = 4;
-        public static final int RECEIVER = 5;
-        public static final int TEMP_FRAME_START = 6;
-        public static final int SMALL_FRAMESIZE = 16;
-        public static final int LARGE_FRAMESIZE = 56;
-    }
-
-    public static final class CONTEXT_PART {
-        public static final int SENDER_INDEX = 0;
-        public static final int PC_INDEX = 1;
-        public static final int STACKP_INDEX = 2;
-    }
-
-    public static final class LINK {
-        public static final int NEXT_LINK = 0;
-    }
-
-    public static final class LINKED_LIST {
-        public static final int FIRST_LINK = 0;
-        public static final int LAST_LINK = 1;
-    }
-
-    public static final class SEMAPHORE {
-        public static final int EXCESS_SIGNALS = 2;
-    }
-
-    public static final class POINT {
-        public static final int SIZE = 2;
-        public static final int X = 0;
-        public static final int Y = 1;
-    }
-
-    public static final class PROCESS_SCHEDULER {
-        public static final int PROCESS_LISTS = 0;
-        public static final int ACTIVE_PROCESS = 1;
-    }
-
-    public static final class PROCESS {
-        public static final int SUSPENDED_CONTEXT = 1;
-        public static final int PRIORITY = 2;
-        public static final int LIST = 3;
     }
 
     public static final class MOUSE_BUTTON {

@@ -13,7 +13,7 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameUtil;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
-import de.hpi.swa.trufflesqueak.util.Constants.BLOCK_CLOSURE;
+import de.hpi.swa.trufflesqueak.util.KnownClasses.BLOCK_CLOSURE;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public class BlockClosure extends BaseSqueakObject {
@@ -69,14 +69,12 @@ public class BlockClosure extends BaseSqueakObject {
         switch (i) {
             case BLOCK_CLOSURE.OUTER_CONTEXT:
                 return getOrPrepareContext();
-            case BLOCK_CLOSURE.COMPILEDBLOCK:
-                return block;
-            case BLOCK_CLOSURE.NUMARGS:
+            case BLOCK_CLOSURE.INITIAL_PC:
+                throw new RuntimeException("Not yet implemented"); // TODO: FIXME
+            case BLOCK_CLOSURE.ARGUMENT_COUNT:
                 return block.getNumArgs();
-            case BLOCK_CLOSURE.RECEIVER:
-                return receiver;
-            default:// FIXME
-                return copied[i - BLOCK_CLOSURE.SIZE];
+            default:
+                return copied[i - BLOCK_CLOSURE.FIRST_COPIED_VALUE];
         }
     }
 
@@ -86,17 +84,12 @@ public class BlockClosure extends BaseSqueakObject {
             case BLOCK_CLOSURE.OUTER_CONTEXT:
                 context = obj;
                 break;
-            case BLOCK_CLOSURE.COMPILEDBLOCK:
-                block = (CompiledBlockObject) obj;
-                break;
-            case BLOCK_CLOSURE.NUMARGS:
+            case BLOCK_CLOSURE.INITIAL_PC:
                 throw new PrimitiveFailed();
-            case BLOCK_CLOSURE.RECEIVER:
-                receiver = obj;
-                break;
+            case BLOCK_CLOSURE.ARGUMENT_COUNT:
+                throw new PrimitiveFailed();
             default:
-                copied[i - BLOCK_CLOSURE.SIZE] = obj;
-                break;
+                copied[i - BLOCK_CLOSURE.FIRST_COPIED_VALUE] = obj;
         }
     }
 
@@ -123,7 +116,7 @@ public class BlockClosure extends BaseSqueakObject {
 
     @Override
     public int instsize() {
-        return BLOCK_CLOSURE.SIZE;
+        return BLOCK_CLOSURE.FIRST_COPIED_VALUE;
     }
 
     @Override

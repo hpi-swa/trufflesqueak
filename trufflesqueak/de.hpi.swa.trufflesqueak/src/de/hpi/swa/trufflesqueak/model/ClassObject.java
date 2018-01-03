@@ -9,15 +9,11 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.util.KnownClasses.CLASS;
+import de.hpi.swa.trufflesqueak.util.KnownClasses.METHOD_DICT;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public class ClassObject extends AbstractPointersObject {
-    private static final int METHODDICT_NAMES_INDEX = 2;
-    private static final int METHODDICT_VALUES_INDEX = 1;
-    private static final int NAME_INDEX = 6;
-    private static final int FORMAT_INDEX = 2;
-    private static final int METHODDICT_INDEX = 1;
-    private static final int SUPERCLASS_INDEX = 0;
     private final Set<ClassObject> subclasses = new HashSet<>();
 
     @CompilationFinal private int instSpec;
@@ -84,12 +80,12 @@ public class ClassObject extends AbstractPointersObject {
     public void fillin(SqueakImageChunk chunk) {
         super.fillin(chunk);
         // initialize the subclasses set
-        setFormat((int) at0(FORMAT_INDEX));
+        setFormat((int) at0(CLASS.FORMAT));
         setSuperclass(getSuperclass());
     }
 
     public void setFormat(int format) {
-        super.atput0(FORMAT_INDEX, format);
+        super.atput0(CLASS.FORMAT, format);
         instSpec = (format >> 16) & 0x1f;
         instanceSize = format & 0xffff;
         classFormatStable.invalidate();
@@ -97,7 +93,7 @@ public class ClassObject extends AbstractPointersObject {
 
     public void setSuperclass(Object superclass) {
         Object oldSuperclass = getSuperclass();
-        super.atput0(SUPERCLASS_INDEX, superclass);
+        super.atput0(CLASS.SUPERCLASS, superclass);
         if (oldSuperclass instanceof ClassObject) {
             ((ClassObject) oldSuperclass).detachSubclass(this);
         }
@@ -122,22 +118,22 @@ public class ClassObject extends AbstractPointersObject {
     }
 
     public Object getSuperclass() {
-        return at0(SUPERCLASS_INDEX);
+        return at0(CLASS.SUPERCLASS);
     }
 
     public Object getMethodDict() {
-        return at0(METHODDICT_INDEX);
+        return at0(CLASS.METHOD_DICT);
     }
 
     public Object getName() {
-        return at0(NAME_INDEX);
+        return at0(CLASS.NAME);
     }
 
     @Override
     public void atput0(int idx, Object obj) {
-        if (idx == FORMAT_INDEX) {
+        if (idx == CLASS.FORMAT) {
             setFormat((int) obj);
-        } else if (idx == SUPERCLASS_INDEX) {
+        } else if (idx == CLASS.SUPERCLASS) {
             setSuperclass(obj);
         } else {
             super.atput0(idx, obj);
@@ -159,12 +155,12 @@ public class ClassObject extends AbstractPointersObject {
         while (lookupClass instanceof ClassObject) {
             Object methodDict = ((ClassObject) lookupClass).getMethodDict();
             if (methodDict instanceof ListObject) {
-                Object values = ((ListObject) methodDict).at0(METHODDICT_VALUES_INDEX);
+                Object values = ((ListObject) methodDict).at0(METHOD_DICT.VALUES);
                 if (values instanceof BaseSqueakObject) {
-                    for (int i = METHODDICT_NAMES_INDEX; i < ((BaseSqueakObject) methodDict).size(); i++) {
+                    for (int i = METHOD_DICT.NAMES; i < ((BaseSqueakObject) methodDict).size(); i++) {
                         Object methodSelector = ((BaseSqueakObject) methodDict).at0(i);
                         if (test.test(methodSelector)) {
-                            return ((BaseSqueakObject) values).at0(i - METHODDICT_NAMES_INDEX);
+                            return ((BaseSqueakObject) values).at0(i - METHOD_DICT.NAMES);
                         }
                     }
                 }

@@ -27,10 +27,10 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.SpecialSelector;
 import de.hpi.swa.trufflesqueak.nodes.TopLevelContextNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ObjectGraph;
-import de.hpi.swa.trufflesqueak.util.Constants.POINT;
-import de.hpi.swa.trufflesqueak.util.Constants.PROCESS;
 import de.hpi.swa.trufflesqueak.util.Constants.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.trufflesqueak.util.OSDetector;
+import de.hpi.swa.trufflesqueak.util.KnownClasses.POINT;
+import de.hpi.swa.trufflesqueak.util.KnownClasses.PROCESS;
 import de.hpi.swa.trufflesqueak.util.ProcessManager;
 import de.hpi.swa.trufflesqueak.util.SqueakImageReader;
 

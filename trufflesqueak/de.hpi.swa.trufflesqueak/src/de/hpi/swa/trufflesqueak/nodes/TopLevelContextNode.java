@@ -11,7 +11,7 @@ import de.hpi.swa.trufflesqueak.exceptions.TopLevelReturn;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
-import de.hpi.swa.trufflesqueak.util.Constants.CONTEXT;
+import de.hpi.swa.trufflesqueak.util.KnownClasses.CONTEXT;
 
 public class TopLevelContextNode extends RootNode {
     @CompilationFinal private final DispatchNode dispatchNode = DispatchNode.create();

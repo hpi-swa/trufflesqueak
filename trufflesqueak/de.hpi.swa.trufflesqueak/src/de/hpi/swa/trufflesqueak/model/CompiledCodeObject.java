@@ -21,7 +21,7 @@ import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.instrumentation.CompiledCodeObjectPrinter;
 import de.hpi.swa.trufflesqueak.nodes.MethodContextNode;
 import de.hpi.swa.trufflesqueak.util.BitSplitter;
-import de.hpi.swa.trufflesqueak.util.Constants.CONTEXT;
+import de.hpi.swa.trufflesqueak.util.KnownClasses.CONTEXT;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public abstract class CompiledCodeObject extends SqueakObject {

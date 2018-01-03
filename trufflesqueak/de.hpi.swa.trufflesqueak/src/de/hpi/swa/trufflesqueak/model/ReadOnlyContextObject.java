@@ -13,7 +13,7 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.NonVirtualContextModification;
-import de.hpi.swa.trufflesqueak.util.Constants.CONTEXT;
+import de.hpi.swa.trufflesqueak.util.KnownClasses.CONTEXT;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 /**

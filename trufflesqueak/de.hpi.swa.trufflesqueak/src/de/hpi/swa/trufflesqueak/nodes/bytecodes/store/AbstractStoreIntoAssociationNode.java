@@ -5,7 +5,7 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.context.MethodLiteralNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtPutNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.AbstractStackNode;
-import de.hpi.swa.trufflesqueak.util.Constants.ASSOCIATION;
+import de.hpi.swa.trufflesqueak.util.KnownClasses.ASSOCIATION;
 
 public abstract class AbstractStoreIntoAssociationNode extends AbstractBytecodeNode {
     @Child ObjectAtPutNode storeNode;

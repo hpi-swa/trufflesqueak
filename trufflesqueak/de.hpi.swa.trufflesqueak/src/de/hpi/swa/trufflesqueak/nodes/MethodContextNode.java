@@ -21,8 +21,8 @@ import de.hpi.swa.trufflesqueak.model.FrameMarker;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.ConditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.UnconditionalJumpNode;
-import de.hpi.swa.trufflesqueak.util.Constants.CLOSURE;
-import de.hpi.swa.trufflesqueak.util.Constants.CONTEXT;
+import de.hpi.swa.trufflesqueak.util.KnownClasses.BLOCK_CLOSURE;
+import de.hpi.swa.trufflesqueak.util.KnownClasses.CONTEXT;
 import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
 public class MethodContextNode extends RootNode {
@@ -133,7 +133,7 @@ public class MethodContextNode extends RootNode {
     protected int initialPC() {
         Object pcObject = context.at0(CONTEXT.INSTRUCTION_POINTER);
         if (pcObject instanceof CompiledBlockObject) {
-            return (int) ((CompiledBlockObject) pcObject).at0(CLOSURE.START_PC);
+            return (int) ((CompiledBlockObject) pcObject).at0(BLOCK_CLOSURE.INITIAL_PC);
         }
         return (int) pcObject - code.getBytecodeOffset() - 1;
     }

@@ -26,8 +26,8 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
-import de.hpi.swa.trufflesqueak.util.Constants.CONTEXT_PART;
 import de.hpi.swa.trufflesqueak.util.Constants.SPECIAL_OBJECT_INDEX;
+import de.hpi.swa.trufflesqueak.util.KnownClasses.CONTEXT;
 
 public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -369,7 +369,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         BaseSqueakObject store(ContextObject receiver, int value) {
-            receiver.atput0(CONTEXT_PART.STACKP_INDEX, value);
+            receiver.atput0(CONTEXT.STACKPOINTER, value);
             return receiver;
         }
     }

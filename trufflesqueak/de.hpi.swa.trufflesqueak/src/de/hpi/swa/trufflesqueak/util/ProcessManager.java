@@ -14,12 +14,12 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
-import de.hpi.swa.trufflesqueak.util.Constants.ASSOCIATION;
-import de.hpi.swa.trufflesqueak.util.Constants.LINK;
-import de.hpi.swa.trufflesqueak.util.Constants.LINKED_LIST;
-import de.hpi.swa.trufflesqueak.util.Constants.PROCESS;
-import de.hpi.swa.trufflesqueak.util.Constants.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.util.Constants.SPECIAL_OBJECT_INDEX;
+import de.hpi.swa.trufflesqueak.util.KnownClasses.ASSOCIATION;
+import de.hpi.swa.trufflesqueak.util.KnownClasses.LINK;
+import de.hpi.swa.trufflesqueak.util.KnownClasses.LINKED_LIST;
+import de.hpi.swa.trufflesqueak.util.KnownClasses.PROCESS;
+import de.hpi.swa.trufflesqueak.util.KnownClasses.PROCESS_SCHEDULER;
 
 public class ProcessManager {
     @CompilationFinal private final SqueakImageContext image;
