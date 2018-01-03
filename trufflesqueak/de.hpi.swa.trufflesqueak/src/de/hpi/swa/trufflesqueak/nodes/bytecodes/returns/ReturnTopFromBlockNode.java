@@ -4,9 +4,10 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.LocalReturn;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PopStackNode;
 
-public class ReturnTopFromBlockNode extends ReturnNode {
+public class ReturnTopFromBlockNode extends AbstractBytecodeNode {
     @Child protected PopStackNode popNode;
 
     public ReturnTopFromBlockNode(CompiledCodeObject code, int index) {

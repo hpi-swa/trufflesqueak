@@ -5,8 +5,9 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.LocalReturn;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 
-public class ReturnConstantNode extends ReturnNode {
+public class ReturnConstantNode extends AbstractBytecodeNode {
     @CompilationFinal private final Object constant;
 
     public ReturnConstantNode(CompiledCodeObject code, int index, Object obj) {
