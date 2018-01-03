@@ -26,8 +26,8 @@ public class TopLevelContextNode extends RootNode {
 
     public static TopLevelContextNode create(SqueakLanguage language, Object receiver, CompiledCodeObject code, BaseSqueakObject senderContext) {
         ContextObject newContext = ContextObject.createWriteableContextObject(code.image, code.frameSize());
-        newContext.atput0(CONTEXT.INSTRUCTION_POINTER, code.getBytecodeOffset() + 1);
         newContext.atput0(CONTEXT.METHOD, code);
+        newContext.atput0(CONTEXT.INSTRUCTION_POINTER, newContext.getCodeObject().getBytecodeOffset() + 1);
         newContext.atput0(CONTEXT.RECEIVER, receiver);
         newContext.atput0(CONTEXT.SENDER, senderContext);
         // newContext.atput0(CONTEXT.STACKPOINTER, 0); // not needed
@@ -45,7 +45,7 @@ public class TopLevelContextNode extends RootNode {
         try {
             executeLoop();
         } catch (TopLevelReturn e) {
-            return e.returnValue;
+            return e.getReturnValue();
         } catch (SqueakQuit e) {
             System.out.println("Squeak is quitting...");
             System.exit(e.getExitCode());
@@ -61,9 +61,22 @@ public class TopLevelContextNode extends RootNode {
             try {
                 RootCallTarget target = Truffle.getRuntime().createCallTarget(new MethodContextNode(image.getLanguage(), activeContext, activeContext.getCodeObject()));
                 target.call(activeContext.getFrameArguments());
-            } catch (ProcessSwitch e) {
-                activeContext = e.getNewContext();
+            } catch (ProcessSwitch ps) {
+                activeContext = ps.getNewContext();
+// } catch (LocalReturn lr) {
+// activeContext = unwindContextChainLocal(activeContext, lr.getReturnValue);
+// } catch (NonLocalReturn nlr) {
+// throw new RuntimeException("Not implemented yet"); // TODO: support NonLocalReturn
+// // activeContext = unwindContextChainNonLocal(activeContext, nlr.returnValue);
             }
         }
+    }
+
+    private ContextObject unwindContextChainLocal(ContextObject context, Object result) {
+        if (context.at0(CONTEXT.SENDER) == image.nil) {
+            throw new TopLevelReturn(result);
+        }
+        context.push(result);
+        return context;
     }
 }

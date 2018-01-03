@@ -54,18 +54,22 @@ public class ContextObject extends BaseSqueakObject {
     }
 
     @Override
-    public Object at0(int l) {
-        return actualContext.at0(l);
+    public Object at0(int index) {
+        return actualContext.at0(index);
     }
 
     @Override
-    public void atput0(int idx, Object object) {
+    public void atput0(int index, Object value) {
         try {
-            actualContext.atContextPut0(idx, object);
+            actualContext.atContextPut0(index, value);
         } catch (NonVirtualContextModification e) {
             beWriteable();
-            actualContext.atput0(idx, object);
+            actualContext.atput0(index, value);
         }
+    }
+
+    public void push(Object result) {
+        // TODO Push result
     }
 
     private void beWriteable() {
@@ -120,5 +124,25 @@ public class ContextObject extends BaseSqueakObject {
             arguments[1 + i] = actualContext.at0(CONTEXT.TEMP_FRAME_START + i);
         }
         return arguments;
+    }
+
+    private void markReturned() {
+        beWriteable();
+        actualContext.atput0(CONTEXT.SENDER, image.nil);
+    }
+
+    public void activateUnwindContext() {
+        Object method = at0(CONTEXT.CLOSURE);
+        if (method != image.nil) {
+            markReturned();
+        }
+        // The first temp is executed flag for both #ensure: and #ifCurtailed:
+        if (at0(CONTEXT.TEMP_FRAME_START + 1) == image.nil) {
+            atput0(CONTEXT.TEMP_FRAME_START + 1, true); // mark unwound
+            push(at0(CONTEXT.TEMP_FRAME_START)); // push the first argument
+            // TODO: primClosureValue and check for NonLocalReturns
+            markReturned();
+        }
+
     }
 }

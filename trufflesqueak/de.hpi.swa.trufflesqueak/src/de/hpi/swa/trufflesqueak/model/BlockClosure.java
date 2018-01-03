@@ -3,6 +3,7 @@ package de.hpi.swa.trufflesqueak.model;
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
@@ -21,8 +22,10 @@ public class BlockClosure extends BaseSqueakObject {
     @CompilationFinal private Object receiver;
     @CompilationFinal(dimensions = 1) private Object[] copied;
     @CompilationFinal private Object frameMarker;
-    @CompilationFinal private Object context;
+    @CompilationFinal private ContextObject context;
     @CompilationFinal private CompiledBlockObject block;
+    @CompilationFinal private int pc = -1;
+    @CompilationFinal private int numArgs = -1;
 
     public BlockClosure(SqueakImageContext image) {
         super(image);
@@ -51,7 +54,8 @@ public class BlockClosure extends BaseSqueakObject {
         }
     }
 
-    private Object getOrPrepareContext() {
+    @TruffleBoundary
+    private ContextObject getOrPrepareContext() {
         if (context == null) {
             Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Object>() {
                 @Override
@@ -74,15 +78,29 @@ public class BlockClosure extends BaseSqueakObject {
         return context;
     }
 
+    private int getPC() {
+        if (pc == -1) {
+            pc = getOrPrepareContext().getCodeObject().getBytecodeOffset() + 1;
+        }
+        return pc;
+    }
+
+    private int getNumArgs() {
+        if (numArgs == -1) {
+            numArgs = getOrPrepareContext().getCodeObject().getNumArgs();
+        }
+        return numArgs;
+    }
+
     @Override
     public Object at0(int i) {
         switch (i) {
             case BLOCK_CLOSURE.OUTER_CONTEXT:
                 return getOrPrepareContext();
             case BLOCK_CLOSURE.INITIAL_PC:
-                throw new RuntimeException("Not yet implemented"); // TODO: FIXME
+                return getPC();
             case BLOCK_CLOSURE.ARGUMENT_COUNT:
-                return block.getNumArgs();
+                return getNumArgs();
             default:
                 return copied[i - BLOCK_CLOSURE.FIRST_COPIED_VALUE];
         }
@@ -92,13 +110,13 @@ public class BlockClosure extends BaseSqueakObject {
     public void atput0(int i, Object obj) {
         switch (i) {
             case BLOCK_CLOSURE.OUTER_CONTEXT:
-                context = obj;
+                context = (ContextObject) obj;
                 break;
             case BLOCK_CLOSURE.INITIAL_PC:
-                // TODO
+                pc = (int) obj;
                 break;
             case BLOCK_CLOSURE.ARGUMENT_COUNT:
-                // TODO
+                numArgs = (int) obj;
                 break;
             default:
                 copied[i - BLOCK_CLOSURE.FIRST_COPIED_VALUE] = obj;
