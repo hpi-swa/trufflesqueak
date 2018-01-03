@@ -27,9 +27,10 @@ import de.hpi.swa.trufflesqueak.model.SpecialSelector;
 import de.hpi.swa.trufflesqueak.nodes.TopLevelContextNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ObjectGraph;
 import de.hpi.swa.trufflesqueak.util.Constants.SPECIAL_OBJECT_INDEX;
-import de.hpi.swa.trufflesqueak.util.OSDetector;
+import de.hpi.swa.trufflesqueak.util.KnownClasses.CONTEXT;
 import de.hpi.swa.trufflesqueak.util.KnownClasses.POINT;
 import de.hpi.swa.trufflesqueak.util.KnownClasses.PROCESS;
+import de.hpi.swa.trufflesqueak.util.OSDetector;
 import de.hpi.swa.trufflesqueak.util.ProcessManager;
 import de.hpi.swa.trufflesqueak.util.SqueakImageReader;
 
@@ -134,6 +135,7 @@ public class SqueakImageContext {
         PointersObject activeProcess = process.activeProcess();
         ContextObject activeContext = (ContextObject) activeProcess.at0(PROCESS.SUSPENDED_CONTEXT);
         activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, nil);
+        output.println(String.format("Resuming active context for %s...", activeContext.at0(CONTEXT.METHOD)));
         return Truffle.getRuntime().createCallTarget(TopLevelContextNode.create(language, activeContext));
     }
 
@@ -142,7 +144,7 @@ public class SqueakImageContext {
         String selector = config.getSelector();
         ClassObject receiverClass = receiver instanceof Integer ? smallIntegerClass : nilClass;
         CompiledCodeObject lookupResult = (CompiledCodeObject) receiverClass.lookup(selector);
-        output.println(String.format("Starting to evaluate %s >> %s:\n", receiver, selector));
+        output.println(String.format("Starting to evaluate %s >> %s...", receiver, selector));
         return Truffle.getRuntime().createCallTarget(TopLevelContextNode.create(getLanguage(), receiver, lookupResult, nil));
     }
 
