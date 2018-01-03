@@ -17,7 +17,6 @@ import de.hpi.swa.trufflesqueak.io.NullDisplay;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.LargeInteger;
 import de.hpi.swa.trufflesqueak.model.ListObject;
@@ -143,13 +142,6 @@ public class SqueakImageContext {
         String selector = config.getSelector();
         ClassObject receiverClass = receiver instanceof Integer ? smallIntegerClass : nilClass;
         CompiledCodeObject lookupResult = (CompiledCodeObject) receiverClass.lookup(selector);
-        // Push literal 1, send literal 2 selector, return top
-        byte[] bytes = new byte[]{32, (byte) 209, 124};
-        Object[] literals = new Object[]{
-                        0, receiver, lookupResult.getCompiledInSelector(),
-                        lookupResult.getCompiledInClass()
-        };
-        CompiledCodeObject code = new CompiledMethodObject(this, bytes, literals);
         output.println(String.format("Starting to evaluate %s >> %s:\n", receiver, selector));
         return Truffle.getRuntime().createCallTarget(TopLevelContextNode.create(getLanguage(), receiver, lookupResult, nil));
     }
