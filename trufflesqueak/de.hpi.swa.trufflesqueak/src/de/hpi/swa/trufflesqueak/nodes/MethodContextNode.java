@@ -19,8 +19,8 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.FrameMarker;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.ConditionalJumpNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.UnconditionalJumpNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
 import de.hpi.swa.trufflesqueak.util.KnownClasses.CONTEXT;
 import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 

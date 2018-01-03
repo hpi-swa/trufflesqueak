@@ -4,12 +4,12 @@ import org.junit.Test;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.DupNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.PopNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.jump.ConditionalJumpNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.push.PushConstantNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.returns.ReturnReceiverNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.send.EagerSendSpecialSelectorNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.DupNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.PopNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushConstantNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodes.ReturnReceiverNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.EagerSendSpecialSelectorNode;
 import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
 public class SqueakBytecodeDecoderTest extends AbstractSqueakTestCase {

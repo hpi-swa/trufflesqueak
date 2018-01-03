@@ -13,7 +13,7 @@ import de.hpi.swa.trufflesqueak.model.LargeInteger;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.returns.ReturnReceiverNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodes.ReturnReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegersFactory.PrimNormalizeNodeFactory;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;

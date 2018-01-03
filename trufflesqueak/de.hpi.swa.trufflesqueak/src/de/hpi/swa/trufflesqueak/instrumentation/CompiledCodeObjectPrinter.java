@@ -2,8 +2,8 @@ package de.hpi.swa.trufflesqueak.instrumentation;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.push.PushClosureNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.returns.ReturnTopFromBlockNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushClosureNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodes.ReturnTopFromBlockNode;
 import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
 public class CompiledCodeObjectPrinter {
