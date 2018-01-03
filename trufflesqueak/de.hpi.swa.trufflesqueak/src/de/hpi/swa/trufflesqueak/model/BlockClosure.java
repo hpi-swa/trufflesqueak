@@ -12,6 +12,7 @@ import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameUtil;
 
+import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.util.KnownClasses.BLOCK_CLOSURE;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
@@ -22,6 +23,10 @@ public class BlockClosure extends BaseSqueakObject {
     @CompilationFinal private Object frameMarker;
     @CompilationFinal private Object context;
     @CompilationFinal private CompiledBlockObject block;
+
+    public BlockClosure(SqueakImageContext image) {
+        super(image);
+    }
 
     public BlockClosure(Object frameId, CompiledBlockObject compiledBlock, Object receiver, Object[] copied) {
         super(compiledBlock.image);
@@ -38,7 +43,12 @@ public class BlockClosure extends BaseSqueakObject {
 
     @Override
     public void fillin(SqueakImageChunk chunk) {
-        // FIXME
+        Object[] pointers = chunk.getPointers();
+        assert pointers.length >= BLOCK_CLOSURE.FIRST_COPIED_VALUE;
+        copied = new Object[pointers.length - BLOCK_CLOSURE.FIRST_COPIED_VALUE];
+        for (int i = 0; i < pointers.length; i++) {
+            atput0(i, pointers[i]);
+        }
     }
 
     private Object getOrPrepareContext() {
@@ -85,9 +95,11 @@ public class BlockClosure extends BaseSqueakObject {
                 context = obj;
                 break;
             case BLOCK_CLOSURE.INITIAL_PC:
-                throw new PrimitiveFailed();
+                // TODO
+                break;
             case BLOCK_CLOSURE.ARGUMENT_COUNT:
-                throw new PrimitiveFailed();
+                // TODO
+                break;
             default:
                 copied[i - BLOCK_CLOSURE.FIRST_COPIED_VALUE] = obj;
         }

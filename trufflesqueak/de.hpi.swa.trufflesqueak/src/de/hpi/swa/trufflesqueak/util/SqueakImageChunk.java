@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Vector;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.model.BlockClosure;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
@@ -104,6 +105,8 @@ public class SqueakImageChunk {
             } else if (format == 3) {
                 if (this.getSqClass() == image.methodContextClass) {
                     object = ContextObject.createWriteableContextObject(image);
+                } else if (this.getSqClass() == image.blockClosureClass) {
+                    object = new BlockClosure(image);
                 } else {
                     // fixed and indexable fields
                     object = new ListObject(image);
