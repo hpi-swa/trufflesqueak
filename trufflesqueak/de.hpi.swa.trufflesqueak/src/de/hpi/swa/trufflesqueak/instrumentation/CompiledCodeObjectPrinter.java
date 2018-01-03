@@ -15,8 +15,7 @@ public class CompiledCodeObjectPrinter {
         byte[] bytes = code.getBytes();
         // TODO: is a new BytecodeSequenceNode needed here?
         AbstractBytecodeNode[] bytecodeNodes = new SqueakBytecodeDecoder(code).decode();
-        for (int i = 0; i < bytecodeNodes.length; i++) {
-            AbstractBytecodeNode node = bytecodeNodes[i];
+        for (AbstractBytecodeNode node : bytecodeNodes) {
             if (node == null) {
                 continue;
             }
@@ -26,8 +25,8 @@ public class CompiledCodeObjectPrinter {
             }
             int numBytecodes = node.getNumBytecodes();
             sb.append("<");
-            for (int j = i; j < i + numBytecodes; j++) {
-                if (j > i) {
+            for (int j = node.getIndex(); j < node.getIndex() + numBytecodes; j++) {
+                if (j > node.getIndex()) {
                     sb.append(" ");
                 }
                 if (j < bytes.length) {
@@ -36,7 +35,7 @@ public class CompiledCodeObjectPrinter {
             }
             sb.append("> ");
             sb.append(node.toString());
-            if (i < bytecodeNodes.length - 1) {
+            if (node.getIndex() < bytecodeNodes.length - 1) {
                 sb.append("\n");
             }
             if (node.getClass().equals(PushClosureNode.class)) {

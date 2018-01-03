@@ -14,7 +14,7 @@ public abstract class AbstractBytecodeNode extends SqueakNodeWithCode {
     @CompilationFinal protected final int numBytecodes;
     @CompilationFinal protected final int index;
     @CompilationFinal private SourceSection sourceSection;
-    public int lineNumber = 1;
+    @CompilationFinal private int lineNumber = 1;
 
     protected AbstractBytecodeNode(AbstractBytecodeNode original) {
         super(original.code);
@@ -23,14 +23,19 @@ public abstract class AbstractBytecodeNode extends SqueakNodeWithCode {
         setSourceSection(original.getSourceSection());
     }
 
+    public AbstractBytecodeNode(CompiledCodeObject code, int index) {
+        this(code, index, 1);
+    }
+
     public AbstractBytecodeNode(CompiledCodeObject code, int index, int numBytecodes) {
         super(code);
         this.index = index;
         this.numBytecodes = numBytecodes;
     }
 
-    public AbstractBytecodeNode(CompiledCodeObject code, int index) {
-        this(code, index, 1);
+    @Override
+    public Object executeGeneric(VirtualFrame frame) {
+        throw new RuntimeException("Should call executeVoid instead");
     }
 
     public int executeInt(VirtualFrame frame) {
@@ -43,27 +48,12 @@ public abstract class AbstractBytecodeNode extends SqueakNodeWithCode {
 
     public abstract void executeVoid(VirtualFrame frame);
 
-    @Override
-    public Object executeGeneric(VirtualFrame frame) {
-        throw new RuntimeException("Should call executeVoid instead");
-    }
-
-    public int getNumBytecodes() {
-        return numBytecodes;
-    }
-
     public int getIndex() {
         return index;
     }
 
-    @Override
-    protected boolean isTaggedWith(Class<?> tag) {
-        return tag == StandardTags.StatementTag.class;
-    }
-
-    @Override
-    public void setSourceSection(SourceSection section) {
-        sourceSection = section;
+    public int getNumBytecodes() {
+        return numBytecodes;
     }
 
     @Override
@@ -72,5 +62,19 @@ public abstract class AbstractBytecodeNode extends SqueakNodeWithCode {
             sourceSection = code.getSource().createSection(lineNumber);
         }
         return sourceSection;
+    }
+
+    @Override
+    protected boolean isTaggedWith(Class<?> tag) {
+        return tag == StandardTags.StatementTag.class;
+    }
+
+    public void setLineNumber(int lineNumber) {
+        this.lineNumber = lineNumber;
+    }
+
+    @Override
+    public void setSourceSection(SourceSection section) {
+        sourceSection = section;
     }
 }

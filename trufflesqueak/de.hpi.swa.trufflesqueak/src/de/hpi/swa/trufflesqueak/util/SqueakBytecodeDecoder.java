@@ -51,7 +51,7 @@ public class SqueakBytecodeDecoder {
         while (currentIndex < bc.length) {
             int index = currentIndex;
             nodes[index] = decodeNextByte();
-            nodes[index].lineNumber = i;
+            nodes[index].setLineNumber(i);
             i++;
         }
         return nodes;
