@@ -33,7 +33,7 @@ public class SqueakImageReader {
     private int specialObjectsPointer;
     private int lastHash;
     private int lastWindowSize;
-    private int wasFullscreen;
+    private int headerFlags;
     private int extraVMMemory;
     private short numStackPages;
     private short cogCodeSize;
@@ -46,7 +46,12 @@ public class SqueakImageReader {
     HashMap<Integer, SqueakImageChunk> chunktable;
     private PrintWriter output;
 
-    public SqueakImageReader(FileInputStream inputStream, PrintWriter printWriter) throws FileNotFoundException {
+    public static void readImage(SqueakImageContext squeakImageContext, FileInputStream inputStream) throws IOException {
+        SqueakImageReader instance = new SqueakImageReader(inputStream, squeakImageContext.getOutput());
+        instance.readImage(squeakImageContext);
+    }
+
+    private SqueakImageReader(FileInputStream inputStream, PrintWriter printWriter) throws FileNotFoundException {
         shortBuf.order(ByteOrder.nativeOrder());
         intBuf.order(ByteOrder.nativeOrder());
         longBuf.order(ByteOrder.nativeOrder());
@@ -55,6 +60,12 @@ public class SqueakImageReader {
         this.position = 0;
         this.chunklist = new Vector<>();
         this.chunktable = new HashMap<>();
+    }
+
+    private void readImage(SqueakImageContext image) throws IOException {
+        readHeader(image);
+        readBody(image);
+        initObjects(image);
     }
 
     private void nextInto(ByteBuffer buf) throws IOException {
@@ -86,14 +97,15 @@ public class SqueakImageReader {
         return version;
     }
 
-    private void readBaseHeader() throws IOException {
+    private void readBaseHeader(SqueakImageContext image) throws IOException {
         headerSize = nextInt();
         endOfMemory = nextInt();
         oldBaseAddress = nextInt();
         specialObjectsPointer = nextInt();
         lastHash = nextInt();
         lastWindowSize = nextInt();
-        wasFullscreen = nextInt();
+        headerFlags = nextInt();
+        image.flags.initialize(headerFlags);
         extraVMMemory = nextInt();
     }
 
@@ -107,9 +119,9 @@ public class SqueakImageReader {
         freeOldSpace = nextInt();
     }
 
-    private void readHeader() throws IOException {
+    private void readHeader(SqueakImageContext image) throws IOException {
         readVersion();
-        readBaseHeader();
+        readBaseHeader(image);
         readSpurHeader();
         skipToBody();
     }
@@ -312,16 +324,5 @@ public class SqueakImageReader {
 
     private static int minorClassIndexOf(int classid) {
         return classid & ((1 << 10) - 1);
-    }
-
-    private void readImage(SqueakImageContext image) throws IOException {
-        readHeader();
-        readBody(image);
-        initObjects(image);
-    }
-
-    public static void readImage(SqueakImageContext squeakImageContext, FileInputStream inputStream) throws IOException {
-        SqueakImageReader instance = new SqueakImageReader(inputStream, squeakImageContext.getOutput());
-        instance.readImage(squeakImageContext);
     }
 }

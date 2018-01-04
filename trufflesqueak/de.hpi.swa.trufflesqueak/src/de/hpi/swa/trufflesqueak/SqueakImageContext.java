@@ -32,6 +32,7 @@ import de.hpi.swa.trufflesqueak.util.KnownClasses.POINT;
 import de.hpi.swa.trufflesqueak.util.KnownClasses.PROCESS;
 import de.hpi.swa.trufflesqueak.util.OSDetector;
 import de.hpi.swa.trufflesqueak.util.ProcessManager;
+import de.hpi.swa.trufflesqueak.util.SqueakImageFlags;
 import de.hpi.swa.trufflesqueak.util.SqueakImageReader;
 
 public class SqueakImageContext {
@@ -110,6 +111,7 @@ public class SqueakImageContext {
     public final ObjectGraph objects = new ObjectGraph(this);
     public final OSDetector os = new OSDetector();
     public final ProcessManager process = new ProcessManager(this);
+    public final SqueakImageFlags flags = new SqueakImageFlags();
 
     public SqueakImageContext(SqueakLanguage squeakLanguage, SqueakLanguage.Env environ,
                     PrintWriter out, PrintWriter err) {

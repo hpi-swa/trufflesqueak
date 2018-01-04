@@ -121,7 +121,6 @@ public final class Display {
 
             public void mouseDragged(MouseEvent e) {
                 // TODO Auto-generated method stub
-
             }
 
             public void mouseMoved(MouseEvent e) {
@@ -269,5 +268,4 @@ public final class Display {
         public void close() {
         }
     }
-
 }
