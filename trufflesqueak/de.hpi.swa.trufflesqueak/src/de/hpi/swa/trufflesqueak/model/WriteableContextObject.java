@@ -5,6 +5,7 @@ import java.util.Arrays;
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 
 public class WriteableContextObject extends AbstractPointersObject implements ActualContextObject {
+
     public WriteableContextObject(SqueakImageContext img) {
         super(img);
     }

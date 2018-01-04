@@ -68,10 +68,6 @@ public class ContextObject extends BaseSqueakObject {
         }
     }
 
-    public void push(Object result) {
-        // TODO Push result
-    }
-
     private void beWriteable() {
         if (actualContext instanceof ReadOnlyContextObject) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -132,17 +128,38 @@ public class ContextObject extends BaseSqueakObject {
     }
 
     public void activateUnwindContext() {
-        Object method = at0(CONTEXT.CLOSURE);
-        if (method != image.nil) {
+        if (isClosureContext() || !isBlockClosure()) {
             markReturned();
+            return;
         }
         // The first temp is executed flag for both #ensure: and #ifCurtailed:
         if (at0(CONTEXT.TEMP_FRAME_START + 1) == image.nil) {
             atput0(CONTEXT.TEMP_FRAME_START + 1, true); // mark unwound
-            push(at0(CONTEXT.TEMP_FRAME_START)); // push the first argument
-            // TODO: primClosureValue and check for NonLocalReturns
+// push(at0(CONTEXT.TEMP_FRAME_START)); // push the first argument
+// TODO: primClosureValue and check for NonLocalReturns
             markReturned();
         }
+    }
 
+    private boolean isClosureContext() {
+        return at0(CONTEXT.CLOSURE) != image.nil;
+    }
+
+    private boolean isBlockClosure() {
+        return at0(CONTEXT.METHOD) instanceof BlockClosure;
+    }
+
+    public boolean isDirty() {
+        return false; // TODO: implement
+    }
+
+    public ContextObject getSender() {
+        Object sender = actualContext.at0(CONTEXT.SENDER);
+        if (sender instanceof ContextObject) {
+            return (ContextObject) sender;
+        } else if (sender instanceof NilObject) {
+            return null;
+        }
+        throw new RuntimeException("Unexpected sender: " + sender);
     }
 }

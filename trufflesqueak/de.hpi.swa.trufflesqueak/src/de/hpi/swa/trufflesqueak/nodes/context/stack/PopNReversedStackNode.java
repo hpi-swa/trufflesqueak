@@ -20,6 +20,7 @@ public class PopNReversedStackNode extends AbstractStackNode {
     @ExplodeLoop
     public Object[] execute(VirtualFrame frame) {
         int sp = stackPointer(frame);
+        assert sp - numPop >= -1;
         Object[] result = new Object[numPop];
         for (int i = 0; i < numPop; i++) {
             result[numPop - 1 - i] = readNode.execute(frame, sp - i);

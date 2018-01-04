@@ -146,8 +146,16 @@ public class SqueakImageContext {
         String selector = config.getSelector();
         ClassObject receiverClass = receiver instanceof Integer ? smallIntegerClass : nilClass;
         CompiledCodeObject lookupResult = (CompiledCodeObject) receiverClass.lookup(selector);
+
+        ContextObject customContext = ContextObject.createWriteableContextObject(this, lookupResult.frameSize());
+        customContext.atput0(CONTEXT.METHOD, lookupResult);
+        customContext.atput0(CONTEXT.INSTRUCTION_POINTER, customContext.getCodeObject().getBytecodeOffset() + 1);
+        customContext.atput0(CONTEXT.RECEIVER, receiver);
+        customContext.atput0(CONTEXT.SENDER, nil);
+        // newContext.atput0(CONTEXT.STACKPOINTER, 0); // not needed
+
         output.println(String.format("Starting to evaluate %s >> %s...", receiver, selector));
-        return Truffle.getRuntime().createCallTarget(TopLevelContextNode.create(getLanguage(), receiver, lookupResult, nil));
+        return Truffle.getRuntime().createCallTarget(TopLevelContextNode.create(getLanguage(), customContext));
     }
 
     public void fillInFrom(FileInputStream inputStream) throws IOException {

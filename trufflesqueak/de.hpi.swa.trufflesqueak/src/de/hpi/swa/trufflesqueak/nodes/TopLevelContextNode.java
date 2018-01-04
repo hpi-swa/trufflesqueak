@@ -11,39 +11,30 @@ import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakQuit;
 import de.hpi.swa.trufflesqueak.exceptions.TopLevelReturn;
-import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
-import de.hpi.swa.trufflesqueak.util.KnownClasses.CONTEXT;
+import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
 
 public class TopLevelContextNode extends RootNode {
     @CompilationFinal private final SqueakImageContext image;
     @CompilationFinal private final ContextObject initialContext;
+    @Child private PushStackNode pushStackNode;
 
     public static TopLevelContextNode create(SqueakLanguage language, ContextObject context) {
         return new TopLevelContextNode(language, context, context.getCodeObject());
-    }
-
-    public static TopLevelContextNode create(SqueakLanguage language, Object receiver, CompiledCodeObject code, BaseSqueakObject senderContext) {
-        ContextObject newContext = ContextObject.createWriteableContextObject(code.image, code.frameSize());
-        newContext.atput0(CONTEXT.METHOD, code);
-        newContext.atput0(CONTEXT.INSTRUCTION_POINTER, newContext.getCodeObject().getBytecodeOffset() + 1);
-        newContext.atput0(CONTEXT.RECEIVER, receiver);
-        newContext.atput0(CONTEXT.SENDER, senderContext);
-        // newContext.atput0(CONTEXT.STACKPOINTER, 0); // not needed
-        return new TopLevelContextNode(language, newContext, code);
     }
 
     private TopLevelContextNode(SqueakLanguage language, ContextObject context, CompiledCodeObject code) {
         super(language, code.getFrameDescriptor());
         this.image = code.image;
         this.initialContext = context;
+        pushStackNode = new PushStackNode(code);
     }
 
     @Override
     public Object execute(VirtualFrame frame) {
         try {
-            executeLoop();
+            executeLoop(frame);
         } catch (TopLevelReturn e) {
             return e.getReturnValue();
         } catch (SqueakQuit e) {
@@ -55,28 +46,40 @@ public class TopLevelContextNode extends RootNode {
         throw new RuntimeException("Top level context did not return");
     }
 
-    public void executeLoop() {
+    public void executeLoop(VirtualFrame frame) {
         ContextObject activeContext = initialContext;
         while (true) {
+            ContextObject sender = activeContext.getSender();
             try {
                 RootCallTarget target = Truffle.getRuntime().createCallTarget(new MethodContextNode(image.getLanguage(), activeContext, activeContext.getCodeObject()));
-                target.call(activeContext.getFrameArguments());
+                Object result = target.call(activeContext.getFrameArguments());
+                activeContext = unwindContextChain(frame, sender, activeContext, result);
             } catch (ProcessSwitch ps) {
                 activeContext = ps.getNewContext();
-// } catch (LocalReturn lr) {
-// activeContext = unwindContextChainLocal(activeContext, lr.getReturnValue);
 // } catch (NonLocalReturn nlr) {
-// throw new RuntimeException("Not implemented yet"); // TODO: support NonLocalReturn
-// // activeContext = unwindContextChainNonLocal(activeContext, nlr.returnValue);
+// ContextObject target = nlr.hasArrivedAtTargetContext() ? activeContext : nlr.getTargetContext();
+// activeContext = unwindContextChain(frame, sender, target, nlr.getReturnValue());
+// } catch (NonVirtualReturn nvr) {
+// activeContext = unwindContextChain(frame, nvr.getCurrentContext(), nvr.getTargetContext(),
+// nvr.getReturnValue());
             }
         }
     }
 
-    private ContextObject unwindContextChainLocal(ContextObject context, Object result) {
-        if (context.at0(CONTEXT.SENDER) == image.nil) {
-            throw new TopLevelReturn(result);
+    private ContextObject unwindContextChain(VirtualFrame frame, ContextObject startContext, ContextObject targetContext, Object returnValue) {
+        if (startContext == null) {
+            throw new TopLevelReturn(returnValue);
         }
-        context.push(result);
+        ContextObject context = startContext;
+        while (context != targetContext) {
+            if (context == null) {
+                throw new RuntimeException("Unable to unwind context chain");
+            }
+            ContextObject sender = context.getSender();
+            context.activateUnwindContext();
+            context = sender;
+        }
+        pushStackNode.executeWrite(frame, returnValue);
         return context;
     }
 }

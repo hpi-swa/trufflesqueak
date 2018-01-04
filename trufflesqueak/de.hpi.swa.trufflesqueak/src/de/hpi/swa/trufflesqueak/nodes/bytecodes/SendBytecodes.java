@@ -93,9 +93,11 @@ public final class SendBytecodes {
             }
             return getFallbackNode(code, index, specialSelector);
         }
+
         private static SendSelectorNode getFallbackNode(CompiledCodeObject code, int index, SpecialSelector specialSelector) {
             return new SendSelectorNode(code, index, 1, specialSelector, specialSelector.getNumArguments());
         }
+
         @CompilationFinal private final SpecialSelector specialSelector;
 
         @Child private AbstractPrimitiveNode primitiveNode;

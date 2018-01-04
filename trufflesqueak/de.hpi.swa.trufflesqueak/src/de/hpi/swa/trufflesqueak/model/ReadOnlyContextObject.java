@@ -30,7 +30,7 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
     @CompilationFinal private final FrameSlot markerSlot;
     @CompilationFinal private final FrameDescriptor frameDescriptor;
     @CompilationFinal private Object receiver;
-    @CompilationFinal private Object sender;
+    @CompilationFinal private ContextObject sender;
     @CompilationFinal private int pc = -1;
 
     public ReadOnlyContextObject(SqueakImageContext img, MaterializedFrame materializedFrame) {
@@ -148,6 +148,9 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
         switch (i) {
             case CONTEXT.RECEIVER:
                 receiver = obj;
+                break;
+            case CONTEXT.SENDER:
+                sender = (ContextObject) obj;
                 break;
             default:
                 setTemp(i - CONTEXT.TEMP_FRAME_START, obj);

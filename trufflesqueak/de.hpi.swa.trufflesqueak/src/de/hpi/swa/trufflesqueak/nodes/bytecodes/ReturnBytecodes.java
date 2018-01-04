@@ -4,8 +4,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.LocalReturn;
-import de.hpi.swa.trufflesqueak.exceptions.NonLocalReturn;
-import de.hpi.swa.trufflesqueak.model.BlockClosure;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PopStackNode;
@@ -79,7 +77,9 @@ public final class ReturnBytecodes {
             if (getClosure(frame) == code.image.nil) {
                 super.executeVoid(frame);
             } else {
-                throw new NonLocalReturn(popNode.executeGeneric(frame), ((BlockClosure) getClosure(frame)).getFrameMarker());
+                throw new RuntimeException("Not yet implemented");
+                // throw new NonLocalReturn(popNode.executeGeneric(frame), ((BlockClosure)
+                // getClosure(frame)).getFrameMarker());
             }
         }
 

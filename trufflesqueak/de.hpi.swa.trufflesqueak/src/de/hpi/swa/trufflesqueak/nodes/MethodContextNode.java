@@ -3,7 +3,6 @@ package de.hpi.swa.trufflesqueak.nodes;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
@@ -54,30 +53,33 @@ public class MethodContextNode extends RootNode {
     public Object execute(VirtualFrame frame) {
         enterFrame(frame);
         try {
-            return executeBytecode(frame);
-        } catch (LocalReturn e) {
-            return e.getReturnValue();
-// context.activateUnwindContext();
-// throw e;
-        } catch (NonLocalReturn e) {
-            Object targetMarker = e.getTarget();
-            Object frameMarker = FrameUtil.getObjectSafe(frame, code.markerSlot);
-            if (targetMarker == frameMarker) {
-                return e.getReturnValue();
-            } else {
-                throw e;
+            executeBytecode(frame);
+            CompilerDirectives.transferToInterpreter();
+            throw new RuntimeException("Method did not return");
+        } catch (LocalReturn lr) {
+            if (context.isDirty()) {
+                ContextObject sender = context.getSender();
+                throw new NonVirtualReturn(lr.getReturnValue(), sender, sender);
             }
-        } catch (NonVirtualReturn e) {
-            // TODO: unwind context chain towards e.targetContext
+            context.activateUnwindContext();
+            return lr.getReturnValue();
+        } catch (NonLocalReturn nlr) {
+            if (context.isDirty()) {
+                throw new NonVirtualReturn(nlr.getReturnValue(), nlr.getTargetContext(), context.getSender());
+            }
+            context.activateUnwindContext();
+            if (nlr.getTargetContext() == context.getSender()) {
+                nlr.setArrivedAtTargetContext();
+            }
+            throw nlr;
         }
-        throw new RuntimeException("unimplemented exit from activation");
     }
 
     /*
      * Inspired by Sulong's LLVMDispatchBasicBlockNode (https://goo.gl/4LMzfX).
      */
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.MERGE_EXPLODE)
-    protected Object executeBytecode(VirtualFrame frame) {
+    protected void executeBytecode(VirtualFrame frame) {
         CompilerAsserts.compilationConstant(bytecodeNodes.length);
         int pc = initialPC();
         int backJumpCounter = 0;
@@ -127,8 +129,6 @@ public class MethodContextNode extends RootNode {
             assert backJumpCounter >= 0;
             LoopNode.reportLoopCount(this, backJumpCounter);
         }
-        CompilerDirectives.transferToInterpreter();
-        throw new RuntimeException("Method did not return");
     }
 
     protected int initialPC() {
@@ -139,15 +139,6 @@ public class MethodContextNode extends RootNode {
     protected int initialSP() {
         // no need to read context.at0(CONTEXT.STACKPOINTER)
         return code.getNumTemps() - 1;
-    }
-
-    private ContextObject getSender() {
-        Object sender = context.at0(CONTEXT.SENDER);
-        if (sender instanceof ContextObject) {
-            return (ContextObject) sender;
-        } else {
-            throw new RuntimeException("sender chain ended");
-        }
     }
 
     @Override

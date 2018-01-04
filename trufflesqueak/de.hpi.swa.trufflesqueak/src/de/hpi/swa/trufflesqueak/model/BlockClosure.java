@@ -22,7 +22,7 @@ public class BlockClosure extends BaseSqueakObject {
     @CompilationFinal private Object receiver;
     @CompilationFinal(dimensions = 1) private Object[] copied;
     @CompilationFinal private Object frameMarker;
-    @CompilationFinal private ContextObject context;
+    @CompilationFinal private ContextObject outerContext;
     @CompilationFinal private CompiledBlockObject block;
     @CompilationFinal private int pc = -1;
     @CompilationFinal private int numArgs = -1;
@@ -41,7 +41,7 @@ public class BlockClosure extends BaseSqueakObject {
 
     private BlockClosure(BlockClosure original) {
         this(original.frameMarker, original.block, original.receiver, original.copied);
-        context = original.context;
+        outerContext = original.outerContext;
     }
 
     @Override
@@ -56,7 +56,7 @@ public class BlockClosure extends BaseSqueakObject {
 
     @TruffleBoundary
     private ContextObject getOrPrepareContext() {
-        if (context == null) {
+        if (outerContext == null) {
             Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Object>() {
                 @Override
                 public Object visitFrame(FrameInstance frameInstance) {
@@ -65,17 +65,17 @@ public class BlockClosure extends BaseSqueakObject {
                     FrameSlot markerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.MARKER);
                     Object marker = FrameUtil.getObjectSafe(frame, markerSlot);
                     if (marker == frameMarker) {
-                        context = ContextObject.createReadOnlyContextObject(image, frame);
-                        return context;
+                        outerContext = ContextObject.createReadOnlyContextObject(image, frame);
+                        return outerContext;
                     }
                     return null;
                 }
             });
-            if (context == null) {
+            if (outerContext == null) {
                 throw new RuntimeException("Unable to find context");
             }
         }
-        return context;
+        return outerContext;
     }
 
     private int getPC() {
@@ -110,7 +110,7 @@ public class BlockClosure extends BaseSqueakObject {
     public void atput0(int i, Object obj) {
         switch (i) {
             case BLOCK_CLOSURE.OUTER_CONTEXT:
-                context = (ContextObject) obj;
+                outerContext = (ContextObject) obj;
                 break;
             case BLOCK_CLOSURE.INITIAL_PC:
                 pc = (int) obj;
@@ -209,7 +209,7 @@ public class BlockClosure extends BaseSqueakObject {
             result[i] = copied[i];
         }
         result[copied.length] = receiver;
-        result[copied.length + 1] = context;
+        result[copied.length + 1] = outerContext;
         return result;
     }
 }

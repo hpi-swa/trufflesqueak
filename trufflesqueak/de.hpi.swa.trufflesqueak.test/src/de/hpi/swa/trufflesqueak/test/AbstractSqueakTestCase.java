@@ -11,7 +11,7 @@ import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
-import de.hpi.swa.trufflesqueak.nodes.MethodContextNode;
+import de.hpi.swa.trufflesqueak.nodes.TopLevelContextNode;
 import de.hpi.swa.trufflesqueak.util.KnownClasses.CONTEXT;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 import junit.framework.TestCase;
@@ -103,22 +103,30 @@ public abstract class AbstractSqueakTestCase extends TestCase {
     }
 
     public Object runMethod(CompiledCodeObject code, Object receiver, Object... arguments) {
-        VirtualFrame frame = createTestFrame(code, receiver, arguments);
+        VirtualFrame frame = createTestFrame(code);
         Object result = null;
         try {
-            result = createContext(code).execute(frame);
+            result = createContext(code, receiver, arguments).execute(frame);
         } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
             assertTrue("broken test", false);
         }
         return result;
     }
 
-    protected MethodContextNode createContext(CompiledCodeObject code) {
+    protected TopLevelContextNode createContext(CompiledCodeObject code, Object receiver) {
+        return createContext(code, receiver, new Object[0]);
+    }
+
+    protected TopLevelContextNode createContext(CompiledCodeObject code, Object receiver, Object[] arguments) {
         ContextObject testContext = ContextObject.createWriteableContextObject(code.image, code.frameSize());
         testContext.atput0(CONTEXT.METHOD, code);
+        testContext.atput0(CONTEXT.INSTRUCTION_POINTER, testContext.getCodeObject().getBytecodeOffset() + 1);
+        testContext.atput0(CONTEXT.RECEIVER, receiver);
         testContext.atput0(CONTEXT.SENDER, code.image.nil);
-        testContext.atput0(CONTEXT.INSTRUCTION_POINTER, code.getBytecodeOffset() + 1);
-        return new MethodContextNode(null, testContext, code);
+        for (int i = 0; i < arguments.length; i++) {
+            testContext.atput0(CONTEXT.TEMP_FRAME_START + i, arguments[i]);
+        }
+        return TopLevelContextNode.create(null, testContext);
     }
 
     public Object runMethod(BaseSqueakObject receiver, int... intbytes) {
@@ -143,17 +151,7 @@ public abstract class AbstractSqueakTestCase extends TestCase {
         return runMethod(cm, rcvr, arguments);
     }
 
-    public VirtualFrame createTestFrame(CompiledCodeObject code, Object receiver) {
-        return createTestFrame(code, receiver, new BaseSqueakObject[]{});
-    }
-
-    public VirtualFrame createTestFrame(CompiledCodeObject code, Object receiver, Object[] arguments) {
-        Object[] args = new Object[arguments.length + 1];
-        int i = 0;
-        args[i++] = receiver;
-        for (Object o : arguments) {
-            args[i++] = o;
-        }
-        return Truffle.getRuntime().createVirtualFrame(args, code.getFrameDescriptor());
+    public VirtualFrame createTestFrame(CompiledCodeObject code) {
+        return Truffle.getRuntime().createVirtualFrame(new Object[0], code.getFrameDescriptor());
     }
 }
