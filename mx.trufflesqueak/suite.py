@@ -26,6 +26,7 @@ suite = {
                 "truffle:TRUFFLE_DSL_PROCESSOR",
                 "sdk:GRAAL_SDK",
                 "sdk:LAUNCHER_COMMON",
+                "tools:CHROMEINSPECTOR",
             ],
             "checkstyle": "de.hpi.swa.trufflesqueak",
             "javaCompliance": "1.8",
