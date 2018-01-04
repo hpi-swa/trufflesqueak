@@ -9,6 +9,7 @@ import java.math.BigInteger;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.Truffle;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
@@ -100,18 +101,18 @@ public class SqueakImageContext {
     public final SpecialSelector x = new SpecialSelector(this, 1, 0);
     public final SpecialSelector y = new SpecialSelector(this, 1, 0);
 
-    public final SpecialSelector[] specialSelectorsArray = new SpecialSelector[]{
+    @CompilationFinal public final SpecialSelector[] specialSelectorsArray = new SpecialSelector[]{
                     plus, minus, lt, gt, le, ge, eq, ne, times, divide, modulo, pointAt, bitShift,
                     floorDivide, bitAnd, bitOr, at, atput, size_, next, nextPut, atEnd, equivalent,
                     klass, blockCopy, value, valueWithArg, do_, new_, newWithArg, x, y
     };
 
-    public final SqueakConfig config;
-    public final AbstractDisplay display;
-    public final ObjectGraph objects = new ObjectGraph(this);
-    public final OSDetector os = new OSDetector();
-    public final ProcessManager process = new ProcessManager(this);
-    public final SqueakImageFlags flags = new SqueakImageFlags();
+    @CompilationFinal public final SqueakConfig config;
+    @CompilationFinal public final AbstractDisplay display;
+    @CompilationFinal public final ObjectGraph objects = new ObjectGraph(this);
+    @CompilationFinal public final OSDetector os = new OSDetector();
+    @CompilationFinal public final ProcessManager process = new ProcessManager(this);
+    @CompilationFinal public final SqueakImageFlags flags = new SqueakImageFlags();
 
     public SqueakImageContext(SqueakLanguage squeakLanguage, SqueakLanguage.Env environ,
                     PrintWriter out, PrintWriter err) {
