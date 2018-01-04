@@ -94,6 +94,10 @@ public class SqueakConfig {
         return tracing;
     }
 
+    public boolean isCustomContext() {
+        return selector != null; // make better?
+    }
+
     public String getImagePath() {
         return imagePath;
     }

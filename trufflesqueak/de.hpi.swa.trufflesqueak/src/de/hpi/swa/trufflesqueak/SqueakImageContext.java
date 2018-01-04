@@ -122,11 +122,7 @@ public class SqueakImageContext {
         if (env != null) {
             String[] applicationArguments = env.getApplicationArguments();
             config = new SqueakConfig(applicationArguments);
-            if (config.getSelector() == null) {
-                display = new JavaDisplay();
-            } else {
-                display = new NullDisplay();
-            }
+            display = config.isCustomContext() ? new NullDisplay() : new JavaDisplay();
         } else { // testing
             config = new SqueakConfig(new String[0]);
             display = new NullDisplay();
