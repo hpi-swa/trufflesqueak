@@ -22,8 +22,6 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.nodes.BlockActivationNode;
 import de.hpi.swa.trufflesqueak.nodes.BlockActivationNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameReceiverNode;
-import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractClosureValuePrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
@@ -97,15 +95,20 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
     }
 
+    private static abstract class AbstractClosureValuePrimitiveNode extends AbstractPrimitiveNode {
+        @Child protected BlockActivationNode dispatch = BlockActivationNodeGen.create();
+
+        public AbstractClosureValuePrimitiveNode(CompiledMethodObject method) {
+            super(method);
+        }
+    }
+
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {201, 221})
     public static abstract class PrimClosureValue0Node extends AbstractClosureValuePrimitiveNode {
-        @Child FrameReceiverNode receiverNode = new FrameReceiverNode();
-        @Child protected BlockActivationNode dispatch;
 
         public PrimClosureValue0Node(CompiledMethodObject method) {
             super(method);
-            dispatch = BlockActivationNodeGen.create();
         }
 
         @Specialization
