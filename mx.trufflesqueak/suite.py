@@ -6,8 +6,8 @@ suite = {
     "imports": {
         "suites": [{
             "name": "truffle",
-            "subdir": "true",
-            "version": "47fa2a76cf0d7611e6521368a004f5f26dfdbb16",
+            "subdir": True,
+            "version": "c17a85c54a07eb6d921a036f325d4616ea5f252a",
             "urls": [{
                 "url": "https://github.com/graalvm/graal",
                 "kind": "git"
@@ -26,7 +26,7 @@ suite = {
                 "truffle:TRUFFLE_DSL_PROCESSOR",
                 "sdk:GRAAL_SDK",
                 "sdk:LAUNCHER_COMMON",
-                "tools:CHROMEINSPECTOR",
+                # "tools:CHROMEINSPECTOR",
             ],
             "checkstyle": "de.hpi.swa.trufflesqueak",
             "javaCompliance": "1.8",
