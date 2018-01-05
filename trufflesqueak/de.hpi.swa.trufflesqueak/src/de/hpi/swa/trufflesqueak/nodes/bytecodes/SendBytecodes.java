@@ -30,8 +30,8 @@ public final class SendBytecodes {
         @CompilationFinal protected final Object selector;
         @CompilationFinal private final int argumentCount;
         @Child protected SqueakLookupClassNode lookupClassNode;
-        @Child private LookupNode lookupNode;
-        @Child private DispatchNode dispatchNode;
+        @Child private LookupNode lookupNode = LookupNode.create();
+        @Child private DispatchNode dispatchNode = DispatchNode.create();
         @Child private PopNReversedStackNode popNReversedNode;
         @Child private PushStackNode pushNode;
 
@@ -40,8 +40,6 @@ public final class SendBytecodes {
             selector = sel;
             argumentCount = argcount;
             lookupClassNode = SqueakLookupClassNode.create(code);
-            dispatchNode = DispatchNode.create();
-            lookupNode = LookupNode.create();
             pushNode = new PushStackNode(code);
             popNReversedNode = new PopNReversedStackNode(code, 1 + argumentCount);
         }
