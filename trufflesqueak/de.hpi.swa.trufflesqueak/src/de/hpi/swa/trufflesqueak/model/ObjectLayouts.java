@@ -11,10 +11,9 @@ public final class ObjectLayouts {
         public static final int INITIAL_PC = 1;
         public static final int ARGUMENT_COUNT = 2;
         public static final int FIRST_COPIED_VALUE = 3;
-
     }
 
-    public static final class BLOCK_CONTEXT {
+    public static final class BLOCK_CONTEXT { // only used by blockCopy primitive
         public static final int CALLER = 0;
         public static final int ARGUMENT_COUNT = 3;
         public static final int INITIAL_PC = 4;

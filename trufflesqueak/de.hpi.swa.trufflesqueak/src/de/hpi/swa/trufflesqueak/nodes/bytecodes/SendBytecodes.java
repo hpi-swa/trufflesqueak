@@ -44,7 +44,7 @@ public final class SendBytecodes {
             popNReversedNode = new PopNReversedStackNode(code, 1 + argumentCount);
         }
 
-        private Object executeSend(VirtualFrame frame) {
+        public Object executeSend(VirtualFrame frame) {
             Object[] rcvrAndArgs = popNReversedNode.execute(frame);
             ClassObject rcvrClass;
             try {

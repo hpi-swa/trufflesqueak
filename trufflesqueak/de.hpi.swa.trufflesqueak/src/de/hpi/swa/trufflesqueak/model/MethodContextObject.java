@@ -10,10 +10,7 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.nodes.Node.Child;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.exceptions.LocalReturn;
-import de.hpi.swa.trufflesqueak.exceptions.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.NonVirtualContextModification;
-import de.hpi.swa.trufflesqueak.model.ObjectLayouts.BLOCK_CONTEXT;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.BlockActivationNode;
 import de.hpi.swa.trufflesqueak.nodes.BlockActivationNodeGen;
@@ -94,10 +91,7 @@ public class MethodContextObject extends BaseSqueakObject {
 
     public CompiledCodeObject getCodeObject() {
         Object method = at0(CONTEXT.METHOD);
-        if (method instanceof Integer) { // if the method field is an integer, activeContex is a block context
-            MethodContextObject homeContext = (MethodContextObject) at0(BLOCK_CONTEXT.HOME);
-            return (CompiledCodeObject) homeContext.at0(CONTEXT.METHOD);
-        } else if (method instanceof BlockClosureObject) {
+        if (method instanceof BlockClosureObject) {
             return ((BlockClosureObject) method).getCompiledBlock();
         } else {
             return (CompiledCodeObject) method;
@@ -134,41 +128,20 @@ public class MethodContextObject extends BaseSqueakObject {
     }
 
     public void activateUnwindContext() {
-        if (isClosureContext() || !isBlockClosure()) {
+        if (isClosureContext() || !methodHasEnsurePrimitive()) {
             markReturned();
             return;
         }
-        // The first temp is executed flag for both #ensure: and #ifCurtailed:
-        if (at0(CONTEXT.TEMP_FRAME_START) == image.nil) {
-            atput0(CONTEXT.TEMP_FRAME_START, true); // mark unwound
-            BlockClosureObject block = (BlockClosureObject) at0(CONTEXT.RECEIVER);
-            try {
-                dispatch.executeBlock(block, block.getFrameArguments());
-            } catch (LocalReturn lr) {
 
-            } catch (NonLocalReturn nlr) {
-                if (!nlr.hasArrivedAtTargetContext()) {
-                    throw nlr;
-                }
-            } finally {
-                markReturned();
-            }
-        }
     }
 
     private boolean isClosureContext() {
-        return at0(CONTEXT.CLOSURE_OR_NIL) != image.nil || at0(CONTEXT.METHOD) instanceof CompiledBlockObject;
+        return at0(CONTEXT.CLOSURE_OR_NIL) != image.nil;
     }
 
-    private boolean isBlockClosure() {
-        return false; // TODO FIXME
-// Object method = at0(CONTEXT.METHOD);
-// if (method instanceof CompiledMethodObject) {
-// if (((CompiledMethodObject) method).getBytes()[1] == -58) {
-// return false; // true;
-// }
-// }
-// return false;
+    public boolean methodHasEnsurePrimitive() {
+        CompiledCodeObject code = getCodeObject();
+        return code.hasPrimitive() && code.primitiveIndex() == 198;
     }
 
     public boolean isDirty() {
