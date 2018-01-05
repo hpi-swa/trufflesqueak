@@ -20,6 +20,7 @@ import de.hpi.swa.trufflesqueak.model.FrameMarker;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
+import de.hpi.swa.trufflesqueak.util.KnownClasses.BLOCK_CONTEXT;
 import de.hpi.swa.trufflesqueak.util.KnownClasses.CONTEXT;
 import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
@@ -45,7 +46,7 @@ public class MethodContextNode extends RootNode {
         assert sp >= -1;
         frame.setInt(code.stackPointerSlot, sp);
         if (code instanceof CompiledBlockObject) {
-            frame.setInt(code.closureSlot, 1 + code.getNumCopiedValues()); // rcvr + args + copied
+            frame.setObject(code.closureSlot, context.at0(BLOCK_CONTEXT.HOME));
         }
     }
 

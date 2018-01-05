@@ -8,6 +8,8 @@ import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
+import de.hpi.swa.trufflesqueak.exceptions.NonLocalReturn;
+import de.hpi.swa.trufflesqueak.exceptions.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakQuit;
 import de.hpi.swa.trufflesqueak.exceptions.TopLevelReturn;
@@ -56,12 +58,12 @@ public class TopLevelContextNode extends RootNode {
                 activeContext = unwindContextChain(frame, sender, activeContext, result);
             } catch (ProcessSwitch ps) {
                 activeContext = ps.getNewContext();
-// } catch (NonLocalReturn nlr) {
-// ContextObject target = nlr.hasArrivedAtTargetContext() ? activeContext : nlr.getTargetContext();
-// activeContext = unwindContextChain(frame, sender, target, nlr.getReturnValue());
-// } catch (NonVirtualReturn nvr) {
-// activeContext = unwindContextChain(frame, nvr.getCurrentContext(), nvr.getTargetContext(),
-// nvr.getReturnValue());
+            } catch (NonLocalReturn nlr) {
+                ContextObject target = nlr.hasArrivedAtTargetContext() ? activeContext : nlr.getTargetContext();
+                activeContext = unwindContextChain(frame, sender, target, nlr.getReturnValue());
+            } catch (NonVirtualReturn nvr) {
+                activeContext = unwindContextChain(frame, nvr.getCurrentContext(), nvr.getTargetContext(),
+                                nvr.getReturnValue());
             }
         }
     }
