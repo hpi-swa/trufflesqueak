@@ -13,37 +13,37 @@ import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.LocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.NonVirtualContextModification;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.BLOCK_CONTEXT;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.BlockActivationNode;
 import de.hpi.swa.trufflesqueak.nodes.BlockActivationNodeGen;
-import de.hpi.swa.trufflesqueak.util.KnownClasses.BLOCK_CONTEXT;
-import de.hpi.swa.trufflesqueak.util.KnownClasses.CONTEXT;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
-public class ContextObject extends BaseSqueakObject {
+public class MethodContextObject extends BaseSqueakObject {
     @Child private BlockActivationNode dispatch = BlockActivationNodeGen.create();
     @CompilationFinal private ActualContextObject actualContext;
 
-    public static ContextObject createReadOnlyContextObject(SqueakImageContext img, Frame virtualFrame) {
+    public static MethodContextObject createReadOnlyContextObject(SqueakImageContext img, Frame virtualFrame) {
         MaterializedFrame frame = virtualFrame.materialize();
         FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
         FrameSlot thisContextSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.THIS_CONTEXT);
-        ContextObject contextObject = (ContextObject) FrameUtil.getObjectSafe(frame, thisContextSlot);
+        MethodContextObject contextObject = (MethodContextObject) FrameUtil.getObjectSafe(frame, thisContextSlot);
         if (contextObject == null) {
-            contextObject = new ContextObject(img, new ReadOnlyContextObject(img, frame));
+            contextObject = new MethodContextObject(img, new ReadOnlyContextObject(img, frame));
             frame.setObject(thisContextSlot, contextObject);
         }
         return contextObject;
     }
 
-    public static ContextObject createWriteableContextObject(SqueakImageContext img) {
-        return new ContextObject(img, new WriteableContextObject(img));
+    public static MethodContextObject createWriteableContextObject(SqueakImageContext img) {
+        return new MethodContextObject(img, new WriteableContextObject(img));
     }
 
-    public static ContextObject createWriteableContextObject(SqueakImageContext img, int size) {
-        return new ContextObject(img, new WriteableContextObject(img, size));
+    public static MethodContextObject createWriteableContextObject(SqueakImageContext img, int size) {
+        return new MethodContextObject(img, new WriteableContextObject(img, size));
     }
 
-    private ContextObject(SqueakImageContext img, ActualContextObject context) {
+    private MethodContextObject(SqueakImageContext img, ActualContextObject context) {
         super(img);
         actualContext = context;
     }
@@ -95,10 +95,10 @@ public class ContextObject extends BaseSqueakObject {
     public CompiledCodeObject getCodeObject() {
         Object method = at0(CONTEXT.METHOD);
         if (method instanceof Integer) { // if the method field is an integer, activeContex is a block context
-            ContextObject homeContext = (ContextObject) at0(BLOCK_CONTEXT.HOME);
+            MethodContextObject homeContext = (MethodContextObject) at0(BLOCK_CONTEXT.HOME);
             return (CompiledCodeObject) homeContext.at0(CONTEXT.METHOD);
-        } else if (method instanceof BlockClosure) {
-            return ((BlockClosure) method).getCompiledBlock();
+        } else if (method instanceof BlockClosureObject) {
+            return ((BlockClosureObject) method).getCompiledBlock();
         } else {
             return (CompiledCodeObject) method;
         }
@@ -117,8 +117,8 @@ public class ContextObject extends BaseSqueakObject {
         int numArgs = getCodeObject().getNumArgsAndCopiedValues();
         Object[] arguments = new Object[1 + numArgs];
         Object method = at0(CONTEXT.METHOD);
-        if (method instanceof BlockClosure) {
-            arguments[0] = ((BlockClosure) method).getReceiver();
+        if (method instanceof BlockClosureObject) {
+            arguments[0] = ((BlockClosureObject) method).getReceiver();
         } else {
             arguments[0] = actualContext.at0(CONTEXT.RECEIVER);
         }
@@ -141,7 +141,7 @@ public class ContextObject extends BaseSqueakObject {
         // The first temp is executed flag for both #ensure: and #ifCurtailed:
         if (at0(CONTEXT.TEMP_FRAME_START) == image.nil) {
             atput0(CONTEXT.TEMP_FRAME_START, true); // mark unwound
-            BlockClosure block = (BlockClosure) at0(CONTEXT.RECEIVER);
+            BlockClosureObject block = (BlockClosureObject) at0(CONTEXT.RECEIVER);
             try {
                 dispatch.executeBlock(block, block.getFrameArguments());
             } catch (LocalReturn lr) {
@@ -157,7 +157,7 @@ public class ContextObject extends BaseSqueakObject {
     }
 
     private boolean isClosureContext() {
-        return at0(CONTEXT.CLOSURE) != image.nil || at0(CONTEXT.METHOD) instanceof CompiledBlockObject;
+        return at0(CONTEXT.CLOSURE_OR_NIL) != image.nil || at0(CONTEXT.METHOD) instanceof CompiledBlockObject;
     }
 
     private boolean isBlockClosure() {
@@ -175,10 +175,10 @@ public class ContextObject extends BaseSqueakObject {
         return false; // TODO: implement
     }
 
-    public ContextObject getSender() {
+    public MethodContextObject getSender() {
         Object sender = actualContext.at0(CONTEXT.SENDER);
-        if (sender instanceof ContextObject) {
-            return (ContextObject) sender;
+        if (sender instanceof MethodContextObject) {
+            return (MethodContextObject) sender;
         } else if (sender instanceof NilObject) {
             return null;
         }

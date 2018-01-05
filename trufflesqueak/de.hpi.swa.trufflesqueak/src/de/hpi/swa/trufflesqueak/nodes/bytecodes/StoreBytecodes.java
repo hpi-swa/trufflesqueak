@@ -4,6 +4,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.ASSOCIATION;
 import de.hpi.swa.trufflesqueak.nodes.context.MethodLiteralNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtPutNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameReceiverNode;
@@ -12,7 +13,6 @@ import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameTemporaryReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.AbstractStackNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PopStackNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.TopStackNode;
-import de.hpi.swa.trufflesqueak.util.KnownClasses.ASSOCIATION;
 
 public final class StoreBytecodes {
 

@@ -13,7 +13,7 @@ import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.model.SpecialSelector;
+import de.hpi.swa.trufflesqueak.model.SpecialSelectorObject;
 import de.hpi.swa.trufflesqueak.nodes.DispatchNode;
 import de.hpi.swa.trufflesqueak.nodes.LookupNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
@@ -84,7 +84,7 @@ public final class SendBytecodes {
 
     public static class EagerSendSpecialSelectorNode extends AbstractBytecodeNode {
         public static AbstractBytecodeNode create(CompiledCodeObject code, int index, int selectorIndex) {
-            SpecialSelector specialSelector = code.image.specialSelectorsArray[selectorIndex];
+            SpecialSelectorObject specialSelector = code.image.specialSelectorsArray[selectorIndex];
             if (code instanceof CompiledMethodObject && specialSelector.getPrimitiveIndex() > 0) {
                 AbstractPrimitiveNode primitiveNode;
                 primitiveNode = PrimitiveNodeFactory.forSpecialSelector((CompiledMethodObject) code,
@@ -94,17 +94,17 @@ public final class SendBytecodes {
             return getFallbackNode(code, index, specialSelector);
         }
 
-        private static SendSelectorNode getFallbackNode(CompiledCodeObject code, int index, SpecialSelector specialSelector) {
+        private static SendSelectorNode getFallbackNode(CompiledCodeObject code, int index, SpecialSelectorObject specialSelector) {
             return new SendSelectorNode(code, index, 1, specialSelector, specialSelector.getNumArguments());
         }
 
-        @CompilationFinal private final SpecialSelector specialSelector;
+        @CompilationFinal private final SpecialSelectorObject specialSelector;
 
         @Child private AbstractPrimitiveNode primitiveNode;
 
         @Child private PushStackNode pushStackNode;
 
-        public EagerSendSpecialSelectorNode(CompiledCodeObject code, int index, SpecialSelector specialSelector, AbstractPrimitiveNode primitiveNode) {
+        public EagerSendSpecialSelectorNode(CompiledCodeObject code, int index, SpecialSelectorObject specialSelector, AbstractPrimitiveNode primitiveNode) {
             super(code, index);
             this.pushStackNode = new PushStackNode(code);
             this.specialSelector = specialSelector;

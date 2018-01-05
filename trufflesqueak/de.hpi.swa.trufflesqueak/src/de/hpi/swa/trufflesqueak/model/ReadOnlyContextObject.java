@@ -13,7 +13,7 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.NonVirtualContextModification;
-import de.hpi.swa.trufflesqueak.util.KnownClasses.CONTEXT;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 /**
@@ -30,7 +30,7 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
     @CompilationFinal private final FrameSlot markerSlot;
     @CompilationFinal private final FrameDescriptor frameDescriptor;
     @CompilationFinal private Object receiver;
-    @CompilationFinal private ContextObject sender;
+    @CompilationFinal private MethodContextObject sender;
     @CompilationFinal private int pc = -1;
 
     public ReadOnlyContextObject(SqueakImageContext img, MaterializedFrame materializedFrame) {
@@ -55,7 +55,7 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
                 return getStackPointer();
             case CONTEXT.METHOD:
                 return getMethod();
-            case CONTEXT.CLOSURE:
+            case CONTEXT.CLOSURE_OR_NIL:
                 return getClosure();
             case CONTEXT.RECEIVER:
                 return receiver;
@@ -129,7 +129,7 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
                     FrameDescriptor currentFD = current.getFrameDescriptor();
                     FrameSlot currentMarkerSlot = currentFD.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.MARKER);
                     if (foundMyself) {
-                        sender = ContextObject.createReadOnlyContextObject(image, current);
+                        sender = MethodContextObject.createReadOnlyContextObject(image, current);
                         return sender;
                     } else if (marker == FrameUtil.getObjectSafe(current, currentMarkerSlot)) {
                         foundMyself = true;
@@ -150,7 +150,7 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
                 receiver = obj;
                 break;
             case CONTEXT.SENDER:
-                sender = (ContextObject) obj;
+                sender = (MethodContextObject) obj;
                 break;
             default:
                 setTemp(i - CONTEXT.TEMP_FRAME_START, obj);

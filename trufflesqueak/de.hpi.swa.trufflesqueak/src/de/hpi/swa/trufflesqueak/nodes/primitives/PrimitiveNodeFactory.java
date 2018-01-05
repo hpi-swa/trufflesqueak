@@ -8,7 +8,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.NodeFactory;
 
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.model.SpecialSelector;
+import de.hpi.swa.trufflesqueak.model.SpecialSelectorObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameArgumentNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameArgumentProfileNode;
@@ -55,7 +55,7 @@ public abstract class PrimitiveNodeFactory {
     }
 
     @TruffleBoundary
-    public static AbstractPrimitiveNode forSpecialSelector(CompiledMethodObject method, SpecialSelector specialSelector) {
+    public static AbstractPrimitiveNode forSpecialSelector(CompiledMethodObject method, SpecialSelectorObject specialSelector) {
         NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = getPrimitiveTable().get(specialSelector.getPrimitiveIndex());
         SqueakPrimitive primitive = nodeFactory.getNodeClass().getAnnotation(SqueakPrimitive.class);
         int numArguments = primitive.numArguments();

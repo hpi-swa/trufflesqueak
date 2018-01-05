@@ -7,12 +7,12 @@ import java.util.List;
 import java.util.Vector;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.model.BlockClosure;
+import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.MethodContextObject;
 import de.hpi.swa.trufflesqueak.model.EmptyObject;
-import de.hpi.swa.trufflesqueak.model.LargeInteger;
+import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -104,9 +104,9 @@ public class SqueakImageChunk {
                 object = new ListObject(image);
             } else if (format == 3) {
                 if (this.getSqClass() == image.methodContextClass) {
-                    object = ContextObject.createWriteableContextObject(image);
+                    object = MethodContextObject.createWriteableContextObject(image);
                 } else if (this.getSqClass() == image.blockClosureClass) {
-                    object = new BlockClosure(image);
+                    object = new BlockClosureObject(image);
                 } else {
                     // fixed and indexable fields
                     object = new ListObject(image);
@@ -135,7 +135,7 @@ public class SqueakImageChunk {
             } else if (format <= 23) {
                 // bytes
                 if (this.getSqClass() == image.largePositiveIntegerClass || this.getSqClass() == image.largeNegativeIntegerClass) {
-                    object = new LargeInteger(image);
+                    object = new LargeIntegerObject(image);
                 } else {
                     object = new NativeObject(image, (byte) 1);
                 }

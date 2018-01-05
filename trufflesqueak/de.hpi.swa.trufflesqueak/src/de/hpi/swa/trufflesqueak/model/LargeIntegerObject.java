@@ -5,18 +5,18 @@ import java.math.BigInteger;
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
-public class LargeInteger extends SqueakObject {
+public class LargeIntegerObject extends SqueakObject {
     private BigInteger integer;
 
-    public LargeInteger(SqueakImageContext img) {
+    public LargeIntegerObject(SqueakImageContext img) {
         super(img);
     }
 
-    public LargeInteger(SqueakImageContext img, ClassObject klass) {
+    public LargeIntegerObject(SqueakImageContext img, ClassObject klass) {
         super(img, klass);
     }
 
-    public LargeInteger(SqueakImageContext img, BigInteger i) {
+    public LargeIntegerObject(SqueakImageContext img, BigInteger i) {
         super(img);
         ClassObject liKlass = img.largePositiveIntegerClass;
         if (i.compareTo(BigInteger.ZERO) < 0) {
@@ -26,7 +26,7 @@ public class LargeInteger extends SqueakObject {
         integer = i;
     }
 
-    public LargeInteger(SqueakImageContext img, ClassObject klass, byte[] bytes) {
+    public LargeIntegerObject(SqueakImageContext img, ClassObject klass, byte[] bytes) {
         this(img, klass);
         setBytes(bytes);
     }
@@ -122,6 +122,6 @@ public class LargeInteger extends SqueakObject {
 
     @Override
     public BaseSqueakObject shallowCopy() {
-        return new LargeInteger(image, integer);
+        return new LargeIntegerObject(image, integer);
     }
 }

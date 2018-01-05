@@ -7,11 +7,11 @@ import com.oracle.truffle.api.dsl.ImplicitCast;
 import com.oracle.truffle.api.dsl.TypeSystem;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
-import de.hpi.swa.trufflesqueak.model.BlockClosure;
+import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.model.LargeInteger;
+import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -24,12 +24,12 @@ import de.hpi.swa.trufflesqueak.model.ReadOnlyContextObject;
                 BigInteger.class,
                 double.class,
                 String.class,
-                LargeInteger.class,
+                LargeIntegerObject.class,
                 ClassObject.class,
                 ReadOnlyContextObject.class,
                 ListObject.class,
                 PointersObject.class,
-                BlockClosure.class,
+                BlockClosureObject.class,
                 NativeObject.class,
                 CompiledBlockObject.class,
                 CompiledMethodObject.class,
@@ -53,7 +53,7 @@ public abstract class SqueakTypes {
     }
 
     @ImplicitCast
-    public static BigInteger castBigInteger(LargeInteger value) {
+    public static BigInteger castBigInteger(LargeIntegerObject value) {
         return value.getValue();
     }
 
@@ -73,7 +73,7 @@ public abstract class SqueakTypes {
     }
 
     @ImplicitCast
-    public static double castDouble(LargeInteger obj) {
+    public static double castDouble(LargeIntegerObject obj) {
         return obj.getValue().doubleValue();
     }
 }

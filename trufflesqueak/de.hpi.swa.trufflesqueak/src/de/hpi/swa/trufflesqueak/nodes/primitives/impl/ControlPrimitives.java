@@ -15,6 +15,11 @@ import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.BLOCK_CONTEXT;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.PROCESS;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SEMAPHORE;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.DispatchNode;
 import de.hpi.swa.trufflesqueak.nodes.DispatchNodeGen;
@@ -33,11 +38,6 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitivesFactory.PrimQuickReturnReceiverVariableNodeFactory;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitivesFactory.PrimitiveFailedNodeFactory;
-import de.hpi.swa.trufflesqueak.util.Constants.SPECIAL_OBJECT_INDEX;
-import de.hpi.swa.trufflesqueak.util.KnownClasses.BLOCK_CONTEXT;
-import de.hpi.swa.trufflesqueak.util.KnownClasses.CONTEXT;
-import de.hpi.swa.trufflesqueak.util.KnownClasses.PROCESS;
-import de.hpi.swa.trufflesqueak.util.KnownClasses.SEMAPHORE;
 import de.hpi.swa.trufflesqueak.util.ProcessManager;
 
 public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {

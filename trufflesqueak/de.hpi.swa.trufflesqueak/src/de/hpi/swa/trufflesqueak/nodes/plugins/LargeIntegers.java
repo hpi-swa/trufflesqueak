@@ -9,7 +9,7 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.model.LargeInteger;
+import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
@@ -321,7 +321,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         private BigInteger bigIntFromNative(NativeObject o) {
-            return new LargeInteger(code.image, o.getSqClass(), o.getBytes()).getValue();
+            return new LargeIntegerObject(code.image, o.getSqClass(), o.getBytes()).getValue();
         }
     }
 

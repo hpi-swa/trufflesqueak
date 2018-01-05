@@ -1,18 +1,18 @@
 package de.hpi.swa.trufflesqueak.exceptions;
 
-import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.MethodContextObject;
 
 public class NonLocalReturn extends Return {
     private static final long serialVersionUID = 1L;
-    private final ContextObject targetContext;
+    private final MethodContextObject targetContext;
     private boolean arrivedAtTargetContext = false;
 
-    public NonLocalReturn(Object returnValue, ContextObject targetContext) {
+    public NonLocalReturn(Object returnValue, MethodContextObject targetContext) {
         super(returnValue);
         this.targetContext = targetContext;
     }
 
-    public ContextObject getTargetContext() {
+    public MethodContextObject getTargetContext() {
         return targetContext;
     }
 

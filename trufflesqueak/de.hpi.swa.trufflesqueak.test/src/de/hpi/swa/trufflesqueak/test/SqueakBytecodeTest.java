@@ -17,13 +17,13 @@ import de.hpi.swa.trufflesqueak.exceptions.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
-import de.hpi.swa.trufflesqueak.model.BlockClosure;
+import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.ASSOCIATION;
 import de.hpi.swa.trufflesqueak.nodes.TopLevelContextNode;
-import de.hpi.swa.trufflesqueak.util.KnownClasses.ASSOCIATION;
 
 public class SqueakBytecodeTest extends AbstractSqueakTestCase {
     @Rule public ExpectedException exceptions = ExpectedException.none();
@@ -547,8 +547,8 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
         CompiledCodeObject code = makeMethod(literals, 0x8F, 0x02, 0x00, 0x04, 0x10, 0x11, 0xB0, 0x7D, 0x7C);
         VirtualFrame frame = createTestFrame(code);
         Object result = createContext(code, rcvr).execute(frame);
-        assertTrue(result instanceof BlockClosure);
-        CompiledBlockObject block = ((BlockClosure) result).getCompiledBlock();
+        assertTrue(result instanceof BlockClosureObject);
+        CompiledBlockObject block = ((BlockClosureObject) result).getCompiledBlock();
         assertEquals(2, block.getNumArgs());
         assertEquals(0, block.getNumCopiedValues());
         assertEquals(0, block.getNumTemps());

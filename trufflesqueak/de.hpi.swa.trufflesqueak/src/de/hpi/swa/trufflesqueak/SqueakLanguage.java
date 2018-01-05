@@ -12,8 +12,8 @@ import com.oracle.truffle.api.instrumentation.StandardTags;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.model.FrameMarker;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNode;
+import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
 @TruffleLanguage.Registration(name = "SqueakSmalltalk", version = "0.1", mimeType = SqueakLanguage.MIME_TYPE)
 @ProvidedTags({StandardTags.CallTag.class, StandardTags.RootTag.class, StandardTags.StatementTag.class, DebuggerTags.AlwaysHalt.class})

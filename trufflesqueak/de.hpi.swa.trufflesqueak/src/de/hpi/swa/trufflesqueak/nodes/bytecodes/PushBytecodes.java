@@ -6,10 +6,10 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.trufflesqueak.model.BlockClosure;
+import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.MethodContextObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.context.LiteralConstantNode;
 import de.hpi.swa.trufflesqueak.nodes.context.MethodLiteralNode;
@@ -45,7 +45,7 @@ public final class PushBytecodes {
 
         @Override
         public void executeVoid(VirtualFrame frame) {
-            pushNode.executeWrite(frame, ContextObject.createReadOnlyContextObject(code.image, frame));
+            pushNode.executeWrite(frame, MethodContextObject.createReadOnlyContextObject(code.image, frame));
         }
 
         @Override
@@ -85,7 +85,7 @@ public final class PushBytecodes {
             int codeEnd = codeStart + blockSize;
             byte[] bytes = Arrays.copyOfRange(code.getBytes(), codeStart, codeEnd);
             compiledBlock.setBytes(bytes);
-            pushNode.executeWrite(frame, new BlockClosure(frameMarker, compiledBlock, receiverNode.executeGeneric(frame), copiedValues));
+            pushNode.executeWrite(frame, new BlockClosureObject(frameMarker, compiledBlock, receiverNode.executeGeneric(frame), copiedValues));
         }
 
         @Override

@@ -19,9 +19,9 @@ import com.oracle.truffle.api.utilities.CyclicAssumption;
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.instrumentation.CompiledCodeObjectPrinter;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.MethodContextNode;
 import de.hpi.swa.trufflesqueak.util.BitSplitter;
-import de.hpi.swa.trufflesqueak.util.KnownClasses.CONTEXT;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public abstract class CompiledCodeObject extends SqueakObject {
@@ -117,8 +117,8 @@ public abstract class CompiledCodeObject extends SqueakObject {
     @TruffleBoundary
     private void updateAndInvalidateCallTargets() {
         Frame frame = Truffle.getRuntime().getCurrentFrame().getFrame(FrameInstance.FrameAccess.MATERIALIZE);
-        ContextObject activeContext = ContextObject.createReadOnlyContextObject(image, frame);
-        ContextObject newContext = ContextObject.createWriteableContextObject(image, frameSize());
+        MethodContextObject activeContext = MethodContextObject.createReadOnlyContextObject(image, frame);
+        MethodContextObject newContext = MethodContextObject.createWriteableContextObject(image, frameSize());
         newContext.atput0(CONTEXT.METHOD, this);
         newContext.atput0(CONTEXT.SENDER, activeContext);
         newContext.atput0(CONTEXT.INSTRUCTION_POINTER, newContext.getCodeObject().getBytecodeOffset() + 1);

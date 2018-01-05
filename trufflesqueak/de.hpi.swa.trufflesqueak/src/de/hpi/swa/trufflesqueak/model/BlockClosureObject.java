@@ -15,23 +15,23 @@ import com.oracle.truffle.api.frame.FrameUtil;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
-import de.hpi.swa.trufflesqueak.util.KnownClasses.BLOCK_CLOSURE;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.BLOCK_CLOSURE;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
-public class BlockClosure extends BaseSqueakObject {
+public class BlockClosureObject extends BaseSqueakObject {
     @CompilationFinal private Object receiver;
     @CompilationFinal(dimensions = 1) private Object[] copied;
     @CompilationFinal private Object frameMarker;
-    @CompilationFinal private ContextObject outerContext;
+    @CompilationFinal private MethodContextObject outerContext;
     @CompilationFinal private CompiledBlockObject block;
     @CompilationFinal private int pc = -1;
     @CompilationFinal private int numArgs = -1;
 
-    public BlockClosure(SqueakImageContext image) {
+    public BlockClosureObject(SqueakImageContext image) {
         super(image);
     }
 
-    public BlockClosure(Object frameId, CompiledBlockObject compiledBlock, Object receiver, Object[] copied) {
+    public BlockClosureObject(Object frameId, CompiledBlockObject compiledBlock, Object receiver, Object[] copied) {
         super(compiledBlock.image);
         block = compiledBlock;
         frameMarker = frameId;
@@ -39,7 +39,7 @@ public class BlockClosure extends BaseSqueakObject {
         this.copied = copied;
     }
 
-    private BlockClosure(BlockClosure original) {
+    private BlockClosureObject(BlockClosureObject original) {
         this(original.frameMarker, original.block, original.receiver, original.copied);
         outerContext = original.outerContext;
     }
@@ -55,7 +55,7 @@ public class BlockClosure extends BaseSqueakObject {
     }
 
     @TruffleBoundary
-    private ContextObject getOrPrepareContext() {
+    private MethodContextObject getOrPrepareContext() {
         if (outerContext == null) {
             Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Object>() {
                 @Override
@@ -65,7 +65,7 @@ public class BlockClosure extends BaseSqueakObject {
                     FrameSlot markerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.MARKER);
                     Object marker = FrameUtil.getObjectSafe(frame, markerSlot);
                     if (marker == frameMarker) {
-                        outerContext = ContextObject.createReadOnlyContextObject(image, frame);
+                        outerContext = MethodContextObject.createReadOnlyContextObject(image, frame);
                         return outerContext;
                     }
                     return null;
@@ -110,7 +110,7 @@ public class BlockClosure extends BaseSqueakObject {
     public void atput0(int i, Object obj) {
         switch (i) {
             case BLOCK_CLOSURE.OUTER_CONTEXT:
-                outerContext = (ContextObject) obj;
+                outerContext = (MethodContextObject) obj;
                 break;
             case BLOCK_CLOSURE.INITIAL_PC:
                 pc = (int) obj;
@@ -125,10 +125,10 @@ public class BlockClosure extends BaseSqueakObject {
 
     @Override
     public boolean become(BaseSqueakObject other) {
-        if (other instanceof BlockClosure && super.become(other)) {
+        if (other instanceof BlockClosureObject && super.become(other)) {
             Object[] stack2 = copied;
-            copied = ((BlockClosure) other).copied;
-            ((BlockClosure) other).copied = stack2;
+            copied = ((BlockClosureObject) other).copied;
+            ((BlockClosureObject) other).copied = stack2;
             return true;
         }
         return false;
@@ -200,7 +200,7 @@ public class BlockClosure extends BaseSqueakObject {
 
     @Override
     public BaseSqueakObject shallowCopy() {
-        return new BlockClosure(this);
+        return new BlockClosureObject(this);
     }
 
     public Object[] getTraceableObjects() {

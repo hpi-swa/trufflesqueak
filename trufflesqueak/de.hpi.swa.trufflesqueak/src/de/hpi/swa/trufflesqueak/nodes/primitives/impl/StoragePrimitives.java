@@ -13,21 +13,21 @@ import com.oracle.truffle.api.dsl.Specialization;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
-import de.hpi.swa.trufflesqueak.model.BlockClosure;
+import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.MethodContextObject;
 import de.hpi.swa.trufflesqueak.model.EmptyObject;
-import de.hpi.swa.trufflesqueak.model.LargeInteger;
+import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
-import de.hpi.swa.trufflesqueak.util.Constants.SPECIAL_OBJECT_INDEX;
-import de.hpi.swa.trufflesqueak.util.KnownClasses.CONTEXT;
 
 public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -196,13 +196,13 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object at(LargeInteger receiver, int idx) {
+        protected Object at(LargeIntegerObject receiver, int idx) {
             return receiver.at0(idx - 1);
         }
 
         @Specialization
         protected long intAt(BigInteger receiver, int idx) {
-            return LargeInteger.byteAt0(receiver, idx - 1);
+            return LargeIntegerObject.byteAt0(receiver, idx - 1);
         }
 
         @Specialization
@@ -228,7 +228,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object at(BlockClosure receiver, int idx) {
+        protected Object at(BlockClosureObject receiver, int idx) {
             return receiver.at0(idx - 1);
         }
 
@@ -261,13 +261,13 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected char atput(LargeInteger receiver, int idx, char value) {
+        protected char atput(LargeIntegerObject receiver, int idx, char value) {
             receiver.atput0(idx - 1, value);
             return value;
         }
 
         @Specialization
-        protected int atput(LargeInteger receiver, int idx, int value) {
+        protected int atput(LargeIntegerObject receiver, int idx, int value) {
             receiver.atput0(idx - 1, value);
             return value;
         }
@@ -291,7 +291,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object atput(BlockClosure receiver, int idx, Object value) {
+        protected Object atput(BlockClosureObject receiver, int idx, Object value) {
             receiver.atput0(idx - 1, value);
             return value;
         }
@@ -368,7 +368,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        BaseSqueakObject store(ContextObject receiver, int value) {
+        BaseSqueakObject store(MethodContextObject receiver, int value) {
             receiver.atput0(CONTEXT.STACKPOINTER, value);
             return receiver;
         }

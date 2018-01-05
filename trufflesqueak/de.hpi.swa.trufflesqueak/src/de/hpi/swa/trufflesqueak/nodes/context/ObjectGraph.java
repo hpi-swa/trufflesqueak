@@ -13,7 +13,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
-import de.hpi.swa.trufflesqueak.model.BlockClosure;
+import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
@@ -78,8 +78,8 @@ public class ObjectGraph {
             addBaseSqueakObjects(result, ((CompiledMethodObject) currentObject).getLiterals());
         } else if (currentObject instanceof AbstractPointersObject) {
             addBaseSqueakObjects(result, ((AbstractPointersObject) currentObject).getPointers());
-        } else if (currentObject instanceof BlockClosure) {
-            addBaseSqueakObjects(result, ((BlockClosure) currentObject).getTraceableObjects());
+        } else if (currentObject instanceof BlockClosureObject) {
+            addBaseSqueakObjects(result, ((BlockClosureObject) currentObject).getTraceableObjects());
         }
         return result;
     }

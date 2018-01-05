@@ -1,4 +1,4 @@
-package de.hpi.swa.trufflesqueak.model;
+package de.hpi.swa.trufflesqueak.util;
 
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;

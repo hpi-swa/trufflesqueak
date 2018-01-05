@@ -6,10 +6,10 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 
-import de.hpi.swa.trufflesqueak.model.BlockClosure;
+import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.MethodContextObject;
 import de.hpi.swa.trufflesqueak.model.SqueakObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
 
@@ -69,12 +69,12 @@ public abstract class SqueakLookupClassNode extends Node {
     }
 
     @Specialization
-    public ClassObject squeakClass(BlockClosure ch) {
+    public ClassObject squeakClass(BlockClosureObject ch) {
         return ch.getSqClass();
     }
 
     @Specialization
-    public ClassObject squeakClass(@SuppressWarnings("unused") ContextObject ch) {
+    public ClassObject squeakClass(@SuppressWarnings("unused") MethodContextObject ch) {
         return code.image.methodContextClass;
     }
 

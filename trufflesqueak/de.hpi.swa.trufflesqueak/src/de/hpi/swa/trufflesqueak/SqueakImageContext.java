@@ -15,22 +15,22 @@ import com.oracle.truffle.api.Truffle;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.ContextObject;
-import de.hpi.swa.trufflesqueak.model.LargeInteger;
+import de.hpi.swa.trufflesqueak.model.MethodContextObject;
+import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.POINT;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.PROCESS;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
-import de.hpi.swa.trufflesqueak.model.SpecialSelector;
+import de.hpi.swa.trufflesqueak.model.SpecialSelectorObject;
 import de.hpi.swa.trufflesqueak.nodes.TopLevelContextNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ObjectGraph;
-import de.hpi.swa.trufflesqueak.util.Constants.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.trufflesqueak.util.Display.AbstractDisplay;
 import de.hpi.swa.trufflesqueak.util.Display.JavaDisplay;
 import de.hpi.swa.trufflesqueak.util.Display.NullDisplay;
-import de.hpi.swa.trufflesqueak.util.KnownClasses.CONTEXT;
-import de.hpi.swa.trufflesqueak.util.KnownClasses.POINT;
-import de.hpi.swa.trufflesqueak.util.KnownClasses.PROCESS;
 import de.hpi.swa.trufflesqueak.util.OSDetector;
 import de.hpi.swa.trufflesqueak.util.ProcessManager;
 import de.hpi.swa.trufflesqueak.util.SqueakImageFlags;
@@ -68,40 +68,40 @@ public class SqueakImageContext {
     private final SqueakLanguage.Env env;
 
     // Special selectors
-    public final SpecialSelector plus = new SpecialSelector(this, 1, 1, 1);
-    public final SpecialSelector minus = new SpecialSelector(this, 1, 1, 2);
-    public final SpecialSelector lt = new SpecialSelector(this, 1, 1, 3);
-    public final SpecialSelector gt = new SpecialSelector(this, 1, 1, 4);
-    public final SpecialSelector le = new SpecialSelector(this, 1, 1, 5);
-    public final SpecialSelector ge = new SpecialSelector(this, 1, 1, 6);
-    public final SpecialSelector eq = new SpecialSelector(this, 1, 1, 7);
-    public final SpecialSelector ne = new SpecialSelector(this, 1, 1, 8);
-    public final SpecialSelector times = new SpecialSelector(this, 1, 1, 9);
-    public final SpecialSelector divide = new SpecialSelector(this, 1, 1, 10);
-    public final SpecialSelector modulo = new SpecialSelector(this, 1, 1, 11);
-    public final SpecialSelector pointAt = new SpecialSelector(this, 1, 1);
-    public final SpecialSelector bitShift = new SpecialSelector(this, 1, 1, 17);
-    public final SpecialSelector floorDivide = new SpecialSelector(this, 1, 1, 12);
-    public final SpecialSelector bitAnd = new SpecialSelector(this, 1, 1, 14);
-    public final SpecialSelector bitOr = new SpecialSelector(this, 1, 1, 15);
-    public final SpecialSelector at = new SpecialSelector(this, 1, 1/* , 63 */);
-    public final SpecialSelector atput = new SpecialSelector(this, 1, 2/* , 64 */);
-    public final SpecialSelector size_ = new SpecialSelector(this, 1, 0/* , 62 */);
-    public final SpecialSelector next = new SpecialSelector(this, 1, 0);
-    public final SpecialSelector nextPut = new SpecialSelector(this, 1, 1);
-    public final SpecialSelector atEnd = new SpecialSelector(this, 1, 0);
-    public final SpecialSelector equivalent = new SpecialSelector(this, 1, 1, 110);
-    public final SpecialSelector klass = new SpecialSelector(this, 1, 0, 111);
-    public final SpecialSelector blockCopy = new SpecialSelector(this, 1, 1);
-    public final SpecialSelector value = new SpecialSelector(this, 1, 0, 201);
-    public final SpecialSelector valueWithArg = new SpecialSelector(this, 1, 1, 202);
-    public final SpecialSelector do_ = new SpecialSelector(this, 1, 1);
-    public final SpecialSelector new_ = new SpecialSelector(this, 1, 0);
-    public final SpecialSelector newWithArg = new SpecialSelector(this, 1, 1);
-    public final SpecialSelector x = new SpecialSelector(this, 1, 0);
-    public final SpecialSelector y = new SpecialSelector(this, 1, 0);
+    public final SpecialSelectorObject plus = new SpecialSelectorObject(this, 1, 1, 1);
+    public final SpecialSelectorObject minus = new SpecialSelectorObject(this, 1, 1, 2);
+    public final SpecialSelectorObject lt = new SpecialSelectorObject(this, 1, 1, 3);
+    public final SpecialSelectorObject gt = new SpecialSelectorObject(this, 1, 1, 4);
+    public final SpecialSelectorObject le = new SpecialSelectorObject(this, 1, 1, 5);
+    public final SpecialSelectorObject ge = new SpecialSelectorObject(this, 1, 1, 6);
+    public final SpecialSelectorObject eq = new SpecialSelectorObject(this, 1, 1, 7);
+    public final SpecialSelectorObject ne = new SpecialSelectorObject(this, 1, 1, 8);
+    public final SpecialSelectorObject times = new SpecialSelectorObject(this, 1, 1, 9);
+    public final SpecialSelectorObject divide = new SpecialSelectorObject(this, 1, 1, 10);
+    public final SpecialSelectorObject modulo = new SpecialSelectorObject(this, 1, 1, 11);
+    public final SpecialSelectorObject pointAt = new SpecialSelectorObject(this, 1, 1);
+    public final SpecialSelectorObject bitShift = new SpecialSelectorObject(this, 1, 1, 17);
+    public final SpecialSelectorObject floorDivide = new SpecialSelectorObject(this, 1, 1, 12);
+    public final SpecialSelectorObject bitAnd = new SpecialSelectorObject(this, 1, 1, 14);
+    public final SpecialSelectorObject bitOr = new SpecialSelectorObject(this, 1, 1, 15);
+    public final SpecialSelectorObject at = new SpecialSelectorObject(this, 1, 1/* , 63 */);
+    public final SpecialSelectorObject atput = new SpecialSelectorObject(this, 1, 2/* , 64 */);
+    public final SpecialSelectorObject size_ = new SpecialSelectorObject(this, 1, 0/* , 62 */);
+    public final SpecialSelectorObject next = new SpecialSelectorObject(this, 1, 0);
+    public final SpecialSelectorObject nextPut = new SpecialSelectorObject(this, 1, 1);
+    public final SpecialSelectorObject atEnd = new SpecialSelectorObject(this, 1, 0);
+    public final SpecialSelectorObject equivalent = new SpecialSelectorObject(this, 1, 1, 110);
+    public final SpecialSelectorObject klass = new SpecialSelectorObject(this, 1, 0, 111);
+    public final SpecialSelectorObject blockCopy = new SpecialSelectorObject(this, 1, 1);
+    public final SpecialSelectorObject value = new SpecialSelectorObject(this, 1, 0, 201);
+    public final SpecialSelectorObject valueWithArg = new SpecialSelectorObject(this, 1, 1, 202);
+    public final SpecialSelectorObject do_ = new SpecialSelectorObject(this, 1, 1);
+    public final SpecialSelectorObject new_ = new SpecialSelectorObject(this, 1, 0);
+    public final SpecialSelectorObject newWithArg = new SpecialSelectorObject(this, 1, 1);
+    public final SpecialSelectorObject x = new SpecialSelectorObject(this, 1, 0);
+    public final SpecialSelectorObject y = new SpecialSelectorObject(this, 1, 0);
 
-    @CompilationFinal public final SpecialSelector[] specialSelectorsArray = new SpecialSelector[]{
+    @CompilationFinal public final SpecialSelectorObject[] specialSelectorsArray = new SpecialSelectorObject[]{
                     plus, minus, lt, gt, le, ge, eq, ne, times, divide, modulo, pointAt, bitShift,
                     floorDivide, bitAnd, bitOr, at, atput, size_, next, nextPut, atEnd, equivalent,
                     klass, blockCopy, value, valueWithArg, do_, new_, newWithArg, x, y
@@ -132,7 +132,7 @@ public class SqueakImageContext {
 
     public CallTarget getActiveContext() {
         PointersObject activeProcess = process.activeProcess();
-        ContextObject activeContext = (ContextObject) activeProcess.at0(PROCESS.SUSPENDED_CONTEXT);
+        MethodContextObject activeContext = (MethodContextObject) activeProcess.at0(PROCESS.SUSPENDED_CONTEXT);
         activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, nil);
         output.println(String.format("Resuming active context for %s...", activeContext.at0(CONTEXT.METHOD)));
         return Truffle.getRuntime().createCallTarget(TopLevelContextNode.create(language, activeContext));
@@ -146,7 +146,7 @@ public class SqueakImageContext {
         if (lookupResult == null) {
             throw new RuntimeException(String.format("%s >> %s could not be found!", receiver, selector));
         }
-        ContextObject customContext = ContextObject.createWriteableContextObject(this, lookupResult.frameSize());
+        MethodContextObject customContext = MethodContextObject.createWriteableContextObject(this, lookupResult.frameSize());
         customContext.atput0(CONTEXT.METHOD, lookupResult);
         customContext.atput0(CONTEXT.INSTRUCTION_POINTER, customContext.getCodeObject().getBytecodeOffset() + 1);
         customContext.atput0(CONTEXT.RECEIVER, receiver);
@@ -192,7 +192,7 @@ public class SqueakImageContext {
     }
 
     public BaseSqueakObject wrap(BigInteger i) {
-        return new LargeInteger(this, i);
+        return new LargeIntegerObject(this, i);
     }
 
     public NativeObject wrap(String s) {

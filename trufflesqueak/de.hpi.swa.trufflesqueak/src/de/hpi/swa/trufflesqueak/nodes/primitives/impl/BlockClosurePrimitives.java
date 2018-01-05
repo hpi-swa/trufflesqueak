@@ -15,10 +15,10 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameUtil;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakQuit;
-import de.hpi.swa.trufflesqueak.model.BlockClosure;
+import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.MethodContextObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.nodes.BlockActivationNode;
 import de.hpi.swa.trufflesqueak.nodes.BlockActivationNodeGen;
@@ -44,7 +44,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
         @Specialization
         @TruffleBoundary
-        Object findNext(ContextObject receiver) {
+        Object findNext(MethodContextObject receiver) {
             Object handlerContext = Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Object>() {
                 final Object marker = receiver.getFrameMarker();
 
@@ -112,7 +112,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         @Specialization
-        protected Object value(BlockClosure block) {
+        protected Object value(BlockClosureObject block) {
             return dispatch.executeBlock(block, block.getFrameArguments());
         }
     }
@@ -126,7 +126,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         @Specialization
-        protected Object value(BlockClosure block, Object arg) {
+        protected Object value(BlockClosureObject block, Object arg) {
             return dispatch.executeBlock(block, block.getFrameArguments(arg));
         }
     }
@@ -140,7 +140,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         @Specialization
-        protected Object value(BlockClosure block, Object arg1, Object arg2) {
+        protected Object value(BlockClosureObject block, Object arg1, Object arg2) {
             return dispatch.executeBlock(block, block.getFrameArguments(arg1, arg2));
         }
     }
@@ -154,7 +154,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         @Specialization
-        protected Object value(BlockClosure block, Object arg1, Object arg2, Object arg3) {
+        protected Object value(BlockClosureObject block, Object arg1, Object arg2, Object arg3) {
             return dispatch.executeBlock(block, block.getFrameArguments(arg1, arg2, arg3));
         }
     }
@@ -168,7 +168,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         @Specialization
-        protected Object value(BlockClosure block, Object arg1, Object arg2, Object arg3, Object arg4) {
+        protected Object value(BlockClosureObject block, Object arg1, Object arg2, Object arg3, Object arg4) {
             return dispatch.executeBlock(block, block.getFrameArguments(arg1, arg2, arg3, arg4));
         }
     }
@@ -182,7 +182,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         @Specialization
-        protected Object value(BlockClosure block, ListObject argArray) {
+        protected Object value(BlockClosureObject block, ListObject argArray) {
             return dispatch.executeBlock(block, block.getFrameArguments(argArray.getPointers()));
         }
     }
@@ -195,7 +195,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         @Specialization
-        int doSize(ContextObject receiver) {
+        int doSize(MethodContextObject receiver) {
             return receiver.size();
         }
     }

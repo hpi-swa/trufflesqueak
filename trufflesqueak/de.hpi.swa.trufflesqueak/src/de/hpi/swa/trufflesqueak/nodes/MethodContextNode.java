@@ -15,21 +15,21 @@ import de.hpi.swa.trufflesqueak.exceptions.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.ContextObject;
-import de.hpi.swa.trufflesqueak.model.FrameMarker;
+import de.hpi.swa.trufflesqueak.model.MethodContextObject;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.BLOCK_CONTEXT;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
-import de.hpi.swa.trufflesqueak.util.KnownClasses.BLOCK_CONTEXT;
-import de.hpi.swa.trufflesqueak.util.KnownClasses.CONTEXT;
+import de.hpi.swa.trufflesqueak.util.FrameMarker;
 import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
 public class MethodContextNode extends RootNode {
-    @CompilationFinal private final ContextObject context;
+    @CompilationFinal private final MethodContextObject context;
     @CompilationFinal private final CompiledCodeObject code;
     @Children private final AbstractBytecodeNode[] bytecodeNodes;
 
-    public MethodContextNode(SqueakLanguage language, ContextObject context, CompiledCodeObject code) {
+    public MethodContextNode(SqueakLanguage language, MethodContextObject context, CompiledCodeObject code) {
         super(language, code.getFrameDescriptor());
         this.code = code;
         this.context = context;
@@ -59,7 +59,7 @@ public class MethodContextNode extends RootNode {
             throw new RuntimeException("Method did not return");
         } catch (LocalReturn lr) {
             if (context.isDirty()) {
-                ContextObject sender = context.getSender();
+                MethodContextObject sender = context.getSender();
                 throw new NonVirtualReturn(lr.getReturnValue(), sender, sender);
             }
             context.activateUnwindContext();

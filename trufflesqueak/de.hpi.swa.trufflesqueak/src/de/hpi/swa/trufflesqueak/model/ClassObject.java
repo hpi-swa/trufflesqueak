@@ -9,8 +9,8 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.util.KnownClasses.CLASS;
-import de.hpi.swa.trufflesqueak.util.KnownClasses.METHOD_DICT;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CLASS;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.METHOD_DICT;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public class ClassObject extends AbstractPointersObject {
@@ -214,9 +214,9 @@ public class ClassObject extends AbstractPointersObject {
                 return new ListObject(image, this, size);
             case 3: // mixed indexable and named pointers
                 if (this == image.methodContextClass) {
-                    return ContextObject.createWriteableContextObject(image, size);
+                    return MethodContextObject.createWriteableContextObject(image, size);
                 } else if (this.getSqClass() == image.blockClosureClass) {
-                    return new BlockClosure(image); // TODO: verify this is actually used
+                    return new BlockClosureObject(image); // TODO: verify this is actually used
                 } else {
                 return new PointersObject(image, this, size);
                 }

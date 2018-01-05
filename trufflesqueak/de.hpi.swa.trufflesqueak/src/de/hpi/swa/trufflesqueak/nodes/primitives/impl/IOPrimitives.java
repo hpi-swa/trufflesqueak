@@ -13,14 +13,14 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.model.LargeInteger;
+import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
-import de.hpi.swa.trufflesqueak.util.Constants.SPECIAL_OBJECT_INDEX;
 
 public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -85,21 +85,21 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        Object replace(LargeInteger rcvr, int start, int stop, LargeInteger repl, int replStart) {
+        Object replace(LargeIntegerObject rcvr, int start, int stop, LargeIntegerObject repl, int replStart) {
             return replaceInLarge(rcvr, start, stop, repl.getBytes(), replStart);
         }
 
         @Specialization
-        Object replace(LargeInteger rcvr, int start, int stop, NativeObject repl, int replStart) {
+        Object replace(LargeIntegerObject rcvr, int start, int stop, NativeObject repl, int replStart) {
             return replaceInLarge(rcvr, start, stop, repl.getBytes(), replStart);
         }
 
         @Specialization
-        Object replace(LargeInteger rcvr, int start, int stop, BigInteger repl, int replStart) {
-            return replaceInLarge(rcvr, start, stop, LargeInteger.getSqueakBytes(repl), replStart);
+        Object replace(LargeIntegerObject rcvr, int start, int stop, BigInteger repl, int replStart) {
+            return replaceInLarge(rcvr, start, stop, LargeIntegerObject.getSqueakBytes(repl), replStart);
         }
 
-        private static Object replaceInLarge(LargeInteger rcvr, int start, int stop, byte[] replBytes, int replStart) {
+        private static Object replaceInLarge(LargeIntegerObject rcvr, int start, int stop, byte[] replBytes, int replStart) {
             byte[] rcvrBytes = rcvr.getBytes();
             int repOff = replStart - start;
             for (int i = start - 1; i < stop; i++) {
@@ -110,7 +110,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        Object replace(NativeObject rcvr, int start, int stop, LargeInteger repl, int replStart) {
+        Object replace(NativeObject rcvr, int start, int stop, LargeIntegerObject repl, int replStart) {
             int repOff = replStart - start;
             byte[] replBytes = repl.getBytes();
             for (int i = start - 1; i < stop; i++) {
@@ -131,7 +131,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         Object replace(NativeObject rcvr, int start, int stop, BigInteger repl, int replStart) {
             int repOff = replStart - start;
-            byte[] bytes = LargeInteger.getSqueakBytes(repl);
+            byte[] bytes = LargeIntegerObject.getSqueakBytes(repl);
             for (int i = start - 1; i < stop; i++) {
                 rcvr.setNativeAt0(i, bytes[repOff + i]);
             }

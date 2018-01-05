@@ -14,11 +14,24 @@ import java.util.Deque;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import de.hpi.swa.trufflesqueak.util.Constants.KEYBOARD_MODIFIER;
-import de.hpi.swa.trufflesqueak.util.Constants.MOUSE_BUTTON;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public final class Display {
+    private static final class MOUSE_BUTTON {
+        public static final int ALL = 1 + 2 + 4;
+        public static final int BLUE = 1;
+        public static final int YELLOW = 2;
+        public static final int RED = 4;
+    }
+
+    private static final class KEYBOARD_MODIFIER {
+        public static final int ALL = 8 + 16 + 32 + 64;
+        public static final int SHIFT = 8;
+        public static final int CTRL = 16;
+        public static final int ALT = 32;
+        public static final int CMD = 64;
+    }
+
     public static abstract class AbstractDisplay {
         public abstract void drawRect(int left, int right, int top, int bottom);
 
