@@ -66,7 +66,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    // primitiveBlockCopy (#80) no longer needed.
+    // primitiveBlockCopy / primitiveBlockValue: (#80, #81, #82) no longer needed.
 
     private static abstract class AbstractPerformPrimitiveNode extends AbstractPrimitiveNode {
         @Child protected SqueakLookupClassNode lookupClassNode;
@@ -203,8 +203,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected BaseSqueakObject doResume(VirtualFrame frame, PointersObject receiver) {
-            ProcessManager manager = code.image.process;
-            manager.resumeProcess(frame, receiver);
+            code.image.process.resumeProcess(frame, receiver);
             return receiver;
         }
     }
@@ -399,6 +398,36 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         Object get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
             System.gc();
             return code.image.wrap(Runtime.getRuntime().freeMemory());
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 188, variableArguments = true)
+    protected static abstract class PrimExecuteMethodArgsArray extends AbstractPerformPrimitiveNode {
+        @Child private DispatchNode dispatchNode = DispatchNode.create();
+
+        protected PrimExecuteMethodArgsArray(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected Object doExecute(Object[] rcvrAndArgs) {
+            if (3 < rcvrAndArgs.length || rcvrAndArgs.length > 5) {
+                throw new PrimitiveFailed();
+            }
+            if (!(rcvrAndArgs[1] instanceof ListObject) || !(rcvrAndArgs[2] instanceof CompiledMethodObject)) {
+                throw new PrimitiveFailed();
+            }
+            Object receiver = rcvrAndArgs[0];
+            ListObject argArray = (ListObject) rcvrAndArgs[1];
+            Object method = rcvrAndArgs[2];
+            int numArgs = argArray.size();
+            Object[] dispatchRcvrAndArgs = new Object[1 + numArgs];
+            dispatchRcvrAndArgs[0] = receiver;
+            for (int i = 0; i < numArgs; i++) {
+                dispatchRcvrAndArgs[1 + i] = argArray.at0(i);
+            }
+            return dispatchNode.executeDispatch(method, dispatchRcvrAndArgs);
         }
     }
 

@@ -31,6 +31,7 @@ import de.hpi.swa.trufflesqueak.nodes.context.ObjectGraph;
 import de.hpi.swa.trufflesqueak.util.Display.AbstractDisplay;
 import de.hpi.swa.trufflesqueak.util.Display.JavaDisplay;
 import de.hpi.swa.trufflesqueak.util.Display.NullDisplay;
+import de.hpi.swa.trufflesqueak.util.InterruptHandler;
 import de.hpi.swa.trufflesqueak.util.OSDetector;
 import de.hpi.swa.trufflesqueak.util.ProcessManager;
 import de.hpi.swa.trufflesqueak.util.SqueakImageFlags;
@@ -113,6 +114,8 @@ public class SqueakImageContext {
     @CompilationFinal public final OSDetector os = new OSDetector();
     @CompilationFinal public final ProcessManager process = new ProcessManager(this);
     @CompilationFinal public final SqueakImageFlags flags = new SqueakImageFlags();
+    @CompilationFinal public final InterruptHandler interrupt = new InterruptHandler();
+    @CompilationFinal public final long startUpTime = System.currentTimeMillis();
 
     public SqueakImageContext(SqueakLanguage squeakLanguage, SqueakLanguage.Env environ,
                     PrintWriter out, PrintWriter err) {

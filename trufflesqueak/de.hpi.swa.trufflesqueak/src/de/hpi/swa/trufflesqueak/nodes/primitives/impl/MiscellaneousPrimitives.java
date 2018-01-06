@@ -1,5 +1,11 @@
 package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.io.IOException;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
@@ -15,6 +21,7 @@ import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
@@ -125,6 +132,84 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(index = 135)
+    protected static abstract class PrimMillisecondClockNode extends AbstractPrimitiveNode {
+
+        protected PrimMillisecondClockNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected BaseSqueakObject doClock(@SuppressWarnings("unused") ClassObject receiver) {
+            return code.image.wrap(System.currentTimeMillis() - code.image.startUpTime);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 136, numArguments = 3)
+    protected static abstract class PrimSignalAtMillisecondsNode extends AbstractPrimitiveNode {
+
+        protected PrimSignalAtMillisecondsNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected BaseSqueakObject doSignal(BaseSqueakObject receiver, BaseSqueakObject semaphore, int msTime) {
+            if (semaphore.isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassSemaphore)) {
+                code.image.registerSemaphore(semaphore, SPECIAL_OBJECT_INDEX.TheTimerSemaphore);
+                code.image.interrupt.nextWakeupTick(msTime);
+            } else {
+                code.image.registerSemaphore(code.image.nil, SPECIAL_OBJECT_INDEX.TheTimerSemaphore);
+                code.image.interrupt.nextWakeupTick(0);
+            }
+            return receiver;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 141, variableArguments = true)
+    protected static abstract class PrimClipboardTextNode extends AbstractPrimitiveNode {
+
+        protected PrimClipboardTextNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected Object doClipboard(Object[] rcvrAndArgs) {
+            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            if (rcvrAndArgs.length == 1) {
+                String text;
+                try {
+                    text = (String) code.image.wrap(clipboard.getData(DataFlavor.stringFlavor));
+                } catch (UnsupportedFlavorException | IOException | IllegalStateException e) {
+                    text = "";
+                }
+                return code.image.wrap(text);
+            } else if (rcvrAndArgs.length == 2 && (rcvrAndArgs[1] instanceof NativeObject)) {
+                String text = ((NativeObject) rcvrAndArgs[1]).toString();
+                StringSelection selection = new StringSelection(text);
+                clipboard.setContents(selection, selection);
+                return rcvrAndArgs[1];
+            }
+            throw new PrimitiveFailed();
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 142)
+    protected static abstract class PrimVMPathNode extends AbstractPrimitiveNode {
+
+        protected PrimVMPathNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected BaseSqueakObject goVMPath(@SuppressWarnings("unused") BaseSqueakObject receiver) {
+            return code.image.wrap(System.getProperty("java.home"));
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(index = 148)
     protected static abstract class PrimShallowCopyNode extends AbstractPrimitiveNode {
         protected PrimShallowCopyNode(CompiledMethodObject method) {
@@ -176,6 +261,19 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
                     }
             }
             return code.image.nil;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 176)
+    protected static abstract class PrimMaxIdentityHashNode extends AbstractPrimitiveNode {
+        protected PrimMaxIdentityHashNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected Object copy(@SuppressWarnings("unused") BaseSqueakObject receiver) {
+            return code.image.wrap(Math.pow(2, 22) - 1);
         }
     }
 
