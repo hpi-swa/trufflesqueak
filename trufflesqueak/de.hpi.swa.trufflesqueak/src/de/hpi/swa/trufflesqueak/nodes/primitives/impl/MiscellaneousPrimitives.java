@@ -194,12 +194,12 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = "hasNoInstances(classObject)")
         ListObject noInstances(ClassObject classObject) {
-            return code.image.wrap(new Object[0]);
+            return code.image.newList(new Object[0]);
         }
 
         @Specialization
         ListObject allInstances(ClassObject classObject) {
-            return code.image.wrap(code.image.objects.allInstances(classObject).toArray());
+            return code.image.newList(code.image.objects.allInstances(classObject).toArray());
         }
 
         @SuppressWarnings("unused")
@@ -240,10 +240,10 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected Object doTwoArguments(Object[] rcvrAndArgs) {
             int numRcvrAndArgs = rcvrAndArgs.length;
-            Object[] vmParameters = new Object[71];
-            Arrays.fill(vmParameters, code.image.wrap(0));
             if (numRcvrAndArgs == 1) {
-                return code.image.wrap(vmParameters);
+                Object[] vmParameters = new Object[71];
+                Arrays.fill(vmParameters, code.image.wrap(0));
+                return code.image.newList(vmParameters);
             }
             int index;
             try {
@@ -253,7 +253,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
             }
             if (numRcvrAndArgs <= 3) {
                 // when two args are provided, do nothing and return old value
-                return vmParameters[index];
+                return code.image.wrap(0);
             }
             throw new PrimitiveFailed();
         }

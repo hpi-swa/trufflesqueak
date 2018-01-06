@@ -124,7 +124,7 @@ public class SqueakSourceTest extends AbstractSqueakTestCase {
             "63 <BF> send: bitOr\n" +
             "64 <C0> send: at\n" +
             "65 <C1> send: atput\n" +
-            "66 <C2> send: size_\n" +
+            "66 <C2> send: size\n" +
             "67 <C3> send: next\n" +
             "68 <C4> send: nextPut\n" +
             "69 <C5> send: atEnd\n" +
@@ -133,8 +133,8 @@ public class SqueakSourceTest extends AbstractSqueakTestCase {
             "72 <C8> send: blockCopy\n" +
             "73 <C9> send: value\n" +
             "74 <CA> send: valueWithArg\n" +
-            "75 <CB> send: do_\n" +
-            "76 <CC> send: new_\n" +
+            "75 <CB> send: do\n" +
+            "76 <CC> send: new\n" +
             "77 <CD> send: newWithArg\n" +
             "78 <CE> send: x\n" +
             "79 <CF> send: y\n" +

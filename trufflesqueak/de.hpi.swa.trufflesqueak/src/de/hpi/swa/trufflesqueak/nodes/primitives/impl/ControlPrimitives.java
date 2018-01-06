@@ -313,7 +313,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        BaseSqueakObject get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
+        Object get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
             return code.image.wrap(Runtime.getRuntime().freeMemory());
         }
     }
@@ -396,7 +396,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        BaseSqueakObject get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
+        Object get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
             System.gc();
             return code.image.wrap(Runtime.getRuntime().freeMemory());
         }

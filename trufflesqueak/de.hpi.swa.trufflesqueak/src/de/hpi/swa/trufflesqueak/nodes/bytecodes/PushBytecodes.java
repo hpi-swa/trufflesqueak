@@ -167,14 +167,11 @@ public final class PushBytecodes {
 
         @Override
         public void executeVoid(VirtualFrame frame) {
-            Object[] array;
             if (popNReversedNode != null) {
-                array = popNReversedNode.execute(frame);
+                pushNode.executeWrite(frame, code.image.newList(popNReversedNode.execute(frame)));
             } else {
-                array = new Object[arraySize];
-                Arrays.fill(array, code.image.nil); // Initialize with nil
+                pushNode.executeWrite(frame, code.image.wrap(new Object[arraySize]));
             }
-            pushNode.executeWrite(frame, code.image.wrap(array));
         }
 
         @Override

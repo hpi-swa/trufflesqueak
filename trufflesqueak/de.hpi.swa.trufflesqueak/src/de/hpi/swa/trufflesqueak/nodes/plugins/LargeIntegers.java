@@ -143,9 +143,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         @Specialization
         ListObject div(BigInteger rcvr, BigInteger arg) {
             BigInteger[] divRem = rcvr.divideAndRemainder(arg);
-            return code.image.wrap(new Object[]{
-                            code.image.wrap(divRem[0]),
-                            code.image.wrap(divRem[1])});
+            return code.image.wrap(new Object[]{divRem[0], divRem[1]});
         }
     }
 

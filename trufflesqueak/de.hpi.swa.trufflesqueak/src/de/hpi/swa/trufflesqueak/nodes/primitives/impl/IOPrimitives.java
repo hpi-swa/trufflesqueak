@@ -172,7 +172,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        BaseSqueakObject get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
+        Object get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
             return code.image.wrap(code.image.display.getButtons());
         }
     }
@@ -186,7 +186,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        BaseSqueakObject get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
+        Object get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
             return code.image.wrap(code.image.display.nextKey());
         }
     }
@@ -200,7 +200,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        BaseSqueakObject get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
+        Object get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
             return code.image.wrap(code.image.display.peekKey());
         }
     }

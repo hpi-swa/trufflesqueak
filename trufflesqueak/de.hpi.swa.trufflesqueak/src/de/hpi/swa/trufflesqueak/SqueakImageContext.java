@@ -93,7 +93,7 @@ public class SqueakImageContext {
     public final SpecialSelectorObject equivalent = new SpecialSelectorObject(this, 1, 1, 110);
     public final SpecialSelectorObject klass = new SpecialSelectorObject(this, 1, 0, 111);
     public final SpecialSelectorObject blockCopy = new SpecialSelectorObject(this, 1, 1);
-    public final SpecialSelectorObject value = new SpecialSelectorObject(this, 1, 0, 201);
+    public final SpecialSelectorObject value_ = new SpecialSelectorObject(this, 1, 0, 201);
     public final SpecialSelectorObject valueWithArg = new SpecialSelectorObject(this, 1, 1, 202);
     public final SpecialSelectorObject do_ = new SpecialSelectorObject(this, 1, 1);
     public final SpecialSelectorObject new_ = new SpecialSelectorObject(this, 1, 0);
@@ -101,10 +101,10 @@ public class SqueakImageContext {
     public final SpecialSelectorObject x = new SpecialSelectorObject(this, 1, 0);
     public final SpecialSelectorObject y = new SpecialSelectorObject(this, 1, 0);
 
-    @CompilationFinal public final SpecialSelectorObject[] specialSelectorsArray = new SpecialSelectorObject[]{
+    @CompilationFinal(dimensions = 1) public final SpecialSelectorObject[] specialSelectorsArray = new SpecialSelectorObject[]{
                     plus, minus, lt, gt, le, ge, eq, ne, times, divide, modulo, pointAt, bitShift,
                     floorDivide, bitAnd, bitOr, at, atput, size_, next, nextPut, atEnd, equivalent,
-                    klass, blockCopy, value, valueWithArg, do_, new_, newWithArg, x, y
+                    klass, blockCopy, value_, valueWithArg, do_, new_, newWithArg, x, y
     };
 
     @CompilationFinal public final SqueakConfig config;
@@ -172,22 +172,42 @@ public class SqueakImageContext {
         return language;
     }
 
-    public BaseSqueakObject wrap(Object obj) {
+    public Object wrap(Object obj) {
         CompilerAsserts.neverPartOfCompilation();
-        if (obj instanceof Integer) {
-            return wrap(BigInteger.valueOf(((Integer) obj).intValue()));
+        if (obj == null) {
+            return nil;
+        } else if (obj instanceof Boolean) {
+            return wrap((boolean) obj);
+        } else if (obj instanceof Integer) {
+            return wrap((int) obj);
+        } else if (obj instanceof Long) {
+            return wrap((long) obj);
         } else if (obj instanceof BigInteger) {
             return wrap((BigInteger) obj);
-        } else if (obj instanceof Long) {
-            return wrap(BigInteger.valueOf((long) obj).intValue());
         } else if (obj instanceof String) {
             return wrap((String) obj);
+        } else if (obj instanceof Character) {
+            return wrap((char) obj);
         } else if (obj instanceof Object[]) {
             return wrap((Object[]) obj);
-        } else if (obj == null) {
-            return nil;
+        } else if (obj instanceof Point) {
+            return wrap((Point) obj);
+        } else if (obj instanceof Dimension) {
+            return wrap((Dimension) obj);
         }
         throw new RuntimeException("Don't know how to wrap " + obj);
+    }
+
+    public Object wrap(boolean value) {
+        return value ? sqTrue : sqFalse;
+    }
+
+    public BaseSqueakObject wrap(int i) {
+        return wrap(BigInteger.valueOf(((Integer) i).intValue()));
+    }
+
+    public BaseSqueakObject wrap(long l) {
+        return wrap(BigInteger.valueOf(l).intValue());
     }
 
     public BaseSqueakObject wrap(BigInteger i) {
@@ -203,7 +223,11 @@ public class SqueakImageContext {
     }
 
     public ListObject wrap(Object... elements) {
-        return new ListObject(this, arrayClass, elements);
+        Object[] wrappedElements = new Object[elements.length];
+        for (int i = 0; i < elements.length; i++) {
+            wrappedElements[i] = wrap(elements[i]);
+        }
+        return newList(wrappedElements);
     }
 
     public PointersObject wrap(Point point) {
@@ -212,6 +236,10 @@ public class SqueakImageContext {
 
     public PointersObject wrap(Dimension dimension) {
         return newPoint((int) dimension.getWidth(), (int) dimension.getHeight());
+    }
+
+    public ListObject newList(Object... elements) {
+        return new ListObject(this, arrayClass, elements);
     }
 
     public PointersObject newPoint(int xPos, int yPos) {
