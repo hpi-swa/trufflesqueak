@@ -1,45 +1,309 @@
 package de.hpi.swa.trufflesqueak.nodes.plugins;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 
 public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
+    private static final class STDIO_HANDLES {
+        public static final int IN = 0;
+        public static final int OUT = 1;
+        public static final int ERROR = 2;
+    }
+
+    @CompilationFinal private static final Map<Integer, RandomAccessFile> files = new HashMap<>();
 
     @Override
     public List<NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
         return FilePluginFactory.getFactories();
     }
 
+    protected static abstract class AbstractFilePluginPrimitiveNode extends AbstractPrimitiveNode {
+
+        protected AbstractFilePluginPrimitiveNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        protected boolean isString(NativeObject obj) {
+            return obj.isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassString);
+        }
+    }
+
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveFileSize", numArguments = 2)
-    public static abstract class PrimFileSizeNode extends AbstractPrimitiveNode {
-        public PrimFileSizeNode(CompiledMethodObject code) {
-            super(code);
+    @SqueakPrimitive(name = "primitiveDirectoryCreate", numArguments = 2)
+    public static abstract class PrimDirectoryCreateNode extends AbstractPrimitiveNode {
+
+        public PrimDirectoryCreateNode(CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization
-        int size(@SuppressWarnings("unused") Object receiver, int fd) {
-            // TODO: use registry of files
-            if (fd <= 2) {
-                return 0;
+        protected Object doCreate(PointersObject receiver, NativeObject fullPath) {
+            File directory = new File(fullPath.toString());
+            if (directory.mkdir()) {
+                return receiver;
             }
             throw new PrimitiveFailed();
         }
+    }
 
-        // TODO: double, long, BigInteger
+    @GenerateNodeFactory
+    @SqueakPrimitive(name = "primitiveDirectoryDelimitor")
+    public static abstract class PrimDirectoryDelimitorNode extends AbstractPrimitiveNode {
+
+        public PrimDirectoryDelimitorNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected Object doDelimitor(@SuppressWarnings("unused") Object receiver) {
+            return code.image.wrap(File.separatorChar);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(name = "primitiveDirectoryLookup", numArguments = 3)
+    public static abstract class PrimDirectoryLookupNode extends AbstractFilePluginPrimitiveNode {
+
+        public PrimDirectoryLookupNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = "isString(nativePathName)")
+        protected Object doLookup(@SuppressWarnings("unused") PointersObject receiver, NativeObject nativePathName, int index) {
+            if (index < 0) {
+                throw new PrimitiveFailed();
+            }
+            String pathName = nativePathName.toString();
+            if (pathName.length() == 0) {
+                pathName = "/";
+            }
+            File directory = new File(pathName);
+            if (!directory.isDirectory()) {
+                throw new PrimitiveFailed();
+            }
+            File[] paths = directory.listFiles();
+            if (index < paths.length) {
+                File path = paths[index];
+                Object[] result = new Object[]{path.getName(), path.lastModified(), path.lastModified(), path.isDirectory(), path.length()};
+                return code.image.wrap(result);
+            }
+            return code.image.nil;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(name = "primitiveFileAtEnd", numArguments = 2)
+    public static abstract class PrimFileAtEndNode extends AbstractPrimitiveNode {
+
+        public PrimFileAtEndNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected Object doAtEnd(@SuppressWarnings("unused") PointersObject receiver, int fileDescriptor) {
+            try {
+                RandomAccessFile file = files.get(fileDescriptor);
+                return code.image.wrap(file.getFilePointer() >= file.length());
+            } catch (NullPointerException | IOException e) {
+                throw new PrimitiveFailed();
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(name = "primitiveFileClose", numArguments = 2)
+    public static abstract class PrimFileCloseNode extends AbstractPrimitiveNode {
+
+        public PrimFileCloseNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected Object doClose(PointersObject receiver, int fileDescriptor) {
+            try {
+                RandomAccessFile file = files.get(fileDescriptor);
+                file.close();
+            } catch (NullPointerException | IOException e) {
+                throw new PrimitiveFailed();
+            }
+            return receiver;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(name = "primitiveFileDelete", numArguments = 2)
+    public static abstract class PrimFileDeleteNode extends AbstractFilePluginPrimitiveNode {
+
+        public PrimFileDeleteNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = "isString(nativeFileName)")
+        protected Object doDelete(PointersObject receiver, NativeObject nativeFileName) {
+            File file = new File(nativeFileName.toString());
+            if (file.delete()) {
+                return receiver;
+            }
+            throw new PrimitiveFailed();
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(name = "primitiveFileFlush", numArguments = 2)
+    public static abstract class PrimFileFlushNode extends AbstractPrimitiveNode {
+
+        public PrimFileFlushNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected Object doFlush(PointersObject receiver, @SuppressWarnings("unused") int fileDescriptor) {
+            return receiver;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(name = "primitiveFileGetPosition", numArguments = 2)
+    public static abstract class PrimFileGetPositionNode extends AbstractPrimitiveNode {
+
+        public PrimFileGetPositionNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected Object doGet(@SuppressWarnings("unused") PointersObject receiver, int fileDescriptor) {
+            try {
+                RandomAccessFile file = files.get(fileDescriptor);
+                return file.getFilePointer();
+            } catch (NullPointerException | IOException e) {
+                throw new PrimitiveFailed();
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(name = "primitiveFileOpen", numArguments = 3)
+    public static abstract class PrimFileOpenNode extends AbstractFilePluginPrimitiveNode {
+
+        public PrimFileOpenNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = "isString(nativeFileName)")
+        protected Object doOpen(@SuppressWarnings("unused") PointersObject receiver, NativeObject nativeFileName, Boolean writableFlag) {
+            String fileName = nativeFileName.toString();
+            String mode = writableFlag ? "rw" : "r";
+            try {
+                RandomAccessFile file = new RandomAccessFile(fileName, mode);
+                int fileId = file.hashCode();
+                files.put(fileId, file);
+                return fileId;
+            } catch (FileNotFoundException e) {
+                throw new PrimitiveFailed();
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(name = "primitiveFileRead", numArguments = 5)
+    public static abstract class PrimFileReadNode extends AbstractPrimitiveNode {
+
+        public PrimFileReadNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected Object doRead(@SuppressWarnings("unused") PointersObject receiver, int fileDescriptor, BaseSqueakObject target, int startIndex, int count) {
+            byte[] buffer = new byte[count];
+            try {
+                RandomAccessFile file = files.get(fileDescriptor);
+                int read = file.read(buffer, 0, count);
+                for (int index = 0; index < read; index++) {
+                    target.atput0(startIndex + index, buffer[index]);
+                }
+                return read;
+            } catch (NullPointerException | IOException e) {
+                throw new PrimitiveFailed();
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(name = "primitiveFileRename", numArguments = 3)
+    public static abstract class PrimFileRenameNode extends AbstractFilePluginPrimitiveNode {
+
+        public PrimFileRenameNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = {"isString(oldName)", "isString(newName)"})
+        protected Object doRename(PointersObject receiver, NativeObject oldName, NativeObject newName) {
+            File file = new File(oldName.toString());
+            if (file.renameTo(new File(newName.toString()))) {
+                return receiver;
+            }
+            throw new PrimitiveFailed();
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(name = "primitiveFileSetPosition", numArguments = 3)
+    public static abstract class PrimFileSetPositionNode extends AbstractPrimitiveNode {
+
+        public PrimFileSetPositionNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected Object doSet(PointersObject receiver, int fileDescriptor, int position) {
+            try {
+                RandomAccessFile file = files.get(fileDescriptor);
+                file.seek(position);
+            } catch (NullPointerException | IOException e) {
+                throw new PrimitiveFailed();
+            }
+            return receiver;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(name = "primitiveFileSize", numArguments = 2)
+    public static abstract class PrimFileSizeNode extends AbstractPrimitiveNode {
+
+        public PrimFileSizeNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected Object doSize(@SuppressWarnings("unused") PointersObject receiver, int fileDescriptor) {
+            try {
+                RandomAccessFile file = files.get(fileDescriptor);
+                return code.image.wrap(file.length());
+            } catch (NullPointerException | IOException e) {
+                throw new PrimitiveFailed();
+            }
+        }
     }
 
     @GenerateNodeFactory
@@ -49,10 +313,9 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             super(code);
         }
 
-        @SuppressWarnings("unused")
         @Specialization
-        public Object getHandles(VirtualFrame frame) {
-            return code.image.wrap(0, 1, 2);
+        protected Object getHandles(@SuppressWarnings("unused") PointersObject receiver) {
+            return code.image.newList(STDIO_HANDLES.IN, STDIO_HANDLES.OUT, STDIO_HANDLES.ERROR);
         }
     }
 
@@ -65,43 +328,32 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         @TruffleBoundary
-        int write(@SuppressWarnings("unused") Object receiver, int fd, NativeObject content, int start, int count) {
-            // TODO: use registry of files
+        protected int doWrite(@SuppressWarnings("unused") PointersObject receiver, int fileDescriptor, NativeObject content, int startIndex, int count) {
             String chars = content.toString();
             int elementSize = content.getElementSize();
-            int byteStart = (start - 1) * elementSize;
-            int byteEnd = Math.min(start - 1 + count, chars.length()) * elementSize;
-            switch (fd) {
-                case 1:
+            int byteStart = (startIndex - 1) * elementSize;
+            int byteEnd = Math.min(startIndex - 1 + count, chars.length()) * elementSize;
+            switch (fileDescriptor) {
+                case STDIO_HANDLES.IN:
+                    throw new PrimitiveFailed();
+                case STDIO_HANDLES.OUT:
                     code.image.getOutput().append(chars, byteStart, byteEnd);
                     code.image.getOutput().flush();
                     break;
-                case 2:
+                case STDIO_HANDLES.ERROR:
                     code.image.getError().append(chars, byteStart, byteEnd);
                     code.image.getError().flush();
                     break;
                 default:
-                    throw new PrimitiveFailed();
+                    try {
+                        RandomAccessFile file = files.get(fileDescriptor);
+                        throw new IOException("Start debugger here and verify the below!"); // TODO: verify
+                        // file.writeChars(chars);
+                    } catch (NullPointerException | IOException e) {
+                        throw new PrimitiveFailed();
+                    }
             }
             return (byteEnd - byteStart) / elementSize;
         }
-
-        // TODO: double, long, BigInteger
     }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveDirectoryDelimitor")
-    public static abstract class PrimDirectoryDelimiterNode extends AbstractPrimitiveNode {
-
-        public PrimDirectoryDelimiterNode(CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization
-        Object get(@SuppressWarnings("unused") Object receiver) {
-            return code.image.wrap(File.separatorChar);
-        }
-
-    }
-
 }
