@@ -30,8 +30,8 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {60, 210}, numArguments = 2)
-    public static abstract class PrimBasicAtNode extends PrimAtNode {
-        public PrimBasicAtNode(CompiledMethodObject method) {
+    protected static abstract class PrimBasicAtNode extends PrimAtNode {
+        protected PrimBasicAtNode(CompiledMethodObject method) {
             super(method);
         }
 
@@ -56,8 +56,8 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {61, 211}, numArguments = 3)
-    public static abstract class PrimBasicAtPutNode extends PrimAtPutNode {
-        public PrimBasicAtPutNode(CompiledMethodObject method) {
+    protected static abstract class PrimBasicAtPutNode extends PrimAtPutNode {
+        protected PrimBasicAtPutNode(CompiledMethodObject method) {
             super(method);
         }
 
@@ -84,48 +84,48 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 62)
-    public static abstract class PrimSizeNode extends AbstractPrimitiveNode {
-        public PrimSizeNode(CompiledMethodObject method) {
+    protected static abstract class PrimSizeNode extends AbstractPrimitiveNode {
+        protected PrimSizeNode(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization(guards = "isNil(obj)")
-        public int size(@SuppressWarnings("unused") char obj) {
+        protected int size(@SuppressWarnings("unused") char obj) {
             return 0;
         }
 
         @Specialization
-        public int size(@SuppressWarnings("unused") boolean o) {
+        protected int size(@SuppressWarnings("unused") boolean o) {
             return 0;
         }
 
         @Specialization
-        public int size(@SuppressWarnings("unused") int o) {
+        protected int size(@SuppressWarnings("unused") int o) {
             return 0;
         }
 
         @Specialization
-        public int size(@SuppressWarnings("unused") long o) {
+        protected int size(@SuppressWarnings("unused") long o) {
             return 0;
         }
 
         @Specialization
-        public int size(String s) {
+        protected int size(String s) {
             return s.getBytes().length;
         }
 
         @Specialization
-        public int size(BigInteger i) {
+        protected int size(BigInteger i) {
             return LargeIntegerObject.byteSize(i);
         }
 
         @Specialization
-        public int size(@SuppressWarnings("unused") double o) {
+        protected int size(@SuppressWarnings("unused") double o) {
             return 2; // Float in words
         }
 
         @Specialization
-        public int size(BaseSqueakObject obj) {
+        protected int size(BaseSqueakObject obj) {
             if (!obj.getSqClass().isVariable()) {
                 throw new PrimitiveFailed();
             }
@@ -135,13 +135,13 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 63, numArguments = 2)
-    public static abstract class PrimStringAtNode extends AbstractPrimitiveNode {
-        public PrimStringAtNode(CompiledMethodObject method) {
+    protected static abstract class PrimStringAtNode extends AbstractPrimitiveNode {
+        protected PrimStringAtNode(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        char stringAt(NativeObject obj, int idx) {
+        protected char stringAt(NativeObject obj, int idx) {
             byte nativeAt0 = ((Long) obj.getNativeAt0(idx - 1)).byteValue();
             return (char) nativeAt0;
         }
@@ -149,19 +149,19 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 64, numArguments = 3)
-    public static abstract class PrimStringAtPutNode extends AbstractPrimitiveNode {
-        public PrimStringAtPutNode(CompiledMethodObject method) {
+    protected static abstract class PrimStringAtPutNode extends AbstractPrimitiveNode {
+        protected PrimStringAtPutNode(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        char atput(NativeObject obj, int idx, char value) {
+        protected char atput(NativeObject obj, int idx, char value) {
             obj.setNativeAt0(idx - 1, value);
             return value;
         }
 
         @Specialization
-        char atput(NativeObject obj, int idx, int value) {
+        protected char atput(NativeObject obj, int idx, int value) {
             char charValue = (char) ((Integer) value).byteValue();
             obj.setNativeAt0(idx - 1, charValue);
             return charValue;

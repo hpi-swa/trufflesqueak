@@ -22,7 +22,7 @@ public abstract class FrameStackReadNode extends Node {
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"index == cachedIndex"}, limit = "SQUEAK_MAX_STACK_SIZE")
-    public Object readInt(VirtualFrame frame, int index,
+    protected Object readInt(VirtualFrame frame, int index,
                     @Cached("index") int cachedIndex,
                     @Cached("getFrameSlotForIndex(frame, index)") FrameSlot slot,
                     @Cached("create(slot)") FrameSlotReadNode readNode) {

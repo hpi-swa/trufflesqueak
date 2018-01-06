@@ -16,14 +16,18 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
 public abstract class SqueakLookupClassNode extends Node {
     protected final CompiledCodeObject code;
 
-    public SqueakLookupClassNode(CompiledCodeObject code) {
+    public static SqueakLookupClassNode create(CompiledCodeObject code) {
+        return SqueakLookupClassNodeGen.create(code);
+    }
+
+    protected SqueakLookupClassNode(CompiledCodeObject code) {
         this.code = code;
     }
 
     public abstract Object executeLookup(Object receiver);
 
     @Specialization
-    public ClassObject squeakClass(boolean object) {
+    protected ClassObject squeakClass(boolean object) {
         if (object) {
             return code.image.trueClass;
         } else {
@@ -37,30 +41,30 @@ public abstract class SqueakLookupClassNode extends Node {
 
     @SuppressWarnings("unused")
     @Specialization
-    public ClassObject squeakClass(int object) {
+    protected ClassObject squeakClass(int object) {
         return code.image.smallIntegerClass;
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    public ClassObject squeakClass(long object) {
+    protected ClassObject squeakClass(long object) {
         return code.image.smallIntegerClass;
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    public ClassObject squeakClass(char object) {
+    protected ClassObject squeakClass(char object) {
         return code.image.characterClass;
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    public ClassObject squeakClass(double object) {
+    protected ClassObject squeakClass(double object) {
         return code.image.floatClass;
     }
 
     @Specialization
-    public ClassObject squeakClass(BigInteger object) {
+    protected ClassObject squeakClass(BigInteger object) {
         if (object.signum() >= 0) {
             return code.image.largePositiveIntegerClass;
         } else {
@@ -69,27 +73,23 @@ public abstract class SqueakLookupClassNode extends Node {
     }
 
     @Specialization
-    public ClassObject squeakClass(BlockClosureObject ch) {
+    protected ClassObject squeakClass(BlockClosureObject ch) {
         return ch.getSqClass();
     }
 
     @Specialization
-    public ClassObject squeakClass(@SuppressWarnings("unused") MethodContextObject ch) {
+    protected ClassObject squeakClass(@SuppressWarnings("unused") MethodContextObject ch) {
         return code.image.methodContextClass;
     }
 
     @Specialization(rewriteOn = UnexpectedResultException.class)
-    public ClassObject squeakClass(SqueakObject object) throws UnexpectedResultException {
+    protected ClassObject squeakClass(SqueakObject object) throws UnexpectedResultException {
         return SqueakTypesGen.expectClassObject(object.getSqClass());
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = "isNil(object)")
-    public ClassObject nilClass(Object object) {
+    protected ClassObject nilClass(Object object) {
         return code.image.nilClass;
-    }
-
-    public static SqueakLookupClassNode create(CompiledCodeObject code) {
-        return SqueakLookupClassNodeGen.create(code);
     }
 }

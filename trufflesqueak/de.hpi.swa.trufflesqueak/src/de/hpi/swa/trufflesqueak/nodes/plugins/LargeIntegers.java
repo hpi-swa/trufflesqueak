@@ -36,17 +36,17 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        int add(int a, int b) {
+        protected int add(int a, int b) {
             return Math.addExact(a, b);
         }
 
         @Specialization
-        long addOverflow(int a, int b) {
+        protected long addOverflow(int a, int b) {
             return (long) a + (long) b;
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        long add(long a, long b) {
+        protected long add(long a, long b) {
             return Math.addExact(a, b);
         }
 
@@ -57,7 +57,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        double add(double a, double b) {
+        protected double add(double a, double b) {
             return a + b;
         }
     }
@@ -70,37 +70,37 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        int sub(int a, int b) {
+        protected int sub(int a, int b) {
             return Math.subtractExact(a, b);
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        int subInt(long a, long b) {
+        protected int subInt(long a, long b) {
             return Math.toIntExact(Math.subtractExact(a, b));
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        long sub(long a, long b) {
+        protected long sub(long a, long b) {
             return Math.subtractExact(a, b);
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        int subInt(BigInteger a, BigInteger b) {
+        protected int subInt(BigInteger a, BigInteger b) {
             return a.subtract(b).intValueExact();
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        long sub(BigInteger a, BigInteger b) {
+        protected long sub(BigInteger a, BigInteger b) {
             return a.subtract(b).longValueExact();
         }
 
         @Specialization
-        BigInteger subBig(BigInteger a, BigInteger b) {
+        protected BigInteger subBig(BigInteger a, BigInteger b) {
             return a.subtract(b);
         }
 
         @Specialization
-        double sub(double a, double b) {
+        protected double sub(double a, double b) {
             return a - b;
         }
     }
@@ -113,22 +113,22 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        int mul(int a, int b) {
+        protected int mul(int a, int b) {
             return Math.multiplyExact(a, b);
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        long mul(long a, long b) {
+        protected long mul(long a, long b) {
             return Math.multiplyExact(a, b);
         }
 
         @Specialization
-        BigInteger mul(BigInteger a, BigInteger b) {
+        protected BigInteger mul(BigInteger a, BigInteger b) {
             return a.multiply(b);
         }
 
         @Specialization
-        double mul(double a, double b) {
+        protected double mul(double a, double b) {
             return a * b;
         }
     }
@@ -141,7 +141,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        ListObject div(BigInteger rcvr, BigInteger arg) {
+        protected ListObject div(BigInteger rcvr, BigInteger arg) {
             BigInteger[] divRem = rcvr.divideAndRemainder(arg);
             return code.image.wrap(new Object[]{divRem[0], divRem[1]});
         }
@@ -279,42 +279,42 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        int normalizeInt(int o) {
+        protected int normalizeInt(int o) {
             return o;
         }
 
         @Specialization
-        long normalizeLong(long o) {
+        protected long normalizeLong(long o) {
             return o;
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        int normalizeInt(BigInteger o) {
+        protected int normalizeInt(BigInteger o) {
             return o.intValueExact();
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        long normalizeLong(BigInteger o) {
+        protected long normalizeLong(BigInteger o) {
             return o.longValueExact();
         }
 
         @Specialization
-        BigInteger normalizeBig(BigInteger o) {
+        protected BigInteger normalizeBig(BigInteger o) {
             return o;
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        int normalizeInt(NativeObject o) {
+        protected int normalizeInt(NativeObject o) {
             return bigIntFromNative(o).intValueExact();
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        long normalizeLong(NativeObject o) {
+        protected long normalizeLong(NativeObject o) {
             return bigIntFromNative(o).longValueExact();
         }
 
         @Specialization
-        public BigInteger normalizeBig(NativeObject o) {
+        protected BigInteger normalizeBig(NativeObject o) {
             return bigIntFromNative(o);
         }
 

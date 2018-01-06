@@ -18,38 +18,38 @@ public abstract class FrameSlotReadNode extends FrameSlotNode {
     public abstract Object executeRead(VirtualFrame frame);
 
     @Specialization(guards = "isInt(frame)")
-    public int readInt(VirtualFrame frame) {
+    protected int readInt(VirtualFrame frame) {
         return FrameUtil.getIntSafe(frame, slot);
     }
 
     @Specialization(guards = "isLong(frame)", rewriteOn = ArithmeticException.class)
-    public int readLongAsInt(VirtualFrame frame) {
+    protected int readLongAsInt(VirtualFrame frame) {
         long longSafe = FrameUtil.getLongSafe(frame, slot);
         return Math.toIntExact(longSafe);
     }
 
     @Specialization(guards = "isLong(frame)")
-    public long readLong(VirtualFrame frame) {
+    protected long readLong(VirtualFrame frame) {
         return FrameUtil.getLongSafe(frame, slot);
     }
 
     @Specialization(guards = "isDouble(frame)")
-    public double readDouble(VirtualFrame frame) {
+    protected double readDouble(VirtualFrame frame) {
         return FrameUtil.getDoubleSafe(frame, slot);
     }
 
     @Specialization(guards = "isBoolean(frame)")
-    public boolean readBool(VirtualFrame frame) {
+    protected boolean readBool(VirtualFrame frame) {
         return FrameUtil.getBooleanSafe(frame, slot);
     }
 
     @Specialization(guards = "isObject(frame)")
-    public Object readObject(VirtualFrame frame) {
+    protected Object readObject(VirtualFrame frame) {
         return FrameUtil.getObjectSafe(frame, slot);
     }
 
     @Specialization(guards = "isIllegal(frame)")
-    public Object readIllegal(@SuppressWarnings("unused") VirtualFrame frame) {
+    protected Object readIllegal(@SuppressWarnings("unused") VirtualFrame frame) {
         throw new RuntimeException("Trying to read from illegal slot");
     }
 

@@ -13,6 +13,11 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 
 public abstract class DispatchNode extends Node {
+
+    public static DispatchNode create() {
+        return DispatchNodeGen.create();
+    }
+
     public abstract Object executeDispatch(Object method, Object[] arguments);
 
     @SuppressWarnings("unused")
@@ -35,9 +40,5 @@ public abstract class DispatchNode extends Node {
     @Fallback
     protected static Object fail(Object method, Object[] arguments) {
         throw new RuntimeException("failed to lookup generic selector object on generic class");
-    }
-
-    public static DispatchNode create() {
-        return DispatchNodeGen.create();
     }
 }

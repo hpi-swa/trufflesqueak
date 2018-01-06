@@ -18,27 +18,27 @@ public abstract class FrameSlotWriteNode extends FrameSlotNode {
     public abstract void executeWrite(VirtualFrame frame, Object value);
 
     @Specialization(guards = "isIntSlot(value)")
-    public void writeInt(VirtualFrame frame, int value) {
+    protected void writeInt(VirtualFrame frame, int value) {
         frame.setInt(slot, value);
     }
 
     @Specialization(guards = "isLongSlot(value)")
-    public void writeLong(VirtualFrame frame, long value) {
+    protected void writeLong(VirtualFrame frame, long value) {
         frame.setLong(slot, value);
     }
 
     @Specialization(guards = "isDoubleSlot(value)")
-    public void writeDouble(VirtualFrame frame, double value) {
+    protected void writeDouble(VirtualFrame frame, double value) {
         frame.setDouble(slot, value);
     }
 
     @Specialization(guards = "isBooleanSlot(value)")
-    public void writeBool(VirtualFrame frame, boolean value) {
+    protected void writeBool(VirtualFrame frame, boolean value) {
         frame.setBoolean(slot, value);
     }
 
     @Specialization(replaces = {"writeInt", "writeLong", "writeDouble", "writeBool"})
-    public void writeObject(VirtualFrame frame, Object value) {
+    protected void writeObject(VirtualFrame frame, Object value) {
         assert value != null;
         frame.setObject(slot, value);
     }

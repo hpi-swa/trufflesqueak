@@ -23,7 +23,7 @@ public abstract class FrameStackWriteNode extends Node {
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"index == cachedIndex"}, limit = "SQUEAK_MAX_STACK_SIZE")
-    public Object writeInt(VirtualFrame frame, int index, Object value,
+    protected Object writeInt(VirtualFrame frame, int index, Object value,
                     @Cached("index") int cachedIndex,
                     @Cached("getFrameSlotForIndex(frame, index)") FrameSlot slot,
                     @Cached("create(slot)") FrameSlotWriteNode writeNode) {

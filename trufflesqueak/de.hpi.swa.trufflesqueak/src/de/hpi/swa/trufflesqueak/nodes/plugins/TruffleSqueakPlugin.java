@@ -23,8 +23,8 @@ public final class TruffleSqueakPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "debugPrint")
-    public static abstract class PrimPrintArgs extends AbstractPrimitiveNode {
-        public PrimPrintArgs(CompiledMethodObject code) {
+    protected static abstract class PrimPrintArgs extends AbstractPrimitiveNode {
+        protected PrimPrintArgs(CompiledMethodObject code) {
             super(code);
         }
 
@@ -38,7 +38,7 @@ public final class TruffleSqueakPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        public Object printArgs(VirtualFrame frame) {
+        protected Object printArgs(VirtualFrame frame) {
             Object[] arguments = frame.getArguments();
             for (int i = 1; i < arguments.length; i++) {
                 debugPrint(arguments[i]);

@@ -21,120 +21,120 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {3, 23, 43}, numArguments = 2)
-    public static abstract class PrimLessThanNode extends AbstractPrimitiveNode {
-        public PrimLessThanNode(CompiledMethodObject method) {
+    protected static abstract class PrimLessThanNode extends AbstractPrimitiveNode {
+        protected PrimLessThanNode(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        boolean lt(int a, int b) {
+        protected boolean lt(int a, int b) {
             return a < b;
         }
 
         @Specialization
-        boolean lt(long a, long b) {
+        protected boolean lt(long a, long b) {
             return a < b;
         }
 
         @Specialization
-        boolean lt(BigInteger a, BigInteger b) {
+        protected boolean lt(BigInteger a, BigInteger b) {
             return a.compareTo(b) < 0;
         }
 
         @Specialization
-        boolean lt(double a, double b) {
+        protected boolean lt(double a, double b) {
             return a < b;
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {4, 24, 44}, numArguments = 2)
-    public static abstract class PrimGreaterThanNode extends AbstractPrimitiveNode {
-        public PrimGreaterThanNode(CompiledMethodObject method) {
+    protected static abstract class PrimGreaterThanNode extends AbstractPrimitiveNode {
+        protected PrimGreaterThanNode(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        boolean gt(int a, int b) {
+        protected boolean gt(int a, int b) {
             return a > b;
         }
 
         @Specialization
-        boolean gt(long a, long b) {
+        protected boolean gt(long a, long b) {
             return a > b;
         }
 
         @Specialization
-        boolean gt(BigInteger a, BigInteger b) {
+        protected boolean gt(BigInteger a, BigInteger b) {
             return a.compareTo(b) > 0;
         }
 
         @Specialization
-        boolean gt(double a, double b) {
+        protected boolean gt(double a, double b) {
             return a > b;
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {5, 25, 45}, numArguments = 2)
-    public static abstract class PrimLessOrEqualNode extends AbstractPrimitiveNode {
+    protected static abstract class PrimLessOrEqualNode extends AbstractPrimitiveNode {
         protected PrimLessOrEqualNode(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        boolean le(int a, int b) {
+        protected boolean le(int a, int b) {
             return a <= b;
         }
 
         @Specialization
-        boolean le(long a, long b) {
+        protected boolean le(long a, long b) {
             return a <= b;
         }
 
         @Specialization
-        boolean le(BigInteger a, BigInteger b) {
+        protected boolean le(BigInteger a, BigInteger b) {
             return a.compareTo(b) <= 0;
         }
 
         @Specialization
-        boolean le(double a, double b) {
+        protected boolean le(double a, double b) {
             return a <= b;
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {6, 26, 46}, numArguments = 2)
-    public static abstract class PrimGreaterOrEqualNode extends AbstractPrimitiveNode {
-        public PrimGreaterOrEqualNode(CompiledMethodObject method) {
+    protected static abstract class PrimGreaterOrEqualNode extends AbstractPrimitiveNode {
+        protected PrimGreaterOrEqualNode(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        boolean ge(int a, int b) {
+        protected boolean ge(int a, int b) {
             return a >= b;
         }
 
         @Specialization
-        boolean ge(long a, long b) {
+        protected boolean ge(long a, long b) {
             return a >= b;
         }
 
         @Specialization
-        boolean ge(BigInteger a, BigInteger b) {
+        protected boolean ge(BigInteger a, BigInteger b) {
             return a.compareTo(b) >= 0;
         }
 
         @Specialization
-        boolean ge(double a, double b) {
+        protected boolean ge(double a, double b) {
             return a >= b;
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {7, 27, 47}, numArguments = 2)
-    public static abstract class PrimEqualNode extends AbstractPrimitiveNode {
-        public PrimEqualNode(CompiledMethodObject method) {
+    protected static abstract class PrimEqualNode extends AbstractPrimitiveNode {
+        protected PrimEqualNode(CompiledMethodObject method) {
             super(method);
         }
 
@@ -149,12 +149,12 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        boolean eq(BigInteger a, BigInteger b) {
+        protected boolean eq(BigInteger a, BigInteger b) {
             return a.equals(b);
         }
 
         @Specialization
-        boolean eq(double a, double b) {
+        protected boolean eq(double a, double b) {
             return a == b;
         }
 
@@ -166,28 +166,28 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {8, 28, 48}, numArguments = 2)
-    public static abstract class PrimNotEqualNode extends AbstractPrimitiveNode {
-        public PrimNotEqualNode(CompiledMethodObject method) {
+    protected static abstract class PrimNotEqualNode extends AbstractPrimitiveNode {
+        protected PrimNotEqualNode(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        boolean neq(int a, int b) {
+        protected boolean neq(int a, int b) {
             return a != b;
         }
 
         @Specialization
-        boolean neq(long a, long b) {
+        protected boolean neq(long a, long b) {
             return a != b;
         }
 
         @Specialization
-        boolean neq(BigInteger a, BigInteger b) {
+        protected boolean neq(BigInteger a, BigInteger b) {
             return !a.equals(b);
         }
 
         @Specialization
-        boolean neq(double a, double b) {
+        protected boolean neq(double a, double b) {
             return a != b;
         }
 
@@ -199,81 +199,81 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {10, 30, 50}, numArguments = 2)
-    public static abstract class PrimDivideNode extends AbstractPrimitiveNode {
-        public PrimDivideNode(CompiledMethodObject method) {
+    protected static abstract class PrimDivideNode extends AbstractPrimitiveNode {
+        protected PrimDivideNode(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        int divide(int a, int b) {
+        protected int divide(int a, int b) {
             return a / b;
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        long divideInt(long a, long b) {
+        protected long divideInt(long a, long b) {
             return Math.toIntExact(a / b);
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        long divide(long a, long b) {
+        protected long divide(long a, long b) {
             return a / b;
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        int divdideInt(BigInteger a, BigInteger b) {
+        protected int divdideInt(BigInteger a, BigInteger b) {
             return a.divide(b).intValueExact();
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        long divide(BigInteger a, BigInteger b) {
+        protected long divide(BigInteger a, BigInteger b) {
             return a.divide(b).longValueExact();
         }
 
         @Specialization
-        BigInteger divBig(BigInteger a, BigInteger b) {
+        protected BigInteger divBig(BigInteger a, BigInteger b) {
             return a.divide(b);
         }
 
         @Specialization
-        double div(double a, double b) {
+        protected double div(double a, double b) {
             return a / b;
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {11, 31}, numArguments = 2)
-    public static abstract class PrimModNode extends AbstractPrimitiveNode {
-        public PrimModNode(CompiledMethodObject method) {
+    protected static abstract class PrimModNode extends AbstractPrimitiveNode {
+        protected PrimModNode(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        int mod(int a, int b) {
+        protected int mod(int a, int b) {
             return a % b;
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        int modInt(long a, long b) {
+        protected int modInt(long a, long b) {
             return Math.toIntExact(a % b);
         }
 
         @Specialization
-        long mod(long a, long b) {
+        protected long mod(long a, long b) {
             return a % b;
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        int modInt(BigInteger a, BigInteger b) {
+        protected int modInt(BigInteger a, BigInteger b) {
             return doBigModulo(a, b).intValueExact();
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        long mod(BigInteger a, BigInteger b) {
+        protected long mod(BigInteger a, BigInteger b) {
             return doBigModulo(a, b).longValueExact();
         }
 
         @Specialization
-        BigInteger modBig(BigInteger a, BigInteger b) {
+        protected BigInteger modBig(BigInteger a, BigInteger b) {
             return doBigModulo(a, b);
         }
 
@@ -289,84 +289,84 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {12, 32}, numArguments = 2)
-    public static abstract class PrimFloorDivideNode extends AbstractPrimitiveNode {
-        public PrimFloorDivideNode(CompiledMethodObject method) {
+    protected static abstract class PrimFloorDivideNode extends AbstractPrimitiveNode {
+        protected PrimFloorDivideNode(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        int div(int a, int b) {
+        protected int div(int a, int b) {
             return Math.floorDiv(a, b);
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        int divInt(long a, long b) {
+        protected int divInt(long a, long b) {
             return Math.toIntExact(Math.floorDiv(a, b));
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        long div(long a, long b) {
+        protected long div(long a, long b) {
             return Math.floorDiv(a, b);
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        int divInt(BigInteger a, BigInteger b) {
+        protected int divInt(BigInteger a, BigInteger b) {
             return a.divide(b).intValueExact();
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        long div(BigInteger a, BigInteger b) {
+        protected long div(BigInteger a, BigInteger b) {
             return a.divide(b).longValueExact();
         }
 
         @Specialization
-        BigInteger divBig(BigInteger a, BigInteger b) {
+        protected BigInteger divBig(BigInteger a, BigInteger b) {
             return a.divide(b);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {13, 33}, numArguments = 2)
-    public static abstract class PrimQuoNode extends AbstractPrimitiveNode {
-        public PrimQuoNode(CompiledMethodObject method) {
+    protected static abstract class PrimQuoNode extends AbstractPrimitiveNode {
+        protected PrimQuoNode(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        int quo(int a, int b) {
+        protected int quo(int a, int b) {
             return a / b;
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        int quoInt(long a, long b) {
+        protected int quoInt(long a, long b) {
             return Math.toIntExact(a / b);
         }
 
         @Specialization
-        long quo(long a, long b) {
+        protected long quo(long a, long b) {
             return a / b;
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        int quoInt(BigInteger a, BigInteger b) {
+        protected int quoInt(BigInteger a, BigInteger b) {
             return a.divide(b).intValueExact();
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        long quo(BigInteger a, BigInteger b) {
+        protected long quo(BigInteger a, BigInteger b) {
             return a.divide(b).longValueExact();
         }
 
         @Specialization
-        BigInteger quoBig(BigInteger a, BigInteger b) {
+        protected BigInteger quoBig(BigInteger a, BigInteger b) {
             return a.divide(b);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {16, 36}, numArguments = 2)
-    public static abstract class PrimBitXorNode extends AbstractPrimitiveNode {
-        public PrimBitXorNode(CompiledMethodObject method) {
+    protected static abstract class PrimBitXorNode extends AbstractPrimitiveNode {
+        protected PrimBitXorNode(CompiledMethodObject method) {
             super(method);
         }
 
@@ -388,127 +388,127 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 40, numArguments = 2)
-    public static abstract class PrimAsFloatNode extends AbstractPrimitiveNode {
-        public PrimAsFloatNode(CompiledMethodObject method) {
+    protected static abstract class PrimAsFloatNode extends AbstractPrimitiveNode {
+        protected PrimAsFloatNode(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        double asFloat(int v) {
+        protected double asFloat(int v) {
             return v;
         }
 
         @Specialization
-        double asFloat(long v) {
+        protected double asFloat(long v) {
             return v;
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 51)
-    public static abstract class PrimFloatTruncatedNode extends AbstractPrimitiveNode {
-        public PrimFloatTruncatedNode(CompiledMethodObject method) {
+    protected static abstract class PrimFloatTruncatedNode extends AbstractPrimitiveNode {
+        protected PrimFloatTruncatedNode(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        int truncateToInt(double receiver) {
+        protected int truncateToInt(double receiver) {
             return Math.toIntExact((long) Math.floor(receiver));
         }
 
         @Specialization
-        long truncate(double receiver) {
+        protected long truncate(double receiver) {
             return (long) Math.floor(receiver);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 53)
-    public static abstract class PrimFloatExponentNode extends AbstractPrimitiveNode {
-        public PrimFloatExponentNode(CompiledMethodObject method) {
+    protected static abstract class PrimFloatExponentNode extends AbstractPrimitiveNode {
+        protected PrimFloatExponentNode(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        int exponentAsInt(double receiver) {
+        protected int exponentAsInt(double receiver) {
             return Math.getExponent(receiver);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 54, numArguments = 2)
-    public static abstract class PrimFloatTimesTwoPowerNode extends AbstractPrimitiveNode {
-        public PrimFloatTimesTwoPowerNode(CompiledMethodObject method) {
+    protected static abstract class PrimFloatTimesTwoPowerNode extends AbstractPrimitiveNode {
+        protected PrimFloatTimesTwoPowerNode(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        double calc(double receiver, long argument) {
+        protected double calc(double receiver, long argument) {
             return receiver * Math.pow(2, argument);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 55)
-    public static abstract class PrimSquareRootNode extends AbstractPrimitiveNode {
-        public PrimSquareRootNode(CompiledMethodObject method) {
+    protected static abstract class PrimSquareRootNode extends AbstractPrimitiveNode {
+        protected PrimSquareRootNode(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        double squareRoot(double a) {
+        protected double squareRoot(double a) {
             return Math.sqrt(a);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 56)
-    public static abstract class PrimSinNode extends AbstractPrimitiveNode {
-        public PrimSinNode(CompiledMethodObject method) {
+    protected static abstract class PrimSinNode extends AbstractPrimitiveNode {
+        protected PrimSinNode(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        double sin(double a) {
+        protected double sin(double a) {
             return Math.sin(a);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 57)
-    public static abstract class PrimArcTanNode extends AbstractPrimitiveNode {
-        public PrimArcTanNode(CompiledMethodObject method) {
+    protected static abstract class PrimArcTanNode extends AbstractPrimitiveNode {
+        protected PrimArcTanNode(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        double arctan(double a) {
+        protected double arctan(double a) {
             return Math.atan(a);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 58)
-    public static abstract class PrimLogNNode extends AbstractPrimitiveNode {
-        public PrimLogNNode(CompiledMethodObject method) {
+    protected static abstract class PrimLogNNode extends AbstractPrimitiveNode {
+        protected PrimLogNNode(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        double logn(double a) {
+        protected double logn(double a) {
             return Math.log(a);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 59)
-    public static abstract class PrimExpNode extends AbstractPrimitiveNode {
-        public PrimExpNode(CompiledMethodObject method) {
+    protected static abstract class PrimExpNode extends AbstractPrimitiveNode {
+        protected PrimExpNode(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        double exp(double a) {
+        protected double exp(double a) {
             return Math.exp(a);
         }
     }

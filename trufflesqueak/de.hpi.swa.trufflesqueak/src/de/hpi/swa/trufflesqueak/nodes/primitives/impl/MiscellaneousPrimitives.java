@@ -29,9 +29,9 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 77)
-    public static abstract class PrimSomeInstanceNode extends AbstractPrimitiveNode {
+    protected static abstract class PrimSomeInstanceNode extends AbstractPrimitiveNode {
 
-        public PrimSomeInstanceNode(CompiledMethodObject method) {
+        protected PrimSomeInstanceNode(CompiledMethodObject method) {
             super(method);
         }
 
@@ -45,12 +45,12 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "isSmallIntegerClass(classObject)")
-        ListObject allInstances(ClassObject classObject) {
+        protected ListObject allInstances(ClassObject classObject) {
             throw new PrimitiveFailed();
         }
 
         @Specialization(guards = "isClassObject(classObject)")
-        BaseSqueakObject someInstance(ClassObject classObject) {
+        protected BaseSqueakObject someInstance(ClassObject classObject) {
             try {
                 return code.image.objects.someInstance(classObject).get(0);
             } catch (IndexOutOfBoundsException e) {
@@ -60,35 +60,35 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Fallback
-        ListObject allInstances(Object object) {
+        protected ListObject allInstances(Object object) {
             throw new PrimitiveFailed();
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 121)
-    public static abstract class PrimImageNameNode extends AbstractPrimitiveNode {
+    protected static abstract class PrimImageNameNode extends AbstractPrimitiveNode {
 
-        public PrimImageNameNode(CompiledMethodObject method) {
+        protected PrimImageNameNode(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        BaseSqueakObject get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
+        protected BaseSqueakObject get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
             return code.image.wrap(code.image.config.getImagePath());
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 124, numArguments = 2)
-    public static abstract class PrimLowSpaceSemaphoreNode extends AbstractPrimitiveNode {
+    protected static abstract class PrimLowSpaceSemaphoreNode extends AbstractPrimitiveNode {
 
-        public PrimLowSpaceSemaphoreNode(CompiledMethodObject method) {
+        protected PrimLowSpaceSemaphoreNode(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        BaseSqueakObject get(BaseSqueakObject receiver, BaseSqueakObject semaphore) {
+        protected BaseSqueakObject get(BaseSqueakObject receiver, BaseSqueakObject semaphore) {
             code.image.registerSemaphore(semaphore, SPECIAL_OBJECT_INDEX.TheLowSpaceSemaphore);
             return receiver;
         }
@@ -96,14 +96,14 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 125, numArguments = 2)
-    public static abstract class PrimSetLowSpaceThresholdNode extends AbstractPrimitiveNode {
+    protected static abstract class PrimSetLowSpaceThresholdNode extends AbstractPrimitiveNode {
 
-        public PrimSetLowSpaceThresholdNode(CompiledMethodObject method) {
+        protected PrimSetLowSpaceThresholdNode(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        BaseSqueakObject get(BaseSqueakObject receiver, @SuppressWarnings("unused") int numBytes) {
+        protected BaseSqueakObject get(BaseSqueakObject receiver, @SuppressWarnings("unused") int numBytes) {
             // TODO: do something with numBytes
             return receiver;
         }
@@ -111,14 +111,14 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 134, numArguments = 2)
-    public static abstract class PrimInterruptSemaphoreNode extends AbstractPrimitiveNode {
+    protected static abstract class PrimInterruptSemaphoreNode extends AbstractPrimitiveNode {
 
-        public PrimInterruptSemaphoreNode(CompiledMethodObject method) {
+        protected PrimInterruptSemaphoreNode(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        BaseSqueakObject get(BaseSqueakObject receiver, BaseSqueakObject semaphore) {
+        protected BaseSqueakObject get(BaseSqueakObject receiver, BaseSqueakObject semaphore) {
             code.image.registerSemaphore(semaphore, SPECIAL_OBJECT_INDEX.TheInterruptSemaphore);
             return receiver;
         }
@@ -126,27 +126,27 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 148)
-    public static abstract class PrimShallowCopyNode extends AbstractPrimitiveNode {
-        public PrimShallowCopyNode(CompiledMethodObject method) {
+    protected static abstract class PrimShallowCopyNode extends AbstractPrimitiveNode {
+        protected PrimShallowCopyNode(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        Object copy(BaseSqueakObject self) {
+        protected Object copy(BaseSqueakObject self) {
             return self.shallowCopy();
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 149, numArguments = 2)
-    public static abstract class PrimSystemAttributeNode extends AbstractPrimitiveNode {
-        public PrimSystemAttributeNode(CompiledMethodObject method) {
+    protected static abstract class PrimSystemAttributeNode extends AbstractPrimitiveNode {
+        protected PrimSystemAttributeNode(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
         @TruffleBoundary
-        public Object getSystemAttribute(@SuppressWarnings("unused") Object image, int index) {
+        protected Object getSystemAttribute(@SuppressWarnings("unused") Object image, int index) {
             if (index == 0) {
                 String separator = System.getProperty("file.separator");
                 return code.image.wrap(System.getProperty("java.home") + separator + "bin" + separator + "java");
@@ -181,9 +181,9 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 177)
-    public static abstract class PrimAllInstancesNode extends AbstractPrimitiveNode {
+    protected static abstract class PrimAllInstancesNode extends AbstractPrimitiveNode {
 
-        public PrimAllInstancesNode(CompiledMethodObject method) {
+        protected PrimAllInstancesNode(CompiledMethodObject method) {
             super(method);
         }
 
@@ -193,31 +193,31 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "hasNoInstances(classObject)")
-        ListObject noInstances(ClassObject classObject) {
+        protected ListObject noInstances(ClassObject classObject) {
             return code.image.newList(new Object[0]);
         }
 
         @Specialization
-        ListObject allInstances(ClassObject classObject) {
+        protected ListObject allInstances(ClassObject classObject) {
             return code.image.newList(code.image.objects.allInstances(classObject).toArray());
         }
 
         @SuppressWarnings("unused")
         @Fallback
-        ListObject allInstances(Object object) {
+        protected ListObject allInstances(Object object) {
             throw new PrimitiveFailed();
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 240)
-    public static abstract class PrimUTCClockNode extends AbstractPrimitiveNode {
+    protected static abstract class PrimUTCClockNode extends AbstractPrimitiveNode {
         // The Delta between Squeak Epoch (Jan 1st 1901) and POSIX Epoch (Jan 1st 1970)
         private final long SQUEAK_EPOCH_DELTA_MICROSECONDS = 2177452800000000L;
         private final long SEC2USEC = 1000 * 1000;
         private final long USEC2NANO = 1000;
 
-        public PrimUTCClockNode(CompiledMethodObject method) {
+        protected PrimUTCClockNode(CompiledMethodObject method) {
             super(method);
         }
 
@@ -232,8 +232,8 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 254, variableArguments = true)
-    public static abstract class PrimVMParametersNode extends AbstractPrimitiveNode {
-        public PrimVMParametersNode(CompiledMethodObject method) {
+    protected static abstract class PrimVMParametersNode extends AbstractPrimitiveNode {
+        protected PrimVMParametersNode(CompiledMethodObject method) {
             super(method);
         }
 

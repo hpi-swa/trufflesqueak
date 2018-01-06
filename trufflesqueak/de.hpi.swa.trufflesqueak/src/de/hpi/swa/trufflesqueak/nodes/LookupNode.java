@@ -12,6 +12,10 @@ import de.hpi.swa.trufflesqueak.model.ClassObject;
 public abstract class LookupNode extends Node {
     protected static final int LOOKUP_CACHE_SIZE = 3;
 
+    public static LookupNode create() {
+        return LookupNodeGen.create();
+    }
+
     public abstract Object executeLookup(Object sqClass, Object selector);
 
     @SuppressWarnings("unused")
@@ -34,9 +38,5 @@ public abstract class LookupNode extends Node {
     @Fallback
     protected static Object fail(Object sqClass, Object selector) {
         throw new RuntimeException("failed to lookup generic selector object on generic class");
-    }
-
-    public static LookupNode create() {
-        return LookupNodeGen.create();
     }
 }
