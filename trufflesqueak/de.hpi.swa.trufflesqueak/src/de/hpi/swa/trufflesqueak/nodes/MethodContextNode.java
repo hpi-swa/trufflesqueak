@@ -75,9 +75,6 @@ public class MethodContextNode extends RootNode {
             }
             return lr.getReturnValue();
         } catch (NonLocalReturn nlr) {
-            if (context.isDirty()) {
-                throw new NonVirtualReturn(nlr.getReturnValue(), nlr.getTargetContext(), context.getSender());
-            }
             if (aboutToReturnNode != null) { // handle ensure: or ifCurtailed:
                 pushNode.executeWrite(frame, nlr.getTargetContext());
                 pushNode.executeWrite(frame, nlr.getReturnValue());
@@ -85,10 +82,13 @@ public class MethodContextNode extends RootNode {
                 context.atput0(CONTEXT.TEMP_FRAME_START, argumentNode.executeGeneric(frame)); // store ensure BlockClosure in context
                 aboutToReturnNode.executeSend(frame);
             }
-            if (nlr.getTargetContext().equals(context.getSender())) {
-                nlr.setArrivedAtTargetContext();
+            if (context.isDirty()) {
+                throw new NonVirtualReturn(nlr.getReturnValue(), nlr.getTargetContext(), context.getSender());
+            } else if (nlr.getTargetContext().equals(context)) {
+                return nlr.getReturnValue();
+            } else {
+                throw nlr;
             }
-            throw nlr;
         }
     }
 
