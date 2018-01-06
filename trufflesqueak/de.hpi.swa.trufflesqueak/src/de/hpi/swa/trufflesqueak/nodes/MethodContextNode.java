@@ -14,7 +14,6 @@ import de.hpi.swa.trufflesqueak.exceptions.LocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
-import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.MethodContextObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
@@ -23,6 +22,7 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.SendSelectorNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameArgumentNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
 import de.hpi.swa.trufflesqueak.util.FrameMarker;
 import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
@@ -33,6 +33,7 @@ public class MethodContextNode extends RootNode {
     @Children private final AbstractBytecodeNode[] bytecodeNodes;
     @Child private PushStackNode pushNode;
     @Child private SendSelectorNode aboutToReturnNode;
+    @Child private FrameArgumentNode argumentNode = new FrameArgumentNode(1);
 
     public MethodContextNode(SqueakLanguage language, MethodContextObject context, CompiledCodeObject code) {
         super(language, code.getFrameDescriptor());
@@ -40,7 +41,7 @@ public class MethodContextNode extends RootNode {
         this.context = context;
         bytecodeNodes = new SqueakBytecodeDecoder(code).decode();
         pushNode = new PushStackNode(code);
-        if (context.methodHasEnsurePrimitive()) {
+        if (context.isUnwindMarked()) {
             BaseSqueakObject aboutToReturnSelector = (BaseSqueakObject) code.image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SelectorAboutToReturn);
             aboutToReturnNode = new SendSelectorNode(code, -1, -1, aboutToReturnSelector, 2);
         } else {
@@ -57,9 +58,7 @@ public class MethodContextNode extends RootNode {
         int sp = initialSP();
         assert sp >= -1;
         frame.setInt(code.stackPointerSlot, sp);
-        if (code instanceof CompiledBlockObject) {
-            frame.setObject(code.closureSlot, context.at0(CONTEXT.CLOSURE_OR_NIL));
-        }
+        frame.setObject(code.closureSlot, context.at0(CONTEXT.CLOSURE_OR_NIL));
     }
 
     @Override
@@ -79,11 +78,12 @@ public class MethodContextNode extends RootNode {
             if (context.isDirty()) {
                 throw new NonVirtualReturn(nlr.getReturnValue(), nlr.getTargetContext(), context.getSender());
             }
-            if (aboutToReturnNode != null) {
+            if (aboutToReturnNode != null) { // handle ensure: or ifCurtailed:
                 pushNode.executeWrite(frame, nlr.getTargetContext());
                 pushNode.executeWrite(frame, nlr.getReturnValue());
                 pushNode.executeWrite(frame, context);
-                aboutToReturnNode.executeSend(frame); // ensure: or ifCurtailed:
+                context.atput0(CONTEXT.TEMP_FRAME_START, argumentNode.executeGeneric(frame)); // store ensure BlockClosure in context
+                aboutToReturnNode.executeSend(frame);
             }
             if (nlr.getTargetContext() == context.getSender()) {
                 nlr.setArrivedAtTargetContext();

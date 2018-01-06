@@ -122,24 +122,7 @@ public class MethodContextObject extends BaseSqueakObject {
         return arguments;
     }
 
-    private void markReturned() {
-        beWriteable();
-        actualContext.atput0(CONTEXT.SENDER, image.nil);
-    }
-
-    public void activateUnwindContext() {
-        if (isClosureContext() || !methodHasEnsurePrimitive()) {
-            markReturned();
-            return;
-        }
-
-    }
-
-    private boolean isClosureContext() {
-        return at0(CONTEXT.CLOSURE_OR_NIL) != image.nil;
-    }
-
-    public boolean methodHasEnsurePrimitive() {
+    public boolean isUnwindMarked() {
         CompiledCodeObject code = getCodeObject();
         return code.hasPrimitive() && code.primitiveIndex() == 198;
     }

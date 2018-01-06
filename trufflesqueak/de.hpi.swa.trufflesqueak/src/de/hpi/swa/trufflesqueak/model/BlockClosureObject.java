@@ -2,6 +2,7 @@ package de.hpi.swa.trufflesqueak.model;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
@@ -12,6 +13,7 @@ import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameUtil;
+import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
@@ -26,6 +28,8 @@ public class BlockClosureObject extends BaseSqueakObject {
     @CompilationFinal private CompiledBlockObject block;
     @CompilationFinal private int pc = -1;
     @CompilationFinal private int numArgs = -1;
+    private RootCallTarget callTarget;
+    private final CyclicAssumption callTargetStable = new CyclicAssumption("Compiled method assumption");
 
     public BlockClosureObject(SqueakImageContext image) {
         super(image);
@@ -163,11 +167,15 @@ public class BlockClosureObject extends BaseSqueakObject {
     }
 
     public RootCallTarget getCallTarget() {
-        return block.getCallTarget();
+        if (callTarget == null) {
+            CompilerDirectives.transferToInterpreter();
+            callTarget = CompiledCodeObject.newCallTarget(block, this);
+        }
+        return callTarget;
     }
 
     public Assumption getCallTargetStable() {
-        return block.getCallTargetStable();
+        return callTargetStable.getAssumption();
     }
 
     public CompiledBlockObject getCompiledBlock() {

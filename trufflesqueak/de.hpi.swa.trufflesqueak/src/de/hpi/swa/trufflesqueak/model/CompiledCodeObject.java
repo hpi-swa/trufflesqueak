@@ -116,15 +116,21 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     @TruffleBoundary
     private void updateAndInvalidateCallTargets() {
+        callTarget = newCallTarget(this, image.nil);
+        callTargetStable.invalidate();
+    }
+
+    @TruffleBoundary
+    public static RootCallTarget newCallTarget(CompiledCodeObject code, Object closureOrNil) {
         Frame frame = Truffle.getRuntime().getCurrentFrame().getFrame(FrameInstance.FrameAccess.MATERIALIZE);
-        MethodContextObject activeContext = MethodContextObject.createReadOnlyContextObject(image, frame);
-        MethodContextObject newContext = MethodContextObject.createWriteableContextObject(image, frameSize());
-        newContext.atput0(CONTEXT.METHOD, this);
+        MethodContextObject activeContext = MethodContextObject.createReadOnlyContextObject(code.image, frame);
+        MethodContextObject newContext = MethodContextObject.createWriteableContextObject(code.image, code.frameSize());
+        newContext.atput0(CONTEXT.METHOD, code);
         newContext.atput0(CONTEXT.SENDER, activeContext);
         newContext.atput0(CONTEXT.INSTRUCTION_POINTER, newContext.getCodeObject().getBytecodeOffset() + 1);
         newContext.atput0(CONTEXT.RECEIVER, frame.getArguments()[0]);
-        callTarget = Truffle.getRuntime().createCallTarget(new MethodContextNode(image.getLanguage(), newContext, this));
-        callTargetStable.invalidate();
+        newContext.atput0(CONTEXT.CLOSURE_OR_NIL, closureOrNil);
+        return Truffle.getRuntime().createCallTarget(new MethodContextNode(code.image.getLanguage(), newContext, code));
     }
 
     public Assumption getCallTargetStable() {

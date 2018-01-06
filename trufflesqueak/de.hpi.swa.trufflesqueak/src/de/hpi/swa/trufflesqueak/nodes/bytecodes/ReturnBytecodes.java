@@ -14,7 +14,32 @@ import de.hpi.swa.trufflesqueak.nodes.context.stack.PopStackNode;
 
 public final class ReturnBytecodes {
 
-    public static class ReturnConstantNode extends AbstractBytecodeNode {
+    private static abstract class AbstractReturnNode extends AbstractBytecodeNode {
+
+        protected AbstractReturnNode(CompiledCodeObject code, int index) {
+            super(code, index);
+        }
+
+        @Override
+        public void executeVoid(VirtualFrame frame) {
+            Object block = getClosure(frame);
+            Object returnValue = getReturnValue(frame);
+            if (block.equals(code.image.nil) || localReturn()) { // TODO: should be false if context is dirty
+                throw new LocalReturn(returnValue);
+            } else {
+                MethodContextObject targetContext = (MethodContextObject) ((BlockClosureObject) block).at0(BLOCK_CLOSURE.OUTER_CONTEXT);
+                throw new NonLocalReturn(returnValue, targetContext);
+            }
+        }
+
+        protected boolean localReturn() {
+            return false;
+        }
+
+        protected abstract Object getReturnValue(VirtualFrame frame);
+    }
+
+    public static class ReturnConstantNode extends AbstractReturnNode {
         @CompilationFinal private final Object constant;
 
         public ReturnConstantNode(CompiledCodeObject code, int index, Object obj) {
@@ -23,8 +48,8 @@ public final class ReturnBytecodes {
         }
 
         @Override
-        public void executeVoid(VirtualFrame frame) {
-            throw new LocalReturn(constant);
+        protected Object getReturnValue(VirtualFrame frame) {
+            return constant;
         }
 
         @Override
@@ -33,7 +58,7 @@ public final class ReturnBytecodes {
         }
     }
 
-    public static class ReturnReceiverNode extends AbstractBytecodeNode {
+    public static class ReturnReceiverNode extends AbstractReturnNode {
         @Child private FrameReceiverNode receiverNode = new FrameReceiverNode();
 
         public ReturnReceiverNode(CompiledCodeObject code, int index) {
@@ -41,27 +66,26 @@ public final class ReturnBytecodes {
         }
 
         @Override
-        public void executeVoid(VirtualFrame frame) {
-            throw new LocalReturn(receiverNode.executeGeneric(frame));
+        protected Object getReturnValue(VirtualFrame frame) {
+            return receiverNode.executeGeneric(frame);
         }
 
         @Override
         public String toString() {
             return "returnSelf";
         }
+
     }
 
-    public static class ReturnTopFromBlockNode extends AbstractBytecodeNode {
-        @Child protected PopStackNode popNode;
+    public static class ReturnTopFromBlockNode extends ReturnTopFromMethodNode {
 
         public ReturnTopFromBlockNode(CompiledCodeObject code, int index) {
             super(code, index);
-            popNode = new PopStackNode(code);
         }
 
         @Override
-        public void executeVoid(VirtualFrame frame) {
-            throw new LocalReturn(popNode.executeGeneric(frame));
+        protected boolean localReturn() {
+            return true;
         }
 
         @Override
@@ -70,25 +94,23 @@ public final class ReturnBytecodes {
         }
     }
 
-    public static class ReturnTopFromMethodNode extends ReturnTopFromBlockNode {
+    public static class ReturnTopFromMethodNode extends AbstractReturnNode {
+        @Child protected PopStackNode popNode;
 
-        public ReturnTopFromMethodNode(CompiledCodeObject code, int idx) {
-            super(code, idx);
+        public ReturnTopFromMethodNode(CompiledCodeObject code, int index) {
+            super(code, index);
+            popNode = new PopStackNode(code);
         }
 
         @Override
-        public void executeVoid(VirtualFrame frame) {
-            Object block = getClosure(frame);
-            if (block == code.image.nil) {
-                super.executeVoid(frame);
-            } else {
-                throw new NonLocalReturn(popNode.executeGeneric(frame), (MethodContextObject) ((BlockClosureObject) block).at0(BLOCK_CLOSURE.OUTER_CONTEXT));
-            }
+        protected Object getReturnValue(VirtualFrame frame) {
+            return popNode.executeGeneric(frame);
         }
 
         @Override
         public String toString() {
             return "returnTop";
         }
+
     }
 }

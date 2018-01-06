@@ -63,15 +63,22 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Override
         @Specialization
-        protected Object atput(AbstractPointersObject receiver, int idx, Object value) {
-            receiver.atput0(idx - 1 + receiver.instsize(), value);
+        protected Object atput(AbstractPointersObject receiver, int index, Object value) {
+            receiver.atput0(index - 1 + receiver.instsize(), value);
+            return value;
+        }
+
+        @Specialization
+        protected Object atput(MethodContextObject receiver, int index, Object value) {
+            // MethodContext>>tempAt:put:
+            receiver.atput0(CONTEXT.TEMP_FRAME_START + index - 1, value);
             return value;
         }
 
         @Override
         @Specialization
-        protected Object atput(BaseSqueakObject receiver, int idx, Object value) {
-            return super.atput(receiver, idx, value);
+        protected Object atput(BaseSqueakObject receiver, int index, Object value) {
+            return super.atput(receiver, index, value);
         }
     }
 

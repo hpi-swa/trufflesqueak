@@ -78,7 +78,7 @@ public class TopLevelContextNode extends RootNode {
                 throw new RuntimeException("Unable to unwind context chain");
             }
             MethodContextObject sender = context.getSender();
-            context.activateUnwindContext();
+            // context.activateUnwindContext();
             context = sender;
         }
         pushStackNode.executeWrite(frame, returnValue);
