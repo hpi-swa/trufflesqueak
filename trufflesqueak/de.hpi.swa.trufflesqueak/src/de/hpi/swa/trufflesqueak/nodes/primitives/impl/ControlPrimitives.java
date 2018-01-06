@@ -15,8 +15,6 @@ import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
-import de.hpi.swa.trufflesqueak.model.ObjectLayouts.BLOCK_CONTEXT;
-import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SEMAPHORE;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
@@ -68,30 +66,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @GenerateNodeFactory
-    @SqueakPrimitive(index = 80, numArguments = 2)
-    public static abstract class PrimBlockCopyNode extends AbstractPrimitiveNode {
-        public PrimBlockCopyNode(CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization
-        BaseSqueakObject doCopy(BaseSqueakObject receiver, int argCount) { // TODO: fixme
-            PointersObject context = (PointersObject) receiver;
-            if (context.at0(CONTEXT.METHOD) instanceof Integer) {
-                context = (PointersObject) context.at0(BLOCK_CONTEXT.HOME);
-            }
-            ClassObject blockContextClass = (ClassObject) code.image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.ClassBlockContext);
-            BaseSqueakObject newBlock = blockContextClass.newInstance(context.size() + context.instsize());
-            newBlock.atput0(BLOCK_CONTEXT.INITIAL_PC, -1); // TODO: calculate pc
-            newBlock.atput0(CONTEXT.INSTRUCTION_POINTER, -1);
-            newBlock.atput0(CONTEXT.STACKPOINTER, 0);
-            newBlock.atput0(BLOCK_CONTEXT.ARGUMENT_COUNT, argCount);
-            newBlock.atput0(BLOCK_CONTEXT.HOME, context);
-            newBlock.atput0(CONTEXT.SENDER, code.image.nil); // claim not needed; just initialized
-            return newBlock;
-        }
-    }
+    // primitiveBlockCopy (#80) no longer needed.
 
     private static abstract class AbstractPerformPrimitiveNode extends AbstractPrimitiveNode {
         @Child protected SqueakLookupClassNode lookupClassNode;
