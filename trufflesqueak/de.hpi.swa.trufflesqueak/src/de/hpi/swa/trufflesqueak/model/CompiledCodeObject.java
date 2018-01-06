@@ -126,7 +126,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
         MethodContextObject activeContext = MethodContextObject.createReadOnlyContextObject(code.image, frame);
         MethodContextObject newContext = MethodContextObject.createWriteableContextObject(code.image, code.frameSize());
         newContext.atput0(CONTEXT.METHOD, code);
-        newContext.atput0(CONTEXT.SENDER, activeContext);
+        newContext.atput0(CONTEXT.SENDER, activeContext, false);
         newContext.atput0(CONTEXT.INSTRUCTION_POINTER, newContext.getCodeObject().getBytecodeOffset() + 1);
         newContext.atput0(CONTEXT.RECEIVER, frame.getArguments()[0]);
         newContext.atput0(CONTEXT.CLOSURE_OR_NIL, closureOrNil);

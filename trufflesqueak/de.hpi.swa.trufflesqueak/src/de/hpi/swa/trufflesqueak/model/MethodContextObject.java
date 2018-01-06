@@ -19,6 +19,8 @@ import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 public class MethodContextObject extends BaseSqueakObject {
     @Child private BlockActivationNode dispatch = BlockActivationNodeGen.create();
     @CompilationFinal private ActualContextObject actualContext;
+    private int sp = CONTEXT.TEMP_FRAME_START - 1;
+    private boolean isDirty;
 
     public static MethodContextObject createReadOnlyContextObject(SqueakImageContext img, Frame virtualFrame) {
         MaterializedFrame frame = virtualFrame.materialize();
@@ -63,6 +65,13 @@ public class MethodContextObject extends BaseSqueakObject {
 
     @Override
     public void atput0(int index, Object value) {
+        atput0(index, value, true);
+    }
+
+    public void atput0(int index, Object value, boolean flagDirty) {
+        if (flagDirty && index == CONTEXT.SENDER) {
+            isDirty = true;
+        }
         try {
             actualContext.atContextPut0(index, value);
         } catch (NonVirtualContextModification e) {
@@ -128,7 +137,7 @@ public class MethodContextObject extends BaseSqueakObject {
     }
 
     public boolean isDirty() {
-        return false; // TODO: implement
+        return isDirty;
     }
 
     public MethodContextObject getSender() {
@@ -139,5 +148,9 @@ public class MethodContextObject extends BaseSqueakObject {
             return null;
         }
         throw new RuntimeException("Unexpected sender: " + sender);
+    }
+
+    public void push(Object value) {
+        atput0(++sp, value);
     }
 }

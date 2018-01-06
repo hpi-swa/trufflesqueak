@@ -15,9 +15,9 @@ import com.oracle.truffle.api.Truffle;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.MethodContextObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
+import de.hpi.swa.trufflesqueak.model.MethodContextObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
@@ -150,8 +150,7 @@ public class SqueakImageContext {
         customContext.atput0(CONTEXT.METHOD, lookupResult);
         customContext.atput0(CONTEXT.INSTRUCTION_POINTER, customContext.getCodeObject().getBytecodeOffset() + 1);
         customContext.atput0(CONTEXT.RECEIVER, receiver);
-        customContext.atput0(CONTEXT.SENDER, nil);
-        // newContext.atput0(CONTEXT.STACKPOINTER, 0); // not needed
+        // sender nil by default
 
         output.println(String.format("Starting to evaluate %s >> %s...", receiver, selector));
         return Truffle.getRuntime().createCallTarget(TopLevelContextNode.create(getLanguage(), customContext));

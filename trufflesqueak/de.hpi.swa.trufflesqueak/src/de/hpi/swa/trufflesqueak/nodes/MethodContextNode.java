@@ -70,8 +70,8 @@ public class MethodContextNode extends RootNode {
             throw new RuntimeException("Method did not return");
         } catch (LocalReturn lr) {
             if (context.isDirty()) {
-                MethodContextObject sender = context.getSender();
-                throw new NonVirtualReturn(lr.getReturnValue(), sender, sender);
+                MethodContextObject newSender = context.getSender();
+                throw new NonVirtualReturn(lr.getReturnValue(), newSender, newSender);
             }
             return lr.getReturnValue();
         } catch (NonLocalReturn nlr) {
@@ -85,7 +85,7 @@ public class MethodContextNode extends RootNode {
                 context.atput0(CONTEXT.TEMP_FRAME_START, argumentNode.executeGeneric(frame)); // store ensure BlockClosure in context
                 aboutToReturnNode.executeSend(frame);
             }
-            if (nlr.getTargetContext() == context.getSender()) {
+            if (nlr.getTargetContext().equals(context.getSender())) {
                 nlr.setArrivedAtTargetContext();
             }
             throw nlr;
