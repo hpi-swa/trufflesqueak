@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.util;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -11,8 +12,8 @@ import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.MethodContextObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
+import de.hpi.swa.trufflesqueak.model.MethodContextObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.ASSOCIATION;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.LINK;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.LINKED_LIST;
@@ -76,6 +77,7 @@ public class ProcessManager {
     }
 
     public void transferTo(VirtualFrame frame, BaseSqueakObject activeProcess, BaseSqueakObject newProcess) {
+        CompilerDirectives.transferToInterpreter();
         FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
         FrameSlot thisContextSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.THIS_CONTEXT);
         MethodContextObject thisContext;
