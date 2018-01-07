@@ -6,8 +6,8 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
-import java.time.Instant;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -40,6 +40,43 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     @Override
     public List<NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
         return MiscellaneousPrimitivesFactory.getFactories();
+    }
+
+    private static abstract class AbstractClockPrimitiveNode extends AbstractPrimitiveNode {
+        // The delta between Squeak Epoch (January 1st 1901) and POSIX Epoch (January 1st 1970)
+        @CompilationFinal private final static long EPOCH_DELTA_MICROSECONDS = (long) (69 * 365 + 17) * 24 * 3600 * 1000 * 1000;
+        @CompilationFinal private final long timeZoneOffsetMicroseconds;
+
+        private AbstractClockPrimitiveNode(CompiledMethodObject method) {
+            super(method);
+            Calendar rightNow = Calendar.getInstance();
+            timeZoneOffsetMicroseconds = (((long) rightNow.get(Calendar.ZONE_OFFSET)) + rightNow.get(Calendar.DST_OFFSET)) * 1000;
+        }
+
+        protected long currentMicrosecondsUTC() {
+            return System.currentTimeMillis() * 1000 + System.nanoTime() / 1000 + EPOCH_DELTA_MICROSECONDS;
+        }
+
+        protected long currentMicrosecondsLocal() {
+            return currentMicrosecondsUTC() + timeZoneOffsetMicroseconds;
+        }
+    }
+
+    private static abstract class AbstractSignalAtPrimitiveNode extends AbstractPrimitiveNode {
+
+        protected AbstractSignalAtPrimitiveNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        protected void signalAtMilliseconds(BaseSqueakObject semaphore, int msTime) {
+            if (semaphore.isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassSemaphore)) {
+                code.image.registerSemaphore(semaphore, SPECIAL_OBJECT_INDEX.TheTimerSemaphore);
+                code.image.interrupt.nextWakeupTick(msTime);
+            } else {
+                code.image.registerSemaphore(code.image.nil, SPECIAL_OBJECT_INDEX.TheTimerSemaphore);
+                code.image.interrupt.nextWakeupTick(0);
+            }
+        }
     }
 
     @GenerateNodeFactory
@@ -149,13 +186,13 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected BaseSqueakObject doClock(@SuppressWarnings("unused") ClassObject receiver) {
-            return code.image.wrap(System.currentTimeMillis() - code.image.startUpTime);
+            return code.image.wrap(System.currentTimeMillis() - code.image.startUpMillis);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 136, numArguments = 3)
-    protected static abstract class PrimSignalAtMillisecondsNode extends AbstractPrimitiveNode {
+    protected static abstract class PrimSignalAtMillisecondsNode extends AbstractSignalAtPrimitiveNode {
 
         protected PrimSignalAtMillisecondsNode(CompiledMethodObject method) {
             super(method);
@@ -163,14 +200,22 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected BaseSqueakObject doSignal(BaseSqueakObject receiver, BaseSqueakObject semaphore, int msTime) {
-            if (semaphore.isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassSemaphore)) {
-                code.image.registerSemaphore(semaphore, SPECIAL_OBJECT_INDEX.TheTimerSemaphore);
-                code.image.interrupt.nextWakeupTick(msTime);
-            } else {
-                code.image.registerSemaphore(code.image.nil, SPECIAL_OBJECT_INDEX.TheTimerSemaphore);
-                code.image.interrupt.nextWakeupTick(0);
-            }
+            signalAtMilliseconds(semaphore, msTime);
             return receiver;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 137)
+    protected static abstract class PrimSecondClockNode extends AbstractClockPrimitiveNode {
+
+        protected PrimSecondClockNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected BaseSqueakObject doClock(@SuppressWarnings("unused") ClassObject receiver) {
+            return code.image.wrap(currentMicrosecondsLocal() / 1000000);
         }
     }
 
@@ -317,11 +362,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 240)
-    protected static abstract class PrimUTCClockNode extends AbstractPrimitiveNode {
-        // The Delta between Squeak Epoch (Jan 1st 1901) and POSIX Epoch (Jan 1st 1970)
-        private final long SQUEAK_EPOCH_DELTA_MICROSECONDS = 2177452800000000L;
-        private final long SEC2USEC = 1000 * 1000;
-        private final long USEC2NANO = 1000;
+    protected static abstract class PrimUTCClockNode extends AbstractClockPrimitiveNode {
 
         protected PrimUTCClockNode(CompiledMethodObject method) {
             super(method);
@@ -329,10 +370,37 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected long time(@SuppressWarnings("unused") Object receiver) {
-            Instant now = Instant.now();
-            long epochSecond = now.getEpochSecond();
-            int nano = now.getNano();
-            return epochSecond * SEC2USEC + nano / USEC2NANO + SQUEAK_EPOCH_DELTA_MICROSECONDS;
+            return currentMicrosecondsUTC();
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 241)
+    protected static abstract class PrimLocalMicrosecondsClockNode extends AbstractClockPrimitiveNode {
+
+        protected PrimLocalMicrosecondsClockNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected long time(@SuppressWarnings("unused") Object receiver) {
+            return currentMicrosecondsLocal();
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 242, numArguments = 3)
+    protected static abstract class PrimSignalAtUTCMicrosecondsNode extends AbstractSignalAtPrimitiveNode {
+
+        protected PrimSignalAtUTCMicrosecondsNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected BaseSqueakObject doSignal(BaseSqueakObject receiver, BaseSqueakObject semaphore, long usecsUTC) {
+            int msTime = (int) (usecsUTC / 1000 + AbstractClockPrimitiveNode.EPOCH_DELTA_MICROSECONDS - code.image.startUpMillis);
+            signalAtMilliseconds(semaphore, msTime);
+            return receiver;
         }
     }
 

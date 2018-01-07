@@ -117,7 +117,7 @@ public class SqueakImageContext {
     @CompilationFinal public final ProcessManager process = new ProcessManager(this);
     @CompilationFinal public final SqueakImageFlags flags = new SqueakImageFlags();
     @CompilationFinal public final InterruptHandler interrupt = new InterruptHandler(this);
-    @CompilationFinal public final long startUpTime = System.currentTimeMillis();
+    @CompilationFinal public final long startUpMillis = System.currentTimeMillis();
 
     public SqueakImageContext(SqueakLanguage squeakLanguage, SqueakLanguage.Env environ,
                     PrintWriter out, PrintWriter err) {
