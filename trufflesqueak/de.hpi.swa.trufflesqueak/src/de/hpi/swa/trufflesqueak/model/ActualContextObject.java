@@ -1,6 +1,6 @@
 package de.hpi.swa.trufflesqueak.model;
 
-import de.hpi.swa.trufflesqueak.exceptions.NonVirtualContextModification;
+import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualContextModification;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public interface ActualContextObject {

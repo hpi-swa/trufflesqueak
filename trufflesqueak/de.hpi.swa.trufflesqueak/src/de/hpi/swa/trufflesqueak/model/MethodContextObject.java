@@ -10,7 +10,7 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.nodes.Node.Child;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.exceptions.NonVirtualContextModification;
+import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualContextModification;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.BlockActivationNode;
 import de.hpi.swa.trufflesqueak.nodes.BlockActivationNodeGen;

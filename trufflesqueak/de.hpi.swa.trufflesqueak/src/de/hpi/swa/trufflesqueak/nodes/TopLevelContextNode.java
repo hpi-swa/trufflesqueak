@@ -8,11 +8,11 @@ import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
-import de.hpi.swa.trufflesqueak.exceptions.NonLocalReturn;
-import de.hpi.swa.trufflesqueak.exceptions.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
+import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
+import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
+import de.hpi.swa.trufflesqueak.exceptions.Returns.TopLevelReturn;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakQuit;
-import de.hpi.swa.trufflesqueak.exceptions.TopLevelReturn;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.MethodContextObject;
 
