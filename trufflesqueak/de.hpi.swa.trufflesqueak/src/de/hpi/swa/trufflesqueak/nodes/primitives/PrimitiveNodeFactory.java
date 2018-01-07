@@ -24,6 +24,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitives;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitives.PrimitiveFailedNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.IOPrimitives;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitives;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitives.PrimSimulateNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.StoragePrimitives;
 
 public abstract class PrimitiveNodeFactory {
@@ -69,6 +70,9 @@ public abstract class PrimitiveNodeFactory {
 
     @TruffleBoundary
     public static AbstractPrimitiveNode forName(CompiledMethodObject method, String moduleName, String functionName) {
+        if (moduleName.equals("BitBltPlugin")) {
+            return PrimSimulateNode.create(method, moduleName, functionName, new SqueakNode[]{new FrameReceiverAndArgumentsNode()});
+        }
         for (AbstractPrimitiveFactoryHolder plugin : plugins) {
             if (!plugin.getClass().getSimpleName().equals(moduleName)) {
                 continue;

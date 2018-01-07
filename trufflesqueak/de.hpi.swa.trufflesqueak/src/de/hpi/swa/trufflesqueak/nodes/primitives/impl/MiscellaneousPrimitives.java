@@ -10,11 +10,13 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.UnexpectedResultException;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
@@ -23,9 +25,15 @@ import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
+import de.hpi.swa.trufflesqueak.nodes.DispatchNode;
+import de.hpi.swa.trufflesqueak.nodes.LookupNode;
+import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
+import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
+import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitivesFactory.PrimSimulateNodeGen;
 
 public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -352,6 +360,54 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
             if (numRcvrAndArgs <= 3) {
                 // when two args are provided, do nothing and return old value
                 return code.image.wrap(0);
+            }
+            throw new PrimitiveFailed();
+        }
+    }
+
+    /*
+     * The simulation primitive is neither a SqueakPrimitive nor a GenerateNodeFactory. Instead, it is
+     * directly used by PrimitiveNodeFactory.
+     */
+    public static abstract class PrimSimulateNode extends AbstractPrimitiveNode {
+        private static final String SIMULATE_PRIMITIVE_SELECTOR = "simulatePrimitive:args:";
+        @CompilationFinal private final String moduleName;
+        @CompilationFinal private final String functionName;
+        @Child private LookupNode lookupNode = LookupNode.create();
+        @Child private DispatchNode dispatchNode = DispatchNode.create();
+        @Child protected SqueakLookupClassNode lookupClassNode;
+
+        public static PrimSimulateNode create(CompiledMethodObject method, String moduleName, String functionName, SqueakNode[] arguments) {
+            return PrimSimulateNodeGen.create(method, moduleName, functionName, arguments);
+        }
+
+        public PrimSimulateNode(CompiledMethodObject method, String moduleName, String functionName) {
+            super(method);
+            this.moduleName = moduleName;
+            this.functionName = functionName;
+            lookupClassNode = SqueakLookupClassNode.create(code);
+        }
+
+        @Specialization
+        protected Object doSimulation(Object[] rcvrAndArguments) {
+            CompiledMethodObject method = getSimulateMethod(rcvrAndArguments[0]);
+            Object[] newRcvrAndArgs = new Object[]{rcvrAndArguments[0], code.image.wrap(functionName), code.image.newList(rcvrAndArguments)};
+            return dispatchNode.executeDispatch(method, newRcvrAndArgs);
+        }
+
+        private CompiledMethodObject getSimulateMethod(Object receiver) {
+            ClassObject rcvrClass;
+            try {
+                rcvrClass = SqueakTypesGen.expectClassObject(lookupClassNode.executeLookup(receiver));
+            } catch (UnexpectedResultException e) {
+                throw new RuntimeException("receiver has no class");
+            }
+            Object lookupResult = lookupNode.executeLookup(rcvrClass, code.image.wrap(SIMULATE_PRIMITIVE_SELECTOR));
+            if (lookupResult instanceof CompiledMethodObject) {
+                CompiledMethodObject result = (CompiledMethodObject) lookupResult;
+                if (result.getCompiledInSelector() != code.image.doesNotUnderstand) {
+                    return result;
+                }
             }
             throw new PrimitiveFailed();
         }
