@@ -6,6 +6,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
@@ -44,7 +45,9 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
     private static abstract class AbstractClockPrimitiveNode extends AbstractPrimitiveNode {
         // The delta between Squeak Epoch (January 1st 1901) and POSIX Epoch (January 1st 1970)
-        @CompilationFinal private final static long EPOCH_DELTA_MICROSECONDS = (long) (69 * 365 + 17) * 24 * 3600 * 1000 * 1000;
+        @CompilationFinal private static final long EPOCH_DELTA_MICROSECONDS = (long) (69 * 365 + 17) * 24 * 3600 * 1000 * 1000;
+        @CompilationFinal private static final long SEC_TO_USEC = 1000 * 1000;
+        @CompilationFinal private static final long USEC_TO_NANO = 1000;
         @CompilationFinal private final long timeZoneOffsetMicroseconds;
 
         private AbstractClockPrimitiveNode(CompiledMethodObject method) {
@@ -54,7 +57,8 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         protected long currentMicrosecondsUTC() {
-            return System.currentTimeMillis() * 1000 + System.nanoTime() / 1000 + EPOCH_DELTA_MICROSECONDS;
+            Instant now = Instant.now();
+            return now.getEpochSecond() * SEC_TO_USEC + now.getNano() / USEC_TO_NANO + EPOCH_DELTA_MICROSECONDS;
         }
 
         protected long currentMicrosecondsLocal() {
