@@ -6,8 +6,8 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 
-import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
 
 public abstract class LookupNode extends Node {
     protected static final int LOOKUP_CACHE_SIZE = 3;
@@ -21,16 +21,16 @@ public abstract class LookupNode extends Node {
     @SuppressWarnings("unused")
     @Specialization(limit = "LOOKUP_CACHE_SIZE", guards = {"sqClass == cachedSqClass",
                     "selector == cachedSelector"}, assumptions = {"methodLookupStable"})
-    protected static Object doDirect(ClassObject sqClass, BaseSqueakObject selector,
+    protected static Object doDirect(ClassObject sqClass, NativeObject selector,
                     @Cached("sqClass") ClassObject cachedSqClass,
-                    @Cached("selector") BaseSqueakObject cachedSelector,
+                    @Cached("selector") NativeObject cachedSelector,
                     @Cached("cachedSqClass.getMethodLookupStable()") Assumption methodLookupStable,
                     @Cached("cachedSqClass.lookup(cachedSelector)") Object cachedMethod) {
         return cachedMethod;
     }
 
     @Specialization(replaces = "doDirect")
-    protected static Object doIndirect(ClassObject sqClass, BaseSqueakObject selector) {
+    protected static Object doIndirect(ClassObject sqClass, NativeObject selector) {
         return sqClass.lookup(selector);
     }
 

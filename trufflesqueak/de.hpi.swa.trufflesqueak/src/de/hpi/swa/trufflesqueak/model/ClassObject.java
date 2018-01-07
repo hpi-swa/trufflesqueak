@@ -2,7 +2,6 @@ package de.hpi.swa.trufflesqueak.model;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.function.Predicate;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -150,7 +149,8 @@ public class ClassObject extends AbstractPointersObject {
 
     // TODO: cache the methoddict in a better structure than what Squeak provides
     // ... or use the Squeak hash to decide where to put stuff
-    private Object lookup(Predicate<Object> test) {
+    public Object lookup(NativeObject selector) {
+        String selectorString = selector.toString();
         Object lookupClass = this;
         while (lookupClass instanceof ClassObject) {
             Object methodDict = ((ClassObject) lookupClass).getMethodDict();
@@ -159,7 +159,7 @@ public class ClassObject extends AbstractPointersObject {
                 if (values instanceof BaseSqueakObject) {
                     for (int i = METHOD_DICT.NAMES; i < ((BaseSqueakObject) methodDict).size(); i++) {
                         Object methodSelector = ((BaseSqueakObject) methodDict).at0(i);
-                        if (test.test(methodSelector)) {
+                        if (selectorString.equals(methodSelector.toString())) {
                             return ((BaseSqueakObject) values).at0(i - METHOD_DICT.NAMES);
                         }
                     }
@@ -167,27 +167,10 @@ public class ClassObject extends AbstractPointersObject {
             }
             lookupClass = ((ClassObject) lookupClass).getSuperclass();
         }
-        return null;
-    }
-
-    public Object lookup(Object selector) {
-        Object result = lookup(methodSelector -> methodSelector == selector);
-        if (result == null) {
-            return doesNotUnderstand();
-        }
-        return result;
-    }
-
-    public Object lookup(String selector) {
-        return lookup(methodSelector -> methodSelector != null && methodSelector.toString().equals(selector));
-    }
-
-    private Object doesNotUnderstand() {
-        Object result = lookup(methodSelector -> methodSelector == image.doesNotUnderstand);
-        if (result == null) {
+        if (selector.equals(image.doesNotUnderstand)) { // exit recursive call
             throw new RuntimeException("doesNotUnderstand missing!");
         }
-        return result;
+        return lookup(image.doesNotUnderstand);
     }
 
     public boolean isVariable() {
