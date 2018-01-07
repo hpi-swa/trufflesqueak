@@ -89,7 +89,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = "isNil(obj)")
+        @Specialization
         protected int size(@SuppressWarnings("unused") char obj) {
             return 0;
         }
@@ -124,7 +124,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
             return 2; // Float in words
         }
 
-        @Specialization
+        @Specialization(guards = "!isNil(obj)")
         protected int size(BaseSqueakObject obj) {
             if (!obj.getSqClass().isVariable()) {
                 throw new PrimitiveFailed();
