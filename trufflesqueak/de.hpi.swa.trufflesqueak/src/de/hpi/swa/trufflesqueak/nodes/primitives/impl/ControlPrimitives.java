@@ -157,13 +157,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "isSemaphore(receiver)")
         protected BaseSqueakObject doSignal(VirtualFrame frame, PointersObject receiver) {
-            ProcessManager manager = code.image.process;
-            if (manager.isEmptyList(receiver)) {
-                // no process is waiting on this semaphore
-                receiver.atput0(SEMAPHORE.EXCESS_SIGNALS, (int) receiver.at0(SEMAPHORE.EXCESS_SIGNALS) + 1);
-            } else {
-                manager.resumeProcess(frame, manager.removeFirstLinkOfList(receiver));
-            }
+            code.image.synchronousSignal(frame, receiver);
             return receiver;
         }
     }

@@ -11,6 +11,7 @@ import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
@@ -23,6 +24,7 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.POINT;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.PROCESS;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SEMAPHORE;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.SpecialSelectorObject;
@@ -114,7 +116,7 @@ public class SqueakImageContext {
     @CompilationFinal public final OSDetector os = new OSDetector();
     @CompilationFinal public final ProcessManager process = new ProcessManager(this);
     @CompilationFinal public final SqueakImageFlags flags = new SqueakImageFlags();
-    @CompilationFinal public final InterruptHandler interrupt = new InterruptHandler();
+    @CompilationFinal public final InterruptHandler interrupt = new InterruptHandler(this);
     @CompilationFinal public final long startUpTime = System.currentTimeMillis();
 
     public SqueakImageContext(SqueakLanguage squeakLanguage, SqueakLanguage.Env environ,
@@ -255,5 +257,13 @@ public class SqueakImageContext {
 
     public void registerSemaphore(BaseSqueakObject semaphore, int index) {
         specialObjectsArray.atput0(index, semaphore.isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassSemaphore) ? semaphore : nil);
+    }
+
+    public void synchronousSignal(VirtualFrame frame, PointersObject semaphore) {
+        if (process.isEmptyList(semaphore)) { // no process is waiting on this semaphore
+            semaphore.atput0(SEMAPHORE.EXCESS_SIGNALS, (int) semaphore.at0(SEMAPHORE.EXCESS_SIGNALS) + 1);
+        } else {
+            process.resumeProcess(frame, process.removeFirstLinkOfList(semaphore));
+        }
     }
 }
