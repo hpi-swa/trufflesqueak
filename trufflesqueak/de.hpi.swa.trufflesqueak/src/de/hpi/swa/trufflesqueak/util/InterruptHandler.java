@@ -29,6 +29,7 @@ public class InterruptHandler {
         nextWakeupTick = msTime;
     }
 
+    // TODO: current checkForInterrupts version slows tinyBenchmarks down by approximately 2.4x
     public void checkForInterrupts(VirtualFrame frame) { // Check for interrupts at sends and backward jumps
         if (interruptCheckCounter-- > 0) {
             return; // only really check every 100 times or so
