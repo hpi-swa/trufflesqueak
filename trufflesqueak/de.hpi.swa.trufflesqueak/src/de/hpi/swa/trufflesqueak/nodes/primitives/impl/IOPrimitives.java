@@ -21,6 +21,7 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitives.PrimSimulateNode;
 
 public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -40,6 +41,15 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected Object mousePoint(@SuppressWarnings("unused") VirtualFrame frame) {
             return code.image.wrap(code.image.display.getMousePosition());
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 96, variableArguments = true)
+    protected static abstract class PrimCopyBitsNode extends PrimSimulateNode {
+
+        protected PrimCopyBitsNode(CompiledMethodObject method) {
+            super(method, "BitBltPlugin", "primitiveCopyBits");
         }
     }
 
