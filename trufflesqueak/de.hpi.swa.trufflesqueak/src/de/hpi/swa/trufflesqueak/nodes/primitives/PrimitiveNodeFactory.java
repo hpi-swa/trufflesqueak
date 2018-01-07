@@ -68,9 +68,9 @@ public abstract class PrimitiveNodeFactory {
     }
 
     @TruffleBoundary
-    public static AbstractPrimitiveNode forName(CompiledMethodObject method, String modulename, String functionname) {
+    public static AbstractPrimitiveNode forName(CompiledMethodObject method, String moduleName, String functionName) {
         for (AbstractPrimitiveFactoryHolder plugin : plugins) {
-            if (!plugin.getClass().getSimpleName().equals(modulename)) {
+            if (!plugin.getClass().getSimpleName().equals(moduleName)) {
                 continue;
             }
             try {
@@ -78,7 +78,7 @@ public abstract class PrimitiveNodeFactory {
                 for (NodeFactory<? extends AbstractPrimitiveNode> nodeFactory : nodeFactories) {
                     Class<? extends AbstractPrimitiveNode> primitiveClass = nodeFactory.getNodeClass();
                     SqueakPrimitive primitive = primitiveClass.getAnnotation(SqueakPrimitive.class);
-                    if (functionname.equals(primitive.name())) {
+                    if (functionName.equals(primitive.name())) {
                         return createInstance(method, nodeFactory, primitive);
                     }
                 }

@@ -23,7 +23,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @Override
-    public List<NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
+    public List<? extends NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
         return LargeIntegersFactory.getFactories();
     }
 

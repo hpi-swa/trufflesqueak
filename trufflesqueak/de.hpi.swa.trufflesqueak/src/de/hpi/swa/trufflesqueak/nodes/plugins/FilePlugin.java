@@ -34,7 +34,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     @CompilationFinal private static final Map<Integer, RandomAccessFile> files = new HashMap<>();
 
     @Override
-    public List<NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
+    public List<? extends NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
         return FilePluginFactory.getFactories();
     }
 

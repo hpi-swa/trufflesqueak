@@ -359,21 +359,21 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 117, variableArguments = true)
-    protected static abstract class NamedPrimitiveCallNode extends AbstractPrimitiveNode {
-        protected NamedPrimitiveCallNode(CompiledMethodObject method) {
+    protected static abstract class PrimExternalCallNode extends AbstractPrimitiveNode {
+        protected PrimExternalCallNode(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        Object doNamedPrimitive(VirtualFrame frame) {
+        Object doExternalCall(VirtualFrame frame) {
             BaseSqueakObject descriptor = code.getLiteral(0) instanceof BaseSqueakObject ? (BaseSqueakObject) code.getLiteral(0) : null;
             if (descriptor != null && descriptor.getSqClass() != null && descriptor.size() >= 2) {
                 Object descriptorAt0 = descriptor.at0(0);
                 Object descriptorAt1 = descriptor.at0(1);
                 if (descriptorAt0 != null && descriptorAt1 != null) {
-                    String modulename = descriptorAt0.toString();
-                    String functionname = descriptorAt1.toString();
-                    return replace(PrimitiveNodeFactory.forName((CompiledMethodObject) code, modulename, functionname)).executeGeneric(frame);
+                    String moduleName = descriptorAt0.toString();
+                    String functionName = descriptorAt1.toString();
+                    return replace(PrimitiveNodeFactory.forName((CompiledMethodObject) code, moduleName, functionName)).executeGeneric(frame);
                 }
             }
             return replace(PrimitiveFailedNode.create((CompiledMethodObject) code)).executeGeneric(frame);
