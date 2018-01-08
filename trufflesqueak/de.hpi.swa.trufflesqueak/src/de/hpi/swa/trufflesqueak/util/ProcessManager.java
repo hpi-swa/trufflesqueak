@@ -2,16 +2,12 @@ package de.hpi.swa.trufflesqueak.util;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
-import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.MethodContextObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.ASSOCIATION;
@@ -78,17 +74,11 @@ public class ProcessManager {
 
     public void transferTo(VirtualFrame frame, BaseSqueakObject activeProcess, BaseSqueakObject newProcess) {
         CompilerDirectives.transferToInterpreter();
-        FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-        FrameSlot thisContextSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.THIS_CONTEXT);
-        MethodContextObject thisContext;
-        try {
-            thisContext = (MethodContextObject) frame.getObject(thisContextSlot);
-        } catch (FrameSlotTypeException e) {
-            throw new RuntimeException("Unable to find thisContext");
-        }
+        MethodContextObject activeContext = MethodContextObject.createReadOnlyContextObject(image, frame);
+        assert activeContext != null;
         // Record a process to be awakened on the next interpreter cycle.
         getScheduler().atput0(PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
-        activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, thisContext);
+        activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, activeContext);
         MethodContextObject newActiveContext = (MethodContextObject) newProcess.at0(PROCESS.SUSPENDED_CONTEXT);
         newProcess.atput0(PROCESS.SUSPENDED_CONTEXT, image.nil);
         throw new ProcessSwitch(newActiveContext);
