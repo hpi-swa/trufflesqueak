@@ -104,12 +104,11 @@ public class MethodContextObject extends BaseSqueakObject {
     }
 
     public CompiledCodeObject getCodeObject() {
-        Object method = at0(CONTEXT.METHOD);
-        if (method instanceof BlockClosureObject) {
-            return ((BlockClosureObject) method).getCompiledBlock();
-        } else {
-            return (CompiledCodeObject) method;
+        Object closure = at0(CONTEXT.CLOSURE_OR_NIL);
+        if (closure instanceof BlockClosureObject) {
+            return ((BlockClosureObject) closure).getCompiledBlock();
         }
+        return (CompiledCodeObject) at0(CONTEXT.METHOD);
     }
 
     public Object getFrameMarker() {
