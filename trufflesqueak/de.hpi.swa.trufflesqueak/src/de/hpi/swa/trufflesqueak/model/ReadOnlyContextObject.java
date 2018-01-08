@@ -190,4 +190,9 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
     public BaseSqueakObject shallowCopy() {
         return new WriteableContextObject(image, this);
     }
+
+    @Override
+    public String toString() {
+        return String.format("Readonly context for %s", at0(CONTEXT.METHOD));
+    }
 }

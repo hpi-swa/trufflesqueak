@@ -25,6 +25,11 @@ public final class Returns {
         public LocalReturn(Object result) {
             super(result);
         }
+
+        @Override
+        public String toString() {
+            return String.format("LR (value: %s)", returnValue);
+        }
     }
 
     public static class NonLocalReturn extends AbstractReturn {
@@ -47,6 +52,11 @@ public final class Returns {
 
         public void setArrivedAtTargetContext() {
             arrivedAtTargetContext = true;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("NLR (value: %s, arrived: %s, target: %s)", returnValue, arrivedAtTargetContext, targetContext);
         }
     }
 
@@ -72,6 +82,11 @@ public final class Returns {
         public MethodContextObject getCurrentContext() {
             return currentContext;
         }
+
+        @Override
+        public String toString() {
+            return String.format("NVR (value: %s, current: %s, target: %s)", returnValue, currentContext, targetContext);
+        }
     }
 
     public static class TopLevelReturn extends AbstractReturn {
@@ -79,6 +94,11 @@ public final class Returns {
 
         public TopLevelReturn(Object result) {
             super(result);
+        }
+
+        @Override
+        public String toString() {
+            return String.format("TLR (value: %s)", returnValue);
         }
     }
 }

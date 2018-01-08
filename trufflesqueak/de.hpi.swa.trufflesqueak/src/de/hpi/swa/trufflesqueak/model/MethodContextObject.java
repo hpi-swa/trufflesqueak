@@ -153,4 +153,9 @@ public class MethodContextObject extends BaseSqueakObject {
     public void push(Object value) {
         atput0(++sp, value);
     }
+
+    @Override
+    public String toString() {
+        return actualContext.toString();
+    }
 }

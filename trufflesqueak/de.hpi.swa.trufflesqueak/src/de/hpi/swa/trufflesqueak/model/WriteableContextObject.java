@@ -3,6 +3,7 @@ package de.hpi.swa.trufflesqueak.model;
 import java.util.Arrays;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 
 public class WriteableContextObject extends AbstractPointersObject implements ActualContextObject {
 
@@ -38,5 +39,10 @@ public class WriteableContextObject extends AbstractPointersObject implements Ac
     @Override
     public BaseSqueakObject shallowCopy() {
         return new WriteableContextObject(this);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Writeable context for %s", at0(CONTEXT.METHOD));
     }
 }
