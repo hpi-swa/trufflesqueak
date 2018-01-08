@@ -33,7 +33,7 @@ public class TopLevelContextNode extends RootNode {
     @Override
     public Object execute(VirtualFrame frame) {
         try {
-            executeLoop(frame);
+            executeLoop();
         } catch (TopLevelReturn e) {
             return e.getReturnValue();
         } catch (SqueakQuit e) {
@@ -45,7 +45,7 @@ public class TopLevelContextNode extends RootNode {
         throw new RuntimeException("Top level context did not return");
     }
 
-    public void executeLoop(VirtualFrame frame) {
+    public void executeLoop() {
         MethodContextObject activeContext = initialContext;
         while (true) {
             MethodContextObject sender = activeContext.getSender();
@@ -75,7 +75,7 @@ public class TopLevelContextNode extends RootNode {
                 throw new RuntimeException("Unable to unwind context chain");
             }
             MethodContextObject sender = context.getSender();
-            // context.activateUnwindContext();
+            context.unwind();
             context = sender;
         }
         context.push(returnValue);

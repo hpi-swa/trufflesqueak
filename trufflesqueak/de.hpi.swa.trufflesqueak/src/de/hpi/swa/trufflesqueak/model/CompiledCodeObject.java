@@ -8,9 +8,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.source.Source;
@@ -116,21 +114,8 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     @TruffleBoundary
     private void updateAndInvalidateCallTargets() {
-        callTarget = newCallTarget(this, image.nil);
+        callTarget = Truffle.getRuntime().createCallTarget(new MethodContextNode(image.getLanguage(), this));
         callTargetStable.invalidate();
-    }
-
-    @TruffleBoundary
-    public static RootCallTarget newCallTarget(CompiledCodeObject code, Object closureOrNil) {
-        Frame frame = Truffle.getRuntime().getCurrentFrame().getFrame(FrameInstance.FrameAccess.MATERIALIZE);
-        MethodContextObject activeContext = MethodContextObject.createReadOnlyContextObject(code.image, frame);
-        MethodContextObject newContext = MethodContextObject.createWriteableContextObject(code.image, code.frameSize());
-        newContext.atput0(CONTEXT.METHOD, code);
-        newContext.atput0(CONTEXT.SENDER, activeContext, false);
-        newContext.atput0(CONTEXT.INSTRUCTION_POINTER, newContext.getCodeObject().getBytecodeOffset() + 1);
-        newContext.atput0(CONTEXT.RECEIVER, frame.getArguments()[0]);
-        newContext.atput0(CONTEXT.CLOSURE_OR_NIL, closureOrNil);
-        return Truffle.getRuntime().createCallTarget(new MethodContextNode(code.image.getLanguage(), newContext, code));
     }
 
     public Assumption getCallTargetStable() {

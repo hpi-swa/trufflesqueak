@@ -3,6 +3,9 @@ package de.hpi.swa.trufflesqueak.nodes;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
@@ -14,6 +17,8 @@ import de.hpi.swa.trufflesqueak.exceptions.Returns.LocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
+import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
+import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.MethodContextObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
@@ -28,54 +33,71 @@ import de.hpi.swa.trufflesqueak.util.FrameMarker;
 import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
 public class MethodContextNode extends RootNode {
-    @CompilationFinal private final MethodContextObject context;
+    @CompilationFinal private final FrameMarker frameMarker = new FrameMarker();
+    @CompilationFinal private MethodContextObject cachedContext;
     @CompilationFinal private final CompiledCodeObject code;
+    @CompilationFinal private BlockClosureObject closure;
     @Children private final AbstractBytecodeNode[] bytecodeNodes;
     @Child private PushStackNode pushNode;
     @Child private SendSelectorNode aboutToReturnNode;
     @Child private FrameArgumentNode argumentNode = new FrameArgumentNode(1);
 
     public MethodContextNode(SqueakLanguage language, MethodContextObject context, CompiledCodeObject code) {
+        this(language, context, code, null);
+    }
+
+    public MethodContextNode(SqueakLanguage language, CompiledCodeObject code) {
+        this(language, null, code, null);
+    }
+
+    public MethodContextNode(SqueakLanguage language, CompiledBlockObject code, BlockClosureObject closure) {
+        this(language, null, code, closure);
+    }
+
+    public MethodContextNode(SqueakLanguage language, MethodContextObject context, CompiledCodeObject code, BlockClosureObject closure) {
         super(language, code.getFrameDescriptor());
+        this.cachedContext = context;
         this.code = code;
-        this.context = context;
+        this.closure = closure;
         bytecodeNodes = new SqueakBytecodeDecoder(code).decode();
         pushNode = new PushStackNode(code);
-        if (context.isUnwindMarked()) {
-            BaseSqueakObject aboutToReturnSelector = (BaseSqueakObject) code.image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SelectorAboutToReturn);
-            aboutToReturnNode = new SendSelectorNode(code, -1, -1, aboutToReturnSelector, 2);
-        } else {
-            aboutToReturnNode = null;
-        }
+        BaseSqueakObject aboutToReturnSelector = (BaseSqueakObject) code.image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SelectorAboutToReturn);
+        aboutToReturnNode = new SendSelectorNode(code, -1, -1, aboutToReturnSelector, 2);
     }
 
     private void enterFrame(VirtualFrame frame) {
         CompilerDirectives.ensureVirtualized(frame);
-        frame.setObject(code.markerSlot, new FrameMarker());
+        frame.setObject(code.markerSlot, frameMarker);
         frame.setObject(code.methodSlot, code);
-        frame.setObject(code.thisContextSlot, context);
+        frame.setObject(code.thisContextSlot, cachedContext);
         // sp points to the last temp slot
         int sp = initialSP();
         assert sp >= -1;
         frame.setInt(code.stackPointerSlot, sp);
-        frame.setObject(code.closureSlot, context.at0(CONTEXT.CLOSURE_OR_NIL));
+        frame.setObject(code.closureSlot, closure != null ? closure : code.image.nil);
     }
 
     @Override
     public Object execute(VirtualFrame frame) {
         enterFrame(frame);
+        MethodContextObject context;
         try {
             executeBytecode(frame);
             CompilerDirectives.transferToInterpreter();
             throw new RuntimeException("Method did not return");
         } catch (LocalReturn lr) {
+            context = getContextObject();
             if (context.isDirty()) {
-                MethodContextObject newSender = context.getSender();
-                throw new NonVirtualReturn(lr.getReturnValue(), newSender, newSender);
+                MethodContextObject sender = context.getSender();
+                context.unwind();
+                throw new NonVirtualReturn(lr.getReturnValue(), sender, sender);
+            } else {
+                context.unwind();
+                return lr.getReturnValue();
             }
-            return lr.getReturnValue();
         } catch (NonLocalReturn nlr) {
-            if (aboutToReturnNode != null) { // handle ensure: or ifCurtailed:
+            context = getContextObject();
+            if (context.isUnwindMarked()) { // handle ensure: or ifCurtailed:
                 pushNode.executeWrite(frame, nlr.getTargetContext());
                 pushNode.executeWrite(frame, nlr.getReturnValue());
                 pushNode.executeWrite(frame, context);
@@ -83,11 +105,16 @@ public class MethodContextNode extends RootNode {
                 aboutToReturnNode.executeSend(frame);
             }
             if (context.isDirty()) {
-                throw new NonVirtualReturn(nlr.getReturnValue(), nlr.getTargetContext(), context.getSender());
-            } else if (nlr.getTargetContext().equals(context)) {
-                return nlr.getReturnValue();
+                MethodContextObject sender = context.getSender();
+                context.unwind();
+                throw new NonVirtualReturn(nlr.getReturnValue(), nlr.getTargetContext(), sender);
             } else {
-                throw nlr;
+                context.unwind();
+                if (nlr.getTargetContext().hasSameMethodObject(context)) {
+                    return nlr.getReturnValue();
+                } else {
+                    throw nlr;
+                }
             }
         }
     }
@@ -151,12 +178,15 @@ public class MethodContextNode extends RootNode {
         }
     }
 
-    protected int initialPC() {
-        int rawPC = (int) context.at0(CONTEXT.INSTRUCTION_POINTER);
+    private int initialPC() {
+        if (cachedContext == null) {
+            return 0;
+        }
+        int rawPC = (int) cachedContext.at0(CONTEXT.INSTRUCTION_POINTER);
         return rawPC - code.getBytecodeOffset() - 1;
     }
 
-    protected int initialSP() {
+    private int initialSP() {
         // no need to read context.at0(CONTEXT.STACKPOINTER)
         return code.getNumTemps() - 1;
     }
@@ -174,5 +204,26 @@ public class MethodContextNode extends RootNode {
     @Override
     protected boolean isTaggedWith(Class<?> tag) {
         return tag == StandardTags.RootTag.class;
+    }
+
+    public MethodContextObject getContextObject() {
+        if (cachedContext == null) {
+            cachedContext = createContextObject();
+        }
+        return cachedContext;
+    }
+
+    public MethodContextObject createContextObject() {
+        if (cachedContext == null) {
+            Frame frame = Truffle.getRuntime().getCurrentFrame().getFrame(FrameInstance.FrameAccess.MATERIALIZE);
+            MethodContextObject activeContext = MethodContextObject.createReadOnlyContextObject(code.image, frame);
+            cachedContext = MethodContextObject.createWriteableContextObject(code.image, code.frameSize());
+            cachedContext.atput0(CONTEXT.METHOD, code);
+            cachedContext.atput0(CONTEXT.SENDER, activeContext, false);
+            cachedContext.atput0(CONTEXT.INSTRUCTION_POINTER, -1 + cachedContext.getCodeObject().getBytecodeOffset() + 1); // FIXME: pc?
+            cachedContext.atput0(CONTEXT.RECEIVER, frame.getArguments()[0]);
+            cachedContext.atput0(CONTEXT.CLOSURE_OR_NIL, code.image.nil);
+        }
+        return cachedContext;
     }
 }

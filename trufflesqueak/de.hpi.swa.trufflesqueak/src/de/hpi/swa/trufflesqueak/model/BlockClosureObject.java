@@ -18,6 +18,7 @@ import com.oracle.truffle.api.utilities.CyclicAssumption;
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.BLOCK_CLOSURE;
+import de.hpi.swa.trufflesqueak.nodes.MethodContextNode;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public class BlockClosureObject extends BaseSqueakObject {
@@ -169,7 +170,7 @@ public class BlockClosureObject extends BaseSqueakObject {
     public RootCallTarget getCallTarget() {
         if (callTarget == null) {
             CompilerDirectives.transferToInterpreter();
-            callTarget = CompiledCodeObject.newCallTarget(block, this);
+            callTarget = Truffle.getRuntime().createCallTarget(new MethodContextNode(image.getLanguage(), block, this));
         }
         return callTarget;
     }

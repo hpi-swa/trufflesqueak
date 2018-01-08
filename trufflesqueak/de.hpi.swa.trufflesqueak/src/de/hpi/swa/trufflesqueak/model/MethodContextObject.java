@@ -68,6 +68,11 @@ public class MethodContextObject extends BaseSqueakObject {
         atput0(index, value, true);
     }
 
+    public void unwind() {
+        atput0(CONTEXT.INSTRUCTION_POINTER, getCodeObject().getBytecodeOffset() + 1); // FIXME: reset pc to "zero", this is a hack... MCO is a call target and therefore cached
+        atput0(CONTEXT.SENDER, image.nil, false);
+    }
+
     public void atput0(int index, Object value, boolean flagDirty) {
         if (flagDirty && index == CONTEXT.SENDER) {
             isDirty = true;
@@ -157,5 +162,9 @@ public class MethodContextObject extends BaseSqueakObject {
     @Override
     public String toString() {
         return actualContext.toString();
+    }
+
+    public boolean hasSameMethodObject(MethodContextObject obj) {
+        return actualContext.at0(CONTEXT.METHOD).equals(obj.actualContext.at0(CONTEXT.METHOD));
     }
 }
