@@ -21,7 +21,7 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitives.PrimSimulateNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitives.PrimBitBltSimulateNode;
 
 public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -46,7 +46,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 96, variableArguments = true)
-    protected static abstract class PrimCopyBitsNode extends PrimSimulateNode {
+    protected static abstract class PrimCopyBitsNode extends PrimBitBltSimulateNode {
 
         protected PrimCopyBitsNode(CompiledMethodObject method) {
             super(method, "BitBltPlugin", "primitiveCopyBits");
