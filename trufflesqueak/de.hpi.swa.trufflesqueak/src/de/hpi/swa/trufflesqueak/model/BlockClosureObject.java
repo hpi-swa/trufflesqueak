@@ -18,7 +18,7 @@ import com.oracle.truffle.api.utilities.CyclicAssumption;
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.BLOCK_CLOSURE;
-import de.hpi.swa.trufflesqueak.nodes.MethodContextNode;
+import de.hpi.swa.trufflesqueak.nodes.EnterMethodNode;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public class BlockClosureObject extends BaseSqueakObject {
@@ -170,7 +170,7 @@ public class BlockClosureObject extends BaseSqueakObject {
     public RootCallTarget getCallTarget() {
         if (callTarget == null) {
             CompilerDirectives.transferToInterpreter();
-            callTarget = Truffle.getRuntime().createCallTarget(new MethodContextNode(image.getLanguage(), block, this));
+            callTarget = Truffle.getRuntime().createCallTarget(EnterMethodNode.create(block.image.getLanguage(), block));
         }
         return callTarget;
     }
@@ -188,16 +188,19 @@ public class BlockClosureObject extends BaseSqueakObject {
         if (block.getNumArgs() != objects.length) {
             throw new PrimitiveFailed();
         }
-        Object[] arguments = new Object[1 /* receiver */ +
+        Object[] arguments = new Object[2 + /* METHOD + CLOSURE_OR_NULL */
+                        1 /* receiver */ +
                         objects.length +
                         copied.length // +
         /* 1 */ /* this */];
-        arguments[0] = getReceiver();
+        arguments[0] = block;
+        arguments[1] = null; // TODO: there might actually be a closure in a closure?
+        arguments[2] = getReceiver();
         for (int i = 0; i < objects.length; i++) {
-            arguments[1 + i] = objects[i];
+            arguments[3 + i] = objects[i];
         }
         for (int i = 0; i < copied.length; i++) {
-            arguments[1 + objects.length + i] = copied[i];
+            arguments[3 + objects.length + i] = copied[i];
         }
 // arguments[arguments.length - 1] = this;
         return arguments;

@@ -5,12 +5,12 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.ASSOCIATION;
+import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.context.MethodLiteralNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtPutNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameReceiverNode;
+import de.hpi.swa.trufflesqueak.nodes.context.ReceiverNode;
+import de.hpi.swa.trufflesqueak.nodes.context.TemporaryReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotWriteNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameTemporaryReadNode;
-import de.hpi.swa.trufflesqueak.nodes.context.stack.AbstractStackNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PopStackNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.TopStackNode;
 
@@ -45,7 +45,7 @@ public final class StoreBytecodes {
 
         protected abstract String getTypeName();
 
-        protected abstract AbstractStackNode getValueNode();
+        protected abstract SqueakNode getValueNode();
     }
 
     private static abstract class AbstractStoreIntoReceiverVariableNode extends AbstractStoreIntoNode {
@@ -54,7 +54,7 @@ public final class StoreBytecodes {
         private AbstractStoreIntoReceiverVariableNode(CompiledCodeObject code, int index, int numBytecodes, int receiverIndex) {
             super(code, index, numBytecodes);
             this.receiverIndex = receiverIndex;
-            storeNode = ObjectAtPutNode.create(receiverIndex, new FrameReceiverNode(), getValueNode());
+            storeNode = ObjectAtPutNode.create(receiverIndex, ReceiverNode.create(code), getValueNode());
         }
 
         @Override
@@ -71,7 +71,7 @@ public final class StoreBytecodes {
             super(code, index, numBytecodes);
             this.indexInArray = indexInArray;
             this.indexOfArray = indexOfArray;
-            storeNode = ObjectAtPutNode.create(indexInArray, FrameTemporaryReadNode.create(code, indexOfArray), getValueNode());
+            storeNode = ObjectAtPutNode.create(indexInArray, TemporaryReadNode.create(code, indexOfArray), getValueNode());
         }
 
         @Override
@@ -114,8 +114,8 @@ public final class StoreBytecodes {
         }
 
         @Override
-        protected AbstractStackNode getValueNode() {
-            return new PopStackNode(code);
+        protected SqueakNode getValueNode() {
+            return PopStackNode.create(code);
         }
     }
 
@@ -131,8 +131,8 @@ public final class StoreBytecodes {
         }
 
         @Override
-        protected AbstractStackNode getValueNode() {
-            return new PopStackNode(code);
+        protected SqueakNode getValueNode() {
+            return PopStackNode.create(code);
         }
     }
 
@@ -148,8 +148,8 @@ public final class StoreBytecodes {
         }
 
         @Override
-        protected AbstractStackNode getValueNode() {
-            return new PopStackNode(code);
+        protected SqueakNode getValueNode() {
+            return PopStackNode.create(code);
         }
     }
 
@@ -158,7 +158,7 @@ public final class StoreBytecodes {
 
         public PopIntoTemporaryLocationNode(CompiledCodeObject code, int index, int numBytecodes, int tempIndex) {
             super(code, index, numBytecodes, tempIndex);
-            popNode = new PopStackNode(code);
+            popNode = PopStackNode.create(code);
         }
 
         @Override
@@ -185,8 +185,8 @@ public final class StoreBytecodes {
         }
 
         @Override
-        protected AbstractStackNode getValueNode() {
-            return new TopStackNode(code);
+        protected SqueakNode getValueNode() {
+            return TopStackNode.create(code);
         }
     }
 
@@ -203,8 +203,8 @@ public final class StoreBytecodes {
         }
 
         @Override
-        protected AbstractStackNode getValueNode() {
-            return new TopStackNode(code);
+        protected SqueakNode getValueNode() {
+            return TopStackNode.create(code);
         }
     }
 
@@ -220,8 +220,8 @@ public final class StoreBytecodes {
         }
 
         @Override
-        protected AbstractStackNode getValueNode() {
-            return new TopStackNode(code);
+        protected SqueakNode getValueNode() {
+            return TopStackNode.create(code);
         }
     }
 
@@ -230,7 +230,7 @@ public final class StoreBytecodes {
 
         public StoreIntoTempNode(CompiledCodeObject code, int index, int numBytecodes, int tempIndex) {
             super(code, index, numBytecodes, tempIndex);
-            topNode = new TopStackNode(code);
+            topNode = TopStackNode.create(code);
         }
 
         @Override

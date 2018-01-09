@@ -15,6 +15,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.SpecialSelectorObject;
 import de.hpi.swa.trufflesqueak.nodes.DispatchNode;
+import de.hpi.swa.trufflesqueak.nodes.FrameAccess;
 import de.hpi.swa.trufflesqueak.nodes.LookupNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
 import de.hpi.swa.trufflesqueak.nodes.context.HaltNode;
@@ -40,13 +41,13 @@ public final class SendBytecodes {
             selector = sel;
             argumentCount = argcount;
             lookupClassNode = SqueakLookupClassNode.create(code);
-            pushNode = new PushStackNode(code);
-            popNReversedNode = new PopNReversedStackNode(code, 1 + argumentCount);
+            pushNode = PushStackNode.create(code);
+            popNReversedNode = PopNReversedStackNode.create(code, 1 + argumentCount);
         }
 
         public Object executeSend(VirtualFrame frame) {
             code.image.interrupt.checkForInterrupts(frame);
-            Object[] rcvrAndArgs = popNReversedNode.execute(frame);
+            Object[] rcvrAndArgs = (Object[]) popNReversedNode.executeGeneric(frame);
             ClassObject rcvrClass;
             try {
                 rcvrClass = SqueakTypesGen.expectClassObject(lookupClassNode.executeLookup(rcvrAndArgs[0]));
@@ -54,7 +55,13 @@ public final class SendBytecodes {
                 throw new RuntimeException("receiver has no class");
             }
             Object lookupResult = lookupNode.executeLookup(rcvrClass, selector);
-            return dispatchNode.executeDispatch(lookupResult, rcvrAndArgs);
+            Object[] arguments;
+            if (lookupResult instanceof CompiledCodeObject) {
+                arguments = FrameAccess.newWith((CompiledCodeObject) lookupResult, null, rcvrAndArgs);
+            } else {
+                throw new RuntimeException("lookupResult not yet support. Object as method?");
+            }
+            return dispatchNode.executeDispatch(lookupResult, arguments);
         }
 
         @Override
@@ -84,7 +91,8 @@ public final class SendBytecodes {
     public static class EagerSendSpecialSelectorNode extends AbstractBytecodeNode {
         public static AbstractBytecodeNode create(CompiledCodeObject code, int index, int selectorIndex) {
             SpecialSelectorObject specialSelector = code.image.specialSelectorsArray[selectorIndex];
-            if (code instanceof CompiledMethodObject && specialSelector.getPrimitiveIndex() > 0) {
+            // TODO: temporary eager sends disabled
+            if (false && code instanceof CompiledMethodObject && specialSelector.getPrimitiveIndex() > 0) {
                 AbstractPrimitiveNode primitiveNode;
                 primitiveNode = PrimitiveNodeFactory.forSpecialSelector((CompiledMethodObject) code,
                                 specialSelector);
@@ -105,7 +113,7 @@ public final class SendBytecodes {
 
         public EagerSendSpecialSelectorNode(CompiledCodeObject code, int index, SpecialSelectorObject specialSelector, AbstractPrimitiveNode primitiveNode) {
             super(code, index);
-            this.pushStackNode = new PushStackNode(code);
+            this.pushStackNode = PushStackNode.create(code);
             this.specialSelector = specialSelector;
             this.primitiveNode = primitiveNode;
         }
@@ -119,9 +127,11 @@ public final class SendBytecodes {
                 if (result != null) { // primitive produced no result
                     pushStackNode.executeWrite(frame, result);
                 }
-            } catch (PrimitiveFailed | ArithmeticException | UnsupportedSpecializationException | FrameSlotTypeException e) {
+            } catch (PrimitiveFailed | ArithmeticException | UnsupportedSpecializationException e) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 replace(getFallbackNode(code, index, specialSelector)).executeVoid(frame);
+            } catch (FrameSlotTypeException e) {
+                throw new RuntimeException("Unable to set stack pointer");
             }
         }
 

@@ -9,7 +9,8 @@ import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.MethodContextObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.BLOCK_CLOSURE;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameReceiverNode;
+import de.hpi.swa.trufflesqueak.nodes.FrameAccess;
+import de.hpi.swa.trufflesqueak.nodes.context.ReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PopStackNode;
 
 public final class ReturnBytecodes {
@@ -22,9 +23,9 @@ public final class ReturnBytecodes {
 
         @Override
         public void executeVoid(VirtualFrame frame) {
-            Object block = getClosure(frame);
+            Object block = FrameAccess.getClosure(frame);
             Object returnValue = getReturnValue(frame);
-            if (block.equals(code.image.nil) || localReturn()) { // TODO: should be false if context is dirty
+            if (block == null || localReturn()) { // TODO: should be false if context is dirty
                 throw new LocalReturn(returnValue);
             } else {
                 MethodContextObject targetContext = (MethodContextObject) ((BlockClosureObject) block).at0(BLOCK_CLOSURE.OUTER_CONTEXT);
@@ -59,10 +60,11 @@ public final class ReturnBytecodes {
     }
 
     public static class ReturnReceiverNode extends AbstractReturnNode {
-        @Child private FrameReceiverNode receiverNode = new FrameReceiverNode();
+        @Child private ReceiverNode receiverNode;
 
         public ReturnReceiverNode(CompiledCodeObject code, int index) {
             super(code, index);
+            receiverNode = ReceiverNode.create(code);
         }
 
         @Override
@@ -99,7 +101,7 @@ public final class ReturnBytecodes {
 
         public ReturnTopFromMethodNode(CompiledCodeObject code, int index) {
             super(code, index);
-            popNode = new PopStackNode(code);
+            popNode = PopStackNode.create(code);
         }
 
         @Override

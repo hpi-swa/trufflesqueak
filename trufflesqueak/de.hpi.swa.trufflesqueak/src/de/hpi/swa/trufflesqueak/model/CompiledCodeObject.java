@@ -18,7 +18,7 @@ import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.instrumentation.CompiledCodeObjectPrinter;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
-import de.hpi.swa.trufflesqueak.nodes.MethodContextNode;
+import de.hpi.swa.trufflesqueak.nodes.EnterMethodNode;
 import de.hpi.swa.trufflesqueak.util.BitSplitter;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
@@ -35,10 +35,8 @@ public abstract class CompiledCodeObject extends SqueakObject {
     // frame info
     @CompilationFinal private FrameDescriptor frameDescriptor;
     @CompilationFinal public FrameSlot thisContextSlot;
-    @CompilationFinal public FrameSlot closureSlot;
     @CompilationFinal(dimensions = 1) public FrameSlot[] stackSlots;
     @CompilationFinal public FrameSlot markerSlot;
-    @CompilationFinal public FrameSlot methodSlot;
     @CompilationFinal public FrameSlot stackPointerSlot;
     private RootCallTarget callTarget;
     private final CyclicAssumption callTargetStable = new CyclicAssumption("Compiled method assumption");
@@ -53,6 +51,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
     private @CompilationFinal int numTemps;
     @SuppressWarnings("unused") private int accessModifier;
     @SuppressWarnings("unused") private boolean altInstructionSet;
+    private Assumption noContextNeeded = Truffle.getRuntime().createAssumption("Does not need a materialized context");
 
     abstract public NativeObject getCompiledInSelector();
 
@@ -98,9 +97,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
             stackSlots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Illegal);
         }
         thisContextSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.THIS_CONTEXT, FrameSlotKind.Object);
-        closureSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.CLOSURE, FrameSlotKind.Object);
         markerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.MARKER, FrameSlotKind.Object);
-        methodSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.METHOD, FrameSlotKind.Object);
         stackPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.STACK_POINTER, FrameSlotKind.Int);
     }
 
@@ -114,7 +111,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     @TruffleBoundary
     private void updateAndInvalidateCallTargets() {
-        callTarget = Truffle.getRuntime().createCallTarget(new MethodContextNode(image.getLanguage(), this));
+        callTarget = Truffle.getRuntime().createCallTarget(EnterMethodNode.create(image.getLanguage(), this));
         callTargetStable.invalidate();
     }
 
@@ -288,4 +285,12 @@ public abstract class CompiledCodeObject extends SqueakObject {
     }
 
     abstract public CompiledMethodObject getMethod();
+
+    public Assumption getNoContextNeededAssumption() {
+        return noContextNeeded;
+    }
+
+    public boolean isUnwindMarked() {
+        return hasPrimitive() && primitiveIndex() == 198;
+    }
 }

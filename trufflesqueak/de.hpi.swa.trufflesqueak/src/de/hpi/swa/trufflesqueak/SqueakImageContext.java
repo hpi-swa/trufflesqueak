@@ -155,7 +155,7 @@ public class SqueakImageContext {
         customContext.atput0(CONTEXT.METHOD, lookupResult);
         customContext.atput0(CONTEXT.INSTRUCTION_POINTER, customContext.getCodeObject().getBytecodeOffset() + 1);
         customContext.atput0(CONTEXT.RECEIVER, receiver);
-        // sender nil by default
+        customContext.atput0(CONTEXT.STACKPOINTER, 0);
 
         output.println(String.format("Starting to evaluate %s >> %s...", receiver, selector));
         return Truffle.getRuntime().createCallTarget(TopLevelContextNode.create(getLanguage(), customContext));

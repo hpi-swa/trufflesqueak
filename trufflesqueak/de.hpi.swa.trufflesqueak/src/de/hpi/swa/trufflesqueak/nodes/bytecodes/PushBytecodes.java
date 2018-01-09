@@ -14,8 +14,8 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.context.LiteralConstantNode;
 import de.hpi.swa.trufflesqueak.nodes.context.MethodLiteralNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameReceiverNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameTemporaryReadNode;
+import de.hpi.swa.trufflesqueak.nodes.context.ReceiverNode;
+import de.hpi.swa.trufflesqueak.nodes.context.TemporaryReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PopNReversedStackNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
 
@@ -30,7 +30,7 @@ public final class PushBytecodes {
 
         private AbstractPushNode(CompiledCodeObject code, int index, int numBytecodes) {
             super(code, index, numBytecodes);
-            pushNode = new PushStackNode(code);
+            pushNode = PushStackNode.create(code);
         }
 
         @Override
@@ -60,7 +60,7 @@ public final class PushBytecodes {
         @CompilationFinal private final int numCopied;
         @CompilationFinal private final CompiledBlockObject compiledBlock;
         @Child private PopNReversedStackNode popNReversedNode;
-        @Child private FrameReceiverNode receiverNode = new FrameReceiverNode();
+        @Child private ReceiverNode receiverNode;
 
         public PushClosureNode(CompiledCodeObject code, int index, int numBytecodes, int i, int j, int k) {
             super(code, index, numBytecodes);
@@ -68,7 +68,8 @@ public final class PushBytecodes {
             this.numCopied = (i >> 4) & 0xF;
             this.blockSize = (j << 8) | k;
             this.compiledBlock = new CompiledBlockObject(code, numArgs, numCopied);
-            popNReversedNode = new PopNReversedStackNode(code, numCopied);
+            popNReversedNode = PopNReversedStackNode.create(code, numCopied);
+            receiverNode = ReceiverNode.create(code);
         }
 
         @Override
@@ -80,7 +81,7 @@ public final class PushBytecodes {
         @Override
         public void executeVoid(VirtualFrame frame) {
             Object frameMarker = FrameUtil.getObjectSafe(frame, code.markerSlot);
-            Object[] copiedValues = popNReversedNode.execute(frame);
+            Object[] copiedValues = (Object[]) popNReversedNode.executeGeneric(frame);
             int codeStart = index + numBytecodes;
             int codeEnd = codeStart + blockSize;
             byte[] bytes = Arrays.copyOfRange(code.getBytes(), codeStart, codeEnd);
@@ -162,13 +163,13 @@ public final class PushBytecodes {
         public PushNewArrayNode(CompiledCodeObject code, int index, int numBytecodes, int param) {
             super(code, index, numBytecodes);
             arraySize = param & 127;
-            popNReversedNode = param > 127 ? new PopNReversedStackNode(code, arraySize) : null;
+            popNReversedNode = param > 127 ? PopNReversedStackNode.create(code, arraySize) : null;
         }
 
         @Override
         public void executeVoid(VirtualFrame frame) {
             if (popNReversedNode != null) {
-                pushNode.executeWrite(frame, code.image.newList(popNReversedNode.execute(frame)));
+                pushNode.executeWrite(frame, code.image.newList(popNReversedNode.executeGeneric(frame)));
             } else {
                 pushNode.executeWrite(frame, code.image.wrap(new Object[arraySize]));
             }
@@ -181,10 +182,11 @@ public final class PushBytecodes {
     }
 
     public static class PushReceiverNode extends AbstractPushNode {
-        @Child private FrameReceiverNode receiverNode = new FrameReceiverNode();
+        @Child private ReceiverNode receiverNode;
 
         public PushReceiverNode(CompiledCodeObject code, int index) {
             super(code, index);
+            receiverNode = ReceiverNode.create(code);
         }
 
         @Override
@@ -205,7 +207,7 @@ public final class PushBytecodes {
         public PushReceiverVariableNode(CompiledCodeObject code, int index, int numBytecodes, int varIndex) {
             super(code, index, numBytecodes);
             variableIndex = varIndex;
-            fetchNode = ObjectAtNode.create(varIndex, new FrameReceiverNode());
+            fetchNode = ObjectAtNode.create(varIndex, ReceiverNode.create(code));
         }
 
         @Override
@@ -228,7 +230,7 @@ public final class PushBytecodes {
             super(code, index, numBytecodes);
             this.indexInArray = indexInArray;
             this.indexOfArray = indexOfArray;
-            remoteTempNode = ObjectAtNode.create(indexInArray, FrameTemporaryReadNode.create(code, indexOfArray));
+            remoteTempNode = ObjectAtNode.create(indexInArray, TemporaryReadNode.create(code, indexOfArray));
         }
 
         @Override
@@ -250,11 +252,11 @@ public final class PushBytecodes {
         public PushTemporaryLocationNode(CompiledCodeObject code, int index, int numBytecodes, int tempIndex) {
             super(code, index, numBytecodes);
             this.tempIndex = tempIndex;
-            pushNode = new PushStackNode(code);
+            pushNode = PushStackNode.create(code);
             if (code.getNumStackSlots() <= tempIndex) {
                 // sometimes we'll decode more bytecodes than we have slots ... that's fine
             } else {
-                tempNode = FrameTemporaryReadNode.create(code, tempIndex);
+                tempNode = TemporaryReadNode.create(code, tempIndex);
             }
         }
 

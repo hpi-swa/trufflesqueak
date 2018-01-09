@@ -14,7 +14,7 @@ import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodes.ReturnReceiverNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameReceiverNode;
+import de.hpi.swa.trufflesqueak.nodes.context.ReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegersFactory.PrimNormalizeNodeFactory;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
@@ -200,7 +200,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
         public PrimBitShiftNode(CompiledMethodObject method) {
             super(method);
-            normalizeNode = PrimNormalizeNodeFactory.create(method, new SqueakNode[]{new FrameReceiverNode()});
+            normalizeNode = PrimNormalizeNodeFactory.create(method, new SqueakNode[]{ReceiverNode.create(method)});
         }
 
         @Specialization(guards = {"arg <= 0"})

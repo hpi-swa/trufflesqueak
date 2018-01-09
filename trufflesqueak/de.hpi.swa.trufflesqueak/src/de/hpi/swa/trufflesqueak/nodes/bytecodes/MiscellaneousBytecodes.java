@@ -114,8 +114,8 @@ public final class MiscellaneousBytecodes {
 
         public DupNode(CompiledCodeObject code, int index, int numBytecodes) {
             super(code, index, numBytecodes, -1);
-            topNode = new TopStackNode(code);
-            pushNode = new PushStackNode(code);
+            topNode = TopStackNode.create(code);
+            pushNode = PushStackNode.create(code);
         }
 
         @Override
@@ -193,7 +193,7 @@ public final class MiscellaneousBytecodes {
 
         public PopNode(CompiledCodeObject code, int index, int numBytecodes) {
             super(code, index, numBytecodes, -1);
-            popNode = new PopStackNode(code);
+            popNode = PopStackNode.create(code);
         }
 
         @Override

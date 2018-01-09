@@ -18,8 +18,8 @@ public abstract class ObjectAtPutNode extends AbstractObjectAtNode {
     @CompilationFinal private final ValueProfile classProfile = ValueProfile.createClassProfile();
     @CompilationFinal private final int index;
 
-    public static ObjectAtPutNode create(int idx, SqueakNode object, SqueakNode value) {
-        return ObjectAtPutNodeGen.create(idx, object, value);
+    public static ObjectAtPutNode create(int index, SqueakNode object, SqueakNode value) {
+        return ObjectAtPutNodeGen.create(index, object, value);
     }
 
     protected ObjectAtPutNode(int variableIndex) {

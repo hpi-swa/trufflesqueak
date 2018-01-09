@@ -1,7 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
@@ -15,6 +14,7 @@ import de.hpi.swa.trufflesqueak.exceptions.Returns.TopLevelReturn;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakQuit;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.MethodContextObject;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 
 public class TopLevelContextNode extends RootNode {
     @CompilationFinal private final SqueakImageContext image;
@@ -50,8 +50,12 @@ public class TopLevelContextNode extends RootNode {
         while (true) {
             MethodContextObject sender = activeContext.getSender();
             try {
-                RootCallTarget target = Truffle.getRuntime().createCallTarget(new MethodContextNode(image.getLanguage(), activeContext, activeContext.getCodeObject()));
-                Object result = target.call(activeContext.getFrameArguments());
+                CompiledCodeObject code = activeContext.getCodeObject();
+                Object[] frameArgs = activeContext.getReceiverAndArguments();
+                Object closure = activeContext.at0(CONTEXT.CLOSURE_OR_NIL);
+                VirtualFrame frame = Truffle.getRuntime().createVirtualFrame(FrameAccess.newWith(code, closure, frameArgs), code.getFrameDescriptor());
+                frame.setObject(code.thisContextSlot, activeContext);
+                Object result = new MethodContextNode(code).execute(frame); // TODO don't generate node here
                 activeContext = unwindContextChain(sender, activeContext, result);
             } catch (ProcessSwitch ps) {
                 activeContext = ps.getNewContext();

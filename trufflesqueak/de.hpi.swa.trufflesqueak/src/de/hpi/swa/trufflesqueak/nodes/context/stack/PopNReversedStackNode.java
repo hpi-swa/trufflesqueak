@@ -1,25 +1,33 @@
 package de.hpi.swa.trufflesqueak.nodes.context.stack;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 
-public class PopNReversedStackNode extends AbstractStackNode {
+public abstract class PopNReversedStackNode extends AbstractStackNode {
     @Child private FrameStackReadNode readNode;
     @CompilationFinal private final int numPop;
 
-    public PopNReversedStackNode(CompiledCodeObject code, int numPop) {
+    public static PopNReversedStackNode create(CompiledCodeObject code, int numPop) {
+        return PopNReversedStackNodeGen.create(code, numPop);
+    }
+
+// public abstract Object[] executeGeneric(VirtualFrame frame);
+
+    protected PopNReversedStackNode(CompiledCodeObject code, int numPop) {
         super(code);
         this.numPop = numPop;
         readNode = FrameStackReadNode.create();
     }
 
     @ExplodeLoop
-    public Object[] execute(VirtualFrame frame) {
-        int sp = stackPointer(frame);
+    @Specialization(guards = {"isVirtualized(frame)"})
+    protected Object[] doPopNVirtualized(VirtualFrame frame) {
+        int sp = frameStackPointer(frame);
         assert sp - numPop >= -1;
         Object[] result = new Object[numPop];
         for (int i = 0; i < numPop; i++) {
@@ -27,5 +35,11 @@ public class PopNReversedStackNode extends AbstractStackNode {
         }
         frame.setInt(code.stackPointerSlot, sp - numPop);
         return result;
+    }
+
+    @ExplodeLoop
+    @Specialization(guards = {"!isVirtualized(frame)"})
+    protected Object[] doPopN(VirtualFrame frame) {
+        return getContext(frame).popNReversed(numPop);
     }
 }

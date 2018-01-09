@@ -26,10 +26,10 @@ import de.hpi.swa.trufflesqueak.nodes.LookupNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
 import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtNode;
+import de.hpi.swa.trufflesqueak.nodes.context.ReceiverAndArgumentsNode;
+import de.hpi.swa.trufflesqueak.nodes.context.ReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameReceiverAndArgumentsNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
@@ -109,10 +109,11 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 83, variableArguments = true)
     protected static abstract class PrimPerformNode extends AbstractPerformPrimitiveNode {
-        @Child private FrameReceiverAndArgumentsNode rcvrAndArgsNode = new FrameReceiverAndArgumentsNode();
+        @Child private ReceiverAndArgumentsNode rcvrAndArgsNode;
 
         protected PrimPerformNode(CompiledMethodObject method) {
             super(method);
+            rcvrAndArgsNode = ReceiverAndArgumentsNode.create(method);
         }
 
         @Specialization
@@ -567,7 +568,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected PrimQuickReturnReceiverVariableNode(CompiledMethodObject method, int variableIndex) {
             super(method);
-            receiverVariableNode = ObjectAtNode.create(variableIndex, new FrameReceiverNode());
+            receiverVariableNode = ObjectAtNode.create(variableIndex, ReceiverNode.create(method));
         }
 
         @Specialization

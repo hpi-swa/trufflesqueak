@@ -19,7 +19,6 @@ import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 public class MethodContextObject extends BaseSqueakObject {
     @Child private BlockActivationNode dispatch = BlockActivationNodeGen.create();
     @CompilationFinal private ActualContextObject actualContext;
-    private int sp = CONTEXT.TEMP_FRAME_START - 1;
     private boolean isDirty;
 
     public static MethodContextObject createReadOnlyContextObject(SqueakImageContext img, Frame virtualFrame) {
@@ -120,7 +119,7 @@ public class MethodContextObject extends BaseSqueakObject {
         return actualContext.shallowCopy();
     }
 
-    public Object[] getFrameArguments() {
+    public Object[] getReceiverAndArguments() {
         int numArgs = getCodeObject().getNumArgsAndCopiedValues();
         Object[] arguments = new Object[1 + numArgs];
         Object method = at0(CONTEXT.METHOD);
@@ -133,11 +132,6 @@ public class MethodContextObject extends BaseSqueakObject {
             arguments[1 + i] = actualContext.at0(CONTEXT.TEMP_FRAME_START + i);
         }
         return arguments;
-    }
-
-    public boolean isUnwindMarked() {
-        CompiledCodeObject code = getCodeObject();
-        return code.hasPrimitive() && code.primitiveIndex() == 198;
     }
 
     public boolean isDirty() {
@@ -157,7 +151,17 @@ public class MethodContextObject extends BaseSqueakObject {
     }
 
     public void push(Object value) {
-        atput0(++sp, value);
+        int newSP = stackPointer() + 1;
+        atput0(newSP, value);
+        setStackPointer(newSP);
+    }
+
+    private int stackPointer() {
+        return (int) at0(CONTEXT.STACKPOINTER) - 1;
+    }
+
+    private void setStackPointer(int newSP) {
+        atput0(CONTEXT.STACKPOINTER, newSP + 1);
     }
 
     @Override
@@ -167,5 +171,38 @@ public class MethodContextObject extends BaseSqueakObject {
 
     public boolean hasSameMethodObject(MethodContextObject obj) {
         return actualContext.at0(CONTEXT.METHOD).equals(obj.actualContext.at0(CONTEXT.METHOD));
+    }
+
+    public Object top() {
+        return at0(stackPointer());
+    }
+
+    public Object pop() {
+        int sp = stackPointer();
+        setStackPointer(sp - 1);
+        return at0(sp);
+    }
+
+    public Object peek(int offset) {
+        return at0(stackPointer() - offset);
+    }
+
+    public Object[] popNReversed(int numPop) {
+        int sp = stackPointer();
+        assert sp - numPop >= -1;
+        Object[] result = new Object[numPop];
+        for (int i = 0; i < numPop; i++) {
+            result[numPop - 1 - i] = at0(sp - i);
+        }
+        setStackPointer(sp - numPop);
+        return result;
+    }
+
+    public Object getReceiver() {
+        return at0(CONTEXT.RECEIVER);
+    }
+
+    public Object getArgument(int argumentIndex) {
+        return at0(CONTEXT.TEMP_FRAME_START + argumentIndex);
     }
 }

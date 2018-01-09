@@ -10,10 +10,9 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.SpecialSelectorObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameArgumentNode;
+import de.hpi.swa.trufflesqueak.nodes.context.ArgumentNode;
+import de.hpi.swa.trufflesqueak.nodes.context.ReceiverAndArgumentsNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameArgumentProfileNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameReceiverAndArgumentsNode;
-import de.hpi.swa.trufflesqueak.nodes.context.stack.PeekStackNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.FilePlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
 import de.hpi.swa.trufflesqueak.nodes.plugins.TruffleSqueakPlugin;
@@ -63,7 +62,7 @@ public abstract class PrimitiveNodeFactory {
         assert numArguments == 1 + specialSelector.getNumArguments();
         SqueakNode[] arguments = new SqueakNode[numArguments];
         for (int i = 0; i < numArguments; i++) {
-            arguments[i] = new PeekStackNode(method, numArguments - 1 - i);
+            arguments[i] = ArgumentNode.create(method, numArguments - 1 - i);
         }
         return nodeFactory.createNode(method, arguments);
     }
@@ -71,7 +70,7 @@ public abstract class PrimitiveNodeFactory {
     @TruffleBoundary
     public static AbstractPrimitiveNode forName(CompiledMethodObject method, String moduleName, String functionName) {
         if (moduleName.equals("BitBltPlugin")) {
-            return PrimBitBltSimulateNode.create(method, moduleName, functionName, new SqueakNode[]{new FrameReceiverAndArgumentsNode()});
+            return PrimBitBltSimulateNode.create(method, moduleName, functionName, new SqueakNode[]{ReceiverAndArgumentsNode.create(method)});
         }
         for (AbstractPrimitiveFactoryHolder plugin : plugins) {
             if (!plugin.getClass().getSimpleName().equals(moduleName)) {
@@ -95,12 +94,12 @@ public abstract class PrimitiveNodeFactory {
 
     private static AbstractPrimitiveNode createInstance(CompiledMethodObject method, NodeFactory<? extends AbstractPrimitiveNode> nodeFactory, SqueakPrimitive primitive) {
         if (primitive.variableArguments()) {
-            return nodeFactory.createNode(method, new SqueakNode[]{new FrameReceiverAndArgumentsNode()});
+            return nodeFactory.createNode(method, new SqueakNode[]{ReceiverAndArgumentsNode.create(method)});
         }
         int numArgs = primitive.numArguments();
         SqueakNode[] arguments = new SqueakNode[numArgs];
         for (int i = 0; i < numArgs; i++) {
-            arguments[i] = new FrameArgumentProfileNode(new FrameArgumentNode(i));
+            arguments[i] = new FrameArgumentProfileNode(ArgumentNode.create(method, i));
         }
         return nodeFactory.createNode(method, arguments);
     }

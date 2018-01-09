@@ -20,14 +20,14 @@ public final class JumpBytecodes {
         public ConditionalJumpNode(CompiledCodeObject code, int index, int numBytecodes, int bytecode) {
             super(code, index, numBytecodes, bytecode);
             isIfTrue = false;
-            popNode = new PopStackNode(code);
+            popNode = PopStackNode.create(code);
             successorExecutionCount = new long[2];
         }
 
         public ConditionalJumpNode(CompiledCodeObject code, int index, int numBytecodes, int bytecode, int parameter, boolean condition) {
             super(code, index, numBytecodes, bytecode, parameter);
             isIfTrue = condition;
-            popNode = new PopStackNode(code);
+            popNode = PopStackNode.create(code);
             successorExecutionCount = new long[2];
         }
 
