@@ -137,9 +137,10 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
                     return null;
                 }
             });
-            if (sender == null) {
-                throw new RuntimeException("Unable to find sender");
-            }
+            // TODO: below check should be used, sender should be nil instead of null
+// if (sender == null) {
+// throw new RuntimeException("Unable to find sender");
+// }
         }
         return sender;
     }

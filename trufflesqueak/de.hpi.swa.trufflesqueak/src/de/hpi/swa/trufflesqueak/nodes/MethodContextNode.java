@@ -182,8 +182,12 @@ public class MethodContextNode extends RootNode {
         if (cachedContext == null) {
             return 0;
         }
+        CompiledCodeObject codeObject = (CompiledCodeObject) cachedContext.at0(CONTEXT.METHOD);
         int rawPC = (int) cachedContext.at0(CONTEXT.INSTRUCTION_POINTER);
-        return rawPC - code.getBytecodeOffset() - 1;
+        if (rawPC < 0) {
+            return 0;
+        }
+        return rawPC - codeObject.getBytecodeOffset() - 1;
     }
 
     private int initialSP() {
@@ -220,7 +224,7 @@ public class MethodContextNode extends RootNode {
             cachedContext = MethodContextObject.createWriteableContextObject(code.image, code.frameSize());
             cachedContext.atput0(CONTEXT.METHOD, code);
             cachedContext.atput0(CONTEXT.SENDER, activeContext, false);
-            cachedContext.atput0(CONTEXT.INSTRUCTION_POINTER, -1 + cachedContext.getCodeObject().getBytecodeOffset() + 1); // FIXME: pc?
+            cachedContext.atput0(CONTEXT.INSTRUCTION_POINTER, -1); // FIXME: pc? cachedContext.getCodeObject().getBytecodeOffset() + 1
             cachedContext.atput0(CONTEXT.RECEIVER, frame.getArguments()[0]);
             cachedContext.atput0(CONTEXT.CLOSURE_OR_NIL, code.image.nil);
         }
