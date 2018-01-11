@@ -11,7 +11,7 @@ public class WriteableContextObject extends AbstractPointersObject implements Ac
 
     public WriteableContextObject(SqueakImageContext img, int size) {
         this(img);
-        pointers = new Object[size];
+        pointers = new Object[CONTEXT.TEMP_FRAME_START + size];
     }
 
     public WriteableContextObject(SqueakImageContext img, ReadOnlyContextObject actualContext) {

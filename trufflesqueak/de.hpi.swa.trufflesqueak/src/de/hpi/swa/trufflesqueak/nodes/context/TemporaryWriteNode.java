@@ -20,8 +20,9 @@ public abstract class TemporaryWriteNode extends AbstractWriteNode {
         super(code);
         this.tempIndex = tempIndex;
         int stackIndex = code.convertTempIndexToStackIndex(tempIndex);
-        assert stackIndex >= 0;
-        this.frameSlotWriteNode = FrameSlotWriteNode.create(code.getStackSlot(stackIndex));
+        if (stackIndex >= 0) {
+            frameSlotWriteNode = FrameSlotWriteNode.create(code.getStackSlot(stackIndex));
+        }
     }
 
     @Specialization(guards = {"isVirtualized(frame)"})

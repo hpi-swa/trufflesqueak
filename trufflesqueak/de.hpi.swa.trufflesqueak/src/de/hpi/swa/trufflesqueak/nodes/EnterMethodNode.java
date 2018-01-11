@@ -48,7 +48,7 @@ public abstract class EnterMethodNode extends RootNode {
         MethodContextObject context = getContextNode.executeGetMethodContext(frame, code.getBytecodeOffset() + 1);
         frame.setObject(code.markerSlot, context); // TODO: unify markerSlot and thisContextSlot
         Object[] arguments = frame.getArguments();
-        assert arguments.length - (FrameAccess.RCVR_AND_ARGS_START + 1) == code.getNumArgs();
+        assert arguments.length - (FrameAccess.RCVR_AND_ARGS_START + 1) == code.getNumArgsAndCopiedValues();
         for (int i = FrameAccess.RCVR_AND_ARGS_START + 1; i < arguments.length; i++) {
             context.push(arguments[i]);
         }
