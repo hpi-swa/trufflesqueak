@@ -48,7 +48,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
     @CompilationFinal private int accessModifier;
     @CompilationFinal private boolean altInstructionSet;
 
-    private Assumption noContextNeeded = Truffle.getRuntime().createAssumption("Does not need a materialized context");
+    @CompilationFinal private final Assumption noContextNeeded = Truffle.getRuntime().createAssumption("Does not need a materialized context");
 
     @CompilationFinal private Source source;
 
