@@ -7,17 +7,13 @@ import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.MaterializedFrame;
-import com.oracle.truffle.api.nodes.Node.Child;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualContextModification;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
-import de.hpi.swa.trufflesqueak.nodes.BlockActivationNode;
-import de.hpi.swa.trufflesqueak.nodes.BlockActivationNodeGen;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public class MethodContextObject extends BaseSqueakObject {
-    @Child private BlockActivationNode dispatch = BlockActivationNodeGen.create();
     @CompilationFinal private ActualContextObject actualContext;
     private boolean isDirty;
 
