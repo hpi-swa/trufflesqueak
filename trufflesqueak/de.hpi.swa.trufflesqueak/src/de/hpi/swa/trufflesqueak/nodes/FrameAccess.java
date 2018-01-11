@@ -45,10 +45,10 @@ public class FrameAccess {
         return frame.getArguments()[idx + TEMP_START];
     }
 
-    public static Object[] newWith(CompiledCodeObject code, MethodContextObject context, BlockClosureObject closure, Object[] frameArgs) {
+    public static Object[] newWith(CompiledCodeObject code, MethodContextObject sender, BlockClosureObject closure, Object[] frameArgs) {
         Object[] arguments = new Object[RCVR_AND_ARGS_START + frameArgs.length];
         arguments[METHOD] = code;
-        arguments[SENDER_OR_NULL] = context;
+        arguments[SENDER_OR_NULL] = sender;
         arguments[CLOSURE_OR_NULL] = closure;
         for (int i = 0; i < frameArgs.length; i++) {
             arguments[RCVR_AND_ARGS_START + i] = frameArgs[i];

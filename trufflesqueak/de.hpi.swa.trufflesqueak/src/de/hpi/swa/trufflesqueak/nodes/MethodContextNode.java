@@ -27,6 +27,7 @@ import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
 public class MethodContextNode extends Node {
     @CompilationFinal private final CompiledCodeObject code;
+    @CompilationFinal private static BaseSqueakObject aboutToReturnSelector;
     @Children private final AbstractBytecodeNode[] bytecodeNodes;
     @Child private PushStackNode pushNode;
     @Child private SendSelectorNode aboutToReturnNode;
@@ -43,7 +44,9 @@ public class MethodContextNode extends Node {
         pushNode = PushStackNode.create(code);
         terminateNode = TerminateContextNode.create(code);
         getContextNode = GetMethodContextNode.create(code);
-        BaseSqueakObject aboutToReturnSelector = (BaseSqueakObject) code.image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SelectorAboutToReturn);
+        if (aboutToReturnSelector == null) {
+            aboutToReturnSelector = (BaseSqueakObject) code.image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SelectorAboutToReturn);
+        }
         aboutToReturnNode = new SendSelectorNode(code, -1, -1, aboutToReturnSelector, 2);
     }
 

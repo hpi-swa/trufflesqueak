@@ -175,7 +175,7 @@ public final class PushBytecodes {
         @Override
         public void executeVoid(VirtualFrame frame) {
             if (popNReversedNode != null) {
-                pushNode.executeWrite(frame, code.image.newList(popNReversedNode.executeGeneric(frame)));
+                pushNode.executeWrite(frame, code.image.newList((Object[]) popNReversedNode.executeGeneric(frame)));
             } else {
                 pushNode.executeWrite(frame, code.image.wrap(new Object[arraySize]));
             }

@@ -12,6 +12,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.MethodContextObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
+import de.hpi.swa.trufflesqueak.nodes.FrameAccess;
 import de.hpi.swa.trufflesqueak.nodes.TopLevelContextNode;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 import junit.framework.TestCase;
@@ -28,9 +29,9 @@ public abstract class AbstractSqueakTestCase extends TestCase {
         super(name);
     }
 
-    private class DummyChunk extends SqueakImageChunk {
+    private class DummyFormatChunk extends SqueakImageChunk {
 
-        public DummyChunk(int format) {
+        public DummyFormatChunk(int format) {
             super(null, null, 0, format, 0, 0, 0);
         }
 
@@ -39,6 +40,20 @@ public abstract class AbstractSqueakTestCase extends TestCase {
             Object[] pointers = new Object[6];
             pointers[2] = format; // FORMAT_INDEX
             return pointers;
+        }
+    }
+
+    private class DummyPointersChunk extends SqueakImageChunk {
+        private Object[] dummyPointers;
+
+        public DummyPointersChunk(Object[] pointers) {
+            super(null, null, 0, 0, 0, 0, 0);
+            this.dummyPointers = pointers;
+        }
+
+        @Override
+        public Object[] getPointers() {
+            return dummyPointers;
         }
     }
 
@@ -77,7 +92,8 @@ public abstract class AbstractSqueakTestCase extends TestCase {
         image.newWithArg.setBytes("newWithArg".getBytes());
         image.x.setBytes("x".getBytes());
         image.y.setBytes("y".getBytes());
-        image.compiledMethodClass.fillin(new DummyChunk(100)); // sets instanceSize to 100
+        image.specialObjectsArray.fillin(new DummyPointersChunk(new Object[100]));
+        image.compiledMethodClass.fillin(new DummyFormatChunk(100)); // sets instanceSize to 100
     }
 
     public CompiledCodeObject makeMethod(byte[] bytes) {
@@ -118,11 +134,14 @@ public abstract class AbstractSqueakTestCase extends TestCase {
     }
 
     protected TopLevelContextNode createContext(CompiledCodeObject code, Object receiver, Object[] arguments) {
-        MethodContextObject testContext = MethodContextObject.createWriteableContextObject(code.image, code.frameSize());
+        // always use large instance size and large frame size for testing
+        MethodContextObject testContext = MethodContextObject.createWriteableContextObject(code.image, 50 + CONTEXT.LARGE_FRAMESIZE);
         testContext.atput0(CONTEXT.METHOD, code);
         testContext.atput0(CONTEXT.INSTRUCTION_POINTER, testContext.getCodeObject().getBytecodeOffset() + 1);
         testContext.atput0(CONTEXT.RECEIVER, receiver);
-        testContext.atput0(CONTEXT.SENDER_OR_NIL, code.image.nil);
+        testContext.atput0(CONTEXT.STACKPOINTER, 1);
+        testContext.atput0(CONTEXT.CLOSURE_OR_NIL, code.image.nil);
+        testContext.setSender(code.image.nil);
         for (int i = 0; i < arguments.length; i++) {
             testContext.atput0(CONTEXT.TEMP_FRAME_START + i, arguments[i]);
         }
@@ -152,6 +171,7 @@ public abstract class AbstractSqueakTestCase extends TestCase {
     }
 
     public VirtualFrame createTestFrame(CompiledCodeObject code) {
-        return Truffle.getRuntime().createVirtualFrame(new Object[0], code.getFrameDescriptor());
+        Object[] arguments = FrameAccess.newWith(code, null, null, new Object[0]);
+        return Truffle.getRuntime().createVirtualFrame(arguments, code.getFrameDescriptor());
     }
 }
