@@ -15,7 +15,9 @@ public abstract class FrameStackReadNode extends Node {
 
     protected FrameSlot getFrameSlotForIndex(VirtualFrame frame, int index) {
         assert index >= 0;
-        return frame.getFrameDescriptor().findFrameSlot(index);
+        FrameSlot slot = frame.getFrameDescriptor().findFrameSlot(index);
+        assert slot != null;
+        return slot;
     }
 
     protected static final int SQUEAK_MAX_STACK_SIZE = 200;

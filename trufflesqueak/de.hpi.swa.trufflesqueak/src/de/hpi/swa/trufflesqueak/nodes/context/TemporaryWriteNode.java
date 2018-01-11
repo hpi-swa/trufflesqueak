@@ -26,12 +26,14 @@ public abstract class TemporaryWriteNode extends AbstractWriteNode {
     }
 
     @Specialization(guards = {"isVirtualized(frame)"})
-    protected void doStoreVirtualized(VirtualFrame frame, Object value) {
+    protected void doWriteVirtualized(VirtualFrame frame, Object value) {
+        assert value != null;
         frameSlotWriteNode.executeWrite(frame, value);
     }
 
     @Specialization(guards = {"!isVirtualized(frame)"})
-    protected void doStore(VirtualFrame frame, Object value) {
+    protected void doWrite(VirtualFrame frame, Object value) {
+        assert value != null;
         getContext(frame).atTempPut(tempIndex, value);
     }
 }

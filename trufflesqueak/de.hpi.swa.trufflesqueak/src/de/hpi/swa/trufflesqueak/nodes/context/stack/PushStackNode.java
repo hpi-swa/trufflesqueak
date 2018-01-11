@@ -8,7 +8,7 @@ import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode;
 
 public abstract class PushStackNode extends AbstractWriteNode {
-    @Child private FrameStackWriteNode writeNode;
+    @Child private FrameStackWriteNode writeNode = FrameStackWriteNode.create();
     @Child private FrameSlotReadNode spNode;
 
     public static PushStackNode create(CompiledCodeObject code) {
@@ -17,8 +17,7 @@ public abstract class PushStackNode extends AbstractWriteNode {
 
     protected PushStackNode(CompiledCodeObject code) {
         super(code);
-        this.spNode = FrameSlotReadNode.create(code.stackPointerSlot);
-        writeNode = FrameStackWriteNode.create();
+        spNode = FrameSlotReadNode.create(code.stackPointerSlot);
     }
 
     protected int frameStackPointer(VirtualFrame frame) {
@@ -35,6 +34,7 @@ public abstract class PushStackNode extends AbstractWriteNode {
 
     @Specialization(guards = {"!isVirtualized(frame)"})
     protected void doWrite(VirtualFrame frame, Object value) {
+        assert value != null;
         getContext(frame).push(value);
     }
 }
