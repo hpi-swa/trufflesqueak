@@ -1,6 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
-import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.frame.Frame;
 
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -25,23 +25,23 @@ public class FrameAccess {
     public static final int RCVR_AND_ARGS_START = 3;
     public static final int TEMP_START = 4;
 
-    public static CompiledCodeObject getMethod(VirtualFrame frame) {
+    public static CompiledCodeObject getMethod(Frame frame) {
         return (CompiledCodeObject) frame.getArguments()[METHOD];
     }
 
-    public static MethodContextObject getSender(VirtualFrame frame) {
+    public static MethodContextObject getSender(Frame frame) {
         return (MethodContextObject) frame.getArguments()[SENDER_OR_NULL];
     }
 
-    public static BlockClosureObject getClosure(VirtualFrame frame) {
+    public static BlockClosureObject getClosure(Frame frame) {
         return (BlockClosureObject) frame.getArguments()[CLOSURE_OR_NULL];
     }
 
-    public static Object getReceiver(VirtualFrame frame) {
+    public static Object getReceiver(Frame frame) {
         return frame.getArguments()[RECEIVER];
     }
 
-    public static Object getArg(VirtualFrame frame, int idx) {
+    public static Object getArg(Frame frame, int idx) {
         return frame.getArguments()[idx + TEMP_START];
     }
 

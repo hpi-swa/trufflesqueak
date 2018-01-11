@@ -26,8 +26,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
     public static enum SLOT_IDENTIFIER {
         THIS_CONTEXT,
         STACK_POINTER,
-        MARKER,
-        METHOD
+        MARKER
     }
 
     // frame info

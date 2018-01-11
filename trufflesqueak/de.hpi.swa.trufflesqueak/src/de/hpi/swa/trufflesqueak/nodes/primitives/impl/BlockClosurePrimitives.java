@@ -23,6 +23,7 @@ import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.MethodContextObject;
 import de.hpi.swa.trufflesqueak.nodes.BlockActivationNode;
 import de.hpi.swa.trufflesqueak.nodes.BlockActivationNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.FrameAccess;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
@@ -101,13 +102,12 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                 public Object visitFrame(FrameInstance frameInstance) {
                     Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
                     FrameDescriptor frameDescriptor = current.getFrameDescriptor();
-                    FrameSlot methodSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.METHOD);
+                    CompiledCodeObject frameMethod = FrameAccess.getMethod(current);
                     FrameSlot markerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.MARKER);
-                    if (methodSlot != null && markerSlot != null) {
-                        Object frameMethod = FrameUtil.getObjectSafe(current, methodSlot);
+                    if (markerSlot != null) {
                         Object frameMarker = FrameUtil.getObjectSafe(current, markerSlot);
-                        if (frameMarker == marker && frameMethod instanceof CompiledCodeObject) {
-                            if (((CompiledCodeObject) frameMethod).primitiveIndex() == EXCEPTION_HANDLER_MARKER) {
+                        if (frameMarker == marker) {
+                            if (frameMethod.primitiveIndex() == EXCEPTION_HANDLER_MARKER) {
                                 return frameMethod;
                             }
                         }
@@ -128,14 +128,11 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                 @Override
                 public Object visitFrame(FrameInstance frameInstance) {
                     Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
-                    FrameDescriptor frameDescriptor = current.getFrameDescriptor();
-                    FrameSlot methodSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.METHOD);
-                    if (methodSlot != null) {
-                        code.image.getOutput().println(FrameUtil.getObjectSafe(current, methodSlot));
-                        for (Object arg : current.getArguments()) {
-                            code.image.getOutput().append("   ");
-                            code.image.getOutput().println(arg);
-                        }
+                    CompiledCodeObject method = FrameAccess.getMethod(current);
+                    code.image.getOutput().println(method);
+                    for (Object arg : current.getArguments()) {
+                        code.image.getOutput().append("   ");
+                        code.image.getOutput().println(arg);
                     }
                     return null;
                 }

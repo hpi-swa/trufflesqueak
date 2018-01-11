@@ -25,9 +25,9 @@ import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
  */
 public class ReadOnlyContextObject extends BaseSqueakObject implements ActualContextObject {
     @CompilationFinal private final MaterializedFrame frame;
-    @CompilationFinal private final FrameSlot methodSlot;
     @CompilationFinal private final FrameSlot stackPointerSlot;
     @CompilationFinal private final FrameSlot markerSlot;
+    @CompilationFinal private final CompiledCodeObject method;
     @CompilationFinal private final FrameDescriptor frameDescriptor;
     @CompilationFinal private Object receiver;
     @CompilationFinal private MethodContextObject sender;
@@ -38,8 +38,8 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
         super(img);
         frame = materializedFrame;
         frameDescriptor = frame.getFrameDescriptor();
-        methodSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.METHOD);
         markerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.MARKER);
+        method = FrameAccess.getMethod(frame);
         closure = FrameAccess.getClosure(frame);
         stackPointerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.STACK_POINTER);
         receiver = frame.getArguments()[0];
@@ -55,7 +55,7 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
             case CONTEXT.STACKPOINTER:
                 return getStackPointer();
             case CONTEXT.METHOD:
-                return getMethod();
+                return method;
             case CONTEXT.CLOSURE_OR_NIL:
                 return getClosure();
             case CONTEXT.RECEIVER:
@@ -104,18 +104,14 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
     }
 
     private int getPC() {
-        if (pc == -1) {
-            pc = getMethod().getBytecodeOffset() + 1;
+        if (pc == -1) { // TODO: is this still needed?
+            pc = method.getBytecodeOffset() + 1;
         }
         return pc;
     }
 
     private int getStackPointer() {
         return FrameUtil.getIntSafe(frame, stackPointerSlot);
-    }
-
-    private CompiledCodeObject getMethod() {
-        return (CompiledCodeObject) FrameUtil.getObjectSafe(frame, methodSlot);
     }
 
     private Object getSender() {
