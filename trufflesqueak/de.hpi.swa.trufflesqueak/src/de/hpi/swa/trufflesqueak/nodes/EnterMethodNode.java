@@ -6,6 +6,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
@@ -26,6 +27,7 @@ public abstract class EnterMethodNode extends RootNode {
         this.code = code;
     }
 
+    @ExplodeLoop
     @Specialization(assumptions = {"code.getNoContextNeededAssumption()"})
     protected Object enterVirtualized(VirtualFrame frame,
                     @Cached("create(code)") MethodContextNode contextNode) {
@@ -41,6 +43,7 @@ public abstract class EnterMethodNode extends RootNode {
         return contextNode.execute(frame);
     }
 
+    @ExplodeLoop
     @Specialization(guards = {"!code.getNoContextNeededAssumption().isValid()"})
     protected Object enter(VirtualFrame frame,
                     @Cached("create(code)") GetMethodContextNode getContextNode,
