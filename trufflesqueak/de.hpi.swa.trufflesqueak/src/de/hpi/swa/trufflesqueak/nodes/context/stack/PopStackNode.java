@@ -22,8 +22,8 @@ public abstract class PopStackNode extends AbstractStackNode {
     public Object doPopVirtualized(VirtualFrame frame) {
         int newSP = frameStackPointer(frame) - 1;
         frame.setInt(code.stackPointerSlot, newSP);
-        if (newSP <= 0) {
-            return frame.getArguments()[frame.getArguments().length - 1 + newSP];
+        if (newSP < 0) {
+            return frame.getArguments()[frame.getArguments().length + newSP];
         }
         return readNode.execute(frame, newSP);
     }
