@@ -140,8 +140,6 @@ public class MethodContextObject extends BaseSqueakObject {
             return (MethodContextObject) sender;
         } else if (sender instanceof NilObject) {
             return null;
-        } else if (sender == null) {
-            return null; // TODO: this is a hack
         }
         throw new RuntimeException("Unexpected sender: " + sender);
     }

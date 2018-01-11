@@ -155,12 +155,9 @@ public class MethodContextNode extends Node {
     private int initialPC(VirtualFrame frame) {
         MethodContextObject context = getContextObject(frame);
         if (context == null) {
-            return 0; // start at the beginning.
+            return 0; // start at the beginning
         }
         int rawPC = (int) context.at0(CONTEXT.INSTRUCTION_POINTER);
-        if (rawPC < 0) { // FIXME: dirty -1 hack
-            return 0;
-        }
         return rawPC - code.getBytecodeOffset() - 1;
     }
 
