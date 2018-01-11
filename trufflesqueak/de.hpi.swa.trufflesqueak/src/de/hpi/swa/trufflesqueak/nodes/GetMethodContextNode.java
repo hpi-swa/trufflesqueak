@@ -31,12 +31,12 @@ public abstract class GetMethodContextNode extends Node {
         if (context == null) {
             context = MethodContextObject.createWriteableContextObject(code.image, code.frameSize());
             context.atput0(CONTEXT.METHOD, code);
-            context.atput0(CONTEXT.SENDER, null, false);
+            context.setSender(FrameAccess.getSender(frame));
             context.atput0(CONTEXT.INSTRUCTION_POINTER, pc);
-            context.atput0(CONTEXT.RECEIVER, frame.getArguments()[0]);
+            context.atput0(CONTEXT.RECEIVER, FrameAccess.getReceiver(frame));
             BlockClosureObject closure = FrameAccess.getClosure(frame);
             context.atput0(CONTEXT.CLOSURE_OR_NIL, closure == null ? code.image.nil : closure);
-            context.atput0(CONTEXT.STACKPOINTER, FrameUtil.getIntSafe(frame, code.stackPointerSlot));
+            context.atput0(CONTEXT.STACKPOINTER, 1);
             frame.setObject(code.thisContextSlot, context);
         }
         return context;

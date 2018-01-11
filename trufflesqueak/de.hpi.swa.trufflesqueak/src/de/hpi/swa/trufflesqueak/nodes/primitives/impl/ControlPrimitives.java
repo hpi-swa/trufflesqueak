@@ -21,6 +21,7 @@ import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.DispatchNode;
 import de.hpi.swa.trufflesqueak.nodes.DispatchNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.FrameAccess;
 import de.hpi.swa.trufflesqueak.nodes.LookupNode;
 import de.hpi.swa.trufflesqueak.nodes.LookupNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
@@ -86,9 +87,10 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        protected Object dispatch(Object receiver, Object selector, Object arguments, ClassObject rcvrClass) {
+        protected Object dispatch(VirtualFrame frame, Object receiver, Object selector, Object arguments, ClassObject rcvrClass) {
             Object lookupResult = lookupNode.executeLookup(rcvrClass, selector);
             Object[] rcvrAndArgs;
+
             if (arguments instanceof ListObject) {
                 ListObject list = (ListObject) arguments;
                 int numArgs = list.size();
@@ -102,7 +104,8 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             } else {
                 rcvrAndArgs = new Object[]{receiver};
             }
-            return dispatchNode.executeDispatch(lookupResult, rcvrAndArgs);
+            Object[] frameArguments = FrameAccess.newWith(code, getContext(frame), null, rcvrAndArgs);
+            return dispatchNode.executeDispatch(lookupResult, frameArguments);
         }
     }
 
@@ -117,7 +120,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object perform(Object[] rcvrAndArgs) {
+        protected Object perform(VirtualFrame frame, Object[] rcvrAndArgs) {
             int numRcvrAndArgs = rcvrAndArgs.length;
             if (numRcvrAndArgs != 2 && numRcvrAndArgs != 3) {
                 throw new PrimitiveFailed();
@@ -126,9 +129,9 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             Object selector = rcvrAndArgs[1];
             ClassObject rcvrClass = lookup(receiver);
             if (numRcvrAndArgs == 2) {
-                return dispatch(receiver, selector, null, rcvrClass);
+                return dispatch(frame, receiver, selector, null, rcvrClass);
             }
-            return dispatch(receiver, selector, rcvrAndArgs[2], rcvrClass);
+            return dispatch(frame, receiver, selector, rcvrAndArgs[2], rcvrClass);
         }
     }
 
@@ -140,8 +143,8 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object perform(Object receiver, Object selector, ListObject arguments) {
-            return dispatch(receiver, selector, arguments, lookup(receiver));
+        protected Object perform(VirtualFrame frame, Object receiver, Object selector, ListObject arguments) {
+            return dispatch(frame, receiver, selector, arguments, lookup(receiver));
         }
     }
 
@@ -239,8 +242,8 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object perform(Object receiver, Object selector, ListObject arguments, ClassObject superClass) {
-            return dispatch(receiver, selector, arguments, superClass);
+        protected Object perform(VirtualFrame frame, Object receiver, Object selector, ListObject arguments, ClassObject superClass) {
+            return dispatch(frame, receiver, selector, arguments, superClass);
         }
     }
 
@@ -406,7 +409,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doExecute(Object[] rcvrAndArgs) {
+        protected Object doExecute(VirtualFrame frame, Object[] rcvrAndArgs) {
             if (3 < rcvrAndArgs.length || rcvrAndArgs.length > 5) {
                 throw new PrimitiveFailed();
             }
@@ -422,7 +425,8 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             for (int i = 0; i < numArgs; i++) {
                 dispatchRcvrAndArgs[1 + i] = argArray.at0(i);
             }
-            return dispatchNode.executeDispatch(method, dispatchRcvrAndArgs);
+            Object[] frameArguments = FrameAccess.newWith(code, getContext(frame), null, dispatchRcvrAndArgs);
+            return dispatchNode.executeDispatch(method, frameArguments);
         }
     }
 

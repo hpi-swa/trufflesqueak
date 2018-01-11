@@ -10,31 +10,36 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithCode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
 
 public abstract class TemporaryReadNode extends SqueakNodeWithCode {
+    @CompilationFinal private final int tempIndex;
     @Child private FrameSlotReadNode readNode;
-    @CompilationFinal private final int stackIndex;
+    @Child private ArgumentNode argumentNode;
 
     public static SqueakNode create(CompiledCodeObject code, int tempIndex) {
-        int stackIndex = code.convertTempIndexToStackIndex(tempIndex);
-        if (stackIndex >= 0) {
-            return TemporaryReadNodeGen.create(code, stackIndex);
-        } else {
-            return ArgumentNode.create(code, 1 + tempIndex);
-        }
+        return TemporaryReadNodeGen.create(code, tempIndex);
     }
 
-    protected TemporaryReadNode(CompiledCodeObject code, int stackIndex) {
+    protected TemporaryReadNode(CompiledCodeObject code, int tempIndex) {
         super(code);
-        this.stackIndex = stackIndex;
-        readNode = FrameSlotReadNode.create(code.getStackSlot(stackIndex));
+        this.tempIndex = tempIndex;
+        int stackIndex = code.convertTempIndexToStackIndex(tempIndex);
+        if (stackIndex >= 0) {
+            readNode = FrameSlotReadNode.create(code.getStackSlot(stackIndex));
+        } else {
+            argumentNode = ArgumentNode.create(code, 1 + tempIndex);
+        }
     }
 
     @Specialization(guards = {"isVirtualized(frame)"})
     public Object doReadVirtualized(VirtualFrame frame) {
-        return readNode.executeRead(frame);
+        if (readNode != null) {
+            return readNode.executeRead(frame);
+        } else {
+            return argumentNode.executeGeneric(frame);
+        }
     }
 
     @Specialization(guards = {"!isVirtualized(frame)"})
     public Object doRead(VirtualFrame frame) {
-        return getContext(frame).getArgument(stackIndex);
+        return getContext(frame).atTemp(tempIndex);
     }
 }

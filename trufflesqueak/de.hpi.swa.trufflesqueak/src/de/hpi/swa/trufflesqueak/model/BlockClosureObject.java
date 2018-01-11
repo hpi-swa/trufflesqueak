@@ -13,12 +13,14 @@ import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameUtil;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.BLOCK_CLOSURE;
 import de.hpi.swa.trufflesqueak.nodes.EnterMethodNode;
+import de.hpi.swa.trufflesqueak.nodes.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public class BlockClosureObject extends BaseSqueakObject {
@@ -183,26 +185,25 @@ public class BlockClosureObject extends BaseSqueakObject {
         return block;
     }
 
-    public Object[] getFrameArguments(Object... objects) {
+    public Object[] getFrameArguments(VirtualFrame frame, Object... objects) {
         CompilerAsserts.compilationConstant(objects.length);
         if (block.getNumArgs() != objects.length) {
             throw new PrimitiveFailed();
         }
-        Object[] arguments = new Object[2 + /* METHOD + CLOSURE_OR_NULL */
+        Object[] arguments = new Object[FrameAccess.RCVR_AND_ARGS_START + /* METHOD + CLOSURE_OR_NULL */
                         1 /* receiver */ +
                         objects.length +
-                        copied.length // +
-        /* 1 */ /* this */];
-        arguments[0] = block;
-        arguments[1] = null; // TODO: there might actually be a closure in a closure?
-        arguments[2] = getReceiver();
+                        copied.length];
+        arguments[FrameAccess.METHOD] = block;
+        arguments[FrameAccess.SENDER_OR_NULL] = FrameAccess.getSender(frame);
+        arguments[FrameAccess.CLOSURE_OR_NULL] = this;
+        arguments[FrameAccess.RCVR_AND_ARGS_START] = getReceiver();
         for (int i = 0; i < objects.length; i++) {
-            arguments[3 + i] = objects[i];
+            arguments[FrameAccess.RCVR_AND_ARGS_START + 1 + i] = objects[i];
         }
         for (int i = 0; i < copied.length; i++) {
-            arguments[3 + objects.length + i] = copied[i];
+            arguments[FrameAccess.RCVR_AND_ARGS_START + 1 + objects.length + i] = copied[i];
         }
-// arguments[arguments.length - 1] = this;
         return arguments;
     }
 

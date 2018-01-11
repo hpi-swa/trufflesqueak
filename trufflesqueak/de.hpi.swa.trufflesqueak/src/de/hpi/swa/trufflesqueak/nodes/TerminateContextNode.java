@@ -11,33 +11,33 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.MethodContextObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 
-public abstract class UnwindNode extends Node {
+public abstract class TerminateContextNode extends Node {
     @CompilationFinal private final CompiledCodeObject code;
 
-    public static UnwindNode create(CompiledCodeObject code) {
-        return UnwindNodeGen.create(code);
+    public static TerminateContextNode create(CompiledCodeObject code) {
+        return TerminateContextNodeGen.create(code);
     }
 
-    protected UnwindNode(CompiledCodeObject code) {
+    protected TerminateContextNode(CompiledCodeObject code) {
         super();
         this.code = code;
     }
 
-    protected abstract void executeUnwind(VirtualFrame frame);
+    protected abstract void executeTerminate(VirtualFrame frame);
 
     protected MethodContextObject getContext(VirtualFrame frame) {
         return (MethodContextObject) FrameUtil.getObjectSafe(frame, code.thisContextSlot);
     }
 
-    @Specialization(guards = {"context != null"})
-    protected void doUnwind(@SuppressWarnings("unused") VirtualFrame frame, @Cached("getContext(frame)") MethodContextObject context) {
-        context.atput0(CONTEXT.INSTRUCTION_POINTER, -1); // FIXME: reset pc to "zero", this is a hack... MCO is a call target and therefore cached
-        context.atput0(CONTEXT.SENDER, code.image.nil, false);
-    }
-
     @SuppressWarnings("unused")
     @Specialization(guards = {"context == null"})
-    protected void doUnwindNoContext(VirtualFrame frame, @Cached("getContext(frame)") MethodContextObject context) {
+    protected void doTerminateVirtualized(VirtualFrame frame, @Cached("getContext(frame)") MethodContextObject context) {
         // do nothing, context did not leak
+    }
+
+    @Specialization(guards = {"context != null"})
+    protected void doTerminate(@SuppressWarnings("unused") VirtualFrame frame, @Cached("getContext(frame)") MethodContextObject context) {
+        context.setSender(code.image.nil);
+        context.atput0(CONTEXT.INSTRUCTION_POINTER, code.image.nil);
     }
 }

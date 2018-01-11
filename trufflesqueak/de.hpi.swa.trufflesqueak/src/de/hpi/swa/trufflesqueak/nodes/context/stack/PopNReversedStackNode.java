@@ -16,8 +16,6 @@ public abstract class PopNReversedStackNode extends AbstractStackNode {
         return PopNReversedStackNodeGen.create(code, numPop);
     }
 
-// public abstract Object[] executeGeneric(VirtualFrame frame);
-
     protected PopNReversedStackNode(CompiledCodeObject code, int numPop) {
         super(code);
         this.numPop = numPop;
@@ -31,7 +29,7 @@ public abstract class PopNReversedStackNode extends AbstractStackNode {
         assert sp - numPop >= -1;
         Object[] result = new Object[numPop];
         for (int i = 0; i < numPop; i++) {
-            result[numPop - 1 - i] = readNode.execute(frame, sp - i);
+            result[numPop - 1 - i] = readNode.execute(frame, sp - 1 - i);
         }
         frame.setInt(code.stackPointerSlot, sp - numPop);
         return result;

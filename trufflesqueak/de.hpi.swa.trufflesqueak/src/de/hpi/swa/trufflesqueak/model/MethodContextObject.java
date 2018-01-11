@@ -62,18 +62,14 @@ public class MethodContextObject extends BaseSqueakObject {
         return actualContext.at0(index);
     }
 
+    public void terminate() {
+        atput0(CONTEXT.INSTRUCTION_POINTER, image.nil);
+        setSender(image.nil); // remove sender
+    }
+
     @Override
     public void atput0(int index, Object value) {
-        atput0(index, value, true);
-    }
-
-    public void unwind() {
-        atput0(CONTEXT.INSTRUCTION_POINTER, -1); // FIXME: reset pc to "zero", this is a hack... MCO is a call target and therefore cached
-        atput0(CONTEXT.SENDER, image.nil, false);
-    }
-
-    public void atput0(int index, Object value, boolean flagDirty) {
-        if (flagDirty && index == CONTEXT.SENDER) {
+        if (index == CONTEXT.SENDER_OR_NIL) {
             isDirty = true;
         }
         try {
@@ -126,10 +122,10 @@ public class MethodContextObject extends BaseSqueakObject {
         if (method instanceof BlockClosureObject) {
             arguments[0] = ((BlockClosureObject) method).getReceiver();
         } else {
-            arguments[0] = actualContext.at0(CONTEXT.RECEIVER);
+            arguments[0] = actualContext.at0(CONTEXT.TEMP_FRAME_START);
         }
         for (int i = 0; i < numArgs; i++) {
-            arguments[1 + i] = actualContext.at0(CONTEXT.TEMP_FRAME_START + i);
+            arguments[1 + i] = actualContext.at0(CONTEXT.TEMP_FRAME_START + 1 + i);
         }
         return arguments;
     }
@@ -139,7 +135,7 @@ public class MethodContextObject extends BaseSqueakObject {
     }
 
     public MethodContextObject getSender() {
-        Object sender = actualContext.at0(CONTEXT.SENDER);
+        Object sender = actualContext.at0(CONTEXT.SENDER_OR_NIL);
         if (sender instanceof MethodContextObject) {
             return (MethodContextObject) sender;
         } else if (sender instanceof NilObject) {
@@ -150,18 +146,28 @@ public class MethodContextObject extends BaseSqueakObject {
         throw new RuntimeException("Unexpected sender: " + sender);
     }
 
+    /*
+     * Set sender without flagging context as dirty.
+     */
+    public void setSender(Object sender) {
+        actualContext.atput0(CONTEXT.SENDER_OR_NIL, sender);
+    }
+
     public void push(Object value) {
-        int newSP = stackPointer() + 1;
-        atput0(newSP, value);
-        setStackPointer(newSP);
+        assert value != null;
+        int sp = stackPointer();
+        atput0(sp, value);
+        setStackPointer(sp + 1);
     }
 
     private int stackPointer() {
-        return (int) at0(CONTEXT.STACKPOINTER) - 1;
+        return CONTEXT.TEMP_FRAME_START + (int) at0(CONTEXT.STACKPOINTER) - 1;
     }
 
     private void setStackPointer(int newSP) {
-        atput0(CONTEXT.STACKPOINTER, newSP + 1);
+        int encodedSP = newSP + 1 - CONTEXT.TEMP_FRAME_START;
+        assert encodedSP >= 0;
+        atput0(CONTEXT.STACKPOINTER, encodedSP);
     }
 
     @Override
@@ -174,17 +180,13 @@ public class MethodContextObject extends BaseSqueakObject {
     }
 
     public Object top() {
-        return at0(stackPointer());
+        return at0(stackPointer() - 1);
     }
 
     public Object pop() {
-        int sp = stackPointer();
-        setStackPointer(sp - 1);
-        return at0(sp);
-    }
-
-    public Object peek(int offset) {
-        return at0(stackPointer() - offset);
+        int newSP = stackPointer() - 1;
+        setStackPointer(newSP);
+        return at0(newSP);
     }
 
     public Object[] popNReversed(int numPop) {
@@ -192,7 +194,7 @@ public class MethodContextObject extends BaseSqueakObject {
         assert sp - numPop >= -1;
         Object[] result = new Object[numPop];
         for (int i = 0; i < numPop; i++) {
-            result[numPop - 1 - i] = at0(sp - i);
+            result[numPop - 1 - i] = at0(sp - 1 - i);
         }
         setStackPointer(sp - numPop);
         return result;
@@ -202,7 +204,16 @@ public class MethodContextObject extends BaseSqueakObject {
         return at0(CONTEXT.RECEIVER);
     }
 
-    public Object getArgument(int argumentIndex) {
+    public Object atTemp(int argumentIndex) {
         return at0(CONTEXT.TEMP_FRAME_START + argumentIndex);
+    }
+
+    public void atTempPut(int argumentIndex, Object value) {
+        atput0(CONTEXT.TEMP_FRAME_START + argumentIndex, value);
+    }
+
+    public BlockClosureObject getClosure() {
+        Object closureOrNil = at0(CONTEXT.CLOSURE_OR_NIL);
+        return closureOrNil.equals(image.nil) ? null : (BlockClosureObject) closureOrNil;
     }
 }

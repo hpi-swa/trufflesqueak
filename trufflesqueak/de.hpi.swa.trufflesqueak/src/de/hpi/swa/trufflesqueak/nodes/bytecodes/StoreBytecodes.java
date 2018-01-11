@@ -9,8 +9,8 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.context.MethodLiteralNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtPutNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ReceiverNode;
+import de.hpi.swa.trufflesqueak.nodes.context.TemporaryWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.context.TemporaryReadNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PopStackNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.TopStackNode;
 
@@ -81,16 +81,13 @@ public final class StoreBytecodes {
     }
 
     private static abstract class AbstractStoreIntoTempNode extends AbstractBytecodeNode {
-        @Child FrameSlotWriteNode storeNode;
+        @Child TemporaryWriteNode storeNode;
         protected final int tempIndex;
 
         private AbstractStoreIntoTempNode(CompiledCodeObject code, int index, int numBytecodes, int tempIndex) {
             super(code, index, numBytecodes);
             this.tempIndex = tempIndex;
-            int stackIndex = code.convertTempIndexToStackIndex(tempIndex);
-            if (stackIndex >= 0) {
-                this.storeNode = FrameSlotWriteNode.create(code.getStackSlot(stackIndex));
-            }
+            this.storeNode = TemporaryWriteNode.create(code, tempIndex);
         }
 
         protected abstract String getTypeName();

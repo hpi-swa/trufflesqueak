@@ -17,13 +17,9 @@ public abstract class InvokeNode extends Node {
     public abstract Object executeInvoke(CompiledCodeObject method, Object[] arguments);
 
     @Specialization(guards = "code.getCallTarget() == callTarget", limit = "1")
-    protected Object doInvoke(CompiledCodeObject code, Object[] arguments,
+    protected Object doInvoke(@SuppressWarnings("unused") CompiledCodeObject code, Object[] arguments,
                     @SuppressWarnings("unused") @Cached("code.getCallTarget()") RootCallTarget callTarget,
                     @Cached("create(callTarget)") DirectCallNode callNode) {
-        Object[] frameArgs = new Object[FrameAccess.RCVR_AND_ARGS_START + arguments.length]; // arguments array already contains receiver
-        frameArgs[FrameAccess.METHOD] = code;
-        frameArgs[FrameAccess.CLOSURE_OR_NULL] = null;
-        System.arraycopy(arguments, 0, frameArgs, FrameAccess.RCVR_AND_ARGS_START, arguments.length);
         return callNode.call(arguments);
     }
 }

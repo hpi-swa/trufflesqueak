@@ -13,6 +13,7 @@ import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameUtil;
+import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
@@ -31,6 +32,54 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @Override
     public List<NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
         return BlockClosurePrimitivesFactory.getFactories();
+    }
+
+    /*
+     * This primitive is implemented to avoid running the fallback code which sets senders. This in turn
+     * flags contexts incorrectly as dirty.
+     */
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 196, numArguments = 2)
+    protected static abstract class PrimTerminateToNode extends AbstractPrimitiveNode {
+
+        public PrimTerminateToNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        /*
+         * Terminate all the Contexts between me and previousContext, if previousContext is on my Context
+         * stack. Make previousContext my sender.
+         */
+        @Specialization
+        protected Object doTerminate(MethodContextObject receiver, MethodContextObject previousContext) {
+            if (hasSender(receiver, previousContext)) {
+                MethodContextObject currentContext = receiver.getSender();
+                while (!currentContext.equals(previousContext)) {
+                    MethodContextObject sendingContext = currentContext.getSender();
+                    currentContext.terminate();
+                    currentContext = sendingContext;
+                }
+            }
+            receiver.setSender(previousContext);
+            return receiver;
+        }
+
+        /*
+         * Answer whether the receiver is strictly above context on the stack.
+         */
+        private static boolean hasSender(MethodContextObject context, MethodContextObject previousContext) {
+            if (context.equals(previousContext)) {
+                return false;
+            }
+            MethodContextObject sender = context.getSender();
+            while (sender != null) {
+                if (sender.equals(previousContext)) {
+                    return true;
+                }
+                sender = sender.getSender();
+            }
+            return false;
+        }
     }
 
     @GenerateNodeFactory
@@ -113,8 +162,8 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         @Specialization
-        protected Object value(BlockClosureObject block) {
-            return dispatch.executeBlock(block, block.getFrameArguments());
+        protected Object value(VirtualFrame frame, BlockClosureObject block) {
+            return dispatch.executeBlock(block, block.getFrameArguments(frame));
         }
     }
 
@@ -127,8 +176,8 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         @Specialization
-        protected Object value(BlockClosureObject block, Object arg) {
-            return dispatch.executeBlock(block, block.getFrameArguments(arg));
+        protected Object value(VirtualFrame frame, BlockClosureObject block, Object arg) {
+            return dispatch.executeBlock(block, block.getFrameArguments(frame, arg));
         }
     }
 
@@ -141,8 +190,8 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         @Specialization
-        protected Object value(BlockClosureObject block, Object arg1, Object arg2) {
-            return dispatch.executeBlock(block, block.getFrameArguments(arg1, arg2));
+        protected Object value(VirtualFrame frame, BlockClosureObject block, Object arg1, Object arg2) {
+            return dispatch.executeBlock(block, block.getFrameArguments(frame, arg1, arg2));
         }
     }
 
@@ -155,8 +204,8 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         @Specialization
-        protected Object value(BlockClosureObject block, Object arg1, Object arg2, Object arg3) {
-            return dispatch.executeBlock(block, block.getFrameArguments(arg1, arg2, arg3));
+        protected Object value(VirtualFrame frame, BlockClosureObject block, Object arg1, Object arg2, Object arg3) {
+            return dispatch.executeBlock(block, block.getFrameArguments(frame, arg1, arg2, arg3));
         }
     }
 
@@ -169,8 +218,8 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         @Specialization
-        protected Object value(BlockClosureObject block, Object arg1, Object arg2, Object arg3, Object arg4) {
-            return dispatch.executeBlock(block, block.getFrameArguments(arg1, arg2, arg3, arg4));
+        protected Object value(VirtualFrame frame, BlockClosureObject block, Object arg1, Object arg2, Object arg3, Object arg4) {
+            return dispatch.executeBlock(block, block.getFrameArguments(frame, arg1, arg2, arg3, arg4));
         }
     }
 
@@ -183,8 +232,8 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         @Specialization
-        protected Object value(BlockClosureObject block, ListObject argArray) {
-            return dispatch.executeBlock(block, block.getFrameArguments(argArray.getPointers()));
+        protected Object value(VirtualFrame frame, BlockClosureObject block, ListObject argArray) {
+            return dispatch.executeBlock(block, block.getFrameArguments(frame, argArray.getPointers()));
         }
     }
 

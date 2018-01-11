@@ -1,7 +1,5 @@
 package de.hpi.swa.trufflesqueak.model;
 
-import java.util.Arrays;
-
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 
@@ -14,7 +12,6 @@ public class WriteableContextObject extends AbstractPointersObject implements Ac
     public WriteableContextObject(SqueakImageContext img, int size) {
         this(img);
         pointers = new Object[size];
-        Arrays.fill(pointers, img.nil);
     }
 
     public WriteableContextObject(SqueakImageContext img, ReadOnlyContextObject actualContext) {

@@ -37,6 +37,10 @@ public final class PushBytecodes {
         public abstract void executeVoid(VirtualFrame frame);
     }
 
+    /*
+     * This bytecode is used to access thisContext. Therefore, we need to invalidate the corresponding
+     * assumption on the CompiledCodeObject. Then, the frame can no longer be virtualized.
+     */
     public static class PushActiveContextNode extends AbstractPushNode {
 
         public PushActiveContextNode(CompiledCodeObject code, int idx) {
@@ -45,7 +49,9 @@ public final class PushBytecodes {
 
         @Override
         public void executeVoid(VirtualFrame frame) {
-            pushNode.executeWrite(frame, MethodContextObject.createReadOnlyContextObject(code.image, frame));
+            MethodContextObject activeContext = MethodContextObject.createReadOnlyContextObject(code.image, frame);
+            activeContext.getCodeObject().invalidateNoContextNeededAssumption();
+            pushNode.executeWrite(frame, activeContext);
         }
 
         @Override

@@ -30,7 +30,7 @@ public class MethodContextNode extends Node {
     @Children private final AbstractBytecodeNode[] bytecodeNodes;
     @Child private PushStackNode pushNode;
     @Child private SendSelectorNode aboutToReturnNode;
-    @Child private UnwindNode unwindNode;
+    @Child private TerminateContextNode terminateNode;
     @Child private GetMethodContextNode getContextNode;
 
     public static MethodContextNode create(CompiledCodeObject code) {
@@ -41,7 +41,7 @@ public class MethodContextNode extends Node {
         this.code = code;
         bytecodeNodes = new SqueakBytecodeDecoder(code).decode();
         pushNode = PushStackNode.create(code);
-        unwindNode = UnwindNode.create(code);
+        terminateNode = TerminateContextNode.create(code);
         getContextNode = GetMethodContextNode.create(code);
         BaseSqueakObject aboutToReturnSelector = (BaseSqueakObject) code.image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SelectorAboutToReturn);
         aboutToReturnNode = new SendSelectorNode(code, -1, -1, aboutToReturnSelector, 2);
@@ -57,10 +57,10 @@ public class MethodContextNode extends Node {
             context = getContextObject(frame);
             if (context != null && context.isDirty()) {
                 MethodContextObject sender = context.getSender();
-                unwindNode.executeUnwind(frame);
+                terminateNode.executeTerminate(frame);
                 throw new NonVirtualReturn(lr.getReturnValue(), sender, sender);
             } else {
-                unwindNode.executeUnwind(frame);
+                terminateNode.executeTerminate(frame);
                 return lr.getReturnValue();
             }
         } catch (NonLocalReturn nlr) {
@@ -73,10 +73,10 @@ public class MethodContextNode extends Node {
             }
             if (context.isDirty()) {
                 MethodContextObject sender = context.getSender();
-                unwindNode.executeUnwind(frame);
+                terminateNode.executeTerminate(frame);
                 throw new NonVirtualReturn(nlr.getReturnValue(), nlr.getTargetContext(), sender);
             } else {
-                unwindNode.executeUnwind(frame);
+                terminateNode.executeTerminate(frame);
                 if (nlr.getTargetContext().hasSameMethodObject(context)) {
                     return nlr.getReturnValue();
                 } else {

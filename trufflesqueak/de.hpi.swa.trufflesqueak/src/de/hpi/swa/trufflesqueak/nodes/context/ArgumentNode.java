@@ -4,6 +4,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.FrameAccess;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithCode;
 
@@ -26,6 +27,6 @@ public abstract class ArgumentNode extends SqueakNodeWithCode {
 
     @Specialization(guards = {"!isVirtualized(frame)"})
     protected Object doUnvirtualized(VirtualFrame frame) {
-        return getContext(frame).getArgument(argumentIndex);
+        return getContext(frame).at0(CONTEXT.RECEIVER + argumentIndex);
     }
 }

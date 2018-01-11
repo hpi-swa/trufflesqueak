@@ -14,6 +14,7 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualContextModification;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
+import de.hpi.swa.trufflesqueak.nodes.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 /**
@@ -25,13 +26,13 @@ import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 public class ReadOnlyContextObject extends BaseSqueakObject implements ActualContextObject {
     @CompilationFinal private final MaterializedFrame frame;
     @CompilationFinal private final FrameSlot methodSlot;
-    @CompilationFinal private final FrameSlot closureSlot;
     @CompilationFinal private final FrameSlot stackPointerSlot;
     @CompilationFinal private final FrameSlot markerSlot;
     @CompilationFinal private final FrameDescriptor frameDescriptor;
     @CompilationFinal private Object receiver;
     @CompilationFinal private MethodContextObject sender;
     @CompilationFinal private int pc = -1;
+    @CompilationFinal private BlockClosureObject closure;
 
     public ReadOnlyContextObject(SqueakImageContext img, MaterializedFrame materializedFrame) {
         super(img);
@@ -39,7 +40,7 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
         frameDescriptor = frame.getFrameDescriptor();
         methodSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.METHOD);
         markerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.MARKER);
-        closureSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.CLOSURE);
+        closure = FrameAccess.getClosure(frame);
         stackPointerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.STACK_POINTER);
         receiver = frame.getArguments()[0];
     }
@@ -47,7 +48,7 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
     @Override
     public Object at0(int i) {
         switch (i) {
-            case CONTEXT.SENDER:
+            case CONTEXT.SENDER_OR_NIL:
                 return getSender();
             case CONTEXT.INSTRUCTION_POINTER:
                 return getPC();
@@ -99,7 +100,7 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
     }
 
     private Object getClosure() {
-        return FrameUtil.getObjectSafe(frame, closureSlot);
+        return FrameAccess.getClosure(frame);
     }
 
     private int getPC() {
@@ -150,7 +151,7 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
             case CONTEXT.RECEIVER:
                 receiver = obj;
                 break;
-            case CONTEXT.SENDER:
+            case CONTEXT.SENDER_OR_NIL:
                 sender = (MethodContextObject) obj;
                 break;
             default:

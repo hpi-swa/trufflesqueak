@@ -28,7 +28,7 @@ public final class ObjectLayouts {
     }
 
     public static final class CONTEXT {
-        public static final int SENDER = 0;
+        public static final int SENDER_OR_NIL = 0;
         public static final int INSTRUCTION_POINTER = 1;
         public static final int STACKPOINTER = 2;
         public static final int METHOD = 3;

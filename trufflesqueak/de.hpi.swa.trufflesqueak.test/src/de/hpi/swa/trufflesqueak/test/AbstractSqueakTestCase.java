@@ -122,7 +122,7 @@ public abstract class AbstractSqueakTestCase extends TestCase {
         testContext.atput0(CONTEXT.METHOD, code);
         testContext.atput0(CONTEXT.INSTRUCTION_POINTER, testContext.getCodeObject().getBytecodeOffset() + 1);
         testContext.atput0(CONTEXT.RECEIVER, receiver);
-        testContext.atput0(CONTEXT.SENDER, code.image.nil);
+        testContext.atput0(CONTEXT.SENDER_OR_NIL, code.image.nil);
         for (int i = 0; i < arguments.length; i++) {
             testContext.atput0(CONTEXT.TEMP_FRAME_START + i, arguments[i]);
         }

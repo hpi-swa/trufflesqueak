@@ -24,34 +24,36 @@ import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public abstract class CompiledCodeObject extends SqueakObject {
     public static enum SLOT_IDENTIFIER {
-        CLOSURE,
         THIS_CONTEXT,
         STACK_POINTER,
         MARKER,
         METHOD
     }
 
-    private Source source;
     // frame info
     @CompilationFinal private FrameDescriptor frameDescriptor;
     @CompilationFinal public FrameSlot thisContextSlot;
     @CompilationFinal(dimensions = 1) public FrameSlot[] stackSlots;
     @CompilationFinal public FrameSlot markerSlot;
     @CompilationFinal public FrameSlot stackPointerSlot;
-    private RootCallTarget callTarget;
-    private final CyclicAssumption callTargetStable = new CyclicAssumption("Compiled method assumption");
     // header info and data
     @CompilationFinal(dimensions = 1) protected Object[] literals;
     @CompilationFinal(dimensions = 1) protected byte[] bytes;
     @CompilationFinal private int numArgs;
-    protected int numLiterals;
-    @SuppressWarnings("unused") private boolean isOptimized;
+    @CompilationFinal protected int numLiterals;
+    @CompilationFinal private boolean isOptimized;
     @CompilationFinal private boolean hasPrimitive;
     @CompilationFinal private boolean needsLargeFrame;
-    private @CompilationFinal int numTemps;
-    @SuppressWarnings("unused") private int accessModifier;
-    @SuppressWarnings("unused") private boolean altInstructionSet;
+    @CompilationFinal private int numTemps;
+    @CompilationFinal private int accessModifier;
+    @CompilationFinal private boolean altInstructionSet;
+
     private Assumption noContextNeeded = Truffle.getRuntime().createAssumption("Does not need a materialized context");
+
+    @CompilationFinal private Source source;
+
+    private RootCallTarget callTarget;
+    private final CyclicAssumption callTargetStable = new CyclicAssumption("Compiled method assumption");
 
     abstract public NativeObject getCompiledInSelector();
 
@@ -59,6 +61,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     public CompiledCodeObject(SqueakImageContext img, ClassObject klass) {
         super(img, klass);
+        noContextNeeded.invalidate(); // invalidate immediately to force contexts
     }
 
     public CompiledCodeObject(SqueakImageContext img) {
@@ -90,7 +93,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     @TruffleBoundary
     protected void prepareFrameDescriptor() {
-        frameDescriptor = new FrameDescriptor(image.nil);
+        frameDescriptor = new FrameDescriptor();
         int numStackSlots = frameSize() + getSqClass().getBasicInstanceSize();
         stackSlots = new FrameSlot[numStackSlots];
         for (int i = 0; i < stackSlots.length; i++) {
@@ -288,6 +291,10 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     public Assumption getNoContextNeededAssumption() {
         return noContextNeeded;
+    }
+
+    public void invalidateNoContextNeededAssumption() {
+        noContextNeeded.invalidate();
     }
 
     public boolean isUnwindMarked() {

@@ -32,10 +32,12 @@ public abstract class EnterMethodNode extends RootNode {
         CompilerDirectives.ensureVirtualized(frame);
         frame.setObject(code.markerSlot, new FrameMarker());
         frame.setObject(code.thisContextSlot, null);
-        // sp points to the last temp slot
-        int sp = initialSP();
-        assert sp >= -1;
-        frame.setInt(code.stackPointerSlot, sp);
+        int numTemps = code.getNumTemps() - code.getNumArgsAndCopiedValues();
+        assert numTemps >= 0;
+        for (int i = 0; i < numTemps; i++) {
+            frame.setObject(code.stackSlots[i], code.image.nil);
+        }
+        frame.setInt(code.stackPointerSlot, numTemps); // sp points to the last temp slot
         return contextNode.execute(frame);
     }
 
@@ -43,22 +45,18 @@ public abstract class EnterMethodNode extends RootNode {
     protected Object enter(VirtualFrame frame,
                     @Cached("create(code)") GetMethodContextNode getContextNode,
                     @Cached("create(code)") MethodContextNode contextNode) {
-        MethodContextObject context = getContextNode.executeGetMethodContext(frame, 0);
-        frame.setInt(code.stackPointerSlot, 0);
+        MethodContextObject context = getContextNode.executeGetMethodContext(frame, code.getBytecodeOffset() + 1);
         frame.setObject(code.markerSlot, context); // TODO: unify markerSlot and thisContextSlot
         Object[] arguments = frame.getArguments();
-        for (int i = 1; i < arguments.length; i++) {
+        assert arguments.length - (FrameAccess.RCVR_AND_ARGS_START + 1) == code.getNumArgs();
+        for (int i = FrameAccess.RCVR_AND_ARGS_START + 1; i < arguments.length; i++) {
             context.push(arguments[i]);
         }
-        for (int i = 0; i < code.getNumTemps(); i++) {
+        int numTemps = code.getNumTemps() - code.getNumArgsAndCopiedValues();
+        for (int i = 0; i < numTemps; i++) {
             context.push(code.image.nil);
         }
         return contextNode.execute(frame);
-    }
-
-    private int initialSP() {
-        // no need to read context.at0(CONTEXT.STACKPOINTER)
-        return code.getNumTemps() - 1;
     }
 
     @Override

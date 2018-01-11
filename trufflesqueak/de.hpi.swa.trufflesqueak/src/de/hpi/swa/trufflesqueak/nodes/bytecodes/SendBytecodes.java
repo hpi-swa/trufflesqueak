@@ -55,13 +55,11 @@ public final class SendBytecodes {
                 throw new RuntimeException("receiver has no class");
             }
             Object lookupResult = lookupNode.executeLookup(rcvrClass, selector);
-            Object[] arguments;
-            if (lookupResult instanceof CompiledCodeObject) {
-                arguments = FrameAccess.newWith((CompiledCodeObject) lookupResult, null, rcvrAndArgs);
-            } else {
+            if (!(lookupResult instanceof CompiledCodeObject)) {
                 throw new RuntimeException("lookupResult not yet support. Object as method?");
             }
-            return dispatchNode.executeDispatch(lookupResult, arguments);
+            Object[] frameArguments = FrameAccess.newWith(code, getContext(frame), null, rcvrAndArgs);
+            return dispatchNode.executeDispatch(lookupResult, frameArguments);
         }
 
         @Override

@@ -17,7 +17,7 @@ public abstract class ReceiverAndArgumentsNode extends SqueakNodeWithCode {
     }
 
     @Specialization(guards = {"isVirtualized(frame)"})
-    protected Object[] doReceiverVirtualized(VirtualFrame frame) {
+    protected Object[] doRcvrAndArgsVirtualized(VirtualFrame frame) {
         Object[] frameArguments = frame.getArguments();
         Object[] rcvrAndArgs = new Object[frameArguments.length - FrameAccess.RCVR_AND_ARGS_START];
         for (int i = 0; i < rcvrAndArgs.length; i++) {
@@ -27,7 +27,7 @@ public abstract class ReceiverAndArgumentsNode extends SqueakNodeWithCode {
     }
 
     @Specialization(guards = {"!isVirtualized(frame)"})
-    protected Object[] doReceiver(VirtualFrame frame) {
+    protected Object[] doRcvrAndArgs(VirtualFrame frame) {
         return getContext(frame).getReceiverAndArguments();
     }
 }
