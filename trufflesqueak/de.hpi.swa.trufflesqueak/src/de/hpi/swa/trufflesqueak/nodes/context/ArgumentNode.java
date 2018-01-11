@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes.context;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -9,7 +10,7 @@ import de.hpi.swa.trufflesqueak.nodes.FrameAccess;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithCode;
 
 public abstract class ArgumentNode extends SqueakNodeWithCode {
-    private final int argumentIndex;
+    @CompilationFinal private final int argumentIndex;
 
     public static ArgumentNode create(CompiledCodeObject code, int argumentIndex) {
         return ArgumentNodeGen.create(code, argumentIndex);

@@ -13,6 +13,8 @@ import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.MethodContextObject;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.model.SpecialSelectorObject;
 import de.hpi.swa.trufflesqueak.nodes.DispatchNode;
 import de.hpi.swa.trufflesqueak.nodes.FrameAccess;
@@ -89,8 +91,7 @@ public final class SendBytecodes {
     public static class EagerSendSpecialSelectorNode extends AbstractBytecodeNode {
         public static AbstractBytecodeNode create(CompiledCodeObject code, int index, int selectorIndex) {
             SpecialSelectorObject specialSelector = code.image.specialSelectorsArray[selectorIndex];
-            // TODO: temporary eager sends disabled
-            if (false && code instanceof CompiledMethodObject && specialSelector.getPrimitiveIndex() > 0) {
+            if (code instanceof CompiledMethodObject && specialSelector.getPrimitiveIndex() > 0) {
                 AbstractPrimitiveNode primitiveNode;
                 primitiveNode = PrimitiveNodeFactory.forSpecialSelector((CompiledMethodObject) code,
                                 specialSelector);
@@ -121,7 +122,13 @@ public final class SendBytecodes {
             try {
                 Object result = primitiveNode.executeGeneric(frame);
                 // Success! Manipulate the sp to quick pop receiver and arguments and push result.
-                frame.setInt(code.stackPointerSlot, frame.getInt(code.stackPointerSlot) - 1 - specialSelector.getNumArguments());
+                MethodContextObject context = getContext(frame);
+                int spOffset = 1 + specialSelector.getNumArguments();
+                if (context == null) {
+                    frame.setInt(code.stackPointerSlot, frame.getInt(code.stackPointerSlot) - spOffset);
+                } else {
+                    context.atput0(CONTEXT.STACKPOINTER, (int) context.at0(CONTEXT.STACKPOINTER) - spOffset);
+                }
                 if (result != null) { // primitive produced no result
                     pushStackNode.executeWrite(frame, result);
                 }

@@ -13,6 +13,7 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ArgumentNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ReceiverAndArgumentsNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameArgumentProfileNode;
+import de.hpi.swa.trufflesqueak.nodes.context.stack.PeekStackNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.FilePlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
 import de.hpi.swa.trufflesqueak.nodes.plugins.TruffleSqueakPlugin;
@@ -62,7 +63,7 @@ public abstract class PrimitiveNodeFactory {
         assert numArguments == 1 + specialSelector.getNumArguments();
         SqueakNode[] arguments = new SqueakNode[numArguments];
         for (int i = 0; i < numArguments; i++) {
-            arguments[i] = ArgumentNode.create(method, numArguments - 1 - i);
+            arguments[i] = PeekStackNode.create(method, numArguments - 1 - i);
         }
         return nodeFactory.createNode(method, arguments);
     }

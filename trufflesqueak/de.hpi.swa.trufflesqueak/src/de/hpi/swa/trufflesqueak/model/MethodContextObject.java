@@ -178,7 +178,11 @@ public class MethodContextObject extends BaseSqueakObject {
     }
 
     public Object top() {
-        return at0(stackPointer() - 1);
+        return peek(0);
+    }
+
+    public Object peek(int offset) {
+        return at0(stackPointer() - 1 - offset);
     }
 
     public Object pop() {
