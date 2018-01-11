@@ -31,7 +31,6 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
     @CompilationFinal private final FrameDescriptor frameDescriptor;
     @CompilationFinal private Object receiver;
     @CompilationFinal private MethodContextObject sender;
-    @CompilationFinal private int pc = -1;
     @CompilationFinal private BlockClosureObject closure;
 
     public ReadOnlyContextObject(SqueakImageContext img, MaterializedFrame materializedFrame) {
@@ -42,7 +41,8 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
         method = FrameAccess.getMethod(frame);
         closure = FrameAccess.getClosure(frame);
         stackPointerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.STACK_POINTER);
-        receiver = frame.getArguments()[0];
+        receiver = FrameAccess.getReceiver(frame);
+        sender = FrameAccess.getSender(frame);
     }
 
     @Override
@@ -104,10 +104,7 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
     }
 
     private int getPC() {
-        if (pc == -1) { // TODO: is this still needed?
-            pc = method.getBytecodeOffset() + 1;
-        }
-        return pc;
+        return method.getBytecodeOffset() + 1;
     }
 
     private int getStackPointer() {
