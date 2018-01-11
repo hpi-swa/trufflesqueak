@@ -93,13 +93,23 @@ public class MethodContextNode extends Node {
         return (MethodContextObject) FrameUtil.getObjectSafe(frame, code.thisContextSlot);
     }
 
+    protected void executeBytecode(VirtualFrame frame) {
+        CompilerAsserts.compilationConstant(bytecodeNodes.length);
+        int initialPC = initialPC(frame);
+        if (initialPC == 0) {
+            startBytecode(frame);
+        } else {
+            // avoid optimizing the cases in which a context is resumed
+            resumeBytecode(frame, initialPC);
+        }
+    }
+
     /*
      * Inspired by Sulong's LLVMDispatchBasicBlockNode (https://goo.gl/4LMzfX).
      */
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.MERGE_EXPLODE)
-    protected void executeBytecode(VirtualFrame frame) {
-        CompilerAsserts.compilationConstant(bytecodeNodes.length);
-        int pc = initialPC(frame);
+    protected void startBytecode(VirtualFrame frame) {
+        int pc = 0;
         int backJumpCounter = 0;
         try {
             while (pc >= 0) {
@@ -152,6 +162,22 @@ public class MethodContextNode extends Node {
         } finally {
             assert backJumpCounter >= 0;
             LoopNode.reportLoopCount(this, backJumpCounter);
+        }
+    }
+
+    /*
+     * Non-optimized version of startBytecode that is used to resume contexts.
+     */
+    protected void resumeBytecode(VirtualFrame frame, int initialPC) {
+        int pc = initialPC;
+        try {
+            while (pc >= 0) {
+                AbstractBytecodeNode node = bytecodeNodes[pc];
+                pc = node.executeInt(frame);
+            }
+        } catch (NonLocalReturn nlr) {
+            getContextNode.doGet(frame, pc); // ensure context is there
+            throw nlr;
         }
     }
 
