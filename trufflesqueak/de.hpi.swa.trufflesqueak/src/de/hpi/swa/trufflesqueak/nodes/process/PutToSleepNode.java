@@ -1,7 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes.process;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
@@ -10,12 +9,12 @@ import de.hpi.swa.trufflesqueak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 
-public abstract class PutToSleepNode extends AbstractProcessNode {
+public class PutToSleepNode extends AbstractProcessNode {
     @Child private LinkProcessToListNode linkProcessToList;
     @Child private GetSchedulerNode getSchedulerNode;
 
     public static PutToSleepNode create(SqueakImageContext image) {
-        return PutToSleepNodeGen.create(image);
+        return new PutToSleepNode(image);
     }
 
     protected PutToSleepNode(SqueakImageContext image) {
@@ -24,10 +23,7 @@ public abstract class PutToSleepNode extends AbstractProcessNode {
         getSchedulerNode = GetSchedulerNode.create(image);
     }
 
-    public abstract void executePutToSleep(BaseSqueakObject process);
-
-    @Specialization
-    protected void putToSleep(BaseSqueakObject process) {
+    protected void executePutToSleep(BaseSqueakObject process) {
         CompilerDirectives.transferToInterpreter(); // TODO: the below should be done in nodes
         // Save the given process on the scheduler process list for its priority.
         int priority = (int) process.at0(PROCESS.PRIORITY);

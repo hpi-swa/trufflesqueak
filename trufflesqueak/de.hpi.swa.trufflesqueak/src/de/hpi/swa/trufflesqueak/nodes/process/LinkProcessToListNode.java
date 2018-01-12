@@ -1,7 +1,5 @@
 package de.hpi.swa.trufflesqueak.nodes.process;
 
-import com.oracle.truffle.api.dsl.Specialization;
-
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.LINK;
@@ -9,11 +7,11 @@ import de.hpi.swa.trufflesqueak.model.ObjectLayouts.LINKED_LIST;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 
-public abstract class LinkProcessToListNode extends AbstractProcessNode {
+public class LinkProcessToListNode extends AbstractProcessNode {
     @Child private IsEmptyListNode isEmptyListNode;
 
     public static LinkProcessToListNode create(SqueakImageContext image) {
-        return LinkProcessToListNodeGen.create(image);
+        return new LinkProcessToListNode(image);
     }
 
     protected LinkProcessToListNode(SqueakImageContext image) {
@@ -21,10 +19,7 @@ public abstract class LinkProcessToListNode extends AbstractProcessNode {
         isEmptyListNode = IsEmptyListNode.create(image);
     }
 
-    public abstract void executeLink(BaseSqueakObject process, BaseSqueakObject list);
-
-    @Specialization
-    protected void linkProcessToList(BaseSqueakObject process, PointersObject list) {
+    public void executeLink(BaseSqueakObject process, PointersObject list) {
         // Add the given process to the given linked list and set the backpointer
         // of process to its new list.
         if (isEmptyListNode.executeIsEmpty(list)) {

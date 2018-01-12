@@ -1,19 +1,18 @@
 package de.hpi.swa.trufflesqueak.nodes.process;
 
-import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.PROCESS;
 
-public abstract class ResumeProcessNode extends AbstractProcessNode {
+public class ResumeProcessNode extends AbstractProcessNode {
     @Child private GetActiveProcessNode getActiveProcessNode;
     @Child private PutToSleepNode putToSleepNode;
     @Child private TransferToNode transferToNode;
 
     public static ResumeProcessNode create(SqueakImageContext image) {
-        return ResumeProcessNodeGen.create(image);
+        return new ResumeProcessNode(image);
     }
 
     protected ResumeProcessNode(SqueakImageContext image) {
@@ -23,10 +22,7 @@ public abstract class ResumeProcessNode extends AbstractProcessNode {
         transferToNode = TransferToNode.create(image);
     }
 
-    public abstract void executeResume(VirtualFrame frame, BaseSqueakObject newProcess);
-
-    @Specialization
-    protected void resumeProcess(VirtualFrame frame, BaseSqueakObject newProcess) {
+    public void executeResume(VirtualFrame frame, BaseSqueakObject newProcess) {
         BaseSqueakObject activeProcess = getActiveProcessNode.executeGet();
         int activePriority = (int) activeProcess.at0(PROCESS.PRIORITY);
         int newPriority = (int) newProcess.at0(PROCESS.PRIORITY);

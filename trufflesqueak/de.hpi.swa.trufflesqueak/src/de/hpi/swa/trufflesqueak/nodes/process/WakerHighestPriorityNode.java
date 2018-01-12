@@ -1,20 +1,18 @@
 package de.hpi.swa.trufflesqueak.nodes.process;
 
-import com.oracle.truffle.api.dsl.Specialization;
-
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 
-public abstract class WakerHighestPriorityNode extends AbstractProcessNode {
+public class WakerHighestPriorityNode extends AbstractProcessNode {
     @Child private RemoveFirstLinkOfListNode removeFirstLinkOfListNode;
     @Child private GetSchedulerNode getSchedulerNode;
     @Child private IsEmptyListNode isEmptyListNode;
 
     public static WakerHighestPriorityNode create(SqueakImageContext image) {
-        return WakerHighestPriorityNodeGen.create(image);
+        return new WakerHighestPriorityNode(image);
     }
 
     protected WakerHighestPriorityNode(SqueakImageContext image) {
@@ -24,10 +22,7 @@ public abstract class WakerHighestPriorityNode extends AbstractProcessNode {
         isEmptyListNode = IsEmptyListNode.create(image);
     }
 
-    public abstract BaseSqueakObject executeWake();
-
-    @Specialization
-    public BaseSqueakObject wakeHighestPriority() {
+    public BaseSqueakObject executeWake() {
         // Return the highest priority process that is ready to run.
         // Note: It is a fatal VM error if there is no runnable process.
         PointersObject scheduler = getSchedulerNode.executeGet();
