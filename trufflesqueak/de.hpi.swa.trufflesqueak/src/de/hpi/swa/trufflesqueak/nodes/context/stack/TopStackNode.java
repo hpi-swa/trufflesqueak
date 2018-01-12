@@ -20,7 +20,7 @@ public abstract class TopStackNode extends AbstractStackNode {
 
     @Specialization(guards = {"isVirtualized(frame)"})
     protected Object doTopVirtualized(VirtualFrame frame) {
-        return readNode.execute(frame, frameStackPointer(frame));
+        return readNode.execute(frame, frameStackPointer(frame) - 1);
     }
 
     @Specialization(guards = {"!isVirtualized(frame)"})
