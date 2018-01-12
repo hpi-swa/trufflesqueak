@@ -95,11 +95,12 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         @Specialization
         @TruffleBoundary
         Object findNext(MethodContextObject receiver) {
-            Object handlerContext = Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Object>() {
+            // TODO: this returns a CompiledCoeObject, not a context
+            CompiledCodeObject handlerContext = Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<CompiledCodeObject>() {
                 final Object marker = receiver.getFrameMarker();
 
                 @Override
-                public Object visitFrame(FrameInstance frameInstance) {
+                public CompiledCodeObject visitFrame(FrameInstance frameInstance) {
                     Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
                     FrameDescriptor frameDescriptor = current.getFrameDescriptor();
                     CompiledCodeObject frameMethod = FrameAccess.getMethod(current);

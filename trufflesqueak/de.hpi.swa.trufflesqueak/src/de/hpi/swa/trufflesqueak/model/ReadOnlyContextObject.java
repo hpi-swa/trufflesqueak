@@ -111,20 +111,19 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
         return FrameUtil.getIntSafe(frame, stackPointerSlot);
     }
 
-    private Object getSender() {
+    private MethodContextObject getSender() {
         if (sender == null) {
-            Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Object>() {
+            sender = Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<MethodContextObject>() {
                 boolean foundMyself = false;
                 Object marker = FrameUtil.getObjectSafe(frame, markerSlot);
 
                 @Override
-                public Object visitFrame(FrameInstance frameInstance) {
+                public MethodContextObject visitFrame(FrameInstance frameInstance) {
                     Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
                     FrameDescriptor currentFD = current.getFrameDescriptor();
                     FrameSlot currentMarkerSlot = currentFD.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.MARKER);
                     if (foundMyself) {
-                        sender = MethodContextObject.createReadOnlyContextObject(image, current);
-                        return sender;
+                        return MethodContextObject.createReadOnlyContextObject(image, current);
                     } else if (marker == FrameUtil.getObjectSafe(current, currentMarkerSlot)) {
                         foundMyself = true;
                     }
@@ -132,7 +131,7 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
                 }
             });
             if (sender == null) {
-                throw new RuntimeException("Unable to find sender"); // this might need to return nil to indicate that no sender was found
+                throw new RuntimeException("Unable to find sender");
             }
         }
         return sender;

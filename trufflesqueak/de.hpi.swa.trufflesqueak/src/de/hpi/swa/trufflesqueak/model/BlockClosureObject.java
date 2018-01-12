@@ -64,16 +64,15 @@ public class BlockClosureObject extends BaseSqueakObject {
     @TruffleBoundary
     private MethodContextObject getOrPrepareContext() {
         if (outerContext == null) {
-            Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Object>() {
+            outerContext = Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<MethodContextObject>() {
                 @Override
-                public Object visitFrame(FrameInstance frameInstance) {
+                public MethodContextObject visitFrame(FrameInstance frameInstance) {
                     Frame frame = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
                     FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
                     FrameSlot markerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.MARKER);
                     Object marker = FrameUtil.getObjectSafe(frame, markerSlot);
                     if (marker == frameMarker) {
-                        outerContext = MethodContextObject.createReadOnlyContextObject(image, frame);
-                        return outerContext;
+                        return MethodContextObject.createReadOnlyContextObject(image, frame);
                     }
                     return null;
                 }
@@ -87,14 +86,14 @@ public class BlockClosureObject extends BaseSqueakObject {
 
     private int getPC() {
         if (pc == -1) {
-            pc = getOrPrepareContext().getCodeObject().getBytecodeOffset() + 1;
+            pc = block.getBytecodeOffset() + 1;
         }
         return pc;
     }
 
     private int getNumArgs() {
         if (numArgs == -1) {
-            numArgs = getOrPrepareContext().getCodeObject().getNumArgs();
+            numArgs = block.getNumArgs();
         }
         return numArgs;
     }
