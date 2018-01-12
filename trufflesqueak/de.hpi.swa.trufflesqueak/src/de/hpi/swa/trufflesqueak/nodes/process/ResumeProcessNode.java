@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes.process;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
@@ -23,6 +24,7 @@ public class ResumeProcessNode extends AbstractProcessNode {
     }
 
     public void executeResume(VirtualFrame frame, BaseSqueakObject newProcess) {
+        CompilerDirectives.transferToInterpreter();
         BaseSqueakObject activeProcess = getActiveProcessNode.executeGet();
         int activePriority = (int) activeProcess.at0(PROCESS.PRIORITY);
         int newPriority = (int) newProcess.at0(PROCESS.PRIORITY);
