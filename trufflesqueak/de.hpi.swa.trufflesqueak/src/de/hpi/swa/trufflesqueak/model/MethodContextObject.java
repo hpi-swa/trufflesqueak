@@ -118,10 +118,10 @@ public class MethodContextObject extends BaseSqueakObject {
         if (method instanceof BlockClosureObject) {
             arguments[0] = ((BlockClosureObject) method).getReceiver();
         } else {
-            arguments[0] = actualContext.at0(CONTEXT.TEMP_FRAME_START);
+            arguments[0] = actualContext.at0(CONTEXT.RECEIVER);
         }
         for (int i = 0; i < numArgs; i++) {
-            arguments[1 + i] = actualContext.at0(CONTEXT.TEMP_FRAME_START + 1 + i);
+            arguments[1 + i] = actualContext.at0(CONTEXT.TEMP_FRAME_START + i);
         }
         return arguments;
     }
