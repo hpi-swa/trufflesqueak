@@ -64,6 +64,11 @@ public abstract class EnterMethodNode extends RootNode {
 
     @Override
     public String getName() {
+        return toString();
+    }
+
+    @Override
+    public String toString() {
         return code.toString();
     }
 }
