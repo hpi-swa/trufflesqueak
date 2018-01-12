@@ -38,7 +38,7 @@ import de.hpi.swa.trufflesqueak.nodes.process.ResumeProcessNode;
 import de.hpi.swa.trufflesqueak.util.Display.AbstractDisplay;
 import de.hpi.swa.trufflesqueak.util.Display.JavaDisplay;
 import de.hpi.swa.trufflesqueak.util.Display.NullDisplay;
-import de.hpi.swa.trufflesqueak.util.InterruptHandler;
+import de.hpi.swa.trufflesqueak.util.InterruptHandlerNode;
 import de.hpi.swa.trufflesqueak.util.OSDetector;
 import de.hpi.swa.trufflesqueak.util.SqueakImageFlags;
 import de.hpi.swa.trufflesqueak.util.SqueakImageReader;
@@ -119,7 +119,7 @@ public class SqueakImageContext {
     @CompilationFinal public final ObjectGraph objects = new ObjectGraph(this);
     @CompilationFinal public final OSDetector os = new OSDetector();
     @CompilationFinal public final SqueakImageFlags flags = new SqueakImageFlags();
-    @CompilationFinal public final InterruptHandler interrupt = new InterruptHandler(this);
+    @CompilationFinal public final InterruptHandlerNode interrupt = InterruptHandlerNode.create(this);
     @CompilationFinal public final long startUpMillis = System.currentTimeMillis();
 
     @Child private IsEmptyListNode isEmptyListNode;

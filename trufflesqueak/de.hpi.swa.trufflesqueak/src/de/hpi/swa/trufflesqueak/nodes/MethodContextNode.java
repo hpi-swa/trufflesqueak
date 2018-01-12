@@ -116,7 +116,7 @@ public class MethodContextNode extends Node {
                             jumpNode.increaseBranchProbability(ConditionalJumpNode.TRUE_SUCCESSOR);
                             if (successor <= pc) {
                                 backJumpCounter++;
-                                code.image.interrupt.checkForInterrupts(frame);
+                                code.image.interrupt.executeCheck(frame);
                             }
                         }
                         pc = successor;
@@ -127,7 +127,7 @@ public class MethodContextNode extends Node {
                             jumpNode.increaseBranchProbability(ConditionalJumpNode.FALSE_SUCCESSOR);
                             if (successor <= pc) {
                                 backJumpCounter++;
-                                code.image.interrupt.checkForInterrupts(frame);
+                                code.image.interrupt.executeCheck(frame);
                             }
                         }
                         pc = successor;
@@ -138,7 +138,7 @@ public class MethodContextNode extends Node {
                     if (CompilerDirectives.inInterpreter()) {
                         if (successor <= pc) {
                             backJumpCounter++;
-                            code.image.interrupt.checkForInterrupts(frame);
+                            code.image.interrupt.executeCheck(frame);
                         }
                     }
                     pc = successor;

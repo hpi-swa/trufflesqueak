@@ -1,12 +1,13 @@
 package de.hpi.swa.trufflesqueak.util;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 
-public class InterruptHandler {
+public class InterruptHandlerNode extends Node {
     private final SqueakImageContext image;
     private int interruptCheckCounter = 0;
     private int interruptCheckCounterFeedbackReset = 1000;
@@ -17,7 +18,11 @@ public class InterruptHandler {
     private boolean interruptPending = false;
     private int pendingFinalizationSignals = 0;
 
-    public InterruptHandler(SqueakImageContext image) {
+    public static InterruptHandlerNode create(SqueakImageContext image) {
+        return new InterruptHandlerNode(image);
+    }
+
+    protected InterruptHandlerNode(SqueakImageContext image) {
         this.image = image;
     }
 
@@ -30,7 +35,7 @@ public class InterruptHandler {
     }
 
     // TODO: current checkForInterrupts version slows tinyBenchmarks down by approximately 2.4x
-    public void checkForInterrupts(VirtualFrame frame) { // Check for interrupts at sends and backward jumps
+    public void executeCheck(VirtualFrame frame) { // Check for interrupts at sends and backward jumps
         if (interruptCheckCounter-- > 0) {
             return; // only really check every 100 times or so
         }

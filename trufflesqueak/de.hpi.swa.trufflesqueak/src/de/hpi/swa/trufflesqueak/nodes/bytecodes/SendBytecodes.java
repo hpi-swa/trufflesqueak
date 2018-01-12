@@ -48,7 +48,7 @@ public final class SendBytecodes {
         }
 
         public Object executeSend(VirtualFrame frame) {
-            code.image.interrupt.checkForInterrupts(frame);
+            code.image.interrupt.executeCheck(frame);
             Object[] rcvrAndArgs = (Object[]) popNReversedNode.executeGeneric(frame);
             ClassObject rcvrClass;
             try {

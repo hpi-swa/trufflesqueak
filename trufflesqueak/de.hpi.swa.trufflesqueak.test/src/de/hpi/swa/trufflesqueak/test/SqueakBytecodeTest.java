@@ -620,7 +620,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
     // TODO: testSendSelector()
     // TODO: testSend()
 
-    private Object[] getTestObjects(int n) {
+    private static Object[] getTestObjects(int n) {
         List<Object> list = new ArrayList<>();
         while (list.size() < n) {
             list.add(getTestObject());
