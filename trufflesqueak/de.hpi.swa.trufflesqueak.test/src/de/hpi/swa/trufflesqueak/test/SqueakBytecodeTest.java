@@ -628,7 +628,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
         return list.toArray();
     }
 
-    private PointersObject getTestObject() {
+    private static PointersObject getTestObject() {
         return new PointersObject(image, image.arrayClass,
                         new Object[]{image.nil, image.sqFalse, image.sqTrue, image.characterClass, image.metaclass,
                                         image.schedulerAssociation, image.smallIntegerClass, image.smalltalk,

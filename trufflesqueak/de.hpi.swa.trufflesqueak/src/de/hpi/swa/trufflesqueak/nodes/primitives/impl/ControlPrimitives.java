@@ -37,7 +37,12 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitivesFactory.PrimQuickReturnReceiverVariableNodeFactory;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitivesFactory.PrimitiveFailedNodeFactory;
-import de.hpi.swa.trufflesqueak.util.ProcessManager;
+import de.hpi.swa.trufflesqueak.nodes.process.GetActiveProcessNode;
+import de.hpi.swa.trufflesqueak.nodes.process.LinkProcessToListNode;
+import de.hpi.swa.trufflesqueak.nodes.process.RemoveProcessFromListNode;
+import de.hpi.swa.trufflesqueak.nodes.process.ResumeProcessNode;
+import de.hpi.swa.trufflesqueak.nodes.process.TransferToNode;
+import de.hpi.swa.trufflesqueak.nodes.process.WakerHighestPriorityNode;
 
 public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -169,8 +174,17 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 86)
     protected static abstract class PrimWaitNode extends AbstractPrimitiveNode {
+        @Child private WakerHighestPriorityNode wakerHighestPriorityNode;
+        @Child private LinkProcessToListNode linkProcessToListNode;
+        @Child private GetActiveProcessNode getActiveProcessNode;
+        @Child private TransferToNode transferToNode;
+
         protected PrimWaitNode(CompiledMethodObject method) {
             super(method);
+            linkProcessToListNode = LinkProcessToListNode.create(method.image);
+            wakerHighestPriorityNode = WakerHighestPriorityNode.create(method.image);
+            transferToNode = TransferToNode.create(method.image);
+            getActiveProcessNode = GetActiveProcessNode.create(method.image);
         }
 
         protected boolean isSemaphore(PointersObject receiver) {
@@ -183,10 +197,9 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             if (excessSignals > 0)
                 receiver.atput0(SEMAPHORE.EXCESS_SIGNALS, excessSignals - 1);
             else {
-                ProcessManager manager = code.image.process;
-                PointersObject activeProcess = manager.activeProcess();
-                manager.linkProcessToList(activeProcess, receiver);
-                manager.transferTo(frame, activeProcess, manager.wakeHighestPriority());
+                PointersObject activeProcess = getActiveProcessNode.executeGet();
+                linkProcessToListNode.executeLink(activeProcess, receiver);
+                transferToNode.executeTransferTo(frame, activeProcess, wakerHighestPriorityNode.executeWake());
             }
             return receiver;
         }
@@ -195,13 +208,16 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 87)
     protected static abstract class PrimResumeNode extends AbstractPrimitiveNode {
+        @Child private ResumeProcessNode resumeProcessNode;
+
         protected PrimResumeNode(CompiledMethodObject method) {
             super(method);
+            resumeProcessNode = ResumeProcessNode.create(method.image);
         }
 
         @Specialization
         protected BaseSqueakObject doResume(VirtualFrame frame, PointersObject receiver) {
-            code.image.process.resumeProcess(frame, receiver);
+            resumeProcessNode.executeResume(frame, receiver);
             return receiver;
         }
     }
@@ -209,23 +225,31 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 88)
     protected static abstract class PrimSuspendNode extends AbstractPrimitiveNode {
+        @Child private WakerHighestPriorityNode wakerHighestPriorityNode;
+        @Child private RemoveProcessFromListNode removeProcessNode;
+        @Child private GetActiveProcessNode getActiveProcessNode;
+        @Child private TransferToNode transferToNode;
+
         protected PrimSuspendNode(CompiledMethodObject method) {
             super(method);
+            removeProcessNode = RemoveProcessFromListNode.create(method.image);
+            wakerHighestPriorityNode = WakerHighestPriorityNode.create(method.image);
+            transferToNode = TransferToNode.create(method.image);
+            getActiveProcessNode = GetActiveProcessNode.create(method.image);
         }
 
         @Specialization
         protected BaseSqueakObject doSuspend(VirtualFrame frame, PointersObject receiver) {
-            ProcessManager manager = code.image.process;
-            PointersObject activeProcess = manager.activeProcess();
+            PointersObject activeProcess = getActiveProcessNode.executeGet();
             if (receiver.equals(activeProcess)) {
                 // popNandPush(1, code.image.nil);
-                manager.transferTo(frame, activeProcess, manager.wakeHighestPriority());
+                transferToNode.executeTransferTo(frame, activeProcess, wakerHighestPriorityNode.executeWake());
             } else {
                 BaseSqueakObject oldList = (BaseSqueakObject) receiver.at0(PROCESS.LIST);
                 if (oldList == code.image.nil) {
                     throw new PrimitiveFailed();
                 }
-                manager.removeProcessFromList(receiver, oldList);
+                removeProcessNode.executeRemove(receiver, oldList);
                 receiver.atput0(PROCESS.LIST, code.image.nil);
                 return oldList;
             }

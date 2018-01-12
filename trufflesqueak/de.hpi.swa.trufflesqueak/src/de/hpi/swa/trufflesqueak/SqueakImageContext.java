@@ -12,6 +12,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node.Child;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
@@ -30,12 +31,15 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.SpecialSelectorObject;
 import de.hpi.swa.trufflesqueak.nodes.TopLevelContextNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ObjectGraph;
+import de.hpi.swa.trufflesqueak.nodes.process.GetActiveProcessNode;
+import de.hpi.swa.trufflesqueak.nodes.process.IsEmptyListNode;
+import de.hpi.swa.trufflesqueak.nodes.process.RemoveFirstLinkOfListNode;
+import de.hpi.swa.trufflesqueak.nodes.process.ResumeProcessNode;
 import de.hpi.swa.trufflesqueak.util.Display.AbstractDisplay;
 import de.hpi.swa.trufflesqueak.util.Display.JavaDisplay;
 import de.hpi.swa.trufflesqueak.util.Display.NullDisplay;
 import de.hpi.swa.trufflesqueak.util.InterruptHandler;
 import de.hpi.swa.trufflesqueak.util.OSDetector;
-import de.hpi.swa.trufflesqueak.util.ProcessManager;
 import de.hpi.swa.trufflesqueak.util.SqueakImageFlags;
 import de.hpi.swa.trufflesqueak.util.SqueakImageReader;
 
@@ -114,10 +118,14 @@ public class SqueakImageContext {
     @CompilationFinal public final AbstractDisplay display;
     @CompilationFinal public final ObjectGraph objects = new ObjectGraph(this);
     @CompilationFinal public final OSDetector os = new OSDetector();
-    @CompilationFinal public final ProcessManager process = new ProcessManager(this);
     @CompilationFinal public final SqueakImageFlags flags = new SqueakImageFlags();
     @CompilationFinal public final InterruptHandler interrupt = new InterruptHandler(this);
     @CompilationFinal public final long startUpMillis = System.currentTimeMillis();
+
+    @Child private IsEmptyListNode isEmptyListNode;
+    @Child private ResumeProcessNode resumeProcessNode;
+    @Child private GetActiveProcessNode getActiveProcessNode;
+    @Child private RemoveFirstLinkOfListNode removeFirstLinkOfListNode;
 
     public SqueakImageContext(SqueakLanguage squeakLanguage, SqueakLanguage.Env environ,
                     PrintWriter out, PrintWriter err) {
@@ -133,10 +141,14 @@ public class SqueakImageContext {
             config = new SqueakConfig(new String[0]);
             display = new NullDisplay();
         }
+        isEmptyListNode = IsEmptyListNode.create(this);
+        resumeProcessNode = ResumeProcessNode.create(this);
+        getActiveProcessNode = GetActiveProcessNode.create(this);
+        removeFirstLinkOfListNode = RemoveFirstLinkOfListNode.create(this);
     }
 
     public CallTarget getActiveContext() {
-        PointersObject activeProcess = process.activeProcess();
+        PointersObject activeProcess = getActiveProcessNode.executeGet();
         MethodContextObject activeContext = (MethodContextObject) activeProcess.at0(PROCESS.SUSPENDED_CONTEXT);
         activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, nil);
         output.println(String.format("Resuming active context for %s...", activeContext.at0(CONTEXT.METHOD)));
@@ -267,10 +279,10 @@ public class SqueakImageContext {
     }
 
     public void synchronousSignal(VirtualFrame frame, PointersObject semaphore) {
-        if (process.isEmptyList(semaphore)) { // no process is waiting on this semaphore
+        if (isEmptyListNode.executeIsEmpty(semaphore)) { // no process is waiting on this semaphore
             semaphore.atput0(SEMAPHORE.EXCESS_SIGNALS, (int) semaphore.at0(SEMAPHORE.EXCESS_SIGNALS) + 1);
         } else {
-            process.resumeProcess(frame, process.removeFirstLinkOfList(semaphore));
+            resumeProcessNode.executeResume(frame, removeFirstLinkOfListNode.executeRemove(semaphore));
         }
     }
 }

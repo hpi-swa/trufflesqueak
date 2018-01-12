@@ -28,6 +28,7 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.trufflesqueak.nodes.process.GetActiveProcessNode;
 
 public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -136,9 +137,12 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 72, numArguments = 2)
     protected static abstract class PrimArrayBecome extends AbstractPrimitiveNode {
+        @Child private GetActiveProcessNode getActiveProcessNode;
+
         protected PrimArrayBecome(CompiledMethodObject method) {
             // TODO: this primitive does not correctly perform a one way become yet, FIXME!
             super(method);
+            getActiveProcessNode = GetActiveProcessNode.create(method.image);
         }
 
         @Specialization
@@ -169,7 +173,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         private List<BaseSqueakObject> getInstancesArray() {
-            PointersObject activeProcess = code.image.process.activeProcess();
+            PointersObject activeProcess = getActiveProcessNode.executeGet();
             // TODO: activeProcess.storeSuspendedContext(frame)
             try {
                 return code.image.objects.allInstances();

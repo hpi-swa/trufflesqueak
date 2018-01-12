@@ -9,8 +9,8 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.context.MethodLiteralNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtPutNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ReceiverNode;
-import de.hpi.swa.trufflesqueak.nodes.context.TemporaryWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.context.TemporaryReadNode;
+import de.hpi.swa.trufflesqueak.nodes.context.TemporaryWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PopStackNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.TopStackNode;
 
