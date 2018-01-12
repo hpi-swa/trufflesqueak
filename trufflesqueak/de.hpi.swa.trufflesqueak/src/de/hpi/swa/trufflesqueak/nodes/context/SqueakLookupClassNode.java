@@ -37,7 +37,7 @@ public abstract class SqueakLookupClassNode extends Node {
     }
 
     protected boolean isNil(Object object) {
-        return object.equals(code.image.nil);
+        return object == code.image.nil;
     }
 
     @SuppressWarnings("unused")

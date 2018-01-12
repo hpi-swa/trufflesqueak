@@ -26,10 +26,11 @@ public class ProcessManager {
     }
 
     public boolean isEmptyList(BaseSqueakObject list) {
-        return list.at0(LINKED_LIST.FIRST_LINK).equals(image.nil);
+        return list.at0(LINKED_LIST.FIRST_LINK) == image.nil;
     }
 
     public BaseSqueakObject removeFirstLinkOfList(BaseSqueakObject list) {
+        CompilerDirectives.transferToInterpreter(); // TODO: the below should be done in nodes
         // Remove the first process from the given linked list.
         BaseSqueakObject first = (BaseSqueakObject) list.at0(LINKED_LIST.FIRST_LINK);
         BaseSqueakObject last = (BaseSqueakObject) list.at0(LINKED_LIST.LAST_LINK);
@@ -125,7 +126,7 @@ public class ProcessManager {
             BaseSqueakObject temp = first;
             BaseSqueakObject next;
             while (true) {
-                if (temp.equals(image.nil)) {
+                if (temp == image.nil) {
                     throw new PrimitiveFailed();
                 }
                 next = (BaseSqueakObject) temp.at0(LINK.NEXT_LINK);

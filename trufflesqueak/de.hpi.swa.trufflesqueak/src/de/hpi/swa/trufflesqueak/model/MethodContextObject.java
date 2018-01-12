@@ -212,6 +212,6 @@ public class MethodContextObject extends BaseSqueakObject {
 
     public BlockClosureObject getClosure() {
         Object closureOrNil = at0(CONTEXT.CLOSURE_OR_NIL);
-        return closureOrNil.equals(image.nil) ? null : (BlockClosureObject) closureOrNil;
+        return closureOrNil == image.nil ? null : (BlockClosureObject) closureOrNil;
     }
 }

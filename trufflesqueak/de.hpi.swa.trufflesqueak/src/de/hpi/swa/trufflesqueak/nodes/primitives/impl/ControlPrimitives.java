@@ -222,7 +222,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 manager.transferTo(frame, activeProcess, manager.wakeHighestPriority());
             } else {
                 BaseSqueakObject oldList = (BaseSqueakObject) receiver.at0(PROCESS.LIST);
-                if (oldList.equals(code.image.nil)) {
+                if (oldList == code.image.nil) {
                     throw new PrimitiveFailed();
                 }
                 manager.removeProcessFromList(receiver, oldList);

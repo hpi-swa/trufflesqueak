@@ -66,7 +66,7 @@ public class InterruptHandler {
             pendingFinalizationSignals = 0;
             semaphoreObject = image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.TheFinalizationSemaphore);
         }
-        if (!semaphoreObject.equals(image.nil)) {
+        if (semaphoreObject != image.nil) {
             image.synchronousSignal(frame, (PointersObject) semaphoreObject);
         }
     }
