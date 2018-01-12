@@ -60,7 +60,6 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     public CompiledCodeObject(SqueakImageContext img, ClassObject klass) {
         super(img, klass);
-        noContextNeeded.invalidate(); // invalidate immediately to force contexts
     }
 
     public CompiledCodeObject(SqueakImageContext img) {
