@@ -1,5 +1,11 @@
 package de.hpi.swa.trufflesqueak.test;
 
+import org.junit.BeforeClass;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
+
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -17,9 +23,16 @@ import de.hpi.swa.trufflesqueak.nodes.TopLevelContextNode;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 import junit.framework.TestCase;
 
+@RunWith(Parameterized.class)
 public abstract class AbstractSqueakTestCase extends TestCase {
+    protected static SqueakImageContext image;
 
-    protected SqueakImageContext image;
+    @Parameters(name = "{index}: noContextNeeded={0}")
+    public static Boolean[] data() {
+        return new Boolean[]{true, false};
+    }
+
+    @Parameter public boolean invalidateNoContextNeededAssumption;
 
     public AbstractSqueakTestCase() {
         super();
@@ -29,7 +42,7 @@ public abstract class AbstractSqueakTestCase extends TestCase {
         super(name);
     }
 
-    private class DummyFormatChunk extends SqueakImageChunk {
+    private static class DummyFormatChunk extends SqueakImageChunk {
 
         public DummyFormatChunk(int format) {
             super(null, null, 0, format, 0, 0, 0);
@@ -43,7 +56,7 @@ public abstract class AbstractSqueakTestCase extends TestCase {
         }
     }
 
-    private class DummyPointersChunk extends SqueakImageChunk {
+    private static class DummyPointersChunk extends SqueakImageChunk {
         private Object[] dummyPointers;
 
         public DummyPointersChunk(Object[] pointers) {
@@ -57,8 +70,8 @@ public abstract class AbstractSqueakTestCase extends TestCase {
         }
     }
 
-    @Override
-    public void setUp() {
+    @BeforeClass
+    public static void setUpSqueakImageContext() {
         image = new SqueakImageContext(null, null, null, null);
         image.plus.setBytes("plus".getBytes());
         image.minus.setBytes("minus".getBytes());
@@ -102,8 +115,11 @@ public abstract class AbstractSqueakTestCase extends TestCase {
     }
 
     public CompiledCodeObject makeMethod(byte[] bytes, Object[] literals) {
-        // Always add three literals...
-        return new CompiledMethodObject(image, bytes, literals);
+        CompiledMethodObject code = new CompiledMethodObject(image, bytes, literals);
+        if (invalidateNoContextNeededAssumption) {
+            code.invalidateNoContextNeededAssumption();
+        }
+        return code;
     }
 
     public CompiledCodeObject makeMethod(Object[] literals, int... intbytes) {
