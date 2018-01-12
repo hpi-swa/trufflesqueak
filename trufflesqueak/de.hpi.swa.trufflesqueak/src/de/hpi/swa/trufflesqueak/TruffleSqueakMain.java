@@ -15,10 +15,12 @@ import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Source.Builder;
 
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.TruffleRuntime;
 
 public class TruffleSqueakMain extends AbstractLanguageLauncher {
     private static void executeImage(String... args) throws RuntimeException {
-        System.out.println(String.format("== Running TruffleSqueak on %s ==", Truffle.getRuntime().getName()));
+        TruffleRuntime runtime = Truffle.getRuntime();
+        System.out.println(String.format("== Running %s on %s ==", SqueakLanguage.NAME, runtime.getName()));
         new TruffleSqueakMain().launch(args);
     }
 
@@ -44,9 +46,9 @@ public class TruffleSqueakMain extends AbstractLanguageLauncher {
 
     @Override
     protected void launch(Context.Builder contextBuilder) {
-        contextBuilder.arguments("squeaksmalltalk", config.toStringArgs());
+        contextBuilder.arguments(getLanguageId(), config.toStringArgs());
         try (Context ctx = contextBuilder.build()) {
-            Builder sourceBuilder = Source.newBuilder("squeaksmalltalk", new File(config.getImagePath()));
+            Builder sourceBuilder = Source.newBuilder(getLanguageId(), new File(config.getImagePath()));
             sourceBuilder.interactive(true);
             ctx.eval(sourceBuilder.build());
         } catch (IOException e) {
@@ -56,7 +58,7 @@ public class TruffleSqueakMain extends AbstractLanguageLauncher {
 
     @Override
     protected String getLanguageId() {
-        return "squeaksmalltalk";
+        return SqueakLanguage.NAME.toLowerCase();
     }
 
     @Override

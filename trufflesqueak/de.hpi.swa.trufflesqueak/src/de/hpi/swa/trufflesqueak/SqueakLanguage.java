@@ -15,10 +15,11 @@ import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
-@TruffleLanguage.Registration(name = "SqueakSmalltalk", version = "0.1", mimeType = SqueakLanguage.MIME_TYPE)
+@TruffleLanguage.Registration(name = SqueakLanguage.NAME, version = "0.1", mimeType = SqueakLanguage.MIME_TYPE)
 @ProvidedTags({StandardTags.CallTag.class, StandardTags.RootTag.class, StandardTags.StatementTag.class, DebuggerTags.AlwaysHalt.class})
 public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
     public static final String MIME_TYPE = "application/x-squeak-smalltalk";
+    public static final String NAME = "Squeak/Smalltalk";
 
     @Override
     protected SqueakImageContext createContext(Env env) {
