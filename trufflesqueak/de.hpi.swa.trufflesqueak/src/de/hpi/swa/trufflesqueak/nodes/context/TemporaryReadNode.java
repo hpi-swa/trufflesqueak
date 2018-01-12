@@ -25,7 +25,7 @@ public abstract class TemporaryReadNode extends SqueakNodeWithCode {
         if (stackIndex >= 0) {
             readNode = FrameSlotReadNode.create(code.getStackSlot(stackIndex));
         } else {
-            argumentNode = ArgumentNode.create(code, 1 + tempIndex);
+            argumentNode = ArgumentNode.create(code, 1 + tempIndex); // skip receiver
         }
     }
 
