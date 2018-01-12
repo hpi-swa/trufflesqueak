@@ -9,7 +9,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.MethodContextObject;
+import de.hpi.swa.trufflesqueak.nodes.GetMethodContextNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.context.LiteralConstantNode;
 import de.hpi.swa.trufflesqueak.nodes.context.MethodLiteralNode;
@@ -37,21 +37,18 @@ public final class PushBytecodes {
         public abstract void executeVoid(VirtualFrame frame);
     }
 
-    /*
-     * This bytecode is used to access thisContext. Therefore, we need to invalidate the corresponding
-     * assumption on the CompiledCodeObject. Then, the frame can no longer be virtualized.
-     */
     public static class PushActiveContextNode extends AbstractPushNode {
+        @Child private GetMethodContextNode getContextNode;
 
-        public PushActiveContextNode(CompiledCodeObject code, int idx) {
-            super(code, idx);
+        public PushActiveContextNode(CompiledCodeObject code, int index) {
+            super(code, index);
+            getContextNode = GetMethodContextNode.create(code);
         }
 
         @Override
         public void executeVoid(VirtualFrame frame) {
-            MethodContextObject activeContext = MethodContextObject.createReadOnlyContextObject(code.image, frame);
-            activeContext.getCodeObject().invalidateNoContextNeededAssumption();
-            pushNode.executeWrite(frame, activeContext);
+            // current index is pc
+            pushNode.executeWrite(frame, getContextNode.executeGetMethodContext(frame, index));
         }
 
         @Override

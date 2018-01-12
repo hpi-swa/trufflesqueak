@@ -157,7 +157,7 @@ public class MethodContextNode extends Node {
                 }
             }
         } catch (NonLocalReturn nlr) {
-            getContextNode.doGet(frame, pc); // ensure context is there
+            getContextNode.executeGetMethodContext(frame, pc); // ensure context is there
             throw nlr;
         } finally {
             assert backJumpCounter >= 0;
@@ -176,7 +176,7 @@ public class MethodContextNode extends Node {
                 pc = node.executeInt(frame);
             }
         } catch (NonLocalReturn nlr) {
-            getContextNode.doGet(frame, pc); // ensure context is there
+            getContextNode.executeGetMethodContext(frame, pc); // ensure context is there
             throw nlr;
         }
     }

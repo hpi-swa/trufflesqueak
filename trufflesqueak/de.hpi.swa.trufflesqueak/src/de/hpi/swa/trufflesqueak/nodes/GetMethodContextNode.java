@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameUtil;
@@ -18,17 +19,19 @@ public abstract class GetMethodContextNode extends Node {
         return GetMethodContextNodeGen.create(code);
     }
 
-    protected abstract MethodContextObject executeGetMethodContext(VirtualFrame frame, int pc);
+    public abstract MethodContextObject executeGetMethodContext(VirtualFrame frame, int pc);
 
-    public GetMethodContextNode(CompiledCodeObject code) {
+    protected GetMethodContextNode(CompiledCodeObject code) {
         super();
         this.code = code;
     }
 
     @Specialization
-    public MethodContextObject doGet(VirtualFrame frame, int pc) {
+    protected MethodContextObject doGet(VirtualFrame frame, int pc) {
         MethodContextObject context = (MethodContextObject) FrameUtil.getObjectSafe(frame, code.thisContextSlot);
         if (context == null) {
+            CompilerDirectives.transferToInterpreter();
+            code.invalidateNoContextNeededAssumption();
             context = MethodContextObject.createWriteableContextObject(code.image, code.frameSize());
             context.atput0(CONTEXT.METHOD, code);
             context.setSender(FrameAccess.getSender(frame));
