@@ -45,6 +45,7 @@ public class ProcessManager {
     }
 
     public void resumeProcess(VirtualFrame frame, BaseSqueakObject newProcess) {
+        CompilerDirectives.transferToInterpreter(); // TODO: the below should be done in nodes
         BaseSqueakObject activeProcess = activeProcess();
         int activePriority = (int) activeProcess.at0(PROCESS.PRIORITY);
         int newPriority = (int) newProcess.at0(PROCESS.PRIORITY);
@@ -66,6 +67,7 @@ public class ProcessManager {
     }
 
     public void putToSleep(BaseSqueakObject process) {
+        CompilerDirectives.transferToInterpreter(); // TODO: the below should be done in nodes
         // Save the given process on the scheduler process list for its priority.
         int priority = (int) process.at0(PROCESS.PRIORITY);
         ListObject processLists = (ListObject) this.getScheduler().at0(PROCESS_SCHEDULER.PROCESS_LISTS);
