@@ -1,10 +1,18 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.FrameInstance;
+import com.oracle.truffle.api.frame.FrameInstanceVisitor;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameUtil;
 
+import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.MethodContextObject;
+import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
 public class FrameAccess {
     /**
@@ -54,5 +62,40 @@ public class FrameAccess {
             arguments[RCVR_AND_ARGS_START + i] = frameArgs[i];
         }
         return arguments;
+    }
+
+    public static MethodContextObject findContextForMarker(FrameMarker frameMarker, SqueakImageContext image) {
+        return Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<MethodContextObject>() {
+            @Override
+            public MethodContextObject visitFrame(FrameInstance frameInstance) {
+                Frame frame = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
+                FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
+                FrameSlot markerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.MARKER);
+                Object marker = FrameUtil.getObjectSafe(frame, markerSlot);
+                if (marker == frameMarker) {
+                    return MethodContextObject.createReadOnlyContextObject(image, frame);
+                }
+                return null;
+            }
+        });
+    }
+
+    public static MethodContextObject findSenderForMarker(FrameMarker frameMarker, SqueakImageContext image) {
+        return Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<MethodContextObject>() {
+            boolean foundMyself = false;
+
+            @Override
+            public MethodContextObject visitFrame(FrameInstance frameInstance) {
+                Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
+                FrameDescriptor currentFD = current.getFrameDescriptor();
+                FrameSlot currentMarkerSlot = currentFD.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.MARKER);
+                if (foundMyself) {
+                    return MethodContextObject.createReadOnlyContextObject(image, current);
+                } else if (frameMarker == FrameUtil.getObjectSafe(current, currentMarkerSlot)) {
+                    foundMyself = true;
+                }
+                return null;
+            }
+        });
     }
 }

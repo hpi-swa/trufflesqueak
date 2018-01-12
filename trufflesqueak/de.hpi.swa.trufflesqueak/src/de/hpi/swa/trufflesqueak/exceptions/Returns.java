@@ -3,7 +3,10 @@ package de.hpi.swa.trufflesqueak.exceptions;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.nodes.ControlFlowException;
 
+import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.MethodContextObject;
+import de.hpi.swa.trufflesqueak.nodes.FrameAccess;
+import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
 public final class Returns {
     private static abstract class AbstractReturn extends ControlFlowException {
@@ -34,15 +37,23 @@ public final class Returns {
 
     public static class NonLocalReturn extends AbstractReturn {
         private static final long serialVersionUID = 1L;
-        @CompilationFinal private final MethodContextObject targetContext;
+        @CompilationFinal private final FrameMarker frameMarker;
+        @CompilationFinal private MethodContextObject targetContext;
         private boolean arrivedAtTargetContext = false;
 
-        public NonLocalReturn(Object returnValue, MethodContextObject targetContext) {
+        public NonLocalReturn(Object returnValue, FrameMarker frameMarker, MethodContextObject targetContext) {
             super(returnValue);
+            this.frameMarker = frameMarker;
             this.targetContext = targetContext;
         }
 
-        public MethodContextObject getTargetContext() {
+        public MethodContextObject getTargetContext(SqueakImageContext image) {
+            if (targetContext == null) {
+                targetContext = FrameAccess.findContextForMarker(frameMarker, image);
+                if (targetContext == null) {
+                    throw new RuntimeException("Unable to find context");
+                }
+            }
             return targetContext;
         }
 

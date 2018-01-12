@@ -27,6 +27,7 @@ import de.hpi.swa.trufflesqueak.nodes.FrameAccess;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.BlockClosurePrimitivesFactory.PrimClosureValue0NodeFactory.PrimClosureValue0NodeGen;
 
 public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -95,12 +96,11 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         @Specialization
         @TruffleBoundary
         Object findNext(MethodContextObject receiver) {
-            // TODO: this returns a CompiledCoeObject, not a context
-            CompiledCodeObject handlerContext = Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<CompiledCodeObject>() {
+            MethodContextObject handlerContext = Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<MethodContextObject>() {
                 final Object marker = receiver.getFrameMarker();
 
                 @Override
-                public CompiledCodeObject visitFrame(FrameInstance frameInstance) {
+                public MethodContextObject visitFrame(FrameInstance frameInstance) {
                     Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
                     FrameDescriptor frameDescriptor = current.getFrameDescriptor();
                     CompiledCodeObject frameMethod = FrameAccess.getMethod(current);
@@ -109,7 +109,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         Object frameMarker = FrameUtil.getObjectSafe(current, markerSlot);
                         if (frameMarker == marker) {
                             if (frameMethod.primitiveIndex() == EXCEPTION_HANDLER_MARKER) {
-                                return frameMethod;
+                                return MethodContextObject.createReadOnlyContextObject(code.image, current);
                             }
                         }
                     }
@@ -153,7 +153,11 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {201, 221})
-    protected static abstract class PrimClosureValue0Node extends AbstractClosureValuePrimitiveNode {
+    public static abstract class PrimClosureValue0Node extends AbstractClosureValuePrimitiveNode {
+
+        public static PrimClosureValue0Node create(CompiledMethodObject method) {
+            return PrimClosureValue0NodeGen.create(method);
+        }
 
         protected PrimClosureValue0Node(CompiledMethodObject method) {
             super(method);

@@ -18,6 +18,7 @@ import de.hpi.swa.trufflesqueak.nodes.context.ReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.context.TemporaryReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PopNReversedStackNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
+import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
 public final class PushBytecodes {
 
@@ -83,7 +84,7 @@ public final class PushBytecodes {
 
         @Override
         public void executeVoid(VirtualFrame frame) {
-            Object frameMarker = FrameUtil.getObjectSafe(frame, code.markerSlot);
+            FrameMarker frameMarker = (FrameMarker) FrameUtil.getObjectSafe(frame, code.markerSlot);
             Object[] copiedValues = (Object[]) popNReversedNode.executeGeneric(frame);
             int codeStart = index + numBytecodes;
             int codeEnd = codeStart + blockSize;

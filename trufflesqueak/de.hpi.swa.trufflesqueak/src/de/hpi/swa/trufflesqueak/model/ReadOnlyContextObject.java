@@ -1,11 +1,7 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.FrameInstance;
-import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameUtil;
@@ -15,6 +11,7 @@ import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualContextModification;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.FrameAccess;
+import de.hpi.swa.trufflesqueak.util.FrameMarker;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 /**
@@ -113,23 +110,8 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
 
     private MethodContextObject getSender() {
         if (sender == null) {
-            sender = Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<MethodContextObject>() {
-                boolean foundMyself = false;
-                Object marker = FrameUtil.getObjectSafe(frame, markerSlot);
-
-                @Override
-                public MethodContextObject visitFrame(FrameInstance frameInstance) {
-                    Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
-                    FrameDescriptor currentFD = current.getFrameDescriptor();
-                    FrameSlot currentMarkerSlot = currentFD.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.MARKER);
-                    if (foundMyself) {
-                        return MethodContextObject.createReadOnlyContextObject(image, current);
-                    } else if (marker == FrameUtil.getObjectSafe(current, currentMarkerSlot)) {
-                        foundMyself = true;
-                    }
-                    return null;
-                }
-            });
+            FrameMarker frameMarker = (FrameMarker) FrameUtil.getObjectSafe(frame, markerSlot);
+            sender = FrameAccess.findSenderForMarker(frameMarker, image);
             if (sender == null) {
                 throw new RuntimeException("Unable to find sender");
             }

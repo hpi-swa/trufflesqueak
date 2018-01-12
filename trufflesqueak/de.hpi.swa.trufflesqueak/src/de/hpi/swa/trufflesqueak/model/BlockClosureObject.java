@@ -7,26 +7,21 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.FrameInstance;
-import com.oracle.truffle.api.frame.FrameInstanceVisitor;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.BLOCK_CLOSURE;
-import de.hpi.swa.trufflesqueak.nodes.EnterMethodNode;
+import de.hpi.swa.trufflesqueak.nodes.EnterCodeNode;
 import de.hpi.swa.trufflesqueak.nodes.FrameAccess;
+import de.hpi.swa.trufflesqueak.util.FrameMarker;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public class BlockClosureObject extends BaseSqueakObject {
     @CompilationFinal private Object receiver;
     @CompilationFinal(dimensions = 1) private Object[] copied;
-    @CompilationFinal private Object frameMarker;
+    @CompilationFinal private FrameMarker frameMarker;
     @CompilationFinal private MethodContextObject outerContext;
     @CompilationFinal private CompiledBlockObject block;
     @CompilationFinal private int pc = -1;
@@ -38,10 +33,10 @@ public class BlockClosureObject extends BaseSqueakObject {
         super(image);
     }
 
-    public BlockClosureObject(Object frameId, CompiledBlockObject compiledBlock, Object receiver, Object[] copied) {
+    public BlockClosureObject(FrameMarker frameMarker, CompiledBlockObject compiledBlock, Object receiver, Object[] copied) {
         super(compiledBlock.image);
-        block = compiledBlock;
-        frameMarker = frameId;
+        this.block = compiledBlock;
+        this.frameMarker = frameMarker;
         this.receiver = receiver;
         this.copied = copied;
     }
@@ -64,19 +59,7 @@ public class BlockClosureObject extends BaseSqueakObject {
     @TruffleBoundary
     private MethodContextObject getOrPrepareContext() {
         if (outerContext == null) {
-            outerContext = Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<MethodContextObject>() {
-                @Override
-                public MethodContextObject visitFrame(FrameInstance frameInstance) {
-                    Frame frame = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
-                    FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-                    FrameSlot markerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.MARKER);
-                    Object marker = FrameUtil.getObjectSafe(frame, markerSlot);
-                    if (marker == frameMarker) {
-                        return MethodContextObject.createReadOnlyContextObject(image, frame);
-                    }
-                    return null;
-                }
-            });
+            outerContext = FrameAccess.findContextForMarker(frameMarker, image);
             if (outerContext == null) {
                 throw new RuntimeException("Unable to find context");
             }
@@ -171,7 +154,7 @@ public class BlockClosureObject extends BaseSqueakObject {
     public RootCallTarget getCallTarget() {
         if (callTarget == null) {
             CompilerDirectives.transferToInterpreter();
-            callTarget = Truffle.getRuntime().createCallTarget(EnterMethodNode.create(block.image.getLanguage(), block));
+            callTarget = Truffle.getRuntime().createCallTarget(EnterCodeNode.create(block.image.getLanguage(), block));
         }
         return callTarget;
     }
@@ -206,8 +189,12 @@ public class BlockClosureObject extends BaseSqueakObject {
         return arguments;
     }
 
-    public Object getFrameMarker() {
+    public FrameMarker getFrameMarker() {
         return frameMarker;
+    }
+
+    public MethodContextObject getOuterContextOrNull() {
+        return outerContext;
     }
 
     @Override

@@ -15,6 +15,7 @@ import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.MethodContextObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
@@ -36,13 +37,15 @@ public class MethodContextNode extends Node {
         return new MethodContextNode(code);
     }
 
-    public MethodContextNode(CompiledCodeObject code) {
-        this.code = code;
+    public MethodContextNode(CompiledCodeObject codeObject) {
+        code = codeObject;
         bytecodeNodes = new SqueakBytecodeDecoder(code).decode();
         pushNode = PushStackNode.create(code);
         terminateNode = TerminateContextNode.create(code);
         getContextNode = GetMethodContextNode.create(code);
-        aboutToReturnNode = AboutToReturnNode.create(code);
+        if (code instanceof CompiledMethodObject) {
+            aboutToReturnNode = AboutToReturnNode.create((CompiledMethodObject) code);
+        }
     }
 
     public Object execute(VirtualFrame frame) {
@@ -62,17 +65,17 @@ public class MethodContextNode extends Node {
                 return lr.getReturnValue();
             }
         } catch (NonLocalReturn nlr) {
-            context = getContextObject(frame); // TODO: we always need to force a context, do aboutToReturn in Truffle!
-            if (code.isUnwindMarked()) { // handle ensure: or ifCurtailed:
+            if (aboutToReturnNode != null && code.isUnwindMarked()) { // handle ensure: or ifCurtailed:
                 aboutToReturnNode.executeAboutToReturn(frame, nlr);
             }
-            if (context.isDirty()) {
+            context = getContextObject(frame);
+            if (context != null && context.isDirty()) {
                 MethodContextObject sender = context.getSender();
                 terminateNode.executeTerminate(frame);
-                throw new NonVirtualReturn(nlr.getReturnValue(), nlr.getTargetContext(), sender);
+                throw new NonVirtualReturn(nlr.getReturnValue(), nlr.getTargetContext(code.image), sender);
             } else {
                 terminateNode.executeTerminate(frame);
-                if (nlr.getTargetContext().hasSameMethodObject(context)) {
+                if (nlr.getTargetContext(code.image).hasSameMethodObject(context)) {
                     return nlr.getReturnValue();
                 } else {
                     throw nlr;

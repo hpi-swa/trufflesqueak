@@ -60,7 +60,7 @@ public class TopLevelContextNode extends RootNode {
             } catch (ProcessSwitch ps) {
                 activeContext = ps.getNewContext();
             } catch (NonLocalReturn nlr) {
-                MethodContextObject target = nlr.hasArrivedAtTargetContext() ? sender : nlr.getTargetContext();
+                MethodContextObject target = nlr.hasArrivedAtTargetContext() ? sender : nlr.getTargetContext(image);
                 activeContext = unwindContextChain(sender, target, nlr.getReturnValue());
             } catch (NonVirtualReturn nvr) {
                 activeContext = unwindContextChain(nvr.getCurrentContext(), nvr.getTargetContext(),

@@ -18,7 +18,7 @@ import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.instrumentation.CompiledCodeObjectPrinter;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
-import de.hpi.swa.trufflesqueak.nodes.EnterMethodNode;
+import de.hpi.swa.trufflesqueak.nodes.EnterCodeNode;
 import de.hpi.swa.trufflesqueak.util.BitSplitter;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
@@ -112,7 +112,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     @TruffleBoundary
     private void updateAndInvalidateCallTargets() {
-        callTarget = Truffle.getRuntime().createCallTarget(EnterMethodNode.create(image.getLanguage(), this));
+        callTarget = Truffle.getRuntime().createCallTarget(EnterCodeNode.create(image.getLanguage(), this));
         callTargetStable.invalidate();
     }
 

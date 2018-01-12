@@ -15,14 +15,14 @@ import de.hpi.swa.trufflesqueak.model.MethodContextObject;
 import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
 @ImportStatic(FrameAccess.class)
-public abstract class EnterMethodNode extends RootNode {
+public abstract class EnterCodeNode extends RootNode {
     @CompilationFinal protected final CompiledCodeObject code;
 
-    public static EnterMethodNode create(SqueakLanguage language, CompiledCodeObject code) {
-        return EnterMethodNodeGen.create(language, code);
+    public static EnterCodeNode create(SqueakLanguage language, CompiledCodeObject code) {
+        return EnterCodeNodeGen.create(language, code);
     }
 
-    protected EnterMethodNode(SqueakLanguage language, CompiledCodeObject code) {
+    protected EnterCodeNode(SqueakLanguage language, CompiledCodeObject code) {
         super(language, code.getFrameDescriptor());
         this.code = code;
     }
