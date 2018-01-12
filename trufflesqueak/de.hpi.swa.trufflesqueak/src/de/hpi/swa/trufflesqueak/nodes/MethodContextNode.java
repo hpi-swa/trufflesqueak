@@ -17,11 +17,9 @@ import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.MethodContextObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
-import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.SendSelectorNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
 import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
@@ -30,7 +28,7 @@ public class MethodContextNode extends Node {
     @CompilationFinal private static BaseSqueakObject aboutToReturnSelector;
     @Children private final AbstractBytecodeNode[] bytecodeNodes;
     @Child private PushStackNode pushNode;
-    @Child private SendSelectorNode aboutToReturnNode;
+    @Child private AboutToReturnNode aboutToReturnNode;
     @Child private TerminateContextNode terminateNode;
     @Child private GetMethodContextNode getContextNode;
 
@@ -44,10 +42,7 @@ public class MethodContextNode extends Node {
         pushNode = PushStackNode.create(code);
         terminateNode = TerminateContextNode.create(code);
         getContextNode = GetMethodContextNode.create(code);
-        if (aboutToReturnSelector == null) {
-            aboutToReturnSelector = (BaseSqueakObject) code.image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SelectorAboutToReturn);
-        }
-        aboutToReturnNode = new SendSelectorNode(code, -1, -1, aboutToReturnSelector, 2);
+        aboutToReturnNode = AboutToReturnNode.create(code);
     }
 
     public Object execute(VirtualFrame frame) {
@@ -69,10 +64,7 @@ public class MethodContextNode extends Node {
         } catch (NonLocalReturn nlr) {
             context = getContextObject(frame); // TODO: we always need to force a context, do aboutToReturn in Truffle!
             if (code.isUnwindMarked()) { // handle ensure: or ifCurtailed:
-                pushNode.executeWrite(frame, nlr.getTargetContext());
-                pushNode.executeWrite(frame, nlr.getReturnValue());
-                pushNode.executeWrite(frame, context);
-                aboutToReturnNode.executeSend(frame);
+                aboutToReturnNode.executeAboutToReturn(frame, nlr);
             }
             if (context.isDirty()) {
                 MethodContextObject sender = context.getSender();
