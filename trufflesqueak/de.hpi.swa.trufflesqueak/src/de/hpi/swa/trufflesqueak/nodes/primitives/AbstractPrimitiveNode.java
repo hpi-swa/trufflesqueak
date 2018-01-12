@@ -2,6 +2,7 @@ package de.hpi.swa.trufflesqueak.nodes.primitives;
 
 import com.oracle.truffle.api.dsl.NodeChild;
 
+import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
@@ -16,5 +17,9 @@ public abstract class AbstractPrimitiveNode extends SqueakNodeWithCode {
 
     protected static boolean isNil(Object obj) {
         return obj instanceof NilObject;
+    }
+
+    protected static boolean hasVariableClass(BaseSqueakObject obj) {
+        return obj.getSqClass().isVariable();
     }
 }

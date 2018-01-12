@@ -7,7 +7,6 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
@@ -123,11 +122,8 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
             return 2; // Float in words
         }
 
-        @Specialization(guards = "!isNil(obj)")
+        @Specialization(guards = {"!isNil(obj)", "hasVariableClass(obj)"})
         protected int size(BaseSqueakObject obj) {
-            if (!obj.getSqClass().isVariable()) {
-                throw new PrimitiveFailed();
-            }
             return obj.varsize();
         }
     }
