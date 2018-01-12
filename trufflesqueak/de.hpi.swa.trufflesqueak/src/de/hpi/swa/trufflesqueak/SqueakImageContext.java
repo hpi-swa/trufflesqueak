@@ -159,7 +159,7 @@ public class SqueakImageContext {
         Object receiver = config.getReceiver();
         String selector = config.getSelector();
         ClassObject receiverClass = receiver instanceof Integer ? smallIntegerClass : nilClass;
-        CompiledCodeObject lookupResult = (CompiledCodeObject) receiverClass.lookup(wrap(selector));
+        CompiledCodeObject lookupResult = (CompiledCodeObject) receiverClass.lookup(selector);
         if (lookupResult == null) {
             throw new RuntimeException(String.format("%s >> %s could not be found!", receiver, selector));
         }

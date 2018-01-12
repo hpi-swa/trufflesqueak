@@ -2,6 +2,7 @@ package de.hpi.swa.trufflesqueak.model;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -149,8 +150,7 @@ public class ClassObject extends AbstractPointersObject {
 
     // TODO: cache the methoddict in a better structure than what Squeak provides
     // ... or use the Squeak hash to decide where to put stuff
-    public Object lookup(NativeObject selector) {
-        String selectorString = selector.toString();
+    private Object lookup(Predicate<Object> predicate) {
         Object lookupClass = this;
         while (lookupClass instanceof ClassObject) {
             Object methodDict = ((ClassObject) lookupClass).getMethodDict();
@@ -159,7 +159,7 @@ public class ClassObject extends AbstractPointersObject {
                 if (values instanceof BaseSqueakObject) {
                     for (int i = METHOD_DICT.NAMES; i < ((BaseSqueakObject) methodDict).size(); i++) {
                         Object methodSelector = ((BaseSqueakObject) methodDict).at0(i);
-                        if (selectorString.equals(methodSelector.toString())) {
+                        if (predicate.test(methodSelector)) {
                             return ((BaseSqueakObject) values).at0(i - METHOD_DICT.NAMES);
                         }
                     }
@@ -167,10 +167,18 @@ public class ClassObject extends AbstractPointersObject {
             }
             lookupClass = ((ClassObject) lookupClass).getSuperclass();
         }
-        if (selector.equals(image.doesNotUnderstand)) { // exit recursive call
+        if (predicate.test(image.doesNotUnderstand)) { // exit recursive call
             throw new RuntimeException("doesNotUnderstand missing!");
         }
         return lookup(image.doesNotUnderstand);
+    }
+
+    public Object lookup(NativeObject selector) {
+        return lookup(methodSelector -> methodSelector == selector);
+    }
+
+    public Object lookup(String selector) {
+        return lookup(methodSelector -> methodSelector != null && methodSelector.toString().equals(selector));
     }
 
     public boolean isVariable() {
