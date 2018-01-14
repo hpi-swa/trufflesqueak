@@ -12,8 +12,8 @@ import com.oracle.truffle.api.nodes.RootNode;
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.MethodContextObject;
-import de.hpi.swa.trufflesqueak.util.FrameMarker;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
+import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
 @ImportStatic(FrameAccess.class)
 public abstract class EnterCodeNode extends RootNode {
@@ -49,7 +49,7 @@ public abstract class EnterCodeNode extends RootNode {
                     @Cached("create(code)") GetMethodContextNode getContextNode,
                     @Cached("create(code)") MethodContextNode contextNode) {
         MethodContextObject context = getContextNode.executeGetMethodContext(frame, code.getBytecodeOffset() + 1);
-        frame.setObject(code.markerSlot, context); // TODO: unify markerSlot and thisContextSlot
+        frame.setObject(code.thisContextSlot, context); // TODO: unify markerSlot and thisContextSlot
         Object[] arguments = frame.getArguments();
         assert arguments.length - (FrameAccess.RCVR_AND_ARGS_START + 1) == code.getNumArgsAndCopiedValues();
         for (int i = FrameAccess.RCVR_AND_ARGS_START + 1; i < arguments.length; i++) {

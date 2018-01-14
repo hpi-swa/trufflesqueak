@@ -56,6 +56,9 @@ public class MethodContextObject extends BaseSqueakObject {
 
     @Override
     public Object at0(int index) {
+        if (index == CONTEXT.SENDER_OR_NIL) {
+            return getSender();
+        }
         return actualContext.at0(index);
     }
 
@@ -96,9 +99,9 @@ public class MethodContextObject extends BaseSqueakObject {
     }
 
     public CompiledCodeObject getCodeObject() {
-        Object closure = at0(CONTEXT.CLOSURE_OR_NIL);
-        if (closure instanceof BlockClosureObject) {
-            return ((BlockClosureObject) closure).getCompiledBlock();
+        BlockClosureObject closure = getClosure();
+        if (closure != null) {
+            return closure.getCompiledBlock();
         }
         return (CompiledCodeObject) at0(CONTEXT.METHOD);
     }
@@ -137,6 +140,14 @@ public class MethodContextObject extends BaseSqueakObject {
             return (MethodContextObject) sender;
         } else if (sender instanceof NilObject) {
             return null;
+        } else if (sender == null) { // null indicates virtual frame, reconstructing contexts...
+            Frame frame = FrameAccess.currentMaterializableFrame();
+            MethodContextObject reconstructedSender = FrameAccess.findSenderForMarker(frame, getCodeObject().markerSlot, image);
+            if (reconstructedSender == null) {
+                throw new RuntimeException("Unable to find sender");
+            }
+            setSender(reconstructedSender);
+            return reconstructedSender;
         }
         throw new RuntimeException("Unexpected sender: " + sender);
     }

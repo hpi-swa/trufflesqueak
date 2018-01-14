@@ -43,11 +43,12 @@ public abstract class AboutToReturnNode extends AbstractContextNode {
 
     public abstract void executeAboutToReturn(VirtualFrame frame, NonLocalReturn nlr);
 
-// @Specialization(guards = {"context == null"})
-// protected void doAboutToReturnVirtualized(VirtualFrame frame, NonLocalReturn nlr,
-// @Cached("getContext(frame)") MethodContextObject context) {
-// activateBlockAndTerminate(frame, context);
-// }
+    @Specialization(guards = {"context == null"})
+    protected void doAboutToReturnVirtualized(VirtualFrame frame, NonLocalReturn nlr,
+                    @Cached("getContext(frame)") MethodContextObject context) {
+        System.out.println("wooot");
+        activateBlockAndTerminate(frame, context);
+    }
 
     private void activateBlockAndTerminate(VirtualFrame frame, MethodContextObject context) {
         if (completeTempReadNode.executeGeneric(frame) == code.image.nil) {
@@ -67,7 +68,7 @@ public abstract class AboutToReturnNode extends AbstractContextNode {
         }
     }
 
-    @Specialization// (guards = {"context != null"})
+    @Specialization(guards = {"context != null"})
     protected void doAboutToReturn(VirtualFrame frame, NonLocalReturn nlr,
                     @Cached("getContext(frame)") MethodContextObject context) {
         pushNode.executeWrite(frame, nlr.getTargetContext(code.image));
