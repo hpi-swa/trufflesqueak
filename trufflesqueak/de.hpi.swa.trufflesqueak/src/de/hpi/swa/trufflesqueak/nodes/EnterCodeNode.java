@@ -35,7 +35,7 @@ public abstract class EnterCodeNode extends RootNode {
         CompilerDirectives.ensureVirtualized(frame);
         frame.setObject(code.markerSlot, new FrameMarker());
         frame.setObject(code.thisContextSlot, null);
-        int numTemps = code.getNumTemps() - code.getNumArgsAndCopiedValues();
+        int numTemps = Math.max(code.getNumTemps() - code.getNumArgsAndCopiedValues(), 0);
         for (int i = 0; i < numTemps; i++) {
             frame.setObject(code.stackSlots[i], code.image.nil);
         }

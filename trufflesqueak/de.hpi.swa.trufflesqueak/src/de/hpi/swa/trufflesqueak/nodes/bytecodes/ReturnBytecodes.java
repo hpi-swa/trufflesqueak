@@ -96,7 +96,6 @@ public final class ReturnBytecodes {
         public String toString() {
             return "returnSelf";
         }
-
     }
 
     public static abstract class ReturnTopFromBlockNode extends ReturnTopFromMethodNode {
