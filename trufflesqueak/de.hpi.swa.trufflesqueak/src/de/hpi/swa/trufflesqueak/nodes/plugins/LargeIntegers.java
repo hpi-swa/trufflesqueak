@@ -275,7 +275,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
         public PrimNormalizeNode(CompiledMethodObject method) {
             super(method);
-            receiverNode = new ReturnReceiverNode(method, -1);
+            receiverNode = ReturnReceiverNode.create(method, -1);
         }
 
         @Specialization

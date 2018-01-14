@@ -1,6 +1,7 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.Returns.LocalReturn;
@@ -8,41 +9,57 @@ import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.MethodContextObject;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnConstantNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnReceiverNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnTopFromBlockNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnTopFromMethodNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.context.ReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PopStackNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class ReturnBytecodes {
 
-    private static abstract class AbstractReturnNode extends AbstractBytecodeNode {
+    protected static abstract class AbstractReturnNode extends AbstractBytecodeNode {
 
         protected AbstractReturnNode(CompiledCodeObject code, int index) {
             super(code, index);
         }
 
-        @Override
-        public void executeVoid(VirtualFrame frame) {
-            BlockClosureObject block = FrameAccess.getClosure(frame);
-            Object returnValue = getReturnValue(frame);
-            if (block == null || localReturn()) { // TODO: should be false if context is dirty
-                throw new LocalReturn(returnValue);
+        protected boolean isLocalReturn(VirtualFrame frame) {
+            boolean hasNoClosure = FrameAccess.getClosure(frame) == null;
+            MethodContextObject context = FrameAccess.getContext(frame, code.thisContextSlot);
+            if (context != null) {
+                return hasNoClosure && !context.isDirty();
             } else {
-                MethodContextObject targetContext = block.getOuterContextOrNull();
-                throw new NonLocalReturn(returnValue, block.getFrameMarker(), targetContext);
+                return hasNoClosure;
             }
         }
 
-        protected boolean localReturn() {
-            return false;
+        @Specialization(guards = "isLocalReturn(frame)")
+        protected Object executeLocalReturn(VirtualFrame frame) {
+            throw new LocalReturn(getReturnValue(frame));
         }
 
-        protected abstract Object getReturnValue(VirtualFrame frame);
+        @Specialization(guards = "!isLocalReturn(frame)")
+        protected Object executeNonLocalReturn(VirtualFrame frame) {
+            BlockClosureObject block = FrameAccess.getClosure(frame);
+            MethodContextObject targetContext = block.getOuterContextOrNull();
+            throw new NonLocalReturn(getReturnValue(frame), block.getFrameMarker(), targetContext);
+        }
+
+        protected Object getReturnValue(@SuppressWarnings("unused") VirtualFrame frame) {
+            throw new RuntimeException("Needs to be overriden");
+        }
     }
 
-    public static class ReturnConstantNode extends AbstractReturnNode {
+    public static abstract class ReturnConstantNode extends AbstractReturnNode {
         @CompilationFinal private final Object constant;
 
-        public ReturnConstantNode(CompiledCodeObject code, int index, Object obj) {
+        public static ReturnConstantNode create(CompiledCodeObject code, int index, Object value) {
+            return ReturnConstantNodeGen.create(code, index, value);
+        }
+
+        protected ReturnConstantNode(CompiledCodeObject code, int index, Object obj) {
             super(code, index);
             constant = obj;
         }
@@ -58,10 +75,14 @@ public final class ReturnBytecodes {
         }
     }
 
-    public static class ReturnReceiverNode extends AbstractReturnNode {
+    public static abstract class ReturnReceiverNode extends AbstractReturnNode {
         @Child private ReceiverNode receiverNode;
 
-        public ReturnReceiverNode(CompiledCodeObject code, int index) {
+        public static ReturnReceiverNode create(CompiledCodeObject code, int index) {
+            return ReturnReceiverNodeGen.create(code, index);
+        }
+
+        protected ReturnReceiverNode(CompiledCodeObject code, int index) {
             super(code, index);
             receiverNode = ReceiverNode.create(code);
         }
@@ -78,15 +99,20 @@ public final class ReturnBytecodes {
 
     }
 
-    public static class ReturnTopFromBlockNode extends ReturnTopFromMethodNode {
+    public static abstract class ReturnTopFromBlockNode extends ReturnTopFromMethodNode {
 
-        public ReturnTopFromBlockNode(CompiledCodeObject code, int index) {
+        public static ReturnTopFromBlockNode create(CompiledCodeObject code, int index) {
+            return ReturnTopFromBlockNodeGen.create(code, index);
+        }
+
+        protected ReturnTopFromBlockNode(CompiledCodeObject code, int index) {
             super(code, index);
         }
 
         @Override
-        protected boolean localReturn() {
-            return true;
+        protected boolean isLocalReturn(VirtualFrame frame) {
+            MethodContextObject context = FrameAccess.getContext(frame, code.thisContextSlot);
+            return context != null ? !context.isDirty() : true;
         }
 
         @Override
@@ -95,10 +121,14 @@ public final class ReturnBytecodes {
         }
     }
 
-    public static class ReturnTopFromMethodNode extends AbstractReturnNode {
+    public static abstract class ReturnTopFromMethodNode extends AbstractReturnNode {
         @Child protected PopStackNode popNode;
 
-        public ReturnTopFromMethodNode(CompiledCodeObject code, int index) {
+        public static ReturnTopFromMethodNode create(CompiledCodeObject code, int index) {
+            return ReturnTopFromMethodNodeGen.create(code, index);
+        }
+
+        protected ReturnTopFromMethodNode(CompiledCodeObject code, int index) {
             super(code, index);
             popNode = PopStackNode.create(code);
         }
@@ -112,6 +142,5 @@ public final class ReturnBytecodes {
         public String toString() {
             return "returnTop";
         }
-
     }
 }

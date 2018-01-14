@@ -40,7 +40,7 @@ public class CompiledCodeObjectPrinter {
             }
             if (node.getClass().equals(PushClosureNode.class)) {
                 indent++;
-            } else if (node.getClass().equals(ReturnTopFromBlockNode.class)) {
+            } else if (ReturnTopFromBlockNode.class.isAssignableFrom(node.getClass())) {
                 indent--;
             }
             index++;

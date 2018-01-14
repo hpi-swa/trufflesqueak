@@ -37,6 +37,6 @@ public class SqueakBytecodeDecoderTest extends AbstractSqueakTestCase {
         assertSame(image.klass, send.getSpecialSelector());
 
         assertSame(PopNode.class, bytecodeNodes[8].getClass());
-        assertSame(ReturnReceiverNode.class, bytecodeNodes[9].getClass());
+        assertTrue(ReturnReceiverNode.class.isAssignableFrom(bytecodeNodes[9].getClass()));
     }
 }

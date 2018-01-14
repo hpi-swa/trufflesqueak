@@ -7,6 +7,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.MethodContextObject;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 /**
  * This is the base class for Squeak bytecode evaluation.
@@ -24,6 +25,6 @@ public abstract class SqueakNodeWithCode extends SqueakNode {
     }
 
     protected MethodContextObject getContext(VirtualFrame frame) {
-        return (MethodContextObject) FrameUtil.getObjectSafe(frame, code.thisContextSlot);
+        return FrameAccess.getContext(frame, code.thisContextSlot);
     }
 }

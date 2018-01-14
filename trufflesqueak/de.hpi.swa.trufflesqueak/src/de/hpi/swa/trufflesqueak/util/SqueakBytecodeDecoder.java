@@ -111,17 +111,17 @@ public class SqueakBytecodeDecoder {
             case 119:
                 return new PushConstantNode(code, index, 2);
             case 120:
-                return new ReturnReceiverNode(code, index);
+                return ReturnReceiverNode.create(code, index);
             case 121:
-                return new ReturnConstantNode(code, index, true);
+                return ReturnConstantNode.create(code, index, true);
             case 122:
-                return new ReturnConstantNode(code, index, false);
+                return ReturnConstantNode.create(code, index, false);
             case 123:
-                return new ReturnConstantNode(code, index, code.image.nil);
+                return ReturnConstantNode.create(code, index, code.image.nil);
             case 124:
-                return new ReturnTopFromMethodNode(code, index);
+                return ReturnTopFromMethodNode.create(code, index);
             case 125:
-                return new ReturnTopFromBlockNode(code, index);
+                return ReturnTopFromBlockNode.create(code, index);
             case 126:
                 return new UnknownBytecodeNode(code, index, 1, b);
             case 127:
