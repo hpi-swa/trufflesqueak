@@ -53,7 +53,7 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
             case CONTEXT.METHOD:
                 return method;
             case CONTEXT.CLOSURE_OR_NIL:
-                return getClosure();
+                return closure != null ? closure : image.nil;
             case CONTEXT.RECEIVER:
                 return receiver;
             default:
@@ -93,10 +93,6 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
             frame.setObject(frameSlot, o);
         }
         throw new NonVirtualContextModification();
-    }
-
-    private Object getClosure() {
-        return FrameAccess.getClosure(frame);
     }
 
     private int getPC() {
