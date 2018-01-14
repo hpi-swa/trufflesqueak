@@ -25,7 +25,7 @@ public class MethodContextObject extends BaseSqueakObject {
         MethodContextObject contextObject = (MethodContextObject) FrameUtil.getObjectSafe(frame, thisContextSlot);
         if (contextObject == null) {
             contextObject = new MethodContextObject(img, new ReadOnlyContextObject(img, frame));
-            frame.setObject(thisContextSlot, contextObject);
+            // do not attach ReadOnlyContextObject to thisContextSlot to avoid becoming non-virtualized
         }
         return contextObject;
     }
