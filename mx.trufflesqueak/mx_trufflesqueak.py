@@ -17,13 +17,22 @@ def squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
 
     vm_args += [
         '-Dgraal.TraceTruffleCompilation=true',
-        # '-Dgraal.Dump=',
-        # '-Dgraal.MethodFilter=Truffle.*',
+        # '-Dgraal.Dump=Metaclass,Truffle,hpi',
         # '-XX:CompileCommand=print,*OptimizedCallTarget.callRoot',
         # '-XX:CompileCommand=exclude,*OptimizedCallTarget.callRoot',
         # '-Dgraal.TruffleBackgroundCompilation=false',
         # '-Dgraal.TraceTrufflePerformanceWarnings=true',
         # '-Dgraal.TruffleCompilationExceptionsArePrinted=true',
+        # '-Dgraal.TrufflePerformanceWarningsAreFatal=false',
+
+        # Print deopts and assumptions
+        # '-Dgraal.TraceTruffleTransferToInterpreter=true',
+        # '-Dgraal.TraceTruffleAssumptions=true',
+
+        # Log deopts to file
+        # '-XX:+UnlockDiagnosticVMOptions',
+        # '-XX:+LogCompilation',
+        # '-XX:+TraceDeoptimization',
     ]
 
     if USES_GRAAL:
