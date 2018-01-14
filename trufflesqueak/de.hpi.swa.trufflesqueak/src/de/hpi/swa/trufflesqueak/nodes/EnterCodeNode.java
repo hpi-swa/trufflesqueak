@@ -46,7 +46,7 @@ public abstract class EnterCodeNode extends RootNode {
     @ExplodeLoop
     @Specialization(guards = {"!code.getNoContextNeededAssumption().isValid()"})
     protected Object enter(VirtualFrame frame,
-                    @Cached("create(code)") GetMethodContextNode getContextNode,
+                    @Cached("create(code)") GetOrCreateMethodContextNode getContextNode,
                     @Cached("create(code)") MethodContextNode contextNode) {
         MethodContextObject context = getContextNode.executeGetMethodContext(frame, code.getBytecodeOffset() + 1);
         frame.setObject(code.thisContextSlot, context); // TODO: unify markerSlot and thisContextSlot

@@ -3,7 +3,6 @@ package de.hpi.swa.trufflesqueak.nodes;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
@@ -22,6 +21,7 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
 public class MethodContextNode extends Node {
@@ -31,7 +31,7 @@ public class MethodContextNode extends Node {
     @Child private PushStackNode pushNode;
     @Child private AboutToReturnNode aboutToReturnNode;
     @Child private TerminateContextNode terminateNode;
-    @Child private GetMethodContextNode getContextNode;
+    @Child private GetOrCreateMethodContextNode getContextNode;
 
     public static MethodContextNode create(CompiledCodeObject code) {
         return new MethodContextNode(code);
@@ -42,7 +42,7 @@ public class MethodContextNode extends Node {
         bytecodeNodes = new SqueakBytecodeDecoder(code).decode();
         pushNode = PushStackNode.create(code);
         terminateNode = TerminateContextNode.create(code);
-        getContextNode = GetMethodContextNode.create(code);
+        getContextNode = GetOrCreateMethodContextNode.create(code);
         if (code instanceof CompiledMethodObject) {
             aboutToReturnNode = AboutToReturnNode.create((CompiledMethodObject) code);
         }
@@ -55,7 +55,7 @@ public class MethodContextNode extends Node {
             CompilerDirectives.transferToInterpreter();
             throw new RuntimeException("Method did not return");
         } catch (LocalReturn lr) {
-            context = getContextObject(frame);
+            context = FrameAccess.getContext(frame, code.thisContextSlot);
             if (context != null && context.isDirty()) {
                 MethodContextObject sender = context.getSender();
                 terminateNode.executeTerminate(frame);
@@ -68,7 +68,7 @@ public class MethodContextNode extends Node {
             if (aboutToReturnNode != null && code.isUnwindMarked()) { // handle ensure: or ifCurtailed:
                 aboutToReturnNode.executeAboutToReturn(frame, nlr);
             }
-            context = getContextObject(frame);
+            context = FrameAccess.getContext(frame, code.thisContextSlot);
             if (context != null && context.isDirty()) {
                 MethodContextObject sender = context.getSender();
                 terminateNode.executeTerminate(frame);
@@ -82,10 +82,6 @@ public class MethodContextNode extends Node {
                 }
             }
         }
-    }
-
-    private MethodContextObject getContextObject(VirtualFrame frame) {
-        return (MethodContextObject) FrameUtil.getObjectSafe(frame, code.thisContextSlot);
     }
 
     protected void executeBytecode(VirtualFrame frame) {
@@ -177,7 +173,7 @@ public class MethodContextNode extends Node {
     }
 
     private int initialPC(VirtualFrame frame) {
-        MethodContextObject context = getContextObject(frame);
+        MethodContextObject context = FrameAccess.getContext(frame, code.thisContextSlot);
         if (context == null) {
             return 0; // start at the beginning
         }

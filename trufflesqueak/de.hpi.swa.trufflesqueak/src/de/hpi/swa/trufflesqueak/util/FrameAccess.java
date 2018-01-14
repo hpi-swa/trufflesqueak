@@ -53,6 +53,10 @@ public class FrameAccess {
         return frame.getArguments()[idx + TEMP_START];
     }
 
+    public static MethodContextObject getContext(Frame frame, FrameSlot thisContextSlot) {
+        return (MethodContextObject) FrameUtil.getObjectSafe(frame, thisContextSlot);
+    }
+
     public static Object[] newWith(CompiledCodeObject code, MethodContextObject sender, BlockClosureObject closure, Object[] frameArgs) {
         Object[] arguments = new Object[RCVR_AND_ARGS_START + frameArgs.length];
         arguments[METHOD] = code;

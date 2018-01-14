@@ -9,7 +9,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.nodes.GetMethodContextNode;
+import de.hpi.swa.trufflesqueak.nodes.GetOrCreateMethodContextNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.context.LiteralConstantNode;
 import de.hpi.swa.trufflesqueak.nodes.context.MethodLiteralNode;
@@ -39,11 +39,11 @@ public final class PushBytecodes {
     }
 
     public static class PushActiveContextNode extends AbstractPushNode {
-        @Child private GetMethodContextNode getContextNode;
+        @Child private GetOrCreateMethodContextNode getContextNode;
 
         public PushActiveContextNode(CompiledCodeObject code, int index) {
             super(code, index);
-            getContextNode = GetMethodContextNode.create(code);
+            getContextNode = GetOrCreateMethodContextNode.create(code);
         }
 
         @Override
