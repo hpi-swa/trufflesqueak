@@ -36,7 +36,6 @@ public abstract class EnterCodeNode extends RootNode {
         frame.setObject(code.markerSlot, new FrameMarker());
         frame.setObject(code.thisContextSlot, null);
         int numTemps = code.getNumTemps() - code.getNumArgsAndCopiedValues();
-        assert numTemps >= 0;
         for (int i = 0; i < numTemps; i++) {
             frame.setObject(code.stackSlots[i], code.image.nil);
         }
