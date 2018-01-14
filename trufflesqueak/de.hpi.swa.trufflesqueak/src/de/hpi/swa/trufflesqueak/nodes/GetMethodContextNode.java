@@ -11,6 +11,7 @@ import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.MethodContextObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public abstract class GetMethodContextNode extends Node {
     @CompilationFinal private final CompiledCodeObject code;

@@ -4,8 +4,8 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.nodes.FrameAccess;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithCode;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public abstract class ReceiverAndArgumentsNode extends SqueakNodeWithCode {
     public static ReceiverAndArgumentsNode create(CompiledCodeObject code) {

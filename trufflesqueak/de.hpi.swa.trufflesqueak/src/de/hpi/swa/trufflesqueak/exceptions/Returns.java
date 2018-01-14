@@ -5,8 +5,8 @@ import com.oracle.truffle.api.nodes.ControlFlowException;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.MethodContextObject;
-import de.hpi.swa.trufflesqueak.nodes.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.FrameMarker;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class Returns {
     private static abstract class AbstractReturn extends ControlFlowException {

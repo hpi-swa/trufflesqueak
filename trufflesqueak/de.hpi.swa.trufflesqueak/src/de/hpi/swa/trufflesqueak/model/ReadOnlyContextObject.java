@@ -10,8 +10,7 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualContextModification;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
-import de.hpi.swa.trufflesqueak.nodes.FrameAccess;
-import de.hpi.swa.trufflesqueak.util.FrameMarker;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 /**
@@ -110,8 +109,7 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
 
     private MethodContextObject getSender() {
         if (sender == null) {
-            FrameMarker frameMarker = (FrameMarker) FrameUtil.getObjectSafe(frame, markerSlot);
-            sender = FrameAccess.findSenderForMarker(frameMarker, image);
+            sender = FrameAccess.findSenderForMarker(frame, markerSlot, image);
             if (sender == null) {
                 throw new RuntimeException("Unable to find sender");
             }

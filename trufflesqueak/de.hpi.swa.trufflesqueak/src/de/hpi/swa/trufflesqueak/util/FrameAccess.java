@@ -1,4 +1,4 @@
-package de.hpi.swa.trufflesqueak.nodes;
+package de.hpi.swa.trufflesqueak.util;
 
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
@@ -12,17 +12,17 @@ import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.MethodContextObject;
-import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
 public class FrameAccess {
     /**
-     * Our frame:
+     * TruffleSqueak frame:
      *
      * <pre>
      * CompiledCodeObject
+     * SenderOrNull
      * ClosureOrNull
      * Receiver
-     * Args*
+     * Arguments*
      * CopiedValues*
      * </pre>
      */
@@ -64,6 +64,10 @@ public class FrameAccess {
         return arguments;
     }
 
+    public static Frame currentMaterializableFrame() {
+        return Truffle.getRuntime().getCurrentFrame().getFrame(FrameInstance.FrameAccess.MATERIALIZE);
+    }
+
     public static MethodContextObject findContextForMarker(FrameMarker frameMarker, SqueakImageContext image) {
         return Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<MethodContextObject>() {
             @Override
@@ -80,7 +84,8 @@ public class FrameAccess {
         });
     }
 
-    public static MethodContextObject findSenderForMarker(FrameMarker frameMarker, SqueakImageContext image) {
+    public static MethodContextObject findSenderForMarker(Frame frame, FrameSlot markerSlot, SqueakImageContext image) {
+        FrameMarker frameMarker = (FrameMarker) FrameUtil.getObjectSafe(frame, markerSlot);
         return Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<MethodContextObject>() {
             boolean foundMyself = false;
 

@@ -13,6 +13,7 @@ import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.MethodContextObject;
 import de.hpi.swa.trufflesqueak.util.FrameMarker;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 @ImportStatic(FrameAccess.class)
 public abstract class EnterCodeNode extends RootNode {
