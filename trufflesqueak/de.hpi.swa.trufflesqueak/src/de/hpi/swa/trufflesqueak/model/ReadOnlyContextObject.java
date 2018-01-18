@@ -47,7 +47,7 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
             case CONTEXT.SENDER_OR_NIL:
                 return getSender();
             case CONTEXT.INSTRUCTION_POINTER:
-                return getPC();
+                return method.getInitialPC();
             case CONTEXT.STACKPOINTER:
                 return getStackPointer();
             case CONTEXT.METHOD:
@@ -93,10 +93,6 @@ public class ReadOnlyContextObject extends BaseSqueakObject implements ActualCon
             frame.setObject(frameSlot, o);
         }
         throw new NonVirtualContextModification();
-    }
-
-    private int getPC() {
-        return method.getBytecodeOffset() + 1;
     }
 
     private int getStackPointer() {

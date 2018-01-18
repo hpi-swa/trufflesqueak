@@ -165,7 +165,7 @@ public class SqueakImageContext {
         }
         MethodContextObject customContext = MethodContextObject.createWriteableContextObject(this, lookupResult.frameSize());
         customContext.atput0(CONTEXT.METHOD, lookupResult);
-        customContext.atput0(CONTEXT.INSTRUCTION_POINTER, customContext.getCodeObject().getBytecodeOffset() + 1);
+        customContext.atput0(CONTEXT.INSTRUCTION_POINTER, customContext.getCodeObject().getInitialPC());
         customContext.atput0(CONTEXT.RECEIVER, receiver);
         customContext.atput0(CONTEXT.STACKPOINTER, 1);
         customContext.atput0(CONTEXT.CLOSURE_OR_NIL, nil);

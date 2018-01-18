@@ -219,8 +219,11 @@ public abstract class CompiledCodeObject extends SqueakObject {
         return false;
     }
 
-    public int getBytecodeOffset() {
-        return literals.length * 4;
+    /*
+     * Answer the program counter for the receiver's first bytecode.
+     */
+    public int getInitialPC() {
+        return literals.length * 4 + 1;
     }
 
     @Override

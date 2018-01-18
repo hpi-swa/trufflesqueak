@@ -13,9 +13,10 @@ import com.oracle.truffle.api.utilities.CyclicAssumption;
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.BLOCK_CLOSURE;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.EnterCodeNode;
-import de.hpi.swa.trufflesqueak.util.FrameMarker;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
+import de.hpi.swa.trufflesqueak.util.FrameMarker;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public class BlockClosureObject extends BaseSqueakObject {
@@ -67,9 +68,9 @@ public class BlockClosureObject extends BaseSqueakObject {
         return outerContext;
     }
 
-    private int getPC() {
+    public int getPC() {
         if (pc == -1) {
-            pc = block.getBytecodeOffset() + 1;
+            pc = block.getMethod().getInitialPC() + block.getBytecodeOffset();
         }
         return pc;
     }
@@ -164,6 +165,15 @@ public class BlockClosureObject extends BaseSqueakObject {
     }
 
     public CompiledBlockObject getCompiledBlock() {
+        if (block == null) {
+            CompiledMethodObject code = (CompiledMethodObject) getOrPrepareContext().at0(CONTEXT.METHOD);
+            int codeStart = pc - code.getInitialPC();
+            int j = code.getBytes()[codeStart - 2];
+            int k = code.getBytes()[codeStart - 1];
+            int blockSize = (j << 8) | k;
+            int codeEnd = codeStart + blockSize;
+            block = new CompiledBlockObject(code, numArgs, copied.length, codeStart, codeEnd);
+        }
         return block;
     }
 

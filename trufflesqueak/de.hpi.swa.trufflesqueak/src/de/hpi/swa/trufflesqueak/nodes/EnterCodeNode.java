@@ -48,7 +48,7 @@ public abstract class EnterCodeNode extends RootNode {
     protected Object enter(VirtualFrame frame,
                     @Cached("create(code)") GetOrCreateMethodContextNode getContextNode,
                     @Cached("create(code)") MethodContextNode contextNode) {
-        MethodContextObject context = getContextNode.executeGetMethodContext(frame, code.getBytecodeOffset() + 1);
+        MethodContextObject context = getContextNode.executeGetMethodContext(frame, code.getInitialPC());
         frame.setObject(code.thisContextSlot, context); // TODO: unify markerSlot and thisContextSlot
         Object[] arguments = frame.getArguments();
         assert arguments.length - (FrameAccess.RCVR_AND_ARGS_START + 1) == code.getNumArgsAndCopiedValues();

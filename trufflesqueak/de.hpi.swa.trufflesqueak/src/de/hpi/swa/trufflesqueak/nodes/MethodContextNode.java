@@ -13,6 +13,8 @@ import de.hpi.swa.trufflesqueak.exceptions.Returns.LocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
+import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
+import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.MethodContextObject;
@@ -177,8 +179,15 @@ public class MethodContextNode extends Node {
         if (context == null) {
             return 0; // start at the beginning
         }
+        BlockClosureObject closure = FrameAccess.getClosure(frame);
+        if (closure != null) {
+            int rawPC = closure.getPC();
+            CompiledBlockObject block = closure.getCompiledBlock();
+            assert code == block;
+            return rawPC - block.getMethod().getInitialPC() - block.getBytecodeOffset();
+        }
         int rawPC = (int) context.at0(CONTEXT.INSTRUCTION_POINTER);
-        return rawPC - code.getBytecodeOffset() - 1;
+        return rawPC - code.getInitialPC();
     }
 
     @Override

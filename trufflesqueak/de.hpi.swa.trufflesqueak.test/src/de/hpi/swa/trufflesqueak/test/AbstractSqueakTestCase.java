@@ -153,7 +153,7 @@ public abstract class AbstractSqueakTestCase extends TestCase {
         // always use large instance size and large frame size for testing
         MethodContextObject testContext = MethodContextObject.createWriteableContextObject(code.image, 50 + CONTEXT.LARGE_FRAMESIZE);
         testContext.atput0(CONTEXT.METHOD, code);
-        testContext.atput0(CONTEXT.INSTRUCTION_POINTER, testContext.getCodeObject().getBytecodeOffset() + 1);
+        testContext.atput0(CONTEXT.INSTRUCTION_POINTER, testContext.getCodeObject().getInitialPC());
         testContext.atput0(CONTEXT.RECEIVER, receiver);
         testContext.atput0(CONTEXT.STACKPOINTER, 1);
         testContext.atput0(CONTEXT.CLOSURE_OR_NIL, code.image.nil);

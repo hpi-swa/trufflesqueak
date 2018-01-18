@@ -7,17 +7,20 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 public class CompiledBlockObject extends CompiledCodeObject {
     @CompilationFinal private final CompiledMethodObject outerMethod;
     @CompilationFinal private final int numCopiedValues;
+    @CompilationFinal private final int bytecodeOffset;
 
-    public CompiledBlockObject(CompiledCodeObject code, int numArgs, int numCopied) {
+    public CompiledBlockObject(CompiledCodeObject code, int numArgs, int numCopied, int bytecodeOffset, int blockSize) {
         super(code.image);
         outerMethod = code.getMethod();
         numCopiedValues = numCopied;
+        this.bytecodeOffset = bytecodeOffset;
         Object[] outerLiterals = outerMethod.getLiterals();
         outerLiterals = Arrays.copyOf(outerLiterals, outerLiterals.length - 1);
         int baseHdr = ((numArgs & 0xF) << 24) | ((numCopied & 0x3F) << 18);
         outerLiterals[0] = baseHdr; // replace header
         outerLiterals[outerLiterals.length - 1] = outerMethod; // last literal is back pointer to method
         this.literals = outerLiterals;
+        this.bytes = Arrays.copyOfRange(code.getBytes(), bytecodeOffset, bytecodeOffset + blockSize);
         decodeHeader();
     }
 
@@ -25,6 +28,7 @@ public class CompiledBlockObject extends CompiledCodeObject {
         super(original);
         outerMethod = original.outerMethod;
         numCopiedValues = original.numCopiedValues;
+        bytecodeOffset = original.bytecodeOffset;
     }
 
     @Override
@@ -52,12 +56,12 @@ public class CompiledBlockObject extends CompiledCodeObject {
         return outerMethod;
     }
 
+    public int getBytecodeOffset() {
+        return bytecodeOffset;
+    }
+
     @Override
     public BaseSqueakObject shallowCopy() {
         return new CompiledBlockObject(this);
-    }
-
-    public void setBytes(byte[] bytes) {
-        this.bytes = bytes;
     }
 }
