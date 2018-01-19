@@ -57,10 +57,7 @@ public final class MiscellaneousBytecodes {
             CompilerAsserts.compilationConstant(index);
             try {
                 throw new LocalReturn(primitiveNode.executeGeneric(frame));
-            } catch (UnsupportedSpecializationException
-                            | PrimitiveFailed
-                            | ArithmeticException
-                            | IndexOutOfBoundsException e) {
+            } catch (UnsupportedSpecializationException | PrimitiveFailed e) {
             }
         }
 
