@@ -6,7 +6,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.MethodContextObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
 
 public abstract class AbstractWriteNode extends Node {
     @CompilationFinal protected final CompiledCodeObject code;
@@ -21,7 +21,7 @@ public abstract class AbstractWriteNode extends Node {
         return FrameUtil.getObjectSafe(frame, code.thisContextSlot) == null;
     }
 
-    protected MethodContextObject getContext(VirtualFrame frame) {
-        return (MethodContextObject) FrameUtil.getObjectSafe(frame, code.thisContextSlot);
+    protected ContextObject getContext(VirtualFrame frame) {
+        return (ContextObject) FrameUtil.getObjectSafe(frame, code.thisContextSlot);
     }
 }

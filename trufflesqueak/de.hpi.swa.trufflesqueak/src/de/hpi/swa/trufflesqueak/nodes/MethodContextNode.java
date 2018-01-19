@@ -17,7 +17,7 @@ import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.model.MethodContextObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
@@ -51,7 +51,7 @@ public class MethodContextNode extends Node {
     }
 
     public Object execute(VirtualFrame frame) {
-        MethodContextObject context;
+        ContextObject context;
         try {
             executeBytecode(frame);
             CompilerDirectives.transferToInterpreter();
@@ -59,7 +59,7 @@ public class MethodContextNode extends Node {
         } catch (LocalReturn lr) {
             context = FrameAccess.getContext(frame, code.thisContextSlot);
             if (context != null && context.isDirty()) {
-                MethodContextObject sender = context.getSender();
+                ContextObject sender = context.getSender();
                 terminateNode.executeTerminate(frame);
                 throw new NonVirtualReturn(lr.getReturnValue(), sender, sender);
             } else {
@@ -72,7 +72,7 @@ public class MethodContextNode extends Node {
             }
             context = FrameAccess.getContext(frame, code.thisContextSlot);
             if (context != null && context.isDirty()) {
-                MethodContextObject sender = context.getSender();
+                ContextObject sender = context.getSender();
                 terminateNode.executeTerminate(frame);
                 throw new NonVirtualReturn(nlr.getReturnValue(), nlr.getTargetContext(code.image), sender);
             } else {
@@ -175,7 +175,7 @@ public class MethodContextNode extends Node {
     }
 
     private int initialPC(VirtualFrame frame) {
-        MethodContextObject context = FrameAccess.getContext(frame, code.thisContextSlot);
+        ContextObject context = FrameAccess.getContext(frame, code.thisContextSlot);
         if (context == null) {
             return 0; // start at the beginning
         }

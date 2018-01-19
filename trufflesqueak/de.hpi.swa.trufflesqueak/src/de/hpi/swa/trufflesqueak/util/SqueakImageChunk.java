@@ -13,7 +13,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.EmptyObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
-import de.hpi.swa.trufflesqueak.model.MethodContextObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.SqueakObject;
@@ -104,7 +104,7 @@ public class SqueakImageChunk {
                 object = new ListObject(image);
             } else if (format == 3) {
                 if (this.getSqClass() == image.methodContextClass) {
-                    object = MethodContextObject.createWriteableContextObject(image);
+                    object = ContextObject.create(image);
                 } else if (this.getSqClass() == image.blockClosureClass) {
                     object = new BlockClosureObject(image);
                 } else {

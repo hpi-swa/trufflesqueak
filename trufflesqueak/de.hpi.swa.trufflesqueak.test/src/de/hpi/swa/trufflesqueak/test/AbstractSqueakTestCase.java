@@ -16,7 +16,7 @@ import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.model.MethodContextObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.TopLevelContextNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -151,7 +151,7 @@ public abstract class AbstractSqueakTestCase extends TestCase {
 
     protected TopLevelContextNode createContext(CompiledCodeObject code, Object receiver, Object[] arguments) {
         // always use large instance size and large frame size for testing
-        MethodContextObject testContext = MethodContextObject.createWriteableContextObject(code.image, 50 + CONTEXT.LARGE_FRAMESIZE);
+        ContextObject testContext = ContextObject.create(code.image, 50 + CONTEXT.LARGE_FRAMESIZE);
         testContext.atput0(CONTEXT.METHOD, code);
         testContext.atput0(CONTEXT.INSTRUCTION_POINTER, testContext.getCodeObject().getInitialPC());
         testContext.atput0(CONTEXT.RECEIVER, receiver);

@@ -205,7 +205,7 @@ public class ClassObject extends AbstractPointersObject {
                 return new ListObject(image, this, size);
             case 3: // mixed indexable and named pointers
                 if (this == image.methodContextClass) {
-                    return MethodContextObject.createWriteableContextObject(image, size);
+                    return ContextObject.create(image, size);
                 } else if (this.getSqClass() == image.blockClosureClass) {
                     return new BlockClosureObject(image); // TODO: verify this is actually used
                 } else {

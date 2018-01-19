@@ -11,7 +11,6 @@ import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
-import de.hpi.swa.trufflesqueak.model.MethodContextObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
@@ -39,12 +38,6 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
             return receiver.at0(index - 1 + receiver.instsize());
         }
 
-        @Specialization
-        protected Object at(MethodContextObject receiver, int index) {
-            // MethodContext>>tempAt:
-            return receiver.atTemp(index - 1);
-        }
-
         @Override
         @Specialization
         protected Object at(BaseSqueakObject receiver, int index) {
@@ -63,13 +56,6 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected Object atput(AbstractPointersObject receiver, int index, Object value) {
             receiver.atput0(index - 1 + receiver.instsize(), value);
-            return value;
-        }
-
-        @Specialization
-        protected Object atput(MethodContextObject receiver, int index, Object value) {
-            // MethodContext>>tempAt:put:
-            receiver.atTempPut(index - 1, value);
             return value;
         }
 

@@ -6,7 +6,7 @@ import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.MethodContextObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 /**
@@ -24,7 +24,7 @@ public abstract class SqueakNodeWithCode extends SqueakNode {
         return FrameUtil.getObjectSafe(frame, code.thisContextSlot) == null;
     }
 
-    protected MethodContextObject getContext(VirtualFrame frame) {
+    protected ContextObject getContext(VirtualFrame frame) {
         return FrameAccess.getContext(frame, code.thisContextSlot);
     }
 }

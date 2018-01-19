@@ -19,7 +19,7 @@ import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
-import de.hpi.swa.trufflesqueak.model.MethodContextObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
@@ -149,7 +149,7 @@ public class SqueakImageContext {
 
     public CallTarget getActiveContext() {
         PointersObject activeProcess = getActiveProcessNode.executeGet();
-        MethodContextObject activeContext = (MethodContextObject) activeProcess.at0(PROCESS.SUSPENDED_CONTEXT);
+        ContextObject activeContext = (ContextObject) activeProcess.at0(PROCESS.SUSPENDED_CONTEXT);
         activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, nil);
         output.println(String.format("Resuming active context for %s...", activeContext.at0(CONTEXT.METHOD)));
         return Truffle.getRuntime().createCallTarget(TopLevelContextNode.create(language, activeContext));
@@ -163,7 +163,7 @@ public class SqueakImageContext {
         if (lookupResult == null) {
             throw new RuntimeException(String.format("%s >> %s could not be found!", receiver, selector));
         }
-        MethodContextObject customContext = MethodContextObject.createWriteableContextObject(this, lookupResult.frameSize());
+        ContextObject customContext = ContextObject.create(this, lookupResult.frameSize());
         customContext.atput0(CONTEXT.METHOD, lookupResult);
         customContext.atput0(CONTEXT.INSTRUCTION_POINTER, customContext.getCodeObject().getInitialPC());
         customContext.atput0(CONTEXT.RECEIVER, receiver);

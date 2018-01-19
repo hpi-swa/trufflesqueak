@@ -9,7 +9,7 @@ import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.model.MethodContextObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.SendSelectorNode;
 import de.hpi.swa.trufflesqueak.nodes.context.TemporaryReadNode;
@@ -45,12 +45,12 @@ public abstract class AboutToReturnNode extends AbstractContextNode {
 
     @Specialization(guards = {"context == null"})
     protected void doAboutToReturnVirtualized(VirtualFrame frame, NonLocalReturn nlr,
-                    @Cached("getContext(frame)") MethodContextObject context) {
+                    @Cached("getContext(frame)") ContextObject context) {
         System.out.println("wooot");
         activateBlockAndTerminate(frame, context);
     }
 
-    private void activateBlockAndTerminate(VirtualFrame frame, MethodContextObject context) {
+    private void activateBlockAndTerminate(VirtualFrame frame, ContextObject context) {
         if (completeTempReadNode.executeGeneric(frame) == code.image.nil) {
             completeTempWriteNode.executeWrite(frame, code.image.sqTrue);
             BlockClosureObject block = (BlockClosureObject) blockArgumentNode.executeGeneric(frame);
@@ -70,7 +70,7 @@ public abstract class AboutToReturnNode extends AbstractContextNode {
 
     @Specialization(guards = {"context != null"})
     protected void doAboutToReturn(VirtualFrame frame, NonLocalReturn nlr,
-                    @Cached("getContext(frame)") MethodContextObject context) {
+                    @Cached("getContext(frame)") ContextObject context) {
         pushNode.executeWrite(frame, nlr.getTargetContext(code.image));
         pushNode.executeWrite(frame, nlr.getReturnValue());
         pushNode.executeWrite(frame, context);

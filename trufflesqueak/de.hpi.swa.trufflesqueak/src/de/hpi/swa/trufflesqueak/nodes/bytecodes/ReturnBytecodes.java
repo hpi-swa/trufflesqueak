@@ -8,7 +8,7 @@ import de.hpi.swa.trufflesqueak.exceptions.Returns.LocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.MethodContextObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnConstantNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnReceiverNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnTopFromBlockNodeGen;
@@ -27,7 +27,7 @@ public final class ReturnBytecodes {
 
         protected boolean isLocalReturn(VirtualFrame frame) {
             boolean hasNoClosure = FrameAccess.getClosure(frame) == null;
-            MethodContextObject context = FrameAccess.getContext(frame, code.thisContextSlot);
+            ContextObject context = FrameAccess.getContext(frame, code.thisContextSlot);
             if (context != null) {
                 return hasNoClosure && !context.isDirty();
             } else {
@@ -43,7 +43,7 @@ public final class ReturnBytecodes {
         @Specialization(guards = "!isLocalReturn(frame)")
         protected Object executeNonLocalReturn(VirtualFrame frame) {
             BlockClosureObject block = FrameAccess.getClosure(frame);
-            MethodContextObject targetContext = block.getOuterContextOrNull();
+            ContextObject targetContext = block.getOuterContextOrNull();
             throw new NonLocalReturn(getReturnValue(frame), block.getFrameMarker(), targetContext);
         }
 
@@ -110,7 +110,7 @@ public final class ReturnBytecodes {
 
         @Override
         protected boolean isLocalReturn(VirtualFrame frame) {
-            MethodContextObject context = FrameAccess.getContext(frame, code.thisContextSlot);
+            ContextObject context = FrameAccess.getContext(frame, code.thisContextSlot);
             return context != null ? !context.isDirty() : true;
         }
 

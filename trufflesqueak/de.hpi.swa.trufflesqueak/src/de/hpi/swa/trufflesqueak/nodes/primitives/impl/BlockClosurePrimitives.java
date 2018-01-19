@@ -8,11 +8,8 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
@@ -20,7 +17,7 @@ import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
-import de.hpi.swa.trufflesqueak.model.MethodContextObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.nodes.BlockActivationNode;
 import de.hpi.swa.trufflesqueak.nodes.BlockActivationNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -53,11 +50,11 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
          * stack. Make previousContext my sender.
          */
         @Specialization
-        protected Object doTerminate(MethodContextObject receiver, MethodContextObject previousContext) {
+        protected Object doTerminate(ContextObject receiver, ContextObject previousContext) {
             if (hasSender(receiver, previousContext)) {
-                MethodContextObject currentContext = receiver.getSender();
+                ContextObject currentContext = receiver.getSender();
                 while (!currentContext.equals(previousContext)) {
-                    MethodContextObject sendingContext = currentContext.getSender();
+                    ContextObject sendingContext = currentContext.getSender();
                     currentContext.terminate();
                     currentContext = sendingContext;
                 }
@@ -69,11 +66,11 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         /*
          * Answer whether the receiver is strictly above context on the stack.
          */
-        private static boolean hasSender(MethodContextObject context, MethodContextObject previousContext) {
+        private static boolean hasSender(ContextObject context, ContextObject previousContext) {
             if (context.equals(previousContext)) {
                 return false;
             }
-            MethodContextObject sender = context.getSender();
+            ContextObject sender = context.getSender();
             while (sender != null) {
                 if (sender.equals(previousContext)) {
                     return true;
@@ -95,30 +92,32 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
         @Specialization
         @TruffleBoundary
-        Object findNext(MethodContextObject receiver) {
-            MethodContextObject handlerContext = Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<MethodContextObject>() {
-                final Object marker = receiver.getFrameMarker();
-
-                @Override
-                public MethodContextObject visitFrame(FrameInstance frameInstance) {
-                    Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
-                    if (current.getArguments().length < FrameAccess.RCVR_AND_ARGS_START) {
-                        return null;
-                    }
-                    FrameDescriptor frameDescriptor = current.getFrameDescriptor();
-                    CompiledCodeObject frameMethod = FrameAccess.getMethod(current);
-                    FrameSlot markerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.MARKER);
-                    if (markerSlot != null) {
-                        Object frameMarker = FrameUtil.getObjectSafe(current, markerSlot);
-                        if (frameMarker == marker) {
-                            if (frameMethod.primitiveIndex() == EXCEPTION_HANDLER_MARKER) {
-                                return MethodContextObject.createReadOnlyContextObject(code.image, current);
-                            }
-                        }
-                    }
-                    return null;
-                }
-            });
+        Object findNext(ContextObject receiver) {
+            ContextObject handlerContext = null;
+// MethodContextObject handlerContext = Truffle.getRuntime().iterateFrames(new
+// FrameInstanceVisitor<MethodContextObject>() {
+// final Object marker = receiver.getFrameMarker();
+//
+// @Override
+// public MethodContextObject visitFrame(FrameInstance frameInstance) {
+// Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
+// if (current.getArguments().length < FrameAccess.RCVR_AND_ARGS_START) {
+// return null;
+// }
+// FrameDescriptor frameDescriptor = current.getFrameDescriptor();
+// CompiledCodeObject frameMethod = FrameAccess.getMethod(current);
+// FrameSlot markerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.MARKER);
+// if (markerSlot != null) {
+// Object frameMarker = FrameUtil.getObjectSafe(current, markerSlot);
+// if (frameMarker == marker) {
+// if (frameMethod.primitiveIndex() == EXCEPTION_HANDLER_MARKER) {
+// return MethodContextObject.createReadOnlyContextObject(code.image, current);
+// }
+// }
+// }
+// return null;
+// }
+// });
             if (handlerContext == null) {
                 printException();
             }
@@ -132,6 +131,9 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                 @Override
                 public Object visitFrame(FrameInstance frameInstance) {
                     Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
+                    if (current.getArguments().length < FrameAccess.RCVR_AND_ARGS_START) {
+                        return null;
+                    }
                     CompiledCodeObject method = FrameAccess.getMethod(current);
                     code.image.getOutput().println(method);
                     for (Object arg : current.getArguments()) {
@@ -251,7 +253,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         @Specialization
-        int doSize(MethodContextObject receiver) {
+        int doSize(ContextObject receiver) {
             return receiver.varsize();
         }
     }

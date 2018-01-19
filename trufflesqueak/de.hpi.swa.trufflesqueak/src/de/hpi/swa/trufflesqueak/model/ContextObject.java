@@ -1,6 +1,5 @@
 package de.hpi.swa.trufflesqueak.model;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
@@ -9,57 +8,69 @@ import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualContextModification;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
-import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
+import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
-public class MethodContextObject extends BaseSqueakObject {
-    @CompilationFinal private ActualContextObject actualContext;
+public class ContextObject extends AbstractPointersObject {
+    @CompilationFinal private FrameDescriptor frameDescriptor;
+    @CompilationFinal private FrameMarker frameMarker;
     private boolean isDirty;
 
-    public static MethodContextObject createReadOnlyContextObject(SqueakImageContext img, Frame virtualFrame) {
+    public static ContextObject create(SqueakImageContext img, Frame virtualFrame) {
         MaterializedFrame frame = virtualFrame.materialize();
         FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
         FrameSlot thisContextSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.THIS_CONTEXT);
-        MethodContextObject contextObject = (MethodContextObject) FrameUtil.getObjectSafe(frame, thisContextSlot);
+        ContextObject contextObject = (ContextObject) FrameUtil.getObjectSafe(frame, thisContextSlot);
         if (contextObject == null) {
-            contextObject = new MethodContextObject(img, new ReadOnlyContextObject(img, frame));
+            contextObject = new ContextObject(img, frame);
             // do not attach ReadOnlyContextObject to thisContextSlot to avoid becoming non-virtualized
         }
         return contextObject;
     }
 
-    public static MethodContextObject createWriteableContextObject(SqueakImageContext img) {
-        return new MethodContextObject(img, new WriteableContextObject(img));
+    public static ContextObject create(SqueakImageContext img) {
+        return new ContextObject(img);
     }
 
-    public static MethodContextObject createWriteableContextObject(SqueakImageContext img, int size) {
-        return new MethodContextObject(img, new WriteableContextObject(img, size));
+    public static ContextObject create(SqueakImageContext img, int size) {
+        return new ContextObject(img, size);
     }
 
-    private MethodContextObject(SqueakImageContext img, ActualContextObject context) {
+    private ContextObject(SqueakImageContext img, Frame frame) {
         super(img);
-        actualContext = context;
+        frameDescriptor = frame.getFrameDescriptor();
+        CompiledCodeObject method = FrameAccess.getMethod(frame);
+        BlockClosureObject closure = FrameAccess.getClosure(frame);
+        ContextObject sender = FrameAccess.getSender(frame);
+        FrameSlot stackPointerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.STACK_POINTER);
+
+        pointers = new Object[CONTEXT.TEMP_FRAME_START + method.frameSize()];
+        setSender(sender == null ? image.nil : sender);
+        atput0(CONTEXT.INSTRUCTION_POINTER, method.getInitialPC());
+        atput0(CONTEXT.STACKPOINTER, FrameUtil.getIntSafe(frame, stackPointerSlot));
+        atput0(CONTEXT.METHOD, method);
+        atput0(CONTEXT.CLOSURE_OR_NIL, closure == null ? image.nil : closure);
+        atput0(CONTEXT.RECEIVER, FrameAccess.getReceiver(frame));
     }
 
-    @Override
-    public void fillin(SqueakImageChunk chunk) {
-        assert actualContext instanceof WriteableContextObject;
-        actualContext.fillin(chunk);
+    private ContextObject(SqueakImageContext img) {
+        super(img);
+    }
+
+    private ContextObject(SqueakImageContext img, int size) {
+        super(img);
+        pointers = new Object[CONTEXT.TEMP_FRAME_START + size];
+    }
+
+    private ContextObject(ContextObject original) {
+        super(original.image);
+        pointers = original.pointers;
     }
 
     @Override
     public ClassObject getSqClass() {
         return image.methodContextClass;
-    }
-
-    @Override
-    public Object at0(int index) {
-        if (index == CONTEXT.SENDER_OR_NIL) {
-            return getSender();
-        }
-        return actualContext.at0(index);
     }
 
     public void terminate() {
@@ -72,30 +83,12 @@ public class MethodContextObject extends BaseSqueakObject {
         if (index == CONTEXT.SENDER_OR_NIL) {
             isDirty = true;
         }
-        try {
-            actualContext.atContextPut0(index, value);
-        } catch (NonVirtualContextModification e) {
-            beWriteable();
-            actualContext.atput0(index, value);
-        }
-    }
-
-    private void beWriteable() {
-        if (actualContext instanceof ReadOnlyContextObject) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            actualContext = new WriteableContextObject(image, (ReadOnlyContextObject) actualContext);
-        }
-    }
-
-    @Override
-    public int size() {
-        return actualContext.size();
+        super.atput0(index, value);
     }
 
     @Override
     public int instsize() {
-        // the receiver is part of the "variable part", because it is on the stack in Squeak
-        return CONTEXT.TEMP_FRAME_START - 1;
+        return CONTEXT.TEMP_FRAME_START;
     }
 
     public CompiledCodeObject getCodeObject() {
@@ -103,29 +96,29 @@ public class MethodContextObject extends BaseSqueakObject {
         if (closure != null) {
             return closure.getCompiledBlock();
         }
-        return (CompiledCodeObject) at0(CONTEXT.METHOD);
+        return getMethod();
     }
 
-    public Object getFrameMarker() {
-        return actualContext.getFrameMarker();
+    public CompiledCodeObject getMethod() {
+        return (CompiledCodeObject) at0(CONTEXT.METHOD);
     }
 
     @Override
     public BaseSqueakObject shallowCopy() {
-        return actualContext.shallowCopy();
+        return new ContextObject(this);
     }
 
     public Object[] getReceiverAndArguments() {
         int numArgs = getCodeObject().getNumArgsAndCopiedValues();
         Object[] arguments = new Object[1 + numArgs];
-        Object method = at0(CONTEXT.METHOD);
-        if (method instanceof BlockClosureObject) {
-            arguments[0] = ((BlockClosureObject) method).getReceiver();
+        BlockClosureObject closure = getClosure();
+        if (closure != null) {
+            arguments[0] = closure.getReceiver();
         } else {
-            arguments[0] = actualContext.at0(CONTEXT.RECEIVER);
+            arguments[0] = at0(CONTEXT.RECEIVER);
         }
         for (int i = 0; i < numArgs; i++) {
-            arguments[1 + i] = actualContext.at0(CONTEXT.TEMP_FRAME_START + i);
+            arguments[1 + i] = at0(CONTEXT.TEMP_FRAME_START + i);
         }
         return arguments;
     }
@@ -134,15 +127,15 @@ public class MethodContextObject extends BaseSqueakObject {
         return isDirty;
     }
 
-    public MethodContextObject getSender() {
-        Object sender = actualContext.at0(CONTEXT.SENDER_OR_NIL);
-        if (sender instanceof MethodContextObject) {
-            return (MethodContextObject) sender;
+    public ContextObject getSender() {
+        Object sender = at0(CONTEXT.SENDER_OR_NIL);
+        if (sender instanceof ContextObject) {
+            return (ContextObject) sender;
         } else if (sender instanceof NilObject) {
             return null;
         } else if (sender == null) { // null indicates virtual frame, reconstructing contexts...
             Frame frame = FrameAccess.currentMaterializableFrame();
-            MethodContextObject reconstructedSender = FrameAccess.findSenderForMarker(frame, getCodeObject().markerSlot, image);
+            ContextObject reconstructedSender = FrameAccess.findSenderForMarker(frame, getCodeObject().markerSlot, image);
             if (reconstructedSender == null) {
                 throw new RuntimeException("Unable to find sender");
             }
@@ -156,7 +149,7 @@ public class MethodContextObject extends BaseSqueakObject {
      * Set sender without flagging context as dirty.
      */
     public void setSender(Object sender) {
-        actualContext.atput0(CONTEXT.SENDER_OR_NIL, sender);
+        super.atput0(CONTEXT.SENDER_OR_NIL, sender);
     }
 
     public void push(Object value) {
@@ -178,11 +171,11 @@ public class MethodContextObject extends BaseSqueakObject {
 
     @Override
     public String toString() {
-        return actualContext.toString();
+        return String.format("Context for %s", at0(CONTEXT.METHOD));
     }
 
-    public boolean hasSameMethodObject(MethodContextObject obj) {
-        return actualContext.at0(CONTEXT.METHOD).equals(obj.actualContext.at0(CONTEXT.METHOD));
+    public boolean hasSameMethodObject(ContextObject obj) {
+        return getMethod().equals(obj.getMethod());
     }
 
     public Object top() {

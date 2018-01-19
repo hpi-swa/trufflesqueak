@@ -15,7 +15,6 @@ import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
-import de.hpi.swa.trufflesqueak.model.ReadOnlyContextObject;
 
 @TypeSystem({boolean.class,
                 char.class,
@@ -26,7 +25,6 @@ import de.hpi.swa.trufflesqueak.model.ReadOnlyContextObject;
                 String.class,
                 LargeIntegerObject.class,
                 ClassObject.class,
-                ReadOnlyContextObject.class,
                 ListObject.class,
                 PointersObject.class,
                 BlockClosureObject.class,

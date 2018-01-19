@@ -8,7 +8,7 @@ import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.MethodContextObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
@@ -23,8 +23,8 @@ public class GetOrCreateMethodContextNode extends Node {
         this.code = code;
     }
 
-    public MethodContextObject executeGetMethodContext(VirtualFrame frame, int pc) {
-        MethodContextObject context = (MethodContextObject) FrameUtil.getObjectSafe(frame, code.thisContextSlot);
+    public ContextObject executeGetMethodContext(VirtualFrame frame, int pc) {
+        ContextObject context = (ContextObject) FrameUtil.getObjectSafe(frame, code.thisContextSlot);
         if (context == null) {
             context = createContext(frame, pc);
             frame.setObject(code.thisContextSlot, context);
@@ -32,10 +32,10 @@ public class GetOrCreateMethodContextNode extends Node {
         return context;
     }
 
-    private MethodContextObject createContext(VirtualFrame frame, int pc) {
+    private ContextObject createContext(VirtualFrame frame, int pc) {
         CompilerDirectives.transferToInterpreter();
         code.invalidateNoContextNeededAssumption();
-        MethodContextObject context = MethodContextObject.createWriteableContextObject(code.image, code.frameSize());
+        ContextObject context = ContextObject.create(code.image, code.frameSize());
         context.atput0(CONTEXT.METHOD, code);
         context.setSender(FrameAccess.getSender(frame));
         context.atput0(CONTEXT.INSTRUCTION_POINTER, pc);

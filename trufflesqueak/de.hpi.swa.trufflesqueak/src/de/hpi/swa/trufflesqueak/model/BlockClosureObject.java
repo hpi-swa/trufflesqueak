@@ -23,7 +23,7 @@ public class BlockClosureObject extends BaseSqueakObject {
     @CompilationFinal private Object receiver;
     @CompilationFinal(dimensions = 1) private Object[] copied;
     @CompilationFinal private FrameMarker frameMarker;
-    @CompilationFinal private MethodContextObject outerContext;
+    @CompilationFinal private ContextObject outerContext;
     @CompilationFinal private CompiledBlockObject block;
     @CompilationFinal private int pc = -1;
     @CompilationFinal private int numArgs = -1;
@@ -58,7 +58,7 @@ public class BlockClosureObject extends BaseSqueakObject {
     }
 
     @TruffleBoundary
-    private MethodContextObject getOrPrepareContext() {
+    private ContextObject getOrPrepareContext() {
         if (outerContext == null) {
             outerContext = FrameAccess.findContextForMarker(frameMarker, image);
             if (outerContext == null) {
@@ -100,7 +100,7 @@ public class BlockClosureObject extends BaseSqueakObject {
     public void atput0(int i, Object obj) {
         switch (i) {
             case BLOCK_CLOSURE.OUTER_CONTEXT:
-                outerContext = (MethodContextObject) obj;
+                outerContext = (ContextObject) obj;
                 break;
             case BLOCK_CLOSURE.INITIAL_PC:
                 pc = (int) obj;
@@ -203,7 +203,7 @@ public class BlockClosureObject extends BaseSqueakObject {
         return frameMarker;
     }
 
-    public MethodContextObject getOuterContextOrNull() {
+    public ContextObject getOuterContextOrNull() {
         return outerContext;
     }
 

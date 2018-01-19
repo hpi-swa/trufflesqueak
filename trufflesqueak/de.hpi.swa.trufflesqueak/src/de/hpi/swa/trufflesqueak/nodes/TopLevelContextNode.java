@@ -14,18 +14,18 @@ import de.hpi.swa.trufflesqueak.exceptions.Returns.TopLevelReturn;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakQuit;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.MethodContextObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public class TopLevelContextNode extends RootNode {
     @CompilationFinal private final SqueakImageContext image;
-    @CompilationFinal private final MethodContextObject initialContext;
+    @CompilationFinal private final ContextObject initialContext;
 
-    public static TopLevelContextNode create(SqueakLanguage language, MethodContextObject context) {
+    public static TopLevelContextNode create(SqueakLanguage language, ContextObject context) {
         return new TopLevelContextNode(language, context, context.getCodeObject());
     }
 
-    private TopLevelContextNode(SqueakLanguage language, MethodContextObject context, CompiledCodeObject code) {
+    private TopLevelContextNode(SqueakLanguage language, ContextObject context, CompiledCodeObject code) {
         super(language, code.getFrameDescriptor());
         this.image = code.image;
         this.initialContext = context;
@@ -47,9 +47,9 @@ public class TopLevelContextNode extends RootNode {
     }
 
     public void executeLoop() {
-        MethodContextObject activeContext = initialContext;
+        ContextObject activeContext = initialContext;
         while (true) {
-            MethodContextObject sender = activeContext.getSender();
+            ContextObject sender = activeContext.getSender();
             try {
                 CompiledCodeObject code = activeContext.getCodeObject();
                 Object[] frameArgs = activeContext.getReceiverAndArguments();
@@ -61,7 +61,7 @@ public class TopLevelContextNode extends RootNode {
             } catch (ProcessSwitch ps) {
                 activeContext = ps.getNewContext();
             } catch (NonLocalReturn nlr) {
-                MethodContextObject target = nlr.hasArrivedAtTargetContext() ? sender : nlr.getTargetContext(image);
+                ContextObject target = nlr.hasArrivedAtTargetContext() ? sender : nlr.getTargetContext(image);
                 activeContext = unwindContextChain(sender, target, nlr.getReturnValue());
             } catch (NonVirtualReturn nvr) {
                 activeContext = unwindContextChain(nvr.getCurrentContext(), nvr.getTargetContext(),
@@ -70,16 +70,16 @@ public class TopLevelContextNode extends RootNode {
         }
     }
 
-    private static MethodContextObject unwindContextChain(MethodContextObject startContext, MethodContextObject targetContext, Object returnValue) {
+    private static ContextObject unwindContextChain(ContextObject startContext, ContextObject targetContext, Object returnValue) {
         if (startContext == null) {
             throw new TopLevelReturn(returnValue);
         }
-        MethodContextObject context = startContext;
+        ContextObject context = startContext;
         while (context != targetContext) {
             if (context == null) {
                 throw new RuntimeException("Unable to unwind context chain");
             }
-            MethodContextObject sender = context.getSender();
+            ContextObject sender = context.getSender();
             context.terminate();
             context = sender;
         }

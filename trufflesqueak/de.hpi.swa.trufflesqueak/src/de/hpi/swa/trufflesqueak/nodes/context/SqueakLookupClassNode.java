@@ -10,7 +10,7 @@ import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.MethodContextObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.SqueakObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
 
@@ -79,7 +79,7 @@ public abstract class SqueakLookupClassNode extends Node {
     }
 
     @Specialization
-    protected ClassObject squeakClass(@SuppressWarnings("unused") MethodContextObject ch) {
+    protected ClassObject squeakClass(@SuppressWarnings("unused") ContextObject ch) {
         return code.image.methodContextClass;
     }
 

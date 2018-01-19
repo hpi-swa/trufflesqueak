@@ -5,7 +5,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
-import de.hpi.swa.trufflesqueak.model.MethodContextObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -23,13 +23,13 @@ public class TransferToNode extends AbstractProcessNode {
     }
 
     public void executeTransferTo(VirtualFrame frame, BaseSqueakObject activeProcess, BaseSqueakObject newProcess) {
-        MethodContextObject activeContext = MethodContextObject.createReadOnlyContextObject(image, frame);
+        ContextObject activeContext = ContextObject.create(image, frame);
         assert activeContext != null;
         // Record a process to be awakened on the next interpreter cycle.
         PointersObject scheduler = getSchedulerNode.executeGet();
         scheduler.atput0(PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
         activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, activeContext);
-        MethodContextObject newActiveContext = (MethodContextObject) newProcess.at0(PROCESS.SUSPENDED_CONTEXT);
+        ContextObject newActiveContext = (ContextObject) newProcess.at0(PROCESS.SUSPENDED_CONTEXT);
         newProcess.atput0(PROCESS.SUSPENDED_CONTEXT, image.nil);
         throw new ProcessSwitch(newActiveContext);
     }

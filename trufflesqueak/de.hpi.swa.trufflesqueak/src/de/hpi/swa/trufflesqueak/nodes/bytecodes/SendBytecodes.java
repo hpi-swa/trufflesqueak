@@ -13,7 +13,7 @@ import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.model.MethodContextObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.model.SpecialSelectorObject;
 import de.hpi.swa.trufflesqueak.nodes.DispatchNode;
@@ -122,7 +122,7 @@ public final class SendBytecodes {
             try {
                 Object result = primitiveNode.executeGeneric(frame);
                 // Success! Manipulate the sp to quick pop receiver and arguments and push result.
-                MethodContextObject context = getContext(frame);
+                ContextObject context = getContext(frame);
                 int spOffset = 1 + specialSelector.getNumArguments();
                 if (context == null) {
                     frame.setInt(code.stackPointerSlot, frame.getInt(code.stackPointerSlot) - spOffset);
