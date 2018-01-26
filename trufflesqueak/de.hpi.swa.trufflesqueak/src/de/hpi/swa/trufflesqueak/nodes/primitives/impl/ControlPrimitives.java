@@ -15,6 +15,7 @@ import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.MUTEX;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SEMAPHORE;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
@@ -30,6 +31,7 @@ import de.hpi.swa.trufflesqueak.nodes.context.ReceiverAndArgumentsNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
@@ -37,11 +39,12 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitivesFactory.PrimQuickReturnReceiverVariableNodeFactory;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitivesFactory.PrimitiveFailedNodeFactory;
 import de.hpi.swa.trufflesqueak.nodes.process.GetActiveProcessNode;
+import de.hpi.swa.trufflesqueak.nodes.process.IsEmptyListNode;
 import de.hpi.swa.trufflesqueak.nodes.process.LinkProcessToListNode;
+import de.hpi.swa.trufflesqueak.nodes.process.RemoveFirstLinkOfListNode;
 import de.hpi.swa.trufflesqueak.nodes.process.RemoveProcessFromListNode;
 import de.hpi.swa.trufflesqueak.nodes.process.ResumeProcessNode;
-import de.hpi.swa.trufflesqueak.nodes.process.TransferToNode;
-import de.hpi.swa.trufflesqueak.nodes.process.WakerHighestPriorityNode;
+import de.hpi.swa.trufflesqueak.nodes.process.WakeHighestPriorityNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
@@ -174,16 +177,14 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 86)
     protected static abstract class PrimWaitNode extends AbstractPrimitiveNode {
-        @Child private WakerHighestPriorityNode wakerHighestPriorityNode;
+        @Child private WakeHighestPriorityNode wakeHighestPriorityNode;
         @Child private LinkProcessToListNode linkProcessToListNode;
         @Child private GetActiveProcessNode getActiveProcessNode;
-        @Child private TransferToNode transferToNode;
 
         protected PrimWaitNode(CompiledMethodObject method) {
             super(method);
             linkProcessToListNode = LinkProcessToListNode.create(method.image);
-            wakerHighestPriorityNode = WakerHighestPriorityNode.create(method.image);
-            transferToNode = TransferToNode.create(method.image);
+            wakeHighestPriorityNode = WakeHighestPriorityNode.create(method.image);
             getActiveProcessNode = GetActiveProcessNode.create(method.image);
         }
 
@@ -199,7 +200,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             else {
                 PointersObject activeProcess = getActiveProcessNode.executeGet();
                 linkProcessToListNode.executeLink(activeProcess, receiver);
-                transferToNode.executeTransferTo(frame, activeProcess, wakerHighestPriorityNode.executeWake());
+                wakeHighestPriorityNode.executeWake(frame);
             }
             return receiver;
         }
@@ -225,16 +226,14 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 88)
     protected static abstract class PrimSuspendNode extends AbstractPrimitiveNode {
-        @Child private WakerHighestPriorityNode wakerHighestPriorityNode;
+        @Child private WakeHighestPriorityNode wakeHighestPriorityNode;
         @Child private RemoveProcessFromListNode removeProcessNode;
         @Child private GetActiveProcessNode getActiveProcessNode;
-        @Child private TransferToNode transferToNode;
 
         protected PrimSuspendNode(CompiledMethodObject method) {
             super(method);
             removeProcessNode = RemoveProcessFromListNode.create(method.image);
-            wakerHighestPriorityNode = WakerHighestPriorityNode.create(method.image);
-            transferToNode = TransferToNode.create(method.image);
+            wakeHighestPriorityNode = WakeHighestPriorityNode.create(method.image);
             getActiveProcessNode = GetActiveProcessNode.create(method.image);
         }
 
@@ -243,7 +242,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             PointersObject activeProcess = getActiveProcessNode.executeGet();
             if (receiver.equals(activeProcess)) {
                 // popNandPush(1, code.image.nil);
-                transferToNode.executeTransferTo(frame, activeProcess, wakerHighestPriorityNode.executeWake());
+                wakeHighestPriorityNode.executeWake(frame);
             } else {
                 BaseSqueakObject oldList = (BaseSqueakObject) receiver.at0(PROCESS.LIST);
                 if (oldList == code.image.nil) {
@@ -417,7 +416,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        Object get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
+        protected Object get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
             System.gc();
             return code.image.wrap(Runtime.getRuntime().freeMemory());
         }
