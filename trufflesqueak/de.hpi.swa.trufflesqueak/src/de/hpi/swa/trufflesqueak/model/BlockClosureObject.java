@@ -189,7 +189,7 @@ public class BlockClosureObject extends BaseSqueakObject {
                         objects.length +
                         copied.length];
         arguments[FrameAccess.METHOD] = block;
-        arguments[FrameAccess.SENDER_OR_NULL] = FrameAccess.getSender(frame);
+        arguments[FrameAccess.SENDER_OR_NULL] = FrameAccess.getContext(frame, block);
         arguments[FrameAccess.CLOSURE_OR_NULL] = this;
         arguments[FrameAccess.RCVR_AND_ARGS_START] = getReceiver();
         for (int i = 0; i < objects.length; i++) {
