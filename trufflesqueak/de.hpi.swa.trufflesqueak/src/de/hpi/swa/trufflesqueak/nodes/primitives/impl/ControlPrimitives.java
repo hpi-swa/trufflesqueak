@@ -423,6 +423,91 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(index = 185)
+    protected static abstract class PrimExitCriticalSectionNode extends AbstractPrimitiveNode {
+        @Child private IsEmptyListNode isEmptyListNode;
+        @Child private RemoveFirstLinkOfListNode removeFirstLinkOfListNode;
+        @Child private ResumeProcessNode resumeProcessNode;
+
+        public PrimExitCriticalSectionNode(CompiledMethodObject method) {
+            super(method);
+            isEmptyListNode = IsEmptyListNode.create(method.image);
+            removeFirstLinkOfListNode = RemoveFirstLinkOfListNode.create(method.image);
+            resumeProcessNode = ResumeProcessNode.create(method.image);
+        }
+
+        @Specialization
+        protected Object doExit(VirtualFrame frame, PointersObject rcvrMutex) {
+            if (isEmptyListNode.executeIsEmpty(rcvrMutex)) {
+                rcvrMutex.atput0(MUTEX.OWNER, code.image.nil);
+            } else {
+                BaseSqueakObject owningProcess = removeFirstLinkOfListNode.executeRemove(rcvrMutex);
+                rcvrMutex.atput0(MUTEX.OWNER, owningProcess);
+                resumeProcessNode.executeResume(frame, owningProcess);
+            }
+            return rcvrMutex;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 186)
+    protected static abstract class PrimEnterCriticalSectionNode extends AbstractPrimitiveNode {
+        @Child private GetActiveProcessNode getActiveProcessNode;
+        @Child private LinkProcessToListNode linkProcessToListNode;
+        @Child private WakeHighestPriorityNode wakeHighestPriorityNode;
+        @Child private PushStackNode pushStackNode;
+
+        public PrimEnterCriticalSectionNode(CompiledMethodObject method) {
+            super(method);
+            getActiveProcessNode = GetActiveProcessNode.create(method.image);
+            linkProcessToListNode = LinkProcessToListNode.create(method.image);
+            wakeHighestPriorityNode = WakeHighestPriorityNode.create(method.image);
+            pushStackNode = PushStackNode.create(method);
+        }
+
+        @Specialization
+        protected Object doEnter(VirtualFrame frame, PointersObject rcvrMutex) {
+            PointersObject activeProcess = getActiveProcessNode.executeGet();
+            Object owner = rcvrMutex.at0(MUTEX.OWNER);
+            if (owner == code.image.nil) {
+                rcvrMutex.atput0(MUTEX.OWNER, activeProcess);
+                return code.image.sqFalse;
+            } else if (owner == activeProcess) {
+                return code.image.sqTrue;
+            } else {
+                pushStackNode.executeWrite(frame, code.image.sqFalse);
+                linkProcessToListNode.executeLink(activeProcess, rcvrMutex);
+                wakeHighestPriorityNode.executeWake(frame);
+                return null; // already pushed false to stack
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 187)
+    protected static abstract class PrimTestAndSetOwnershipOfCriticalSectionNode extends AbstractPrimitiveNode {
+        @Child private GetActiveProcessNode getActiveProcessNode;
+
+        public PrimTestAndSetOwnershipOfCriticalSectionNode(CompiledMethodObject method) {
+            super(method);
+            getActiveProcessNode = GetActiveProcessNode.create(method.image);
+        }
+
+        @Specialization
+        protected Object doTest(PointersObject rcvrMutex) {
+            PointersObject activeProcess = getActiveProcessNode.executeGet();
+            Object owner = rcvrMutex.at0(MUTEX.OWNER);
+            if (owner == code.image.nil) {
+                rcvrMutex.atput0(MUTEX.OWNER, activeProcess);
+                return code.image.sqFalse;
+            } else if (owner == activeProcess) {
+                return code.image.sqTrue;
+            }
+            return code.image.nil;
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(index = 188, variableArguments = true)
     protected static abstract class PrimExecuteMethodArgsArray extends AbstractPerformPrimitiveNode {
         @Child private DispatchNode dispatchNode = DispatchNode.create();
