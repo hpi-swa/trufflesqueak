@@ -1,12 +1,12 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.nodes.GetOrCreateMethodContextNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.context.LiteralConstantNode;
@@ -16,6 +16,7 @@ import de.hpi.swa.trufflesqueak.nodes.context.ReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.context.TemporaryReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PopNReversedStackNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
 public final class PushBytecodes {
@@ -80,12 +81,13 @@ public final class PushBytecodes {
 
         @Override
         public void executeVoid(VirtualFrame frame) {
-            FrameMarker frameMarker = (FrameMarker) FrameUtil.getObjectSafe(frame, code.markerSlot);
             Object receiver = receiverNode.executeGeneric(frame);
             Object[] copiedValues = (Object[]) popNReversedNode.executeGeneric(frame);
             int bytecodeOffset = index + numBytecodes;
             CompiledBlockObject block = new CompiledBlockObject(code, numArgs, numCopied, bytecodeOffset, blockSize);
-            pushNode.executeWrite(frame, new BlockClosureObject(frameMarker, block, receiver, copiedValues));
+            ContextObject thisContext = FrameAccess.getContext(frame, code);
+            FrameMarker frameMarker = FrameAccess.getFrameMarker(frame, code);
+            pushNode.executeWrite(frame, new BlockClosureObject(block, receiver, copiedValues, thisContext, frameMarker));
         }
 
         @Override

@@ -34,16 +34,18 @@ public class BlockClosureObject extends BaseSqueakObject {
         super(image);
     }
 
-    public BlockClosureObject(FrameMarker frameMarker, CompiledBlockObject compiledBlock, Object receiver, Object[] copied) {
+    public BlockClosureObject(CompiledBlockObject compiledBlock, Object receiver, Object[] copied, ContextObject outerContext, FrameMarker frameMarker) {
         super(compiledBlock.image);
+        assert frameMarker != null;
         this.block = compiledBlock;
+        this.outerContext = outerContext;
         this.frameMarker = frameMarker;
         this.receiver = receiver;
         this.copied = copied;
     }
 
     private BlockClosureObject(BlockClosureObject original) {
-        this(original.frameMarker, original.block, original.receiver, original.copied);
+        this(original.block, original.receiver, original.copied, original.outerContext, original.frameMarker);
         outerContext = original.outerContext;
     }
 
@@ -60,7 +62,7 @@ public class BlockClosureObject extends BaseSqueakObject {
     @TruffleBoundary
     private ContextObject getOrPrepareContext() {
         if (outerContext == null) {
-            outerContext = FrameAccess.findContextForMarker(frameMarker, image);
+            outerContext = FrameAccess.findSenderForMarker(frameMarker, image);
             if (outerContext == null) {
                 throw new RuntimeException("Unable to find context");
             }
@@ -203,8 +205,14 @@ public class BlockClosureObject extends BaseSqueakObject {
         return frameMarker;
     }
 
-    public ContextObject getOuterContextOrNull() {
-        return outerContext;
+    public ContextObject getHomeContext() {
+        ContextObject context = getOrPrepareContext();
+        BlockClosureObject closure = context.getClosure();
+        // recursively unpack closures until home context is reached
+        if (closure != null) {
+            return closure.getHomeContext();
+        }
+        return context;
     }
 
     @Override

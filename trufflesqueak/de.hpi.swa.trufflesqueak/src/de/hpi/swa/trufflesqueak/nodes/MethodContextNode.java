@@ -57,7 +57,7 @@ public class MethodContextNode extends Node {
             CompilerDirectives.transferToInterpreter();
             throw new RuntimeException("Method did not return");
         } catch (LocalReturn lr) {
-            context = FrameAccess.getContext(frame, code.thisContextSlot);
+            context = FrameAccess.getContext(frame, code);
             if (context != null && context.isDirty()) {
                 ContextObject sender = context.getSender();
                 terminateNode.executeTerminate(frame);
@@ -70,14 +70,15 @@ public class MethodContextNode extends Node {
             if (aboutToReturnNode != null && code.isUnwindMarked()) { // handle ensure: or ifCurtailed:
                 aboutToReturnNode.executeAboutToReturn(frame, nlr);
             }
-            context = FrameAccess.getContext(frame, code.thisContextSlot);
+            context = FrameAccess.getContext(frame, code);
             if (context != null && context.isDirty()) {
                 ContextObject sender = context.getSender();
                 terminateNode.executeTerminate(frame);
                 throw new NonVirtualReturn(nlr.getReturnValue(), nlr.getTargetContext(code.image), sender);
             } else {
                 terminateNode.executeTerminate(frame);
-                if (nlr.getTargetContext(code.image).hasSameMethodObject(context)) {
+                assert context != null; // currently assuming contexts are not virtualized
+                if (nlr.getTargetContext(code.image) == context) {
                     return nlr.getReturnValue();
                 } else {
                     throw nlr;
@@ -175,7 +176,7 @@ public class MethodContextNode extends Node {
     }
 
     private int initialPC(VirtualFrame frame) {
-        ContextObject context = FrameAccess.getContext(frame, code.thisContextSlot);
+        ContextObject context = FrameAccess.getContext(frame, code);
         if (context == null) {
             return 0; // start at the beginning
         }

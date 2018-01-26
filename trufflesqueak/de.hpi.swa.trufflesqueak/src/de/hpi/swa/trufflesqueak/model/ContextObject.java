@@ -79,7 +79,20 @@ public class ContextObject extends AbstractPointersObject {
     }
 
     @Override
+    public Object at0(int index) {
+        if (index == CONTEXT.SENDER_OR_NIL) {
+            ContextObject sender = getSender(); // sender might need to be reconstructed
+            if (sender == null) { // sender was nil
+                return image.nil;
+            }
+            return sender;
+        }
+        return super.at0(index);
+    }
+
+    @Override
     public void atput0(int index, Object value) {
+        assert value != null;
         if (index == CONTEXT.SENDER_OR_NIL) {
             isDirty = true;
         }
@@ -128,14 +141,13 @@ public class ContextObject extends AbstractPointersObject {
     }
 
     public ContextObject getSender() {
-        Object sender = at0(CONTEXT.SENDER_OR_NIL);
+        Object sender = super.at0(CONTEXT.SENDER_OR_NIL);
         if (sender instanceof ContextObject) {
             return (ContextObject) sender;
         } else if (sender instanceof NilObject) {
             return null;
         } else if (sender == null) { // null indicates virtual frame, reconstructing contexts...
-            Frame frame = FrameAccess.currentMaterializableFrame();
-            ContextObject reconstructedSender = FrameAccess.findSenderForMarker(frame, getCodeObject().markerSlot, image);
+            ContextObject reconstructedSender = FrameAccess.findSender(getCodeObject(), image);
             if (reconstructedSender == null) {
                 throw new RuntimeException("Unable to find sender");
             }
@@ -172,10 +184,6 @@ public class ContextObject extends AbstractPointersObject {
     @Override
     public String toString() {
         return String.format("Context for %s", at0(CONTEXT.METHOD));
-    }
-
-    public boolean hasSameMethodObject(ContextObject obj) {
-        return getMethod().equals(obj.getMethod());
     }
 
     public Object top() {
@@ -218,5 +226,9 @@ public class ContextObject extends AbstractPointersObject {
     public BlockClosureObject getClosure() {
         Object closureOrNil = at0(CONTEXT.CLOSURE_OR_NIL);
         return closureOrNil == image.nil ? null : (BlockClosureObject) closureOrNil;
+    }
+
+    public FrameMarker getFrameMarker() {
+        return frameMarker;
     }
 }

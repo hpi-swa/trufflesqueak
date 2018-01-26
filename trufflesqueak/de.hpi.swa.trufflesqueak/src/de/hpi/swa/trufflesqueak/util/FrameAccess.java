@@ -54,8 +54,12 @@ public class FrameAccess {
         return frame.getArguments()[idx + TEMP_START];
     }
 
-    public static ContextObject getContext(Frame frame, FrameSlot thisContextSlot) {
-        return (ContextObject) FrameUtil.getObjectSafe(frame, thisContextSlot);
+    public static ContextObject getContext(Frame frame, CompiledCodeObject code) {
+        return (ContextObject) FrameUtil.getObjectSafe(frame, code.thisContextSlot);
+    }
+
+    public static FrameMarker getFrameMarker(Frame frame, CompiledCodeObject code) {
+        return (FrameMarker) FrameUtil.getObjectSafe(frame, code.markerSlot);
     }
 
     public static Object[] newWith(CompiledCodeObject code, ContextObject sender, BlockClosureObject closure, Object[] frameArgs) {
@@ -92,8 +96,12 @@ public class FrameAccess {
     }
 
     @TruffleBoundary
-    public static ContextObject findSenderForMarker(Frame frame, FrameSlot markerSlot, SqueakImageContext image) {
-        FrameMarker frameMarker = (FrameMarker) FrameUtil.getObjectSafe(frame, markerSlot);
+    public static ContextObject findSender(CompiledCodeObject code, SqueakImageContext image) {
+        return findSenderForMarker(getFrameMarker(FrameAccess.currentMaterializableFrame(), code), image);
+    }
+
+    @TruffleBoundary
+    public static ContextObject findSenderForMarker(FrameMarker frameMarker, SqueakImageContext image) {
         return Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<ContextObject>() {
             boolean foundMyself = false;
 
@@ -105,6 +113,10 @@ public class FrameAccess {
                 if (foundMyself) {
                     return ContextObject.create(image, current);
                 } else if (frameMarker == FrameUtil.getObjectSafe(current, currentMarkerSlot)) {
+                    ContextObject sender = getSender(current);
+                    if (sender != null) {
+                        return sender;
+                    }
                     foundMyself = true;
                 }
                 return null;
