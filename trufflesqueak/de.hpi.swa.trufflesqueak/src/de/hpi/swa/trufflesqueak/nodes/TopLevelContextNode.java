@@ -16,6 +16,7 @@ import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
+import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
 public class TopLevelContextNode extends RootNode {
     @CompilationFinal private final SqueakImageContext image;
@@ -56,6 +57,7 @@ public class TopLevelContextNode extends RootNode {
                 BlockClosureObject closure = activeContext.getClosure();
                 VirtualFrame frame = Truffle.getRuntime().createVirtualFrame(FrameAccess.newWith(code, sender, closure, frameArgs), code.getFrameDescriptor());
                 frame.setObject(code.thisContextSlot, activeContext);
+                frame.setObject(code.markerSlot, new FrameMarker());
                 Object result = new MethodContextNode(code).execute(frame); // TODO don't generate node here
                 activeContext = unwindContextChain(sender, activeContext, result);
             } catch (ProcessSwitch ps) {
