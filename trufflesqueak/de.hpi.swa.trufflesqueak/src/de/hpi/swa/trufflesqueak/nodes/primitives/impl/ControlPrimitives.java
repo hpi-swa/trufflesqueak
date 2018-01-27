@@ -2,6 +2,7 @@ package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -535,6 +536,27 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             }
             Object[] frameArguments = FrameAccess.newFor(frame, code, null, dispatchRcvrAndArgs);
             return dispatchNode.executeDispatch(method, frameArguments);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 230, numArguments = 2)
+    protected static abstract class PrimRelinquishProcessorNode extends AbstractPrimitiveNode {
+
+        public PrimRelinquishProcessorNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected BaseSqueakObject doRelinquish(VirtualFrame frame, BaseSqueakObject receiver, int timeMicroseconds) {
+            code.image.interrupt.executeCheck(frame);
+            try {
+                TimeUnit.MICROSECONDS.sleep(timeMicroseconds);
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            return receiver;
         }
     }
 
