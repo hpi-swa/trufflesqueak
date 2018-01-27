@@ -27,7 +27,7 @@ public final class ReturnBytecodes {
 
         protected boolean isLocalReturn(VirtualFrame frame) {
             boolean hasNoClosure = FrameAccess.getClosure(frame) == null;
-            Object context = FrameAccess.getContextOrMarker(frame, code);
+            Object context = FrameAccess.getContextOrMarker(frame);
             if (context instanceof ContextObject) {
                 return hasNoClosure && !((ContextObject) context).isDirty();
             } else {
@@ -110,7 +110,7 @@ public final class ReturnBytecodes {
 
         @Override
         protected boolean isLocalReturn(VirtualFrame frame) {
-            Object contextOrMarker = FrameAccess.getContextOrMarker(frame, code);
+            Object contextOrMarker = FrameAccess.getContextOrMarker(frame);
             return contextOrMarker instanceof ContextObject ? !((ContextObject) contextOrMarker).isDirty() : true;
         }
 

@@ -82,16 +82,16 @@ public final class PushBytecodes {
             return index + numBytecodes + blockSize;
         }
 
-        @Specialization(guards = "isVirtualized(frame, code)")
+        @Specialization(guards = "isVirtualized(frame)")
         protected Object doPushVirtualized(VirtualFrame frame) {
-            FrameMarker frameMarker = (FrameMarker) FrameAccess.getContextOrMarker(frame, code);
+            FrameMarker frameMarker = (FrameMarker) FrameAccess.getContextOrMarker(frame);
             pushNode.executeWrite(frame, createClosure(frame, null, frameMarker));
             return index + numBytecodes + blockSize;
         }
 
-        @Specialization(guards = "!isVirtualized(frame, code)")
+        @Specialization(guards = "!isVirtualized(frame)")
         protected Object doPush(VirtualFrame frame) {
-            ContextObject context = (ContextObject) FrameAccess.getContextOrMarker(frame, code);
+            ContextObject context = (ContextObject) FrameAccess.getContextOrMarker(frame);
             pushNode.executeWrite(frame, createClosure(frame, context, null));
             return index + numBytecodes + blockSize;
         }

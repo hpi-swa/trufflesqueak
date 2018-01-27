@@ -23,6 +23,6 @@ public abstract class SqueakNodeWithCode extends SqueakNode {
 
     // This can only be used when non-virtualized
     protected ContextObject getContext(VirtualFrame frame) {
-        return (ContextObject) FrameAccess.getContextOrMarker(frame, code);
+        return (ContextObject) FrameAccess.getContextOrMarker(frame);
     }
 }

@@ -62,7 +62,7 @@ public final class SendBytecodes {
                 throw new RuntimeException("lookupResult not yet support. Object as method?");
             }
             CompiledCodeObject lookupCode = (CompiledCodeObject) lookupResult;
-            Object contextOrMarker = FrameAccess.getContextOrMarker(frame, lookupCode);
+            Object contextOrMarker = FrameAccess.getContextOrMarker(frame);
             Object[] frameArguments = FrameAccess.newWith(lookupCode, contextOrMarker, null, rcvrAndArgs);
             return dispatchNode.executeDispatch(lookupResult, frameArguments);
         }
@@ -125,7 +125,7 @@ public final class SendBytecodes {
             try {
                 Object result = primitiveNode.executeGeneric(frame);
                 // Success! Manipulate the sp to quick pop receiver and arguments and push result.
-                Object contextOrMarker = FrameAccess.getContextOrMarker(frame, code);
+                Object contextOrMarker = FrameAccess.getContextOrMarker(frame);
                 int spOffset = 1 + specialSelector.getNumArguments();
                 if (contextOrMarker instanceof ContextObject) {
                     ContextObject context = (ContextObject) contextOrMarker;

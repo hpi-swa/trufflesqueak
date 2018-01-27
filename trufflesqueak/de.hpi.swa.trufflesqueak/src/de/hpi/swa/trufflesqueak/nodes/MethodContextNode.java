@@ -150,7 +150,7 @@ public class MethodContextNode extends Node {
     }
 
     private int initialPC(VirtualFrame frame) {
-        Object contextOrMarker = FrameAccess.getContextOrMarker(frame, code);
+        Object contextOrMarker = FrameAccess.getContextOrMarker(frame);
         if (contextOrMarker instanceof FrameMarker) {
             return 0; // start at the beginning
         }

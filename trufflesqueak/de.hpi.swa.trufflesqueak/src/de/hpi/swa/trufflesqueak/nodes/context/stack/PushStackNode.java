@@ -24,7 +24,7 @@ public abstract class PushStackNode extends AbstractWriteNode {
         return (int) spNode.executeRead(frame);
     }
 
-    @Specialization(guards = {"isVirtualized(frame, code)"})
+    @Specialization(guards = {"isVirtualized(frame)"})
     protected void doWriteVirtualized(VirtualFrame frame, Object value) {
         assert value != null;
         int newSP = frameStackPointer(frame) + 1;
@@ -32,7 +32,7 @@ public abstract class PushStackNode extends AbstractWriteNode {
         frame.setInt(code.stackPointerSlot, newSP);
     }
 
-    @Specialization(guards = {"!isVirtualized(frame, code)"})
+    @Specialization(guards = {"!isVirtualized(frame)"})
     protected void doWrite(VirtualFrame frame, Object value) {
         assert value != null;
         getContext(frame).push(value);

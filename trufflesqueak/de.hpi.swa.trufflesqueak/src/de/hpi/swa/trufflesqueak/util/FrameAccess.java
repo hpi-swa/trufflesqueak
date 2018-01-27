@@ -54,21 +54,21 @@ public class FrameAccess {
         return frame.getArguments()[idx + RCVR_AND_ARGS_START];
     }
 
-    public static Object getContextOrMarker(Frame frame, CompiledCodeObject code) {
-        return FrameUtil.getObjectSafe(frame, code.thisContextOrMarkerSlot);
+    public static Object getContextOrMarker(Frame frame) {
+        return FrameUtil.getObjectSafe(frame, getMethod(frame).thisContextOrMarkerSlot);
     }
 
     public static int getStackPointer(VirtualFrame frame, CompiledCodeObject code) {
         return FrameUtil.getIntSafe(frame, code.stackPointerSlot);
     }
 
-    public static boolean isVirtualized(VirtualFrame frame, CompiledCodeObject code) {
-        Object contextOrMarker = FrameAccess.getContextOrMarker(frame, code);
+    public static boolean isVirtualized(VirtualFrame frame) {
+        Object contextOrMarker = FrameAccess.getContextOrMarker(frame);
         return contextOrMarker instanceof FrameMarker || contextOrMarker == null;
     }
 
     public static Object[] newFor(VirtualFrame frame, CompiledCodeObject code, BlockClosureObject closure, Object[] frameArgs) {
-        return newWith(code, getContextOrMarker(frame, code), closure, frameArgs);
+        return newWith(code, getContextOrMarker(frame), closure, frameArgs);
     }
 
     public static Object[] newWith(CompiledCodeObject code, Object sender, BlockClosureObject closure, Object[] frameArgs) {

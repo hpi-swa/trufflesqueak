@@ -25,16 +25,16 @@ public abstract class GetOrCreateContextNode extends Node {
 
     public abstract ContextObject executeGet(VirtualFrame frame, int pc);
 
-    @Specialization(guards = {"isVirtualized(frame, code)"})
+    @Specialization(guards = {"isVirtualized(frame)"})
     protected ContextObject doCreateVirtualized(VirtualFrame frame, int pc) {
         ContextObject context = createContext(frame, pc);
         frame.setObject(code.thisContextOrMarkerSlot, context);
         return context;
     }
 
-    @Specialization(guards = {"!isVirtualized(frame, code)"})
+    @Specialization(guards = {"!isVirtualized(frame)"})
     protected ContextObject doGet(VirtualFrame frame, @SuppressWarnings("unused") int pc) {
-        return (ContextObject) FrameAccess.getContextOrMarker(frame, code);
+        return (ContextObject) FrameAccess.getContextOrMarker(frame);
     }
 
     private ContextObject createContext(VirtualFrame frame, int pc) {

@@ -35,22 +35,22 @@ public abstract class HandleNonLocalReturnNode extends Node {
 
     public abstract Object executeHandle(VirtualFrame frame, NonLocalReturn nlr);
 
-    @Specialization(guards = "isVirtualized(frame, code)")
+    @Specialization(guards = "isVirtualized(frame)")
     protected Object handleVirtualized(VirtualFrame frame, NonLocalReturn nlr) {
         if (aboutToReturnNode != null && code.isUnwindMarked()) { // handle ensure: or ifCurtailed:
             aboutToReturnNode.executeAboutToReturn(frame, nlr);
         }
         terminateNode.executeTerminate(frame);
-        if (nlr.getFrameMarker() == (FrameMarker) FrameAccess.getContextOrMarker(frame, code)) {
+        if (nlr.getFrameMarker() == (FrameMarker) FrameAccess.getContextOrMarker(frame)) {
             return nlr.getReturnValue();
         } else {
             throw nlr;
         }
     }
 
-    @Specialization(guards = "!isVirtualized(frame, code)")
+    @Specialization(guards = "!isVirtualized(frame)")
     protected Object handle(VirtualFrame frame, NonLocalReturn nlr) {
-        ContextObject context = (ContextObject) FrameAccess.getContextOrMarker(frame, code);
+        ContextObject context = (ContextObject) FrameAccess.getContextOrMarker(frame);
         if (context.isDirty()) {
             ContextObject sender = (ContextObject) context.getSender(); // sender should not be nil
             terminateNode.executeTerminate(frame);
