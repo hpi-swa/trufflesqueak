@@ -1,14 +1,16 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
-import de.hpi.swa.trufflesqueak.nodes.GetOrCreateMethodContextNode;
+import de.hpi.swa.trufflesqueak.nodes.GetOrCreateContextNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodesFactory.PushClosureNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.context.LiteralConstantNode;
 import de.hpi.swa.trufflesqueak.nodes.context.MethodLiteralNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtNode;
@@ -24,31 +26,28 @@ public final class PushBytecodes {
     private static abstract class AbstractPushNode extends AbstractBytecodeNode {
         @Child protected PushStackNode pushNode;
 
-        private AbstractPushNode(CompiledCodeObject code, int index) {
+        protected AbstractPushNode(CompiledCodeObject code, int index) {
             this(code, index, 1);
         }
 
-        private AbstractPushNode(CompiledCodeObject code, int index, int numBytecodes) {
+        protected AbstractPushNode(CompiledCodeObject code, int index, int numBytecodes) {
             super(code, index, numBytecodes);
             pushNode = PushStackNode.create(code);
         }
-
-        @Override
-        public abstract void executeVoid(VirtualFrame frame);
     }
 
     public static class PushActiveContextNode extends AbstractPushNode {
-        @Child private GetOrCreateMethodContextNode getContextNode;
+        @Child private GetOrCreateContextNode getContextNode;
 
         public PushActiveContextNode(CompiledCodeObject code, int index) {
             super(code, index);
-            getContextNode = GetOrCreateMethodContextNode.create(code);
+            getContextNode = GetOrCreateContextNode.create(code);
         }
 
         @Override
         public void executeVoid(VirtualFrame frame) {
             // current index is pc
-            pushNode.executeWrite(frame, getContextNode.executeGetMethodContext(frame, index));
+            pushNode.executeWrite(frame, getContextNode.executeGet(frame, index));
         }
 
         @Override
@@ -57,14 +56,18 @@ public final class PushBytecodes {
         }
     }
 
-    public static class PushClosureNode extends AbstractPushNode {
-        @CompilationFinal private final int blockSize;
-        @CompilationFinal private final int numArgs;
-        @CompilationFinal private final int numCopied;
-        @Child private PopNReversedStackNode popNReversedNode;
-        @Child private ReceiverNode receiverNode;
+    public abstract static class PushClosureNode extends AbstractPushNode {
+        @CompilationFinal protected final int blockSize;
+        @CompilationFinal protected final int numArgs;
+        @CompilationFinal protected final int numCopied;
+        @Child protected PopNReversedStackNode popNReversedNode;
+        @Child protected ReceiverNode receiverNode;
 
-        public PushClosureNode(CompiledCodeObject code, int index, int numBytecodes, int i, int j, int k) {
+        public static PushClosureNode create(CompiledCodeObject code, int index, int numBytecodes, int i, int j, int k) {
+            return PushClosureNodeGen.create(code, index, numBytecodes, i, j, k);
+        }
+
+        protected PushClosureNode(CompiledCodeObject code, int index, int numBytecodes, int i, int j, int k) {
             super(code, index, numBytecodes);
             numArgs = i & 0xF;
             numCopied = (i >> 4) & 0xF;
@@ -79,15 +82,26 @@ public final class PushBytecodes {
             return index + numBytecodes + blockSize;
         }
 
-        @Override
-        public void executeVoid(VirtualFrame frame) {
-            Object receiver = receiverNode.executeGeneric(frame);
-            Object[] copiedValues = (Object[]) popNReversedNode.executeGeneric(frame);
+        @Specialization(guards = "isVirtualized(frame, code)")
+        protected Object doPushVirtualized(VirtualFrame frame) {
+            FrameMarker frameMarker = (FrameMarker) FrameAccess.getContextOrMarker(frame, code);
+            pushNode.executeWrite(frame, createClosure(frame, null, frameMarker));
+            return index + numBytecodes + blockSize;
+        }
+
+        @Specialization(guards = "!isVirtualized(frame, code)")
+        protected Object doPush(VirtualFrame frame) {
+            ContextObject context = (ContextObject) FrameAccess.getContextOrMarker(frame, code);
+            pushNode.executeWrite(frame, createClosure(frame, context, null));
+            return index + numBytecodes + blockSize;
+        }
+
+        private BlockClosureObject createClosure(VirtualFrame frame, ContextObject context, FrameMarker frameMarker) {
             int bytecodeOffset = index + numBytecodes;
             CompiledBlockObject block = new CompiledBlockObject(code, numArgs, numCopied, bytecodeOffset, blockSize);
-            ContextObject thisContext = FrameAccess.getContext(frame, code);
-            FrameMarker frameMarker = FrameAccess.getFrameMarker(frame, code);
-            pushNode.executeWrite(frame, new BlockClosureObject(block, receiver, copiedValues, thisContext, frameMarker));
+            Object receiver = receiverNode.executeGeneric(frame);
+            Object[] copiedValues = (Object[]) popNReversedNode.executeGeneric(frame);
+            return new BlockClosureObject(block, receiver, copiedValues, context, frameMarker);
         }
 
         @Override

@@ -27,9 +27,9 @@ public final class ReturnBytecodes {
 
         protected boolean isLocalReturn(VirtualFrame frame) {
             boolean hasNoClosure = FrameAccess.getClosure(frame) == null;
-            ContextObject context = FrameAccess.getContext(frame, code);
-            if (context != null) {
-                return hasNoClosure && !context.isDirty();
+            Object context = FrameAccess.getContextOrMarker(frame, code);
+            if (context instanceof ContextObject) {
+                return hasNoClosure && !((ContextObject) context).isDirty();
             } else {
                 return hasNoClosure;
             }
@@ -44,7 +44,7 @@ public final class ReturnBytecodes {
         protected Object executeNonLocalReturn(VirtualFrame frame) {
             BlockClosureObject block = FrameAccess.getClosure(frame);
             ContextObject outerContext = block.getHomeContext();
-            throw new NonLocalReturn(getReturnValue(frame), outerContext.getFrameMarker(), outerContext);
+            throw new NonLocalReturn(getReturnValue(frame), null, outerContext); // FIXME: null
         }
 
         protected Object getReturnValue(@SuppressWarnings("unused") VirtualFrame frame) {
@@ -110,8 +110,8 @@ public final class ReturnBytecodes {
 
         @Override
         protected boolean isLocalReturn(VirtualFrame frame) {
-            ContextObject context = FrameAccess.getContext(frame, code);
-            return context != null ? !context.isDirty() : true;
+            Object contextOrMarker = FrameAccess.getContextOrMarker(frame, code);
+            return contextOrMarker instanceof ContextObject ? !((ContextObject) contextOrMarker).isDirty() : true;
         }
 
         @Override

@@ -157,7 +157,7 @@ public class SqueakBytecodeDecoder {
             case 142:
                 return new PopIntoRemoteTempNode(code, index, 3, nextByte(), nextByte());
             case 143:
-                return new PushClosureNode(code, index, 4, nextByte(), nextByte(), nextByte());
+                return PushClosureNode.create(code, index, 4, nextByte(), nextByte(), nextByte());
             case 144: case 145: case 146: case 147: case 148: case 149: case 150: case 151:
                 return new UnconditionalJumpNode(code, index, 1, b);
             case 152: case 153: case 154: case 155: case 156: case 157: case 158: case 159:

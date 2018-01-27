@@ -7,12 +7,9 @@ import de.hpi.swa.trufflesqueak.instrumentation.BaseSqueakObjectMessageResolutio
 
 public final class FrameMarker implements TruffleObject {
 
-    public FrameMarker() {
-    }
-
     @Override
     public String toString() {
-        return "aFrameMarker";
+        return String.format("FrameMarker@%s", Integer.toHexString(System.identityHashCode(this)));
     }
 
     public ForeignAccess getForeignAccess() {

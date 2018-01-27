@@ -76,5 +76,4 @@ public abstract class FrameSlotReadNode extends FrameSlotNode {
     protected boolean isIllegal(@SuppressWarnings("unused") VirtualFrame frame) {
         return slot.getKind() == FrameSlotKind.Illegal;
     }
-
 }

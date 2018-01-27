@@ -33,31 +33,29 @@ public abstract class EnterCodeNode extends RootNode {
     protected Object enterVirtualized(VirtualFrame frame,
                     @Cached("create(code)") MethodContextNode contextNode) {
         CompilerDirectives.ensureVirtualized(frame);
-        frame.setObject(code.markerSlot, new FrameMarker());
-        frame.setObject(code.thisContextSlot, null);
+        frame.setObject(code.thisContextOrMarkerSlot, new FrameMarker()); // storing new marker in slot
         int numTemps = Math.max(code.getNumTemps() - code.getNumArgsAndCopiedValues(), 0);
         for (int i = 0; i < numTemps; i++) {
             frame.setObject(code.stackSlots[i], code.image.nil);
         }
-        frame.setInt(code.stackPointerSlot, numTemps); // sp points to the last temp slot
+        frame.setInt(code.stackPointerSlot, numTemps - 1);
         return contextNode.execute(frame);
     }
 
     @ExplodeLoop
     @Specialization(guards = {"!code.getNoContextNeededAssumption().isValid()"})
     protected Object enter(VirtualFrame frame,
-                    @Cached("create(code)") GetOrCreateMethodContextNode getContextNode,
                     @Cached("create(code)") MethodContextNode contextNode) {
-        ContextObject context = getContextNode.executeGetMethodContext(frame, code.getInitialPC());
-        frame.setObject(code.thisContextSlot, context); // TODO: unify markerSlot and thisContextSlot
+        ContextObject newContext = ContextObject.create(code, frame, code.getInitialPC(), 0);
+        frame.setObject(code.thisContextOrMarkerSlot, newContext);
         Object[] arguments = frame.getArguments();
         assert arguments.length - (FrameAccess.RCVR_AND_ARGS_START + 1) == code.getNumArgsAndCopiedValues();
         for (int i = FrameAccess.RCVR_AND_ARGS_START + 1; i < arguments.length; i++) {
-            context.push(arguments[i]);
+            newContext.push(arguments[i]);
         }
         int numTemps = code.getNumTemps() - code.getNumArgsAndCopiedValues();
         for (int i = 0; i < numTemps; i++) {
-            context.push(code.image.nil);
+            newContext.push(code.image.nil);
         }
         return contextNode.execute(frame);
     }

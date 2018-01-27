@@ -3,9 +3,7 @@ package de.hpi.swa.trufflesqueak.exceptions;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.nodes.ControlFlowException;
 
-import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
-import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
 public final class Returns {
@@ -47,14 +45,12 @@ public final class Returns {
             this.targetContext = targetContext;
         }
 
-        public ContextObject getTargetContext(SqueakImageContext image) {
-            if (targetContext == null) {
-                targetContext = FrameAccess.findContextForMarker(frameMarker, image);
-                if (targetContext == null) {
-                    throw new RuntimeException("Unable to find context");
-                }
-            }
+        public ContextObject getTargetContext() {
             return targetContext;
+        }
+
+        public FrameMarker getFrameMarker() {
+            return frameMarker;
         }
 
         public boolean hasArrivedAtTargetContext() {

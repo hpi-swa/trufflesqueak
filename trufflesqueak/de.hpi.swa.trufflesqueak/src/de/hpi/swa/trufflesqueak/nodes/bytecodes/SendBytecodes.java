@@ -26,6 +26,7 @@ import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
+import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
 public final class SendBytecodes {
 
@@ -48,7 +49,7 @@ public final class SendBytecodes {
         }
 
         public Object executeSend(VirtualFrame frame) {
-            code.image.interrupt.executeCheck(frame);
+            code.image.interrupt.sendOrBackwardJumpTrigger(frame);
             Object[] rcvrAndArgs = (Object[]) popNReversedNode.executeGeneric(frame);
             ClassObject rcvrClass;
             try {
@@ -60,7 +61,9 @@ public final class SendBytecodes {
             if (!(lookupResult instanceof CompiledCodeObject)) {
                 throw new RuntimeException("lookupResult not yet support. Object as method?");
             }
-            Object[] frameArguments = FrameAccess.newWith(code, getContext(frame), null, rcvrAndArgs);
+            CompiledCodeObject lookupCode = (CompiledCodeObject) lookupResult;
+            Object contextOrMarker = FrameAccess.getContextOrMarker(frame, lookupCode);
+            Object[] frameArguments = FrameAccess.newWith(lookupCode, contextOrMarker, null, rcvrAndArgs);
             return dispatchNode.executeDispatch(lookupResult, frameArguments);
         }
 
@@ -110,7 +113,7 @@ public final class SendBytecodes {
 
         @Child private PushStackNode pushStackNode;
 
-        public EagerSendSpecialSelectorNode(CompiledCodeObject code, int index, SpecialSelectorObject specialSelector, AbstractPrimitiveNode primitiveNode) {
+        private EagerSendSpecialSelectorNode(CompiledCodeObject code, int index, SpecialSelectorObject specialSelector, AbstractPrimitiveNode primitiveNode) {
             super(code, index);
             this.pushStackNode = PushStackNode.create(code);
             this.specialSelector = specialSelector;
@@ -122,12 +125,15 @@ public final class SendBytecodes {
             try {
                 Object result = primitiveNode.executeGeneric(frame);
                 // Success! Manipulate the sp to quick pop receiver and arguments and push result.
-                ContextObject context = getContext(frame);
+                Object contextOrMarker = FrameAccess.getContextOrMarker(frame, code);
                 int spOffset = 1 + specialSelector.getNumArguments();
-                if (context == null) {
+                if (contextOrMarker instanceof ContextObject) {
+                    ContextObject context = (ContextObject) contextOrMarker;
+                    context.atput0(CONTEXT.STACKPOINTER, (int) context.at0(CONTEXT.STACKPOINTER) - spOffset);
+                } else if (contextOrMarker instanceof FrameMarker) {
                     frame.setInt(code.stackPointerSlot, frame.getInt(code.stackPointerSlot) - spOffset);
                 } else {
-                    context.atput0(CONTEXT.STACKPOINTER, (int) context.at0(CONTEXT.STACKPOINTER) - spOffset);
+                    throw new RuntimeException(String.format("Expected ContextObject or FrameMarker, got: %s.", contextOrMarker));
                 }
                 if (result != null) { // primitive produced no result
                     pushStackNode.executeWrite(frame, result);

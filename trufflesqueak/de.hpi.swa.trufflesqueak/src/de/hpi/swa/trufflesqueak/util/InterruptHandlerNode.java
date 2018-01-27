@@ -35,10 +35,14 @@ public class InterruptHandlerNode extends Node {
     }
 
     // TODO: current checkForInterrupts version slows tinyBenchmarks down by approximately 2.4x
-    public void executeCheck(VirtualFrame frame) { // Check for interrupts at sends and backward jumps
+    public void sendOrBackwardJumpTrigger(VirtualFrame frame) { // Check for interrupts at sends and backward jumps
         if (interruptCheckCounter-- > 0) {
             return; // only really check every 100 times or so
         }
+        executeCheck(frame);
+    }
+
+    public void executeCheck(VirtualFrame frame) { // Check for interrupts at sends and backward jumps
         int now = (int) System.currentTimeMillis();
         if (now < lastTick) { // millisecond clock wrapped"
             nextPollTick = now + (nextPollTick - lastTick);

@@ -16,8 +16,8 @@ import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.nodes.BlockActivationNode;
 import de.hpi.swa.trufflesqueak.nodes.BlockActivationNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -52,9 +52,9 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         @Specialization
         protected Object doTerminate(ContextObject receiver, ContextObject previousContext) {
             if (hasSender(receiver, previousContext)) {
-                ContextObject currentContext = receiver.getSender();
+                ContextObject currentContext = receiver.getNotNilSender();
                 while (!currentContext.equals(previousContext)) {
-                    ContextObject sendingContext = currentContext.getSender();
+                    ContextObject sendingContext = currentContext.getNotNilSender();
                     currentContext.terminate();
                     currentContext = sendingContext;
                 }
@@ -70,12 +70,12 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
             if (context.equals(previousContext)) {
                 return false;
             }
-            ContextObject sender = context.getSender();
+            ContextObject sender = context.getNotNilSender();
             while (sender != null) {
                 if (sender.equals(previousContext)) {
                     return true;
                 }
-                sender = sender.getSender();
+                sender = sender.getNotNilSender();
             }
             return false;
         }
@@ -93,7 +93,8 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         @Specialization
         @TruffleBoundary
         Object findNext(ContextObject receiver) {
-            ContextObject handlerContext = null;
+            printException();
+            throw new PrimitiveFailed();
 // MethodContextObject handlerContext = Truffle.getRuntime().iterateFrames(new
 // FrameInstanceVisitor<MethodContextObject>() {
 // final Object marker = receiver.getFrameMarker();
@@ -118,10 +119,10 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 // return null;
 // }
 // });
-            if (handlerContext == null) {
-                printException();
-            }
-            return handlerContext;
+// if (handlerContext == null) {
+// printException();
+// }
+// return handlerContext;
         }
 
         @TruffleBoundary

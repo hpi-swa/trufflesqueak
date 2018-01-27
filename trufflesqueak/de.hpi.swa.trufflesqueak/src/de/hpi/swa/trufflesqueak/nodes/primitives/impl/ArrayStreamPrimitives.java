@@ -7,6 +7,7 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
+import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
@@ -55,7 +56,11 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         @Override
         @Specialization
         protected Object atput(AbstractPointersObject receiver, int index, Object value) {
-            receiver.atput0(index - 1 + receiver.instsize(), value);
+            try {
+                receiver.atput0(index - 1 + receiver.instsize(), value);
+            } catch (ArrayIndexOutOfBoundsException e) {
+                throw new PrimitiveFailed();
+            }
             return value;
         }
 

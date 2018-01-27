@@ -24,16 +24,14 @@ import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public abstract class CompiledCodeObject extends SqueakObject {
     public static enum SLOT_IDENTIFIER {
-        THIS_CONTEXT,
+        THIS_CONTEXT_OR_MARKER,
         STACK_POINTER,
-        MARKER
     }
 
     // frame info
     @CompilationFinal private FrameDescriptor frameDescriptor;
-    @CompilationFinal public FrameSlot thisContextSlot;
+    @CompilationFinal public FrameSlot thisContextOrMarkerSlot;
     @CompilationFinal(dimensions = 1) public FrameSlot[] stackSlots;
-    @CompilationFinal public FrameSlot markerSlot;
     @CompilationFinal public FrameSlot stackPointerSlot;
     // header info and data
     @CompilationFinal(dimensions = 1) protected Object[] literals;
@@ -97,8 +95,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
         for (int i = 0; i < stackSlots.length; i++) {
             stackSlots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Illegal);
         }
-        thisContextSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.THIS_CONTEXT, FrameSlotKind.Object);
-        markerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.MARKER, FrameSlotKind.Object);
+        thisContextOrMarkerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.THIS_CONTEXT_OR_MARKER, FrameSlotKind.Object);
         stackPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.STACK_POINTER, FrameSlotKind.Int);
     }
 
@@ -221,9 +218,11 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     /*
      * Answer the program counter for the receiver's first bytecode.
+     *
      */
     public int getInitialPC() {
-        return literals.length * 4 + 1;
+        // pc is offset by header + numLiterals, +1 for one-based addressing
+        return (1 + numLiterals) * 4 + 1;
     }
 
     @Override

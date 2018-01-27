@@ -22,8 +22,8 @@ import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 public class BlockClosureObject extends BaseSqueakObject {
     @CompilationFinal private Object receiver;
     @CompilationFinal(dimensions = 1) private Object[] copied;
-    @CompilationFinal private FrameMarker frameMarker;
     @CompilationFinal private ContextObject outerContext;
+    @CompilationFinal private FrameMarker outerMarker;
     @CompilationFinal private CompiledBlockObject block;
     @CompilationFinal private int pc = -1;
     @CompilationFinal private int numArgs = -1;
@@ -35,18 +35,16 @@ public class BlockClosureObject extends BaseSqueakObject {
     }
 
     public BlockClosureObject(CompiledBlockObject compiledBlock, Object receiver, Object[] copied, ContextObject outerContext, FrameMarker frameMarker) {
-        super(compiledBlock.image);
-        assert frameMarker != null;
+        this(compiledBlock.image);
         this.block = compiledBlock;
         this.outerContext = outerContext;
-        this.frameMarker = frameMarker;
+        this.outerMarker = frameMarker;
         this.receiver = receiver;
         this.copied = copied;
     }
 
     private BlockClosureObject(BlockClosureObject original) {
-        this(original.block, original.receiver, original.copied, original.outerContext, original.frameMarker);
-        outerContext = original.outerContext;
+        this(original.block, original.receiver, original.copied, original.outerContext, original.outerMarker);
     }
 
     @Override
@@ -62,7 +60,7 @@ public class BlockClosureObject extends BaseSqueakObject {
     @TruffleBoundary
     private ContextObject getOrPrepareContext() {
         if (outerContext == null) {
-            outerContext = FrameAccess.findSenderForMarker(frameMarker, image);
+            outerContext = FrameAccess.findContextForMarker(outerMarker, image);
             if (outerContext == null) {
                 throw new RuntimeException("Unable to find context");
             }
@@ -189,7 +187,7 @@ public class BlockClosureObject extends BaseSqueakObject {
                         objects.length +
                         copied.length];
         arguments[FrameAccess.METHOD] = block;
-        arguments[FrameAccess.SENDER_OR_NULL] = FrameAccess.getContext(frame, block);
+        arguments[FrameAccess.SENDER_OR_SENDER_MARKER] = FrameAccess.getContextOrMarker(frame, block);
         arguments[FrameAccess.CLOSURE_OR_NULL] = this;
         arguments[FrameAccess.RCVR_AND_ARGS_START] = getReceiver();
         for (int i = 0; i < objects.length; i++) {
@@ -199,10 +197,6 @@ public class BlockClosureObject extends BaseSqueakObject {
             arguments[FrameAccess.RCVR_AND_ARGS_START + 1 + objects.length + i] = copied[i];
         }
         return arguments;
-    }
-
-    public FrameMarker getFrameMarker() {
-        return frameMarker;
     }
 
     public ContextObject getHomeContext() {

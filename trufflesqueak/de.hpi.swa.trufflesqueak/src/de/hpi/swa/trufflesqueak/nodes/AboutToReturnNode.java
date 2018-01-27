@@ -71,7 +71,7 @@ public abstract class AboutToReturnNode extends AbstractContextNode {
     @Specialization(guards = {"context != null"})
     protected void doAboutToReturn(VirtualFrame frame, NonLocalReturn nlr,
                     @Cached("getContext(frame)") ContextObject context) {
-        pushNode.executeWrite(frame, nlr.getTargetContext(code.image));
+        pushNode.executeWrite(frame, nlr.getTargetContext());
         pushNode.executeWrite(frame, nlr.getReturnValue());
         pushNode.executeWrite(frame, context);
         sendAboutToReturnNode.executeSend(frame);

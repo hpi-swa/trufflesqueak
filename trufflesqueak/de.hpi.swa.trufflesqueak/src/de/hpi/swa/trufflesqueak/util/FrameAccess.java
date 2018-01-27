@@ -8,6 +8,7 @@ import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameUtil;
+import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
@@ -28,18 +29,17 @@ public class FrameAccess {
      * </pre>
      */
     public static final int METHOD = 0;
-    public static final int SENDER_OR_NULL = 1;
+    public static final int SENDER_OR_SENDER_MARKER = 1;
     public static final int CLOSURE_OR_NULL = 2;
     public static final int RECEIVER = 3;
     public static final int RCVR_AND_ARGS_START = 3;
-    public static final int TEMP_START = 4;
 
     public static CompiledCodeObject getMethod(Frame frame) {
         return (CompiledCodeObject) frame.getArguments()[METHOD];
     }
 
-    public static ContextObject getSender(Frame frame) {
-        return (ContextObject) frame.getArguments()[SENDER_OR_NULL];
+    public static Object getSender(Frame frame) {
+        return frame.getArguments()[SENDER_OR_SENDER_MARKER];
     }
 
     public static BlockClosureObject getClosure(Frame frame) {
@@ -50,22 +50,31 @@ public class FrameAccess {
         return frame.getArguments()[RECEIVER];
     }
 
-    public static Object getArg(Frame frame, int idx) {
-        return frame.getArguments()[idx + TEMP_START];
+    public static Object getArgument(Frame frame, int idx) {
+        return frame.getArguments()[idx + RCVR_AND_ARGS_START];
     }
 
-    public static ContextObject getContext(Frame frame, CompiledCodeObject code) {
-        return (ContextObject) FrameUtil.getObjectSafe(frame, code.thisContextSlot);
+    public static Object getContextOrMarker(Frame frame, CompiledCodeObject code) {
+        return FrameUtil.getObjectSafe(frame, code.thisContextOrMarkerSlot);
     }
 
-    public static FrameMarker getFrameMarker(Frame frame, CompiledCodeObject code) {
-        return (FrameMarker) FrameUtil.getObjectSafe(frame, code.markerSlot);
+    public static int getStackPointer(VirtualFrame frame, CompiledCodeObject code) {
+        return FrameUtil.getIntSafe(frame, code.stackPointerSlot);
     }
 
-    public static Object[] newWith(CompiledCodeObject code, ContextObject sender, BlockClosureObject closure, Object[] frameArgs) {
+    public static boolean isVirtualized(VirtualFrame frame, CompiledCodeObject code) {
+        Object contextOrMarker = FrameAccess.getContextOrMarker(frame, code);
+        return contextOrMarker instanceof FrameMarker || contextOrMarker == null;
+    }
+
+    public static Object[] newFor(VirtualFrame frame, CompiledCodeObject code, BlockClosureObject closure, Object[] frameArgs) {
+        return newWith(code, getContextOrMarker(frame, code), closure, frameArgs);
+    }
+
+    public static Object[] newWith(CompiledCodeObject code, Object sender, BlockClosureObject closure, Object[] frameArgs) {
         Object[] arguments = new Object[RCVR_AND_ARGS_START + frameArgs.length];
         arguments[METHOD] = code;
-        arguments[SENDER_OR_NULL] = sender;
+        arguments[SENDER_OR_SENDER_MARKER] = sender;
         arguments[CLOSURE_OR_NULL] = closure;
         for (int i = 0; i < frameArgs.length; i++) {
             arguments[RCVR_AND_ARGS_START + i] = frameArgs[i];
@@ -83,41 +92,14 @@ public class FrameAccess {
         return Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<ContextObject>() {
             @Override
             public ContextObject visitFrame(FrameInstance frameInstance) {
-                Frame frame = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
-                FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-                FrameSlot markerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.MARKER);
-                Object marker = FrameUtil.getObjectSafe(frame, markerSlot);
-                if (marker == frameMarker) {
-                    return ContextObject.create(image, frame);
-                }
-                return null;
-            }
-        });
-    }
-
-    @TruffleBoundary
-    public static ContextObject findSender(CompiledCodeObject code, SqueakImageContext image) {
-        return findSenderForMarker(getFrameMarker(FrameAccess.currentMaterializableFrame(), code), image);
-    }
-
-    @TruffleBoundary
-    public static ContextObject findSenderForMarker(FrameMarker frameMarker, SqueakImageContext image) {
-        return Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<ContextObject>() {
-            boolean foundMyself = false;
-
-            @Override
-            public ContextObject visitFrame(FrameInstance frameInstance) {
                 Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
-                FrameDescriptor currentFD = current.getFrameDescriptor();
-                FrameSlot currentMarkerSlot = currentFD.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.MARKER);
-                if (foundMyself) {
-                    return ContextObject.create(image, current);
-                } else if (frameMarker == FrameUtil.getObjectSafe(current, currentMarkerSlot)) {
-                    ContextObject sender = getSender(current);
-                    if (sender != null) {
-                        return sender;
-                    }
-                    foundMyself = true;
+                if (current.getArguments().length < RCVR_AND_ARGS_START) {
+                    return null;
+                }
+                FrameDescriptor frameDescriptor = current.getFrameDescriptor();
+                FrameSlot contextOrMarkerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.THIS_CONTEXT_OR_MARKER);
+                if (frameMarker == FrameUtil.getObjectSafe(current, contextOrMarkerSlot)) {
+                    return ContextObject.materialize(current, image);
                 }
                 return null;
             }

@@ -23,7 +23,7 @@ public class TransferToNode extends AbstractProcessNode {
     }
 
     public void executeTransferTo(VirtualFrame frame, BaseSqueakObject activeProcess, BaseSqueakObject newProcess) {
-        ContextObject activeContext = ContextObject.create(image, frame);
+        ContextObject activeContext = ContextObject.materialize(frame, image);
         assert activeContext != null;
         // Record a process to be awakened on the next interpreter cycle.
         PointersObject scheduler = getSchedulerNode.executeGet();

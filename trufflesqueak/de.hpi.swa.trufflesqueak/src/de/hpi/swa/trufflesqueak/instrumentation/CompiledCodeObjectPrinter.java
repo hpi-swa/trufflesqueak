@@ -38,7 +38,7 @@ public class CompiledCodeObjectPrinter {
             if (node.getIndex() < bytecodeNodes.length - 1) {
                 sb.append("\n");
             }
-            if (node.getClass().equals(PushClosureNode.class)) {
+            if (PushClosureNode.class.isAssignableFrom(node.getClass())) {
                 indent++;
             } else if (ReturnTopFromBlockNode.class.isAssignableFrom(node.getClass())) {
                 indent--;

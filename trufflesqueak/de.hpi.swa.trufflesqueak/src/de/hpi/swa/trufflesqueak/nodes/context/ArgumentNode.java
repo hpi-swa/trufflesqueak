@@ -21,12 +21,12 @@ public abstract class ArgumentNode extends SqueakNodeWithCode {
         this.argumentIndex = argumentIndex;
     }
 
-    @Specialization(guards = {"isVirtualized(frame)"})
+    @Specialization(guards = {"isVirtualized(frame, code)"})
     protected Object doVirtualized(VirtualFrame frame) {
-        return frame.getArguments()[FrameAccess.RCVR_AND_ARGS_START + argumentIndex];
+        return FrameAccess.getArgument(frame, argumentIndex);
     }
 
-    @Specialization(guards = {"!isVirtualized(frame)"})
+    @Specialization(guards = {"!isVirtualized(frame, code)"})
     protected Object doUnvirtualized(VirtualFrame frame) {
         return getContext(frame).at0(CONTEXT.RECEIVER + argumentIndex);
     }

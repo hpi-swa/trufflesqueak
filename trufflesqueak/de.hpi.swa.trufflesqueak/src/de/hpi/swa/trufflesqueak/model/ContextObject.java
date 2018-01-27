@@ -6,6 +6,7 @@ import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
@@ -14,19 +15,21 @@ import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
 public class ContextObject extends AbstractPointersObject {
     @CompilationFinal private FrameDescriptor frameDescriptor;
-    @CompilationFinal private FrameMarker frameMarker;
     private boolean isDirty;
 
-    public static ContextObject create(SqueakImageContext img, Frame virtualFrame) {
+    public static ContextObject materialize(Frame virtualFrame, SqueakImageContext img) {
         MaterializedFrame frame = virtualFrame.materialize();
         FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-        FrameSlot thisContextSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.THIS_CONTEXT);
-        ContextObject contextObject = (ContextObject) FrameUtil.getObjectSafe(frame, thisContextSlot);
-        if (contextObject == null) {
-            contextObject = new ContextObject(img, frame);
+        FrameSlot contextOrMarkerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.THIS_CONTEXT_OR_MARKER);
+        Object contextOrMarker = FrameUtil.getObjectSafe(frame, contextOrMarkerSlot);
+        if (contextOrMarker instanceof ContextObject) {
+            return (ContextObject) contextOrMarker;
+        } else if (contextOrMarker instanceof FrameMarker) {
+            CompiledCodeObject method = FrameAccess.getMethod(frame);
             // do not attach ReadOnlyContextObject to thisContextSlot to avoid becoming non-virtualized
+            return new ContextObject(img, frame, method);
         }
-        return contextObject;
+        throw new RuntimeException(String.format("Expected ContextObject or FrameMarker, got: %s.", contextOrMarker));
     }
 
     public static ContextObject create(SqueakImageContext img) {
@@ -37,21 +40,16 @@ public class ContextObject extends AbstractPointersObject {
         return new ContextObject(img, size);
     }
 
-    private ContextObject(SqueakImageContext img, Frame frame) {
-        super(img);
-        frameDescriptor = frame.getFrameDescriptor();
-        CompiledCodeObject method = FrameAccess.getMethod(frame);
+    public static ContextObject create(CompiledCodeObject code, VirtualFrame frame, int pc, int sp) {
+        ContextObject context = create(code.image, code.frameSize());
+        context.atput0(CONTEXT.METHOD, code);
+        context.setSender(FrameAccess.getSender(frame));
+        context.atput0(CONTEXT.INSTRUCTION_POINTER, pc);
+        context.atput0(CONTEXT.RECEIVER, FrameAccess.getReceiver(frame));
         BlockClosureObject closure = FrameAccess.getClosure(frame);
-        ContextObject sender = FrameAccess.getSender(frame);
-        FrameSlot stackPointerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.STACK_POINTER);
-
-        pointers = new Object[CONTEXT.TEMP_FRAME_START + method.frameSize()];
-        setSender(sender == null ? image.nil : sender);
-        atput0(CONTEXT.INSTRUCTION_POINTER, method.getInitialPC());
-        atput0(CONTEXT.STACKPOINTER, FrameUtil.getIntSafe(frame, stackPointerSlot));
-        atput0(CONTEXT.METHOD, method);
-        atput0(CONTEXT.CLOSURE_OR_NIL, closure == null ? image.nil : closure);
-        atput0(CONTEXT.RECEIVER, FrameAccess.getReceiver(frame));
+        context.atput0(CONTEXT.CLOSURE_OR_NIL, closure == null ? code.image.nil : closure);
+        context.atput0(CONTEXT.STACKPOINTER, sp);
+        return context;
     }
 
     private ContextObject(SqueakImageContext img) {
@@ -59,8 +57,22 @@ public class ContextObject extends AbstractPointersObject {
     }
 
     private ContextObject(SqueakImageContext img, int size) {
-        super(img);
+        this(img);
         pointers = new Object[CONTEXT.TEMP_FRAME_START + size];
+    }
+
+    private ContextObject(SqueakImageContext img, Frame frame, CompiledCodeObject method) {
+        this(img, method.frameSize());
+        frameDescriptor = frame.getFrameDescriptor();
+        BlockClosureObject closure = FrameAccess.getClosure(frame);
+        FrameSlot stackPointerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.STACK_POINTER);
+
+        setSender(FrameAccess.getSender(frame));
+        atput0(CONTEXT.INSTRUCTION_POINTER, method.getInitialPC());
+        atput0(CONTEXT.STACKPOINTER, FrameUtil.getIntSafe(frame, stackPointerSlot));
+        atput0(CONTEXT.METHOD, method);
+        atput0(CONTEXT.CLOSURE_OR_NIL, closure == null ? image.nil : closure);
+        atput0(CONTEXT.RECEIVER, FrameAccess.getReceiver(frame));
     }
 
     private ContextObject(ContextObject original) {
@@ -80,19 +92,19 @@ public class ContextObject extends AbstractPointersObject {
 
     @Override
     public Object at0(int index) {
+        assert index >= 0;
         if (index == CONTEXT.SENDER_OR_NIL) {
-            ContextObject sender = getSender(); // sender might need to be reconstructed
-            if (sender == null) { // sender was nil
-                return image.nil;
-            }
-            return sender;
+            return getSender(); // sender might need to be reconstructed
         }
         return super.at0(index);
     }
 
     @Override
     public void atput0(int index, Object value) {
-        assert value != null;
+        if (index == CONTEXT.RECEIVER && value instanceof ContextObject) {
+            int i = 1;
+        }
+        assert index >= 0 && value != null;
         if (index == CONTEXT.SENDER_OR_NIL) {
             isDirty = true;
         }
@@ -125,11 +137,7 @@ public class ContextObject extends AbstractPointersObject {
         int numArgs = getCodeObject().getNumArgsAndCopiedValues();
         Object[] arguments = new Object[1 + numArgs];
         BlockClosureObject closure = getClosure();
-        if (closure != null) {
-            arguments[0] = closure.getReceiver();
-        } else {
-            arguments[0] = at0(CONTEXT.RECEIVER);
-        }
+        arguments[0] = closure != null ? closure.getReceiver() : at0(CONTEXT.RECEIVER);
         for (int i = 0; i < numArgs; i++) {
             arguments[1 + i] = at0(CONTEXT.TEMP_FRAME_START + i);
         }
@@ -140,14 +148,27 @@ public class ContextObject extends AbstractPointersObject {
         return isDirty;
     }
 
-    public ContextObject getSender() {
+    public BaseSqueakObject getSender() {
+        Object sender = super.at0(CONTEXT.SENDER_OR_NIL);
+        if (sender instanceof ContextObject || sender instanceof NilObject) {
+            return (BaseSqueakObject) sender;
+        } else if (sender instanceof FrameMarker) { // null indicates virtual frame, reconstructing contexts...
+            ContextObject reconstructedSender = FrameAccess.findContextForMarker((FrameMarker) sender, image);
+            if (reconstructedSender == null) {
+                throw new RuntimeException("Unable to find sender");
+            }
+            setSender(reconstructedSender);
+            return reconstructedSender;
+        }
+        throw new RuntimeException("Unexpected sender: " + sender);
+    }
+
+    public ContextObject getNotNilSender() {
         Object sender = super.at0(CONTEXT.SENDER_OR_NIL);
         if (sender instanceof ContextObject) {
             return (ContextObject) sender;
-        } else if (sender instanceof NilObject) {
-            return null;
-        } else if (sender == null) { // null indicates virtual frame, reconstructing contexts...
-            ContextObject reconstructedSender = FrameAccess.findSender(getCodeObject(), image);
+        } else if (sender instanceof FrameMarker) { // null indicates virtual frame, reconstructing contexts...
+            ContextObject reconstructedSender = FrameAccess.findContextForMarker((FrameMarker) sender, image);
             if (reconstructedSender == null) {
                 throw new RuntimeException("Unable to find sender");
             }
@@ -166,18 +187,18 @@ public class ContextObject extends AbstractPointersObject {
 
     public void push(Object value) {
         assert value != null;
-        int sp = stackPointer();
-        atput0(sp, value);
-        setStackPointer(sp + 1);
+        int newSP = stackPointer() + 1;
+        atput0(newSP, value);
+        setStackPointer(newSP);
     }
 
     private int stackPointer() {
-        return CONTEXT.TEMP_FRAME_START + (int) at0(CONTEXT.STACKPOINTER) - 1;
+        return decodeSqueakStackPointer((int) at0(CONTEXT.STACKPOINTER));
     }
 
     private void setStackPointer(int newSP) {
-        int encodedSP = newSP + 1 - CONTEXT.TEMP_FRAME_START;
-        assert encodedSP >= 0;
+        int encodedSP = toSqueakStackPointer(newSP);
+        assert encodedSP >= -1;
         atput0(CONTEXT.STACKPOINTER, encodedSP);
     }
 
@@ -191,21 +212,21 @@ public class ContextObject extends AbstractPointersObject {
     }
 
     public Object peek(int offset) {
-        return at0(stackPointer() - 1 - offset);
+        return at0(stackPointer() - offset);
     }
 
     public Object pop() {
-        int newSP = stackPointer() - 1;
-        setStackPointer(newSP);
-        return at0(newSP);
+        int sp = stackPointer();
+        setStackPointer(sp - 1);
+        return at0(sp);
     }
 
     public Object[] popNReversed(int numPop) {
         int sp = stackPointer();
-        assert sp - numPop >= -1;
+        assert sp - numPop >= 0;
         Object[] result = new Object[numPop];
         for (int i = 0; i < numPop; i++) {
-            result[numPop - 1 - i] = at0(sp - 1 - i);
+            result[numPop - 1 - i] = at0(sp - i);
         }
         setStackPointer(sp - numPop);
         return result;
@@ -228,7 +249,25 @@ public class ContextObject extends AbstractPointersObject {
         return closureOrNil == image.nil ? null : (BlockClosureObject) closureOrNil;
     }
 
-    public FrameMarker getFrameMarker() {
-        return frameMarker;
+    /*
+     * pc is offset by the initial pc
+     */
+    public static int encodeSqPC(int pc, CompiledCodeObject code) {
+        return pc + code.getInitialPC();
+    }
+
+    public static int decodeSqPC(int pc, CompiledCodeObject code) {
+        return pc - code.getInitialPC();
+    }
+
+    /*
+     * sp is offset by CONTEXT.TEMP_FRAME_START, -1 for zero-based addressing
+     */
+    public static int toSqueakStackPointer(int sp) {
+        return sp - (CONTEXT.TEMP_FRAME_START - 1);
+    }
+
+    public static int decodeSqueakStackPointer(int sp) {
+        return sp + (CONTEXT.TEMP_FRAME_START - 1);
     }
 }

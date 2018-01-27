@@ -12,11 +12,11 @@ import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.TopLevelReturn;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakQuit;
+import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
-import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
 public class TopLevelContextNode extends RootNode {
     @CompilationFinal private final SqueakImageContext image;
@@ -50,40 +50,38 @@ public class TopLevelContextNode extends RootNode {
     public void executeLoop() {
         ContextObject activeContext = initialContext;
         while (true) {
-            ContextObject sender = activeContext.getSender();
+            BaseSqueakObject sender = activeContext.getSender();
             try {
                 CompiledCodeObject code = activeContext.getCodeObject();
                 Object[] frameArgs = activeContext.getReceiverAndArguments();
                 BlockClosureObject closure = activeContext.getClosure();
                 VirtualFrame frame = Truffle.getRuntime().createVirtualFrame(FrameAccess.newWith(code, sender, closure, frameArgs), code.getFrameDescriptor());
-                frame.setObject(code.thisContextSlot, activeContext);
-                frame.setObject(code.markerSlot, new FrameMarker());
+                frame.setObject(code.thisContextOrMarkerSlot, activeContext);
                 Object result = new MethodContextNode(code).execute(frame); // TODO don't generate node here
                 activeContext = unwindContextChain(sender, activeContext, result);
             } catch (ProcessSwitch ps) {
                 activeContext = ps.getNewContext();
             } catch (NonLocalReturn nlr) {
-                ContextObject target = nlr.hasArrivedAtTargetContext() ? sender : nlr.getTargetContext(image);
+                BaseSqueakObject target = nlr.hasArrivedAtTargetContext() ? sender : nlr.getTargetContext();
                 activeContext = unwindContextChain(sender, target, nlr.getReturnValue());
             } catch (NonVirtualReturn nvr) {
-                activeContext = unwindContextChain(nvr.getCurrentContext(), nvr.getTargetContext(),
-                                nvr.getReturnValue());
+                activeContext = unwindContextChain(nvr.getCurrentContext(), nvr.getTargetContext(), nvr.getReturnValue());
             }
         }
     }
 
-    private static ContextObject unwindContextChain(ContextObject startContext, ContextObject targetContext, Object returnValue) {
-        if (startContext == null) {
+    private ContextObject unwindContextChain(BaseSqueakObject startContext, BaseSqueakObject targetContext, Object returnValue) {
+        if (startContext == image.nil) {
             throw new TopLevelReturn(returnValue);
         }
-        ContextObject context = startContext;
+        ContextObject context = (ContextObject) startContext;
         while (context != targetContext) {
-            if (context == null) {
+            BaseSqueakObject sender = context.getSender();
+            if (sender == image.nil) {
                 throw new RuntimeException("Unable to unwind context chain");
             }
-            ContextObject sender = context.getSender();
             context.terminate();
-            context = sender;
+            context = (ContextObject) sender;
         }
         context.push(returnValue);
         return context;
