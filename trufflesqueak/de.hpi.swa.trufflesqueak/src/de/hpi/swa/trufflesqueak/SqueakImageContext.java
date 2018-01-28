@@ -68,6 +68,7 @@ public class SqueakImageContext {
     public final ClassObject largePositiveIntegerClass = new ClassObject(this);
     public final ClassObject largeNegativeIntegerClass = new ClassObject(this);
     public final ClassObject floatClass = new ClassObject(this);
+    @CompilationFinal public BaseSqueakObject asSymbol = nil;
 
     private final SqueakLanguage language;
     private final PrintWriter output;
@@ -272,6 +273,14 @@ public class SqueakImageContext {
         newPoint.atput0(POINT.X, xPos);
         newPoint.atput0(POINT.Y, yPos);
         return newPoint;
+    }
+
+    public NativeObject newSymbol(String value) {
+        return new NativeObject(this, doesNotUnderstand.getSqClass(), value.getBytes());
+    }
+
+    public PointersObject newAssociation(Object key, Object value) {
+        return new PointersObject(this, schedulerAssociation.getSqClass(), new Object[]{key, value});
     }
 
     public void registerSemaphore(BaseSqueakObject semaphore, int index) {

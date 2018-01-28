@@ -22,4 +22,11 @@ public abstract class InvokeNode extends Node {
                     @Cached("create(callTarget)") DirectCallNode callNode) {
         return callNode.call(arguments);
     }
+
+    @Specialization(replaces = "doInvoke")
+    protected Object doIndirect(CompiledCodeObject code, Object[] arguments) {
+        RootCallTarget callTarget = code.getCallTarget();
+        DirectCallNode callNode = DirectCallNode.create(callTarget);
+        return callNode.call(arguments);
+    }
 }

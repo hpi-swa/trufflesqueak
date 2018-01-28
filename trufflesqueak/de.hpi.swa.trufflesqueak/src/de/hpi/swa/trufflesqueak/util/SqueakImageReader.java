@@ -303,6 +303,11 @@ public class SqueakImageReader {
             if (chunkObject instanceof BaseSqueakObject) {
                 ((BaseSqueakObject) chunkObject).fillin(chunk);
             }
+            if (chunkObject instanceof NativeObject) {
+                if (((NativeObject) chunkObject).getSqClass() == image.doesNotUnderstand.getSqClass() && chunkObject.toString().equals("asSymbol")) {
+                    image.asSymbol = (NativeObject) chunkObject;
+                }
+            }
         }
     }
 

@@ -6,5 +6,6 @@ install:
 before_script:
   - mx/mx -n sforceimports
   - mx/mx -n build
+  - test/download-test-image.sh
 script:
   - mx/mx -n unittest --verbose --regex trufflesqueak
