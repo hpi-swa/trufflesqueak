@@ -18,7 +18,7 @@ public abstract class DispatchNode extends Node {
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"method == cachedMethod"}, assumptions = {"callTargetStable"})
-    protected static Object doDirect(CompiledCodeObject method, Object[] arguments,
+    protected Object doDirect(CompiledCodeObject method, Object[] arguments,
                     @Cached("method") CompiledCodeObject cachedMethod,
                     @Cached("create()") InvokeNode invokeNode,
                     @Cached("method.getCallTargetStable()") Assumption callTargetStable) {
@@ -26,14 +26,14 @@ public abstract class DispatchNode extends Node {
     }
 
     @Specialization(replaces = "doDirect")
-    protected static Object doIndirect(CompiledCodeObject method, Object[] arguments,
+    protected Object doIndirect(CompiledCodeObject method, Object[] arguments,
                     @Cached("create()") InvokeNode invokeNode) {
         return invokeNode.executeInvoke(method, arguments);
     }
 
     @SuppressWarnings("unused")
     @Fallback
-    protected static Object fail(Object method, Object[] arguments) {
+    protected Object fail(Object method, Object[] arguments) {
         throw new RuntimeException("failed to lookup generic selector object on generic class");
     }
 }
