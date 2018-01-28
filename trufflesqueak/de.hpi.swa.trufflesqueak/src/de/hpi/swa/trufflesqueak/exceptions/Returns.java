@@ -4,7 +4,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.nodes.ControlFlowException;
 
 import de.hpi.swa.trufflesqueak.model.ContextObject;
-import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
 public final class Returns {
     private static abstract class AbstractReturn extends ControlFlowException {
@@ -35,22 +34,16 @@ public final class Returns {
 
     public static class NonLocalReturn extends AbstractReturn {
         private static final long serialVersionUID = 1L;
-        @CompilationFinal private final FrameMarker frameMarker;
         @CompilationFinal private ContextObject targetContext;
         private boolean arrivedAtTargetContext = false;
 
-        public NonLocalReturn(Object returnValue, FrameMarker frameMarker, ContextObject targetContext) {
+        public NonLocalReturn(Object returnValue, ContextObject targetContext) {
             super(returnValue);
-            this.frameMarker = frameMarker;
             this.targetContext = targetContext;
         }
 
         public ContextObject getTargetContext() {
             return targetContext;
-        }
-
-        public FrameMarker getFrameMarker() {
-            return frameMarker;
         }
 
         public boolean hasArrivedAtTargetContext() {

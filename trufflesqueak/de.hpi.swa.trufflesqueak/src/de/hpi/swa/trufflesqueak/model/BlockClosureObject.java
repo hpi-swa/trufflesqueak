@@ -36,6 +36,7 @@ public class BlockClosureObject extends BaseSqueakObject {
 
     public BlockClosureObject(CompiledBlockObject compiledBlock, Object receiver, Object[] copied, ContextObject outerContext, FrameMarker frameMarker) {
         this(compiledBlock.image);
+        assert outerContext == null || outerContext.getFrameMarker() != null;
         this.block = compiledBlock;
         this.outerContext = outerContext;
         this.outerMarker = frameMarker;

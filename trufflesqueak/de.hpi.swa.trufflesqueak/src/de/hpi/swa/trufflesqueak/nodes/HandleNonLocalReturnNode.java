@@ -41,7 +41,8 @@ public abstract class HandleNonLocalReturnNode extends Node {
             aboutToReturnNode.executeAboutToReturn(frame, nlr);
         }
         terminateNode.executeTerminate(frame);
-        if (nlr.getFrameMarker() == (FrameMarker) FrameAccess.getContextOrMarker(frame)) {
+        FrameMarker frameMarker = (FrameMarker) FrameAccess.getContextOrMarker(frame);
+        if (nlr.getTargetContext().getFrameMarker() == frameMarker) {
             return nlr.getReturnValue();
         } else {
             throw nlr;
@@ -57,8 +58,8 @@ public abstract class HandleNonLocalReturnNode extends Node {
             throw new NonVirtualReturn(nlr.getReturnValue(), nlr.getTargetContext(), sender);
         } else {
             terminateNode.executeTerminate(frame);
-            assert context != null; // currently assuming contexts are not virtualized
-            if (nlr.getTargetContext() == context) {
+            assert context != null; // TODO: currently assuming contexts are not virtualized
+            if (nlr.getTargetContext() == context || nlr.getTargetContext().getFrameMarker() == context.getFrameMarker()) {
                 return nlr.getReturnValue();
             } else {
                 throw nlr;

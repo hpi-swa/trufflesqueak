@@ -47,6 +47,7 @@ public abstract class EnterCodeNode extends RootNode {
     protected Object enter(VirtualFrame frame,
                     @Cached("create(code)") MethodContextNode contextNode) {
         ContextObject newContext = ContextObject.create(code, frame, code.getInitialPC(), 0);
+        newContext.setFrameMarker(new FrameMarker());
         frame.setObject(code.thisContextOrMarkerSlot, newContext);
         Object[] arguments = frame.getArguments();
         assert arguments.length - (FrameAccess.RCVR_AND_ARGS_START + 1) == code.getNumArgsAndCopiedValues();

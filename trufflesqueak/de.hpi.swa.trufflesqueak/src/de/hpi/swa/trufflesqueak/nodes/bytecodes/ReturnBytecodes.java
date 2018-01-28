@@ -44,7 +44,7 @@ public final class ReturnBytecodes {
         protected Object executeNonLocalReturn(VirtualFrame frame) {
             BlockClosureObject block = FrameAccess.getClosure(frame);
             ContextObject outerContext = block.getHomeContext();
-            throw new NonLocalReturn(getReturnValue(frame), null, outerContext); // FIXME: null
+            throw new NonLocalReturn(getReturnValue(frame), outerContext);
         }
 
         protected Object getReturnValue(@SuppressWarnings("unused") VirtualFrame frame) {

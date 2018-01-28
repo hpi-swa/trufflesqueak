@@ -17,6 +17,7 @@ import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
 public class ContextObject extends AbstractPointersObject {
     @CompilationFinal private FrameDescriptor frameDescriptor;
+    @CompilationFinal private FrameMarker frameMarker;
     private boolean isDirty;
 
     public static ContextObject materialize(Frame virtualFrame, SqueakImageContext img) {
@@ -29,7 +30,7 @@ public class ContextObject extends AbstractPointersObject {
         } else if (contextOrMarker instanceof FrameMarker) {
             CompiledCodeObject method = FrameAccess.getMethod(frame);
             // do not attach ReadOnlyContextObject to thisContextSlot to avoid becoming non-virtualized
-            return new ContextObject(img, frame, method);
+            return new ContextObject(img, frame, (FrameMarker) contextOrMarker, method);
         }
         throw new RuntimeException(String.format("Expected ContextObject or FrameMarker, got: %s.", contextOrMarker));
     }
@@ -43,7 +44,8 @@ public class ContextObject extends AbstractPointersObject {
     }
 
     public static ContextObject create(CompiledCodeObject code, VirtualFrame frame, int pc, int sp) {
-        ContextObject context = create(code.image, code.frameSize());
+        FrameMarker frameMarker = (FrameMarker) FrameAccess.getContextOrMarker(frame);
+        ContextObject context = new ContextObject(code.image, code.frameSize(), frameMarker);
         context.atput0(CONTEXT.METHOD, code);
         context.setSender(FrameAccess.getSender(frame));
         context.atput0(CONTEXT.INSTRUCTION_POINTER, pc);
@@ -51,6 +53,9 @@ public class ContextObject extends AbstractPointersObject {
         BlockClosureObject closure = FrameAccess.getClosure(frame);
         context.atput0(CONTEXT.CLOSURE_OR_NIL, closure == null ? code.image.nil : closure);
         context.atput0(CONTEXT.STACKPOINTER, sp);
+        for (int i = 0; i < sp; i++) {
+            context.atTempPut(i, code.image.nil);
+        }
         return context;
     }
 
@@ -63,9 +68,15 @@ public class ContextObject extends AbstractPointersObject {
         pointers = new Object[CONTEXT.TEMP_FRAME_START + size];
     }
 
-    private ContextObject(SqueakImageContext img, Frame frame, CompiledCodeObject method) {
+    private ContextObject(SqueakImageContext img, int size, FrameMarker frameMarker) {
+        this(img, size);
+        this.frameMarker = frameMarker;
+    }
+
+    private ContextObject(SqueakImageContext img, Frame frame, FrameMarker frameMarker, CompiledCodeObject method) {
         this(img, method.frameSize());
-        frameDescriptor = frame.getFrameDescriptor();
+        this.frameDescriptor = frame.getFrameDescriptor();
+        this.frameMarker = frameMarker;
         BlockClosureObject closure = FrameAccess.getClosure(frame);
 
         setSender(FrameAccess.getSender(frame));
@@ -76,9 +87,10 @@ public class ContextObject extends AbstractPointersObject {
         atput0(CONTEXT.CLOSURE_OR_NIL, closure == null ? image.nil : closure);
         atput0(CONTEXT.RECEIVER, FrameAccess.getReceiver(frame));
 
-        for (int i = 0; i <= sp; i++) {
+        for (int i = 0; i < sp; i++) {
             SqueakNode readNode = TemporaryReadNode.create(method, i);
             Object tempValue = readNode.executeGeneric((VirtualFrame) frame);
+            assert tempValue != null;
             atTempPut(i, tempValue);
         }
     }
@@ -252,6 +264,14 @@ public class ContextObject extends AbstractPointersObject {
     public BlockClosureObject getClosure() {
         Object closureOrNil = at0(CONTEXT.CLOSURE_OR_NIL);
         return closureOrNil == image.nil ? null : (BlockClosureObject) closureOrNil;
+    }
+
+    public FrameMarker getFrameMarker() {
+        return frameMarker;
+    }
+
+    public void setFrameMarker(FrameMarker frameMarker) {
+        this.frameMarker = frameMarker;
     }
 
     /*
