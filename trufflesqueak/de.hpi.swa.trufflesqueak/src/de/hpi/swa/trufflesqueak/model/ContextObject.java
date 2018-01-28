@@ -71,7 +71,7 @@ public class ContextObject extends AbstractPointersObject {
         setSender(FrameAccess.getSender(frame));
         atput0(CONTEXT.INSTRUCTION_POINTER, method.getInitialPC());
         int sp = FrameAccess.getStackPointer(frame);
-        atput0(CONTEXT.STACKPOINTER, sp + 1);
+        atput0(CONTEXT.STACKPOINTER, sp);
         atput0(CONTEXT.METHOD, method);
         atput0(CONTEXT.CLOSURE_OR_NIL, closure == null ? image.nil : closure);
         atput0(CONTEXT.RECEIVER, FrameAccess.getReceiver(frame));

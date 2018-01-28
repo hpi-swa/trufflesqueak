@@ -40,7 +40,7 @@ public abstract class GetOrCreateContextNode extends Node {
     private ContextObject createContext(VirtualFrame frame, int pc) {
         CompilerDirectives.transferToInterpreter();
         code.invalidateNoContextNeededAssumption();
-        int sp = FrameAccess.getStackPointer(frame) + 1; // virtualized sp starts at -1
+        int sp = FrameAccess.getStackPointer(frame);
         return ContextObject.create(code, frame, pc, sp);
     }
 }

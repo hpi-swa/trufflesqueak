@@ -38,7 +38,7 @@ public abstract class EnterCodeNode extends RootNode {
         for (int i = 0; i < numTempsToInitialize; i++) {
             frame.setObject(code.stackSlots[i], code.image.nil);
         }
-        frame.setInt(code.stackPointerSlot, code.getNumArgsAndCopiedValues() + numTempsToInitialize - 1);
+        frame.setInt(code.stackPointerSlot, code.getNumArgsAndCopiedValues() + numTempsToInitialize);
         return contextNode.execute(frame);
     }
 
