@@ -19,6 +19,7 @@ import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegersFactory.PrimNormalize
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.AbstractArithmeticPrimitiveNode;
 
 public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
@@ -29,7 +30,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {1, 21, 41}, name = "primDigitAdd", numArguments = 2)
-    public static abstract class PrimAddNode extends AbstractPrimitiveNode {
+    public static abstract class PrimAddNode extends AbstractArithmeticPrimitiveNode {
 
         public PrimAddNode(CompiledMethodObject method) {
             super(method);
@@ -41,8 +42,8 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected long addOverflow(int a, int b) {
-            return (long) a + (long) b;
+        protected Number addOverflow(int a, int b) {
+            return reduceIfPossible((long) a + (long) b);
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
@@ -52,8 +53,8 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         @TruffleBoundary
-        BigInteger add(BigInteger a, BigInteger b) {
-            return a.add(b);
+        protected Number add(BigInteger a, BigInteger b) {
+            return reduceIfPossible(a.add(b));
         }
 
         @Specialization
