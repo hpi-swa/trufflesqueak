@@ -30,7 +30,7 @@ import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
 public final class SendBytecodes {
 
-    private static abstract class AbstractSendNode extends AbstractBytecodeNode {
+    public static abstract class AbstractSendNode extends AbstractBytecodeNode {
         @CompilationFinal protected final Object selector;
         @CompilationFinal private final int argumentCount;
         @Child protected SqueakLookupClassNode lookupClassNode;
@@ -89,7 +89,7 @@ public final class SendBytecodes {
         }
     }
 
-    public static class EagerSendSpecialSelectorNode extends AbstractBytecodeNode {
+    public static class EagerSendSpecialSelectorNode extends AbstractSendNode {
         public static AbstractBytecodeNode create(CompiledCodeObject code, int index, int selectorIndex) {
             SpecialSelectorObject specialSelector = code.image.specialSelectorsArray[selectorIndex];
             if (code instanceof CompiledMethodObject && specialSelector.getPrimitiveIndex() > 0) {
@@ -105,16 +105,12 @@ public final class SendBytecodes {
             return new SendSelectorNode(code, index, 1, specialSelector, specialSelector.getNumArguments());
         }
 
-        @CompilationFinal private final SpecialSelectorObject specialSelector;
-
         @Child private AbstractPrimitiveNode primitiveNode;
-
         @Child private PushStackNode pushStackNode;
 
         private EagerSendSpecialSelectorNode(CompiledCodeObject code, int index, SpecialSelectorObject specialSelector, AbstractPrimitiveNode primitiveNode) {
-            super(code, index);
+            super(code, index, 1, specialSelector, specialSelector.getNumArguments());
             this.pushStackNode = PushStackNode.create(code);
-            this.specialSelector = specialSelector;
             this.primitiveNode = primitiveNode;
         }
 
@@ -124,7 +120,7 @@ public final class SendBytecodes {
                 Object result = primitiveNode.executeGeneric(frame);
                 // Success! Manipulate the sp to quick pop receiver and arguments and push result.
                 Object contextOrMarker = FrameAccess.getContextOrMarker(frame);
-                int spOffset = 1 + specialSelector.getNumArguments();
+                int spOffset = 1 + ((SpecialSelectorObject) selector).getNumArguments();
                 if (contextOrMarker instanceof ContextObject) {
                     ContextObject context = (ContextObject) contextOrMarker;
                     context.atput0(CONTEXT.STACKPOINTER, (int) context.at0(CONTEXT.STACKPOINTER) - spOffset);
@@ -138,19 +134,10 @@ public final class SendBytecodes {
                 }
             } catch (PrimitiveFailed | ArithmeticException | UnsupportedSpecializationException e) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                replace(getFallbackNode(code, index, specialSelector)).executeVoid(frame);
+                replace(getFallbackNode(code, index, (SpecialSelectorObject) selector)).executeVoid(frame);
             } catch (FrameSlotTypeException e) {
                 throw new RuntimeException("Unable to set stack pointer");
             }
-        }
-
-        public Object getSpecialSelector() {
-            return specialSelector;
-        }
-
-        @Override
-        public String toString() {
-            return "send: " + specialSelector.toString();
         }
     }
 
