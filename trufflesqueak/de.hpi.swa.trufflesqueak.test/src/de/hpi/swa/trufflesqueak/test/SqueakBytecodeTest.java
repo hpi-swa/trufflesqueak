@@ -468,7 +468,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
     @Test
     public void testCallPrimitive() {
         BaseSqueakObject rcvr = image.wrap(1);
-        assertEquals(BigInteger.valueOf(2), runBinaryPrimitive(1, rcvr, rcvr));
+        assertEquals(2, runBinaryPrimitive(1, rcvr, rcvr));
     }
 
     @Test
