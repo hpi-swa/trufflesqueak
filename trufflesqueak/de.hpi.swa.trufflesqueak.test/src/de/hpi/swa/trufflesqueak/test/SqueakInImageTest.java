@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
@@ -80,5 +81,27 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
         for (int i = 0; i < 2; i++) {
             assertEquals(i + 1, evaluate(String.format("%s + 1", i)));
         }
+    }
+
+    @Ignore("not ready yet")
+    @Test
+    public void testEnsure() {
+        assertEquals(21, evaluate("[21] ensure: [42]"));
+        assertEquals(42, evaluate("[21] ensure: [^42]"));
+        assertEquals(21, evaluate("[^21] ensure: [42]"));
+        assertEquals(42, evaluate("[^21] ensure: [^42]"));
+    }
+
+    @Ignore("not ready yet")
+    @Test
+    public void testOnError() {
+        assertEquals(image.wrap("foobar"), evaluate("[self error: 'foobar'] on: Error do: [:err| ^ err messageText]"));
+    }
+
+    @Ignore("not ready yet")
+    @Test
+    public void testValue() {
+        assertEquals(42, evaluate("[42] value"));
+        assertEquals(21, evaluate("[[21] value] value"));
     }
 }
