@@ -34,11 +34,11 @@ public abstract class EnterCodeNode extends RootNode {
                     @Cached("create(code)") MethodContextNode contextNode) {
         CompilerDirectives.ensureVirtualized(frame);
         frame.setObject(code.thisContextOrMarkerSlot, new FrameMarker()); // storing new marker in slot
-        int numTemps = Math.max(code.getNumTemps() - code.getNumArgsAndCopiedValues(), 0);
-        for (int i = 0; i < numTemps; i++) {
+        int numTempsToInitialize = Math.max(code.getNumTemps() - code.getNumArgsAndCopiedValues(), 0);
+        for (int i = 0; i < numTempsToInitialize; i++) {
             frame.setObject(code.stackSlots[i], code.image.nil);
         }
-        frame.setInt(code.stackPointerSlot, numTemps - 1);
+        frame.setInt(code.stackPointerSlot, code.getNumArgsAndCopiedValues() + numTempsToInitialize - 1);
         return contextNode.execute(frame);
     }
 
@@ -53,8 +53,8 @@ public abstract class EnterCodeNode extends RootNode {
         for (int i = FrameAccess.RCVR_AND_ARGS_START + 1; i < arguments.length; i++) {
             newContext.push(arguments[i]);
         }
-        int numTemps = code.getNumTemps() - code.getNumArgsAndCopiedValues();
-        for (int i = 0; i < numTemps; i++) {
+        int numTempsToInitialize = code.getNumTemps() - code.getNumArgsAndCopiedValues();
+        for (int i = 0; i < numTempsToInitialize; i++) {
             newContext.push(code.image.nil);
         }
         return contextNode.execute(frame);

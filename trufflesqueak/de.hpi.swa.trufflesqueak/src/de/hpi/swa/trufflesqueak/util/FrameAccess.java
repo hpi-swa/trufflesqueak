@@ -58,8 +58,8 @@ public class FrameAccess {
         return FrameUtil.getObjectSafe(frame, getMethod(frame).thisContextOrMarkerSlot);
     }
 
-    public static int getStackPointer(VirtualFrame frame, CompiledCodeObject code) {
-        return FrameUtil.getIntSafe(frame, code.stackPointerSlot);
+    public static int getStackPointer(Frame frame) {
+        return FrameUtil.getIntSafe(frame, getMethod(frame).stackPointerSlot);
     }
 
     public static boolean isVirtualized(VirtualFrame frame) {

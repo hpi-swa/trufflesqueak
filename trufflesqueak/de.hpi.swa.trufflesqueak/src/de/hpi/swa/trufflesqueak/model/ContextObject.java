@@ -10,6 +10,8 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
+import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
+import de.hpi.swa.trufflesqueak.nodes.context.TemporaryReadNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
@@ -65,14 +67,20 @@ public class ContextObject extends AbstractPointersObject {
         this(img, method.frameSize());
         frameDescriptor = frame.getFrameDescriptor();
         BlockClosureObject closure = FrameAccess.getClosure(frame);
-        FrameSlot stackPointerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.STACK_POINTER);
 
         setSender(FrameAccess.getSender(frame));
         atput0(CONTEXT.INSTRUCTION_POINTER, method.getInitialPC());
-        atput0(CONTEXT.STACKPOINTER, FrameUtil.getIntSafe(frame, stackPointerSlot));
+        int sp = FrameAccess.getStackPointer(frame);
+        atput0(CONTEXT.STACKPOINTER, sp + 1);
         atput0(CONTEXT.METHOD, method);
         atput0(CONTEXT.CLOSURE_OR_NIL, closure == null ? image.nil : closure);
         atput0(CONTEXT.RECEIVER, FrameAccess.getReceiver(frame));
+
+        for (int i = 0; i <= sp; i++) {
+            SqueakNode readNode = TemporaryReadNode.create(method, i);
+            Object tempValue = readNode.executeGeneric((VirtualFrame) frame);
+            atTempPut(i, tempValue);
+        }
     }
 
     private ContextObject(ContextObject original) {
@@ -101,9 +109,6 @@ public class ContextObject extends AbstractPointersObject {
 
     @Override
     public void atput0(int index, Object value) {
-        if (index == CONTEXT.RECEIVER && value instanceof ContextObject) {
-            int i = 1;
-        }
         assert index >= 0 && value != null;
         if (index == CONTEXT.SENDER_OR_NIL) {
             isDirty = true;
