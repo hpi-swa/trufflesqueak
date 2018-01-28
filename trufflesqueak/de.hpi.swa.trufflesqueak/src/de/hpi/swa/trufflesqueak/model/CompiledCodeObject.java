@@ -28,6 +28,8 @@ public abstract class CompiledCodeObject extends SqueakObject {
         STACK_POINTER,
     }
 
+    private static final int BYTES_PER_WORD = 4;
+
     // frame info
     @CompilationFinal private FrameDescriptor frameDescriptor;
     @CompilationFinal public FrameSlot thisContextOrMarkerSlot;
@@ -40,7 +42,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
     @CompilationFinal protected int numLiterals;
     @CompilationFinal private boolean isOptimized;
     @CompilationFinal private boolean hasPrimitive;
-    @CompilationFinal private boolean needsLargeFrame;
+    @CompilationFinal private boolean needsLargeFrame = true; // defaults to true
     @CompilationFinal private int numTemps;
     @CompilationFinal private int accessModifier;
     @CompilationFinal private boolean altInstructionSet;
@@ -152,6 +154,10 @@ public abstract class CompiledCodeObject extends SqueakObject {
         return numArgs + getNumCopiedValues();
     }
 
+    public int getNumLiterals() {
+        return numLiterals;
+    }
+
     public FrameSlot getStackSlot(int i) {
         if (i >= stackSlots.length) { // This is fine, ignore for decoder
             return null;
@@ -222,29 +228,45 @@ public abstract class CompiledCodeObject extends SqueakObject {
      */
     public int getInitialPC() {
         // pc is offset by header + numLiterals, +1 for one-based addressing
-        return (1 + numLiterals) * 4 + 1;
+        return getBytecodeOffset() + 1;
+    }
+
+    public int getBytecodeOffset() {
+        return (1 + numLiterals) * BYTES_PER_WORD; // header plus numLiterals
     }
 
     @Override
     public int size() {
-        return literals.length * 4 + bytes.length;
+        return getBytecodeOffset() + bytes.length;
     }
 
     @Override
-    public Object at0(int idx) {
-        if (idx < literals.length * 4) {
-            return literals[idx / 4];
+    public Object at0(int index) {
+        if (index < getBytecodeOffset()) {
+            assert index % BYTES_PER_WORD == 0;
+            return literals[index / BYTES_PER_WORD];
         } else {
-            return Byte.toUnsignedInt(bytes[idx - literals.length * 4]);
+            int realIndex = index - getBytecodeOffset();
+            assert realIndex < bytes.length;
+            return Byte.toUnsignedInt(bytes[realIndex]);
         }
     }
 
     @Override
-    public void atput0(int idx, Object obj) {
-        if (idx < literals.length) {
-            setLiteral(idx / 4, obj);
+    public void atput0(int index, Object obj) {
+        assert index >= 0;
+        if (index < getBytecodeOffset()) {
+            assert index % BYTES_PER_WORD == 0;
+            setLiteral(index / BYTES_PER_WORD, obj);
         } else {
-            bytes[idx] = (byte) obj;
+            int realIndex = index - getBytecodeOffset();
+            assert realIndex < bytes.length;
+            if (obj instanceof Integer) {
+                Integer value = (Integer) obj;
+                bytes[realIndex] = value.byteValue();
+            } else {
+                bytes[realIndex] = (byte) obj;
+            }
         }
     }
 
@@ -258,8 +280,15 @@ public abstract class CompiledCodeObject extends SqueakObject {
     }
 
     public void setLiteral(int i, Object obj) {
-        assert i > 0; // first lit is header
-        literals[i] = obj;
+        if (i == 0) {
+            assert obj instanceof Integer;
+            int oldNumLiterals = numLiterals;
+            literals[0] = obj;
+            decodeHeader();
+            assert numLiterals == oldNumLiterals;
+        } else {
+            literals[i] = obj;
+        }
     }
 
     @Override

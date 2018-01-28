@@ -14,8 +14,9 @@ public class CompiledMethodObject extends CompiledCodeObject {
         bytes = bc;
     }
 
-    public CompiledMethodObject(SqueakImageContext img, ClassObject klass) {
+    public CompiledMethodObject(SqueakImageContext img, ClassObject klass, int size) {
         super(img, klass);
+        bytes = new byte[size];
     }
 
     private CompiledMethodObject(CompiledMethodObject compiledMethodObject) {

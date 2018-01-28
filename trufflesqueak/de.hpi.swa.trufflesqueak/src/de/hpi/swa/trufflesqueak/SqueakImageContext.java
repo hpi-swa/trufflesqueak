@@ -268,7 +268,7 @@ public class SqueakImageContext {
 
     public PointersObject newPoint(int xPos, int yPos) {
         ClassObject pointClass = (ClassObject) specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.ClassPoint);
-        PointersObject newPoint = (PointersObject) pointClass.newInstance(POINT.SIZE);
+        PointersObject newPoint = (PointersObject) pointClass.newInstance();
         newPoint.atput0(POINT.X, xPos);
         newPoint.atput0(POINT.Y, yPos);
         return newPoint;

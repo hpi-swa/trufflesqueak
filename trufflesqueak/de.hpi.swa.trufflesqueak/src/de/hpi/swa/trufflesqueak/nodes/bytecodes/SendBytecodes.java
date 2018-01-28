@@ -61,9 +61,7 @@ public final class SendBytecodes {
             if (!(lookupResult instanceof CompiledCodeObject)) {
                 throw new RuntimeException("lookupResult not yet support. Object as method?");
             }
-            CompiledCodeObject lookupCode = (CompiledCodeObject) lookupResult;
-            Object contextOrMarker = FrameAccess.getContextOrMarker(frame);
-            Object[] frameArguments = FrameAccess.newWith(lookupCode, contextOrMarker, null, rcvrAndArgs);
+            Object[] frameArguments = FrameAccess.newFor(frame, (CompiledCodeObject) lookupResult, null, rcvrAndArgs);
             return dispatchNode.executeDispatch(lookupResult, frameArguments);
         }
 

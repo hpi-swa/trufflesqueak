@@ -70,7 +70,7 @@ public class BlockClosureObject extends BaseSqueakObject {
 
     public int getPC() {
         if (pc == -1) {
-            pc = block.getMethod().getInitialPC() + block.getBytecodeOffset();
+            pc = block.getMethod().getInitialPC() + block.getOffset();
         }
         return pc;
     }
@@ -149,6 +149,9 @@ public class BlockClosureObject extends BaseSqueakObject {
     }
 
     public Object getReceiver() {
+        if (receiver == null) {
+            receiver = outerContext.getReceiver();
+        }
         return receiver;
     }
 
@@ -167,26 +170,25 @@ public class BlockClosureObject extends BaseSqueakObject {
     public CompiledBlockObject getCompiledBlock() {
         if (block == null) {
             CompiledMethodObject code = (CompiledMethodObject) getOrPrepareContext().at0(CONTEXT.METHOD);
-            int codeStart = pc - code.getInitialPC();
-            int j = code.getBytes()[codeStart - 2];
-            int k = code.getBytes()[codeStart - 1];
+            int offset = pc - code.getInitialPC();
+            int j = code.getBytes()[offset - 2];
+            int k = code.getBytes()[offset - 1];
             int blockSize = (j << 8) | k;
-            int codeEnd = codeStart + blockSize;
-            block = new CompiledBlockObject(code, numArgs, copied.length, codeStart, codeEnd);
+            block = new CompiledBlockObject(code, numArgs, copied.length, offset, blockSize);
         }
         return block;
     }
 
     public Object[] getFrameArguments(VirtualFrame frame, Object... objects) {
         CompilerAsserts.compilationConstant(objects.length);
-        if (block.getNumArgs() != objects.length) {
+        if (getCompiledBlock().getNumArgs() != objects.length) {
             throw new PrimitiveFailed();
         }
         Object[] arguments = new Object[FrameAccess.RCVR_AND_ARGS_START + /* METHOD + CLOSURE_OR_NULL */
                         1 /* receiver */ +
                         objects.length +
                         copied.length];
-        arguments[FrameAccess.METHOD] = block;
+        arguments[FrameAccess.METHOD] = getCompiledBlock();
         arguments[FrameAccess.SENDER_OR_SENDER_MARKER] = FrameAccess.getContextOrMarker(frame);
         arguments[FrameAccess.CLOSURE_OR_NULL] = this;
         arguments[FrameAccess.RCVR_AND_ARGS_START] = getReceiver();

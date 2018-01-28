@@ -14,6 +14,7 @@ import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakQuit;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.MUTEX;
@@ -113,7 +114,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             } else {
                 rcvrAndArgs = new Object[]{receiver};
             }
-            Object[] frameArguments = FrameAccess.newFor(frame, code, null, rcvrAndArgs);
+            Object[] frameArguments = FrameAccess.newFor(frame, (CompiledCodeObject) lookupResult, null, rcvrAndArgs);
             return dispatchNode.executeDispatch(lookupResult, frameArguments);
         }
     }
@@ -534,7 +535,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             for (int i = 0; i < numArgs; i++) {
                 dispatchRcvrAndArgs[1 + i] = argArray.at0(i);
             }
-            Object[] frameArguments = FrameAccess.newFor(frame, code, null, dispatchRcvrAndArgs);
+            Object[] frameArguments = FrameAccess.newFor(frame, (CompiledCodeObject) method, null, dispatchRcvrAndArgs);
             return dispatchNode.executeDispatch(method, frameArguments);
         }
     }

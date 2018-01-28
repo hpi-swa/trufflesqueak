@@ -50,6 +50,7 @@ public class MethodContextNode extends Node {
     }
 
     public Object execute(VirtualFrame frame) {
+        assert FrameAccess.getMethod(frame) == code;
         try {
             executeBytecode(frame);
             CompilerDirectives.transferToInterpreter();
@@ -159,7 +160,7 @@ public class MethodContextNode extends Node {
             int rawPC = closure.getPC();
             CompiledBlockObject block = closure.getCompiledBlock();
             assert code == block;
-            return rawPC - block.getMethod().getInitialPC() - block.getBytecodeOffset();
+            return rawPC - block.getMethod().getInitialPC() - block.getOffset();
         }
         int rawPC = (int) ((ContextObject) contextOrMarker).at0(CONTEXT.INSTRUCTION_POINTER);
         return rawPC - code.getInitialPC();

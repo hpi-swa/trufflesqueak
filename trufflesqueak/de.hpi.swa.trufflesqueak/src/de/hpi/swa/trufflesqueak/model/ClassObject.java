@@ -186,10 +186,11 @@ public class ClassObject extends AbstractPointersObject {
     }
 
     public BaseSqueakObject newInstance() {
-        return newInstance(instanceSize);
+        return newInstance(0);
     }
 
-    public BaseSqueakObject newInstance(int size) {
+    public BaseSqueakObject newInstance(int extraSize) {
+        int size = instanceSize + extraSize;
         //@formatter:off
         switch (instSpec) {
             case 0: // empty objects
@@ -223,8 +224,7 @@ public class ClassObject extends AbstractPointersObject {
             case 16: case 17: case 18: case 19: case 20: case 21: case 22: case 23:
                 return new NativeObject(image, this, size, 1);
             default:
-                // FIXME: ignore the size?
-                return new CompiledMethodObject(image, this);
+                return new CompiledMethodObject(image, this, extraSize);
         }
         //@formatter:on
     }
