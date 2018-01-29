@@ -26,10 +26,10 @@ import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 public class ExecuteContextNode extends Node {
     @CompilationFinal private final CompiledCodeObject code;
     @Children private final AbstractBytecodeNode[] bytecodeNodes;
-    @Child private TerminateContextNode terminateNode;
     @Child private HandleLocalReturnNode handleLocalReturnNode;
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
     @Child private GetOrCreateContextNode getContextNode;
+    private int pcAfterNonLocalReturn;
 
     public static ExecuteContextNode create(CompiledCodeObject code) {
         return new ExecuteContextNode(code);
@@ -38,7 +38,6 @@ public class ExecuteContextNode extends Node {
     public ExecuteContextNode(CompiledCodeObject code) {
         this.code = code;
         bytecodeNodes = new SqueakBytecodeDecoder(code).decode();
-        terminateNode = TerminateContextNode.create(code);
         handleLocalReturnNode = HandleLocalReturnNode.create(code);
         handleNonLocalReturnNode = HandleNonLocalReturnNode.create(code);
         getContextNode = GetOrCreateContextNode.create(code);
@@ -122,7 +121,7 @@ public class ExecuteContextNode extends Node {
                 }
             }
         } catch (NonLocalReturn nlr) {
-            getContextNode.executeGet(frame, pc); // ensure context is there
+            pcAfterNonLocalReturn = pc;
             throw nlr;
         } finally {
             assert backJumpCounter >= 0;
@@ -141,7 +140,7 @@ public class ExecuteContextNode extends Node {
                 pc = node.executeInt(frame);
             }
         } catch (NonLocalReturn nlr) {
-            getContextNode.executeGet(frame, pc); // ensure context is there
+            pcAfterNonLocalReturn = pc;
             throw nlr;
         }
     }
@@ -162,6 +161,10 @@ public class ExecuteContextNode extends Node {
         return rawPC - code.getInitialPC();
     }
 
+    public int getPCAfterNonLocalReturn() { // TODO: this maybe be needed
+        return pcAfterNonLocalReturn;
+    }
+
     @Override
     public String toString() {
         return code.toString();
@@ -171,5 +174,4 @@ public class ExecuteContextNode extends Node {
     protected boolean isTaggedWith(Class<?> tag) {
         return tag == StandardTags.RootTag.class;
     }
-
 }
