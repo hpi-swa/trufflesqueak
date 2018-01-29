@@ -103,4 +103,12 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
         assertEquals(42, evaluate("[42] value"));
         assertEquals(21, evaluate("[[21] value] value"));
     }
+
+    @Test
+    public void testTinyBenchmarks() {
+        String resultString = evaluate("1 tinyBenchmarks").toString();
+        assertTrue(resultString.contains("bytecodes/sec"));
+        assertTrue(resultString.contains("sends/sec"));
+    }
+
 }
