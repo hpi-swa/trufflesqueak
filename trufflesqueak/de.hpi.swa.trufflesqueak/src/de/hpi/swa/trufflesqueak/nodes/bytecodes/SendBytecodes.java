@@ -7,6 +7,8 @@ import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
@@ -107,6 +109,8 @@ public final class SendBytecodes {
 
         @Child private AbstractPrimitiveNode primitiveNode;
         @Child private PushStackNode pushStackNode;
+        private ConditionProfile wasContextOrMarker = ConditionProfile.createBinaryProfile();
+        private ValueProfile contextClass = ValueProfile.createClassProfile();
 
         private EagerSendSpecialSelectorNode(CompiledCodeObject code, int index, SpecialSelectorObject specialSelector, AbstractPrimitiveNode primitiveNode) {
             super(code, index, 1, specialSelector, specialSelector.getNumArguments());
@@ -119,15 +123,14 @@ public final class SendBytecodes {
             try {
                 Object result = primitiveNode.executeGeneric(frame);
                 // Success! Manipulate the sp to quick pop receiver and arguments and push result.
-                Object contextOrMarker = FrameAccess.getContextOrMarker(frame);
+                Object contextOrMarker = contextClass.profile(FrameAccess.getContextOrMarker(frame));
                 int spOffset = 1 + ((SpecialSelectorObject) selector).getNumArguments();
-                if (contextOrMarker instanceof ContextObject) {
+                if (wasContextOrMarker.profile(contextOrMarker instanceof ContextObject)) {
                     ContextObject context = (ContextObject) contextOrMarker;
                     context.atput0(CONTEXT.STACKPOINTER, (int) context.at0(CONTEXT.STACKPOINTER) - spOffset);
-                } else if (contextOrMarker instanceof FrameMarker) {
-                    frame.setInt(code.stackPointerSlot, frame.getInt(code.stackPointerSlot) - spOffset);
                 } else {
-                    throw new RuntimeException(String.format("Expected ContextObject or FrameMarker, got: %s.", contextOrMarker));
+                    assert (contextOrMarker instanceof FrameMarker);
+                    frame.setInt(code.stackPointerSlot, frame.getInt(code.stackPointerSlot) - spOffset);
                 }
                 if (result != null) { // primitive produced no result
                     pushStackNode.executeWrite(frame, result);
