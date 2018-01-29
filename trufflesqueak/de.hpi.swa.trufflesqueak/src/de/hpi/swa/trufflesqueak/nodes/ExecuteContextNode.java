@@ -64,7 +64,8 @@ public class ExecuteContextNode extends Node {
             startBytecode(frame);
         } else {
             // avoid optimizing the cases in which a context is resumed
-            resumeBytecode(frame, initialPC);
+            CompilerDirectives.transferToInterpreter();
+            resumeBytecode(frame.materialize(), initialPC);
         }
     }
 
