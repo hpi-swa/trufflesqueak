@@ -9,6 +9,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
@@ -192,6 +193,17 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
+        @Override
+        public final Object executeGeneric(VirtualFrame frame) {
+            try {
+                return executePrimitive(frame);
+            } catch (ArrayIndexOutOfBoundsException e) {
+                throw new PrimitiveFailed();
+            }
+        }
+
+        public abstract Object executePrimitive(VirtualFrame frame);
+
         @Specialization
         protected int at(char receiver, int idx) {
             if (idx == 1) {
@@ -265,6 +277,17 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         protected PrimAtPutNode(CompiledMethodObject method) {
             super(method);
         }
+
+        @Override
+        public final Object executeGeneric(VirtualFrame frame) {
+            try {
+                return executePrimitive(frame);
+            } catch (ArrayIndexOutOfBoundsException e) {
+                throw new PrimitiveFailed();
+            }
+        }
+
+        public abstract Object executePrimitive(VirtualFrame frame);
 
         @Specialization
         protected char atput(LargeIntegerObject receiver, int idx, char value) {
