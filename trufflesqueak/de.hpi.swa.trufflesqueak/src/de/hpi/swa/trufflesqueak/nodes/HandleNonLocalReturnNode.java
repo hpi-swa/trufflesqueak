@@ -25,7 +25,6 @@ public abstract class HandleNonLocalReturnNode extends Node {
     }
 
     public HandleNonLocalReturnNode(CompiledCodeObject code) {
-        super();
         this.code = code;
         terminateNode = TerminateContextNode.create(code);
         if (code instanceof CompiledMethodObject) {
@@ -51,6 +50,9 @@ public abstract class HandleNonLocalReturnNode extends Node {
 
     @Specialization(guards = "!isVirtualized(frame)")
     protected Object handle(VirtualFrame frame, NonLocalReturn nlr) {
+        if (aboutToReturnNode != null && code.isUnwindMarked()) { // handle ensure: or ifCurtailed:
+            aboutToReturnNode.executeAboutToReturn(frame, nlr);
+        }
         ContextObject context = (ContextObject) FrameAccess.getContextOrMarker(frame);
         if (context.isDirty()) {
             ContextObject sender = (ContextObject) context.getSender(); // sender should not be nil
@@ -58,7 +60,7 @@ public abstract class HandleNonLocalReturnNode extends Node {
             throw new NonVirtualReturn(nlr.getReturnValue(), nlr.getTargetContext(), sender);
         } else {
             terminateNode.executeTerminate(frame);
-            assert context != null; // TODO: currently assuming contexts are not virtualized
+            assert context != null; // TODO: currently assuming context is not virtualized
             if (nlr.getTargetContext() == context || nlr.getTargetContext().getFrameMarker() == context.getFrameMarker()) {
                 return nlr.getReturnValue();
             } else {

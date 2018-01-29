@@ -1,6 +1,7 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -15,7 +16,9 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.SendSelectorNode;
 import de.hpi.swa.trufflesqueak.nodes.context.TemporaryReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.TemporaryWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
+@ImportStatic(FrameAccess.class)
 public abstract class AboutToReturnNode extends AbstractContextNode {
     @Child protected BlockActivationNode dispatch = BlockActivationNodeGen.create();
     private static BaseSqueakObject aboutToReturnSelector;
@@ -43,32 +46,30 @@ public abstract class AboutToReturnNode extends AbstractContextNode {
 
     public abstract void executeAboutToReturn(VirtualFrame frame, NonLocalReturn nlr);
 
-    @Specialization(guards = {"context == null"})
-    protected void doAboutToReturnVirtualized(VirtualFrame frame, NonLocalReturn nlr,
-                    @Cached("getContext(frame)") ContextObject context) {
-        System.out.println("wooot");
-        activateBlockAndTerminate(frame, context);
-    }
-
-    private void activateBlockAndTerminate(VirtualFrame frame, ContextObject context) {
+    /*
+     * Virtualized version of Context>>aboutToReturn:through:, more specifically
+     * Context>>resume:through:. This is only called if code.isUnwindMarked(), so there is no need to
+     * unwind contexts here as this is already happening when NonLocalReturns are handled. Note that
+     * this however does not check if the current context isDead nor does it terminate contexts (this
+     * may be a problem).
+     */
+    @Specialization(guards = {"isVirtualized(frame)"})
+    protected void doAboutToReturnVirtualized(VirtualFrame frame, @SuppressWarnings("unused") NonLocalReturn nlr) {
         if (completeTempReadNode.executeGeneric(frame) == code.image.nil) {
             completeTempWriteNode.executeWrite(frame, code.image.sqTrue);
             BlockClosureObject block = (BlockClosureObject) blockArgumentNode.executeGeneric(frame);
             try {
                 dispatch.executeBlock(block, block.getFrameArguments(frame));
-            } catch (LocalReturn blockLR) {
-                // ignore
+            } catch (LocalReturn blockLR) { // ignore
             } catch (NonLocalReturn blockNLR) {
                 if (!blockNLR.hasArrivedAtTargetContext()) {
                     throw blockNLR;
                 }
-            } finally {
-                context.terminate();
             }
         }
     }
 
-    @Specialization(guards = {"context != null"})
+    @Specialization(guards = {"!isVirtualized(frame)"})
     protected void doAboutToReturn(VirtualFrame frame, NonLocalReturn nlr,
                     @Cached("getContext(frame)") ContextObject context) {
         pushNode.executeWrite(frame, nlr.getTargetContext());
