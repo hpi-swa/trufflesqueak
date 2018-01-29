@@ -62,9 +62,7 @@ public class BlockClosureObject extends BaseSqueakObject {
     private ContextObject getOrPrepareContext() {
         if (outerContext == null) {
             outerContext = FrameAccess.findContextForMarker(outerMarker, image);
-            if (outerContext == null) {
-                throw new RuntimeException("Unable to find context");
-            }
+            assert outerContext != null;
         }
         return outerContext;
     }
@@ -175,7 +173,7 @@ public class BlockClosureObject extends BaseSqueakObject {
             int j = code.getBytes()[offset - 2];
             int k = code.getBytes()[offset - 1];
             int blockSize = (j << 8) | k;
-            block = new CompiledBlockObject(code, numArgs, copied.length, offset, blockSize);
+            block = CompiledBlockObject.create(code, numArgs, copied.length, offset, blockSize);
         }
         return block;
     }

@@ -9,7 +9,11 @@ public class CompiledBlockObject extends CompiledCodeObject {
     @CompilationFinal private final int numCopiedValues;
     @CompilationFinal private final int offset;
 
-    public CompiledBlockObject(CompiledCodeObject code, int numArgs, int numCopied, int bytecodeOffset, int blockSize) {
+    public static CompiledBlockObject create(CompiledCodeObject code, int numArgs, int numCopied, int bytecodeOffset, int blockSize) {
+        return new CompiledBlockObject(code, numArgs, numCopied, bytecodeOffset, blockSize);
+    }
+
+    private CompiledBlockObject(CompiledCodeObject code, int numArgs, int numCopied, int bytecodeOffset, int blockSize) {
         super(code.image);
         outerMethod = code.getMethod();
         numCopiedValues = numCopied;

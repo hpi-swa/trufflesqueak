@@ -57,13 +57,11 @@ public final class SendBytecodes {
             try {
                 rcvrClass = SqueakTypesGen.expectClassObject(lookupClassNode.executeLookup(rcvrAndArgs[0]));
             } catch (UnexpectedResultException e) {
+                CompilerDirectives.transferToInterpreter();
                 throw new RuntimeException("receiver has no class");
             }
-            Object lookupResult = lookupNode.executeLookup(rcvrClass, selector);
-            if (!(lookupResult instanceof CompiledCodeObject)) {
-                throw new RuntimeException("lookupResult not yet support. Object as method?");
-            }
-            Object[] frameArguments = FrameAccess.newFor(frame, (CompiledCodeObject) lookupResult, null, rcvrAndArgs);
+            CompiledCodeObject lookupResult = (CompiledCodeObject) lookupNode.executeLookup(rcvrClass, selector);
+            Object[] frameArguments = FrameAccess.newFor(frame, lookupResult, null, rcvrAndArgs);
             return dispatchNode.executeDispatch(lookupResult, frameArguments);
         }
 

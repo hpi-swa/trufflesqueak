@@ -98,7 +98,7 @@ public final class PushBytecodes {
 
         private BlockClosureObject createClosure(VirtualFrame frame, ContextObject context, FrameMarker frameMarker) {
             int offset = index + numBytecodes;
-            CompiledBlockObject block = new CompiledBlockObject(code, numArgs, numCopied, offset, blockSize);
+            CompiledBlockObject block = CompiledBlockObject.create(code, numArgs, numCopied, offset, blockSize);
             Object receiver = receiverNode.executeGeneric(frame);
             Object[] copiedValues = (Object[]) popNReversedNode.executeGeneric(frame);
             return new BlockClosureObject(block, receiver, copiedValues, context, frameMarker);

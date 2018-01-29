@@ -98,9 +98,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         protected Object dispatch(VirtualFrame frame, Object receiver, Object selector, Object arguments, ClassObject rcvrClass) {
-            Object lookupResult = lookupNode.executeLookup(rcvrClass, selector);
             Object[] rcvrAndArgs;
-
             if (arguments instanceof ListObject) {
                 ListObject list = (ListObject) arguments;
                 int numArgs = list.size();
@@ -114,7 +112,8 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             } else {
                 rcvrAndArgs = new Object[]{receiver};
             }
-            Object[] frameArguments = FrameAccess.newFor(frame, (CompiledCodeObject) lookupResult, null, rcvrAndArgs);
+            CompiledCodeObject lookupResult = (CompiledCodeObject) lookupNode.executeLookup(rcvrClass, selector);
+            Object[] frameArguments = FrameAccess.newFor(frame, lookupResult, null, rcvrAndArgs);
             return dispatchNode.executeDispatch(lookupResult, frameArguments);
         }
     }
