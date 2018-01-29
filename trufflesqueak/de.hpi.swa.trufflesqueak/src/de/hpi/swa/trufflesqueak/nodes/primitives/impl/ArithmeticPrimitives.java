@@ -277,17 +277,17 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected int mod(int a, int b) {
-            return a % b;
+            return Math.floorMod(a, b);
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
         protected int modInt(long a, long b) {
-            return Math.toIntExact(a % b);
+            return Math.toIntExact(Math.floorMod(a, b));
         }
 
         @Specialization
         protected long mod(long a, long b) {
-            return a % b;
+            return Math.floorMod(a, b);
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
