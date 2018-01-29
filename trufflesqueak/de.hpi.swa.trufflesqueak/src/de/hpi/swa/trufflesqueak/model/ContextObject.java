@@ -29,12 +29,12 @@ public class ContextObject extends AbstractPointersObject {
         Object contextOrMarker = FrameUtil.getObjectSafe(frame, contextOrMarkerSlot);
         if (contextOrMarker instanceof ContextObject) {
             return (ContextObject) contextOrMarker;
-        } else if (contextOrMarker instanceof FrameMarker) {
+        } else {
+            assert contextOrMarker instanceof FrameMarker;
             CompiledCodeObject method = FrameAccess.getMethod(frame);
             // do not attach ReadOnlyContextObject to thisContextSlot to avoid becoming non-virtualized
-            return new ContextObject(img, frame, (FrameMarker) contextOrMarker, method);
+            return new ContextObject(img, frame.materialize(), (FrameMarker) contextOrMarker, method);
         }
-        throw new RuntimeException(String.format("Expected ContextObject or FrameMarker, got: %s.", contextOrMarker));
     }
 
     public static ContextObject create(SqueakImageContext img) {

@@ -133,9 +133,7 @@ public abstract class PrimitiveNodeFactory {
     }
 
     private static void addEntryToPrimitiveTable(int index, NodeFactory<? extends AbstractPrimitiveNode> nodeFactory) {
-        if (primitiveTable.containsKey(index)) {
-            throw new RuntimeException(String.format("Failed to register %s as primitive %d, because it is already assigned by %s.", nodeFactory, index, primitiveTable.get(index)));
-        }
+        assert !primitiveTable.containsKey(index); // primitives are not allowed to override others
         primitiveTable.put(index, nodeFactory);
     }
 }
