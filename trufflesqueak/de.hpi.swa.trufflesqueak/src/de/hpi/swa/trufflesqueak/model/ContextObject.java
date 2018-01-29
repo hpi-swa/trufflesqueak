@@ -1,5 +1,7 @@
 package de.hpi.swa.trufflesqueak.model;
 
+import java.util.Arrays;
+
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
@@ -53,7 +55,7 @@ public class ContextObject extends AbstractPointersObject {
         BlockClosureObject closure = FrameAccess.getClosure(frame);
         context.atput0(CONTEXT.CLOSURE_OR_NIL, closure == null ? code.image.nil : closure);
         context.atput0(CONTEXT.STACKPOINTER, sp);
-        for (int i = 0; i < sp; i++) {
+        for (int i = 0; i < sp - 1; i++) {
             context.atTempPut(i, code.image.nil);
         }
         return context;
@@ -66,6 +68,7 @@ public class ContextObject extends AbstractPointersObject {
     private ContextObject(SqueakImageContext img, int size) {
         this(img);
         pointers = new Object[CONTEXT.TEMP_FRAME_START + size];
+        Arrays.fill(pointers, img.nil); // initialize all with nil
     }
 
     private ContextObject(SqueakImageContext img, int size, FrameMarker frameMarker) {
@@ -87,7 +90,7 @@ public class ContextObject extends AbstractPointersObject {
         atput0(CONTEXT.CLOSURE_OR_NIL, closure == null ? image.nil : closure);
         atput0(CONTEXT.RECEIVER, FrameAccess.getReceiver(frame));
 
-        for (int i = 0; i < sp; i++) {
+        for (int i = 0; i < sp - 1; i++) {
             SqueakNode readNode = TemporaryReadNode.create(method, i);
             Object tempValue = readNode.executeGeneric((VirtualFrame) frame);
             assert tempValue != null;

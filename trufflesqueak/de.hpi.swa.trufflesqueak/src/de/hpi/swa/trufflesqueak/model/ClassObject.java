@@ -81,7 +81,8 @@ public class ClassObject extends AbstractPointersObject {
         super.fillin(chunk);
         // initialize the subclasses set
         setFormat((int) at0(CLASS.FORMAT));
-        setSuperclass(getSuperclass());
+        Object superclass = getSuperclass();
+        setSuperclass(superclass != null ? superclass : image.nil);
     }
 
     public void setFormat(int format) {
