@@ -58,7 +58,13 @@ public class ExecuteContextNode extends Node {
 
     protected void executeBytecode(VirtualFrame frame) {
         CompilerAsserts.compilationConstant(bytecodeNodes.length);
-        int initialPC = initialPC(frame);
+        int initialPC;
+        if (FrameAccess.isVirtualized(frame)) {
+            initialPC = 0;
+        } else {
+            initialPC = initialPC(frame);
+        }
+        
         if (initialPC == 0) {
             startBytecode(frame);
         } else {
@@ -146,10 +152,6 @@ public class ExecuteContextNode extends Node {
     }
 
     private int initialPC(VirtualFrame frame) {
-        Object contextOrMarker = FrameAccess.getContextOrMarker(frame);
-        if (contextOrMarker instanceof FrameMarker) {
-            return 0; // start at the beginning
-        }
         BlockClosureObject closure = FrameAccess.getClosure(frame);
         if (closure != null) {
             int rawPC = closure.getPC();
@@ -157,7 +159,8 @@ public class ExecuteContextNode extends Node {
             assert code == block;
             return rawPC - block.getMethod().getInitialPC() - block.getOffset();
         }
-        int rawPC = (int) ((ContextObject) contextOrMarker).at0(CONTEXT.INSTRUCTION_POINTER);
+        ContextObject context = (ContextObject) FrameAccess.getContextOrMarker(frame);
+        int rawPC = (int) context.at0(CONTEXT.INSTRUCTION_POINTER);
         return rawPC - code.getInitialPC();
     }
 
