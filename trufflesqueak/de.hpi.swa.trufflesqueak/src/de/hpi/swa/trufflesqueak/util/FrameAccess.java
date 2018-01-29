@@ -54,6 +54,18 @@ public class FrameAccess {
         return frame.getArguments()[idx + RCVR_AND_ARGS_START];
     }
 
+    public static Object[] getArguments(Frame frame) {
+        int index = 0;
+        Object[] arguments = new Object[frame.getArguments().length - RCVR_AND_ARGS_START];
+        for (Object argument : frame.getArguments()) {
+            if (index >= RCVR_AND_ARGS_START) {
+                arguments[index - RCVR_AND_ARGS_START] = argument;
+            }
+            index++;
+        }
+        return arguments;
+    }
+
     public static Object getContextOrMarker(Frame frame) {
         return FrameUtil.getObjectSafe(frame, getMethod(frame).thisContextOrMarkerSlot);
     }

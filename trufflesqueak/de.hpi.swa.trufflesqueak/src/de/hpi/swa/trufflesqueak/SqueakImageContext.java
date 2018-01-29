@@ -10,11 +10,16 @@ import java.math.BigInteger;
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameInstance;
+import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node.Child;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
+import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
@@ -38,6 +43,7 @@ import de.hpi.swa.trufflesqueak.nodes.process.ResumeProcessNode;
 import de.hpi.swa.trufflesqueak.util.Display.AbstractDisplay;
 import de.hpi.swa.trufflesqueak.util.Display.JavaDisplay;
 import de.hpi.swa.trufflesqueak.util.Display.NullDisplay;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.InterruptHandlerNode;
 import de.hpi.swa.trufflesqueak.util.OSDetector;
 import de.hpi.swa.trufflesqueak.util.SqueakImageFlags;
@@ -293,5 +299,33 @@ public class SqueakImageContext {
         } else {
             resumeProcessNode.executeResume(frame, removeFirstLinkOfListNode.executeRemove(semaphore));
         }
+    }
+
+    /*
+     * Helper function for debugging purposes.
+     */
+    @TruffleBoundary
+    public void printSqStackTrace() {
+        getOutput().println("== Squeak stack trace ===========================================================");
+        Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Object>() {
+            @Override
+            public Object visitFrame(FrameInstance frameInstance) {
+                Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
+                if (current.getArguments().length < FrameAccess.RCVR_AND_ARGS_START) {
+                    return null;
+                }
+                Object method = FrameAccess.getMethod(current);
+                Object sender = FrameAccess.getSender(current);
+                BlockClosureObject closure = FrameAccess.getClosure(current);
+                Object[] arguments = FrameAccess.getArguments(current);
+                String[] argumentStrings = new String[arguments.length];
+                for (int i = 0; i < arguments.length; i++) {
+                    argumentStrings[i] = arguments[i].toString();
+                }
+                getOutput().println(String.format("%s #(%s) [sender: %s, closure: %s]", method, String.join(", ", argumentStrings), sender, closure));
+                return null;
+            }
+        });
+        getOutput().println("=================================================================================");
     }
 }

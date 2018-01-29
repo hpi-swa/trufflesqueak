@@ -3,18 +3,13 @@ package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameInstance;
-import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
-import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
@@ -24,7 +19,6 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.BlockClosurePrimitivesFactory.PrimClosureValue0NodeFactory.PrimClosureValue0NodeGen;
-import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -93,7 +87,8 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         @Specialization
         @TruffleBoundary
         Object findNext(ContextObject receiver) {
-            printException();
+            code.image.printSqStackTrace();
+            code.image.getOutput().println("Letting primitive fail, executing fallback code instead...");
             throw new PrimitiveFailed();
 // MethodContextObject handlerContext = Truffle.getRuntime().iterateFrames(new
 // FrameInstanceVisitor<MethodContextObject>() {
@@ -123,29 +118,6 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 // printException();
 // }
 // return handlerContext;
-        }
-
-        @TruffleBoundary
-        private void printException() {
-            code.image.getOutput().println("=== Unhandled Error in PrimNextHandlerContextNode ===");
-            Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Object>() {
-                @Override
-                public Object visitFrame(FrameInstance frameInstance) {
-                    Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
-                    if (current.getArguments().length < FrameAccess.RCVR_AND_ARGS_START) {
-                        return null;
-                    }
-                    CompiledCodeObject method = FrameAccess.getMethod(current);
-                    code.image.getOutput().println(method);
-                    for (Object arg : current.getArguments()) {
-                        code.image.getOutput().append("   ");
-                        code.image.getOutput().println(arg);
-                    }
-                    return null;
-                }
-            });
-            code.image.getOutput().println("Letting primitive fail, executing fallback code instead...");
-            throw new PrimitiveFailed();
         }
     }
 
