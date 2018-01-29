@@ -59,7 +59,7 @@ public class TopLevelContextNode extends RootNode {
                 VirtualFrame frame = Truffle.getRuntime().createVirtualFrame(FrameAccess.newWith(code, sender, closure, frameArgs), code.getFrameDescriptor());
                 activeContext.setFrameMarker(new FrameMarker());
                 frame.setObject(code.thisContextOrMarkerSlot, activeContext);
-                Object result = new MethodContextNode(code).execute(frame); // TODO don't generate node here
+                Object result = new ExecuteContextNode(code).execute(frame); // TODO don't generate node here
                 activeContext = unwindContextChain(sender, activeContext, result);
             } catch (ProcessSwitch ps) {
                 activeContext = ps.getNewContext();

@@ -11,7 +11,6 @@ import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.exceptions.Returns.LocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
-import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -20,29 +19,25 @@ import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
-import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.FrameMarker;
 import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
-public class MethodContextNode extends Node {
+public class ExecuteContextNode extends Node {
     @CompilationFinal private final CompiledCodeObject code;
-    @CompilationFinal private static BaseSqueakObject aboutToReturnSelector;
     @Children private final AbstractBytecodeNode[] bytecodeNodes;
-    @Child private PushStackNode pushNode;
     @Child private TerminateContextNode terminateNode;
     @Child private HandleLocalReturnNode handleLocalReturnNode;
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
     @Child private GetOrCreateContextNode getContextNode;
 
-    public static MethodContextNode create(CompiledCodeObject code) {
-        return new MethodContextNode(code);
+    public static ExecuteContextNode create(CompiledCodeObject code) {
+        return new ExecuteContextNode(code);
     }
 
-    public MethodContextNode(CompiledCodeObject code) {
+    public ExecuteContextNode(CompiledCodeObject code) {
         this.code = code;
         bytecodeNodes = new SqueakBytecodeDecoder(code).decode();
-        pushNode = PushStackNode.create(code);
         terminateNode = TerminateContextNode.create(code);
         handleLocalReturnNode = HandleLocalReturnNode.create(code);
         handleNonLocalReturnNode = HandleNonLocalReturnNode.create(code);

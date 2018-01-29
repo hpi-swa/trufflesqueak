@@ -31,7 +31,7 @@ public abstract class EnterCodeNode extends RootNode {
     @ExplodeLoop
     @Specialization(assumptions = {"code.getNoContextNeededAssumption()"})
     protected Object enterVirtualized(VirtualFrame frame,
-                    @Cached("create(code)") MethodContextNode contextNode) {
+                    @Cached("create(code)") ExecuteContextNode contextNode) {
         CompilerDirectives.ensureVirtualized(frame);
         frame.setObject(code.thisContextOrMarkerSlot, new FrameMarker()); // storing new marker in slot
         int numTempsToInitialize = Math.max(code.getNumTemps() - code.getNumArgsAndCopiedValues(), 0);
@@ -45,7 +45,7 @@ public abstract class EnterCodeNode extends RootNode {
     @ExplodeLoop
     @Specialization(guards = {"!code.getNoContextNeededAssumption().isValid()"})
     protected Object enter(VirtualFrame frame,
-                    @Cached("create(code)") MethodContextNode contextNode) {
+                    @Cached("create(code)") ExecuteContextNode contextNode) {
         ContextObject newContext = ContextObject.create(code, frame, code.getInitialPC(), 0);
         newContext.setFrameMarker(new FrameMarker());
         frame.setObject(code.thisContextOrMarkerSlot, newContext);
