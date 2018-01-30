@@ -2,11 +2,11 @@ package de.hpi.swa.trufflesqueak.model;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.Node.Child;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
@@ -15,7 +15,7 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
 public class ContextObject extends AbstractPointersObject {
-    @Child private FrameStackReadNode frameStackReadNode = FrameStackReadNode.create();
+    private static FrameStackReadNode frameStackReadNode = FrameStackReadNode.create();
     @CompilationFinal private FrameDescriptor frameDescriptor;
     @CompilationFinal private FrameMarker frameMarker;
     private boolean isDirty;
@@ -76,6 +76,7 @@ public class ContextObject extends AbstractPointersObject {
 
         // Copy temps
         for (int i = 0; i < sp - 1; i++) {
+            CompilerDirectives.transferToInterpreter();
             int tempIndex = i - method.getNumArgsAndCopiedValues();
             Object tempValue;
             if (tempIndex < 0) {
@@ -168,30 +169,18 @@ public class ContextObject extends AbstractPointersObject {
         Object sender = super.at0(CONTEXT.SENDER_OR_NIL);
         if (sender instanceof ContextObject || sender instanceof NilObject) {
             return (BaseSqueakObject) sender;
-        } else if (sender instanceof FrameMarker) { // null indicates virtual frame, reconstructing contexts...
+        } else {
+            assert sender instanceof FrameMarker;
             ContextObject reconstructedSender = FrameAccess.findContextForMarker((FrameMarker) sender, image);
-            if (reconstructedSender == null) {
-                throw new RuntimeException("Unable to find sender");
-            }
+            assert reconstructedSender != null;
             setSender(reconstructedSender);
             return reconstructedSender;
         }
-        throw new RuntimeException("Unexpected sender: " + sender);
     }
 
+    // should only be used when sender is not nil
     public ContextObject getNotNilSender() {
-        Object sender = super.at0(CONTEXT.SENDER_OR_NIL);
-        if (sender instanceof ContextObject) {
-            return (ContextObject) sender;
-        } else if (sender instanceof FrameMarker) { // null indicates virtual frame, reconstructing contexts...
-            ContextObject reconstructedSender = FrameAccess.findContextForMarker((FrameMarker) sender, image);
-            if (reconstructedSender == null) {
-                throw new RuntimeException("Unable to find sender");
-            }
-            setSender(reconstructedSender);
-            return reconstructedSender;
-        }
-        throw new RuntimeException("Unexpected sender: " + sender);
+        return (ContextObject) getSender();
     }
 
     /*
