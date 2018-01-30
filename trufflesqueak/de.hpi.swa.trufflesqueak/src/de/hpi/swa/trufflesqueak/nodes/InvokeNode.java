@@ -4,6 +4,7 @@ import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.DirectCallNode;
+import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -24,9 +25,8 @@ public abstract class InvokeNode extends Node {
     }
 
     @Specialization(replaces = "doInvoke")
-    protected Object doIndirect(CompiledCodeObject code, Object[] arguments) {
-        RootCallTarget callTarget = code.getCallTarget();
-        DirectCallNode callNode = DirectCallNode.create(callTarget);
-        return callNode.call(arguments);
+    protected Object doIndirect(CompiledCodeObject code, Object[] arguments,
+                    @Cached("create()") IndirectCallNode callNode) {
+        return callNode.call(code.getCallTarget(), arguments);
     }
 }
