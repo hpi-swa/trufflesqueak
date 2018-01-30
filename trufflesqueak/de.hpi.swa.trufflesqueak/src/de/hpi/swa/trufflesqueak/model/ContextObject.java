@@ -61,6 +61,12 @@ public class ContextObject extends AbstractPointersObject {
         return context;
     }
 
+    public static ContextObject create(Frame frame) {
+        FrameMarker frameMarker = (FrameMarker) FrameAccess.getContextOrMarker(frame);
+        CompiledCodeObject method = FrameAccess.getMethod(frame);
+        return new ContextObject(method.image, frame.materialize(), frameMarker, method);
+    }
+
     private ContextObject(SqueakImageContext img) {
         super(img);
     }
@@ -83,7 +89,7 @@ public class ContextObject extends AbstractPointersObject {
         BlockClosureObject closure = FrameAccess.getClosure(frame);
 
         setSender(FrameAccess.getSender(frame));
-        atput0(CONTEXT.INSTRUCTION_POINTER, method.getInitialPC());
+        atput0(CONTEXT.INSTRUCTION_POINTER, FrameAccess.getInstructionPointer(frame));
         int sp = FrameAccess.getStackPointer(frame);
         atput0(CONTEXT.STACKPOINTER, sp);
         atput0(CONTEXT.METHOD, method);
@@ -166,6 +172,10 @@ public class ContextObject extends AbstractPointersObject {
 
     public boolean isDirty() {
         return isDirty;
+    }
+
+    public boolean hasVirtualSender() {
+        return super.at0(CONTEXT.SENDER_OR_NIL) instanceof FrameMarker;
     }
 
     public BaseSqueakObject getSender() {

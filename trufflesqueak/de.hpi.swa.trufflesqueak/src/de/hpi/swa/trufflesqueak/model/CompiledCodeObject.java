@@ -332,4 +332,8 @@ public abstract class CompiledCodeObject extends SqueakObject {
     public boolean isUnwindMarked() {
         return hasPrimitive() && primitiveIndex() == 198;
     }
+
+    public boolean isExceptionHandlerMarked() {
+        return hasPrimitive() && primitiveIndex() == 199;
+    }
 }

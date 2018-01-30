@@ -3,13 +3,22 @@ package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.FrameInstance;
+import com.oracle.truffle.api.frame.FrameInstanceVisitor;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
@@ -19,6 +28,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.BlockClosurePrimitivesFactory.PrimClosureValue0NodeFactory.PrimClosureValue0NodeGen;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -28,8 +38,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     }
 
     /*
-     * This primitive is implemented to avoid running the fallback code which sets senders. This in turn
-     * flags contexts incorrectly as dirty.
+     * This primitive is implemented to avoid running the fallback code which sets senders.
      */
     @GenerateNodeFactory
     @SqueakPrimitive(index = 196, numArguments = 2)
@@ -78,47 +87,66 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @GenerateNodeFactory
     @SqueakPrimitive(index = 197)
     protected static abstract class PrimNextHandlerContextNode extends AbstractPrimitiveNode {
-        private static final int EXCEPTION_HANDLER_MARKER = 199;
 
         protected PrimNextHandlerContextNode(CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization
+        @Specialization(guards = {"receiver.hasVirtualSender()"})
         @TruffleBoundary
+        Object findNextVirtualized(ContextObject receiver) {
+            ContextObject handlerContext = Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<ContextObject>() {
+                boolean foundMyself = false;
+                final Object marker = receiver.getFrameMarker();
+
+                @Override
+                public ContextObject visitFrame(FrameInstance frameInstance) {
+                    Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
+                    if (current.getArguments().length < FrameAccess.RCVR_AND_ARGS_START) {
+                        return null;
+                    }
+                    if (!foundMyself) {
+                        FrameDescriptor frameDescriptor = current.getFrameDescriptor();
+                        FrameSlot contextOrMarkerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.THIS_CONTEXT_OR_MARKER);
+                        Object frameMarker = FrameUtil.getObjectSafe(current, contextOrMarkerSlot);
+                        if (frameMarker == marker) {
+                            foundMyself = true;
+                        }
+                    } else {
+                        CompiledCodeObject frameMethod = FrameAccess.getMethod(current);
+                        if (frameMethod.isExceptionHandlerMarked()) {
+                            Frame currentMaterializable = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
+                            return ContextObject.create(currentMaterializable);
+                        }
+                    }
+                    return null;
+                }
+            });
+            if (handlerContext == null) {
+                throw new PrimitiveFailed(); // unable to find handler, falling back
+            }
+            return handlerContext;
+        }
+
+        @Specialization(guards = {"!receiver.hasVirtualSender()"})
         Object findNext(ContextObject receiver) {
             code.image.printSqStackTrace();
-            code.image.getOutput().println("Letting primitive fail, executing fallback code instead...");
+            ContextObject context = receiver;
+            while (true) {
+                if (context.getMethod().isExceptionHandlerMarked()) {
+                    return context;
+                }
+                BaseSqueakObject sender = context.getSender();
+                if (sender instanceof ContextObject) {
+                    context = (ContextObject) sender;
+                } else {
+                    assert sender == code.image.nil;
+                    break;
+                }
+            }
             throw new PrimitiveFailed();
-// MethodContextObject handlerContext = Truffle.getRuntime().iterateFrames(new
-// FrameInstanceVisitor<MethodContextObject>() {
-// final Object marker = receiver.getFrameMarker();
-//
-// @Override
-// public MethodContextObject visitFrame(FrameInstance frameInstance) {
-// Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
-// if (current.getArguments().length < FrameAccess.RCVR_AND_ARGS_START) {
-// return null;
-// }
-// FrameDescriptor frameDescriptor = current.getFrameDescriptor();
-// CompiledCodeObject frameMethod = FrameAccess.getMethod(current);
-// FrameSlot markerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.MARKER);
-// if (markerSlot != null) {
-// Object frameMarker = FrameUtil.getObjectSafe(current, markerSlot);
-// if (frameMarker == marker) {
-// if (frameMethod.primitiveIndex() == EXCEPTION_HANDLER_MARKER) {
-// return MethodContextObject.createReadOnlyContextObject(code.image, current);
-// }
-// }
-// }
-// return null;
-// }
-// });
-// if (handlerContext == null) {
-// printException();
-// }
-// return handlerContext;
         }
+
     }
 
     private static abstract class AbstractClosureValuePrimitiveNode extends AbstractPrimitiveNode {
