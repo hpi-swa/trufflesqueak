@@ -1,7 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -16,10 +15,8 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.SendSelectorNode;
 import de.hpi.swa.trufflesqueak.nodes.context.TemporaryReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.TemporaryWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
-import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
-@ImportStatic(FrameAccess.class)
-public abstract class AboutToReturnNode extends AbstractContextNode {
+public abstract class AboutToReturnNode extends AbstractNodeWithCode {
     @Child protected BlockActivationNode dispatch = BlockActivationNodeGen.create();
     private static BaseSqueakObject aboutToReturnSelector;
     @Child private SendSelectorNode sendAboutToReturnNode;

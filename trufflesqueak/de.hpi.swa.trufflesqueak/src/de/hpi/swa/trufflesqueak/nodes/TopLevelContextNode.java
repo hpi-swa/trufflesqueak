@@ -22,6 +22,7 @@ import de.hpi.swa.trufflesqueak.util.FrameMarker;
 public class TopLevelContextNode extends RootNode {
     @CompilationFinal private final SqueakImageContext image;
     @CompilationFinal private final ContextObject initialContext;
+    @CompilationFinal private final ExecuteContextNode executeActiveContextNode;
 
     public static TopLevelContextNode create(SqueakLanguage language, ContextObject context) {
         return new TopLevelContextNode(language, context, context.getCodeObject());
@@ -31,6 +32,7 @@ public class TopLevelContextNode extends RootNode {
         super(language, code.getFrameDescriptor());
         this.image = code.image;
         this.initialContext = context;
+        this.executeActiveContextNode = ExecuteContextNode.create(code);
     }
 
     @Override
@@ -60,8 +62,8 @@ public class TopLevelContextNode extends RootNode {
                 activeContext.setFrameMarker(new FrameMarker());
                 frame.setInt(code.instructionPointerSlot, activeContext.instructionPointer(code));
                 frame.setObject(code.thisContextOrMarkerSlot, activeContext);
-                Object result = new ExecuteContextNode(code).execute(frame); // TODO don't generate node here
-                activeContext = unwindContextChain(sender, activeContext, result);
+                Object result = executeActiveContextNode.executeNonVirtualized(frame);
+                throw new TopLevelReturn(result);
             } catch (ProcessSwitch ps) {
                 activeContext = ps.getNewContext();
             } catch (NonLocalReturn nlr) {

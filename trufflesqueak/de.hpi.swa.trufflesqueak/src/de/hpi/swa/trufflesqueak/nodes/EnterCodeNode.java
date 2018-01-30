@@ -3,7 +3,6 @@ package de.hpi.swa.trufflesqueak.nodes;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
@@ -15,7 +14,6 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
-@ImportStatic(FrameAccess.class)
 public abstract class EnterCodeNode extends RootNode {
     @CompilationFinal protected final CompiledCodeObject code;
 
@@ -40,7 +38,7 @@ public abstract class EnterCodeNode extends RootNode {
         }
         frame.setInt(code.instructionPointerSlot, 0);
         frame.setInt(code.stackPointerSlot, code.getNumArgsAndCopiedValues() + numTempsToInitialize);
-        return contextNode.execute(frame);
+        return contextNode.executeVirtualized(frame);
     }
 
     @ExplodeLoop
@@ -60,7 +58,7 @@ public abstract class EnterCodeNode extends RootNode {
         for (int i = 0; i < numTempsToInitialize; i++) {
             newContext.push(code.image.nil);
         }
-        return contextNode.execute(frame);
+        return contextNode.executeNonVirtualized(frame);
     }
 
     @Override

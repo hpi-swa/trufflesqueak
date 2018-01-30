@@ -70,6 +70,11 @@ public class FrameAccess {
         return FrameUtil.getObjectSafe(frame, getMethod(frame).thisContextOrMarkerSlot);
     }
 
+    // This can only be used when non-virtualized
+    public static ContextObject getContext(Frame frame) {
+        return (ContextObject) getContextOrMarker(frame);
+    }
+
     public static int getInstructionPointer(Frame frame) {
         return FrameUtil.getIntSafe(frame, getMethod(frame).instructionPointerSlot);
     }

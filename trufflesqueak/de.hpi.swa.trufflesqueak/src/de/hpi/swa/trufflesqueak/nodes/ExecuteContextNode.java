@@ -2,12 +2,11 @@ package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.LoopNode;
-import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.exceptions.Returns.LocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
@@ -18,29 +17,26 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpN
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
-public class ExecuteContextNode extends Node {
-    @CompilationFinal private final CompiledCodeObject code;
-    @Children private final AbstractBytecodeNode[] bytecodeNodes;
+public class ExecuteContextNode extends AbstractNodeWithCode {
+    @Children private AbstractBytecodeNode[] bytecodeNodes;
     @Child private HandleLocalReturnNode handleLocalReturnNode;
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
-    @Child private GetOrCreateContextNode getContextNode;
 
     public static ExecuteContextNode create(CompiledCodeObject code) {
         return new ExecuteContextNode(code);
     }
 
-    public ExecuteContextNode(CompiledCodeObject code) {
-        this.code = code;
+    protected ExecuteContextNode(CompiledCodeObject code) {
+        super(code);
         bytecodeNodes = new SqueakBytecodeDecoder(code).decode();
+        CompilerAsserts.compilationConstant(bytecodeNodes.length);
         handleLocalReturnNode = HandleLocalReturnNode.create(code);
         handleNonLocalReturnNode = HandleNonLocalReturnNode.create(code);
-        getContextNode = GetOrCreateContextNode.create(code);
     }
 
-    public Object execute(VirtualFrame frame) {
-        assert FrameAccess.getMethod(frame) == code;
+    public Object executeVirtualized(VirtualFrame frame) {
         try {
-            executeBytecode(frame);
+            startBytecode(frame);
             CompilerDirectives.transferToInterpreter();
             throw new RuntimeException("Method did not return");
         } catch (LocalReturn lr) {
@@ -50,15 +46,22 @@ public class ExecuteContextNode extends Node {
         }
     }
 
-    protected void executeBytecode(VirtualFrame frame) {
-        CompilerAsserts.compilationConstant(bytecodeNodes.length);
-        int initialPC = FrameAccess.getInstructionPointer(frame);
-        if (initialPC == 0) {
-            startBytecode(frame);
-        } else {
-            // avoid optimizing the cases in which a context is resumed
+    public Object executeNonVirtualized(VirtualFrame frame) {
+        try {
+            int initialPC = FrameAccess.getInstructionPointer(frame);
+            if (initialPC == 0) {
+                startBytecode(frame);
+            } else {
+                // avoid optimizing the cases in which a context is resumed
+                CompilerDirectives.transferToInterpreter();
+                resumeBytecode(frame.materialize(), initialPC);
+            }
             CompilerDirectives.transferToInterpreter();
-            resumeBytecode(frame.materialize(), initialPC);
+            throw new RuntimeException("Method did not return");
+        } catch (LocalReturn lr) {
+            return handleLocalReturnNode.executeHandle(frame, lr);
+        } catch (NonLocalReturn nlr) {
+            return handleNonLocalReturnNode.executeHandle(frame, nlr);
         }
     }
 
@@ -134,6 +137,7 @@ public class ExecuteContextNode extends Node {
     }
 
     @Override
+    @TruffleBoundary
     public String toString() {
         return code.toString();
     }

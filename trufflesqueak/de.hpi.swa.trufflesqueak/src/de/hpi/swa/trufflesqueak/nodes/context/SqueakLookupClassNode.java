@@ -2,9 +2,7 @@ package de.hpi.swa.trufflesqueak.nodes.context;
 
 import java.math.BigInteger;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
@@ -12,17 +10,16 @@ import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.SqueakObject;
+import de.hpi.swa.trufflesqueak.nodes.AbstractNodeWithCode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
 
-public abstract class SqueakLookupClassNode extends Node {
-    @CompilationFinal protected final CompiledCodeObject code;
-
+public abstract class SqueakLookupClassNode extends AbstractNodeWithCode {
     public static SqueakLookupClassNode create(CompiledCodeObject code) {
         return SqueakLookupClassNodeGen.create(code);
     }
 
     protected SqueakLookupClassNode(CompiledCodeObject code) {
-        this.code = code;
+        super(code);
     }
 
     public abstract Object executeLookup(Object receiver);

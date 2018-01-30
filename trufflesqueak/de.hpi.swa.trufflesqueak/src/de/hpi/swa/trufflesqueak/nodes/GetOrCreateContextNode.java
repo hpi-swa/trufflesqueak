@@ -1,26 +1,20 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
-@ImportStatic(FrameAccess.class)
-public abstract class GetOrCreateContextNode extends Node {
-    @CompilationFinal protected final CompiledCodeObject code;
-
+public abstract class GetOrCreateContextNode extends AbstractNodeWithCode {
     public static GetOrCreateContextNode create(CompiledCodeObject code) {
         return GetOrCreateContextNodeGen.create(code);
     }
 
     protected GetOrCreateContextNode(CompiledCodeObject code) {
-        this.code = code;
+        super(code);
     }
 
     public abstract ContextObject executeGet(VirtualFrame frame);

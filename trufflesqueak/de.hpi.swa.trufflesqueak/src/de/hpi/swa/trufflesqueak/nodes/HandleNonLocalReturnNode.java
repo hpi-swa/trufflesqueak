@@ -1,10 +1,7 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
@@ -14,9 +11,7 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
-@ImportStatic(FrameAccess.class)
-public abstract class HandleNonLocalReturnNode extends Node {
-    @CompilationFinal protected final CompiledCodeObject code;
+public abstract class HandleNonLocalReturnNode extends AbstractNodeWithCode {
     @Child private TerminateContextNode terminateNode;
     @Child private AboutToReturnNode aboutToReturnNode;
 
@@ -25,8 +20,8 @@ public abstract class HandleNonLocalReturnNode extends Node {
     }
 
     public HandleNonLocalReturnNode(CompiledCodeObject code) {
-        this.code = code;
-        terminateNode = TerminateContextNode.create(code);
+        super(code);
+        terminateNode = TerminateContextNode.create(code.image);
         if (code instanceof CompiledMethodObject) {
             aboutToReturnNode = AboutToReturnNode.create((CompiledMethodObject) code);
         }

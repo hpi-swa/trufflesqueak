@@ -3,7 +3,7 @@ package de.hpi.swa.trufflesqueak.nodes;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
-import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.frame.Frame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
@@ -21,8 +21,7 @@ public abstract class SqueakNodeWithCode extends SqueakNode {
         this.code = code;
     }
 
-    // This can only be used when non-virtualized
-    protected ContextObject getContext(VirtualFrame frame) {
-        return (ContextObject) FrameAccess.getContextOrMarker(frame);
+    protected ContextObject getContext(Frame frame) {
+        return FrameAccess.getContext(frame);
     }
 }
