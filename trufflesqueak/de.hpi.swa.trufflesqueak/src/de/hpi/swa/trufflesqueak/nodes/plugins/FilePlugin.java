@@ -240,7 +240,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
                 RandomAccessFile file = files.get(fileDescriptor);
                 int read = file.read(buffer, 0, count);
                 for (int index = 0; index < read; index++) {
-                    target.atput0(startIndex + index, buffer[index]);
+                    target.atput0(startIndex - 1 + index, (int) buffer[index]);
                 }
                 return read;
             } catch (NullPointerException | IOException e) {

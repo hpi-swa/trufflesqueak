@@ -503,7 +503,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected Object value(BaseSqueakObject receiver, int index) {
             try {
-                return receiver.at0(index);
+                return receiver.at0(index - 1);
             } catch (ArrayIndexOutOfBoundsException e) {
                 throw new PrimitiveFailed();
             }
@@ -521,7 +521,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected Object value(BaseSqueakObject receiver, int index, Object value) {
             try {
-                receiver.atput0(index, value);
+                receiver.atput0(index - 1, value);
                 return value;
             } catch (ArrayIndexOutOfBoundsException e) {
                 throw new PrimitiveFailed();
