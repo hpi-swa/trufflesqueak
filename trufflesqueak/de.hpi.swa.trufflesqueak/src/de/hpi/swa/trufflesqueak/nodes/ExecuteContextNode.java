@@ -20,7 +20,6 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
-import de.hpi.swa.trufflesqueak.util.FrameMarker;
 import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
 public class ExecuteContextNode extends Node {
@@ -29,7 +28,6 @@ public class ExecuteContextNode extends Node {
     @Child private HandleLocalReturnNode handleLocalReturnNode;
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
     @Child private GetOrCreateContextNode getContextNode;
-    private int pcAfterNonLocalReturn;
 
     public static ExecuteContextNode create(CompiledCodeObject code) {
         return new ExecuteContextNode(code);
@@ -64,7 +62,7 @@ public class ExecuteContextNode extends Node {
         } else {
             initialPC = initialPC(frame);
         }
-        
+
         if (initialPC == 0) {
             startBytecode(frame);
         } else {
@@ -122,13 +120,11 @@ public class ExecuteContextNode extends Node {
                     pc = successor;
                     continue;
                 } else {
+                    frame.setInt(code.instructionPointerSlot, pc);
                     pc = node.executeInt(frame);
                     continue;
                 }
             }
-        } catch (NonLocalReturn nlr) {
-            pcAfterNonLocalReturn = pc;
-            throw nlr;
         } finally {
             assert backJumpCounter >= 0;
             LoopNode.reportLoopCount(this, backJumpCounter);
@@ -140,14 +136,10 @@ public class ExecuteContextNode extends Node {
      */
     protected void resumeBytecode(VirtualFrame frame, int initialPC) {
         int pc = initialPC;
-        try {
-            while (pc >= 0) {
-                AbstractBytecodeNode node = bytecodeNodes[pc];
-                pc = node.executeInt(frame);
-            }
-        } catch (NonLocalReturn nlr) {
-            pcAfterNonLocalReturn = pc;
-            throw nlr;
+        while (pc >= 0) {
+            AbstractBytecodeNode node = bytecodeNodes[pc];
+            frame.setInt(code.instructionPointerSlot, pc);
+            pc = node.executeInt(frame);
         }
     }
 
@@ -162,10 +154,6 @@ public class ExecuteContextNode extends Node {
         ContextObject context = (ContextObject) FrameAccess.getContextOrMarker(frame);
         int rawPC = (int) context.at0(CONTEXT.INSTRUCTION_POINTER);
         return rawPC - code.getInitialPC();
-    }
-
-    public int getPCAfterNonLocalReturn() { // TODO: this maybe be needed
-        return pcAfterNonLocalReturn;
     }
 
     @Override

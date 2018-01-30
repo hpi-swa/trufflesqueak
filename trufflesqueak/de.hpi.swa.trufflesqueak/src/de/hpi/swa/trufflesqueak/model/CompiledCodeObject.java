@@ -25,6 +25,7 @@ import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 public abstract class CompiledCodeObject extends SqueakObject {
     public static enum SLOT_IDENTIFIER {
         THIS_CONTEXT_OR_MARKER,
+        INSTRUCTION_POINTER,
         STACK_POINTER,
     }
 
@@ -34,6 +35,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
     @CompilationFinal private FrameDescriptor frameDescriptor;
     @CompilationFinal public FrameSlot thisContextOrMarkerSlot;
     @CompilationFinal(dimensions = 1) public FrameSlot[] stackSlots;
+    @CompilationFinal public FrameSlot instructionPointerSlot;
     @CompilationFinal public FrameSlot stackPointerSlot;
     // header info and data
     @CompilationFinal(dimensions = 1) protected Object[] literals;
@@ -98,6 +100,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
             stackSlots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Illegal);
         }
         thisContextOrMarkerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.THIS_CONTEXT_OR_MARKER, FrameSlotKind.Object);
+        instructionPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.INSTRUCTION_POINTER, FrameSlotKind.Int);
         stackPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.STACK_POINTER, FrameSlotKind.Int);
     }
 

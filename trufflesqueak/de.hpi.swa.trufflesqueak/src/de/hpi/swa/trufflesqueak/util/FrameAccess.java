@@ -70,6 +70,10 @@ public class FrameAccess {
         return FrameUtil.getObjectSafe(frame, getMethod(frame).thisContextOrMarkerSlot);
     }
 
+    public static int getInstructionPointer(Frame frame) {
+        return FrameUtil.getIntSafe(frame, getMethod(frame).instructionPointerSlot);
+    }
+
     public static int getStackPointer(Frame frame) {
         return FrameUtil.getIntSafe(frame, getMethod(frame).stackPointerSlot);
     }
