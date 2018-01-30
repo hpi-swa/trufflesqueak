@@ -42,8 +42,13 @@ public final class ReturnBytecodes {
 
         @Specialization(guards = "!isLocalReturn(frame)")
         protected Object executeNonLocalReturn(VirtualFrame frame) {
+            ContextObject outerContext;
             BlockClosureObject block = FrameAccess.getClosure(frame);
-            ContextObject outerContext = block.getHomeContext();
+            if (block != null) {
+                outerContext = block.getHomeContext();
+            } else {
+                outerContext = FrameAccess.getContext(frame);
+            }
             throw new NonLocalReturn(getReturnValue(frame), outerContext);
         }
 
