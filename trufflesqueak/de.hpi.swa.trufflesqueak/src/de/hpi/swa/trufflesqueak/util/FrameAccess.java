@@ -74,6 +74,10 @@ public class FrameAccess {
         return (ContextObject) getContextOrMarker(frame);
     }
 
+    public static void setContext(VirtualFrame frame, ContextObject context) {
+        frame.setObject(getMethod(frame).thisContextOrMarkerSlot, context);
+    }
+
     public static void initializeCodeSlots(Frame frame) {
         CompiledCodeObject code = getMethod(frame);
         frame.setObject(code.thisContextOrMarkerSlot, new FrameMarker());

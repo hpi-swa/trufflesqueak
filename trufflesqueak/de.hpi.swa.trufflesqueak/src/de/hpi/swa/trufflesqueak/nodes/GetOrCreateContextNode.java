@@ -22,13 +22,16 @@ public abstract class GetOrCreateContextNode extends Node {
         return GetOrCreateContextNodeGen.create();
     }
 
-    public abstract ContextObject executeGet(Frame frame);
+    public final ContextObject executeGet(Frame frame) {
+        return executeGet(frame, false);
+    }
+
+    public abstract ContextObject executeGet(Frame frame, boolean forceContext);
 
     @Specialization(guards = {"isVirtualized(frame)"})
-    protected ContextObject doCreateVirtualized(VirtualFrame frame) {
+    protected ContextObject doCreateVirtualized(VirtualFrame frame, boolean forceContext) {
         FrameMarker frameMarker = (FrameMarker) FrameAccess.getContextOrMarker(frame);
         CompiledCodeObject method = FrameAccess.getMethod(frame);
-        method.invalidateNoContextNeededAssumption();
         ContextObject context = ContextObject.create(method.image, method.frameSize(), frameMarker);
 
         context.setSender(FrameAccess.getSender(frame));
@@ -54,11 +57,15 @@ public abstract class GetOrCreateContextNode extends Node {
             assert tempValue != null;
             context.atTempPut(i, tempValue);
         }
+        if (forceContext) {
+            method.invalidateNoContextNeededAssumption();
+            FrameAccess.setContext(frame, context);
+        }
         return context;
     }
 
     @Specialization(guards = {"!isVirtualized(frame)"})
-    protected ContextObject doGet(VirtualFrame frame) {
+    protected ContextObject doGet(VirtualFrame frame, @SuppressWarnings("unused") boolean forceContext) {
         return (ContextObject) FrameAccess.getContextOrMarker(frame);
     }
 }

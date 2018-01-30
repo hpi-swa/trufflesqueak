@@ -47,8 +47,7 @@ public abstract class EnterCodeNode extends RootNode {
     protected Object enter(VirtualFrame frame,
                     @Cached("create(code)") ExecuteContextNode contextNode) {
         FrameAccess.initializeCodeSlots(frame); //
-        ContextObject newContext = createContextNode.executeGet(frame);
-        frame.setObject(code.thisContextOrMarkerSlot, newContext); // comment
+        ContextObject newContext = createContextNode.executeGet(frame, true);
         Object[] arguments = frame.getArguments();
         // Push arguments and copied values onto the newContext.
         int numArgsAndCopiedValues = code.getNumArgsAndCopiedValues();
