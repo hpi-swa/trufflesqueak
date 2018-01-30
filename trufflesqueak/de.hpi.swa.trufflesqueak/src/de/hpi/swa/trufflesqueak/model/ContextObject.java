@@ -6,15 +6,16 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node.Child;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
-import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
-import de.hpi.swa.trufflesqueak.nodes.context.TemporaryReadNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
 public class ContextObject extends AbstractPointersObject {
+    @Child private FrameStackReadNode frameStackReadNode = FrameStackReadNode.create();
     @CompilationFinal private FrameDescriptor frameDescriptor;
     @CompilationFinal private FrameMarker frameMarker;
     private boolean isDirty;
@@ -59,23 +60,7 @@ public class ContextObject extends AbstractPointersObject {
         this.frameMarker = frameMarker;
     }
 
-    public static ContextObject create(CompiledCodeObject code, VirtualFrame frame, int pc, int sp) {
-        FrameMarker frameMarker = (FrameMarker) FrameAccess.getContextOrMarker(frame);
-        ContextObject context = new ContextObject(code.image, code.frameSize(), frameMarker);
-        context.atput0(CONTEXT.METHOD, code);
-        context.setSender(FrameAccess.getSender(frame));
-        context.atput0(CONTEXT.INSTRUCTION_POINTER, encodeSqPC(pc, code));
-        context.atput0(CONTEXT.RECEIVER, FrameAccess.getReceiver(frame));
-        BlockClosureObject closure = FrameAccess.getClosure(frame);
-        context.atput0(CONTEXT.CLOSURE_OR_NIL, closure == null ? code.image.nil : closure);
-        context.atput0(CONTEXT.STACKPOINTER, sp);
-        for (int i = 0; i < sp - 1; i++) {
-            context.atTempPut(i, code.image.nil);
-        }
-        return context;
-    }
-
-    private ContextObject(SqueakImageContext img, Frame frame, FrameMarker frameMarker, CompiledCodeObject method) {
+    private ContextObject(SqueakImageContext img, VirtualFrame frame, FrameMarker frameMarker, CompiledCodeObject method) {
         this(img, method.frameSize());
         this.frameDescriptor = frame.getFrameDescriptor();
         this.frameMarker = frameMarker;
@@ -89,9 +74,17 @@ public class ContextObject extends AbstractPointersObject {
         atput0(CONTEXT.CLOSURE_OR_NIL, closure == null ? image.nil : closure);
         atput0(CONTEXT.RECEIVER, FrameAccess.getReceiver(frame));
 
+        // Copy temps
         for (int i = 0; i < sp - 1; i++) {
-            SqueakNode readNode = TemporaryReadNode.create(method, i);
-            Object tempValue = readNode.executeGeneric((VirtualFrame) frame);
+            int tempIndex = i - method.getNumArgsAndCopiedValues();
+            Object tempValue;
+            if (tempIndex < 0) {
+                int frameArgumentIndex = frame.getArguments().length + tempIndex;
+                assert frameArgumentIndex >= FrameAccess.RCVR_AND_ARGS_START;
+                tempValue = frame.getArguments()[frameArgumentIndex];
+            } else {
+                tempValue = frameStackReadNode.execute(frame, tempIndex);
+            }
             assert tempValue != null;
             atTempPut(i, tempValue);
         }

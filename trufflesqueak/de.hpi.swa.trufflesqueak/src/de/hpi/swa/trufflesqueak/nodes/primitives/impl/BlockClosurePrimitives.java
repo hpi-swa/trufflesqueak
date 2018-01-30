@@ -130,7 +130,6 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
         @Specialization(guards = {"!receiver.hasVirtualSender()"})
         Object findNext(ContextObject receiver) {
-            code.image.printSqStackTrace();
             ContextObject context = receiver;
             while (true) {
                 if (context.getMethod().isExceptionHandlerMarked()) {
