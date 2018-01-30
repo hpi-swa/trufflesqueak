@@ -1,10 +1,8 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 
@@ -25,25 +23,18 @@ public abstract class GetOrCreateContextNode extends Node {
         this.code = code;
     }
 
-    public abstract ContextObject executeGet(VirtualFrame frame, int pc);
+    public abstract ContextObject executeGet(VirtualFrame frame);
 
     @Specialization(guards = {"isVirtualized(frame)"})
-    protected ContextObject doCreateVirtualized(VirtualFrame frame, int pc) {
-        ContextObject context = createContext(frame, pc);
-        context.setFrameMarker((FrameMarker) FrameUtil.getObjectSafe(frame, code.thisContextOrMarkerSlot));
+    protected ContextObject doCreateVirtualized(VirtualFrame frame) {
+        code.invalidateNoContextNeededAssumption();
+        ContextObject context = ContextObject.materialize(frame, (FrameMarker) FrameAccess.getContextOrMarker(frame));
         frame.setObject(code.thisContextOrMarkerSlot, context);
         return context;
     }
 
     @Specialization(guards = {"!isVirtualized(frame)"})
-    protected ContextObject doGet(VirtualFrame frame, @SuppressWarnings("unused") int pc) {
+    protected ContextObject doGet(VirtualFrame frame) {
         return (ContextObject) FrameAccess.getContextOrMarker(frame);
-    }
-
-    private ContextObject createContext(VirtualFrame frame, int pc) {
-        CompilerDirectives.transferToInterpreter();
-        code.invalidateNoContextNeededAssumption();
-        int sp = FrameAccess.getStackPointer(frame);
-        return ContextObject.create(code, frame, pc, sp);
     }
 }

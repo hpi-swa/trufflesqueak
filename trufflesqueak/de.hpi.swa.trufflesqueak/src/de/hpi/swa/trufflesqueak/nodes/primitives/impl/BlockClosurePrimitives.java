@@ -116,7 +116,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         CompiledCodeObject frameMethod = FrameAccess.getMethod(current);
                         if (frameMethod.isExceptionHandlerMarked()) {
                             Frame currentMaterializable = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
-                            return ContextObject.create(currentMaterializable);
+                            return ContextObject.getOrMaterialize(currentMaterializable);
                         }
                     }
                     return null;

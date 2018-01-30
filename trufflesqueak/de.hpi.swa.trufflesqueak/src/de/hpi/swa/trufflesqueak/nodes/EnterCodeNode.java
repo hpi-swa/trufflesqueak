@@ -38,6 +38,7 @@ public abstract class EnterCodeNode extends RootNode {
         for (int i = 0; i < numTempsToInitialize; i++) {
             frame.setObject(code.stackSlots[i], code.image.nil);
         }
+        frame.setInt(code.instructionPointerSlot, 0);
         frame.setInt(code.stackPointerSlot, code.getNumArgsAndCopiedValues() + numTempsToInitialize);
         return contextNode.execute(frame);
     }
@@ -46,8 +47,9 @@ public abstract class EnterCodeNode extends RootNode {
     @Specialization(guards = {"!code.getNoContextNeededAssumption().isValid()"})
     protected Object enter(VirtualFrame frame,
                     @Cached("create(code)") ExecuteContextNode contextNode) {
-        ContextObject newContext = ContextObject.create(code, frame, code.getInitialPC(), 0);
-        newContext.setFrameMarker(new FrameMarker());
+        frame.setInt(code.instructionPointerSlot, 0);
+        frame.setInt(code.stackPointerSlot, 0);
+        ContextObject newContext = ContextObject.materialize(frame, new FrameMarker());
         frame.setObject(code.thisContextOrMarkerSlot, newContext);
         Object[] arguments = frame.getArguments();
         assert arguments.length - (FrameAccess.RCVR_AND_ARGS_START + 1) == code.getNumArgsAndCopiedValues();

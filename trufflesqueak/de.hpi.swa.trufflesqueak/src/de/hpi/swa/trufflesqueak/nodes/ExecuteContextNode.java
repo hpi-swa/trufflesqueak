@@ -11,11 +11,7 @@ import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.exceptions.Returns.LocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
-import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
-import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.ContextObject;
-import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
@@ -56,13 +52,7 @@ public class ExecuteContextNode extends Node {
 
     protected void executeBytecode(VirtualFrame frame) {
         CompilerAsserts.compilationConstant(bytecodeNodes.length);
-        int initialPC;
-        if (FrameAccess.isVirtualized(frame)) {
-            initialPC = 0;
-        } else {
-            initialPC = initialPC(frame);
-        }
-
+        int initialPC = FrameAccess.getInstructionPointer(frame);
         if (initialPC == 0) {
             startBytecode(frame);
         } else {
@@ -82,6 +72,7 @@ public class ExecuteContextNode extends Node {
         try {
             while (pc >= 0) {
                 CompilerAsserts.partialEvaluationConstant(pc);
+                frame.setInt(code.instructionPointerSlot, pc);
                 AbstractBytecodeNode node = bytecodeNodes[pc];
                 if (node instanceof ConditionalJumpNode) {
                     ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
@@ -120,7 +111,6 @@ public class ExecuteContextNode extends Node {
                     pc = successor;
                     continue;
                 } else {
-                    frame.setInt(code.instructionPointerSlot, pc);
                     pc = node.executeInt(frame);
                     continue;
                 }
@@ -137,23 +127,10 @@ public class ExecuteContextNode extends Node {
     protected void resumeBytecode(VirtualFrame frame, int initialPC) {
         int pc = initialPC;
         while (pc >= 0) {
-            AbstractBytecodeNode node = bytecodeNodes[pc];
             frame.setInt(code.instructionPointerSlot, pc);
+            AbstractBytecodeNode node = bytecodeNodes[pc];
             pc = node.executeInt(frame);
         }
-    }
-
-    private int initialPC(VirtualFrame frame) {
-        BlockClosureObject closure = FrameAccess.getClosure(frame);
-        if (closure != null) {
-            int rawPC = closure.getPC();
-            CompiledBlockObject block = closure.getCompiledBlock();
-            assert code == block;
-            return rawPC - block.getMethod().getInitialPC() - block.getOffset();
-        }
-        ContextObject context = (ContextObject) FrameAccess.getContextOrMarker(frame);
-        int rawPC = (int) context.at0(CONTEXT.INSTRUCTION_POINTER);
-        return rawPC - code.getInitialPC();
     }
 
     @Override

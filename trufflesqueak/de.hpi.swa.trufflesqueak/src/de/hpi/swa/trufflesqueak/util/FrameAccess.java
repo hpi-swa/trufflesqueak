@@ -115,7 +115,7 @@ public class FrameAccess {
                 FrameDescriptor frameDescriptor = current.getFrameDescriptor();
                 FrameSlot contextOrMarkerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.THIS_CONTEXT_OR_MARKER);
                 if (frameMarker == FrameUtil.getObjectSafe(current, contextOrMarkerSlot)) {
-                    return ContextObject.materialize(current, image);
+                    return ContextObject.getOrMaterialize(current);
                 }
                 return null;
             }

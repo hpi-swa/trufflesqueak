@@ -46,8 +46,7 @@ public final class PushBytecodes {
 
         @Override
         public void executeVoid(VirtualFrame frame) {
-            // current index is pc
-            pushNode.executeWrite(frame, getContextNode.executeGet(frame, index));
+            pushNode.executeWrite(frame, getContextNode.executeGet(frame));
         }
 
         @Override

@@ -5,9 +5,6 @@ import java.util.Arrays;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameUtil;
-import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
@@ -22,53 +19,33 @@ public class ContextObject extends AbstractPointersObject {
     @CompilationFinal private FrameMarker frameMarker;
     private boolean isDirty;
 
-    public static ContextObject materialize(Frame virtualFrame, SqueakImageContext img) {
-        MaterializedFrame frame = virtualFrame.materialize();
-        FrameDescriptor frameDescriptor = frame.getFrameDescriptor();
-        FrameSlot contextOrMarkerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.THIS_CONTEXT_OR_MARKER);
-        Object contextOrMarker = FrameUtil.getObjectSafe(frame, contextOrMarkerSlot);
+    public static ContextObject getOrMaterialize(Frame frame) {
+        Object contextOrMarker = FrameAccess.getContextOrMarker(frame);
         if (contextOrMarker instanceof ContextObject) {
             return (ContextObject) contextOrMarker;
         } else {
             assert contextOrMarker instanceof FrameMarker;
-            CompiledCodeObject method = FrameAccess.getMethod(frame);
             // do not attach ReadOnlyContextObject to thisContextSlot to avoid becoming non-virtualized
-            return new ContextObject(img, frame.materialize(), (FrameMarker) contextOrMarker, method);
+            return materialize(frame, (FrameMarker) contextOrMarker);
         }
+    }
+
+    public static ContextObject materialize(Frame frame, FrameMarker frameMarker) {
+        // do not attach ReadOnlyContextObject to thisContextSlot to avoid becoming non-virtualized
+        CompiledCodeObject method = FrameAccess.getMethod(frame);
+        return new ContextObject(method.image, frame.materialize(), frameMarker, method);
     }
 
     public static ContextObject create(SqueakImageContext img) {
         return new ContextObject(img);
     }
 
-    public static ContextObject create(SqueakImageContext img, int size) {
-        return new ContextObject(img, size);
-    }
-
-    public static ContextObject create(CompiledCodeObject code, VirtualFrame frame, int pc, int sp) {
-        FrameMarker frameMarker = (FrameMarker) FrameAccess.getContextOrMarker(frame);
-        ContextObject context = new ContextObject(code.image, code.frameSize(), frameMarker);
-        context.atput0(CONTEXT.METHOD, code);
-        context.setSender(FrameAccess.getSender(frame));
-        context.atput0(CONTEXT.INSTRUCTION_POINTER, pc);
-        context.atput0(CONTEXT.RECEIVER, FrameAccess.getReceiver(frame));
-        BlockClosureObject closure = FrameAccess.getClosure(frame);
-        context.atput0(CONTEXT.CLOSURE_OR_NIL, closure == null ? code.image.nil : closure);
-        context.atput0(CONTEXT.STACKPOINTER, sp);
-        for (int i = 0; i < sp - 1; i++) {
-            context.atTempPut(i, code.image.nil);
-        }
-        return context;
-    }
-
-    public static ContextObject create(Frame frame) {
-        FrameMarker frameMarker = (FrameMarker) FrameAccess.getContextOrMarker(frame);
-        CompiledCodeObject method = FrameAccess.getMethod(frame);
-        return new ContextObject(method.image, frame.materialize(), frameMarker, method);
-    }
-
     private ContextObject(SqueakImageContext img) {
         super(img);
+    }
+
+    public static ContextObject create(SqueakImageContext img, int size) {
+        return new ContextObject(img, size);
     }
 
     private ContextObject(SqueakImageContext img, int size) {
@@ -80,6 +57,22 @@ public class ContextObject extends AbstractPointersObject {
     private ContextObject(SqueakImageContext img, int size, FrameMarker frameMarker) {
         this(img, size);
         this.frameMarker = frameMarker;
+    }
+
+    public static ContextObject create(CompiledCodeObject code, VirtualFrame frame, int pc, int sp) {
+        FrameMarker frameMarker = (FrameMarker) FrameAccess.getContextOrMarker(frame);
+        ContextObject context = new ContextObject(code.image, code.frameSize(), frameMarker);
+        context.atput0(CONTEXT.METHOD, code);
+        context.setSender(FrameAccess.getSender(frame));
+        context.atput0(CONTEXT.INSTRUCTION_POINTER, encodeSqPC(pc, code));
+        context.atput0(CONTEXT.RECEIVER, FrameAccess.getReceiver(frame));
+        BlockClosureObject closure = FrameAccess.getClosure(frame);
+        context.atput0(CONTEXT.CLOSURE_OR_NIL, closure == null ? code.image.nil : closure);
+        context.atput0(CONTEXT.STACKPOINTER, sp);
+        for (int i = 0; i < sp - 1; i++) {
+            context.atTempPut(i, code.image.nil);
+        }
+        return context;
     }
 
     private ContextObject(SqueakImageContext img, Frame frame, FrameMarker frameMarker, CompiledCodeObject method) {
@@ -220,6 +213,10 @@ public class ContextObject extends AbstractPointersObject {
         int newSP = stackPointer() + 1;
         atput0(newSP, value);
         setStackPointer(newSP);
+    }
+
+    public int instructionPointer(CompiledCodeObject code) {
+        return decodeSqPC((int) at0(CONTEXT.INSTRUCTION_POINTER), code);
     }
 
     private int stackPointer() {
