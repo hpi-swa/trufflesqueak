@@ -10,7 +10,6 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
@@ -75,12 +74,23 @@ public class FrameAccess {
         return (ContextObject) getContextOrMarker(frame);
     }
 
+    public static void initializeCodeSlots(Frame frame) {
+        CompiledCodeObject code = getMethod(frame);
+        frame.setObject(code.thisContextOrMarkerSlot, new FrameMarker());
+        frame.setInt(getMethod(frame).instructionPointerSlot, 0);
+        frame.setInt(getMethod(frame).stackPointerSlot, 0);
+    }
+
     public static int getInstructionPointer(Frame frame) {
         return FrameUtil.getIntSafe(frame, getMethod(frame).instructionPointerSlot);
     }
 
     public static int getStackPointer(Frame frame) {
         return FrameUtil.getIntSafe(frame, getMethod(frame).stackPointerSlot);
+    }
+
+    public static void setStackPointer(VirtualFrame frame, int value) {
+        frame.setInt(getMethod(frame).stackPointerSlot, value);
     }
 
     public static boolean isVirtualized(VirtualFrame frame) {
@@ -109,10 +119,10 @@ public class FrameAccess {
     }
 
     @TruffleBoundary
-    public static ContextObject findContextForMarker(FrameMarker frameMarker, SqueakImageContext image) {
-        return Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<ContextObject>() {
+    public static Frame findFrameForMarker(FrameMarker frameMarker) {
+        return Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Frame>() {
             @Override
-            public ContextObject visitFrame(FrameInstance frameInstance) {
+            public Frame visitFrame(FrameInstance frameInstance) {
                 Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
                 if (current.getArguments().length < RCVR_AND_ARGS_START) {
                     return null;
@@ -120,7 +130,7 @@ public class FrameAccess {
                 FrameDescriptor frameDescriptor = current.getFrameDescriptor();
                 FrameSlot contextOrMarkerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.THIS_CONTEXT_OR_MARKER);
                 if (frameMarker == FrameUtil.getObjectSafe(current, contextOrMarkerSlot)) {
-                    return ContextObject.getOrMaterialize(current);
+                    return current;
                 }
                 return null;
             }

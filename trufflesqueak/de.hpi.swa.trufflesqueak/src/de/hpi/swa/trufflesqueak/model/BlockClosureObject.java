@@ -7,7 +7,9 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
@@ -15,6 +17,7 @@ import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.BLOCK_CLOSURE;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.EnterCodeNode;
+import de.hpi.swa.trufflesqueak.nodes.GetOrCreateContextNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.FrameMarker;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
@@ -27,6 +30,7 @@ public class BlockClosureObject extends BaseSqueakObject {
     @CompilationFinal private CompiledBlockObject block;
     @CompilationFinal private int pc = -1;
     @CompilationFinal private int numArgs = -1;
+    @Child private GetOrCreateContextNode createContextNode = GetOrCreateContextNode.create();
     private RootCallTarget callTarget;
     private final CyclicAssumption callTargetStable = new CyclicAssumption("Compiled method assumption");
 
@@ -61,7 +65,9 @@ public class BlockClosureObject extends BaseSqueakObject {
     @TruffleBoundary
     private ContextObject getOrPrepareContext() {
         if (outerContext == null) {
-            outerContext = FrameAccess.findContextForMarker(outerMarker, image);
+            Frame frame = FrameAccess.findFrameForMarker(outerMarker);
+            assert frame != null;
+            outerContext = createContextNode.executeGet(frame);
             assert outerContext != null;
         }
         return outerContext;

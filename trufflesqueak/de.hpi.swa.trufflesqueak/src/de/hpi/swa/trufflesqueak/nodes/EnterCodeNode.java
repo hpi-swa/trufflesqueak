@@ -11,11 +11,12 @@ import com.oracle.truffle.api.nodes.RootNode;
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
-import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
 public abstract class EnterCodeNode extends RootNode {
     @CompilationFinal protected final CompiledCodeObject code;
+    @Child private GetOrCreateContextNode createContextNode = GetOrCreateContextNode.create();
 
     public static EnterCodeNode create(SqueakLanguage language, CompiledCodeObject code) {
         return EnterCodeNodeGen.create(language, code);
@@ -31,13 +32,13 @@ public abstract class EnterCodeNode extends RootNode {
     protected Object enterVirtualized(VirtualFrame frame,
                     @Cached("create(code)") ExecuteContextNode contextNode) {
         CompilerDirectives.ensureVirtualized(frame);
-        frame.setObject(code.thisContextOrMarkerSlot, new FrameMarker()); // storing new marker in slot
-        int numTempsToInitialize = Math.max(code.getNumTemps() - code.getNumArgsAndCopiedValues(), 0);
-        for (int i = 0; i < numTempsToInitialize; i++) {
+        FrameAccess.initializeCodeSlots(frame);
+        int numTemps = code.getNumTemps();
+        // Initialize temps with nil in newContext.
+        for (int i = 0; i < numTemps - code.getNumArgsAndCopiedValues(); i++) {
             frame.setObject(code.stackSlots[i], code.image.nil);
         }
-        frame.setInt(code.instructionPointerSlot, 0);
-        frame.setInt(code.stackPointerSlot, code.getNumArgsAndCopiedValues() + numTempsToInitialize);
+        FrameAccess.setStackPointer(frame, numTemps);
         return contextNode.executeVirtualized(frame);
     }
 
@@ -45,19 +46,21 @@ public abstract class EnterCodeNode extends RootNode {
     @Specialization(guards = {"!code.getNoContextNeededAssumption().isValid()"})
     protected Object enter(VirtualFrame frame,
                     @Cached("create(code)") ExecuteContextNode contextNode) {
-        frame.setInt(code.instructionPointerSlot, 0);
-        frame.setInt(code.stackPointerSlot, 0);
-        ContextObject newContext = ContextObject.materialize(frame, new FrameMarker());
-        frame.setObject(code.thisContextOrMarkerSlot, newContext);
+        FrameAccess.initializeCodeSlots(frame); //
+        ContextObject newContext = createContextNode.executeGet(frame);
+        frame.setObject(code.thisContextOrMarkerSlot, newContext); // comment
         Object[] arguments = frame.getArguments();
-        assert arguments.length - (FrameAccess.RCVR_AND_ARGS_START + 1) == code.getNumArgsAndCopiedValues();
-        for (int i = FrameAccess.RCVR_AND_ARGS_START + 1; i < arguments.length; i++) {
-            newContext.push(arguments[i]);
+        // Push arguments and copied values onto the newContext.
+        int numArgsAndCopiedValues = code.getNumArgsAndCopiedValues();
+        for (int i = 0; i < numArgsAndCopiedValues; i++) {
+            newContext.push(arguments[FrameAccess.RCVR_AND_ARGS_START + 1 + i]);
         }
-        int numTempsToInitialize = code.getNumTemps() - code.getNumArgsAndCopiedValues();
-        for (int i = 0; i < numTempsToInitialize; i++) {
+        // Initialize temps with nil in newContext.
+        int numTemps = code.getNumTemps();
+        for (int i = 0; i < numTemps - numArgsAndCopiedValues; i++) {
             newContext.push(code.image.nil);
         }
+        assert (int) newContext.at0(CONTEXT.STACKPOINTER) == numTemps;
         return contextNode.executeNonVirtualized(frame);
     }
 

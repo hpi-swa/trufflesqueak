@@ -9,9 +9,11 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.nodes.GetOrCreateContextNode;
 
 public class TransferToNode extends AbstractProcessNode {
     @Child private GetSchedulerNode getSchedulerNode;
+    @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create();
 
     public static TransferToNode create(SqueakImageContext image) {
         return new TransferToNode(image);
@@ -23,7 +25,7 @@ public class TransferToNode extends AbstractProcessNode {
     }
 
     public void executeTransferTo(VirtualFrame frame, BaseSqueakObject activeProcess, BaseSqueakObject newProcess) {
-        ContextObject activeContext = ContextObject.getOrMaterialize(frame);
+        ContextObject activeContext = getOrCreateContextNode.executeGet(frame);
         assert activeContext != null;
         // Record a process to be awakened on the next interpreter cycle.
         PointersObject scheduler = getSchedulerNode.executeGet();

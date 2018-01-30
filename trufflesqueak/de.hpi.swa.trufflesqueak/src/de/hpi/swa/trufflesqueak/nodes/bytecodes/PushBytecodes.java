@@ -37,11 +37,10 @@ public final class PushBytecodes {
     }
 
     public static class PushActiveContextNode extends AbstractPushNode {
-        @Child private GetOrCreateContextNode getContextNode;
+        @Child private GetOrCreateContextNode getContextNode = GetOrCreateContextNode.create();
 
         public PushActiveContextNode(CompiledCodeObject code, int index) {
             super(code, index);
-            getContextNode = GetOrCreateContextNode.create(code);
         }
 
         @Override

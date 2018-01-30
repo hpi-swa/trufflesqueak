@@ -24,6 +24,7 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.nodes.BlockActivationNode;
 import de.hpi.swa.trufflesqueak.nodes.BlockActivationNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.GetOrCreateContextNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
@@ -87,6 +88,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @GenerateNodeFactory
     @SqueakPrimitive(index = 197)
     protected static abstract class PrimNextHandlerContextNode extends AbstractPrimitiveNode {
+        @Child private GetOrCreateContextNode createContextNode = GetOrCreateContextNode.create();
 
         protected PrimNextHandlerContextNode(CompiledMethodObject method) {
             super(method);
@@ -116,7 +118,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         CompiledCodeObject frameMethod = FrameAccess.getMethod(current);
                         if (frameMethod.isExceptionHandlerMarked()) {
                             Frame currentMaterializable = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
-                            return ContextObject.getOrMaterialize(currentMaterializable);
+                            return createContextNode.executeGet(currentMaterializable);
                         }
                     }
                     return null;

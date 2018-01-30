@@ -2,40 +2,20 @@ package de.hpi.swa.trufflesqueak.model;
 
 import java.util.Arrays;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameDescriptor;
-import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node.Child;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
+import de.hpi.swa.trufflesqueak.nodes.GetOrCreateContextNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
 public class ContextObject extends AbstractPointersObject {
-    private static FrameStackReadNode frameStackReadNode = FrameStackReadNode.create();
-    @CompilationFinal private FrameDescriptor frameDescriptor;
     @CompilationFinal private FrameMarker frameMarker;
+    @Child private GetOrCreateContextNode createContextNode = GetOrCreateContextNode.create();
     private boolean isDirty;
-
-    public static ContextObject getOrMaterialize(Frame frame) {
-        Object contextOrMarker = FrameAccess.getContextOrMarker(frame);
-        if (contextOrMarker instanceof ContextObject) {
-            return (ContextObject) contextOrMarker;
-        } else {
-            assert contextOrMarker instanceof FrameMarker;
-            // do not attach ReadOnlyContextObject to thisContextSlot to avoid becoming non-virtualized
-            return materialize(frame, (FrameMarker) contextOrMarker);
-        }
-    }
-
-    public static ContextObject materialize(Frame frame, FrameMarker frameMarker) {
-        // do not attach ReadOnlyContextObject to thisContextSlot to avoid becoming non-virtualized
-        CompiledCodeObject method = FrameAccess.getMethod(frame);
-        return new ContextObject(method.image, frame.materialize(), frameMarker, method);
-    }
 
     public static ContextObject create(SqueakImageContext img) {
         return new ContextObject(img);
@@ -55,40 +35,13 @@ public class ContextObject extends AbstractPointersObject {
         Arrays.fill(pointers, img.nil); // initialize all with nil
     }
 
+    public static ContextObject create(SqueakImageContext img, int size, FrameMarker frameMarker) {
+        return new ContextObject(img, size, frameMarker);
+    }
+
     private ContextObject(SqueakImageContext img, int size, FrameMarker frameMarker) {
         this(img, size);
         this.frameMarker = frameMarker;
-    }
-
-    private ContextObject(SqueakImageContext img, VirtualFrame frame, FrameMarker frameMarker, CompiledCodeObject method) {
-        this(img, method.frameSize());
-        this.frameDescriptor = frame.getFrameDescriptor();
-        this.frameMarker = frameMarker;
-        BlockClosureObject closure = FrameAccess.getClosure(frame);
-
-        setSender(FrameAccess.getSender(frame));
-        atput0(CONTEXT.INSTRUCTION_POINTER, FrameAccess.getInstructionPointer(frame));
-        int sp = FrameAccess.getStackPointer(frame);
-        atput0(CONTEXT.STACKPOINTER, sp);
-        atput0(CONTEXT.METHOD, method);
-        atput0(CONTEXT.CLOSURE_OR_NIL, closure == null ? image.nil : closure);
-        atput0(CONTEXT.RECEIVER, FrameAccess.getReceiver(frame));
-
-        // Copy temps
-        for (int i = 0; i < sp - 1; i++) {
-            CompilerDirectives.transferToInterpreter();
-            int tempIndex = i - method.getNumArgsAndCopiedValues();
-            Object tempValue;
-            if (tempIndex < 0) {
-                int frameArgumentIndex = frame.getArguments().length + tempIndex;
-                assert frameArgumentIndex >= FrameAccess.RCVR_AND_ARGS_START;
-                tempValue = frame.getArguments()[frameArgumentIndex];
-            } else {
-                tempValue = frameStackReadNode.execute(frame, tempIndex);
-            }
-            assert tempValue != null;
-            atTempPut(i, tempValue);
-        }
     }
 
     private ContextObject(ContextObject original) {
@@ -171,7 +124,8 @@ public class ContextObject extends AbstractPointersObject {
             return (BaseSqueakObject) sender;
         } else {
             assert sender instanceof FrameMarker;
-            ContextObject reconstructedSender = FrameAccess.findContextForMarker((FrameMarker) sender, image);
+            Frame frame = FrameAccess.findFrameForMarker((FrameMarker) sender);
+            ContextObject reconstructedSender = createContextNode.executeGet(frame);
             assert reconstructedSender != null;
             setSender(reconstructedSender);
             return reconstructedSender;
