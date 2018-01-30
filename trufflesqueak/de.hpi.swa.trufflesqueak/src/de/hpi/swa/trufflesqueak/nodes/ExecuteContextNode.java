@@ -10,6 +10,7 @@ import com.oracle.truffle.api.nodes.LoopNode;
 
 import de.hpi.swa.trufflesqueak.exceptions.Returns.LocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
@@ -37,8 +38,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
     public Object executeVirtualized(VirtualFrame frame) {
         try {
             startBytecode(frame);
-            CompilerDirectives.transferToInterpreter();
-            throw new RuntimeException("Method did not return");
+            throw new SqueakException("Method did not return");
         } catch (LocalReturn lr) {
             return handleLocalReturnNode.executeHandle(frame, lr);
         } catch (NonLocalReturn nlr) {
@@ -56,8 +56,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
                 CompilerDirectives.transferToInterpreter();
                 resumeBytecode(frame.materialize(), initialPC);
             }
-            CompilerDirectives.transferToInterpreter();
-            throw new RuntimeException("Method did not return");
+            throw new SqueakException("Method did not return");
         } catch (LocalReturn lr) {
             return handleLocalReturnNode.executeHandle(frame, lr);
         } catch (NonLocalReturn nlr) {

@@ -11,6 +11,7 @@ import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.TopLevelReturn;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakQuit;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
@@ -42,12 +43,12 @@ public class TopLevelContextNode extends RootNode {
         } catch (TopLevelReturn e) {
             return e.getReturnValue();
         } catch (SqueakQuit e) {
-            System.out.println("Squeak is quitting...");
+            System.out.println(e.toString());
             System.exit(e.getExitCode());
         } finally {
             image.display.close();
         }
-        throw new RuntimeException("Top level context did not return");
+        throw new SqueakException("Top level context did not return");
     }
 
     public void executeLoop() {
@@ -83,7 +84,7 @@ public class TopLevelContextNode extends RootNode {
         while (context != targetContext) {
             BaseSqueakObject sender = context.getSender();
             if (sender == image.nil) {
-                throw new RuntimeException("Unable to unwind context chain");
+                throw new SqueakException("Unable to unwind context chain");
             }
             context.terminate();
             context = (ContextObject) sender;

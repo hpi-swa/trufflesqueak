@@ -9,6 +9,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CLASS;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.METHOD_DICT;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
@@ -169,7 +170,7 @@ public class ClassObject extends AbstractPointersObject {
             lookupClass = ((ClassObject) lookupClass).getSuperclass();
         }
         if (predicate.test(image.doesNotUnderstand)) { // exit recursive call
-            throw new RuntimeException("doesNotUnderstand missing!");
+            throw new SqueakException("doesNotUnderstand missing!");
         }
         return lookup(image.doesNotUnderstand);
     }
@@ -218,7 +219,7 @@ public class ClassObject extends AbstractPointersObject {
             case 5: // TODO: weak pointers
                 return new PointersObject(image, this, size);
             case 7: case 8:
-                throw new RuntimeException("tried to instantiate an immediate");
+                throw new SqueakException("tried to instantiate an immediate");
             case 9: case 10: case 11: case 12: case 13: case 14: case 15:
                 // TODO: Float
                 return new NativeObject(image, this, size, 4);

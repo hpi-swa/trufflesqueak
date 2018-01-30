@@ -18,6 +18,7 @@ import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node.Child;
 
+import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
@@ -168,7 +169,7 @@ public class SqueakImageContext {
         ClassObject receiverClass = receiver instanceof Integer ? smallIntegerClass : nilClass;
         CompiledCodeObject lookupResult = (CompiledCodeObject) receiverClass.lookup(selector);
         if (lookupResult == null) {
-            throw new RuntimeException(String.format("%s >> %s could not be found!", receiver, selector));
+            throw new SqueakException(String.format("%s >> %s could not be found!", receiver, selector));
         }
         ContextObject customContext = ContextObject.create(this, lookupResult.frameSize());
         customContext.atput0(CONTEXT.METHOD, lookupResult);
@@ -226,7 +227,7 @@ public class SqueakImageContext {
         } else if (obj instanceof Dimension) {
             return wrap((Dimension) obj);
         }
-        throw new RuntimeException("Don't know how to wrap " + obj);
+        throw new SqueakException("Don't know how to wrap " + obj);
     }
 
     public Object wrap(boolean value) {

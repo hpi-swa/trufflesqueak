@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.util;
 
+import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
@@ -184,6 +185,6 @@ public class SqueakBytecodeDecoder {
                 return SendLiteralSelectorNode.create(code, index, 1, b & 0xF, 2);
         }
         //@formatter:on
-        throw new RuntimeException("Unknown bytecode: " + b);
+        throw new SqueakException("Unknown bytecode: " + b);
     }
 }

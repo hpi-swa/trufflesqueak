@@ -4,6 +4,7 @@ import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.instrumentation.BaseSqueakObjectMessageResolutionForeign;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
@@ -34,7 +35,7 @@ public abstract class BaseSqueakObject implements TruffleObject {
      * @param newCls
      */
     public void setSqClass(ClassObject newCls) {
-        throw new RuntimeException("cannot do this");
+        throw new SqueakException("cannot do this");
     }
 
     public boolean isClass() {

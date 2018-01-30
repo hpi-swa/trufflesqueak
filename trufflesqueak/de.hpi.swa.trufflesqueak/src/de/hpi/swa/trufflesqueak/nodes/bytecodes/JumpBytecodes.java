@@ -5,6 +5,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
+import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PopStackNode;
 
@@ -113,7 +114,7 @@ public final class JumpBytecodes {
 
         @Override
         public void executeVoid(VirtualFrame frame) {
-            throw new RuntimeException("Jumps cannot be executed like other bytecode nodes");
+            throw new SqueakException("Jumps cannot be executed like other bytecode nodes");
         }
 
         public int getJumpSuccessor() {

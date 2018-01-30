@@ -9,6 +9,7 @@ import com.oracle.truffle.api.source.SourceSection;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.LocalReturn;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushLiteralConstantNode;
@@ -47,7 +48,7 @@ public final class MiscellaneousBytecodes {
                     primitiveNode = PrimitiveNodeFactory.forIndex((CompiledMethodObject) code, primitiveIndex);
                 }
             } else {
-                throw new RuntimeException("Primitives only supported in CompiledMethodObject");
+                throw new SqueakException("Primitives only supported in CompiledMethodObject");
             }
 
         }
@@ -140,7 +141,7 @@ public final class MiscellaneousBytecodes {
                 case 3:
                     return new PopIntoAssociationNode(code, index, numBytecodes, variableIndex);
                 default:
-                    throw new RuntimeException("illegal ExtendedStore bytecode");
+                    throw new SqueakException("illegal ExtendedStore bytecode");
             }
         }
 
@@ -156,7 +157,7 @@ public final class MiscellaneousBytecodes {
                 case 3:
                     return new PushLiteralVariableNode(code, index, numBytecodes, variableIndex);
                 default:
-                    throw new RuntimeException("unexpected type for ExtendedPush");
+                    throw new SqueakException("unexpected type for ExtendedPush");
             }
         }
 
@@ -172,7 +173,7 @@ public final class MiscellaneousBytecodes {
                 case 3:
                     return new StoreIntoAssociationNode(code, index, numBytecodes, variableIndex);
                 default:
-                    throw new RuntimeException("illegal ExtendedStore bytecode");
+                    throw new SqueakException("illegal ExtendedStore bytecode");
             }
         }
 
@@ -214,7 +215,7 @@ public final class MiscellaneousBytecodes {
 
         @Override
         public void executeVoid(VirtualFrame frame) {
-            throw new RuntimeException("Unknown/uninterpreted bytecode " + bytecode);
+            throw new SqueakException("Unknown/uninterpreted bytecode " + bytecode);
         }
 
         @Override

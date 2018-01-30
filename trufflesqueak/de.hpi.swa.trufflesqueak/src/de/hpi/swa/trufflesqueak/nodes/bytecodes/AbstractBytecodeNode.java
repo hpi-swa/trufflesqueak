@@ -6,6 +6,7 @@ import com.oracle.truffle.api.instrumentation.Instrumentable;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.source.SourceSection;
 
+import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithCode;
 
@@ -35,12 +36,12 @@ public abstract class AbstractBytecodeNode extends SqueakNodeWithCode {
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
-        throw new RuntimeException("Should call executeVoid instead");
+        throw new SqueakException("Should call executeVoid instead");
     }
 
     public int executeInt(VirtualFrame frame) {
         if (index < 0) {
-            throw new RuntimeException("Inner nodes are not allowed to be executed here");
+            throw new SqueakException("Inner nodes are not allowed to be executed here");
         }
         executeVoid(frame);
         return index + numBytecodes;

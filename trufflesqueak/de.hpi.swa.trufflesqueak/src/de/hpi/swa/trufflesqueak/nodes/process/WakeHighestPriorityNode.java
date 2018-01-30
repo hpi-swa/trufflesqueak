@@ -3,6 +3,7 @@ package de.hpi.swa.trufflesqueak.nodes.process;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.PROCESS_SCHEDULER;
@@ -35,7 +36,7 @@ public class WakeHighestPriorityNode extends AbstractProcessNode {
         BaseSqueakObject processList;
         do {
             if (p < 0) {
-                throw new RuntimeException("scheduler could not find a runnable process");
+                throw new SqueakException("scheduler could not find a runnable process");
             }
             processList = (BaseSqueakObject) schedLists.at0(p--);
         } while (isEmptyListNode.executeIsEmpty(processList));

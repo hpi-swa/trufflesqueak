@@ -6,6 +6,7 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 
 public abstract class DispatchNode extends Node {
@@ -34,6 +35,6 @@ public abstract class DispatchNode extends Node {
     @SuppressWarnings("unused")
     @Fallback
     protected Object fail(Object method, Object[] arguments) {
-        throw new RuntimeException("failed to lookup generic selector object on generic class");
+        throw new SqueakException("failed to lookup generic selector object on generic class");
     }
 }

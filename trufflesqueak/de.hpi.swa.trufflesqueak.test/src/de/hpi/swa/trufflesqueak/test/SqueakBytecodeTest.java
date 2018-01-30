@@ -15,6 +15,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
@@ -145,7 +146,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
             try {
                 runMethod(rcvr, bytecode);
                 assertTrue("Exception expected", false);
-            } catch (RuntimeException e) {
+            } catch (SqueakException e) {
                 assertEquals("Unknown/uninterpreted bytecode " + bytecode, e.getMessage());
             }
         }

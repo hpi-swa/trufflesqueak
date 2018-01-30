@@ -11,6 +11,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -57,8 +58,7 @@ public final class SendBytecodes {
             try {
                 rcvrClass = SqueakTypesGen.expectClassObject(lookupClassNode.executeLookup(rcvrAndArgs[0]));
             } catch (UnexpectedResultException e) {
-                CompilerDirectives.transferToInterpreter();
-                throw new RuntimeException("receiver has no class");
+                throw new SqueakException("receiver has no class");
             }
             CompiledCodeObject lookupResult = (CompiledCodeObject) lookupNode.executeLookup(rcvrClass, selector);
             Object[] frameArguments = FrameAccess.newFor(frame, lookupResult, null, rcvrAndArgs);
@@ -137,7 +137,7 @@ public final class SendBytecodes {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 replace(getFallbackNode(code, index, (SpecialSelectorObject) selector)).executeVoid(frame);
             } catch (FrameSlotTypeException e) {
-                throw new RuntimeException("Unable to set stack pointer");
+                throw new SqueakException("Unable to set stack pointer");
             }
         }
     }

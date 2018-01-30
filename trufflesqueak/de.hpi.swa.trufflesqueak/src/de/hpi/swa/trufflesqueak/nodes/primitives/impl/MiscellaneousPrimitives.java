@@ -19,6 +19,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
@@ -473,7 +474,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
             try {
                 rcvrClass = SqueakTypesGen.expectClassObject(lookupClassNode.executeLookup(receiver));
             } catch (UnexpectedResultException e) {
-                throw new RuntimeException("receiver has no class");
+                throw new SqueakException("receiver has no class");
             }
             Object lookupResult = lookupNode.executeLookup(rcvrClass, code.image.wrap(SIMULATE_PRIMITIVE_SELECTOR));
             if (lookupResult instanceof CompiledMethodObject) {

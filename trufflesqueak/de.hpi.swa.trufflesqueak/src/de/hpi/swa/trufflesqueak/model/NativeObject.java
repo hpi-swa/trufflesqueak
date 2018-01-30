@@ -7,6 +7,7 @@ import java.nio.CharBuffer;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public class NativeObject extends SqueakObject {
@@ -90,7 +91,7 @@ public class NativeObject extends SqueakObject {
             case 8:
                 return content.asLongBuffer().get(index);
             default:
-                throw new RuntimeException("invalid native object size");
+                throw new SqueakException("invalid native object size");
         }
     }
 
@@ -110,7 +111,7 @@ public class NativeObject extends SqueakObject {
                 content.asLongBuffer().put(index, value);
                 break;
             default:
-                throw new RuntimeException("invalid native object size");
+                throw new SqueakException("invalid native object size");
         }
     }
 

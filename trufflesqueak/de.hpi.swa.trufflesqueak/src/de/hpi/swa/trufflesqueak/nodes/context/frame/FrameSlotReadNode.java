@@ -6,6 +6,8 @@ import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
+import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
+
 public abstract class FrameSlotReadNode extends FrameSlotNode {
     protected FrameSlotReadNode(FrameSlot frameSlot) {
         super(frameSlot);
@@ -50,7 +52,7 @@ public abstract class FrameSlotReadNode extends FrameSlotNode {
 
     @Specialization(guards = "isIllegal(frame)")
     protected Object readIllegal(@SuppressWarnings("unused") VirtualFrame frame) {
-        throw new RuntimeException("Trying to read from illegal slot");
+        throw new SqueakException("Trying to read from illegal slot");
     }
 
     protected boolean isInt(VirtualFrame frame) {

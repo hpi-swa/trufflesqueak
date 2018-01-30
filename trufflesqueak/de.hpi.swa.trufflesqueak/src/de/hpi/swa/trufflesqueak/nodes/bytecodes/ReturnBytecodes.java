@@ -6,6 +6,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.Returns.LocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
@@ -53,7 +54,7 @@ public final class ReturnBytecodes {
         }
 
         protected Object getReturnValue(@SuppressWarnings("unused") VirtualFrame frame) {
-            throw new RuntimeException("Needs to be overriden");
+            throw new SqueakException("Needs to be overriden");
         }
     }
 

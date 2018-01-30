@@ -7,6 +7,7 @@ import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.util.FrameMarker;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 // refer to com.oracle.truffle.api.interop.Message for documentation
 
@@ -17,7 +18,7 @@ public class BaseSqueakObjectMessageResolution {
     public abstract static class BaseSqueakObjectWriteNode extends Node {
         @SuppressWarnings("unused")
         public Object access(BaseSqueakObject receiver, Object name, Object value) {
-            throw new RuntimeException("not yet implemented");
+            throw new NotImplementedException();
         }
     }
 

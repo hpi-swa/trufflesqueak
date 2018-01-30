@@ -11,6 +11,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakQuit;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
@@ -93,7 +94,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             try {
                 return SqueakTypesGen.expectClassObject(lookupClassNode.executeLookup(receiver));
             } catch (UnexpectedResultException e) {
-                throw new RuntimeException("receiver has no class");
+                throw new SqueakException("receiver has no class");
             }
         }
 
@@ -253,7 +254,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 receiver.atput0(PROCESS.LIST, code.image.nil);
                 return oldList;
             }
-            throw new RuntimeException("Failed to suspend process: " + receiver.toString());
+            throw new SqueakException("Failed to suspend process: " + receiver.toString());
         }
     }
 
@@ -367,7 +368,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object debugger(@SuppressWarnings("unused") VirtualFrame frame) {
-            throw new RuntimeException("EXIT TO DEBUGGER");
+            throw new SqueakException("EXIT TO DEBUGGER");
         }
     }
 
