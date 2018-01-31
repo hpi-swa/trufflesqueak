@@ -65,6 +65,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected boolean lt(BigInteger a, BigInteger b) {
             return a.compareTo(b) < 0;
         }
@@ -93,6 +94,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected boolean gt(BigInteger a, BigInteger b) {
             return a.compareTo(b) > 0;
         }
@@ -121,6 +123,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected boolean le(BigInteger a, BigInteger b) {
             return a.compareTo(b) <= 0;
         }
@@ -149,6 +152,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected boolean ge(BigInteger a, BigInteger b) {
             return a.compareTo(b) >= 0;
         }
@@ -177,6 +181,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected boolean eq(BigInteger a, BigInteger b) {
             return a.equals(b);
         }
@@ -210,6 +215,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected boolean neq(BigInteger a, BigInteger b) {
             return !a.equals(b);
         }
@@ -248,16 +254,19 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
+        @TruffleBoundary
         protected int divdideInt(BigInteger a, BigInteger b) {
             return a.divide(b).intValueExact();
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
+        @TruffleBoundary
         protected long divide(BigInteger a, BigInteger b) {
             return a.divide(b).longValueExact();
         }
 
         @Specialization
+        @TruffleBoundary
         protected BigInteger divBig(BigInteger a, BigInteger b) {
             return a.divide(b);
         }
@@ -291,16 +300,19 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
+        @TruffleBoundary
         protected int modInt(BigInteger a, BigInteger b) {
             return doBigModulo(a, b).intValueExact();
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
+        @TruffleBoundary
         protected long mod(BigInteger a, BigInteger b) {
             return doBigModulo(a, b).longValueExact();
         }
 
         @Specialization
+        @TruffleBoundary
         protected BigInteger modBig(BigInteger a, BigInteger b) {
             return doBigModulo(a, b);
         }
@@ -338,16 +350,19 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
+        @TruffleBoundary
         protected int divInt(BigInteger a, BigInteger b) {
             return a.divide(b).intValueExact();
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
+        @TruffleBoundary
         protected long div(BigInteger a, BigInteger b) {
             return a.divide(b).longValueExact();
         }
 
         @Specialization
+        @TruffleBoundary
         protected BigInteger divBig(BigInteger a, BigInteger b) {
             return a.divide(b);
         }
@@ -376,16 +391,19 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
+        @TruffleBoundary
         protected int quoInt(BigInteger a, BigInteger b) {
             return a.divide(b).intValueExact();
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
+        @TruffleBoundary
         protected long quo(BigInteger a, BigInteger b) {
             return a.divide(b).longValueExact();
         }
 
         @Specialization
+        @TruffleBoundary
         protected BigInteger quoBig(BigInteger a, BigInteger b) {
             return a.divide(b);
         }
@@ -409,6 +427,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected BigInteger bitAnd(BigInteger receiver, BigInteger arg) {
             return receiver.xor(arg);
         }

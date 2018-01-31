@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -219,6 +220,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected long intAt(BigInteger receiver, int idx) {
             return LargeIntegerObject.byteAt0(receiver, idx - 1);
         }
@@ -379,6 +381,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected int hash(BigInteger obj) {
             return obj.hashCode();
         }

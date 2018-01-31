@@ -5,6 +5,7 @@ import java.awt.GraphicsEnvironment;
 import java.math.BigInteger;
 import java.util.List;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -105,6 +106,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected Object replace(LargeIntegerObject rcvr, int start, int stop, BigInteger repl, int replStart) {
             return replaceInLarge(rcvr, start, stop, LargeIntegerObject.getSqueakBytes(repl), replStart);
         }
@@ -139,6 +141,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected Object replace(NativeObject rcvr, int start, int stop, BigInteger repl, int replStart) {
             int repOff = replStart - start;
             byte[] bytes = LargeIntegerObject.getSqueakBytes(repl);

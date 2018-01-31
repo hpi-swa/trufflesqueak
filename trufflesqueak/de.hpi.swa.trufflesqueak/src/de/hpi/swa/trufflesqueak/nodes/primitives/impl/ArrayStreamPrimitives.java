@@ -3,6 +3,7 @@ package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 import java.math.BigInteger;
 import java.util.List;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -104,6 +105,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected int size(BigInteger i) {
             return LargeIntegerObject.byteSize(i);
         }
