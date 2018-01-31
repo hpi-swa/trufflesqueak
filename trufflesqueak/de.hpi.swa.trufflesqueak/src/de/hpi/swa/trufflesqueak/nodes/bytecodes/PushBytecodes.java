@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -55,6 +56,7 @@ public final class PushBytecodes {
     }
 
     public abstract static class PushClosureNode extends AbstractPushNode {
+        @CompilationFinal protected CompiledBlockObject block;
         @CompilationFinal protected final int blockSize;
         @CompilationFinal protected final int numArgs;
         @CompilationFinal protected final int numCopied;
@@ -72,6 +74,15 @@ public final class PushBytecodes {
             blockSize = (j << 8) | k;
             popNReversedNode = PopNReversedStackNode.create(code, numCopied);
             receiverNode = ReceiverNode.create(code);
+
+        }
+
+        private CompiledBlockObject getBlock() {
+            if (block == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                block = CompiledBlockObject.create(code, numArgs, numCopied, index + numBytecodes, blockSize);
+            }
+            return block;
         }
 
         @Override
@@ -95,11 +106,9 @@ public final class PushBytecodes {
         }
 
         private BlockClosureObject createClosure(VirtualFrame frame, ContextObject context, FrameMarker frameMarker) {
-            int offset = index + numBytecodes;
-            CompiledBlockObject block = CompiledBlockObject.create(code, numArgs, numCopied, offset, blockSize);
             Object receiver = receiverNode.executeGeneric(frame);
             Object[] copiedValues = (Object[]) popNReversedNode.executeGeneric(frame);
-            return new BlockClosureObject(block, receiver, copiedValues, context, frameMarker);
+            return new BlockClosureObject(getBlock(), receiver, copiedValues, context, frameMarker);
         }
 
         @Override

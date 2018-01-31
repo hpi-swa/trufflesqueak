@@ -23,6 +23,7 @@ import de.hpi.swa.trufflesqueak.util.FrameMarker;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public class BlockClosureObject extends BaseSqueakObject {
+    @Child private GetOrCreateContextNode createContextNode = GetOrCreateContextNode.create();
     @CompilationFinal private Object receiver;
     @CompilationFinal(dimensions = 1) private Object[] copied;
     @CompilationFinal private ContextObject outerContext;
@@ -30,9 +31,8 @@ public class BlockClosureObject extends BaseSqueakObject {
     @CompilationFinal private CompiledBlockObject block;
     @CompilationFinal private int pc = -1;
     @CompilationFinal private int numArgs = -1;
-    @Child private GetOrCreateContextNode createContextNode = GetOrCreateContextNode.create();
-    private RootCallTarget callTarget;
-    private final CyclicAssumption callTargetStable = new CyclicAssumption("Compiled method assumption");
+    @CompilationFinal private RootCallTarget callTarget;
+    @CompilationFinal private final CyclicAssumption callTargetStable = new CyclicAssumption("Compiled method assumption");
 
     public BlockClosureObject(SqueakImageContext image) {
         super(image);
@@ -162,7 +162,7 @@ public class BlockClosureObject extends BaseSqueakObject {
 
     public RootCallTarget getCallTarget() {
         if (callTarget == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             callTarget = Truffle.getRuntime().createCallTarget(EnterCodeNode.create(block.image.getLanguage(), block));
         }
         return callTarget;

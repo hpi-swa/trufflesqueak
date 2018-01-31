@@ -53,8 +53,8 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     @CompilationFinal private Source source;
 
-    private RootCallTarget callTarget;
-    private final CyclicAssumption callTargetStable = new CyclicAssumption("Compiled method assumption");
+    @CompilationFinal private RootCallTarget callTarget;
+    @CompilationFinal private final CyclicAssumption callTargetStable = new CyclicAssumption("Compiled method assumption");
 
     abstract public NativeObject getCompiledInSelector();
 
@@ -106,7 +106,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     public RootCallTarget getCallTarget() {
         if (callTarget == null) {
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             callTarget = invalidateAndCreateNewCallTargets();
         }
         return callTarget;
