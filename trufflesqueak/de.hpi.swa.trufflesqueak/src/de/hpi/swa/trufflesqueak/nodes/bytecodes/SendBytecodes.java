@@ -3,7 +3,6 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
-import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
@@ -24,6 +23,8 @@ import de.hpi.swa.trufflesqueak.nodes.LookupNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
 import de.hpi.swa.trufflesqueak.nodes.context.HaltNode;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PopNReversedStackNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
@@ -107,6 +108,8 @@ public final class SendBytecodes {
 
         @Child private AbstractPrimitiveNode primitiveNode;
         @Child private PushStackNode pushStackNode;
+        @Child private FrameSlotReadNode stackPointerReadNode;
+        @Child private FrameSlotWriteNode stackPointerWriteNode;
         private ConditionProfile wasContextOrMarker = ConditionProfile.createBinaryProfile();
         private ValueProfile contextClass = ValueProfile.createClassProfile();
 
@@ -114,6 +117,8 @@ public final class SendBytecodes {
             super(code, index, 1, specialSelector, specialSelector.getNumArguments());
             this.pushStackNode = PushStackNode.create(code);
             this.primitiveNode = primitiveNode;
+            stackPointerReadNode = FrameSlotReadNode.create(code.stackPointerSlot);
+            stackPointerWriteNode = FrameSlotWriteNode.create(code.stackPointerSlot);
         }
 
         @Override
@@ -128,7 +133,7 @@ public final class SendBytecodes {
                     context.atput0(CONTEXT.STACKPOINTER, (int) context.at0(CONTEXT.STACKPOINTER) - spOffset);
                 } else {
                     assert (contextOrMarker instanceof FrameMarker);
-                    frame.setInt(code.stackPointerSlot, frame.getInt(code.stackPointerSlot) - spOffset);
+                    stackPointerWriteNode.executeWrite(frame, (int) stackPointerReadNode.executeRead(frame) - spOffset);
                 }
                 if (result != null) { // primitive produced no result
                     pushStackNode.executeWrite(frame, result);
@@ -136,8 +141,6 @@ public final class SendBytecodes {
             } catch (PrimitiveFailed | ArithmeticException | UnsupportedSpecializationException e) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 replace(getFallbackNode(code, index, (SpecialSelectorObject) selector)).executeVoid(frame);
-            } catch (FrameSlotTypeException e) {
-                throw new SqueakException("Unable to set stack pointer");
             }
         }
     }

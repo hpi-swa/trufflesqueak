@@ -24,7 +24,7 @@ public abstract class PopStackNode extends AbstractStackNode {
         if (sp < 0) {
             return frame.getArguments()[frame.getArguments().length + sp];
         } else {
-            frame.setInt(code.stackPointerSlot, sp - 1);
+            setFrameStackPointer(frame, sp - 1);
             return readNode.execute(frame, sp);
         }
     }

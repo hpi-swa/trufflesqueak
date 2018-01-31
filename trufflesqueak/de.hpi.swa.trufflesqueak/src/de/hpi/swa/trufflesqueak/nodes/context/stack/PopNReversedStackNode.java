@@ -31,7 +31,7 @@ public abstract class PopNReversedStackNode extends AbstractStackNode {
         for (int i = 0; i < numPop; i++) {
             result[numPop - 1 - i] = readNode.execute(frame, sp - i);
         }
-        frame.setInt(code.stackPointerSlot, sp - numPop);
+        setFrameStackPointer(frame, sp - numPop);
         return result;
     }
 

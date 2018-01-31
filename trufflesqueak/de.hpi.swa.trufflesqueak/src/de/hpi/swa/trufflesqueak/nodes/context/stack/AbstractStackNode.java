@@ -5,16 +5,23 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithCode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotWriteNode;
 
 public abstract class AbstractStackNode extends SqueakNodeWithCode {
-    @Child private FrameSlotReadNode spNode;
+    @Child private FrameSlotReadNode stackPointerReadNode;
+    @Child private FrameSlotWriteNode stackPointerWriteNode;
 
     public AbstractStackNode(CompiledCodeObject code) {
         super(code);
-        this.spNode = FrameSlotReadNode.create(code.stackPointerSlot);
+        stackPointerReadNode = FrameSlotReadNode.create(code.stackPointerSlot);
+        stackPointerWriteNode = FrameSlotWriteNode.create(code.stackPointerSlot);
     }
 
     protected int frameStackPointer(VirtualFrame frame) {
-        return (int) spNode.executeRead(frame);
+        return (int) stackPointerReadNode.executeRead(frame);
+    }
+
+    protected void setFrameStackPointer(VirtualFrame frame, int value) {
+        stackPointerWriteNode.executeWrite(frame, value);
     }
 }

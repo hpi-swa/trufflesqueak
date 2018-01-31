@@ -118,23 +118,18 @@ public class FrameAccess {
     }
 
     @TruffleBoundary
-    public static Frame currentMaterializableFrame() {
-        return Truffle.getRuntime().getCurrentFrame().getFrame(FrameInstance.FrameAccess.MATERIALIZE);
-    }
-
-    @TruffleBoundary
     public static Frame findFrameForMarker(FrameMarker frameMarker) {
         return Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Frame>() {
             @Override
             public Frame visitFrame(FrameInstance frameInstance) {
-                Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
+                Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
                 if (current.getArguments().length < RCVR_AND_ARGS_START) {
                     return null;
                 }
                 FrameDescriptor frameDescriptor = current.getFrameDescriptor();
                 FrameSlot contextOrMarkerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.THIS_CONTEXT_OR_MARKER);
                 if (frameMarker == FrameUtil.getObjectSafe(current, contextOrMarkerSlot)) {
-                    return current;
+                    return frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
                 }
                 return null;
             }
