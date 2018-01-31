@@ -25,15 +25,15 @@ public abstract class HandleLocalReturnNode extends AbstractNodeWithCode {
 
     public abstract Object executeHandle(VirtualFrame frame, LocalReturn lr);
 
-    @Specialization(guards = "isVirtualized(frame, code)")
+    @Specialization(guards = "isVirtualized(frame)")
     protected Object handleVirtualized(VirtualFrame frame, LocalReturn lr) {
         terminateNode.executeTerminate(frame);
         return lr.getReturnValue();
     }
 
-    @Specialization(guards = "!isVirtualized(frame, code)")
+    @Specialization(guards = "!isVirtualized(frame)")
     protected Object handle(VirtualFrame frame, LocalReturn lr) {
-        ContextObject context = (ContextObject) FrameAccess.getContextOrMarker(frame);
+        ContextObject context = getContext(frame);
         if (context.isDirty()) {
             ContextObject sender = (ContextObject) context.getSender(); // sender should not be nil
             terminateNode.executeTerminate(frame);

@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.util;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
@@ -9,13 +10,11 @@ import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.FrameUtil;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.model.ContextObject;
 
 public class FrameAccess {
     /**
@@ -37,26 +36,27 @@ public class FrameAccess {
     public static final int RCVR_AND_ARGS_START = 3;
 
     public static CompiledCodeObject getMethod(Frame frame) {
+        CompilerAsserts.neverPartOfCompilation();
         return (CompiledCodeObject) frame.getArguments()[METHOD];
     }
 
     public static Object getSender(Frame frame) {
+        CompilerAsserts.neverPartOfCompilation();
         return frame.getArguments()[SENDER_OR_SENDER_MARKER];
     }
 
     public static BlockClosureObject getClosure(Frame frame) {
+        CompilerAsserts.neverPartOfCompilation();
         return (BlockClosureObject) frame.getArguments()[CLOSURE_OR_NULL];
     }
 
     public static Object getReceiver(Frame frame) {
+        CompilerAsserts.neverPartOfCompilation();
         return frame.getArguments()[RECEIVER];
     }
 
-    public static Object getArgument(Frame frame, int idx) {
-        return frame.getArguments()[idx + RCVR_AND_ARGS_START];
-    }
-
     public static Object[] getArguments(Frame frame) {
+        CompilerAsserts.neverPartOfCompilation();
         int index = 0;
         Object[] arguments = new Object[frame.getArguments().length - RCVR_AND_ARGS_START];
         for (Object argument : frame.getArguments()) {
@@ -69,58 +69,12 @@ public class FrameAccess {
     }
 
     public static Object getContextOrMarker(Frame frame) {
+        CompilerAsserts.neverPartOfCompilation();
         try {
             return frame.getObject(getMethod(frame).thisContextOrMarkerSlot);
         } catch (FrameSlotTypeException e) {
             throw new SqueakException("thisContextOrMarkerSlot should never be invalid");
         }
-    }
-
-    // This can only be used when non-virtualized
-    public static ContextObject getContext(Frame frame) {
-        return (ContextObject) getContextOrMarker(frame);
-    }
-
-    public static void setContext(VirtualFrame frame, CompiledCodeObject code, ContextObject context) {
-        frame.setObject(code.thisContextOrMarkerSlot, context);
-    }
-
-    public static void initializeCodeSlots(Frame frame, CompiledCodeObject code) {
-        frame.setObject(code.thisContextOrMarkerSlot, new FrameMarker());
-        frame.setInt(code.instructionPointerSlot, 0);
-        frame.setInt(code.stackPointerSlot, 0);
-    }
-
-    public static int getInstructionPointer(Frame frame, CompiledCodeObject code) {
-        try {
-            return frame.getInt(code.instructionPointerSlot);
-        } catch (FrameSlotTypeException e) {
-            throw new SqueakException("instructionPointerSlot should never be invalid");
-        }
-    }
-
-    public static int getStackPointer(Frame frame, CompiledCodeObject code) {
-        try {
-            return frame.getInt(code.stackPointerSlot);
-        } catch (FrameSlotTypeException e) {
-            throw new SqueakException("stackPointerSlot should never be invalid");
-        }
-    }
-
-    public static void setStackPointer(VirtualFrame frame, CompiledCodeObject code, int value) {
-        frame.setInt(code.stackPointerSlot, value);
-    }
-
-    public static boolean isVirtualized(VirtualFrame frame, CompiledCodeObject code) {
-        try {
-            return frame.getObject(code.thisContextOrMarkerSlot) instanceof FrameMarker;
-        } catch (FrameSlotTypeException e) {
-            throw new SqueakException("thisContextOrMarkerSlot should never be invalid");
-        }
-    }
-
-    public static Object[] newFor(VirtualFrame frame, CompiledCodeObject code, BlockClosureObject closure, Object[] frameArgs) {
-        return newWith(code, getContextOrMarker(frame), closure, frameArgs);
     }
 
     @ExplodeLoop

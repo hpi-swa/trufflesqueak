@@ -109,7 +109,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 rcvrAndArgs = new Object[]{receiver};
             }
             CompiledCodeObject lookupResult = (CompiledCodeObject) lookupNode.executeLookup(rcvrClass, selector);
-            Object[] frameArguments = FrameAccess.newFor(frame, lookupResult, null, rcvrAndArgs);
+            Object[] frameArguments = FrameAccess.newWith(lookupResult, getContextOrMarker(frame), null, rcvrAndArgs);
             return dispatchNode.executeDispatch(lookupResult, frameArguments);
         }
     }
@@ -524,15 +524,15 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             }
             Object receiver = rcvrAndArgs[0];
             ListObject argArray = (ListObject) rcvrAndArgs[1];
-            Object method = rcvrAndArgs[2];
+            CompiledCodeObject codeObject = (CompiledCodeObject) rcvrAndArgs[2];
             int numArgs = argArray.size();
             Object[] dispatchRcvrAndArgs = new Object[1 + numArgs];
             dispatchRcvrAndArgs[0] = receiver;
             for (int i = 0; i < numArgs; i++) {
                 dispatchRcvrAndArgs[1 + i] = argArray.at0(i);
             }
-            Object[] frameArguments = FrameAccess.newFor(frame, (CompiledCodeObject) method, null, dispatchRcvrAndArgs);
-            return dispatchNode.executeDispatch(method, frameArguments);
+            Object[] frameArguments = FrameAccess.newWith(codeObject, getContextOrMarker(frame), null, dispatchRcvrAndArgs);
+            return dispatchNode.executeDispatch(codeObject, frameArguments);
         }
     }
 

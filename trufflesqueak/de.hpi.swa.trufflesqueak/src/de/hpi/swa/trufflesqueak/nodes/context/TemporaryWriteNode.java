@@ -7,7 +7,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.AbstractWriteNode;
-import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public abstract class TemporaryWriteNode extends AbstractWriteNode {
     @Child private FrameSlotWriteNode frameSlotWriteNode;
@@ -26,15 +25,15 @@ public abstract class TemporaryWriteNode extends AbstractWriteNode {
         }
     }
 
-    @Specialization(guards = {"isVirtualized(frame, code)"})
+    @Specialization(guards = {"isVirtualized(frame)"})
     protected void doWriteVirtualized(VirtualFrame frame, Object value) {
         assert value != null;
         frameSlotWriteNode.executeWrite(frame, value);
     }
 
-    @Specialization(guards = {"!isVirtualized(frame, code)"})
+    @Specialization(guards = {"!isVirtualized(frame)"})
     protected void doWrite(VirtualFrame frame, Object value) {
         assert value != null;
-        FrameAccess.getContext(frame).atTempPut(tempIndex, value);
+        getContext(frame).atTempPut(tempIndex, value);
     }
 }

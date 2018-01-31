@@ -18,6 +18,7 @@ import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotWriteNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
@@ -25,6 +26,8 @@ public class TopLevelContextNode extends RootNode {
     @CompilationFinal private final SqueakImageContext image;
     @CompilationFinal private final ContextObject initialContext;
     @CompilationFinal private final ExecuteContextNode executeActiveContextNode;
+    @Child private FrameSlotWriteNode instructionPointerWriteNode;
+    @Child private FrameSlotWriteNode contextWriteNode;
 
     public static TopLevelContextNode create(SqueakLanguage language, ContextObject context) {
         return new TopLevelContextNode(language, context, context.getCodeObject());
@@ -35,6 +38,8 @@ public class TopLevelContextNode extends RootNode {
         this.image = code.image;
         this.initialContext = context;
         this.executeActiveContextNode = ExecuteContextNode.create(code);
+        instructionPointerWriteNode = FrameSlotWriteNode.create(code.instructionPointerSlot);
+        contextWriteNode = FrameSlotWriteNode.create(code.thisContextOrMarkerSlot);
     }
 
     @Override
@@ -62,8 +67,8 @@ public class TopLevelContextNode extends RootNode {
                 BlockClosureObject closure = activeContext.getClosure();
                 MaterializedFrame frame = Truffle.getRuntime().createMaterializedFrame(FrameAccess.newWith(code, sender, closure, frameArgs), code.getFrameDescriptor());
                 activeContext.setFrameMarker(new FrameMarker());
-                frame.setInt(code.instructionPointerSlot, activeContext.instructionPointer(code));
-                frame.setObject(code.thisContextOrMarkerSlot, activeContext);
+                instructionPointerWriteNode.executeWrite(frame, activeContext.instructionPointer());
+                contextWriteNode.executeWrite(frame, activeContext);
                 Object result = executeActiveContextNode.executeNonVirtualized(frame);
                 throw new TopLevelReturn(result);
             } catch (ProcessSwitch ps) {

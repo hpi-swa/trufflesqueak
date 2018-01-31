@@ -15,40 +15,44 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnRec
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnTopFromBlockNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnTopFromMethodNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.context.ReceiverNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameArgumentNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PopStackNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class ReturnBytecodes {
 
     protected static abstract class AbstractReturnNode extends AbstractBytecodeNode {
+        @Child protected FrameSlotReadNode readContextNode;
+        @Child protected FrameArgumentNode readClosureNode;
 
         protected AbstractReturnNode(CompiledCodeObject code, int index) {
             super(code, index);
+            readContextNode = FrameSlotReadNode.create(code.thisContextOrMarkerSlot);
+            readClosureNode = FrameArgumentNode.create(FrameAccess.CLOSURE_OR_NULL);
         }
 
-        protected boolean isLocalReturn(VirtualFrame frame) {
-            boolean hasNoClosure = FrameAccess.getClosure(frame) == null;
-            Object context = FrameAccess.getContextOrMarker(frame);
-            if (context instanceof ContextObject) {
-                return hasNoClosure && !((ContextObject) context).isDirty();
-            } else {
-                return hasNoClosure;
-            }
+        protected boolean hasClosure(VirtualFrame frame) {
+            return readClosureNode.executeRead(frame) instanceof BlockClosureObject;
         }
 
-        @Specialization(guards = "isLocalReturn(frame)")
+        protected boolean isDirty(VirtualFrame frame) {
+            return getContext(frame).isDirty();
+        }
+
+        @Specialization(guards = {"!hasClosure(frame)", "isVirtualized(frame) || !isDirty(frame)"})
         protected Object executeLocalReturn(VirtualFrame frame) {
             throw new LocalReturn(getReturnValue(frame));
         }
 
-        @Specialization(guards = "!isLocalReturn(frame)")
+        @Specialization(guards = "hasClosure(frame)")
         protected Object executeNonLocalReturn(VirtualFrame frame) {
             ContextObject outerContext;
-            BlockClosureObject block = FrameAccess.getClosure(frame);
+            BlockClosureObject block = (BlockClosureObject) readClosureNode.executeRead(frame);
             if (block != null) {
                 outerContext = block.getHomeContext();
             } else {
-                outerContext = FrameAccess.getContext(frame);
+                outerContext = (ContextObject) readContextNode.executeRead(frame);
             }
             throw new NonLocalReturn(getReturnValue(frame), outerContext);
         }
@@ -115,9 +119,8 @@ public final class ReturnBytecodes {
         }
 
         @Override
-        protected boolean isLocalReturn(VirtualFrame frame) {
-            Object contextOrMarker = FrameAccess.getContextOrMarker(frame);
-            return contextOrMarker instanceof ContextObject ? !((ContextObject) contextOrMarker).isDirty() : true;
+        protected boolean hasClosure(VirtualFrame frame) {
+            return false;
         }
 
         @Override

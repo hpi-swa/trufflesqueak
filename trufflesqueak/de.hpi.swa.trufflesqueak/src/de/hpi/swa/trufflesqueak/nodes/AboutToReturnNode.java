@@ -1,6 +1,5 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -50,7 +49,7 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
      * this however does not check if the current context isDead nor does it terminate contexts (this
      * may be a problem).
      */
-    @Specialization(guards = {"isVirtualized(frame, code)"})
+    @Specialization(guards = {"isVirtualized(frame)"})
     protected void doAboutToReturnVirtualized(VirtualFrame frame, @SuppressWarnings("unused") NonLocalReturn nlr) {
         if (completeTempReadNode.executeRead(frame) == code.image.nil) {
             completeTempWriteNode.executeWrite(frame, code.image.sqTrue);
@@ -66,9 +65,9 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
         }
     }
 
-    @Specialization(guards = {"!isVirtualized(frame, code)"})
-    protected void doAboutToReturn(VirtualFrame frame, NonLocalReturn nlr,
-                    @Cached("getContext(frame)") ContextObject context) {
+    @Specialization(guards = {"!isVirtualized(frame)"})
+    protected void doAboutToReturn(VirtualFrame frame, NonLocalReturn nlr) {
+        ContextObject context = getContext(frame);
         pushNode.executeWrite(frame, nlr.getTargetContext());
         pushNode.executeWrite(frame, nlr.getReturnValue());
         pushNode.executeWrite(frame, context);

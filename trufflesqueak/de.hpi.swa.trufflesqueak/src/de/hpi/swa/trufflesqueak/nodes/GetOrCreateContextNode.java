@@ -1,11 +1,15 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameSlotTypeException;
+import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
@@ -29,18 +33,23 @@ public abstract class GetOrCreateContextNode extends Node {
     public abstract ContextObject executeGet(Frame frame, boolean forceContext);
 
     protected boolean isVirtualized(VirtualFrame frame) {
-        return FrameAccess.isVirtualized(frame, FrameAccess.getMethod(frame));
+        try {
+            return frame.getObject(FrameAccess.getMethod(frame).thisContextOrMarkerSlot) instanceof FrameMarker;
+        } catch (FrameSlotTypeException e) {
+            throw new SqueakException("thisContextOrMarkerSlot should never be invalid");
+        }
     }
 
     @Specialization(guards = {"isVirtualized(frame)"})
     protected ContextObject doCreateVirtualized(VirtualFrame frame, boolean forceContext) {
+        CompilerDirectives.transferToInterpreter();
         FrameMarker frameMarker = (FrameMarker) FrameAccess.getContextOrMarker(frame);
         CompiledCodeObject method = FrameAccess.getMethod(frame);
         ContextObject context = ContextObject.create(method.image, method.frameSize(), frameMarker);
 
         context.setSender(FrameAccess.getSender(frame));
-        context.atput0(CONTEXT.INSTRUCTION_POINTER, FrameAccess.getInstructionPointer(frame, method));
-        int sp = FrameAccess.getStackPointer(frame, method);
+        context.atput0(CONTEXT.INSTRUCTION_POINTER, FrameUtil.getIntSafe(frame, method.instructionPointerSlot));
+        int sp = FrameUtil.getIntSafe(frame, method.stackPointerSlot);
         context.atput0(CONTEXT.STACKPOINTER, sp);
         context.atput0(CONTEXT.METHOD, method);
         BlockClosureObject closure = FrameAccess.getClosure(frame);
@@ -63,7 +72,7 @@ public abstract class GetOrCreateContextNode extends Node {
         }
         if (forceContext) {
             method.invalidateNoContextNeededAssumption();
-            FrameAccess.setContext(frame, method, context);
+            frame.setObject(method.thisContextOrMarkerSlot, context);
         }
         return context;
     }

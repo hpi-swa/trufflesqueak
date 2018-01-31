@@ -9,7 +9,6 @@ import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
-import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public abstract class FrameArgumentNode extends Node {
     @CompilationFinal private final int argumentIndex;
@@ -29,7 +28,7 @@ public abstract class FrameArgumentNode extends Node {
 
     @Specialization
     protected Object doArgument(VirtualFrame frame) {
-        Object value = FrameAccess.getArgument(frame, argumentIndex);
+        Object value = frame.getArguments()[argumentIndex];
         if (objectProfile.profile(value instanceof BaseSqueakObject)) {
             return classProfile.profile(value);
         } else {

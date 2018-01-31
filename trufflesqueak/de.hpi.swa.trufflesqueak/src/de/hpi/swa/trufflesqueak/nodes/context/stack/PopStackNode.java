@@ -18,7 +18,7 @@ public abstract class PopStackNode extends AbstractStackNode {
         readNode = FrameStackReadNode.create();
     }
 
-    @Specialization(guards = {"isVirtualized(frame, code)"})
+    @Specialization(guards = {"isVirtualized(frame)"})
     public Object doPopVirtualized(VirtualFrame frame) {
         int sp = frameStackPointer(frame);
         if (sp < 0) {
@@ -29,7 +29,7 @@ public abstract class PopStackNode extends AbstractStackNode {
         }
     }
 
-    @Specialization(guards = {"!isVirtualized(frame, code)"})
+    @Specialization(guards = {"!isVirtualized(frame)"})
     protected Object doPop(VirtualFrame frame) {
         return getContext(frame).pop();
     }

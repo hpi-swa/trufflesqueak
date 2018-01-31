@@ -19,7 +19,6 @@ import de.hpi.swa.trufflesqueak.nodes.context.ReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.context.TemporaryReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PopNReversedStackNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
-import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
 public final class PushBytecodes {
@@ -91,17 +90,15 @@ public final class PushBytecodes {
             return index + numBytecodes + blockSize;
         }
 
-        @Specialization(guards = "isVirtualized(frame, code)")
+        @Specialization(guards = "isVirtualized(frame)")
         protected int doPushVirtualized(VirtualFrame frame) {
-            FrameMarker frameMarker = (FrameMarker) FrameAccess.getContextOrMarker(frame);
-            pushNode.executeWrite(frame, createClosure(frame, null, frameMarker));
+            pushNode.executeWrite(frame, createClosure(frame, null, getFrameMarker(frame)));
             return index + numBytecodes + blockSize;
         }
 
-        @Specialization(guards = "!isVirtualized(frame, code)")
+        @Specialization(guards = "!isVirtualized(frame)")
         protected int doPush(VirtualFrame frame) {
-            ContextObject context = (ContextObject) FrameAccess.getContextOrMarker(frame);
-            pushNode.executeWrite(frame, createClosure(frame, context, null));
+            pushNode.executeWrite(frame, createClosure(frame, getContext(frame), null));
             return index + numBytecodes + blockSize;
         }
 

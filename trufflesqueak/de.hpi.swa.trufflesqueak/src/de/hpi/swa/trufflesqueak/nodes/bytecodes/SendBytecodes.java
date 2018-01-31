@@ -38,6 +38,7 @@ public final class SendBytecodes {
         @Child private DispatchNode dispatchNode = DispatchNode.create();
         @Child private PopNReversedStackNode popNReversedNode;
         @Child private PushStackNode pushNode;
+        @Child private FrameSlotReadNode readContextNode;
 
         private AbstractSendNode(CompiledCodeObject code, int index, int numBytecodes, Object sel, int argcount) {
             super(code, index, numBytecodes);
@@ -46,6 +47,7 @@ public final class SendBytecodes {
             lookupClassNode = SqueakLookupClassNode.create(code);
             pushNode = PushStackNode.create(code);
             popNReversedNode = PopNReversedStackNode.create(code, 1 + argumentCount);
+            readContextNode = FrameSlotReadNode.create(code.thisContextOrMarkerSlot);
         }
 
         public Object executeSend(VirtualFrame frame) {
@@ -53,7 +55,8 @@ public final class SendBytecodes {
             Object[] rcvrAndArgs = (Object[]) popNReversedNode.executeRead(frame);
             ClassObject rcvrClass = lookupClassNode.executeLookup(rcvrAndArgs[0]);
             CompiledCodeObject lookupResult = (CompiledCodeObject) lookupNode.executeLookup(rcvrClass, selector);
-            Object[] frameArguments = FrameAccess.newFor(frame, lookupResult, null, rcvrAndArgs);
+            Object contextOrMarker = readContextNode.executeRead(frame);
+            Object[] frameArguments = FrameAccess.newWith(lookupResult, contextOrMarker, null, rcvrAndArgs);
             return dispatchNode.executeDispatch(lookupResult, frameArguments);
         }
 
@@ -112,7 +115,7 @@ public final class SendBytecodes {
             stackPointerWriteNode = FrameSlotWriteNode.create(code.stackPointerSlot);
         }
 
-        @Specialization(guards = {"isVirtualized(frame, code)"})
+        @Specialization(guards = {"isVirtualized(frame)"})
         protected int doEagerVirtualized(VirtualFrame frame) {
             try {
                 Object result = primitiveNode.executeRead(frame);
@@ -129,12 +132,12 @@ public final class SendBytecodes {
             return index + numBytecodes;
         }
 
-        @Specialization(guards = {"!isVirtualized(frame, code)"})
+        @Specialization(guards = {"!isVirtualized(frame)"})
         protected int doEager(VirtualFrame frame) {
             try {
                 Object result = primitiveNode.executeRead(frame);
                 // Success! Manipulate the sp to quick pop receiver and arguments and push result.
-                ContextObject context = FrameAccess.getContext(frame);
+                ContextObject context = getContext(frame);
                 int spOffset = 1 + specialSelector.getNumArguments();
                 context.atput0(CONTEXT.STACKPOINTER, (int) context.at0(CONTEXT.STACKPOINTER) - spOffset);
                 if (result != null) { // primitive produced no result

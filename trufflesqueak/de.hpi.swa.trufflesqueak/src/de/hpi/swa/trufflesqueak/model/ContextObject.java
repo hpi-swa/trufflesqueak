@@ -151,8 +151,8 @@ public class ContextObject extends AbstractPointersObject {
         setStackPointer(newSP);
     }
 
-    public int instructionPointer(CompiledCodeObject code) {
-        return decodeSqPC((int) at0(CONTEXT.INSTRUCTION_POINTER), code);
+    public int instructionPointer() {
+        return decodeSqPC((int) at0(CONTEXT.INSTRUCTION_POINTER), getCodeObject());
     }
 
     private int stackPointer() {

@@ -18,6 +18,7 @@ import de.hpi.swa.trufflesqueak.model.ObjectLayouts.BLOCK_CLOSURE;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.EnterCodeNode;
 import de.hpi.swa.trufflesqueak.nodes.GetOrCreateContextNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.FrameMarker;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
@@ -33,6 +34,7 @@ public class BlockClosureObject extends BaseSqueakObject {
     @CompilationFinal private int numArgs = -1;
     @CompilationFinal private RootCallTarget callTarget;
     @CompilationFinal private final CyclicAssumption callTargetStable = new CyclicAssumption("Compiled method assumption");
+    @Child private FrameSlotReadNode readSenderNode;
 
     public BlockClosureObject(SqueakImageContext image) {
         super(image);
@@ -46,10 +48,17 @@ public class BlockClosureObject extends BaseSqueakObject {
         this.outerMarker = frameMarker;
         this.receiver = receiver;
         this.copied = copied;
+        this.readSenderNode = FrameSlotReadNode.create(block.thisContextOrMarkerSlot);
     }
 
     private BlockClosureObject(BlockClosureObject original) {
-        this(original.block, original.receiver, original.copied, original.outerContext, original.outerMarker);
+        this(original.block.image);
+        this.block = original.block;
+        this.outerContext = original.outerContext;
+        this.outerMarker = original.outerMarker;
+        this.receiver = original.receiver;
+        this.copied = original.copied;
+        this.readSenderNode = original.readSenderNode;
     }
 
     @Override
@@ -196,7 +205,13 @@ public class BlockClosureObject extends BaseSqueakObject {
                         objects.length +
                         copied.length];
         arguments[FrameAccess.METHOD] = getCompiledBlock();
-        arguments[FrameAccess.SENDER_OR_SENDER_MARKER] = FrameAccess.getContextOrMarker(frame);
+        // Sender is thisContext
+        if (readSenderNode != null) {
+            arguments[FrameAccess.SENDER_OR_SENDER_MARKER] = readSenderNode.executeRead(frame);
+        } else {
+            CompilerDirectives.transferToInterpreter();
+            arguments[FrameAccess.SENDER_OR_SENDER_MARKER] = FrameAccess.getContextOrMarker(frame);
+        }
         arguments[FrameAccess.CLOSURE_OR_NULL] = this;
         arguments[FrameAccess.RCVR_AND_ARGS_START] = getReceiver();
         for (int i = 0; i < objects.length; i++) {

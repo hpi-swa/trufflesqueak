@@ -23,7 +23,7 @@ public abstract class PopNReversedStackNode extends AbstractStackNode {
     }
 
     @ExplodeLoop
-    @Specialization(guards = {"isVirtualized(frame, code)"})
+    @Specialization(guards = {"isVirtualized(frame)"})
     protected Object[] doPopNVirtualized(VirtualFrame frame) {
         int sp = frameStackPointer(frame);
         assert sp - numPop >= -1;
@@ -36,7 +36,7 @@ public abstract class PopNReversedStackNode extends AbstractStackNode {
     }
 
     @ExplodeLoop
-    @Specialization(guards = {"!isVirtualized(frame, code)"})
+    @Specialization(guards = {"!isVirtualized(frame)"})
     protected Object[] doPopN(VirtualFrame frame) {
         return getContext(frame).popNReversed(numPop);
     }

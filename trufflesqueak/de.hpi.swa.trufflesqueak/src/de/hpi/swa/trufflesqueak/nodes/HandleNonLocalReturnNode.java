@@ -8,7 +8,6 @@ import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
-import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
 public abstract class HandleNonLocalReturnNode extends AbstractNodeWithCode {
@@ -29,13 +28,13 @@ public abstract class HandleNonLocalReturnNode extends AbstractNodeWithCode {
 
     public abstract Object executeHandle(VirtualFrame frame, NonLocalReturn nlr);
 
-    @Specialization(guards = "isVirtualized(frame, code)")
+    @Specialization(guards = "isVirtualized(frame)")
     protected Object handleVirtualized(VirtualFrame frame, NonLocalReturn nlr) {
         if (aboutToReturnNode != null && code.isUnwindMarked()) { // handle ensure: or ifCurtailed:
             aboutToReturnNode.executeAboutToReturn(frame, nlr);
         }
         terminateNode.executeTerminate(frame);
-        FrameMarker frameMarker = (FrameMarker) FrameAccess.getContextOrMarker(frame);
+        FrameMarker frameMarker = getFrameMarker(frame);
         if (nlr.getTargetContext().getFrameMarker() == frameMarker) {
             return nlr.getReturnValue();
         } else {
@@ -43,14 +42,14 @@ public abstract class HandleNonLocalReturnNode extends AbstractNodeWithCode {
         }
     }
 
-    @Specialization(guards = "!isVirtualized(frame, code)")
+    @Specialization(guards = "!isVirtualized(frame)")
     protected Object handle(VirtualFrame frame, NonLocalReturn nlr) {
         if (aboutToReturnNode != null && code.isUnwindMarked()) { // handle ensure: or ifCurtailed:
             aboutToReturnNode.executeAboutToReturn(frame, nlr);
         }
-        ContextObject context = (ContextObject) FrameAccess.getContextOrMarker(frame);
+        ContextObject context = getContext(frame);
         if (context.isDirty()) {
-            ContextObject sender = (ContextObject) context.getSender(); // sender should not be nil
+            ContextObject sender = context.getNotNilSender();
             terminateNode.executeTerminate(frame);
             throw new NonVirtualReturn(nlr.getReturnValue(), nlr.getTargetContext(), sender);
         } else {

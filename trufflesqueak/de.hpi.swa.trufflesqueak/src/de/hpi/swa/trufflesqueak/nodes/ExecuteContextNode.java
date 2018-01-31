@@ -15,13 +15,16 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
-import de.hpi.swa.trufflesqueak.util.FrameAccess;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotWriteNode;
 import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
 public class ExecuteContextNode extends AbstractNodeWithCode {
     @Children private AbstractBytecodeNode[] bytecodeNodes;
     @Child private HandleLocalReturnNode handleLocalReturnNode;
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
+    @Child private FrameSlotReadNode instructionPointerReadNode;
+    @Child private FrameSlotWriteNode instructionPointerWriteNode;
 
     public static ExecuteContextNode create(CompiledCodeObject code) {
         return new ExecuteContextNode(code);
@@ -33,6 +36,8 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
         CompilerAsserts.compilationConstant(bytecodeNodes.length);
         handleLocalReturnNode = HandleLocalReturnNode.create(code);
         handleNonLocalReturnNode = HandleNonLocalReturnNode.create(code);
+        instructionPointerReadNode = FrameSlotReadNode.create(code.instructionPointerSlot);
+        instructionPointerWriteNode = FrameSlotWriteNode.create(code.instructionPointerSlot);
     }
 
     public Object executeVirtualized(VirtualFrame frame) {
@@ -48,7 +53,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
 
     public Object executeNonVirtualized(VirtualFrame frame) {
         try {
-            int initialPC = FrameAccess.getInstructionPointer(frame, code);
+            int initialPC = (int) instructionPointerReadNode.executeRead(frame);
             if (initialPC == 0) {
                 startBytecode(frame);
             } else {
@@ -74,7 +79,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
         try {
             while (pc >= 0) {
                 CompilerAsserts.partialEvaluationConstant(pc);
-                frame.setInt(code.instructionPointerSlot, pc);
+                instructionPointerWriteNode.executeWrite(frame, pc);
                 AbstractBytecodeNode node = bytecodeNodes[pc];
                 if (node instanceof ConditionalJumpNode) {
                     ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
@@ -129,9 +134,8 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
     protected void resumeBytecode(VirtualFrame frame, int initialPC) {
         int pc = initialPC;
         while (pc >= 0) {
-            frame.setInt(code.instructionPointerSlot, pc);
-            AbstractBytecodeNode node = bytecodeNodes[pc];
-            pc = node.executeInt(frame);
+            instructionPointerWriteNode.executeWrite(frame, pc);
+            pc = bytecodeNodes[pc].executeInt(frame);
         }
     }
 

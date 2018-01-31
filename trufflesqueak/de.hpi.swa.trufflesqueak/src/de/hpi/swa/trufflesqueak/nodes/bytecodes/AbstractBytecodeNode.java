@@ -40,9 +40,7 @@ public abstract class AbstractBytecodeNode extends SqueakNodeWithCode {
     }
 
     public int executeInt(VirtualFrame frame) {
-        if (index < 0) {
-            throw new SqueakException("Inner nodes are not allowed to be executed here");
-        }
+        assert index >= 0; // Inner nodes are not allowed to be executed here
         executeVoid(frame);
         return index + numBytecodes;
     }

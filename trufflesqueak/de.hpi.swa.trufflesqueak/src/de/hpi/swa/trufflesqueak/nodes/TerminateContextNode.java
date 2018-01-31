@@ -24,14 +24,14 @@ public abstract class TerminateContextNode extends AbstractNodeWithCode {
     protected abstract void executeTerminate(VirtualFrame frame);
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"isVirtualized(frame, code)"})
+    @Specialization(guards = {"isVirtualized(frame)"})
     protected void doTerminateVirtualized(VirtualFrame frame, @Cached("getContextOrMarker(frame)") Object contextOrMarker) {
         // do nothing, context did not leak
     }
 
-    @Specialization(guards = {"!isVirtualized(frame, code)"})
-    protected void doTerminate(@SuppressWarnings("unused") VirtualFrame frame, @Cached("getContextOrMarker(frame)") Object contextOrMarker) {
-        ContextObject context = (ContextObject) contextOrMarker;
+    @Specialization(guards = {"!isVirtualized(frame)"})
+    protected void doTerminate(VirtualFrame frame) {
+        ContextObject context = getContext(frame);
         context.setSender(code.image.nil);
         context.atput0(CONTEXT.INSTRUCTION_POINTER, code.image.nil);
     }

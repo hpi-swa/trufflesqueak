@@ -12,11 +12,18 @@ import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotWriteNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
+import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
 public abstract class EnterCodeNode extends RootNode {
     @CompilationFinal protected final CompiledCodeObject code;
     @Child private GetOrCreateContextNode createContextNode = GetOrCreateContextNode.create();
+    @Child private FrameSlotWriteNode contextWriteNode;
+    @Child private FrameSlotWriteNode instructionPointerWriteNode;
+    @Child private FrameSlotWriteNode stackPointerWriteNode;
+    @Child private FrameStackWriteNode frameStackWriteNode = FrameStackWriteNode.create();
 
     public static EnterCodeNode create(SqueakLanguage language, CompiledCodeObject code) {
         return EnterCodeNodeGen.create(language, code);
@@ -25,6 +32,15 @@ public abstract class EnterCodeNode extends RootNode {
     protected EnterCodeNode(SqueakLanguage language, CompiledCodeObject code) {
         super(language, code.getFrameDescriptor());
         this.code = code;
+        contextWriteNode = FrameSlotWriteNode.create(code.thisContextOrMarkerSlot);
+        instructionPointerWriteNode = FrameSlotWriteNode.create(code.instructionPointerSlot);
+        stackPointerWriteNode = FrameSlotWriteNode.create(code.stackPointerSlot);
+    }
+
+    private void initializeSlots(VirtualFrame frame) {
+        contextWriteNode.executeWrite(frame, new FrameMarker());
+        instructionPointerWriteNode.executeWrite(frame, 0);
+        stackPointerWriteNode.executeWrite(frame, 0);
     }
 
     @ExplodeLoop
@@ -32,13 +48,13 @@ public abstract class EnterCodeNode extends RootNode {
     protected Object enterVirtualized(VirtualFrame frame,
                     @Cached("create(code)") ExecuteContextNode contextNode) {
         CompilerDirectives.ensureVirtualized(frame);
-        FrameAccess.initializeCodeSlots(frame, code);
+        initializeSlots(frame);
         int numTemps = code.getNumTemps();
         // Initialize temps with nil in newContext.
         for (int i = 0; i < numTemps - code.getNumArgsAndCopiedValues(); i++) {
-            frame.setObject(code.stackSlots[i], code.image.nil);
+            frameStackWriteNode.execute(frame, i, code.image.nil);
         }
-        FrameAccess.setStackPointer(frame, code, numTemps);
+        stackPointerWriteNode.executeWrite(frame, numTemps);
         return contextNode.executeVirtualized(frame);
     }
 
@@ -46,7 +62,7 @@ public abstract class EnterCodeNode extends RootNode {
     @Specialization(guards = {"!code.getNoContextNeededAssumption().isValid()"})
     protected Object enter(VirtualFrame frame,
                     @Cached("create(code)") ExecuteContextNode contextNode) {
-        FrameAccess.initializeCodeSlots(frame, code); //
+        initializeSlots(frame);
         ContextObject newContext = createContextNode.executeGet(frame, true);
         Object[] arguments = frame.getArguments();
         // Push arguments and copied values onto the newContext.
