@@ -51,6 +51,7 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
 
     @Override
     protected Object findMetaObject(SqueakImageContext context, Object value) {
+        // TODO FIXME
         if (value instanceof FrameMarker) {
             return context.nilClass;
         }

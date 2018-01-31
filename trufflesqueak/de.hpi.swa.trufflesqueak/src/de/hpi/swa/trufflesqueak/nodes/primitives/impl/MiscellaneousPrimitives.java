@@ -16,10 +16,8 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.UnexpectedResultException;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
-import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
@@ -29,7 +27,6 @@ import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.trufflesqueak.nodes.DispatchNode;
 import de.hpi.swa.trufflesqueak.nodes.LookupNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
-import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
@@ -470,12 +467,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         private CompiledMethodObject getSimulateMethod(Object receiver) { // TODO: cache method for a given module name
-            ClassObject rcvrClass;
-            try {
-                rcvrClass = SqueakTypesGen.expectClassObject(lookupClassNode.executeLookup(receiver));
-            } catch (UnexpectedResultException e) {
-                throw new SqueakException("receiver has no class");
-            }
+            ClassObject rcvrClass = lookupClassNode.executeLookup(receiver);
             Object lookupResult = lookupNode.executeLookup(rcvrClass, code.image.wrap(SIMULATE_PRIMITIVE_SELECTOR));
             if (lookupResult instanceof CompiledMethodObject) {
                 CompiledMethodObject result = (CompiledMethodObject) lookupResult;

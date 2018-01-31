@@ -8,7 +8,6 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.UnexpectedResultException;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
@@ -28,7 +27,6 @@ import de.hpi.swa.trufflesqueak.nodes.DispatchNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.LookupNode;
 import de.hpi.swa.trufflesqueak.nodes.LookupNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
-import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
 import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ReceiverAndArgumentsNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ReceiverNode;
@@ -91,11 +89,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         protected ClassObject lookup(Object receiver) {
-            try {
-                return SqueakTypesGen.expectClassObject(lookupClassNode.executeLookup(receiver));
-            } catch (UnexpectedResultException e) {
-                throw new SqueakException("receiver has no class");
-            }
+            return lookupClassNode.executeLookup(receiver);
         }
 
         protected Object dispatch(VirtualFrame frame, Object receiver, Object selector, Object arguments, ClassObject rcvrClass) {
@@ -321,7 +315,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object lookup(Object arg) {
+        protected ClassObject lookup(Object arg) {
             return node.executeLookup(arg);
         }
     }

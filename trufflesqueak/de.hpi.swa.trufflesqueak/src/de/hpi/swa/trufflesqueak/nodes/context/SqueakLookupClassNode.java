@@ -3,15 +3,14 @@ package de.hpi.swa.trufflesqueak.nodes.context;
 import java.math.BigInteger;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.UnexpectedResultException;
 
+import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
-import de.hpi.swa.trufflesqueak.model.SqueakObject;
+import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNodeWithCode;
-import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
 
 public abstract class SqueakLookupClassNode extends AbstractNodeWithCode {
     public static SqueakLookupClassNode create(CompiledCodeObject code) {
@@ -22,7 +21,7 @@ public abstract class SqueakLookupClassNode extends AbstractNodeWithCode {
         super(code);
     }
 
-    public abstract Object executeLookup(Object receiver);
+    public abstract ClassObject executeLookup(Object receiver);
 
     @Specialization
     protected ClassObject squeakClass(boolean object) {
@@ -80,14 +79,14 @@ public abstract class SqueakLookupClassNode extends AbstractNodeWithCode {
         return code.image.methodContextClass;
     }
 
-    @Specialization(rewriteOn = UnexpectedResultException.class)
-    protected ClassObject squeakClass(SqueakObject object) throws UnexpectedResultException {
-        return SqueakTypesGen.expectClassObject(object.getSqClass());
+    @SuppressWarnings("unused")
+    @Specialization
+    protected ClassObject nilClass(NilObject object) {
+        return code.image.nilClass;
     }
 
-    @SuppressWarnings("unused")
-    @Specialization(guards = "isNil(object)")
-    protected ClassObject nilClass(Object object) {
-        return code.image.nilClass;
+    @Specialization
+    protected ClassObject squeakClass(BaseSqueakObject object) {
+        return object.getSqClass();
     }
 }

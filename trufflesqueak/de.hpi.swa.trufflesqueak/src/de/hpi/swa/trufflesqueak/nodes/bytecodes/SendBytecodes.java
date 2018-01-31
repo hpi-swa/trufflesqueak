@@ -5,12 +5,10 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags;
-import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
-import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -20,7 +18,6 @@ import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.model.SpecialSelectorObject;
 import de.hpi.swa.trufflesqueak.nodes.DispatchNode;
 import de.hpi.swa.trufflesqueak.nodes.LookupNode;
-import de.hpi.swa.trufflesqueak.nodes.SqueakTypesGen;
 import de.hpi.swa.trufflesqueak.nodes.context.HaltNode;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
@@ -55,12 +52,7 @@ public final class SendBytecodes {
         public Object executeSend(VirtualFrame frame) {
             code.image.interrupt.sendOrBackwardJumpTrigger(frame);
             Object[] rcvrAndArgs = (Object[]) popNReversedNode.executeGeneric(frame);
-            ClassObject rcvrClass;
-            try {
-                rcvrClass = SqueakTypesGen.expectClassObject(lookupClassNode.executeLookup(rcvrAndArgs[0]));
-            } catch (UnexpectedResultException e) {
-                throw new SqueakException("receiver has no class");
-            }
+            ClassObject rcvrClass = lookupClassNode.executeLookup(rcvrAndArgs[0]);
             CompiledCodeObject lookupResult = (CompiledCodeObject) lookupNode.executeLookup(rcvrClass, selector);
             Object[] frameArguments = FrameAccess.newFor(frame, lookupResult, null, rcvrAndArgs);
             return dispatchNode.executeDispatch(lookupResult, frameArguments);
@@ -190,8 +182,13 @@ public final class SendBytecodes {
             }
 
             @Override
-            public Object executeLookup(Object receiver) {
-                return code.getCompiledInClass().getSuperclass();
+            public ClassObject executeLookup(Object receiver) {
+                Object superclass = code.getCompiledInClass().getSuperclass();
+                if (superclass == code.image.nil) {
+                    return code.getCompiledInClass();
+                } else {
+                    return (ClassObject) superclass;
+                }
             }
         }
 
