@@ -77,7 +77,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
         this.literals = literals;
         decodeHeader();
         this.bytes = bytes;
-        updateAndInvalidateCallTargets();
+        invalidateAndCreateNewCallTargets();
     }
 
     public Source getSource() {
@@ -107,15 +107,15 @@ public abstract class CompiledCodeObject extends SqueakObject {
     public RootCallTarget getCallTarget() {
         if (callTarget == null) {
             CompilerDirectives.transferToInterpreter();
-            updateAndInvalidateCallTargets();
+            callTarget = invalidateAndCreateNewCallTargets();
         }
         return callTarget;
     }
 
     @TruffleBoundary
-    private void updateAndInvalidateCallTargets() {
-        callTarget = Truffle.getRuntime().createCallTarget(EnterCodeNode.create(image.getLanguage(), this));
+    private RootCallTarget invalidateAndCreateNewCallTargets() {
         callTargetStable.invalidate();
+        return Truffle.getRuntime().createCallTarget(EnterCodeNode.create(image.getLanguage(), this));
     }
 
     public Assumption getCallTargetStable() {
