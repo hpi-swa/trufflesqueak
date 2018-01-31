@@ -155,6 +155,7 @@ public class BlockClosureObject extends BaseSqueakObject {
 
     public Object getReceiver() {
         if (receiver == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             receiver = outerContext.getReceiver();
         }
         return receiver;
@@ -174,6 +175,7 @@ public class BlockClosureObject extends BaseSqueakObject {
 
     public CompiledBlockObject getCompiledBlock() {
         if (block == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             CompiledMethodObject code = (CompiledMethodObject) getOrPrepareContext().at0(CONTEXT.METHOD);
             int offset = pc - code.getInitialPC();
             int j = code.getBytes()[offset - 2];

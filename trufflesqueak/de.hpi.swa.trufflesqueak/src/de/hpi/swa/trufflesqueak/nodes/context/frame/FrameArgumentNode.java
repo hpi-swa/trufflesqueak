@@ -1,30 +1,35 @@
 package de.hpi.swa.trufflesqueak.nodes.context.frame;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.NodeCost;
-import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
-import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
-@NodeInfo(cost = NodeCost.NONE)
-public class FrameArgumentProfileNode extends SqueakNode {
-    @Child private SqueakNode argumentNode;
+public abstract class FrameArgumentNode extends Node {
+    @CompilationFinal private final int argumentIndex;
     @CompilationFinal private final ConditionProfile objectProfile = ConditionProfile.createBinaryProfile();
     @CompilationFinal private final ValueProfile primitiveProfile = PrimitiveValueProfile.createEqualityProfile();
     @CompilationFinal private final ValueProfile classProfile = ValueProfile.createClassProfile();
 
-    public FrameArgumentProfileNode(SqueakNode argNode) {
-        argumentNode = argNode;
+    public static FrameArgumentNode create(int argumentIndex) {
+        return FrameArgumentNodeGen.create(argumentIndex);
     }
 
-    @Override
-    public Object executeGeneric(VirtualFrame frame) {
-        final Object value = argumentNode.executeGeneric(frame);
+    protected FrameArgumentNode(int argumentIndex) {
+        this.argumentIndex = argumentIndex;
+    }
+
+    public abstract Object executeRead(VirtualFrame frame);
+
+    @Specialization
+    protected Object doArgument(VirtualFrame frame) {
+        Object value = FrameAccess.getArgument(frame, argumentIndex);
         if (objectProfile.profile(value instanceof BaseSqueakObject)) {
             return classProfile.profile(value);
         } else {

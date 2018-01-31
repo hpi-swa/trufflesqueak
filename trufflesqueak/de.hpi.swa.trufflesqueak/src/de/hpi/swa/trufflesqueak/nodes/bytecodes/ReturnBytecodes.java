@@ -95,7 +95,7 @@ public final class ReturnBytecodes {
 
         @Override
         protected Object getReturnValue(VirtualFrame frame) {
-            return receiverNode.executeGeneric(frame);
+            return receiverNode.executeRead(frame);
         }
 
         @Override
@@ -140,7 +140,7 @@ public final class ReturnBytecodes {
 
         @Override
         protected Object getReturnValue(VirtualFrame frame) {
-            return popNode.executeGeneric(frame);
+            return popNode.executeRead(frame);
         }
 
         @Override

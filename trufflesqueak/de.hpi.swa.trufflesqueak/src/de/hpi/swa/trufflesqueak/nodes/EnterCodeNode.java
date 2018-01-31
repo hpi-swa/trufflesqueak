@@ -32,13 +32,13 @@ public abstract class EnterCodeNode extends RootNode {
     protected Object enterVirtualized(VirtualFrame frame,
                     @Cached("create(code)") ExecuteContextNode contextNode) {
         CompilerDirectives.ensureVirtualized(frame);
-        FrameAccess.initializeCodeSlots(frame);
+        FrameAccess.initializeCodeSlots(frame, code);
         int numTemps = code.getNumTemps();
         // Initialize temps with nil in newContext.
         for (int i = 0; i < numTemps - code.getNumArgsAndCopiedValues(); i++) {
             frame.setObject(code.stackSlots[i], code.image.nil);
         }
-        FrameAccess.setStackPointer(frame, numTemps);
+        FrameAccess.setStackPointer(frame, code, numTemps);
         return contextNode.executeVirtualized(frame);
     }
 
@@ -46,7 +46,7 @@ public abstract class EnterCodeNode extends RootNode {
     @Specialization(guards = {"!code.getNoContextNeededAssumption().isValid()"})
     protected Object enter(VirtualFrame frame,
                     @Cached("create(code)") ExecuteContextNode contextNode) {
-        FrameAccess.initializeCodeSlots(frame); //
+        FrameAccess.initializeCodeSlots(frame, code); //
         ContextObject newContext = createContextNode.executeGet(frame, true);
         Object[] arguments = frame.getArguments();
         // Push arguments and copied values onto the newContext.

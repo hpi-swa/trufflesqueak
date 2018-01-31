@@ -160,7 +160,7 @@ public final class StoreBytecodes {
 
         @Override
         public void executeVoid(VirtualFrame frame) {
-            storeNode.executeWrite(frame, popNode.executeGeneric(frame));
+            storeNode.executeWrite(frame, popNode.executeRead(frame));
         }
 
         @Override
@@ -232,7 +232,7 @@ public final class StoreBytecodes {
 
         @Override
         public void executeVoid(VirtualFrame frame) {
-            storeNode.executeWrite(frame, topNode.executeGeneric(frame));
+            storeNode.executeWrite(frame, topNode.executeRead(frame));
         }
 
         @Override

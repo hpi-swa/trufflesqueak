@@ -7,7 +7,7 @@ import com.oracle.truffle.api.source.SourceSection;
 
 @TypeSystemReference(SqueakTypes.class)
 public abstract class SqueakNode extends Node {
-    public abstract Object executeGeneric(VirtualFrame frame);
+    public abstract Object executeRead(VirtualFrame frame);
 
     /**
      * Set the source section for this node. Only nodes associated with a compiled code object have

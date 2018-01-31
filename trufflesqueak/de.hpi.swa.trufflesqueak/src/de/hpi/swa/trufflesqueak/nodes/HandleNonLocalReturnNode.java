@@ -21,7 +21,7 @@ public abstract class HandleNonLocalReturnNode extends AbstractNodeWithCode {
 
     public HandleNonLocalReturnNode(CompiledCodeObject code) {
         super(code);
-        terminateNode = TerminateContextNode.create(code.image);
+        terminateNode = TerminateContextNode.create(code);
         if (code instanceof CompiledMethodObject) {
             aboutToReturnNode = AboutToReturnNode.create((CompiledMethodObject) code);
         }
@@ -29,7 +29,7 @@ public abstract class HandleNonLocalReturnNode extends AbstractNodeWithCode {
 
     public abstract Object executeHandle(VirtualFrame frame, NonLocalReturn nlr);
 
-    @Specialization(guards = "isVirtualized(frame)")
+    @Specialization(guards = "isVirtualized(frame, code)")
     protected Object handleVirtualized(VirtualFrame frame, NonLocalReturn nlr) {
         if (aboutToReturnNode != null && code.isUnwindMarked()) { // handle ensure: or ifCurtailed:
             aboutToReturnNode.executeAboutToReturn(frame, nlr);
@@ -43,7 +43,7 @@ public abstract class HandleNonLocalReturnNode extends AbstractNodeWithCode {
         }
     }
 
-    @Specialization(guards = "!isVirtualized(frame)")
+    @Specialization(guards = "!isVirtualized(frame, code)")
     protected Object handle(VirtualFrame frame, NonLocalReturn nlr) {
         if (aboutToReturnNode != null && code.isUnwindMarked()) { // handle ensure: or ifCurtailed:
             aboutToReturnNode.executeAboutToReturn(frame, nlr);

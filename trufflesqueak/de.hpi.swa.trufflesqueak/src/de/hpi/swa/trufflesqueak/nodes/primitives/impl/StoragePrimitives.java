@@ -195,7 +195,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Override
-        public final Object executeGeneric(VirtualFrame frame) {
+        public final Object executeRead(VirtualFrame frame) {
             try {
                 return executePrimitive(frame);
             } catch (ArrayIndexOutOfBoundsException e) {
@@ -281,7 +281,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Override
-        public final Object executeGeneric(VirtualFrame frame) {
+        public final Object executeRead(VirtualFrame frame) {
             try {
                 return executePrimitive(frame);
             } catch (ArrayIndexOutOfBoundsException e) {

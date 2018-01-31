@@ -9,7 +9,6 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.DupNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.PopNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushConstantNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodes.ReturnReceiverNode;
-import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
 public class SqueakBytecodeDecoderTest extends AbstractSqueakTestCase {
@@ -26,15 +25,13 @@ public class SqueakBytecodeDecoderTest extends AbstractSqueakTestCase {
         assertSame(DupNode.class, bytecodeNodes[1].getClass());
         assertSame(PushConstantNode.class, bytecodeNodes[2].getClass());
 
-        AbstractSendNode send = (AbstractSendNode) bytecodeNodes[3];
-        assertSame(image.equivalent, send.getSelector());
+        assertEquals(String.format("send: %s", image.equivalent), bytecodeNodes[3].toString());
 
         assertSame(ConditionalJumpNode.class, bytecodeNodes[4].getClass());
         assertSame(PopNode.class, bytecodeNodes[5].getClass());
         assertSame(PushConstantNode.class, bytecodeNodes[6].getClass());
 
-        send = (AbstractSendNode) bytecodeNodes[7];
-        assertSame(image.klass, send.getSelector());
+        assertEquals(String.format("send: %s", image.klass), bytecodeNodes[7].toString());
 
         assertSame(PopNode.class, bytecodeNodes[8].getClass());
         assertTrue(ReturnReceiverNode.class.isAssignableFrom(bytecodeNodes[9].getClass()));

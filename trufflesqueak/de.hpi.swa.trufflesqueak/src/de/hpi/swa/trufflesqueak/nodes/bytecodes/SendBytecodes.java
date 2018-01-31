@@ -2,11 +2,10 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags;
-import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
@@ -18,6 +17,7 @@ import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.model.SpecialSelectorObject;
 import de.hpi.swa.trufflesqueak.nodes.DispatchNode;
 import de.hpi.swa.trufflesqueak.nodes.LookupNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.EagerSendSpecialSelectorNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.context.HaltNode;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
@@ -27,7 +27,6 @@ import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
-import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
 public final class SendBytecodes {
 
@@ -51,7 +50,7 @@ public final class SendBytecodes {
 
         public Object executeSend(VirtualFrame frame) {
             code.image.interrupt.sendOrBackwardJumpTrigger(frame);
-            Object[] rcvrAndArgs = (Object[]) popNReversedNode.executeGeneric(frame);
+            Object[] rcvrAndArgs = (Object[]) popNReversedNode.executeRead(frame);
             ClassObject rcvrClass = lookupClassNode.executeLookup(rcvrAndArgs[0]);
             CompiledCodeObject lookupResult = (CompiledCodeObject) lookupNode.executeLookup(rcvrClass, selector);
             Object[] frameArguments = FrameAccess.newFor(frame, lookupResult, null, rcvrAndArgs);
@@ -82,58 +81,75 @@ public final class SendBytecodes {
         }
     }
 
-    public static class EagerSendSpecialSelectorNode extends AbstractSendNode {
+    public static abstract class EagerSendSpecialSelectorNode extends AbstractBytecodeNode {
         public static AbstractBytecodeNode create(CompiledCodeObject code, int index, int selectorIndex) {
             SpecialSelectorObject specialSelector = code.image.specialSelectorsArray[selectorIndex];
             if (code instanceof CompiledMethodObject && specialSelector.getPrimitiveIndex() > 0) {
                 AbstractPrimitiveNode primitiveNode;
                 primitiveNode = PrimitiveNodeFactory.forSpecialSelector((CompiledMethodObject) code,
                                 specialSelector);
-                return new EagerSendSpecialSelectorNode(code, index, specialSelector, primitiveNode);
+                return EagerSendSpecialSelectorNodeGen.create(code, index, specialSelector, primitiveNode);
             }
             return getFallbackNode(code, index, specialSelector);
         }
 
-        private static SendSelectorNode getFallbackNode(CompiledCodeObject code, int index, SpecialSelectorObject specialSelector) {
+        protected static SendSelectorNode getFallbackNode(CompiledCodeObject code, int index, SpecialSelectorObject specialSelector) {
             return new SendSelectorNode(code, index, 1, specialSelector, specialSelector.getNumArguments());
         }
 
-        @Child private AbstractPrimitiveNode primitiveNode;
-        @Child private PushStackNode pushStackNode;
-        @Child private FrameSlotReadNode stackPointerReadNode;
-        @Child private FrameSlotWriteNode stackPointerWriteNode;
-        private ConditionProfile wasContextOrMarker = ConditionProfile.createBinaryProfile();
-        private ValueProfile contextClass = ValueProfile.createClassProfile();
+        @CompilationFinal protected final SpecialSelectorObject specialSelector;
+        @Child protected AbstractPrimitiveNode primitiveNode;
+        @Child protected PushStackNode pushStackNode;
+        @Child protected FrameSlotReadNode stackPointerReadNode;
+        @Child protected FrameSlotWriteNode stackPointerWriteNode;
 
-        private EagerSendSpecialSelectorNode(CompiledCodeObject code, int index, SpecialSelectorObject specialSelector, AbstractPrimitiveNode primitiveNode) {
-            super(code, index, 1, specialSelector, specialSelector.getNumArguments());
+        protected EagerSendSpecialSelectorNode(CompiledCodeObject code, int index, SpecialSelectorObject specialSelector, AbstractPrimitiveNode primitiveNode) {
+            super(code, index);
             this.pushStackNode = PushStackNode.create(code);
+            this.specialSelector = specialSelector;
             this.primitiveNode = primitiveNode;
             stackPointerReadNode = FrameSlotReadNode.create(code.stackPointerSlot);
             stackPointerWriteNode = FrameSlotWriteNode.create(code.stackPointerSlot);
         }
 
-        @Override
-        public void executeVoid(VirtualFrame frame) {
+        @Specialization(guards = {"isVirtualized(frame, code)"})
+        protected int doEagerVirtualized(VirtualFrame frame) {
             try {
-                Object result = primitiveNode.executeGeneric(frame);
+                Object result = primitiveNode.executeRead(frame);
                 // Success! Manipulate the sp to quick pop receiver and arguments and push result.
-                Object contextOrMarker = contextClass.profile(FrameAccess.getContextOrMarker(frame));
-                int spOffset = 1 + ((SpecialSelectorObject) selector).getNumArguments();
-                if (wasContextOrMarker.profile(contextOrMarker instanceof ContextObject)) {
-                    ContextObject context = (ContextObject) contextOrMarker;
-                    context.atput0(CONTEXT.STACKPOINTER, (int) context.at0(CONTEXT.STACKPOINTER) - spOffset);
-                } else {
-                    assert (contextOrMarker instanceof FrameMarker);
-                    stackPointerWriteNode.executeWrite(frame, (int) stackPointerReadNode.executeRead(frame) - spOffset);
-                }
+                int spOffset = 1 + specialSelector.getNumArguments();
+                stackPointerWriteNode.executeWrite(frame, (int) stackPointerReadNode.executeRead(frame) - spOffset);
                 if (result != null) { // primitive produced no result
                     pushStackNode.executeWrite(frame, result);
                 }
             } catch (PrimitiveFailed | ArithmeticException | UnsupportedSpecializationException e) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                replace(getFallbackNode(code, index, (SpecialSelectorObject) selector)).executeVoid(frame);
+                replace(getFallbackNode(code, index, specialSelector)).executeVoid(frame);
             }
+            return index + numBytecodes;
+        }
+
+        @Specialization(guards = {"!isVirtualized(frame, code)"})
+        protected int doEager(VirtualFrame frame) {
+            try {
+                Object result = primitiveNode.executeRead(frame);
+                // Success! Manipulate the sp to quick pop receiver and arguments and push result.
+                ContextObject context = FrameAccess.getContext(frame);
+                int spOffset = 1 + specialSelector.getNumArguments();
+                context.atput0(CONTEXT.STACKPOINTER, (int) context.at0(CONTEXT.STACKPOINTER) - spOffset);
+                if (result != null) { // primitive produced no result
+                    pushStackNode.executeWrite(frame, result);
+                }
+            } catch (PrimitiveFailed | ArithmeticException | UnsupportedSpecializationException e) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                replace(getFallbackNode(code, index, specialSelector)).executeVoid(frame);
+            }
+            return index + numBytecodes;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("send: %s", specialSelector);
         }
     }
 
@@ -176,7 +192,7 @@ public final class SendBytecodes {
     }
 
     public static class SingleExtendedSuperNode extends AbstractSendNode {
-        private static class SqueakLookupClassSuperNode extends SqueakLookupClassNode {
+        protected static class SqueakLookupClassSuperNode extends SqueakLookupClassNode {
             public SqueakLookupClassSuperNode(CompiledCodeObject code) {
                 super(code);
             }

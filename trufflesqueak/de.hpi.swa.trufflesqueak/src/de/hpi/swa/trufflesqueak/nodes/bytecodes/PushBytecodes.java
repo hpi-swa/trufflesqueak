@@ -55,7 +55,7 @@ public final class PushBytecodes {
         }
     }
 
-    public abstract static class PushClosureNode extends AbstractPushNode {
+    public static abstract class PushClosureNode extends AbstractPushNode {
         @CompilationFinal protected CompiledBlockObject block;
         @CompilationFinal protected final int blockSize;
         @CompilationFinal protected final int numArgs;
@@ -91,23 +91,23 @@ public final class PushBytecodes {
             return index + numBytecodes + blockSize;
         }
 
-        @Specialization(guards = "isVirtualized(frame)")
-        protected Object doPushVirtualized(VirtualFrame frame) {
+        @Specialization(guards = "isVirtualized(frame, code)")
+        protected int doPushVirtualized(VirtualFrame frame) {
             FrameMarker frameMarker = (FrameMarker) FrameAccess.getContextOrMarker(frame);
             pushNode.executeWrite(frame, createClosure(frame, null, frameMarker));
             return index + numBytecodes + blockSize;
         }
 
-        @Specialization(guards = "!isVirtualized(frame)")
-        protected Object doPush(VirtualFrame frame) {
+        @Specialization(guards = "!isVirtualized(frame, code)")
+        protected int doPush(VirtualFrame frame) {
             ContextObject context = (ContextObject) FrameAccess.getContextOrMarker(frame);
             pushNode.executeWrite(frame, createClosure(frame, context, null));
             return index + numBytecodes + blockSize;
         }
 
         private BlockClosureObject createClosure(VirtualFrame frame, ContextObject context, FrameMarker frameMarker) {
-            Object receiver = receiverNode.executeGeneric(frame);
-            Object[] copiedValues = (Object[]) popNReversedNode.executeGeneric(frame);
+            Object receiver = receiverNode.executeRead(frame);
+            Object[] copiedValues = (Object[]) popNReversedNode.executeRead(frame);
             return new BlockClosureObject(getBlock(), receiver, copiedValues, context, frameMarker);
         }
 
@@ -148,7 +148,7 @@ public final class PushBytecodes {
 
         @Override
         public void executeVoid(VirtualFrame frame) {
-            pushNode.executeWrite(frame, literalNode.executeGeneric(frame));
+            pushNode.executeWrite(frame, literalNode.executeRead(frame));
         }
 
         @Override
@@ -191,7 +191,7 @@ public final class PushBytecodes {
         @Override
         public void executeVoid(VirtualFrame frame) {
             if (popNReversedNode != null) {
-                pushNode.executeWrite(frame, code.image.newList((Object[]) popNReversedNode.executeGeneric(frame)));
+                pushNode.executeWrite(frame, code.image.newList((Object[]) popNReversedNode.executeRead(frame)));
             } else {
                 pushNode.executeWrite(frame, code.image.wrap(new Object[arraySize]));
             }
@@ -213,7 +213,7 @@ public final class PushBytecodes {
 
         @Override
         public void executeVoid(VirtualFrame frame) {
-            pushNode.executeWrite(frame, receiverNode.executeGeneric(frame));
+            pushNode.executeWrite(frame, receiverNode.executeRead(frame));
         }
 
         @Override
@@ -284,7 +284,7 @@ public final class PushBytecodes {
 
         @Override
         public void executeVoid(VirtualFrame frame) {
-            pushNode.executeWrite(frame, tempNode.executeGeneric(frame));
+            pushNode.executeWrite(frame, tempNode.executeRead(frame));
         }
 
         @Override

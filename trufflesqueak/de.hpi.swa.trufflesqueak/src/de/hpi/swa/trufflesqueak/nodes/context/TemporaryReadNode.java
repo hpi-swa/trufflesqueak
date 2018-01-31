@@ -29,16 +29,16 @@ public abstract class TemporaryReadNode extends SqueakNodeWithCode {
         }
     }
 
-    @Specialization(guards = {"isVirtualized(frame)"})
+    @Specialization(guards = {"isVirtualized(frame, code)"})
     public Object doReadVirtualized(VirtualFrame frame) {
         if (readNode != null) {
             return readNode.executeRead(frame);
         } else {
-            return argumentNode.executeGeneric(frame);
+            return argumentNode.executeRead(frame);
         }
     }
 
-    @Specialization(guards = {"!isVirtualized(frame)"})
+    @Specialization(guards = {"!isVirtualized(frame, code)"})
     public Object doRead(VirtualFrame frame) {
         return getContext(frame).atTemp(tempIndex);
     }

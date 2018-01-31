@@ -28,6 +28,10 @@ public abstract class GetOrCreateContextNode extends Node {
 
     public abstract ContextObject executeGet(Frame frame, boolean forceContext);
 
+    protected boolean isVirtualized(VirtualFrame frame) {
+        return FrameAccess.isVirtualized(frame, FrameAccess.getMethod(frame));
+    }
+
     @Specialization(guards = {"isVirtualized(frame)"})
     protected ContextObject doCreateVirtualized(VirtualFrame frame, boolean forceContext) {
         FrameMarker frameMarker = (FrameMarker) FrameAccess.getContextOrMarker(frame);
@@ -35,8 +39,8 @@ public abstract class GetOrCreateContextNode extends Node {
         ContextObject context = ContextObject.create(method.image, method.frameSize(), frameMarker);
 
         context.setSender(FrameAccess.getSender(frame));
-        context.atput0(CONTEXT.INSTRUCTION_POINTER, FrameAccess.getInstructionPointer(frame));
-        int sp = FrameAccess.getStackPointer(frame);
+        context.atput0(CONTEXT.INSTRUCTION_POINTER, FrameAccess.getInstructionPointer(frame, method));
+        int sp = FrameAccess.getStackPointer(frame, method);
         context.atput0(CONTEXT.STACKPOINTER, sp);
         context.atput0(CONTEXT.METHOD, method);
         BlockClosureObject closure = FrameAccess.getClosure(frame);
@@ -59,7 +63,7 @@ public abstract class GetOrCreateContextNode extends Node {
         }
         if (forceContext) {
             method.invalidateNoContextNeededAssumption();
-            FrameAccess.setContext(frame, context);
+            FrameAccess.setContext(frame, method, context);
         }
         return context;
     }

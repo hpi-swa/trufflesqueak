@@ -2,6 +2,7 @@ package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
 
@@ -59,7 +60,7 @@ public class TopLevelContextNode extends RootNode {
                 CompiledCodeObject code = activeContext.getCodeObject();
                 Object[] frameArgs = activeContext.getReceiverAndArguments();
                 BlockClosureObject closure = activeContext.getClosure();
-                VirtualFrame frame = Truffle.getRuntime().createVirtualFrame(FrameAccess.newWith(code, sender, closure, frameArgs), code.getFrameDescriptor());
+                MaterializedFrame frame = Truffle.getRuntime().createMaterializedFrame(FrameAccess.newWith(code, sender, closure, frameArgs), code.getFrameDescriptor());
                 activeContext.setFrameMarker(new FrameMarker());
                 frame.setInt(code.instructionPointerSlot, activeContext.instructionPointer(code));
                 frame.setObject(code.thisContextOrMarkerSlot, activeContext);

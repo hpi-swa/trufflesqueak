@@ -14,7 +14,7 @@ public class LiteralConstantNode extends SqueakNode {
     }
 
     @Override
-    public Object executeGeneric(VirtualFrame frame) {
-        return literalNode.executeGeneric(frame);
+    public Object executeRead(VirtualFrame frame) {
+        return literalNode.executeRead(frame);
     }
 }

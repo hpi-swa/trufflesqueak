@@ -3,7 +3,6 @@ package de.hpi.swa.trufflesqueak.nodes;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.exceptions.Returns.LocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
@@ -12,7 +11,7 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 @ImportStatic(FrameAccess.class)
-public abstract class HandleLocalReturnNode extends Node {
+public abstract class HandleLocalReturnNode extends AbstractNodeWithCode {
     @Child private TerminateContextNode terminateNode;
 
     public static HandleLocalReturnNode create(CompiledCodeObject code) {
@@ -20,18 +19,19 @@ public abstract class HandleLocalReturnNode extends Node {
     }
 
     public HandleLocalReturnNode(CompiledCodeObject code) {
-        terminateNode = TerminateContextNode.create(code.image);
+        super(code);
+        terminateNode = TerminateContextNode.create(code);
     }
 
     public abstract Object executeHandle(VirtualFrame frame, LocalReturn lr);
 
-    @Specialization(guards = "isVirtualized(frame)")
+    @Specialization(guards = "isVirtualized(frame, code)")
     protected Object handleVirtualized(VirtualFrame frame, LocalReturn lr) {
         terminateNode.executeTerminate(frame);
         return lr.getReturnValue();
     }
 
-    @Specialization(guards = "!isVirtualized(frame)")
+    @Specialization(guards = "!isVirtualized(frame, code)")
     protected Object handle(VirtualFrame frame, LocalReturn lr) {
         ContextObject context = (ContextObject) FrameAccess.getContextOrMarker(frame);
         if (context.isDirty()) {

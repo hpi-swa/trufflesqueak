@@ -50,11 +50,11 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
      * this however does not check if the current context isDead nor does it terminate contexts (this
      * may be a problem).
      */
-    @Specialization(guards = {"isVirtualized(frame)"})
+    @Specialization(guards = {"isVirtualized(frame, code)"})
     protected void doAboutToReturnVirtualized(VirtualFrame frame, @SuppressWarnings("unused") NonLocalReturn nlr) {
-        if (completeTempReadNode.executeGeneric(frame) == code.image.nil) {
+        if (completeTempReadNode.executeRead(frame) == code.image.nil) {
             completeTempWriteNode.executeWrite(frame, code.image.sqTrue);
-            BlockClosureObject block = (BlockClosureObject) blockArgumentNode.executeGeneric(frame);
+            BlockClosureObject block = (BlockClosureObject) blockArgumentNode.executeRead(frame);
             try {
                 dispatch.executeBlock(block, block.getFrameArguments(frame));
             } catch (LocalReturn blockLR) { // ignore
@@ -66,7 +66,7 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
         }
     }
 
-    @Specialization(guards = {"!isVirtualized(frame)"})
+    @Specialization(guards = {"!isVirtualized(frame, code)"})
     protected void doAboutToReturn(VirtualFrame frame, NonLocalReturn nlr,
                     @Cached("getContext(frame)") ContextObject context) {
         pushNode.executeWrite(frame, nlr.getTargetContext());

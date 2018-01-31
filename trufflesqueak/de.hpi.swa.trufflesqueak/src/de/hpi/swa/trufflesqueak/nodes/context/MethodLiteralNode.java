@@ -15,7 +15,7 @@ public class MethodLiteralNode extends SqueakNode {
     }
 
     @Override
-    public Object executeGeneric(VirtualFrame frame) {
+    public Object executeRead(VirtualFrame frame) {
         return literal;
     }
 }

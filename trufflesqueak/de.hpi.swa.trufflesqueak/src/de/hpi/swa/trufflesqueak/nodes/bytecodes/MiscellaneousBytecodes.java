@@ -57,7 +57,7 @@ public final class MiscellaneousBytecodes {
         public void executeVoid(VirtualFrame frame) {
             CompilerAsserts.compilationConstant(index);
             try {
-                throw new LocalReturn(primitiveNode.executeGeneric(frame));
+                throw new LocalReturn(primitiveNode.executeRead(frame));
             } catch (UnsupportedSpecializationException | PrimitiveFailed e) {
             }
         }
@@ -118,7 +118,7 @@ public final class MiscellaneousBytecodes {
 
         @Override
         public void executeVoid(VirtualFrame frame) {
-            pushNode.executeWrite(frame, topNode.executeGeneric(frame));
+            pushNode.executeWrite(frame, topNode.executeRead(frame));
         }
 
         @Override
@@ -196,7 +196,7 @@ public final class MiscellaneousBytecodes {
 
         @Override
         public void executeVoid(VirtualFrame frame) {
-            popNode.executeGeneric(frame);
+            popNode.executeRead(frame);
         }
 
         @Override

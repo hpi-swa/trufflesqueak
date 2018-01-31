@@ -33,7 +33,7 @@ public final class JumpBytecodes {
         }
 
         public boolean executeCondition(VirtualFrame frame) {
-            return popNode.executeGeneric(frame) == isIfTrue;
+            return popNode.executeRead(frame) == isIfTrue;
         }
 
         @Override

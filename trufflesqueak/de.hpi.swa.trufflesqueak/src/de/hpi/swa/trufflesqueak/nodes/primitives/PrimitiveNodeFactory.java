@@ -12,7 +12,6 @@ import de.hpi.swa.trufflesqueak.model.SpecialSelectorObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ArgumentNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ReceiverAndArgumentsNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameArgumentProfileNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PeekStackNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.FilePlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
@@ -100,7 +99,7 @@ public abstract class PrimitiveNodeFactory {
         int numArgs = primitive.numArguments();
         SqueakNode[] arguments = new SqueakNode[numArgs];
         for (int i = 0; i < numArgs; i++) {
-            arguments[i] = new FrameArgumentProfileNode(ArgumentNode.create(method, i));
+            arguments[i] = ArgumentNode.create(method, i);
         }
         return nodeFactory.createNode(method, arguments);
     }

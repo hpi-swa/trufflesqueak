@@ -7,9 +7,12 @@ import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 
+import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
@@ -66,7 +69,11 @@ public class FrameAccess {
     }
 
     public static Object getContextOrMarker(Frame frame) {
-        return FrameUtil.getObjectSafe(frame, getMethod(frame).thisContextOrMarkerSlot);
+        try {
+            return frame.getObject(getMethod(frame).thisContextOrMarkerSlot);
+        } catch (FrameSlotTypeException e) {
+            throw new SqueakException("thisContextOrMarkerSlot should never be invalid");
+        }
     }
 
     // This can only be used when non-virtualized
@@ -74,38 +81,49 @@ public class FrameAccess {
         return (ContextObject) getContextOrMarker(frame);
     }
 
-    public static void setContext(VirtualFrame frame, ContextObject context) {
-        frame.setObject(getMethod(frame).thisContextOrMarkerSlot, context);
+    public static void setContext(VirtualFrame frame, CompiledCodeObject code, ContextObject context) {
+        frame.setObject(code.thisContextOrMarkerSlot, context);
     }
 
-    public static void initializeCodeSlots(Frame frame) {
-        CompiledCodeObject code = getMethod(frame);
+    public static void initializeCodeSlots(Frame frame, CompiledCodeObject code) {
         frame.setObject(code.thisContextOrMarkerSlot, new FrameMarker());
-        frame.setInt(getMethod(frame).instructionPointerSlot, 0);
-        frame.setInt(getMethod(frame).stackPointerSlot, 0);
+        frame.setInt(code.instructionPointerSlot, 0);
+        frame.setInt(code.stackPointerSlot, 0);
     }
 
-    public static int getInstructionPointer(Frame frame) {
-        return FrameUtil.getIntSafe(frame, getMethod(frame).instructionPointerSlot);
+    public static int getInstructionPointer(Frame frame, CompiledCodeObject code) {
+        try {
+            return frame.getInt(code.instructionPointerSlot);
+        } catch (FrameSlotTypeException e) {
+            throw new SqueakException("instructionPointerSlot should never be invalid");
+        }
     }
 
-    public static int getStackPointer(Frame frame) {
-        return FrameUtil.getIntSafe(frame, getMethod(frame).stackPointerSlot);
+    public static int getStackPointer(Frame frame, CompiledCodeObject code) {
+        try {
+            return frame.getInt(code.stackPointerSlot);
+        } catch (FrameSlotTypeException e) {
+            throw new SqueakException("stackPointerSlot should never be invalid");
+        }
     }
 
-    public static void setStackPointer(VirtualFrame frame, int value) {
-        frame.setInt(getMethod(frame).stackPointerSlot, value);
+    public static void setStackPointer(VirtualFrame frame, CompiledCodeObject code, int value) {
+        frame.setInt(code.stackPointerSlot, value);
     }
 
-    public static boolean isVirtualized(VirtualFrame frame) {
-        Object contextOrMarker = FrameAccess.getContextOrMarker(frame);
-        return contextOrMarker instanceof FrameMarker || contextOrMarker == null;
+    public static boolean isVirtualized(VirtualFrame frame, CompiledCodeObject code) {
+        try {
+            return frame.getObject(code.thisContextOrMarkerSlot) instanceof FrameMarker;
+        } catch (FrameSlotTypeException e) {
+            throw new SqueakException("thisContextOrMarkerSlot should never be invalid");
+        }
     }
 
     public static Object[] newFor(VirtualFrame frame, CompiledCodeObject code, BlockClosureObject closure, Object[] frameArgs) {
         return newWith(code, getContextOrMarker(frame), closure, frameArgs);
     }
 
+    @ExplodeLoop
     public static Object[] newWith(CompiledCodeObject code, Object sender, BlockClosureObject closure, Object[] frameArgs) {
         Object[] arguments = new Object[RCVR_AND_ARGS_START + frameArgs.length];
         arguments[METHOD] = code;
