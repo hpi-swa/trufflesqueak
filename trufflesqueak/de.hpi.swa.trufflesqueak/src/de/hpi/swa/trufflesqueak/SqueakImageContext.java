@@ -9,6 +9,7 @@ import java.math.BigInteger;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
@@ -126,7 +127,7 @@ public class SqueakImageContext {
     @CompilationFinal public final ObjectGraph objects = new ObjectGraph(this);
     @CompilationFinal public final OSDetector os = new OSDetector();
     @CompilationFinal public final SqueakImageFlags flags = new SqueakImageFlags();
-    @CompilationFinal public final InterruptHandlerNode interrupt = InterruptHandlerNode.create(this);
+    @CompilationFinal public final InterruptHandlerNode interrupt;
     @CompilationFinal public final long startUpMillis = System.currentTimeMillis();
 
     @Child private IsEmptyListNode isEmptyListNode;
@@ -150,6 +151,7 @@ public class SqueakImageContext {
             config = new SqueakConfig(new String[0]);
             display = new NullDisplay();
         }
+        interrupt = InterruptHandlerNode.create(this, config);
         isEmptyListNode = IsEmptyListNode.create(this);
         resumeProcessNode = ResumeProcessNode.create(this);
         getActiveProcessNode = GetActiveProcessNode.create(this);
@@ -292,6 +294,7 @@ public class SqueakImageContext {
     }
 
     public void synchronousSignal(VirtualFrame frame, PointersObject semaphore) {
+        CompilerDirectives.transferToInterpreter();
         if (isEmptyListNode.executeIsEmpty(semaphore)) { // no process is waiting on this semaphore
             semaphore.atput0(SEMAPHORE.EXCESS_SIGNALS, (int) semaphore.at0(SEMAPHORE.EXCESS_SIGNALS) + 1);
         } else {

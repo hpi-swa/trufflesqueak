@@ -3,6 +3,7 @@ package de.hpi.swa.trufflesqueak.util;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.trufflesqueak.SqueakConfig;
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -18,8 +19,12 @@ public class InterruptHandlerNode extends Node {
     private boolean interruptPending = false;
     private int pendingFinalizationSignals = 0;
 
-    public static InterruptHandlerNode create(SqueakImageContext image) {
-        return new InterruptHandlerNode(image);
+    public static InterruptHandlerNode create(SqueakImageContext image, SqueakConfig config) {
+        if (config.disableInterruptHandler()) {
+            return new DummyInterruptHandlerNode(image);
+        } else {
+            return new InterruptHandlerNode(image);
+        }
     }
 
     protected InterruptHandlerNode(SqueakImageContext image) {
@@ -34,7 +39,6 @@ public class InterruptHandlerNode extends Node {
         nextWakeupTick = msTime;
     }
 
-    // TODO: current checkForInterrupts version slows tinyBenchmarks down by approximately 2.4x
     public void sendOrBackwardJumpTrigger(VirtualFrame frame) { // Check for interrupts at sends and backward jumps
         if (interruptCheckCounter-- > 0) {
             return; // only really check every 100 times or so
@@ -62,21 +66,38 @@ public class InterruptHandlerNode extends Node {
         }
         interruptCheckCounter = interruptCheckCounterFeedbackReset;
         lastTick = now; // used to detect wrap around of millisecond clock
-        Object semaphoreObject = image.nil;
         if (interruptPending) {
             interruptPending = false; // reset interrupt flag
-            semaphoreObject = image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.TheInterruptSemaphore);
+            signalSemaporeIfNotNil(frame, SPECIAL_OBJECT_INDEX.TheInterruptSemaphore);
         }
         if ((nextWakeupTick != 0) && (now >= nextWakeupTick)) {
             nextWakeupTick = 0; // reset timer interrupt
-            semaphoreObject = image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.TheTimerSemaphore);
+            signalSemaporeIfNotNil(frame, SPECIAL_OBJECT_INDEX.TheTimerSemaphore);
         }
         if (pendingFinalizationSignals > 0) { // signal any pending finalizations
             pendingFinalizationSignals = 0;
-            semaphoreObject = image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.TheFinalizationSemaphore);
+            signalSemaporeIfNotNil(frame, SPECIAL_OBJECT_INDEX.TheFinalizationSemaphore);
         }
+    }
+
+    private void signalSemaporeIfNotNil(VirtualFrame frame, int semaphoreIndex) {
+        Object semaphoreObject = image.specialObjectsArray.at0(semaphoreIndex);
         if (semaphoreObject != image.nil) {
             image.synchronousSignal(frame, (PointersObject) semaphoreObject);
+        }
+    }
+
+    protected static final class DummyInterruptHandlerNode extends InterruptHandlerNode {
+        protected DummyInterruptHandlerNode(SqueakImageContext image) {
+            super(image);
+        }
+
+        @Override
+        public void sendOrBackwardJumpTrigger(VirtualFrame frame) {
+        }
+
+        @Override
+        public void executeCheck(VirtualFrame frame) {
         }
     }
 }

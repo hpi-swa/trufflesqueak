@@ -10,6 +10,7 @@ public class SqueakConfig {
     @CompilationFinal private final String imagePath;
     @CompilationFinal private final boolean verbose;
     @CompilationFinal private final boolean tracing;
+    @CompilationFinal private final boolean disableInterrupts;
     @CompilationFinal private final String receiver;
     @CompilationFinal private final String selector;
     @CompilationFinal(dimensions = 1) private final String[] restArgs;
@@ -20,6 +21,7 @@ public class SqueakConfig {
         this.imagePath = args.length > 0 ? args[0] : "unknown";
         boolean verbose = false;
         boolean tracing = false;
+        boolean disableInterrupts = false;
         String receiver = "nil";
         String selector = null;
         String[] restArgs = null;
@@ -33,6 +35,9 @@ public class SqueakConfig {
                 case "--trace":
                 case "-t":
                     tracing = true;
+                    break;
+                case "--disable-interrupts":
+                    disableInterrupts = true;
                     break;
                 case "--receiver":
                 case "-r":
@@ -54,6 +59,7 @@ public class SqueakConfig {
 
         this.verbose = verbose;
         this.tracing = tracing;
+        this.disableInterrupts = disableInterrupts;
         this.receiver = receiver;
         this.selector = selector;
         this.restArgs = restArgs;
@@ -118,5 +124,9 @@ public class SqueakConfig {
 
     public String[] getRestArgs() {
         return restArgs;
+    }
+
+    public boolean disableInterruptHandler() {
+        return disableInterrupts;
     }
 }
