@@ -15,12 +15,10 @@ import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Source.Builder;
 
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.TruffleRuntime;
 
 public class TruffleSqueakMain extends AbstractLanguageLauncher {
     private static void executeImage(String... args) throws RuntimeException {
-        TruffleRuntime runtime = Truffle.getRuntime();
-        System.out.println(String.format("== Running %s on %s ==", SqueakLanguage.NAME, runtime.getName()));
+        System.out.println("== Running " + SqueakLanguage.NAME + " on " + Truffle.getRuntime().getName() + " ==");
         new TruffleSqueakMain().launch(args);
     }
 

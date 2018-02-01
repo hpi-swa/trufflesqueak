@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.Vector;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -308,6 +309,9 @@ public class SqueakImageReader {
                     image.asSymbol = (NativeObject) chunkObject;
                 }
             }
+        }
+        if (image.asSymbol == image.nil) {
+            throw new SqueakException("Unable to find asSymbol selector");
         }
     }
 

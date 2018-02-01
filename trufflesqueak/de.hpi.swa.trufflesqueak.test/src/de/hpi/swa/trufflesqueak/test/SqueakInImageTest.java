@@ -10,9 +10,10 @@ import org.junit.Test;
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
 
 public class SqueakInImageTest extends AbstractSqueakTestCase {
-    private static final String IMAGE_PATH = String.format("%s/images/test.image", System.getenv("TRAVIS_BUILD_DIR"));
+    private static final String IMAGE_PATH = System.getenv("TRAVIS_BUILD_DIR") + "/images/test.image";
     private static Object smalltalkDictionary;
     private static Object smalltalkAssociation;
     private static Object evaluateSymbol;
@@ -39,7 +40,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
 
     private static Object getSmalltalkAssociation() {
         if (smalltalkAssociation == null) {
-            smalltalkAssociation = image.newAssociation(image.newSymbol("Smalltalk"), getSmalltalkDictionary());
+            smalltalkAssociation = new PointersObject(image, image.schedulerAssociation.getSqClass(), new Object[]{image.newSymbol("Smalltalk"), getSmalltalkDictionary()});
         }
         return smalltalkAssociation;
     }
@@ -59,7 +60,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
     }
 
     private Object asSymbol(String value) {
-        String fakeMethodName = String.format("fakeAsSymbol%s", value.hashCode());
+        String fakeMethodName = "fakeAsSymbol" + value.hashCode();
         CompiledCodeObject method = makeMethod(
                         new Object[]{4, image.asSymbol, image.wrap(value), image.newSymbol(fakeMethodName), getSmalltalkAssociation()},
                         new int[]{0x21, 0xD0, 0x7C});
@@ -68,7 +69,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
 
     private Object evaluate(String expression) {
         // ^ (Smalltalk at: #Compiler) evaluate: '{expression}'
-        String fakeMethodName = String.format("fakeEvaluate%s", expression.hashCode());
+        String fakeMethodName = "fakeEvaluate%s" + expression.hashCode();
         CompiledCodeObject method = makeMethod(
                         new Object[]{6, getEvaluateSymbol(), getSmalltalkAssociation(), getCompilerSymbol(), image.wrap(expression), asSymbol(fakeMethodName), getSmalltalkAssociation()},
                         new int[]{0x41, 0x22, 0xC0, 0x23, 0xE0, 0x7C});
@@ -79,7 +80,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
     public void testNumerical() {
         // Evaluate a few simple expressions to ensure that methodDictionaries grow correctly.
         for (int i = 0; i < 10; i++) {
-            assertEquals(i + 1, evaluate(String.format("%s + 1", i)));
+            assertEquals(i + 1, evaluate(i + " + 1"));
         }
         assertEquals(4, evaluate("-1 \\\\ 5"));
     }

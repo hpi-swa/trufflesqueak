@@ -111,7 +111,9 @@ public final class PushBytecodes {
 
         @Override
         public String toString() {
-            return String.format("closureNumCopied: %d numArgs: %d bytes %d to %d", numCopied, numArgs, index + numBytecodes, index + numBytecodes + blockSize);
+            int start = index + numBytecodes;
+            int end = start + blockSize;
+            return "closureNumCopied: " + numCopied + " numArgs: " + numArgs + " bytes " + start + " to " + end;
         }
     }
 
@@ -197,7 +199,7 @@ public final class PushBytecodes {
 
         @Override
         public String toString() {
-            return String.format("push: (Array new: %d)", arraySize);
+            return "push: (Array new: " + arraySize + ")";
         }
     }
 
@@ -260,7 +262,7 @@ public final class PushBytecodes {
 
         @Override
         public String toString() {
-            return String.format("pushTemp: %d inVectorAt: %d", this.indexInArray, this.indexOfArray);
+            return "pushTemp: " + indexInArray + " inVectorAt: " + indexOfArray;
         }
     }
 

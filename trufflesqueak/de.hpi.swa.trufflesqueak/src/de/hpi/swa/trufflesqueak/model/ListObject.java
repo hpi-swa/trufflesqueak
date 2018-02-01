@@ -22,6 +22,6 @@ public class ListObject extends AbstractPointersObject {
 
     @Override
     public String toString() {
-        return String.format("ListObject: %s", getSqClass());
+        return "ListObject: " + getSqClass();
     }
 }

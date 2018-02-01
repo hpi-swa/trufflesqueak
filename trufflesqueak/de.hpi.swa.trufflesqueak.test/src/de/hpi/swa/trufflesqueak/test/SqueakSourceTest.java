@@ -82,8 +82,8 @@ public class SqueakSourceTest extends AbstractSqueakTestCase {
             "21 <7A> return: false\n" +
             "22 <7B> return: nil\n" +
             "23 <7C> returnTop\n" +
-            "24 <7E> unknown: 7E\n" +
-            "25 <7F> unknown: 7F\n" +
+            "24 <7E> unknown: 126\n" +
+            "25 <7F> unknown: 127\n" +
             "26 <80 1F> pushRcvr: 31\n" +
             "27 <81 1F> storeIntoRcvr: 31\n" +
             "28 <82 1F> popIntoRcvr: 31\n" +

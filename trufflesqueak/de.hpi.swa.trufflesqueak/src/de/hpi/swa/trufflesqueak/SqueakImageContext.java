@@ -159,7 +159,7 @@ public class SqueakImageContext {
         PointersObject activeProcess = getActiveProcessNode.executeGet();
         ContextObject activeContext = (ContextObject) activeProcess.at0(PROCESS.SUSPENDED_CONTEXT);
         activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, nil);
-        output.println(String.format("Resuming active context for %s...", activeContext.at0(CONTEXT.METHOD)));
+        output.println("Resuming active context for " + activeContext.getMethod() + "...");
         return Truffle.getRuntime().createCallTarget(TopLevelContextNode.create(language, activeContext));
     }
 
@@ -168,8 +168,8 @@ public class SqueakImageContext {
         String selector = config.getSelector();
         ClassObject receiverClass = receiver instanceof Integer ? smallIntegerClass : nilClass;
         CompiledCodeObject lookupResult = (CompiledCodeObject) receiverClass.lookup(selector);
-        if (lookupResult == null) {
-            throw new SqueakException(String.format("%s >> %s could not be found!", receiver, selector));
+        if (lookupResult.getCompiledInSelector() == doesNotUnderstand) {
+            throw new SqueakException(receiver + " >> " + selector + " could not be found!");
         }
         ContextObject customContext = ContextObject.create(this, lookupResult.frameSize());
         customContext.atput0(CONTEXT.METHOD, lookupResult);
@@ -184,7 +184,7 @@ public class SqueakImageContext {
             customContext.push(nil);
         }
 
-        output.println(String.format("Starting to evaluate %s >> %s...", receiver, selector));
+        output.println("Starting to evaluate " + receiver + " >> " + selector + "...");
         return Truffle.getRuntime().createCallTarget(TopLevelContextNode.create(getLanguage(), customContext));
     }
 
@@ -284,10 +284,6 @@ public class SqueakImageContext {
 
     public NativeObject newSymbol(String value) {
         return new NativeObject(this, doesNotUnderstand.getSqClass(), value.getBytes());
-    }
-
-    public PointersObject newAssociation(Object key, Object value) {
-        return new PointersObject(this, schedulerAssociation.getSqClass(), new Object[]{key, value});
     }
 
     public void registerSemaphore(BaseSqueakObject semaphore, int index) {

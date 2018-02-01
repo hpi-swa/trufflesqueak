@@ -25,13 +25,13 @@ public class SqueakBytecodeDecoderTest extends AbstractSqueakTestCase {
         assertSame(DupNode.class, bytecodeNodes[1].getClass());
         assertSame(PushConstantNode.class, bytecodeNodes[2].getClass());
 
-        assertEquals(String.format("send: %s", image.equivalent), bytecodeNodes[3].toString());
+        assertEquals("send: " + image.equivalent, bytecodeNodes[3].toString());
 
         assertSame(ConditionalJumpNode.class, bytecodeNodes[4].getClass());
         assertSame(PopNode.class, bytecodeNodes[5].getClass());
         assertSame(PushConstantNode.class, bytecodeNodes[6].getClass());
 
-        assertEquals(String.format("send: %s", image.klass), bytecodeNodes[7].toString());
+        assertEquals("send: " + image.klass, bytecodeNodes[7].toString());
 
         assertSame(PopNode.class, bytecodeNodes[8].getClass());
         assertTrue(ReturnReceiverNode.class.isAssignableFrom(bytecodeNodes[9].getClass()));

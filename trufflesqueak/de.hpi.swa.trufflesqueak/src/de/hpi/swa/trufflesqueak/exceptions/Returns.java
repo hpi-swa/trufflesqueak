@@ -28,7 +28,7 @@ public final class Returns {
 
         @Override
         public String toString() {
-            return String.format("LR (value: %s)", returnValue);
+            return "LR (value: " + returnValue + ")";
         }
     }
 
@@ -56,7 +56,7 @@ public final class Returns {
 
         @Override
         public String toString() {
-            return String.format("NLR (value: %s, arrived: %s, target: %s)", returnValue, arrivedAtTargetContext, targetContext);
+            return "NLR (value: " + returnValue + ", arrived: " + arrivedAtTargetContext + ", target: " + targetContext + ")";
         }
     }
 
@@ -85,7 +85,7 @@ public final class Returns {
 
         @Override
         public String toString() {
-            return String.format("NVR (value: %s, current: %s, target: %s)", returnValue, currentContext, targetContext);
+            return "NVR (value: " + returnValue + ", current: " + currentContext + ", target: " + targetContext + ")";
         }
     }
 
@@ -98,7 +98,7 @@ public final class Returns {
 
         @Override
         public String toString() {
-            return String.format("TLR (value: %s)", returnValue);
+            return "TLR (value: " + returnValue + ")";
         }
     }
 }

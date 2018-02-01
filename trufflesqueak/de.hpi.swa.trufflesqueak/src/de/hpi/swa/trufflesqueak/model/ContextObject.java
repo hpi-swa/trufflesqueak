@@ -167,7 +167,7 @@ public class ContextObject extends AbstractPointersObject {
 
     @Override
     public String toString() {
-        return String.format("Context for %s", at0(CONTEXT.METHOD));
+        return "Context for " + getMethod();
     }
 
     public Object top() {

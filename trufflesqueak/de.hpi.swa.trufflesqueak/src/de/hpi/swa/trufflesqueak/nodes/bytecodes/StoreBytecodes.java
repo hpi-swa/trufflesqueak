@@ -27,7 +27,7 @@ public final class StoreBytecodes {
 
         @Override
         public String toString() {
-            return String.format("%sIntoLit: %d", getTypeName(), variableIndex);
+            return getTypeName() + "IntoLit: " + variableIndex;
         }
     }
 
@@ -59,7 +59,7 @@ public final class StoreBytecodes {
 
         @Override
         public String toString() {
-            return String.format("%sIntoRcvr: %d", getTypeName(), receiverIndex);
+            return getTypeName() + "IntoRcvr: " + receiverIndex;
         }
     }
 
@@ -76,7 +76,7 @@ public final class StoreBytecodes {
 
         @Override
         public String toString() {
-            return String.format("%sIntoTemp: %d inVectorAt: %d", getTypeName(), this.indexInArray, this.indexOfArray);
+            return getTypeName() + "IntoTemp: " + indexInArray + " inVectorAt: " + indexOfArray;
         }
     }
 
@@ -94,7 +94,7 @@ public final class StoreBytecodes {
 
         @Override
         public String toString() {
-            return String.format("%sIntoTemp: %d", getTypeName(), tempIndex);
+            return getTypeName() + "IntoTemp: " + tempIndex;
         }
     }
 

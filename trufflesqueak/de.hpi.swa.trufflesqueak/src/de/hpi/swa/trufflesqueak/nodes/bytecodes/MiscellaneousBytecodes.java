@@ -220,7 +220,7 @@ public final class MiscellaneousBytecodes {
 
         @Override
         public String toString() {
-            return String.format("unknown: %02X", bytecode);
+            return "unknown: " + bytecode;
         }
     }
 }

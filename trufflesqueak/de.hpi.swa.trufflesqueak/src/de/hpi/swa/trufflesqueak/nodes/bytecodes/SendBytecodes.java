@@ -18,7 +18,6 @@ import de.hpi.swa.trufflesqueak.model.SpecialSelectorObject;
 import de.hpi.swa.trufflesqueak.nodes.DispatchNode;
 import de.hpi.swa.trufflesqueak.nodes.LookupNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodesFactory.EagerSendSpecialSelectorNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.context.HaltNode;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotWriteNode;
@@ -153,7 +152,7 @@ public final class SendBytecodes {
 
         @Override
         public String toString() {
-            return String.format("send: %s", specialSelector);
+            return "send: " + specialSelector;
         }
     }
 
@@ -166,9 +165,9 @@ public final class SendBytecodes {
     public static class SendLiteralSelectorNode extends AbstractSendNode {
         public static AbstractBytecodeNode create(CompiledCodeObject code, int index, int numBytecodes, int literalIndex, int argCount) {
             Object selector = code.getLiteral(literalIndex);
-            if (selector != null && selector.toString().equals("halt")) {
-                return new HaltNode(code, index);
-            }
+// if (selector != null && selector.toString().equals("halt")) {
+// return new HaltNode(code, index);
+// }
             return new SendLiteralSelectorNode(code, index, numBytecodes, selector, argCount);
         }
 

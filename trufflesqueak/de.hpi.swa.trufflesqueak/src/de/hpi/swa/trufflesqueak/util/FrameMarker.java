@@ -9,7 +9,7 @@ public final class FrameMarker implements TruffleObject {
 
     @Override
     public String toString() {
-        return String.format("FrameMarker@%s", Integer.toHexString(System.identityHashCode(this)));
+        return "FrameMarker@" + Integer.toHexString(System.identityHashCode(this));
     }
 
     public ForeignAccess getForeignAccess() {
