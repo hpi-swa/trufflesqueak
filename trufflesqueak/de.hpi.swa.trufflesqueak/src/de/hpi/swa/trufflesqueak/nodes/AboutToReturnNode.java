@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -51,6 +52,7 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
      */
     @Specialization(guards = {"isVirtualized(frame)"})
     protected void doAboutToReturnVirtualized(VirtualFrame frame, @SuppressWarnings("unused") NonLocalReturn nlr) {
+        CompilerDirectives.ensureVirtualizedHere(frame);
         if (completeTempReadNode.executeRead(frame) == code.image.nil) {
             completeTempWriteNode.executeWrite(frame, code.image.sqTrue);
             BlockClosureObject block = (BlockClosureObject) blockArgumentNode.executeRead(frame);

@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes.context.stack;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -22,6 +23,7 @@ public abstract class PeekStackNode extends AbstractStackNode {
 
     @Specialization(guards = {"isVirtualized(frame)"})
     protected Object doPeekVirtualized(VirtualFrame frame) {
+        CompilerDirectives.ensureVirtualizedHere(frame);
         return readNode.execute(frame, frameStackPointer(frame) - offset);
     }
 

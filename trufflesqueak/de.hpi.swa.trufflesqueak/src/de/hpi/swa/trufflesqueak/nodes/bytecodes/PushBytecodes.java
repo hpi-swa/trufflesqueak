@@ -92,6 +92,7 @@ public final class PushBytecodes {
 
         @Specialization(guards = "isVirtualized(frame)")
         protected int doPushVirtualized(VirtualFrame frame) {
+            CompilerDirectives.ensureVirtualizedHere(frame);
             pushNode.executeWrite(frame, createClosure(frame, null, getFrameMarker(frame)));
             return index + numBytecodes + blockSize;
         }

@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes.context;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -18,6 +19,7 @@ public abstract class ReceiverAndArgumentsNode extends SqueakNodeWithCode {
 
     @Specialization(guards = {"isVirtualized(frame)"})
     protected Object[] doRcvrAndArgsVirtualized(VirtualFrame frame) {
+        CompilerDirectives.ensureVirtualizedHere(frame);
         Object[] frameArguments = frame.getArguments();
         Object[] rcvrAndArgs = new Object[frameArguments.length - FrameAccess.RCVR_AND_ARGS_START];
         for (int i = 0; i < rcvrAndArgs.length; i++) {

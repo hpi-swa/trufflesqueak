@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes.context.stack;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -33,6 +34,7 @@ public abstract class PushStackNode extends AbstractWriteNode {
 
     @Specialization(guards = {"isVirtualized(frame)"})
     protected void doWriteVirtualized(VirtualFrame frame, Object value) {
+        CompilerDirectives.ensureVirtualizedHere(frame);
         assert value != null;
         int newSP = getFrameStackPointer(frame) + 1;
         writeNode.execute(frame, newSP, value);

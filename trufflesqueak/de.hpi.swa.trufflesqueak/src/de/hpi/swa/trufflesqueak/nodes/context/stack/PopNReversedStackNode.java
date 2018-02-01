@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes.context.stack;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -25,6 +26,7 @@ public abstract class PopNReversedStackNode extends AbstractStackNode {
     @ExplodeLoop
     @Specialization(guards = {"isVirtualized(frame)"})
     protected Object[] doPopNVirtualized(VirtualFrame frame) {
+        CompilerDirectives.ensureVirtualizedHere(frame);
         int sp = frameStackPointer(frame);
         assert sp - numPop >= -1;
         Object[] result = new Object[numPop];

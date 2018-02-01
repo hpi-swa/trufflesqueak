@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes.context;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -26,6 +27,7 @@ public abstract class ArgumentNode extends SqueakNodeWithCode {
 
     @Specialization(guards = {"isVirtualized(frame)"})
     protected Object doVirtualized(VirtualFrame frame) {
+        CompilerDirectives.ensureVirtualizedHere(frame);
         return frameArgumentNode.executeRead(frame);
     }
 

@@ -117,6 +117,7 @@ public final class SendBytecodes {
 
         @Specialization(guards = {"isVirtualized(frame)"})
         protected int doEagerVirtualized(VirtualFrame frame) {
+            CompilerDirectives.ensureVirtualizedHere(frame);
             try {
                 Object result = primitiveNode.executeRead(frame);
                 // Success! Manipulate the sp to quick pop receiver and arguments and push result.

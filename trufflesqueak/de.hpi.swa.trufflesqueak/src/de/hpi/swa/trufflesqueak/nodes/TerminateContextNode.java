@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -24,6 +25,7 @@ public abstract class TerminateContextNode extends AbstractNodeWithCode {
     @SuppressWarnings("unused")
     @Specialization(guards = {"isVirtualized(frame)"})
     protected void doTerminateVirtualized(VirtualFrame frame, @Cached("getContextOrMarker(frame)") Object contextOrMarker) {
+        CompilerDirectives.ensureVirtualizedHere(frame);
         // do nothing, context did not leak
     }
 

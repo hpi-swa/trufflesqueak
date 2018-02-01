@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -27,6 +28,7 @@ public abstract class HandleLocalReturnNode extends AbstractNodeWithCode {
 
     @Specialization(guards = "isVirtualized(frame)")
     protected Object handleVirtualized(VirtualFrame frame, LocalReturn lr) {
+        CompilerDirectives.ensureVirtualizedHere(frame);
         terminateNode.executeTerminate(frame);
         return lr.getReturnValue();
     }

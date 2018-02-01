@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes.context;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -27,6 +28,7 @@ public abstract class TemporaryWriteNode extends AbstractWriteNode {
 
     @Specialization(guards = {"isVirtualized(frame)"})
     protected void doWriteVirtualized(VirtualFrame frame, Object value) {
+        CompilerDirectives.ensureVirtualizedHere(frame);
         assert value != null;
         frameSlotWriteNode.executeWrite(frame, value);
     }
