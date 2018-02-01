@@ -68,18 +68,18 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         /*
-         * Answer whether the receiver is strictly above context on the stack.
+         * Answer whether the receiver is strictly above context on the stack (Context>>hasSender:).
          */
-        private static boolean hasSender(ContextObject context, ContextObject previousContext) {
+        private boolean hasSender(ContextObject context, ContextObject previousContext) {
             if (context.equals(previousContext)) {
                 return false;
             }
-            ContextObject sender = context.getNotNilSender();
-            while (sender != null) {
+            BaseSqueakObject sender = context.getSender();
+            while (sender != code.image.nil) {
                 if (sender.equals(previousContext)) {
                     return true;
                 }
-                sender = sender.getNotNilSender();
+                sender = ((ContextObject) sender).getSender();
             }
             return false;
         }
