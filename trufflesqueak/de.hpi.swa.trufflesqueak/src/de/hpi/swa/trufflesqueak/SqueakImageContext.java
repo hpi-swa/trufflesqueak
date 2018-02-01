@@ -52,69 +52,68 @@ import de.hpi.swa.trufflesqueak.util.SqueakImageReader;
 
 public class SqueakImageContext {
     // Special objects
-    public final NilObject nil = new NilObject(this);
-    public final boolean sqFalse = false;
-    public final boolean sqTrue = true;
-    public final ListObject specialObjectsArray = new ListObject(this);
-    public final PointersObject schedulerAssociation = new PointersObject(this);
-    public final ClassObject characterClass = new ClassObject(this);
-    public final ClassObject smallIntegerClass = new ClassObject(this);
-    public final ClassObject arrayClass = new ClassObject(this);
-    public final PointersObject smalltalk = new PointersObject(this);
-    public final NativeObject doesNotUnderstand = new NativeObject(this, (byte) 1);
-    public final ListObject specialSelectors = new ListObject(this);
-    public final NativeObject mustBeBoolean = new NativeObject(this, (byte) 1);
-    public final ClassObject metaclass = new ClassObject(this);
-    public final ClassObject methodContextClass = new ClassObject(this);
-    public final ClassObject nilClass = new ClassObject(this);
-    public final ClassObject trueClass = new ClassObject(this);
-    public final ClassObject falseClass = new ClassObject(this);
-    public final ClassObject stringClass = new ClassObject(this);
-    public final ClassObject compiledMethodClass = new ClassObject(this);
-    public final ClassObject blockClosureClass = new ClassObject(this);
-    public final ClassObject largePositiveIntegerClass = new ClassObject(this);
-    public final ClassObject largeNegativeIntegerClass = new ClassObject(this);
-    public final ClassObject floatClass = new ClassObject(this);
-    @CompilationFinal public BaseSqueakObject asSymbol = nil;
+    @CompilationFinal public final NilObject nil = new NilObject(this);
+    @CompilationFinal public final boolean sqFalse = false;
+    @CompilationFinal public final boolean sqTrue = true;
+    @CompilationFinal public final ListObject specialObjectsArray = new ListObject(this);
+    @CompilationFinal public final PointersObject schedulerAssociation = new PointersObject(this);
+    @CompilationFinal public final ClassObject characterClass = new ClassObject(this);
+    @CompilationFinal public final ClassObject smallIntegerClass = new ClassObject(this);
+    @CompilationFinal public final ClassObject arrayClass = new ClassObject(this);
+    @CompilationFinal public final PointersObject smalltalk = new PointersObject(this);
+    @CompilationFinal public final NativeObject doesNotUnderstand = new NativeObject(this, (byte) 1);
+    @CompilationFinal public final ListObject specialSelectors = new ListObject(this);
+    @CompilationFinal public final NativeObject mustBeBoolean = new NativeObject(this, (byte) 1);
+    @CompilationFinal public final ClassObject metaclass = new ClassObject(this);
+    @CompilationFinal public final ClassObject methodContextClass = new ClassObject(this);
+    @CompilationFinal public final ClassObject nilClass = new ClassObject(this);
+    @CompilationFinal public final ClassObject trueClass = new ClassObject(this);
+    @CompilationFinal public final ClassObject falseClass = new ClassObject(this);
+    @CompilationFinal public final ClassObject stringClass = new ClassObject(this);
+    @CompilationFinal public final ClassObject compiledMethodClass = new ClassObject(this);
+    @CompilationFinal public final ClassObject blockClosureClass = new ClassObject(this);
+    @CompilationFinal public final ClassObject largePositiveIntegerClass = new ClassObject(this);
+    @CompilationFinal public final ClassObject largeNegativeIntegerClass = new ClassObject(this);
+    @CompilationFinal public final ClassObject floatClass = new ClassObject(this);
 
-    private final SqueakLanguage language;
-    private final PrintWriter output;
-    private final PrintWriter error;
-    private final SqueakLanguage.Env env;
+    @CompilationFinal private final SqueakLanguage language;
+    @CompilationFinal private final PrintWriter output;
+    @CompilationFinal private final PrintWriter error;
+    @CompilationFinal private final SqueakLanguage.Env env;
 
     // Special selectors
-    public final SpecialSelectorObject plus = new SpecialSelectorObject(this, 1, 1, 1);
-    public final SpecialSelectorObject minus = new SpecialSelectorObject(this, 1, 1, 2);
-    public final SpecialSelectorObject lt = new SpecialSelectorObject(this, 1, 1, 3);
-    public final SpecialSelectorObject gt = new SpecialSelectorObject(this, 1, 1, 4);
-    public final SpecialSelectorObject le = new SpecialSelectorObject(this, 1, 1, 5);
-    public final SpecialSelectorObject ge = new SpecialSelectorObject(this, 1, 1, 6);
-    public final SpecialSelectorObject eq = new SpecialSelectorObject(this, 1, 1, 7);
-    public final SpecialSelectorObject ne = new SpecialSelectorObject(this, 1, 1, 8);
-    public final SpecialSelectorObject times = new SpecialSelectorObject(this, 1, 1, 9);
-    public final SpecialSelectorObject divide = new SpecialSelectorObject(this, 1, 1, 10);
-    public final SpecialSelectorObject modulo = new SpecialSelectorObject(this, 1, 1, 11);
-    public final SpecialSelectorObject pointAt = new SpecialSelectorObject(this, 1, 1);
-    public final SpecialSelectorObject bitShift = new SpecialSelectorObject(this, 1, 1, 17);
-    public final SpecialSelectorObject floorDivide = new SpecialSelectorObject(this, 1, 1, 12);
-    public final SpecialSelectorObject bitAnd = new SpecialSelectorObject(this, 1, 1, 14);
-    public final SpecialSelectorObject bitOr = new SpecialSelectorObject(this, 1, 1, 15);
-    public final SpecialSelectorObject at = new SpecialSelectorObject(this, 1, 1/* , 63 */);
-    public final SpecialSelectorObject atput = new SpecialSelectorObject(this, 1, 2/* , 64 */);
-    public final SpecialSelectorObject size_ = new SpecialSelectorObject(this, 1, 0/* , 62 */);
-    public final SpecialSelectorObject next = new SpecialSelectorObject(this, 1, 0);
-    public final SpecialSelectorObject nextPut = new SpecialSelectorObject(this, 1, 1);
-    public final SpecialSelectorObject atEnd = new SpecialSelectorObject(this, 1, 0);
-    public final SpecialSelectorObject equivalent = new SpecialSelectorObject(this, 1, 1, 110);
-    public final SpecialSelectorObject klass = new SpecialSelectorObject(this, 1, 0, 111);
-    public final SpecialSelectorObject blockCopy = new SpecialSelectorObject(this, 1, 1);
-    public final SpecialSelectorObject value_ = new SpecialSelectorObject(this, 1, 0, 201);
-    public final SpecialSelectorObject valueWithArg = new SpecialSelectorObject(this, 1, 1, 202);
-    public final SpecialSelectorObject do_ = new SpecialSelectorObject(this, 1, 1);
-    public final SpecialSelectorObject new_ = new SpecialSelectorObject(this, 1, 0);
-    public final SpecialSelectorObject newWithArg = new SpecialSelectorObject(this, 1, 1);
-    public final SpecialSelectorObject x = new SpecialSelectorObject(this, 1, 0);
-    public final SpecialSelectorObject y = new SpecialSelectorObject(this, 1, 0);
+    @CompilationFinal public final SpecialSelectorObject plus = new SpecialSelectorObject(this, 1, 1, 1);
+    @CompilationFinal public final SpecialSelectorObject minus = new SpecialSelectorObject(this, 1, 1, 2);
+    @CompilationFinal public final SpecialSelectorObject lt = new SpecialSelectorObject(this, 1, 1, 3);
+    @CompilationFinal public final SpecialSelectorObject gt = new SpecialSelectorObject(this, 1, 1, 4);
+    @CompilationFinal public final SpecialSelectorObject le = new SpecialSelectorObject(this, 1, 1, 5);
+    @CompilationFinal public final SpecialSelectorObject ge = new SpecialSelectorObject(this, 1, 1, 6);
+    @CompilationFinal public final SpecialSelectorObject eq = new SpecialSelectorObject(this, 1, 1, 7);
+    @CompilationFinal public final SpecialSelectorObject ne = new SpecialSelectorObject(this, 1, 1, 8);
+    @CompilationFinal public final SpecialSelectorObject times = new SpecialSelectorObject(this, 1, 1, 9);
+    @CompilationFinal public final SpecialSelectorObject divide = new SpecialSelectorObject(this, 1, 1, 10);
+    @CompilationFinal public final SpecialSelectorObject modulo = new SpecialSelectorObject(this, 1, 1, 11);
+    @CompilationFinal public final SpecialSelectorObject pointAt = new SpecialSelectorObject(this, 1, 1);
+    @CompilationFinal public final SpecialSelectorObject bitShift = new SpecialSelectorObject(this, 1, 1, 17);
+    @CompilationFinal public final SpecialSelectorObject floorDivide = new SpecialSelectorObject(this, 1, 1, 12);
+    @CompilationFinal public final SpecialSelectorObject bitAnd = new SpecialSelectorObject(this, 1, 1, 14);
+    @CompilationFinal public final SpecialSelectorObject bitOr = new SpecialSelectorObject(this, 1, 1, 15);
+    @CompilationFinal public final SpecialSelectorObject at = new SpecialSelectorObject(this, 1, 1/* , 63 */);
+    @CompilationFinal public final SpecialSelectorObject atput = new SpecialSelectorObject(this, 1, 2/* , 64 */);
+    @CompilationFinal public final SpecialSelectorObject size_ = new SpecialSelectorObject(this, 1, 0/* , 62 */);
+    @CompilationFinal public final SpecialSelectorObject next = new SpecialSelectorObject(this, 1, 0);
+    @CompilationFinal public final SpecialSelectorObject nextPut = new SpecialSelectorObject(this, 1, 1);
+    @CompilationFinal public final SpecialSelectorObject atEnd = new SpecialSelectorObject(this, 1, 0);
+    @CompilationFinal public final SpecialSelectorObject equivalent = new SpecialSelectorObject(this, 1, 1, 110);
+    @CompilationFinal public final SpecialSelectorObject klass = new SpecialSelectorObject(this, 1, 0, 111);
+    @CompilationFinal public final SpecialSelectorObject blockCopy = new SpecialSelectorObject(this, 1, 1);
+    @CompilationFinal public final SpecialSelectorObject value_ = new SpecialSelectorObject(this, 1, 0, 201);
+    @CompilationFinal public final SpecialSelectorObject valueWithArg = new SpecialSelectorObject(this, 1, 1, 202);
+    @CompilationFinal public final SpecialSelectorObject do_ = new SpecialSelectorObject(this, 1, 1);
+    @CompilationFinal public final SpecialSelectorObject new_ = new SpecialSelectorObject(this, 1, 0);
+    @CompilationFinal public final SpecialSelectorObject newWithArg = new SpecialSelectorObject(this, 1, 1);
+    @CompilationFinal public final SpecialSelectorObject x = new SpecialSelectorObject(this, 1, 0);
+    @CompilationFinal public final SpecialSelectorObject y = new SpecialSelectorObject(this, 1, 0);
 
     @CompilationFinal(dimensions = 1) public final SpecialSelectorObject[] specialSelectorsArray = new SpecialSelectorObject[]{
                     plus, minus, lt, gt, le, ge, eq, ne, times, divide, modulo, pointAt, bitShift,
@@ -134,6 +133,8 @@ public class SqueakImageContext {
     @Child private ResumeProcessNode resumeProcessNode;
     @Child private GetActiveProcessNode getActiveProcessNode;
     @Child private RemoveFirstLinkOfListNode removeFirstLinkOfListNode;
+
+    public BaseSqueakObject asSymbol = nil; // for testing
 
     public SqueakImageContext(SqueakLanguage squeakLanguage, SqueakLanguage.Env environ,
                     PrintWriter out, PrintWriter err) {
