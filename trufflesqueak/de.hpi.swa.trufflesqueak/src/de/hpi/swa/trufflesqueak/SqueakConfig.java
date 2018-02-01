@@ -4,14 +4,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+
 public class SqueakConfig {
-    private final String imagePath;
-    private final boolean verbose;
-    private final boolean tracing;
-    private final String receiver;
-    private final String selector;
-    private final String[] restArgs;
-    private final List<String> unrecognized = new ArrayList<>();
+    @CompilationFinal private final String imagePath;
+    @CompilationFinal private final boolean verbose;
+    @CompilationFinal private final boolean tracing;
+    @CompilationFinal private final String receiver;
+    @CompilationFinal private final String selector;
+    @CompilationFinal(dimensions = 1) private final String[] restArgs;
+    @CompilationFinal private final List<String> unrecognized = new ArrayList<>();
 
     @SuppressWarnings("hiding")
     public SqueakConfig(String[] args) {
