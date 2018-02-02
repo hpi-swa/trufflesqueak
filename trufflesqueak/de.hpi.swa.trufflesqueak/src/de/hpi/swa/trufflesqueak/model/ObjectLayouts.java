@@ -37,6 +37,7 @@ public final class ObjectLayouts {
         public static final int TEMP_FRAME_START = 6;
         public static final int SMALL_FRAMESIZE = 16;
         public static final int LARGE_FRAMESIZE = 56;
+        public static final int MAX_STACK_SIZE = LARGE_FRAMESIZE - TEMP_FRAME_START;
     }
 
     public static final class FORM {

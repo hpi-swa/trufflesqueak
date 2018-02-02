@@ -11,7 +11,6 @@ import com.oracle.truffle.api.nodes.RootNode;
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
-import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -62,7 +61,9 @@ public abstract class EnterCodeNode extends RootNode {
     @Specialization(guards = {"!code.getNoContextNeededAssumption().isValid()"})
     protected Object enter(VirtualFrame frame,
                     @Cached("create(code)") ExecuteContextNode contextNode) {
+        initializeSlots(frame);
         ContextObject newContext = createContextNode.executeGet(frame, true);
+        contextWriteNode.executeWrite(frame, newContext);
         Object[] arguments = frame.getArguments();
         // Push arguments and copied values onto the newContext.
         int numArgsAndCopiedValues = code.getNumArgsAndCopiedValues();
@@ -74,7 +75,6 @@ public abstract class EnterCodeNode extends RootNode {
         for (int i = 0; i < numTemps - numArgsAndCopiedValues; i++) {
             newContext.push(code.image.nil);
         }
-        assert (int) newContext.at0(CONTEXT.STACKPOINTER) == numTemps;
         return contextNode.executeNonVirtualized(frame, newContext);
     }
 

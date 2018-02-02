@@ -84,7 +84,7 @@ public class BlockClosureObject extends BaseSqueakObject {
 
     public int getPC() {
         if (pc == -1) {
-            pc = block.getMethod().getInitialPC() + block.getOffset();
+            pc = block.getInitialPC() + block.getOffset();
         }
         return pc;
     }

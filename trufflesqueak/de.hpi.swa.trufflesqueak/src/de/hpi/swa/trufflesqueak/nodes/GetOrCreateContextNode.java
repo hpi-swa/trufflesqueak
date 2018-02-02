@@ -49,16 +49,16 @@ public abstract class GetOrCreateContextNode extends Node {
 
         context.setSender(FrameAccess.getSender(frame));
         int framePC = FrameUtil.getIntSafe(frame, method.instructionPointerSlot);
-        context.atput0(CONTEXT.INSTRUCTION_POINTER, ContextObject.encodeSqPC(framePC, method));
-        int sp = FrameUtil.getIntSafe(frame, method.stackPointerSlot);
-        context.atput0(CONTEXT.STACKPOINTER, sp);
+        int frameSP = FrameUtil.getIntSafe(frame, method.stackPointerSlot);
         context.atput0(CONTEXT.METHOD, method);
+        context.setInstructionPointer(framePC);
+        context.setStackPointer(frameSP);
         BlockClosureObject closure = FrameAccess.getClosure(frame);
         context.atput0(CONTEXT.CLOSURE_OR_NIL, closure == null ? method.image.nil : closure);
         context.atput0(CONTEXT.RECEIVER, FrameAccess.getReceiver(frame));
 
         // Copy temps
-        for (int i = 0; i < sp - 1; i++) {
+        for (int i = 0; i < frameSP - 1; i++) {
             int tempIndex = i - method.getNumArgsAndCopiedValues();
             Object tempValue;
             if (tempIndex < 0) {

@@ -132,7 +132,7 @@ public abstract class AbstractSqueakTestCase extends TestCase {
     }
 
     public CompiledCodeObject makeMethod(int... intbytes) {
-        return makeMethod(new Object[]{68419598}, intbytes);
+        return makeMethod(new Object[]{makeHeader(4, 5, 14, false, true)}, intbytes);
     }
 
     public Object runMethod(CompiledCodeObject code, Object receiver, Object... arguments) {
@@ -154,13 +154,13 @@ public abstract class AbstractSqueakTestCase extends TestCase {
         // always use large instance size and large frame size for testing
         ContextObject testContext = ContextObject.create(code.image, 50 + CONTEXT.LARGE_FRAMESIZE);
         testContext.atput0(CONTEXT.METHOD, code);
-        testContext.atput0(CONTEXT.INSTRUCTION_POINTER, testContext.getCodeObject().getInitialPC());
         testContext.atput0(CONTEXT.RECEIVER, receiver);
-        testContext.atput0(CONTEXT.STACKPOINTER, 0);
+        testContext.setInstructionPointer(0);
+        testContext.setStackPointer(0);
         testContext.atput0(CONTEXT.CLOSURE_OR_NIL, code.image.nil);
         testContext.setSender(code.image.nil);
         for (int i = 0; i < arguments.length; i++) {
-            testContext.atput0(CONTEXT.TEMP_FRAME_START + i, arguments[i]);
+            testContext.push(arguments[i]);
         }
         testContext.setFrameMarker(new FrameMarker());
         return ExecuteTopLevelContextNode.create(null, testContext);
@@ -191,5 +191,15 @@ public abstract class AbstractSqueakTestCase extends TestCase {
     public VirtualFrame createTestFrame(CompiledCodeObject code) {
         Object[] arguments = FrameAccess.newWith(code, code.image.nil, null, new Object[0]);
         return Truffle.getRuntime().createVirtualFrame(arguments, code.getFrameDescriptor());
+    }
+
+    public static int makeHeader(int numArgs, int numTemps, int numLiterals, boolean hasPrimitive, boolean needsLargeFrame) {
+        int header = 0;
+        header += (numArgs & 0x0F) << 24;
+        header += (numTemps & 0x3F) << 18;
+        header += numLiterals & 0x7FFF;
+        header += hasPrimitive ? 65536 : 0;
+        header += needsLargeFrame ? 0x20000 : 0;
+        return header;
     }
 }

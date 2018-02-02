@@ -319,7 +319,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
         return bytes;
     }
 
-    abstract public CompiledMethodObject getMethod();
+    public abstract CompiledMethodObject getMethod();
 
     public Assumption getNoContextNeededAssumption() {
         return noContextNeeded;

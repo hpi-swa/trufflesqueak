@@ -125,6 +125,7 @@ public class ContextObject extends AbstractPointersObject {
         } else {
             assert sender instanceof FrameMarker;
             Frame frame = FrameAccess.findFrameForMarker((FrameMarker) sender);
+            assert frame != null;
             ContextObject reconstructedSender = createContextNode.executeGet(frame);
             assert reconstructedSender != null;
             setSender(reconstructedSender);
@@ -146,23 +147,30 @@ public class ContextObject extends AbstractPointersObject {
 
     public void push(Object value) {
         assert value != null;
-        int newSP = stackPointer() + 1;
-        atput0(newSP, value);
+        int newSP = getStackPointer() + 1;
+        assert newSP <= CONTEXT.MAX_STACK_SIZE;
+        atStackPut(newSP, value);
         setStackPointer(newSP);
     }
 
-    public int instructionPointer() {
-        return decodeSqPC((int) at0(CONTEXT.INSTRUCTION_POINTER), getCodeObject());
+    public int getInstructionPointer() {
+        CompiledCodeObject code = getCodeObject();
+        return decodeSqPC((int) at0(CONTEXT.INSTRUCTION_POINTER), code);
     }
 
-    private int stackPointer() {
-        return decodeSqueakStackPointer((int) at0(CONTEXT.STACKPOINTER));
+    public void setInstructionPointer(int newPC) {
+        int encodedPC = encodeSqPC(newPC, getCodeObject());
+        assert encodedPC >= 0;
+        atput0(CONTEXT.INSTRUCTION_POINTER, encodedPC);
     }
 
-    private void setStackPointer(int newSP) {
-        int encodedSP = toSqueakStackPointer(newSP);
-        assert encodedSP >= -1;
-        atput0(CONTEXT.STACKPOINTER, encodedSP);
+    public int getStackPointer() {
+        return (int) at0(CONTEXT.STACKPOINTER);
+    }
+
+    public void setStackPointer(int newSP) {
+        assert 0 <= newSP && newSP <= CONTEXT.MAX_STACK_SIZE;
+        atput0(CONTEXT.STACKPOINTER, newSP);
     }
 
     @Override
@@ -175,21 +183,23 @@ public class ContextObject extends AbstractPointersObject {
     }
 
     public Object peek(int offset) {
-        return at0(stackPointer() - offset);
+        return atStack(getStackPointer() - offset);
     }
 
     public Object pop() {
-        int sp = stackPointer();
-        setStackPointer(sp - 1);
-        return at0(sp);
+        int sp = getStackPointer();
+        if (sp > 0) {
+            setStackPointer(sp - 1);
+        }
+        return atStack(sp);
     }
 
     public Object[] popNReversed(int numPop) {
-        int sp = stackPointer();
+        int sp = getStackPointer();
         assert sp - numPop >= 0;
         Object[] result = new Object[numPop];
         for (int i = 0; i < numPop; i++) {
-            result[numPop - 1 - i] = at0(sp - i);
+            result[numPop - 1 - i] = atStack(sp - i);
         }
         setStackPointer(sp - numPop);
         return result;
@@ -205,6 +215,14 @@ public class ContextObject extends AbstractPointersObject {
 
     public void atTempPut(int argumentIndex, Object value) {
         atput0(CONTEXT.TEMP_FRAME_START + argumentIndex, value);
+    }
+
+    public Object atStack(int argumentIndex) {
+        return at0(CONTEXT.TEMP_FRAME_START - 1 + argumentIndex);
+    }
+
+    public void atStackPut(int argumentIndex, Object value) {
+        atput0(CONTEXT.TEMP_FRAME_START - 1 + argumentIndex, value);
     }
 
     public BlockClosureObject getClosure() {
@@ -229,16 +247,5 @@ public class ContextObject extends AbstractPointersObject {
 
     public static int decodeSqPC(int pc, CompiledCodeObject code) {
         return pc - code.getInitialPC();
-    }
-
-    /*
-     * sp is offset by CONTEXT.TEMP_FRAME_START, -1 for zero-based addressing
-     */
-    public static int toSqueakStackPointer(int sp) {
-        return sp - (CONTEXT.TEMP_FRAME_START - 1);
-    }
-
-    public static int decodeSqueakStackPointer(int sp) {
-        return sp + (CONTEXT.TEMP_FRAME_START - 1);
     }
 }

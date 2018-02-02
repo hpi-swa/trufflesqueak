@@ -21,7 +21,9 @@ import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledBlockObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.ASSOCIATION;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.ExecuteTopLevelContextNode;
 
@@ -163,9 +165,10 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
 
     @Test
     public void testExtendedPushTemporaryVariables() {
-        Object[] literals = new Object[]{14548994}; // header with numTemp=55
+        int maxNumTemps = CONTEXT.MAX_STACK_SIZE - 1; // one stack slot required for code
+        Object[] literals = new Object[]{makeHeader(0, maxNumTemps, 0, false, true)}; // header with numTemp=55
         BaseSqueakObject rcvr = image.specialObjectsArray;
-        for (int i = 0; i < 55; i++) {
+        for (int i = 0; i < maxNumTemps; i++) {
             // push true, popIntoTemp i, pushTemp i, returnTop
             CompiledCodeObject code = makeMethod(literals, 113, 130, 64 + i, 128, 64 + i, 124);
             VirtualFrame frame = createTestFrame(code);
@@ -229,9 +232,10 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
 
     @Test
     public void testExtendedStoreIntoTemporaryVariables() {
-        Object[] literals = new Object[]{14548994, image.nil, image.nil}; // header with numTemp=55
+        int maxNumTemps = CONTEXT.MAX_STACK_SIZE - 2; // two stack slots required for code
+        Object[] literals = new Object[]{makeHeader(0, maxNumTemps, 0, false, true)};
         BaseSqueakObject rcvr = image.specialObjectsArray;
-        for (int i = 0; i < 55; i++) {
+        for (int i = 0; i < maxNumTemps; i++) {
             // push true, push 1, storeIntoTemp i, pop, pushTemp i, returnTop
             CompiledCodeObject code = makeMethod(literals, 113, 118, 129, 64 + i, 135, 128, 64 + i, 124);
             VirtualFrame frame = createTestFrame(code);
@@ -282,10 +286,11 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
 
     @Test
     public void testExtendedPopIntoTemporaryVariables() {
-        Object[] literals = new Object[]{14548994, image.nil, image.nil}; // header with numTemp=55
+        int maxNumTemps = CONTEXT.MAX_STACK_SIZE - 2; // two stack slots required for code
+        Object[] literals = new Object[]{makeHeader(0, maxNumTemps, 0, false, true), image.nil, image.nil};
         BaseSqueakObject rcvr = image.specialObjectsArray;
-        for (int i = 0; i < 55; i++) {
-            // push true, push 1; popIntoTemp i, pushTemp i, quickReturnTop
+        for (int i = 0; i < maxNumTemps; i++) {
+            // push true, push 1, popIntoTemp i, pushTemp i, quickReturnTop
             CompiledCodeObject code = makeMethod(literals, 113, 118, 130, 64 + i, 128, 64 + i, 124);
             VirtualFrame frame = createTestFrame(code);
             try {
@@ -298,14 +303,14 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
 
     @Test
     public void testExtendedPopIntoLiteralVariables() {
-        PointersObject testObject = new PointersObject(image, image.arrayClass, new Object[64]);
-
-        List<Object> literalsList = new ArrayList<>(Arrays.asList(new Object[]{64})); // header with numLiterals=64
-        for (int i = 0; i < 64; i++) {
+        int maxNumLiterals = 64; // number of accepted bytecodes
+        PointersObject testObject = new PointersObject(image, image.arrayClass, new Object[maxNumLiterals]);
+        List<Object> literalsList = new ArrayList<>(Arrays.asList(new Object[]{makeHeader(0, 0, maxNumLiterals, false, true)}));
+        for (int i = 0; i < maxNumLiterals; i++) {
             literalsList.add(testObject);
         }
         BaseSqueakObject rcvr = image.specialObjectsArray;
-        for (int i = 0; i < 64; i++) {
+        for (int i = 0; i < maxNumLiterals; i++) {
             // push true, popIntoLiteral i, returnTop
             CompiledCodeObject code = makeMethod(literalsList.toArray(), 113, 130, 192 + i, 124);
             VirtualFrame frame = createTestFrame(code);
@@ -442,13 +447,14 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
     public void testPushNewArray() {
         BaseSqueakObject rcvr = image.specialObjectsArray;
         // pushNewArray (size 127), returnTop
-        Object result = runMethod(rcvr, 138, 127, 124);
+        CompiledCodeObject cm = makeMethod(new Object[]{makeHeader(0, 0, 0, false, true)}, 138, 127, 124);
+        Object result = runMethod(cm, rcvr);
         assertTrue(result instanceof ListObject);
         ListObject resultList = ((ListObject) result);
         assertEquals(127, resultList.size());
 
         // pushNewArray and pop
-        int arraySize = 100;
+        int arraySize = CONTEXT.MAX_STACK_SIZE;
         int[] intbytes = new int[arraySize + 3];
         for (int i = 0; i < arraySize; i++) {
             intbytes[i] = i % 2 == 0 ? 113 : 114; // push true or false
@@ -456,7 +462,8 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
         intbytes[arraySize] = 138; // pushNewArray
         intbytes[arraySize + 1] = 128 + arraySize; // pop, size 127
         intbytes[arraySize + 2] = 124; // returnTop
-        result = runMethod(rcvr, intbytes);
+        cm = makeMethod(new Object[]{makeHeader(0, 0, 0, false, true)}, intbytes);
+        result = runMethod(cm, rcvr);
         assertTrue(result instanceof ListObject);
         resultList = ((ListObject) result);
         assertEquals(arraySize, resultList.size());
@@ -475,10 +482,11 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
     public void testCallPrimitiveFailure() {
         int primCode = 1;
         BaseSqueakObject rcvr = image.wrap(1);
-        CompiledCodeObject cm = makeMethod(new Object[]{65538},
+        NativeObject argument = image.wrap("foo");
+        CompiledCodeObject cm = makeMethod(new Object[]{makeHeader(1, 1, 0, true, false)}, // similar to SmallInteger>>#+
                         // callPrimitive 1, returnTop
                         139, primCode & 0xFF, (primCode & 0xFF00) >> 8, 124);
-        assertEquals(rcvr, runMethod(cm, rcvr));
+        assertEquals(argument, runMethod(cm, rcvr, argument));
     }
 
     @Test

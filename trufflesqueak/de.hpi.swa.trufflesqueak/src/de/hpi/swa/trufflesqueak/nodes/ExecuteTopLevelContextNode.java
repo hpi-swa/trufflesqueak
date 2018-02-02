@@ -67,7 +67,8 @@ public class ExecuteTopLevelContextNode extends RootNode {
                 BlockClosureObject closure = activeContext.getClosure();
                 MaterializedFrame frame = Truffle.getRuntime().createMaterializedFrame(FrameAccess.newWith(code, sender, closure, frameArgs), code.getFrameDescriptor());
                 contextWriteNode.executeWrite(frame, activeContext);
-                Object result = enterActiveCodeNode.execute(frame);
+                // FIXME: do not create node here
+                Object result = EnterCodeNode.create(image.getLanguage(), closure != null ? closure.getCompiledBlock() : code).execute(frame);
                 throw new TopLevelReturn(result);
             } catch (ProcessSwitch ps) {
                 activeContext = ps.getNewContext();

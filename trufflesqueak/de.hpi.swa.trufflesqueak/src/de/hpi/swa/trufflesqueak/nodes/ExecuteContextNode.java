@@ -54,9 +54,9 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
     }
 
     public Object executeNonVirtualized(VirtualFrame frame, ContextObject newContext) {
-        assert newContext.getMethod() == FrameAccess.getMethod(frame);
+        assert newContext.getCodeObject() == FrameAccess.getMethod(frame);
         try {
-            int initialPC = newContext.instructionPointer();
+            int initialPC = newContext.getInstructionPointer();
             if (initialPC == 0) {
                 startBytecode(frame);
             } else {
