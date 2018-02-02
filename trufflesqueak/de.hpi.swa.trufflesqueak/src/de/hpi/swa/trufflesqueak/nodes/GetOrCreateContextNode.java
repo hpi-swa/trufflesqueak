@@ -48,7 +48,8 @@ public abstract class GetOrCreateContextNode extends Node {
         ContextObject context = ContextObject.create(method.image, method.frameSize(), frameMarker);
 
         context.setSender(FrameAccess.getSender(frame));
-        context.atput0(CONTEXT.INSTRUCTION_POINTER, FrameUtil.getIntSafe(frame, method.instructionPointerSlot));
+        int framePC = FrameUtil.getIntSafe(frame, method.instructionPointerSlot);
+        context.atput0(CONTEXT.INSTRUCTION_POINTER, ContextObject.encodeSqPC(framePC, method));
         int sp = FrameUtil.getIntSafe(frame, method.stackPointerSlot);
         context.atput0(CONTEXT.STACKPOINTER, sp);
         context.atput0(CONTEXT.METHOD, method);

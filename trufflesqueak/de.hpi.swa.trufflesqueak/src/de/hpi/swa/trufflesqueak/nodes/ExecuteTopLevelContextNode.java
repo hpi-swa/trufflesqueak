@@ -20,24 +20,23 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotWriteNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
-import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
-public class TopLevelContextNode extends RootNode {
+public class ExecuteTopLevelContextNode extends RootNode {
     @CompilationFinal private final SqueakImageContext image;
     @CompilationFinal private final ContextObject initialContext;
-    @CompilationFinal private final ExecuteContextNode executeActiveContextNode;
+    @CompilationFinal private final EnterCodeNode enterActiveCodeNode;
     @Child private FrameSlotWriteNode instructionPointerWriteNode;
     @Child private FrameSlotWriteNode contextWriteNode;
 
-    public static TopLevelContextNode create(SqueakLanguage language, ContextObject context) {
-        return new TopLevelContextNode(language, context, context.getCodeObject());
+    public static ExecuteTopLevelContextNode create(SqueakLanguage language, ContextObject context) {
+        return new ExecuteTopLevelContextNode(language, context, context.getCodeObject());
     }
 
-    private TopLevelContextNode(SqueakLanguage language, ContextObject context, CompiledCodeObject code) {
+    private ExecuteTopLevelContextNode(SqueakLanguage language, ContextObject context, CompiledCodeObject code) {
         super(language, code.getFrameDescriptor());
         this.image = code.image;
         this.initialContext = context;
-        this.executeActiveContextNode = ExecuteContextNode.create(code);
+        enterActiveCodeNode = EnterCodeNode.create(language, code);
         instructionPointerWriteNode = FrameSlotWriteNode.create(code.instructionPointerSlot);
         contextWriteNode = FrameSlotWriteNode.create(code.thisContextOrMarkerSlot);
     }
@@ -63,13 +62,12 @@ public class TopLevelContextNode extends RootNode {
             BaseSqueakObject sender = activeContext.getSender();
             try {
                 CompiledCodeObject code = activeContext.getCodeObject();
+                code.invalidateNoContextNeededAssumption();
                 Object[] frameArgs = activeContext.getReceiverAndArguments();
                 BlockClosureObject closure = activeContext.getClosure();
                 MaterializedFrame frame = Truffle.getRuntime().createMaterializedFrame(FrameAccess.newWith(code, sender, closure, frameArgs), code.getFrameDescriptor());
-                activeContext.setFrameMarker(new FrameMarker());
-                instructionPointerWriteNode.executeWrite(frame, activeContext.instructionPointer());
                 contextWriteNode.executeWrite(frame, activeContext);
-                Object result = executeActiveContextNode.executeNonVirtualized(frame);
+                Object result = enterActiveCodeNode.execute(frame);
                 throw new TopLevelReturn(result);
             } catch (ProcessSwitch ps) {
                 activeContext = ps.getNewContext();

@@ -18,8 +18,9 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
-import de.hpi.swa.trufflesqueak.nodes.TopLevelContextNode;
+import de.hpi.swa.trufflesqueak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
+import de.hpi.swa.trufflesqueak.util.FrameMarker;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 import junit.framework.TestCase;
 
@@ -145,11 +146,11 @@ public abstract class AbstractSqueakTestCase extends TestCase {
         return result;
     }
 
-    protected TopLevelContextNode createContext(CompiledCodeObject code, Object receiver) {
+    protected ExecuteTopLevelContextNode createContext(CompiledCodeObject code, Object receiver) {
         return createContext(code, receiver, new Object[0]);
     }
 
-    protected TopLevelContextNode createContext(CompiledCodeObject code, Object receiver, Object[] arguments) {
+    protected ExecuteTopLevelContextNode createContext(CompiledCodeObject code, Object receiver, Object[] arguments) {
         // always use large instance size and large frame size for testing
         ContextObject testContext = ContextObject.create(code.image, 50 + CONTEXT.LARGE_FRAMESIZE);
         testContext.atput0(CONTEXT.METHOD, code);
@@ -161,7 +162,8 @@ public abstract class AbstractSqueakTestCase extends TestCase {
         for (int i = 0; i < arguments.length; i++) {
             testContext.atput0(CONTEXT.TEMP_FRAME_START + i, arguments[i]);
         }
-        return TopLevelContextNode.create(null, testContext);
+        testContext.setFrameMarker(new FrameMarker());
+        return ExecuteTopLevelContextNode.create(null, testContext);
     }
 
     public Object runMethod(BaseSqueakObject receiver, int... intbytes) {
@@ -187,7 +189,7 @@ public abstract class AbstractSqueakTestCase extends TestCase {
     }
 
     public VirtualFrame createTestFrame(CompiledCodeObject code) {
-        Object[] arguments = FrameAccess.newWith(code, null, null, new Object[0]);
+        Object[] arguments = FrameAccess.newWith(code, code.image.nil, null, new Object[0]);
         return Truffle.getRuntime().createVirtualFrame(arguments, code.getFrameDescriptor());
     }
 }

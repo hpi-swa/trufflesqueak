@@ -23,7 +23,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.ASSOCIATION;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
-import de.hpi.swa.trufflesqueak.nodes.TopLevelContextNode;
+import de.hpi.swa.trufflesqueak.nodes.ExecuteTopLevelContextNode;
 
 public class SqueakBytecodeTest extends AbstractSqueakTestCase {
     @Rule public ExpectedException exceptions = ExpectedException.none();
@@ -169,7 +169,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
             // push true, popIntoTemp i, pushTemp i, returnTop
             CompiledCodeObject code = makeMethod(literals, 113, 130, 64 + i, 128, 64 + i, 124);
             VirtualFrame frame = createTestFrame(code);
-            TopLevelContextNode method = createContext(code, rcvr);
+            ExecuteTopLevelContextNode method = createContext(code, rcvr);
             try {
                 assertSame(image.sqTrue, method.execute(frame));
             } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {

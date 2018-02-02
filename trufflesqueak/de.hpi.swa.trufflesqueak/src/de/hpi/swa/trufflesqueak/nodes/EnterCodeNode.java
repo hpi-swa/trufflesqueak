@@ -62,7 +62,6 @@ public abstract class EnterCodeNode extends RootNode {
     @Specialization(guards = {"!code.getNoContextNeededAssumption().isValid()"})
     protected Object enter(VirtualFrame frame,
                     @Cached("create(code)") ExecuteContextNode contextNode) {
-        initializeSlots(frame);
         ContextObject newContext = createContextNode.executeGet(frame, true);
         Object[] arguments = frame.getArguments();
         // Push arguments and copied values onto the newContext.
@@ -76,7 +75,7 @@ public abstract class EnterCodeNode extends RootNode {
             newContext.push(code.image.nil);
         }
         assert (int) newContext.at0(CONTEXT.STACKPOINTER) == numTemps;
-        return contextNode.executeNonVirtualized(frame);
+        return contextNode.executeNonVirtualized(frame, newContext);
     }
 
     @Override

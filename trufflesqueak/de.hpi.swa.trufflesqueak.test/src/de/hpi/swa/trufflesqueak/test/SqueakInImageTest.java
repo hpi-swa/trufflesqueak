@@ -69,7 +69,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
 
     private Object evaluate(String expression) {
         // ^ (Smalltalk at: #Compiler) evaluate: '{expression}'
-        String fakeMethodName = "fakeEvaluate%s" + expression.hashCode();
+        String fakeMethodName = "fakeEvaluate" + expression.hashCode();
         CompiledCodeObject method = makeMethod(
                         new Object[]{6, getEvaluateSymbol(), getSmalltalkAssociation(), getCompilerSymbol(), image.wrap(expression), asSymbol(fakeMethodName), getSmalltalkAssociation()},
                         new int[]{0x41, 0x22, 0xC0, 0x23, 0xE0, 0x7C});

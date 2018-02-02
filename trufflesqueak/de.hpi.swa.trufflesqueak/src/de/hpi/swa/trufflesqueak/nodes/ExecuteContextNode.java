@@ -12,11 +12,13 @@ import de.hpi.swa.trufflesqueak.exceptions.Returns.LocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotWriteNode;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
 public class ExecuteContextNode extends AbstractNodeWithCode {
@@ -51,9 +53,10 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
         }
     }
 
-    public Object executeNonVirtualized(VirtualFrame frame) {
+    public Object executeNonVirtualized(VirtualFrame frame, ContextObject newContext) {
+        assert newContext.getMethod() == FrameAccess.getMethod(frame);
         try {
-            int initialPC = (int) instructionPointerReadNode.executeRead(frame);
+            int initialPC = newContext.instructionPointer();
             if (initialPC == 0) {
                 startBytecode(frame);
             } else {
