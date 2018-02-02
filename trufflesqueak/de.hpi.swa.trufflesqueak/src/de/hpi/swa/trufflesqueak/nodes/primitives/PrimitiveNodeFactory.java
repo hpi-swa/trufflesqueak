@@ -46,12 +46,11 @@ public abstract class PrimitiveNodeFactory {
         if (264 <= primitiveIndex && primitiveIndex <= 520) {
             return ControlPrimitives.PrimQuickReturnReceiverVariableNode.create(method, primitiveIndex - 264);
         }
-        try {
-            NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = getPrimitiveTable().get(primitiveIndex);
+        NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = getPrimitiveTable().get(primitiveIndex);
+        if (nodeFactory != null) {
             return createInstance(method, nodeFactory, nodeFactory.getNodeClass().getAnnotation(SqueakPrimitive.class));
-        } catch (NullPointerException e) {
-            return PrimitiveFailedNode.create(method);
         }
+        return PrimitiveFailedNode.create(method);
     }
 
     @TruffleBoundary
