@@ -386,8 +386,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected long quo(long a, long b) {
-            return a / b;
+        protected Number quo(long a, long b) {
+            return reduceIfPossible(a / b);
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
@@ -398,14 +398,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(rewriteOn = ArithmeticException.class)
         @TruffleBoundary
-        protected long quo(BigInteger a, BigInteger b) {
-            return a.divide(b).longValueExact();
+        protected Number quo(BigInteger a, BigInteger b) {
+            return reduceIfPossible(a.divide(b).longValueExact());
         }
 
         @Specialization
         @TruffleBoundary
-        protected BigInteger quoBig(BigInteger a, BigInteger b) {
-            return a.divide(b);
+        protected Number quoBig(BigInteger a, BigInteger b) {
+            return reduceIfPossible(a.divide(b));
         }
     }
 

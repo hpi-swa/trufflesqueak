@@ -40,10 +40,20 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
             return receiver.at0(index - 1 + receiver.instsize());
         }
 
+        @Specialization
+        protected Object at(AbstractPointersObject receiver, long index) {
+            return receiver.at0((int) index - 1 + receiver.instsize());
+        }
+
         @Override
         @Specialization
         protected Object at(BaseSqueakObject receiver, int index) {
             return super.at(receiver, index);
+        }
+
+        @Specialization
+        protected Object at(BaseSqueakObject receiver, long index) {
+            return super.at(receiver, (int) index);
         }
     }
 

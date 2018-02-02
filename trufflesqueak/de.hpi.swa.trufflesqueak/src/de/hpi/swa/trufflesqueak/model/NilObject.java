@@ -46,4 +46,9 @@ public class NilObject extends BaseSqueakObject {
     public BaseSqueakObject shallowCopy() {
         return this;
     }
+
+    @Override
+    public int squeakHash() {
+        return 1;
+    }
 }

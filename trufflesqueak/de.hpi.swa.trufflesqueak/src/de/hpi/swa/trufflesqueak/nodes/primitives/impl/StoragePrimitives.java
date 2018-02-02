@@ -390,6 +390,15 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         protected int hash(BaseSqueakObject obj) {
             return obj.squeakHash();
         }
+
+        @Specialization
+        protected int hash(boolean obj) {
+            if (obj == code.image.sqTrue) {
+                return 3;
+            } else {
+                return 2;
+            }
+        }
     }
 
     @GenerateNodeFactory

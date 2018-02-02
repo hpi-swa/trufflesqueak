@@ -15,4 +15,9 @@ public class ProcessSwitch extends ControlFlowException {
     public ContextObject getNewContext() {
         return context;
     }
+
+    @Override
+    public String toString() {
+        return "Process switch to " + context;
+    }
 }
