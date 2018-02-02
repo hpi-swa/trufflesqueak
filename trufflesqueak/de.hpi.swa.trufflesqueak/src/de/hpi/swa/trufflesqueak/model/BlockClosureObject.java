@@ -9,7 +9,6 @@ import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
@@ -18,13 +17,11 @@ import de.hpi.swa.trufflesqueak.model.ObjectLayouts.BLOCK_CLOSURE;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.EnterCodeNode;
 import de.hpi.swa.trufflesqueak.nodes.GetOrCreateContextNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.FrameMarker;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public class BlockClosureObject extends BaseSqueakObject {
-    @Child private GetOrCreateContextNode createContextNode = GetOrCreateContextNode.create();
     @CompilationFinal private Object receiver;
     @CompilationFinal(dimensions = 1) private Object[] copied;
     @CompilationFinal private ContextObject outerContext;
@@ -34,7 +31,6 @@ public class BlockClosureObject extends BaseSqueakObject {
     @CompilationFinal private int numArgs = -1;
     @CompilationFinal private RootCallTarget callTarget;
     @CompilationFinal private final CyclicAssumption callTargetStable = new CyclicAssumption("Compiled method assumption");
-    @Child private FrameSlotReadNode readSenderNode;
 
     public BlockClosureObject(SqueakImageContext image) {
         super(image);
@@ -48,7 +44,6 @@ public class BlockClosureObject extends BaseSqueakObject {
         this.outerMarker = frameMarker;
         this.receiver = receiver;
         this.copied = copied;
-        this.readSenderNode = FrameSlotReadNode.create(block.thisContextOrMarkerSlot);
     }
 
     private BlockClosureObject(BlockClosureObject original) {
@@ -58,7 +53,6 @@ public class BlockClosureObject extends BaseSqueakObject {
         this.outerMarker = original.outerMarker;
         this.receiver = original.receiver;
         this.copied = original.copied;
-        this.readSenderNode = original.readSenderNode;
     }
 
     @Override
@@ -74,9 +68,10 @@ public class BlockClosureObject extends BaseSqueakObject {
     @TruffleBoundary
     private ContextObject getOrPrepareContext() {
         if (outerContext == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             Frame frame = FrameAccess.findFrameForMarker(outerMarker);
             assert frame != null;
-            outerContext = createContextNode.executeGet(frame);
+            outerContext = GetOrCreateContextNode.getOrCreate(frame);
             assert outerContext != null;
         }
         return outerContext;
@@ -197,21 +192,17 @@ public class BlockClosureObject extends BaseSqueakObject {
 
     public Object[] getFrameArguments(VirtualFrame frame, Object... objects) {
         CompilerAsserts.compilationConstant(objects.length);
-        if (getCompiledBlock().getNumArgs() != objects.length) {
+        CompiledBlockObject block = getCompiledBlock();
+        if (block.getNumArgs() != objects.length) {
             throw new PrimitiveFailed();
         }
         Object[] arguments = new Object[FrameAccess.RCVR_AND_ARGS_START + /* METHOD + CLOSURE_OR_NULL */
                         1 /* receiver */ +
                         objects.length +
                         copied.length];
-        arguments[FrameAccess.METHOD] = getCompiledBlock();
+        arguments[FrameAccess.METHOD] = block;
         // Sender is thisContext
-        if (readSenderNode != null) {
-            arguments[FrameAccess.SENDER_OR_SENDER_MARKER] = readSenderNode.executeRead(frame);
-        } else {
-            CompilerDirectives.transferToInterpreter();
-            arguments[FrameAccess.SENDER_OR_SENDER_MARKER] = FrameAccess.getContextOrMarker(frame);
-        }
+        arguments[FrameAccess.SENDER_OR_SENDER_MARKER] = FrameAccess.getContextOrMarker(frame, block);
         arguments[FrameAccess.CLOSURE_OR_NULL] = this;
         arguments[FrameAccess.RCVR_AND_ARGS_START] = getReceiver();
         for (int i = 0; i < objects.length; i++) {

@@ -70,8 +70,12 @@ public class FrameAccess {
 
     public static Object getContextOrMarker(Frame frame) {
         CompilerAsserts.neverPartOfCompilation();
+        return getContextOrMarker(frame, getMethod(frame));
+    }
+
+    public static Object getContextOrMarker(Frame frame, CompiledCodeObject code) {
         try {
-            return frame.getObject(getMethod(frame).thisContextOrMarkerSlot);
+            return frame.getObject(code.thisContextOrMarkerSlot);
         } catch (FrameSlotTypeException e) {
             throw new SqueakException("thisContextOrMarkerSlot should never be invalid");
         }

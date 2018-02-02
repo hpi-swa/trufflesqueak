@@ -1,6 +1,7 @@
 package de.hpi.swa.trufflesqueak.nodes.context.frame;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameUtil;
@@ -17,7 +18,7 @@ public abstract class FrameSlotReadNode extends FrameSlotNode {
         return FrameSlotReadNodeGen.create(frameSlot);
     }
 
-    public abstract Object executeRead(VirtualFrame frame);
+    public abstract Object executeRead(Frame frame);
 
     @Specialization(guards = "isInt(frame)")
     protected int readInt(VirtualFrame frame) {

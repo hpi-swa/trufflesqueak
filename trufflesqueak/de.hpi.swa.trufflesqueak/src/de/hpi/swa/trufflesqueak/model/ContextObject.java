@@ -2,9 +2,9 @@ package de.hpi.swa.trufflesqueak.model;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.nodes.Node.Child;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
@@ -14,7 +14,6 @@ import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
 public class ContextObject extends AbstractPointersObject {
     @CompilationFinal private FrameMarker frameMarker;
-    @Child private GetOrCreateContextNode createContextNode = GetOrCreateContextNode.create();
     private boolean isDirty;
 
     public static ContextObject create(SqueakImageContext img) {
@@ -123,10 +122,11 @@ public class ContextObject extends AbstractPointersObject {
         if (sender instanceof ContextObject || sender instanceof NilObject) {
             return (BaseSqueakObject) sender;
         } else {
+            CompilerDirectives.transferToInterpreter();
             assert sender instanceof FrameMarker;
             Frame frame = FrameAccess.findFrameForMarker((FrameMarker) sender);
             assert frame != null;
-            ContextObject reconstructedSender = createContextNode.executeGet(frame);
+            ContextObject reconstructedSender = GetOrCreateContextNode.getOrCreate(frame);
             assert reconstructedSender != null;
             setSender(reconstructedSender);
             return reconstructedSender;

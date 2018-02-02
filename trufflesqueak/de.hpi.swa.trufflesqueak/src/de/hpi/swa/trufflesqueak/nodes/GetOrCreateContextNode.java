@@ -20,7 +20,7 @@ import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
 @ImportStatic(FrameAccess.class)
 public abstract class GetOrCreateContextNode extends Node {
-    @Child private FrameStackReadNode frameStackReadNode = FrameStackReadNode.create();
+    @Child private static FrameStackReadNode frameStackReadNode = FrameStackReadNode.create();
 
     public static GetOrCreateContextNode create() {
         return GetOrCreateContextNodeGen.create();
@@ -42,6 +42,19 @@ public abstract class GetOrCreateContextNode extends Node {
 
     @Specialization(guards = {"isVirtualized(frame)"})
     protected ContextObject doCreateVirtualized(VirtualFrame frame, boolean forceContext) {
+        return materialize(frame, forceContext);
+    }
+
+    public static ContextObject getOrCreate(Frame frame) {
+        Object contextOrMarker = FrameAccess.getContextOrMarker(frame);
+        if (contextOrMarker instanceof ContextObject) {
+            return (ContextObject) contextOrMarker;
+        } else {
+            return materialize(frame, false);
+        }
+    }
+
+    private static ContextObject materialize(Frame frame, boolean forceContext) {
         CompilerDirectives.transferToInterpreter();
         FrameMarker frameMarker = (FrameMarker) FrameAccess.getContextOrMarker(frame);
         CompiledCodeObject method = FrameAccess.getMethod(frame);
