@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
@@ -22,6 +23,7 @@ public class ClassObject extends AbstractPointersObject {
     @CompilationFinal private int instanceSize;
     private final CyclicAssumption methodLookupStable = new CyclicAssumption("Class lookup stability");
     private final CyclicAssumption classFormatStable = new CyclicAssumption("Class format stability");
+    @CompilationFinal private Object doesNotUnderstandMethod;
 
     public ClassObject(SqueakImageContext img) {
         super(img);
@@ -173,7 +175,11 @@ public class ClassObject extends AbstractPointersObject {
         if (predicate.test(image.doesNotUnderstand)) { // exit recursive call
             throw new SqueakException("doesNotUnderstand missing!");
         }
-        return lookup(image.doesNotUnderstand);
+        if (doesNotUnderstandMethod == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            doesNotUnderstandMethod = lookup(image.doesNotUnderstand);
+        }
+        return doesNotUnderstandMethod;
     }
 
     public Object lookup(NativeObject selector) {
