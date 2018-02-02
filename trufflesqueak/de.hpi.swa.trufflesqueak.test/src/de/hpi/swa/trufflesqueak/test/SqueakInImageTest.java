@@ -1,5 +1,7 @@
 package de.hpi.swa.trufflesqueak.test;
 
+import static org.junit.Assert.assertNotEquals;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -110,6 +112,24 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
         String resultString = evaluate("1 tinyBenchmarks").toString();
         assertTrue(resultString.contains("bytecodes/sec"));
         assertTrue(resultString.contains("sends/sec"));
+    }
+
+    @Test
+    public void testRunArrayTest() {
+        /*
+         * Disable timeout logic by patching TestCase>>#timeout:after: (uses processes -> incompatible to
+         * running headless).
+         */
+        Object patchResult = evaluate(
+                        "TestCase addSelectorSilently: #timeout:after: withMethod: (TestCase compile: 'timeout: aBlock after: seconds ^ aBlock value' notifying: nil trailer: (CompiledMethodTrailer empty) ifFail: [^ nil]) method");
+        assertNotEquals(image.nil, patchResult);
+
+        // Run all tests of ArrayTest
+        // String resultString = evaluate("ArrayTest buildSuite run").toString();
+
+        // Run selected tests
+        Object result = evaluate("#(#testAtWrap #testEmpty #testIsArray #testIsLiteral #testLiteralEqual #testNewWithSize) allSatisfy: [:ea | (ArrayTest run: ea) hasPassed]");
+        assertEquals(image.sqTrue, result);
     }
 
 }
