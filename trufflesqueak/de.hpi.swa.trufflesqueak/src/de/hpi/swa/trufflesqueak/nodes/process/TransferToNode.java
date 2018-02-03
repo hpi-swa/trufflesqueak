@@ -2,26 +2,28 @@ package de.hpi.swa.trufflesqueak.nodes.process;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.nodes.AbstractNodeWithCode;
 import de.hpi.swa.trufflesqueak.nodes.GetOrCreateContextNode;
 
-public class TransferToNode extends AbstractProcessNode {
+public class TransferToNode extends AbstractNodeWithCode {
     @Child private GetSchedulerNode getSchedulerNode;
-    @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create();
+    @Child private GetOrCreateContextNode getOrCreateContextNode;
 
-    public static TransferToNode create(SqueakImageContext image) {
-        return new TransferToNode(image);
+    public static TransferToNode create(CompiledCodeObject code) {
+        return new TransferToNode(code);
     }
 
-    protected TransferToNode(SqueakImageContext image) {
-        super(image);
-        getSchedulerNode = GetSchedulerNode.create(image);
+    protected TransferToNode(CompiledCodeObject code) {
+        super(code);
+        getSchedulerNode = GetSchedulerNode.create(code);
+        getOrCreateContextNode = GetOrCreateContextNode.create(code);
     }
 
     public void executeTransferTo(VirtualFrame frame, BaseSqueakObject activeProcess, BaseSqueakObject newProcess) {
@@ -32,7 +34,7 @@ public class TransferToNode extends AbstractProcessNode {
         scheduler.atput0(PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
         activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, activeContext);
         ContextObject newActiveContext = (ContextObject) newProcess.at0(PROCESS.SUSPENDED_CONTEXT);
-        newProcess.atput0(PROCESS.SUSPENDED_CONTEXT, image.nil);
+        newProcess.atput0(PROCESS.SUSPENDED_CONTEXT, code.image.nil);
         throw new ProcessSwitch(newActiveContext);
     }
 }

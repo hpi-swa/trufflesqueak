@@ -18,7 +18,7 @@ import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
 public abstract class EnterCodeNode extends RootNode {
     @CompilationFinal protected final CompiledCodeObject code;
-    @Child private GetOrCreateContextNode createContextNode = GetOrCreateContextNode.create();
+    @Child private GetOrCreateContextNode createContextNode;
     @Child private FrameSlotWriteNode contextWriteNode;
     @Child private FrameSlotWriteNode instructionPointerWriteNode;
     @Child private FrameSlotWriteNode stackPointerWriteNode;
@@ -31,6 +31,7 @@ public abstract class EnterCodeNode extends RootNode {
     protected EnterCodeNode(SqueakLanguage language, CompiledCodeObject code) {
         super(language, code.getFrameDescriptor());
         this.code = code;
+        createContextNode = GetOrCreateContextNode.create(code);
         contextWriteNode = FrameSlotWriteNode.create(code.thisContextOrMarkerSlot);
         instructionPointerWriteNode = FrameSlotWriteNode.create(code.instructionPointerSlot);
         stackPointerWriteNode = FrameSlotWriteNode.create(code.stackPointerSlot);

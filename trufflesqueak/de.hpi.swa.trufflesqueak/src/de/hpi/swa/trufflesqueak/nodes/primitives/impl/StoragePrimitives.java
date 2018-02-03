@@ -146,7 +146,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         protected PrimArrayBecome(CompiledMethodObject method) {
             // TODO: this primitive does not correctly perform a one way become yet, FIXME!
             super(method);
-            getActiveProcessNode = GetActiveProcessNode.create(method.image);
+            getActiveProcessNode = GetActiveProcessNode.create(method);
         }
 
         @Specialization

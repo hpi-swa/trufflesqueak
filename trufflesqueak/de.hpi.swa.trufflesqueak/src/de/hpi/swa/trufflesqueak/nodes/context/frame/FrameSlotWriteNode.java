@@ -13,6 +13,7 @@ public abstract class FrameSlotWriteNode extends FrameSlotNode {
 
     protected FrameSlotWriteNode(FrameSlot slot) {
         super(slot);
+        assert slot != null;
     }
 
     public abstract void executeWrite(VirtualFrame frame, Object value);

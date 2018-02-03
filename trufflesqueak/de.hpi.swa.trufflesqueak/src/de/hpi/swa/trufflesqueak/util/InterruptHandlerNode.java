@@ -5,8 +5,10 @@ import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.SqueakConfig;
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.nodes.process.SignalSemaphoreNode;
 
 public class InterruptHandlerNode extends Node {
     private final SqueakImageContext image;
@@ -18,6 +20,7 @@ public class InterruptHandlerNode extends Node {
     private int lastTick = 0;
     private boolean interruptPending = false;
     private int pendingFinalizationSignals = 0;
+    @Child private SignalSemaphoreNode signalSemaporeNode;
 
     public static InterruptHandlerNode create(SqueakImageContext image, SqueakConfig config) {
         if (config.disableInterruptHandler()) {
@@ -29,6 +32,8 @@ public class InterruptHandlerNode extends Node {
 
     protected InterruptHandlerNode(SqueakImageContext image) {
         this.image = image;
+        // Use fake CompiledMethodObject, SignalSemaphore expects but doesn't really need a code object.
+        signalSemaporeNode = SignalSemaphoreNode.create(new CompiledMethodObject(image));
     }
 
     public void setInterruptPending() {
@@ -83,7 +88,7 @@ public class InterruptHandlerNode extends Node {
     private void signalSemaporeIfNotNil(VirtualFrame frame, int semaphoreIndex) {
         Object semaphoreObject = image.specialObjectsArray.at0(semaphoreIndex);
         if (semaphoreObject != image.nil) {
-            image.synchronousSignal(frame, (PointersObject) semaphoreObject);
+            signalSemaporeNode.executeSignal(frame, (PointersObject) semaphoreObject);
         }
     }
 

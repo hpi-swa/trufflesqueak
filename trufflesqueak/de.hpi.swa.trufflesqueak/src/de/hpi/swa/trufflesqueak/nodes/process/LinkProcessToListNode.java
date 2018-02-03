@@ -1,22 +1,23 @@
 package de.hpi.swa.trufflesqueak.nodes.process;
 
-import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.LINK;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.LINKED_LIST;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.nodes.AbstractNodeWithCode;
 
-public class LinkProcessToListNode extends AbstractProcessNode {
+public class LinkProcessToListNode extends AbstractNodeWithCode {
     @Child private IsEmptyListNode isEmptyListNode;
 
-    public static LinkProcessToListNode create(SqueakImageContext image) {
-        return new LinkProcessToListNode(image);
+    public static LinkProcessToListNode create(CompiledCodeObject code) {
+        return new LinkProcessToListNode(code);
     }
 
-    protected LinkProcessToListNode(SqueakImageContext image) {
-        super(image);
-        isEmptyListNode = IsEmptyListNode.create(image);
+    protected LinkProcessToListNode(CompiledCodeObject code) {
+        super(code);
+        isEmptyListNode = IsEmptyListNode.create(code);
     }
 
     public void executeLink(BaseSqueakObject process, PointersObject list) {

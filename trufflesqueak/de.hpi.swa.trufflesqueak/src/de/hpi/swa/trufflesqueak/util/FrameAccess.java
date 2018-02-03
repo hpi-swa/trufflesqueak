@@ -68,11 +68,6 @@ public class FrameAccess {
         return arguments;
     }
 
-    public static Object getContextOrMarker(Frame frame) {
-        CompilerAsserts.neverPartOfCompilation();
-        return getContextOrMarker(frame, getMethod(frame));
-    }
-
     public static Object getContextOrMarker(Frame frame, CompiledCodeObject code) {
         try {
             return frame.getObject(code.thisContextOrMarkerSlot);

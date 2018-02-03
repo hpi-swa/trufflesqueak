@@ -88,10 +88,11 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @GenerateNodeFactory
     @SqueakPrimitive(index = 197)
     protected static abstract class PrimNextHandlerContextNode extends AbstractPrimitiveNode {
-        @Child private GetOrCreateContextNode createContextNode = GetOrCreateContextNode.create();
+        @Child private GetOrCreateContextNode createContextNode;
 
         protected PrimNextHandlerContextNode(CompiledMethodObject method) {
             super(method);
+            createContextNode = GetOrCreateContextNode.create(method);
         }
 
         @Specialization(guards = {"receiver.hasVirtualSender()"})

@@ -9,21 +9,19 @@ import java.math.BigInteger;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
-import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.Node.Child;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
@@ -32,16 +30,12 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.POINT;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.PROCESS;
-import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SEMAPHORE;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.SpecialSelectorObject;
 import de.hpi.swa.trufflesqueak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ObjectGraph;
 import de.hpi.swa.trufflesqueak.nodes.process.GetActiveProcessNode;
-import de.hpi.swa.trufflesqueak.nodes.process.IsEmptyListNode;
-import de.hpi.swa.trufflesqueak.nodes.process.RemoveFirstLinkOfListNode;
-import de.hpi.swa.trufflesqueak.nodes.process.ResumeProcessNode;
 import de.hpi.swa.trufflesqueak.util.Display.AbstractDisplay;
 import de.hpi.swa.trufflesqueak.util.Display.JavaDisplay;
 import de.hpi.swa.trufflesqueak.util.Display.NullDisplay;
@@ -130,11 +124,6 @@ public class SqueakImageContext {
     @CompilationFinal public final InterruptHandlerNode interrupt;
     @CompilationFinal public final long startUpMillis = System.currentTimeMillis();
 
-    @Child private IsEmptyListNode isEmptyListNode;
-    @Child private ResumeProcessNode resumeProcessNode;
-    @Child private GetActiveProcessNode getActiveProcessNode;
-    @Child private RemoveFirstLinkOfListNode removeFirstLinkOfListNode;
-
     public BaseSqueakObject asSymbol = nil; // for testing
 
     public SqueakImageContext(SqueakLanguage squeakLanguage, SqueakLanguage.Env environ,
@@ -152,14 +141,11 @@ public class SqueakImageContext {
             display = new NullDisplay();
         }
         interrupt = InterruptHandlerNode.create(this, config);
-        isEmptyListNode = IsEmptyListNode.create(this);
-        resumeProcessNode = ResumeProcessNode.create(this);
-        getActiveProcessNode = GetActiveProcessNode.create(this);
-        removeFirstLinkOfListNode = RemoveFirstLinkOfListNode.create(this);
     }
 
     public CallTarget getActiveContext() {
-        PointersObject activeProcess = getActiveProcessNode.executeGet();
+        // TODO: maybe there is a better way to do the below
+        PointersObject activeProcess = GetActiveProcessNode.create(new CompiledMethodObject(this)).executeGet();
         ContextObject activeContext = (ContextObject) activeProcess.at0(PROCESS.SUSPENDED_CONTEXT);
         activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, nil);
         output.println("Resuming active context for " + activeContext.getMethod() + "...");
@@ -291,15 +277,6 @@ public class SqueakImageContext {
 
     public void registerSemaphore(BaseSqueakObject semaphore, int index) {
         specialObjectsArray.atput0(index, semaphore.isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassSemaphore) ? semaphore : nil);
-    }
-
-    public void synchronousSignal(VirtualFrame frame, PointersObject semaphore) {
-        CompilerDirectives.transferToInterpreter();
-        if (isEmptyListNode.executeIsEmpty(semaphore)) { // no process is waiting on this semaphore
-            semaphore.atput0(SEMAPHORE.EXCESS_SIGNALS, (int) semaphore.at0(SEMAPHORE.EXCESS_SIGNALS) + 1);
-        } else {
-            resumeProcessNode.executeResume(frame, removeFirstLinkOfListNode.executeRemove(semaphore));
-        }
     }
 
     /*

@@ -60,11 +60,11 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     abstract public ClassObject getCompiledInClass();
 
-    public CompiledCodeObject(SqueakImageContext img, ClassObject klass) {
+    protected CompiledCodeObject(SqueakImageContext img, ClassObject klass) {
         super(img, klass);
     }
 
-    public CompiledCodeObject(SqueakImageContext img) {
+    protected CompiledCodeObject(SqueakImageContext img) {
         this(img, img.compiledMethodClass);
     }
 

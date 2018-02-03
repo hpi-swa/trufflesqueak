@@ -1,19 +1,20 @@
 package de.hpi.swa.trufflesqueak.nodes.process;
 
-import de.hpi.swa.trufflesqueak.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.nodes.AbstractNodeWithCode;
 
-public class GetActiveProcessNode extends AbstractProcessNode {
+public class GetActiveProcessNode extends AbstractNodeWithCode {
     @Child private GetSchedulerNode getSchedulerNode;
 
-    public static GetActiveProcessNode create(SqueakImageContext image) {
-        return new GetActiveProcessNode(image);
+    public static GetActiveProcessNode create(CompiledCodeObject code) {
+        return new GetActiveProcessNode(code);
     }
 
-    protected GetActiveProcessNode(SqueakImageContext image) {
-        super(image);
-        getSchedulerNode = GetSchedulerNode.create(image);
+    protected GetActiveProcessNode(CompiledCodeObject code) {
+        super(code);
+        getSchedulerNode = GetSchedulerNode.create(code);
     }
 
     public PointersObject executeGet() {

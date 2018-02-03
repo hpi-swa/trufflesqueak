@@ -192,17 +192,17 @@ public class BlockClosureObject extends BaseSqueakObject {
 
     public Object[] getFrameArguments(VirtualFrame frame, Object... objects) {
         CompilerAsserts.compilationConstant(objects.length);
-        CompiledBlockObject block = getCompiledBlock();
-        if (block.getNumArgs() != objects.length) {
+        CompiledBlockObject blockObject = getCompiledBlock();
+        if (blockObject.getNumArgs() != objects.length) {
             throw new PrimitiveFailed();
         }
         Object[] arguments = new Object[FrameAccess.RCVR_AND_ARGS_START + /* METHOD + CLOSURE_OR_NULL */
                         1 /* receiver */ +
                         objects.length +
                         copied.length];
-        arguments[FrameAccess.METHOD] = block;
+        arguments[FrameAccess.METHOD] = blockObject;
         // Sender is thisContext
-        arguments[FrameAccess.SENDER_OR_SENDER_MARKER] = FrameAccess.getContextOrMarker(frame, block);
+        arguments[FrameAccess.SENDER_OR_SENDER_MARKER] = FrameAccess.getContextOrMarker(frame, blockObject);
         arguments[FrameAccess.CLOSURE_OR_NULL] = this;
         arguments[FrameAccess.RCVR_AND_ARGS_START] = getReceiver();
         for (int i = 0; i < objects.length; i++) {
