@@ -26,12 +26,12 @@ public class EmptyObject extends SqueakObject {
 
     @Override
     public Object at0(int idx) {
-        throw new ArrayIndexOutOfBoundsException();
+        throw new IndexOutOfBoundsException();
     }
 
     @Override
     public void atput0(int idx, Object obj) {
-        throw new ArrayIndexOutOfBoundsException();
+        throw new IndexOutOfBoundsException();
     }
 
     @Override

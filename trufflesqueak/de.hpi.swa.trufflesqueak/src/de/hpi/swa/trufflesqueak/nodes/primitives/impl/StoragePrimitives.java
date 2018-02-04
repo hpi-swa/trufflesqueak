@@ -198,7 +198,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         public final Object executeRead(VirtualFrame frame) {
             try {
                 return executePrimitive(frame);
-            } catch (ArrayIndexOutOfBoundsException e) {
+            } catch (IndexOutOfBoundsException e) {
                 throw new PrimitiveFailed();
             }
         }
@@ -284,7 +284,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         public final Object executeRead(VirtualFrame frame) {
             try {
                 return executePrimitive(frame);
-            } catch (ArrayIndexOutOfBoundsException e) {
+            } catch (IndexOutOfBoundsException e) {
                 throw new PrimitiveFailed();
             }
         }
@@ -516,7 +516,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         protected Object value(BaseSqueakObject receiver, int index) {
             try {
                 return receiver.at0(index - 1);
-            } catch (ArrayIndexOutOfBoundsException e) {
+            } catch (IndexOutOfBoundsException e) {
                 throw new PrimitiveFailed();
             }
         }
@@ -535,7 +535,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             try {
                 receiver.atput0(index - 1, value);
                 return value;
-            } catch (ArrayIndexOutOfBoundsException e) {
+            } catch (IndexOutOfBoundsException e) {
                 throw new PrimitiveFailed();
             }
         }

@@ -69,7 +69,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         protected Object atput(AbstractPointersObject receiver, int index, Object value) {
             try {
                 receiver.atput0(index - 1 + receiver.instsize(), value);
-            } catch (ArrayIndexOutOfBoundsException e) {
+            } catch (IndexOutOfBoundsException e) {
                 throw new PrimitiveFailed();
             }
             return value;
