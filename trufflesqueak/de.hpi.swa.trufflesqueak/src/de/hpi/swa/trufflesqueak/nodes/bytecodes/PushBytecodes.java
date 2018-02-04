@@ -1,5 +1,7 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
+import java.util.Arrays;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -194,7 +196,9 @@ public final class PushBytecodes {
             if (popNReversedNode != null) {
                 pushNode.executeWrite(frame, code.image.newList((Object[]) popNReversedNode.executeRead(frame)));
             } else {
-                pushNode.executeWrite(frame, code.image.wrap(new Object[arraySize]));
+                Object[] result = new Object[arraySize];
+                Arrays.fill(result, code.image.nil);
+                pushNode.executeWrite(frame, code.image.newList(result));
             }
         }
 
