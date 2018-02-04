@@ -22,11 +22,10 @@ public abstract class TemporaryWriteNode extends AbstractWriteNode {
     public TemporaryWriteNode(CompiledCodeObject code, int tempIndex) {
         super(code);
         this.tempIndex = tempIndex;
-        int stackIndex = code.convertTempIndexToStackIndex(tempIndex);
         // Perform checks to ensure a correct FrameSlotWriteNode is created, otherwise fail which happens
         // when the decoder is decoding garbage.
-        if (0 <= stackIndex && stackIndex <= CONTEXT.MAX_STACK_SIZE) {
-            FrameSlot stackSlot = code.getStackSlot(stackIndex);
+        if (0 <= tempIndex && tempIndex <= CONTEXT.MAX_STACK_SIZE) {
+            FrameSlot stackSlot = code.getStackSlot(tempIndex);
             if (stackSlot != null) {
                 frameSlotWriteNode = FrameSlotWriteNode.create(stackSlot);
             }

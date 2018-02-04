@@ -34,8 +34,9 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
         image.fillInFrom(new FileInputStream(request.getSource().getPath()));
         if (image.config.isCustomContext()) {
             return image.getCustomContext();
+        } else {
+            return image.getActiveContext();
         }
-        return image.getActiveContext();
     }
 
     @Override

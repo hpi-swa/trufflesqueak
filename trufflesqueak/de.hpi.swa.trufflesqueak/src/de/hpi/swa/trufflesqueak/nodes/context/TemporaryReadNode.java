@@ -13,7 +13,6 @@ import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
 public abstract class TemporaryReadNode extends SqueakNodeWithCode {
     @CompilationFinal private final int tempIndex;
     @Child private FrameSlotReadNode readNode;
-    @Child private ArgumentNode argumentNode;
 
     public static SqueakNode create(CompiledCodeObject code, int tempIndex) {
         return TemporaryReadNodeGen.create(code, tempIndex);
@@ -22,22 +21,15 @@ public abstract class TemporaryReadNode extends SqueakNodeWithCode {
     protected TemporaryReadNode(CompiledCodeObject code, int tempIndex) {
         super(code);
         this.tempIndex = tempIndex;
-        int stackIndex = code.convertTempIndexToStackIndex(tempIndex);
-        if (stackIndex >= 0) {
-            readNode = FrameSlotReadNode.create(code.getStackSlot(stackIndex));
-        } else {
-            argumentNode = ArgumentNode.create(code, 1 + tempIndex); // skip receiver
+        if (tempIndex >= 0) {
+            readNode = FrameSlotReadNode.create(code.getStackSlot(tempIndex));
         }
     }
 
     @Specialization(guards = {"isVirtualized(frame)"})
     public Object doReadVirtualized(VirtualFrame frame) {
         CompilerDirectives.ensureVirtualizedHere(frame);
-        if (readNode != null) {
-            return readNode.executeRead(frame);
-        } else {
-            return argumentNode.executeRead(frame);
-        }
+        return readNode.executeRead(frame);
     }
 
     @Specialization(guards = {"!isVirtualized(frame)"})

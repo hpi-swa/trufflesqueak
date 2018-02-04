@@ -276,9 +276,7 @@ public final class PushBytecodes {
             super(code, index, numBytecodes);
             this.tempIndex = tempIndex;
             pushNode = PushStackNode.create(code);
-            if (code.getNumStackSlots() <= tempIndex) {
-                // sometimes we'll decode more bytecodes than we have slots ... that's fine
-            } else {
+            if (tempIndex <= code.getNumStackSlots()) { // for decoder
                 tempNode = TemporaryReadNode.create(code, tempIndex);
             }
         }

@@ -59,22 +59,14 @@ public abstract class GetOrCreateContextNode extends AbstractNodeWithCode {
         int frameSP = FrameUtil.getIntSafe(frame, method.stackPointerSlot);
         context.atput0(CONTEXT.METHOD, method);
         context.setInstructionPointer(framePC);
-        context.setStackPointer(frameSP);
+        context.setStackPointer(frameSP + 1); // frame sp is zero-based
         BlockClosureObject closure = FrameAccess.getClosure(frame);
         context.atput0(CONTEXT.CLOSURE_OR_NIL, closure == null ? method.image.nil : closure);
         context.atput0(CONTEXT.RECEIVER, FrameAccess.getReceiver(frame));
 
         // Copy temps
-        for (int i = 0; i < frameSP - 1; i++) {
-            int tempIndex = i - method.getNumArgsAndCopiedValues();
-            Object tempValue;
-            if (tempIndex < 0) {
-                int frameArgumentIndex = frame.getArguments().length + tempIndex;
-                assert frameArgumentIndex >= FrameAccess.RCVR_AND_ARGS_START;
-                tempValue = frame.getArguments()[frameArgumentIndex];
-            } else {
-                tempValue = frameStackReadNode.execute(frame, tempIndex);
-            }
+        for (int i = 0; i < frameSP; i++) {
+            Object tempValue = frameStackReadNode.execute(frame, i);
             assert tempValue != null;
             context.atTempPut(i, tempValue);
         }
