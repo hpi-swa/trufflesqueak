@@ -7,7 +7,9 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
 
+import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
@@ -45,6 +47,17 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
                 return value;
             }
         }
+
+        @Override
+        public final Object executeRead(VirtualFrame frame) {
+            try {
+                return executePrimitive(frame);
+            } catch (ArithmeticException e) {
+                throw new PrimitiveFailed();
+            }
+        }
+
+        public abstract Object executePrimitive(VirtualFrame frame);
     }
 
     @GenerateNodeFactory
