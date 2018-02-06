@@ -64,8 +64,8 @@ public abstract class GetOrCreateContextNode extends AbstractNodeWithCode {
         context.atput0(CONTEXT.CLOSURE_OR_NIL, closure == null ? method.image.nil : closure);
         context.atput0(CONTEXT.RECEIVER, FrameAccess.getReceiver(frame));
 
-        // Copy temps
-        for (int i = 0; i < frameSP; i++) {
+        // Copy args and temps
+        for (int i = 0; i <= frameSP; i++) {
             Object tempValue = frameStackReadNode.execute(frame, i);
             assert tempValue != null;
             context.atTempPut(i, tempValue);

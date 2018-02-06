@@ -62,7 +62,6 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     protected CompiledCodeObject(SqueakImageContext img, ClassObject klass) {
         super(img, klass);
-        invalidateNoContextNeededAssumption();
     }
 
     protected CompiledCodeObject(SqueakImageContext img) {
