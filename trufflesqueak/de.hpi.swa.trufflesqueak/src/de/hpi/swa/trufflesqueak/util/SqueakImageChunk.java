@@ -31,7 +31,7 @@ public class SqueakImageChunk {
     private final SqueakImageReader reader;
     protected final int format;
     private final int hash;
-    private final Vector<Integer> data;
+    private final Vector<Long> data;
     private final SqueakImageContext image;
 
     public SqueakImageChunk(SqueakImageReader reader,
@@ -51,7 +51,7 @@ public class SqueakImageChunk {
         this.data = new Vector<>();
     }
 
-    public void append(int nextInt) {
+    public void append(long nextInt) {
         data.add(nextInt);
     }
 
@@ -63,7 +63,7 @@ public class SqueakImageChunk {
         data.remove(data.size() - 1);
     }
 
-    public Vector<Integer> data() {
+    public Vector<Long> data() {
         return data;
     }
 
@@ -181,7 +181,7 @@ public class SqueakImageChunk {
         return pointers;
     }
 
-    private Object decodePointer(int ptr) {
+    private Object decodePointer(long ptr) {
         if ((ptr & 3) == 0) {
             SqueakImageChunk chunk = reader.chunktable.get(ptr);
             if (chunk == null) {
@@ -204,12 +204,12 @@ public class SqueakImageChunk {
 
     public byte[] getBytes(int start) {
         byte[] bytes = new byte[((data.size() - start) * 4) - getPadding()];
-        List<Integer> subList = data.subList(start, data.size());
+        List<Long> subList = data.subList(start, data.size());
         ByteBuffer buf = ByteBuffer.allocate(subList.size() * 4);
         buf.order(ByteOrder.nativeOrder());
         IntBuffer intBuf = buf.asIntBuffer();
-        for (int i : subList) {
-            intBuf.put(i);
+        for (long i : subList) {
+            intBuf.put((int) i);
         }
         for (int i = 0; i < bytes.length; i++) {
             bytes[i] = buf.get(i);

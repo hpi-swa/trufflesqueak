@@ -54,12 +54,12 @@ public class ContextObject extends AbstractPointersObject {
     }
 
     public void terminate() {
-        atput0(CONTEXT.INSTRUCTION_POINTER, image.nil);
-        setSender(image.nil); // remove sender
+// atput0(CONTEXT.INSTRUCTION_POINTER, image.nil);
+// setSender(image.nil); // remove sender
     }
 
     @Override
-    public Object at0(int index) {
+    public Object at0(long index) {
         assert index >= 0;
         if (index == CONTEXT.SENDER_OR_NIL) {
             return getSender(); // sender might need to be reconstructed
@@ -68,7 +68,7 @@ public class ContextObject extends AbstractPointersObject {
     }
 
     @Override
-    public void atput0(int index, Object value) {
+    public void atput0(long index, Object value) {
         assert index >= 0 && value != null;
         if (index == CONTEXT.SENDER_OR_NIL) {
             isDirty = true;
@@ -119,7 +119,9 @@ public class ContextObject extends AbstractPointersObject {
 
     public BaseSqueakObject getSender() {
         Object sender = super.at0(CONTEXT.SENDER_OR_NIL);
-        if (sender instanceof ContextObject || sender instanceof NilObject) {
+        if (sender instanceof ContextObject) {
+            return (BaseSqueakObject) sender;
+        } else if (sender instanceof NilObject) {
             return (BaseSqueakObject) sender;
         } else {
             CompilerDirectives.transferToInterpreter();
@@ -147,28 +149,28 @@ public class ContextObject extends AbstractPointersObject {
 
     public void push(Object value) {
         assert value != null;
-        int newSP = getStackPointer() + 1;
+        long newSP = getStackPointer() + 1;
         assert newSP <= CONTEXT.MAX_STACK_SIZE;
         atStackPut(newSP, value);
         setStackPointer(newSP);
     }
 
-    public int getInstructionPointer() {
+    public long getInstructionPointer() {
         CompiledCodeObject code = getCodeObject();
-        return decodeSqPC((int) at0(CONTEXT.INSTRUCTION_POINTER), code);
+        return decodeSqPC((long) at0(CONTEXT.INSTRUCTION_POINTER), code);
     }
 
-    public void setInstructionPointer(int newPC) {
-        int encodedPC = encodeSqPC(newPC, getCodeObject());
+    public void setInstructionPointer(long newPC) {
+        long encodedPC = encodeSqPC(newPC, getCodeObject());
         assert encodedPC >= 0;
         atput0(CONTEXT.INSTRUCTION_POINTER, encodedPC);
     }
 
-    public int getStackPointer() {
-        return (int) at0(CONTEXT.STACKPOINTER);
+    public long getStackPointer() {
+        return (long) at0(CONTEXT.STACKPOINTER);
     }
 
-    public void setStackPointer(int newSP) {
+    public void setStackPointer(long newSP) {
         assert 0 <= newSP && newSP <= CONTEXT.MAX_STACK_SIZE;
         atput0(CONTEXT.STACKPOINTER, newSP);
     }
@@ -187,7 +189,7 @@ public class ContextObject extends AbstractPointersObject {
     }
 
     public Object pop() {
-        int sp = getStackPointer();
+        long sp = getStackPointer();
         if (sp > 0) {
             setStackPointer(sp - 1);
         }
@@ -195,7 +197,7 @@ public class ContextObject extends AbstractPointersObject {
     }
 
     public Object[] popNReversed(int numPop) {
-        int sp = getStackPointer();
+        long sp = getStackPointer();
         assert sp - numPop >= 0;
         Object[] result = new Object[numPop];
         for (int i = 0; i < numPop; i++) {
@@ -209,19 +211,19 @@ public class ContextObject extends AbstractPointersObject {
         return at0(CONTEXT.RECEIVER);
     }
 
-    public Object atTemp(int argumentIndex) {
+    public Object atTemp(long argumentIndex) {
         return at0(CONTEXT.TEMP_FRAME_START + argumentIndex);
     }
 
-    public void atTempPut(int argumentIndex, Object value) {
+    public void atTempPut(long argumentIndex, Object value) {
         atput0(CONTEXT.TEMP_FRAME_START + argumentIndex, value);
     }
 
-    public Object atStack(int argumentIndex) {
+    public Object atStack(long argumentIndex) {
         return at0(CONTEXT.TEMP_FRAME_START - 1 + argumentIndex);
     }
 
-    public void atStackPut(int argumentIndex, Object value) {
+    public void atStackPut(long argumentIndex, Object value) {
         atput0(CONTEXT.TEMP_FRAME_START - 1 + argumentIndex, value);
     }
 
@@ -241,11 +243,11 @@ public class ContextObject extends AbstractPointersObject {
     /*
      * pc is offset by the initial pc
      */
-    public static int encodeSqPC(int pc, CompiledCodeObject code) {
+    public static long encodeSqPC(long pc, CompiledCodeObject code) {
         return pc + code.getInitialPC();
     }
 
-    public static int decodeSqPC(int pc, CompiledCodeObject code) {
+    public static long decodeSqPC(long pc, CompiledCodeObject code) {
         return pc - code.getInitialPC();
     }
 }

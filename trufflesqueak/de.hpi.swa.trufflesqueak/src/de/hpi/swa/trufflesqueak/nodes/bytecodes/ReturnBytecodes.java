@@ -45,7 +45,7 @@ public final class ReturnBytecodes {
             throw new LocalReturn(getReturnValue(frame));
         }
 
-        @Specialization(guards = "hasClosure(frame)")
+        @Specialization(guards = {"hasClosure(frame) || !isVirtualized(frame)", "hasClosure(frame) || isDirty(frame)"})
         protected Object executeNonLocalReturn(VirtualFrame frame) {
             ContextObject outerContext;
             BlockClosureObject block = (BlockClosureObject) readClosureNode.executeRead(frame);

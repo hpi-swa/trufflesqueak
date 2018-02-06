@@ -33,7 +33,7 @@ public abstract class AbstractSqueakTestCase extends TestCase {
         return new Boolean[]{true, false};
     }
 
-    @Parameter public boolean invalidateNoContextNeededAssumption;
+    @Parameter public static boolean invalidateNoContextNeededAssumption;
 
     public AbstractSqueakTestCase() {
         super();
@@ -52,7 +52,7 @@ public abstract class AbstractSqueakTestCase extends TestCase {
         @Override
         public Object[] getPointers() {
             Object[] pointers = new Object[6];
-            pointers[2] = format; // FORMAT_INDEX
+            pointers[2] = (long) format; // FORMAT_INDEX
             return pointers;
         }
     }
@@ -112,10 +112,10 @@ public abstract class AbstractSqueakTestCase extends TestCase {
 
     public CompiledCodeObject makeMethod(byte[] bytes) {
         // Always add three literals...
-        return makeMethod(bytes, new Object[]{68419598, null, null});
+        return makeMethod(bytes, new Object[]{68419598L, null, null});
     }
 
-    public CompiledCodeObject makeMethod(byte[] bytes, Object[] literals) {
+    public static CompiledCodeObject makeMethod(byte[] bytes, Object[] literals) {
         CompiledMethodObject code = new CompiledMethodObject(image, bytes, literals);
         if (invalidateNoContextNeededAssumption) {
             code.invalidateNoContextNeededAssumption();
@@ -123,7 +123,7 @@ public abstract class AbstractSqueakTestCase extends TestCase {
         return code;
     }
 
-    public CompiledCodeObject makeMethod(Object[] literals, int... intbytes) {
+    public static CompiledCodeObject makeMethod(Object[] literals, int... intbytes) {
         byte[] bytes = new byte[intbytes.length];
         for (int i = 0; i < intbytes.length; i++) {
             bytes[i] = (byte) intbytes[i];
@@ -135,7 +135,7 @@ public abstract class AbstractSqueakTestCase extends TestCase {
         return makeMethod(new Object[]{makeHeader(4, 5, 14, false, true)}, intbytes);
     }
 
-    public Object runMethod(CompiledCodeObject code, Object receiver, Object... arguments) {
+    public static Object runMethod(CompiledCodeObject code, Object receiver, Object... arguments) {
         VirtualFrame frame = createTestFrame(code);
         Object result = null;
         try {
@@ -150,7 +150,7 @@ public abstract class AbstractSqueakTestCase extends TestCase {
         return createContext(code, receiver, new Object[0]);
     }
 
-    protected ExecuteTopLevelContextNode createContext(CompiledCodeObject code, Object receiver, Object[] arguments) {
+    protected static ExecuteTopLevelContextNode createContext(CompiledCodeObject code, Object receiver, Object[] arguments) {
         // always use large instance size and large frame size for testing
         ContextObject testContext = ContextObject.create(code.image, 50 + CONTEXT.LARGE_FRAMESIZE);
         testContext.atput0(CONTEXT.METHOD, code);
@@ -176,11 +176,11 @@ public abstract class AbstractSqueakTestCase extends TestCase {
     }
 
     protected Object runBinaryPrimitive(int primCode, Object rcvr, Object... arguments) {
-        return runPrim(new Object[]{17104899}, primCode, rcvr, arguments);
+        return runPrim(new Object[]{17104899L}, primCode, rcvr, arguments);
     }
 
     protected Object runQuinaryPrimitive(int primCode, Object rcvr, Object... arguments) {
-        return runPrim(new Object[]{68222979}, primCode, rcvr, arguments);
+        return runPrim(new Object[]{68222979L}, primCode, rcvr, arguments);
     }
 
     protected Object runPrim(Object[] literals, int primCode, Object rcvr, Object... arguments) {
@@ -188,13 +188,13 @@ public abstract class AbstractSqueakTestCase extends TestCase {
         return runMethod(cm, rcvr, arguments);
     }
 
-    public VirtualFrame createTestFrame(CompiledCodeObject code) {
+    public static VirtualFrame createTestFrame(CompiledCodeObject code) {
         Object[] arguments = FrameAccess.newWith(code, code.image.nil, null, new Object[0]);
         return Truffle.getRuntime().createVirtualFrame(arguments, code.getFrameDescriptor());
     }
 
-    public static int makeHeader(int numArgs, int numTemps, int numLiterals, boolean hasPrimitive, boolean needsLargeFrame) {
-        int header = 0;
+    public static long makeHeader(int numArgs, int numTemps, int numLiterals, boolean hasPrimitive, boolean needsLargeFrame) {
+        long header = 0;
         header += (numArgs & 0x0F) << 24;
         header += (numTemps & 0x3F) << 18;
         header += numLiterals & 0x7FFF;

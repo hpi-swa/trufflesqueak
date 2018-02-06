@@ -16,13 +16,13 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 @NodeChild(value = "valueNode", type = SqueakNode.class)
 public abstract class ObjectAtPutNode extends AbstractObjectAtNode {
     @CompilationFinal private final ValueProfile classProfile = ValueProfile.createClassProfile();
-    @CompilationFinal private final int index;
+    @CompilationFinal private final long index;
 
-    public static ObjectAtPutNode create(int index, SqueakNode object, SqueakNode value) {
+    public static ObjectAtPutNode create(long index, SqueakNode object, SqueakNode value) {
         return ObjectAtPutNodeGen.create(index, object, value);
     }
 
-    protected ObjectAtPutNode(int variableIndex) {
+    protected ObjectAtPutNode(long variableIndex) {
         index = variableIndex;
     }
 
@@ -33,12 +33,12 @@ public abstract class ObjectAtPutNode extends AbstractObjectAtNode {
     }
 
     @Specialization
-    protected void write(NativeObject object, int value) {
+    protected void write(NativeObject object, long value) {
         classProfile.profile(object).setNativeAt0(index, value);
     }
 
     @Specialization(guards = "!isNativeObject(object)")
-    protected void write(BaseSqueakObject object, int value) {
+    protected void write(BaseSqueakObject object, long value) {
         classProfile.profile(object).atput0(index, value);
     }
 

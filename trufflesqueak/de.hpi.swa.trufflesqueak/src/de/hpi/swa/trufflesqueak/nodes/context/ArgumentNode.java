@@ -11,7 +11,7 @@ import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameArgumentNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public abstract class ArgumentNode extends SqueakNodeWithCode {
-    @CompilationFinal private final int argumentIndex;
+    @CompilationFinal private final long argumentIndex;
     @Child private FrameArgumentNode frameArgumentNode;
 
     public static ArgumentNode create(CompiledCodeObject code, int argumentIndex) {

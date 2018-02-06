@@ -9,7 +9,7 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 public class MethodLiteralNode extends SqueakNode {
     @CompilationFinal private final Object literal;
 
-    public MethodLiteralNode(CompiledCodeObject code, int literalIndex) {
+    public MethodLiteralNode(CompiledCodeObject code, long literalIndex) {
         super();
         literal = code.getLiteral(literalIndex);
     }

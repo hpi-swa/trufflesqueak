@@ -13,13 +13,13 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 @NodeChild(value = "objectNode", type = SqueakNode.class)
 public abstract class ObjectAtNode extends AbstractObjectAtNode {
     @CompilationFinal private final ValueProfile classProfile = ValueProfile.createClassProfile();
-    @CompilationFinal private final int index;
+    @CompilationFinal private final long index;
 
-    public static ObjectAtNode create(int i, SqueakNode object) {
+    public static ObjectAtNode create(long i, SqueakNode object) {
         return ObjectAtNodeGen.create(i, object);
     }
 
-    protected ObjectAtNode(int variableIndex) {
+    protected ObjectAtNode(long variableIndex) {
         index = variableIndex;
     }
 

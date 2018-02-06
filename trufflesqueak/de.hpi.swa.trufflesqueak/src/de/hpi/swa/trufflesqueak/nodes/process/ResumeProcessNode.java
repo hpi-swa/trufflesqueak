@@ -27,8 +27,8 @@ public class ResumeProcessNode extends AbstractNodeWithCode {
     public void executeResume(VirtualFrame frame, BaseSqueakObject newProcess) {
         CompilerDirectives.transferToInterpreter();
         BaseSqueakObject activeProcess = getActiveProcessNode.executeGet();
-        int activePriority = (int) activeProcess.at0(PROCESS.PRIORITY);
-        int newPriority = (int) newProcess.at0(PROCESS.PRIORITY);
+        long activePriority = (long) activeProcess.at0(PROCESS.PRIORITY);
+        long newPriority = (long) newProcess.at0(PROCESS.PRIORITY);
         if (newPriority > activePriority) {
             putToSleepNode.executePutToSleep(activeProcess);
             transferToNode.executeTransferTo(frame, activeProcess, newProcess);

@@ -25,7 +25,7 @@ public class SignalSemaphoreNode extends AbstractNodeWithCode {
 
     public void executeSignal(VirtualFrame frame, PointersObject semaphore) {
         if (isEmptyListNode.executeIsEmpty(semaphore)) { // no process is waiting on this semaphore
-            semaphore.atput0(SEMAPHORE.EXCESS_SIGNALS, (int) semaphore.at0(SEMAPHORE.EXCESS_SIGNALS) + 1);
+            semaphore.atput0(SEMAPHORE.EXCESS_SIGNALS, (long) semaphore.at0(SEMAPHORE.EXCESS_SIGNALS) + 1);
         } else {
             resumeProcessNode.executeResume(frame, removeFirstLinkOfListNode.executeRemove(semaphore));
         }

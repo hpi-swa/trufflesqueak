@@ -33,7 +33,7 @@ public class WakeHighestPriorityNode extends AbstractNodeWithCode {
         // Note: It is a fatal VM error if there is no runnable process.
         PointersObject scheduler = getSchedulerNode.executeGet();
         ListObject schedLists = (ListObject) scheduler.at0(PROCESS_SCHEDULER.PROCESS_LISTS);
-        int p = schedLists.size() - 1;  // index of last indexable field
+        long p = schedLists.size() - 1;  // index of last indexable field
         BaseSqueakObject processList;
         do {
             if (p < 0) {

@@ -45,6 +45,9 @@ public final class MiscellaneousBytecodes {
                     primitiveNode = PrimitiveFailedNode.create((CompiledMethodObject) code);
                 } else {
                     primitiveIndex = byte1 + (byte2 << 8);
+                    if (primitiveIndex == 117) {
+                        int i = 1;
+                    }
                     primitiveNode = PrimitiveNodeFactory.forIndex((CompiledMethodObject) code, primitiveIndex);
                 }
             } else {
@@ -130,7 +133,7 @@ public final class MiscellaneousBytecodes {
     public static class ExtendedBytecodes {
 
         public static AbstractBytecodeNode createPopInto(CompiledCodeObject code, int index, int numBytecodes, int nextByte) {
-            int variableIndex = variableIndex(nextByte);
+            long variableIndex = variableIndex(nextByte);
             switch (variableType(nextByte)) {
                 case 0:
                     return new PopIntoReceiverVariableNode(code, index, numBytecodes, variableIndex);
@@ -162,7 +165,7 @@ public final class MiscellaneousBytecodes {
         }
 
         public static AbstractBytecodeNode createStoreInto(CompiledCodeObject code, int index, int numBytecodes, int nextByte) {
-            int variableIndex = variableIndex(nextByte);
+            long variableIndex = variableIndex(nextByte);
             switch (variableType(nextByte)) {
                 case 0:
                     return new StoreIntoReceiverVariableNode(code, index, numBytecodes, variableIndex);
@@ -206,7 +209,7 @@ public final class MiscellaneousBytecodes {
     }
 
     public static class UnknownBytecodeNode extends AbstractBytecodeNode {
-        private final int bytecode;
+        private final long bytecode;
 
         public UnknownBytecodeNode(CompiledCodeObject code, int index, int numBytecodes, int bc) {
             super(code, index, numBytecodes);

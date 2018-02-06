@@ -70,17 +70,18 @@ public class NativeObject extends SqueakObject {
     }
 
     @Override
-    public Object at0(int index) {
+    public Object at0(long index) {
         return getNativeAt0(index);
     }
 
     @Override
-    public void atput0(int index, Object object) {
-        setNativeAt0(index, (int) object);
+    public void atput0(long index, Object object) {
+        setNativeAt0(index, (long) object);
     }
 
     @TruffleBoundary
-    public long getNativeAt0(int index) {
+    public long getNativeAt0(long longIndex) {
+        int index = (int) longIndex;
         switch (elementSize) {
             case 1:
                 return content.get(index) & 0xFF;
@@ -96,7 +97,8 @@ public class NativeObject extends SqueakObject {
     }
 
     @TruffleBoundary
-    public void setNativeAt0(int index, long value) {
+    public void setNativeAt0(long longIndex, long value) {
+        int index = (int) longIndex;
         switch (elementSize) {
             case 1:
                 content.put(index, (byte) value);
@@ -105,7 +107,7 @@ public class NativeObject extends SqueakObject {
                 content.asShortBuffer().put(index, (short) value);
                 break;
             case 4:
-                content.asIntBuffer().put(index, (int) value);
+                content.asIntBuffer().put(index, ((Long) value).intValue());
                 break;
             case 8:
                 content.asLongBuffer().put(index, value);
@@ -153,5 +155,9 @@ public class NativeObject extends SqueakObject {
     @Override
     public BaseSqueakObject shallowCopy() {
         return new NativeObject(this);
+    }
+
+    public boolean equals(NativeObject obj) {
+        return content.equals(obj.content);
     }
 }

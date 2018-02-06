@@ -40,6 +40,7 @@ import de.hpi.swa.trufflesqueak.util.Display.AbstractDisplay;
 import de.hpi.swa.trufflesqueak.util.Display.JavaDisplay;
 import de.hpi.swa.trufflesqueak.util.Display.NullDisplay;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
+import de.hpi.swa.trufflesqueak.util.FrameMarker;
 import de.hpi.swa.trufflesqueak.util.InterruptHandlerNode;
 import de.hpi.swa.trufflesqueak.util.OSDetector;
 import de.hpi.swa.trufflesqueak.util.SqueakImageFlags;
@@ -155,20 +156,21 @@ public class SqueakImageContext {
     public CallTarget getCustomContext() {
         Object receiver = config.getReceiver();
         String selector = config.getSelector();
-        ClassObject receiverClass = receiver instanceof Integer ? smallIntegerClass : nilClass;
+        ClassObject receiverClass = receiver instanceof Long ? smallIntegerClass : nilClass;
         CompiledCodeObject lookupResult = (CompiledCodeObject) receiverClass.lookup(selector);
         if (lookupResult.getCompiledInSelector() == doesNotUnderstand) {
             throw new SqueakException(receiver + " >> " + selector + " could not be found!");
         }
         ContextObject customContext = ContextObject.create(this, lookupResult.frameSize());
         customContext.atput0(CONTEXT.METHOD, lookupResult);
-        customContext.atput0(CONTEXT.INSTRUCTION_POINTER, customContext.getCodeObject().getInitialPC());
+        customContext.atput0(CONTEXT.INSTRUCTION_POINTER, (long) customContext.getCodeObject().getInitialPC());
         customContext.atput0(CONTEXT.RECEIVER, receiver);
-        customContext.atput0(CONTEXT.STACKPOINTER, 1);
+        customContext.atput0(CONTEXT.STACKPOINTER, 1L);
         customContext.atput0(CONTEXT.CLOSURE_OR_NIL, nil);
         customContext.setSender(nil);
+        customContext.setFrameMarker(new FrameMarker());
         // if there were arguments, they would need to be pushed before the temps
-        int numTemps = lookupResult.getNumTemps() - lookupResult.getNumArgsAndCopiedValues();
+        long numTemps = lookupResult.getNumTemps() - lookupResult.getNumArgsAndCopiedValues();
         for (int i = 0; i < numTemps; i++) {
             customContext.push(nil);
         }
@@ -200,7 +202,7 @@ public class SqueakImageContext {
         } else if (obj instanceof Boolean) {
             return wrap((boolean) obj);
         } else if (obj instanceof Integer) {
-            return wrap((int) obj);
+            return wrap((long) obj);
         } else if (obj instanceof Long) {
             return wrap((long) obj);
         } else if (obj instanceof BigInteger) {
@@ -221,10 +223,6 @@ public class SqueakImageContext {
 
     public Object wrap(boolean value) {
         return value ? sqTrue : sqFalse;
-    }
-
-    public BaseSqueakObject wrap(int i) {
-        return wrap(BigInteger.valueOf(((Integer) i).intValue()));
     }
 
     public BaseSqueakObject wrap(long l) {
@@ -252,18 +250,18 @@ public class SqueakImageContext {
     }
 
     public PointersObject wrap(Point point) {
-        return newPoint((int) point.getX(), (int) point.getY());
+        return newPoint((long) point.getX(), (long) point.getY());
     }
 
     public PointersObject wrap(Dimension dimension) {
-        return newPoint((int) dimension.getWidth(), (int) dimension.getHeight());
+        return newPoint((long) dimension.getWidth(), (long) dimension.getHeight());
     }
 
     public ListObject newList(Object... elements) {
         return new ListObject(this, arrayClass, elements);
     }
 
-    public PointersObject newPoint(int xPos, int yPos) {
+    public PointersObject newPoint(long xPos, long yPos) {
         ClassObject pointClass = (ClassObject) specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.ClassPoint);
         PointersObject newPoint = (PointersObject) pointClass.newInstance();
         newPoint.atput0(POINT.X, xPos);
@@ -275,7 +273,7 @@ public class SqueakImageContext {
         return new NativeObject(this, doesNotUnderstand.getSqClass(), value.getBytes());
     }
 
-    public void registerSemaphore(BaseSqueakObject semaphore, int index) {
+    public void registerSemaphore(BaseSqueakObject semaphore, long index) {
         specialObjectsArray.atput0(index, semaphore.isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassSemaphore) ? semaphore : nil);
     }
 

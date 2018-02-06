@@ -22,10 +22,10 @@ public abstract class PopStackNode extends AbstractStackNode {
     @Specialization(guards = {"isVirtualized(frame)"})
     public Object doPopVirtualized(VirtualFrame frame) {
         CompilerDirectives.ensureVirtualizedHere(frame);
-        int sp = frameStackPointer(frame);
+        long sp = frameStackPointer(frame);
         assert sp >= 0;
         setFrameStackPointer(frame, sp - 1);
-        return readNode.execute(frame, sp);
+        return readNode.execute(frame, (int) sp);
     }
 
     @Specialization(guards = {"!isVirtualized(frame)"})

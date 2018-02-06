@@ -46,7 +46,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
     @CompilationFinal private boolean hasPrimitive;
     @CompilationFinal private boolean needsLargeFrame = true; // defaults to true
     @CompilationFinal private int numTemps;
-    @CompilationFinal private int accessModifier;
+    @CompilationFinal private long accessModifier;
     @CompilationFinal private boolean altInstructionSet;
 
     @CompilationFinal private final Assumption noContextNeeded = Truffle.getRuntime().createAssumption("Does not need a materialized context");
@@ -62,6 +62,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     protected CompiledCodeObject(SqueakImageContext img, ClassObject klass) {
         super(img, klass);
+        invalidateNoContextNeededAssumption();
     }
 
     protected CompiledCodeObject(SqueakImageContext img) {
@@ -94,14 +95,14 @@ public abstract class CompiledCodeObject extends SqueakObject {
     @TruffleBoundary
     protected void prepareFrameDescriptor() {
         frameDescriptor = new FrameDescriptor();
-        int numStackSlots = frameSize() + getSqClass().getBasicInstanceSize();
-        stackSlots = new FrameSlot[numStackSlots];
+        long numStackSlots = frameSize() + getSqClass().getBasicInstanceSize();
+        stackSlots = new FrameSlot[(int) numStackSlots];
         for (int i = 0; i < stackSlots.length; i++) {
             stackSlots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Illegal);
         }
         thisContextOrMarkerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.THIS_CONTEXT_OR_MARKER, FrameSlotKind.Object);
-        instructionPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.INSTRUCTION_POINTER, FrameSlotKind.Int);
-        stackPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.STACK_POINTER, FrameSlotKind.Int);
+        instructionPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.INSTRUCTION_POINTER, FrameSlotKind.Long);
+        stackPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.STACK_POINTER, FrameSlotKind.Long);
     }
 
     public RootCallTarget getCallTarget() {
@@ -168,19 +169,19 @@ public abstract class CompiledCodeObject extends SqueakObject {
         return stackSlots[i];
     }
 
-    public int convertTempIndexToStackIndex(int tempIndex) {
+    public long convertTempIndexToStackIndex(long tempIndex) {
         return tempIndex - getNumArgsAndCopiedValues();
     }
 
-    public int getNumStackSlots() {
+    public long getNumStackSlots() {
         return stackSlots.length;
     }
 
     @Override
     public void fillin(SqueakImageChunk chunk) {
         super.fillin(chunk);
-        Vector<Integer> data = chunk.data();
-        int header = data.get(0) >> 1; // header is a tagged small integer
+        Vector<Long> data = chunk.data();
+        int header = (int) (data.get(0) >> 1); // header is a tagged small integer
         int literalsize = header & 0x7fff;
         Object[] ptrs = chunk.getPointers(literalsize + 1);
         assert literals == null;
@@ -191,7 +192,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
     }
 
     void decodeHeader() {
-        int hdr = getHeader();
+        long hdr = getHeader();
         int[] splitHeader = BitSplitter.splitter(hdr, new int[]{15, 1, 1, 1, 6, 4, 2, 1});
         numLiterals = splitHeader[0];
         isOptimized = splitHeader[1] == 1;
@@ -204,10 +205,10 @@ public abstract class CompiledCodeObject extends SqueakObject {
         prepareFrameDescriptor();
     }
 
-    public int getHeader() {
+    public long getHeader() {
         Object object = literals[0];
-        assert object instanceof Integer;
-        int hdr = (int) object;
+        assert object instanceof Long;
+        long hdr = (long) object;
         return hdr;
     }
 
@@ -244,19 +245,21 @@ public abstract class CompiledCodeObject extends SqueakObject {
     }
 
     @Override
-    public Object at0(int index) {
+    public Object at0(long longIndex) {
+        int index = (int) longIndex;
         if (index < getBytecodeOffset()) {
             assert index % BYTES_PER_WORD == 0;
             return literals[index / BYTES_PER_WORD];
         } else {
             int realIndex = index - getBytecodeOffset();
             assert realIndex < bytes.length;
-            return Byte.toUnsignedInt(bytes[realIndex]);
+            return Byte.toUnsignedLong(bytes[realIndex]);
         }
     }
 
     @Override
-    public void atput0(int index, Object obj) {
+    public void atput0(long longIndex, Object obj) {
+        int index = (int) longIndex;
         assert index >= 0;
         if (index < getBytecodeOffset()) {
             assert index % BYTES_PER_WORD == 0;
@@ -267,13 +270,16 @@ public abstract class CompiledCodeObject extends SqueakObject {
             if (obj instanceof Integer) {
                 Integer value = (Integer) obj;
                 bytes[realIndex] = value.byteValue();
+            } else if (obj instanceof Long) {
+                bytes[realIndex] = ((Long) obj).byteValue();
             } else {
                 bytes[realIndex] = (byte) obj;
             }
         }
     }
 
-    public Object getLiteral(int index) {
+    public Object getLiteral(long longIndex) {
+        int index = (int) longIndex;
         int literalIndex = 1 + index; // skip header
         if (literalIndex < literals.length) {
             return literals[literalIndex];
@@ -282,15 +288,16 @@ public abstract class CompiledCodeObject extends SqueakObject {
         }
     }
 
-    public void setLiteral(int i, Object obj) {
-        if (i == 0) {
-            assert obj instanceof Integer;
+    public void setLiteral(long longIndex, Object obj) {
+        int index = (int) longIndex;
+        if (index == 0) {
+            assert obj instanceof Long;
             int oldNumLiterals = numLiterals;
             literals[0] = obj;
             decodeHeader();
             assert numLiterals == oldNumLiterals;
         } else {
-            literals[i] = obj;
+            literals[index] = obj;
         }
     }
 
@@ -303,7 +310,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
         return hasPrimitive;
     }
 
-    public int primitiveIndex() {
+    public long primitiveIndex() {
         if (hasPrimitive && bytes.length >= 3) {
             return Byte.toUnsignedInt(bytes[1]) + (Byte.toUnsignedInt(bytes[2]) << 8);
         } else {

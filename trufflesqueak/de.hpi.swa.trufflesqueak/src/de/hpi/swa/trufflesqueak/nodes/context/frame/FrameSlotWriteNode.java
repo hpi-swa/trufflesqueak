@@ -45,7 +45,7 @@ public abstract class FrameSlotWriteNode extends FrameSlotNode {
     }
 
     // uses `value` to make sure guard is not converted to assertion
-    protected boolean isIntSlot(@SuppressWarnings("unused") int value) {
+    protected boolean isIntSlot(@SuppressWarnings("unused") long value) {
         if (slot.getKind() == FrameSlotKind.Int) {
             return true;
         }

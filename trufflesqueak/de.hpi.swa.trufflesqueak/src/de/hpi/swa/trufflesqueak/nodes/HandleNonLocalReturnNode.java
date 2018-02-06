@@ -53,7 +53,7 @@ public abstract class HandleNonLocalReturnNode extends AbstractNodeWithCode {
         if (context.isDirty()) {
             ContextObject sender = context.getNotNilSender();
             terminateNode.executeTerminate(frame);
-            throw new NonVirtualReturn(nlr.getReturnValue(), nlr.getTargetContext(), sender);
+            throw new NonVirtualReturn(nlr.getReturnValue(), nlr.getTargetContext().getNotNilSender(), sender);
         } else {
             terminateNode.executeTerminate(frame);
             assert context != null; // TODO: currently assuming context is not virtualized

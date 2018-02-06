@@ -86,7 +86,7 @@ public final class SendBytecodes {
     public static abstract class EagerSendSpecialSelectorNode extends AbstractBytecodeNode {
         public static AbstractBytecodeNode create(CompiledCodeObject code, int index, int selectorIndex) {
             SpecialSelectorObject specialSelector = code.image.specialSelectorsArray[selectorIndex];
-            if (code instanceof CompiledMethodObject && specialSelector.getPrimitiveIndex() > 0) {
+            if (false && code instanceof CompiledMethodObject && specialSelector.getPrimitiveIndex() > 0) {
                 AbstractPrimitiveNode primitiveNode;
                 primitiveNode = PrimitiveNodeFactory.forSpecialSelector((CompiledMethodObject) code,
                                 specialSelector);
@@ -121,7 +121,7 @@ public final class SendBytecodes {
                 Object result = primitiveNode.executeRead(frame);
                 // Success! Manipulate the sp to quick pop receiver and arguments and push result.
                 int spOffset = 1 + specialSelector.getNumArguments();
-                stackPointerWriteNode.executeWrite(frame, (int) stackPointerReadNode.executeRead(frame) - spOffset);
+                stackPointerWriteNode.executeWrite(frame, (long) stackPointerReadNode.executeRead(frame) - spOffset);
                 if (result != null) { // primitive produced no result
                     pushStackNode.executeWrite(frame, result);
                 }
@@ -139,9 +139,9 @@ public final class SendBytecodes {
                 // Success! Manipulate the sp to quick pop receiver and arguments and push result.
                 ContextObject context = getContext(frame);
                 int spOffset = 1 + specialSelector.getNumArguments();
-                context.atput0(CONTEXT.STACKPOINTER, (int) context.at0(CONTEXT.STACKPOINTER) - spOffset);
+                context.atput0(CONTEXT.STACKPOINTER, (long) context.at0(CONTEXT.STACKPOINTER) - spOffset);
                 if (result != null) { // primitive produced no result
-                    pushStackNode.executeWrite(frame, result);
+                    context.push(result);
                 }
             } catch (PrimitiveFailed | ArithmeticException | UnsupportedSpecializationException e) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();

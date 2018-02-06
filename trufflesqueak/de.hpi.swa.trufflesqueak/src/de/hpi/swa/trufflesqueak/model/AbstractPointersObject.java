@@ -35,14 +35,14 @@ public abstract class AbstractPointersObject extends SqueakObject {
     }
 
     @Override
-    public Object at0(int i) {
-        return pointers[i];
+    public Object at0(long i) {
+        return pointers[(int) i];
     }
 
     @Override
-    public void atput0(int i, Object obj) {
+    public void atput0(long i, Object obj) {
         assert obj != null; // null indicates a problem
-        pointers[i] = obj;
+        pointers[(int) i] = obj;
     }
 
     @Override

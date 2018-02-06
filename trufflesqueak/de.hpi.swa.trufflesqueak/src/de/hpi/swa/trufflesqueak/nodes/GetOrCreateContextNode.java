@@ -55,8 +55,8 @@ public abstract class GetOrCreateContextNode extends AbstractNodeWithCode {
         ContextObject context = ContextObject.create(method.image, method.frameSize(), frameMarker);
 
         context.setSender(FrameAccess.getSender(frame));
-        int framePC = FrameUtil.getIntSafe(frame, method.instructionPointerSlot);
-        int frameSP = FrameUtil.getIntSafe(frame, method.stackPointerSlot);
+        long framePC = FrameUtil.getLongSafe(frame, method.instructionPointerSlot);
+        long frameSP = FrameUtil.getLongSafe(frame, method.stackPointerSlot);
         context.atput0(CONTEXT.METHOD, method);
         context.setInstructionPointer(framePC);
         context.setStackPointer(frameSP + 1); // frame sp is zero-based

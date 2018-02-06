@@ -31,7 +31,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         private static final int ERROR = 2;
     }
 
-    @CompilationFinal private static final Map<Integer, RandomAccessFile> files = new HashMap<>();
+    @CompilationFinal private static final Map<Long, RandomAccessFile> files = new HashMap<>();
 
     @Override
     public List<? extends NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
@@ -90,7 +90,8 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "isString(nativePathName)")
-        protected Object doLookup(@SuppressWarnings("unused") PointersObject receiver, NativeObject nativePathName, int index) {
+        protected Object doLookup(@SuppressWarnings("unused") PointersObject receiver, NativeObject nativePathName, long longIndex) {
+            int index = (int) longIndex;
             if (index < 0) {
                 throw new PrimitiveFailed();
             }
@@ -121,7 +122,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doAtEnd(@SuppressWarnings("unused") PointersObject receiver, int fileDescriptor) {
+        protected Object doAtEnd(@SuppressWarnings("unused") PointersObject receiver, long fileDescriptor) {
             try {
                 RandomAccessFile file = files.get(fileDescriptor);
                 return code.image.wrap(file.getFilePointer() >= file.length());
@@ -140,7 +141,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doClose(PointersObject receiver, int fileDescriptor) {
+        protected Object doClose(PointersObject receiver, long fileDescriptor) {
             try {
                 RandomAccessFile file = files.get(fileDescriptor);
                 file.close();
@@ -178,7 +179,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doFlush(PointersObject receiver, @SuppressWarnings("unused") int fileDescriptor) {
+        protected Object doFlush(PointersObject receiver, @SuppressWarnings("unused") long fileDescriptor) {
             return receiver;
         }
     }
@@ -192,7 +193,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doGet(@SuppressWarnings("unused") PointersObject receiver, int fileDescriptor) {
+        protected Object doGet(@SuppressWarnings("unused") PointersObject receiver, long fileDescriptor) {
             try {
                 RandomAccessFile file = files.get(fileDescriptor);
                 return file.getFilePointer();
@@ -216,7 +217,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             String mode = writableFlag ? "rw" : "r";
             try {
                 RandomAccessFile file = new RandomAccessFile(fileName, mode);
-                int fileId = file.hashCode();
+                long fileId = file.hashCode();
                 files.put(fileId, file);
                 return fileId;
             } catch (FileNotFoundException e) {
@@ -234,13 +235,14 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doRead(@SuppressWarnings("unused") PointersObject receiver, int fileDescriptor, BaseSqueakObject target, int startIndex, int count) {
+        protected Object doRead(@SuppressWarnings("unused") PointersObject receiver, long fileDescriptor, BaseSqueakObject target, long startIndex, long longCount) {
+            int count = (int) longCount;
             byte[] buffer = new byte[count];
             try {
                 RandomAccessFile file = files.get(fileDescriptor);
-                int read = file.read(buffer, 0, count);
+                long read = file.read(buffer, 0, count);
                 for (int index = 0; index < read; index++) {
-                    target.atput0(startIndex - 1 + index, (int) buffer[index]);
+                    target.atput0(startIndex - 1 + index, (long) buffer[index]);
                 }
                 return read;
             } catch (NullPointerException | IOException e) {
@@ -276,7 +278,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doSet(PointersObject receiver, int fileDescriptor, int position) {
+        protected Object doSet(PointersObject receiver, long fileDescriptor, long position) {
             try {
                 RandomAccessFile file = files.get(fileDescriptor);
                 file.seek(position);
@@ -296,7 +298,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doSize(@SuppressWarnings("unused") PointersObject receiver, int fileDescriptor) {
+        protected Object doSize(@SuppressWarnings("unused") PointersObject receiver, long fileDescriptor) {
             try {
                 RandomAccessFile file = files.get(fileDescriptor);
                 return code.image.wrap(file.length());
@@ -328,12 +330,12 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         @TruffleBoundary
-        protected int doWrite(@SuppressWarnings("unused") PointersObject receiver, int fileDescriptor, NativeObject content, int startIndex, int count) {
+        protected long doWrite(@SuppressWarnings("unused") PointersObject receiver, long fileDescriptor, NativeObject content, long startIndex, long count) {
             String chars = content.toString();
-            int elementSize = content.getElementSize();
-            int byteStart = (startIndex - 1) * elementSize;
-            int byteEnd = Math.min(startIndex - 1 + count, chars.length()) * elementSize;
-            switch (fileDescriptor) {
+            long elementSize = content.getElementSize();
+            int byteStart = (int) ((startIndex - 1) * elementSize);
+            int byteEnd = (int) (Math.min(startIndex - 1 + count, chars.length()) * elementSize);
+            switch ((int) fileDescriptor) {
                 case STDIO_HANDLES.IN:
                     throw new PrimitiveFailed();
                 case STDIO_HANDLES.OUT:

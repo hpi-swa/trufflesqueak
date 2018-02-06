@@ -36,24 +36,14 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Override
         @Specialization
-        protected Object at(AbstractPointersObject receiver, int index) {
-            return receiver.at0(index - 1 + receiver.instsize());
-        }
-
-        @Specialization
         protected Object at(AbstractPointersObject receiver, long index) {
-            return receiver.at0((int) index - 1 + receiver.instsize());
+            return receiver.at0(index - 1 + receiver.instsize());
         }
 
         @Override
         @Specialization
-        protected Object at(BaseSqueakObject receiver, int index) {
-            return super.at(receiver, index);
-        }
-
-        @Specialization
         protected Object at(BaseSqueakObject receiver, long index) {
-            return super.at(receiver, (int) index);
+            return super.at(receiver, index);
         }
     }
 
@@ -66,7 +56,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Override
         @Specialization
-        protected Object atput(AbstractPointersObject receiver, int index, Object value) {
+        protected Object atput(AbstractPointersObject receiver, long index, Object value) {
             try {
                 receiver.atput0(index - 1 + receiver.instsize(), value);
             } catch (IndexOutOfBoundsException e) {
@@ -77,7 +67,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Override
         @Specialization
-        protected Object atput(BaseSqueakObject receiver, int index, Object value) {
+        protected Object atput(BaseSqueakObject receiver, long index, Object value) {
             return super.atput(receiver, index, value);
         }
     }
@@ -90,43 +80,38 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected int size(@SuppressWarnings("unused") char obj) {
+        protected long size(@SuppressWarnings("unused") char obj) {
             return 0;
         }
 
         @Specialization
-        protected int size(@SuppressWarnings("unused") boolean o) {
+        protected long size(@SuppressWarnings("unused") boolean o) {
             return 0;
         }
 
         @Specialization
-        protected int size(@SuppressWarnings("unused") int o) {
+        protected long size(@SuppressWarnings("unused") long o) {
             return 0;
         }
 
         @Specialization
-        protected int size(@SuppressWarnings("unused") long o) {
-            return 0;
-        }
-
-        @Specialization
-        protected int size(String s) {
+        protected long size(String s) {
             return s.getBytes().length;
         }
 
         @Specialization
         @TruffleBoundary
-        protected int size(BigInteger i) {
+        protected long size(BigInteger i) {
             return LargeIntegerObject.byteSize(i);
         }
 
         @Specialization
-        protected int size(@SuppressWarnings("unused") double o) {
+        protected long size(@SuppressWarnings("unused") double o) {
             return 2; // Float in words
         }
 
         @Specialization(guards = {"!isNil(obj)", "hasVariableClass(obj)"})
-        protected int size(BaseSqueakObject obj) {
+        protected long size(BaseSqueakObject obj) {
             return obj.varsize();
         }
     }
@@ -139,7 +124,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected char stringAt(NativeObject obj, int idx) {
+        protected char stringAt(NativeObject obj, long idx) {
             byte nativeAt0 = ((Long) obj.getNativeAt0(idx - 1)).byteValue();
             return (char) nativeAt0;
         }
@@ -153,14 +138,14 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected char atput(NativeObject obj, int idx, char value) {
+        protected char atput(NativeObject obj, long idx, char value) {
             obj.setNativeAt0(idx - 1, value);
             return value;
         }
 
         @Specialization
-        protected char atput(NativeObject obj, int idx, int value) {
-            char charValue = (char) ((Integer) value).byteValue();
+        protected char atput(NativeObject obj, long idx, long value) {
+            char charValue = (char) ((Long) value).byteValue();
             obj.setNativeAt0(idx - 1, charValue);
             return charValue;
         }

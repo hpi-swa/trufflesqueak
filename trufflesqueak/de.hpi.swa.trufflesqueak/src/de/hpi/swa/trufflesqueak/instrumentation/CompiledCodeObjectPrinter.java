@@ -10,8 +10,8 @@ public class CompiledCodeObjectPrinter {
 
     public static String getString(CompiledCodeObject code) {
         StringBuilder sb = new StringBuilder();
-        int index = 1;
-        int indent = 0;
+        long index = 1;
+        long indent = 0;
         byte[] bytes = code.getBytes();
         // TODO: is a new BytecodeSequenceNode needed here?
         AbstractBytecodeNode[] bytecodeNodes = new SqueakBytecodeDecoder(code).decode();
@@ -23,7 +23,7 @@ public class CompiledCodeObjectPrinter {
             for (int j = 0; j < indent; j++) {
                 sb.append(" ");
             }
-            int numBytecodes = node.getNumBytecodes();
+            long numBytecodes = node.getNumBytecodes();
             sb.append("<");
             for (int j = node.getIndex(); j < node.getIndex() + numBytecodes; j++) {
                 if (j > node.getIndex()) {

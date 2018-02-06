@@ -63,7 +63,7 @@ public class CompiledMethodObject extends CompiledCodeObject {
         return this;
     }
 
-    public void setHeader(int header) {
+    public void setHeader(long header) {
         literals = new Object[]{header};
         decodeHeader();
         literals = new Object[1 + numLiterals];

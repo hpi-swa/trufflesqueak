@@ -61,9 +61,9 @@ public abstract class BaseSqueakObject implements TruffleObject {
         return false;
     }
 
-    public abstract Object at0(int l);
+    public abstract Object at0(long l);
 
-    public abstract void atput0(int idx, Object object);
+    public abstract void atput0(long idx, Object object);
 
     public abstract int size();
 
@@ -71,7 +71,7 @@ public abstract class BaseSqueakObject implements TruffleObject {
 
     public abstract BaseSqueakObject shallowCopy();
 
-    public int squeakHash() {
+    public long squeakHash() {
         return hashCode() & IDENTITY_HASH_MASK;
     }
 
@@ -79,11 +79,11 @@ public abstract class BaseSqueakObject implements TruffleObject {
         return size() - instsize();
     }
 
-    public boolean isSpecialKindAt(int index) {
+    public boolean isSpecialKindAt(long index) {
         return getSqClass().equals(image.specialObjectsArray.at0(index));
     }
 
-    public boolean isSpecialClassAt(int index) {
+    public boolean isSpecialClassAt(long index) {
         return this.equals(image.specialObjectsArray.at0(index));
     }
 

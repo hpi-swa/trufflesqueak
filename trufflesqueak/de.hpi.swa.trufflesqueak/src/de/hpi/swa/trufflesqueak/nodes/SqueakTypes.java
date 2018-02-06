@@ -18,7 +18,6 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
 
 @TypeSystem({boolean.class,
                 char.class,
-                int.class,
                 long.class,
                 BigInteger.class,
                 double.class,
@@ -33,16 +32,6 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
                 CompiledMethodObject.class,
                 BaseSqueakObject.class})
 public abstract class SqueakTypes {
-    @ImplicitCast
-    public static long castLong(int obj) {
-        return obj;
-    }
-
-    @ImplicitCast
-    @TruffleBoundary
-    public static BigInteger castBigInteger(int value) {
-        return BigInteger.valueOf(value);
-    }
 
     @ImplicitCast
     @TruffleBoundary
@@ -53,11 +42,6 @@ public abstract class SqueakTypes {
     @ImplicitCast
     public static BigInteger castBigInteger(LargeIntegerObject value) {
         return value.getValue();
-    }
-
-    @ImplicitCast
-    public static double castDouble(int obj) {
-        return obj;
     }
 
     @ImplicitCast

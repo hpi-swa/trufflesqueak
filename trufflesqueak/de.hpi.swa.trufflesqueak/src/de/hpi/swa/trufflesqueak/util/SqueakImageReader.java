@@ -31,7 +31,7 @@ public class SqueakImageReader {
     private int headerSize;
     private int endOfMemory;
     private int oldBaseAddress;
-    private int specialObjectsPointer;
+    private long specialObjectsPointer;
     private int lastHash;
     private int lastWindowSize;
     private int headerFlags;
@@ -44,7 +44,7 @@ public class SqueakImageReader {
     private int freeOldSpace;
     private int position;
     private Vector<SqueakImageChunk> chunklist;
-    HashMap<Integer, SqueakImageChunk> chunktable;
+    HashMap<Long, SqueakImageChunk> chunktable;
     private PrintWriter output;
 
     public static void readImage(SqueakImageContext squeakImageContext, FileInputStream inputStream) throws IOException {
@@ -144,7 +144,7 @@ public class SqueakImageReader {
                     continue;
                 }
                 chunklist.add(chunk);
-                chunktable.put(chunk.pos + currentAddressSwizzle, chunk);
+                chunktable.put((long) (chunk.pos + currentAddressSwizzle), chunk);
             }
             long bridge = nextLong();
             int bridgeSpan = 0;
@@ -195,7 +195,7 @@ public class SqueakImageReader {
             }
         }
         if (format < 10 && classid != FREE_OBJECT_CLASS_INDEX_PUN) {
-            for (int slot : chunk.data()) {
+            for (long slot : chunk.data()) {
                 assert slot % 16 != 0 || slot >= oldBaseAddress;
             }
         }
@@ -282,9 +282,9 @@ public class SqueakImageReader {
 
         // find all metaclasses and instantiate their singleton instances as class objects
         output.println("Instantiating classes...");
-        for (int classtablePtr : chunklist.get(HIDDEN_ROOTS_CHUNK).data()) {
+        for (long classtablePtr : chunklist.get(HIDDEN_ROOTS_CHUNK).data()) {
             if (chunktable.get(classtablePtr) != null) {
-                for (int potentialClassPtr : chunktable.get(classtablePtr).data()) {
+                for (long potentialClassPtr : chunktable.get(classtablePtr).data()) {
                     SqueakImageChunk metaClass = chunktable.get(potentialClassPtr);
                     if (metaClass != null) {
                         if (metaClass.getSqClass() == image.metaclass) {

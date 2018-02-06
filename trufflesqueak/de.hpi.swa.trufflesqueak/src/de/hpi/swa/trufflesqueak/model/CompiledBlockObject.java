@@ -20,11 +20,11 @@ public class CompiledBlockObject extends CompiledCodeObject {
         this.offset = bytecodeOffset;
         Object[] outerLiterals = outerMethod.getLiterals();
         outerLiterals = Arrays.copyOf(outerLiterals, outerLiterals.length - 1);
-        int baseHdr = ((numArgs & 0xF) << 24) | ((numCopied & 0x3F) << 18);
+        long baseHdr = ((numArgs & 0xF) << 24) | ((numCopied & 0x3F) << 18);
         outerLiterals[0] = baseHdr; // replace header
         outerLiterals[outerLiterals.length - 1] = outerMethod; // last literal is back pointer to method
         this.literals = outerLiterals;
-        this.bytes = Arrays.copyOfRange(code.getBytes(), bytecodeOffset, bytecodeOffset + blockSize);
+        this.bytes = Arrays.copyOfRange(code.getBytes(), bytecodeOffset, (bytecodeOffset + blockSize));
         decodeHeader();
     }
 

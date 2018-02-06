@@ -2,6 +2,7 @@ package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags;
@@ -10,6 +11,7 @@ import com.oracle.truffle.api.nodes.LoopNode;
 
 import de.hpi.swa.trufflesqueak.exceptions.Returns.LocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
+import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
@@ -25,8 +27,10 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
     @Children private AbstractBytecodeNode[] bytecodeNodes;
     @Child private HandleLocalReturnNode handleLocalReturnNode;
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
+    @Child private HandleNonVirtualReturnNode handleNonVirtualReturnNode;
     @Child private FrameSlotReadNode instructionPointerReadNode;
     @Child private FrameSlotWriteNode instructionPointerWriteNode;
+    @CompilationFinal private ContextObject context;
 
     public static ExecuteContextNode create(CompiledCodeObject code) {
         return new ExecuteContextNode(code);
@@ -38,6 +42,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
         CompilerAsserts.compilationConstant(bytecodeNodes.length);
         handleLocalReturnNode = HandleLocalReturnNode.create(code);
         handleNonLocalReturnNode = HandleNonLocalReturnNode.create(code);
+        handleNonVirtualReturnNode = HandleNonVirtualReturnNode.create(code);
         instructionPointerReadNode = FrameSlotReadNode.create(code.instructionPointerSlot);
         instructionPointerWriteNode = FrameSlotWriteNode.create(code.instructionPointerSlot);
     }
@@ -50,13 +55,16 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
             return handleLocalReturnNode.executeHandle(frame, lr);
         } catch (NonLocalReturn nlr) {
             return handleNonLocalReturnNode.executeHandle(frame, nlr);
+        } catch (NonVirtualReturn nvr) {
+            return handleNonVirtualReturnNode.executeHandle(frame, nvr);
         }
     }
 
     public Object executeNonVirtualized(VirtualFrame frame, ContextObject newContext) {
+        context = newContext;
         assert newContext.getCodeObject() == FrameAccess.getMethod(frame);
         try {
-            int initialPC = newContext.getInstructionPointer();
+            long initialPC = newContext.getInstructionPointer();
             if (initialPC == 0) {
                 startBytecode(frame);
             } else {
@@ -69,6 +77,8 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
             return handleLocalReturnNode.executeHandle(frame, lr);
         } catch (NonLocalReturn nlr) {
             return handleNonLocalReturnNode.executeHandle(frame, nlr);
+        } catch (NonVirtualReturn nvr) {
+            return handleNonVirtualReturnNode.executeHandle(frame, nvr);
         }
     }
 
@@ -79,11 +89,15 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
     protected void startBytecode(VirtualFrame frame) {
         int pc = 0;
         int backJumpCounter = 0;
+        AbstractBytecodeNode node = bytecodeNodes[pc];
         try {
             while (pc >= 0) {
                 CompilerAsserts.partialEvaluationConstant(pc);
-                instructionPointerWriteNode.executeWrite(frame, pc);
-                AbstractBytecodeNode node = bytecodeNodes[pc];
+                if (context != null) {
+                    context.setInstructionPointer(pc);
+                } else {
+                    instructionPointerWriteNode.executeWrite(frame, (long) pc);
+                }
                 if (node instanceof ConditionalJumpNode) {
                     ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
                     boolean condition = jumpNode.executeCondition(frame);
@@ -97,6 +111,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
                             }
                         }
                         pc = successor;
+                        node = bytecodeNodes[pc];
                         continue;
                     } else {
                         int successor = jumpNode.getNoJumpSuccessor();
@@ -108,6 +123,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
                             }
                         }
                         pc = successor;
+                        node = bytecodeNodes[pc];
                         continue;
                     }
                 } else if (node instanceof UnconditionalJumpNode) {
@@ -119,13 +135,20 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
                         }
                     }
                     pc = successor;
+                    node = bytecodeNodes[pc];
                     continue;
                 } else {
                     pc = node.executeInt(frame);
+                    node = bytecodeNodes[pc];
                     continue;
                 }
             }
         } finally {
+            if (context != null) {
+                context.setInstructionPointer(node.getIndex() + node.getNumBytecodes());
+            } else {
+                instructionPointerWriteNode.executeWrite(frame, (long) (node.getIndex() + node.getNumBytecodes()));
+            }
             assert backJumpCounter >= 0;
             LoopNode.reportLoopCount(this, backJumpCounter);
         }
@@ -134,11 +157,20 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
     /*
      * Non-optimized version of startBytecode that is used to resume contexts.
      */
-    protected void resumeBytecode(VirtualFrame frame, int initialPC) {
-        int pc = initialPC;
+    protected void resumeBytecode(VirtualFrame frame, long initialPC) {
+        int pc = (int) initialPC;
+        AbstractBytecodeNode node = bytecodeNodes[pc];
         while (pc >= 0) {
-            instructionPointerWriteNode.executeWrite(frame, pc);
-            pc = bytecodeNodes[pc].executeInt(frame);
+            try {
+                pc = node.executeInt(frame);
+                node = bytecodeNodes[pc];
+            } finally {
+                if (context != null) {
+                    context.setInstructionPointer(node.getIndex() + node.getNumBytecodes());
+                } else {
+                    instructionPointerWriteNode.executeWrite(frame, (long) (node.getIndex() + node.getNumBytecodes()));
+                }
+            }
         }
     }
 

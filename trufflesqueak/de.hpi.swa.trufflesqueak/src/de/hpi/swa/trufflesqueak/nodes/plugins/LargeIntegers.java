@@ -37,16 +37,6 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        protected int add(int a, int b) {
-            return Math.addExact(a, b);
-        }
-
-        @Specialization
-        protected Number addOverflow(int a, int b) {
-            return reduceIfPossible((long) a + (long) b);
-        }
-
-        @Specialization(rewriteOn = ArithmeticException.class)
         protected long add(long a, long b) {
             return Math.addExact(a, b);
         }
@@ -70,24 +60,13 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(rewriteOn = ArithmeticException.class)
-        protected int sub(int a, int b) {
-            return Math.subtractExact(a, b);
-        }
-
-        @Specialization(rewriteOn = ArithmeticException.class)
-        protected int subInt(long a, long b) {
-            return Math.toIntExact(Math.subtractExact(a, b));
-        }
-
-        @Specialization(rewriteOn = ArithmeticException.class)
         protected long sub(long a, long b) {
             return Math.subtractExact(a, b);
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
         @TruffleBoundary
-        protected int subInt(BigInteger a, BigInteger b) {
+        protected long subInt(BigInteger a, BigInteger b) {
             return a.subtract(b).intValueExact();
         }
 
@@ -114,11 +93,6 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     public static abstract class PrimMultiplyNode extends AbstractPrimitiveNode {
         public PrimMultiplyNode(CompiledMethodObject method) {
             super(method);
-        }
-
-        @Specialization(rewriteOn = ArithmeticException.class)
-        protected int mul(int a, int b) {
-            return Math.multiplyExact(a, b);
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
@@ -161,11 +135,6 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected int bitAnd(int receiver, int arg) {
-            return receiver & arg;
-        }
-
-        @Specialization
         protected long bitAnd(long receiver, long arg) {
             return receiver & arg;
         }
@@ -182,11 +151,6 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     public static abstract class PrimBitOrNode extends AbstractPrimitiveNode {
         public PrimBitOrNode(CompiledMethodObject method) {
             super(method);
-        }
-
-        @Specialization
-        protected int bitOr(int receiver, int arg) {
-            return receiver | arg;
         }
 
         @Specialization
@@ -212,73 +176,51 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"arg <= 0"})
-        protected int bitShiftRightInt(int receiver, int arg) {
-            return receiver >> -arg;
-        }
-
-        @Specialization(guards = {"arg <= 0"}, rewriteOn = ArithmeticException.class)
-        protected int bitShiftRightInt(long receiver, int arg) {
-            return Math.toIntExact(receiver >> -arg);
-        }
-
-        @Specialization(guards = {"arg <= 0"})
-        protected long bitShiftRightLong(long receiver, int arg) {
+        protected long bitShiftRightLong(long receiver, long arg) {
             return receiver >> -arg;
         }
 
         @Specialization(guards = {"arg <= 0"}, rewriteOn = ArithmeticException.class)
         @TruffleBoundary
-        protected int bitShiftRightInt(BigInteger receiver, int arg) {
-            return receiver.shiftRight(-arg).intValueExact();
-        }
-
-        @Specialization(guards = {"arg <= 0"}, rewriteOn = ArithmeticException.class)
-        @TruffleBoundary
-        protected long bitShiftRightLong(BigInteger receiver, int arg) {
-            return receiver.shiftRight(-arg).longValueExact();
+        protected long bitShiftRightLong(BigInteger receiver, long arg) {
+            return receiver.shiftRight((int) -arg).longValueExact();
         }
 
         @Specialization(guards = {"arg <= 0"})
         @TruffleBoundary
-        protected BigInteger bitShiftRightBig(BigInteger receiver, int arg) {
-            return receiver.shiftRight(-arg);
+        protected BigInteger bitShiftRightBig(BigInteger receiver, long arg) {
+            return receiver.shiftRight((int) -arg);
         }
 
         @Specialization(guards = {"arg > 0"}, rewriteOn = ArithmeticException.class)
         @TruffleBoundary
-        protected int bitShiftLeftInt(BigInteger receiver, int arg) {
-            return receiver.shiftLeft(arg).intValueExact();
-        }
-
-        @Specialization(guards = {"arg > 0"}, rewriteOn = ArithmeticException.class)
-        @TruffleBoundary
-        protected long bitShiftLeftLong(BigInteger receiver, int arg) {
-            return receiver.shiftLeft(arg).longValueExact();
+        protected long bitShiftLeftLong(BigInteger receiver, long arg) {
+            return receiver.shiftLeft((int) arg).longValueExact();
         }
 
         @Specialization(guards = {"arg > 0"})
         @TruffleBoundary
-        protected BigInteger bitShiftLeft(BigInteger receiver, int arg) {
-            return receiver.shiftLeft(arg);
+        protected BigInteger bitShiftLeft(BigInteger receiver, long arg) {
+            return receiver.shiftLeft((int) arg);
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        protected long bitShiftNativeLong(NativeObject receiver, int arg) {
+        protected long bitShiftNativeLong(NativeObject receiver, long arg) {
             return shiftNative(receiver, arg).longValueExact();
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
         @TruffleBoundary
-        protected BigInteger bitShiftNativeBig(NativeObject receiver, int arg) {
+        protected BigInteger bitShiftNativeBig(NativeObject receiver, long arg) {
             return shiftNative(receiver, arg);
         }
 
-        private BigInteger shiftNative(NativeObject receiver, int arg) {
+        private BigInteger shiftNative(NativeObject receiver, long arg) {
             BigInteger integer = normalizeNode.normalizeBig(receiver);
             if (arg < 0) {
-                return integer.shiftRight(-arg);
+                return integer.shiftRight((int) -arg);
             } else {
-                return integer.shiftLeft(arg);
+                return integer.shiftLeft((int) arg);
             }
         }
     }
@@ -294,18 +236,13 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected int normalizeInt(int o) {
-            return o;
-        }
-
-        @Specialization
         protected long normalizeLong(long o) {
             return o;
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
         @TruffleBoundary
-        protected int normalizeInt(BigInteger o) {
+        protected long normalizeInt(BigInteger o) {
             return o.intValueExact();
         }
 
@@ -322,7 +259,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        protected int normalizeInt(NativeObject o) {
+        protected long normalizeInt(NativeObject o) {
             return bigIntFromNative(o).intValueExact();
         }
 

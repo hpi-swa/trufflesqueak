@@ -69,10 +69,10 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        protected void signalAtMilliseconds(BaseSqueakObject semaphore, int msTime) {
+        protected void signalAtMilliseconds(BaseSqueakObject semaphore, long msTime) {
             if (semaphore.isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassSemaphore)) {
                 code.image.registerSemaphore(semaphore, SPECIAL_OBJECT_INDEX.TheTimerSemaphore);
-                code.image.interrupt.nextWakeupTick(msTime);
+                code.image.interrupt.nextWakeupTick((int) msTime);
             } else {
                 code.image.registerSemaphore(code.image.nil, SPECIAL_OBJECT_INDEX.TheTimerSemaphore);
                 code.image.interrupt.nextWakeupTick(0);
@@ -156,7 +156,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected BaseSqueakObject get(BaseSqueakObject receiver, @SuppressWarnings("unused") int numBytes) {
+        protected BaseSqueakObject get(BaseSqueakObject receiver, @SuppressWarnings("unused") long numBytes) {
             // TODO: do something with numBytes
             return receiver;
         }
@@ -200,7 +200,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected BaseSqueakObject doSignal(BaseSqueakObject receiver, BaseSqueakObject semaphore, int msTime) {
+        protected BaseSqueakObject doSignal(BaseSqueakObject receiver, BaseSqueakObject semaphore, long msTime) {
             signalAtMilliseconds(semaphore, msTime);
             return receiver;
         }
@@ -285,7 +285,8 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         @TruffleBoundary
-        protected Object getSystemAttribute(@SuppressWarnings("unused") Object image, int index) {
+        protected Object getSystemAttribute(@SuppressWarnings("unused") Object image, long longIndex) {
+            int index = (int) longIndex;
             if (index == 0) {
                 String separator = System.getProperty("file.separator");
                 return code.image.wrap(System.getProperty("java.home") + separator + "bin" + separator + "java");
@@ -399,7 +400,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected BaseSqueakObject doSignal(BaseSqueakObject receiver, BaseSqueakObject semaphore, long usecsUTC) {
-            int msTime = (int) (usecsUTC / 1000 + AbstractClockPrimitiveNode.EPOCH_DELTA_MICROSECONDS - code.image.startUpMillis);
+            long msTime = usecsUTC / 1000 + AbstractClockPrimitiveNode.EPOCH_DELTA_MICROSECONDS - code.image.startUpMillis;
             signalAtMilliseconds(semaphore, msTime);
             return receiver;
         }
@@ -414,14 +415,14 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object doTwoArguments(Object[] rcvrAndArgs) {
-            int numRcvrAndArgs = rcvrAndArgs.length;
+            long numRcvrAndArgs = rcvrAndArgs.length;
             if (numRcvrAndArgs == 1) {
-                int[] vmParameters = new int[71];
+                long[] vmParameters = new long[71];
                 return code.image.wrap(vmParameters);
             }
-            int index;
+            long index;
             try {
-                index = (int) rcvrAndArgs[1];
+                index = (long) rcvrAndArgs[1];
             } catch (ClassCastException e) {
                 throw new PrimitiveFailed();
             }

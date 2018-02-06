@@ -27,7 +27,7 @@ public class TruffleSqueakMain extends AbstractLanguageLauncher {
             executeImage(args);
         } else {
             JFileChooser squeakImageChooser = new JFileChooser();
-            int result = squeakImageChooser.showOpenDialog(null);
+            long result = squeakImageChooser.showOpenDialog(null);
             if (result == JFileChooser.APPROVE_OPTION) {
                 executeImage(squeakImageChooser.getSelectedFile().getAbsolutePath());
             }

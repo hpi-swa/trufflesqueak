@@ -1,5 +1,7 @@
 package de.hpi.swa.trufflesqueak.util;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+
 import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
@@ -36,10 +38,9 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.PopIntoTemporaryL
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.StoreIntoRemoteTempNode;
 
 public class SqueakBytecodeDecoder {
-
-    private final CompiledCodeObject code;
+    @CompilationFinal private final CompiledCodeObject code;
+    @CompilationFinal(dimensions = 1) private final byte[] bc;
     private int currentIndex = 0;
-    private final byte[] bc;
 
     public SqueakBytecodeDecoder(CompiledCodeObject code) {
         this.code = code;
@@ -104,13 +105,13 @@ public class SqueakBytecodeDecoder {
             case 115:
                 return new PushConstantNode(code, index, code.image.nil);
             case 116:
-                return new PushConstantNode(code, index, -1);
+                return new PushConstantNode(code, index, -1L);
             case 117:
-                return new PushConstantNode(code, index, 0);
+                return new PushConstantNode(code, index, 0L);
             case 118:
-                return new PushConstantNode(code, index, 1);
+                return new PushConstantNode(code, index, 1L);
             case 119:
-                return new PushConstantNode(code, index, 2);
+                return new PushConstantNode(code, index, 2L);
             case 120:
                 return ReturnReceiverNode.create(code, index);
             case 121:

@@ -18,6 +18,7 @@ import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.MUTEX;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SEMAPHORE;
@@ -127,7 +128,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object perform(VirtualFrame frame, Object[] rcvrAndArgs) {
-            int numRcvrAndArgs = rcvrAndArgs.length;
+            long numRcvrAndArgs = rcvrAndArgs.length;
             if (numRcvrAndArgs != 2 && numRcvrAndArgs != 3) {
                 throw new PrimitiveFailed();
             }
@@ -195,7 +196,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "isSemaphore(receiver)")
         protected BaseSqueakObject doWait(VirtualFrame frame, PointersObject receiver) {
-            int excessSignals = (int) receiver.at0(SEMAPHORE.EXCESS_SIGNALS);
+            long excessSignals = (long) receiver.at0(SEMAPHORE.EXCESS_SIGNALS);
             if (excessSignals > 0)
                 receiver.atput0(SEMAPHORE.EXCESS_SIGNALS, excessSignals - 1);
             else {
@@ -284,11 +285,6 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        boolean equivalent(int a, int b) {
-            return a == b;
-        }
-
-        @Specialization
         boolean equivalent(long a, long b) {
             return a == b;
         }
@@ -301,6 +297,11 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         @TruffleBoundary
         boolean equivalent(BigInteger a, BigInteger b) {
+            return a.equals(b);
+        }
+
+        @Specialization
+        boolean equivalent(NativeObject a, NativeObject b) {
             return a.equals(b);
         }
 
@@ -321,7 +322,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected ClassObject lookup(Object arg) {
+        protected ClassObject doClass(Object arg) {
             return node.executeLookup(arg);
         }
     }
@@ -549,7 +550,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected BaseSqueakObject doRelinquish(VirtualFrame frame, BaseSqueakObject receiver, int timeMicroseconds) {
+        protected BaseSqueakObject doRelinquish(VirtualFrame frame, BaseSqueakObject receiver, long timeMicroseconds) {
             code.image.interrupt.executeCheck(frame);
             try {
                 TimeUnit.MICROSECONDS.sleep(timeMicroseconds);
@@ -650,7 +651,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object returnValue(@SuppressWarnings("unused") Object receiver) {
-            return -1;
+            return -1L;
         }
     }
 
@@ -663,7 +664,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object returnValue(@SuppressWarnings("unused") Object receiver) {
-            return 0;
+            return 0L;
         }
     }
 
@@ -676,7 +677,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object returnValue(@SuppressWarnings("unused") Object receiver) {
-            return 1;
+            return 1L;
         }
     }
 
@@ -689,7 +690,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object returnValue(@SuppressWarnings("unused") Object receiver) {
-            return 2;
+            return 2L;
         }
     }
 
@@ -697,11 +698,11 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     public static abstract class PrimQuickReturnReceiverVariableNode extends AbstractPrimitiveNode {
         private @Child ObjectAtNode receiverVariableNode;
 
-        public static PrimQuickReturnReceiverVariableNode create(CompiledMethodObject method, int variableIndex) {
+        public static PrimQuickReturnReceiverVariableNode create(CompiledMethodObject method, long variableIndex) {
             return PrimQuickReturnReceiverVariableNodeFactory.create(method, variableIndex, new SqueakNode[0]);
         }
 
-        protected PrimQuickReturnReceiverVariableNode(CompiledMethodObject method, int variableIndex) {
+        protected PrimQuickReturnReceiverVariableNode(CompiledMethodObject method, long variableIndex) {
             super(method);
             receiverVariableNode = ObjectAtNode.create(variableIndex, ReceiverNode.create(method));
         }

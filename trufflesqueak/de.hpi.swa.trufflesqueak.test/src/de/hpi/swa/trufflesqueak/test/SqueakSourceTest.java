@@ -8,7 +8,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 public class SqueakSourceTest extends AbstractSqueakTestCase {
     @Test
     public void testSource() {
-        Object[] literals = new Object[]{14548994, image.nil, image.nil}; // header with numTemp=55
+        Object[] literals = new Object[]{14548994L, image.nil, image.nil}; // header with numTemp=55
         CompiledCodeObject code = makeMethod(literals, 0x70, 0x68, 0x10, 0x8F, 0x10, 0x00, 0x02, 0x10, 0x7D, 0xC9, 0x7C);
         CharSequence source = CompiledCodeObjectPrinter.getString(code);
         //@formatter:off
@@ -26,7 +26,7 @@ public class SqueakSourceTest extends AbstractSqueakTestCase {
 
     @Test
     public void testSourceAllBytecodes() {
-        Object[] literals = new Object[]{17104899, 21, 42, 63};
+        Object[] literals = new Object[]{17104899L, 21, 42, 63};
         CompiledCodeObject code = makeMethod(literals,
         //@formatter:off
             15, 31, 63, 95, 96, 97, 98, 99, 103, 111, 112, 113, 114, 115, 116,

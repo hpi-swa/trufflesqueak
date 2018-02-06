@@ -47,7 +47,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object makePoint(int xPos, int yPos) {
+        protected Object makePoint(long xPos, long yPos) {
             return code.image.newPoint(xPos, yPos);
         }
     }
@@ -60,9 +60,14 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object literalAt(CompiledCodeObject receiver, int index) {
+        protected Object literalAt(CompiledCodeObject receiver, long index) {
             // Use getLiterals() instead of getLiteral(i), the latter skips the header.
-            return receiver.getLiterals()[index - 1];
+            Object object = receiver.getLiterals()[(int) (index - 1)];
+
+            if (object instanceof Integer) {
+                int i = 1;
+            }
+            return object;
         }
     }
 
@@ -74,7 +79,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object setLiteral(CompiledCodeObject code, int index, Object value) {
+        protected Object setLiteral(CompiledCodeObject code, long index, Object value) {
             code.setLiteral(index - 1, value);
             return value;
         }
@@ -114,7 +119,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(limit = "NEW_CACHE_SIZE", guards = {"receiver == cachedReceiver"}, assumptions = {"classFormatStable"})
-        protected BaseSqueakObject newWithArgDirect(ClassObject receiver, int size,
+        protected BaseSqueakObject newWithArgDirect(ClassObject receiver, long size,
                         @Cached("receiver") ClassObject cachedReceiver,
                         @Cached("cachedReceiver.getClassFormatStable()") Assumption classFormatStable) {
             if (!cachedReceiver.isVariable() && size != 0) {
@@ -127,7 +132,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(replaces = "newWithArgDirect")
-        protected BaseSqueakObject newWithArg(ClassObject receiver, int size) {
+        protected BaseSqueakObject newWithArg(ClassObject receiver, long size) {
             if (!receiver.isVariable() && size != 0) {
                 throw new PrimitiveFailed();
             }
@@ -206,7 +211,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         public abstract Object executePrimitive(VirtualFrame frame);
 
         @Specialization
-        protected int at(char receiver, int idx) {
+        protected long at(char receiver, long idx) {
             if (idx == 1) {
                 return receiver;
             } else {
@@ -215,18 +220,18 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object at(LargeIntegerObject receiver, int idx) {
+        protected Object at(LargeIntegerObject receiver, long idx) {
             return receiver.at0(idx - 1);
         }
 
         @Specialization
         @TruffleBoundary
-        protected long intAt(BigInteger receiver, int idx) {
+        protected long intAt(BigInteger receiver, long idx) {
             return LargeIntegerObject.byteAt0(receiver, idx - 1);
         }
 
         @Specialization
-        protected long at(double receiver, int idx) {
+        protected long at(double receiver, long idx) {
             long doubleBits = Double.doubleToLongBits(receiver);
             if (idx == 1) {
                 return 0xFFFFFFFF & (doubleBits >> 32);
@@ -237,38 +242,33 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        @Specialization(rewriteOn = ArithmeticException.class)
-        protected int intAt(NativeObject receiver, int idx) throws ArithmeticException {
-            return Math.toIntExact(receiver.getNativeAt0(idx - 1));
-        }
-
         @Specialization
-        protected long longAt(NativeObject receiver, int idx) {
+        protected long longAt(NativeObject receiver, long idx) {
             return receiver.getNativeAt0(idx - 1);
         }
 
         @Specialization
-        protected Object at(BlockClosureObject receiver, int idx) {
+        protected Object at(BlockClosureObject receiver, long idx) {
             return receiver.at0(idx - 1);
         }
 
         @Specialization
-        protected Object at(CompiledCodeObject receiver, int idx) {
+        protected Object at(CompiledCodeObject receiver, long idx) {
             return receiver.at0(idx - 1);
         }
 
         @Specialization
-        protected Object at(EmptyObject receiver, int idx) {
+        protected Object at(EmptyObject receiver, long idx) {
             return receiver.at0(idx - 1);
         }
 
         @Specialization
-        protected Object at(AbstractPointersObject receiver, int idx) {
+        protected Object at(AbstractPointersObject receiver, long idx) {
             return receiver.at0(idx - 1);
         }
 
         @Specialization
-        protected Object at(BaseSqueakObject receiver, int idx) {
+        protected Object at(BaseSqueakObject receiver, long idx) {
             return receiver.at0(idx - 1);
         }
     }
@@ -292,67 +292,61 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         public abstract Object executePrimitive(VirtualFrame frame);
 
         @Specialization
-        protected char atput(LargeIntegerObject receiver, int idx, char value) {
+        protected char atput(LargeIntegerObject receiver, long idx, char value) {
             receiver.atput0(idx - 1, value);
             return value;
         }
 
         @Specialization
-        protected int atput(LargeIntegerObject receiver, int idx, int value) {
+        protected long atput(LargeIntegerObject receiver, long idx, long value) {
             receiver.atput0(idx - 1, value);
             return value;
         }
 
         @Specialization
-        protected char atput(NativeObject receiver, int idx, char value) {
+        protected char atput(NativeObject receiver, long idx, char value) {
             receiver.setNativeAt0(idx - 1, value);
             return value;
         }
 
         @Specialization
-        protected int atput(NativeObject receiver, int idx, int value) {
+        protected long atput(NativeObject receiver, long idx, long value) {
             receiver.setNativeAt0(idx - 1, value);
             return value;
         }
 
         @Specialization
-        protected long atput(NativeObject receiver, int idx, long value) {
-            receiver.setNativeAt0(idx - 1, value);
-            return value;
-        }
-
-        @Specialization
-        protected Object atput(BlockClosureObject receiver, int idx, Object value) {
+        protected Object atput(BlockClosureObject receiver, long idx, Object value) {
             receiver.atput0(idx - 1, value);
             return value;
         }
 
         @Specialization
-        protected Object atput(ClassObject receiver, int idx, Object value) {
+        protected Object atput(ClassObject receiver, long idx, Object value) {
             receiver.atput0(idx - 1, value);
             return value;
         }
 
         @Specialization
-        protected Object atput(CompiledCodeObject receiver, int idx, Object value) {
+        protected Object atput(CompiledCodeObject receiver, long idx, Object value) {
             receiver.atput0(idx - 1, value);
             return value;
         }
 
         @SuppressWarnings("unused")
         @Specialization
-        protected Object atput(EmptyObject receiver, int idx, Object value) {
+        protected Object atput(EmptyObject receiver, long idx, Object value) {
             throw new PrimitiveFailed();
         }
 
         @Specialization
-        protected Object atput(AbstractPointersObject receiver, int idx, Object value) {
+        protected Object atput(AbstractPointersObject receiver, long idx, Object value) {
             receiver.atput0(idx - 1, value);
             return value;
         }
 
         @Specialization
-        protected Object atput(BaseSqueakObject receiver, int idx, Object value) {
+        protected Object atput(BaseSqueakObject receiver, long idx, Object value) {
             receiver.atput0(idx - 1, value);
             return value;
         }
@@ -366,37 +360,32 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected int hash(char obj) {
+        protected long hash(char obj) {
             return obj;
         }
 
         @Specialization
-        protected int hash(int obj) {
+        protected long hash(long obj) {
             return obj;
-        }
-
-        @Specialization
-        protected int hash(long obj) {
-            return (int) obj;
         }
 
         @Specialization
         @TruffleBoundary
-        protected int hash(BigInteger obj) {
+        protected long hash(BigInteger obj) {
             return obj.hashCode();
         }
 
         @Specialization
-        protected int hash(BaseSqueakObject obj) {
+        protected long hash(BaseSqueakObject obj) {
             return obj.squeakHash();
         }
 
         @Specialization
-        protected int hash(boolean obj) {
+        protected long hash(boolean obj) {
             if (obj == code.image.sqTrue) {
-                return 3;
+                return 3L;
             } else {
-                return 2;
+                return 2L;
             }
         }
     }
@@ -409,7 +398,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected BaseSqueakObject store(ContextObject receiver, int value) {
+        protected BaseSqueakObject store(ContextObject receiver, long value) {
             receiver.atput0(CONTEXT.STACKPOINTER, value);
             return receiver;
         }
@@ -463,7 +452,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "isCompiledMethodClass(receiver)")
-        protected BaseSqueakObject newMethod(ClassObject receiver, int bytecodeCount, int header) {
+        protected BaseSqueakObject newMethod(ClassObject receiver, long bytecodeCount, long header) {
             CompiledMethodObject newMethod = (CompiledMethodObject) receiver.newInstance(bytecodeCount);
             newMethod.setHeader(header);
             return newMethod;
@@ -499,7 +488,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected char value(@SuppressWarnings("unused") BaseSqueakObject ignored, int value) {
+        protected char value(@SuppressWarnings("unused") BaseSqueakObject ignored, long value) {
             return (char) value;
         }
     }
@@ -513,7 +502,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object value(BaseSqueakObject receiver, int index) {
+        protected Object value(BaseSqueakObject receiver, long index) {
             try {
                 return receiver.at0(index - 1);
             } catch (IndexOutOfBoundsException e) {
@@ -531,7 +520,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object value(BaseSqueakObject receiver, int index, Object value) {
+        protected Object value(BaseSqueakObject receiver, long index, Object value) {
             try {
                 receiver.atput0(index - 1, value);
                 return value;

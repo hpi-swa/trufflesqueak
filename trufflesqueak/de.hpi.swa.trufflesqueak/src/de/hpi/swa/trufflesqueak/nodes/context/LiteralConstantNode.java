@@ -8,7 +8,7 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 public class LiteralConstantNode extends SqueakNode {
     @Child private SqueakNode literalNode;
 
-    public LiteralConstantNode(CompiledCodeObject code, int literalIndex) {
+    public LiteralConstantNode(CompiledCodeObject code, long literalIndex) {
         super();
         literalNode = new MethodLiteralNode(code, literalIndex);
     }

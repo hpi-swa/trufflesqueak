@@ -96,25 +96,25 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object replace(LargeIntegerObject rcvr, int start, int stop, LargeIntegerObject repl, int replStart) {
+        protected Object replace(LargeIntegerObject rcvr, long start, long stop, LargeIntegerObject repl, long replStart) {
             return replaceInLarge(rcvr, start, stop, repl.getBytes(), replStart);
         }
 
         @Specialization
-        protected Object replace(LargeIntegerObject rcvr, int start, int stop, NativeObject repl, int replStart) {
+        protected Object replace(LargeIntegerObject rcvr, long start, long stop, NativeObject repl, long replStart) {
             return replaceInLarge(rcvr, start, stop, repl.getBytes(), replStart);
         }
 
         @Specialization
         @TruffleBoundary
-        protected Object replace(LargeIntegerObject rcvr, int start, int stop, BigInteger repl, int replStart) {
+        protected Object replace(LargeIntegerObject rcvr, long start, long stop, BigInteger repl, long replStart) {
             return replaceInLarge(rcvr, start, stop, LargeIntegerObject.getSqueakBytes(repl), replStart);
         }
 
-        private static Object replaceInLarge(LargeIntegerObject rcvr, int start, int stop, byte[] replBytes, int replStart) {
+        private static Object replaceInLarge(LargeIntegerObject rcvr, long start, long stop, byte[] replBytes, long replStart) {
             byte[] rcvrBytes = rcvr.getBytes();
-            int repOff = replStart - start;
-            for (int i = start - 1; i < stop; i++) {
+            int repOff = (int) (replStart - start);
+            for (int i = (int) (start - 1); i < stop; i++) {
                 rcvrBytes[i] = replBytes[repOff + i];
             }
             rcvr.setBytes(rcvrBytes);
@@ -122,19 +122,19 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object replace(NativeObject rcvr, int start, int stop, LargeIntegerObject repl, int replStart) {
-            int repOff = replStart - start;
+        protected Object replace(NativeObject rcvr, long start, long stop, LargeIntegerObject repl, long replStart) {
+            int repOff = (int) (replStart - start);
             byte[] replBytes = repl.getBytes();
-            for (int i = start - 1; i < stop; i++) {
+            for (int i = (int) (start - 1); i < stop; i++) {
                 rcvr.setNativeAt0(i, replBytes[repOff + i]);
             }
             return rcvr;
         }
 
         @Specialization
-        protected Object replace(NativeObject rcvr, int start, int stop, NativeObject repl, int replStart) {
-            int repOff = replStart - start;
-            for (int i = start - 1; i < stop; i++) {
+        protected Object replace(NativeObject rcvr, long start, long stop, NativeObject repl, long replStart) {
+            int repOff = (int) (replStart - start);
+            for (int i = (int) (start - 1); i < stop; i++) {
                 rcvr.setNativeAt0(i, repl.getNativeAt0(repOff + i));
             }
             return rcvr;
@@ -142,19 +142,19 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         @TruffleBoundary
-        protected Object replace(NativeObject rcvr, int start, int stop, BigInteger repl, int replStart) {
-            int repOff = replStart - start;
+        protected Object replace(NativeObject rcvr, long start, long stop, BigInteger repl, long replStart) {
+            int repOff = (int) (replStart - start);
             byte[] bytes = LargeIntegerObject.getSqueakBytes(repl);
-            for (int i = start - 1; i < stop; i++) {
+            for (int i = (int) (start - 1); i < stop; i++) {
                 rcvr.setNativeAt0(i, bytes[repOff + i]);
             }
             return rcvr;
         }
 
         @Specialization
-        protected Object replace(ListObject rcvr, int start, int stop, ListObject repl, int replStart) {
-            int repOff = replStart - start;
-            for (int i = start - 1; i < stop; i++) {
+        protected Object replace(ListObject rcvr, long start, long stop, ListObject repl, long replStart) {
+            long repOff = replStart - start;
+            for (int i = (int) (start - 1); i < stop; i++) {
                 rcvr.atput0(i, repl.at0(repOff + i));
             }
             return rcvr;
@@ -227,14 +227,14 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected BaseSqueakObject get(BaseSqueakObject receiver, int left, int right, int top, int bottom) {
+        protected BaseSqueakObject get(BaseSqueakObject receiver, long left, long right, long top, long bottom) {
             if (receiver != code.image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.TheDisplay)) {
                 return code.image.nil;
             }
             if (!((left <= right) && (top <= bottom))) {
                 return code.image.nil;
             }
-            code.image.display.drawRect(left, right, top, bottom);
+            code.image.display.drawRect((int) left, (int) right, (int) top, (int) bottom);
             return receiver;
         }
     }

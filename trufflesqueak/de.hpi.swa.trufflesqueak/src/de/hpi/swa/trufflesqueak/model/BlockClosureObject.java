@@ -27,7 +27,7 @@ public class BlockClosureObject extends BaseSqueakObject {
     @CompilationFinal private ContextObject outerContext;
     @CompilationFinal private FrameMarker outerMarker;
     @CompilationFinal private CompiledBlockObject block;
-    @CompilationFinal private int pc = -1;
+    @CompilationFinal private long pc = -1;
     @CompilationFinal private int numArgs = -1;
     @CompilationFinal private RootCallTarget callTarget;
     @CompilationFinal private final CyclicAssumption callTargetStable = new CyclicAssumption("Compiled method assumption");
@@ -77,14 +77,14 @@ public class BlockClosureObject extends BaseSqueakObject {
         return outerContext;
     }
 
-    public int getPC() {
+    public long getPC() {
         if (pc == -1) {
             pc = block.getInitialPC() + block.getOffset();
         }
         return pc;
     }
 
-    private int getNumArgs() {
+    private long getNumArgs() {
         if (numArgs == -1) {
             numArgs = block.getNumArgs();
         }
@@ -92,8 +92,9 @@ public class BlockClosureObject extends BaseSqueakObject {
     }
 
     @Override
-    public Object at0(int i) {
-        switch (i) {
+    public Object at0(long longIndex) {
+        int index = (int) longIndex;
+        switch (index) {
             case BLOCK_CLOSURE.OUTER_CONTEXT:
                 return getOrPrepareContext();
             case BLOCK_CLOSURE.INITIAL_PC:
@@ -101,24 +102,25 @@ public class BlockClosureObject extends BaseSqueakObject {
             case BLOCK_CLOSURE.ARGUMENT_COUNT:
                 return getNumArgs();
             default:
-                return copied[i - BLOCK_CLOSURE.FIRST_COPIED_VALUE];
+                return copied[index - BLOCK_CLOSURE.FIRST_COPIED_VALUE];
         }
     }
 
     @Override
-    public void atput0(int i, Object obj) {
-        switch (i) {
+    public void atput0(long longIndex, Object obj) {
+        int index = (int) longIndex;
+        switch (index) {
             case BLOCK_CLOSURE.OUTER_CONTEXT:
                 outerContext = (ContextObject) obj;
                 break;
             case BLOCK_CLOSURE.INITIAL_PC:
-                pc = (int) obj;
+                pc = ((Long) obj).intValue();
                 break;
             case BLOCK_CLOSURE.ARGUMENT_COUNT:
-                numArgs = (int) obj;
+                numArgs = ((Long) obj).intValue();
                 break;
             default:
-                copied[i - BLOCK_CLOSURE.FIRST_COPIED_VALUE] = obj;
+                copied[index - BLOCK_CLOSURE.FIRST_COPIED_VALUE] = obj;
         }
     }
 
@@ -181,7 +183,7 @@ public class BlockClosureObject extends BaseSqueakObject {
         if (block == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             CompiledMethodObject code = (CompiledMethodObject) getOrPrepareContext().at0(CONTEXT.METHOD);
-            int offset = pc - code.getInitialPC();
+            int offset = (int) pc - code.getInitialPC();
             int j = code.getBytes()[offset - 2];
             int k = code.getBytes()[offset - 1];
             int blockSize = (j << 8) | k;

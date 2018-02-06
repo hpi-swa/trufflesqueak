@@ -48,7 +48,7 @@ public final class PushBytecodes {
 
         @Override
         public void executeVoid(VirtualFrame frame) {
-            pushNode.executeWrite(frame, getContextNode.executeGet(frame));
+            pushNode.executeWrite(frame, getContextNode.executeGet(frame, true));
         }
 
         @Override

@@ -24,7 +24,7 @@ public abstract class PeekStackNode extends AbstractStackNode {
     @Specialization(guards = {"isVirtualized(frame)"})
     protected Object doPeekVirtualized(VirtualFrame frame) {
         CompilerDirectives.ensureVirtualizedHere(frame);
-        return readNode.execute(frame, frameStackPointer(frame) - offset);
+        return readNode.execute(frame, (int) frameStackPointer(frame) - offset);
     }
 
     @Specialization(guards = {"!isVirtualized(frame)"})

@@ -13,19 +13,19 @@ import de.hpi.swa.trufflesqueak.nodes.context.stack.AbstractWriteNode;
 
 public abstract class TemporaryWriteNode extends AbstractWriteNode {
     @Child private FrameSlotWriteNode frameSlotWriteNode;
-    @CompilationFinal private final int tempIndex;
+    @CompilationFinal private final long tempIndex;
 
-    public static TemporaryWriteNode create(CompiledCodeObject code, int tempIndex) {
+    public static TemporaryWriteNode create(CompiledCodeObject code, long tempIndex) {
         return TemporaryWriteNodeGen.create(code, tempIndex);
     }
 
-    public TemporaryWriteNode(CompiledCodeObject code, int tempIndex) {
+    public TemporaryWriteNode(CompiledCodeObject code, long tempIndex) {
         super(code);
         this.tempIndex = tempIndex;
         // Perform checks to ensure a correct FrameSlotWriteNode is created, otherwise fail which happens
         // when the decoder is decoding garbage.
         if (0 <= tempIndex && tempIndex <= CONTEXT.MAX_STACK_SIZE) {
-            FrameSlot stackSlot = code.getStackSlot(tempIndex);
+            FrameSlot stackSlot = code.getStackSlot((int) tempIndex);
             if (stackSlot != null) {
                 frameSlotWriteNode = FrameSlotWriteNode.create(stackSlot);
             }

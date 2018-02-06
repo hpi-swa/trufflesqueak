@@ -24,12 +24,12 @@ public class NilObject extends BaseSqueakObject {
     }
 
     @Override
-    public Object at0(int l) {
+    public Object at0(long l) {
         return null;
     }
 
     @Override
-    public void atput0(int idx, Object object) {
+    public void atput0(long idx, Object object) {
     }
 
     @Override
@@ -48,7 +48,7 @@ public class NilObject extends BaseSqueakObject {
     }
 
     @Override
-    public int squeakHash() {
-        return 1;
+    public long squeakHash() {
+        return 1L;
     }
 }

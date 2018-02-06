@@ -27,7 +27,7 @@ public class PutToSleepNode extends AbstractNodeWithCode {
     protected void executePutToSleep(BaseSqueakObject process) {
         CompilerDirectives.transferToInterpreter();
         // Save the given process on the scheduler process list for its priority.
-        int priority = (int) process.at0(PROCESS.PRIORITY);
+        long priority = (long) process.at0(PROCESS.PRIORITY);
         PointersObject scheduler = getSchedulerNode.executeGet();
         ListObject processLists = (ListObject) scheduler.at0(PROCESS_SCHEDULER.PROCESS_LISTS);
         PointersObject processList = (PointersObject) processLists.at0(priority - 1);

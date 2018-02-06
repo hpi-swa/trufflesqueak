@@ -84,15 +84,15 @@ public class ClassObject extends AbstractPointersObject {
     public void fillin(SqueakImageChunk chunk) {
         super.fillin(chunk);
         // initialize the subclasses set
-        setFormat((int) at0(CLASS.FORMAT));
+        setFormat((long) at0(CLASS.FORMAT));
         Object superclass = getSuperclass();
         setSuperclass(superclass != null ? superclass : image.nil);
     }
 
-    public void setFormat(int format) {
+    public void setFormat(long format) {
         super.atput0(CLASS.FORMAT, format);
-        instSpec = (format >> 16) & 0x1f;
-        instanceSize = format & 0xffff;
+        instSpec = (int) ((format >> 16) & 0x1f);
+        instanceSize = (int) (format & 0xffff);
         classFormatStable.invalidate();
     }
 
@@ -135,7 +135,7 @@ public class ClassObject extends AbstractPointersObject {
     }
 
     @Override
-    public void atput0(int idx, Object obj) {
+    public void atput0(long idx, Object obj) {
         if (idx == CLASS.FORMAT) {
             setFormat((int) obj);
         } else if (idx == CLASS.SUPERCLASS) {
@@ -199,8 +199,8 @@ public class ClassObject extends AbstractPointersObject {
         return newInstance(0);
     }
 
-    public BaseSqueakObject newInstance(int extraSize) {
-        int size = instanceSize + extraSize;
+    public BaseSqueakObject newInstance(long extraSize) {
+        int size = instanceSize + ((int) extraSize);
         //@formatter:off
         switch (instSpec) {
             case 0: // empty objects
@@ -234,7 +234,7 @@ public class ClassObject extends AbstractPointersObject {
             case 16: case 17: case 18: case 19: case 20: case 21: case 22: case 23:
                 return new NativeObject(image, this, size, 1);
             default:
-                return new CompiledMethodObject(image, this, extraSize);
+                return new CompiledMethodObject(image, this, (int)extraSize);
         }
         //@formatter:on
     }

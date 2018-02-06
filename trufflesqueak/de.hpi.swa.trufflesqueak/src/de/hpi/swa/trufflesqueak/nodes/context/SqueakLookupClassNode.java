@@ -38,12 +38,6 @@ public abstract class SqueakLookupClassNode extends AbstractNodeWithCode {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected ClassObject squeakClass(int object) {
-        return code.image.smallIntegerClass;
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
     protected ClassObject squeakClass(long object) {
         return code.image.smallIntegerClass;
     }

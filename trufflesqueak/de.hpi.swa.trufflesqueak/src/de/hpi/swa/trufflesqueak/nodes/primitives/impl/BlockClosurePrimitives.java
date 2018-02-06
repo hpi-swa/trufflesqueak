@@ -257,7 +257,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         @Specialization
-        int doSize(ContextObject receiver) {
+        long doSize(ContextObject receiver) {
             return receiver.varsize();
         }
     }

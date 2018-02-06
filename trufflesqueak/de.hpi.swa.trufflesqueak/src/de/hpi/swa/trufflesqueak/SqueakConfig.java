@@ -114,7 +114,7 @@ public class SqueakConfig {
         if (receiver.equals("nil")) {
             return null;
         } else {
-            return Integer.parseInt(receiver);
+            return Long.parseLong(receiver);
         }
     }
 

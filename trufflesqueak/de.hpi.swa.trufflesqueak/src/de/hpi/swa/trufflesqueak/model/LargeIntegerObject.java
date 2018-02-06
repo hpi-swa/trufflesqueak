@@ -39,12 +39,12 @@ public class LargeIntegerObject extends SqueakObject {
     }
 
     @Override
-    public Object at0(int l) {
+    public Object at0(long l) {
         return byteAt0(integer.abs(), l);
     }
 
     @Override
-    public void atput0(int idx, Object object) {
+    public void atput0(long idx, Object object) {
         byte b = (byte) object;
         setBytesNative(byteAtPut0(integer, idx, b));
     }
@@ -87,14 +87,14 @@ public class LargeIntegerObject extends SqueakObject {
         return integer;
     }
 
-    public static long byteAt0(BigInteger receiver, int idx) {
+    public static long byteAt0(BigInteger receiver, long index) {
         byte[] byteArray = receiver.toByteArray();
-        return byteArray[byteArray.length - idx - 1] & 0xFF;
+        return byteArray[byteArray.length - (int) index - 1] & 0xFF;
     }
 
-    public static byte[] byteAtPut0(BigInteger receiver, int idx, long value) {
+    public static byte[] byteAtPut0(BigInteger receiver, long index, long value) {
         byte[] bytes = receiver.toByteArray();
-        bytes[bytes.length - idx - 1] = (byte) value;
+        bytes[bytes.length - (int) index - 1] = (byte) value;
         return bytes;
     }
 

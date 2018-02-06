@@ -21,14 +21,8 @@ public abstract class FrameSlotReadNode extends FrameSlotNode {
     public abstract Object executeRead(Frame frame);
 
     @Specialization(guards = "isInt(frame)")
-    protected int readInt(VirtualFrame frame) {
+    protected long readInt(VirtualFrame frame) {
         return FrameUtil.getIntSafe(frame, slot);
-    }
-
-    @Specialization(guards = "isLong(frame)", rewriteOn = ArithmeticException.class)
-    protected int readLongAsInt(VirtualFrame frame) {
-        long longSafe = FrameUtil.getLongSafe(frame, slot);
-        return Math.toIntExact(longSafe);
     }
 
     @Specialization(guards = "isLong(frame)")

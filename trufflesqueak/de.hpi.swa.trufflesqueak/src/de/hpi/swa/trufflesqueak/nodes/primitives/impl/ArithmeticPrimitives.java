@@ -30,19 +30,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @TruffleBoundary
         protected static final Number reduceIfPossible(BigInteger value) {
-            if (value.bitLength() < Integer.SIZE - 1) {
-                return value.intValue();
-            } else if (value.bitLength() < Long.SIZE - 1) {
+            if (value.bitLength() < Long.SIZE - 1) {
                 return value.longValue();
-            } else {
-                return value;
-            }
-        }
-
-        @TruffleBoundary
-        protected static final Number reduceIfPossible(long value) {
-            if (Integer.MIN_VALUE <= value && value <= Integer.MAX_VALUE) {
-                return (int) value;
             } else {
                 return value;
             }
@@ -65,11 +54,6 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     protected static abstract class PrimLessThanNode extends AbstractArithmeticPrimitiveNode {
         protected PrimLessThanNode(CompiledMethodObject method) {
             super(method);
-        }
-
-        @Specialization
-        protected boolean lt(int a, int b) {
-            return a < b;
         }
 
         @Specialization
@@ -97,11 +81,6 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected boolean gt(int a, int b) {
-            return a > b;
-        }
-
-        @Specialization
         protected boolean gt(long a, long b) {
             return a > b;
         }
@@ -123,11 +102,6 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     protected static abstract class PrimLessOrEqualNode extends AbstractArithmeticPrimitiveNode {
         protected PrimLessOrEqualNode(CompiledMethodObject method) {
             super(method);
-        }
-
-        @Specialization
-        protected boolean le(int a, int b) {
-            return a <= b;
         }
 
         @Specialization
@@ -155,11 +129,6 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected boolean ge(int a, int b) {
-            return a >= b;
-        }
-
-        @Specialization
         protected boolean ge(long a, long b) {
             return a >= b;
         }
@@ -181,11 +150,6 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     protected static abstract class PrimEqualNode extends AbstractArithmeticPrimitiveNode {
         protected PrimEqualNode(CompiledMethodObject method) {
             super(method);
-        }
-
-        @Specialization
-        protected boolean eq(int receiver, int argument) {
-            return receiver == argument;
         }
 
         @Specialization
@@ -218,11 +182,6 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected boolean neq(int a, int b) {
-            return a != b;
-        }
-
-        @Specialization
         protected boolean neq(long a, long b) {
             return a != b;
         }
@@ -252,24 +211,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        protected int divide(int a, int b) {
-            return a / b;
-        }
-
-        @Specialization(rewriteOn = ArithmeticException.class)
-        protected long divideInt(long a, long b) {
-            return Math.toIntExact(a / b);
-        }
-
-        @Specialization(rewriteOn = ArithmeticException.class)
         protected long divide(long a, long b) {
             return a / b;
-        }
-
-        @Specialization(rewriteOn = ArithmeticException.class)
-        @TruffleBoundary
-        protected int divdideInt(BigInteger a, BigInteger b) {
-            return a.divide(b).intValueExact();
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
@@ -280,8 +223,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         @TruffleBoundary
-        protected BigInteger divBig(BigInteger a, BigInteger b) {
-            return a.divide(b);
+        protected Number divBig(BigInteger a, BigInteger b) {
+            return reduceIfPossible(a.divide(b));
         }
 
         @Specialization
@@ -298,24 +241,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected int mod(int a, int b) {
-            return Math.floorMod(a, b);
-        }
-
-        @Specialization(rewriteOn = ArithmeticException.class)
-        protected int modInt(long a, long b) {
-            return Math.toIntExact(Math.floorMod(a, b));
-        }
-
-        @Specialization
         protected long mod(long a, long b) {
             return Math.floorMod(a, b);
-        }
-
-        @Specialization(rewriteOn = ArithmeticException.class)
-        @TruffleBoundary
-        protected int modInt(BigInteger a, BigInteger b) {
-            return doBigModulo(a, b).intValueExact();
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
@@ -348,23 +275,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        protected int div(int a, int b) {
-            return Math.floorDiv(a, b);
-        }
-
-        @Specialization(rewriteOn = ArithmeticException.class)
-        protected int divInt(long a, long b) {
-            return Math.toIntExact(Math.floorDiv(a, b));
-        }
-
-        @Specialization(rewriteOn = ArithmeticException.class)
         protected long div(long a, long b) {
             return Math.floorDiv(a, b);
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
         @TruffleBoundary
-        protected int divInt(BigInteger a, BigInteger b) {
+        protected long divInt(BigInteger a, BigInteger b) {
             return a.divide(b).intValueExact();
         }
 
@@ -389,30 +306,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected int quo(int a, int b) {
+        protected long quo(long a, long b) {
             return a / b;
-        }
-
-        @Specialization(rewriteOn = ArithmeticException.class)
-        protected int quoInt(long a, long b) {
-            return Math.toIntExact(a / b);
-        }
-
-        @Specialization
-        protected Number quo(long a, long b) {
-            return reduceIfPossible(a / b);
-        }
-
-        @Specialization(rewriteOn = ArithmeticException.class)
-        @TruffleBoundary
-        protected int quoInt(BigInteger a, BigInteger b) {
-            return a.divide(b).intValueExact();
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
         @TruffleBoundary
         protected Number quo(BigInteger a, BigInteger b) {
-            return reduceIfPossible(a.divide(b).longValueExact());
+            return a.divide(b).longValueExact();
         }
 
         @Specialization
@@ -427,11 +328,6 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     protected static abstract class PrimBitXorNode extends AbstractArithmeticPrimitiveNode {
         protected PrimBitXorNode(CompiledMethodObject method) {
             super(method);
-        }
-
-        @Specialization
-        protected int bitOr(int receiver, int arg) {
-            return receiver ^ arg;
         }
 
         @Specialization
@@ -454,11 +350,6 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected double asFloat(int v) {
-            return v;
-        }
-
-        @Specialization
         protected double asFloat(long v) {
             return v;
         }
@@ -469,11 +360,6 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     protected static abstract class PrimFloatTruncatedNode extends AbstractArithmeticPrimitiveNode {
         protected PrimFloatTruncatedNode(CompiledMethodObject method) {
             super(method);
-        }
-
-        @Specialization(rewriteOn = ArithmeticException.class)
-        protected int truncateToInt(double receiver) {
-            return Math.toIntExact((long) Math.floor(receiver));
         }
 
         @Specialization
@@ -490,7 +376,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected int exponentAsInt(double receiver) {
+        protected long exponentAsInt(double receiver) {
             return Math.getExponent(receiver);
         }
     }

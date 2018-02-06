@@ -16,20 +16,20 @@ public final class JumpBytecodes {
         public static final int TRUE_SUCCESSOR = 1;
         @CompilationFinal private final Boolean isIfTrue;
         @Child private PopStackNode popNode;
-        @CompilationFinal(dimensions = 1) private final long[] successorExecutionCount;
+        @CompilationFinal(dimensions = 1) private final int[] successorExecutionCount;
 
         public ConditionalJumpNode(CompiledCodeObject code, int index, int numBytecodes, int bytecode) {
             super(code, index, numBytecodes, bytecode);
             isIfTrue = false;
             popNode = PopStackNode.create(code);
-            successorExecutionCount = new long[2];
+            successorExecutionCount = new int[2];
         }
 
         public ConditionalJumpNode(CompiledCodeObject code, int index, int numBytecodes, int bytecode, int parameter, boolean condition) {
             super(code, index, numBytecodes, bytecode, parameter);
             isIfTrue = condition;
             popNode = PopStackNode.create(code);
-            successorExecutionCount = new long[2];
+            successorExecutionCount = new int[2];
         }
 
         public boolean executeCondition(VirtualFrame frame) {
@@ -49,7 +49,7 @@ public final class JumpBytecodes {
          * Inspired by Sulong's LLVMBasicBlockNode (https://goo.gl/AVMg4K).
          */
         @ExplodeLoop
-        public double getBranchProbability(int successorIndex) {
+        public double getBranchProbability(long successorIndex) {
             double successorBranchProbability;
             long succCount = 0;
             long totalExecutionCount = 0;
