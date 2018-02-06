@@ -86,7 +86,7 @@ public final class SendBytecodes {
     public static abstract class EagerSendSpecialSelectorNode extends AbstractBytecodeNode {
         public static AbstractBytecodeNode create(CompiledCodeObject code, int index, int selectorIndex) {
             SpecialSelectorObject specialSelector = code.image.specialSelectorsArray[selectorIndex];
-            if (false && code instanceof CompiledMethodObject && specialSelector.getPrimitiveIndex() > 0) {
+            if (code instanceof CompiledMethodObject && specialSelector.getPrimitiveIndex() > 0) {
                 AbstractPrimitiveNode primitiveNode;
                 primitiveNode = PrimitiveNodeFactory.forSpecialSelector((CompiledMethodObject) code,
                                 specialSelector);

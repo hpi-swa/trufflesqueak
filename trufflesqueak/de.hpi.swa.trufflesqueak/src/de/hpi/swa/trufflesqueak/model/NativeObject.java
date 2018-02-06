@@ -156,8 +156,4 @@ public class NativeObject extends SqueakObject {
     public BaseSqueakObject shallowCopy() {
         return new NativeObject(this);
     }
-
-    public boolean equals(NativeObject obj) {
-        return content.equals(obj.content);
-    }
 }

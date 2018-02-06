@@ -18,7 +18,6 @@ import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
-import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.MUTEX;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SEMAPHORE;
@@ -297,11 +296,6 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         @TruffleBoundary
         boolean equivalent(BigInteger a, BigInteger b) {
-            return a.equals(b);
-        }
-
-        @Specialization
-        boolean equivalent(NativeObject a, NativeObject b) {
             return a.equals(b);
         }
 
