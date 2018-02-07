@@ -95,6 +95,7 @@ public class InterruptHandlerNode extends Node {
     protected static final class DummyInterruptHandlerNode extends InterruptHandlerNode {
         protected DummyInterruptHandlerNode(SqueakImageContext image) {
             super(image);
+            image.getOutput().println("Interrupt handler disabled...");
         }
 
         @Override

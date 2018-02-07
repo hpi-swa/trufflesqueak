@@ -37,6 +37,7 @@ public class SqueakConfig {
                     tracing = true;
                     break;
                 case "--disable-interrupts":
+                case "-d":
                     disableInterrupts = true;
                     break;
                 case "--receiver":
@@ -81,6 +82,9 @@ public class SqueakConfig {
         if (selector != null) {
             sb.add("-m");
             sb.add(selector.toString());
+        }
+        if (disableInterrupts) {
+            sb.add("-d");
         }
         if (restArgs != null) {
             for (String s : restArgs) {
