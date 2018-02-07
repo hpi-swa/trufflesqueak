@@ -9,13 +9,9 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
-import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodes.ReturnReceiverNode;
-import de.hpi.swa.trufflesqueak.nodes.context.ReceiverNode;
-import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegersFactory.PrimNormalizeNodeFactory;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
@@ -37,197 +33,309 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        protected long add(long a, long b) {
+        protected final static long doLong(final long a, final long b) {
             return Math.addExact(a, b);
         }
 
         @Specialization
         @TruffleBoundary
-        protected Number add(BigInteger a, BigInteger b) {
+        protected final static Number doLongWithOverflow(final long a, final long argument) {
+            return doBigInteger(BigInteger.valueOf(a), BigInteger.valueOf(argument));
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final static Number doBigInteger(final BigInteger a, final BigInteger b) {
             return reduceIfPossible(a.add(b));
         }
 
         @Specialization
-        protected double add(double a, double b) {
+        protected final static double doDouble(final double a, final double b) {
             return a + b;
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final static Number doLong(final long a, final BigInteger b) {
+            return doBigInteger(BigInteger.valueOf(a), b);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final static Number doBigInteger(final BigInteger a, final long b) {
+            return doBigInteger(a, BigInteger.valueOf(b));
+        }
+
+        @Specialization
+        protected final static double doLong(final long a, final double b) {
+            return doDouble(a, b);
+        }
+
+        @Specialization
+        protected final static double doDouble(final double a, final long b) {
+            return doDouble(a, (double) b);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {2, 22, 42}, name = "primDigitSubtract", numArguments = 2)
-    public static abstract class PrimSubNode extends AbstractPrimitiveNode {
-        public PrimSubNode(CompiledMethodObject method) {
+    public static abstract class PrimSubstractNode extends AbstractArithmeticPrimitiveNode {
+        public PrimSubstractNode(CompiledMethodObject method) {
             super(method);
         }
 
-        protected long sub(long a, long b) {
+        @Specialization(rewriteOn = ArithmeticException.class)
+        protected final static long doLong(final long a, final long b) {
             return Math.subtractExact(a, b);
         }
 
-        @Specialization(rewriteOn = ArithmeticException.class)
+        @Specialization
         @TruffleBoundary
-        protected long subInt(BigInteger a, BigInteger b) {
-            return a.subtract(b).intValueExact();
-        }
-
-        @Specialization(rewriteOn = ArithmeticException.class)
-        @TruffleBoundary
-        protected long sub(BigInteger a, BigInteger b) {
-            return a.subtract(b).longValueExact();
+        protected final static Number doLongWithOverflow(final long a, final long b) {
+            return doBigInteger(BigInteger.valueOf(a), BigInteger.valueOf(b));
         }
 
         @Specialization
         @TruffleBoundary
-        protected BigInteger subBig(BigInteger a, BigInteger b) {
-            return a.subtract(b);
+        protected final static Number doBigInteger(final BigInteger a, final BigInteger b) {
+            return reduceIfPossible(a.subtract(b));
         }
 
         @Specialization
-        protected double sub(double a, double b) {
+        protected final static double doDouble(final double a, final double b) {
             return a - b;
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final static Number doLong(final long a, final BigInteger b) {
+            return doBigInteger(BigInteger.valueOf(a), b);
+        }
+
+        @Specialization
+        protected final static double doLong(final long a, final double b) {
+            return doDouble(a, b);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final static Number doBigInteger(final BigInteger a, final long b) {
+            return doBigInteger(a, BigInteger.valueOf(b));
+        }
+
+        @Specialization
+        protected final static double doDouble(final double a, final long b) {
+            return doDouble(a, (double) b);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {9, 29, 49}, name = "primDigitMultiplyNegative", numArguments = 2)
-    public static abstract class PrimMultiplyNode extends AbstractPrimitiveNode {
+    public static abstract class PrimMultiplyNode extends AbstractArithmeticPrimitiveNode {
         public PrimMultiplyNode(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        protected long mul(long a, long b) {
+        protected final static long doLong(final long a, final long b) {
             return Math.multiplyExact(a, b);
         }
 
         @Specialization
         @TruffleBoundary
-        protected BigInteger mul(BigInteger a, BigInteger b) {
-            return a.multiply(b);
-        }
-
-        @Specialization
-        protected double mul(double a, double b) {
-            return a * b;
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(name = "primDigitDivNegative", numArguments = 2)
-    public static abstract class PrimDigitDivNegativeNode extends AbstractPrimitiveNode {
-        public PrimDigitDivNegativeNode(CompiledMethodObject method) {
-            super(method);
+        protected final static Number doLongWithOverflow(final long a, final long b) {
+            return doBigInteger(BigInteger.valueOf(a), BigInteger.valueOf(b));
         }
 
         @Specialization
         @TruffleBoundary
-        protected ListObject div(BigInteger rcvr, BigInteger arg) {
-            BigInteger[] divRem = rcvr.divideAndRemainder(arg);
-            return code.image.wrap(new Object[]{divRem[0], divRem[1]});
+        protected final static Number doBigInteger(final BigInteger a, final BigInteger b) {
+            return reduceIfPossible(a.multiply(b));
+        }
+
+        @Specialization
+        protected final static double doDouble(final double a, final double b) {
+            return a * b;
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final static Number doLong(final long a, final BigInteger b) {
+            return doBigInteger(BigInteger.valueOf(a), b);
+        }
+
+        @Specialization
+        protected final static double doLong(final long a, final double b) {
+            return doDouble(a, b);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final static Number doBigInteger(final BigInteger a, final long b) {
+            return doBigInteger(a, BigInteger.valueOf(b));
+        }
+
+        @Specialization
+        protected final static double doDouble(final double a, final long b) {
+            return doDouble(a, (double) b);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(name = "primDigitDivNegative", numArguments = 3)
+    public static abstract class PrimDigitDivNegativeNode extends AbstractArithmeticPrimitiveNode {
+        public PrimDigitDivNegativeNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(rewriteOn = ArithmeticException.class)
+        protected final ListObject doLong(final long rcvr, final long arg, final boolean negative) {
+            long divide = rcvr / arg;
+            if ((negative && divide >= 0) || (!negative && divide < 0)) {
+                divide = Math.negateExact(divide);
+            }
+            long remainder = rcvr % arg;
+            return code.image.wrap(new Object[]{divide, remainder});
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final ListObject doLongWithOverflow(final long rcvr, final long arg, final boolean negative) {
+            return doBigInteger(BigInteger.valueOf(rcvr), BigInteger.valueOf(arg), negative);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final ListObject doBigInteger(final BigInteger rcvr, final BigInteger arg, final boolean negative) {
+            BigInteger divide = rcvr.divide(arg);
+            if ((negative && divide.signum() >= 0) || (!negative && divide.signum() < 0)) {
+                divide = divide.negate();
+            }
+            BigInteger remainder = rcvr.remainder(arg);
+            return code.image.wrap(new Object[]{reduceIfPossible(divide), reduceIfPossible(remainder)});
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final ListObject doLong(final long rcvr, final BigInteger arg, final boolean negative) {
+            return doBigInteger(BigInteger.valueOf(rcvr), arg, negative);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final ListObject doBigInteger(final BigInteger rcvr, final long arg, final boolean negative) {
+            return doBigInteger(rcvr, BigInteger.valueOf(arg), negative);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {14, 34}, name = "primDigitBitAnd", numArguments = 2)
-    public static abstract class PrimBitAndNode extends AbstractPrimitiveNode {
+    public static abstract class PrimBitAndNode extends AbstractArithmeticPrimitiveNode {
         public PrimBitAndNode(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected long bitAnd(long receiver, long arg) {
+        protected final static long doLong(final long receiver, final long arg) {
             return receiver & arg;
         }
 
         @Specialization
         @TruffleBoundary
-        protected BigInteger bitAnd(BigInteger receiver, BigInteger arg) {
-            return receiver.and(arg);
+        protected final static Number doBigInteger(final BigInteger receiver, final BigInteger arg) {
+            return reduceIfPossible(receiver.and(arg));
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final static Number doLong(final long receiver, final BigInteger arg) {
+            return doBigInteger(BigInteger.valueOf(receiver), arg);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final static Number doBigInteger(final BigInteger receiver, final long arg) {
+            return doBigInteger(receiver, BigInteger.valueOf(arg));
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {15, 35}, name = "primDigitBitOr", numArguments = 2)
-    public static abstract class PrimBitOrNode extends AbstractPrimitiveNode {
+    public static abstract class PrimBitOrNode extends AbstractArithmeticPrimitiveNode {
         public PrimBitOrNode(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected long bitOr(long receiver, long arg) {
+        protected final static long bitOr(final long receiver, final long arg) {
             return receiver | arg;
         }
 
         @Specialization
         @TruffleBoundary
-        protected BigInteger bitAnd(BigInteger receiver, BigInteger arg) {
-            return receiver.or(arg);
+        protected final static Number doBigInteger(final BigInteger receiver, final BigInteger arg) {
+            return reduceIfPossible(receiver.or(arg));
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final static Number doLong(final long receiver, final BigInteger arg) {
+            return doBigInteger(BigInteger.valueOf(receiver), arg);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final static Number doBigInteger(final BigInteger receiver, final long arg) {
+            return doBigInteger(receiver, BigInteger.valueOf(arg));
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {17, 37}, name = "primDigitBitShiftMagnitude", numArguments = 2)
-    public static abstract class PrimBitShiftNode extends AbstractPrimitiveNode {
-        @Child private PrimNormalizeNode normalizeNode;
+    public static abstract class PrimBitShiftNode extends AbstractArithmeticPrimitiveNode {
 
         public PrimBitShiftNode(CompiledMethodObject method) {
             super(method);
-            normalizeNode = PrimNormalizeNodeFactory.create(method, new SqueakNode[]{ReceiverNode.create(method)});
         }
 
-        @Specialization(guards = {"arg <= 0"})
-        protected long bitShiftRightLong(long receiver, long arg) {
+        @Specialization(guards = {"arg >= 0"})
+        protected final static long doLong(final long receiver, final long arg) {
+            return receiver << arg;
+        }
+
+        @Specialization(guards = {"arg < 0"})
+        protected final static long doLongNegative(final long receiver, final long arg) {
             return receiver >> -arg;
         }
 
-        @Specialization(guards = {"arg <= 0"}, rewriteOn = ArithmeticException.class)
+        @Specialization(guards = {"arg >= 0"})
         @TruffleBoundary
-        protected long bitShiftRightLong(BigInteger receiver, long arg) {
-            return receiver.shiftRight((int) -arg).longValueExact();
+        protected final static Number doBigInteger(final BigInteger receiver, final long arg) {
+            return reduceIfPossible(receiver.shiftLeft((int) arg));
         }
 
-        @Specialization(guards = {"arg <= 0"})
+        @Specialization(guards = {"arg < 0"})
         @TruffleBoundary
-        protected BigInteger bitShiftRightBig(BigInteger receiver, long arg) {
-            return receiver.shiftRight((int) -arg);
+        protected final static Number doBigIntegerNegative(final BigInteger receiver, final long arg) {
+            return reduceIfPossible(receiver.shiftRight((int) -arg));
         }
 
-        @Specialization(guards = {"arg > 0"}, rewriteOn = ArithmeticException.class)
+        @Specialization(guards = {"arg >= 0"})
         @TruffleBoundary
-        protected long bitShiftLeftLong(BigInteger receiver, long arg) {
-            return receiver.shiftLeft((int) arg).longValueExact();
+        protected final static Number doNativeObject(final NativeObject receiver, final long arg) {
+            return doBigInteger(receiver.normalize(), arg);
         }
 
-        @Specialization(guards = {"arg > 0"})
+        @Specialization(guards = {"arg < 0"})
         @TruffleBoundary
-        protected BigInteger bitShiftLeft(BigInteger receiver, long arg) {
-            return receiver.shiftLeft((int) arg);
-        }
-
-        @Specialization(rewriteOn = ArithmeticException.class)
-        protected long bitShiftNativeLong(NativeObject receiver, long arg) {
-            return shiftNative(receiver, arg).longValueExact();
-        }
-
-        @Specialization(rewriteOn = ArithmeticException.class)
-        @TruffleBoundary
-        protected BigInteger bitShiftNativeBig(NativeObject receiver, long arg) {
-            return shiftNative(receiver, arg);
-        }
-
-        private BigInteger shiftNative(NativeObject receiver, long arg) {
-            BigInteger integer = normalizeNode.normalizeBig(receiver);
-            if (arg < 0) {
-                return integer.shiftRight((int) -arg);
-            } else {
-                return integer.shiftLeft((int) arg);
-            }
+        protected final static Number doNativeObjectNegative(final NativeObject receiver, final long arg) {
+            return doBigIntegerNegative(receiver.normalize(), arg);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = {"primNormalizePositive", "primNormalizeNegative"})
-    public static abstract class PrimNormalizeNode extends AbstractPrimitiveNode {
+    public static abstract class PrimNormalizeNode extends AbstractArithmeticPrimitiveNode {
         @Child private ReturnReceiverNode receiverNode;
 
         public PrimNormalizeNode(CompiledMethodObject method) {
@@ -236,45 +344,19 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected long normalizeLong(long o) {
-            return o;
-        }
-
-        @Specialization(rewriteOn = ArithmeticException.class)
-        @TruffleBoundary
-        protected long normalizeInt(BigInteger o) {
-            return o.intValueExact();
-        }
-
-        @Specialization(rewriteOn = ArithmeticException.class)
-        @TruffleBoundary
-        protected long normalizeLong(BigInteger o) {
-            return o.longValueExact();
+        protected long doLong(long value) {
+            return value;
         }
 
         @Specialization
         @TruffleBoundary
-        protected BigInteger normalizeBig(BigInteger o) {
-            return o;
-        }
-
-        @Specialization(rewriteOn = ArithmeticException.class)
-        protected long normalizeInt(NativeObject o) {
-            return bigIntFromNative(o).intValueExact();
-        }
-
-        @Specialization(rewriteOn = ArithmeticException.class)
-        protected long normalizeLong(NativeObject o) {
-            return bigIntFromNative(o).longValueExact();
+        public Number doBigInteger(BigInteger value) {
+            return reduceIfPossible(value);
         }
 
         @Specialization
-        protected BigInteger normalizeBig(NativeObject o) {
-            return bigIntFromNative(o);
-        }
-
-        private BigInteger bigIntFromNative(NativeObject o) {
-            return new LargeIntegerObject(code.image, o.getSqClass(), o.getBytes()).getValue();
+        protected Number doNativeObject(NativeObject value) {
+            return reduceIfPossible(value.normalize());
         }
     }
 

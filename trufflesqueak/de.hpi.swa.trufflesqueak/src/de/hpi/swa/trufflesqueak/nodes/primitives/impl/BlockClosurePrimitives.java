@@ -22,6 +22,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
+import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.BlockActivationNode;
 import de.hpi.swa.trufflesqueak.nodes.BlockActivationNodeGen;
@@ -173,8 +174,19 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         @Specialization
-        protected Object value(VirtualFrame frame, BlockClosureObject block) {
+        protected Object doClosure(VirtualFrame frame, BlockClosureObject block) {
             return dispatch.executeBlock(block, block.getFrameArguments(frame));
+        }
+
+        // Additional specializations to speed up eager sends
+        @Specialization
+        protected Object doBoolean(boolean receiver) {
+            return receiver;
+        }
+
+        @Specialization
+        protected Object doNilObject(NilObject receiver) {
+            return receiver;
         }
     }
 

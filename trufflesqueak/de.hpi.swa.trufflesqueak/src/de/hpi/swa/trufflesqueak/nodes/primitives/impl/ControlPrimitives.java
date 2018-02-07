@@ -279,28 +279,28 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        boolean equivalent(char a, char b) {
+        protected boolean doChar(char a, char b) {
             return a == b;
         }
 
         @Specialization
-        boolean equivalent(long a, long b) {
+        protected boolean doLong(long a, long b) {
             return a == b;
         }
 
         @Specialization
-        boolean equivalent(boolean a, boolean b) {
+        protected boolean doBoolean(boolean a, boolean b) {
             return a == b;
         }
 
         @Specialization
         @TruffleBoundary
-        boolean equivalent(BigInteger a, BigInteger b) {
+        protected boolean doBigInteger(BigInteger a, BigInteger b) {
             return a.equals(b);
         }
 
         @Specialization
-        boolean equivalent(Object a, Object b) {
+        protected boolean doObject(Object a, Object b) {
             return a == b;
         }
     }

@@ -59,7 +59,7 @@ public class SqueakPrimitiveTest extends AbstractSqueakTestCase {
                         {BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE), 1L, Long.MAX_VALUE}};
         for (int i = 0; i < testValues.length; i++) {
             Object[] values = testValues[i];
-            assertEquals(runBinaryPrimitive(2, values[0], values[1]), values[2]);
+            assertEquals(values[2], runBinaryPrimitive(2, values[0], values[1]));
         }
     }
 }

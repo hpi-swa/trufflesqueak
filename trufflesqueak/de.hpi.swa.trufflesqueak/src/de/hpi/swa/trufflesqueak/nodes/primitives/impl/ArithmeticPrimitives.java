@@ -30,10 +30,10 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @TruffleBoundary
         protected static final Number reduceIfPossible(BigInteger value) {
-            if (value.bitLength() < Long.SIZE - 1) {
-                return value.longValue();
-            } else {
+            if (value.bitLength() > Long.SIZE - 1) {
                 return value;
+            } else {
+                return value.longValue();
             }
         }
 
@@ -57,19 +57,41 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected boolean lt(long a, long b) {
-            return a < b;
+        protected final static boolean doLong(final long left, final long right) {
+            return left < right;
         }
 
         @Specialization
         @TruffleBoundary
-        protected boolean lt(BigInteger a, BigInteger b) {
-            return a.compareTo(b) < 0;
+        protected final static boolean doBigInteger(final BigInteger left, final BigInteger right) {
+            return left.compareTo(right) < 0;
         }
 
         @Specialization
-        protected boolean lt(double a, double b) {
-            return a < b;
+        protected final static boolean doDouble(final double left, final double right) {
+            return left < right;
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final static boolean doLong(final long left, final BigInteger right) {
+            return doBigInteger(BigInteger.valueOf(left), right);
+        }
+
+        @Specialization
+        protected final static boolean doLong(final long left, final double right) {
+            return doDouble(left, right);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final static boolean doBigInteger(final BigInteger left, final long right) {
+            return doBigInteger(left, BigInteger.valueOf(right));
+        }
+
+        @Specialization
+        protected final static boolean doDouble(final double left, final long right) {
+            return doDouble(left, (double) right);
         }
     }
 
@@ -81,19 +103,41 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected boolean gt(long a, long b) {
-            return a > b;
+        protected final static boolean doLong(final long left, final long right) {
+            return left > right;
         }
 
         @Specialization
         @TruffleBoundary
-        protected boolean gt(BigInteger a, BigInteger b) {
-            return a.compareTo(b) > 0;
+        protected final static boolean doBigInteger(final BigInteger left, final BigInteger right) {
+            return left.compareTo(right) > 0;
         }
 
         @Specialization
-        protected boolean gt(double a, double b) {
-            return a > b;
+        protected final static boolean doDouble(final double left, final double right) {
+            return left > right;
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final static boolean doLong(final long left, final BigInteger right) {
+            return doBigInteger(BigInteger.valueOf(left), right);
+        }
+
+        @Specialization
+        protected final static boolean doLong(final long left, final double right) {
+            return doDouble(left, right);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final static boolean doBigInteger(final BigInteger left, final long right) {
+            return doBigInteger(left, BigInteger.valueOf(right));
+        }
+
+        @Specialization
+        protected final static boolean doDouble(final double left, final long right) {
+            return doDouble(left, (double) right);
         }
     }
 
@@ -105,19 +149,41 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected boolean le(long a, long b) {
-            return a <= b;
+        protected final static boolean doLong(final long left, final long right) {
+            return left <= right;
         }
 
         @Specialization
         @TruffleBoundary
-        protected boolean le(BigInteger a, BigInteger b) {
-            return a.compareTo(b) <= 0;
+        protected final static boolean doBigInteger(final BigInteger left, final BigInteger right) {
+            return left.compareTo(right) <= 0;
         }
 
         @Specialization
-        protected boolean le(double a, double b) {
-            return a <= b;
+        protected final static boolean doDouble(final double left, final double right) {
+            return left <= right;
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final static boolean doLong(final long left, final BigInteger right) {
+            return doBigInteger(BigInteger.valueOf(left), right);
+        }
+
+        @Specialization
+        protected final static boolean doLong(final long left, final double right) {
+            return doDouble(left, right);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final static boolean doBigInteger(final BigInteger left, final long right) {
+            return doBigInteger(left, BigInteger.valueOf(right));
+        }
+
+        @Specialization
+        protected final static boolean doDouble(final double left, final long right) {
+            return doDouble(left, (double) right);
         }
     }
 
@@ -129,19 +195,41 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected boolean ge(long a, long b) {
-            return a >= b;
+        protected final static boolean doLong(final long left, final long right) {
+            return left >= right;
         }
 
         @Specialization
         @TruffleBoundary
-        protected boolean ge(BigInteger a, BigInteger b) {
-            return a.compareTo(b) >= 0;
+        protected final static boolean doBigInteger(final BigInteger left, final BigInteger right) {
+            return left.compareTo(right) >= 0;
         }
 
         @Specialization
-        protected boolean ge(double a, double b) {
-            return a >= b;
+        protected final static boolean doDouble(final double left, final double right) {
+            return left >= right;
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final static boolean doLong(final long left, final BigInteger right) {
+            return doBigInteger(BigInteger.valueOf(left), right);
+        }
+
+        @Specialization
+        protected final static boolean doLong(final long left, final double right) {
+            return doDouble(left, right);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final static boolean doBigInteger(final BigInteger left, final long right) {
+            return doBigInteger(left, BigInteger.valueOf(right));
+        }
+
+        @Specialization
+        protected final static boolean doDouble(final double left, final long right) {
+            return doDouble(left, (double) right);
         }
     }
 
@@ -153,24 +241,73 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected boolean eq(long receiver, long argument) {
-            return receiver == argument;
+        protected final static boolean doBoolean(final boolean left, final boolean right) {
+            return left == right;
+        }
+
+        @Specialization
+        protected final static boolean doLong(final long left, final long right) {
+            return left == right;
         }
 
         @Specialization
         @TruffleBoundary
-        protected boolean eq(BigInteger a, BigInteger b) {
-            return a.equals(b);
+        protected final static boolean doBigInteger(final BigInteger left, final BigInteger right) {
+            return left.compareTo(right) == 0;
         }
 
         @Specialization
-        protected boolean eq(double a, double b) {
-            return a == b;
+        protected final static boolean doDouble(final double left, final double right) {
+            return left == right;
         }
 
         @Specialization
-        protected boolean eq(char receiver, char argument) {
+        protected boolean doChar(char receiver, char argument) {
             return receiver == argument;
+        }
+
+        @Specialization
+        protected final static boolean doLong(final long left, final double right) {
+            return left == right;
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final static boolean doBigInteger(final BigInteger left, final long right) {
+            return doBigInteger(left, BigInteger.valueOf(right));
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final static boolean doBigInteger(final BigInteger left, final double right) {
+            return doBigInteger(left, BigInteger.valueOf((long) right));
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final static boolean doDouble(final double left, final BigInteger right) {
+            return doBigInteger(BigInteger.valueOf((long) left), right);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final static boolean doLong(final long left, final BigInteger right) {
+            return doBigInteger(BigInteger.valueOf(left), right);
+        }
+
+        @Specialization
+        protected final static boolean doDouble(final double left, final long right) {
+            return doDouble(left, (double) right);
+        }
+
+        // Additional specialization to speed up eager sends
+        @Specialization
+        protected final static boolean doObject(final Object left, final Object right) {
+            if (left == right) { // must be equal if identical
+                return true;
+            } else {
+                throw new PrimitiveFailed();
+            }
         }
     }
 
@@ -210,26 +347,32 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(rewriteOn = ArithmeticException.class)
-        protected long divide(long a, long b) {
-            return a / b;
-        }
-
-        @Specialization(rewriteOn = ArithmeticException.class)
-        @TruffleBoundary
-        protected long divide(BigInteger a, BigInteger b) {
-            return a.divide(b).longValueExact();
+        @Specialization
+        public final static long doLong(final long left, final long right) {
+            return left / right;
         }
 
         @Specialization
         @TruffleBoundary
-        protected Number divBig(BigInteger a, BigInteger b) {
-            return reduceIfPossible(a.divide(b));
+        protected final static Number doBigInteger(final BigInteger left, final BigInteger right) {
+            return reduceIfPossible(left.divide(right));
         }
 
         @Specialization
-        protected double div(double a, double b) {
-            return a / b;
+        @TruffleBoundary
+        protected final static Number doBigInteger(final BigInteger left, final long right) {
+            return doBigInteger(left, BigInteger.valueOf(right));
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final static Number doLong(final long left, final BigInteger right) {
+            return doBigInteger(BigInteger.valueOf(left), right);
+        }
+
+        @Specialization
+        protected final static long doLong(final long left, final double right) {
+            return (long) (left / right);
         }
     }
 
@@ -241,29 +384,26 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected long mod(long a, long b) {
+        protected long doLong(final long a, final long b) {
             return Math.floorMod(a, b);
-        }
-
-        @Specialization(rewriteOn = ArithmeticException.class)
-        @TruffleBoundary
-        protected long mod(BigInteger a, BigInteger b) {
-            return doBigModulo(a, b).longValueExact();
         }
 
         @Specialization
         @TruffleBoundary
-        protected BigInteger modBig(BigInteger a, BigInteger b) {
-            return doBigModulo(a, b);
+        protected Number doBigInteger(final BigInteger a, final BigInteger b) {
+            return reduceIfPossible(a.mod(b.abs()));
         }
 
-        private static BigInteger doBigModulo(BigInteger a, BigInteger b) {
-            BigInteger mod = a.mod(b.abs());
-            if (a.signum() + b.signum() <= 0) {
-                return mod.negate();
-            } else {
-                return mod;
-            }
+        @Specialization
+        @TruffleBoundary
+        protected Number doLong(final long a, final BigInteger b) {
+            return doBigInteger(BigInteger.valueOf(a), b);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected Number doBigInteger(final BigInteger a, final long b) {
+            return doBigInteger(a, BigInteger.valueOf(b));
         }
     }
 
@@ -275,26 +415,26 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        protected long div(long a, long b) {
+        protected final static long doLong(final long a, final long b) {
             return Math.floorDiv(a, b);
-        }
-
-        @Specialization(rewriteOn = ArithmeticException.class)
-        @TruffleBoundary
-        protected long divInt(BigInteger a, BigInteger b) {
-            return a.divide(b).intValueExact();
-        }
-
-        @Specialization(rewriteOn = ArithmeticException.class)
-        @TruffleBoundary
-        protected long div(BigInteger a, BigInteger b) {
-            return a.divide(b).longValueExact();
         }
 
         @Specialization
         @TruffleBoundary
-        protected BigInteger divBig(BigInteger a, BigInteger b) {
-            return a.divide(b);
+        protected final static Number doBigInteger(final BigInteger a, final BigInteger b) {
+            return reduceIfPossible(a.divide(b));
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final static Number doLong(final long a, final BigInteger b) {
+            return doBigInteger(BigInteger.valueOf(a), b);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final static Number doBigInteger(final BigInteger a, final long b) {
+            return doBigInteger(a, BigInteger.valueOf(b));
         }
     }
 
@@ -306,20 +446,26 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected long quo(long a, long b) {
+        protected final static long doLong(final long a, final long b) {
             return a / b;
-        }
-
-        @Specialization(rewriteOn = ArithmeticException.class)
-        @TruffleBoundary
-        protected Number quo(BigInteger a, BigInteger b) {
-            return a.divide(b).longValueExact();
         }
 
         @Specialization
         @TruffleBoundary
-        protected Number quoBig(BigInteger a, BigInteger b) {
+        protected final static Number doBigInteger(final BigInteger a, final BigInteger b) {
             return reduceIfPossible(a.divide(b));
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final static Number doLong(final long a, final BigInteger b) {
+            return doBigInteger(BigInteger.valueOf(a), b);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final static Number doBigInteger(final BigInteger a, final long b) {
+            return doBigInteger(a, BigInteger.valueOf(b));
         }
     }
 
@@ -331,14 +477,26 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected long bitOr(long receiver, long arg) {
-            return receiver ^ arg;
+        protected final static long doLong(final long receiver, final long right) {
+            return receiver ^ right;
         }
 
         @Specialization
         @TruffleBoundary
-        protected BigInteger bitAnd(BigInteger receiver, BigInteger arg) {
-            return receiver.xor(arg);
+        protected final static Number doBigInteger(final BigInteger receiver, final BigInteger arg) {
+            return reduceIfPossible(receiver.xor(arg));
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final static Number doLong(final long receiver, final BigInteger arg) {
+            return doBigInteger(BigInteger.valueOf(receiver), arg);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final static Number doBigInteger(final BigInteger receiver, final long arg) {
+            return doBigInteger(receiver, BigInteger.valueOf(arg));
         }
     }
 
@@ -350,8 +508,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected double asFloat(long v) {
-            return v;
+        protected final static double doLong(final long receiver) {
+            return receiver;
         }
     }
 
@@ -363,7 +521,12 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected long truncate(double receiver) {
+        protected final static long doLong(final long receiver) {
+            return (long) Math.floor(receiver);
+        }
+
+        @Specialization
+        protected final static long doDouble(final double receiver) {
             return (long) Math.floor(receiver);
         }
     }
@@ -376,7 +539,12 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected long exponentAsInt(double receiver) {
+        protected final static long doLong(final long receiver) {
+            return Math.getExponent(receiver);
+        }
+
+        @Specialization
+        protected final static long doDouble(final double receiver) {
             return Math.getExponent(receiver);
         }
     }
@@ -389,7 +557,22 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected double calc(double receiver, long argument) {
+        protected final static double doLong(final long receiver, final long argument) {
+            return receiver * Math.pow(2, argument);
+        }
+
+        @Specialization
+        protected final static double doLong(final long receiver, final double argument) {
+            return receiver * Math.pow(2, argument);
+        }
+
+        @Specialization
+        protected final static double doDouble(final double receiver, final double argument) {
+            return receiver * Math.pow(2, argument);
+        }
+
+        @Specialization
+        protected final static double doDouble(final double receiver, final long argument) {
             return receiver * Math.pow(2, argument);
         }
     }
@@ -402,8 +585,19 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected double squareRoot(double a) {
-            return Math.sqrt(a);
+        protected final static double doLong(final long receiver) {
+            return Math.sqrt(receiver);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final static double doBigInteger(final BigInteger receiver) {
+            return Math.sqrt(receiver.doubleValue());
+        }
+
+        @Specialization
+        protected final static double doDouble(final double receiver) {
+            return Math.sqrt(receiver);
         }
     }
 
@@ -415,8 +609,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected double sin(double a) {
-            return Math.sin(a);
+        protected final static double doDouble(final double rcvr) {
+            return Math.sin(rcvr);
         }
     }
 
@@ -428,7 +622,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected double arctan(double a) {
+        protected final static double doDouble(final double a) {
             return Math.atan(a);
         }
     }
@@ -441,7 +635,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected double logn(double a) {
+        protected final static double doDouble(final double a) {
             return Math.log(a);
         }
     }
@@ -454,8 +648,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected double exp(double a) {
-            return Math.exp(a);
+        protected final static double doDouble(final double rcvr) {
+            return Math.exp(rcvr);
         }
     }
 }
