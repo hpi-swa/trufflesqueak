@@ -17,13 +17,12 @@ import de.hpi.swa.trufflesqueak.model.ObjectLayouts.METHOD_DICT;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public class ClassObject extends AbstractPointersObject {
-    private final Set<ClassObject> subclasses = new HashSet<>();
-
-    @CompilationFinal private int instSpec;
-    @CompilationFinal private int instanceSize;
-    private final CyclicAssumption methodLookupStable = new CyclicAssumption("Class lookup stability");
-    private final CyclicAssumption classFormatStable = new CyclicAssumption("Class format stability");
-    @CompilationFinal private Object doesNotUnderstandMethod;
+    @CompilationFinal private final Set<ClassObject> subclasses = new HashSet<>();
+    @CompilationFinal private int instSpec = -1;
+    @CompilationFinal private int instanceSize = -1;
+    @CompilationFinal private final CyclicAssumption methodLookupStable = new CyclicAssumption("Class lookup stability");
+    @CompilationFinal private final CyclicAssumption classFormatStable = new CyclicAssumption("Class format stability");
+    @CompilationFinal private CompiledMethodObject doesNotUnderstandMethod;
 
     public ClassObject(SqueakImageContext img) {
         super(img);
@@ -90,10 +89,13 @@ public class ClassObject extends AbstractPointersObject {
     }
 
     public void setFormat(long format) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
         super.atput0(CLASS.FORMAT, format);
+        if (instSpec >= 0) { // only invalidate if not initialized
+            classFormatStable.invalidate();
+        }
         instSpec = (int) ((format >> 16) & 0x1f);
         instanceSize = (int) (format & 0xffff);
-        classFormatStable.invalidate();
     }
 
     public void setSuperclass(Object superclass) {
@@ -172,12 +174,13 @@ public class ClassObject extends AbstractPointersObject {
             }
             lookupClass = ((ClassObject) lookupClass).getSuperclass();
         }
-        if (predicate.test(image.doesNotUnderstand)) { // exit recursive call
-            throw new SqueakException("doesNotUnderstand missing!");
-        }
+        return getDoesNotUnderstandMethod();
+    }
+
+    private CompiledMethodObject getDoesNotUnderstandMethod() {
         if (doesNotUnderstandMethod == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            doesNotUnderstandMethod = lookup(image.doesNotUnderstand);
+            doesNotUnderstandMethod = (CompiledMethodObject) lookup(image.doesNotUnderstand);
         }
         return doesNotUnderstandMethod;
     }
