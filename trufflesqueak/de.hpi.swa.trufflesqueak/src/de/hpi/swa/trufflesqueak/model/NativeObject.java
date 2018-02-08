@@ -81,7 +81,7 @@ public class NativeObject extends SqueakObject {
     }
 
     @TruffleBoundary
-    public long getNativeAt0(long longIndex) {
+    public final long getNativeAt0(long longIndex) {
         int index = (int) longIndex;
         switch (elementSize) {
             case 1:
@@ -98,7 +98,7 @@ public class NativeObject extends SqueakObject {
     }
 
     @TruffleBoundary
-    public void setNativeAt0(long longIndex, long value) {
+    public final void setNativeAt0(long longIndex, long value) {
         int index = (int) longIndex;
         switch (elementSize) {
             case 1:
