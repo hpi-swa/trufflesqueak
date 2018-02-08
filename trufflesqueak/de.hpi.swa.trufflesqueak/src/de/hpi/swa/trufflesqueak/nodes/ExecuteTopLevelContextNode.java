@@ -56,6 +56,8 @@ public class ExecuteTopLevelContextNode extends RootNode {
         throw new SqueakException("Top level context did not return");
     }
 
+    @Child ExecuteContextNode executeContextNode;
+
     public void executeLoop() {
         ContextObject activeContext = initialContext;
         while (true) {
@@ -68,7 +70,8 @@ public class ExecuteTopLevelContextNode extends RootNode {
                 MaterializedFrame frame = Truffle.getRuntime().createMaterializedFrame(FrameAccess.newWith(code, sender, closure, frameArgs), code.getFrameDescriptor());
                 contextWriteNode.executeWrite(frame, activeContext);
                 // FIXME: do not create node here
-                Object result = ExecuteContextNode.create(code).executeNonVirtualized(frame, activeContext);
+                executeContextNode = insert(ExecuteContextNode.create(code));
+                Object result = executeContextNode.executeNonVirtualized(frame, activeContext);
                 throw new TopLevelReturn(result);
             } catch (ProcessSwitch ps) {
                 activeContext = ps.getNewContext();
