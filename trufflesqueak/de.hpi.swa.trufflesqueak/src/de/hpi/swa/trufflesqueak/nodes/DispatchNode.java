@@ -27,9 +27,8 @@ public abstract class DispatchNode extends Node {
 
     public abstract Object executeDispatch(VirtualFrame frame, Object method, Object[] receiverAndArguments, Object contextOrMarker);
 
-    @SuppressWarnings("unused")
     @Specialization(guards = {"264 <= method.primitiveIndex()", "method.primitiveIndex() <= 520"})
-    protected Object doPrimitiveQuickReturnReceiver(VirtualFrame frame, CompiledMethodObject method, Object[] receiverAndArguments, Object contextOrMarker) {
+    protected Object doPrimitiveQuickReturnReceiver(CompiledMethodObject method, Object[] receiverAndArguments, @SuppressWarnings("unused") Object contextOrMarker) {
         assert receiverAndArguments[0] instanceof BaseSqueakObject;
         return ((BaseSqueakObject) receiverAndArguments[0]).at0(method.primitiveIndex() - 264);
     }

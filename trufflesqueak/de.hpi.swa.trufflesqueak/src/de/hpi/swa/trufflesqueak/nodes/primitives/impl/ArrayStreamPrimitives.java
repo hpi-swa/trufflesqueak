@@ -7,6 +7,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
@@ -57,11 +58,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         @Override
         @Specialization
         protected Object atput(AbstractPointersObject receiver, long index, Object value) {
-            try {
-                receiver.atput0(index - 1 + receiver.instsize(), value);
-            } catch (IndexOutOfBoundsException e) {
-                throw new PrimitiveFailed();
-            }
+            receiver.atput0(index - 1 + receiver.instsize(), value);
             return value;
         }
 
@@ -123,6 +120,26 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
+        @Override
+        public final Object executeWithArguments(VirtualFrame frame, Object... arguments) {
+            try {
+                return executeWithArgumentsSpecialized(frame, arguments);
+            } catch (IndexOutOfBoundsException e) {
+                throw new PrimitiveFailed();
+            }
+        }
+
+        @Override
+        public final Object executePrimitive(VirtualFrame frame) {
+            try {
+                return executeStringAt(frame);
+            } catch (IndexOutOfBoundsException e) {
+                throw new PrimitiveFailed();
+            }
+        }
+
+        public abstract Object executeStringAt(VirtualFrame frame);
+
         @Specialization
         protected char stringAt(NativeObject obj, long idx) {
             byte nativeAt0 = ((Long) obj.getNativeAt0(idx - 1)).byteValue();
@@ -136,6 +153,26 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         protected PrimStringAtPutNode(CompiledMethodObject method) {
             super(method);
         }
+
+        @Override
+        public final Object executeWithArguments(VirtualFrame frame, Object... arguments) {
+            try {
+                return executeWithArgumentsSpecialized(frame, arguments);
+            } catch (IndexOutOfBoundsException e) {
+                throw new PrimitiveFailed();
+            }
+        }
+
+        @Override
+        public final Object executePrimitive(VirtualFrame frame) {
+            try {
+                return executeStringAtPut(frame);
+            } catch (IndexOutOfBoundsException e) {
+                throw new PrimitiveFailed();
+            }
+        }
+
+        public abstract Object executeStringAtPut(VirtualFrame frame);
 
         @Specialization
         protected char atput(NativeObject obj, long idx, char value) {

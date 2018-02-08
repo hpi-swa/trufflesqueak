@@ -493,7 +493,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 170, numArguments = 2)
+    @SqueakPrimitive(index = 170, variableArguments = true)
     protected static abstract class PrimCharacterValueNode extends AbstractPrimitiveNode {
 
         protected PrimCharacterValueNode(CompiledMethodObject method) {
@@ -501,13 +501,17 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected char value(@SuppressWarnings("unused") BaseSqueakObject receiver, char value) {
-            return value;
-        }
-
-        @Specialization
-        protected char value(@SuppressWarnings("unused") BaseSqueakObject ignored, long value) {
-            return (char) value;
+        protected char doCharValue(Object[] rcvrAndArgs) {
+            try {
+                switch (rcvrAndArgs.length) {
+                    case 1:
+                        return (char) rcvrAndArgs[0];
+                    case 2:
+                        return (char) rcvrAndArgs[1];
+                }
+            } catch (ClassCastException e) {
+            }
+            throw new PrimitiveFailed();
         }
     }
 
