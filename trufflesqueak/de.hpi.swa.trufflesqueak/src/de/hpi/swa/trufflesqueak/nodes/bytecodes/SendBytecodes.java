@@ -125,7 +125,7 @@ public final class SendBytecodes {
                 if (result != null) { // primitive produced no result
                     pushStackNode.executeWrite(frame, result);
                 }
-            } catch (PrimitiveFailed | ArithmeticException | UnsupportedSpecializationException e) {
+            } catch (PrimitiveFailed | UnsupportedSpecializationException e) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 replace(getFallbackNode(code, index, specialSelector)).executeVoid(frame);
             }
@@ -143,7 +143,7 @@ public final class SendBytecodes {
                 if (result != null) { // primitive produced no result
                     context.push(result);
                 }
-            } catch (PrimitiveFailed | ArithmeticException | UnsupportedSpecializationException e) {
+            } catch (PrimitiveFailed | UnsupportedSpecializationException e) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 replace(getFallbackNode(code, index, specialSelector)).executeVoid(frame);
             }
