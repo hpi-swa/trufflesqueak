@@ -94,9 +94,9 @@ public class SqueakImageContext {
     @CompilationFinal public final SpecialSelectorObject floorDivide = new SpecialSelectorObject(this, 1, 1, 12);
     @CompilationFinal public final SpecialSelectorObject bitAnd = new SpecialSelectorObject(this, 1, 1, 14);
     @CompilationFinal public final SpecialSelectorObject bitOr = new SpecialSelectorObject(this, 1, 1, 15);
-    @CompilationFinal public final SpecialSelectorObject at = new SpecialSelectorObject(this, 1, 1/* , 63 */);
-    @CompilationFinal public final SpecialSelectorObject atput = new SpecialSelectorObject(this, 1, 2/* , 64 */);
-    @CompilationFinal public final SpecialSelectorObject size_ = new SpecialSelectorObject(this, 1, 0/* , 62 */);
+    @CompilationFinal public final SpecialSelectorObject at = new SpecialSelectorObject(this, 1, 1, 60);
+    @CompilationFinal public final SpecialSelectorObject atput = new SpecialSelectorObject(this, 1, 2, 61);
+    @CompilationFinal public final SpecialSelectorObject size_ = new SpecialSelectorObject(this, 1, 0, 62);
     @CompilationFinal public final SpecialSelectorObject next = new SpecialSelectorObject(this, 1, 0);
     @CompilationFinal public final SpecialSelectorObject nextPut = new SpecialSelectorObject(this, 1, 1);
     @CompilationFinal public final SpecialSelectorObject atEnd = new SpecialSelectorObject(this, 1, 0);
