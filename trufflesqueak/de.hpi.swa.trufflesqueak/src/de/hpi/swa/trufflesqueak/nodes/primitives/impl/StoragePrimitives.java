@@ -209,15 +209,15 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Override
-        public final Object executeRead(VirtualFrame frame) {
+        public final Object executePrimitive(VirtualFrame frame) {
             try {
-                return executePrimitive(frame);
+                return executeAt(frame);
             } catch (IndexOutOfBoundsException e) {
                 throw new PrimitiveFailed();
             }
         }
 
-        public abstract Object executePrimitive(VirtualFrame frame);
+        public abstract Object executeAt(VirtualFrame frame);
 
         @Specialization
         protected long at(char receiver, long idx) {
@@ -299,15 +299,15 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Override
-        public final Object executeRead(VirtualFrame frame) {
+        public final Object executePrimitive(VirtualFrame frame) {
             try {
-                return executePrimitive(frame);
+                return executeAtPut(frame);
             } catch (IndexOutOfBoundsException e) {
                 throw new PrimitiveFailed();
             }
         }
 
-        public abstract Object executePrimitive(VirtualFrame frame);
+        public abstract Object executeAtPut(VirtualFrame frame);
 
         @Specialization
         protected char atput(LargeIntegerObject receiver, long idx, char value) {

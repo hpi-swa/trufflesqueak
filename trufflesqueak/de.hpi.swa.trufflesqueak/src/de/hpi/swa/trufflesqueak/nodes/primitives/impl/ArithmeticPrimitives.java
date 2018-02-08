@@ -47,15 +47,15 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Override
-        public final Object executeRead(VirtualFrame frame) {
+        public final Object executePrimitive(VirtualFrame frame) {
             try {
-                return executePrimitive(frame);
+                return executeArithmeticPrimitive(frame);
             } catch (ArithmeticException e) {
                 throw new PrimitiveFailed();
             }
         }
 
-        public abstract Object executePrimitive(VirtualFrame frame);
+        public abstract Object executeArithmeticPrimitive(VirtualFrame frame);
     }
 
     @GenerateNodeFactory

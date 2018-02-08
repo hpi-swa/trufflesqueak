@@ -398,7 +398,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                     return replace(PrimitiveNodeFactory.forName((CompiledMethodObject) code, moduleName, functionName)).executeWithArguments(frame, receiverAndArguments);
                 }
             }
-            return replace(PrimitiveFailedNode.create((CompiledMethodObject) code)).executeRead(frame);
+            return replace(PrimitiveFailedNode.create((CompiledMethodObject) code)).executePrimitive(frame);
         }
 
         @Specialization
@@ -410,10 +410,10 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 if (descriptorAt0 != null && descriptorAt1 != null) {
                     String moduleName = descriptorAt0.toString();
                     String functionName = descriptorAt1.toString();
-                    return replace(PrimitiveNodeFactory.forName((CompiledMethodObject) code, moduleName, functionName)).executeRead(frame);
+                    return replace(PrimitiveNodeFactory.forName((CompiledMethodObject) code, moduleName, functionName)).executePrimitive(frame);
                 }
             }
-            return replace(PrimitiveFailedNode.create((CompiledMethodObject) code)).executeRead(frame);
+            return replace(PrimitiveFailedNode.create((CompiledMethodObject) code)).executePrimitive(frame);
         }
     }
 

@@ -5,7 +5,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags.StatementTag;
-import com.oracle.truffle.api.source.SourceSection;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.LocalReturn;
@@ -54,7 +53,7 @@ public final class MiscellaneousBytecodes {
         public void executeVoid(VirtualFrame frame) {
             CompilerAsserts.compilationConstant(index);
             try {
-                throw new LocalReturn(primitiveNode.executeRead(frame));
+                throw new LocalReturn(primitiveNode.executePrimitive(frame));
             } catch (UnsupportedSpecializationException | PrimitiveFailed e) {
             }
         }
@@ -62,12 +61,6 @@ public final class MiscellaneousBytecodes {
         @Override
         protected boolean isTaggedWith(Class<?> tag) {
             return tag == StatementTag.class;
-        }
-
-        @Override
-        public void setSourceSection(SourceSection section) {
-            super.setSourceSection(section);
-            primitiveNode.setSourceSection(section);
         }
 
         @Override

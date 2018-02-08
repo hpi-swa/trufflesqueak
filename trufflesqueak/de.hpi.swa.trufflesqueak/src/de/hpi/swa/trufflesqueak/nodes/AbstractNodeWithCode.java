@@ -22,6 +22,10 @@ public abstract class AbstractNodeWithCode extends Node {
         return readContextNode.executeRead(frame) instanceof FrameMarker;
     }
 
+    protected Object getContextOrMarker(VirtualFrame frame) {
+        return readContextNode.executeRead(frame);
+    }
+
     protected ContextObject getContext(VirtualFrame frame) {
         return (ContextObject) readContextNode.executeRead(frame);
     }
