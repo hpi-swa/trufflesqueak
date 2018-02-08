@@ -1,6 +1,7 @@
 package de.hpi.swa.trufflesqueak.nodes.primitives;
 
 import com.oracle.truffle.api.dsl.NodeChild;
+import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
@@ -22,4 +23,10 @@ public abstract class AbstractPrimitiveNode extends SqueakNodeWithCode {
     protected static boolean hasVariableClass(BaseSqueakObject obj) {
         return obj.getSqClass().isVariable();
     }
+
+    public Object executeWithArguments(VirtualFrame frame, Object... arguments) {
+        return executeWithArgumentsSpecialized(frame, arguments);
+    }
+
+    protected abstract Object executeWithArgumentsSpecialized(VirtualFrame frame, Object... arguments);
 }

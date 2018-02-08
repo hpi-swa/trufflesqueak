@@ -309,7 +309,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
         return hasPrimitive;
     }
 
-    public long primitiveIndex() {
+    public int primitiveIndex() {
         if (hasPrimitive && bytes.length >= 3) {
             return Byte.toUnsignedInt(bytes[1]) + (Byte.toUnsignedInt(bytes[2]) << 8);
         } else {

@@ -48,7 +48,6 @@ import de.hpi.swa.trufflesqueak.nodes.process.RemoveProcessFromListNode;
 import de.hpi.swa.trufflesqueak.nodes.process.ResumeProcessNode;
 import de.hpi.swa.trufflesqueak.nodes.process.SignalSemaphoreNode;
 import de.hpi.swa.trufflesqueak.nodes.process.WakeHighestPriorityNode;
-import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -66,7 +65,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         public static PrimitiveFailedNode create(CompiledMethodObject method) {
-            return PrimitiveFailedNodeFactory.create(method, new SqueakNode[0]);
+            return PrimitiveFailedNodeFactory.create(method, null);
         }
 
         @Specialization
@@ -110,8 +109,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 rcvrAndArgs = new Object[]{receiver};
             }
             CompiledCodeObject lookupResult = (CompiledCodeObject) lookupNode.executeLookup(rcvrClass, selector);
-            Object[] frameArguments = FrameAccess.newWith(lookupResult, getContextOrMarker(frame), null, rcvrAndArgs);
-            return dispatchNode.executeDispatch(lookupResult, frameArguments);
+            return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndArgs, getContextOrMarker(frame));
         }
     }
 
@@ -388,8 +386,23 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
+        @Override
+        public final Object executeWithArguments(VirtualFrame frame, Object... receiverAndArguments) {
+            BaseSqueakObject descriptor = code.getLiteral(0) instanceof BaseSqueakObject ? (BaseSqueakObject) code.getLiteral(0) : null;
+            if (descriptor != null && descriptor.getSqClass() != null && descriptor.size() >= 2) {
+                Object descriptorAt0 = descriptor.at0(0);
+                Object descriptorAt1 = descriptor.at0(1);
+                if (descriptorAt0 != null && descriptorAt1 != null) {
+                    String moduleName = descriptorAt0.toString();
+                    String functionName = descriptorAt1.toString();
+                    return replace(PrimitiveNodeFactory.forName((CompiledMethodObject) code, moduleName, functionName)).executeWithArguments(frame, receiverAndArguments);
+                }
+            }
+            return replace(PrimitiveFailedNode.create((CompiledMethodObject) code)).executeRead(frame);
+        }
+
         @Specialization
-        Object doExternalCall(VirtualFrame frame) {
+        protected Object doExternalCall(VirtualFrame frame) {
             BaseSqueakObject descriptor = code.getLiteral(0) instanceof BaseSqueakObject ? (BaseSqueakObject) code.getLiteral(0) : null;
             if (descriptor != null && descriptor.getSqClass() != null && descriptor.size() >= 2) {
                 Object descriptorAt0 = descriptor.at0(0);
@@ -530,8 +543,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             for (int i = 0; i < numArgs; i++) {
                 dispatchRcvrAndArgs[1 + i] = argArray.at0(i);
             }
-            Object[] frameArguments = FrameAccess.newWith(codeObject, getContextOrMarker(frame), null, dispatchRcvrAndArgs);
-            return dispatchNode.executeDispatch(codeObject, frameArguments);
+            return dispatchNode.executeDispatch(frame, codeObject, dispatchRcvrAndArgs, getContextOrMarker(frame));
         }
     }
 
@@ -690,7 +702,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     public static abstract class PrimQuickReturnReceiverVariableNode extends AbstractPrimitiveNode {
-        private @Child ObjectAtNode receiverVariableNode;
+        @Child private ObjectAtNode receiverVariableNode;
 
         public static PrimQuickReturnReceiverVariableNode create(CompiledMethodObject method, long variableIndex) {
             return PrimQuickReturnReceiverVariableNodeFactory.create(method, variableIndex, new SqueakNode[0]);

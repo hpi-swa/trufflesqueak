@@ -16,6 +16,7 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
@@ -459,12 +460,12 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doSimulation(Object[] rcvrAndArguments) {
+        protected Object doSimulation(VirtualFrame frame, Object[] rcvrAndArguments) {
             if (simulationMethod == null) {
                 simulationMethod = getSimulateMethod(rcvrAndArguments[0]);
             }
             Object[] newRcvrAndArgs = new Object[]{rcvrAndArguments[0], code.image.wrap(functionName), code.image.newList(rcvrAndArguments)};
-            return dispatchNode.executeDispatch(simulationMethod, newRcvrAndArgs);
+            return dispatchNode.executeDispatch(frame, simulationMethod, newRcvrAndArgs, getContextOrMarker(frame));
         }
 
         private CompiledMethodObject getSimulateMethod(Object receiver) { // TODO: cache method for a given module name

@@ -38,6 +38,15 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Override
+        public final Object executeWithArguments(VirtualFrame frame, Object... arguments) {
+            try {
+                return executeWithArgumentsSpecialized(frame, arguments);
+            } catch (ArithmeticException e) {
+                throw new PrimitiveFailed();
+            }
+        }
+
+        @Override
         public final Object executeRead(VirtualFrame frame) {
             try {
                 return executePrimitive(frame);

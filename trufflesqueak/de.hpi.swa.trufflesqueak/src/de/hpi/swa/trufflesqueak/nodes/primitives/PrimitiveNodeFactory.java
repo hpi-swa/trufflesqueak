@@ -8,11 +8,9 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.NodeFactory;
 
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.model.SpecialSelectorObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ArgumentNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ReceiverAndArgumentsNode;
-import de.hpi.swa.trufflesqueak.nodes.context.stack.PeekStackNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.FilePlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
 import de.hpi.swa.trufflesqueak.nodes.plugins.TruffleSqueakPlugin;
@@ -50,20 +48,7 @@ public abstract class PrimitiveNodeFactory {
         if (nodeFactory != null) {
             return createInstance(method, nodeFactory, nodeFactory.getNodeClass().getAnnotation(SqueakPrimitive.class));
         }
-        return PrimitiveFailedNode.create(method);
-    }
-
-    @TruffleBoundary
-    public static AbstractPrimitiveNode forSpecialSelector(CompiledMethodObject method, SpecialSelectorObject specialSelector) {
-        NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = getPrimitiveTable().get(specialSelector.getPrimitiveIndex());
-        SqueakPrimitive primitive = nodeFactory.getNodeClass().getAnnotation(SqueakPrimitive.class);
-        int numArguments = primitive.numArguments();
-        assert numArguments == 1 + specialSelector.getNumArguments();
-        SqueakNode[] arguments = new SqueakNode[numArguments];
-        for (int i = 0; i < numArguments; i++) {
-            arguments[i] = PeekStackNode.create(method, numArguments - 1 - i);
-        }
-        return nodeFactory.createNode(method, arguments);
+        return null;
     }
 
     @TruffleBoundary

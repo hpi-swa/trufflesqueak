@@ -39,21 +39,15 @@ public final class MiscellaneousBytecodes {
 
         public CallPrimitiveNode(CompiledCodeObject code, int index, int numBytecodes, int byte1, int byte2) {
             super(code, index, numBytecodes);
-            if (code instanceof CompiledMethodObject) {
-                if (!code.hasPrimitive()) {
-                    primitiveIndex = 0;
-                    primitiveNode = PrimitiveFailedNode.create((CompiledMethodObject) code);
-                } else {
-                    primitiveIndex = byte1 + (byte2 << 8);
-                    if (primitiveIndex == 117) {
-                        int i = 1;
-                    }
-                    primitiveNode = PrimitiveNodeFactory.forIndex((CompiledMethodObject) code, primitiveIndex);
-                }
+            assert code instanceof CompiledMethodObject;
+            if (!code.hasPrimitive()) {
+                primitiveIndex = 0;
+                primitiveNode = PrimitiveFailedNode.create((CompiledMethodObject) code);
             } else {
-                throw new SqueakException("Primitives only supported in CompiledMethodObject");
+                primitiveIndex = byte1 + (byte2 << 8);
+                primitiveNode = PrimitiveNodeFactory.forIndex((CompiledMethodObject) code, primitiveIndex);
+                primitiveNode = primitiveNode != null ? primitiveNode : PrimitiveFailedNode.create((CompiledMethodObject) code);
             }
-
         }
 
         @Override
