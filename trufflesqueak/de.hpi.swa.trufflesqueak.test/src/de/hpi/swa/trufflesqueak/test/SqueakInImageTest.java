@@ -8,6 +8,7 @@ import java.io.PrintWriter;
 
 import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
@@ -160,5 +161,18 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
     public void testRunSmallIntegerTest() {
         // Run all tests of SmallIntegerTest
         assertEquals(image.sqTrue, evaluate("SmallIntegerTest buildSuite run hasPassed"));
+    }
+
+    @Ignore
+    @Test
+    public void testRunFailingTests() {
+        assertEquals(image.sqTrue, evaluate("BooleanTest buildSuite run hasPassed"));
+        assertEquals(image.sqTrue, evaluate("DependentsArrayTest buildSuite run defects asString"));
+        assertEquals(image.sqTrue, evaluate("FalseTest buildSuite run defects asString"));
+        assertEquals(image.sqTrue, evaluate("ObjectTest buildSuite run hasPassed"));
+        assertEquals(image.sqTrue, evaluate("ProtoObjectTest buildSuite run defects asString"));
+        assertEquals(image.sqTrue, evaluate("TrueTest buildSuite run defects asString"));
+        assertEquals(image.sqTrue, evaluate("UndefinedObjectTest buildSuite run defects asString"));
+        assertEquals(image.sqTrue, evaluate("WeakMessageSendTest buildSuite run defects asString"));
     }
 }
