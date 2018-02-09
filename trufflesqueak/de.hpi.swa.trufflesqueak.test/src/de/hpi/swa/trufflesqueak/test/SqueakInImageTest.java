@@ -117,6 +117,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
             }
         }
         image.getOutput().print("==================================== ");
+        image.getOutput().flush();
     }
 
     @Ignore
