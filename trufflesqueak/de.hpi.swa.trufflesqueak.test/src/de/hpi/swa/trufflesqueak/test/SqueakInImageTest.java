@@ -10,7 +10,6 @@ import java.util.regex.Pattern;
 
 import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
@@ -86,10 +85,25 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
 
     @Test
     public void testXPassingSqueakTests() {
-        String[] testClasses = {"BagTest", "BooleanTest", "CollectionTest", "ProtoObjectTest", "SetTest", "UndefinedObjectTest"};
+        String[] testClasses = {"AddPrefixNamePolicyTest", "AliasTest", "AllNamePolicyTest", "AssociationTest", "BagTest", "BalloonFontTest", "BasicBehaviorClassMetaclassTest", "BasicTypeTest",
+                        "BindingPolicyTest", "BitmapBugz", "BooleanTest", "ByteEncoderTest", "ChainedSortFunctionTest", "ClassBindingTest", "CollectionTest", "CompilerExceptionsTest", "CompilerTest",
+                        "ContextCompilationTest", "DosFileDirectoryTests", "EventManagerTest", "ExpandedSourceFileArrayTest", "ExplicitNamePolicyTest", "GenericUrlTest", "GlobalTest", "HandBugs",
+                        "HashAndEqualsTestCase", "HashedCollectionTest", "HashTesterTest", "HelpTopicListItemWrapperTest", "HelpTopicTest", "HttpUrlTest", "IdentityBagTest", "InstructionClientTest",
+                        "InstVarRefLocatorTest", "IntegerArrayTest", "KeyedSetTest", "LongTestCaseTest", "LongTestCaseTestUnderTest", "MacFileDirectoryTest", "MatrixTest", "MCDependencySorterTest",
+                        "MessageSendTest", "MonthTest", "MorphicExtrasSymbolExtensionsTest", "NamePolicyTest", "OrderedCollectionTest", "OrderedDictionaryTest", "PackagePaneBrowserTest",
+                        "PluggableMenuItemSpecTests", "ProtoObjectTest", "RectangleTest", "RemovePrefixNamePolicyTest", "ScheduleTest", "SetTest", "SMDependencyTest", "SortFunctionTest", "StackTest",
+                        "StandardSourceFileArrayTest", "SystemChangeErrorHandlingTest", "SystemChangeNotifierTest", "SystemChangeTestRoot", "SystemDictionaryTest", "SystemOrganizerTest",
+                        "SystemVersionTest", "TestNewParagraphFix", "TestSpaceshipOperator", "TextAlignmentTest", "TextEmphasisTest", "TextFontChangeTest", "TextFontReferenceTest", "TextKernTest",
+                        "TextLineTest", "TextStyleTest", "TextTest", "TimespanDoSpanAYearTest", "TimespanDoTest", "TraitsTestCase", "UndefinedObjectTest", "UnimplementedCallBugz", "UUIDTest",
+                        "WeakFinalizersTest", "WeakSetInspectorTest", "WeekTest", "Win32VMTest", "YearMonthWeekTest", "YearTest"};
+        image.getOutput().println();
         for (int i = 0; i < testClasses.length; i++) {
             String testClass = testClasses[i];
-            if (!evaluate(testClass + " buildSuite run hasPassed").equals(image.sqTrue)) {
+            if (evaluate(testClass + " buildSuite run hasPassed").equals(image.sqTrue)) {
+                // Generate some output for TravisCI
+                image.getOutput().print(".");
+                image.getOutput().flush();
+            } else {
                 fail(testClass + " failed");
             }
         }
@@ -97,8 +111,19 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
 
     @Test
     public void testYFailingSqueakTests() {
-        String[] testClasses = {"ArrayTest", "DateTest", "DictionaryTest", "DependentsArrayTest", "FalseTest", "LinkedListTest", "ObjectTest", "SmallIntegerTest",
-                        "StringTest", "SymbolTest"};
+        String[] testClasses = {"ArbitraryObjectSocketTestCase", "ArrayTest", "Base64MimeConverterTest", "BecomeTest", "BehaviorTest", "BlockLocalTemporariesRemovalTest",
+                        "BrowserHierarchicalListTest", "BrowserTest", "CharacterScannerTest", "CharacterSetComplementTest", "CharacterSetTest", "CharacterTest", "ClassAPIHelpBuilderTest",
+                        "ClassDescriptionTest", "ClosureCompilerTest", "CompiledMethodTrailerTest", "CompilerNotifyingTest", "CompilerSyntaxErrorNotifyingTest", "DataStreamTest",
+                        "DateAndTimeEpochTest", "DateAndTimeLeapTest", "DateTest", "DebuggerExtensionsTest", "DependentsArrayTest", "DictionaryTest", "DurationTest", "EtoysStringExtensionTest",
+                        "FalseTest", "FileContentsBrowserTest", "FileDirectoryTest", "FileList2ModalDialogsTest", "FileListTest", "FileUrlTest", "FloatArrayTest", "FloatCollectionTest", "FontTest",
+                        "FormTest", "GradientFillStyleTest", "HierarchicalUrlTest", "HierarchyBrowserTest", "HtmlReadWriterTest", "InstallerUrlTest", "InstructionPrinterTest", "IntegerDigitLogicTest",
+                        "IslandVMTweaksTestCase", "JPEGReadWriter2Test", "LargeNegativeIntegerTest", "LargePositiveIntegerTest", "LayoutFrameTest", "LinkedListTest", "MailAddressParserTest",
+                        "MailMessageTest", "MCSortingTest", "MethodHighlightingTests", "MethodPragmaTest", "MethodPropertiesTest", "MultiByteFileStreamTest", "ObjectFinalizerTests", "ObjectTest",
+                        "ParserEditingTest", "ReadWriteStreamTest", "ReferenceStreamTest", "RunArrayTest", "RWBinaryOrTextStreamTest", "ScannerTest", "SetWithNilTest", "SHParserST80Test",
+                        "SmallIntegerTest", "SmalltalkImageTest", "SmartRefStreamTest", "SMTPClientTest", "SocketStreamTest", "SocketTest", "SqueakSSLTest", "StringTest", "SumBugs", "SymbolTest",
+                        "SystemChangeFileTest", "TestIndenting", "TestParagraphFix", "TestURI", "TextAnchorTest", "TextAttributesScanningTest", "TextDiffBuilderTest", "TextLineEndingsTest",
+                        "TimespanTest", "TimeStampTest", "TimeTest", "UnderscoreSelectorsTest", "UrlTest", "UTF16TextConverterTest", "UTF8TextConverterTest", "UUIDPrimitivesTest",
+                        "WeakIdentityKeyDictionaryTest", "WeakMessageSendTest", "WeakSetTest", "WebClientServerTest", "WideCharacterSetTest", "WideStringTest", "WriteStreamTest", "XMLParserTest"};
         image.getOutput().println();
         image.getOutput().println("== Failing Squeak Tests ===================");
         for (int i = 0; i < testClasses.length; i++) {
@@ -118,16 +143,6 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
         }
         image.getOutput().print("==================================== ");
         image.getOutput().flush();
-    }
-
-    @Ignore
-    @Test
-    public void testZBrokenSqueakTests() {
-        evaluate("ClosureTest buildSuite run");
-        evaluate("FloatTest buildSuite run");
-        evaluate("NumberTest buildSuite run");
-        evaluate("ProcessTest buildSuite run");
-        evaluate("TrueTest buildSuite run"); // doesNotUnderstand not working yet
     }
 
     @BeforeClass
