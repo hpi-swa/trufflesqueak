@@ -187,7 +187,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected BaseSqueakObject doClock(@SuppressWarnings("unused") ClassObject receiver) {
+        protected long doClock(@SuppressWarnings("unused") ClassObject receiver) {
             return code.image.wrap(System.currentTimeMillis() - code.image.startUpMillis);
         }
     }
@@ -216,7 +216,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected BaseSqueakObject doClock(@SuppressWarnings("unused") ClassObject receiver) {
+        protected long doClock(@SuppressWarnings("unused") ClassObject receiver) {
             return code.image.wrap(currentMicrosecondsLocal() / 1000000);
         }
     }

@@ -1,6 +1,5 @@
 package de.hpi.swa.trufflesqueak.model;
 
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.CharBuffer;
@@ -158,7 +157,7 @@ public class NativeObject extends SqueakObject {
         return new NativeObject(this);
     }
 
-    public BigInteger normalize() {
-        return new LargeIntegerObject(image, getSqClass(), getBytes()).getValue();
+    public LargeIntegerObject normalize() {
+        return new LargeIntegerObject(image, getSqClass(), getBytes());
     }
 }

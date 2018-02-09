@@ -1,14 +1,13 @@
 package de.hpi.swa.trufflesqueak.nodes.plugins;
 
-import java.math.BigInteger;
 import java.util.List;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodes.ReturnReceiverNode;
@@ -38,15 +37,13 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        @TruffleBoundary
-        protected final static Number doLongWithOverflow(final long a, final long argument) {
-            return doBigInteger(BigInteger.valueOf(a), BigInteger.valueOf(argument));
+        protected final Object doLongWithOverflow(final long a, final long argument) {
+            return doLargeInteger(asLargeInteger(a), asLargeInteger(argument));
         }
 
         @Specialization
-        @TruffleBoundary
-        protected final static Number doBigInteger(final BigInteger a, final BigInteger b) {
-            return reduceIfPossible(a.add(b));
+        protected final static Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
+            return a.add(b);
         }
 
         @Specialization
@@ -55,15 +52,13 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        @TruffleBoundary
-        protected final static Number doLong(final long a, final BigInteger b) {
-            return doBigInteger(BigInteger.valueOf(a), b);
+        protected final Object doLong(final long a, final LargeIntegerObject b) {
+            return doLargeInteger(asLargeInteger(a), b);
         }
 
         @Specialization
-        @TruffleBoundary
-        protected final static Number doBigInteger(final BigInteger a, final long b) {
-            return doBigInteger(a, BigInteger.valueOf(b));
+        protected final Object doLargeInteger(final LargeIntegerObject a, final long b) {
+            return doLargeInteger(a, asLargeInteger(b));
         }
 
         @Specialization
@@ -90,15 +85,13 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        @TruffleBoundary
-        protected final static Number doLongWithOverflow(final long a, final long b) {
-            return doBigInteger(BigInteger.valueOf(a), BigInteger.valueOf(b));
+        protected final Object doLongWithOverflow(final long a, final long b) {
+            return doLargeInteger(asLargeInteger(a), asLargeInteger(b));
         }
 
         @Specialization
-        @TruffleBoundary
-        protected final static Number doBigInteger(final BigInteger a, final BigInteger b) {
-            return reduceIfPossible(a.subtract(b));
+        protected final static Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
+            return a.subtract(b);
         }
 
         @Specialization
@@ -107,9 +100,8 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        @TruffleBoundary
-        protected final static Number doLong(final long a, final BigInteger b) {
-            return doBigInteger(BigInteger.valueOf(a), b);
+        protected final Object doLong(final long a, final LargeIntegerObject b) {
+            return doLargeInteger(asLargeInteger(a), b);
         }
 
         @Specialization
@@ -118,9 +110,8 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        @TruffleBoundary
-        protected final static Number doBigInteger(final BigInteger a, final long b) {
-            return doBigInteger(a, BigInteger.valueOf(b));
+        protected final Object doLargeInteger(final LargeIntegerObject a, final long b) {
+            return doLargeInteger(a, asLargeInteger(b));
         }
 
         @Specialization
@@ -142,15 +133,13 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        @TruffleBoundary
-        protected final static Number doLongWithOverflow(final long a, final long b) {
-            return doBigInteger(BigInteger.valueOf(a), BigInteger.valueOf(b));
+        protected final Object doLongWithOverflow(final long a, final long b) {
+            return doLargeInteger(asLargeInteger(a), asLargeInteger(b));
         }
 
         @Specialization
-        @TruffleBoundary
-        protected final static Number doBigInteger(final BigInteger a, final BigInteger b) {
-            return reduceIfPossible(a.multiply(b));
+        protected final static Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
+            return a.multiply(b);
         }
 
         @Specialization
@@ -159,9 +148,8 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        @TruffleBoundary
-        protected final static Number doLong(final long a, final BigInteger b) {
-            return doBigInteger(BigInteger.valueOf(a), b);
+        protected final Object doLong(final long a, final LargeIntegerObject b) {
+            return doLargeInteger(asLargeInteger(a), b);
         }
 
         @Specialization
@@ -170,9 +158,8 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        @TruffleBoundary
-        protected final static Number doBigInteger(final BigInteger a, final long b) {
-            return doBigInteger(a, BigInteger.valueOf(b));
+        protected final Object doLargeInteger(final LargeIntegerObject a, final long b) {
+            return doLargeInteger(a, asLargeInteger(b));
         }
 
         @Specialization
@@ -199,32 +186,28 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        @TruffleBoundary
         protected final ListObject doLongWithOverflow(final long rcvr, final long arg, final boolean negative) {
-            return doBigInteger(BigInteger.valueOf(rcvr), BigInteger.valueOf(arg), negative);
+            return doLargeInteger(asLargeInteger(rcvr), asLargeInteger(arg), negative);
         }
 
         @Specialization
-        @TruffleBoundary
-        protected final ListObject doBigInteger(final BigInteger rcvr, final BigInteger arg, final boolean negative) {
-            BigInteger divide = rcvr.divide(arg);
+        protected final ListObject doLargeInteger(final LargeIntegerObject rcvr, final LargeIntegerObject arg, final boolean negative) {
+            LargeIntegerObject divide = rcvr.divideNoReduce(arg);
             if ((negative && divide.signum() >= 0) || (!negative && divide.signum() < 0)) {
-                divide = divide.negate();
+                divide = divide.negateNoReduce();
             }
-            BigInteger remainder = rcvr.remainder(arg);
-            return code.image.wrap(new Object[]{reduceIfPossible(divide), reduceIfPossible(remainder)});
+            Object remainder = rcvr.remainder(arg);
+            return code.image.wrap(new Object[]{divide.reduceIfPossible(), remainder});
         }
 
         @Specialization
-        @TruffleBoundary
-        protected final ListObject doLong(final long rcvr, final BigInteger arg, final boolean negative) {
-            return doBigInteger(BigInteger.valueOf(rcvr), arg, negative);
+        protected final ListObject doLong(final long rcvr, final LargeIntegerObject arg, final boolean negative) {
+            return doLargeInteger(asLargeInteger(rcvr), arg, negative);
         }
 
         @Specialization
-        @TruffleBoundary
-        protected final ListObject doBigInteger(final BigInteger rcvr, final long arg, final boolean negative) {
-            return doBigInteger(rcvr, BigInteger.valueOf(arg), negative);
+        protected final ListObject doLargeInteger(final LargeIntegerObject rcvr, final long arg, final boolean negative) {
+            return doLargeInteger(rcvr, asLargeInteger(arg), negative);
         }
     }
 
@@ -241,21 +224,18 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        @TruffleBoundary
-        protected final static Number doBigInteger(final BigInteger receiver, final BigInteger arg) {
-            return reduceIfPossible(receiver.and(arg));
+        protected final static Object doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject arg) {
+            return receiver.and(arg);
         }
 
         @Specialization
-        @TruffleBoundary
-        protected final static Number doLong(final long receiver, final BigInteger arg) {
-            return doBigInteger(BigInteger.valueOf(receiver), arg);
+        protected final Object doLong(final long receiver, final LargeIntegerObject arg) {
+            return doLargeInteger(asLargeInteger(receiver), arg);
         }
 
         @Specialization
-        @TruffleBoundary
-        protected final static Number doBigInteger(final BigInteger receiver, final long arg) {
-            return doBigInteger(receiver, BigInteger.valueOf(arg));
+        protected final Object doLargeInteger(final LargeIntegerObject receiver, final long arg) {
+            return doLargeInteger(receiver, asLargeInteger(arg));
         }
     }
 
@@ -272,21 +252,18 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        @TruffleBoundary
-        protected final static Number doBigInteger(final BigInteger receiver, final BigInteger arg) {
-            return reduceIfPossible(receiver.or(arg));
+        protected final static Object doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject arg) {
+            return receiver.or(arg);
         }
 
         @Specialization
-        @TruffleBoundary
-        protected final static Number doLong(final long receiver, final BigInteger arg) {
-            return doBigInteger(BigInteger.valueOf(receiver), arg);
+        protected final Object doLong(final long receiver, final LargeIntegerObject arg) {
+            return doLargeInteger(asLargeInteger(receiver), arg);
         }
 
         @Specialization
-        @TruffleBoundary
-        protected final static Number doBigInteger(final BigInteger receiver, final long arg) {
-            return doBigInteger(receiver, BigInteger.valueOf(arg));
+        protected final Object doLargeInteger(final LargeIntegerObject receiver, final long arg) {
+            return doLargeInteger(receiver, asLargeInteger(arg));
         }
     }
 
@@ -309,27 +286,23 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"arg >= 0"})
-        @TruffleBoundary
-        protected final static Number doBigInteger(final BigInteger receiver, final long arg) {
-            return reduceIfPossible(receiver.shiftLeft((int) arg));
+        protected final static Object doLargeInteger(final LargeIntegerObject receiver, final long arg) {
+            return receiver.shiftLeft((int) arg);
         }
 
         @Specialization(guards = {"arg < 0"})
-        @TruffleBoundary
-        protected final static Number doBigIntegerNegative(final BigInteger receiver, final long arg) {
-            return reduceIfPossible(receiver.shiftRight((int) -arg));
+        protected final static Object doLargeIntegerNegative(final LargeIntegerObject receiver, final long arg) {
+            return receiver.shiftRight((int) -arg);
         }
 
         @Specialization(guards = {"arg >= 0"})
-        @TruffleBoundary
-        protected final static Number doNativeObject(final NativeObject receiver, final long arg) {
-            return doBigInteger(receiver.normalize(), arg);
+        protected final static Object doNativeObject(final NativeObject receiver, final long arg) {
+            return doLargeInteger(receiver.normalize(), arg);
         }
 
         @Specialization(guards = {"arg < 0"})
-        @TruffleBoundary
-        protected final static Number doNativeObjectNegative(final NativeObject receiver, final long arg) {
-            return doBigIntegerNegative(receiver.normalize(), arg);
+        protected final static Object doNativeObjectNegative(final NativeObject receiver, final long arg) {
+            return doLargeIntegerNegative(receiver.normalize(), arg);
         }
     }
 
@@ -349,14 +322,13 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        @TruffleBoundary
-        public Number doBigInteger(BigInteger value) {
-            return reduceIfPossible(value);
+        public Object doLargeInteger(LargeIntegerObject value) {
+            return value.reduceIfPossible();
         }
 
         @Specialization
-        protected Number doNativeObject(NativeObject value) {
-            return reduceIfPossible(value.normalize());
+        protected Object doNativeObject(NativeObject value) {
+            return value.normalize().reduceIfPossible();
         }
     }
 

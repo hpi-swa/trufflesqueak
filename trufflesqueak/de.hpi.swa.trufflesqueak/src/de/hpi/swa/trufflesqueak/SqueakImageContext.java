@@ -225,8 +225,8 @@ public class SqueakImageContext {
         return value ? sqTrue : sqFalse;
     }
 
-    public BaseSqueakObject wrap(long l) {
-        return wrap(BigInteger.valueOf(l));
+    public long wrap(long l) {
+        return l;
     }
 
     public BaseSqueakObject wrap(BigInteger i) {

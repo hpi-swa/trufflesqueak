@@ -1,9 +1,5 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
-import java.math.BigInteger;
-
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.ImplicitCast;
 import com.oracle.truffle.api.dsl.TypeSystem;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
@@ -19,7 +15,6 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
 @TypeSystem({boolean.class,
                 char.class,
                 long.class,
-                BigInteger.class,
                 double.class,
                 String.class,
                 LargeIntegerObject.class,
@@ -32,14 +27,4 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
                 CompiledMethodObject.class,
                 BaseSqueakObject.class})
 public abstract class SqueakTypes {
-    @ImplicitCast
-    @TruffleBoundary
-    public static BigInteger castBigInteger(LargeIntegerObject value) {
-        return value.getValue();
-    }
-
-    @ImplicitCast
-    public static double castDouble(LargeIntegerObject obj) {
-        return obj.getValue().doubleValue();
-    }
 }

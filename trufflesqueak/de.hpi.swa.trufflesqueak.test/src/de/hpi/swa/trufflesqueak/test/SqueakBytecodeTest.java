@@ -436,9 +436,8 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
 
     @Test
     public void testDup() {
-        BaseSqueakObject rcvr = image.wrap(1);
         // push true, dup, dup, pop, pop, returnTop
-        assertSame(image.sqTrue, runMethod(rcvr, 113, 136, 136, 135, 135, 124));
+        assertSame(image.sqTrue, runMethod(1L, 113, 136, 136, 135, 135, 124));
     }
 
     // TODO: testPushActiveContext()
@@ -480,7 +479,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
     @Test
     public void testCallPrimitiveFailure() {
         int primCode = 1;
-        BaseSqueakObject rcvr = image.wrap(1);
+        long rcvr = 1L;
         NativeObject argument = image.wrap("foo");
         CompiledCodeObject cm = makeMethod(new Object[]{makeHeader(1, 1, 0, true, false)}, // similar to SmallInteger>>#+
                         // callPrimitive 1, returnTop
@@ -550,7 +549,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCase {
     public void testPushClosure() {
         // ^ [ :arg1 :arg2 | arg1 + arg2 ]
         Object[] literals = new Object[]{2L, image.nil, image.nil};
-        BaseSqueakObject rcvr = image.wrap(1);
+        long rcvr = 1L;
         CompiledCodeObject code = makeMethod(literals, 0x8F, 0x02, 0x00, 0x04, 0x10, 0x11, 0xB0, 0x7D, 0x7C);
         VirtualFrame frame = createTestFrame(code);
         Object result = createContext(code, rcvr).execute(frame);

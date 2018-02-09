@@ -1,5 +1,7 @@
 package de.hpi.swa.trufflesqueak.test;
 
+import java.math.BigInteger;
+
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -17,6 +19,7 @@ import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
@@ -166,11 +169,11 @@ public abstract class AbstractSqueakTestCase extends TestCase {
         return ExecuteTopLevelContextNode.create(null, testContext);
     }
 
-    public Object runMethod(BaseSqueakObject receiver, int... intbytes) {
+    public Object runMethod(Object receiver, int... intbytes) {
         return runMethod(receiver, new BaseSqueakObject[0], intbytes);
     }
 
-    public Object runMethod(BaseSqueakObject receiver, Object[] arguments, int... intbytes) {
+    public Object runMethod(Object receiver, Object[] arguments, int... intbytes) {
         CompiledCodeObject cm = makeMethod(intbytes);
         return runMethod(cm, receiver, arguments);
     }

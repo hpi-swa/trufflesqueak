@@ -40,10 +40,10 @@ public class SqueakPrimitiveTest extends AbstractSqueakTestCase {
         Object[][] testValues = new Object[][]{
                         {(long) Integer.MAX_VALUE, (long) Integer.MAX_VALUE, 2 * (long) Integer.MAX_VALUE},
                         {Long.MAX_VALUE, Long.MAX_VALUE, BigInteger.valueOf(Long.MAX_VALUE).multiply(BigInteger.valueOf(2))},
-                        {BigInteger.valueOf(Long.MAX_VALUE), Long.MIN_VALUE, BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.valueOf(Long.MIN_VALUE)).longValue()}};
+                        {Long.MAX_VALUE, Long.MIN_VALUE, BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.valueOf(Long.MIN_VALUE)).longValue()}};
         for (int i = 0; i < testValues.length; i++) {
             Object[] values = testValues[i];
-            assertEquals(values[2], runBinaryPrimitive(1, values[0], values[1]));
+            assertEquals(image.wrap(values[2]), runBinaryPrimitive(1, image.wrap(values[0]), image.wrap(values[1])));
         }
     }
 
@@ -55,11 +55,11 @@ public class SqueakPrimitiveTest extends AbstractSqueakTestCase {
                         {Long.MAX_VALUE, Long.MAX_VALUE - 1, 1L},
                         {Long.MAX_VALUE, Long.MAX_VALUE - Integer.MAX_VALUE, (long) Integer.MAX_VALUE},
                         {Long.MIN_VALUE, 1L, BigInteger.valueOf(Long.MIN_VALUE).subtract(BigInteger.ONE)},
-                        {BigInteger.valueOf(Long.MAX_VALUE), BigInteger.valueOf(Long.MAX_VALUE - Integer.MAX_VALUE), (long) Integer.MAX_VALUE},
+                        {Long.MAX_VALUE, Long.MAX_VALUE - Integer.MAX_VALUE, (long) Integer.MAX_VALUE},
                         {BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE), 1L, Long.MAX_VALUE}};
         for (int i = 0; i < testValues.length; i++) {
             Object[] values = testValues[i];
-            assertEquals(values[2], runBinaryPrimitive(2, values[0], values[1]));
+            assertEquals(image.wrap(values[2]), runBinaryPrimitive(2, image.wrap(values[0]), image.wrap(values[1])));
         }
     }
 }
