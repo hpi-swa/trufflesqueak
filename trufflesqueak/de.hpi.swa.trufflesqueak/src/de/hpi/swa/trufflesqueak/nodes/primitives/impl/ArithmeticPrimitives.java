@@ -8,6 +8,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -343,8 +344,19 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        protected final static double doDouble(final double a, final double b) {
+            return a / b;
+        }
+
+        @Specialization
         protected final Object doLargeInteger(final LargeIntegerObject a, final long b) {
             return doLargeInteger(a, asLargeInteger(b));
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected final static double doLargeInteger(final LargeIntegerObject a, final double b) {
+            throw new SqueakException("Not implemented yet");
         }
 
         @Specialization
@@ -353,8 +365,19 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final static long doLong(final long a, final double b) {
-            return (long) (a / b);
+        protected final static double doLong(final long a, final double b) {
+            return a / b;
+        }
+
+        @Specialization
+        protected final static double doDouble(final double a, final long b) {
+            return a / b;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected final static double doDouble(final double a, final LargeIntegerObject b) {
+            throw new SqueakException("Not implemented yet");
         }
     }
 

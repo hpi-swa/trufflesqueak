@@ -310,7 +310,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected PrimClassNode(CompiledMethodObject method) {
             super(method);
-            node = SqueakLookupClassNodeGen.create(code);
+            node = SqueakLookupClassNode.create(code);
         }
 
         @Specialization
