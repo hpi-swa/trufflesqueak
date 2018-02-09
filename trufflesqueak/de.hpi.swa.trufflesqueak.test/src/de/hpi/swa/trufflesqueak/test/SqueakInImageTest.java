@@ -99,6 +99,8 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
     public void testYFailingSqueakTests() {
         String[] testClasses = {"ArrayTest", "DateTest", "DictionaryTest", "DependentsArrayTest", "FalseTest", "LinkedListTest", "ObjectTest", "SmallIntegerTest",
                         "StringTest", "SymbolTest"};
+        image.getOutput().println();
+        image.getOutput().println("== Failing Squeak Tests ===================");
         for (int i = 0; i < testClasses.length; i++) {
             String testClass = testClasses[i];
             image.getOutput().print(testClass + ": ");
@@ -114,6 +116,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                 fail("Unable to find number of runs or/and number of passes");
             }
         }
+        image.getOutput().print("==================================== ");
     }
 
     @Ignore
