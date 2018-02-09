@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
+import java.awt.HeadlessException;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
@@ -231,7 +232,12 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object doClipboard(Object[] rcvrAndArgs) {
-            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            Clipboard clipboard;
+            try {
+                clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            } catch (HeadlessException e) {
+                throw new PrimitiveFailed();
+            }
             if (rcvrAndArgs.length == 1) {
                 String text;
                 try {
