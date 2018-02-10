@@ -11,6 +11,7 @@ import java.time.Instant;
 import java.util.Calendar;
 import java.util.List;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
@@ -225,6 +226,8 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 141, variableArguments = true)
     protected static abstract class PrimClipboardTextNode extends AbstractPrimitiveNode {
+        @CompilationFinal private boolean isHeadless = false;
+        private String headlessClipboardContents = "";
 
         protected PrimClipboardTextNode(CompiledMethodObject method) {
             super(method);
@@ -232,24 +235,33 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object doClipboard(Object[] rcvrAndArgs) {
-            Clipboard clipboard;
+            Clipboard clipboard = null;
             try {
                 clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
             } catch (HeadlessException e) {
-                throw new PrimitiveFailed();
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                isHeadless = true;
             }
             if (rcvrAndArgs.length == 1) {
                 String text;
-                try {
-                    text = (String) code.image.wrap(clipboard.getData(DataFlavor.stringFlavor));
-                } catch (UnsupportedFlavorException | IOException | IllegalStateException e) {
-                    text = "";
+                if (isHeadless) {
+                    text = headlessClipboardContents;
+                } else {
+                    try {
+                        text = (String) clipboard.getData(DataFlavor.stringFlavor);
+                    } catch (UnsupportedFlavorException | IOException | IllegalStateException e) {
+                        text = "";
+                    }
                 }
                 return code.image.wrap(text);
             } else if (rcvrAndArgs.length == 2 && (rcvrAndArgs[1] instanceof NativeObject)) {
                 String text = ((NativeObject) rcvrAndArgs[1]).toString();
-                StringSelection selection = new StringSelection(text);
-                clipboard.setContents(selection, selection);
+                if (isHeadless) {
+                    headlessClipboardContents = text;
+                } else {
+                    StringSelection selection = new StringSelection(text);
+                    clipboard.setContents(selection, selection);
+                }
                 return rcvrAndArgs[1];
             }
             throw new PrimitiveFailed();
