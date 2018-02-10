@@ -364,6 +364,16 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        protected Object atput(NativeObject receiver, long idx, LargeIntegerObject value) {
+            try {
+                receiver.atput0(idx - 1, value.reduceToLong());
+                return value;
+            } catch (ArithmeticException e) {
+                throw new PrimitiveFailed();
+            }
+        }
+
+        @Specialization
         protected Object atput(BaseSqueakObject receiver, long idx, Object value) {
             receiver.atput0(idx - 1, value);
             return value;
