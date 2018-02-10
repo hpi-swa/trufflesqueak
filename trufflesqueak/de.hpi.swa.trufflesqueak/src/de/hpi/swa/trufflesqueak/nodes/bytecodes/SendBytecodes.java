@@ -4,6 +4,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 
+import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveWithoutResultException;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -53,10 +54,13 @@ public final class SendBytecodes {
 
         @Override
         public void executeVoid(VirtualFrame frame) {
-            Object result = executeSend(frame);
-            if (result != null) { // primitive produced no result
-                pushNode.executeWrite(frame, result);
+            Object result;
+            try {
+                result = executeSend(frame);
+            } catch (PrimitiveWithoutResultException e) {
+                return; // ignoring result
             }
+            pushNode.executeWrite(frame, result);
             // TODO: Object as Method
         }
 
