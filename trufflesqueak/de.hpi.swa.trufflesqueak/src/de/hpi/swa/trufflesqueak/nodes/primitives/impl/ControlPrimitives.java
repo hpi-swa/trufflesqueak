@@ -109,7 +109,13 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 rcvrAndArgs = new Object[]{receiver};
             }
             CompiledCodeObject lookupResult = (CompiledCodeObject) lookupNode.executeLookup(rcvrClass, selector);
-            return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndArgs, getContextOrMarker(frame));
+            Object contextOrMarker = getContextOrMarker(frame);
+            if (lookupResult.isDoesNotUnderstand()) {
+                Object[] rcvrAndSelector = new Object[]{rcvrAndArgs[0], selector};
+                return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndSelector, contextOrMarker);
+            } else {
+                return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndArgs, contextOrMarker);
+            }
         }
     }
 

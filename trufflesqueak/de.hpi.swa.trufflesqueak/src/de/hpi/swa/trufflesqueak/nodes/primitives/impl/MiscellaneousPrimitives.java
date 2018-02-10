@@ -491,7 +491,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
             Object lookupResult = lookupNode.executeLookup(rcvrClass, code.image.wrap(SIMULATE_PRIMITIVE_SELECTOR));
             if (lookupResult instanceof CompiledMethodObject) {
                 CompiledMethodObject result = (CompiledMethodObject) lookupResult;
-                if (result.getCompiledInSelector() != code.image.doesNotUnderstand) {
+                if (!result.isDoesNotUnderstand()) {
                     return result;
                 }
             }

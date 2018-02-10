@@ -43,7 +43,12 @@ public final class SendBytecodes {
             ClassObject rcvrClass = lookupClassNode.executeLookup(rcvrAndArgs[0]);
             CompiledCodeObject lookupResult = (CompiledCodeObject) lookupNode.executeLookup(rcvrClass, selector);
             Object contextOrMarker = readContextNode.executeRead(frame);
-            return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndArgs, contextOrMarker);
+            if (lookupResult.isDoesNotUnderstand()) {
+                Object[] rcvrAndSelector = new Object[]{rcvrAndArgs[0], selector};
+                return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndSelector, contextOrMarker);
+            } else {
+                return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndArgs, contextOrMarker);
+            }
         }
 
         @Override

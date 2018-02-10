@@ -342,4 +342,8 @@ public abstract class CompiledCodeObject extends SqueakObject {
     public boolean isExceptionHandlerMarked() {
         return hasPrimitive() && primitiveIndex() == 199;
     }
+
+    public boolean isDoesNotUnderstand() {
+        return getCompiledInSelector() == image.doesNotUnderstand;
+    }
 }
