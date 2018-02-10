@@ -10,12 +10,13 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 
 public abstract class FrameSlotReadNode extends FrameSlotNode {
-    protected FrameSlotReadNode(FrameSlot frameSlot) {
-        super(frameSlot);
-    }
 
     public static FrameSlotReadNode create(FrameSlot frameSlot) {
         return FrameSlotReadNodeGen.create(frameSlot);
+    }
+
+    protected FrameSlotReadNode(FrameSlot frameSlot) {
+        super(frameSlot);
     }
 
     public abstract Object executeRead(Frame frame);

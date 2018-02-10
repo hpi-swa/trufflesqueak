@@ -33,9 +33,8 @@ public abstract class DispatchNode extends Node {
         return ((BaseSqueakObject) receiverAndArguments[0]).at0(method.primitiveIndex() - 264);
     }
 
-    // FIXME: primitive 84 cannot be the only one, figure out what's going on
     @SuppressWarnings("unused")
-    @Specialization(guards = {"method == cachedMethod", "method.hasPrimitive()", "method.primitiveIndex() != 84", "primitiveNode != null"}, assumptions = {"callTargetStable"}, rewriteOn = {
+    @Specialization(guards = {"method == cachedMethod", "method.hasPrimitive()", "primitiveNode != null"}, assumptions = {"callTargetStable"}, rewriteOn = {
                     PrimitiveFailed.class,
                     UnsupportedSpecializationException.class})
     protected Object doPrimitiveEagerly(VirtualFrame frame, CompiledMethodObject method, Object[] receiverAndArguments, Object contextOrMarker,

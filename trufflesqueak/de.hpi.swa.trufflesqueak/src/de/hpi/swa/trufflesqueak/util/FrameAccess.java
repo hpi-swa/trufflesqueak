@@ -10,7 +10,6 @@ import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.FrameUtil;
-import com.oracle.truffle.api.nodes.ExplodeLoop;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
@@ -76,7 +75,6 @@ public class FrameAccess {
         }
     }
 
-    @ExplodeLoop
     public static Object[] newWith(CompiledCodeObject code, Object sender, BlockClosureObject closure, Object[] frameArgs) {
         Object[] arguments = new Object[RCVR_AND_ARGS_START + frameArgs.length];
         arguments[METHOD] = code;
@@ -90,7 +88,7 @@ public class FrameAccess {
 
     @TruffleBoundary
     public static Frame findFrameForMarker(FrameMarker frameMarker) {
-        return Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Frame>() {
+        Frame frame = Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Frame>() {
             @Override
             public Frame visitFrame(FrameInstance frameInstance) {
                 Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
@@ -105,5 +103,9 @@ public class FrameAccess {
                 return null;
             }
         });
+        if (frame == null) {
+            throw new SqueakException("Frame not found");
+        }
+        return frame;
     }
 }

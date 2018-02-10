@@ -127,7 +127,6 @@ public class ContextObject extends AbstractPointersObject {
             CompilerDirectives.transferToInterpreter();
             assert sender instanceof FrameMarker;
             Frame frame = FrameAccess.findFrameForMarker((FrameMarker) sender);
-            assert frame != null;
             ContextObject reconstructedSender = GetOrCreateContextNode.getOrCreate(frame);
             assert reconstructedSender != null;
             setSender(reconstructedSender);

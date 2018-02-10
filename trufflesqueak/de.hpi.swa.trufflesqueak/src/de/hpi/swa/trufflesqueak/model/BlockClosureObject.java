@@ -70,7 +70,6 @@ public class BlockClosureObject extends BaseSqueakObject {
         if (outerContext == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             Frame frame = FrameAccess.findFrameForMarker(outerMarker);
-            assert frame != null;
             outerContext = GetOrCreateContextNode.getOrCreate(frame);
             assert outerContext != null;
         }

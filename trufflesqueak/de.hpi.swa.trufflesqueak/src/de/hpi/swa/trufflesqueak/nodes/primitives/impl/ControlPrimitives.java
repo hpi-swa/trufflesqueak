@@ -48,6 +48,7 @@ import de.hpi.swa.trufflesqueak.nodes.process.RemoveProcessFromListNode;
 import de.hpi.swa.trufflesqueak.nodes.process.ResumeProcessNode;
 import de.hpi.swa.trufflesqueak.nodes.process.SignalSemaphoreNode;
 import de.hpi.swa.trufflesqueak.nodes.process.WakeHighestPriorityNode;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -109,7 +110,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 rcvrAndArgs = new Object[]{receiver};
             }
             CompiledCodeObject lookupResult = (CompiledCodeObject) lookupNode.executeLookup(rcvrClass, selector);
-            Object contextOrMarker = getContextOrMarker(frame);
+            Object contextOrMarker = FrameAccess.getContextOrMarker(frame, FrameAccess.getMethod(frame));
             if (lookupResult.isDoesNotUnderstand()) {
                 Object[] rcvrAndSelector = new Object[]{rcvrAndArgs[0], selector};
                 return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndSelector, contextOrMarker);
@@ -549,7 +550,8 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             for (int i = 0; i < numArgs; i++) {
                 dispatchRcvrAndArgs[1 + i] = argArray.at0(i);
             }
-            return dispatchNode.executeDispatch(frame, codeObject, dispatchRcvrAndArgs, getContextOrMarker(frame));
+            Object thisContext = FrameAccess.getContextOrMarker(frame, FrameAccess.getMethod(frame));
+            return dispatchNode.executeDispatch(frame, codeObject, dispatchRcvrAndArgs, thisContext);
         }
     }
 
