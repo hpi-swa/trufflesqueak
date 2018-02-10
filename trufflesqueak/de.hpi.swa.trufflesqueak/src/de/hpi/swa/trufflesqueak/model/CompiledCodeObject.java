@@ -44,7 +44,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
     @CompilationFinal protected int numLiterals;
     @CompilationFinal private boolean isOptimized;
     @CompilationFinal private boolean hasPrimitive;
-    @CompilationFinal private boolean needsLargeFrame = true; // defaults to true
+    @CompilationFinal protected boolean needsLargeFrame = true; // defaults to true
     @CompilationFinal private int numTemps;
     @CompilationFinal private long accessModifier;
     @CompilationFinal private boolean altInstructionSet;
