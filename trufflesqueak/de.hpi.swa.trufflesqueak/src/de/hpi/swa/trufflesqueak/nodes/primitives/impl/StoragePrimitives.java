@@ -502,16 +502,30 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected char doCharValue(Object[] rcvrAndArgs) {
-            try {
-                switch (rcvrAndArgs.length) {
-                    case 1:
-                        return (char) rcvrAndArgs[0];
-                    case 2:
-                        return (char) rcvrAndArgs[1];
-                }
-            } catch (ClassCastException e) {
+            Object value;
+            switch (rcvrAndArgs.length) {
+                case 1:
+                    value = rcvrAndArgs[0];
+                    break;
+                case 2:
+                    value = rcvrAndArgs[1];
+                    break;
+                default:
+                    throw new PrimitiveFailed();
             }
-            throw new PrimitiveFailed();
+            long longValue;
+            try {
+                if (value instanceof Long) {
+                    longValue = (long) value;
+                } else if (value instanceof LargeIntegerObject) {
+                    longValue = ((LargeIntegerObject) value).reduceToLong();
+                } else {
+                    throw new PrimitiveFailed();
+                }
+                return (char) Math.toIntExact(longValue);
+            } catch (ArithmeticException e) {
+                throw new PrimitiveFailed();
+            }
         }
     }
 

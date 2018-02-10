@@ -155,6 +155,11 @@ public class LargeIntegerObject extends SqueakObject {
         return reduceIfPossible(integer);
     }
 
+    @TruffleBoundary
+    public final long reduceToLong() {
+        return integer.longValueExact();
+    }
+
     private final LargeIntegerObject newFromBigInteger(BigInteger value) {
         return newFromBigInteger(image, value);
     }
