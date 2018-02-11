@@ -187,12 +187,14 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Child private WakeHighestPriorityNode wakeHighestPriorityNode;
         @Child private LinkProcessToListNode linkProcessToListNode;
         @Child private GetActiveProcessNode getActiveProcessNode;
+        @Child private IsEmptyListNode isEmptyListNode;
 
         protected PrimWaitNode(CompiledMethodObject method) {
             super(method);
             linkProcessToListNode = LinkProcessToListNode.create(method);
             wakeHighestPriorityNode = WakeHighestPriorityNode.create(method);
             getActiveProcessNode = GetActiveProcessNode.create(method);
+            isEmptyListNode = IsEmptyListNode.create(method);
         }
 
         protected boolean isSemaphore(PointersObject receiver) {
@@ -201,10 +203,9 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "isSemaphore(receiver)")
         protected BaseSqueakObject doWait(VirtualFrame frame, PointersObject receiver) {
-            long excessSignals = (long) receiver.at0(SEMAPHORE.EXCESS_SIGNALS);
-            if (excessSignals > 0)
-                receiver.atput0(SEMAPHORE.EXCESS_SIGNALS, excessSignals - 1);
-            else {
+            if (isEmptyListNode.executeIsEmpty(receiver)) {
+                receiver.atput0(SEMAPHORE.EXCESS_SIGNALS, (long) receiver.at0(SEMAPHORE.EXCESS_SIGNALS) - 1);
+            } else {
                 PointersObject activeProcess = getActiveProcessNode.executeGet();
                 linkProcessToListNode.executeLink(activeProcess, receiver);
                 wakeHighestPriorityNode.executeWake(frame);
