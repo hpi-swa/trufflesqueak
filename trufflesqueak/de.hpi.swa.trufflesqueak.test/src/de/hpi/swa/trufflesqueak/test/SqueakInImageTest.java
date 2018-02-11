@@ -343,7 +343,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "TestParagraphFix", TEST_TYPE.PASSING,
                     "TestSpaceshipOperator", TEST_TYPE.PASSING,
                     "TestURI", TEST_TYPE.PASSING,
-                    "TestValueWithinFix", TEST_TYPE.BROKEN,
+                    "TestValueWithinFix", TEST_TYPE.INCONSISTENT,
                     "TestVMStatistics", TEST_TYPE.PASSING,
                     "TextAlignmentTest", TEST_TYPE.PASSING,
                     "TextAnchorTest", TEST_TYPE.PASSING,
