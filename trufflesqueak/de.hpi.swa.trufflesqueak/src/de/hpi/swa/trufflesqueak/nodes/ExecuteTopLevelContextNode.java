@@ -72,7 +72,7 @@ public class ExecuteTopLevelContextNode extends RootNode {
                 // FIXME: do not create node here
                 executeContextNode = insert(ExecuteContextNode.create(code));
                 Object result = executeContextNode.executeNonVirtualized(frame, activeContext);
-                throw new TopLevelReturn(result);
+                activeContext = unwindContextChain(sender, sender, result);
             } catch (ProcessSwitch ps) {
                 activeContext = ps.getNewContext();
             } catch (NonLocalReturn nlr) {
