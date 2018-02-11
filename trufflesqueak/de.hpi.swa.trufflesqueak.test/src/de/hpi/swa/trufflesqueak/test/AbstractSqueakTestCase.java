@@ -28,12 +28,12 @@ import junit.framework.TestCase;
 public abstract class AbstractSqueakTestCase extends TestCase {
     protected static SqueakImageContext image;
 
-    @Parameters(name = "{index}: noContextNeeded={0}")
+    @Parameters(name = "{index}: virtualizationEnabled={0}")
     public static Boolean[] data() {
         return new Boolean[]{true, false};
     }
 
-    @Parameter public static boolean invalidateNoContextNeededAssumption;
+    @Parameter public static boolean invalidateCanBeVirtualizedAssumption;
 
     public AbstractSqueakTestCase() {
         super();
@@ -117,8 +117,8 @@ public abstract class AbstractSqueakTestCase extends TestCase {
 
     public static CompiledCodeObject makeMethod(byte[] bytes, Object[] literals) {
         CompiledMethodObject code = new CompiledMethodObject(image, bytes, literals);
-        if (invalidateNoContextNeededAssumption) {
-            code.invalidateNoContextNeededAssumption();
+        if (invalidateCanBeVirtualizedAssumption) {
+            code.invalidateCanBeVirtualizedAssumption();
         }
         return code;
     }

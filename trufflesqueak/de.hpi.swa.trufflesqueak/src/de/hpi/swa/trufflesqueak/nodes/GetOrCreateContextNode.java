@@ -70,7 +70,7 @@ public abstract class GetOrCreateContextNode extends AbstractNodeWithCode {
             context.atTempPut(i, tempValue);
         }
         if (forceContext) {
-            method.invalidateNoContextNeededAssumption();
+            method.invalidateCanBeVirtualizedAssumption();
             frame.setObject(method.thisContextOrMarkerSlot, context);
         }
         return context;

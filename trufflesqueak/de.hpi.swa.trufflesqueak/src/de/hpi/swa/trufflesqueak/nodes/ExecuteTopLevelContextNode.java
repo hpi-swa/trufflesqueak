@@ -64,7 +64,7 @@ public class ExecuteTopLevelContextNode extends RootNode {
             BaseSqueakObject sender = activeContext.getSender();
             try {
                 CompiledCodeObject code = activeContext.getCodeObject();
-                code.invalidateNoContextNeededAssumption();
+                code.invalidateCanBeVirtualizedAssumption();
                 Object[] frameArgs = activeContext.getReceiverAndArguments();
                 BlockClosureObject closure = activeContext.getClosure();
                 MaterializedFrame frame = Truffle.getRuntime().createMaterializedFrame(FrameAccess.newWith(code, sender, closure, frameArgs), code.getFrameDescriptor());

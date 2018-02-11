@@ -49,7 +49,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
     @CompilationFinal private long accessModifier;
     @CompilationFinal private boolean altInstructionSet;
 
-    @CompilationFinal private final Assumption noContextNeeded = Truffle.getRuntime().createAssumption("Does not need a materialized context");
+    @CompilationFinal private final Assumption canBeVirtualized = Truffle.getRuntime().createAssumption("Does not need a materialized context");
 
     @CompilationFinal private Source source;
 
@@ -97,10 +97,12 @@ public abstract class CompiledCodeObject extends SqueakObject {
         thisContextOrMarkerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.THIS_CONTEXT_OR_MARKER, FrameSlotKind.Object);
         instructionPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.INSTRUCTION_POINTER, FrameSlotKind.Long);
         stackPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.STACK_POINTER, FrameSlotKind.Long);
-        long numStackSlots = frameSize() + getSqClass().getBasicInstanceSize();
-        stackSlots = new FrameSlot[(int) numStackSlots];
-        for (int i = 0; i < stackSlots.length; i++) {
-            stackSlots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Illegal);
+        if (canBeVirtualized.isValid()) {
+            long numStackSlots = frameSize() + getSqClass().getBasicInstanceSize();
+            stackSlots = new FrameSlot[(int) numStackSlots];
+            for (int i = 0; i < stackSlots.length; i++) {
+                stackSlots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Illegal);
+            }
         }
     }
 
@@ -327,12 +329,12 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     public abstract CompiledMethodObject getMethod();
 
-    public Assumption getNoContextNeededAssumption() {
-        return noContextNeeded;
+    public Assumption getCanBeVirtualizedAssumption() {
+        return canBeVirtualized;
     }
 
-    public void invalidateNoContextNeededAssumption() {
-        noContextNeeded.invalidate();
+    public void invalidateCanBeVirtualizedAssumption() {
+        canBeVirtualized.invalidate();
     }
 
     public boolean isUnwindMarked() {

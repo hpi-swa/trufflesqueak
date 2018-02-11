@@ -46,7 +46,7 @@ public abstract class EnterCodeNode extends RootNode {
     }
 
     @ExplodeLoop
-    @Specialization(assumptions = {"code.getNoContextNeededAssumption()"})
+    @Specialization(assumptions = {"code.getCanBeVirtualizedAssumption()"})
     protected Object enterVirtualized(VirtualFrame frame,
                     @Cached("create(code)") ExecuteContextNode contextNode) {
         CompilerDirectives.ensureVirtualized(frame);
@@ -67,7 +67,7 @@ public abstract class EnterCodeNode extends RootNode {
     }
 
     @ExplodeLoop
-    @Specialization(guards = {"!code.getNoContextNeededAssumption().isValid()"})
+    @Specialization(guards = {"!code.getCanBeVirtualizedAssumption().isValid()"})
     protected Object enter(VirtualFrame frame,
                     @Cached("create(code)") ExecuteContextNode contextNode) {
         initializeSlots(frame);
