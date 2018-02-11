@@ -144,18 +144,13 @@ public class BlockClosureObject extends BaseSqueakObject {
     }
 
     @Override
-    public int size() {
-        return instsize() + varsize();
+    public final int size() {
+        return copied.length + instsize();
     }
 
     @Override
-    public int instsize() {
+    public final int instsize() {
         return BLOCK_CLOSURE.FIRST_COPIED_VALUE;
-    }
-
-    @Override
-    public int varsize() {
-        return copied.length;
     }
 
     public Object[] getStack() {

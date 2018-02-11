@@ -75,7 +75,7 @@ public abstract class BaseSqueakObject implements TruffleObject {
         return hashCode() & IDENTITY_HASH_MASK;
     }
 
-    public int varsize() {
+    public final int varsize() {
         return size() - instsize();
     }
 

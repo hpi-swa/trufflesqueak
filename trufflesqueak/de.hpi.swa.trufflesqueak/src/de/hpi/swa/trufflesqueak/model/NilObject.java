@@ -33,12 +33,12 @@ public class NilObject extends BaseSqueakObject {
     }
 
     @Override
-    public int size() {
+    public final int size() {
         return 0;
     }
 
     @Override
-    public int instsize() {
+    public final int instsize() {
         return 0;
     }
 

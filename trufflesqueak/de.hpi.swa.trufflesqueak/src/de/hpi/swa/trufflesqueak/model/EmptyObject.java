@@ -20,7 +20,12 @@ public class EmptyObject extends SqueakObject {
     }
 
     @Override
-    public int size() {
+    public final int size() {
+        return 0;
+    }
+
+    @Override
+    public final int instsize() {
         return 0;
     }
 
@@ -32,11 +37,6 @@ public class EmptyObject extends SqueakObject {
     @Override
     public void atput0(long idx, Object obj) {
         throw new IndexOutOfBoundsException();
-    }
-
-    @Override
-    public int instsize() {
-        return 0;
     }
 
     @Override

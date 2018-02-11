@@ -16,41 +16,36 @@ public class ContextObject extends AbstractPointersObject {
     @CompilationFinal private FrameMarker frameMarker;
     private boolean isDirty;
 
-    public static ContextObject create(SqueakImageContext img) {
-        return new ContextObject(img);
+    public static ContextObject create(SqueakImageContext image) {
+        return new ContextObject(image);
     }
 
-    private ContextObject(SqueakImageContext img) {
-        super(img);
+    private ContextObject(SqueakImageContext image) {
+        super(image, image.methodContextClass);
     }
 
-    public static ContextObject create(SqueakImageContext img, int size) {
-        return new ContextObject(img, size);
+    public static ContextObject create(SqueakImageContext image, int size) {
+        return new ContextObject(image, size);
     }
 
-    private ContextObject(SqueakImageContext img, int size) {
-        this(img);
+    private ContextObject(SqueakImageContext image, int size) {
+        this(image);
         pointers = new Object[CONTEXT.TEMP_FRAME_START + size];
-        Arrays.fill(pointers, img.nil); // initialize all with nil
+        Arrays.fill(pointers, image.nil); // initialize all with nil
     }
 
-    public static ContextObject create(SqueakImageContext img, int size, FrameMarker frameMarker) {
-        return new ContextObject(img, size, frameMarker);
+    public static ContextObject create(SqueakImageContext image, int size, FrameMarker frameMarker) {
+        return new ContextObject(image, size, frameMarker);
     }
 
-    private ContextObject(SqueakImageContext img, int size, FrameMarker frameMarker) {
-        this(img, size);
+    private ContextObject(SqueakImageContext image, int size, FrameMarker frameMarker) {
+        this(image, size);
         this.frameMarker = frameMarker;
     }
 
     private ContextObject(ContextObject original) {
         super(original.image);
         pointers = original.pointers;
-    }
-
-    @Override
-    public ClassObject getSqClass() {
-        return image.methodContextClass;
     }
 
     public void terminate() {
@@ -74,11 +69,6 @@ public class ContextObject extends AbstractPointersObject {
             isDirty = true;
         }
         super.atput0(index, value);
-    }
-
-    @Override
-    public int instsize() {
-        return CONTEXT.TEMP_FRAME_START;
     }
 
     public CompiledCodeObject getCodeObject() {

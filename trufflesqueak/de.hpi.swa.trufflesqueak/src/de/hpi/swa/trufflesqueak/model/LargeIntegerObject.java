@@ -19,12 +19,7 @@ public class LargeIntegerObject extends SqueakObject {
     }
 
     public LargeIntegerObject(SqueakImageContext img, BigInteger i) {
-        super(img);
-        ClassObject liKlass = img.largePositiveIntegerClass;
-        if (i.compareTo(BigInteger.ZERO) < 0) {
-            liKlass = img.largeNegativeIntegerClass;
-        }
-        setSqClass(liKlass);
+        super(img, i.compareTo(BigInteger.ZERO) >= 0 ? img.largePositiveIntegerClass : img.largeNegativeIntegerClass);
         integer = i;
     }
 
@@ -76,12 +71,12 @@ public class LargeIntegerObject extends SqueakObject {
     }
 
     @Override
-    public int size() {
+    public final int size() {
         return byteSize(integer);
     }
 
     @Override
-    public int instsize() {
+    public final int instsize() {
         return 0;
     }
 

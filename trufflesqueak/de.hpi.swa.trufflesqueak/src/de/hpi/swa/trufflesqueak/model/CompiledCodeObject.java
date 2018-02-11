@@ -239,8 +239,13 @@ public abstract class CompiledCodeObject extends SqueakObject {
     }
 
     @Override
-    public int size() {
+    public final int size() {
         return getBytecodeOffset() + bytes.length;
+    }
+
+    @Override
+    public final int instsize() {
+        return 0;
     }
 
     @Override
@@ -298,11 +303,6 @@ public abstract class CompiledCodeObject extends SqueakObject {
         } else {
             literals[index] = obj;
         }
-    }
-
-    @Override
-    public int instsize() {
-        return 0;
     }
 
     public boolean hasPrimitive() {
