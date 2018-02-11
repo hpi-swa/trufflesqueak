@@ -46,7 +46,7 @@ public abstract class BaseSqueakObject implements TruffleObject {
         return "???NotAClass";
     }
 
-    public String getSqClassName() {
+    public final String getSqClassName() {
         if (isClass()) {
             return nameAsClass() + " class";
         } else {

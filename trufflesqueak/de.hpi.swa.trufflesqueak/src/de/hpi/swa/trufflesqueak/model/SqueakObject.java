@@ -1,11 +1,14 @@
 package de.hpi.swa.trufflesqueak.model;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public abstract class SqueakObject extends BaseSqueakObject {
-    private long hash;
-    private ClassObject sqClass;
+    @CompilationFinal private long hash;
+    @CompilationFinal private ClassObject sqClass;
 
     public SqueakObject(SqueakImageContext img) {
         this(img, null);
@@ -24,12 +27,13 @@ public abstract class SqueakObject extends BaseSqueakObject {
     }
 
     @Override
-    public ClassObject getSqClass() {
+    public final ClassObject getSqClass() {
         return sqClass;
     }
 
     @Override
     public void setSqClass(ClassObject newCls) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
         sqClass = newCls;
     }
 
@@ -51,12 +55,13 @@ public abstract class SqueakObject extends BaseSqueakObject {
     @Override
     public long squeakHash() {
         if (hash == 0) {
-            hash = super.squeakHash();
+            setSqueakHash(super.squeakHash());
         }
         return hash;
     }
 
     public void setSqueakHash(long hash) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
         this.hash = hash;
     }
 }

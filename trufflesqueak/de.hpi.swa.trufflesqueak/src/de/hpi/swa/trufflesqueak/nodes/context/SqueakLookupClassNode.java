@@ -64,8 +64,8 @@ public abstract class SqueakLookupClassNode extends AbstractNodeWithCode {
     }
 
     @Specialization
-    protected ClassObject squeakClass(BlockClosureObject ch) {
-        return ch.getSqClass();
+    protected ClassObject squeakClass(@SuppressWarnings("unused") BlockClosureObject ch) {
+        return code.image.blockClosureClass;
     }
 
     @Specialization

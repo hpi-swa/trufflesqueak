@@ -19,7 +19,7 @@ public class NilObject extends BaseSqueakObject {
     }
 
     @Override
-    public ClassObject getSqClass() {
+    public final ClassObject getSqClass() {
         return image.nilClass;
     }
 
