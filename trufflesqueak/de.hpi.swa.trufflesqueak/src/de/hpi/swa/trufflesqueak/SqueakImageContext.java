@@ -257,8 +257,12 @@ public class SqueakImageContext {
         return newPoint((long) dimension.getWidth(), (long) dimension.getHeight());
     }
 
-    public ListObject newList(Object... elements) {
+    public ListObject newList(Object[] elements) {
         return new ListObject(this, arrayClass, elements);
+    }
+
+    public ListObject newListWith(Object... elements) {
+        return newList(elements);
     }
 
     public PointersObject newPoint(long xPos, long yPos) {

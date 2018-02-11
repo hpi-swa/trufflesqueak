@@ -8,6 +8,7 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 
@@ -436,8 +437,9 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         protected Object doTwoArguments(Object[] rcvrAndArgs) {
             long numRcvrAndArgs = rcvrAndArgs.length;
             if (numRcvrAndArgs == 1) {
-                long[] vmParameters = new long[71];
-                return code.image.wrap(vmParameters);
+                Object[] vmParameters = new Object[71];
+                Arrays.fill(vmParameters, 1L);
+                return code.image.newList(vmParameters);
             }
             long index;
             try {
@@ -447,7 +449,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
             }
             if (numRcvrAndArgs <= 3) {
                 // when two args are provided, do nothing and return old value
-                return code.image.wrap(0);
+                return 1L;
             }
             throw new PrimitiveFailed();
         }

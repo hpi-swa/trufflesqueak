@@ -182,7 +182,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
                 divide = Math.negateExact(divide);
             }
             long remainder = rcvr % arg;
-            return code.image.newList(new Object[]{divide, remainder});
+            return code.image.newListWith(divide, remainder);
         }
 
         @Specialization
@@ -197,7 +197,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
                 divide = divide.negateNoReduce();
             }
             Object remainder = rcvr.remainder(arg);
-            return code.image.newList(new Object[]{divide.reduceIfPossible(), remainder});
+            return code.image.newListWith(divide.reduceIfPossible(), remainder);
         }
 
         @Specialization
