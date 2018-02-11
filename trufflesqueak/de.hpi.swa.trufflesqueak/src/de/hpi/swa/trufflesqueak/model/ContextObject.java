@@ -127,8 +127,13 @@ public class ContextObject extends AbstractPointersObject {
             CompilerDirectives.transferToInterpreter();
             assert sender instanceof FrameMarker;
             Frame frame = FrameAccess.findFrameForMarker((FrameMarker) sender);
-            ContextObject reconstructedSender = GetOrCreateContextNode.getOrCreate(frame);
-            assert reconstructedSender != null;
+            BaseSqueakObject reconstructedSender;
+            if (frame == null) {
+                reconstructedSender = image.nil; // no frame found, so sender must be nil
+            } else {
+                reconstructedSender = GetOrCreateContextNode.getOrCreate(frame);
+                assert reconstructedSender != null;
+            }
             setSender(reconstructedSender);
             return reconstructedSender;
         }

@@ -13,6 +13,7 @@ import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.BLOCK_CLOSURE;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.EnterCodeNode;
@@ -70,6 +71,9 @@ public class BlockClosureObject extends BaseSqueakObject {
         if (outerContext == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             Frame frame = FrameAccess.findFrameForMarker(outerMarker);
+            if (frame == null) {
+                throw new SqueakException("No frame found for closure which should always have one");
+            }
             outerContext = GetOrCreateContextNode.getOrCreate(frame);
             assert outerContext != null;
         }

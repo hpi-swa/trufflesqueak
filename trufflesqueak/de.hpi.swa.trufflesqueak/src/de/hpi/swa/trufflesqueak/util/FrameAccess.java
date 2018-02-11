@@ -14,6 +14,7 @@ import com.oracle.truffle.api.frame.FrameUtil;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
 
 public class FrameAccess {
     /**
@@ -97,15 +98,13 @@ public class FrameAccess {
                 }
                 FrameDescriptor frameDescriptor = current.getFrameDescriptor();
                 FrameSlot contextOrMarkerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.THIS_CONTEXT_OR_MARKER);
-                if (frameMarker == FrameUtil.getObjectSafe(current, contextOrMarkerSlot)) {
+                Object contextOrMarker = FrameUtil.getObjectSafe(current, contextOrMarkerSlot);
+                if (frameMarker == contextOrMarker || (contextOrMarker instanceof ContextObject && frameMarker == ((ContextObject) contextOrMarker).getFrameMarker())) {
                     return frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
                 }
                 return null;
             }
         });
-        if (frame == null) {
-            throw new SqueakException("Frame not found");
-        }
         return frame;
     }
 }
