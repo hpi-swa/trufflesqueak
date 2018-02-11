@@ -114,7 +114,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
                         node = bytecodeNodes[pc];
                         continue;
                     } else {
-                        int successor = jumpNode.getNoJumpSuccessor();
+                        int successor = jumpNode.getSuccessorIndex();
                         if (CompilerDirectives.inInterpreter()) {
                             jumpNode.increaseBranchProbability(ConditionalJumpNode.FALSE_SUCCESSOR);
                             if (successor <= pc) {
@@ -145,9 +145,9 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
             }
         } finally {
             if (context != null) {
-                context.setInstructionPointer(node.getIndex() + node.getNumBytecodes());
+                context.setInstructionPointer(node.getSuccessorIndex());
             } else {
-                instructionPointerWriteNode.executeWrite(frame, (long) (node.getIndex() + node.getNumBytecodes()));
+                instructionPointerWriteNode.executeWrite(frame, (long) (node.getSuccessorIndex()));
             }
             assert backJumpCounter >= 0;
             LoopNode.reportLoopCount(this, backJumpCounter);
@@ -166,9 +166,9 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
                 node = bytecodeNodes[pc];
             } finally {
                 if (context != null) {
-                    context.setInstructionPointer(node.getIndex() + node.getNumBytecodes());
+                    context.setInstructionPointer(node.getSuccessorIndex());
                 } else {
-                    instructionPointerWriteNode.executeWrite(frame, (long) (node.getIndex() + node.getNumBytecodes()));
+                    instructionPointerWriteNode.executeWrite(frame, (long) (node.getSuccessorIndex()));
                 }
             }
         }

@@ -41,7 +41,7 @@ public final class JumpBytecodes {
             if (executeCondition(frame)) {
                 return getJumpSuccessor();
             } else {
-                return getNoJumpSuccessor();
+                return getSuccessorIndex();
             }
         }
 
@@ -68,10 +68,6 @@ public final class JumpBytecodes {
             }
             assert !Double.isNaN(successorBranchProbability) && successorBranchProbability >= 0 && successorBranchProbability <= 1;
             return successorBranchProbability;
-        }
-
-        public int getNoJumpSuccessor() {
-            return index + numBytecodes;
         }
 
         public void increaseBranchProbability(int successorIndex) {
@@ -118,7 +114,7 @@ public final class JumpBytecodes {
         }
 
         public int getJumpSuccessor() {
-            return index + numBytecodes + offset;
+            return getSuccessorIndex() + offset;
         }
 
         protected int longJumpOffset(int bytecode, int parameter) {

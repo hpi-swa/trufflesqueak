@@ -42,10 +42,14 @@ public abstract class AbstractBytecodeNode extends SqueakNodeWithCode {
     public int executeInt(VirtualFrame frame) {
         assert index >= 0; // Inner nodes are not allowed to be executed here
         executeVoid(frame);
-        return index + numBytecodes;
+        return getSuccessorIndex();
     }
 
     public abstract void executeVoid(VirtualFrame frame);
+
+    public int getSuccessorIndex() {
+        return index + numBytecodes;
+    }
 
     public int getIndex() {
         return index;

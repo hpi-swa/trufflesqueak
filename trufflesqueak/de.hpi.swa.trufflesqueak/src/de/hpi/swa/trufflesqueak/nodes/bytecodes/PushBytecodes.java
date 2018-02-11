@@ -88,8 +88,7 @@ public final class PushBytecodes {
         }
 
         @Override
-        public int executeInt(VirtualFrame frame) {
-            executeVoid(frame);
+        public int getSuccessorIndex() {
             return index + numBytecodes + blockSize;
         }
 
@@ -97,13 +96,13 @@ public final class PushBytecodes {
         protected int doPushVirtualized(VirtualFrame frame) {
             CompilerDirectives.ensureVirtualizedHere(frame);
             pushNode.executeWrite(frame, createClosure(frame, null, getFrameMarker(frame)));
-            return index + numBytecodes + blockSize;
+            return getSuccessorIndex();
         }
 
         @Specialization(guards = "!isVirtualized(frame)")
         protected int doPush(VirtualFrame frame) {
             pushNode.executeWrite(frame, createClosure(frame, getContext(frame), null));
-            return index + numBytecodes + blockSize;
+            return getSuccessorIndex();
         }
 
         private BlockClosureObject createClosure(VirtualFrame frame, ContextObject context, FrameMarker frameMarker) {
