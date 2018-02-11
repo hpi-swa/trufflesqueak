@@ -111,7 +111,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 rcvrAndArgs = new Object[]{receiver};
             }
             CompiledCodeObject lookupResult = (CompiledCodeObject) lookupNode.executeLookup(rcvrClass, selector);
-            Object contextOrMarker = FrameAccess.getContextOrMarker(frame, FrameAccess.getMethod(frame));
+            Object contextOrMarker = FrameAccess.getContextOrMarker(frame);
             if (lookupResult.isDoesNotUnderstand()) {
                 Object[] rcvrAndSelector = new Object[]{rcvrAndArgs[0], selector};
                 return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndSelector, contextOrMarker);
@@ -552,7 +552,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             for (int i = 0; i < numArgs; i++) {
                 dispatchRcvrAndArgs[1 + i] = argArray.at0(i);
             }
-            Object thisContext = FrameAccess.getContextOrMarker(frame, FrameAccess.getMethod(frame));
+            Object thisContext = FrameAccess.getContextOrMarker(frame);
             return dispatchNode.executeDispatch(frame, codeObject, dispatchRcvrAndArgs, thisContext);
         }
     }

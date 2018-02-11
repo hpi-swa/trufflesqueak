@@ -1,15 +1,13 @@
 package de.hpi.swa.trufflesqueak.util;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
-import com.oracle.truffle.api.frame.FrameUtil;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
@@ -18,7 +16,7 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 
 public class FrameAccess {
     /**
-     * TruffleSqueak frame:
+     * TruffleSqueak frame arguments:
      *
      * <pre>
      * CompiledCodeObject
@@ -29,33 +27,45 @@ public class FrameAccess {
      * CopiedValues*
      * </pre>
      */
-    public static final int METHOD = 0;
-    public static final int SENDER_OR_SENDER_MARKER = 1;
-    public static final int CLOSURE_OR_NULL = 2;
-    public static final int RECEIVER = 3;
-    public static final int RCVR_AND_ARGS_START = 3;
+    @CompilationFinal public static final int METHOD = 0;
+    @CompilationFinal public static final int SENDER_OR_SENDER_MARKER = 1;
+    @CompilationFinal public static final int CLOSURE_OR_NULL = 2;
+    @CompilationFinal public static final int RECEIVER = 3;
+    @CompilationFinal public static final int RCVR_AND_ARGS_START = 3;
 
-    public static CompiledCodeObject getMethod(Frame frame) {
+    /**
+     * TruffleSqueak frame slots:
+     *
+     * <pre>
+     * thisContextOrMarker
+     * instructionPointer
+     * stackPointer
+     * stack*
+     * </pre>
+     */
+    @CompilationFinal public static final int CONTEXT_OR_MARKER = 0;
+
+    public final static CompiledCodeObject getMethod(Frame frame) {
         CompilerAsserts.neverPartOfCompilation();
         return (CompiledCodeObject) frame.getArguments()[METHOD];
     }
 
-    public static Object getSender(Frame frame) {
+    public final static Object getSender(Frame frame) {
         CompilerAsserts.neverPartOfCompilation();
         return frame.getArguments()[SENDER_OR_SENDER_MARKER];
     }
 
-    public static BlockClosureObject getClosure(Frame frame) {
+    public final static BlockClosureObject getClosure(Frame frame) {
         CompilerAsserts.neverPartOfCompilation();
         return (BlockClosureObject) frame.getArguments()[CLOSURE_OR_NULL];
     }
 
-    public static Object getReceiver(Frame frame) {
+    public final static Object getReceiver(Frame frame) {
         CompilerAsserts.neverPartOfCompilation();
         return frame.getArguments()[RECEIVER];
     }
 
-    public static Object[] getArguments(Frame frame) {
+    public final static Object[] getArguments(Frame frame) {
         CompilerAsserts.neverPartOfCompilation();
         int index = 0;
         Object[] arguments = new Object[frame.getArguments().length - RCVR_AND_ARGS_START];
@@ -68,15 +78,15 @@ public class FrameAccess {
         return arguments;
     }
 
-    public static Object getContextOrMarker(Frame frame, CompiledCodeObject code) {
+    public final static Object getContextOrMarker(Frame frame) {
         try {
-            return frame.getObject(code.thisContextOrMarkerSlot);
+            return frame.getObject(frame.getFrameDescriptor().getSlots().get(CONTEXT_OR_MARKER));
         } catch (FrameSlotTypeException e) {
             throw new SqueakException("thisContextOrMarkerSlot should never be invalid");
         }
     }
 
-    public static Object[] newWith(CompiledCodeObject code, Object sender, BlockClosureObject closure, Object[] frameArgs) {
+    public final static Object[] newWith(CompiledCodeObject code, Object sender, BlockClosureObject closure, Object[] frameArgs) {
         Object[] arguments = new Object[RCVR_AND_ARGS_START + frameArgs.length];
         arguments[METHOD] = code;
         arguments[SENDER_OR_SENDER_MARKER] = sender;
@@ -88,23 +98,24 @@ public class FrameAccess {
     }
 
     @TruffleBoundary
-    public static Frame findFrameForMarker(FrameMarker frameMarker) {
-        Frame frame = Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Frame>() {
+    public final static Frame findFrameForMarker(FrameMarker frameMarker) {
+        return Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Frame>() {
             @Override
             public Frame visitFrame(FrameInstance frameInstance) {
                 Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
-                if (current.getArguments().length < RCVR_AND_ARGS_START) {
+                if (current.getFrameDescriptor().getSize() <= 0) {
                     return null;
                 }
-                FrameDescriptor frameDescriptor = current.getFrameDescriptor();
-                FrameSlot contextOrMarkerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.THIS_CONTEXT_OR_MARKER);
-                Object contextOrMarker = FrameUtil.getObjectSafe(current, contextOrMarkerSlot);
-                if (frameMarker == contextOrMarker || (contextOrMarker instanceof ContextObject && frameMarker == ((ContextObject) contextOrMarker).getFrameMarker())) {
+                Object contextOrMarker = getContextOrMarker(current);
+                if (isMatchingMarker(frameMarker, contextOrMarker)) {
                     return frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
                 }
                 return null;
             }
         });
-        return frame;
+    }
+
+    public final static boolean isMatchingMarker(FrameMarker frameMarker, Object contextOrMarker) {
+        return frameMarker == contextOrMarker || (contextOrMarker instanceof ContextObject && frameMarker == ((ContextObject) contextOrMarker).getFrameMarker());
     }
 }

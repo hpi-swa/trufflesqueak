@@ -8,11 +8,8 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
@@ -32,6 +29,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.BlockClosurePrimitivesFactory.PrimClosureValue0NodeFactory.PrimClosureValue0NodeGen;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
+import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
 public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -102,7 +100,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         Object findNextVirtualized(ContextObject receiver) {
             ContextObject handlerContext = Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<ContextObject>() {
                 boolean foundMyself = false;
-                final Object marker = receiver.getFrameMarker();
+                final FrameMarker frameMarker = receiver.getFrameMarker();
 
                 @Override
                 public ContextObject visitFrame(FrameInstance frameInstance) {
@@ -111,10 +109,8 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         return null;
                     }
                     if (!foundMyself) {
-                        FrameDescriptor frameDescriptor = current.getFrameDescriptor();
-                        FrameSlot contextOrMarkerSlot = frameDescriptor.findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.THIS_CONTEXT_OR_MARKER);
-                        Object frameMarker = FrameUtil.getObjectSafe(current, contextOrMarkerSlot);
-                        if (frameMarker == marker) {
+                        Object contextOrMarker = FrameAccess.getContextOrMarker(current);
+                        if (FrameAccess.isMatchingMarker(frameMarker, contextOrMarker)) {
                             foundMyself = true;
                         }
                     } else {

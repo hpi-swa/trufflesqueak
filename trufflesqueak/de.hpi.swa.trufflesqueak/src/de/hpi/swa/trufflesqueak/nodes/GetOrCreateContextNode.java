@@ -39,8 +39,7 @@ public abstract class GetOrCreateContextNode extends AbstractNodeWithCode {
     }
 
     public static ContextObject getOrCreate(Frame frame) {
-        CompiledCodeObject method = FrameAccess.getMethod(frame);
-        Object contextOrMarker = FrameAccess.getContextOrMarker(frame, method);
+        Object contextOrMarker = FrameAccess.getContextOrMarker(frame);
         if (contextOrMarker instanceof ContextObject) {
             return (ContextObject) contextOrMarker;
         } else {
@@ -51,7 +50,7 @@ public abstract class GetOrCreateContextNode extends AbstractNodeWithCode {
     private static ContextObject materialize(Frame frame, boolean forceContext) {
         CompilerDirectives.transferToInterpreter();
         CompiledCodeObject method = FrameAccess.getMethod(frame);
-        FrameMarker frameMarker = (FrameMarker) FrameAccess.getContextOrMarker(frame, method);
+        FrameMarker frameMarker = (FrameMarker) FrameAccess.getContextOrMarker(frame);
         ContextObject context = ContextObject.create(method.image, method.frameSize(), frameMarker);
 
         context.setSender(FrameAccess.getSender(frame));
@@ -79,7 +78,6 @@ public abstract class GetOrCreateContextNode extends AbstractNodeWithCode {
 
     @Specialization(guards = {"!isVirtualized(frame)"})
     protected ContextObject doGet(VirtualFrame frame, @SuppressWarnings("unused") boolean forceContext) {
-        CompiledCodeObject method = FrameAccess.getMethod(frame);
-        return (ContextObject) FrameAccess.getContextOrMarker(frame, method);
+        return (ContextObject) FrameAccess.getContextOrMarker(frame);
     }
 }
