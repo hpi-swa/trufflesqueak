@@ -75,7 +75,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         protected void signalAtMilliseconds(BaseSqueakObject semaphore, long msTime) {
             if (semaphore.isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassSemaphore)) {
                 code.image.registerSemaphore(semaphore, SPECIAL_OBJECT_INDEX.TheTimerSemaphore);
-                code.image.interrupt.nextWakeupTick((int) msTime);
+                code.image.interrupt.nextWakeupTick(msTime);
             } else {
                 code.image.registerSemaphore(code.image.nil, SPECIAL_OBJECT_INDEX.TheTimerSemaphore);
                 code.image.interrupt.nextWakeupTick(0);

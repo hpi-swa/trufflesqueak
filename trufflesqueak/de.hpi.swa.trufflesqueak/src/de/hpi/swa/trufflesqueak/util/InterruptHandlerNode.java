@@ -15,9 +15,9 @@ public class InterruptHandlerNode extends Node {
     private int interruptCheckCounter = 0;
     private int interruptCheckCounterFeedbackReset = 1000;
     private int interruptChecksEveryNms = 3;
-    private int nextPollTick = 0;
-    private int nextWakeupTick = 0;
-    private int lastTick = 0;
+    private long nextPollTick = 0;
+    private long nextWakeupTick = 0;
+    private long lastTick = 0;
     private boolean interruptPending = false;
     private int pendingFinalizationSignals = 0;
     @Child private SignalSemaphoreNode signalSemaporeNode;
@@ -40,7 +40,7 @@ public class InterruptHandlerNode extends Node {
         interruptPending = true;
     }
 
-    public void nextWakeupTick(int msTime) {
+    public void nextWakeupTick(long msTime) {
         nextWakeupTick = msTime;
     }
 
@@ -52,7 +52,7 @@ public class InterruptHandlerNode extends Node {
     }
 
     public void executeCheck(VirtualFrame frame) { // Check for interrupts at sends and backward jumps
-        int now = (int) System.currentTimeMillis();
+        long now = System.currentTimeMillis();
         if (now < lastTick) { // millisecond clock wrapped"
             nextPollTick = now + (nextPollTick - lastTick);
             if (nextWakeupTick != 0) {

@@ -24,9 +24,6 @@ public final class Returns {
 
         public LocalReturn(Object result) {
             super(result);
-            if (result instanceof Long && (Long) result == 42L) {
-                long i = 123;
-            }
         }
 
         @Override
