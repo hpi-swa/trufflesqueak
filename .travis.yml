@@ -1,12 +1,15 @@
-language: java
-jdk:
-  - oraclejdk8
+language: python
+python:
+  - "2.7"
+addons:
+  apt:
+    packages:
+      - oracle-java8-installer
 install:
   - pip install astroid==1.1.0
   - pip install pylint==1.1.0
   - git clone --depth 1 https://github.com/graalvm/mx
 before_script:
-  - mx/mx -n sforceimports
   - test/download-test-image.sh
 script:
   - mx/mx gate
