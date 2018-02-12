@@ -42,9 +42,9 @@ public class SqueakImageReader {
     private short maxExternalSemaphoreTableSize;
     private int firstSegmentSize;
     private int freeOldSpace;
-    private int position;
-    private Vector<SqueakImageChunk> chunklist;
-    HashMap<Long, SqueakImageChunk> chunktable;
+    private int position = 0;
+    private Vector<SqueakImageChunk> chunklist = new Vector<>();
+    HashMap<Long, SqueakImageChunk> chunktable = new HashMap<>();
     private PrintWriter output;
 
     public static void readImage(SqueakImageContext squeakImageContext, FileInputStream inputStream) throws IOException {
@@ -56,11 +56,8 @@ public class SqueakImageReader {
         shortBuf.order(ByteOrder.nativeOrder());
         intBuf.order(ByteOrder.nativeOrder());
         longBuf.order(ByteOrder.nativeOrder());
-        this.output = printWriter;
-        this.stream = new BufferedInputStream(inputStream);
-        this.position = 0;
-        this.chunklist = new Vector<>();
-        this.chunktable = new HashMap<>();
+        output = printWriter;
+        stream = new BufferedInputStream(inputStream);
     }
 
     private void readImage(SqueakImageContext image) throws IOException {
@@ -129,8 +126,7 @@ public class SqueakImageReader {
 
     private void skipToBody() throws IOException {
         int skip = headerSize - this.position;
-        this.stream.skip(skip);
-        this.position += skip;
+        this.position += this.stream.skip(skip);
     }
 
     private void readBody(SqueakImageContext image) throws IOException {

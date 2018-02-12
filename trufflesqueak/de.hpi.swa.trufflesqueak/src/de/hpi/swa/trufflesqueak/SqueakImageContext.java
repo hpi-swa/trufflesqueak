@@ -202,7 +202,7 @@ public class SqueakImageContext {
         } else if (obj instanceof Boolean) {
             return wrap((boolean) obj);
         } else if (obj instanceof Integer) {
-            return wrap((long) obj);
+            return wrap(Long.valueOf((Integer) obj));
         } else if (obj instanceof Long) {
             return wrap((long) obj);
         } else if (obj instanceof BigInteger) {

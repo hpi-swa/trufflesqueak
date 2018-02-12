@@ -198,7 +198,7 @@ public class BlockClosureObject extends BaseSqueakObject {
             int offset = (int) pc - code.getInitialPC();
             int j = code.getBytes()[offset - 2];
             int k = code.getBytes()[offset - 1];
-            int blockSize = (j << 8) | k;
+            int blockSize = (j << 8) | (k & 0xff);
             block = CompiledBlockObject.create(code, numArgs, copied.length, offset, blockSize);
         }
         return block;

@@ -159,10 +159,6 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @SqueakPrimitive(indices = {201, 221})
     public static abstract class PrimClosureValue0Node extends AbstractClosureValuePrimitiveNode {
 
-        public static PrimClosureValue0Node create(CompiledMethodObject method) {
-            return PrimClosureValue0NodeGen.create(method);
-        }
-
         protected PrimClosureValue0Node(CompiledMethodObject method) {
             super(method);
         }
