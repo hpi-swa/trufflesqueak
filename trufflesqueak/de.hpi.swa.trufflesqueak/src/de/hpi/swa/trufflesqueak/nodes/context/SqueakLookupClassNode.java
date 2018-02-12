@@ -1,7 +1,5 @@
 package de.hpi.swa.trufflesqueak.nodes.context;
 
-import java.math.BigInteger;
-
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
@@ -9,6 +7,7 @@ import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNodeWithCode;
 
@@ -55,7 +54,7 @@ public abstract class SqueakLookupClassNode extends AbstractNodeWithCode {
     }
 
     @Specialization
-    protected ClassObject squeakClass(BigInteger object) {
+    protected ClassObject squeakClass(LargeIntegerObject object) {
         if (object.signum() >= 0) {
             return code.image.largePositiveIntegerClass;
         } else {
