@@ -88,11 +88,9 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @GenerateNodeFactory
     @SqueakPrimitive(index = 197)
     protected static abstract class PrimNextHandlerContextNode extends AbstractPrimitiveNode {
-        @Child private GetOrCreateContextNode createContextNode;
 
         protected PrimNextHandlerContextNode(CompiledMethodObject method) {
             super(method);
-            createContextNode = GetOrCreateContextNode.create(method);
         }
 
         @Specialization(guards = {"receiver.hasVirtualSender()"})
@@ -117,7 +115,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         CompiledCodeObject frameMethod = FrameAccess.getMethod(current);
                         if (frameMethod.isExceptionHandlerMarked()) {
                             Frame currentMaterializable = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
-                            return createContextNode.executeGet(currentMaterializable);
+                            return GetOrCreateContextNode.getOrCreate(currentMaterializable);
                         }
                     }
                     return null;

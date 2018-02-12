@@ -11,26 +11,26 @@ import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
 public abstract class AbstractNodeWithCode extends Node {
     @CompilationFinal protected final CompiledCodeObject code;
-    @Child protected FrameSlotReadNode readContextNode;
+    @Child protected FrameSlotReadNode contextOrMarkerReadNode;
 
     protected AbstractNodeWithCode(CompiledCodeObject code) {
         this.code = code;
-        readContextNode = FrameSlotReadNode.create(code.thisContextOrMarkerSlot);
+        contextOrMarkerReadNode = FrameSlotReadNode.create(code.thisContextOrMarkerSlot);
     }
 
     protected boolean isVirtualized(VirtualFrame frame) {
-        return readContextNode.executeRead(frame) instanceof FrameMarker;
+        return contextOrMarkerReadNode.executeRead(frame) instanceof FrameMarker;
     }
 
     protected Object getContextOrMarker(VirtualFrame frame) {
-        return readContextNode.executeRead(frame);
+        return contextOrMarkerReadNode.executeRead(frame);
     }
 
     protected ContextObject getContext(VirtualFrame frame) {
-        return (ContextObject) readContextNode.executeRead(frame);
+        return (ContextObject) contextOrMarkerReadNode.executeRead(frame);
     }
 
     protected FrameMarker getFrameMarker(VirtualFrame frame) {
-        return (FrameMarker) readContextNode.executeRead(frame);
+        return (FrameMarker) contextOrMarkerReadNode.executeRead(frame);
     }
 }
