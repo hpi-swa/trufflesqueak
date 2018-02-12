@@ -14,7 +14,7 @@ import java.util.Deque;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 
 public final class Display {
     private static final class MOUSE_BUTTON {
@@ -175,13 +175,13 @@ public final class Display {
         public void drawRect(int left, int right, int top, int bottom) {
             // Graphics g = bufferStrategy.getDrawGraphics();
             // TODO: implement drawRect
-            throw new NotImplementedException();
+            throw new SqueakException("Not yet implemented");
         }
 
         @Override
         public void forceUpdate() {
             // TODO: implement force update
-            throw new NotImplementedException();
+            throw new SqueakException("Not yet implemented");
         }
 
         @Override
