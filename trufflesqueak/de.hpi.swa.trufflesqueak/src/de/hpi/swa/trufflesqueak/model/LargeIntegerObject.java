@@ -1,6 +1,7 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
@@ -14,17 +15,21 @@ public class LargeIntegerObject extends SqueakObject {
         super(img);
     }
 
-    public LargeIntegerObject(SqueakImageContext img, ClassObject klass) {
-        super(img, klass);
-    }
-
     public LargeIntegerObject(SqueakImageContext img, BigInteger i) {
         super(img, i.compareTo(BigInteger.ZERO) >= 0 ? img.largePositiveIntegerClass : img.largeNegativeIntegerClass);
         integer = i;
     }
 
     public LargeIntegerObject(SqueakImageContext img, ClassObject klass, byte[] bytes) {
-        this(img, klass);
+        super(img, klass);
+        setBytes(bytes);
+    }
+
+    public LargeIntegerObject(SqueakImageContext image, ClassObject klass, int size) {
+        super(image, klass);
+        byte[] bytes = new byte[size];
+        // fill with max byte value to ensure BigInteger has byte array with length = size
+        Arrays.fill(bytes, (byte) 127);
         setBytes(bytes);
     }
 
@@ -42,7 +47,12 @@ public class LargeIntegerObject extends SqueakObject {
 
     @Override
     public void atput0(long idx, Object object) {
-        byte b = (byte) object;
+        byte b;
+        if (object instanceof Long) {
+            b = ((Long) object).byteValue();
+        } else {
+            b = (byte) object;
+        }
         setBytesNative(byteAtPut0(integer, idx, b));
     }
 

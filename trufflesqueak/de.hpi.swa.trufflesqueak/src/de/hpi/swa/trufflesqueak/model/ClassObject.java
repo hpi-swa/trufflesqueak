@@ -235,7 +235,11 @@ public class ClassObject extends AbstractPointersObject {
                 // TODO: Float
                 return new NativeObject(image, this, size, 4);
             case 16: case 17: case 18: case 19: case 20: case 21: case 22: case 23:
-                return new NativeObject(image, this, size, 1);
+                if (this == image.largePositiveIntegerClass || this == image.largeNegativeIntegerClass) {
+                    return new LargeIntegerObject(image, this, size);
+                } else {
+                    return new NativeObject(image, this, size, 1);
+                }
             default:
                 return new CompiledMethodObject(image, this, (int)extraSize);
         }
