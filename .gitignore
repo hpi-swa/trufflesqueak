@@ -20,4 +20,6 @@ env
 trufflesqueak/de.hpi.swa.trufflesqueak/dumps
 *nbproject*
 build.xml
+coverage
 *.iml
+jacoco.exec

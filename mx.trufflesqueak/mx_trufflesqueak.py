@@ -78,10 +78,10 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
     parser.add_argument('-l', '--low-level',
                         help='enable low-level optimization output',
                         dest='low_level', action='store_true', default=False)
-    parser.add_argument('-ti', '--trace-invalidation',
-                        help='trace assumption invalidation and transfers to interpreter',
-                        dest='trace_invalidation',
-                        action='store_true', default=False)
+    parser.add_argument(
+        '-ti', '--trace-invalidation',
+        help='trace assumption invalidation and transfers to interpreter',
+        dest='trace_invalidation', action='store_true', default=False)
     parser.add_argument('-w', '--perf-warnings',
                         help='enable performance warnings',
                         dest='perf_warnings',
@@ -109,14 +109,17 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
 
 
 def _trufflesqueak_gate_runner(args, tasks):
-    argsPrefix = ['--color']
-    argsPrefix.append('%s.test' % PACKAGE_NAME)
-    print argsPrefix
+    unittest_args = []
+    jacocoArgs = mx_gate.get_jacoco_agent_args()
+    if jacocoArgs:
+        unittest_args.extend(jacocoArgs)
+    unittest_args.append('%s.test' % PACKAGE_NAME)
     with mx_gate.Task("TestTruffleSqueak", tasks, tags=['trufflesqueak']) as t:
         if t:
-            mx_unittest.unittest(argsPrefix)
+            mx_unittest.unittest(unittest_args)
 
 mx.update_commands(_suite, {
     'squeak': [_squeak, '[Squeak args|@VM options]'],
 })
 mx_gate.add_gate_runner(_suite, _trufflesqueak_gate_runner)
+mx_gate.add_jacoco_includes(['%s.*' % PACKAGE_NAME])
