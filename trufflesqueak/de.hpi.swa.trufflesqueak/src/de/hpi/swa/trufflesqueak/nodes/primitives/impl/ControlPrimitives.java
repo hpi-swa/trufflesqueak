@@ -131,6 +131,11 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             rcvrAndArgsNode = ReceiverAndArgumentsNode.create(method);
         }
 
+        @Override
+        public final Object executeWithArguments(VirtualFrame frame, Object... rcvrAndArgs) {
+            return perform(frame, rcvrAndArgs);
+        }
+
         @Specialization
         protected Object perform(VirtualFrame frame, Object[] rcvrAndArgs) {
             long numRcvrAndArgs = rcvrAndArgs.length;
@@ -349,8 +354,13 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
+        @Override
+        public final Object executeWithArguments(VirtualFrame frame, Object... rcvrAndArgs) {
+            return doQuit(rcvrAndArgs);
+        }
+
         @Specialization
-        protected Object quit(Object[] rcvrAndArgs) {
+        protected Object doQuit(Object[] rcvrAndArgs) {
             int errorCode;
             try {
                 errorCode = rcvrAndArgs.length > 1 ? (int) rcvrAndArgs[1] : 0;
@@ -533,6 +543,11 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected PrimExecuteMethodArgsArray(CompiledMethodObject method) {
             super(method);
+        }
+
+        @Override
+        public final Object executeWithArguments(VirtualFrame frame, Object... rcvrAndArgs) {
+            return doExecute(frame, rcvrAndArgs);
         }
 
         @Specialization
