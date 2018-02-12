@@ -108,7 +108,7 @@ public final class PushBytecodes {
         private BlockClosureObject createClosure(VirtualFrame frame, ContextObject context, FrameMarker frameMarker) {
             Object receiver = receiverNode.executeRead(frame);
             Object[] copiedValues = (Object[]) popNReversedNode.executeRead(frame);
-            return new BlockClosureObject(getBlock(), receiver, copiedValues, context, frameMarker);
+            return new BlockClosureObject(getBlock(), receiver, copiedValues, context, frameMarker, code.thisContextOrMarkerSlot);
         }
 
         @Override

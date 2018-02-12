@@ -7,6 +7,7 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
+import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
@@ -78,12 +79,21 @@ public class FrameAccess {
         return arguments;
     }
 
-    public final static Object getContextOrMarker(Frame frame) {
+    public final static Object getContextOrMarker(Frame frame, FrameSlot contextOrMarkerSlot) {
         try {
-            return frame.getObject(frame.getFrameDescriptor().getSlots().get(CONTEXT_OR_MARKER));
+            return frame.getObject(contextOrMarkerSlot);
         } catch (FrameSlotTypeException e) {
             throw new SqueakException("thisContextOrMarkerSlot should never be invalid");
         }
+    }
+
+    public final static Object getContextOrMarker(Frame frame) {
+        // TODO: should not be used
+        return getContextOrMarker(frame, getContextOrMarkerSlot(frame));
+    }
+
+    public final static FrameSlot getContextOrMarkerSlot(Frame frame) {
+        return frame.getFrameDescriptor().getSlots().get(CONTEXT_OR_MARKER);
     }
 
     public final static Object[] newWith(CompiledCodeObject code, Object sender, BlockClosureObject closure, Object[] frameArgs) {

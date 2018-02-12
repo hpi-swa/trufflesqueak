@@ -8,6 +8,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
@@ -32,12 +33,13 @@ public class BlockClosureObject extends BaseSqueakObject {
     @CompilationFinal private int numArgs = -1;
     @CompilationFinal private RootCallTarget callTarget;
     @CompilationFinal private final CyclicAssumption callTargetStable = new CyclicAssumption("Compiled method assumption");
+    @CompilationFinal private FrameSlot contextOrMarkerSlot;
 
     public BlockClosureObject(SqueakImageContext image) {
         super(image);
     }
 
-    public BlockClosureObject(CompiledBlockObject compiledBlock, Object receiver, Object[] copied, ContextObject outerContext, FrameMarker frameMarker) {
+    public BlockClosureObject(CompiledBlockObject compiledBlock, Object receiver, Object[] copied, ContextObject outerContext, FrameMarker frameMarker, FrameSlot contextOrMarkerSlot) {
         this(compiledBlock.image);
         assert outerContext == null || outerContext.getFrameMarker() != null;
         this.block = compiledBlock;
@@ -45,6 +47,7 @@ public class BlockClosureObject extends BaseSqueakObject {
         this.outerMarker = frameMarker;
         this.receiver = receiver;
         this.copied = copied;
+        this.contextOrMarkerSlot = contextOrMarkerSlot;
     }
 
     private BlockClosureObject(BlockClosureObject original) {
@@ -54,6 +57,7 @@ public class BlockClosureObject extends BaseSqueakObject {
         this.outerMarker = original.outerMarker;
         this.receiver = original.receiver;
         this.copied = original.copied;
+        this.contextOrMarkerSlot = original.contextOrMarkerSlot;
     }
 
     @Override
@@ -82,6 +86,7 @@ public class BlockClosureObject extends BaseSqueakObject {
 
     public long getPC() {
         if (pc == -1) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             pc = block.getInitialPC() + block.getOffset();
         }
         return pc;
@@ -89,9 +94,18 @@ public class BlockClosureObject extends BaseSqueakObject {
 
     private long getNumArgs() {
         if (numArgs == -1) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             numArgs = block.getNumArgs();
         }
         return numArgs;
+    }
+
+    private FrameSlot getContextOrMarkerSlot(Frame frame) {
+        if (contextOrMarkerSlot == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            contextOrMarkerSlot = FrameAccess.getContextOrMarkerSlot(frame);
+        }
+        return contextOrMarkerSlot;
     }
 
     @Override
@@ -201,8 +215,8 @@ public class BlockClosureObject extends BaseSqueakObject {
                         objects.length +
                         copied.length];
         arguments[FrameAccess.METHOD] = blockObject;
-        // Sender is thisContext
-        arguments[FrameAccess.SENDER_OR_SENDER_MARKER] = FrameAccess.getContextOrMarker(frame);
+        // Sender is thisContext (or marker)
+        arguments[FrameAccess.SENDER_OR_SENDER_MARKER] = FrameAccess.getContextOrMarker(frame, getContextOrMarkerSlot(frame));
         arguments[FrameAccess.CLOSURE_OR_NULL] = this;
         arguments[FrameAccess.RCVR_AND_ARGS_START] = getReceiver();
         for (int i = 0; i < objects.length; i++) {
