@@ -20,3 +20,4 @@ env
 trufflesqueak/de.hpi.swa.trufflesqueak/dumps
 *nbproject*
 build.xml
+*.iml

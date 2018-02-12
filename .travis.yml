@@ -2,10 +2,11 @@ language: java
 jdk:
   - oraclejdk8
 install:
+  - pip install astroid==1.1.0
+  - pip install pylint==1.1.0
   - git clone --depth 1 https://github.com/graalvm/mx
 before_script:
   - mx/mx -n sforceimports
-  - mx/mx -n build
   - test/download-test-image.sh
 script:
-  - mx/mx -n unittest --verbose --regex trufflesqueak
+  - mx/mx gate

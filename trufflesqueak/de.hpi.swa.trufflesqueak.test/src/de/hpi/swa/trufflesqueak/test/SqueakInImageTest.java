@@ -23,7 +23,7 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class SqueakInImageTest extends AbstractSqueakTestCase {
-    private static final String IMAGE_PATH = System.getenv("TRAVIS_BUILD_DIR") + "/images/test.image";
+    private static final String IMAGE_PATH = System.getenv("TRUFFLESQUEAK_ROOT") + "/images/test.image";
     private static Object smalltalkDictionary;
     private static Object smalltalkAssociation;
     private static Object evaluateSymbol;
