@@ -346,14 +346,13 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
                     code.image.getError().append(chars, byteStart, byteEnd);
                     code.image.getError().flush();
                     break;
-                default:
-                    try {
-                        RandomAccessFile file = files.get(fileDescriptor);
-                        throw new IOException("Start debugger here and verify the below!"); // TODO: verify
-                        // file.writeChars(chars);
-                    } catch (NullPointerException | IOException e) {
-                        throw new PrimitiveFailed();
-                    }
+                default: // currently disabled during development
+// try {
+// RandomAccessFile file = files.get(fileDescriptor);
+// file.writeChars(chars);
+// } catch (NullPointerException | IOException e) {
+// throw new PrimitiveFailed();
+// }
             }
             return (byteEnd - byteStart) / elementSize;
         }
