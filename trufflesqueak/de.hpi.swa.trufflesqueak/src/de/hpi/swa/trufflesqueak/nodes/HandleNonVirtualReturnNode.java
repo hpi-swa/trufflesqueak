@@ -21,18 +21,9 @@ public abstract class HandleNonVirtualReturnNode extends AbstractNodeWithCode {
 
     public abstract Object executeHandle(VirtualFrame frame, NonVirtualReturn nvr);
 
-    @Specialization(guards = "isVirtualized(frame)")
-    protected Object handleVirtualized(VirtualFrame frame, NonVirtualReturn nvr) {
-        if (nvr.getTargetContext().getFrameMarker() == getFrameMarker(frame)) {
-            return nvr.getReturnValue();
-        } else {
-            throw nvr;
-        }
-    }
-
-    @Specialization(guards = "!isVirtualized(frame)")
+    @Specialization
     protected Object handle(VirtualFrame frame, NonVirtualReturn nvr) {
-        if (nvr.getTargetContext() == getContext(frame)) {
+        if (FrameAccess.isMatchingMarker(nvr.getTargetContext().getFrameMarker(), FrameAccess.getSender(frame))) {
             return nvr.getReturnValue();
         } else {
             throw nvr;
