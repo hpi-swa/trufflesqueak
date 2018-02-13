@@ -277,7 +277,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "ReadWriteStreamTest", TEST_TYPE.PASSING,
                     "RecentMessagesTest", TEST_TYPE.FAILING,
                     "RectangleTest", TEST_TYPE.PASSING,
-                    "ReferenceStreamTest", TEST_TYPE.FAILING,
+                    "ReferenceStreamTest", TEST_TYPE.BROKEN,
                     "ReleaseTest", TEST_TYPE.NOT_TERMINATING,
                     "RemoteStringTest", TEST_TYPE.FAILING,
                     "RemovePrefixNamePolicyTest", TEST_TYPE.PASSING,
