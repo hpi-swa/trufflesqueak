@@ -479,6 +479,11 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
             lookupClassNode = simulationMethod == null ? SqueakLookupClassNode.create(code) : null;
         }
 
+        @Override
+        public final Object executeWithArguments(VirtualFrame frame, Object... rcvrAndArgs) {
+            return doSimulation(frame, rcvrAndArgs);
+        }
+
         @Specialization
         protected Object doSimulation(VirtualFrame frame, Object[] rcvrAndArguments) {
             if (simulationMethod == null) {
