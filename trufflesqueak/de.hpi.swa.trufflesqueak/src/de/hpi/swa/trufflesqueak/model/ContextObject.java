@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
@@ -247,5 +248,22 @@ public class ContextObject extends AbstractPointersObject {
 
     public boolean isUnwindContext() {
         return getMethod().isUnwindMarked();
+    }
+
+    /*
+     * Helper function for debugging purposes.
+     */
+    @TruffleBoundary
+    public void printSqStackTrace() {
+        ContextObject current = this;
+        while (true) {
+            image.getOutput().println(current.toString());
+            BaseSqueakObject sender = current.getSender();
+            if (sender == image.nil) {
+                break;
+            } else {
+                current = (ContextObject) sender;
+            }
+        }
     }
 }
