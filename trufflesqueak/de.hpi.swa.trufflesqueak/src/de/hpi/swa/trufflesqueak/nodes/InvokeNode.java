@@ -8,6 +8,7 @@ import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
+import de.hpi.swa.trufflesqueak.instrumentation.CompiledCodeObjectPrinter;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 
 public abstract class InvokeNode extends Node {
@@ -24,7 +25,7 @@ public abstract class InvokeNode extends Node {
     protected Object doInvoke(@SuppressWarnings("unused") CompiledCodeObject code, Object[] arguments,
                     @SuppressWarnings("unused") @Cached("code.getCallTarget()") RootCallTarget callTarget,
                     @Cached("create(callTarget)") DirectCallNode callNode) {
-        incrementAndCheckCallDepth();
+        incrementAndCheckCallDepth(arguments[0]);
         try {
             return callNode.call(arguments);
         } finally {
@@ -35,7 +36,7 @@ public abstract class InvokeNode extends Node {
     @Specialization(replaces = "doInvoke")
     protected Object doIndirect(CompiledCodeObject code, Object[] arguments,
                     @Cached("create()") IndirectCallNode callNode) {
-        incrementAndCheckCallDepth();
+        incrementAndCheckCallDepth(arguments[0]);
         try {
             return callNode.call(code.getCallTarget(), arguments);
         } finally {
@@ -43,9 +44,10 @@ public abstract class InvokeNode extends Node {
         }
     }
 
-    private static void incrementAndCheckCallDepth() {
+    private static void incrementAndCheckCallDepth(Object code) {
         callDepth++;
         if (callDepth > CALL_DEPTH_LIMIT) {
+            ((CompiledCodeObject) code).image.printSqStackTrace();
             throw new SqueakException("Avoiding StackOverflowError, callDepth has reached " + CALL_DEPTH_LIMIT + ".");
         }
     }
