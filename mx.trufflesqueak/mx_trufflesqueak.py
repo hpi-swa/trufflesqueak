@@ -36,6 +36,7 @@ def _graal_vm_args(args, jdk):
         ]
 
     if args.igv:
+        print 'Sending Graal dumps to igv...'
         graal_args += [
             '-Dgraal.Dump=Metaclass,Truffle,hpi',
         ]
@@ -63,7 +64,7 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
     env = env if env else os.environ
 
     vm_args, raw_args = mx.extract_VM_args(
-        args, useDoubleDash=False, defaultAllVMArgs=False)
+        args, useDoubleDash=True, defaultAllVMArgs=False)
 
     parser = argparse.ArgumentParser(prog='mx squeak')
     parser.add_argument('-A', '--enable-assertions',
@@ -87,7 +88,7 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
                         dest='perf_warnings',
                         action='store_true', default=False)
     parser.add_argument('squeak_args', nargs=argparse.REMAINDER)
-    args = parser.parse_args(raw_args)
+    parsed_args = parser.parse_args(raw_args)
 
     vm_args = ['-cp', mx.classpath(PACKAGE_NAME)]
 
@@ -95,17 +96,17 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
         jdk = mx.get_jdk(tag='jvmci')
 
     if _compiler:
-        vm_args.extend(_graal_vm_args(args, jdk))
+        vm_args.extend(_graal_vm_args(parsed_args, jdk))
 
     # default: assertion checking is enabled
-    if args.assertions:
+    if parsed_args.assertions:
         vm_args.extend(['-ea', '-esa'])
 
     if extra_vm_args:
         vm_args.extend(extra_vm_args)
 
     vm_args.append("de.hpi.swa.trufflesqueak.TruffleSqueakMain")
-    return mx.run_java(vm_args + args.squeak_args, jdk=jdk, **kwargs)
+    return mx.run_java(vm_args + parsed_args.squeak_args, jdk=jdk, **kwargs)
 
 
 def _trufflesqueak_gate_runner(args, tasks):
