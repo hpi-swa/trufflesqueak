@@ -37,9 +37,6 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         return BlockClosurePrimitivesFactory.getFactories();
     }
 
-    /*
-     * This primitive is implemented to avoid running the fallback code which sets senders.
-     */
     @GenerateNodeFactory
     @SqueakPrimitive(index = 196, numArguments = 2)
     protected static abstract class PrimTerminateToNode extends AbstractPrimitiveNode {
@@ -121,9 +118,10 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                 }
             });
             if (handlerContext == null) {
-                throw new PrimitiveFailed(); // unable to find handler, falling back
+                return code.image.nil;
+            } else {
+                return handlerContext;
             }
-            return handlerContext;
         }
 
         @Specialization(guards = {"!receiver.hasVirtualSender()"})
@@ -138,10 +136,9 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                     context = (ContextObject) sender;
                 } else {
                     assert sender == code.image.nil;
-                    break;
+                    return code.image.nil;
                 }
             }
-            throw new PrimitiveFailed();
         }
 
     }
