@@ -37,10 +37,11 @@ public class BlockClosureObject extends BaseSqueakObject {
 
     public BlockClosureObject(SqueakImageContext image) {
         super(image);
+        this.copied = new Object[0]; // ensure copied is set
     }
 
     public BlockClosureObject(CompiledBlockObject compiledBlock, Object receiver, Object[] copied, ContextObject outerContext, FrameMarker frameMarker, FrameSlot contextOrMarkerSlot) {
-        this(compiledBlock.image);
+        super(compiledBlock.image);
         assert outerContext == null || outerContext.getFrameMarker() != null;
         this.block = compiledBlock;
         this.outerContext = outerContext;
@@ -51,7 +52,7 @@ public class BlockClosureObject extends BaseSqueakObject {
     }
 
     private BlockClosureObject(BlockClosureObject original) {
-        this(original.block.image);
+        super(original.block.image);
         this.block = original.block;
         this.outerContext = original.outerContext;
         this.outerMarker = original.outerMarker;
@@ -62,6 +63,7 @@ public class BlockClosureObject extends BaseSqueakObject {
 
     @Override
     public void fillin(SqueakImageChunk chunk) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
         Object[] pointers = chunk.getPointers();
         assert pointers.length >= BLOCK_CLOSURE.FIRST_COPIED_VALUE;
         copied = new Object[pointers.length - BLOCK_CLOSURE.FIRST_COPIED_VALUE];
@@ -128,12 +130,15 @@ public class BlockClosureObject extends BaseSqueakObject {
         int index = (int) longIndex;
         switch (index) {
             case BLOCK_CLOSURE.OUTER_CONTEXT:
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 outerContext = (ContextObject) obj;
                 break;
             case BLOCK_CLOSURE.INITIAL_PC:
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 pc = ((Long) obj).intValue();
                 break;
             case BLOCK_CLOSURE.ARGUMENT_COUNT:
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 numArgs = ((Long) obj).intValue();
                 break;
             default:
