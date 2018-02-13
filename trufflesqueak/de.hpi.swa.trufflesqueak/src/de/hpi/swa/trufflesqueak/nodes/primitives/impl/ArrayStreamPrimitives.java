@@ -139,7 +139,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected char stringAt(NativeObject obj, long idx) {
-            byte nativeAt0 = ((Long) obj.getNativeAt0(idx - 1)).byteValue();
+            int nativeAt0 = ((Long) obj.getNativeAt0(idx - 1)).intValue();
             return (char) nativeAt0;
         }
     }
