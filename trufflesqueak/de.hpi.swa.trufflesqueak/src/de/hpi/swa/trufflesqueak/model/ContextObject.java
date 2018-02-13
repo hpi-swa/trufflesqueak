@@ -244,4 +244,8 @@ public class ContextObject extends AbstractPointersObject {
     public static long decodeSqPC(long pc, CompiledCodeObject code) {
         return pc - code.getInitialPC();
     }
+
+    public boolean isUnwindContext() {
+        return getMethod().isUnwindMarked();
+    }
 }

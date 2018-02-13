@@ -12,7 +12,6 @@ import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -35,6 +34,71 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @Override
     public List<NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
         return BlockClosurePrimitivesFactory.getFactories();
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 195, numArguments = 2)
+    protected static abstract class PrimFindNextUnwindContextUpToNode extends AbstractPrimitiveNode {
+
+        public PrimFindNextUnwindContextUpToNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = {"receiver.hasVirtualSender()"})
+        @TruffleBoundary
+        protected Object doFindNextVirtualized(ContextObject receiver, ContextObject previousContext) {
+            ContextObject handlerContext = Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<ContextObject>() {
+                boolean foundMyself = false;
+                final FrameMarker frameMarker = receiver.getFrameMarker();
+
+                @Override
+                public ContextObject visitFrame(FrameInstance frameInstance) {
+                    Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
+                    if (current.getArguments().length < FrameAccess.RCVR_AND_ARGS_START) {
+                        return null;
+                    }
+                    Object contextOrMarker = FrameAccess.getContextOrMarker(current);
+                    if (!foundMyself) {
+                        if (FrameAccess.isMatchingMarker(frameMarker, contextOrMarker)) {
+                            foundMyself = true;
+                        }
+                    } else {
+                        if (FrameAccess.isMatchingMarker(previousContext.getFrameMarker(), contextOrMarker)) {
+                            return null;
+                        } else {
+                            CompiledCodeObject frameMethod = FrameAccess.getMethod(current);
+                            if (frameMethod.isUnwindMarked()) {
+                                Frame currentMaterializable = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
+                                return GetOrCreateContextNode.getOrCreate(currentMaterializable);
+                            }
+                        }
+                    }
+                    return null;
+                }
+            });
+            if (handlerContext == null) {
+                return code.image.nil;
+            } else {
+                return handlerContext;
+            }
+        }
+
+        @Specialization(guards = {"!receiver.hasVirtualSender()"})
+        protected Object doFindNext(ContextObject receiver, ContextObject previousContext) {
+            ContextObject current = receiver;
+            while (current != previousContext) {
+                BaseSqueakObject sender = current.getSender();
+                if (sender == code.image.nil) {
+                    break;
+                } else {
+                    current = (ContextObject) sender;
+                    if (current.isUnwindContext()) {
+                        return current;
+                    }
+                }
+            }
+            return code.image.nil;
+        }
     }
 
     @GenerateNodeFactory
