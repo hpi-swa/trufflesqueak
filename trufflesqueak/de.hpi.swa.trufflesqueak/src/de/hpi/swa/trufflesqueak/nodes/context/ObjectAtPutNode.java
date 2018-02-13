@@ -1,7 +1,5 @@
 package de.hpi.swa.trufflesqueak.nodes.context;
 
-import java.math.BigInteger;
-
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -28,10 +26,6 @@ public abstract class ObjectAtPutNode extends AbstractObjectAtNode {
 
     public abstract void executeWrite(VirtualFrame frame);
 
-    protected static boolean isBigInteger(Object object) {
-        return object instanceof BigInteger;
-    }
-
     @Specialization
     protected void write(NativeObject object, long value) {
         classProfile.profile(object).setNativeAt0(index, value);
@@ -43,11 +37,6 @@ public abstract class ObjectAtPutNode extends AbstractObjectAtNode {
     }
 
     @Specialization
-    protected void write(BaseSqueakObject object, BigInteger value) {
-        classProfile.profile(object).atput0(index, object.image.wrap(value));
-    }
-
-    @Specialization(guards = "!isBigInteger(object)")
     protected void write(BaseSqueakObject object, Object value) {
         classProfile.profile(object).atput0(index, value);
     }

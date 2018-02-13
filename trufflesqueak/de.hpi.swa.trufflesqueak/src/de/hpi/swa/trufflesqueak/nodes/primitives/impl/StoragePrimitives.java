@@ -1,11 +1,9 @@
 package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
-import java.math.BigInteger;
 import java.util.Iterator;
 import java.util.List;
 
 import com.oracle.truffle.api.Assumption;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -62,12 +60,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected Object literalAt(CompiledCodeObject receiver, long index) {
             // Use getLiterals() instead of getLiteral(i), the latter skips the header.
-            Object object = receiver.getLiterals()[(int) (index - 1)];
-
-            if (object instanceof Integer) {
-                int i = 1;
-            }
-            return object;
+            return receiver.getLiterals()[(int) (index - 1)];
         }
     }
 
@@ -234,12 +227,6 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        @TruffleBoundary
-        protected long intAt(BigInteger receiver, long idx) {
-            return LargeIntegerObject.byteAt0(receiver, idx - 1);
-        }
-
-        @Specialization
         protected long at(double receiver, long idx) {
             long doubleBits = Double.doubleToLongBits(receiver);
             if (idx == 1) {
@@ -388,33 +375,37 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected long hash(char obj) {
+        protected long doChar(char obj) {
             return obj;
         }
 
         @Specialization
-        protected long hash(long obj) {
+        protected long doLong(long obj) {
             return obj;
         }
 
         @Specialization
-        @TruffleBoundary
-        protected long hash(BigInteger obj) {
+        protected long doLargeInteger(LargeIntegerObject obj) {
             return obj.hashCode();
         }
 
         @Specialization
-        protected long hash(BaseSqueakObject obj) {
-            return obj.squeakHash();
+        protected long doDouble(double receiver) {
+            return (long) receiver;
         }
 
         @Specialization
-        protected long hash(boolean obj) {
+        protected long doBoolean(boolean obj) {
             if (obj == code.image.sqTrue) {
                 return 3L;
             } else {
                 return 2L;
             }
+        }
+
+        @Specialization
+        protected long doBaseSqueakObject(BaseSqueakObject obj) {
+            return obj.squeakHash();
         }
     }
 

@@ -8,7 +8,6 @@ import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
-import de.hpi.swa.trufflesqueak.instrumentation.CompiledCodeObjectPrinter;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 
 public abstract class InvokeNode extends Node {

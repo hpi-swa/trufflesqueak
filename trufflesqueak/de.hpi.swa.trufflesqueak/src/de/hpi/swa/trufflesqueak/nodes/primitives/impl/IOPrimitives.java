@@ -2,10 +2,8 @@ package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
 import java.awt.DisplayMode;
 import java.awt.GraphicsEnvironment;
-import java.math.BigInteger;
 import java.util.List;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -105,12 +103,6 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return replaceInLarge(rcvr, start, stop, repl.getBytes(), replStart);
         }
 
-        @Specialization
-        @TruffleBoundary
-        protected Object replace(LargeIntegerObject rcvr, long start, long stop, BigInteger repl, long replStart) {
-            return replaceInLarge(rcvr, start, stop, LargeIntegerObject.getSqueakBytes(repl), replStart);
-        }
-
         private static Object replaceInLarge(LargeIntegerObject rcvr, long start, long stop, byte[] replBytes, long replStart) {
             byte[] rcvrBytes = rcvr.getBytes();
             int repOff = (int) (replStart - start);
@@ -136,17 +128,6 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             int repOff = (int) (replStart - start);
             for (int i = (int) (start - 1); i < stop; i++) {
                 rcvr.setNativeAt0(i, repl.getNativeAt0(repOff + i));
-            }
-            return rcvr;
-        }
-
-        @Specialization
-        @TruffleBoundary
-        protected Object replace(NativeObject rcvr, long start, long stop, BigInteger repl, long replStart) {
-            int repOff = (int) (replStart - start);
-            byte[] bytes = LargeIntegerObject.getSqueakBytes(repl);
-            for (int i = (int) (start - 1); i < stop; i++) {
-                rcvr.setNativeAt0(i, bytes[repOff + i]);
             }
             return rcvr;
         }

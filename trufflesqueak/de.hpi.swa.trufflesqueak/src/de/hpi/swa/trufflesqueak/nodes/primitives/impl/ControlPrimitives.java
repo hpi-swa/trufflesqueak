@@ -1,10 +1,8 @@
 package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
-import java.math.BigInteger;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -18,6 +16,7 @@ import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.MUTEX;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.PROCESS;
@@ -306,8 +305,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        @TruffleBoundary
-        protected boolean doBigInteger(BigInteger a, BigInteger b) {
+        protected boolean doLargeInteger(LargeIntegerObject a, LargeIntegerObject b) {
             return a.equals(b);
         }
 

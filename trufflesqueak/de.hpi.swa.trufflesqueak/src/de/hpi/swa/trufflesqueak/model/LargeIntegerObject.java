@@ -82,7 +82,7 @@ public class LargeIntegerObject extends SqueakObject {
 
     @Override
     public final int size() {
-        return byteSize(integer);
+        return byteSize(this);
     }
 
     @Override
@@ -118,8 +118,9 @@ public class LargeIntegerObject extends SqueakObject {
         return bytes;
     }
 
-    public static int byteSize(BigInteger i) {
-        return (i.abs().bitLength() + 7) / 8;
+    @TruffleBoundary
+    public static int byteSize(LargeIntegerObject i) {
+        return (i.integer.abs().bitLength() + 7) / 8;
     }
 
     @Override
