@@ -45,8 +45,10 @@ public class ContextObject extends AbstractPointersObject {
     }
 
     private ContextObject(ContextObject original) {
-        super(original.image);
+        super(original.image, original.image.methodContextClass);
         pointers = original.pointers;
+        frameMarker = original.frameMarker;
+        isDirty = original.isDirty;
     }
 
     public void terminate() {
