@@ -2,7 +2,6 @@ package de.hpi.swa.trufflesqueak.util;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.IntBuffer;
 import java.util.List;
 import java.util.Vector;
 
@@ -31,7 +30,7 @@ public class SqueakImageChunk {
     private final SqueakImageReader reader;
     protected final int format;
     private final int hash;
-    private final Vector<Long> data;
+    private final Vector<Integer> data;
     private final SqueakImageContext image;
 
     public SqueakImageChunk(SqueakImageReader reader,
@@ -51,7 +50,7 @@ public class SqueakImageChunk {
         this.data = new Vector<>();
     }
 
-    public void append(long nextInt) {
+    public void append(int nextInt) {
         data.add(nextInt);
     }
 
@@ -63,7 +62,7 @@ public class SqueakImageChunk {
         data.remove(data.size() - 1);
     }
 
-    public Vector<Long> data() {
+    public Vector<Integer> data() {
         return data;
     }
 
@@ -181,7 +180,7 @@ public class SqueakImageChunk {
         return pointers;
     }
 
-    private Object decodePointer(long ptr) {
+    private Object decodePointer(int ptr) {
         if ((ptr & 3) == 0) {
             SqueakImageChunk chunk = reader.chunktable.get(ptr);
             if (chunk == null) {
@@ -191,7 +190,7 @@ public class SqueakImageChunk {
                 return chunk.asObject();
             }
         } else if ((ptr & 1) == 1) {
-            return ptr >> 1;
+            return (long) ptr >> 1;
         } else {
             assert ((ptr & 3) == 2);
             return (char) (ptr >> 2);
@@ -204,12 +203,11 @@ public class SqueakImageChunk {
 
     public byte[] getBytes(int start) {
         byte[] bytes = new byte[((data.size() - start) * 4) - getPadding()];
-        List<Long> subList = data.subList(start, data.size());
+        List<Integer> subList = data.subList(start, data.size());
         ByteBuffer buf = ByteBuffer.allocate(subList.size() * 4);
         buf.order(ByteOrder.nativeOrder());
-        IntBuffer intBuf = buf.asIntBuffer();
-        for (long i : subList) {
-            intBuf.put((int) i);
+        for (int i : subList) {
+            buf.putInt(i);
         }
         for (int i = 0; i < bytes.length; i++) {
             bytes[i] = buf.get(i);

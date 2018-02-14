@@ -181,8 +181,8 @@ public abstract class CompiledCodeObject extends SqueakObject {
     @Override
     public void fillin(SqueakImageChunk chunk) {
         super.fillin(chunk);
-        Vector<Long> data = chunk.data();
-        int header = (int) (data.get(0) >> 1); // header is a tagged small integer
+        Vector<Integer> data = chunk.data();
+        int header = data.get(0) >> 1; // header is a tagged small integer
         int literalsize = header & 0x7fff;
         Object[] ptrs = chunk.getPointers(literalsize + 1);
         assert literals == null;
@@ -193,7 +193,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
     }
 
     void decodeHeader() {
-        long hdr = getHeader();
+        int hdr = getHeader();
         int[] splitHeader = BitSplitter.splitter(hdr, new int[]{15, 1, 1, 1, 6, 4, 2, 1});
         numLiterals = splitHeader[0];
         isOptimized = splitHeader[1] == 1;
@@ -206,11 +206,10 @@ public abstract class CompiledCodeObject extends SqueakObject {
         prepareFrameDescriptor();
     }
 
-    public long getHeader() {
+    public int getHeader() {
         Object object = literals[0];
         assert object instanceof Long;
-        long hdr = (long) object;
-        return hdr;
+        return ((Long) object).intValue();
     }
 
     @Override

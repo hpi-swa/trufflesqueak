@@ -31,7 +31,7 @@ public class SqueakImageReader {
     private int headerSize;
     private int endOfMemory;
     private int oldBaseAddress;
-    private long specialObjectsPointer;
+    private int specialObjectsPointer;
     private int lastHash;
     private int lastWindowSize;
     private int headerFlags;
@@ -44,7 +44,7 @@ public class SqueakImageReader {
     private int freeOldSpace;
     private int position = 0;
     private Vector<SqueakImageChunk> chunklist = new Vector<>();
-    HashMap<Long, SqueakImageChunk> chunktable = new HashMap<>();
+    HashMap<Integer, SqueakImageChunk> chunktable = new HashMap<>();
     private PrintWriter output;
 
     public static void readImage(SqueakImageContext squeakImageContext, FileInputStream inputStream) throws IOException {
@@ -140,7 +140,7 @@ public class SqueakImageReader {
                     continue;
                 }
                 chunklist.add(chunk);
-                chunktable.put((long) (chunk.pos + currentAddressSwizzle), chunk);
+                chunktable.put(chunk.pos + currentAddressSwizzle, chunk);
             }
             long bridge = nextLong();
             int bridgeSpan = 0;
@@ -278,9 +278,9 @@ public class SqueakImageReader {
 
         // find all metaclasses and instantiate their singleton instances as class objects
         output.println("Instantiating classes...");
-        for (long classtablePtr : chunklist.get(HIDDEN_ROOTS_CHUNK).data()) {
+        for (int classtablePtr : chunklist.get(HIDDEN_ROOTS_CHUNK).data()) {
             if (chunktable.get(classtablePtr) != null) {
-                for (long potentialClassPtr : chunktable.get(classtablePtr).data()) {
+                for (int potentialClassPtr : chunktable.get(classtablePtr).data()) {
                     SqueakImageChunk metaClass = chunktable.get(potentialClassPtr);
                     if (metaClass != null) {
                         if (metaClass.getSqClass() == image.metaclass) {

@@ -16,18 +16,18 @@ public class SqueakImageReadingTest extends AbstractSqueakTestCase {
                         3833906, // identityHash for 1.0
                         0 // position
         );
-        chunk.data().add(0L);
-        chunk.data().add(1072693248L);
+        chunk.data().add(0);
+        chunk.data().add(1072693248);
         assertEquals((double) chunk.asFloatObject(), 1.0);
 
         chunk.data().removeAllElements();
-        chunk.data().add(2482401462L);
-        chunk.data().add(1065322751L);
+        chunk.data().add((int) 2482401462L);
+        chunk.data().add(1065322751);
         assertEquals((double) chunk.asFloatObject(), 0.007699011184197404);
 
         chunk.data().removeAllElements();
-        chunk.data().add(876402988L);
-        chunk.data().add(1075010976L);
+        chunk.data().add(876402988);
+        chunk.data().add(1075010976);
         assertEquals((double) chunk.asFloatObject(), 4.841431442464721);
     }
 }
