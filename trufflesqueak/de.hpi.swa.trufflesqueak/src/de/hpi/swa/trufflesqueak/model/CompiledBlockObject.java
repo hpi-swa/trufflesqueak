@@ -66,8 +66,9 @@ public class CompiledBlockObject extends CompiledCodeObject {
         return outerMethod.getInitialPC();
     }
 
-    public int getOffset() {
-        return offset; // offset in the original bytecode
+    @Override
+    public final int getOffset() {
+        return offset;
     }
 
     @Override

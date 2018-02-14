@@ -240,6 +240,8 @@ public abstract class CompiledCodeObject extends SqueakObject {
         return (1 + numLiterals) * BYTES_PER_WORD; // header plus numLiterals
     }
 
+    public abstract int getOffset(); // offset in the method's bytecode
+
     @Override
     public final int size() {
         return getBytecodeOffset() + bytes.length;

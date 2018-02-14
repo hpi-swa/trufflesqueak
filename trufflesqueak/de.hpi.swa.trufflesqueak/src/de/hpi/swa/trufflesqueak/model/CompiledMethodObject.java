@@ -77,4 +77,9 @@ public class CompiledMethodObject extends CompiledCodeObject {
     public BaseSqueakObject shallowCopy() {
         return new CompiledMethodObject(this);
     }
+
+    @Override
+    public final int getOffset() {
+        return 0; // methods always start at the beginning
+    }
 }

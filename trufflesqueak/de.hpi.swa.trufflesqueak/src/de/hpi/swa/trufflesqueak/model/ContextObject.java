@@ -239,11 +239,11 @@ public class ContextObject extends AbstractPointersObject {
      * pc is offset by the initial pc
      */
     public static long encodeSqPC(long pc, CompiledCodeObject code) {
-        return pc + code.getInitialPC();
+        return pc + code.getInitialPC() + code.getOffset();
     }
 
     public static long decodeSqPC(long pc, CompiledCodeObject code) {
-        return pc - code.getInitialPC();
+        return pc - code.getInitialPC() - code.getOffset();
     }
 
     public boolean isUnwindContext() {
