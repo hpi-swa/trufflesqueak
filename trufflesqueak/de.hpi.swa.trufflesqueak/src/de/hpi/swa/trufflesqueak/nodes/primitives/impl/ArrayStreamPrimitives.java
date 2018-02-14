@@ -138,9 +138,9 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         public abstract Object executeStringAt(VirtualFrame frame);
 
         @Specialization
-        protected char stringAt(NativeObject obj, long idx) {
-            int nativeAt0 = ((Long) obj.getNativeAt0(idx - 1)).intValue();
-            return (char) nativeAt0;
+        protected char doNativeObject(NativeObject obj, long idx) {
+            int intValue = ((Long) obj.getNativeAt0(idx - 1)).intValue();
+            return (char) intValue;
         }
     }
 
@@ -172,16 +172,15 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         public abstract Object executeStringAtPut(VirtualFrame frame);
 
         @Specialization
-        protected char atput(NativeObject obj, long idx, char value) {
+        protected char doNativeObject(NativeObject obj, long idx, char value) {
             obj.setNativeAt0(idx - 1, value);
             return value;
         }
 
         @Specialization
-        protected char atput(NativeObject obj, long idx, long value) {
-            char charValue = (char) ((Long) value).byteValue();
-            obj.setNativeAt0(idx - 1, charValue);
-            return charValue;
+        protected char doNativeObject(NativeObject obj, long idx, long value) {
+            obj.setNativeAt0(idx - 1, value);
+            return (char) ((Long) value).intValue();
         }
     }
 }
