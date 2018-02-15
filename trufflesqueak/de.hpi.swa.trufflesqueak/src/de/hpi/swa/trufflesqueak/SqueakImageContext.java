@@ -19,6 +19,7 @@ import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
+import de.hpi.swa.trufflesqueak.model.BytesObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
@@ -56,9 +57,9 @@ public class SqueakImageContext {
     @CompilationFinal public final ClassObject smallIntegerClass = new ClassObject(this);
     @CompilationFinal public final ClassObject arrayClass = new ClassObject(this);
     @CompilationFinal public final PointersObject smalltalk = new PointersObject(this);
-    @CompilationFinal public final NativeObject doesNotUnderstand = new NativeObject(this, (byte) 1);
+    @CompilationFinal public final BytesObject doesNotUnderstand = new BytesObject(this);
     @CompilationFinal public final ListObject specialSelectors = new ListObject(this);
-    @CompilationFinal public final NativeObject mustBeBoolean = new NativeObject(this, (byte) 1);
+    @CompilationFinal public final BytesObject mustBeBoolean = new BytesObject(this);
     @CompilationFinal public final ClassObject metaclass = new ClassObject(this);
     @CompilationFinal public final ClassObject methodContextClass = new ClassObject(this);
     @CompilationFinal public final ClassObject nilClass = new ClassObject(this);
@@ -94,21 +95,21 @@ public class SqueakImageContext {
     @CompilationFinal public final SpecialSelectorObject bitAnd = new SpecialSelectorObject(this);
     @CompilationFinal public final SpecialSelectorObject bitOr = new SpecialSelectorObject(this);
     @CompilationFinal public final SpecialSelectorObject at = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject atput = new SpecialSelectorObject(this, 1, 2);
-    @CompilationFinal public final SpecialSelectorObject size_ = new SpecialSelectorObject(this, 1, 0);
-    @CompilationFinal public final SpecialSelectorObject next = new SpecialSelectorObject(this, 1, 0);
+    @CompilationFinal public final SpecialSelectorObject atput = new SpecialSelectorObject(this, 2);
+    @CompilationFinal public final SpecialSelectorObject size_ = new SpecialSelectorObject(this, 0);
+    @CompilationFinal public final SpecialSelectorObject next = new SpecialSelectorObject(this, 0);
     @CompilationFinal public final SpecialSelectorObject nextPut = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject atEnd = new SpecialSelectorObject(this, 1, 0);
+    @CompilationFinal public final SpecialSelectorObject atEnd = new SpecialSelectorObject(this, 0);
     @CompilationFinal public final SpecialSelectorObject equivalent = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject klass = new SpecialSelectorObject(this, 1, 0);
+    @CompilationFinal public final SpecialSelectorObject klass = new SpecialSelectorObject(this, 0);
     @CompilationFinal public final SpecialSelectorObject blockCopy = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject value_ = new SpecialSelectorObject(this, 1, 0);
+    @CompilationFinal public final SpecialSelectorObject value_ = new SpecialSelectorObject(this, 0);
     @CompilationFinal public final SpecialSelectorObject valueWithArg = new SpecialSelectorObject(this);
     @CompilationFinal public final SpecialSelectorObject do_ = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject new_ = new SpecialSelectorObject(this, 1, 0);
+    @CompilationFinal public final SpecialSelectorObject new_ = new SpecialSelectorObject(this, 0);
     @CompilationFinal public final SpecialSelectorObject newWithArg = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject x = new SpecialSelectorObject(this, 1, 0);
-    @CompilationFinal public final SpecialSelectorObject y = new SpecialSelectorObject(this, 1, 0);
+    @CompilationFinal public final SpecialSelectorObject x = new SpecialSelectorObject(this, 0);
+    @CompilationFinal public final SpecialSelectorObject y = new SpecialSelectorObject(this, 0);
 
     @CompilationFinal(dimensions = 1) public final SpecialSelectorObject[] specialSelectorsArray = new SpecialSelectorObject[]{
                     plus, minus, lt, gt, le, ge, eq, ne, times, divide, modulo, pointAt, bitShift,
@@ -233,7 +234,7 @@ public class SqueakImageContext {
     }
 
     public NativeObject wrap(String s) {
-        return new NativeObject(this, this.stringClass, s.getBytes());
+        return new BytesObject(this, this.stringClass, s.getBytes());
     }
 
     public char wrap(char character) {
@@ -273,7 +274,7 @@ public class SqueakImageContext {
     }
 
     public NativeObject newSymbol(String value) {
-        return new NativeObject(this, doesNotUnderstand.getSqClass(), value.getBytes());
+        return new BytesObject(this, doesNotUnderstand.getSqClass(), value.getBytes());
     }
 
     public void registerSemaphore(BaseSqueakObject semaphore, long index) {

@@ -89,14 +89,14 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(limit = "NEW_CACHE_SIZE", guards = {"receiver == cachedReceiver"}, assumptions = {"classFormatStable"})
-        protected BaseSqueakObject newDirect(ClassObject receiver,
+        protected Object newDirect(ClassObject receiver,
                         @Cached("receiver") ClassObject cachedReceiver,
                         @Cached("cachedReceiver.getClassFormatStable()") Assumption classFormatStable) {
             return cachedReceiver.newInstance();
         }
 
         @Specialization(replaces = "newDirect")
-        protected BaseSqueakObject newIndirect(ClassObject receiver) {
+        protected Object newIndirect(ClassObject receiver) {
             return receiver.newInstance();
         }
     }
@@ -112,7 +112,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(limit = "NEW_CACHE_SIZE", guards = {"receiver == cachedReceiver"}, assumptions = {"classFormatStable"})
-        protected BaseSqueakObject newWithArgDirect(ClassObject receiver, long size,
+        protected Object newWithArgDirect(ClassObject receiver, long size,
                         @Cached("receiver") ClassObject cachedReceiver,
                         @Cached("cachedReceiver.getClassFormatStable()") Assumption classFormatStable) {
             if (!cachedReceiver.isVariable() && size != 0) {
@@ -125,7 +125,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(replaces = "newWithArgDirect")
-        protected BaseSqueakObject newWithArg(ClassObject receiver, long size) {
+        protected Object newWithArg(ClassObject receiver, long size) {
             if (!receiver.isVariable() && size != 0) {
                 throw new PrimitiveFailed();
             }

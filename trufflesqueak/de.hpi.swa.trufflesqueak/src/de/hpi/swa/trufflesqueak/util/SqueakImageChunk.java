@@ -2,20 +2,24 @@ package de.hpi.swa.trufflesqueak.util;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.ShortBuffer;
 import java.util.List;
 import java.util.Vector;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
+import de.hpi.swa.trufflesqueak.model.BytesObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.EmptyObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
-import de.hpi.swa.trufflesqueak.model.NativeObject;
+import de.hpi.swa.trufflesqueak.model.LongsObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.model.ShortsObject;
 import de.hpi.swa.trufflesqueak.model.SqueakObject;
+import de.hpi.swa.trufflesqueak.model.WordsObject;
 
 public class SqueakImageChunk {
     Object object;
@@ -76,17 +80,6 @@ public class SqueakImageChunk {
         return (ClassObject) object;
     }
 
-    public Object asFloatObject() {
-        assert format == 10 || format == 11;
-        ByteBuffer buf = ByteBuffer.allocate(8); // 2 * 32 bit
-        buf.order(ByteOrder.nativeOrder());
-        buf.put(getBytes());
-        buf.rewind();
-        long low = Integer.toUnsignedLong(buf.asIntBuffer().get(0));
-        long high = Integer.toUnsignedLong(buf.asIntBuffer().get(1));
-        return Double.longBitsToDouble(high << 32 | low);
-    }
-
     public Object asObject() {
         if (object == null) {
             if (format == 0) {
@@ -120,23 +113,23 @@ public class SqueakImageChunk {
                 assert false; // unused
             } else if (format == 9) {
                 // 64-bit integers
-                object = new NativeObject(image, (byte) 8);
+                object = new LongsObject(image);
             } else if (format <= 11) {
                 // 32-bit integers
                 if (this.getSqClass() == image.floatClass) {
-                    object = asFloatObject();
+                    object = WordsObject.bytesAsFloatObject(getBytes());
                 } else {
-                    object = new NativeObject(image, (byte) 4);
+                    object = new WordsObject(image);
                 }
             } else if (format <= 15) {
                 // 16-bit integers
-                object = new NativeObject(image, (byte) 2);
+                object = new ShortsObject(image);
             } else if (format <= 23) {
                 // bytes
                 if (this.getSqClass() == image.largePositiveIntegerClass || this.getSqClass() == image.largeNegativeIntegerClass) {
                     object = new LargeIntegerObject(image);
                 } else {
-                    object = new NativeObject(image, (byte) 1);
+                    object = new BytesObject(image);
                 }
             } else if (format <= 31) {
                 // compiled methods
@@ -213,6 +206,36 @@ public class SqueakImageChunk {
             bytes[i] = buf.get(i);
         }
         return bytes;
+    }
+
+    public short[] getShorts() {
+        short[] shorts = new short[(data.size() * 2) - getPadding()];
+        ByteBuffer buf = ByteBuffer.allocate(data.size() * 2);
+        buf.order(ByteOrder.nativeOrder());
+        for (int i : data) {
+            buf.putInt(i);
+        }
+        ShortBuffer shortBuffer = buf.asShortBuffer();
+        for (int i = 0; i < shorts.length; i++) {
+            shorts[i] = shortBuffer.get(i);
+        }
+        return shorts;
+    }
+
+    public int[] getWords() {
+        int[] ints = new int[data.size()];
+        for (int i = 0; i < ints.length; i++) {
+            ints[i] = data.get(i);
+        }
+        return ints;
+    }
+
+    public long[] getLongs() {
+        long[] longs = new long[data.size()];
+        for (int i = 0; i < longs.length; i++) {
+            longs[i] = data.get(i);
+        }
+        return longs;
     }
 
     public int getPadding() {

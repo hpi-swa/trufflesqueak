@@ -198,11 +198,11 @@ public class ClassObject extends AbstractPointersObject {
         return instSpec >= 2 && (instSpec <= 4 || instSpec >= 9);
     }
 
-    public BaseSqueakObject newInstance() {
+    public Object newInstance() {
         return newInstance(0);
     }
 
-    public BaseSqueakObject newInstance(long extraSize) {
+    public Object newInstance(long extraSize) {
         int size = instanceSize + ((int) extraSize);
         //@formatter:off
         switch (instSpec) {
@@ -230,18 +230,27 @@ public class ClassObject extends AbstractPointersObject {
             case 5: // TODO: weak pointers
                 return new PointersObject(image, this, size);
             case 7: case 8:
-                throw new SqueakException("tried to instantiate an immediate");
-            case 9: case 10: case 11: case 12: case 13: case 14: case 15:
-                // TODO: Float
-                return new NativeObject(image, this, size, 4);
+                throw new SqueakException("Tried to instantiate an immediate");
+            case 9:
+                return new LongsObject(image, this, size);
+            case 10: case 11:
+                if (this == image.floatClass) {
+                    return WordsObject.newFloatObject(size);
+                } else {
+                    return new WordsObject(image, this, size);
+                }
+            case 12: case 13: case 14: case 15:
+                return new ShortsObject(image, this, size);
             case 16: case 17: case 18: case 19: case 20: case 21: case 22: case 23:
                 if (this == image.largePositiveIntegerClass || this == image.largeNegativeIntegerClass) {
                     return new LargeIntegerObject(image, this, size);
                 } else {
-                    return new NativeObject(image, this, size, 1);
+                    return new BytesObject(image, this, size);
                 }
+            case 24: case 25: case 26: case 27: case 28: case 29: case 30: case 31:
+                return new CompiledMethodObject(image, this, (int) extraSize);
             default:
-                return new CompiledMethodObject(image, this, (int)extraSize);
+                throw new SqueakException("Tried to instantiate with bogus instSpec: " + instSpec);
         }
         //@formatter:on
     }
