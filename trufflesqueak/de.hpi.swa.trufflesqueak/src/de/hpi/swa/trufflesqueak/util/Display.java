@@ -64,7 +64,7 @@ public final class Display {
         public abstract void close();
     }
 
-    public static class JavaDisplay extends AbstractDisplay {
+    private static class JavaDisplay extends AbstractDisplay {
         private JFrame frame = new JFrame("TruffleSqueak");
         private Canvas canvas = new Canvas();
         // private BufferStrategy bufferStrategy;
@@ -245,7 +245,7 @@ public final class Display {
         }
     }
 
-    public static class NullDisplay extends AbstractDisplay {
+    private static class NullDisplay extends AbstractDisplay {
         @Override
         public void drawRect(int left, int right, int top, int bottom) {
         }
