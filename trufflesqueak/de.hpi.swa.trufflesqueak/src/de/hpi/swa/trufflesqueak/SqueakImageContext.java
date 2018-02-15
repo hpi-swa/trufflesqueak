@@ -285,10 +285,16 @@ public class SqueakImageContext {
      */
     @TruffleBoundary
     public void printSqStackTrace() {
+        boolean isTravisBuild = System.getenv().containsKey("TRAVIS");
+        final int[] depth = new int[1];
         getOutput().println("== Squeak stack trace ===========================================================");
         Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Object>() {
+
             @Override
             public Object visitFrame(FrameInstance frameInstance) {
+                if (depth[0]++ > 100 && isTravisBuild) {
+                    return null;
+                }
                 Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
                 if (current.getArguments().length < FrameAccess.RCVR_AND_ARGS_START) {
                     return null;
@@ -305,6 +311,6 @@ public class SqueakImageContext {
                 return null;
             }
         });
-        getOutput().println("=================================================================================");
+        getOutput().println("== " + depth[0] + " frames =======================================================================");
     }
 }
