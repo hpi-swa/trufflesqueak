@@ -2,6 +2,7 @@ package de.hpi.swa.trufflesqueak.util;
 
 import java.awt.Canvas;
 import java.awt.Dimension;
+import java.awt.GraphicsEnvironment;
 import java.awt.Point;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -17,6 +18,15 @@ import javax.swing.JPanel;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 
 public final class Display {
+
+    public static AbstractDisplay create(boolean noDisplay) {
+        if (!GraphicsEnvironment.isHeadless() && !noDisplay) {
+            return new JavaDisplay();
+        } else {
+            return new NullDisplay();
+        }
+    }
+
     private static final class MOUSE_BUTTON {
         public static final int ALL = 1 + 2 + 4;
         public static final int BLUE = 1;

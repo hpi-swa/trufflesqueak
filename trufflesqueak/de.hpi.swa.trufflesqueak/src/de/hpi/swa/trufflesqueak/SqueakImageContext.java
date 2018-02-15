@@ -36,9 +36,8 @@ import de.hpi.swa.trufflesqueak.model.SpecialSelectorObject;
 import de.hpi.swa.trufflesqueak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ObjectGraph;
 import de.hpi.swa.trufflesqueak.nodes.process.GetActiveProcessNode;
+import de.hpi.swa.trufflesqueak.util.Display;
 import de.hpi.swa.trufflesqueak.util.Display.AbstractDisplay;
-import de.hpi.swa.trufflesqueak.util.Display.JavaDisplay;
-import de.hpi.swa.trufflesqueak.util.Display.NullDisplay;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.FrameMarker;
 import de.hpi.swa.trufflesqueak.util.InterruptHandlerNode;
@@ -136,10 +135,10 @@ public class SqueakImageContext {
         if (env != null) {
             String[] applicationArguments = env.getApplicationArguments();
             config = new SqueakConfig(applicationArguments);
-            display = config.isCustomContext() ? new NullDisplay() : new JavaDisplay();
+            display = Display.create(config.isCustomContext());
         } else { // testing
             config = new SqueakConfig(new String[0]);
-            display = new NullDisplay();
+            display = Display.create(true);
         }
         interrupt = InterruptHandlerNode.create(this, config);
     }

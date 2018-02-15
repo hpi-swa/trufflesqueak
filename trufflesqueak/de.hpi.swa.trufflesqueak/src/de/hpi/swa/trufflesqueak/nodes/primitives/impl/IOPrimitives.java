@@ -4,6 +4,7 @@ import java.awt.DisplayMode;
 import java.awt.GraphicsEnvironment;
 import java.util.List;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -145,6 +146,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 106)
     protected static abstract class PrimScreenSizeNode extends AbstractPrimitiveNode {
+        @CompilationFinal private final boolean isHeadless = GraphicsEnvironment.isHeadless();
 
         protected PrimScreenSizeNode(CompiledMethodObject method) {
             super(method);
@@ -152,8 +154,12 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected BaseSqueakObject get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
-            DisplayMode displayMode = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDisplayMode();
-            return code.image.newPoint(displayMode.getWidth(), displayMode.getHeight());
+            if (!isHeadless) {
+                DisplayMode displayMode = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDisplayMode();
+                return code.image.newPoint(displayMode.getWidth(), displayMode.getHeight());
+            } else {
+                return code.image.newPoint(1024, 768);
+            }
         }
     }
 

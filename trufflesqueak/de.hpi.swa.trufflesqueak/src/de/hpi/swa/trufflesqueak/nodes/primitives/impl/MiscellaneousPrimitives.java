@@ -1,6 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
-import java.awt.HeadlessException;
+import java.awt.GraphicsEnvironment;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
@@ -12,7 +12,6 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
@@ -227,7 +226,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 141, variableArguments = true)
     protected static abstract class PrimClipboardTextNode extends AbstractPrimitiveNode {
-        @CompilationFinal private boolean isHeadless = false;
+        @CompilationFinal private final boolean isHeadless = GraphicsEnvironment.isHeadless();
         private String headlessClipboardContents = "";
 
         protected PrimClipboardTextNode(CompiledMethodObject method) {
@@ -236,36 +235,33 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object doClipboard(Object[] rcvrAndArgs) {
-            Clipboard clipboard = null;
-            try {
-                clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-            } catch (HeadlessException e) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                isHeadless = true;
-            }
             if (rcvrAndArgs.length == 1) {
                 String text;
-                if (isHeadless) {
-                    text = headlessClipboardContents;
-                } else {
+                if (!isHeadless) {
                     try {
-                        text = (String) clipboard.getData(DataFlavor.stringFlavor);
+                        text = (String) getClipboard().getData(DataFlavor.stringFlavor);
                     } catch (UnsupportedFlavorException | IOException | IllegalStateException e) {
                         text = "";
                     }
+                } else {
+                    text = headlessClipboardContents;
                 }
                 return code.image.wrap(text);
             } else if (rcvrAndArgs.length == 2 && (rcvrAndArgs[1] instanceof NativeObject)) {
                 String text = ((NativeObject) rcvrAndArgs[1]).toString();
-                if (isHeadless) {
-                    headlessClipboardContents = text;
-                } else {
+                if (!isHeadless) {
                     StringSelection selection = new StringSelection(text);
-                    clipboard.setContents(selection, selection);
+                    getClipboard().setContents(selection, selection);
+                } else {
+                    headlessClipboardContents = text;
                 }
                 return rcvrAndArgs[1];
             }
             throw new PrimitiveFailed();
+        }
+
+        private static Clipboard getClipboard() {
+            return Toolkit.getDefaultToolkit().getSystemClipboard();
         }
     }
 
