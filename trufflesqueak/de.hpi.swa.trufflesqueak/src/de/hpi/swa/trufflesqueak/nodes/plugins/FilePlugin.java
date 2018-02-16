@@ -76,8 +76,8 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doDelimitor(@SuppressWarnings("unused") Object receiver) {
-            return code.image.wrap(File.separatorChar);
+        protected char doDelimitor(@SuppressWarnings("unused") Object receiver) {
+            return File.separatorChar;
         }
     }
 
