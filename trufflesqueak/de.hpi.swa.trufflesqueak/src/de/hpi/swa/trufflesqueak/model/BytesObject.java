@@ -1,5 +1,7 @@
 package de.hpi.swa.trufflesqueak.model;
 
+import java.util.Arrays;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
@@ -24,7 +26,7 @@ public class BytesObject extends NativeObject {
     }
 
     private BytesObject(BytesObject original) {
-        this(original.image, original.getSqClass(), original.bytes);
+        this(original.image, original.getSqClass(), Arrays.copyOf(original.bytes, original.bytes.length));
     }
 
     @Override

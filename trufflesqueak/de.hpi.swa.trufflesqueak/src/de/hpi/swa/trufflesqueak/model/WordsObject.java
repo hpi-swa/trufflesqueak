@@ -3,6 +3,7 @@ package de.hpi.swa.trufflesqueak.model;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
+import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -28,7 +29,7 @@ public class WordsObject extends NativeObject {
     }
 
     private WordsObject(WordsObject original) {
-        this(original.image, original.getSqClass(), original.ints);
+        this(original.image, original.getSqClass(), Arrays.copyOf(original.ints, original.ints.length));
     }
 
     @Override

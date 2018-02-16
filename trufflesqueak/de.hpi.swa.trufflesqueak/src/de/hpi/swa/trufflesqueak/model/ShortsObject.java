@@ -2,6 +2,7 @@ package de.hpi.swa.trufflesqueak.model;
 
 import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
+import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -27,7 +28,7 @@ public class ShortsObject extends NativeObject {
     }
 
     private ShortsObject(ShortsObject original) {
-        this(original.image, original.getSqClass(), original.shorts);
+        this(original.image, original.getSqClass(), Arrays.copyOf(original.shorts, original.shorts.length));
     }
 
     @Override
