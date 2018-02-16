@@ -8,7 +8,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
-import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -353,10 +352,9 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return doLargeInteger(a, asLargeInteger(b));
         }
 
-        @SuppressWarnings("unused")
         @Specialization
         protected final static double doLargeInteger(final LargeIntegerObject a, final double b) {
-            throw new SqueakException("Not implemented yet");
+            return doDouble(a.doubleValue(), b);
         }
 
         @Specialization
@@ -374,10 +372,9 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return a / b;
         }
 
-        @SuppressWarnings("unused")
         @Specialization
         protected final static double doDouble(final double a, final LargeIntegerObject b) {
-            throw new SqueakException("Not implemented yet");
+            return doDouble(a, b.doubleValue());
         }
     }
 
