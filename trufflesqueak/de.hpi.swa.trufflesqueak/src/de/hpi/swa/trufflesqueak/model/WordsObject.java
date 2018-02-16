@@ -80,6 +80,10 @@ public class WordsObject extends NativeObject {
         return byteBuffer.array();
     }
 
+    public int[] getWords() {
+        return ints;
+    }
+
     @Override
     public byte getElementSize() {
         return 4;

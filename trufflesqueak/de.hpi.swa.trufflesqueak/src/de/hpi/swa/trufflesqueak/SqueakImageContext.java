@@ -125,7 +125,8 @@ public class SqueakImageContext {
     @CompilationFinal public final InterruptHandlerNode interrupt;
     @CompilationFinal public final long startUpMillis = System.currentTimeMillis();
 
-    public BaseSqueakObject asSymbol = nil; // for testing
+    @CompilationFinal public BaseSqueakObject asSymbol = nil; // for testing
+    @CompilationFinal public BaseSqueakObject simulatePrimitiveArgs = nil;
 
     public SqueakImageContext(SqueakLanguage squeakLanguage, SqueakLanguage.Env environ,
                     PrintWriter out, PrintWriter err) {

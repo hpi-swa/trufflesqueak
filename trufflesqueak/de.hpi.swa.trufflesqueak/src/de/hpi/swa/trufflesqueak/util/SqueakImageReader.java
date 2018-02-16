@@ -303,11 +303,15 @@ public class SqueakImageReader {
             if (chunkObject instanceof NativeObject) {
                 if (((NativeObject) chunkObject).getSqClass() == image.doesNotUnderstand.getSqClass() && chunkObject.toString().equals("asSymbol")) {
                     image.asSymbol = (NativeObject) chunkObject;
+                } else if (((NativeObject) chunkObject).getSqClass() == image.doesNotUnderstand.getSqClass() && chunkObject.toString().equals("simulatePrimitive:args:")) {
+                    image.simulatePrimitiveArgs = (NativeObject) chunkObject;
                 }
             }
         }
         if (image.asSymbol == image.nil) {
             throw new SqueakException("Unable to find asSymbol selector");
+        } else if (image.simulatePrimitiveArgs == image.nil) {
+            image.getError().println("Unable to find BitBlt simulation in image, can only run in headless mode...");
         }
     }
 

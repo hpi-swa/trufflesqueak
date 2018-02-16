@@ -1,10 +1,7 @@
 package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
-import java.awt.DisplayMode;
-import java.awt.GraphicsEnvironment;
 import java.util.List;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -81,6 +78,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             if (receiver.size() < 4) {
                 throw new PrimitiveFailed();
             }
+            code.image.display.setSqDisplay(receiver);
             code.image.display.open();
             code.image.specialObjectsArray.atput0(SPECIAL_OBJECT_INDEX.TheDisplay, receiver);
             return true;
@@ -146,7 +144,6 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 106)
     protected static abstract class PrimScreenSizeNode extends AbstractPrimitiveNode {
-        @CompilationFinal private final boolean isHeadless = GraphicsEnvironment.isHeadless();
 
         protected PrimScreenSizeNode(CompiledMethodObject method) {
             super(method);
@@ -154,12 +151,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected BaseSqueakObject get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
-            if (!isHeadless) {
-                DisplayMode displayMode = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDisplayMode();
-                return code.image.newPoint(displayMode.getWidth(), displayMode.getHeight());
-            } else {
-                return code.image.newPoint(1024, 768);
-            }
+            return code.image.wrap(code.image.display.getSize());
         }
     }
 
@@ -187,7 +179,11 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
-            return code.image.wrap(code.image.display.nextKey());
+            if (code.image.display.hasNext()) {
+                return code.image.wrap(code.image.display.nextKey());
+            } else {
+                return code.image.nil;
+            }
         }
     }
 
@@ -221,7 +217,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             if (!((left <= right) && (top <= bottom))) {
                 return code.image.nil;
             }
-            code.image.display.drawRect((int) left, (int) right, (int) top, (int) bottom);
+            code.image.display.forceRect((int) left, (int) right, (int) top, (int) bottom);
             return receiver;
         }
     }

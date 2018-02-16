@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
@@ -460,8 +461,9 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         @CompilationFinal private static CompiledMethodObject simulationMethod;
         @CompilationFinal private final String moduleName;
         @CompilationFinal private final String functionName;
-        @Child private LookupNode lookupNode = simulationMethod == null ? LookupNode.create() : null;
-        @Child private DispatchNode dispatchNode = simulationMethod == null ? DispatchNode.create() : null;
+        @CompilationFinal private final boolean bitBltSimulationNotFound = code.image.simulatePrimitiveArgs == code.image.nil;
+        @Child private LookupNode lookupNode = LookupNode.create();
+        @Child private DispatchNode dispatchNode = DispatchNode.create();
         @Child protected SqueakLookupClassNode lookupClassNode;
 
         public static PrimBitBltSimulateNode create(CompiledMethodObject method, String moduleName, String functionName, SqueakNode[] arguments) {
@@ -472,7 +474,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
             this.moduleName = moduleName;
             this.functionName = functionName;
-            lookupClassNode = simulationMethod == null ? SqueakLookupClassNode.create(code) : null;
+            lookupClassNode = SqueakLookupClassNode.create(code);
         }
 
         @Override
@@ -483,6 +485,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected Object doSimulation(VirtualFrame frame, Object[] rcvrAndArguments) {
             if (simulationMethod == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 simulationMethod = getSimulateMethod(rcvrAndArguments[0]);
             }
             Object[] newRcvrAndArgs = new Object[]{rcvrAndArguments[0], code.image.wrap(functionName), code.image.newList(rcvrAndArguments)};
@@ -490,8 +493,11 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         private CompiledMethodObject getSimulateMethod(Object receiver) { // TODO: cache method for a given module name
+            if (bitBltSimulationNotFound) {
+                throw new PrimitiveFailed();
+            }
             ClassObject rcvrClass = lookupClassNode.executeLookup(receiver);
-            Object lookupResult = lookupNode.executeLookup(rcvrClass, code.image.wrap(SIMULATE_PRIMITIVE_SELECTOR));
+            Object lookupResult = lookupNode.executeLookup(rcvrClass, code.image.simulatePrimitiveArgs);
             if (lookupResult instanceof CompiledMethodObject) {
                 CompiledMethodObject result = (CompiledMethodObject) lookupResult;
                 if (!result.isDoesNotUnderstand()) {
