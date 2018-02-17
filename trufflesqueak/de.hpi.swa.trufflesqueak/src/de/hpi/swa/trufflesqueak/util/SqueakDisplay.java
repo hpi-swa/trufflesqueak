@@ -6,17 +6,10 @@ import java.awt.GraphicsEnvironment;
 import java.awt.Point;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
 import java.awt.image.DirectColorModel;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
-import java.util.ArrayDeque;
-import java.util.Deque;
 
 import javax.swing.JComponent;
 import javax.swing.JFrame;
@@ -30,12 +23,12 @@ import de.hpi.swa.trufflesqueak.model.ObjectLayouts.FORM;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.WordsObject;
 
-public final class Display {
+public final class SqueakDisplay {
     @CompilationFinal public static final int DEFAULT_WIDTH = 1024;
     @CompilationFinal public static final int DEFAULT_HEIGHT = 768;
     @CompilationFinal public static final Dimension DEFAULT_DIMENSION = new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT);
 
-    public static AbstractDisplay create(boolean noDisplay) {
+    public static AbstractSqueakDisplay create(boolean noDisplay) {
         if (!GraphicsEnvironment.isHeadless() && !noDisplay) {
             return new JavaDisplay();
         } else {
@@ -43,60 +36,41 @@ public final class Display {
         }
     }
 
-    private static final class MOUSE_BUTTON {
-        public static final int ALL = 1 + 2 + 4;
-        public static final int BLUE = 1;
-        public static final int YELLOW = 2;
-        public static final int RED = 4;
-    }
-
-    private static final class KEYBOARD_MODIFIER {
-        public static final int ALL = 8 + 16 + 32 + 64;
-        public static final int SHIFT = 8;
-        public static final int CTRL = 16;
-        public static final int ALT = 32;
-        public static final int CMD = 64;
-    }
-
-    public static abstract class AbstractDisplay {
+    public static abstract class AbstractSqueakDisplay {
         public abstract void forceRect(int left, int right, int top, int bottom);
 
         public abstract Dimension getSize();
 
-        public abstract int getButtons();
-
-        public abstract Point getMousePosition();
-
         public abstract void setFullscreen(boolean enable);
 
         public abstract void forceUpdate();
-
-        public abstract boolean hasNext();
-
-        public abstract int nextKey();
-
-        public abstract int peekKey();
 
         public abstract void open();
 
         public abstract void close();
 
         public abstract void setSqDisplay(PointersObject sqDisplay);
+
+        public abstract Point getLastMousePosition();
+
+        public abstract int getLastMouseButton();
+
+        public abstract int keyboardPeek();
+
+        public abstract int keyboardNext();
     }
 
-    private static class JavaDisplay extends AbstractDisplay {
+    private static class JavaDisplay extends AbstractSqueakDisplay {
         @CompilationFinal private final JFrame frame = new JFrame("TruffleSqueak");
         @CompilationFinal private final Canvas canvas = new Canvas();
 
-        private Point mousePosition = new Point(0, 0);
-        private int buttons = 0;
-        public int modifiers;
-        @CompilationFinal public final Deque<Integer> keys = new ArrayDeque<>();
+        @CompilationFinal private final SqueakMouse mouse = new SqueakMouse();
+        @CompilationFinal private final SqueakKeyboard keyboard = new SqueakKeyboard();
 
         public JavaDisplay() {
-            canvas.addMouseListener(new SqueakMouseListener(this));
-            canvas.addMouseMotionListener(new SqueakMouseMotionListener(this));
-            canvas.addKeyListener(new SqueakKeyListener(this));
+            canvas.addMouseListener(mouse);
+            canvas.addMouseMotionListener(mouse);
+            canvas.addKeyListener(keyboard);
 
             frame.setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -202,94 +176,6 @@ public final class Display {
             }
         }
 
-        private static class SqueakMouseListener implements MouseListener {
-            private JavaDisplay display;
-
-            public SqueakMouseListener(JavaDisplay display) {
-                this.display = display;
-            }
-
-            public void mouseClicked(MouseEvent e) {
-                System.out.println("Clicked: " + e);
-            }
-
-            public void mousePressed(MouseEvent e) {
-                int buttons = display.buttons & MOUSE_BUTTON.ALL;
-                switch (e.getButton()) {
-                    case 0: // left
-                        buttons = MOUSE_BUTTON.RED;
-                        break;
-                    case 1: // middle
-                        buttons = MOUSE_BUTTON.YELLOW;
-                        break;
-                    case 2: // right
-                        buttons = MOUSE_BUTTON.BLUE;
-                        break;
-                }
-                display.updateButtons(buttons);
-            }
-
-            public void mouseReleased(MouseEvent e) {
-                display.buttons = 0;
-
-            }
-
-            public void mouseEntered(MouseEvent e) {
-                System.out.println("Entered: " + e);
-                // TODO Auto-generated method stub
-            }
-
-            public void mouseExited(MouseEvent e) {
-                System.out.println("Exited: " + e);
-            }
-        }
-
-        private static class SqueakMouseMotionListener implements MouseMotionListener {
-            private JavaDisplay display;
-
-            public SqueakMouseMotionListener(JavaDisplay display) {
-                this.display = display;
-            }
-
-            public void mouseDragged(MouseEvent e) {
-                System.out.println("Dragged: " + e);
-            }
-
-            public void mouseMoved(MouseEvent e) {
-                display.mousePosition = e.getPoint();
-            }
-        }
-
-        private static class SqueakKeyListener implements KeyListener {
-            private JavaDisplay display;
-
-            public SqueakKeyListener(JavaDisplay display) {
-                this.display = display;
-            }
-
-            public void keyTyped(KeyEvent e) {
-                display.keys.add(e.getKeyCode());
-            }
-
-            public void keyPressed(KeyEvent e) {
-                boolean shiftPressed = e.isShiftDown();
-                boolean ctrlPressed = e.isControlDown() && !e.isAltDown();
-                boolean cmdPressed = e.isMetaDown() || (e.isAltDown() && !e.isControlDown());
-                int modifiers = (shiftPressed ? KEYBOARD_MODIFIER.SHIFT : 0) +
-                                (ctrlPressed ? KEYBOARD_MODIFIER.CTRL : 0) +
-                                (cmdPressed ? KEYBOARD_MODIFIER.CMD : 0);
-                display.buttons = (display.buttons & ~KEYBOARD_MODIFIER.ALL) | modifiers;
-            }
-
-            public void keyReleased(KeyEvent e) {
-                display.buttons = (display.buttons & ~KEYBOARD_MODIFIER.ALL);
-            }
-        }
-
-        private void updateButtons(int newButtons) {
-            buttons = newButtons | modifiers;
-        }
-
         @Override
         @TruffleBoundary
         public void forceRect(int left, int right, int top, int bottom) {
@@ -324,16 +210,6 @@ public final class Display {
         }
 
         @Override
-        public int getButtons() {
-            return buttons;
-        }
-
-        @Override
-        public Point getMousePosition() {
-            return mousePosition;
-        }
-
-        @Override
         public void setFullscreen(boolean enable) {
             if (enable) {
                 frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
@@ -345,27 +221,32 @@ public final class Display {
         }
 
         @Override
-        public boolean hasNext() {
-            return !keys.isEmpty();
-        }
-
-        @Override
-        public int nextKey() {
-            return keys.pop();
-        }
-
-        @Override
-        public int peekKey() {
-            return keys.peek();
-        }
-
-        @Override
         public void setSqDisplay(PointersObject sqDisplay) {
             canvas.setSqDisplay(sqDisplay);
         }
+
+        @Override
+        public Point getLastMousePosition() {
+            return mouse.getPosition();
+        }
+
+        @Override
+        public int getLastMouseButton() {
+            return mouse.getButtons() & 7 | keyboard.modifierKeys();
+        }
+
+        @Override
+        public int keyboardPeek() {
+            return keyboard.peekKey();
+        }
+
+        @Override
+        public int keyboardNext() {
+            return keyboard.nextKey();
+        }
     }
 
-    private static class NullDisplay extends AbstractDisplay {
+    private static class NullDisplay extends AbstractSqueakDisplay {
         @Override
         public void forceRect(int left, int right, int top, int bottom) {
         }
@@ -376,36 +257,11 @@ public final class Display {
         }
 
         @Override
-        public int getButtons() {
-            return 0;
-        }
-
-        @Override
-        public Point getMousePosition() {
-            return new Point(0, 0);
-        }
-
-        @Override
         public void setFullscreen(boolean enable) {
         }
 
         @Override
         public void forceUpdate() {
-        }
-
-        @Override
-        public boolean hasNext() {
-            return false;
-        }
-
-        @Override
-        public int nextKey() {
-            return 0;
-        }
-
-        @Override
-        public int peekKey() {
-            return 0;
         }
 
         @Override
@@ -418,6 +274,26 @@ public final class Display {
 
         @Override
         public void setSqDisplay(PointersObject sqDisplay) {
+        }
+
+        @Override
+        public Point getLastMousePosition() {
+            return new Point(0, 0);
+        }
+
+        @Override
+        public int getLastMouseButton() {
+            return 0;
+        }
+
+        @Override
+        public int keyboardPeek() {
+            return 0;
+        }
+
+        @Override
+        public int keyboardNext() {
+            return 0;
         }
     }
 

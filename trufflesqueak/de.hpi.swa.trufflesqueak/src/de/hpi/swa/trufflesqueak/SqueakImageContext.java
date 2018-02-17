@@ -37,8 +37,8 @@ import de.hpi.swa.trufflesqueak.model.SpecialSelectorObject;
 import de.hpi.swa.trufflesqueak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ObjectGraph;
 import de.hpi.swa.trufflesqueak.nodes.process.GetActiveProcessNode;
-import de.hpi.swa.trufflesqueak.util.Display;
-import de.hpi.swa.trufflesqueak.util.Display.AbstractDisplay;
+import de.hpi.swa.trufflesqueak.util.SqueakDisplay;
+import de.hpi.swa.trufflesqueak.util.SqueakDisplay.AbstractSqueakDisplay;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.FrameMarker;
 import de.hpi.swa.trufflesqueak.util.InterruptHandlerNode;
@@ -118,7 +118,7 @@ public class SqueakImageContext {
     };
 
     @CompilationFinal public final SqueakConfig config;
-    @CompilationFinal public final AbstractDisplay display;
+    @CompilationFinal public final AbstractSqueakDisplay display;
     @CompilationFinal public final ObjectGraph objects = new ObjectGraph(this);
     @CompilationFinal public final OSDetector os = new OSDetector();
     @CompilationFinal public final SqueakImageFlags flags = new SqueakImageFlags();
@@ -137,10 +137,10 @@ public class SqueakImageContext {
         if (env != null) {
             String[] applicationArguments = env.getApplicationArguments();
             config = new SqueakConfig(applicationArguments);
-            display = Display.create(config.isCustomContext());
+            display = SqueakDisplay.create(config.isCustomContext());
         } else { // testing
             config = new SqueakConfig(new String[0]);
-            display = Display.create(true);
+            display = SqueakDisplay.create(true);
         }
         interrupt = InterruptHandlerNode.create(this, config);
     }

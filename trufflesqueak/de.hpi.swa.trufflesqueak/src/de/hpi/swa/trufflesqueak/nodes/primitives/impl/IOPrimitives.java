@@ -37,7 +37,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object mousePoint(@SuppressWarnings("unused") VirtualFrame frame) {
-            return code.image.wrap(code.image.display.getMousePosition());
+            return code.image.wrap(code.image.display.getLastMousePosition());
         }
     }
 
@@ -165,7 +165,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
-            return code.image.wrap(code.image.display.getButtons());
+            return code.image.wrap(code.image.display.getLastMouseButton());
         }
     }
 
@@ -179,11 +179,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
-            if (code.image.display.hasNext()) {
-                return code.image.wrap(code.image.display.nextKey());
-            } else {
-                return code.image.nil;
-            }
+            return code.image.wrap(code.image.display.keyboardNext());
         }
     }
 
@@ -197,7 +193,12 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
-            return code.image.wrap(code.image.display.peekKey());
+            int keyboardPeek = code.image.display.keyboardPeek();
+            if (keyboardPeek == 0) {
+                return code.image.nil;
+            } else {
+                return code.image.wrap(keyboardPeek);
+            }
         }
     }
 
