@@ -138,10 +138,10 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 72, numArguments = 2)
-    protected static abstract class PrimArrayBecome extends AbstractPrimitiveNode {
+    protected static abstract class PrimForwardIdentity extends AbstractPrimitiveNode {
         @Child private GetActiveProcessNode getActiveProcessNode;
 
-        protected PrimArrayBecome(CompiledMethodObject method) {
+        protected PrimForwardIdentity(CompiledMethodObject method) {
             // TODO: this primitive does not correctly perform a one way become yet, FIXME!
             super(method);
             getActiveProcessNode = GetActiveProcessNode.create(method);
@@ -600,5 +600,36 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                 throw new PrimitiveFailed();
             }
         }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 181, variableArguments = true)
+    protected static abstract class PrimSizeInBytesOfInstanceNode extends AbstractPrimitiveNode {
+
+        protected PrimSizeInBytesOfInstanceNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Override
+        public final Object executeWithArguments(VirtualFrame frame, Object... rcvrAndArgs) {
+            return doSize(rcvrAndArgs);
+        }
+
+        @Specialization
+        protected long doSize(Object[] rcvrAndArgs) {
+            if (!(rcvrAndArgs[0] instanceof ClassObject)) {
+                throw new PrimitiveFailed();
+            }
+            ClassObject receiver = (ClassObject) rcvrAndArgs[0];
+            switch (rcvrAndArgs.length) {
+                case 1:
+                    return receiver.classByteSizeOfInstance(0);
+                case 2:
+                    return receiver.classByteSizeOfInstance((long) rcvrAndArgs[1]);
+                default:
+                    throw new PrimitiveFailed();
+            }
+        }
+
     }
 }

@@ -263,4 +263,25 @@ public class ClassObject extends AbstractPointersObject {
     public BaseSqueakObject shallowCopy() {
         return new ClassObject(this);
     }
+
+    public long classByteSizeOfInstance(long numElements) {
+        int numWords = instanceSize;
+        if (instSpec < 9) {                   // 32 bit
+            numWords += numElements;
+        } else if (instSpec >= 16) {          // 8 bit
+            numWords += (numElements + 3) / 4 | 0;
+        } else if (instSpec >= 12) {          // 16 bit
+            numWords += (numElements + 1) / 2 | 0;
+        } else if (instSpec >= 10) {          // 32 bit
+            numWords += numElements;
+        } else {                              // 64 bit
+            numWords += numElements * 2;
+        }
+        numWords += numWords & 1;             // align to 64 bits
+        numWords += numWords >= 255 ? 4 : 2;  // header words
+        if (numWords < 4) {
+            numWords = 4;                     // minimum object size
+        }
+        return numWords * 4;
+    }
 }
