@@ -45,7 +45,7 @@ public abstract class InvokeNode extends Node {
 
     private static void incrementAndCheckCallDepth(Object code) {
         callDepth++;
-        if (callDepth > CALL_DEPTH_LIMIT) {
+        if (callDepth >= CALL_DEPTH_LIMIT) {
             ((CompiledCodeObject) code).image.printSqStackTrace();
             throw new SqueakException("Avoiding StackOverflowError, callDepth has reached " + CALL_DEPTH_LIMIT + ".");
         }
