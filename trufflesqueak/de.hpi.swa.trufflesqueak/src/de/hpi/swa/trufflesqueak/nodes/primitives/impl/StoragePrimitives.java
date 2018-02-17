@@ -479,6 +479,41 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(index = 128, numArguments = 2)
+    protected static abstract class PrimBecomeNode extends AbstractPrimitiveNode {
+
+        protected PrimBecomeNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected BaseSqueakObject doBecome(ListObject receiver, ListObject other) {
+            int receiverSize = receiver.size();
+            if (receiverSize != other.size()) {
+                throw new PrimitiveFailed();
+            }
+            int numBecomes = 0;
+            BaseSqueakObject[] lefts = new BaseSqueakObject[receiverSize];
+            BaseSqueakObject[] rights = new BaseSqueakObject[receiverSize];
+            for (int i = 0; i < receiverSize; i++) {
+                BaseSqueakObject left = (BaseSqueakObject) receiver.at0(i);
+                BaseSqueakObject right = (BaseSqueakObject) other.at0(i);
+                if (left.become(right)) {
+                    lefts[numBecomes] = left;
+                    rights[numBecomes] = right;
+                    numBecomes++;
+                } else {
+                    for (int j = 0; j < numBecomes; j++) {
+                        lefts[j].become(rights[j]);
+                    }
+                    throw new PrimitiveFailed();
+                }
+            }
+            return receiver;
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(index = 129)
     protected static abstract class PrimSpecialObjectsArrayNode extends AbstractPrimitiveNode {
 
