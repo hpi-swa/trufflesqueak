@@ -48,6 +48,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
     @CompilationFinal private int numTemps;
     @CompilationFinal private long accessModifier;
     @CompilationFinal private boolean altInstructionSet;
+    @CompilationFinal public static boolean alwaysNonVirtualized = false;
 
     @CompilationFinal private final Assumption canBeVirtualized = Truffle.getRuntime().createAssumption("Does not need a materialized context");
 
@@ -62,6 +63,9 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     protected CompiledCodeObject(SqueakImageContext img, ClassObject klass) {
         super(img, klass);
+        if (alwaysNonVirtualized) {
+            invalidateCanBeVirtualizedAssumption();
+        }
     }
 
     protected CompiledCodeObject(SqueakImageContext img) {
@@ -97,7 +101,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
         thisContextOrMarkerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.THIS_CONTEXT_OR_MARKER, FrameSlotKind.Object);
         instructionPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.INSTRUCTION_POINTER, FrameSlotKind.Long);
         stackPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.STACK_POINTER, FrameSlotKind.Long);
-        if (canBeVirtualized.isValid()) {
+        if (canBeVirtualized()) {
             long numStackSlots = frameSize() + getSqClass().getBasicInstanceSize();
             stackSlots = new FrameSlot[(int) numStackSlots];
             for (int i = 0; i < stackSlots.length; i++) {
@@ -329,6 +333,10 @@ public abstract class CompiledCodeObject extends SqueakObject {
     }
 
     public abstract CompiledMethodObject getMethod();
+
+    public boolean canBeVirtualized() {
+        return canBeVirtualized.isValid();
+    }
 
     public Assumption getCanBeVirtualizedAssumption() {
         return canBeVirtualized;

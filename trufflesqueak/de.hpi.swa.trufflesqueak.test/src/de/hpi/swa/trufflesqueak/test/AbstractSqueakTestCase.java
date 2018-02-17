@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.test;
 
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -33,7 +34,7 @@ public abstract class AbstractSqueakTestCase extends TestCase {
         return new Boolean[]{true, false};
     }
 
-    @Parameter public static boolean invalidateCanBeVirtualizedAssumption;
+    @Parameter public static boolean virtualizationEnabled;
 
     public AbstractSqueakTestCase() {
         super();
@@ -110,6 +111,11 @@ public abstract class AbstractSqueakTestCase extends TestCase {
         image.compiledMethodClass.fillin(new DummyFormatChunk(100)); // sets instanceSize to 100
     }
 
+    @Before
+    public void setAlwaysNonVirtualizedFlag() {
+        CompiledCodeObject.alwaysNonVirtualized = !virtualizationEnabled;
+    }
+
     public CompiledCodeObject makeMethod(byte[] bytes) {
         // Always add three literals...
         return makeMethod(bytes, new Object[]{68419598L, null, null});
@@ -117,9 +123,6 @@ public abstract class AbstractSqueakTestCase extends TestCase {
 
     public static CompiledCodeObject makeMethod(byte[] bytes, Object[] literals) {
         CompiledMethodObject code = new CompiledMethodObject(image, bytes, literals);
-        if (invalidateCanBeVirtualizedAssumption) {
-            code.invalidateCanBeVirtualizedAssumption();
-        }
         return code;
     }
 

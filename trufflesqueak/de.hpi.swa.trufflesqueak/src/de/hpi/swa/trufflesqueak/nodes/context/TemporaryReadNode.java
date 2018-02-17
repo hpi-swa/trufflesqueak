@@ -21,7 +21,7 @@ public abstract class TemporaryReadNode extends SqueakNodeWithCode {
     protected TemporaryReadNode(CompiledCodeObject code, long tempIndex) {
         super(code);
         this.tempIndex = tempIndex;
-        if (tempIndex >= 0) {
+        if (tempIndex >= 0 && code.canBeVirtualized()) {
             readNode = FrameSlotReadNode.create(code.getStackSlot((int) tempIndex));
         }
     }

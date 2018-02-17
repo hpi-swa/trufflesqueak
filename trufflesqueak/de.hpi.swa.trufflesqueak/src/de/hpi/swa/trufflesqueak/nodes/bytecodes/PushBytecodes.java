@@ -279,9 +279,7 @@ public final class PushBytecodes {
             super(code, index, numBytecodes);
             this.tempIndex = tempIndex;
             pushNode = PushStackNode.create(code);
-            if (tempIndex <= code.getNumStackSlots()) { // for decoder
-                tempNode = TemporaryReadNode.create(code, tempIndex);
-            }
+            tempNode = TemporaryReadNode.create(code, tempIndex);
         }
 
         @Override
