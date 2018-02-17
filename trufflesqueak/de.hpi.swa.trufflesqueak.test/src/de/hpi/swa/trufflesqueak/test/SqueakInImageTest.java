@@ -469,6 +469,8 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
         for (int i = 0; i < testClasses.length; i++) {
             String testClass = testClasses[i];
             Object result;
+            image.getOutput().print(testClass);
+            image.getOutput().flush();
             try {
                 result = evaluate(testClass + " buildSuite run hasPassed");
             } catch (Exception e) {
@@ -476,9 +478,9 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                 continue;
             }
             if (result.equals(image.sqTrue)) {
-                image.getOutput().println(testClass + " ✔");
+                image.getOutput().println(" ✔");
             } else {
-                image.getOutput().println(testClass + " ✘");
+                image.getOutput().println(" ✘");
                 failing.add(testClass);
             }
         }
