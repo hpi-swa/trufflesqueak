@@ -137,11 +137,7 @@ public class SqueakImageContext {
         if (env != null) {
             String[] applicationArguments = env.getApplicationArguments();
             config = new SqueakConfig(applicationArguments);
-            boolean headless = config.isCustomContext();
-            if (!headless && simulatePrimitiveArgs == nil) {
-                throw new SqueakException("Unable to find BitBlt simulation in image, cannot run with display.");
-            }
-            display = SqueakDisplay.create(headless);
+            display = SqueakDisplay.create(config.isCustomContext());
         } else { // testing
             config = new SqueakConfig(new String[0]);
             display = SqueakDisplay.create(true);
@@ -186,6 +182,9 @@ public class SqueakImageContext {
 
     public void fillInFrom(FileInputStream inputStream) throws IOException {
         SqueakImageReader.readImage(this, inputStream);
+        if (!display.isHeadless() && simulatePrimitiveArgs == nil) {
+            throw new SqueakException("Unable to find BitBlt simulation in image, cannot run with display.");
+        }
     }
 
     public PrintWriter getOutput() {

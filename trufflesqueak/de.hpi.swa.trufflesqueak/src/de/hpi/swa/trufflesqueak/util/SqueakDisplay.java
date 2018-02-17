@@ -58,6 +58,8 @@ public final class SqueakDisplay {
         public abstract int keyboardPeek();
 
         public abstract int keyboardNext();
+
+        public abstract boolean isHeadless();
     }
 
     private static class JavaDisplay extends AbstractSqueakDisplay {
@@ -244,6 +246,11 @@ public final class SqueakDisplay {
         public int keyboardNext() {
             return keyboard.nextKey();
         }
+
+        @Override
+        public boolean isHeadless() {
+            return false;
+        }
     }
 
     private static class NullDisplay extends AbstractSqueakDisplay {
@@ -294,6 +301,11 @@ public final class SqueakDisplay {
         @Override
         public int keyboardNext() {
             return 0;
+        }
+
+        @Override
+        public boolean isHeadless() {
+            return true;
         }
     }
 
