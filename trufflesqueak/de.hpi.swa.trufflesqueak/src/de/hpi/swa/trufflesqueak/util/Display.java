@@ -130,14 +130,14 @@ public final class Display {
                 //@formatter:off
                 switch (depth) {
                     case 1: case 2: case 4: case 8: // colors need to be decoded
-                        bufferedImage.setRGB(0, 0, width, height, decodeColors(), 0, 1);
+                        bufferedImage.setRGB(0, 0, width, height, decodeColors(), 0, width);
                         break;
                     case 16:
                         bufferedImage.setData(get16bitRaster());
                         break;
                     case 32: // use words directly
                         assert bitmap.getWords().length / width / height == 1;
-                        bufferedImage.setRGB(0, 0, width, height, bitmap.getWords(), 0, 1);
+                        bufferedImage.setRGB(0, 0, width, height, bitmap.getWords(), 0, width);
                         break;
                     default:
                         throw new SqueakException("Unsupported form depth: " + depth);
