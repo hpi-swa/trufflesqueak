@@ -2,6 +2,7 @@ package de.hpi.swa.trufflesqueak.test;
 
 import static org.junit.Assert.assertNotEquals;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -25,7 +26,7 @@ import de.hpi.swa.trufflesqueak.nodes.InvokeNode;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class SqueakInImageTest extends AbstractSqueakTestCase {
-    private static final String IMAGE_PATH = System.getenv("TRUFFLESQUEAK_ROOT") + "/images/test.image";
+    private static final String IMAGE_PATH = getImagesPathName() + File.separator + "test.image";
     private static Object smalltalkDictionary;
     private static Object smalltalkAssociation;
     private static Object evaluateSymbol;
@@ -49,7 +50,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "AllNamePolicyTest", TEST_TYPE.PASSING,
                     "AllocationTest", TEST_TYPE.IGNORE,
                     "ArbitraryObjectSocketTestCase", TEST_TYPE.FAILING,
-                    "ArrayLiteralTest", TEST_TYPE.BROKEN,
+                    "ArrayLiteralTest", TEST_TYPE.FAILING,
                     "ArrayTest", TEST_TYPE.FAILING,
                     "Ascii85ConverterTest", TEST_TYPE.PASSING,
                     "AssociationTest", TEST_TYPE.PASSING,
@@ -95,7 +96,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "ClassRenameFixTest", TEST_TYPE.BROKEN,
                     "ClassTest", TEST_TYPE.FAILING,
                     "ClassTestCase", TEST_TYPE.BROKEN,
-                    "ClassTraitTest", TEST_TYPE.BROKEN,
+                    "ClassTraitTest", TEST_TYPE.NOT_TERMINATING,
                     "ClassVarScopeTest", TEST_TYPE.BROKEN,
                     "ClipboardTest", TEST_TYPE.PASSING,
                     "ClosureCompilerTest", TEST_TYPE.BROKEN,
@@ -140,7 +141,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "FileContentsBrowserTest", TEST_TYPE.FAILING,
                     "FileDirectoryTest", TEST_TYPE.BROKEN,
                     "FileList2ModalDialogsTest", TEST_TYPE.FAILING,
-                    "FileListTest", TEST_TYPE.FAILING,
+                    "FileListTest", TEST_TYPE.FAILING, // needs 'FileDirectory startUp'
                     "FileStreamTest", TEST_TYPE.BROKEN,
                     "FileUrlTest", TEST_TYPE.PASSING,
                     "FlapTabTests", TEST_TYPE.INCONSISTENT,
@@ -615,17 +616,24 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        patchTestCaseTimeoutAfter();
+        patchImageForTesting();
     }
 
-    private static void patchTestCaseTimeoutAfter() {
+    private static void patchImageForTesting() {
         /*
-         * Disable timeout logic by patching TestCase>>#timeout:after: (uses processes -> incompatible to
-         * running headless).
+         * Set author initials and disable timeout logic by patching TestCase>>#timeout:after: (uses
+         * processes -> incompatible to running headless).
          */
+        evaluate("Utilities setAuthorInitials: 'TruffleSqueak'");
+        // TODO: run 'FileDirectory startUp'?
+        // evaluate(String.format("FileDirectory setDefaultDirectory: '%s/images'", getImagesPathName()));
         Object patchResult = evaluate(
                         "TestCase addSelectorSilently: #timeout:after: withMethod: (TestCase compile: 'timeout: aBlock after: seconds ^ aBlock value' notifying: nil trailer: (CompiledMethodTrailer empty) ifFail: [^ nil]) method");
         assertNotEquals(image.nil, patchResult);
+    }
+
+    private static String getImagesPathName() {
+        return System.getenv("TRUFFLESQUEAK_ROOT") + File.separator + "images";
     }
 
     private static Object getSmalltalkDictionary() {
