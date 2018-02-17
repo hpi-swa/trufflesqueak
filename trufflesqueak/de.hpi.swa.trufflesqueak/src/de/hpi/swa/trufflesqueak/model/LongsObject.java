@@ -55,11 +55,12 @@ public class LongsObject extends NativeObject {
 
     @Override
     public boolean become(BaseSqueakObject other) {
-        if (other instanceof BytesObject) {
+        if (other instanceof LongsObject) {
             if (super.become(other)) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                long[] otherBytes = ((LongsObject) other).longs;
-                ((LongsObject) other).longs = this.longs;
+                LongsObject otherLongsObject = ((LongsObject) other);
+                long[] otherBytes = otherLongsObject.longs;
+                otherLongsObject.longs = this.longs;
                 this.longs = otherBytes;
                 return true;
             }

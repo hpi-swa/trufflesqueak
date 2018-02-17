@@ -56,8 +56,9 @@ public class BytesObject extends NativeObject {
         if (other instanceof BytesObject) {
             if (super.become(other)) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                byte[] otherBytes = ((BytesObject) other).bytes;
-                ((BytesObject) other).bytes = this.bytes;
+                BytesObject otherBytesObject = (BytesObject) other;
+                byte[] otherBytes = otherBytesObject.bytes;
+                otherBytesObject.bytes = this.bytes;
                 this.bytes = otherBytes;
                 return true;
             }

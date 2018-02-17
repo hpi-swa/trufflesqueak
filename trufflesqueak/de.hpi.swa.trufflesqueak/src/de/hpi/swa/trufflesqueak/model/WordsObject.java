@@ -56,11 +56,12 @@ public class WordsObject extends NativeObject {
 
     @Override
     public boolean become(BaseSqueakObject other) {
-        if (other instanceof BytesObject) {
+        if (other instanceof WordsObject) {
             if (super.become(other)) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                int[] otherWords = ((WordsObject) other).ints;
-                ((WordsObject) other).ints = this.ints;
+                WordsObject otherWordsObject = ((WordsObject) other);
+                int[] otherWords = otherWordsObject.ints;
+                otherWordsObject.ints = this.ints;
                 this.ints = otherWords;
                 return true;
             }

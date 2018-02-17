@@ -55,11 +55,12 @@ public class ShortsObject extends NativeObject {
 
     @Override
     public boolean become(BaseSqueakObject other) {
-        if (other instanceof BytesObject) {
+        if (other instanceof ShortsObject) {
             if (super.become(other)) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                short[] otherShorts = ((ShortsObject) other).shorts;
-                ((ShortsObject) other).shorts = this.shorts;
+                ShortsObject otherShortsObject = ((ShortsObject) other);
+                short[] otherShorts = otherShortsObject.shorts;
+                otherShortsObject.shorts = this.shorts;
                 this.shorts = otherShorts;
                 return true;
             }
