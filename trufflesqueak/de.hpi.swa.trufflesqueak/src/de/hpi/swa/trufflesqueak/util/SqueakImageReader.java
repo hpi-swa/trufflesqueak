@@ -310,8 +310,6 @@ public class SqueakImageReader {
         }
         if (image.asSymbol == image.nil) {
             throw new SqueakException("Unable to find asSymbol selector");
-        } else if (image.simulatePrimitiveArgs == image.nil) {
-            image.getError().println("Unable to find BitBlt simulation in image, can only run in headless mode...");
         }
     }
 

@@ -37,12 +37,12 @@ import de.hpi.swa.trufflesqueak.model.SpecialSelectorObject;
 import de.hpi.swa.trufflesqueak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ObjectGraph;
 import de.hpi.swa.trufflesqueak.nodes.process.GetActiveProcessNode;
-import de.hpi.swa.trufflesqueak.util.SqueakDisplay;
-import de.hpi.swa.trufflesqueak.util.SqueakDisplay.AbstractSqueakDisplay;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.FrameMarker;
 import de.hpi.swa.trufflesqueak.util.InterruptHandlerNode;
 import de.hpi.swa.trufflesqueak.util.OSDetector;
+import de.hpi.swa.trufflesqueak.util.SqueakDisplay;
+import de.hpi.swa.trufflesqueak.util.SqueakDisplay.AbstractSqueakDisplay;
 import de.hpi.swa.trufflesqueak.util.SqueakImageFlags;
 import de.hpi.swa.trufflesqueak.util.SqueakImageReader;
 
@@ -137,7 +137,11 @@ public class SqueakImageContext {
         if (env != null) {
             String[] applicationArguments = env.getApplicationArguments();
             config = new SqueakConfig(applicationArguments);
-            display = SqueakDisplay.create(config.isCustomContext());
+            boolean headless = config.isCustomContext();
+            if (!headless && simulatePrimitiveArgs == nil) {
+                throw new SqueakException("Unable to find BitBlt simulation in image, cannot run with display.");
+            }
+            display = SqueakDisplay.create(headless);
         } else { // testing
             config = new SqueakConfig(new String[0]);
             display = SqueakDisplay.create(true);
