@@ -23,6 +23,7 @@ import javax.swing.JFrame;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.FORM;
@@ -290,11 +291,15 @@ public final class Display {
         }
 
         @Override
+        @TruffleBoundary
         public void forceRect(int left, int right, int top, int bottom) {
-            canvas.repaint(left, top, right - left, bottom - top);
+            // TODO: repaint rect only instead of everything
+            // canvas.repaint(left, top, right - left, bottom - top);
+            canvas.repaint();
         }
 
         @Override
+        @TruffleBoundary
         public void forceUpdate() {
             canvas.repaint();
         }
