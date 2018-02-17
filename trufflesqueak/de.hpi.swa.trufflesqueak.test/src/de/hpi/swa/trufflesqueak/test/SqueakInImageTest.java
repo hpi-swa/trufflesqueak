@@ -17,6 +17,7 @@ import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -39,6 +40,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
         private static final String BROKEN = "Broken"; // throws a Java exceptions
         private static final String INCONSISTENT = "Inconsistent"; // runs in only one of two modes (non/virtualized)
         private static final String NOT_TERMINATING = "Not Terminating"; // does not terminate
+        private static final String BROKEN_IN_SQUEAK = "Broken in Squeak"; // Not working in Squeak
         private static final String IGNORE = "Ignored"; // unable to run (e.g. OOM, ...)
     }
 
@@ -52,7 +54,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "Ascii85ConverterTest", TEST_TYPE.PASSING,
                     "AssociationTest", TEST_TYPE.PASSING,
                     "BagTest", TEST_TYPE.PASSING,
-                    "BalloonFontTest", TEST_TYPE.PASSING,
+                    "BalloonFontTest", TEST_TYPE.INCONSISTENT,
                     "Base64MimeConverterTest", TEST_TYPE.PASSING,
                     "BasicBehaviorClassMetaclassTest", TEST_TYPE.PASSING,
                     "BasicTypeTest", TEST_TYPE.PASSING,
@@ -64,7 +66,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "BitmapBugz", TEST_TYPE.PASSING,
                     "BitmapStreamTests", TEST_TYPE.IGNORE, // OOM error
                     "BitSetTest", TEST_TYPE.PASSING,
-                    "BlockClosureTest", TEST_TYPE.FAILING,
+                    "BlockClosureTest", TEST_TYPE.INCONSISTENT,
                     "BlockLocalTemporariesRemovalTest", TEST_TYPE.INCONSISTENT,
                     "BMPReadWriterTest", TEST_TYPE.FAILING,
                     "BooleanTest", TEST_TYPE.PASSING,
@@ -96,14 +98,14 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "ClassTraitTest", TEST_TYPE.BROKEN,
                     "ClassVarScopeTest", TEST_TYPE.BROKEN,
                     "ClipboardTest", TEST_TYPE.PASSING,
-                    "ClosureCompilerTest", TEST_TYPE.FAILING,
+                    "ClosureCompilerTest", TEST_TYPE.BROKEN,
                     "ClosureTests", TEST_TYPE.FAILING,
                     "CogVMBaseImageTests", TEST_TYPE.FAILING,
                     "CollectionTest", TEST_TYPE.PASSING,
                     "ColorTest", TEST_TYPE.FAILING,
                     "CompiledMethodComparisonTest", TEST_TYPE.BROKEN,
                     "CompiledMethodTest", TEST_TYPE.FAILING,
-                    "CompiledMethodTrailerTest", TEST_TYPE.FAILING,
+                    "CompiledMethodTrailerTest", TEST_TYPE.INCONSISTENT,
                     "CompilerExceptionsTest", TEST_TYPE.PASSING,
                     "CompilerNotifyingTest", TEST_TYPE.FAILING,
                     "CompilerSyntaxErrorNotifyingTest", TEST_TYPE.FAILING,
@@ -138,7 +140,6 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "FileContentsBrowserTest", TEST_TYPE.FAILING,
                     "FileDirectoryTest", TEST_TYPE.BROKEN,
                     "FileList2ModalDialogsTest", TEST_TYPE.FAILING,
-                    "FileListTEST_TYPE.BROKENModalDialogsTest", TEST_TYPE.BROKEN,
                     "FileListTest", TEST_TYPE.FAILING,
                     "FileStreamTest", TEST_TYPE.BROKEN,
                     "FileUrlTest", TEST_TYPE.PASSING,
@@ -180,7 +181,6 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "IntervalTest", TEST_TYPE.FAILING,
                     "IslandVMTweaksTestCase", TEST_TYPE.FAILING,
                     "JPEGReadWriter2Test", TEST_TYPE.FAILING,
-                    "JPEGReadWriterTEST_TYPE.BROKENTest", TEST_TYPE.BROKEN,
                     "KeyedSetTest", TEST_TYPE.PASSING,
                     "LangEnvBugs", TEST_TYPE.BROKEN,
                     "LargeNegativeIntegerTest", TEST_TYPE.FAILING,
@@ -202,7 +202,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "MCEnvironmentLoadTest", TEST_TYPE.NOT_TERMINATING,
                     "MCFileInTest", TEST_TYPE.NOT_TERMINATING,
                     "MCInitializationTest", TEST_TYPE.NOT_TERMINATING,
-                    "MCMcmUpdaterTest", TEST_TYPE.FAILING,
+                    "MCMcmUpdaterTest", TEST_TYPE.PASSING,
                     "MCMczInstallerTest", TEST_TYPE.NOT_TERMINATING,
                     "MCMergingTest", TEST_TYPE.IGNORE,
                     "MCMethodDefinitionTest", TEST_TYPE.IGNORE,
@@ -226,7 +226,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "MessageSendTest", TEST_TYPE.PASSING,
                     "MessageSetTest", TEST_TYPE.BROKEN,
                     "MessageTraceTest", TEST_TYPE.BROKEN,
-                    "MethodContextTest", TEST_TYPE.BROKEN,
+                    "MethodContextTest", TEST_TYPE.NOT_TERMINATING,
                     "MethodHighlightingTests", TEST_TYPE.PASSING,
                     "MethodPragmaTest", TEST_TYPE.BROKEN,
                     "MethodPropertiesTest", TEST_TYPE.INCONSISTENT,
@@ -238,9 +238,9 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "MorphBugs", TEST_TYPE.PASSING,
                     "MorphicEventDispatcherTests", TEST_TYPE.PASSING,
                     "MorphicEventFilterTests", TEST_TYPE.PASSING,
-                    "MorphicEventTests", TEST_TYPE.PASSING,
+                    "MorphicEventTests", TEST_TYPE.INCONSISTENT,
                     "MorphicExtrasSymbolExtensionsTest", TEST_TYPE.PASSING,
-                    "MorphicToolBuilderTests", TEST_TYPE.PASSING,
+                    "MorphicToolBuilderTests", TEST_TYPE.INCONSISTENT,
                     "MorphicUIManagerTest", TEST_TYPE.BROKEN,
                     "MorphTest", TEST_TYPE.FAILING,
                     "MultiByteFileStreamTest", TEST_TYPE.INCONSISTENT,
@@ -260,7 +260,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "PCCByCompilationTest", TEST_TYPE.FAILING,
                     "PCCByLiteralsTest", TEST_TYPE.NOT_TERMINATING,
                     "PluggableMenuItemSpecTests", TEST_TYPE.PASSING,
-                    "PluggableTextMorphTest", TEST_TYPE.PASSING,
+                    "PluggableTextMorphTest", TEST_TYPE.INCONSISTENT,
                     "PNGReadWriterTest", TEST_TYPE.FAILING,
                     "PointTest", TEST_TYPE.FAILING,
                     "PolygonMorphTest", TEST_TYPE.PASSING,
@@ -300,9 +300,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "SetTest", TEST_TYPE.PASSING,
                     "SetWithNilTest", TEST_TYPE.FAILING,
                     "SharedQueue2Test", TEST_TYPE.FAILING,
-                    "SharedQueueTEST_TYPE.BROKENTest", TEST_TYPE.BROKEN,
-                    "SHParserST80Test", TEST_TYPE.BROKEN,
-                    "SHParserST8TEST_TYPE.PASSINGTest", TEST_TYPE.BROKEN,
+                    "SHParserST80Test", TEST_TYPE.BROKEN_IN_SQUEAK,
                     "SimpleSwitchMorphTest", TEST_TYPE.PASSING,
                     "SimpleTestResourceTestCase", TEST_TYPE.PASSING,
                     "SliderTest", TEST_TYPE.FAILING,
@@ -318,11 +316,11 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "SqNumberParserTest", TEST_TYPE.BROKEN,
                     "SqueakSSLTest", TEST_TYPE.FAILING,
                     "ST80MenusTest", TEST_TYPE.INCONSISTENT,
-                    "ST80PackageDependencyTest", TEST_TYPE.FAILING,
+                    "ST80PackageDependencyTest", TEST_TYPE.BROKEN_IN_SQUEAK,
                     "StackTest", TEST_TYPE.PASSING,
                     "StandardSourceFileArrayTest", TEST_TYPE.PASSING,
                     "StandardSystemFontsTest", TEST_TYPE.BROKEN,
-                    "StickynessBugz", TEST_TYPE.PASSING,
+                    "StickynessBugz", TEST_TYPE.INCONSISTENT,
                     "StopwatchTest", TEST_TYPE.NOT_TERMINATING,
                     "StringSocketTestCase", TEST_TYPE.BROKEN,
                     "StringTest", TEST_TYPE.BROKEN,
@@ -340,7 +338,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "SystemOrganizerTest", TEST_TYPE.PASSING,
                     "SystemVersionTest", TEST_TYPE.PASSING,
                     "TestIndenting", TEST_TYPE.FAILING,
-                    "TestNewParagraphFix", TEST_TYPE.PASSING,
+                    "TestNewParagraphFix", TEST_TYPE.INCONSISTENT,
                     "TestObjectsAsMethods", TEST_TYPE.BROKEN,
                     "TestParagraphFix", TEST_TYPE.PASSING,
                     "TestSpaceshipOperator", TEST_TYPE.PASSING,
@@ -348,11 +346,11 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "TestValueWithinFix", TEST_TYPE.INCONSISTENT,
                     "TestVMStatistics", TEST_TYPE.PASSING,
                     "TextAlignmentTest", TEST_TYPE.PASSING,
-                    "TextAnchorTest", TEST_TYPE.PASSING,
+                    "TextAnchorTest", TEST_TYPE.INCONSISTENT,
                     "TextAndTextStreamTest", TEST_TYPE.BROKEN,
                     "TextAttributesScanningTest", TEST_TYPE.FAILING,
                     "TextDiffBuilderTest", TEST_TYPE.PASSING,
-                    "TextEditorTest", TEST_TYPE.FAILING,
+                    "TextEditorTest", TEST_TYPE.INCONSISTENT,
                     "TextEmphasisTest", TEST_TYPE.PASSING,
                     "TextFontChangeTest", TEST_TYPE.PASSING,
                     "TextFontReferenceTest", TEST_TYPE.PASSING,
@@ -385,9 +383,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "UserInterfaceThemeTest", TEST_TYPE.INCONSISTENT,
                     "UTF16TextConverterTest", TEST_TYPE.BROKEN,
                     "UTF32TextConverterTest", TEST_TYPE.FAILING,
-                    "UTF3TEST_TYPE.BROKENTextConverterTest", TEST_TYPE.BROKEN,
                     "UTF8TextConverterTest", TEST_TYPE.PASSING,
-                    "UTFTEST_TYPE.FAILING6TextConverterTest", TEST_TYPE.BROKEN,
                     "UTFTextConverterWithByteOrderTest", TEST_TYPE.BROKEN,
                     "UUIDPrimitivesTest", TEST_TYPE.PASSING,
                     "UUIDTest", TEST_TYPE.PASSING,
@@ -403,7 +399,6 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "WideCharacterSetTest", TEST_TYPE.BROKEN,
                     "WideStringTest", TEST_TYPE.FAILING,
                     "Win32VMTest", TEST_TYPE.PASSING,
-                    "Win3TEST_TYPE.BROKENVMTest", TEST_TYPE.BROKEN,
                     "WordArrayTest", TEST_TYPE.FAILING,
                     "WorldStateTest", TEST_TYPE.NOT_TERMINATING,
                     "WriteStreamTest", TEST_TYPE.PASSING,
@@ -519,6 +514,37 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
         failIfNotEmpty(passing);
     }
 
+    @Ignore
+    @Test
+    public void testXInspectFailingSqueakTests() {
+        String testClass = "BlockClosureTest";
+        image.getOutput().print(testClass + ": ");
+        image.getOutput().flush();
+        BaseSqueakObject result;
+        try {
+            result = (BaseSqueakObject) evaluate(testClass + " buildSuite run");
+        } catch (Exception e) {
+            image.getOutput().println(testClass + " is broken: " + e.toString());
+            return;
+        }
+        BaseSqueakObject failureArray = (BaseSqueakObject) ((BaseSqueakObject) result.at0(1)).at0(1);
+        for (int i = 0; i < failureArray.size(); i++) {
+            BaseSqueakObject value = (BaseSqueakObject) failureArray.at0(i);
+            if (value != image.nil) {
+                image.getOutput().print(value.at0(0) + " (E), ");
+            }
+        }
+        BaseSqueakObject errorArray = (BaseSqueakObject) ((BaseSqueakObject) result.at0(2)).at0(0);
+        for (int i = 0; i < errorArray.size(); i++) {
+            BaseSqueakObject value = (BaseSqueakObject) errorArray.at0(i);
+            if (value != image.nil) {
+                image.getOutput().print(value.at0(0) + " (F), ");
+            }
+        }
+        image.getOutput().println();
+    }
+
+    @Ignore
     @Test
     public void testYBrokenSqueakTests() {
         String[] testClasses = getSqueakTests(TEST_TYPE.BROKEN);
