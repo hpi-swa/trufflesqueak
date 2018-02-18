@@ -54,7 +54,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveAtPut", numArguments = 2)
+    @SqueakPrimitive(name = "primitiveAtPut", numArguments = 3)
     public static abstract class PrimFloatArrayAtPutNode extends AbstractPrimitiveNode {
 
         public PrimFloatArrayAtPutNode(CompiledMethodObject method) {
