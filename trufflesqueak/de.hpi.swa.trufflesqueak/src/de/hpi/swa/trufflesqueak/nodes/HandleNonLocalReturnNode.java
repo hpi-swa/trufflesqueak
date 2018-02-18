@@ -52,8 +52,9 @@ public abstract class HandleNonLocalReturnNode extends AbstractNodeWithCode {
         ContextObject context = getContext(frame);
         if (context.isDirty()) {
             ContextObject sender = context.getNotNilSender();
+            ContextObject target = nlr.getTargetContext().getNotNilSender();
             terminateNode.executeTerminate(frame);
-            throw new NonVirtualReturn(nlr.getReturnValue(), nlr.getTargetContext().getNotNilSender(), sender);
+            throw new NonVirtualReturn(nlr.getReturnValue(), target, sender);
         } else {
             terminateNode.executeTerminate(frame);
             if (nlr.getTargetContext().getFrameMarker() == context.getFrameMarker()) {

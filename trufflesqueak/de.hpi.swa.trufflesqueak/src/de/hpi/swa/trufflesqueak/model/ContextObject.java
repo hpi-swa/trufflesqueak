@@ -52,8 +52,8 @@ public class ContextObject extends AbstractPointersObject {
     }
 
     public void terminate() {
-// atput0(CONTEXT.INSTRUCTION_POINTER, image.nil);
-// setSender(image.nil); // remove sender
+        atput0(CONTEXT.INSTRUCTION_POINTER, image.nil);
+        setSender(image.nil); // remove sender without flagging dirty
     }
 
     @Override
@@ -174,7 +174,11 @@ public class ContextObject extends AbstractPointersObject {
 
     @Override
     public String toString() {
-        return "Context for " + getMethod();
+        if (at0(CONTEXT.METHOD) == image.nil) {
+            return "New context";
+        } else {
+            return "Context for " + getMethod();
+        }
     }
 
     public Object top() {

@@ -6,10 +6,12 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotWriteNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 @ImportStatic(FrameAccess.class)
 public abstract class TerminateContextNode extends AbstractNodeWithCode {
+    @Child private FrameSlotWriteNode instructionPointerWriteNode;
 
     public static TerminateContextNode create(CompiledCodeObject code) {
         return TerminateContextNodeGen.create(code);
@@ -17,6 +19,7 @@ public abstract class TerminateContextNode extends AbstractNodeWithCode {
 
     protected TerminateContextNode(CompiledCodeObject code) {
         super(code);
+        instructionPointerWriteNode = FrameSlotWriteNode.create(code.instructionPointerSlot);
     }
 
     protected abstract void executeTerminate(VirtualFrame frame);
@@ -24,7 +27,8 @@ public abstract class TerminateContextNode extends AbstractNodeWithCode {
     @Specialization(guards = {"isVirtualized(frame)"})
     protected void doTerminateVirtualized(VirtualFrame frame) {
         CompilerDirectives.ensureVirtualizedHere(frame);
-        // do nothing, context did not leak
+        instructionPointerWriteNode.executeWrite(frame, -1); // cannot set nil, -1 instead.
+        // cannot remove sender
     }
 
     @Specialization(guards = {"!isVirtualized(frame)"})

@@ -88,6 +88,9 @@ public class ExecuteTopLevelContextNode extends RootNode {
         if (startContext == image.nil) {
             throw new TopLevelReturn(returnValue);
         }
+        if (!(targetContext instanceof ContextObject)) {
+            throw new SqueakException("targetContext is not a ContextObject: " + targetContext.toString());
+        }
         ContextObject context = (ContextObject) startContext;
         while (context != targetContext) {
             BaseSqueakObject sender = context.getSender();
