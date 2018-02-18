@@ -146,7 +146,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "FileUrlTest", TEST_TYPE.PASSING,
                     "FlapTabTests", TEST_TYPE.INCONSISTENT,
                     "FloatArrayTest", TEST_TYPE.FAILING,
-                    "FloatCollectionTest", TEST_TYPE.FAILING,
+                    "FloatCollectionTest", TEST_TYPE.PASSING,
                     "FloatTest", TEST_TYPE.BROKEN,
                     "FontTest", TEST_TYPE.FAILING,
                     "FormCanvasTest", TEST_TYPE.FAILING,
