@@ -45,13 +45,21 @@ public class WordsObject extends NativeObject {
     }
 
     @Override
-    public long getNativeAt0(long longIndex) {
-        return Integer.toUnsignedLong(ints[(int) longIndex]);
+    public long getNativeAt0(long index) {
+        return Integer.toUnsignedLong(ints[(int) index]);
     }
 
     @Override
     public void setNativeAt0(long longIndex, long value) {
         ints[(int) longIndex] = (int) value;
+    }
+
+    public int getInt(long index) {
+        return ints[(int) index];
+    }
+
+    public void setInt(long index, int value) {
+        ints[(int) index] = value;
     }
 
     @Override

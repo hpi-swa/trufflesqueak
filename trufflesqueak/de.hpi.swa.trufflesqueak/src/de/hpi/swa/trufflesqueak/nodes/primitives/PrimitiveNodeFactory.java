@@ -12,6 +12,7 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ArgumentNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ReceiverAndArgumentsNode;
 import de.hpi.swa.trufflesqueak.nodes.plugins.FilePlugin;
+import de.hpi.swa.trufflesqueak.nodes.plugins.FloatArrayPlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.LargeIntegers;
 import de.hpi.swa.trufflesqueak.nodes.plugins.MiscPrimitivePlugin;
 import de.hpi.swa.trufflesqueak.nodes.plugins.TruffleSqueakPlugin;
@@ -36,6 +37,7 @@ public abstract class PrimitiveNodeFactory {
                     new StoragePrimitives()};
     private static AbstractPrimitiveFactoryHolder[] plugins = new AbstractPrimitiveFactoryHolder[]{
                     new FilePlugin(),
+                    new FloatArrayPlugin(),
                     new LargeIntegers(),
                     new MiscPrimitivePlugin(),
                     new TruffleSqueakPlugin()};
