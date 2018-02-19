@@ -14,7 +14,6 @@ import de.hpi.swa.trufflesqueak.model.WordsObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.AbstractArithmeticPrimitiveNode;
 
 public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
@@ -25,7 +24,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveCompareString", numArguments = 4)
-    public static abstract class PrimCompareStringNode extends AbstractArithmeticPrimitiveNode {
+    public static abstract class PrimCompareStringNode extends AbstractPrimitiveNode {
 
         public PrimCompareStringNode(CompiledMethodObject method) {
             super(method);
@@ -106,7 +105,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveCompressToByteArray", numArguments = 3) // TODO: implement primitive
-    public static abstract class PrimCompressToByteArray extends AbstractArithmeticPrimitiveNode {
+    public static abstract class PrimCompressToByteArray extends AbstractPrimitiveNode {
 
         public PrimCompressToByteArray(CompiledMethodObject method) {
             super(method);
@@ -116,7 +115,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveDecompressFromByteArray", numArguments = 4) // TODO: implement primitive
-    public static abstract class PrimDecompressFromByteArray extends AbstractArithmeticPrimitiveNode {
+    public static abstract class PrimDecompressFromByteArray extends AbstractPrimitiveNode {
 
         public PrimDecompressFromByteArray(CompiledMethodObject method) {
             super(method);
@@ -126,7 +125,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveFindFirstInString", numArguments = 4) // TODO: implement primitive
-    public static abstract class PrimFindFirstInString extends AbstractArithmeticPrimitiveNode {
+    public static abstract class PrimFindFirstInString extends AbstractPrimitiveNode {
 
         public PrimFindFirstInString(CompiledMethodObject method) {
             super(method);
@@ -136,7 +135,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveFindSubstring", numArguments = 5) // TODO: implement primitive
-    public static abstract class PrimFindSubstring extends AbstractArithmeticPrimitiveNode {
+    public static abstract class PrimFindSubstring extends AbstractPrimitiveNode {
 
         public PrimFindSubstring(CompiledMethodObject method) {
             super(method);
@@ -146,7 +145,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveIndexOfAsciiInString", numArguments = 4)
-    public static abstract class PrimIndexOfAsciiInString extends AbstractArithmeticPrimitiveNode {
+    public static abstract class PrimIndexOfAsciiInString extends AbstractPrimitiveNode {
 
         public PrimIndexOfAsciiInString(CompiledMethodObject method) {
             super(method);
@@ -169,7 +168,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveStringHash", numArguments = 3)
-    public static abstract class PrimStringHash extends AbstractArithmeticPrimitiveNode {
+    public static abstract class PrimStringHash extends AbstractPrimitiveNode {
 
         public PrimStringHash(CompiledMethodObject method) {
             super(method);
@@ -190,7 +189,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveTranslateStringWithTable", numArguments = 5)
-    public static abstract class PrimTranslateStringWithTable extends AbstractArithmeticPrimitiveNode {
+    public static abstract class PrimTranslateStringWithTable extends AbstractPrimitiveNode {
 
         public PrimTranslateStringWithTable(CompiledMethodObject method) {
             super(method);
