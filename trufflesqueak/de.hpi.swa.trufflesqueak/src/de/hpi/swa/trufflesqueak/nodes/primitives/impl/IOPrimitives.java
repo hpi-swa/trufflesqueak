@@ -1,5 +1,7 @@
 package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
+import java.awt.AWTError;
+import java.awt.Toolkit;
 import java.util.List;
 
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
