@@ -8,8 +8,8 @@ import javax.swing.event.MouseInputAdapter;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 
 public class SqueakMouse extends MouseInputAdapter {
-    private Point position;
-    private int buttons;
+    private Point position = new Point(0, 0);
+    private int buttons = 0;
 
     private final static int RED = 4;
     private final static int YELLOW = 2;

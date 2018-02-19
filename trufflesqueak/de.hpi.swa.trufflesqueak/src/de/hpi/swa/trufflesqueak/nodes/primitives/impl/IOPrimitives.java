@@ -181,7 +181,12 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
-            return code.image.wrap(code.image.display.keyboardNext());
+            int keyboardNext = code.image.display.keyboardNext();
+            if (keyboardNext == 0) {
+                return code.image.nil;
+            } else {
+                return code.image.wrap(keyboardNext);
+            }
         }
     }
 

@@ -60,7 +60,7 @@ public class SqueakKeyboard implements KeyListener {
     private int modifierKeys = 0;
 
     public int nextKey() {
-        return keycode(keys.removeFirst());
+        return keys.isEmpty() ? 0 : keycode(keys.removeFirst());
     }
 
     public int peekKey() {
