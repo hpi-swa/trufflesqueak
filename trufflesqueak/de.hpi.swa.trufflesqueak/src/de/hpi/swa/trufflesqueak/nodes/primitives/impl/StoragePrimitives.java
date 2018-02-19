@@ -23,8 +23,10 @@ import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.nodes.GetOrCreateContextNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
@@ -140,19 +142,21 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 72, numArguments = 2)
     protected static abstract class PrimForwardIdentity extends AbstractPrimitiveNode {
         @Child private GetActiveProcessNode getActiveProcessNode;
+        @Child private GetOrCreateContextNode getOrCreateContextNode;
 
         protected PrimForwardIdentity(CompiledMethodObject method) {
             // TODO: this primitive does not correctly perform a one way become yet, FIXME!
             super(method);
             getActiveProcessNode = GetActiveProcessNode.create(method);
+            getOrCreateContextNode = GetOrCreateContextNode.create(method);
         }
 
         @Specialization
-        protected BaseSqueakObject arrayBecome(ListObject receiver, ListObject argument) {
+        protected BaseSqueakObject arrayBecome(VirtualFrame frame, ListObject receiver, ListObject argument) {
             if (receiver.size() != argument.size()) {
                 throw new PrimitiveFailed("bad argument");
             }
-            List<BaseSqueakObject> instances = getInstancesArray();
+            List<BaseSqueakObject> instances = getInstancesArray(frame);
             for (Iterator<BaseSqueakObject> iterator = instances.iterator(); iterator.hasNext();) {
                 BaseSqueakObject instance = iterator.next();
                 if (instance != null && instance.getSqClass() != null) {
@@ -174,13 +178,13 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             throw new PrimitiveFailed("bad argument");
         }
 
-        private List<BaseSqueakObject> getInstancesArray() {
+        private List<BaseSqueakObject> getInstancesArray(VirtualFrame frame) {
             PointersObject activeProcess = getActiveProcessNode.executeGet();
-            // TODO: activeProcess.storeSuspendedContext(frame)
+            activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, getOrCreateContextNode.executeGet(frame));
             try {
                 return code.image.objects.allInstances();
             } finally {
-                // TODO: activeProcess.storeSuspendedContext(code.image.nil)
+                activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, code.image.nil);
             }
         }
     }
