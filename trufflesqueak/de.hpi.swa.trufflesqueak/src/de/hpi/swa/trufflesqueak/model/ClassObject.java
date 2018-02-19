@@ -225,8 +225,8 @@ public class ClassObject extends AbstractPointersObject {
                 } else {
                     return new ListObject(image, this, size);
                 }
-            case 4: // TODO: weak pointers
-                return new ListObject(image, this, size);
+            case 4:
+                return new WeakPointersObject(image, this, size);
             case 5: // TODO: weak pointers
                 return new PointersObject(image, this, size);
             case 7: case 8:

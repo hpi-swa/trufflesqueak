@@ -19,6 +19,7 @@ import de.hpi.swa.trufflesqueak.model.LongsObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.ShortsObject;
 import de.hpi.swa.trufflesqueak.model.SqueakObject;
+import de.hpi.swa.trufflesqueak.model.WeakPointersObject;
 import de.hpi.swa.trufflesqueak.model.WordsObject;
 
 public class SqueakImageChunk {
@@ -82,57 +83,46 @@ public class SqueakImageChunk {
 
     public Object asObject() {
         if (object == null) {
-            if (format == 0) {
-                // no fields
+            if (format == 0) { // no fields
                 object = new EmptyObject(image);
-            } else if (format == 1) {
-                // fixed pointers
+            } else if (format == 1) { // fixed pointers
                 // classes should already be instantiated at this point, check a
                 // bit
                 assert this.getSqClass() != image.metaclass && (this.getSqClass() == null || this.getSqClass().getSqClass() != image.metaclass);
                 object = new PointersObject(image);
-            } else if (format == 2) {
-                // indexable fields
+            } else if (format == 2) { // indexable fields
                 object = new ListObject(image);
-            } else if (format == 3) {
+            } else if (format == 3) { // fixed and indexable fields
                 if (this.getSqClass() == image.methodContextClass) {
                     object = ContextObject.create(image);
                 } else if (this.getSqClass() == image.blockClosureClass) {
                     object = new BlockClosureObject(image);
                 } else {
-                    // fixed and indexable fields
                     object = new ListObject(image);
                 }
-            } else if (format == 4) {
-                // indexable weak fields // TODO: Weak
-                object = new ListObject(image);
-            } else if (format == 5) {
-                // fixed weak fields // TODO: Weak
+            } else if (format == 4) { // indexable weak fields
+                object = new WeakPointersObject(image);
+            } else if (format == 5) { // fixed weak fields
                 object = new PointersObject(image);
             } else if (format <= 8) {
                 assert false; // unused
-            } else if (format == 9) {
-                // 64-bit integers
+            } else if (format == 9) { // 64-bit integers
                 object = new LongsObject(image);
-            } else if (format <= 11) {
-                // 32-bit integers
+            } else if (format <= 11) { // 32-bit integers
                 if (this.getSqClass() == image.floatClass) {
                     object = WordsObject.bytesAsFloatObject(getBytes());
                 } else {
                     object = new WordsObject(image);
                 }
-            } else if (format <= 15) {
-                // 16-bit integers
+            } else if (format <= 15) { // 16-bit integers
                 object = new ShortsObject(image);
-            } else if (format <= 23) {
-                // bytes
+            } else if (format <= 23) { // bytes
                 if (this.getSqClass() == image.largePositiveIntegerClass || this.getSqClass() == image.largeNegativeIntegerClass) {
                     object = new LargeIntegerObject(image);
                 } else {
                     object = new BytesObject(image);
                 }
-            } else if (format <= 31) {
-                // compiled methods
+            } else if (format <= 31) { // compiled methods
                 object = new CompiledMethodObject(image);
             }
         }
