@@ -49,7 +49,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected double doAt(WordsObject receiver, long index) {
-            return Float.intBitsToFloat(receiver.getInt(index - 1));
+            return Float.intBitsToFloat(receiver.getInt(((int) index) - 1));
         }
     }
 
@@ -63,7 +63,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected double doAtPut(WordsObject receiver, long index, double value) {
-            receiver.setInt(index - 1, Float.floatToIntBits((float) value));
+            receiver.setInt(((int) index) - 1, Float.floatToIntBits((float) value));
             return value;
         }
     }

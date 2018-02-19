@@ -54,12 +54,12 @@ public class WordsObject extends NativeObject {
         ints[(int) longIndex] = (int) value;
     }
 
-    public int getInt(long index) {
-        return ints[(int) index];
+    public int getInt(int index) {
+        return ints[index];
     }
 
-    public void setInt(long index, int value) {
-        ints[(int) index] = value;
+    public void setInt(int index, int value) {
+        ints[index] = value;
     }
 
     @Override

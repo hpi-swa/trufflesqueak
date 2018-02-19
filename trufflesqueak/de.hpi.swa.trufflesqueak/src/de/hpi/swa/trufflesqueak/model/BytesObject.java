@@ -76,6 +76,10 @@ public class BytesObject extends NativeObject {
         return bytes;
     }
 
+    public void setByte(int index, byte value) {
+        bytes[index] = value;
+    }
+
     @Override
     public byte getElementSize() {
         return 1;

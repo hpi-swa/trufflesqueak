@@ -10,6 +10,7 @@ import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.BytesObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.WordsObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
@@ -188,12 +189,41 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveTranslateStringWithTable", numArguments = 5) // TODO: implement primitive
+    @SqueakPrimitive(name = "primitiveTranslateStringWithTable", numArguments = 5)
     public static abstract class PrimTranslateStringWithTable extends AbstractArithmeticPrimitiveNode {
 
         public PrimTranslateStringWithTable(CompiledMethodObject method) {
             super(method);
         }
 
+        @Specialization
+        protected BytesObject doBytesObject(@SuppressWarnings("unused") ClassObject receiver, BytesObject string, long start, long stop, BytesObject table) {
+            byte[] stringBytes = string.getBytes();
+            byte[] tableBytes = table.getBytes();
+            for (int i = (int) start - 1; i < stop; i++) {
+                string.setByte(i, tableBytes[stringBytes[i]]);
+            }
+            return string;
+        }
+
+        @Specialization
+        protected WordsObject doWordsObject(@SuppressWarnings("unused") ClassObject receiver, WordsObject string, long start, long stop, WordsObject table) {
+            int[] stringBytes = string.getWords();
+            int[] tableBytes = table.getWords();
+            for (int i = (int) start - 1; i < stop; i++) {
+                string.setInt(i, tableBytes[stringBytes[i]]);
+            }
+            return string;
+        }
+
+        @Specialization
+        protected BytesObject doWordsObject(@SuppressWarnings("unused") ClassObject receiver, BytesObject string, long start, long stop, WordsObject table) {
+            byte[] stringBytes = string.getBytes();
+            int[] tableBytes = table.getWords();
+            for (int i = (int) start - 1; i < stop; i++) {
+                string.setByte(i, (byte) tableBytes[stringBytes[i]]);
+            }
+            return string;
+        }
     }
 }
