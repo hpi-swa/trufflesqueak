@@ -241,30 +241,32 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Child private WakeHighestPriorityNode wakeHighestPriorityNode;
         @Child private RemoveProcessFromListNode removeProcessNode;
         @Child private GetActiveProcessNode getActiveProcessNode;
+        @Child private PushStackNode pushStackNode;
 
         protected PrimSuspendNode(CompiledMethodObject method) {
             super(method);
             removeProcessNode = RemoveProcessFromListNode.create(method);
             wakeHighestPriorityNode = WakeHighestPriorityNode.create(method);
             getActiveProcessNode = GetActiveProcessNode.create(method);
+            pushStackNode = PushStackNode.create(method);
         }
 
         @Specialization
         protected BaseSqueakObject doSuspend(VirtualFrame frame, PointersObject receiver) {
             PointersObject activeProcess = getActiveProcessNode.executeGet();
-            if (receiver.equals(activeProcess)) {
-                // popNandPush(1, code.image.nil);
+            if (receiver == activeProcess) {
+                pushStackNode.executeWrite(frame, code.image.nil);
                 wakeHighestPriorityNode.executeWake(frame);
             } else {
                 BaseSqueakObject oldList = (BaseSqueakObject) receiver.at0(PROCESS.LIST);
                 if (oldList == code.image.nil) {
-                    throw new PrimitiveFailed();
+                    throw new PrimitiveFailed("PrimErrBadReceiver");
                 }
                 removeProcessNode.executeRemove(receiver, oldList);
                 receiver.atput0(PROCESS.LIST, code.image.nil);
-                return oldList;
+                pushStackNode.executeWrite(frame, oldList);
             }
-            throw new SqueakException("Failed to suspend process: " + receiver.toString());
+            throw new PrimitiveWithoutResultException(); // result already pushed above
         }
     }
 
