@@ -144,6 +144,12 @@ public final class ObjectLayouts {
         public static final int ClassWeakFinalizer = 55;
     }
 
+    public static final class TEST_RESULT {
+        public static final int FAILURES = 1;
+        public static final int ERRORS = 2;
+        public static final int PASSES = 3;
+    }
+
     public static final class WEAK_FINALIZATION_LIST {
         public static final int FIRST = 0;
     }
