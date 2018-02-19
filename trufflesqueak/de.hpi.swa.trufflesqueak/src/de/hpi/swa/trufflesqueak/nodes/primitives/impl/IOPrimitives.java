@@ -237,4 +237,23 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return receiver;
         }
     }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 140)
+    protected static abstract class PrimBeepNode extends AbstractPrimitiveNode {
+
+        protected PrimBeepNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected BaseSqueakObject doBeep(BaseSqueakObject receiver) {
+            try {
+                Toolkit.getDefaultToolkit().beep();
+            } catch (AWTError e) {
+                code.image.getError().println("BEEP (unable to find default AWT Toolkit).");
+            }
+            return receiver;
+        }
+    }
 }
