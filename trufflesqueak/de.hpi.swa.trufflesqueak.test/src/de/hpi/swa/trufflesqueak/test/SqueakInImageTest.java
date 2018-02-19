@@ -500,7 +500,9 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
             try {
                 resultString = evaluate(testClass + " buildSuite run asString").toString();
             } catch (Exception e) {
-                passing.add(testClass + " is broken: " + e.toString());
+                String text = testClass + " is broken: " + e.toString();
+                image.getOutput().println(text);
+                passing.add(text);
                 continue;
             }
             image.getOutput().println(resultString);
