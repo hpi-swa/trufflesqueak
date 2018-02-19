@@ -94,9 +94,9 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
             while (pc >= 0) {
                 CompilerAsserts.partialEvaluationConstant(pc);
                 if (context != null) {
-                    context.setInstructionPointer(pc);
+                    context.setInstructionPointer(node.getSuccessorIndex());
                 } else {
-                    instructionPointerWriteNode.executeWrite(frame, (long) pc);
+                    instructionPointerWriteNode.executeWrite(frame, (long) node.getSuccessorIndex());
                 }
                 if (node instanceof ConditionalJumpNode) {
                     ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
