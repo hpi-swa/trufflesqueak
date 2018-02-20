@@ -37,7 +37,8 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
         private static final String BROKEN = "Broken"; // throws a Java exceptions
         private static final String INCONSISTENT = "Inconsistent"; // runs sometimes (only non/virtualized, because of side effects, ...)
         private static final String NOT_TERMINATING = "Not Terminating"; // does not terminate
-        private static final String BROKEN_IN_SQUEAK = "Broken in Squeak"; // Not working in Squeak
+        private static final String BROKEN_IN_SQUEAK = "Broken in Squeak"; // not working in Squeak
+        private static final String REQUIRES_STARTUP = "Requires Startup"; // requires the image to be entirely started (e.g. load changes, initialize display, ...)
         private static final String IGNORE = "Ignored"; // unable to run (e.g. OOM, ...)
     }
 
@@ -75,8 +76,8 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "ByteEncoderTest", TEST_TYPE.PASSING,
                     "CategorizerTest", TEST_TYPE.FAILING,
                     "ChainedSortFunctionTest", TEST_TYPE.PASSING,
-                    "ChangeHooksTest", TEST_TYPE.FAILING,
-                    "ChangeSetClassChangesTest", TEST_TYPE.FAILING,
+                    "ChangeHooksTest", TEST_TYPE.REQUIRES_STARTUP,
+                    "ChangeSetClassChangesTest", TEST_TYPE.REQUIRES_STARTUP,
                     "CharacterScannerTest", TEST_TYPE.PASSING,
                     "CharacterSetComplementTest", TEST_TYPE.PASSING,
                     "CharacterSetTest", TEST_TYPE.PASSING,
@@ -89,7 +90,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "ClassDescriptionTest", TEST_TYPE.FAILING,
                     "ClassFactoryForTestCaseTest", TEST_TYPE.INCONSISTENT,
                     "ClassRemovalTest", TEST_TYPE.FAILING,
-                    "ClassRenameFixTest", TEST_TYPE.FAILING,
+                    "ClassRenameFixTest", TEST_TYPE.REQUIRES_STARTUP,
                     "ClassTest", TEST_TYPE.FAILING,
                     "ClassTestCase", TEST_TYPE.NOT_TERMINATING,
                     "ClassTraitTest", TEST_TYPE.NOT_TERMINATING,
@@ -261,7 +262,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "PNGReadWriterTest", TEST_TYPE.FAILING,
                     "PointTest", TEST_TYPE.FAILING,
                     "PolygonMorphTest", TEST_TYPE.PASSING,
-                    "PreferencesTest", TEST_TYPE.FAILING,
+                    "PreferencesTest", TEST_TYPE.REQUIRES_STARTUP,
                     "PrimCallControllerAbstractTest", TEST_TYPE.NOT_TERMINATING,
                     "ProcessSpecificTest", TEST_TYPE.NOT_TERMINATING,
                     "ProcessTerminateBug", TEST_TYPE.BROKEN,
@@ -381,13 +382,13 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "UTF16TextConverterTest", TEST_TYPE.BROKEN,
                     "UTF32TextConverterTest", TEST_TYPE.FAILING,
                     "UTF8TextConverterTest", TEST_TYPE.PASSING,
-                    "UTFTextConverterWithByteOrderTest", TEST_TYPE.FAILING,
+                    "UTFTextConverterWithByteOrderTest", TEST_TYPE.BROKEN,
                     "UUIDPrimitivesTest", TEST_TYPE.PASSING,
                     "UUIDTest", TEST_TYPE.PASSING,
                     "VersionNumberTest", TEST_TYPE.PASSING,
                     "WeakFinalizersTest", TEST_TYPE.PASSING,
                     "WeakIdentityKeyDictionaryTest", TEST_TYPE.PASSING,
-                    "WeakMessageSendTest", TEST_TYPE.FAILING,
+                    "WeakMessageSendTest", TEST_TYPE.BROKEN,
                     "WeakRegistryTest", TEST_TYPE.NOT_TERMINATING,
                     "WeakSetInspectorTest", TEST_TYPE.PASSING,
                     "WeakSetTest", TEST_TYPE.FAILING,
