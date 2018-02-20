@@ -280,6 +280,21 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(index = 126, numArguments = 2)
+    protected static abstract class PrimDeferDisplayUpdatesNode extends AbstractPrimitiveNode {
+
+        public PrimDeferDisplayUpdatesNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected BaseSqueakObject doDefer(BaseSqueakObject receiver, boolean flag) {
+            code.image.display.setDeferUpdates(flag);
+            return receiver;
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(index = 127, numArguments = 5)
     protected static abstract class PrimDrawRectNode extends AbstractPrimitiveNode {
 

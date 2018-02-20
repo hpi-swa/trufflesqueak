@@ -93,6 +93,8 @@ public final class SqueakDisplay {
         public abstract void setCursor(int[] cursorWords);
 
         public abstract long[] getNextEvent();
+
+        public abstract void setDeferUpdates(boolean flag);
     }
 
     public static class JavaDisplay extends AbstractSqueakDisplay {
@@ -108,6 +110,8 @@ public final class SqueakDisplay {
         @CompilationFinal(dimensions = 1) private final static byte blackAndWhite[] = new byte[]{(byte) 0, (byte) 255};
         @CompilationFinal(dimensions = 1) private final static byte alphaComponent[] = new byte[]{(byte) 255};
         @CompilationFinal private final static ColorModel cursorModel = new IndexColorModel(1, 1, blackAndWhite, blackAndWhite, blackAndWhite, alphaComponent);
+
+        private boolean deferUpdates = false;
 
         public JavaDisplay(SqueakImageContext image) {
             this.image = image;
@@ -327,6 +331,11 @@ public final class SqueakDisplay {
         public long getEventTime() {
             return System.currentTimeMillis() - image.startUpMillis;
         }
+
+        @Override
+        public void setDeferUpdates(boolean flag) {
+            deferUpdates = flag;
+        }
     }
 
     private static class NullDisplay extends AbstractSqueakDisplay {
@@ -391,6 +400,10 @@ public final class SqueakDisplay {
         @Override
         public long[] getNextEvent() {
             return NULL_EVENT;
+        }
+
+        @Override
+        public void setDeferUpdates(boolean flag) {
         }
     }
 
