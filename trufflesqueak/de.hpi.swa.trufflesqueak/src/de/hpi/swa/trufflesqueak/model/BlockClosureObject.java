@@ -238,6 +238,7 @@ public class BlockClosureObject extends BaseSqueakObject {
         BlockClosureObject closure = context.getClosure();
         // recursively unpack closures until home context is reached
         if (closure != null) {
+            CompilerDirectives.transferToInterpreter();
             return closure.getHomeContext();
         }
         return context;
