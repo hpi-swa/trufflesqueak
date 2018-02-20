@@ -145,7 +145,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Child private GetOrCreateContextNode getOrCreateContextNode;
 
         protected PrimForwardIdentity(CompiledMethodObject method) {
-            // TODO: this primitive does not correctly perform a one way become yet, FIXME!
+            // FIXME: this primitive does not correctly perform a one way become yet
             super(method);
             getActiveProcessNode = GetActiveProcessNode.create(method);
             getOrCreateContextNode = GetOrCreateContextNode.create(method);

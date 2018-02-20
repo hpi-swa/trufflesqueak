@@ -46,13 +46,12 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
 
     @Override
     protected Object findExportedSymbol(SqueakImageContext context, String globalName, boolean onlyExplicit) {
-        // TODO Auto-generated method stub
-        return null;
+        return null; // TODO: not sure what to return here
     }
 
     @Override
     protected Object findMetaObject(SqueakImageContext context, Object value) {
-        // TODO FIXME
+        // TODO: return ContextObject instead?
         if (value instanceof FrameMarker) {
             return context.nilClass;
         }

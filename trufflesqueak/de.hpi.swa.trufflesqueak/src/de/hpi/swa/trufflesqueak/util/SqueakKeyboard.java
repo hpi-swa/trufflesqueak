@@ -22,7 +22,7 @@ public class SqueakKeyboard implements KeyListener {
     private static final char CURSOR_HOME = 1,
                     CURSOR_END = 4,
                     CR_WITH_IDENT = 13,
-                    SELECT_CURRENT_TYPE_IN = 27, // TODO: Interesting, find out what it does
+                    SELECT_CURRENT_TYPE_IN = 27,
                     CURSOR_LEFT = 28,
                     CURSOR_RIGHT = 29,
                     CURSOR_UP = 30,

@@ -27,6 +27,7 @@ public abstract class TerminateContextNode extends AbstractNodeWithCode {
     @Specialization(guards = {"isVirtualized(frame)"})
     protected void doTerminateVirtualized(VirtualFrame frame) {
         CompilerDirectives.ensureVirtualizedHere(frame);
+        // TODO: check the below is actually needed
         instructionPointerWriteNode.executeWrite(frame, -1); // cannot set nil, -1 instead.
         // cannot remove sender
     }

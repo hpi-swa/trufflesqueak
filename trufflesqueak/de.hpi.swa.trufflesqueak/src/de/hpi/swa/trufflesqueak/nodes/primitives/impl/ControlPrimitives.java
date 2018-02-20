@@ -586,7 +586,6 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             try {
                 TimeUnit.MICROSECONDS.sleep(timeMicroseconds);
             } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
             return receiver;
