@@ -7,7 +7,6 @@ import java.util.List;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
@@ -42,8 +41,26 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object mousePoint(@SuppressWarnings("unused") VirtualFrame frame) {
+        protected Object mousePoint() {
             return code.image.wrap(code.image.display.getLastMousePosition());
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 94, numArguments = 2)
+    protected static abstract class PrimGetNextEventNode extends AbstractPrimitiveNode {
+
+        protected PrimGetNextEventNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected Object doGetNext(PointersObject eventSensor, ListObject targetArray) {
+            long[] nextEvent = code.image.display.getNextEvent();
+            for (int i = 0; i < SqueakDisplay.EVENT_SIZE; i++) {
+                targetArray.atput0(i, nextEvent[i]);
+            }
+            return eventSensor;
         }
     }
 

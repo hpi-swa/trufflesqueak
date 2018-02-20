@@ -19,6 +19,8 @@ import java.awt.image.MultiPixelPackedSampleModel;
 import java.awt.image.Raster;
 import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 import javax.swing.JComponent;
 import javax.swing.JFrame;
@@ -27,6 +29,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
+import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.FORM;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -39,9 +42,24 @@ public final class SqueakDisplay {
     @CompilationFinal public static final int CURSOR_WIDTH = 16;
     @CompilationFinal public static final int CURSOR_HEIGHT = 16;
 
-    public static AbstractSqueakDisplay create(boolean noDisplay) {
+    public static final class EVENT_TYPE {
+        public static final long NONE = 0;
+        public static final long MOUSE = 1;
+        public static final long KEYBOARD = 2;
+        public static final long DRAG_DROP_FILES = 3;
+        public static final long MENU = 4;
+        public static final long WINDOW = 5;
+        public static final long COMPLEX = 6;
+        public static final long MOUSE_WHEEL = 7;
+    }
+
+    public static final int EVENT_SIZE = 8;
+
+    private static final long[] NULL_EVENT = new long[]{EVENT_TYPE.NONE, 0, 0, 0, 0, 0, 0, 0};
+
+    public static AbstractSqueakDisplay create(SqueakImageContext image, boolean noDisplay) {
         if (!GraphicsEnvironment.isHeadless() && !noDisplay) {
-            return new JavaDisplay();
+            return new JavaDisplay(image);
         } else {
             return new NullDisplay();
         }
@@ -73,21 +91,29 @@ public final class SqueakDisplay {
         public abstract boolean isHeadless();
 
         public abstract void setCursor(int[] cursorWords);
+
+        public abstract long[] getNextEvent();
     }
 
-    private static class JavaDisplay extends AbstractSqueakDisplay {
+    public static class JavaDisplay extends AbstractSqueakDisplay {
+        @CompilationFinal private final SqueakImageContext image;
         @CompilationFinal private final JFrame frame = new JFrame("TruffleSqueak");
         @CompilationFinal private final Canvas canvas = new Canvas();
 
-        @CompilationFinal private final SqueakMouse mouse = new SqueakMouse();
-        @CompilationFinal private final SqueakKeyboard keyboard = new SqueakKeyboard();
+        @CompilationFinal public final SqueakMouse mouse;
+        @CompilationFinal public final SqueakKeyboard keyboard;
+        @CompilationFinal private final Deque<long[]> deferredEvents = new ArrayDeque<>();
 
         @CompilationFinal private final static Toolkit toolkit = Toolkit.getDefaultToolkit();
         @CompilationFinal(dimensions = 1) private final static byte blackAndWhite[] = new byte[]{(byte) 0, (byte) 255};
         @CompilationFinal(dimensions = 1) private final static byte alphaComponent[] = new byte[]{(byte) 255};
         @CompilationFinal private final static ColorModel cursorModel = new IndexColorModel(1, 1, blackAndWhite, blackAndWhite, blackAndWhite, alphaComponent);
 
-        public JavaDisplay() {
+        public JavaDisplay(SqueakImageContext image) {
+            this.image = image;
+            mouse = new SqueakMouse(this);
+            keyboard = new SqueakKeyboard(this);
+
             canvas.addMouseListener(mouse);
             canvas.addMouseMotionListener(mouse);
             canvas.addKeyListener(keyboard);
@@ -285,6 +311,22 @@ public final class SqueakDisplay {
             }
             canvas.setCursor(cursor);
         }
+
+        @Override
+        public long[] getNextEvent() {
+            if (!deferredEvents.isEmpty()) {
+                return deferredEvents.removeFirst();
+            }
+            return NULL_EVENT;
+        }
+
+        public void addEvent(long[] event) {
+            deferredEvents.add(event);
+        }
+
+        public long getEventTime() {
+            return System.currentTimeMillis() - image.startUpMillis;
+        }
     }
 
     private static class NullDisplay extends AbstractSqueakDisplay {
@@ -344,6 +386,11 @@ public final class SqueakDisplay {
 
         @Override
         public void setCursor(int[] cursorWords) {
+        }
+
+        @Override
+        public long[] getNextEvent() {
+            return NULL_EVENT;
         }
     }
 

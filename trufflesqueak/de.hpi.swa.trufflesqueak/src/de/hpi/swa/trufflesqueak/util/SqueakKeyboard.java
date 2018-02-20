@@ -5,8 +5,12 @@ import java.awt.event.KeyListener;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
-public class SqueakKeyboard implements KeyListener {
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
+import de.hpi.swa.trufflesqueak.util.SqueakDisplay.EVENT_TYPE;
+import de.hpi.swa.trufflesqueak.util.SqueakDisplay.JavaDisplay;
+
+public class SqueakKeyboard implements KeyListener {
     /**
      * The size of the character queue.
      */
@@ -15,6 +19,12 @@ public class SqueakKeyboard implements KeyListener {
     private static final int SHIFT_KEY = 8;
     private static final int CONTROL_KEY = 16;
     private static final int COMMAND_KEY = 64;
+
+    private static final class EVENT_KEY {
+        private static final long CHAR = 0;
+        private static final long DOWN = 1;
+        private static final long UP = 2;
+    }
 
     /**
      * See ParagraphEditor class>>initializeCmdKeyShortcuts.
@@ -56,8 +66,13 @@ public class SqueakKeyboard implements KeyListener {
                     KeyEvent.VK_BACK_QUOTE,
     };
 
-    private final Deque<Character> keys = new ArrayDeque<>(TYPEAHEAD_LIMIT);
+    @CompilationFinal private final JavaDisplay display;
+    @CompilationFinal private final Deque<Character> keys = new ArrayDeque<>(TYPEAHEAD_LIMIT);
     private int modifierKeys = 0;
+
+    public SqueakKeyboard(JavaDisplay display) {
+        this.display = display;
+    }
 
     public int nextKey() {
         return keys.isEmpty() ? 0 : keycode(keys.removeFirst());
@@ -71,23 +86,30 @@ public class SqueakKeyboard implements KeyListener {
         return modifierKeys;
     }
 
-    public void keyPressed(KeyEvent e) {
-        modifierKeys = mapModifierKey(e);
-        char keyChar = mapSpecialKey(e);
-        if (keyChar != KeyEvent.CHAR_UNDEFINED) {
-            enqueue(keyChar);
-        }
-    }
-
-    public void keyReleased(KeyEvent e) {
-        modifierKeys = mapModifierKey(e);
-    }
-
     public void keyTyped(KeyEvent e) {
         if (e.getKeyChar() == '\n') { // Ignore the return key, mapSpecialKey() took care of it
             return;
         }
         enqueue(e.getKeyChar());
+        addEvent(e, EVENT_KEY.CHAR);
+    }
+
+    public void keyPressed(KeyEvent e) {
+        modifierKeys = mapModifierKey(e);
+        char keyChar = mapSpecialKey(e);
+        if (keyChar != KeyEvent.CHAR_UNDEFINED) {
+            enqueue(keyChar);
+            addEvent(e, EVENT_KEY.DOWN);
+        }
+    }
+
+    public void keyReleased(KeyEvent e) {
+        modifierKeys = mapModifierKey(e);
+        addEvent(e, EVENT_KEY.UP);
+    }
+
+    private void addEvent(KeyEvent e, long keyEventType) {
+        display.addEvent(new long[]{EVENT_TYPE.KEYBOARD, display.getEventTime(), keycode(e.getKeyChar()), keyEventType, modifierKeys, e.getKeyChar(), 0, 0});
     }
 
     private void enqueue(char keyChar) {

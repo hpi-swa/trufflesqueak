@@ -137,10 +137,10 @@ public class SqueakImageContext {
         if (env != null) {
             String[] applicationArguments = env.getApplicationArguments();
             config = new SqueakConfig(applicationArguments);
-            display = SqueakDisplay.create(config.isCustomContext());
+            display = SqueakDisplay.create(this, config.isCustomContext());
         } else { // testing
             config = new SqueakConfig(new String[0]);
-            display = SqueakDisplay.create(true);
+            display = SqueakDisplay.create(this, true);
         }
         interrupt = InterruptHandlerNode.create(this, config);
     }
@@ -237,8 +237,8 @@ public class SqueakImageContext {
         return new LargeIntegerObject(this, i);
     }
 
-    public NativeObject wrap(String s) {
-        return new BytesObject(this, this.stringClass, s.getBytes());
+    public BytesObject wrap(String s) {
+        return new BytesObject(this, stringClass, s.getBytes());
     }
 
     public char wrap(char character) {
