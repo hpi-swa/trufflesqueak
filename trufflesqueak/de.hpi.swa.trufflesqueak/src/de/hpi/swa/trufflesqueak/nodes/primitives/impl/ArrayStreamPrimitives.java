@@ -179,6 +179,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected char doNativeObject(NativeObject obj, long idx, long value) {
+            assert value >= 0;
             obj.setNativeAt0(idx - 1, value);
             return (char) ((Long) value).intValue();
         }

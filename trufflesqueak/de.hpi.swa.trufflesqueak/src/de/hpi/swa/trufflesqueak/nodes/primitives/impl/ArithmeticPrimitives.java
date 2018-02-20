@@ -435,7 +435,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {13, 33}, numArguments = 2)
+    @SqueakPrimitive(indices = {13, 33}, numArguments = 2) // used by SmallInteger and LargePositiveInteger
     protected static abstract class PrimQuoNode extends AbstractArithmeticPrimitiveNode {
         protected PrimQuoNode(CompiledMethodObject method) {
             super(method);
@@ -511,13 +511,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final static long doLong(final long receiver) {
-            return (long) Math.floor(receiver);
-        }
-
-        @Specialization
         protected final static long doDouble(final double receiver) {
-            return (long) Math.floor(receiver);
+            return Double.valueOf(receiver).longValue();
         }
     }
 
