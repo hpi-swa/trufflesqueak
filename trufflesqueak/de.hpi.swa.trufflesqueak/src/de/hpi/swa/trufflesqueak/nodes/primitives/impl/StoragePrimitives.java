@@ -320,6 +320,9 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected long atput(NativeObject receiver, long idx, long value) {
+            if (value < 0) {
+                throw new PrimitiveFailed();
+            }
             receiver.setNativeAt0(idx - 1, value);
             return value;
         }
