@@ -27,12 +27,13 @@ public class TransferToNode extends AbstractNodeWithCode {
     }
 
     public void executeTransferTo(VirtualFrame frame, BaseSqueakObject activeProcess, BaseSqueakObject newProcess) {
-        ContextObject activeContext = getOrCreateContextNode.executeGet(frame);
-        assert activeContext != null;
+        BaseSqueakObject oldContext = getOrCreateContextNode.executeGet(frame).getSender();
+        assert oldContext != null;
         // Record a process to be awakened on the next interpreter cycle.
         PointersObject scheduler = getSchedulerNode.executeGet();
+        assert newProcess != scheduler.at0(PROCESS_SCHEDULER.ACTIVE_PROCESS); // trying to switch to already active process
         scheduler.atput0(PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
-        activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, activeContext);
+        activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, oldContext);
         ContextObject newActiveContext = (ContextObject) newProcess.at0(PROCESS.SUSPENDED_CONTEXT);
         newProcess.atput0(PROCESS.SUSPENDED_CONTEXT, code.image.nil);
         throw new ProcessSwitch(newActiveContext);
