@@ -24,6 +24,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
+import de.hpi.swa.trufflesqueak.model.BytesObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
@@ -461,7 +462,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         @CompilationFinal private static final String SIMULATE_PRIMITIVE_SELECTOR = "simulatePrimitive:args:";
         @CompilationFinal private static CompiledMethodObject simulationMethod;
         @CompilationFinal private final String moduleName;
-        @CompilationFinal private final String functionName;
+        @CompilationFinal private final BytesObject functionName;
         @CompilationFinal private final boolean bitBltSimulationNotFound = code.image.simulatePrimitiveArgs == code.image.nil;
         @Child private LookupNode lookupNode = LookupNode.create();
         @Child private DispatchNode dispatchNode = DispatchNode.create();
@@ -474,7 +475,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         protected PrimBitBltSimulateNode(CompiledMethodObject method, String moduleName, String functionName) {
             super(method);
             this.moduleName = moduleName;
-            this.functionName = functionName;
+            this.functionName = code.image.wrap(functionName);
             lookupClassNode = SqueakLookupClassNode.create(code);
         }
 
@@ -485,27 +486,29 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object doSimulation(VirtualFrame frame, Object[] rcvrAndArguments) {
-            if (simulationMethod == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                simulationMethod = getSimulateMethod(rcvrAndArguments[0]);
-            }
-            Object[] newRcvrAndArgs = new Object[]{rcvrAndArguments[0], code.image.wrap(functionName), code.image.newList(rcvrAndArguments)};
-            return dispatchNode.executeDispatch(frame, simulationMethod, newRcvrAndArgs, getContextOrMarker(frame));
+            Object receiver = rcvrAndArguments[0];
+            Object[] newRcvrAndArgs = new Object[]{receiver, functionName, code.image.newList(rcvrAndArguments)};
+            return dispatchNode.executeDispatch(frame, getSimulateMethod(receiver), newRcvrAndArgs, getContextOrMarker(frame));
         }
 
         private CompiledMethodObject getSimulateMethod(Object receiver) { // TODO: cache method for a given module name
-            if (bitBltSimulationNotFound) {
+            if (simulationMethod == null) {
+                if (bitBltSimulationNotFound) {
+                    throw new PrimitiveFailed();
+                }
+                ClassObject rcvrClass = lookupClassNode.executeLookup(receiver);
+                Object lookupResult = lookupNode.executeLookup(rcvrClass, code.image.simulatePrimitiveArgs);
+                if (lookupResult instanceof CompiledMethodObject) {
+                    CompiledMethodObject result = (CompiledMethodObject) lookupResult;
+                    if (!result.isDoesNotUnderstand()) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        simulationMethod = result;
+                        return result;
+                    }
+                }
                 throw new PrimitiveFailed();
             }
-            ClassObject rcvrClass = lookupClassNode.executeLookup(receiver);
-            Object lookupResult = lookupNode.executeLookup(rcvrClass, code.image.simulatePrimitiveArgs);
-            if (lookupResult instanceof CompiledMethodObject) {
-                CompiledMethodObject result = (CompiledMethodObject) lookupResult;
-                if (!result.isDoesNotUnderstand()) {
-                    return result;
-                }
-            }
-            throw new PrimitiveFailed();
+            return simulationMethod;
         }
     }
 }
