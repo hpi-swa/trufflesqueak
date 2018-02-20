@@ -10,17 +10,21 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.FORM;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
+import de.hpi.swa.trufflesqueak.model.WordsObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitives.PrimBitBltSimulateNode;
+import de.hpi.swa.trufflesqueak.util.SqueakDisplay;
 
 public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -62,9 +66,58 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object beCursor(Object[] rcvrAndArgs) {
-            // TODO: display the cursor, mask is optional argument
+            Object cursorObject = rcvrAndArgs[0];
+            if (!(cursorObject instanceof PointersObject)) {
+                throw new SqueakException("Unexpected cursorObject: " + cursorObject.toString());
+            }
+            PointersObject cursor = (PointersObject) cursorObject;
+            int[] words = ((WordsObject) cursor.at0(FORM.BITS)).getWords();
+            long width = (long) cursor.at0(FORM.WIDTH);
+            long height = (long) cursor.at0(FORM.HEIGHT);
+            if (width != SqueakDisplay.CURSOR_WIDTH || height != SqueakDisplay.CURSOR_HEIGHT) {
+                throw new SqueakException("Unexpected cursor width: " + width + " or height: " + height);
+            }
+            long depth = (long) cursor.at0(FORM.DEPTH);
+            if (depth != 1) {
+                throw new SqueakException("Unexpected cursor depth: " + depth);
+            }
+            if (rcvrAndArgs.length == 2) {
+                Object maskObject = rcvrAndArgs[1];
+                if (!(maskObject instanceof PointersObject)) {
+                    throw new SqueakException("Unexpected maskObject: " + maskObject.toString());
+                }
+                int[] mask = ((WordsObject) ((PointersObject) maskObject).at0(FORM.BITS)).getWords();
+                words = mergeCursorWithMask(words, mask);
+            }
+            code.image.display.setCursor(words);
             return rcvrAndArgs[0];
         }
+
+        private static int[] mergeCursorWithMask(int[] cursorWords, int[] maskWords) {
+            int[] words = new int[16];
+            for (int i = 0; i < words.length; i++) {
+                words[i] = cursorWords[i] ^= ~maskWords[i];
+            }
+            return words;
+        }
+
+        // TODO: properly support arbitrary-sized 32 bit ARGB forms
+// private static int[] mergeCursorWithMask(int[] cursorWords, int[] maskWords) {
+// int[] words = new int[16];
+// int cursorWord, maskWord, bit, merged;
+// for (int y = 0; y < SqueakDisplay.CURSOR_HEIGHT; y++) {
+// cursorWord = cursorWords[y];
+// maskWord = maskWords[y];
+// bit = 0x80000000;
+// merged = 0;
+// for (int x = 0; x < SqueakDisplay.CURSOR_WIDTH; x++) {
+// merged = merged | ((maskWord & bit) >> x) | ((cursorWord & bit) >> (x + 1));
+// bit = bit >>> 1;
+// }
+// words[y] = merged;
+// }
+// return words;
+// }
     }
 
     @GenerateNodeFactory

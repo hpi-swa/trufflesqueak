@@ -1,14 +1,23 @@
 package de.hpi.swa.trufflesqueak.util;
 
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.GraphicsEnvironment;
+import java.awt.Image;
 import java.awt.Point;
+import java.awt.Toolkit;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
+import java.awt.image.DataBuffer;
+import java.awt.image.DataBufferInt;
 import java.awt.image.DirectColorModel;
+import java.awt.image.IndexColorModel;
+import java.awt.image.MultiPixelPackedSampleModel;
 import java.awt.image.Raster;
+import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
 
 import javax.swing.JComponent;
@@ -27,6 +36,8 @@ public final class SqueakDisplay {
     @CompilationFinal public static final int DEFAULT_WIDTH = 1024;
     @CompilationFinal public static final int DEFAULT_HEIGHT = 768;
     @CompilationFinal public static final Dimension DEFAULT_DIMENSION = new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+    @CompilationFinal public static final int CURSOR_WIDTH = 16;
+    @CompilationFinal public static final int CURSOR_HEIGHT = 16;
 
     public static AbstractSqueakDisplay create(boolean noDisplay) {
         if (!GraphicsEnvironment.isHeadless() && !noDisplay) {
@@ -60,6 +71,8 @@ public final class SqueakDisplay {
         public abstract int keyboardNext();
 
         public abstract boolean isHeadless();
+
+        public abstract void setCursor(int[] cursorWords);
     }
 
     private static class JavaDisplay extends AbstractSqueakDisplay {
@@ -68,6 +81,11 @@ public final class SqueakDisplay {
 
         @CompilationFinal private final SqueakMouse mouse = new SqueakMouse();
         @CompilationFinal private final SqueakKeyboard keyboard = new SqueakKeyboard();
+
+        @CompilationFinal private final static Toolkit toolkit = Toolkit.getDefaultToolkit();
+        @CompilationFinal(dimensions = 1) private final static byte blackAndWhite[] = new byte[]{(byte) 0, (byte) 255};
+        @CompilationFinal(dimensions = 1) private final static byte alphaComponent[] = new byte[]{(byte) 255};
+        @CompilationFinal private final static ColorModel cursorModel = new IndexColorModel(1, 1, blackAndWhite, blackAndWhite, blackAndWhite, alphaComponent);
 
         public JavaDisplay() {
             canvas.addMouseListener(mouse);
@@ -251,6 +269,22 @@ public final class SqueakDisplay {
         public boolean isHeadless() {
             return false;
         }
+
+        @Override
+        public void setCursor(int[] cursorWords) {
+            Dimension bestCursorSize = toolkit.getBestCursorSize(CURSOR_WIDTH, CURSOR_HEIGHT);
+            Cursor cursor;
+            if (bestCursorSize.width == 0 || bestCursorSize.height == 0) {
+                cursor = Cursor.getDefaultCursor();
+            } else {
+                DataBuffer buf = new DataBufferInt(cursorWords, (CURSOR_WIDTH * CURSOR_HEIGHT / 8) * 1);
+                SampleModel sm = new MultiPixelPackedSampleModel(DataBuffer.TYPE_INT, CURSOR_WIDTH, CURSOR_HEIGHT, 1);
+                WritableRaster raster = Raster.createWritableRaster(sm, buf, new Point(0, 0));
+                Image cursorImage = new BufferedImage(cursorModel, raster, true, null);
+                cursor = toolkit.createCustomCursor(cursorImage, new Point(0, 0), "TruffleSqueak Cursor");
+            }
+            canvas.setCursor(cursor);
+        }
     }
 
     private static class NullDisplay extends AbstractSqueakDisplay {
@@ -306,6 +340,10 @@ public final class SqueakDisplay {
         @Override
         public boolean isHeadless() {
             return true;
+        }
+
+        @Override
+        public void setCursor(int[] cursorWords) {
         }
     }
 
