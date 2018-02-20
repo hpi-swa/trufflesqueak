@@ -74,6 +74,9 @@ public class ExecuteTopLevelContextNode extends RootNode {
                 Object result = executeContextNode.executeNonVirtualized(frame, activeContext);
                 activeContext = unwindContextChain(sender, sender, result);
             } catch (ProcessSwitch ps) {
+                if (image.config.isTracing()) {
+                    image.getOutput().println("Switching from " + activeContext + " to " + ps.getNewContext());
+                }
                 activeContext = ps.getNewContext();
             } catch (NonLocalReturn nlr) {
                 BaseSqueakObject target = nlr.hasArrivedAtTargetContext() ? sender : nlr.getTargetContext();
