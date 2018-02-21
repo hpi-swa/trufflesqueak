@@ -13,6 +13,7 @@ import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.EmptyObject;
+import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.LongsObject;
@@ -110,7 +111,7 @@ public class SqueakImageChunk {
                 object = new LongsObject(image);
             } else if (format <= 11) { // 32-bit integers
                 if (this.getSqClass() == image.floatClass) {
-                    object = WordsObject.bytesAsFloatObject(getBytes());
+                    object = FloatObject.bytesAsFloatObject(getBytes());
                 } else {
                     object = new WordsObject(image);
                 }

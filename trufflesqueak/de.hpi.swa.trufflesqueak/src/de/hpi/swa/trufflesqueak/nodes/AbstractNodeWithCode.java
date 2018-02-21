@@ -1,6 +1,7 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 
@@ -9,6 +10,7 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
+@TypeSystemReference(SqueakTypes.class)
 public abstract class AbstractNodeWithCode extends Node {
     @CompilationFinal protected final CompiledCodeObject code;
     @Child protected FrameSlotReadNode contextOrMarkerReadNode;

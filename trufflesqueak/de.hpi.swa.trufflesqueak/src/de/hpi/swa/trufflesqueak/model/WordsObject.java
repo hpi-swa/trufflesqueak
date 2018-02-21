@@ -1,7 +1,6 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.util.Arrays;
 
@@ -97,23 +96,5 @@ public class WordsObject extends NativeObject {
     @Override
     public byte getElementSize() {
         return 4;
-    }
-
-    public static double bytesAsFloatObject(byte[] someBytes) {
-        ByteBuffer buf = ByteBuffer.allocate(8); // 2 * 32 bit
-        buf.order(ByteOrder.nativeOrder());
-        buf.put(someBytes);
-        buf.rewind();
-        long low = Integer.toUnsignedLong(buf.asIntBuffer().get(0));
-        long high = Integer.toUnsignedLong(buf.asIntBuffer().get(1));
-        return Double.longBitsToDouble(high << 32 | low);
-    }
-
-    public static double newFloatObject(int size) {
-        byte[] someBytes = new byte[size];
-        for (int i = 0; i < someBytes.length; i++) {
-            someBytes[i] = 127; // max byte value to ensure double has enough slots
-        }
-        return bytesAsFloatObject(someBytes);
     }
 }

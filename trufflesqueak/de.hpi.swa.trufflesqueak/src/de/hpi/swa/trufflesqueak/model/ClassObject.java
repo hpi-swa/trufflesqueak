@@ -235,7 +235,8 @@ public class ClassObject extends AbstractPointersObject {
                 return new LongsObject(image, this, size);
             case 10: case 11:
                 if (this == image.floatClass) {
-                    return WordsObject.newFloatObject(size);
+                    assert size == 2;
+                    return new FloatObject(image);
                 } else {
                     return new WordsObject(image, this, size);
                 }
