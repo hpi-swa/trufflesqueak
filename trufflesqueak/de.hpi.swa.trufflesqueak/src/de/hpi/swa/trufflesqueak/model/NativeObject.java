@@ -24,7 +24,11 @@ public abstract class NativeObject extends SqueakObject {
 
     @Override
     public void atput0(long index, Object object) {
-        setNativeAt0(index, (long) object);
+        if (object instanceof LargeIntegerObject) {
+            setNativeAt0(index, ((LargeIntegerObject) object).reduceToLong());
+        } else {
+            setNativeAt0(index, (long) object);
+        }
     }
 
     public abstract long getNativeAt0(long longIndex);

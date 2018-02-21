@@ -69,7 +69,7 @@ public class LargeIntegerObject extends SqueakObject {
 
     private void setBytesNative(byte[] bigEndianBytes) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        integer = new BigInteger(bigEndianBytes);
+        integer = new BigInteger(bigEndianBytes).and(BigInteger.valueOf(0xffffffffL));
         if (isNegative()) {
             integer = integer.negate();
         }
@@ -102,9 +102,22 @@ public class LargeIntegerObject extends SqueakObject {
         return byteArray[byteArray.length - (int) index - 1] & 0xFF;
     }
 
-    public static byte[] byteAtPut0(BigInteger receiver, long index, long value) {
+    public static byte[] byteAtPut0(BigInteger receiver, long longIndex, long value) {
         byte[] bytes = receiver.toByteArray();
-        bytes[bytes.length - (int) index - 1] = (byte) value;
+        int index = (int) longIndex;
+        int offset = bytes.length - 1 - index;
+        if (offset < 0) {
+            int newLength = bytes.length - offset;
+            byte[] largerBytes = new byte[newLength];
+            for (int i = 0; i < bytes.length; i++) {
+                largerBytes[i] = bytes[i];
+            }
+            bytes = largerBytes;
+            assert bytes.length - 1 - index == 0;
+            bytes[0] = (byte) value;
+        } else {
+            bytes[bytes.length - 1 - index] = (byte) value;
+        }
         return bytes;
     }
 

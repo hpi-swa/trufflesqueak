@@ -63,7 +63,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "!isSmallInteger(receiver)")
-        Object doLong(final long receiver, final long index) {
+        protected Object doLong(final long receiver, final long index) {
             return doSqueakObject(LargeIntegerObject.valueOf(code, receiver), index);
         }
 
