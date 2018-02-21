@@ -461,7 +461,13 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
     @Ignore
     @Test
     public void testInspectSqueakTest() {
-        runTestCase("BrowseTest");
+        runTestCase("FloatTest");
+    }
+
+    @Ignore
+    @Test
+    public void testInspectSqueakTestSelector() {
+        image.getOutput().println(evaluate("(WordArrayTest run: #testCannotPutNegativeValue) asString"));
     }
 
     @Test
