@@ -269,8 +269,4 @@ public class LargeIntegerObject extends SqueakObject {
     public Object shiftRight(int b) {
         return reduceIfPossible(integer.shiftRight(b));
     }
-
-    public static final boolean isSmallInteger(long value) {
-        return SMALL_INTEGER_MIN <= value && value <= SMALL_INTEGER_MAX;
-    }
 }
