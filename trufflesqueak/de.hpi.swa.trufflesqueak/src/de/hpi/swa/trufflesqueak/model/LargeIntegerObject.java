@@ -9,6 +9,9 @@ import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public class LargeIntegerObject extends SqueakObject {
+    public static final long SMALL_INTEGER_MIN = -0x40000000;
+    public static final long SMALL_INTEGER_MAX = 0x3fffffff;
+
     private BigInteger integer;
 
     public LargeIntegerObject(SqueakImageContext img) {
@@ -265,5 +268,9 @@ public class LargeIntegerObject extends SqueakObject {
     @TruffleBoundary
     public Object shiftRight(int b) {
         return reduceIfPossible(integer.shiftRight(b));
+    }
+
+    public static final boolean isSmallInteger(long value) {
+        return SMALL_INTEGER_MIN <= value && value <= SMALL_INTEGER_MAX;
     }
 }

@@ -35,10 +35,15 @@ public abstract class SqueakLookupClassNode extends AbstractNodeWithCode {
         return object == code.image.nil;
     }
 
-    @SuppressWarnings("unused")
     @Specialization
     protected ClassObject squeakClass(long object) {
-        return code.image.smallIntegerClass;
+        if (object < LargeIntegerObject.SMALL_INTEGER_MIN) {
+            return code.image.largeNegativeIntegerClass;
+        } else if (object <= LargeIntegerObject.SMALL_INTEGER_MAX) {
+            return code.image.smallIntegerClass;
+        } else {
+            return code.image.largePositiveIntegerClass;
+        }
     }
 
     @SuppressWarnings("unused")

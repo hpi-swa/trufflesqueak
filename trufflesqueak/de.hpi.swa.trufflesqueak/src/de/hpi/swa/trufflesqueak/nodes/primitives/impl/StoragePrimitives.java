@@ -11,17 +11,13 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
-import de.hpi.swa.trufflesqueak.model.AbstractPointersObject;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
-import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
-import de.hpi.swa.trufflesqueak.model.EmptyObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
-import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
@@ -191,185 +187,35 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 73, numArguments = 2)
-    protected static abstract class PrimAtNode extends AbstractPrimitiveNode {
-        protected PrimAtNode(CompiledMethodObject method) {
+    protected static abstract class PrimInstVarAtNode extends AbstractPrimitiveNode {
+        protected PrimInstVarAtNode(CompiledMethodObject method) {
             super(method);
-        }
-
-        @Override
-        public final Object executeWithArguments(VirtualFrame frame, Object... arguments) {
-            try {
-                return executeWithArgumentsSpecialized(frame, arguments);
-            } catch (IndexOutOfBoundsException e) {
-                throw new PrimitiveFailed();
-            }
-        }
-
-        @Override
-        public final Object executePrimitive(VirtualFrame frame) {
-            try {
-                return executeAt(frame);
-            } catch (IndexOutOfBoundsException e) {
-                throw new PrimitiveFailed();
-            }
-        }
-
-        public abstract Object executeAt(VirtualFrame frame);
-
-        @Specialization
-        protected long at(char receiver, long idx) {
-            if (idx == 1) {
-                return receiver;
-            } else {
-                throw new PrimitiveFailed();
-            }
-        }
-
-        @Specialization
-        protected Object at(LargeIntegerObject receiver, long idx) {
-            return receiver.at0(idx - 1);
-        }
-
-        @Specialization
-        protected long at(double receiver, long idx) {
-            long doubleBits = Double.doubleToLongBits(receiver);
-            if (idx == 1) {
-                return 0xFFFFFFFF & (doubleBits >> 32);
-            } else if (idx == 2) {
-                return 0xFFFFFFFF & doubleBits;
-            } else {
-                throw new PrimitiveFailed();
-            }
-        }
-
-        @Specialization
-        protected long longAt(NativeObject receiver, long idx) {
-            return receiver.getNativeAt0(idx - 1);
-        }
-
-        @Specialization
-        protected Object at(BlockClosureObject receiver, long idx) {
-            return receiver.at0(idx - 1);
-        }
-
-        @Specialization
-        protected Object at(CompiledCodeObject receiver, long idx) {
-            return receiver.at0(idx - 1);
-        }
-
-        @Specialization
-        protected Object at(EmptyObject receiver, long idx) {
-            return receiver.at0(idx - 1);
-        }
-
-        @Specialization
-        protected Object at(AbstractPointersObject receiver, long idx) {
-            return receiver.at0(idx - 1);
         }
 
         @Specialization
         protected Object at(BaseSqueakObject receiver, long idx) {
-            return receiver.at0(idx - 1);
+            try {
+                return receiver.at0(idx - 1);
+            } catch (IndexOutOfBoundsException e) {
+                throw new PrimitiveFailed();
+            }
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 74, numArguments = 3)
-    protected static abstract class PrimAtPutNode extends AbstractPrimitiveNode {
-        protected PrimAtPutNode(CompiledMethodObject method) {
+    protected static abstract class PrimInstVarAtPutNode extends AbstractPrimitiveNode {
+        protected PrimInstVarAtPutNode(CompiledMethodObject method) {
             super(method);
-        }
-
-        @Override
-        public final Object executeWithArguments(VirtualFrame frame, Object... arguments) {
-            try {
-                return executeWithArgumentsSpecialized(frame, arguments);
-            } catch (IndexOutOfBoundsException e) {
-                throw new PrimitiveFailed();
-            }
-        }
-
-        @Override
-        public final Object executePrimitive(VirtualFrame frame) {
-            try {
-                return executeAtPut(frame);
-            } catch (IndexOutOfBoundsException e) {
-                throw new PrimitiveFailed();
-            }
-        }
-
-        public abstract Object executeAtPut(VirtualFrame frame);
-
-        @Specialization
-        protected char atput(LargeIntegerObject receiver, long idx, char value) {
-            receiver.atput0(idx - 1, value);
-            return value;
-        }
-
-        @Specialization
-        protected long atput(LargeIntegerObject receiver, long idx, long value) {
-            receiver.atput0(idx - 1, value);
-            return value;
-        }
-
-        @Specialization
-        protected char atput(NativeObject receiver, long idx, char value) {
-            receiver.setNativeAt0(idx - 1, value);
-            return value;
-        }
-
-        @Specialization
-        protected long atput(NativeObject receiver, long idx, long value) {
-            if (value < 0) {
-                throw new PrimitiveFailed();
-            }
-            receiver.setNativeAt0(idx - 1, value);
-            return value;
-        }
-
-        @Specialization
-        protected Object atput(BlockClosureObject receiver, long idx, Object value) {
-            receiver.atput0(idx - 1, value);
-            return value;
-        }
-
-        @Specialization
-        protected Object atput(ClassObject receiver, long idx, Object value) {
-            receiver.atput0(idx - 1, value);
-            return value;
-        }
-
-        @Specialization
-        protected Object atput(CompiledCodeObject receiver, long idx, Object value) {
-            receiver.atput0(idx - 1, value);
-            return value;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization
-        protected Object atput(EmptyObject receiver, long idx, Object value) {
-            throw new PrimitiveFailed();
-        }
-
-        @Specialization
-        protected Object atput(AbstractPointersObject receiver, long idx, Object value) {
-            receiver.atput0(idx - 1, value);
-            return value;
-        }
-
-        @Specialization
-        protected Object atput(NativeObject receiver, long idx, LargeIntegerObject value) {
-            try {
-                receiver.atput0(idx - 1, value.reduceToLong());
-                return value;
-            } catch (ArithmeticException e) {
-                throw new PrimitiveFailed();
-            }
         }
 
         @Specialization
         protected Object atput(BaseSqueakObject receiver, long idx, Object value) {
-            receiver.atput0(idx - 1, value);
+            try {
+                receiver.atput0(idx - 1, value);
+            } catch (IndexOutOfBoundsException e) {
+                throw new PrimitiveFailed();
+            }
             return value;
         }
     }
