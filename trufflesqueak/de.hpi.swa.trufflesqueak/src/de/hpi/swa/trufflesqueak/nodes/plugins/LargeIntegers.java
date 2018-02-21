@@ -6,6 +6,7 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
+import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
@@ -332,4 +333,52 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    @GenerateNodeFactory
+    @SqueakPrimitive(name = "primDigitCompare")
+    public static abstract class PrimDigitCompareNode extends AbstractArithmeticPrimitiveNode {
+
+        public PrimDigitCompareNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected long doLong(final long a, final long b) {
+            if (a == b) {
+                return 0;
+            }
+            int compare = Long.toString(a).compareTo(Long.toString(b));
+            if (compare > 0) {
+                return 1;
+            } else if (compare < 0) {
+                return -1;
+            } else {
+                throw new SqueakException("Case should not happen");
+            }
+        }
+
+        @Specialization
+        protected long doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
+            if (a.equals(b)) {
+                return 0;
+            }
+            int compare = a.toString().compareTo(b.toString());
+            if (compare > 0) {
+                return 1;
+            } else if (compare < 0) {
+                return -1;
+            } else {
+                throw new SqueakException("Case should not happen");
+            }
+        }
+
+        @Specialization
+        protected long doLong(final long a, final LargeIntegerObject b) {
+            return doLargeInteger(asLargeInteger(a), b);
+        }
+
+        @Specialization
+        protected long doLargeInteger(final LargeIntegerObject a, final long b) {
+            return doLargeInteger(a, asLargeInteger(b));
+        }
+    }
 }
