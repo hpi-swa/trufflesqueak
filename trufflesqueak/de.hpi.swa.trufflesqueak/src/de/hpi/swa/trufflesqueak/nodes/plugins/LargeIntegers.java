@@ -25,6 +25,16 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(name = "primAnyBitFromTo") // TODO: implement primitive
+    public static abstract class PrimAnyBitFromToNode extends AbstractArithmeticPrimitiveNode {
+
+        public PrimAnyBitFromToNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(indices = {1, 21, 41}, name = "primDigitAdd", numArguments = 2)
     public static abstract class PrimAddNode extends AbstractArithmeticPrimitiveNode {
 
@@ -170,49 +180,6 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primDigitDivNegative", numArguments = 3)
-    public static abstract class PrimDigitDivNegativeNode extends AbstractArithmeticPrimitiveNode {
-        public PrimDigitDivNegativeNode(CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization(rewriteOn = ArithmeticException.class)
-        protected final ListObject doLong(final long rcvr, final long arg, final boolean negative) {
-            long divide = rcvr / arg;
-            if ((negative && divide >= 0) || (!negative && divide < 0)) {
-                divide = Math.negateExact(divide);
-            }
-            long remainder = rcvr % arg;
-            return code.image.newListWith(divide, remainder);
-        }
-
-        @Specialization
-        protected final ListObject doLongWithOverflow(final long rcvr, final long arg, final boolean negative) {
-            return doLargeInteger(asLargeInteger(rcvr), asLargeInteger(arg), negative);
-        }
-
-        @Specialization
-        protected final ListObject doLargeInteger(final LargeIntegerObject rcvr, final LargeIntegerObject arg, final boolean negative) {
-            LargeIntegerObject divide = rcvr.divideNoReduce(arg);
-            if ((negative && divide.signum() >= 0) || (!negative && divide.signum() < 0)) {
-                divide = divide.negateNoReduce();
-            }
-            Object remainder = rcvr.remainder(arg);
-            return code.image.newListWith(divide.reduceIfPossible(), remainder);
-        }
-
-        @Specialization
-        protected final ListObject doLong(final long rcvr, final LargeIntegerObject arg, final boolean negative) {
-            return doLargeInteger(asLargeInteger(rcvr), arg, negative);
-        }
-
-        @Specialization
-        protected final ListObject doLargeInteger(final LargeIntegerObject rcvr, final long arg, final boolean negative) {
-            return doLargeInteger(rcvr, asLargeInteger(arg), negative);
-        }
-    }
-
-    @GenerateNodeFactory
     @SqueakPrimitive(indices = {14, 34}, name = "primDigitBitAnd", numArguments = 2)
     public static abstract class PrimBitAndNode extends AbstractArithmeticPrimitiveNode {
         public PrimBitAndNode(CompiledMethodObject method) {
@@ -308,28 +275,30 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(names = {"primNormalizePositive", "primNormalizeNegative"})
-    public static abstract class PrimNormalizeNode extends AbstractArithmeticPrimitiveNode {
-        @Child private ReturnReceiverNode receiverNode;
-
-        public PrimNormalizeNode(CompiledMethodObject method) {
+    @SqueakPrimitive(indices = {16, 36}, name = "primDigitBitXor", numArguments = 2)
+    protected static abstract class PrimBitXorNode extends AbstractArithmeticPrimitiveNode {
+        protected PrimBitXorNode(CompiledMethodObject method) {
             super(method);
-            receiverNode = ReturnReceiverNode.create(method, -1);
         }
 
         @Specialization
-        protected long doLong(long value) {
-            return value;
+        protected final static long doLong(final long receiver, final long b) {
+            return receiver ^ b;
         }
 
         @Specialization
-        public Object doLargeInteger(LargeIntegerObject value) {
-            return value.reduceIfPossible();
+        protected final static Object doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject arg) {
+            return receiver.xor(arg);
         }
 
         @Specialization
-        protected Object doNativeObject(NativeObject value) {
-            return value.normalize().reduceIfPossible();
+        protected final Object doLong(final long receiver, final LargeIntegerObject arg) {
+            return doLargeInteger(asLargeInteger(receiver), arg);
+        }
+
+        @Specialization
+        protected final Object doLargeInteger(final LargeIntegerObject receiver, final long arg) {
+            return doLargeInteger(receiver, asLargeInteger(arg));
         }
     }
 
@@ -379,6 +348,95 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected long doLargeInteger(final LargeIntegerObject a, final long b) {
             return doLargeInteger(a, asLargeInteger(b));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(name = "primDigitDivNegative", numArguments = 3)
+    public static abstract class PrimDigitDivNegativeNode extends AbstractArithmeticPrimitiveNode {
+        public PrimDigitDivNegativeNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(rewriteOn = ArithmeticException.class)
+        protected final ListObject doLong(final long rcvr, final long arg, final boolean negative) {
+            long divide = rcvr / arg;
+            if ((negative && divide >= 0) || (!negative && divide < 0)) {
+                divide = Math.negateExact(divide);
+            }
+            long remainder = rcvr % arg;
+            return code.image.newListWith(divide, remainder);
+        }
+
+        @Specialization
+        protected final ListObject doLongWithOverflow(final long rcvr, final long arg, final boolean negative) {
+            return doLargeInteger(asLargeInteger(rcvr), asLargeInteger(arg), negative);
+        }
+
+        @Specialization
+        protected final ListObject doLargeInteger(final LargeIntegerObject rcvr, final LargeIntegerObject arg, final boolean negative) {
+            LargeIntegerObject divide = rcvr.divideNoReduce(arg);
+            if ((negative && divide.signum() >= 0) || (!negative && divide.signum() < 0)) {
+                divide = divide.negateNoReduce();
+            }
+            Object remainder = rcvr.remainder(arg);
+            return code.image.newListWith(divide.reduceIfPossible(), remainder);
+        }
+
+        @Specialization
+        protected final ListObject doLong(final long rcvr, final LargeIntegerObject arg, final boolean negative) {
+            return doLargeInteger(asLargeInteger(rcvr), arg, negative);
+        }
+
+        @Specialization
+        protected final ListObject doLargeInteger(final LargeIntegerObject rcvr, final long arg, final boolean negative) {
+            return doLargeInteger(rcvr, asLargeInteger(arg), negative);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(name = "primMontgomeryDigitLength") // TODO: implement primitive
+    public static abstract class PrimMontgomeryDigitLengthNode extends AbstractArithmeticPrimitiveNode {
+
+        public PrimMontgomeryDigitLengthNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(name = "primMontgomeryTimesModulo", numArguments = 4) // TODO: implement primitive
+    public static abstract class PrimMontgomeryTimesModuloNode extends AbstractArithmeticPrimitiveNode {
+
+        public PrimMontgomeryTimesModuloNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(names = {"primNormalizePositive", "primNormalizeNegative"})
+    public static abstract class PrimNormalizeNode extends AbstractArithmeticPrimitiveNode {
+        @Child private ReturnReceiverNode receiverNode;
+
+        public PrimNormalizeNode(CompiledMethodObject method) {
+            super(method);
+            receiverNode = ReturnReceiverNode.create(method, -1);
+        }
+
+        @Specialization
+        protected long doLong(long value) {
+            return value;
+        }
+
+        @Specialization
+        public Object doLargeInteger(LargeIntegerObject value) {
+            return value.reduceIfPossible();
+        }
+
+        @Specialization
+        protected Object doNativeObject(NativeObject value) {
+            return value.normalize().reduceIfPossible();
         }
     }
 }

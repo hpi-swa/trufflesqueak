@@ -463,34 +463,6 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {16, 36}, numArguments = 2)
-    protected static abstract class PrimBitXorNode extends AbstractArithmeticPrimitiveNode {
-        protected PrimBitXorNode(CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization
-        protected final static long doLong(final long receiver, final long b) {
-            return receiver ^ b;
-        }
-
-        @Specialization
-        protected final static Object doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject arg) {
-            return receiver.xor(arg);
-        }
-
-        @Specialization
-        protected final Object doLong(final long receiver, final LargeIntegerObject arg) {
-            return doLargeInteger(asLargeInteger(receiver), arg);
-        }
-
-        @Specialization
-        protected final Object doLargeInteger(final LargeIntegerObject receiver, final long arg) {
-            return doLargeInteger(receiver, asLargeInteger(arg));
-        }
-    }
-
-    @GenerateNodeFactory
     @SqueakPrimitive(index = 40, numArguments = 2)
     protected static abstract class PrimAsFloatNode extends AbstractArithmeticPrimitiveNode {
         protected PrimAsFloatNode(CompiledMethodObject method) {
