@@ -21,7 +21,6 @@ import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.MUTEX;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SEMAPHORE;
-import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.DispatchNode;
 import de.hpi.swa.trufflesqueak.nodes.DispatchNodeGen;
@@ -174,10 +173,6 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             signalSemaphoreNode = SignalSemaphoreNode.create(method);
         }
 
-        protected boolean isSemaphore(PointersObject receiver) {
-            return receiver.isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassSemaphore);
-        }
-
         @Specialization(guards = "isSemaphore(receiver)")
         protected BaseSqueakObject doSignal(VirtualFrame frame, PointersObject receiver) {
             signalSemaphoreNode.executeSignal(frame, receiver);
@@ -191,24 +186,19 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Child private WakeHighestPriorityNode wakeHighestPriorityNode;
         @Child private LinkProcessToListNode linkProcessToListNode;
         @Child private GetActiveProcessNode getActiveProcessNode;
-        @Child private IsEmptyListNode isEmptyListNode;
 
         protected PrimWaitNode(CompiledMethodObject method) {
             super(method);
             linkProcessToListNode = LinkProcessToListNode.create(method);
             wakeHighestPriorityNode = WakeHighestPriorityNode.create(method);
             getActiveProcessNode = GetActiveProcessNode.create(method);
-            isEmptyListNode = IsEmptyListNode.create(method);
-        }
-
-        protected boolean isSemaphore(PointersObject receiver) {
-            return receiver.isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassSemaphore);
         }
 
         @Specialization(guards = "isSemaphore(receiver)")
         protected BaseSqueakObject doWait(VirtualFrame frame, PointersObject receiver) {
-            if (isEmptyListNode.executeIsEmpty(receiver)) {
-                receiver.atput0(SEMAPHORE.EXCESS_SIGNALS, (long) receiver.at0(SEMAPHORE.EXCESS_SIGNALS) - 1);
+            long excessSignals = (long) receiver.at0(SEMAPHORE.EXCESS_SIGNALS);
+            if (excessSignals > 0) {
+                receiver.atput0(SEMAPHORE.EXCESS_SIGNALS, excessSignals - 1);
             } else {
                 PointersObject activeProcess = getActiveProcessNode.executeGet();
                 linkProcessToListNode.executeLink(activeProcess, receiver);
@@ -466,15 +456,15 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doExit(VirtualFrame frame, PointersObject rcvrMutex) {
-            if (isEmptyListNode.executeIsEmpty(rcvrMutex)) {
-                rcvrMutex.atput0(MUTEX.OWNER, code.image.nil);
+        protected Object doExit(VirtualFrame frame, PointersObject mutex) {
+            if (isEmptyListNode.executeIsEmpty(mutex)) {
+                mutex.atput0(MUTEX.OWNER, code.image.nil);
             } else {
-                BaseSqueakObject owningProcess = removeFirstLinkOfListNode.executeRemove(rcvrMutex);
-                rcvrMutex.atput0(MUTEX.OWNER, owningProcess);
+                BaseSqueakObject owningProcess = removeFirstLinkOfListNode.executeRemove(mutex);
+                mutex.atput0(MUTEX.OWNER, owningProcess);
                 resumeProcessNode.executeResume(frame, owningProcess);
             }
-            return rcvrMutex;
+            return mutex;
         }
     }
 
@@ -494,21 +484,32 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             pushStackNode = PushStackNode.create(method);
         }
 
+        @Override
+        public final Object executeWithArguments(VirtualFrame frame, Object... arguments) {
+            return doEnter(frame, arguments);
+        }
+
         @Specialization
-        protected Object doEnter(VirtualFrame frame, PointersObject rcvrMutex) {
-            PointersObject activeProcess = getActiveProcessNode.executeGet();
-            Object owner = rcvrMutex.at0(MUTEX.OWNER);
+        protected Object doEnter(VirtualFrame frame, Object[] rcvrAndArguments) {
+            PointersObject mutex = (PointersObject) rcvrAndArguments[0];
+            PointersObject activeProcess;
+            if (rcvrAndArguments.length == 2) {
+                activeProcess = (PointersObject) rcvrAndArguments[1];
+            } else {
+                activeProcess = getActiveProcessNode.executeGet();
+            }
+            Object owner = mutex.at0(MUTEX.OWNER);
             if (owner == code.image.nil) {
-                rcvrMutex.atput0(MUTEX.OWNER, activeProcess);
-                return code.image.sqFalse;
+                mutex.atput0(MUTEX.OWNER, activeProcess);
+                pushStackNode.executeWrite(frame, code.image.sqFalse);
             } else if (owner == activeProcess) {
-                return code.image.sqTrue;
+                pushStackNode.executeWrite(frame, code.image.sqTrue);
             } else {
                 pushStackNode.executeWrite(frame, code.image.sqFalse);
-                linkProcessToListNode.executeLink(activeProcess, rcvrMutex);
+                linkProcessToListNode.executeLink(activeProcess, mutex);
                 wakeHighestPriorityNode.executeWake(frame);
-                return null; // already pushed false to stack
             }
+            throw new PrimitiveWithoutResultException();
         }
     }
 

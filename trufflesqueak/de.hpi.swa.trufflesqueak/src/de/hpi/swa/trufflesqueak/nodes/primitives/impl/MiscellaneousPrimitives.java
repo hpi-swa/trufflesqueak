@@ -419,7 +419,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected BaseSqueakObject doSignal(BaseSqueakObject receiver, BaseSqueakObject semaphore, long usecsUTC) {
-            long msTime = usecsUTC / 1000 + AbstractClockPrimitiveNode.EPOCH_DELTA_MICROSECONDS - code.image.startUpMillis;
+            long msTime = (usecsUTC - AbstractClockPrimitiveNode.EPOCH_DELTA_MICROSECONDS) / 1000;
             signalAtMilliseconds(semaphore, msTime);
             return receiver;
         }

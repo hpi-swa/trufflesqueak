@@ -31,4 +31,8 @@ public abstract class AbstractPrimitiveNode extends AbstractNodeWithCode {
     public abstract Object executePrimitive(VirtualFrame frame);
 
     protected abstract Object executeWithArgumentsSpecialized(VirtualFrame frame, Object... arguments);
+
+    protected static final boolean isSemaphore(PointersObject receiver) {
+        return receiver.isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassSemaphore);
+    }
 }
