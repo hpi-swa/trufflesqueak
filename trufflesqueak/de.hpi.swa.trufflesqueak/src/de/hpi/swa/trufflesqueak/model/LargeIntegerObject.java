@@ -1,8 +1,9 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
@@ -12,7 +13,7 @@ public class LargeIntegerObject extends SqueakObject {
     public static final long SMALL_INTEGER_MIN = -0x40000000;
     public static final long SMALL_INTEGER_MAX = 0x3fffffff;
 
-    private BigInteger integer;
+    @CompilationFinal private BigInteger integer;
 
     public LargeIntegerObject(SqueakImageContext img) {
         super(img);
@@ -31,8 +32,6 @@ public class LargeIntegerObject extends SqueakObject {
     public LargeIntegerObject(SqueakImageContext image, ClassObject klass, int size) {
         super(image, klass);
         byte[] bytes = new byte[size];
-        // fill with max byte value to ensure BigInteger has byte array with length = size
-        Arrays.fill(bytes, (byte) 127);
         setBytes(bytes);
     }
 
@@ -69,6 +68,7 @@ public class LargeIntegerObject extends SqueakObject {
     }
 
     private void setBytesNative(byte[] bigEndianBytes) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
         integer = new BigInteger(bigEndianBytes);
         if (isNegative()) {
             integer = integer.negate();
