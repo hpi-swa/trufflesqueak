@@ -22,6 +22,11 @@ public class FloatObject extends SqueakObject {
         this.value = original.value;
     }
 
+    public FloatObject(SqueakImageContext image, double value) {
+        this(image);
+        this.value = value;
+    }
+
     @Override
     public void fillin(SqueakImageChunk chunk) {
         throw new SqueakException("Not implemented by FloatObject");

@@ -27,6 +27,7 @@ import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BytesObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
@@ -290,8 +291,13 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object copy(BaseSqueakObject self) {
-            return self.shallowCopy();
+        protected Object doDouble(final double value) {
+            return new FloatObject(code.image, value);
+        }
+
+        @Specialization
+        protected Object doSqueakObject(BaseSqueakObject receiver) {
+            return receiver.shallowCopy();
         }
     }
 
