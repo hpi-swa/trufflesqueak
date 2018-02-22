@@ -2,7 +2,6 @@ package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -20,6 +19,7 @@ import de.hpi.swa.trufflesqueak.util.FrameMarker;
 public abstract class EnterCodeNode extends RootNode {
     @CompilationFinal protected final CompiledCodeObject code;
     @Child private GetOrCreateContextNode createContextNode;
+    @Child private ExecuteContextNode executeContextNode;
     @Child private FrameSlotWriteNode contextWriteNode;
     @Child private FrameSlotWriteNode instructionPointerWriteNode;
     @Child private FrameSlotWriteNode stackPointerWriteNode;
@@ -33,6 +33,7 @@ public abstract class EnterCodeNode extends RootNode {
         super(language, code.getFrameDescriptor());
         this.code = code;
         createContextNode = GetOrCreateContextNode.create(code);
+        executeContextNode = ExecuteContextNode.create(code);
         contextWriteNode = FrameSlotWriteNode.create(code.thisContextOrMarkerSlot);
         instructionPointerWriteNode = FrameSlotWriteNode.create(code.instructionPointerSlot);
         stackPointerWriteNode = FrameSlotWriteNode.create(code.stackPointerSlot);
@@ -47,8 +48,7 @@ public abstract class EnterCodeNode extends RootNode {
 
     @ExplodeLoop
     @Specialization(assumptions = {"code.getCanBeVirtualizedAssumption()"})
-    protected Object enterVirtualized(VirtualFrame frame,
-                    @Cached("create(code)") ExecuteContextNode contextNode) {
+    protected Object enterVirtualized(VirtualFrame frame) {
         CompilerDirectives.ensureVirtualized(frame);
         initializeSlots(frame);
         int numArgsAndCopiedValues = code.getNumArgsAndCopiedValues();
@@ -63,13 +63,12 @@ public abstract class EnterCodeNode extends RootNode {
             pushStackNode.executeWrite(frame, code.image.nil);
         }
         assert FrameUtil.getLongSafe(frame, code.stackPointerSlot) + 1 >= numTemps;
-        return contextNode.executeVirtualized(frame);
+        return executeContextNode.executeVirtualized(frame);
     }
 
     @ExplodeLoop
     @Specialization(guards = {"!code.getCanBeVirtualizedAssumption().isValid()"})
-    protected Object enter(VirtualFrame frame,
-                    @Cached("create(code)") ExecuteContextNode contextNode) {
+    protected Object enter(VirtualFrame frame) {
         initializeSlots(frame);
         ContextObject newContext = createContextNode.executeGet(frame, true);
         contextWriteNode.executeWrite(frame, newContext);
@@ -85,7 +84,7 @@ public abstract class EnterCodeNode extends RootNode {
             newContext.push(code.image.nil);
         }
         assert newContext.getStackPointer() >= numTemps;
-        return contextNode.executeNonVirtualized(frame, newContext);
+        return executeContextNode.executeNonVirtualized(frame, newContext);
     }
 
     @Override
