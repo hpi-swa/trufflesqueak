@@ -70,6 +70,9 @@ public class BlockClosureObject extends BaseSqueakObject {
         for (int i = 0; i < pointers.length; i++) {
             atput0(i, pointers[i]);
         }
+        assert outerContext != null;
+        assert pc != -1;
+        assert numArgs != -1;
     }
 
     @TruffleBoundary
