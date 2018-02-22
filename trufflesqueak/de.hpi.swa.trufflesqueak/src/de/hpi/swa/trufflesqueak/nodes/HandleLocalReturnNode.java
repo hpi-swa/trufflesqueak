@@ -37,7 +37,7 @@ public abstract class HandleLocalReturnNode extends AbstractNodeWithCode {
     protected Object handle(VirtualFrame frame, LocalReturn lr) {
         ContextObject context = getContext(frame);
         if (context.isDirty()) {
-            ContextObject sender = (ContextObject) context.getSender(); // sender should not be nil
+            ContextObject sender = context.getNotNilSender(); // sender has changed
             terminateNode.executeTerminate(frame);
             throw new NonVirtualReturn(lr.getReturnValue(), sender, sender);
         } else {
