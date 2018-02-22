@@ -5,7 +5,6 @@ import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.SqueakConfig;
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.process.SignalSemaphoreNode;
@@ -19,6 +18,7 @@ public class InterruptHandlerNode extends Node {
     private long nextWakeupTick = 0;
     private long lastTick = 0;
     private boolean interruptPending = false;
+    private boolean disabled = false;
     private int pendingFinalizationSignals = 0;
     @Child private SignalSemaphoreNode signalSemaporeNode;
 
@@ -43,8 +43,12 @@ public class InterruptHandlerNode extends Node {
         nextWakeupTick = msTime;
     }
 
+    public void setDisabled(boolean value) {
+        disabled = value;
+    }
+
     public void sendOrBackwardJumpTrigger(VirtualFrame frame) { // Check for interrupts at sends and backward jumps
-        if (interruptCheckCounter-- > 0) {
+        if (disabled || interruptCheckCounter-- > 0) {
             return; // only really check every 100 times or so
         }
         executeCheck(frame);

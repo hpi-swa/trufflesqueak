@@ -494,7 +494,12 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
                 arguments[i] = rcvrAndArguments[1 + i];
             }
             Object[] newRcvrAndArgs = new Object[]{receiver, functionName, code.image.newList(arguments)};
-            return dispatchNode.executeDispatch(frame, getSimulateMethod(receiver), newRcvrAndArgs, getContextOrMarker(frame));
+            code.image.interrupt.setDisabled(true);
+            try {
+                return dispatchNode.executeDispatch(frame, getSimulateMethod(receiver), newRcvrAndArgs, getContextOrMarker(frame));
+            } finally {
+                code.image.interrupt.setDisabled(false);
+            }
         }
 
         protected CompiledMethodObject getSimulateMethod(Object receiver) {
@@ -522,7 +527,6 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     public static abstract class PrimBitBltSimulateNode extends AbstractSimulationPrimitiveNode {
-        @CompilationFinal private static final String SIMULATE_PRIMITIVE_SELECTOR = "simulatePrimitive:args:";
         @Child protected SqueakLookupClassNode lookupClassNode;
 
         public static PrimBitBltSimulateNode create(CompiledMethodObject method, String moduleName, String functionName, SqueakNode[] arguments) {
@@ -542,7 +546,6 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     public static abstract class PrimBalloonEngineSimulateNode extends AbstractSimulationPrimitiveNode {
-        @CompilationFinal private static final String SIMULATE_PRIMITIVE_SELECTOR = "simulatePrimitive:args:";
 
         public static PrimBalloonEngineSimulateNode create(CompiledMethodObject method, String moduleName, String functionName, SqueakNode[] arguments) {
             return PrimBalloonEngineSimulateNodeGen.create(method, moduleName, functionName, arguments);
