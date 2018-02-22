@@ -183,6 +183,11 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        protected long doNativeObject(NativeObject obj) {
+            return obj.size();
+        }
+
+        @Specialization
         protected long doLargeInteger(final LargeIntegerObject value) {
             return value.size();
         }
