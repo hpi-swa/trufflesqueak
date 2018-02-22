@@ -156,6 +156,7 @@ public class LargeIntegerObject extends SqueakObject {
     }
 
     @Override
+    @TruffleBoundary
     public String toString() {
         return integer.toString();
     }
