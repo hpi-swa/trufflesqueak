@@ -284,6 +284,12 @@ public class SqueakImageContext {
         specialObjectsArray.atput0(index, semaphore.isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassSemaphore) ? semaphore : nil);
     }
 
+    public void trace(String message) {
+        if (config.isTracing()) {
+            getOutput().println(message);
+        }
+    }
+
     /*
      * Helper function for debugging purposes.
      */

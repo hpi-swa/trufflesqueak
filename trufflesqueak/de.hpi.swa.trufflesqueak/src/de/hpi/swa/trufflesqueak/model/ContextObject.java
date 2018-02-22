@@ -69,6 +69,7 @@ public class ContextObject extends AbstractPointersObject {
     public void atput0(long index, Object value) {
         assert index >= 0 && value != null;
         if (index == CONTEXT.SENDER_OR_NIL) {
+            image.trace("Sender of " + toString() + " set to " + value);
             isDirty = true;
         }
         super.atput0(index, value);

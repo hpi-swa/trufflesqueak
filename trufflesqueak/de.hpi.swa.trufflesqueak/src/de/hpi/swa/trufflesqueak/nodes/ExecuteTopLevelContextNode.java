@@ -73,16 +73,17 @@ public class ExecuteTopLevelContextNode extends RootNode {
                 executeContextNode = insert(ExecuteContextNode.create(code));
                 Object result = executeContextNode.executeNonVirtualized(frame, activeContext);
                 activeContext = unwindContextChain(sender, sender, result);
+                image.trace("Local Return on top-level, new context is " + activeContext);
             } catch (ProcessSwitch ps) {
-                if (image.config.isTracing()) {
-                    image.getOutput().println("Switching from " + activeContext + " to " + ps.getNewContext());
-                }
+                image.trace("Switching from " + activeContext + " to " + ps.getNewContext());
                 activeContext = ps.getNewContext();
             } catch (NonLocalReturn nlr) {
                 BaseSqueakObject target = nlr.hasArrivedAtTargetContext() ? sender : nlr.getTargetContext();
                 activeContext = unwindContextChain(sender, target, nlr.getReturnValue());
+                image.trace("Non Local Return on top-level, new context is " + activeContext);
             } catch (NonVirtualReturn nvr) {
                 activeContext = unwindContextChain(nvr.getCurrentContext(), nvr.getTargetContext(), nvr.getReturnValue());
+                image.trace("Non Virtual Return on top-level, new context is " + activeContext);
             }
         }
     }
