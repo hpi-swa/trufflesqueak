@@ -32,8 +32,7 @@ public class InterruptHandlerNode extends Node {
 
     protected InterruptHandlerNode(SqueakImageContext image) {
         this.image = image;
-        // Use fake CompiledMethodObject, SignalSemaphore expects but doesn't really need a code object.
-        signalSemaporeNode = SignalSemaphoreNode.create(new CompiledMethodObject(image));
+        signalSemaporeNode = SignalSemaphoreNode.create(image);
     }
 
     public void setInterruptPending() {

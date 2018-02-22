@@ -2,25 +2,25 @@ package de.hpi.swa.trufflesqueak.nodes.process;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SEMAPHORE;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
-import de.hpi.swa.trufflesqueak.nodes.AbstractNodeWithCode;
+import de.hpi.swa.trufflesqueak.nodes.AbstractNodeWithImage;
 
-public class SignalSemaphoreNode extends AbstractNodeWithCode {
+public class SignalSemaphoreNode extends AbstractNodeWithImage {
     @Child private IsEmptyListNode isEmptyListNode;
     @Child private ResumeProcessNode resumeProcessNode;
     @Child private RemoveFirstLinkOfListNode removeFirstLinkOfListNode;
 
-    public static SignalSemaphoreNode create(CompiledCodeObject code) {
-        return new SignalSemaphoreNode(code);
+    public static SignalSemaphoreNode create(SqueakImageContext image) {
+        return new SignalSemaphoreNode(image);
     }
 
-    protected SignalSemaphoreNode(CompiledCodeObject code) {
-        super(code);
-        isEmptyListNode = IsEmptyListNode.create(code);
-        resumeProcessNode = ResumeProcessNode.create(code);
-        removeFirstLinkOfListNode = RemoveFirstLinkOfListNode.create(code);
+    protected SignalSemaphoreNode(SqueakImageContext image) {
+        super(image);
+        isEmptyListNode = IsEmptyListNode.create(image);
+        resumeProcessNode = ResumeProcessNode.create(image);
+        removeFirstLinkOfListNode = RemoveFirstLinkOfListNode.create(image);
     }
 
     public void executeSignal(VirtualFrame frame, PointersObject semaphore) {

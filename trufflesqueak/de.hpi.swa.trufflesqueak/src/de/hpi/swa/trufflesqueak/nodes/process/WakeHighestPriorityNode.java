@@ -2,30 +2,32 @@ package de.hpi.swa.trufflesqueak.nodes.process;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 
+import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
-import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
-import de.hpi.swa.trufflesqueak.nodes.AbstractNodeWithCode;
+import de.hpi.swa.trufflesqueak.nodes.AbstractNodeWithImage;
 
-public class WakeHighestPriorityNode extends AbstractNodeWithCode {
+public class WakeHighestPriorityNode extends AbstractNodeWithImage {
     @Child private RemoveFirstLinkOfListNode removeFirstLinkOfListNode;
-    @Child private TransferToNode transferToNode;
+    @Child private GetActiveProcessNode getActiveProcessNode;
     @Child private GetSchedulerNode getSchedulerNode;
     @Child private IsEmptyListNode isEmptyListNode;
+    @Child private TransferToNode transferToNode;
 
-    public static WakeHighestPriorityNode create(CompiledCodeObject code) {
-        return new WakeHighestPriorityNode(code);
+    public static WakeHighestPriorityNode create(SqueakImageContext image) {
+        return new WakeHighestPriorityNode(image);
     }
 
-    protected WakeHighestPriorityNode(CompiledCodeObject code) {
-        super(code);
-        removeFirstLinkOfListNode = RemoveFirstLinkOfListNode.create(code);
-        getSchedulerNode = GetSchedulerNode.create(code);
-        isEmptyListNode = IsEmptyListNode.create(code);
-        transferToNode = TransferToNode.create(code);
+    protected WakeHighestPriorityNode(SqueakImageContext image) {
+        super(image);
+        removeFirstLinkOfListNode = RemoveFirstLinkOfListNode.create(image);
+        getActiveProcessNode = GetActiveProcessNode.create(image);
+        getSchedulerNode = GetSchedulerNode.create(image);
+        isEmptyListNode = IsEmptyListNode.create(image);
+        transferToNode = TransferToNode.create(image);
     }
 
     public void executeWake(VirtualFrame frame) {
@@ -41,7 +43,7 @@ public class WakeHighestPriorityNode extends AbstractNodeWithCode {
             }
             processList = (BaseSqueakObject) schedLists.at0(p--);
         } while (isEmptyListNode.executeIsEmpty(processList));
-        BaseSqueakObject activeProcess = (BaseSqueakObject) scheduler.at0(PROCESS_SCHEDULER.ACTIVE_PROCESS);
+        PointersObject activeProcess = getActiveProcessNode.executeGet();
         BaseSqueakObject newProcess = removeFirstLinkOfListNode.executeRemove(processList);
         transferToNode.executeTransferTo(frame, activeProcess, newProcess);
     }

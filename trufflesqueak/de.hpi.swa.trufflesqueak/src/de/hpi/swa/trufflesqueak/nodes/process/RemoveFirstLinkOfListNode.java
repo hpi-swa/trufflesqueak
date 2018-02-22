@@ -2,19 +2,20 @@ package de.hpi.swa.trufflesqueak.nodes.process;
 
 import com.oracle.truffle.api.CompilerDirectives;
 
+import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
-import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.LINK;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.LINKED_LIST;
-import de.hpi.swa.trufflesqueak.nodes.AbstractNodeWithCode;
+import de.hpi.swa.trufflesqueak.nodes.AbstractNodeWithImage;
 
-public class RemoveFirstLinkOfListNode extends AbstractNodeWithCode {
-    public static RemoveFirstLinkOfListNode create(CompiledCodeObject code) {
-        return new RemoveFirstLinkOfListNode(code);
+public class RemoveFirstLinkOfListNode extends AbstractNodeWithImage {
+
+    public static RemoveFirstLinkOfListNode create(SqueakImageContext image) {
+        return new RemoveFirstLinkOfListNode(image);
     }
 
-    protected RemoveFirstLinkOfListNode(CompiledCodeObject code) {
-        super(code);
+    protected RemoveFirstLinkOfListNode(SqueakImageContext image) {
+        super(image);
     }
 
     public BaseSqueakObject executeRemove(BaseSqueakObject list) {
@@ -23,12 +24,12 @@ public class RemoveFirstLinkOfListNode extends AbstractNodeWithCode {
         BaseSqueakObject first = (BaseSqueakObject) list.at0(LINKED_LIST.FIRST_LINK);
         BaseSqueakObject last = (BaseSqueakObject) list.at0(LINKED_LIST.LAST_LINK);
         if (first.equals(last)) {
-            list.atput0(LINKED_LIST.FIRST_LINK, code.image.nil);
-            list.atput0(LINKED_LIST.LAST_LINK, code.image.nil);
+            list.atput0(LINKED_LIST.FIRST_LINK, image.nil);
+            list.atput0(LINKED_LIST.LAST_LINK, image.nil);
         } else {
             list.atput0(LINKED_LIST.FIRST_LINK, first.at0(LINK.NEXT_LINK));
         }
-        first.atput0(LINK.NEXT_LINK, code.image.nil);
+        first.atput0(LINK.NEXT_LINK, image.nil);
         return first;
     }
 }

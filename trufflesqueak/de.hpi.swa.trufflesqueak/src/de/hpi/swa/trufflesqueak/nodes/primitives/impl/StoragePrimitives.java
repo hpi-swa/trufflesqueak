@@ -143,7 +143,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         protected PrimForwardIdentity(CompiledMethodObject method) {
             // FIXME: this primitive does not correctly perform a one way become yet
             super(method);
-            getActiveProcessNode = GetActiveProcessNode.create(method);
+            getActiveProcessNode = GetActiveProcessNode.create(method.image);
             getOrCreateContextNode = GetOrCreateContextNode.create(method);
         }
 

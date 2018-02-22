@@ -2,25 +2,25 @@ package de.hpi.swa.trufflesqueak.nodes.process;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 
+import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
-import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.PROCESS;
-import de.hpi.swa.trufflesqueak.nodes.AbstractNodeWithCode;
+import de.hpi.swa.trufflesqueak.nodes.AbstractNodeWithImage;
 
-public class ResumeProcessNode extends AbstractNodeWithCode {
+public class ResumeProcessNode extends AbstractNodeWithImage {
     @Child private GetActiveProcessNode getActiveProcessNode;
     @Child private PutToSleepNode putToSleepNode;
     @Child private TransferToNode transferToNode;
 
-    public static ResumeProcessNode create(CompiledCodeObject code) {
-        return new ResumeProcessNode(code);
+    public static ResumeProcessNode create(SqueakImageContext image) {
+        return new ResumeProcessNode(image);
     }
 
-    protected ResumeProcessNode(CompiledCodeObject code) {
-        super(code);
-        getActiveProcessNode = GetActiveProcessNode.create(code);
-        putToSleepNode = PutToSleepNode.create(code);
-        transferToNode = TransferToNode.create(code);
+    protected ResumeProcessNode(SqueakImageContext image) {
+        super(image);
+        getActiveProcessNode = GetActiveProcessNode.create(image);
+        putToSleepNode = PutToSleepNode.create(image);
+        transferToNode = TransferToNode.create(image);
     }
 
     public void executeResume(VirtualFrame frame, BaseSqueakObject newProcess) {
