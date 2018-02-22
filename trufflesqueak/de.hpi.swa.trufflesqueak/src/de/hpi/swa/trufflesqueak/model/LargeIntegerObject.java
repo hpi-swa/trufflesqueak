@@ -10,9 +10,10 @@ import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public class LargeIntegerObject extends SqueakObject {
-    public static final long SMALL_INTEGER_MIN = -0x40000000;
-    public static final long SMALL_INTEGER_MAX = 0x3fffffff;
+    @CompilationFinal public static final long SMALL_INTEGER_MIN = -0x40000000;
+    @CompilationFinal public static final long SMALL_INTEGER_MAX = 0x3fffffff;
 
+    @CompilationFinal private int size = -1;
     @CompilationFinal private BigInteger integer;
 
     public LargeIntegerObject(SqueakImageContext img) {
@@ -22,6 +23,7 @@ public class LargeIntegerObject extends SqueakObject {
     public LargeIntegerObject(SqueakImageContext img, BigInteger i) {
         super(img, i.compareTo(BigInteger.ZERO) >= 0 ? img.largePositiveIntegerClass : img.largeNegativeIntegerClass);
         integer = i;
+        size = byteSize(integer);
     }
 
     public LargeIntegerObject(SqueakImageContext img, ClassObject klass, byte[] bytes) {
@@ -31,8 +33,7 @@ public class LargeIntegerObject extends SqueakObject {
 
     public LargeIntegerObject(SqueakImageContext image, ClassObject klass, int size) {
         super(image, klass);
-        byte[] bytes = new byte[size];
-        setBytes(bytes);
+        setBytes(new byte[size]);
     }
 
     @Override
@@ -43,49 +44,82 @@ public class LargeIntegerObject extends SqueakObject {
     }
 
     @Override
-    public Object at0(long l) {
-        return byteAt0(integer.abs(), l);
+    public Object at0(long index) {
+        return byteAt0(index);
     }
 
     @Override
-    public void atput0(long idx, Object object) {
+    public void atput0(long index, Object object) {
+        assert index >= 0;
         byte b;
         if (object instanceof Long) {
             b = ((Long) object).byteValue();
         } else {
             b = (byte) object;
         }
-        setBytesNative(byteAtPut0(integer, idx, b));
+        setBytesNative(byteAtPut0(integer, index, b));
     }
 
     public void setBytes(byte[] bytes) {
-        byte[] bigEndianBytes = new byte[bytes.length + 1];
-        bigEndianBytes[0] = 0;
-        for (int i = 0; i < bytes.length; i++) {
-            bigEndianBytes[bytes.length - i] = bytes[i];
-        }
-        setBytesNative(bigEndianBytes);
+        setBytesNative(swapOrder(bytes));
     }
 
     private void setBytesNative(byte[] bigEndianBytes) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        integer = new BigInteger(bigEndianBytes).and(BigInteger.valueOf(0xffffffffL));
+        size = bigEndianBytes.length;
+        if (size == 0) {
+            integer = BigInteger.valueOf(0);
+        } else {
+            integer = new BigInteger(bigEndianBytes).and(BigInteger.valueOf(1).shiftLeft(bigEndianBytes.length * 8).subtract(BigInteger.valueOf(1)));
+        }
         if (isNegative()) {
             integer = integer.negate();
         }
     }
 
+    private long byteAt0(long index) {
+        assert index >= 0;
+        if (size >= 0 && index >= size) {
+            throw new ArrayIndexOutOfBoundsException("Tried to access LargeInteger with size: " + size + " at " + index);
+        }
+        byte[] byteArray = integer.toByteArray();
+        try {
+            return byteArray[byteArray.length - (int) index - 1] & 0xFF;
+        } catch (ArrayIndexOutOfBoundsException e) {
+            return 0;
+        }
+    }
+
     public byte[] getBytes() {
-        return getSqueakBytes(integer);
+        byte[] nonZeroBytes = integer.toByteArray();
+        byte[] bytes = new byte[size >= 0 ? size : nonZeroBytes.length];
+        // the image expects little endian byte order
+        for (int i = 0; i < nonZeroBytes.length; i++) {
+            bytes[bytes.length - 1 - i] = nonZeroBytes[i];
+        }
+        return bytes;
     }
 
     private boolean isNegative() {
         return getSqClass() == image.largeNegativeIntegerClass;
     }
 
+    private static byte[] swapOrder(byte[] bytes) {
+        for (int i = 0; i < bytes.length / 2; i++) {
+            byte b = bytes[i];
+            bytes[i] = bytes[bytes.length - 1 - i];
+            bytes[bytes.length - 1 - i] = b;
+        }
+        return bytes;
+    }
+
     @Override
     public final int size() {
-        return byteSize(this);
+        if (size < 0) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            size = byteSize(integer);
+        }
+        return size;
     }
 
     @Override
@@ -95,11 +129,6 @@ public class LargeIntegerObject extends SqueakObject {
 
     public BigInteger getValue() {
         return integer;
-    }
-
-    public static long byteAt0(BigInteger receiver, long index) {
-        byte[] byteArray = receiver.toByteArray();
-        return byteArray[byteArray.length - (int) index - 1] & 0xFF;
     }
 
     public static byte[] byteAtPut0(BigInteger receiver, long longIndex, long value) {
@@ -121,22 +150,9 @@ public class LargeIntegerObject extends SqueakObject {
         return bytes;
     }
 
-    public static byte[] getSqueakBytes(BigInteger repl) {
-        byte[] bytes;
-        // squeak large integers are unsigned, hence the abs call
-        bytes = repl.abs().toByteArray();
-        // the image expects little endian byte order
-        for (int i = 0; i < bytes.length / 2; i++) {
-            byte b = bytes[i];
-            bytes[i] = bytes[bytes.length - i - 1];
-            bytes[bytes.length - i - 1] = b;
-        }
-        return bytes;
-    }
-
     @TruffleBoundary
-    public static int byteSize(LargeIntegerObject i) {
-        return (i.integer.abs().bitLength() + 7) / 8;
+    public int byteSize(BigInteger value) {
+        return value.toByteArray().length;
     }
 
     @Override
@@ -168,7 +184,7 @@ public class LargeIntegerObject extends SqueakObject {
         if (value.bitLength() > Long.SIZE - 1) {
             return newFromBigInteger(value);
         } else {
-            return value.longValue();
+            return value.longValue() & 0xffffffffffffffffL;
         }
     }
 
@@ -179,7 +195,7 @@ public class LargeIntegerObject extends SqueakObject {
 
     @TruffleBoundary
     public final long reduceToLong() {
-        return integer.longValueExact();
+        return integer.longValueExact() & 0xffffffffffffffffL;
     }
 
     private final LargeIntegerObject newFromBigInteger(BigInteger value) {

@@ -184,7 +184,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected long doLargeInteger(final LargeIntegerObject value) {
-            return LargeIntegerObject.byteSize(value);
+            return value.size();
         }
 
         @Specialization

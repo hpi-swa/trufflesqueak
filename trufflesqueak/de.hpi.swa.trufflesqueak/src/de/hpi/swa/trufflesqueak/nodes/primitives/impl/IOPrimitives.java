@@ -170,6 +170,11 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        protected Object replace(LargeIntegerObject rcvr, long start, long stop, long repl, long replStart) {
+            return replaceInLarge(rcvr, start, stop, LargeIntegerObject.valueOf(code, repl).getBytes(), replStart);
+        }
+
+        @Specialization
         protected Object replace(LargeIntegerObject rcvr, long start, long stop, NativeObject repl, long replStart) {
             return replaceInLarge(rcvr, start, stop, repl.getBytes(), replStart);
         }
