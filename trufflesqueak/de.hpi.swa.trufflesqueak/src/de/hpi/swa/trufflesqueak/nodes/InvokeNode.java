@@ -7,11 +7,11 @@ import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
 
-import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakException.SqueakTestException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 
 public abstract class InvokeNode extends Node {
-    public static int callDepth = 0;
+    public static int callDepth = 0; // callDepth check is only needed for testing purposes, can be removed later on
     private final static int CALL_DEPTH_LIMIT = 400;
 
     public static InvokeNode create() {
@@ -46,8 +46,7 @@ public abstract class InvokeNode extends Node {
     private static void incrementAndCheckCallDepth(Object code) {
         callDepth++;
         if (callDepth >= CALL_DEPTH_LIMIT) {
-            ((CompiledCodeObject) code).image.printSqStackTrace();
-            throw new SqueakException("Avoiding StackOverflowError, callDepth has reached " + CALL_DEPTH_LIMIT + ".");
+            throw new SqueakTestException(((CompiledCodeObject) code).image, "Avoiding StackOverflowError, callDepth has reached " + CALL_DEPTH_LIMIT + ".");
         }
     }
 }
