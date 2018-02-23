@@ -54,8 +54,9 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
             return handleLocalReturnNode.executeHandle(frame, lr);
         } catch (NonLocalReturn nlr) {
             return handleNonLocalReturnNode.executeHandle(frame, nlr);
-        } catch (NonVirtualReturn nvr) {
-            return handleNonVirtualReturnNode.executeHandle(frame, nvr);
+// TODO: use handleNonVirtualReturnNode again
+// } catch (NonVirtualReturn nvr) {
+// return handleNonVirtualReturnNode.executeHandle(frame, nvr);
         }
     }
 
@@ -76,8 +77,9 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
             return handleLocalReturnNode.executeHandle(frame, lr);
         } catch (NonLocalReturn nlr) {
             return handleNonLocalReturnNode.executeHandle(frame, nlr);
-        } catch (NonVirtualReturn nvr) {
-            return handleNonVirtualReturnNode.executeHandle(frame, nvr);
+// TODO: use handleNonVirtualReturnNode again
+// } catch (NonVirtualReturn nvr) {
+// return handleNonVirtualReturnNode.executeHandle(frame, nvr);
         }
     }
 
