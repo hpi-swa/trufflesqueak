@@ -7,6 +7,7 @@ import java.util.List;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
@@ -79,6 +80,11 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected PrimBeCursorNode(CompiledMethodObject method) {
             super(method);
+        }
+
+        @Override
+        public final Object executeWithArguments(VirtualFrame frame, Object... rcvrAndArgs) {
+            return beCursor(rcvrAndArgs);
         }
 
         @Specialization
