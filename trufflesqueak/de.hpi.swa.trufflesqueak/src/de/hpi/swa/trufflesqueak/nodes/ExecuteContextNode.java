@@ -2,7 +2,6 @@ package de.hpi.swa.trufflesqueak.nodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags;
@@ -11,7 +10,6 @@ import com.oracle.truffle.api.nodes.LoopNode;
 
 import de.hpi.swa.trufflesqueak.exceptions.Returns.LocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
-import de.hpi.swa.trufflesqueak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
@@ -28,9 +26,9 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
     @Child private HandleLocalReturnNode handleLocalReturnNode;
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
     @Child private HandleNonVirtualReturnNode handleNonVirtualReturnNode;
+    @Child private FrameSlotReadNode contextReadNode;
     @Child private FrameSlotReadNode instructionPointerReadNode;
     @Child private FrameSlotWriteNode instructionPointerWriteNode;
-    @CompilationFinal private ContextObject context;
 
     public static ExecuteContextNode create(CompiledCodeObject code) {
         return new ExecuteContextNode(code);
@@ -43,6 +41,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
         handleLocalReturnNode = HandleLocalReturnNode.create(code);
         handleNonLocalReturnNode = HandleNonLocalReturnNode.create(code);
         handleNonVirtualReturnNode = HandleNonVirtualReturnNode.create(code);
+        contextReadNode = FrameSlotReadNode.create(code.thisContextOrMarkerSlot);
         instructionPointerReadNode = FrameSlotReadNode.create(code.instructionPointerSlot);
         instructionPointerWriteNode = FrameSlotWriteNode.create(code.instructionPointerSlot);
     }
@@ -61,7 +60,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
     }
 
     public Object executeNonVirtualized(VirtualFrame frame, ContextObject newContext) {
-        context = newContext;
+        // maybe persist newContext, so there's no need to lookup the context to update its pc.
         assert newContext.getCodeObject() == FrameAccess.getMethod(frame);
         try {
             long initialPC = newContext.getInstructionPointer();
@@ -93,11 +92,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
         try {
             while (pc >= 0) {
                 CompilerAsserts.partialEvaluationConstant(pc);
-                if (context != null) {
-                    context.setInstructionPointer(node.getSuccessorIndex());
-                } else {
-                    instructionPointerWriteNode.executeWrite(frame, (long) node.getSuccessorIndex());
-                }
+                storeInstructionPointer(frame, node);
                 if (node instanceof ConditionalJumpNode) {
                     ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
                     boolean condition = jumpNode.executeCondition(frame);
@@ -144,11 +139,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
                 }
             }
         } finally {
-            if (context != null) {
-                context.setInstructionPointer(node.getSuccessorIndex());
-            } else {
-                instructionPointerWriteNode.executeWrite(frame, (long) (node.getSuccessorIndex()));
-            }
+            storeInstructionPointer(frame, node);
             assert backJumpCounter >= 0;
             LoopNode.reportLoopCount(this, backJumpCounter);
         }
@@ -165,12 +156,17 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
                 pc = node.executeInt(frame);
                 node = bytecodeNodes[pc];
             } finally {
-                if (context != null) {
-                    context.setInstructionPointer(node.getSuccessorIndex());
-                } else {
-                    instructionPointerWriteNode.executeWrite(frame, (long) (node.getSuccessorIndex()));
-                }
+                storeInstructionPointer(frame, node);
             }
+        }
+    }
+
+    private void storeInstructionPointer(VirtualFrame frame, AbstractBytecodeNode node) {
+        Object contextOrMarker = contextReadNode.executeRead(frame);
+        if (contextOrMarker instanceof ContextObject) {
+            ((ContextObject) contextOrMarker).setInstructionPointer(node.getSuccessorIndex());
+        } else {
+            instructionPointerWriteNode.executeWrite(frame, (long) node.getSuccessorIndex());
         }
     }
 
