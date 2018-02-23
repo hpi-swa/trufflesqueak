@@ -440,6 +440,11 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
+        @Override
+        public final Object executeWithArguments(VirtualFrame frame, Object... rcvrAndArgs) {
+            return doTwoArguments(rcvrAndArgs);
+        }
+
         @Specialization
         protected Object doTwoArguments(Object[] rcvrAndArgs) {
             long numRcvrAndArgs = rcvrAndArgs.length;
