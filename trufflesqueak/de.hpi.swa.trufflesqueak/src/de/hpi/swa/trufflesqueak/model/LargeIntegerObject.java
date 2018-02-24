@@ -51,13 +51,22 @@ public class LargeIntegerObject extends SqueakObject {
     @Override
     public void atput0(long index, Object object) {
         assert index >= 0;
-        byte b;
-        if (object instanceof Long) {
-            b = ((Long) object).byteValue();
-        } else {
-            b = (byte) object;
+        if (index >= size) {
+            throw new ArrayIndexOutOfBoundsException();
         }
-        setBytesNative(byteAtPut0(integer, index, b));
+        byte[] bytes = integer.toByteArray();
+        if (index > bytes.length - 1) { // need to enlarge ByteArray
+            assert size > bytes.length : "ByteArray must be smaller than size of LargeInteger";
+            int offset = size - bytes.length;
+            byte[] largerBytes = new byte[size];
+            for (int i = 0; i < bytes.length; i++) {
+                largerBytes[i + offset] = bytes[i];
+            }
+            bytes = largerBytes;
+        }
+        byte value = object instanceof Long ? ((Long) object).byteValue() : (byte) object;
+        bytes[bytes.length - 1 - (int) index] = value;
+        setBytesNative(bytes);
     }
 
     public void setBytes(byte[] bytes) {
@@ -129,25 +138,6 @@ public class LargeIntegerObject extends SqueakObject {
 
     public BigInteger getValue() {
         return integer;
-    }
-
-    public static byte[] byteAtPut0(BigInteger receiver, long longIndex, long value) {
-        byte[] bytes = receiver.toByteArray();
-        int index = (int) longIndex;
-        int offset = bytes.length - 1 - index;
-        if (offset < 0) {
-            int newLength = bytes.length - offset;
-            byte[] largerBytes = new byte[newLength];
-            for (int i = 0; i < bytes.length; i++) {
-                largerBytes[i] = bytes[i];
-            }
-            bytes = largerBytes;
-            assert bytes.length - 1 - index == 0;
-            bytes[0] = (byte) value;
-        } else {
-            bytes[bytes.length - 1 - index] = (byte) value;
-        }
-        return bytes;
     }
 
     @TruffleBoundary
