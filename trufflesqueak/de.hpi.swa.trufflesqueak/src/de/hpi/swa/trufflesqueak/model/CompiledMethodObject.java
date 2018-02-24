@@ -101,6 +101,7 @@ public class CompiledMethodObject extends CompiledCodeObject {
 
     @Override
     public void pointersBecomeOneWay(Object[] from, Object[] to) {
+        super.pointersBecomeOneWay(from, to);
         ClassObject klass = getCompiledInClass();
         for (int i = 0; i < from.length; i++) {
             if (from[i] == klass) {

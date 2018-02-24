@@ -93,6 +93,6 @@ public abstract class BaseSqueakObject implements TruffleObject {
     }
 
     @SuppressWarnings("unused")
-    public void pointersBecomeOneWay(Object[] pointers, Object[] pointers2) {
+    public void pointersBecomeOneWay(Object[] from, Object[] to) {
     }
 }

@@ -64,4 +64,15 @@ public abstract class SqueakObject extends BaseSqueakObject {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         this.hash = hash;
     }
+
+    @Override
+    public void pointersBecomeOneWay(Object[] from, Object[] to) {
+        for (int i = 0; i < from.length; i++) {
+            if (from[i] == sqClass) {
+                Object newClass = to[i];
+                assert newClass instanceof ClassObject : "New class not a ClassObject: " + newClass;
+                setSqClass((ClassObject) newClass);
+            }
+        }
+    }
 }
