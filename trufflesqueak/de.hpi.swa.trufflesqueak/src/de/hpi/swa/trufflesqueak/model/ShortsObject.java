@@ -12,6 +12,7 @@ import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public class ShortsObject extends NativeObject {
     @CompilationFinal(dimensions = 1) private short[] shorts;
+    @CompilationFinal private static final long SHORT_MAX = (long) (Math.pow(2, Short.SIZE) - 1);
 
     public ShortsObject(SqueakImageContext image) {
         super(image);
@@ -50,6 +51,9 @@ public class ShortsObject extends NativeObject {
 
     @Override
     public void setNativeAt0(long longIndex, long value) {
+        if (value > SHORT_MAX) { // check for overflow
+            throw new IllegalArgumentException("Value to be for ShortsObject: " + value);
+        }
         shorts[(int) longIndex] = (short) value;
     }
 

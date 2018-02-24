@@ -66,7 +66,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "BitmapBugz", TEST_TYPE.PASSING,
                     "BitmapStreamTests", TEST_TYPE.IGNORE, // OOM error
                     "BitSetTest", TEST_TYPE.PASSING,
-                    "BlockClosureTest", TEST_TYPE.NOT_TERMINATING, // TODO: investigate why this causes other tests to break
+                    "BlockClosureTest", TEST_TYPE.IGNORE, // testRunSimulated does not work headless, testSourceString requires sources
                     "BlockLocalTemporariesRemovalTest", TEST_TYPE.PASSING,
                     "BMPReadWriterTest", TEST_TYPE.FAILING,
                     "BooleanTest", TEST_TYPE.PASSING,
@@ -157,7 +157,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "GradientFillStyleTest", TEST_TYPE.PASSING,
                     "HandBugs", TEST_TYPE.PASSING,
                     "HashAndEqualsTestCase", TEST_TYPE.PASSING,
-                    "HashedCollectionTest", TEST_TYPE.PASSING,
+                    "HashedCollectionTest", TEST_TYPE.FAILING,
                     "HashTesterTest", TEST_TYPE.PASSING,
                     "HeapTest", TEST_TYPE.NOT_TERMINATING,
                     "HelpBrowserTest", TEST_TYPE.NOT_TERMINATING,
@@ -346,7 +346,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "TestVMStatistics", TEST_TYPE.PASSING,
                     "TextAlignmentTest", TEST_TYPE.PASSING,
                     "TextAnchorTest", TEST_TYPE.PASSING,
-                    "TextAndTextStreamTest", TEST_TYPE.FAILING,
+                    "TextAndTextStreamTest", TEST_TYPE.PASSING,
                     "TextAttributesScanningTest", TEST_TYPE.FAILING,
                     "TextDiffBuilderTest", TEST_TYPE.PASSING,
                     "TextEditorTest", TEST_TYPE.PROCESS_SWITCHING,
@@ -398,7 +398,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "WideCharacterSetTest", TEST_TYPE.FAILING,
                     "WideStringTest", TEST_TYPE.FAILING,
                     "Win32VMTest", TEST_TYPE.PASSING,
-                    "WordArrayTest", TEST_TYPE.FAILING,
+                    "WordArrayTest", TEST_TYPE.PASSING,
                     "WorldStateTest", TEST_TYPE.NOT_TERMINATING,
                     "WriteStreamTest", TEST_TYPE.PASSING,
                     "XMLParserTest", TEST_TYPE.PASSING,

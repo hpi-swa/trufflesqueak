@@ -174,7 +174,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         public final Object executeWithArguments(VirtualFrame frame, Object... arguments) {
             try {
                 return executeWithArgumentsSpecialized(frame, arguments);
-            } catch (IndexOutOfBoundsException e) {
+            } catch (IndexOutOfBoundsException | IllegalArgumentException e) {
                 throw new PrimitiveFailed();
             }
         }
@@ -183,7 +183,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         public final Object executePrimitive(VirtualFrame frame) {
             try {
                 return executeReplace(frame);
-            } catch (IndexOutOfBoundsException e) {
+            } catch (IndexOutOfBoundsException | IllegalArgumentException e) {
                 throw new PrimitiveFailed();
             }
         }

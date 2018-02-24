@@ -12,6 +12,7 @@ import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public class WordsObject extends NativeObject {
     @CompilationFinal(dimensions = 1) private int[] ints;
+    @CompilationFinal private static final long INTEGER_MAX = (long) (Math.pow(2, Integer.SIZE) - 1);
 
     public WordsObject(SqueakImageContext image) {
         super(image);
@@ -50,6 +51,9 @@ public class WordsObject extends NativeObject {
 
     @Override
     public void setNativeAt0(long longIndex, long value) {
+        if (value > INTEGER_MAX) { // check for overflow
+            throw new IllegalArgumentException("Value to be for WordsObject: " + value);
+        }
         ints[(int) longIndex] = (int) value;
     }
 

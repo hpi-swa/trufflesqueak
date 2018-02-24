@@ -10,6 +10,7 @@ import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public class BytesObject extends NativeObject {
     @CompilationFinal(dimensions = 1) protected byte[] bytes;
+    @CompilationFinal private static final long BYTE_MAX = (long) (Math.pow(2, Byte.SIZE) - 1);
 
     public BytesObject(SqueakImageContext image) {
         super(image);
@@ -48,6 +49,9 @@ public class BytesObject extends NativeObject {
 
     @Override
     public void setNativeAt0(long longIndex, long value) {
+        if (value > BYTE_MAX) { // check for overflow
+            throw new IllegalArgumentException("Value to be for BytesObject: " + value);
+        }
         bytes[(int) longIndex] = (byte) value;
     }
 

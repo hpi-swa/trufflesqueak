@@ -118,8 +118,12 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         public abstract Object executeAtPut(VirtualFrame frame);
 
         @Specialization
-        protected char doNativeObject(final NativeObject receiver, final long idx, final char value) {
-            receiver.setNativeAt0(idx - 1, value);
+        protected char doNativeObject(final NativeObject receiver, final long index, final char value) {
+            try {
+                receiver.setNativeAt0(index - 1, value);
+            } catch (IllegalArgumentException e) {
+                throw new PrimitiveFailed();
+            }
             return value;
         }
 
@@ -128,7 +132,11 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
             if (value < 0) {
                 throw new PrimitiveFailed();
             }
-            receiver.setNativeAt0(index - 1, value);
+            try {
+                receiver.setNativeAt0(index - 1, value);
+            } catch (IllegalArgumentException e) {
+                throw new PrimitiveFailed();
+            }
             return value;
         }
 
@@ -136,10 +144,10 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         protected Object doNativeObject(final NativeObject receiver, final long idx, final LargeIntegerObject value) {
             try {
                 receiver.atput0(idx - 1, value.reduceToLong());
-                return value;
-            } catch (ArithmeticException e) {
+            } catch (IllegalArgumentException | ArithmeticException e) {
                 throw new PrimitiveFailed();
             }
+            return value;
         }
 
         @SuppressWarnings("unused")
@@ -248,7 +256,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         public final Object executeWithArguments(VirtualFrame frame, Object... arguments) {
             try {
                 return executeWithArgumentsSpecialized(frame, arguments);
-            } catch (IndexOutOfBoundsException e) {
+            } catch (IndexOutOfBoundsException | IllegalArgumentException e) {
                 throw new PrimitiveFailed();
             }
         }
@@ -257,7 +265,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         public final Object executePrimitive(VirtualFrame frame) {
             try {
                 return executeStringAtPut(frame);
-            } catch (IndexOutOfBoundsException e) {
+            } catch (IndexOutOfBoundsException | IllegalArgumentException e) {
                 throw new PrimitiveFailed();
             }
         }
