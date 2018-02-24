@@ -51,29 +51,30 @@ suite = {
         },
     },
 
-    "distributions": {
-        "TRUFFLESQUEAK": {
-            "path": "trufflesqueak.jar",
-            "dependencies": [
-                "de.hpi.swa.trufflesqueak",
-            ],
-            "distDependencies": [
-                "truffle:TRUFFLE_API",
-                "truffle:TRUFFLE_DSL_PROCESSOR",
-                "sdk:LAUNCHER_COMMON",
-            ],
-            "exclude": ["mx:JUNIT"],
-            "sourcesPath": "trufflesqueak.src.zip",
-        },
+    # Distributions currently not needed
+    # "distributions": {
+    #     "TRUFFLESQUEAK": {
+    #         "path": "trufflesqueak.jar",
+    #         "dependencies": [
+    #             "de.hpi.swa.trufflesqueak",
+    #         ],
+    #         "distDependencies": [
+    #             "truffle:TRUFFLE_API",
+    #             "truffle:TRUFFLE_DSL_PROCESSOR",
+    #             "sdk:LAUNCHER_COMMON",
+    #         ],
+    #         "exclude": ["mx:JUNIT"],
+    #         "sourcesPath": "trufflesqueak.src.zip",
+    #     },
 
-        "TRUFFLESQUEAK_TEST": {
-            "path": "trufflesqueak_test.jar",
-            "javaCompliance": "1.8",
-            "dependencies": [
-                "de.hpi.swa.trufflesqueak.test",
-            ],
-            "exclude": ["mx:JUNIT"],
-            "distDependencies": ["TRUFFLESQUEAK"],
-        },
-    },
+    #     "TRUFFLESQUEAK_TEST": {
+    #         "path": "trufflesqueak_test.jar",
+    #         "javaCompliance": "1.8",
+    #         "dependencies": [
+    #             "de.hpi.swa.trufflesqueak.test",
+    #         ],
+    #         "exclude": ["mx:JUNIT"],
+    #         "distDependencies": ["TRUFFLESQUEAK"],
+    #     },
+    # },
 }
