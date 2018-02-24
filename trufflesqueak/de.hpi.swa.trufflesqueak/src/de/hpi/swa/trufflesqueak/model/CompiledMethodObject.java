@@ -58,6 +58,22 @@ public class CompiledMethodObject extends CompiledCodeObject {
         return null;
     }
 
+    public void setCompiledInClass(ClassObject newClass) {
+        if (literals.length == 0) {
+            return;
+        }
+        Object baseSqueakObject = literals[literals.length - 1];
+        if (baseSqueakObject instanceof PointersObject) {
+            if (((PointersObject) baseSqueakObject).size() == 2) {
+                ((PointersObject) baseSqueakObject).atput0(1, newClass);
+                return;
+            }
+        }
+        if (baseSqueakObject instanceof ClassObject) {
+            literals[literals.length - 1] = newClass;
+        }
+    }
+
     @Override
     public CompiledMethodObject getMethod() {
         return this;
@@ -81,5 +97,18 @@ public class CompiledMethodObject extends CompiledCodeObject {
     @Override
     public final int getOffset() {
         return 0; // methods always start at the beginning
+    }
+
+    @Override
+    public void pointersBecomeOneWay(Object[] from, Object[] to) {
+        ClassObject klass = getCompiledInClass();
+        for (int i = 0; i < from.length; i++) {
+            if (from[i] == klass) {
+                Object newClass = to[i];
+                assert newClass instanceof ClassObject : "New class not a ClassObject: " + newClass;
+                setCompiledInClass((ClassObject) newClass);
+                // TODO: flush method caches
+            }
+        }
     }
 }
