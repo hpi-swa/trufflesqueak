@@ -140,7 +140,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "FileContentsBrowserTest", TEST_TYPE.FAILING,
                     "FileDirectoryTest", TEST_TYPE.FAILING,
                     "FileList2ModalDialogsTest", TEST_TYPE.FAILING,
-                    "FileListTest", TEST_TYPE.PASSING,
+                    "FileListTest", TEST_TYPE.IGNORE,
                     "FileStreamTest", TEST_TYPE.FAILING,
                     "FileUrlTest", TEST_TYPE.PASSING,
                     "FlapTabTests", TEST_TYPE.PROCESS_SWITCHING,
