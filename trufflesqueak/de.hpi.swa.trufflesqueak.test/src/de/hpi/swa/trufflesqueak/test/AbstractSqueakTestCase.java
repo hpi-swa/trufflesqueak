@@ -1,11 +1,6 @@
 package de.hpi.swa.trufflesqueak.test;
 
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import static org.junit.Assert.assertTrue;
 
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -22,111 +17,21 @@ import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.FrameMarker;
-import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
-import junit.framework.TestCase;
 
-@RunWith(Parameterized.class)
-public abstract class AbstractSqueakTestCase extends TestCase {
+public abstract class AbstractSqueakTestCase {
     protected static SqueakImageContext image;
 
-    @Parameters(name = "{index}: virtualizationEnabled={0}")
-    public static Boolean[] data() {
-        return new Boolean[]{true, false};
-    }
-
-    @Parameter public static boolean virtualizationEnabled;
-
-    public AbstractSqueakTestCase() {
-        super();
-    }
-
-    public AbstractSqueakTestCase(String name) {
-        super(name);
-    }
-
-    private static class DummyFormatChunk extends SqueakImageChunk {
-
-        public DummyFormatChunk(int format) {
-            super(null, null, 0, format, 0, 0, 0);
-        }
-
-        @Override
-        public Object[] getPointers() {
-            Object[] pointers = new Object[6];
-            pointers[2] = (long) format; // FORMAT_INDEX
-            return pointers;
-        }
-    }
-
-    private static class DummyPointersChunk extends SqueakImageChunk {
-        private Object[] dummyPointers;
-
-        public DummyPointersChunk(Object[] pointers) {
-            super(null, null, 0, 0, 0, 0, 0);
-            this.dummyPointers = pointers;
-        }
-
-        @Override
-        public Object[] getPointers() {
-            return dummyPointers;
-        }
-    }
-
-    @BeforeClass
-    public static void setUpSqueakImageContext() {
-        image = new SqueakImageContext(null, null, null, null);
-        image.plus.setBytes("plus".getBytes());
-        image.minus.setBytes("minus".getBytes());
-        image.lt.setBytes("lt".getBytes());
-        image.gt.setBytes("gt".getBytes());
-        image.le.setBytes("le".getBytes());
-        image.ge.setBytes("ge".getBytes());
-        image.eq.setBytes("eq".getBytes());
-        image.ne.setBytes("ne".getBytes());
-        image.times.setBytes("times".getBytes());
-        image.divide.setBytes("divide".getBytes());
-        image.modulo.setBytes("modulo".getBytes());
-        image.pointAt.setBytes("pointAt".getBytes());
-        image.bitShift.setBytes("bitShift".getBytes());
-        image.floorDivide.setBytes("floorDivide".getBytes());
-        image.bitAnd.setBytes("bitAnd".getBytes());
-        image.bitOr.setBytes("bitOr".getBytes());
-        image.at.setBytes("at".getBytes());
-        image.atput.setBytes("atput".getBytes());
-        image.size_.setBytes("size".getBytes());
-        image.next.setBytes("next".getBytes());
-        image.nextPut.setBytes("nextPut".getBytes());
-        image.atEnd.setBytes("atEnd".getBytes());
-        image.equivalent.setBytes("equivalent".getBytes());
-        image.klass.setBytes("klass".getBytes());
-        image.blockCopy.setBytes("blockCopy".getBytes());
-        image.value_.setBytes("value".getBytes());
-        image.valueWithArg.setBytes("valueWithArg".getBytes());
-        image.do_.setBytes("do".getBytes());
-        image.new_.setBytes("new".getBytes());
-        image.newWithArg.setBytes("newWithArg".getBytes());
-        image.x.setBytes("x".getBytes());
-        image.y.setBytes("y".getBytes());
-        image.specialObjectsArray.fillin(new DummyPointersChunk(new Object[100]));
-        image.compiledMethodClass.fillin(new DummyFormatChunk(100)); // sets instanceSize to 100
-    }
-
-    @Before
-    public void setAlwaysNonVirtualizedFlag() {
-        CompiledCodeObject.alwaysNonVirtualized = !virtualizationEnabled;
-    }
-
-    public CompiledCodeObject makeMethod(byte[] bytes) {
+    protected CompiledCodeObject makeMethod(byte[] bytes) {
         // Always add three literals...
         return makeMethod(bytes, new Object[]{68419598L, null, null});
     }
 
-    public static CompiledCodeObject makeMethod(byte[] bytes, Object[] literals) {
+    protected static CompiledCodeObject makeMethod(byte[] bytes, Object[] literals) {
         CompiledMethodObject code = new CompiledMethodObject(image, bytes, literals);
         return code;
     }
 
-    public static CompiledCodeObject makeMethod(Object[] literals, int... intbytes) {
+    protected static CompiledCodeObject makeMethod(Object[] literals, int... intbytes) {
         byte[] bytes = new byte[intbytes.length];
         for (int i = 0; i < intbytes.length; i++) {
             bytes[i] = (byte) intbytes[i];
@@ -134,11 +39,11 @@ public abstract class AbstractSqueakTestCase extends TestCase {
         return makeMethod(bytes, literals);
     }
 
-    public CompiledCodeObject makeMethod(int... intbytes) {
+    protected CompiledCodeObject makeMethod(int... intbytes) {
         return makeMethod(new Object[]{makeHeader(4, 5, 14, false, true)}, intbytes);
     }
 
-    public static Object runMethod(CompiledCodeObject code, Object receiver, Object... arguments) {
+    protected static Object runMethod(CompiledCodeObject code, Object receiver, Object... arguments) {
         VirtualFrame frame = createTestFrame(code);
         Object result = null;
         try {
@@ -169,11 +74,11 @@ public abstract class AbstractSqueakTestCase extends TestCase {
         return ExecuteTopLevelContextNode.create(null, testContext);
     }
 
-    public Object runMethod(Object receiver, int... intbytes) {
+    protected Object runMethod(Object receiver, int... intbytes) {
         return runMethod(receiver, new BaseSqueakObject[0], intbytes);
     }
 
-    public Object runMethod(Object receiver, Object[] arguments, int... intbytes) {
+    protected Object runMethod(Object receiver, Object[] arguments, int... intbytes) {
         CompiledCodeObject cm = makeMethod(intbytes);
         return runMethod(cm, receiver, arguments);
     }
@@ -191,12 +96,12 @@ public abstract class AbstractSqueakTestCase extends TestCase {
         return runMethod(cm, rcvr, arguments);
     }
 
-    public static VirtualFrame createTestFrame(CompiledCodeObject code) {
+    protected static VirtualFrame createTestFrame(CompiledCodeObject code) {
         Object[] arguments = FrameAccess.newWith(code, code.image.nil, null, new Object[0]);
         return Truffle.getRuntime().createVirtualFrame(arguments, code.getFrameDescriptor());
     }
 
-    public static long makeHeader(int numArgs, int numTemps, int numLiterals, boolean hasPrimitive, boolean needsLargeFrame) {
+    protected static long makeHeader(int numArgs, int numTemps, int numLiterals, boolean hasPrimitive, boolean needsLargeFrame) {
         long header = 0;
         header += (numArgs & 0x0F) << 24;
         header += (numTemps & 0x3F) << 18;

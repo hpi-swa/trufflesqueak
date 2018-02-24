@@ -1,11 +1,48 @@
 package de.hpi.swa.trufflesqueak.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+
 import org.junit.Test;
 
 import de.hpi.swa.trufflesqueak.instrumentation.CompiledCodeObjectPrinter;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.DupNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.PopNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushConstantNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodes.ReturnReceiverNode;
+import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
+import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
-public class SqueakSourceTest extends AbstractSqueakTestCase {
+public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImage {
+    @Test
+    public void testIfNil() {
+        // (1 ifNil: [true]) class
+        // pushConstant: 1, dup, pushConstant: nil, send: ==, jumpFalse: 24, pop,
+        // pushConstant: true, send: class, pop, returnSelf
+        int[] bytes = {0x76, 0x88, 0x73, 0xc6, 0x99, 0x87, 0x71, 0xc7, 0x87, 0x78};
+        CompiledCodeObject code = makeMethod(bytes);
+        AbstractBytecodeNode[] bytecodeNodes = new SqueakBytecodeDecoder(code).decode();
+        assertEquals(bytes.length, bytecodeNodes.length);
+        assertSame(PushConstantNode.class, bytecodeNodes[0].getClass());
+        assertSame(DupNode.class, bytecodeNodes[1].getClass());
+        assertSame(PushConstantNode.class, bytecodeNodes[2].getClass());
+
+        assertEquals("send: " + image.equivalent, bytecodeNodes[3].toString());
+
+        assertSame(ConditionalJumpNode.class, bytecodeNodes[4].getClass());
+        assertSame(PopNode.class, bytecodeNodes[5].getClass());
+        assertSame(PushConstantNode.class, bytecodeNodes[6].getClass());
+
+        assertEquals("send: " + image.klass, bytecodeNodes[7].toString());
+
+        assertSame(PopNode.class, bytecodeNodes[8].getClass());
+        assertTrue(ReturnReceiverNode.class.isAssignableFrom(bytecodeNodes[9].getClass()));
+    }
+
     @Test
     public void testSource() {
         Object[] literals = new Object[]{14548994L, image.nil, image.nil}; // header with numTemp=55
@@ -142,5 +179,37 @@ public class SqueakSourceTest extends AbstractSqueakTestCase {
             "81 <E1> send: 42\n" +
             "82 <F2> send: 63", source);
         //@formatter:on
+    }
+
+    @Test
+    public void testFloatDecoding() {
+        SqueakImageChunk chunk = newFloatChunk();
+        chunk.data().add(0);
+        chunk.data().add(1072693248);
+        assertEquals(1.0, chunk.asObject());
+
+        chunk = newFloatChunk();
+        chunk.data().add((int) 2482401462L);
+        chunk.data().add(1065322751);
+        assertEquals(0.007699011184197404, chunk.asObject());
+
+        chunk = newFloatChunk();
+        chunk.data().add(876402988);
+        chunk.data().add(1075010976);
+        assertEquals(4.841431442464721, chunk.asObject());
+    }
+
+    private static SqueakImageChunk newFloatChunk() {
+        SqueakImageChunk chunk = new SqueakImageChunk(
+                        null,
+                        image,
+                        2, // 2 words
+                        10, // float format, 32-bit words without padding word
+                        34, // classid of BoxedFloat64
+                        3833906, // identityHash for 1.0
+                        0 // position
+        );
+        chunk.setSqClass(image.floatClass);
+        return chunk;
     }
 }

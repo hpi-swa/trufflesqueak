@@ -1,6 +1,9 @@
 package de.hpi.swa.trufflesqueak.test;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,7 +30,7 @@ import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.ExecuteTopLevelContextNode;
 
-public class SqueakBytecodeTest extends AbstractSqueakTestCase {
+public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
     @Rule public ExpectedException exceptions = ExpectedException.none();
 
     @Test

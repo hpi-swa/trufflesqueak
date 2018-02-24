@@ -114,7 +114,7 @@ def _trufflesqueak_gate_runner(args, tasks):
     jacocoArgs = mx_gate.get_jacoco_agent_args()
     if jacocoArgs:
         unittest_args.extend(jacocoArgs)
-    unittest_args.append('%s.test' % PACKAGE_NAME)
+    unittest_args.extend(['--suite', 'trufflesqueak'])
     with mx_gate.Task("TestTruffleSqueak", tasks, tags=['trufflesqueak']) as t:
         if t:
             mx_unittest.unittest(unittest_args)
