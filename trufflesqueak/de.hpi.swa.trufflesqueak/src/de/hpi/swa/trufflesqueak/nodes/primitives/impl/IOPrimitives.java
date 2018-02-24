@@ -170,6 +170,26 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
+        @Override
+        public final Object executeWithArguments(VirtualFrame frame, Object... arguments) {
+            try {
+                return executeWithArgumentsSpecialized(frame, arguments);
+            } catch (IndexOutOfBoundsException e) {
+                throw new PrimitiveFailed();
+            }
+        }
+
+        @Override
+        public final Object executePrimitive(VirtualFrame frame) {
+            try {
+                return executeReplace(frame);
+            } catch (IndexOutOfBoundsException e) {
+                throw new PrimitiveFailed();
+            }
+        }
+
+        public abstract Object executeReplace(VirtualFrame frame);
+
         @Specialization
         protected Object replace(LargeIntegerObject rcvr, long start, long stop, LargeIntegerObject repl, long replStart) {
             return replaceInLarge(rcvr, start, stop, repl.getBytes(), replStart);
