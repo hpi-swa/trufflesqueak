@@ -75,8 +75,10 @@ public class LargeIntegerObject extends SqueakObject {
 
     private void setBytesNative(byte[] bigEndianBytes) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        size = bigEndianBytes.length;
-        if (size == 0) {
+        if (size < 0) {
+            size = bigEndianBytes.length;
+        }
+        if (bigEndianBytes.length == 0) {
             integer = BigInteger.valueOf(0);
         } else {
             integer = new BigInteger(bigEndianBytes).and(BigInteger.valueOf(1).shiftLeft(bigEndianBytes.length * 8).subtract(BigInteger.valueOf(1)));
