@@ -20,8 +20,7 @@ public class CompiledBlockObject extends CompiledCodeObject {
         this.offset = bytecodeOffset;
         Object[] outerLiterals = outerMethod.getLiterals();
         outerLiterals = Arrays.copyOf(outerLiterals, outerLiterals.length - 1);
-        long baseHdr = ((numArgs & 0xF) << 24) | ((numCopied & 0x3F) << 18);
-        baseHdr += 0x20000; // FIXME: always using large frame for blocks (incorrect: code.needsLargeFrame ? 0x20000 : 0;)
+        long baseHdr = makeHeader(numArgs, numCopied, outerLiterals.length, false, true); // FIXME: always using large frame for blocks (incorrect: code.needsLargeFrame ? 0x20000 : 0;)
         outerLiterals[0] = baseHdr; // replace header
         outerLiterals[outerLiterals.length - 1] = outerMethod; // last literal is back pointer to method
         this.literals = outerLiterals;

@@ -357,4 +357,14 @@ public abstract class CompiledCodeObject extends SqueakObject {
     public boolean isDoesNotUnderstand() {
         return getCompiledInSelector() == image.doesNotUnderstand;
     }
+
+    public static long makeHeader(int numArgs, int numTemps, int numLiterals, boolean hasPrimitive, boolean needsLargeFrame) {
+        long header = 0;
+        header += (numArgs & 0x0F) << 24;
+        header += (numTemps & 0x3F) << 18;
+        header += numLiterals & 0x7FFF;
+        header += hasPrimitive ? 65536 : 0;
+        header += needsLargeFrame ? 0x20000 : 0;
+        return header;
+    }
 }

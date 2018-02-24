@@ -39,6 +39,10 @@ public abstract class AbstractSqueakTestCase {
         return makeMethod(bytes, literals);
     }
 
+    protected static long makeHeader(int numArgs, int numTemps, int numLiterals, boolean hasPrimitive, boolean needsLargeFrame) { // shortcut
+        return CompiledCodeObject.makeHeader(numArgs, numTemps, numLiterals, hasPrimitive, needsLargeFrame);
+    }
+
     protected CompiledCodeObject makeMethod(int... intbytes) {
         return makeMethod(new Object[]{makeHeader(4, 5, 14, false, true)}, intbytes);
     }
@@ -99,15 +103,5 @@ public abstract class AbstractSqueakTestCase {
     protected static VirtualFrame createTestFrame(CompiledCodeObject code) {
         Object[] arguments = FrameAccess.newWith(code, code.image.nil, null, new Object[0]);
         return Truffle.getRuntime().createVirtualFrame(arguments, code.getFrameDescriptor());
-    }
-
-    protected static long makeHeader(int numArgs, int numTemps, int numLiterals, boolean hasPrimitive, boolean needsLargeFrame) {
-        long header = 0;
-        header += (numArgs & 0x0F) << 24;
-        header += (numTemps & 0x3F) << 18;
-        header += numLiterals & 0x7FFF;
-        header += hasPrimitive ? 65536 : 0;
-        header += needsLargeFrame ? 0x20000 : 0;
-        return header;
     }
 }
