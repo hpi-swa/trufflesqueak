@@ -28,7 +28,7 @@ public abstract class GetOrCreateContextNode extends AbstractNodeWithCode {
     }
 
     public final ContextObject executeGet(Frame frame) {
-        return executeGet(frame, false);
+        return executeGet(frame, true);  // TODO: only force context when necessary
     }
 
     public abstract ContextObject executeGet(Frame frame, boolean forceContext);
@@ -43,7 +43,7 @@ public abstract class GetOrCreateContextNode extends AbstractNodeWithCode {
         if (contextOrMarker instanceof ContextObject) {
             return (ContextObject) contextOrMarker;
         } else {
-            return materialize(frame, false);
+            return materialize(frame, true); // TODO: only force context when necessary
         }
     }
 
@@ -73,6 +73,7 @@ public abstract class GetOrCreateContextNode extends AbstractNodeWithCode {
             method.invalidateCanBeVirtualizedAssumption();
             frame.setObject(method.thisContextOrMarkerSlot, context);
         }
+        context.getSender(); // forces sender chain to be materialized as well
         return context;
     }
 

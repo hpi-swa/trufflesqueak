@@ -19,6 +19,24 @@ public final class Returns {
         }
     }
 
+    public static class FreshReturn extends ControlFlowException {
+        private static final long serialVersionUID = 1L;
+        @CompilationFinal protected final AbstractReturn returnValue;
+
+        public FreshReturn(AbstractReturn result) {
+            returnValue = result;
+        }
+
+        public AbstractReturn getReturnException() {
+            return returnValue;
+        }
+
+        @Override
+        public String toString() {
+            return "Fresh (value: " + returnValue + ")";
+        }
+    }
+
     public static class LocalReturn extends AbstractReturn {
         private static final long serialVersionUID = 1L;
 

@@ -7,6 +7,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags.StatementTag;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.exceptions.Returns.FreshReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.LocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -53,7 +54,7 @@ public final class MiscellaneousBytecodes {
         public void executeVoid(VirtualFrame frame) {
             CompilerAsserts.compilationConstant(index);
             try {
-                throw new LocalReturn(primitiveNode.executePrimitive(frame));
+                throw new FreshReturn(new LocalReturn(primitiveNode.executePrimitive(frame)));
             } catch (UnsupportedSpecializationException | PrimitiveFailed e) {
             }
         }

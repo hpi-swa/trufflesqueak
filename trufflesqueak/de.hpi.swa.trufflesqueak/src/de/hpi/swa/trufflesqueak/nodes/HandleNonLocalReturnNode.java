@@ -58,10 +58,9 @@ public abstract class HandleNonLocalReturnNode extends AbstractNodeWithCode {
         } else {
             terminateNode.executeTerminate(frame);
             if (nlr.getTargetContext().getFrameMarker() == context.getFrameMarker()) {
-                return nlr.getReturnValue();
-            } else {
-                throw nlr;
+                nlr.setArrivedAtTargetContext();
             }
+            throw nlr;
         }
     }
 }

@@ -8,6 +8,7 @@ import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.LoopNode;
 
+import de.hpi.swa.trufflesqueak.exceptions.Returns.FreshReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.LocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
@@ -18,6 +19,7 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNod
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotWriteNode;
+import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
@@ -29,6 +31,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
     @Child private FrameSlotReadNode contextReadNode;
     @Child private FrameSlotReadNode instructionPointerReadNode;
     @Child private FrameSlotWriteNode instructionPointerWriteNode;
+    @Child private PushStackNode pushStackNode;
 
     public static ExecuteContextNode create(CompiledCodeObject code) {
         return new ExecuteContextNode(code);
@@ -44,6 +47,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
         contextReadNode = FrameSlotReadNode.create(code.thisContextOrMarkerSlot);
         instructionPointerReadNode = FrameSlotReadNode.create(code.instructionPointerSlot);
         instructionPointerWriteNode = FrameSlotWriteNode.create(code.instructionPointerSlot);
+        pushStackNode = PushStackNode.create(code);
     }
 
     public Object executeVirtualized(VirtualFrame frame) {
@@ -135,13 +139,25 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
                     node = bytecodeNodes[pc];
                     continue;
                 } else {
-                    pc = node.executeInt(frame);
+                    try {
+                        pc = node.executeInt(frame);
+                    } catch (FreshReturn fr) {
+                        throw fr.getReturnException();
+                    } catch (LocalReturn lr) {
+                        pushStackNode.executeWrite(frame, lr.getReturnValue());
+                    } catch (NonLocalReturn nlr) {
+                        if (nlr.hasArrivedAtTargetContext()) {
+                            pushStackNode.executeWrite(frame, nlr.getReturnValue());
+                            pc = node.getSuccessorIndex();
+                        } else {
+                            throw nlr;
+                        }
+                    }
                     node = bytecodeNodes[pc];
                     continue;
                 }
             }
         } finally {
-            storeInstructionPointer(frame, node);
             assert backJumpCounter >= 0;
             LoopNode.reportLoopCount(this, backJumpCounter);
         }
@@ -154,12 +170,22 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
         int pc = (int) initialPC;
         AbstractBytecodeNode node = bytecodeNodes[pc];
         while (pc >= 0) {
+            storeInstructionPointer(frame, node);
             try {
                 pc = node.executeInt(frame);
-                node = bytecodeNodes[pc];
-            } finally {
-                storeInstructionPointer(frame, node);
+            } catch (FreshReturn fr) {
+                throw fr.getReturnException();
+            } catch (LocalReturn lr) {
+                pushStackNode.executeWrite(frame, lr.getReturnValue());
+            } catch (NonLocalReturn nlr) {
+                if (nlr.hasArrivedAtTargetContext()) {
+                    pushStackNode.executeWrite(frame, nlr.getReturnValue());
+                    pc = node.getSuccessorIndex();
+                } else {
+                    throw nlr;
+                }
             }
+            node = bytecodeNodes[pc];
         }
     }
 

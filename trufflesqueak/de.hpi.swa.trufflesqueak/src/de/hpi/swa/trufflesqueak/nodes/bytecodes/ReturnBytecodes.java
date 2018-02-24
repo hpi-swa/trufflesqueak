@@ -4,6 +4,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
+import de.hpi.swa.trufflesqueak.exceptions.Returns.FreshReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.LocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
@@ -42,7 +43,7 @@ public final class ReturnBytecodes {
 
         @Specialization(guards = {"!hasClosure(frame)", "isVirtualized(frame) || !isDirty(frame)"})
         protected Object executeLocalReturn(VirtualFrame frame) {
-            throw new LocalReturn(getReturnValue(frame));
+            throw new FreshReturn(new LocalReturn(getReturnValue(frame)));
         }
 
         @Specialization(guards = {"hasClosure(frame) || !isVirtualized(frame)", "hasClosure(frame) || isDirty(frame)"})
@@ -54,7 +55,7 @@ public final class ReturnBytecodes {
             } else {
                 outerContext = (ContextObject) readContextNode.executeRead(frame);
             }
-            throw new NonLocalReturn(getReturnValue(frame), outerContext);
+            throw new FreshReturn(new NonLocalReturn(getReturnValue(frame), outerContext));
         }
 
         protected Object getReturnValue(@SuppressWarnings("unused") VirtualFrame frame) {
