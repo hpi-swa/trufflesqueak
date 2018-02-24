@@ -52,7 +52,7 @@ public class ShortsObject extends NativeObject {
     @Override
     public void setNativeAt0(long longIndex, long value) {
         if (value > SHORT_MAX) { // check for overflow
-            throw new IllegalArgumentException("Value to be for ShortsObject: " + value);
+            throw new IllegalArgumentException("Overflow value for ShortsObject: " + value);
         }
         shorts[(int) longIndex] = (short) value;
     }
