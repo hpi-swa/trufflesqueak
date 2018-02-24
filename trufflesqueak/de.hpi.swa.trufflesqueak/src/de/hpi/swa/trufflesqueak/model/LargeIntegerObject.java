@@ -187,7 +187,7 @@ public class LargeIntegerObject extends SqueakObject {
     }
 
     @TruffleBoundary
-    public final long reduceToLong() {
+    public final long reduceToLong() throws ArithmeticException {
         return integer.longValueExact() & 0xffffffffffffffffL;
     }
 

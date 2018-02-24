@@ -407,7 +407,12 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                 if (value instanceof Long) {
                     longValue = (long) value;
                 } else if (value instanceof LargeIntegerObject) {
-                    longValue = ((LargeIntegerObject) value).reduceToLong();
+                    try {
+                        longValue = ((LargeIntegerObject) value).reduceToLong();
+                    } catch (ArithmeticException e) {
+                        code.image.getError().println("Letting primitive 170 fail: " + e.toString());
+                        throw new PrimitiveFailed();
+                    }
                 } else {
                     throw new PrimitiveFailed();
                 }

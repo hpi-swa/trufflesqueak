@@ -101,7 +101,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         public final Object executeWithArguments(VirtualFrame frame, Object... arguments) {
             try {
                 return executeWithArgumentsSpecialized(frame, arguments);
-            } catch (IndexOutOfBoundsException e) {
+            } catch (IndexOutOfBoundsException | IllegalArgumentException e) {
                 throw new PrimitiveFailed();
             }
         }
@@ -110,7 +110,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         public final Object executePrimitive(VirtualFrame frame) {
             try {
                 return executeAtPut(frame);
-            } catch (IndexOutOfBoundsException e) {
+            } catch (IndexOutOfBoundsException | IllegalArgumentException e) {
                 throw new PrimitiveFailed();
             }
         }
