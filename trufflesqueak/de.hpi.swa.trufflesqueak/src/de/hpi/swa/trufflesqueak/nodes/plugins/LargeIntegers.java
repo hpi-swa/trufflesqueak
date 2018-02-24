@@ -244,13 +244,15 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"arg >= 0"})
-        protected final static long doLong(final long receiver, final long arg) {
-            return receiver << arg;
+        protected final Object doLong(final long receiver, final long arg) {
+            // Always use BigInteger as its hard to detect if long shift causes an overflow (e.g. 58 << 58).
+            return doLargeInteger(asLargeInteger(receiver), arg);
         }
 
         @Specialization(guards = {"arg < 0"})
-        protected final static long doLongNegative(final long receiver, final long arg) {
-            return receiver >> -arg;
+        protected final Object doLongNegative(final long receiver, final long arg) {
+            // Always use BigInteger as its hard to detect if long shift causes an overflow (e.g. 58 << 58).
+            return doLargeIntegerNegative(asLargeInteger(receiver), arg);
         }
 
         @Specialization(guards = {"arg >= 0"})
