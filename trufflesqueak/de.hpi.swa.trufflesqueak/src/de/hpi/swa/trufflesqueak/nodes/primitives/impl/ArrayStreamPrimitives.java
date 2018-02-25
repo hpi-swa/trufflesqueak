@@ -129,9 +129,6 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected long doNativeObject(final NativeObject receiver, final long index, final long value) {
-            if (value < 0) {
-                throw new PrimitiveFailed();
-            }
             try {
                 receiver.setNativeAt0(index - 1, value);
             } catch (IllegalArgumentException e) {

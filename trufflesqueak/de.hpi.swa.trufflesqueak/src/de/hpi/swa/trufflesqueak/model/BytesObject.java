@@ -49,8 +49,8 @@ public class BytesObject extends NativeObject {
 
     @Override
     public void setNativeAt0(long longIndex, long value) {
-        if (value > BYTE_MAX) { // check for overflow
-            throw new IllegalArgumentException("Overflow value for BytesObject: " + value);
+        if (value < 0 || value > BYTE_MAX) { // check for overflow
+            throw new IllegalArgumentException("Illegal value for BytesObject: " + value);
         }
         bytes[(int) longIndex] = (byte) value;
     }

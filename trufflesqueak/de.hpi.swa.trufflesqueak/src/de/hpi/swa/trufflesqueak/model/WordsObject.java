@@ -51,8 +51,8 @@ public class WordsObject extends NativeObject {
 
     @Override
     public void setNativeAt0(long longIndex, long value) {
-        if (value > INTEGER_MAX) { // check for overflow
-            throw new IllegalArgumentException("Overflow value for WordsObject: " + value);
+        if (value < 0 || value > INTEGER_MAX) { // check for overflow
+            throw new IllegalArgumentException("Illegal value for WordsObject: " + value);
         }
         ints[(int) longIndex] = (int) value;
     }
