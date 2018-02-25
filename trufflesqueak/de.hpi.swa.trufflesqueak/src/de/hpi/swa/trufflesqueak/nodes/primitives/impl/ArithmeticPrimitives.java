@@ -2,6 +2,7 @@ package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
 import java.util.List;
 
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -332,49 +333,59 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization
+        protected boolean isZero(double value) {
+            return value == 0;
+        }
+
+        @Specialization(guards = "b != 0")
         public final static long doLong(final long a, final long b) {
             return a / b;
         }
 
-        @Specialization
+        @Specialization(guards = "!b.isZero()")
         protected final static Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
             return a.divide(b);
         }
 
-        @Specialization
+        @Specialization(guards = "!isZero(b)")
         protected final static double doDouble(final double a, final double b) {
             return a / b;
         }
 
-        @Specialization
-        protected final Object doLargeInteger(final LargeIntegerObject a, final long b) {
+        @Specialization(guards = "b != 0")
+        protected final Object doLargeIntegerLong(final LargeIntegerObject a, final long b) {
             return doLargeInteger(a, asLargeInteger(b));
         }
 
-        @Specialization
-        protected final static double doLargeInteger(final LargeIntegerObject a, final double b) {
+        @Specialization(guards = "!isZero(b)")
+        protected final static double doLargeIntegerDouble(final LargeIntegerObject a, final double b) {
             return doDouble(a.doubleValue(), b);
         }
 
-        @Specialization
-        protected final Object doLong(final long a, final LargeIntegerObject b) {
+        @Specialization(guards = "!b.isZero()")
+        protected final Object doLongLargeInteger(final long a, final LargeIntegerObject b) {
             return doLargeInteger(asLargeInteger(a), b);
         }
 
-        @Specialization
-        protected final static double doLong(final long a, final double b) {
-            return a / b;
+        @Specialization(guards = "!isZero(b)")
+        protected final static double doLongDouble(final long a, final double b) {
+            return doDouble(a, b);
         }
 
-        @Specialization
-        protected final static double doDouble(final double a, final long b) {
-            return a / b;
+        @Specialization(guards = "b != 0")
+        protected final static double doDoubleLong(final double a, final long b) {
+            return doDouble(a, b);
         }
 
-        @Specialization
-        protected final static double doDouble(final double a, final LargeIntegerObject b) {
+        @Specialization(guards = "!b.isZero()")
+        protected final static double doDoubleLargeInteger(final double a, final LargeIntegerObject b) {
             return doDouble(a, b.doubleValue());
+        }
+
+        @SuppressWarnings("unused")
+        @Fallback
+        public final static long doZeroDivide(final Object a, final Object b) {
+            throw new PrimitiveFailed();
         }
     }
 

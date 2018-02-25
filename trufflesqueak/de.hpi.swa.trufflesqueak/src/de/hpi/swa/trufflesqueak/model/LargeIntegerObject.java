@@ -263,6 +263,11 @@ public class LargeIntegerObject extends SqueakObject {
         return reduceIfPossible(integer.mod(b.integer.abs()));
     }
 
+    @TruffleBoundary
+    public boolean isZero() {
+        return integer.compareTo(BigInteger.ZERO) == 0;
+    }
+
     /*
      * Bit Operations
      */
