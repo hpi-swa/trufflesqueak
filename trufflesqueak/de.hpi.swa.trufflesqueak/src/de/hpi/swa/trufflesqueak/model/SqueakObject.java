@@ -69,9 +69,10 @@ public abstract class SqueakObject extends BaseSqueakObject {
     public void pointersBecomeOneWay(Object[] from, Object[] to) {
         for (int i = 0; i < from.length; i++) {
             if (from[i] == sqClass) {
-                Object newClass = to[i];
-                assert newClass instanceof ClassObject : "New class not a ClassObject: " + newClass;
-                setSqClass((ClassObject) newClass);
+                ClassObject oldClass = getSqClass();
+                ClassObject newClass = (ClassObject) to[i]; // must be a ClassObject
+                setSqClass(newClass);
+                newClass.setSqueakHash(oldClass.squeakHash());
             }
         }
     }

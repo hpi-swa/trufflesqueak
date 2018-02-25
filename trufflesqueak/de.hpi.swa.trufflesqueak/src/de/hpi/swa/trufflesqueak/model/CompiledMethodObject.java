@@ -105,9 +105,10 @@ public class CompiledMethodObject extends CompiledCodeObject {
         ClassObject klass = getCompiledInClass();
         for (int i = 0; i < from.length; i++) {
             if (from[i] == klass) {
-                Object newClass = to[i];
-                assert newClass instanceof ClassObject : "New class not a ClassObject: " + newClass;
-                setCompiledInClass((ClassObject) newClass);
+                ClassObject oldClass = getCompiledInClass();
+                ClassObject newClass = (ClassObject) to[i];  // must be a ClassObject
+                setCompiledInClass(newClass);
+                newClass.setSqueakHash(oldClass.squeakHash());
                 // TODO: flush method caches
             }
         }

@@ -2,6 +2,7 @@ package de.hpi.swa.trufflesqueak.model;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
@@ -60,25 +61,21 @@ public abstract class AbstractPointersObject extends SqueakObject {
 
     @Override
     public void pointersBecomeOneWay(Object[] from, Object[] to) {
-        super.pointersBecomeOneWay(from, to);
-        int index;
-        Object[] newPointers = pointers.clone();
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        // TODO: super.pointersBecomeOneWay(from, to); ?
+        // TODO: verify if a copy of the pointers is needed, otherwise modify pointers in place?
+        Object[] newPointers = pointers;
         for (int i = 0; i < from.length; i++) {
             Object fromPointer = from[i];
-            index = -1;
-            for (int j = 0; j < pointers.length; j++) {
-                if (pointers[j].equals(fromPointer)) {
-                    index = j;
-                    break;
+            for (int j = 0; j < newPointers.length; j++) {
+                Object newPointer = newPointers[j];
+                if (newPointer == fromPointer) {
+                    Object toPointer = to[i];
+                    newPointers[j] = toPointer;
+                    if (fromPointer instanceof BaseSqueakObject && toPointer instanceof SqueakObject) {
+                        ((SqueakObject) toPointer).setSqueakHash(((BaseSqueakObject) fromPointer).squeakHash());
+                    }
                 }
-            }
-            if (index < 0) {
-                continue;
-            }
-            Object toPointer = to[i];
-            newPointers[index] = toPointer;
-            if (fromPointer instanceof BaseSqueakObject && toPointer instanceof SqueakObject) {
-                ((SqueakObject) toPointer).setSqueakHash(((BaseSqueakObject) fromPointer).squeakHash());
             }
         }
         pointers = newPointers;
