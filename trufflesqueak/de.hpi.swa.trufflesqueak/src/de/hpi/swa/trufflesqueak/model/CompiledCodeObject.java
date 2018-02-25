@@ -263,7 +263,6 @@ public abstract class CompiledCodeObject extends SqueakObject {
             return literals[index / BYTES_PER_WORD];
         } else {
             int realIndex = index - getBytecodeOffset();
-            assert realIndex < bytes.length;
             return Byte.toUnsignedLong(bytes[realIndex]);
         }
     }
