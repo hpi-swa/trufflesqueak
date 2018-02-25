@@ -333,16 +333,20 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        protected boolean isZero(double value) {
+        protected boolean isZero(final double value) {
             return value == 0;
         }
 
-        @Specialization(guards = "b != 0")
+        protected boolean isIntegral(final long a, final long b) {
+            return a % b == 0;
+        }
+
+        @Specialization(guards = {"b != 0", "isIntegral(a, b)"})
         public final static long doLong(final long a, final long b) {
             return a / b;
         }
 
-        @Specialization(guards = "!b.isZero()")
+        @Specialization(guards = {"!b.isZero()", "a.isIntegralWhenDividedBy(b)"})
         protected final static Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
             return a.divide(b);
         }

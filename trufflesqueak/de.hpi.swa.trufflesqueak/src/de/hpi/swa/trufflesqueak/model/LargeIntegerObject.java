@@ -268,6 +268,11 @@ public class LargeIntegerObject extends SqueakObject {
         return integer.compareTo(BigInteger.ZERO) == 0;
     }
 
+    @TruffleBoundary
+    public boolean isIntegralWhenDividedBy(final LargeIntegerObject other) {
+        return integer.mod(other.integer).compareTo(BigInteger.ZERO) == 0;
+    }
+
     /*
      * Bit Operations
      */

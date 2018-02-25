@@ -41,7 +41,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
         private static final String PROCESS_SWITCHING = "Process Switching"; // attempts to switch processes which is not supported
         private static final String BROKEN_IN_SQUEAK = "Broken in Squeak"; // not working in Squeak
         private static final String REQUIRES_STARTUP = "Requires Startup"; // requires the image to be entirely started (e.g. load changes, initialize display, ...)
-        private static final String IGNORE_RESULT = "Ignore Result"; // flaky tests
+        private static final String FLAKY = "Flaky"; // flaky tests
         private static final String IGNORE = "Ignored"; // unable to run (e.g. OOM, ...)
     }
 
@@ -103,7 +103,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "ClosureTests", TEST_TYPE.FAILING,
                     "CogVMBaseImageTests", TEST_TYPE.FAILING,
                     "CollectionTest", TEST_TYPE.PASSING,
-                    "ColorTest", TEST_TYPE.FAILING,
+                    "ColorTest", TEST_TYPE.PASSING,
                     "CompiledMethodComparisonTest", TEST_TYPE.NOT_TERMINATING,
                     "CompiledMethodTest", TEST_TYPE.FAILING,
                     "CompiledMethodTrailerTest", TEST_TYPE.PASSING,
@@ -126,9 +126,9 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "DependentsArrayTest", TEST_TYPE.PASSING,
                     "DictionaryTest", TEST_TYPE.FAILING,
                     "DosFileDirectoryTests", TEST_TYPE.PASSING,
-                    "DoubleByteArrayTest", TEST_TYPE.IGNORE_RESULT, // passes sometimes, one failure in Squeak (BROKEN_IN_SQUEAK)
-                    "DoubleWordArrayTest", TEST_TYPE.IGNORE_RESULT, // two errors in Squeak (BROKEN_IN_SQUEAK)
-                    "DurationTest", TEST_TYPE.FAILING,
+                    "DoubleByteArrayTest", TEST_TYPE.FLAKY, // passes sometimes, one failure in Squeak (BROKEN_IN_SQUEAK)
+                    "DoubleWordArrayTest", TEST_TYPE.FLAKY, // two errors in Squeak (BROKEN_IN_SQUEAK)
+                    "DurationTest", TEST_TYPE.PASSING,
                     "EnvironmentTest", TEST_TYPE.FAILING,
                     "EPSCanvasTest", TEST_TYPE.NOT_TERMINATING,
                     "EtoysStringExtensionTest", TEST_TYPE.PASSING,
@@ -136,7 +136,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "ExceptionTests", TEST_TYPE.FAILING,
                     "ExpandedSourceFileArrayTest", TEST_TYPE.PASSING,
                     "ExplicitNamePolicyTest", TEST_TYPE.PASSING,
-                    "ExtendedNumberParserTest", TEST_TYPE.FAILING,
+                    "ExtendedNumberParserTest", TEST_TYPE.PASSING,
                     "FalseTest", TEST_TYPE.PASSING,
                     "FileContentsBrowserTest", TEST_TYPE.FAILING,
                     "FileDirectoryTest", TEST_TYPE.FAILING,
@@ -186,7 +186,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "LangEnvBugs", TEST_TYPE.FAILING,
                     "LargeNegativeIntegerTest", TEST_TYPE.FAILING,
                     "LargePositiveIntegerTest", TEST_TYPE.FAILING,
-                    "LayoutFrameTest", TEST_TYPE.FAILING,
+                    "LayoutFrameTest", TEST_TYPE.PASSING,
                     "LinkedListTest", TEST_TYPE.PASSING,
                     "LocaleTest", TEST_TYPE.PROCESS_SWITCHING,
                     "MacFileDirectoryTest", TEST_TYPE.PASSING,
@@ -232,7 +232,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "MethodPragmaTest", TEST_TYPE.FAILING,
                     "MethodPropertiesTest", TEST_TYPE.PASSING,
                     "MethodReferenceTest", TEST_TYPE.FAILING,
-                    "MIMEDocumentTest", TEST_TYPE.IGNORE_RESULT,
+                    "MIMEDocumentTest", TEST_TYPE.FLAKY,
                     "MirrorPrimitiveTests", TEST_TYPE.FAILING,
                     "MonitorTest", TEST_TYPE.NOT_TERMINATING,
                     "MonthTest", TEST_TYPE.PASSING,
@@ -263,7 +263,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "PluggableMenuItemSpecTests", TEST_TYPE.PASSING,
                     "PluggableTextMorphTest", TEST_TYPE.PASSING,
                     "PNGReadWriterTest", TEST_TYPE.FAILING,
-                    "PointTest", TEST_TYPE.FAILING,
+                    "PointTest", TEST_TYPE.PASSING,
                     "PolygonMorphTest", TEST_TYPE.PASSING,
                     "PreferencesTest", TEST_TYPE.REQUIRES_STARTUP,
                     "PrimCallControllerAbstractTest", TEST_TYPE.NOT_TERMINATING,
@@ -304,7 +304,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "SHParserST80Test", TEST_TYPE.BROKEN_IN_SQUEAK,
                     "SimpleSwitchMorphTest", TEST_TYPE.PASSING,
                     "SimpleTestResourceTestCase", TEST_TYPE.PASSING,
-                    "SliderTest", TEST_TYPE.FAILING,
+                    "SliderTest", TEST_TYPE.PASSING,
                     "SmallIntegerTest", TEST_TYPE.PASSING,
                     "SmalltalkImageTest", TEST_TYPE.FAILING,
                     "SmartRefStreamTest", TEST_TYPE.NOT_TERMINATING,
@@ -324,7 +324,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "StopwatchTest", TEST_TYPE.NOT_TERMINATING,
                     "StringSocketTestCase", TEST_TYPE.FAILING,
                     "StringTest", TEST_TYPE.FAILING,
-                    "SumBugs", TEST_TYPE.FAILING,
+                    "SumBugs", TEST_TYPE.PASSING,
                     "SUnitExtensionsTest", TEST_TYPE.NOT_TERMINATING,
                     "SUnitTest", TEST_TYPE.NOT_TERMINATING,
                     "SUnitToolBuilderTests", TEST_TYPE.PROCESS_SWITCHING,
@@ -493,9 +493,9 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
     }
 
     @Test
-    public void testXIgnoreResultSqueakTests() {
-        String[] testClasses = getSqueakTests(TEST_TYPE.IGNORE_RESULT);
-        printHeader(TEST_TYPE.IGNORE_RESULT, testClasses);
+    public void testXFlakySqueakTests() {
+        String[] testClasses = getSqueakTests(TEST_TYPE.FLAKY);
+        printHeader(TEST_TYPE.FLAKY, testClasses);
         for (int i = 0; i < testClasses.length; i++) {
             runTestCase(testClasses[i]);
         }
