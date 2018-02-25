@@ -125,8 +125,8 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "DependentsArrayTest", TEST_TYPE.PASSING,
                     "DictionaryTest", TEST_TYPE.FAILING,
                     "DosFileDirectoryTests", TEST_TYPE.PASSING,
-                    "DoubleByteArrayTest", TEST_TYPE.PASSING,
-                    "DoubleWordArrayTest", TEST_TYPE.FAILING,
+                    "DoubleByteArrayTest", TEST_TYPE.FAILING, // one failure in Squeak (BROKEN_IN_SQUEAK)
+                    "DoubleWordArrayTest", TEST_TYPE.FAILING, // two errors in Squeak (BROKEN_IN_SQUEAK)
                     "DurationTest", TEST_TYPE.FAILING,
                     "EnvironmentTest", TEST_TYPE.FAILING,
                     "EPSCanvasTest", TEST_TYPE.NOT_TERMINATING,
