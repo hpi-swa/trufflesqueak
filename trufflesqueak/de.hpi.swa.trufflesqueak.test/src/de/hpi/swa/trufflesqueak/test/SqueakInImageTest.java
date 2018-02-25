@@ -41,6 +41,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
         private static final String PROCESS_SWITCHING = "Process Switching"; // attempts to switch processes which is not supported
         private static final String BROKEN_IN_SQUEAK = "Broken in Squeak"; // not working in Squeak
         private static final String REQUIRES_STARTUP = "Requires Startup"; // requires the image to be entirely started (e.g. load changes, initialize display, ...)
+        private static final String IGNORE_RESULT = "Ignore Result"; // flaky tests
         private static final String IGNORE = "Ignored"; // unable to run (e.g. OOM, ...)
     }
 
@@ -125,8 +126,8 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "DependentsArrayTest", TEST_TYPE.PASSING,
                     "DictionaryTest", TEST_TYPE.FAILING,
                     "DosFileDirectoryTests", TEST_TYPE.PASSING,
-                    "DoubleByteArrayTest", TEST_TYPE.IGNORE, // passes sometimes, one failure in Squeak (BROKEN_IN_SQUEAK)
-                    "DoubleWordArrayTest", TEST_TYPE.FAILING, // two errors in Squeak (BROKEN_IN_SQUEAK)
+                    "DoubleByteArrayTest", TEST_TYPE.IGNORE_RESULT, // passes sometimes, one failure in Squeak (BROKEN_IN_SQUEAK)
+                    "DoubleWordArrayTest", TEST_TYPE.IGNORE_RESULT, // two errors in Squeak (BROKEN_IN_SQUEAK)
                     "DurationTest", TEST_TYPE.FAILING,
                     "EnvironmentTest", TEST_TYPE.FAILING,
                     "EPSCanvasTest", TEST_TYPE.NOT_TERMINATING,
@@ -231,7 +232,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "MethodPragmaTest", TEST_TYPE.FAILING,
                     "MethodPropertiesTest", TEST_TYPE.PASSING,
                     "MethodReferenceTest", TEST_TYPE.FAILING,
-                    "MIMEDocumentTest", TEST_TYPE.PASSING,
+                    "MIMEDocumentTest", TEST_TYPE.IGNORE_RESULT,
                     "MirrorPrimitiveTests", TEST_TYPE.FAILING,
                     "MonitorTest", TEST_TYPE.NOT_TERMINATING,
                     "MonthTest", TEST_TYPE.PASSING,
@@ -478,7 +479,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
     }
 
     @Test
-    public void testXPassingSqueakTests() {
+    public void testWPassingSqueakTests() {
         List<String> failing = new ArrayList<>();
         String[] testClasses = getSqueakTests(TEST_TYPE.PASSING);
         printHeader(TEST_TYPE.PASSING, testClasses);
@@ -489,6 +490,15 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
             }
         }
         failIfNotEmpty(failing);
+    }
+
+    @Test
+    public void testXIgnoreResultSqueakTests() {
+        String[] testClasses = getSqueakTests(TEST_TYPE.IGNORE_RESULT);
+        printHeader(TEST_TYPE.IGNORE_RESULT, testClasses);
+        for (int i = 0; i < testClasses.length; i++) {
+            runTestCase(testClasses[i]);
+        }
     }
 
     @Test
