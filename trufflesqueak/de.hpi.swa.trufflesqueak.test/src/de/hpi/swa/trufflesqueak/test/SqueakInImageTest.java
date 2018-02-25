@@ -136,7 +136,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "ExpandedSourceFileArrayTest", TEST_TYPE.PASSING,
                     "ExplicitNamePolicyTest", TEST_TYPE.PASSING,
                     "ExtendedNumberParserTest", TEST_TYPE.FAILING,
-                    "FalseTest", TEST_TYPE.FAILING,
+                    "FalseTest", TEST_TYPE.PASSING,
                     "FileContentsBrowserTest", TEST_TYPE.FAILING,
                     "FileDirectoryTest", TEST_TYPE.FAILING,
                     "FileList2ModalDialogsTest", TEST_TYPE.FAILING,
