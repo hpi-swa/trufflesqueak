@@ -7,8 +7,8 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BytesObject;
-import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.WordsObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -22,24 +22,13 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         return MiscPrimitivePluginFactory.getFactories();
     }
 
-    @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveCompareString", numArguments = 4)
-    public static abstract class PrimCompareStringNode extends AbstractPrimitiveNode {
+    public static abstract class AbstractMiscPrimitiveNode extends AbstractPrimitiveNode {
 
-        public PrimCompareStringNode(CompiledMethodObject method) {
+        public AbstractMiscPrimitiveNode(CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization
-        protected long doBytesObject(@SuppressWarnings("unused") ClassObject receiver, BytesObject string1, BytesObject string2, BytesObject order) {
-            if (isASCIIOrder(order)) {
-                return compareASCII(string1, string2);
-            } else {
-                return compareCollated(string1, string2, order);
-            }
-        }
-
-        private static boolean isASCIIOrder(BytesObject order) {
+        protected static boolean isASCIIOrder(BytesObject order) {
             byte[] bytes = order.getBytes();
             for (int i = 0; i < 256; i++) {
                 if (bytes[i] != (byte) i) {
@@ -48,8 +37,18 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             }
             return true;
         }
+    }
 
-        private static long compareASCII(BytesObject string1, BytesObject string2) {
+    @GenerateNodeFactory
+    @SqueakPrimitive(name = "primitiveCompareString", numArguments = 4)
+    public static abstract class PrimCompareStringNode extends AbstractMiscPrimitiveNode {
+
+        public PrimCompareStringNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = "isASCIIOrder(order)")
+        protected final static long doAsciiOrder(@SuppressWarnings("unused") BaseSqueakObject receiver, BytesObject string1, BytesObject string2, @SuppressWarnings("unused") BytesObject order) {
             byte[] bytes1 = string1.getBytes();
             byte[] bytes2 = string2.getBytes();
             int length1 = bytes1.length;
@@ -75,7 +74,8 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        private static long compareCollated(BytesObject string1, BytesObject string2, BytesObject order) {
+        @Specialization(guards = "!isASCIIOrder(order)")
+        protected final static long doCollated(@SuppressWarnings("unused") BaseSqueakObject receiver, BytesObject string1, BytesObject string2, BytesObject order) {
             byte[] bytes1 = string1.getBytes();
             byte[] bytes2 = string2.getBytes();
             byte[] orderBytes = order.getBytes();
@@ -105,7 +105,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveCompressToByteArray", numArguments = 3) // TODO: implement primitive
-    public static abstract class PrimCompressToByteArray extends AbstractPrimitiveNode {
+    public static abstract class PrimCompressToByteArray extends AbstractMiscPrimitiveNode {
 
         public PrimCompressToByteArray(CompiledMethodObject method) {
             super(method);
@@ -115,7 +115,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveDecompressFromByteArray", numArguments = 4) // TODO: implement primitive
-    public static abstract class PrimDecompressFromByteArray extends AbstractPrimitiveNode {
+    public static abstract class PrimDecompressFromByteArray extends AbstractMiscPrimitiveNode {
 
         public PrimDecompressFromByteArray(CompiledMethodObject method) {
             super(method);
@@ -124,35 +124,65 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveFindFirstInString", numArguments = 4) // TODO: implement primitive
-    public static abstract class PrimFindFirstInString extends AbstractPrimitiveNode {
+    @SqueakPrimitive(name = "primitiveFindFirstInString", numArguments = 4)
+    public static abstract class PrimFindFirstInString extends AbstractMiscPrimitiveNode {
 
         public PrimFindFirstInString(CompiledMethodObject method) {
             super(method);
         }
 
+        @Specialization
+        protected long doFind(@SuppressWarnings("unused") BaseSqueakObject receiver, BytesObject string, BytesObject inclusionMap, long start) {
+            byte[] inclusionBytes = inclusionMap.getBytes();
+            if (inclusionBytes.length != 256) {
+                return 0;
+            }
+            byte[] stringBytes = string.getBytes();
+            int stringSize = stringBytes.length;
+            int index = (int) start;
+            for (; index <= stringSize; index++) {
+                if (inclusionBytes[stringBytes[index - 1] - 1] != 0) {
+                    break;
+                }
+            }
+            if (index > stringSize) {
+                return 0;
+            } else {
+                return index;
+            }
+        }
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveFindSubstring", numArguments = 5) // TODO: implement primitive
-    public static abstract class PrimFindSubstring extends AbstractPrimitiveNode {
+    @SqueakPrimitive(name = "primitiveFindSubstring", numArguments = 5)
+    public static abstract class PrimFindSubstring extends AbstractMiscPrimitiveNode {
 
         public PrimFindSubstring(CompiledMethodObject method) {
             super(method);
         }
 
+        @Specialization(guards = "isASCIIOrder(matchTable)")
+        protected long doFindAscii(@SuppressWarnings("unused") BaseSqueakObject receiver, BytesObject key, BytesObject body, long start, @SuppressWarnings("unused") BytesObject matchTable) {
+            return body.toString().indexOf(key.toString(), (int) start - 1) + 1;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "!isASCIIOrder(matchTable)")
+        protected long doFindWithMatchTable(BaseSqueakObject receiver, BytesObject key, BytesObject body, long start, BytesObject matchTable) {
+            throw new PrimitiveFailed(); // TODO: implement primitive
+        }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveIndexOfAsciiInString", numArguments = 4)
-    public static abstract class PrimIndexOfAsciiInString extends AbstractPrimitiveNode {
+    public static abstract class PrimIndexOfAsciiInString extends AbstractMiscPrimitiveNode {
 
         public PrimIndexOfAsciiInString(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected long doBytesObject(@SuppressWarnings("unused") ClassObject receiver, long value, BytesObject string, long start) {
+        protected long doBytesObject(@SuppressWarnings("unused") BaseSqueakObject receiver, long value, BytesObject string, long start) {
             if (start < 0) {
                 throw new PrimitiveFailed();
             }
@@ -168,14 +198,14 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveStringHash", numArguments = 3)
-    public static abstract class PrimStringHash extends AbstractPrimitiveNode {
+    public static abstract class PrimStringHash extends AbstractMiscPrimitiveNode {
 
         public PrimStringHash(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected long doBytesObject(@SuppressWarnings("unused") ClassObject receiver, BytesObject string, long initialHash) {
+        protected long doBytesObject(@SuppressWarnings("unused") BaseSqueakObject receiver, BytesObject string, long initialHash) {
             long hash = initialHash & 0xfffffff;
             long low;
             for (byte value : string.getBytes()) {
@@ -189,14 +219,14 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveTranslateStringWithTable", numArguments = 5)
-    public static abstract class PrimTranslateStringWithTable extends AbstractPrimitiveNode {
+    public static abstract class PrimTranslateStringWithTable extends AbstractMiscPrimitiveNode {
 
         public PrimTranslateStringWithTable(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected BytesObject doBytesObject(@SuppressWarnings("unused") ClassObject receiver, BytesObject string, long start, long stop, BytesObject table) {
+        protected BytesObject doBytesObject(@SuppressWarnings("unused") BaseSqueakObject receiver, BytesObject string, long start, long stop, BytesObject table) {
             byte[] stringBytes = string.getBytes();
             byte[] tableBytes = table.getBytes();
             for (int i = (int) start - 1; i < stop; i++) {
@@ -206,7 +236,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected WordsObject doWordsObject(@SuppressWarnings("unused") ClassObject receiver, WordsObject string, long start, long stop, WordsObject table) {
+        protected WordsObject doWordsObject(@SuppressWarnings("unused") BaseSqueakObject receiver, WordsObject string, long start, long stop, WordsObject table) {
             int[] stringBytes = string.getWords();
             int[] tableBytes = table.getWords();
             for (int i = (int) start - 1; i < stop; i++) {
@@ -216,7 +246,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected BytesObject doWordsObject(@SuppressWarnings("unused") ClassObject receiver, BytesObject string, long start, long stop, WordsObject table) {
+        protected BytesObject doWordsObject(@SuppressWarnings("unused") BaseSqueakObject receiver, BytesObject string, long start, long stop, WordsObject table) {
             byte[] stringBytes = string.getBytes();
             int[] tableBytes = table.getWords();
             for (int i = (int) start - 1; i < stop; i++) {
