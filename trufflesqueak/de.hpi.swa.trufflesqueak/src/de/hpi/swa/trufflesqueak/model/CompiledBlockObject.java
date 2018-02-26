@@ -19,11 +19,13 @@ public class CompiledBlockObject extends CompiledCodeObject {
         numCopiedValues = numCopied;
         this.offset = bytecodeOffset;
         Object[] outerLiterals = outerMethod.getLiterals();
-        outerLiterals = Arrays.copyOf(outerLiterals, outerLiterals.length - 1);
-        long baseHdr = makeHeader(numArgs, numCopied, outerLiterals.length, false, true); // FIXME: always using large frame for blocks (incorrect: code.needsLargeFrame ? 0x20000 : 0;)
-        outerLiterals[0] = baseHdr; // replace header
-        outerLiterals[outerLiterals.length - 1] = outerMethod; // last literal is back pointer to method
-        this.literals = outerLiterals;
+        Object[] blockLiterals = new Object[outerLiterals.length + 1];
+        blockLiterals[0] = makeHeader(numArgs, numCopied, outerLiterals.length, false, true); // FIXME: always using large frame for blocks (incorrect: code.needsLargeFrame ? 0x20000 : 0;)
+        for (int i = 1; i < outerLiterals.length; i++) {
+            blockLiterals[i] = outerLiterals[i];
+        }
+        blockLiterals[blockLiterals.length - 1] = outerMethod; // last literal is back pointer to method
+        this.literals = blockLiterals;
         this.bytes = Arrays.copyOfRange(code.getBytes(), bytecodeOffset, (bytecodeOffset + blockSize));
         decodeHeader();
     }

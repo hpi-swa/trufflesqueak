@@ -58,7 +58,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected Object literalAt(CompiledCodeObject receiver, long index) {
             // Use getLiterals() instead of getLiteral(i), the latter skips the header.
-            return receiver.getLiterals()[(int) (index - 1)];
+            return receiver.getLiterals()[(int) (index) - 1];
         }
     }
 
