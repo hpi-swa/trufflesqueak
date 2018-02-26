@@ -46,6 +46,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
     }
 
     private static final Object[] squeakTests = new Object[]{"AddPrefixNamePolicyTest", TEST_TYPE.PASSING,
+                    "AddPrefixNamePolicyTest", TEST_TYPE.PASSING,
                     "AliasTest", TEST_TYPE.PASSING,
                     "AllNamePolicyTest", TEST_TYPE.PASSING,
                     "AllocationTest", TEST_TYPE.IGNORE,
@@ -63,6 +64,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "BehaviorTest", TEST_TYPE.FAILING,
                     "BindingPolicyTest", TEST_TYPE.PASSING,
                     "BitBltClipBugs", TEST_TYPE.PASSING,
+                    "BitBltSimulationTest", TEST_TYPE.PASSING,
                     "BitBltTest", TEST_TYPE.NOT_TERMINATING,
                     "BitmapBugz", TEST_TYPE.PASSING,
                     "BitmapStreamTests", TEST_TYPE.IGNORE, // OOM error
@@ -189,6 +191,8 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "LayoutFrameTest", TEST_TYPE.PASSING,
                     "LinkedListTest", TEST_TYPE.PASSING,
                     "LocaleTest", TEST_TYPE.PROCESS_SWITCHING,
+                    "LongTestCaseTest", TEST_TYPE.PASSING,
+                    "LongTestCaseTestUnderTest", TEST_TYPE.PASSING,
                     "MacFileDirectoryTest", TEST_TYPE.PASSING,
                     "MailAddressParserTest", TEST_TYPE.PROCESS_SWITCHING,
                     "MailDateAndTimeTest", TEST_TYPE.PASSING,
@@ -211,7 +215,6 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "MCPackageTest", TEST_TYPE.IGNORE,
                     "MCPatchTest", TEST_TYPE.IGNORE,
                     "MCPTest", TEST_TYPE.PASSING,
-                    "MCRepositoryTest", TEST_TYPE.IGNORE,
                     "MCScannerTest", TEST_TYPE.IGNORE,
                     "MCSerializationTest", TEST_TYPE.IGNORE,
                     "MCSnapshotBrowserTest", TEST_TYPE.IGNORE,
@@ -234,6 +237,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "MethodReferenceTest", TEST_TYPE.FAILING,
                     "MIMEDocumentTest", TEST_TYPE.FLAKY,
                     "MirrorPrimitiveTests", TEST_TYPE.FAILING,
+                    "MiscPrimitivePluginTest", TEST_TYPE.FAILING, // failing in Squeak
                     "MonitorTest", TEST_TYPE.NOT_TERMINATING,
                     "MonthTest", TEST_TYPE.PASSING,
                     "MorphBugs", TEST_TYPE.PASSING,
@@ -329,7 +333,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "SUnitTest", TEST_TYPE.NOT_TERMINATING,
                     "SUnitToolBuilderTests", TEST_TYPE.PROCESS_SWITCHING,
                     "SymbolTest", TEST_TYPE.PASSING,
-                    "SystemChangeErrorHandlingTest", TEST_TYPE.PASSING,
+                    "SystemChangeErrorHandling", TEST_TYPE.FAILING,
                     "SystemChangeFileTest", TEST_TYPE.IGNORE,
                     "SystemChangeNotifierTest", TEST_TYPE.PASSING,
                     "SystemChangeTestRoot", TEST_TYPE.PASSING,
@@ -367,7 +371,6 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "TimespanTest", TEST_TYPE.PASSING,
                     "TimeStampTest", TEST_TYPE.PASSING,
                     "TimeTest", TEST_TYPE.PASSING,
-                    "ToolBuilderTests", TEST_TYPE.NOT_TERMINATING,
                     "TraitCompositionTest", TEST_TYPE.NOT_TERMINATING,
                     "TraitFileOutTest", TEST_TYPE.NOT_TERMINATING,
                     "TraitMethodDescriptionTest", TEST_TYPE.NOT_TERMINATING,
@@ -384,7 +387,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "UTF16TextConverterTest", TEST_TYPE.FAILING,
                     "UTF32TextConverterTest", TEST_TYPE.FAILING,
                     "UTF8TextConverterTest", TEST_TYPE.FAILING,
-                    "UTFTextConverterWithByteOrderTest", TEST_TYPE.FAILING,
+                    "UTF8EdgeCaseTest", TEST_TYPE.FAILING, // failing in Squeak
                     "UUIDPrimitivesTest", TEST_TYPE.PASSING,
                     "UUIDTest", TEST_TYPE.PASSING,
                     "VersionNumberTest", TEST_TYPE.PASSING,
