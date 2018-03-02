@@ -378,7 +378,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final ListObject doLargeInteger(final LargeIntegerObject rcvr, final LargeIntegerObject arg, final boolean negative) {
             LargeIntegerObject divide = rcvr.divideNoReduce(arg);
-            if ((negative && divide.signum() >= 0) || (!negative && divide.signum() < 0)) {
+            if (negative != divide.isNegative()) {
                 divide = divide.negateNoReduce();
             }
             Object remainder = rcvr.remainder(arg);

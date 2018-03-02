@@ -59,15 +59,6 @@ public abstract class SqueakLookupClassNode extends AbstractNodeWithCode {
     }
 
     @Specialization
-    protected ClassObject squeakClass(LargeIntegerObject object) {
-        if (object.signum() >= 0) {
-            return code.image.largePositiveIntegerClass;
-        } else {
-            return code.image.largeNegativeIntegerClass;
-        }
-    }
-
-    @Specialization
     protected ClassObject squeakClass(@SuppressWarnings("unused") BlockClosureObject ch) {
         return code.image.blockClosureClass;
     }

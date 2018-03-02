@@ -83,9 +83,6 @@ public class LargeIntegerObject extends SqueakObject {
         } else {
             integer = new BigInteger(bigEndianBytes).and(BigInteger.valueOf(1).shiftLeft(bigEndianBytes.length * 8).subtract(BigInteger.valueOf(1)));
         }
-        if (isNegative()) {
-            integer = integer.negate();
-        }
     }
 
     private long byteAt0(long index) {
@@ -111,7 +108,7 @@ public class LargeIntegerObject extends SqueakObject {
         return bytes;
     }
 
-    private boolean isNegative() {
+    public boolean isNegative() {
         return getSqClass() == image.largeNegativeIntegerClass;
     }
 
@@ -241,11 +238,6 @@ public class LargeIntegerObject extends SqueakObject {
     @TruffleBoundary
     public LargeIntegerObject negateNoReduce() {
         return newFromBigInteger(integer.negate());
-    }
-
-    @TruffleBoundary
-    public int signum() {
-        return integer.signum();
     }
 
     @TruffleBoundary
