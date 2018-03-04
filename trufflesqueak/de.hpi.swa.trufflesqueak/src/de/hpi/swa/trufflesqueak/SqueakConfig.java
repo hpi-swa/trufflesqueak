@@ -24,7 +24,7 @@ public class SqueakConfig {
         boolean disableInterrupts = false;
         String receiver = "nil";
         String selector = null;
-        String[] restArgs = null;
+        String[] restArgs = new String[]{};
 
         for (int i = 1; i < args.length; i++) {
             switch (args[i]) {
