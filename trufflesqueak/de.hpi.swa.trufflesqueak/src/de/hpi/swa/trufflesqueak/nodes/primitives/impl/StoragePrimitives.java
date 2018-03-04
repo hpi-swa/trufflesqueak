@@ -19,20 +19,26 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
-import de.hpi.swa.trufflesqueak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
-import de.hpi.swa.trufflesqueak.model.PointersObject;
-import de.hpi.swa.trufflesqueak.nodes.GetOrCreateContextNode;
+import de.hpi.swa.trufflesqueak.nodes.GetAllInstancesNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
-import de.hpi.swa.trufflesqueak.nodes.process.GetActiveProcessNode;
 
 public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @Override
     public List<NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
         return StoragePrimitivesFactory.getFactories();
+    }
+
+    private static abstract class AbstractInstancesPrimitiveNode extends AbstractPrimitiveNode {
+        @Child protected GetAllInstancesNode getAllInstancesNode;
+
+        protected AbstractInstancesPrimitiveNode(CompiledMethodObject method) {
+            super(method);
+            getAllInstancesNode = GetAllInstancesNode.create(method);
+        }
     }
 
     @GenerateNodeFactory
@@ -136,15 +142,11 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 72, numArguments = 2)
-    protected static abstract class PrimForwardIdentity extends AbstractPrimitiveNode {
-        @Child private GetActiveProcessNode getActiveProcessNode;
-        @Child private GetOrCreateContextNode getOrCreateContextNode;
+    protected static abstract class PrimForwardIdentity extends AbstractInstancesPrimitiveNode {
 
         protected PrimForwardIdentity(CompiledMethodObject method) {
             // FIXME: this primitive does not correctly perform a one way become yet
             super(method);
-            getActiveProcessNode = GetActiveProcessNode.create(method.image);
-            getOrCreateContextNode = GetOrCreateContextNode.create(method);
         }
 
         @Specialization
@@ -152,7 +154,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             if (receiver.size() != argument.size()) {
                 throw new PrimitiveFailed("bad argument");
             }
-            List<BaseSqueakObject> instances = getInstancesArray(frame);
+            List<BaseSqueakObject> instances = getAllInstancesNode.execute(frame);
             for (Iterator<BaseSqueakObject> iterator = instances.iterator(); iterator.hasNext();) {
                 BaseSqueakObject instance = iterator.next();
                 if (instance != null && instance.getSqClass() != null) {
@@ -172,16 +174,6 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected BaseSqueakObject arrayBecome(ListObject receiver, Object argument) {
             throw new PrimitiveFailed("bad argument");
-        }
-
-        private List<BaseSqueakObject> getInstancesArray(VirtualFrame frame) {
-            PointersObject activeProcess = getActiveProcessNode.executeGet();
-            activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, getOrCreateContextNode.executeGet(frame));
-            try {
-                return code.image.objects.allInstances();
-            } finally {
-                activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, code.image.nil);
-            }
         }
     }
 
@@ -378,7 +370,40 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         protected BaseSqueakObject get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
             return code.image.specialObjectsArray;
         }
+    }
 
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 138)
+    protected static abstract class PrimSomeObjectNode extends AbstractInstancesPrimitiveNode {
+
+        protected PrimSomeObjectNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected BaseSqueakObject doSome(VirtualFrame frame, @SuppressWarnings("unused") BaseSqueakObject receiver) {
+            return getAllInstancesNode.execute(frame).get(0);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 139)
+    protected static abstract class PrimNextObjectNode extends AbstractInstancesPrimitiveNode {
+
+        protected PrimNextObjectNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected BaseSqueakObject doNext(VirtualFrame frame, @SuppressWarnings("unused") BaseSqueakObject receiver) {
+            List<BaseSqueakObject> allInstances = getAllInstancesNode.execute(frame);
+            int index = allInstances.indexOf(receiver);
+            if (0 <= index && index + 1 < allInstances.size()) {
+                return allInstances.get(index + 1);
+            } else {
+                return allInstances.get(0);
+            }
+        }
     }
 
     @GenerateNodeFactory
@@ -462,6 +487,21 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             } catch (IndexOutOfBoundsException e) {
                 throw new PrimitiveFailed();
             }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 178)
+    protected static abstract class PrimAllObjectsNode extends AbstractInstancesPrimitiveNode {
+
+        protected PrimAllObjectsNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected BaseSqueakObject doAll(VirtualFrame frame, @SuppressWarnings("unused") BaseSqueakObject receiver) {
+            List<BaseSqueakObject> allInstances = getAllInstancesNode.execute(frame);
+            return code.image.newList(allInstances.toArray());
         }
     }
 
