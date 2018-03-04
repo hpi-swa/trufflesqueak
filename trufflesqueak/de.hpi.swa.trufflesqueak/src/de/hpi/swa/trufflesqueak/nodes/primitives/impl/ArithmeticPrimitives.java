@@ -9,8 +9,11 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakException.SqueakTestException;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
+import de.hpi.swa.trufflesqueak.model.NilObject;
+import de.hpi.swa.trufflesqueak.model.SqueakObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
@@ -267,14 +270,16 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return doLargeInteger(a, asLargeInteger(b));
         }
 
+        @SuppressWarnings("unused")
         @Specialization
-        protected final boolean doLargeInteger(final LargeIntegerObject a, final double b) {
-            return doLargeInteger(a, asLargeInteger((long) b));
+        protected final static boolean doLargeInteger(final LargeIntegerObject a, final double b) {
+            return false;
         }
 
+        @SuppressWarnings("unused")
         @Specialization
-        protected final boolean doDouble(final double a, final LargeIntegerObject b) {
-            return doLargeInteger(asLargeInteger((long) a), b);
+        protected final static boolean doDouble(final double a, final LargeIntegerObject b) {
+            return false;
         }
 
         @Specialization
@@ -287,14 +292,25 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return doDouble(a, (double) b);
         }
 
-        // Additional specialization to speed up eager sends
+        /*
+         * nil checks
+         */
+        @SuppressWarnings("unused")
         @Specialization
-        protected final static boolean doObject(final Object a, final Object b) {
-            if (a == b) { // must be equal if identical
-                return true;
-            } else {
-                throw new PrimitiveFailed();
-            }
+        protected final static boolean doNil(final long a, final NilObject b) {
+            return false;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected final static boolean doNil(final LargeIntegerObject a, final NilObject b) {
+            return false;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected final static boolean doNil(final double a, final NilObject b) {
+            return false;
         }
     }
 
@@ -306,23 +322,82 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected boolean neq(long a, long b) {
+        protected final static boolean doBoolean(final boolean a, final boolean b) {
             return a != b;
         }
 
         @Specialization
-        protected boolean neq(LargeIntegerObject a, LargeIntegerObject b) {
+        protected final static boolean doLong(final long a, final long b) {
+            return a != b;
+        }
+
+        @Specialization
+        protected final static boolean doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
             return !a.equals(b);
         }
 
         @Specialization
-        protected boolean neq(double a, double b) {
+        protected final static boolean doDouble(final double a, final double b) {
             return a != b;
         }
 
         @Specialization
-        protected boolean eq(char receiver, char argument) {
+        protected final static boolean doChar(final char receiver, final char argument) {
             return receiver != argument;
+        }
+
+        @Specialization
+        protected final static boolean doLong(final long a, final double b) {
+            return doDouble(a, b);
+        }
+
+        @Specialization
+        protected final static boolean doDouble(final double a, final long b) {
+            return doDouble(a, (double) b);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected final static boolean doDouble(final double a, final LargeIntegerObject b) {
+            return true;
+        }
+
+        @Specialization
+        protected final boolean doLong(final long a, final LargeIntegerObject b) {
+            return doLargeInteger(asLargeInteger(a), b);
+        }
+
+        @Specialization
+        protected final boolean doLargeInteger(final LargeIntegerObject a, final long b) {
+            return doLargeInteger(a, asLargeInteger(b));
+
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected final static boolean doLargeInteger(final LargeIntegerObject a, final double b) {
+            return true;
+        }
+
+        /*
+         * nil checks
+         */
+        @SuppressWarnings("unused")
+        @Specialization
+        protected final static boolean doNil(final long a, final NilObject b) {
+            return true;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected final static boolean doNil(final LargeIntegerObject a, final NilObject b) {
+            return true;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected final static boolean doNil(final double a, final NilObject b) {
+            return true;
         }
     }
 
@@ -337,11 +412,11 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return value == 0;
         }
 
-        protected boolean isIntegral(final long a, final long b) {
+        protected boolean isIntegralWhenDividedBy(final long a, final long b) {
             return a % b == 0;
         }
 
-        @Specialization(guards = {"b != 0", "isIntegral(a, b)"})
+        @Specialization(guards = {"b != 0", "isIntegralWhenDividedBy(a, b)"})
         public final static long doLong(final long a, final long b) {
             return a / b;
         }
