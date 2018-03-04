@@ -13,7 +13,7 @@ public abstract class NativeObject extends SqueakObject {
     }
 
     @Override
-    public final String toString() {
+    public String toString() {
         return new String(getBytes());
     }
 

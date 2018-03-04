@@ -16,8 +16,12 @@ public class BytesObject extends NativeObject {
         super(image);
     }
 
-    public BytesObject(SqueakImageContext image, ClassObject classObject, int size) {
+    public BytesObject(SqueakImageContext image, ClassObject classObject) {
         super(image, classObject);
+    }
+
+    public BytesObject(SqueakImageContext image, ClassObject classObject, int size) {
+        this(image, classObject);
         bytes = new byte[size];
     }
 
@@ -26,7 +30,7 @@ public class BytesObject extends NativeObject {
         this.bytes = bytes;
     }
 
-    private BytesObject(BytesObject original) {
+    protected BytesObject(BytesObject original) {
         this(original.image, original.getSqClass(), Arrays.copyOf(original.bytes, original.bytes.length));
     }
 

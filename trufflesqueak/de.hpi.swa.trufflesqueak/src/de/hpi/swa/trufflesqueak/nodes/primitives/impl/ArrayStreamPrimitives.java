@@ -64,7 +64,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "!isSmallInteger(receiver)")
         protected Object doLong(final long receiver, final long index) {
-            return doSqueakObject(LargeIntegerObject.valueOf(code, receiver), index);
+            return doNativeObject(LargeIntegerObject.valueOf(code, receiver), index);
         }
 
         @Specialization
@@ -179,7 +179,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "!isSmallInteger(value)")
         protected long doLong(final long value) {
-            return doLargeInteger(asLargeInteger(value));
+            return doNativeObject(asLargeInteger(value));
         }
 
         @Specialization
@@ -190,11 +190,6 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected long doNativeObject(NativeObject obj) {
             return obj.size();
-        }
-
-        @Specialization
-        protected long doLargeInteger(final LargeIntegerObject value) {
-            return value.size();
         }
 
         @Specialization
