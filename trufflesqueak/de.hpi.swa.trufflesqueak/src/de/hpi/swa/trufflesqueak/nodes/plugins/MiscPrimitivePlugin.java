@@ -141,7 +141,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             int stringSize = stringBytes.length;
             int index = (int) start;
             for (; index <= stringSize; index++) {
-                if (inclusionBytes[stringBytes[index - 1] - 1] != 0) {
+                if (inclusionBytes[stringBytes[index - 1]] != 0) {
                     break;
                 }
             }
