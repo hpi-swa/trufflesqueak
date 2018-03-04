@@ -16,6 +16,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
+import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
@@ -26,9 +27,9 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 
 public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     private static final class STDIO_HANDLES {
-        private static final int IN = 0;
-        private static final int OUT = 1;
-        private static final int ERROR = 2;
+        private static final long IN = 0;
+        private static final long OUT = 1;
+        private static final long ERROR = 2;
     }
 
     @CompilationFinal private static final Map<Long, RandomAccessFile> files = new HashMap<>();
@@ -316,7 +317,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object getHandles(@SuppressWarnings("unused") PointersObject receiver) {
+        protected Object getHandles(@SuppressWarnings("unused") ClassObject receiver) {
             return code.image.newListWith(STDIO_HANDLES.IN, STDIO_HANDLES.OUT, STDIO_HANDLES.ERROR);
         }
     }
@@ -335,24 +336,21 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             long elementSize = content.getElementSize();
             int byteStart = (int) ((startIndex - 1) * elementSize);
             int byteEnd = (int) (Math.min(startIndex - 1 + count, chars.length()) * elementSize);
-            switch ((int) fileDescriptor) {
-                case STDIO_HANDLES.IN:
-                    throw new PrimitiveFailed();
-                case STDIO_HANDLES.OUT:
-                    code.image.getOutput().append(chars, byteStart, byteEnd);
-                    code.image.getOutput().flush();
-                    break;
-                case STDIO_HANDLES.ERROR:
-                    code.image.getError().append(chars, byteStart, byteEnd);
-                    code.image.getError().flush();
-                    break;
-                default: // currently disabled during development
-// try {
-// RandomAccessFile file = files.get(fileDescriptor);
-// file.writeChars(chars);
-// } catch (NullPointerException | IOException e) {
-// throw new PrimitiveFailed();
-// }
+            if (fileDescriptor == STDIO_HANDLES.IN) {
+                throw new PrimitiveFailed();
+            } else if (fileDescriptor == STDIO_HANDLES.OUT) {
+                code.image.getOutput().append(chars, byteStart, byteEnd);
+                code.image.getOutput().flush();
+            } else if (fileDescriptor == STDIO_HANDLES.ERROR) {
+                code.image.getError().append(chars, byteStart, byteEnd);
+                code.image.getError().flush();
+            } else { // TODO: writing to files is currently disabled during development
+                // try {
+                // RandomAccessFile file = files.get(fileDescriptor);
+                // file.writeChars(chars);
+                // } catch (NullPointerException | IOException e) {
+                // throw new PrimitiveFailed();
+                // }
             }
             return (byteEnd - byteStart) / elementSize;
         }
