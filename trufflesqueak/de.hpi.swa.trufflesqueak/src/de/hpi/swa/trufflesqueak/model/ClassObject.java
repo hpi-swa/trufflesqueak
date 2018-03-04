@@ -40,7 +40,7 @@ public class ClassObject extends AbstractPointersObject {
     }
 
     private ClassObject(SqueakImageContext image, ClassObject classObject, int size) {
-        this(image, classObject, new Object[size]);
+        super(image, classObject, size);
     }
 
     @Override
@@ -139,7 +139,7 @@ public class ClassObject extends AbstractPointersObject {
     @Override
     public void atput0(long idx, Object obj) {
         if (idx == CLASS.FORMAT) {
-            setFormat((int) obj);
+            setFormat((long) obj);
         } else if (idx == CLASS.SUPERCLASS) {
             setSuperclass(obj);
         } else {
