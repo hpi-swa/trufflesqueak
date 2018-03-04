@@ -389,6 +389,11 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
+        @Override
+        public final Object executeWithArguments(VirtualFrame frame, Object... rcvrAndArgs) {
+            return doCharValue(rcvrAndArgs);
+        }
+
         @Specialization
         protected char doCharValue(Object[] rcvrAndArgs) {
             Object value;
