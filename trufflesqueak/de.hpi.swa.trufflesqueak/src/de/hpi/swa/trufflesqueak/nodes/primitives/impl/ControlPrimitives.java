@@ -261,6 +261,21 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(index = 89)
+    protected static abstract class PrimFlushCacheNode extends AbstractPrimitiveNode {
+
+        public PrimFlushCacheNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final BaseSqueakObject doFlush(BaseSqueakObject receiver) {
+            // TODO: actually flush caches once there are some
+            return receiver;
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(index = 100, numArguments = 4)
     protected static abstract class PrimPerformWithArgumentsInSuperclassNode extends AbstractPerformPrimitiveNode {
 
@@ -389,6 +404,21 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(index = 116)
+    protected static abstract class PrimFlushCacheByMethodNode extends AbstractPrimitiveNode {
+
+        public PrimFlushCacheByMethodNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final BaseSqueakObject doFlush(BaseSqueakObject receiver) {
+            // TODO: actually flush caches once there are some
+            return receiver;
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(index = 117, variableArguments = true)
     protected static abstract class PrimExternalCallNode extends AbstractPrimitiveNode {
         protected PrimExternalCallNode(CompiledMethodObject method) {
@@ -423,6 +453,21 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 }
             }
             return replace(PrimitiveFailedNode.create((CompiledMethodObject) code)).executePrimitive(frame);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 119)
+    protected static abstract class PrimFlushCacheSelectiveNode extends AbstractPrimitiveNode {
+
+        public PrimFlushCacheSelectiveNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final BaseSqueakObject doFlush(BaseSqueakObject receiver) {
+            // TODO: actually flush caches once there are some
+            return receiver;
         }
     }
 
