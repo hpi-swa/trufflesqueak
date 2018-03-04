@@ -21,7 +21,6 @@ import de.hpi.swa.trufflesqueak.nodes.context.ReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.context.TemporaryReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PopNReversedStackNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
-import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
 public final class PushBytecodes {
 
@@ -62,6 +61,7 @@ public final class PushBytecodes {
         @CompilationFinal protected final int blockSize;
         @CompilationFinal protected final int numArgs;
         @CompilationFinal protected final int numCopied;
+        @Child protected GetOrCreateContextNode getOrCreateContextNode;
         @Child protected PopNReversedStackNode popNReversedNode;
         @Child protected ReceiverNode receiverNode;
 
@@ -74,6 +74,7 @@ public final class PushBytecodes {
             numArgs = i & 0xF;
             numCopied = (i >> 4) & 0xF;
             blockSize = (j << 8) | k;
+            getOrCreateContextNode = GetOrCreateContextNode.create(code);
             popNReversedNode = PopNReversedStackNode.create(code, numCopied);
             receiverNode = ReceiverNode.create(code);
 
@@ -95,20 +96,21 @@ public final class PushBytecodes {
         @Specialization(guards = "isVirtualized(frame)")
         protected int doPushVirtualized(VirtualFrame frame) {
             CompilerDirectives.ensureVirtualizedHere(frame);
-            pushNode.executeWrite(frame, createClosure(frame, null, getFrameMarker(frame)));
+            pushNode.executeWrite(frame, createClosure(frame));
             return getSuccessorIndex();
         }
 
         @Specialization(guards = "!isVirtualized(frame)")
         protected int doPush(VirtualFrame frame) {
-            pushNode.executeWrite(frame, createClosure(frame, getContext(frame), null));
+            pushNode.executeWrite(frame, createClosure(frame));
             return getSuccessorIndex();
         }
 
-        private BlockClosureObject createClosure(VirtualFrame frame, ContextObject context, FrameMarker frameMarker) {
+        private BlockClosureObject createClosure(VirtualFrame frame) {
             Object receiver = receiverNode.executeRead(frame);
             Object[] copiedValues = (Object[]) popNReversedNode.executeRead(frame);
-            return new BlockClosureObject(getBlock(), receiver, copiedValues, context, frameMarker, code.thisContextOrMarkerSlot);
+            ContextObject thisContext = getOrCreateContextNode.executeGet(frame);
+            return new BlockClosureObject(getBlock(), receiver, copiedValues, thisContext, code.thisContextOrMarkerSlot);
         }
 
         @Override
