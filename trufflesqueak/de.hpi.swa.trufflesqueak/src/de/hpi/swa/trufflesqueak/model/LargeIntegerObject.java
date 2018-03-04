@@ -101,8 +101,7 @@ public class LargeIntegerObject extends BytesObject {
     @Override
     public boolean equals(Object other) {
         if (other instanceof LargeIntegerObject) {
-            LargeIntegerObject otherLargeInteger = (LargeIntegerObject) other;
-            return integer.equals(otherLargeInteger.integer) && getSqClass() == otherLargeInteger.getSqClass();
+            return integer.equals(((LargeIntegerObject) other).integer);
         } else {
             return super.equals(other);
         }
