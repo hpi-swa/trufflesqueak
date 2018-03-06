@@ -20,7 +20,10 @@ public class CompiledBlockObject extends CompiledCodeObject {
         this.offset = bytecodeOffset;
         Object[] outerLiterals = outerMethod.getLiterals();
         Object[] blockLiterals = new Object[outerLiterals.length + 1];
-        blockLiterals[0] = makeHeader(numArgs, numCopied, outerLiterals.length, false, true); // FIXME: always using large frame for blocks (incorrect: code.needsLargeFrame ? 0x20000 : 0;)
+        /*
+         * FIXME: always using large frame for blocks (incorrect: code.needsLargeFrame ? 0x20000 : 0;)
+         */
+        blockLiterals[0] = makeHeader(numArgs, numCopied, code.numLiterals, false, true);
         for (int i = 1; i < outerLiterals.length; i++) {
             blockLiterals[i] = outerLiterals[i];
         }

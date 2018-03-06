@@ -258,11 +258,11 @@ public abstract class CompiledCodeObject extends SqueakObject {
     @Override
     public Object at0(long longIndex) {
         int index = (int) longIndex;
-        if (index < getBytecodeOffset()) {
+        if (index < getBytecodeOffset() - getOffset()) {
             assert index % BYTES_PER_WORD == 0;
             return literals[index / BYTES_PER_WORD];
         } else {
-            int realIndex = index - getBytecodeOffset();
+            int realIndex = index - getBytecodeOffset() - getOffset();
             return Byte.toUnsignedLong(bytes[realIndex]);
         }
     }
