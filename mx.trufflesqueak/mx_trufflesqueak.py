@@ -48,6 +48,12 @@ def _graal_vm_args(args, jdk):
             '-XX:+TraceDeoptimization',
         ]
 
+    if args.print_machine_code:
+        graal_args += [
+            '-XX:CompileCommand=print,*OptimizedCallTarget.callRoot',
+            '-XX:CompileCommand=exclude,*OptimizedCallTarget.callRoot',
+        ]
+
     if not args.background_compilation:
         graal_args += ['-Dgraal.TruffleBackgroundCompilation=false']
 
@@ -67,24 +73,28 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
         args, useDoubleDash=True, defaultAllVMArgs=False)
 
     parser = argparse.ArgumentParser(prog='mx squeak')
-    parser.add_argument('-A', '--enable-assertions',
+    parser.add_argument('-A', '--assertions',
                         help='Enable assertion',
                         dest='assertions',
                         action='store_true', default=False)
     parser.add_argument('-B', '--no-background',
-                        help='disable background compilation',
+                        help='Disable background compilation',
                         dest='background_compilation',
                         action='store_false', default=True)
     parser.add_argument('--igv', action='store_true', help='Dump to igv')
     parser.add_argument('-l', '--low-level',
-                        help='enable low-level optimization output',
+                        help='Enable low-level optimization output',
                         dest='low_level', action='store_true', default=False)
+    parser.add_argument('--machine-code',
+                        help='Print machine code',
+                        dest='print_machine_code', action='store_true',
+                        default=False)
     parser.add_argument(
-        '-ti', '--trace-invalidation',
-        help='trace assumption invalidation and transfers to interpreter',
+        '-ti', '--trace-invalid',
+        help='Trace assumption invalidation and transfers to interpreter',
         dest='trace_invalidation', action='store_true', default=False)
     parser.add_argument('-w', '--perf-warnings',
-                        help='enable performance warnings',
+                        help='Enable performance warnings',
                         dest='perf_warnings',
                         action='store_true', default=False)
     parser.add_argument('squeak_args', nargs=argparse.REMAINDER)
