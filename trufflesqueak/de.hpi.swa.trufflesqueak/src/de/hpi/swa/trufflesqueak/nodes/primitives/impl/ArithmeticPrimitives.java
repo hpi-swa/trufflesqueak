@@ -9,11 +9,9 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
-import de.hpi.swa.trufflesqueak.exceptions.SqueakException.SqueakTestException;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
-import de.hpi.swa.trufflesqueak.model.SqueakObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
@@ -51,6 +49,18 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected final LargeIntegerObject asLargeInteger(long value) {
             return LargeIntegerObject.valueOf(code, value);
+        }
+
+        protected boolean isZero(final double value) {
+            return value == 0;
+        }
+
+        protected boolean isIntegralWhenDividedBy(final long a, final long b) {
+            return a % b == 0;
+        }
+
+        protected final static boolean isMinValueDividedByMinusOne(final long a, final long b) {
+            return a == Long.MIN_VALUE && b == -1;
         }
 
         public abstract Object executeArithmeticPrimitive(VirtualFrame frame);
@@ -408,17 +418,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        protected boolean isZero(final double value) {
-            return value == 0;
-        }
-
-        protected boolean isIntegralWhenDividedBy(final long a, final long b) {
-            return a % b == 0;
-        }
-
-        @Specialization(guards = {"b != 0", "isIntegralWhenDividedBy(a, b)"})
+        @Specialization(guards = {"b != 0", "isIntegralWhenDividedBy(a, b)", "isMinValueDividedByMinusOne(a, b)"})
         public final static long doLong(final long a, final long b) {
             return a / b;
+        }
+
+        @Specialization(guards = "isMinValueDividedByMinusOne(a, b)")
+        protected final Object doLongOverflow(final long a, final long b) {
+            return doLargeInteger(asLargeInteger(a), asLargeInteger(b));
         }
 
         @Specialization(guards = {"!b.isZero()", "a.isIntegralWhenDividedBy(b)"})
@@ -531,24 +538,35 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization
+        @Specialization(guards = {"b != 0", "!isMinValueDividedByMinusOne(a, b)"})
         protected final static long doLong(final long a, final long b) {
             return a / b;
         }
 
-        @Specialization
+        @Specialization(guards = {"b != 0", "isMinValueDividedByMinusOne(a, b)"})
+        protected final Object doLongOverflow(final long a, final long b) {
+            return doLargeInteger(asLargeInteger(a), asLargeInteger(b));
+        }
+
+        @Specialization(guards = "!b.isZero()")
         protected final static Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
             return a.divide(b);
         }
 
-        @Specialization
+        @Specialization(guards = "!b.isZero()")
         protected final Object doLong(final long a, final LargeIntegerObject b) {
             return doLargeInteger(asLargeInteger(a), b);
         }
 
-        @Specialization
+        @Specialization(guards = "b != 0")
         protected final Object doLargeInteger(final LargeIntegerObject a, final long b) {
             return doLargeInteger(a, asLargeInteger(b));
+        }
+
+        @SuppressWarnings("unused")
+        @Fallback
+        public final static long doZeroDivide(final Object a, final Object b) {
+            throw new PrimitiveFailed();
         }
     }
 

@@ -421,6 +421,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
             assertEquals(i + 1, evaluate(i + " + 1"));
         }
         assertEquals(4L, evaluate("-1 \\\\ 5"));
+        assertEquals("9223372036854775808", evaluate("-9223372036854775808 / -1").toString()); // Long.MIN_VALUE / -1
     }
 
     @Test
