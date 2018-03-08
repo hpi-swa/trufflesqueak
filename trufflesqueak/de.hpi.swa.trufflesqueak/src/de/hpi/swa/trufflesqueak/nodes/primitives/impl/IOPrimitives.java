@@ -238,7 +238,12 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         protected Object replace(NativeObject rcvr, long start, long stop, ListObject repl, long replStart) {
             int repOff = (int) (replStart - start);
             for (int i = (int) (start - 1); i < stop; i++) {
-                rcvr.setNativeAt0(i, (long) repl.at0(repOff + i));
+                Object value = repl.at0(repOff + i);
+                if (value instanceof Character) {
+                    rcvr.setNativeAt0(i, Character.getNumericValue((Character) value));
+                } else {
+                    rcvr.setNativeAt0(i, (long) value);
+                }
             }
             return rcvr;
         }
