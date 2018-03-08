@@ -37,9 +37,9 @@ public abstract class SqueakLookupClassNode extends AbstractNodeWithCode {
 
     @Specialization
     protected ClassObject squeakClass(long object) {
-        if (object < LargeIntegerObject.SMALL_INTEGER_MIN) {
+        if (object < LargeIntegerObject.SMALLINTEGER32_MIN) {
             return code.image.largeNegativeIntegerClass;
-        } else if (object <= LargeIntegerObject.SMALL_INTEGER_MAX) {
+        } else if (object <= LargeIntegerObject.SMALLINTEGER32_MAX) {
             return code.image.smallIntegerClass;
         } else {
             return code.image.largePositiveIntegerClass;

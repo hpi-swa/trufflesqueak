@@ -11,8 +11,10 @@ import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public class LargeIntegerObject extends BytesObject {
-    @CompilationFinal public static final long SMALL_INTEGER_MIN = -0x40000000;
-    @CompilationFinal public static final long SMALL_INTEGER_MAX = 0x3fffffff;
+    @CompilationFinal public static final long SMALLINTEGER32_MIN = -0x40000000;
+    @CompilationFinal public static final long SMALLINTEGER32_MAX = 0x3fffffff;
+    @CompilationFinal public static final long SMALLINTEGER64_MIN = -0x1000000000000000L;
+    @CompilationFinal public static final long SMALLINTEGER64_MAX = 0xfffffffffffffffL;
 
     @CompilationFinal private BigInteger integer;
 
@@ -23,7 +25,20 @@ public class LargeIntegerObject extends BytesObject {
     public LargeIntegerObject(SqueakImageContext img, BigInteger integer) {
         super(img, integer.compareTo(BigInteger.ZERO) >= 0 ? img.largePositiveIntegerClass : img.largeNegativeIntegerClass);
         this.integer = integer;
-        this.bytes = swapInPlaceOrder(integer.abs().toByteArray());
+        byte[] byteArray;
+        byte[] array = integer.abs().toByteArray();
+        int size = (integer.bitLength() + 7) / 8;
+        if ( array.length > size) {
+            byteArray = new byte[size];
+            int offset = array.length - size;
+            for (int i = 0; i < byteArray.length; i++) {
+                byteArray[i] = array[offset+i];
+            }
+        } else {
+            assert array.length == size;
+            byteArray = array;
+        }
+        this.bytes = swapOrderInPlace(byteArray);
     }
 
     public LargeIntegerObject(SqueakImageContext img, ClassObject klass, byte[] bytes) {
@@ -71,10 +86,10 @@ public class LargeIntegerObject extends BytesObject {
     }
 
     private static byte[] swapOrder(byte[] bytes) {
-        return swapInPlaceOrder(Arrays.copyOf(bytes, bytes.length));
+        return swapOrderInPlace(Arrays.copyOf(bytes, bytes.length));
     }
 
-    private static byte[] swapInPlaceOrder(byte[] bytes) {
+    private static byte[] swapOrderInPlace(byte[] bytes) {
         for (int i = 0; i < bytes.length / 2; i++) {
             byte b = bytes[i];
             bytes[i] = bytes[bytes.length - 1 - i];

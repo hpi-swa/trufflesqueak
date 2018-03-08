@@ -28,7 +28,7 @@ public abstract class AbstractPrimitiveNode extends AbstractNodeWithCode {
     protected abstract Object executeWithArgumentsSpecialized(VirtualFrame frame, Object... arguments);
 
     protected static final boolean isSmallInteger(long value) {
-        return LargeIntegerObject.SMALL_INTEGER_MIN <= value && value <= LargeIntegerObject.SMALL_INTEGER_MAX;
+        return LargeIntegerObject.SMALLINTEGER32_MIN <= value && value <= LargeIntegerObject.SMALLINTEGER32_MAX;
     }
 
     protected static final boolean hasVariableClass(BaseSqueakObject obj) {
@@ -41,5 +41,9 @@ public abstract class AbstractPrimitiveNode extends AbstractNodeWithCode {
 
     protected static final boolean isSemaphore(PointersObject receiver) {
         return receiver.isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassSemaphore);
+    }
+
+    protected final LargeIntegerObject asLargeInteger(long value) {
+        return LargeIntegerObject.valueOf(code, value);
     }
 }
