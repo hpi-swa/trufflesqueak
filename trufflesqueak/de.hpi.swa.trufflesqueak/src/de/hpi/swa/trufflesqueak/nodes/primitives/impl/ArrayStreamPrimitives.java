@@ -2,6 +2,7 @@ package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 
 import java.util.List;
 
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -209,6 +210,15 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"!isNil(obj)", "hasVariableClass(obj)"})
         protected long size(BaseSqueakObject obj) {
             return obj.varsize();
+        }
+
+        /*
+         * Quick return 0 to allow eager primitive calls.
+         * "The number of indexable fields of fixed-length objects is 0" (see Object>>basicSize).
+         */
+        @Fallback
+        protected final static long doObject(@SuppressWarnings("unused") Object receiver) {
+            return 0;
         }
     }
 
