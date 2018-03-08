@@ -5,6 +5,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveWithoutResultException;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakException.SqueakTestException;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -44,7 +45,9 @@ public final class SendBytecodes {
             ClassObject rcvrClass = lookupClassNode.executeLookup(rcvrAndArgs[0]);
             CompiledCodeObject lookupResult = (CompiledCodeObject) lookupNode.executeLookup(rcvrClass, selector);
             Object contextOrMarker = readContextNode.executeRead(frame);
-            if (lookupResult.isDoesNotUnderstand()) {
+            if (lookupResult.toString().equals("Metaclass (ToolSet)>>debugError:")) { // TODO: remove when no longer needed for testing
+                throw new SqueakTestException(code.image, "Tried to call ToolSet class>>debugError: to open debugger");
+            } else if (lookupResult.isDoesNotUnderstand()) {
                 Object[] rcvrAndSelector = new Object[]{rcvrAndArgs[0], selector};
                 return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndSelector, contextOrMarker);
             } else {

@@ -304,7 +304,7 @@ public class SqueakImageContext {
 
             @Override
             public Object visitFrame(FrameInstance frameInstance) {
-                if (depth[0]++ > 100 && isTravisBuild) {
+                if (depth[0]++ > 50 && isTravisBuild) {
                     return null;
                 }
                 Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
