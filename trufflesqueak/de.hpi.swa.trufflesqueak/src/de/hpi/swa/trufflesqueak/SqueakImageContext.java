@@ -268,7 +268,9 @@ public class SqueakImageContext {
         return newList(elements);
     }
 
-    public PointersObject newPoint(long xPos, long yPos) {
+    public PointersObject newPoint(Object xPos, Object yPos) {
+        assert xPos instanceof Long || xPos instanceof LargeIntegerObject || xPos instanceof Double;
+        assert yPos instanceof Long || yPos instanceof LargeIntegerObject || yPos instanceof Double;
         ClassObject pointClass = (ClassObject) specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.ClassPoint);
         PointersObject newPoint = (PointersObject) pointClass.newInstance();
         newPoint.atput0(POINT.X, xPos);

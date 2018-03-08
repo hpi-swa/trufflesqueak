@@ -49,7 +49,47 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object makePoint(long xPos, long yPos) {
+        protected final Object doLong(final long xPos, final long yPos) {
+            return code.image.newPoint(xPos, yPos);
+        }
+
+        @Specialization
+        protected final Object doLong(final long xPos, final LargeIntegerObject yPos) {
+            return code.image.newPoint(xPos, yPos);
+        }
+
+        @Specialization
+        protected final Object doLong(final long xPos, final double yPos) {
+            return code.image.newPoint(xPos, yPos);
+        }
+
+        @Specialization
+        protected final Object doLargeInteger(final LargeIntegerObject xPos, final long yPos) {
+            return code.image.newPoint(xPos, yPos);
+        }
+
+        @Specialization
+        protected final Object doLargeInteger(final LargeIntegerObject xPos, final LargeIntegerObject yPos) {
+            return code.image.newPoint(xPos, yPos);
+        }
+
+        @Specialization
+        protected final Object doLargeInteger(final LargeIntegerObject xPos, final double yPos) {
+            return code.image.newPoint(xPos, yPos);
+        }
+
+        @Specialization
+        protected final Object doDouble(final double xPos, final long yPos) {
+            return code.image.newPoint(xPos, yPos);
+        }
+
+        @Specialization
+        protected final Object doDouble(final double xPos, final double yPos) {
+            return code.image.newPoint(xPos, yPos);
+        }
+
+        @Specialization
+        protected final Object doDouble(final double xPos, final LargeIntegerObject yPos) {
             return code.image.newPoint(xPos, yPos);
         }
     }
