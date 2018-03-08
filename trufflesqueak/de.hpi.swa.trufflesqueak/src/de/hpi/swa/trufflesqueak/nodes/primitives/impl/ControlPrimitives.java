@@ -16,7 +16,6 @@ import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.MUTEX;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.PROCESS;
@@ -297,28 +296,28 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected boolean doChar(char a, char b) {
+        protected final static boolean doBoolean(final boolean a, final boolean b) {
             return a == b;
         }
 
         @Specialization
-        protected boolean doLong(long a, long b) {
+        protected final static boolean doChar(final char a, final char b) {
             return a == b;
         }
 
         @Specialization
-        protected boolean doBoolean(boolean a, boolean b) {
+        protected final static boolean doLong(final long a, final long b) {
             return a == b;
         }
 
         @Specialization
-        protected boolean doLargeInteger(LargeIntegerObject a, LargeIntegerObject b) {
+        protected final static boolean doDouble(final double a, final double b) {
+            return a == b;
+        }
+
+        @Specialization
+        protected final static boolean doObject(final Object a, final Object b) {
             return a.equals(b);
-        }
-
-        @Specialization
-        protected boolean doObject(Object a, Object b) {
-            return a == b;
         }
     }
 
