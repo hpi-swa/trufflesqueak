@@ -6,7 +6,7 @@ import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 // TODO: Validate that weak objects are working correctly
-public class WeakPointersObject extends AbstractPointersObject {
+public class WeakPointersObject extends ListObject {
 
     public WeakPointersObject(SqueakImageContext img) {
         super(img);

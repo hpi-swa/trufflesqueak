@@ -249,7 +249,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object replace(ListObject rcvr, long start, long stop, ListObject repl, long replStart) {
+        protected Object doListObject(ListObject rcvr, long start, long stop, ListObject repl, long replStart) {
             long repOff = replStart - start;
             for (int i = (int) (start - 1); i < stop; i++) {
                 rcvr.atput0(i, repl.at0(repOff + i));

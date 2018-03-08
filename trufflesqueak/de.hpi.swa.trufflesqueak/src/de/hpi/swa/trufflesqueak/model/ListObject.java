@@ -7,12 +7,16 @@ public class ListObject extends AbstractPointersObject {
         super(img);
     }
 
-    public ListObject(SqueakImageContext img, ClassObject klass, Object[] objects) {
-        super(img, klass, objects);
+    public ListObject(SqueakImageContext image, ClassObject sqClass) {
+        super(image, sqClass);
     }
 
-    public ListObject(SqueakImageContext image, ClassObject classObject, int size) {
-        super(image, classObject, size);
+    public ListObject(SqueakImageContext image, ClassObject sqClass, Object[] objects) {
+        super(image, sqClass, objects);
+    }
+
+    public ListObject(SqueakImageContext image, ClassObject sqClass, int size) {
+        super(image, sqClass, size);
     }
 
     @Override
