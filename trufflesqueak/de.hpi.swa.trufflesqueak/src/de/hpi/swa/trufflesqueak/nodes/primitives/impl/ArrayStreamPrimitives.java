@@ -71,7 +71,11 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         protected long doDouble(final double receiver, final long index) {
             long doubleBits = Double.doubleToLongBits(receiver);
             if (index == 1) {
-                return Math.abs(doubleBits >> 32);
+                if (receiver >= 0) {
+                    return Math.abs(doubleBits >> 32);
+                } else {
+                    return ~Math.abs(doubleBits >> 32) + 1 & 0xffffffffL;
+                }
             } else if (index == 2) {
                 return Math.abs((int) doubleBits);
             } else {
