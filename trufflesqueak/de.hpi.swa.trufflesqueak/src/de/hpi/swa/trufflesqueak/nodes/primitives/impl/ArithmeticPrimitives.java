@@ -399,8 +399,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 10, numArguments = 2)
-    protected static abstract class PrimDivideSmallIntegerNode extends AbstractArithmeticPrimitiveNode {
-        protected PrimDivideSmallIntegerNode(CompiledMethodObject method) {
+    protected static abstract class PrimSmallIntegerDivideNode extends AbstractArithmeticPrimitiveNode {
+        protected PrimSmallIntegerDivideNode(CompiledMethodObject method) {
             super(method);
         }
 
@@ -495,9 +495,9 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {30, 50}, numArguments = 2)
-    protected static abstract class PrimDivideNode extends AbstractArithmeticPrimitiveNode {
-        protected PrimDivideNode(CompiledMethodObject method) {
+    @SqueakPrimitive(index = 30, numArguments = 2)
+    protected static abstract class PrimLargeIntegerDivideNode extends AbstractArithmeticPrimitiveNode {
+        protected PrimLargeIntegerDivideNode(CompiledMethodObject method) {
             super(method);
         }
 
@@ -519,39 +519,14 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return a.divide(b);
         }
 
-        @Specialization(guards = "!isZero(b)")
-        protected final static double doDouble(final double a, final double b) {
-            return a / b;
-        }
-
-        @Specialization(guards = "b != 0")
+        @Specialization(guards = {"b != 0", "a.isIntegralWhenDividedBy(asLargeInteger(b))"})
         protected final Object doLargeIntegerLong(final LargeIntegerObject a, final long b) {
             return doLargeInteger(a, asLargeInteger(b));
         }
 
-        @Specialization(guards = "!isZero(b)")
-        protected final static double doLargeIntegerDouble(final LargeIntegerObject a, final double b) {
-            return doDouble(a.doubleValue(), b);
-        }
-
-        @Specialization(guards = "!b.isZero()")
+        @Specialization(guards = {"!b.isZero()", "asLargeInteger(a).isIntegralWhenDividedBy(b)"})
         protected final Object doLongLargeInteger(final long a, final LargeIntegerObject b) {
             return doLargeInteger(asLargeInteger(a), b);
-        }
-
-        @Specialization(guards = "!isZero(b)")
-        protected final static double doLongDouble(final long a, final double b) {
-            return doDouble(a, b);
-        }
-
-        @Specialization(guards = "b != 0")
-        protected final static double doDoubleLong(final double a, final long b) {
-            return doDouble(a, b);
-        }
-
-        @Specialization(guards = "!b.isZero()")
-        protected final static double doDoubleLargeInteger(final double a, final LargeIntegerObject b) {
-            return doDouble(a, b.doubleValue());
         }
 
         @SuppressWarnings("unused")
@@ -607,6 +582,30 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final static double doLong(final long receiver) {
             return receiver;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 50, numArguments = 2)
+    protected static abstract class PrimFloatDivideNode extends AbstractArithmeticPrimitiveNode {
+        protected PrimFloatDivideNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = "!isZero(b)")
+        protected final static double doDouble(final double a, final double b) {
+            return a / b;
+        }
+
+        @Specialization(guards = {"b != 0", "isSmallInteger(b)"})
+        protected final static double doDoubleLong(final double a, final long b) {
+            return doDouble(a, b);
+        }
+
+        @SuppressWarnings("unused")
+        @Fallback
+        public final static long doZeroDivide(final Object a, final Object b) {
+            throw new PrimitiveFailed();
         }
     }
 
