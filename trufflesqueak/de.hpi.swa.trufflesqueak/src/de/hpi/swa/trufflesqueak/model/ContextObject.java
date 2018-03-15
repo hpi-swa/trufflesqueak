@@ -173,9 +173,9 @@ public class ContextObject extends AbstractPointersObject {
     @Override
     public String toString() {
         if (at0(CONTEXT.METHOD) == image.nil) {
-            return "New context";
+            return "CTX without method";
         } else {
-            return "Context for " + getMethod();
+            return "CTX " + getMethod();
         }
     }
 
@@ -261,7 +261,12 @@ public class ContextObject extends AbstractPointersObject {
     public void printSqStackTrace() {
         ContextObject current = this;
         while (true) {
-            image.getOutput().println(current.toString());
+            Object[] rcvrAndArgs = current.getReceiverAndArguments();
+            String[] argumentStrings = new String[rcvrAndArgs.length];
+            for (int i = 0; i < rcvrAndArgs.length; i++) {
+                argumentStrings[i] = rcvrAndArgs[i].toString();
+            }
+            image.getOutput().println(String.format("%s #(%s)", current, String.join(", ", argumentStrings)));
             BaseSqueakObject sender = current.getSender();
             if (sender == image.nil) {
                 break;
