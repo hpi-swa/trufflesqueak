@@ -63,7 +63,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                             foundMyself = true;
                         }
                     } else {
-                        if (FrameAccess.isMatchingMarker(previousContext.getFrameMarker(), contextOrMarker)) {
+                        if (previousContext != null && FrameAccess.isMatchingMarker(previousContext.getFrameMarker(), contextOrMarker)) {
                             return null;
                         } else {
                             CompiledCodeObject frameMethod = FrameAccess.getMethod(current);
@@ -83,10 +83,15 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
             }
         }
 
+        @Specialization(guards = {"receiver.hasVirtualSender()"})
+        protected Object doFindNextVirtualizedNil(ContextObject receiver, @SuppressWarnings("unused") NilObject nil) {
+            return doFindNextVirtualized(receiver, null);
+        }
+
         @Specialization(guards = {"!receiver.hasVirtualSender()"})
-        protected Object doFindNext(ContextObject receiver, ContextObject previousContext) {
+        protected Object doFindNext(ContextObject receiver, BaseSqueakObject previousContextOrNil) {
             ContextObject current = receiver;
-            while (current != previousContext) {
+            while (current != previousContextOrNil) {
                 BaseSqueakObject sender = current.getSender();
                 if (sender == code.image.nil) {
                     break;
