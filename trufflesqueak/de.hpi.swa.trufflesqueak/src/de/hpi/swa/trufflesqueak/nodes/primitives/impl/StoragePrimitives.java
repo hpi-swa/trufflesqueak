@@ -218,16 +218,35 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 73, numArguments = 2)
+    @SqueakPrimitive(index = 73, variableArguments = true)
     protected static abstract class PrimInstVarAtNode extends AbstractPrimitiveNode {
         protected PrimInstVarAtNode(CompiledMethodObject method) {
             super(method);
         }
 
+        @Override
+        public final Object executeWithArguments(VirtualFrame frame, Object... rcvrAndArgs) {
+            return doAt(rcvrAndArgs);
+        }
+
         @Specialization
-        protected Object at(BaseSqueakObject receiver, long idx) {
+        protected Object doAt(Object[] rcvrAndArgs) {
+            BaseSqueakObject receiver;
+            long index;
+            switch (rcvrAndArgs.length) {
+                case 2:
+                    receiver = (BaseSqueakObject) rcvrAndArgs[0];
+                    index = (long) rcvrAndArgs[1];
+                    break;
+                case 3:
+                    receiver = (BaseSqueakObject) rcvrAndArgs[1];
+                    index = (long) rcvrAndArgs[2];
+                    break;
+                default:
+                    throw new PrimitiveFailed();
+            }
             try {
-                return receiver.at0(idx - 1);
+                return receiver.at0(index - 1);
             } catch (IndexOutOfBoundsException e) {
                 throw new PrimitiveFailed();
             }
