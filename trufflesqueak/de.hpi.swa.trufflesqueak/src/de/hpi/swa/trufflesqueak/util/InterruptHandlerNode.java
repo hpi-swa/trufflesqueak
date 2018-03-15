@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.util;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 
@@ -10,10 +11,11 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.process.SignalSemaphoreNode;
 
 public class InterruptHandlerNode extends Node {
-    private final SqueakImageContext image;
+    @CompilationFinal private final SqueakImageContext image;
+    @CompilationFinal private static final int interruptCheckCounterSize = 1000;
+    @CompilationFinal public static final int interruptChecksEveryNms = 3;
     private int interruptCheckCounter = 0;
-    private int interruptCheckCounterFeedbackReset = 1000;
-    private int interruptChecksEveryNms = 3;
+    private static int interruptCheckCounterFeedbackReset = interruptCheckCounterSize;
     private long nextPollTick = 0;
     private long nextWakeupTick = 0;
     private long lastTick = 0;
@@ -66,8 +68,8 @@ public class InterruptHandlerNode extends Node {
         if ((now - lastTick) < interruptChecksEveryNms) {
             interruptCheckCounterFeedbackReset += 10;
         } else {
-            if (interruptCheckCounterFeedbackReset <= 1000) {
-                interruptCheckCounterFeedbackReset = 1000;
+            if (interruptCheckCounterFeedbackReset <= interruptCheckCounterSize) {
+                interruptCheckCounterFeedbackReset = interruptCheckCounterSize;
             } else {
                 interruptCheckCounterFeedbackReset -= 12;
             }

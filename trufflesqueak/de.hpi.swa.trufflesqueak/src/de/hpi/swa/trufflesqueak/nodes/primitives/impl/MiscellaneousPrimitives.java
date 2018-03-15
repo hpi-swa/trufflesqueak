@@ -8,8 +8,8 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.File;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 
@@ -41,6 +41,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitivesFactory.PrimBalloonEngineSimulateNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitivesFactory.PrimBitBltSimulateNodeGen;
+import de.hpi.swa.trufflesqueak.util.InterruptHandlerNode;
 
 public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -442,28 +443,116 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Override
         public final Object executeWithArguments(VirtualFrame frame, Object... rcvrAndArgs) {
-            return doTwoArguments(rcvrAndArgs);
+            return getVMParameters(rcvrAndArgs);
         }
 
         @Specialization
-        protected Object doTwoArguments(Object[] rcvrAndArgs) {
-            long numRcvrAndArgs = rcvrAndArgs.length;
-            if (numRcvrAndArgs == 1) {
-                Object[] vmParameters = new Object[71];
-                Arrays.fill(vmParameters, 1L);
-                return code.image.newList(vmParameters);
+        protected Object getVMParameters(Object[] rcvrAndArgs) {
+            int paramsArraySize = 71;
+            /**
+             * Behaviour depends on argument count:
+             *
+             * <pre>
+             * 0 args: return an Array of VM parameter values;
+             * 1 arg:  return the indicated VM parameter;
+             * 2 args: set the VM indicated parameter.
+             * </pre>
+             */
+            switch (rcvrAndArgs.length) {
+                case 1:
+                    Object[] vmParameters = new Object[paramsArraySize];
+                    for (int i = 0; i < paramsArraySize; i++) {
+                        vmParameters[i] = vmParameterAt(i);
+                    }
+                    return code.image.newList(vmParameters);
+                case 2:
+                    int index;
+                    try {
+                        index = ((Long) rcvrAndArgs[1]).intValue();
+                    } catch (ClassCastException e) {
+                        throw new PrimitiveFailed();
+                    }
+                    if (index < 1 || index > paramsArraySize) {
+                        throw new PrimitiveFailed();
+                    } else {
+                        return vmParameterAt(index);
+                    }
+                case 3:
+                    return code.image.nil; // ignore writes
+                default:
+                    throw new PrimitiveFailed();
             }
-            long index;
-            try {
-                index = (long) rcvrAndArgs[1];
-            } catch (ClassCastException e) {
-                throw new PrimitiveFailed();
+        }
+
+        private Object vmParameterAt(int index) {
+            //@formatter:off
+            switch (index) {
+                case 1: // end (v3)/size(Spur) of old-space (0-based, read-only)
+                case 2: return 1L; // end (v3)/size(Spur) of young/new-space (read-only)
+                case 3: // end (v3)/size(Spur) of heap (read-only)
+                case 4: return code.image.nil; // nil (was allocationCount (read-only))
+                case 5: return code.image.nil; // nil (was allocations between GCs (read-write)
+                case 6: // survivor count tenuring threshold (read-write)
+                case 7: return ManagementFactory.getGarbageCollectorMXBeans().get(1).getCollectionCount(); // full GCs since startup (read-only)
+                case 8: return 1L; // total milliseconds in full GCs since startup (read-only)
+                case 9: return ManagementFactory.getGarbageCollectorMXBeans().get(0).getCollectionCount(); // incremental GCs (SqueakV3) or scavenges (Spur) since startup (read-only)
+                case 10: // total milliseconds in incremental GCs (SqueakV3) or scavenges (Spur) since startup (read-only)
+                case 11: // tenures of surving objects since startup (read-only)
+                // case 12-20 were specific to ikp's JITTER VM, now 12-19 are open for use
+                case 20: // utc microseconds at VM start-up (actually at time initialization, which precedes image load).
+                case 21: // root table size (read-only)
+                case 22: return 0L; // root table overflows since startup (read-only)
+                case 23: // bytes of extra memory to reserve for VM buffers, plugins, etc (stored in image file header).
+                case 24: // memory threshold above which shrinking object memory (rw)
+                case 25: // memory headroom when growing object memory (rw)
+                case 26: return InterruptHandlerNode.interruptChecksEveryNms; // interruptChecksEveryNms - force an ioProcessEvents every N milliseconds (rw)
+                case 27: // number of times mark loop iterated for current IGC/FGC (read-only) includes ALL marking
+                case 28: // number of times sweep loop iterated for current IGC/FGC (read-only)
+                case 29: // number of times make forward loop iterated for current IGC/FGC (read-only)
+                case 30: // number of times compact move loop iterated for current IGC/FGC (read-only)
+                case 31: // number of grow memory requests (read-only)
+                case 32: // number of shrink memory requests (read-only)
+                case 33: // number of root table entries used for current IGC/FGC (read-only)
+                case 34: // number of allocations done before current IGC/FGC (read-only)
+                case 35: // number of survivor objects after current IGC/FGC (read-only)
+                case 36: // millisecond clock when current IGC/FGC completed (read-only)
+                case 37: // number of marked objects for Roots of the world, not including Root Table entries for current IGC/FGC (read-only)
+                case 38: // milliseconds taken by current IGC (read-only)
+                case 39: // Number of finalization signals for Weak Objects pending when current IGC/FGC completed (read-only)
+                case 40: return 4L; // BytesPerOop for this image
+                case 41: return 6521L; // imageFormatVersion for the VM
+                case 42: // number of stack pages in use
+                case 43: // desired number of stack pages (stored in image file header, max 65535)
+                case 44: return 0L; // size of eden, in bytes
+                case 45: // desired size of eden, in bytes (stored in image file header)
+                case 46: // machine code zone size, in bytes (Cog only; otherwise nil)
+                case 47: // desired machine code zone size (stored in image file header; Cog only; otherwise nil)
+                case 48: return 0L; // various header flags.  See getCogVMFlags.
+                case 49: // max size the image promises to grow the external semaphore table to (0 sets to default, which is 256 as of writing)
+                case 50: case 51: return code.image.nil; // nil; reserved for VM parameters that persist in the image (such as eden above)
+                case 52: // root table capacity
+                case 53: // number of segments (Spur only; otherwise nil)
+                case 54: // total size of free old space (Spur only, otherwise nil)
+                case 55: // ratio of growth and image size at or above which a GC will be performed post scavenge
+                case 56: // number of process switches since startup (read-only)
+                case 57: // number of ioProcessEvents calls since startup (read-only)
+                case 58: // number of ForceInterruptCheck calls since startup (read-only)
+                case 59: // number of check event calls since startup (read-only)
+                case 60: // number of stack page overflows since startup (read-only)
+                case 61: // number of stack page divorces since startup (read-only)
+                case 62: // compiled code compactions since startup (read-only; Cog only; otherwise nil)
+                case 63: // total milliseconds in compiled code compactions since startup (read-only; Cog only; otherwise nil)
+                case 64: // the number of methods that currently have jitted machine-code
+                case 65: // whether the VM supports a certain feature, MULTIPLE_BYTECODE_SETS is bit 0, IMMTABILITY is bit 1
+                case 66: // the byte size of a stack page
+                case 67: // the max allowed size of old space (Spur only; nil otherwise; 0 implies no limit except that of the underlying platform)
+                case 68: // the average number of live stack pages when scanned by GC (at scavenge/gc/become et al)
+                case 69: // the maximum number of live stack pages when scanned by GC (at scavenge/gc/become et al)
+                case 70: return 1L; // the vmProxyMajorVersion (the interpreterProxy VM_MAJOR_VERSION)
+                case 71: return 13L; // the vmProxyMinorVersion (the interpreterProxy VM_MINOR_VERSION)
             }
-            if (numRcvrAndArgs <= 3) {
-                // when two args are provided, do nothing and return old value
-                return 1L;
-            }
-            throw new PrimitiveFailed();
+            //@formatter:on
+            return 0L;
         }
     }
 
