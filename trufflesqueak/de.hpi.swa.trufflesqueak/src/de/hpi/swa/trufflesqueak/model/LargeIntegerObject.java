@@ -28,11 +28,11 @@ public class LargeIntegerObject extends BytesObject {
         byte[] byteArray;
         byte[] array = integer.abs().toByteArray();
         int size = (integer.bitLength() + 7) / 8;
-        if ( array.length > size) {
+        if (array.length > size) {
             byteArray = new byte[size];
             int offset = array.length - size;
             for (int i = 0; i < byteArray.length; i++) {
-                byteArray[i] = array[offset+i];
+                byteArray[i] = array[offset + i];
             }
         } else {
             assert array.length == size;

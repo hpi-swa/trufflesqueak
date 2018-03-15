@@ -1,5 +1,7 @@
 package de.hpi.swa.trufflesqueak.model;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 
 public abstract class NativeObject extends SqueakObject {
@@ -12,6 +14,7 @@ public abstract class NativeObject extends SqueakObject {
         super(image, classObject);
     }
 
+    @TruffleBoundary
     @Override
     public String toString() {
         return new String(getBytes());
