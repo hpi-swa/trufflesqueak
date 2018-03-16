@@ -39,17 +39,14 @@ public abstract class SqueakObject extends BaseSqueakObject {
 
     @Override
     public boolean become(BaseSqueakObject other) {
-        if (other instanceof SqueakObject) {
-            long otherHash = ((SqueakObject) other).hash;
-            ((SqueakObject) other).hash = this.hash;
-            this.hash = otherHash;
-
-            ClassObject otherSqClass = ((SqueakObject) other).sqClass;
-            ((SqueakObject) other).sqClass = this.sqClass;
-            this.sqClass = otherSqClass;
-            return true;
+        if (this == other || !(other instanceof SqueakObject)) {
+            return false;
         }
-        return false;
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        ClassObject otherSqClass = ((SqueakObject) other).sqClass;
+        ((SqueakObject) other).sqClass = this.sqClass;
+        this.sqClass = otherSqClass;
+        return true;
     }
 
     @Override
@@ -66,10 +63,10 @@ public abstract class SqueakObject extends BaseSqueakObject {
     }
 
     @Override
-    public void pointersBecomeOneWay(Object[] from, Object[] to) {
+    public void pointersBecomeOneWay(Object[] from, Object[] to, boolean copyHash) {
+        ClassObject oldClass = getSqClass();
         for (int i = 0; i < from.length; i++) {
-            if (from[i] == sqClass) {
-                ClassObject oldClass = getSqClass();
+            if (from[i] == oldClass) {
                 ClassObject newClass = (ClassObject) to[i]; // must be a ClassObject
                 setSqClass(newClass);
                 newClass.setSqueakHash(oldClass.squeakHash());

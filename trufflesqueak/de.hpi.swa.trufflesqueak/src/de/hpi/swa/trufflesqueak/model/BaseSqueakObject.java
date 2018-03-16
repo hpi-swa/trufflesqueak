@@ -54,10 +54,7 @@ public abstract class BaseSqueakObject implements TruffleObject {
         }
     }
 
-    /**
-     * @param other The object to swap identities with
-     */
-    public boolean become(BaseSqueakObject other) {
+    public boolean become(@SuppressWarnings("unused") BaseSqueakObject other) {
         return false;
     }
 
@@ -93,6 +90,6 @@ public abstract class BaseSqueakObject implements TruffleObject {
     }
 
     @SuppressWarnings("unused")
-    public void pointersBecomeOneWay(Object[] from, Object[] to) {
+    public void pointersBecomeOneWay(Object[] from, Object[] to, boolean copyHash) {
     }
 }

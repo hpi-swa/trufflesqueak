@@ -4,10 +4,15 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameInstance;
+import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
@@ -20,10 +25,15 @@ import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
+import de.hpi.swa.trufflesqueak.model.SqueakObject;
 import de.hpi.swa.trufflesqueak.nodes.GetAllInstancesNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -38,6 +48,63 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         protected AbstractInstancesPrimitiveNode(CompiledMethodObject method) {
             super(method);
             getAllInstancesNode = GetAllInstancesNode.create(method);
+        }
+    }
+
+    private static abstract class AbstractArrayBecomeOneWayPrimitiveNode extends AbstractInstancesPrimitiveNode {
+        @Child private FrameStackReadNode stackReadNode = FrameStackReadNode.create();
+        @Child private FrameStackWriteNode stackWriteNode = FrameStackWriteNode.create();
+        @Child private FrameSlotReadNode stackPointerReadNode;
+
+        protected AbstractArrayBecomeOneWayPrimitiveNode(CompiledMethodObject method) {
+            super(method);
+            stackPointerReadNode = FrameSlotReadNode.create(method.stackPointerSlot);
+        }
+
+        protected final BaseSqueakObject performPointersBecomeOneWay(VirtualFrame frame, ListObject fromArray, ListObject toArray, boolean copyHash) {
+            if (fromArray.size() != toArray.size()) {
+                throw new PrimitiveFailed("bad argument");
+            }
+            Object[] fromPointers = fromArray.getPointers();
+            Object[] toPointers = toArray.getPointers();
+            List<BaseSqueakObject> instances = getAllInstancesNode.execute(frame);
+            for (Iterator<BaseSqueakObject> iterator = instances.iterator(); iterator.hasNext();) {
+                BaseSqueakObject instance = iterator.next();
+                if (instance != null && instance.getSqClass() != null) {
+                    instance.pointersBecomeOneWay(fromPointers, toPointers, copyHash);
+                }
+            }
+            patchTruffleFrames(fromPointers, toPointers);
+            return fromArray;
+        }
+
+        @TruffleBoundary
+        private final void patchTruffleFrames(Object[] fromPointers, Object[] toPointers) {
+            Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Frame>() {
+                @Override
+                public Frame visitFrame(FrameInstance frameInstance) {
+                    Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_WRITE);
+                    Object stackPointer = stackPointerReadNode.executeRead(current);
+                    if (stackPointer == null) {
+                        return null;
+                    }
+                    CompiledCodeObject codeObject = FrameAccess.getMethod(current);
+                    for (int i = 0; i < codeObject.getNumArgsAndCopiedValues() + codeObject.getNumTemps() + (long) stackPointer; i++) {
+                        Object stackObject = stackReadNode.execute(current, i);
+                        for (int j = 0; j < fromPointers.length; j++) {
+                            Object fromPointer = fromPointers[j];
+                            if (stackObject == fromPointer) {
+                                Object toPointer = toPointers[j];
+                                stackWriteNode.execute(current, i, toPointer);
+                                if (fromPointer instanceof BaseSqueakObject && toPointer instanceof SqueakObject) {
+                                    ((SqueakObject) toPointer).setSqueakHash(((BaseSqueakObject) fromPointer).squeakHash());
+                                }
+                            }
+                        }
+                    }
+                    return null;
+                }
+            });
         }
     }
 
@@ -182,37 +249,27 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 72, numArguments = 2)
-    protected static abstract class PrimForwardIdentity extends AbstractInstancesPrimitiveNode {
+    protected static abstract class PrimArrayBecomeOneWayNode extends AbstractArrayBecomeOneWayPrimitiveNode {
 
-        protected PrimForwardIdentity(CompiledMethodObject method) {
+        protected PrimArrayBecomeOneWayNode(CompiledMethodObject method) {
             // FIXME: this primitive does not correctly perform a one way become yet
             super(method);
         }
 
         @Specialization
-        protected BaseSqueakObject arrayBecome(VirtualFrame frame, ListObject receiver, ListObject argument) {
-            if (receiver.size() != argument.size()) {
-                throw new PrimitiveFailed("bad argument");
-            }
-            List<BaseSqueakObject> instances = getAllInstancesNode.execute(frame);
-            for (Iterator<BaseSqueakObject> iterator = instances.iterator(); iterator.hasNext();) {
-                BaseSqueakObject instance = iterator.next();
-                if (instance != null && instance.getSqClass() != null) {
-                    instance.pointersBecomeOneWay(receiver.getPointers(), argument.getPointers());
-                }
-            }
-            return receiver;
+        protected final BaseSqueakObject doForward(VirtualFrame frame, ListObject fromArray, ListObject toArray) {
+            return performPointersBecomeOneWay(frame, fromArray, toArray, true);
         }
 
         @SuppressWarnings("unused")
         @Specialization
-        protected BaseSqueakObject arrayBecome(Object receiver, ListObject argument) {
+        protected BaseSqueakObject arrayBecome(VirtualFrame frame, Object receiver, ListObject argument) {
             throw new PrimitiveFailed("bad receiver");
         }
 
         @SuppressWarnings("unused")
         @Specialization
-        protected BaseSqueakObject arrayBecome(ListObject receiver, Object argument) {
+        protected BaseSqueakObject arrayBecome(VirtualFrame frame, ListObject receiver, Object argument) {
             throw new PrimitiveFailed("bad argument");
         }
     }
@@ -391,7 +448,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected BaseSqueakObject doBecome(ListObject receiver, ListObject other) {
+        protected static final BaseSqueakObject doBecome(ListObject receiver, ListObject other) {
             int receiverSize = receiver.size();
             if (receiverSize != other.size()) {
                 throw new PrimitiveFailed();
@@ -592,6 +649,35 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                     throw new PrimitiveFailed();
             }
         }
+    }
 
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 249, numArguments = 3)
+    protected static abstract class PrimArrayBecomeOneWayCopyHashNode extends AbstractArrayBecomeOneWayPrimitiveNode {
+        @Child private FrameStackReadNode stackReadNode = FrameStackReadNode.create();
+        @Child private FrameStackWriteNode stackWriteNode = FrameStackWriteNode.create();
+        @Child private FrameSlotReadNode stackPointerReadNode;
+
+        protected PrimArrayBecomeOneWayCopyHashNode(CompiledMethodObject method) {
+            super(method);
+            stackPointerReadNode = FrameSlotReadNode.create(method.stackPointerSlot);
+        }
+
+        @Specialization
+        protected final BaseSqueakObject doForward(VirtualFrame frame, ListObject fromArray, ListObject toArray, boolean copyHash) {
+            return performPointersBecomeOneWay(frame, fromArray, toArray, copyHash);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected BaseSqueakObject arrayBecome(VirtualFrame frame, Object receiver, ListObject argument, boolean copyHash) {
+            throw new PrimitiveFailed("bad receiver");
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected BaseSqueakObject arrayBecome(VirtualFrame frame, ListObject receiver, Object argument, boolean copyHash) {
+            throw new PrimitiveFailed("bad argument");
+        }
     }
 }

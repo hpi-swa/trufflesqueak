@@ -100,15 +100,16 @@ public class CompiledMethodObject extends CompiledCodeObject {
     }
 
     @Override
-    public void pointersBecomeOneWay(Object[] from, Object[] to) {
-        super.pointersBecomeOneWay(from, to);
-        ClassObject klass = getCompiledInClass();
+    public void pointersBecomeOneWay(Object[] from, Object[] to, boolean copyHash) {
+        super.pointersBecomeOneWay(from, to, copyHash);
+        ClassObject oldClass = getCompiledInClass();
         for (int i = 0; i < from.length; i++) {
-            if (from[i] == klass) {
-                ClassObject oldClass = getCompiledInClass();
+            if (from[i] == oldClass) {
                 ClassObject newClass = (ClassObject) to[i];  // must be a ClassObject
                 setCompiledInClass(newClass);
-                newClass.setSqueakHash(oldClass.squeakHash());
+                if (copyHash) {
+                    newClass.setSqueakHash(oldClass.squeakHash());
+                }
                 // TODO: flush method caches
             }
         }

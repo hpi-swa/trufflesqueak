@@ -48,7 +48,6 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
     }
 
     private static final Object[] squeakTests = new Object[]{"AddPrefixNamePolicyTest", TEST_TYPE.PASSING,
-                    "AddPrefixNamePolicyTest", TEST_TYPE.PASSING,
                     "AliasTest", TEST_TYPE.PASSING,
                     "AllNamePolicyTest", TEST_TYPE.PASSING,
                     "AllocationTest", TEST_TYPE.IGNORE,
@@ -62,7 +61,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "Base64MimeConverterTest", TEST_TYPE.PASSING,
                     "BasicBehaviorClassMetaclassTest", TEST_TYPE.PASSING,
                     "BasicTypeTest", TEST_TYPE.PASSING,
-                    "BecomeTest", TEST_TYPE.FAILING,
+                    "BecomeTest", TEST_TYPE.PASSING,
                     "BehaviorTest", TEST_TYPE.REQUIRES_SOURCES,
                     "BindingPolicyTest", TEST_TYPE.PASSING,
                     "BitBltClipBugs", TEST_TYPE.PASSING,

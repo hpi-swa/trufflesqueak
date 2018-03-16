@@ -44,9 +44,9 @@ public class ContextObject extends AbstractPointersObject {
         this.frameMarker = frameMarker;
     }
 
-    private ContextObject(ContextObject original) {
+    public ContextObject(ContextObject original) {
         super(original.image, original.image.methodContextClass);
-        pointers = original.pointers;
+        pointers = original.pointers.clone();
         frameMarker = original.frameMarker;
         isDirty = original.isDirty;
     }

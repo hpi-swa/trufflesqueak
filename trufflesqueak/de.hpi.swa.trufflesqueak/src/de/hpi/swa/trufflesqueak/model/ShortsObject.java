@@ -8,6 +8,8 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public class ShortsObject extends NativeObject {
@@ -59,17 +61,18 @@ public class ShortsObject extends NativeObject {
 
     @Override
     public boolean become(BaseSqueakObject other) {
-        if (other instanceof ShortsObject) {
-            if (super.become(other)) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                ShortsObject otherShortsObject = ((ShortsObject) other);
-                short[] otherShorts = otherShortsObject.shorts;
-                otherShortsObject.shorts = this.shorts;
-                this.shorts = otherShorts;
-                return true;
-            }
+        if (!(other instanceof ShortsObject)) {
+            throw new PrimitiveExceptions.PrimitiveFailed();
         }
-        return false;
+        if (!super.become(other)) {
+            throw new SqueakException("Should not fail");
+        }
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        ShortsObject otherShortsObject = ((ShortsObject) other);
+        short[] otherShorts = otherShortsObject.shorts;
+        otherShortsObject.shorts = this.shorts;
+        this.shorts = otherShorts;
+        return true;
     }
 
     @Override

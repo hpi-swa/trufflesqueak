@@ -16,6 +16,8 @@ import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.SqueakLanguage;
+import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.instrumentation.CompiledCodeObjectPrinter;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.EnterCodeNode;
@@ -74,7 +76,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     protected CompiledCodeObject(CompiledCodeObject original) {
         this(original.image, original.getSqClass());
-        setLiteralsAndBytes(original.literals, original.bytes);
+        setLiteralsAndBytes(original.literals.clone(), original.bytes.clone());
     }
 
     private void setLiteralsAndBytes(Object[] literals, byte[] bytes) {
@@ -218,16 +220,18 @@ public abstract class CompiledCodeObject extends SqueakObject {
 
     @Override
     public boolean become(BaseSqueakObject other) {
-        if (other instanceof CompiledMethodObject) {
-            if (super.become(other)) {
-                Object[] literals2 = ((CompiledCodeObject) other).literals;
-                byte[] bytes2 = ((CompiledCodeObject) other).bytes;
-                ((CompiledCodeObject) other).setLiteralsAndBytes(literals, bytes);
-                this.setLiteralsAndBytes(literals2, bytes2);
-                return true;
-            }
+        if (!(other instanceof CompiledMethodObject)) {
+            throw new PrimitiveExceptions.PrimitiveFailed();
         }
-        return false;
+        if (!super.become(other)) {
+            throw new SqueakException("Should not fail");
+        }
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        Object[] literals2 = ((CompiledCodeObject) other).literals;
+        byte[] bytes2 = ((CompiledCodeObject) other).bytes;
+        ((CompiledCodeObject) other).setLiteralsAndBytes(literals, bytes);
+        this.setLiteralsAndBytes(literals2, bytes2);
+        return true;
     }
 
     /*

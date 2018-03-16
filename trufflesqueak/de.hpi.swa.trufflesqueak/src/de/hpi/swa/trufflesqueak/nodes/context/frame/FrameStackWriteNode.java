@@ -2,6 +2,7 @@ package de.hpi.swa.trufflesqueak.nodes.context.frame;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
@@ -11,7 +12,7 @@ public abstract class FrameStackWriteNode extends Node {
         return FrameStackWriteNodeGen.create();
     }
 
-    public abstract Object execute(VirtualFrame frame, int stackIndex, Object value);
+    public abstract Object execute(Frame frame, int stackIndex, Object value);
 
     protected FrameSlot getFrameSlotForIndex(VirtualFrame frame, int index) {
         assert index >= 0;

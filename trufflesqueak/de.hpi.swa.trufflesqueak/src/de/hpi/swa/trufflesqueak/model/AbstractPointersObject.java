@@ -6,6 +6,8 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public abstract class AbstractPointersObject extends SqueakObject {
@@ -48,37 +50,37 @@ public abstract class AbstractPointersObject extends SqueakObject {
 
     @Override
     public boolean become(BaseSqueakObject other) {
-        if (other instanceof AbstractPointersObject) {
-            if (super.become(other)) {
-                Object[] pointers2 = ((PointersObject) other).getPointers();
-                ((PointersObject) other).pointers = this.getPointers();
-                pointers = pointers2;
-                return true;
-            }
+        if (!(other instanceof AbstractPointersObject)) {
+            throw new PrimitiveExceptions.PrimitiveFailed();
         }
-        return false;
+        if (!super.become(other)) {
+            throw new SqueakException("Should not fail");
+        }
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        Object[] pointers2 = ((PointersObject) other).getPointers();
+        ((PointersObject) other).pointers = this.getPointers();
+        pointers = pointers2;
+        return true;
     }
 
     @Override
-    public void pointersBecomeOneWay(Object[] from, Object[] to) {
+    public void pointersBecomeOneWay(Object[] from, Object[] to, boolean copyHash) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         // TODO: super.pointersBecomeOneWay(from, to); ?
         // TODO: verify if a copy of the pointers is needed, otherwise modify pointers in place?
-        Object[] newPointers = pointers;
         for (int i = 0; i < from.length; i++) {
             Object fromPointer = from[i];
-            for (int j = 0; j < newPointers.length; j++) {
-                Object newPointer = newPointers[j];
+            for (int j = 0; j < pointers.length; j++) {
+                Object newPointer = pointers[j];
                 if (newPointer == fromPointer) {
                     Object toPointer = to[i];
-                    newPointers[j] = toPointer;
-                    if (fromPointer instanceof BaseSqueakObject && toPointer instanceof SqueakObject) {
+                    pointers[j] = toPointer;
+                    if (copyHash && fromPointer instanceof BaseSqueakObject && toPointer instanceof SqueakObject) {
                         ((SqueakObject) toPointer).setSqueakHash(((BaseSqueakObject) fromPointer).squeakHash());
                     }
                 }
             }
         }
-        pointers = newPointers;
     }
 
     @Override

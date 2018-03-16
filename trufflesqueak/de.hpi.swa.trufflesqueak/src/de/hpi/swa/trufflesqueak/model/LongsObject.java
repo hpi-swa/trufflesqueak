@@ -8,6 +8,8 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public class LongsObject extends NativeObject {
@@ -55,17 +57,18 @@ public class LongsObject extends NativeObject {
 
     @Override
     public boolean become(BaseSqueakObject other) {
-        if (other instanceof LongsObject) {
-            if (super.become(other)) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                LongsObject otherLongsObject = ((LongsObject) other);
-                long[] otherBytes = otherLongsObject.longs;
-                otherLongsObject.longs = this.longs;
-                this.longs = otherBytes;
-                return true;
-            }
+        if (!(other instanceof LongsObject)) {
+            throw new PrimitiveExceptions.PrimitiveFailed();
         }
-        return false;
+        if (!super.become(other)) {
+            throw new SqueakException("Should not fail");
+        }
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        LongsObject otherLongsObject = ((LongsObject) other);
+        long[] otherBytes = otherLongsObject.longs;
+        otherLongsObject.longs = this.longs;
+        this.longs = otherBytes;
+        return true;
     }
 
     @Override

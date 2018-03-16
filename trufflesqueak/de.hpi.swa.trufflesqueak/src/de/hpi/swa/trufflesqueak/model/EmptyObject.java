@@ -1,6 +1,7 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions;
 
 public class EmptyObject extends SqueakObject {
     public EmptyObject(SqueakImageContext img) {
@@ -13,10 +14,10 @@ public class EmptyObject extends SqueakObject {
 
     @Override
     public boolean become(BaseSqueakObject other) {
-        if (other instanceof EmptyObject) {
-            return super.become(other);
+        if (!(other instanceof EmptyObject)) {
+            throw new PrimitiveExceptions.PrimitiveFailed();
         }
-        return false;
+        return super.become(other);
     }
 
     @Override

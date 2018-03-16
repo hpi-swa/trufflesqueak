@@ -29,7 +29,7 @@ public class ClassObject extends AbstractPointersObject {
     }
 
     private ClassObject(ClassObject original) {
-        this(original.image, original.getSqClass(), original.pointers);
+        this(original.image, original.getSqClass(), original.pointers.clone());
         instSpec = original.instSpec;
         instanceSize = original.instanceSize;
     }
