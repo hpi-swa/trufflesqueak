@@ -60,6 +60,16 @@ public class ShortsObject extends NativeObject {
     }
 
     @Override
+    public long shortAt0(long index) {
+        return getNativeAt0(index);
+    }
+
+    @Override
+    public void shortAtPut0(long index, long value) {
+        setNativeAt0(index, value);
+    }
+
+    @Override
     public boolean become(BaseSqueakObject other) {
         if (!(other instanceof ShortsObject)) {
             throw new PrimitiveExceptions.PrimitiveFailed();

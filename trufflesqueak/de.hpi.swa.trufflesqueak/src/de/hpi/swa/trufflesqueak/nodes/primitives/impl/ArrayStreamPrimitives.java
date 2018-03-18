@@ -298,9 +298,43 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(indices = 143, numArguments = 2)
+    protected static abstract class PrimShortAtNode extends AbstractPrimitiveNode {
+        protected PrimShortAtNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected long doNativeObject(final NativeObject receiver, final long index) {
+            try {
+                return receiver.shortAt0(index);
+            } catch (IndexOutOfBoundsException e) {
+                throw new PrimitiveFailed();
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 144, numArguments = 3)
+    protected static abstract class PrimShortAtPutNode extends AbstractPrimitiveNode {
+        protected PrimShortAtPutNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected long doNativeObject(final NativeObject receiver, final long index, final long value) {
+            if (!(-0x8000 <= value && value <= 0x8000)) {
+                throw new PrimitiveFailed();
+            }
+            receiver.shortAtPut0(index, value);
+            return value;
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(indices = 210, numArguments = 2)
-    protected static abstract class PrimContextAt extends AbstractPrimitiveNode {
-        protected PrimContextAt(CompiledMethodObject method) {
+    protected static abstract class PrimContextAtNode extends AbstractPrimitiveNode {
+        protected PrimContextAtNode(CompiledMethodObject method) {
             super(method);
         }
 

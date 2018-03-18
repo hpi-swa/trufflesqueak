@@ -56,6 +56,16 @@ public class LongsObject extends NativeObject {
     }
 
     @Override
+    public long shortAt0(long index) {
+        throw new SqueakException.SqueakTestException(image, "Not yet implemented"); // TODO: implement
+    }
+
+    @Override
+    public void shortAtPut0(long longIndex, long value) {
+        throw new SqueakException.SqueakTestException(image, "Not yet implemented"); // TODO: implement
+    }
+
+    @Override
     public boolean become(BaseSqueakObject other) {
         if (!(other instanceof LongsObject)) {
             throw new PrimitiveExceptions.PrimitiveFailed();

@@ -62,6 +62,27 @@ public class BytesObject extends NativeObject {
     }
 
     @Override
+    public long shortAt0(long index) {
+        long offset = (index - 1) * 2;
+        int byte0 = (byte) at0(offset);
+        int byte1 = (int) at0(offset + 1) << 8;
+
+        if ((byte1 & 0x8000) != 0) {
+            byte1 = 0xffff0000 | byte1;
+        }
+        return byte1 | byte0;
+    }
+
+    @Override
+    public void shortAtPut0(long index, long value) {
+        Long byte0 = value & 0xff;
+        Long byte1 = value & 0xff00;
+        long offset = (index - 1) * 2;
+        atput0(offset, byte0.byteValue());
+        atput0(offset + 1, byte1.byteValue());
+    }
+
+    @Override
     public boolean become(BaseSqueakObject other) {
         if (!(other instanceof BytesObject)) {
             throw new PrimitiveExceptions.PrimitiveFailed();

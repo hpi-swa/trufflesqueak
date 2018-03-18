@@ -59,6 +59,33 @@ public class WordsObject extends NativeObject {
         ints[(int) longIndex] = (int) value;
     }
 
+    @Override
+    public long shortAt0(long index) {
+        int word = ints[((int) index - 1) / 2];
+        int shortValue;
+        if ((index - 1) % 2 == 0) {
+            shortValue = word & 0xffff;
+        } else {
+            shortValue = (word >> 16) & 0xffff;
+        }
+        if ((shortValue & 0x8000) != 0) {
+            shortValue = 0xffff0000 | shortValue;
+        }
+        return shortValue;
+    }
+
+    @Override
+    public void shortAtPut0(long index, long value) {
+        long wordIndex = (index - 1) / 2;
+        long word = (int) at0(wordIndex);
+        if ((index - 1) % 2 == 0) {
+            word = (word & 0xffff0000) | (value & 0xffff);
+        } else {
+            word = (value << 16) | (word & 0xffff);
+        }
+        atput0(wordIndex, word);
+    }
+
     public int getInt(int index) {
         return ints[index];
     }

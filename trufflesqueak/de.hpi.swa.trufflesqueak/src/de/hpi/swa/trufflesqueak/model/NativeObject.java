@@ -44,6 +44,10 @@ public abstract class NativeObject extends SqueakObject {
 
     public abstract void setNativeAt0(long longIndex, long value);
 
+    public abstract long shortAt0(long longIndex);
+
+    public abstract void shortAtPut0(long longIndex, long value);
+
     @Override
     public final int instsize() {
         return 0;
