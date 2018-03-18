@@ -290,8 +290,8 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 110, numArguments = 2)
-    protected static abstract class PrimEquivalentNode extends AbstractPrimitiveNode {
-        protected PrimEquivalentNode(CompiledMethodObject method) {
+    protected static abstract class PrimIdenticalNode extends AbstractPrimitiveNode {
+        protected PrimIdenticalNode(CompiledMethodObject method) {
             super(method);
         }
 
@@ -482,6 +482,39 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected Object get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
             System.gc();
             return code.image.wrap(Runtime.getRuntime().freeMemory());
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 169, numArguments = 2) // complements 110
+    protected static abstract class PrimNotIdenticalNode extends AbstractPrimitiveNode {
+        protected PrimNotIdenticalNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected final static boolean doBoolean(final boolean a, final boolean b) {
+            return a != b;
+        }
+
+        @Specialization
+        protected final static boolean doChar(final char a, final char b) {
+            return a != b;
+        }
+
+        @Specialization
+        protected final static boolean doLong(final long a, final long b) {
+            return a != b;
+        }
+
+        @Specialization
+        protected final static boolean doDouble(final double a, final double b) {
+            return a != b;
+        }
+
+        @Specialization
+        protected final static boolean doObject(final Object a, final Object b) {
+            return !a.equals(b);
         }
     }
 
