@@ -41,7 +41,6 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
         private static final String PROCESS_SWITCHING = "Process Switching"; // attempts to switch processes which is not supported
         private static final String BROKEN_IN_SQUEAK = "Broken in Squeak"; // not working in Squeak
         private static final String REQUIRES_STARTUP = "Requires Startup"; // requires the image to be entirely started (e.g. initialize display, ...)
-        private static final String REQUIRES_SOURCES = "Requires Sources"; // requires sources to be loaded
         private static final String FLAKY = "Flaky"; // flaky tests
         private static final String IGNORE = "Ignored"; // unable to run (e.g. OOM, ...)
     }
@@ -51,7 +50,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "AllNamePolicyTest", TEST_TYPE.PASSING,
                     "AllocationTest", TEST_TYPE.IGNORE,
                     "ArbitraryObjectSocketTestCase", TEST_TYPE.IGNORE,
-                    "ArrayLiteralTest", TEST_TYPE.FAILING,
+                    "ArrayLiteralTest", TEST_TYPE.NOT_TERMINATING,
                     "ArrayTest", TEST_TYPE.PASSING,
                     "Ascii85ConverterTest", TEST_TYPE.PASSING,
                     "AssociationTest", TEST_TYPE.PASSING,
@@ -61,7 +60,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "BasicBehaviorClassMetaclassTest", TEST_TYPE.PASSING,
                     "BasicTypeTest", TEST_TYPE.PASSING,
                     "BecomeTest", TEST_TYPE.PASSING,
-                    "BehaviorTest", TEST_TYPE.REQUIRES_SOURCES,
+                    "BehaviorTest", TEST_TYPE.FAILING,
                     "BindingPolicyTest", TEST_TYPE.PASSING,
                     "BitBltClipBugs", TEST_TYPE.PASSING,
                     "BitBltSimulationTest", TEST_TYPE.PASSING,
@@ -74,28 +73,28 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "BMPReadWriterTest", TEST_TYPE.FAILING,
                     "BooleanTest", TEST_TYPE.PASSING,
                     "BrowserHierarchicalListTest", TEST_TYPE.PASSING,
-                    "BrowserTest", TEST_TYPE.REQUIRES_SOURCES,
-                    "BrowseTest", TEST_TYPE.REQUIRES_SOURCES,
+                    "BrowserTest", TEST_TYPE.FAILING,
+                    "BrowseTest", TEST_TYPE.PASSING,
                     "ByteArrayTest", TEST_TYPE.PASSING,
                     "BytecodeDecodingTests", TEST_TYPE.FAILING,
                     "ByteEncoderTest", TEST_TYPE.PASSING,
                     "CategorizerTest", TEST_TYPE.FAILING,
                     "ChainedSortFunctionTest", TEST_TYPE.PASSING,
-                    "ChangeHooksTest", TEST_TYPE.REQUIRES_SOURCES,
-                    "ChangeSetClassChangesTest", TEST_TYPE.REQUIRES_SOURCES,
+                    "ChangeHooksTest", TEST_TYPE.FAILING,
+                    "ChangeSetClassChangesTest", TEST_TYPE.FAILING,
                     "CharacterScannerTest", TEST_TYPE.PASSING,
                     "CharacterSetComplementTest", TEST_TYPE.PASSING,
                     "CharacterSetTest", TEST_TYPE.PASSING,
                     "CharacterTest", TEST_TYPE.PASSING,
                     "CircleMorphBugs", TEST_TYPE.PASSING,
                     "CircleMorphTest", TEST_TYPE.PASSING,
-                    "ClassAPIHelpBuilderTest", TEST_TYPE.FAILING,
+                    "ClassAPIHelpBuilderTest", TEST_TYPE.PASSING,
                     "ClassBindingTest", TEST_TYPE.PASSING,
                     "ClassBuilderTest", TEST_TYPE.FAILING,
                     "ClassDescriptionTest", TEST_TYPE.PASSING,
                     "ClassFactoryForTestCaseTest", TEST_TYPE.IGNORE,
                     "ClassRemovalTest", TEST_TYPE.FAILING,
-                    "ClassRenameFixTest", TEST_TYPE.REQUIRES_SOURCES,
+                    "ClassRenameFixTest", TEST_TYPE.FAILING,
                     "ClassTest", TEST_TYPE.FAILING,
                     "ClassTestCase", TEST_TYPE.NOT_TERMINATING,
                     "ClassTraitTest", TEST_TYPE.NOT_TERMINATING,
@@ -117,7 +116,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "ContextCompilationTest", TEST_TYPE.PASSING,
                     "DataStreamTest", TEST_TYPE.FLAKY,
                     "DateAndTimeEpochTest", TEST_TYPE.PASSING,
-                    "DateAndTimeLeapTest", TEST_TYPE.FAILING,
+                    "DateAndTimeLeapTest", TEST_TYPE.BROKEN_IN_SQUEAK,
                     "DateAndTimeTest", TEST_TYPE.NOT_TERMINATING, // does not terminate sometimes (side effects?)
                     "DateTest", TEST_TYPE.PASSING,
                     "DebuggerExtensionsTest", TEST_TYPE.FAILING,
@@ -140,8 +139,8 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "ExplicitNamePolicyTest", TEST_TYPE.PASSING,
                     "ExtendedNumberParserTest", TEST_TYPE.PASSING,
                     "FalseTest", TEST_TYPE.PASSING,
-                    "FileContentsBrowserTest", TEST_TYPE.FAILING,
-                    "FileDirectoryTest", TEST_TYPE.FAILING,
+                    "FileContentsBrowserTest", TEST_TYPE.NOT_TERMINATING,
+                    "FileDirectoryTest", TEST_TYPE.PASSING,
                     "FileList2ModalDialogsTest", TEST_TYPE.FAILING,
                     "FileListTest", TEST_TYPE.IGNORE,
                     "FileStreamTest", TEST_TYPE.FAILING,
@@ -233,7 +232,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "MethodContextTest", TEST_TYPE.PROCESS_SWITCHING, // testRestart uses #should:notTakeMoreThan:
                     "MethodHighlightingTests", TEST_TYPE.PASSING,
                     "MethodPragmaTest", TEST_TYPE.FAILING,
-                    "MethodPropertiesTest", TEST_TYPE.REQUIRES_SOURCES,
+                    "MethodPropertiesTest", TEST_TYPE.PASSING,
                     "MethodReferenceTest", TEST_TYPE.FAILING,
                     "MIMEDocumentTest", TEST_TYPE.FLAKY,
                     "MirrorPrimitiveTests", TEST_TYPE.FAILING,
@@ -284,7 +283,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "RectangleTest", TEST_TYPE.PASSING,
                     "ReferenceStreamTest", TEST_TYPE.FLAKY,
                     "ReleaseTest", TEST_TYPE.NOT_TERMINATING,
-                    "RemoteStringTest", TEST_TYPE.FAILING,
+                    "RemoteStringTest", TEST_TYPE.NOT_TERMINATING,
                     "RemovePrefixNamePolicyTest", TEST_TYPE.PASSING,
                     "RenderBugz", TEST_TYPE.NOT_TERMINATING,
                     "ResumableTestFailureTestCase", TEST_TYPE.PASSING,
@@ -310,8 +309,8 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "SimpleTestResourceTestCase", TEST_TYPE.PASSING,
                     "SliderTest", TEST_TYPE.PASSING,
                     "SmallIntegerTest", TEST_TYPE.PASSING,
-                    "SmalltalkImageTest", TEST_TYPE.FAILING,
-                    "SmartRefStreamTest", TEST_TYPE.NOT_TERMINATING,
+                    "SmalltalkImageTest", TEST_TYPE.PASSING,
+                    "SmartRefStreamTest", TEST_TYPE.FAILING,
                     "SMDependencyTest", TEST_TYPE.PASSING,
                     "SMTPClientTest", TEST_TYPE.IGNORE,
                     "SocketStreamTest", TEST_TYPE.FAILING,
@@ -320,7 +319,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "SortFunctionTest", TEST_TYPE.PASSING,
                     "SqNumberParserTest", TEST_TYPE.FAILING,
                     "SqueakSSLTest", TEST_TYPE.FAILING,
-                    "ST80MenusTest", TEST_TYPE.NOT_TERMINATING,
+                    "ST80MenusTest", TEST_TYPE.PASSING,
                     "ST80PackageDependencyTest", TEST_TYPE.BROKEN_IN_SQUEAK,
                     "StackTest", TEST_TYPE.PASSING,
                     "StandardSourceFileArrayTest", TEST_TYPE.PASSING,
@@ -365,7 +364,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "TextStyleTest", TEST_TYPE.PASSING,
                     "TextTest", TEST_TYPE.PASSING,
                     "ThirtyTwoBitRegisterTest", TEST_TYPE.NOT_TERMINATING,
-                    "TileMorphTest", TEST_TYPE.NOT_TERMINATING,
+                    "TileMorphTest", TEST_TYPE.PASSING,
                     "TimespanDoSpanAYearTest", TEST_TYPE.PASSING,
                     "TimespanDoTest", TEST_TYPE.PASSING,
                     "TimespanTest", TEST_TYPE.PASSING,
@@ -574,6 +573,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
          * processes -> incompatible to running headless).
          */
         evaluate("Utilities setAuthorInitials: 'TruffleSqueak'");
+        evaluate("FileDirectory startUp");
         // TODO: run 'FileDirectory startUp'?
         // evaluate(String.format("FileDirectory setDefaultDirectory: '%s/images'", getImagesPathName()));
         Object patchResult = evaluate(
