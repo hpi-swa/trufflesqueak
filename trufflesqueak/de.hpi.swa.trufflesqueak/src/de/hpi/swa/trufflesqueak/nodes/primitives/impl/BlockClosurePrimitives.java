@@ -12,6 +12,7 @@ import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
+import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -217,6 +218,21 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
         protected AbstractClosureValuePrimitiveNode(CompiledMethodObject method) {
             super(method);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 200, numArguments = 3)
+    public static abstract class PrimClosureCopyWithCopiedValuesNode extends AbstractPrimitiveNode {
+
+        protected PrimClosureCopyWithCopiedValuesNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected Object doCopy(VirtualFrame frame, ContextObject outerContext, long numArgs, ListObject copiedValues) {
+            throw new SqueakException("Not implemented and not used in Squeak anymore");
         }
     }
 
