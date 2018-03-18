@@ -8,7 +8,6 @@ import static org.junit.Assert.fail;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -558,9 +557,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
 
     @BeforeClass
     public static void loadTestImage() {
-        PrintWriter out = new PrintWriter(System.out, true);
-        PrintWriter err = new PrintWriter(System.err, true);
-        image = new SqueakImageContext(null, null, out, err);
+        image = new SqueakImageContext(IMAGE_PATH);
         image.getOutput().println();
         image.getOutput().println("Loading test image at " + IMAGE_PATH + "...");
         try {

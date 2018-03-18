@@ -11,6 +11,7 @@ public class SqueakConfig {
     @CompilationFinal private final boolean verbose;
     @CompilationFinal private final boolean tracing;
     @CompilationFinal private final boolean disableInterrupts;
+    @CompilationFinal private final boolean testing;
     @CompilationFinal private final String receiver;
     @CompilationFinal private final String selector;
     @CompilationFinal(dimensions = 1) private final String[] restArgs;
@@ -22,6 +23,7 @@ public class SqueakConfig {
         boolean verbose = false;
         boolean tracing = false;
         boolean disableInterrupts = false;
+        boolean testing = false;
         String receiver = "nil";
         String selector = null;
         String[] restArgs = new String[]{};
@@ -39,6 +41,9 @@ public class SqueakConfig {
                 case "--disable-interrupts":
                 case "-d":
                     disableInterrupts = true;
+                    break;
+                case "--testing":
+                    testing = true;
                     break;
                 case "--receiver":
                 case "-r":
@@ -61,6 +66,7 @@ public class SqueakConfig {
         this.verbose = verbose;
         this.tracing = tracing;
         this.disableInterrupts = disableInterrupts;
+        this.testing = testing;
         this.receiver = receiver;
         this.selector = selector;
         this.restArgs = restArgs;
@@ -85,6 +91,9 @@ public class SqueakConfig {
         }
         if (disableInterrupts) {
             sb.add("-d");
+        }
+        if (testing) {
+            sb.add("--testing");
         }
         if (restArgs != null) {
             for (String s : restArgs) {
@@ -132,5 +141,9 @@ public class SqueakConfig {
 
     public boolean disableInterruptHandler() {
         return disableInterrupts;
+    }
+
+    public boolean isTesting() {
+        return testing;
     }
 }

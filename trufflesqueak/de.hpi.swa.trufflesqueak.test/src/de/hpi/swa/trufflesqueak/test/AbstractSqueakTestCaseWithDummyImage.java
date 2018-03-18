@@ -37,7 +37,7 @@ public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSquea
 
     @BeforeClass
     public static void setUpSqueakImageContext() {
-        image = new SqueakImageContext(null, null, null, null);
+        image = new SqueakImageContext("fake.image");
         image.plus.setBytes("plus".getBytes());
         image.minus.setBytes("minus".getBytes());
         image.lt.setBytes("lt".getBytes());
