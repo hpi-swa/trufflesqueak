@@ -70,6 +70,15 @@ public class ShortsObject extends NativeObject {
     }
 
     @Override
+    public void fillWith(Object value) {
+        if (value instanceof Long) {
+            Arrays.fill(shorts, ((Long) value).shortValue());
+        } else {
+            Arrays.fill(shorts, (short) value);
+        }
+    }
+
+    @Override
     public boolean become(BaseSqueakObject other) {
         if (!(other instanceof ShortsObject)) {
             throw new PrimitiveExceptions.PrimitiveFailed();

@@ -287,6 +287,21 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(index = 145, numArguments = 2)
+    protected static abstract class PrimConstantFillNode extends AbstractPrimitiveNode {
+
+        protected PrimConstantFillNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected BaseSqueakObject doFill(NativeObject receiver, Object value) {
+            receiver.fillWith(value);
+            return receiver;
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(index = 148)
     protected static abstract class PrimShallowCopyNode extends AbstractPrimitiveNode {
         protected PrimShallowCopyNode(CompiledMethodObject method) {

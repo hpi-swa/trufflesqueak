@@ -66,6 +66,11 @@ public class LongsObject extends NativeObject {
     }
 
     @Override
+    public void fillWith(Object value) {
+        Arrays.fill(longs, (long) value);
+    }
+
+    @Override
     public boolean become(BaseSqueakObject other) {
         if (!(other instanceof LongsObject)) {
             throw new PrimitiveExceptions.PrimitiveFailed();

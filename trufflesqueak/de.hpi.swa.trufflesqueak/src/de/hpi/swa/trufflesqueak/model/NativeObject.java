@@ -55,6 +55,8 @@ public abstract class NativeObject extends SqueakObject {
 
     public abstract byte[] getBytes();
 
+    public abstract void fillWith(Object value);
+
     public abstract byte getElementSize();
 
     public LargeIntegerObject normalize() {

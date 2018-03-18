@@ -83,6 +83,15 @@ public class BytesObject extends NativeObject {
     }
 
     @Override
+    public void fillWith(Object value) {
+        if (value instanceof Long) {
+            Arrays.fill(bytes, ((Long) value).byteValue());
+        } else {
+            Arrays.fill(bytes, (byte) value);
+        }
+    }
+
+    @Override
     public boolean become(BaseSqueakObject other) {
         if (!(other instanceof BytesObject)) {
             throw new PrimitiveExceptions.PrimitiveFailed();

@@ -95,6 +95,15 @@ public class WordsObject extends NativeObject {
     }
 
     @Override
+    public void fillWith(Object value) {
+        if (value instanceof Long) {
+            Arrays.fill(ints, ((Long) value).intValue());
+        } else {
+            Arrays.fill(ints, (byte) value);
+        }
+    }
+
+    @Override
     public boolean become(BaseSqueakObject other) {
         if (!(other instanceof WordsObject)) {
             throw new PrimitiveExceptions.PrimitiveFailed();
