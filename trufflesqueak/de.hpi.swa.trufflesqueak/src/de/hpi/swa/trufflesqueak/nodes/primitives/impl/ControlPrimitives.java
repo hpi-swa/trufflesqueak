@@ -46,6 +46,7 @@ import de.hpi.swa.trufflesqueak.nodes.process.RemoveProcessFromListNode;
 import de.hpi.swa.trufflesqueak.nodes.process.ResumeProcessNode;
 import de.hpi.swa.trufflesqueak.nodes.process.SignalSemaphoreNode;
 import de.hpi.swa.trufflesqueak.nodes.process.WakeHighestPriorityNode;
+import de.hpi.swa.trufflesqueak.nodes.process.YieldProcessNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
@@ -483,6 +484,24 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             System.gc();
             return code.image.wrap(Runtime.getRuntime().freeMemory());
         }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 167)
+    protected static abstract class PrimYieldNode extends AbstractPrimitiveNode {
+        @Child private YieldProcessNode yieldProcessNode;
+
+        public PrimYieldNode(CompiledMethodObject method) {
+            super(method);
+            yieldProcessNode = YieldProcessNode.create(method.image);
+        }
+
+        @Specialization
+        protected final Object doYield(VirtualFrame frame, PointersObject scheduler) {
+            yieldProcessNode.executeYield(frame, scheduler);
+            throw new SqueakException("Yield failed");
+        }
+
     }
 
     @GenerateNodeFactory
