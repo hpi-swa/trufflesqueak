@@ -495,6 +495,40 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(index = 20, numArguments = 2)
+    protected static abstract class PrimRemLargeIntegersNode extends AbstractArithmeticPrimitiveNode {
+        protected PrimRemLargeIntegersNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = {"b != 0"})
+        protected final static long doLong(final long a, final long b) {
+            return a / b;
+        }
+
+        @Specialization(guards = {"!b.isZero()"})
+        protected final static Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
+            return a.remainder(b);
+        }
+
+        @Specialization(guards = {"!b.isZero()"})
+        protected final Object doLong(final long a, final LargeIntegerObject b) {
+            return doLargeInteger(asLargeInteger(a), b);
+        }
+
+        @Specialization(guards = {"b != 0"})
+        protected final Object doLargeInteger(final LargeIntegerObject a, final long b) {
+            return doLargeInteger(a, asLargeInteger(b));
+        }
+
+        @SuppressWarnings("unused")
+        @Fallback
+        public final static long doZeroDivide(final Object a, final Object b) {
+            throw new PrimitiveFailed();
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(index = 30, numArguments = 2)
     protected static abstract class PrimLargeIntegerDivideNode extends AbstractArithmeticPrimitiveNode {
         protected PrimLargeIntegerDivideNode(CompiledMethodObject method) {
