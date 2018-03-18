@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.NodeFactory;
 
@@ -28,7 +30,7 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitives.Pr
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.StoragePrimitives;
 
 public abstract class PrimitiveNodeFactory {
-    private static AbstractPrimitiveFactoryHolder[] indexPrimitives = new AbstractPrimitiveFactoryHolder[]{
+    @CompilationFinal(dimensions = 1) private static final AbstractPrimitiveFactoryHolder[] indexPrimitives = new AbstractPrimitiveFactoryHolder[]{
                     new ArithmeticPrimitives(),
                     new ArrayStreamPrimitives(),
                     new BlockClosurePrimitives(),
@@ -36,13 +38,13 @@ public abstract class PrimitiveNodeFactory {
                     new IOPrimitives(),
                     new MiscellaneousPrimitives(),
                     new StoragePrimitives()};
-    private static AbstractPrimitiveFactoryHolder[] plugins = new AbstractPrimitiveFactoryHolder[]{
+    @CompilationFinal(dimensions = 1) private static final AbstractPrimitiveFactoryHolder[] plugins = new AbstractPrimitiveFactoryHolder[]{
                     new FilePlugin(),
                     new FloatArrayPlugin(),
                     new LargeIntegers(),
                     new MiscPrimitivePlugin(),
                     new TruffleSqueakPlugin()};
-    private static Map<Integer, NodeFactory<? extends AbstractPrimitiveNode>> primitiveTable;
+    @CompilationFinal private static Map<Integer, NodeFactory<? extends AbstractPrimitiveNode>> primitiveTable;
 
     @TruffleBoundary
     public static AbstractPrimitiveNode forIndex(CompiledMethodObject method, int primitiveIndex) {
@@ -97,6 +99,7 @@ public abstract class PrimitiveNodeFactory {
 
     private static Map<Integer, NodeFactory<? extends AbstractPrimitiveNode>> getPrimitiveTable() {
         if (primitiveTable == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             primitiveTable = new HashMap<>();
             fillPrimitiveTable(indexPrimitives);
             fillPrimitiveTable(plugins);
