@@ -48,6 +48,41 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(index = 91, numArguments = 2)
+    protected static abstract class PrimTestDisplayDepthNode extends AbstractPrimitiveNode {
+        private static final int[] SUPPORTED_DEPTHS = new int[]{32}; // TODO: support all depths? {1, 2, 4, 8, 16, 32}
+
+        protected PrimTestDisplayDepthNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected final Object doTest(@SuppressWarnings("unused") final BaseSqueakObject receiver, final long depth) {
+            for (int i = 0; i < SUPPORTED_DEPTHS.length; i++) {
+                if (SUPPORTED_DEPTHS[i] == depth) {
+                    return code.image.sqTrue;
+                }
+            }
+            return code.image.sqFalse;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 92, numArguments = 5)
+    protected static abstract class PrimSetDisplayModeNode extends AbstractPrimitiveNode {
+
+        protected PrimSetDisplayModeNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected final Object doSet(final BaseSqueakObject receiver, final long depth, final long width, final long height, final boolean fullscreen) {
+            code.image.display.adjustDisplay(depth, width, height, fullscreen);
+            return receiver;
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(index = 94, numArguments = 2)
     protected static abstract class PrimGetNextEventNode extends AbstractPrimitiveNode {
 

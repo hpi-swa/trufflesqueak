@@ -95,6 +95,8 @@ public final class SqueakDisplay {
         public abstract long[] getNextEvent();
 
         public abstract void setDeferUpdates(boolean flag);
+
+        public abstract void adjustDisplay(long depth, long width, long height, boolean fullscreen);
     }
 
     public static class JavaDisplay extends AbstractSqueakDisplay {
@@ -260,6 +262,15 @@ public final class SqueakDisplay {
         }
 
         @Override
+        public void adjustDisplay(long depth, long width, long height, boolean fullscreen) {
+            canvas.depth = ((Long) depth).intValue();
+            canvas.width = ((Long) width).intValue();
+            canvas.height = ((Long) height).intValue();
+            frame.setSize(canvas.width, canvas.height);
+            setFullscreen(fullscreen);
+        }
+
+        @Override
         public void setFullscreen(boolean enable) {
             if (enable) {
                 frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
@@ -404,6 +415,10 @@ public final class SqueakDisplay {
 
         @Override
         public void setDeferUpdates(boolean flag) {
+        }
+
+        @Override
+        public void adjustDisplay(long depth, long width, long height, boolean fullscreen) {
         }
     }
 
