@@ -9,6 +9,9 @@ import de.hpi.swa.trufflesqueak.exceptions.SqueakException.SqueakTestException;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.MESSAGE;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.SpecialSelectorObject;
 import de.hpi.swa.trufflesqueak.nodes.DispatchNode;
 import de.hpi.swa.trufflesqueak.nodes.LookupNode;
@@ -39,22 +42,6 @@ public final class SendBytecodes {
             readContextNode = FrameSlotReadNode.create(code.thisContextOrMarkerSlot);
         }
 
-        public Object executeSend(VirtualFrame frame) {
-            code.image.interrupt.sendOrBackwardJumpTrigger(frame);
-            Object[] rcvrAndArgs = (Object[]) popNReversedNode.executeRead(frame);
-            ClassObject rcvrClass = lookupClassNode.executeLookup(rcvrAndArgs[0]);
-            CompiledCodeObject lookupResult = (CompiledCodeObject) lookupNode.executeLookup(rcvrClass, selector);
-            Object contextOrMarker = readContextNode.executeRead(frame);
-            if (lookupResult.toString().equals("Metaclass (ToolSet)>>debugError:")) { // TODO: remove when no longer needed for testing
-                throw new SqueakTestException(code.image, "Tried to call ToolSet class>>debugError: to open debugger");
-            } else if (lookupResult.isDoesNotUnderstand()) {
-                Object[] rcvrAndSelector = new Object[]{rcvrAndArgs[0], selector};
-                return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndSelector, contextOrMarker);
-            } else {
-                return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndArgs, contextOrMarker);
-            }
-        }
-
         @Override
         public void executeVoid(VirtualFrame frame) {
             Object result;
@@ -65,6 +52,36 @@ public final class SendBytecodes {
             }
             pushNode.executeWrite(frame, result);
             // TODO: Object as Method
+        }
+
+        public Object executeSend(VirtualFrame frame) {
+            code.image.interrupt.sendOrBackwardJumpTrigger(frame);
+            Object[] rcvrAndArgs = (Object[]) popNReversedNode.executeRead(frame);
+            ClassObject rcvrClass = lookupClassNode.executeLookup(rcvrAndArgs[0]);
+            CompiledCodeObject lookupResult = (CompiledCodeObject) lookupNode.executeLookup(rcvrClass, selector);
+            Object contextOrMarker = readContextNode.executeRead(frame);
+            if (lookupResult.toString().equals("Metaclass (ToolSet)>>debugError:")) { // TODO: remove when no longer needed for testing
+                throw new SqueakTestException(code.image, "Tried to call ToolSet class>>debugError: to open debugger");
+            } else if (lookupResult.isDoesNotUnderstand()) {
+                return sendDoesNotUnderstand(frame, rcvrAndArgs, rcvrClass, lookupResult, contextOrMarker);
+            } else {
+                return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndArgs, contextOrMarker);
+            }
+        }
+
+        private Object sendDoesNotUnderstand(VirtualFrame frame, Object[] rcvrAndArgs, ClassObject rcvrClass, CompiledCodeObject lookupDNU, Object contextOrMarker) {
+            ClassObject messageClass = (ClassObject) code.image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.ClassMessage);
+            PointersObject message = (PointersObject) messageClass.newInstance();
+            message.atput0(MESSAGE.SELECTOR, selector);
+            Object[] arguments = new Object[rcvrAndArgs.length - 1];
+            for (int i = 0; i < arguments.length; i++) {
+                arguments[i] = rcvrAndArgs[1 + i];
+            }
+            message.atput0(MESSAGE.ARGUMENTS, code.image.newList(arguments));
+            if (message.instsize() > MESSAGE.LOOKUP_CLASS) { // early versions do not have lookupClass
+                message.atput0(MESSAGE.LOOKUP_CLASS, rcvrClass);
+            }
+            return dispatchNode.executeDispatch(frame, lookupDNU, new Object[]{rcvrAndArgs[0], message}, contextOrMarker);
         }
 
         public Object getSelector() {

@@ -57,6 +57,12 @@ public final class ObjectLayouts {
         public static final int LAST_LINK = 1;
     }
 
+    public static final class MESSAGE {
+        public static final int SELECTOR = 0;
+        public static final int ARGUMENTS = 1;
+        public static final int LOOKUP_CLASS = 2;
+    }
+
     public static final class METHOD_DICT {
         public static final int NAMES = 2;
         public static final int VALUES = 1;
