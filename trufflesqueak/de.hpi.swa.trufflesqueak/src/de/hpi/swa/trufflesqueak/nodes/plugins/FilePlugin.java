@@ -16,6 +16,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
+import de.hpi.swa.trufflesqueak.model.BytesObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -69,6 +70,24 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(name = "primitiveDirectoryDelete", numArguments = 2)
+    protected static abstract class PrimDirectoryDeleteNode extends AbstractPrimitiveNode {
+
+        protected PrimDirectoryDeleteNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected Object doCreate(PointersObject receiver, BytesObject fullPath) {
+            File directory = new File(fullPath.toString());
+            if (directory.delete()) {
+                return receiver;
+            }
+            throw new PrimitiveFailed();
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveDirectoryDelimitor")
     protected static abstract class PrimDirectoryDelimitorNode extends AbstractPrimitiveNode {
 
@@ -79,6 +98,32 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected char doDelimitor(@SuppressWarnings("unused") Object receiver) {
             return File.separatorChar;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(name = "primitiveDirectoryEntry", numArguments = 3)
+    protected static abstract class PrimDirectoryEntryNode extends AbstractFilePluginPrimitiveNode {
+
+        protected PrimDirectoryEntryNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = "isString(fullPath)")
+        protected Object doLookup(@SuppressWarnings("unused") PointersObject receiver, BytesObject fullPath, BytesObject fName) {
+            String pathName = fullPath.toString();
+            String fileName = fName.toString();
+            File path;
+            if (fileName.equals(".")) {
+                path = new File(pathName);
+            } else {
+                path = new File(pathName + File.separator + fileName);
+            }
+            if (path.exists()) {
+                Object[] result = new Object[]{path.getName(), path.lastModified(), path.lastModified(), path.isDirectory(), path.length()};
+                return code.image.wrap(result);
+            }
+            return code.image.nil;
         }
     }
 
