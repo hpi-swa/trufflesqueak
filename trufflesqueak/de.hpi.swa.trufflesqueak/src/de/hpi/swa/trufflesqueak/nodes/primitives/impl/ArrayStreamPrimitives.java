@@ -55,7 +55,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         public abstract Object executeAt(VirtualFrame frame);
 
         @Specialization
-        protected long doCharacter(final char receiver, final long index) {
+        protected static final long doCharacter(final char receiver, final long index) {
             if (index == 1) {
                 return receiver;
             } else {
@@ -64,12 +64,12 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "!isSmallInteger(receiver)")
-        protected Object doLong(final long receiver, final long index) {
+        protected final Object doLong(final long receiver, final long index) {
             return doNativeObject(LargeIntegerObject.valueOf(code, receiver), index);
         }
 
         @Specialization
-        protected long doDouble(final double receiver, final long index) {
+        protected static final long doDouble(final double receiver, final long index) {
             long doubleBits = Double.doubleToLongBits(receiver);
             if (index == 1) {
                 if (receiver >= 0) {
@@ -85,12 +85,12 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected long doNativeObject(final NativeObject receiver, final long index) {
+        protected static final long doNativeObject(final NativeObject receiver, final long index) {
             return receiver.getNativeAt0(index - 1);
         }
 
         @Specialization
-        protected Object doSqueakObject(final BaseSqueakObject receiver, final long index) {
+        protected static final Object doSqueakObject(final BaseSqueakObject receiver, final long index) {
             return receiver.at0(index - 1 + receiver.instsize());
         }
     }

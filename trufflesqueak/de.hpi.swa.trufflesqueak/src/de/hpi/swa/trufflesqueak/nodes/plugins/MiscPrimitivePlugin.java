@@ -8,9 +8,8 @@ import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
-import de.hpi.swa.trufflesqueak.model.BytesObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.model.WordsObject;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
@@ -28,7 +27,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        protected static boolean isASCIIOrder(BytesObject order) {
+        protected static boolean isASCIIOrder(NativeObject order) {
             byte[] bytes = order.getBytes();
             for (int i = 0; i < 256; i++) {
                 if (bytes[i] != (byte) i) {
@@ -48,7 +47,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "isASCIIOrder(order)")
-        protected final static long doAsciiOrder(@SuppressWarnings("unused") BaseSqueakObject receiver, BytesObject string1, BytesObject string2, @SuppressWarnings("unused") BytesObject order) {
+        protected final static long doAsciiOrder(@SuppressWarnings("unused") BaseSqueakObject receiver, NativeObject string1, NativeObject string2, @SuppressWarnings("unused") NativeObject order) {
             byte[] bytes1 = string1.getBytes();
             byte[] bytes2 = string2.getBytes();
             int length1 = bytes1.length;
@@ -75,7 +74,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "!isASCIIOrder(order)")
-        protected final static long doCollated(@SuppressWarnings("unused") BaseSqueakObject receiver, BytesObject string1, BytesObject string2, BytesObject order) {
+        protected final static long doCollated(@SuppressWarnings("unused") BaseSqueakObject receiver, NativeObject string1, NativeObject string2, NativeObject order) {
             byte[] bytes1 = string1.getBytes();
             byte[] bytes2 = string2.getBytes();
             byte[] orderBytes = order.getBytes();
@@ -132,7 +131,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected long doFind(@SuppressWarnings("unused") BaseSqueakObject receiver, BytesObject string, BytesObject inclusionMap, long start) {
+        protected long doFind(@SuppressWarnings("unused") BaseSqueakObject receiver, NativeObject string, NativeObject inclusionMap, long start) {
             byte[] inclusionBytes = inclusionMap.getBytes();
             if (inclusionBytes.length != 256) {
                 return 0;
@@ -162,13 +161,13 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "isASCIIOrder(matchTable)")
-        protected long doFindAscii(@SuppressWarnings("unused") BaseSqueakObject receiver, BytesObject key, BytesObject body, long start, @SuppressWarnings("unused") BytesObject matchTable) {
+        protected long doFindAscii(@SuppressWarnings("unused") BaseSqueakObject receiver, NativeObject key, NativeObject body, long start, @SuppressWarnings("unused") NativeObject matchTable) {
             return body.toString().indexOf(key.toString(), (int) start - 1) + 1;
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = "!isASCIIOrder(matchTable)")
-        protected long doFindWithMatchTable(BaseSqueakObject receiver, BytesObject key, BytesObject body, long start, BytesObject matchTable) {
+        protected long doFindWithMatchTable(BaseSqueakObject receiver, NativeObject key, NativeObject body, long start, NativeObject matchTable) {
             throw new PrimitiveFailed(); // TODO: implement primitive
         }
     }
@@ -182,7 +181,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected long doBytesObject(@SuppressWarnings("unused") BaseSqueakObject receiver, long value, BytesObject string, long start) {
+        protected long doNativeObject(@SuppressWarnings("unused") BaseSqueakObject receiver, long value, NativeObject string, long start) {
             if (start < 0) {
                 throw new PrimitiveFailed();
             }
@@ -205,7 +204,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected long doBytesObject(@SuppressWarnings("unused") BaseSqueakObject receiver, BytesObject string, long initialHash) {
+        protected long doNativeObject(@SuppressWarnings("unused") BaseSqueakObject receiver, NativeObject string, long initialHash) {
             long hash = initialHash & 0xfffffff;
             long low;
             for (byte value : string.getBytes()) {
@@ -226,31 +225,10 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected BytesObject doBytesObject(@SuppressWarnings("unused") BaseSqueakObject receiver, BytesObject string, long start, long stop, BytesObject table) {
-            byte[] stringBytes = string.getBytes();
-            byte[] tableBytes = table.getBytes();
+        protected NativeObject doNativeObject(@SuppressWarnings("unused") BaseSqueakObject receiver, NativeObject string, long start, long stop, NativeObject table) {
             for (int i = (int) start - 1; i < stop; i++) {
-                string.setByte(i, tableBytes[stringBytes[i]]);
-            }
-            return string;
-        }
-
-        @Specialization
-        protected WordsObject doWordsObject(@SuppressWarnings("unused") BaseSqueakObject receiver, WordsObject string, long start, long stop, WordsObject table) {
-            int[] stringBytes = string.getWords();
-            int[] tableBytes = table.getWords();
-            for (int i = (int) start - 1; i < stop; i++) {
-                string.setInt(i, tableBytes[stringBytes[i]]);
-            }
-            return string;
-        }
-
-        @Specialization
-        protected BytesObject doWordsObject(@SuppressWarnings("unused") BaseSqueakObject receiver, BytesObject string, long start, long stop, WordsObject table) {
-            byte[] stringBytes = string.getBytes();
-            int[] tableBytes = table.getWords();
-            for (int i = (int) start - 1; i < stop; i++) {
-                string.setByte(i, (byte) tableBytes[stringBytes[i]]);
+                Long tableValue = (long) table.at0(((Long) string.getNativeAt0(i)).intValue());
+                string.setByte(i, tableValue.byteValue());
             }
             return string;
         }

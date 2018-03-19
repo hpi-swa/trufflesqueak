@@ -232,21 +232,21 @@ public class ClassObject extends AbstractPointersObject {
             case 7: case 8:
                 throw new SqueakException("Tried to instantiate an immediate");
             case 9:
-                return new LongsObject(image, this, size);
+                return NativeObject.newNativeLongs(image, this, size);
             case 10: case 11:
                 if (this == image.floatClass) {
                     assert size == 2;
                     return new FloatObject(image);
                 } else {
-                    return new WordsObject(image, this, size);
+                    return NativeObject.newNativeWords(image, this, size);
                 }
             case 12: case 13: case 14: case 15:
-                return new ShortsObject(image, this, size);
+                return NativeObject.newNativeShorts(image, this, size);
             case 16: case 17: case 18: case 19: case 20: case 21: case 22: case 23:
                 if (this == image.largePositiveIntegerClass || this == image.largeNegativeIntegerClass) {
                     return new LargeIntegerObject(image, this, size);
                 } else {
-                    return new BytesObject(image, this, size);
+                    return NativeObject.newNativeBytes(image, this, size);
                 }
             case 24: case 25: case 26: case 27: case 28: case 29: case 30: case 31:
                 return new CompiledMethodObject(image, this, (int) extraSize);

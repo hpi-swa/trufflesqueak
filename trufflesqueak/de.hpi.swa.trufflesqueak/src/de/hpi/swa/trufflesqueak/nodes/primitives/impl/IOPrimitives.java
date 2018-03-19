@@ -19,7 +19,6 @@ import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.FORM;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
-import de.hpi.swa.trufflesqueak.model.WordsObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
@@ -129,7 +128,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 throw new SqueakException("Unexpected cursorObject: " + cursorObject.toString());
             }
             PointersObject cursor = (PointersObject) cursorObject;
-            int[] words = ((WordsObject) cursor.at0(FORM.BITS)).getWords();
+            int[] words = ((NativeObject) cursor.at0(FORM.BITS)).getWords();
             long width = (long) cursor.at0(FORM.WIDTH);
             long height = (long) cursor.at0(FORM.HEIGHT);
             if (width != SqueakDisplay.CURSOR_WIDTH || height != SqueakDisplay.CURSOR_HEIGHT) {
@@ -144,7 +143,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 if (!(maskObject instanceof PointersObject)) {
                     throw new SqueakException("Unexpected maskObject: " + maskObject.toString());
                 }
-                int[] mask = ((WordsObject) ((PointersObject) maskObject).at0(FORM.BITS)).getWords();
+                int[] mask = ((NativeObject) ((PointersObject) maskObject).at0(FORM.BITS)).getWords();
                 words = mergeCursorWithMask(words, mask);
             }
             code.image.display.setCursor(words);

@@ -4,11 +4,11 @@ import com.oracle.truffle.api.CompilerAsserts;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 
-public class SpecialSelectorObject extends BytesObject {
+public class SpecialSelectorObject extends NativeObject {
     private final int numArguments;
 
     public SpecialSelectorObject(SqueakImageContext img, int numArguments) {
-        super(img);
+        super(img, null, new NativeBytesStorage(0));
         this.numArguments = numArguments;
     }
 
@@ -22,6 +22,6 @@ public class SpecialSelectorObject extends BytesObject {
 
     public void setBytes(byte[] bytes) {
         CompilerAsserts.neverPartOfCompilation("This method is for testing purposes only");
-        this.bytes = bytes;
+        storage.setBytes(bytes);
     }
 }

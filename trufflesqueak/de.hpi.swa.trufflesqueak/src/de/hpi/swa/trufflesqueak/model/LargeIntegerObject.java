@@ -10,7 +10,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
-public class LargeIntegerObject extends BytesObject {
+public class LargeIntegerObject extends NativeObject {
     @CompilationFinal public static final long SMALLINTEGER32_MIN = -0x40000000;
     @CompilationFinal public static final long SMALLINTEGER32_MAX = 0x3fffffff;
     @CompilationFinal public static final long SMALLINTEGER64_MIN = -0x1000000000000000L;
@@ -19,7 +19,7 @@ public class LargeIntegerObject extends BytesObject {
     @CompilationFinal private BigInteger integer;
 
     public LargeIntegerObject(SqueakImageContext img) {
-        super(img);
+        super(img, null, new NativeBytesStorage(0));
     }
 
     public LargeIntegerObject(SqueakImageContext img, BigInteger integer) {
@@ -38,16 +38,18 @@ public class LargeIntegerObject extends BytesObject {
             assert array.length == size;
             byteArray = array;
         }
-        this.bytes = swapOrderInPlace(byteArray);
+        this.storage = new NativeBytesStorage(swapOrderInPlace(byteArray));
     }
 
     public LargeIntegerObject(SqueakImageContext img, ClassObject klass, byte[] bytes) {
-        super(img, klass, bytes);
+        super(img, klass);
+        this.storage = new NativeBytesStorage(bytes);
         derivedBigIntegerFromBytes();
     }
 
     public LargeIntegerObject(SqueakImageContext image, ClassObject klass, int size) {
-        super(image, klass, size);
+        super(image, klass);
+        this.storage = new NativeBytesStorage(size);
         integer = BigInteger.ZERO;
     }
 
@@ -70,7 +72,7 @@ public class LargeIntegerObject extends BytesObject {
 
     private void derivedBigIntegerFromBytes() {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        byte[] bigEndianBytes = swapOrder(bytes);
+        byte[] bigEndianBytes = swapOrder(storage.getBytes());
         if (bigEndianBytes.length == 0) {
             integer = BigInteger.ZERO;
         } else {
@@ -265,7 +267,7 @@ public class LargeIntegerObject extends BytesObject {
 
     public void setBytes(byte[] bytes) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        this.bytes = bytes;
+        storage.setBytes(bytes);
         derivedBigIntegerFromBytes();
     }
 }

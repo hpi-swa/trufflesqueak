@@ -19,7 +19,6 @@ import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
-import de.hpi.swa.trufflesqueak.model.BytesObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
@@ -56,9 +55,9 @@ public class SqueakImageContext {
     @CompilationFinal public final ClassObject smallIntegerClass = new ClassObject(this);
     @CompilationFinal public final ClassObject arrayClass = new ClassObject(this);
     @CompilationFinal public final PointersObject smalltalk = new PointersObject(this);
-    @CompilationFinal public final BytesObject doesNotUnderstand = new BytesObject(this);
+    @CompilationFinal public final NativeObject doesNotUnderstand = NativeObject.newNativeBytes(this, null, 0);
     @CompilationFinal public final ListObject specialSelectors = new ListObject(this);
-    @CompilationFinal public final BytesObject mustBeBoolean = new BytesObject(this);
+    @CompilationFinal public final NativeObject mustBeBoolean = NativeObject.newNativeBytes(this, null, 0);
     @CompilationFinal public final ClassObject metaclass = new ClassObject(this);
     @CompilationFinal public final ClassObject methodContextClass = new ClassObject(this);
     @CompilationFinal public final ClassObject nilClass = new ClassObject(this);
@@ -242,8 +241,8 @@ public class SqueakImageContext {
         return new LargeIntegerObject(this, i);
     }
 
-    public BytesObject wrap(String s) {
-        return new BytesObject(this, stringClass, s.getBytes());
+    public NativeObject wrap(String s) {
+        return NativeObject.newNativeBytes(this, stringClass, s.getBytes());
     }
 
     public char wrap(char character) {
@@ -285,7 +284,7 @@ public class SqueakImageContext {
     }
 
     public NativeObject newSymbol(String value) {
-        return new BytesObject(this, doesNotUnderstand.getSqClass(), value.getBytes());
+        return NativeObject.newNativeBytes(this, doesNotUnderstand.getSqClass(), value.getBytes());
     }
 
     public void registerSemaphore(BaseSqueakObject semaphore, long index) {

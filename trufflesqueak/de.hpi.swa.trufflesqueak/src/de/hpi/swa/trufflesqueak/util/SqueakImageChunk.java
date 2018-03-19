@@ -8,7 +8,6 @@ import java.util.Vector;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
-import de.hpi.swa.trufflesqueak.model.BytesObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
@@ -16,12 +15,10 @@ import de.hpi.swa.trufflesqueak.model.EmptyObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
-import de.hpi.swa.trufflesqueak.model.LongsObject;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
-import de.hpi.swa.trufflesqueak.model.ShortsObject;
 import de.hpi.swa.trufflesqueak.model.SqueakObject;
 import de.hpi.swa.trufflesqueak.model.WeakPointersObject;
-import de.hpi.swa.trufflesqueak.model.WordsObject;
 
 public class SqueakImageChunk {
     Object object;
@@ -108,20 +105,20 @@ public class SqueakImageChunk {
             } else if (format <= 8) {
                 assert false; // unused
             } else if (format == 9) { // 64-bit integers
-                object = new LongsObject(image);
+                object = NativeObject.newNativeLongs(image, null, null);
             } else if (format <= 11) { // 32-bit integers
                 if (this.getSqClass() == image.floatClass) {
                     object = FloatObject.bytesAsFloatObject(getBytes());
                 } else {
-                    object = new WordsObject(image);
+                    object = NativeObject.newNativeWords(image, null, null);
                 }
             } else if (format <= 15) { // 16-bit integers
-                object = new ShortsObject(image);
+                object = NativeObject.newNativeShorts(image, null, null);
             } else if (format <= 23) { // bytes
                 if (this.getSqClass() == image.largePositiveIntegerClass || this.getSqClass() == image.largeNegativeIntegerClass) {
                     object = new LargeIntegerObject(image);
                 } else {
-                    object = new BytesObject(image);
+                    object = NativeObject.newNativeBytes(image, null, null);
                 }
             } else if (format <= 31) { // compiled methods
                 object = new CompiledMethodObject(image);

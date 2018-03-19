@@ -7,8 +7,8 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
-import de.hpi.swa.trufflesqueak.model.BytesObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.trufflesqueak.nodes.GetOrCreateContextNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.SendSelectorNode;
@@ -42,7 +42,7 @@ public final class JumpBytecodes {
         private void initializeChildNodes(CompiledCodeObject codeObject) {
             popNode = PopStackNode.create(codeObject);
             pushNode = PushStackNode.create(codeObject);
-            BytesObject mustBeBooleanSelector = (BytesObject) codeObject.image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SelectorMustBeBoolean);
+            NativeObject mustBeBooleanSelector = (NativeObject) codeObject.image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SelectorMustBeBoolean);
             sendMustBeBooleanNode = new SendSelectorNode(codeObject, -1, 1, mustBeBooleanSelector, 1);
             getOrCreateContextNode = GetOrCreateContextNode.create(codeObject);
         }

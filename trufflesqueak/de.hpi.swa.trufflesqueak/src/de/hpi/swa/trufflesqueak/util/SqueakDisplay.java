@@ -31,9 +31,9 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.FORM;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
-import de.hpi.swa.trufflesqueak.model.WordsObject;
 
 public final class SqueakDisplay {
     @CompilationFinal public static final int DEFAULT_WIDTH = 1024;
@@ -139,7 +139,7 @@ public final class SqueakDisplay {
         class Canvas extends JComponent {
             private static final long serialVersionUID = 1L;
             @CompilationFinal private BufferedImage bufferedImage;
-            @CompilationFinal private WordsObject bitmap;
+            @CompilationFinal private NativeObject bitmap;
             @CompilationFinal private int width;
             @CompilationFinal private int height;
             @CompilationFinal private int depth;
@@ -221,7 +221,7 @@ public final class SqueakDisplay {
 
             private void setSqDisplay(PointersObject sqDisplay) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                this.bitmap = (WordsObject) sqDisplay.at0(FORM.BITS);
+                this.bitmap = (NativeObject) sqDisplay.at0(FORM.BITS);
                 this.width = ((Long) sqDisplay.at0(FORM.WIDTH)).intValue();
                 this.height = ((Long) sqDisplay.at0(FORM.HEIGHT)).intValue();
                 this.depth = ((Long) sqDisplay.at0(FORM.DEPTH)).intValue();

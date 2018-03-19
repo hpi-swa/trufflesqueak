@@ -17,6 +17,7 @@ import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.MUTEX;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SEMAPHORE;
@@ -396,8 +397,21 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"isSmallInteger(receiver)", "isSmallInteger(argument)"})
+        protected Object doSmallInteger(final long receiver, final long argument) {
+            throw new PrimitiveFailed();
+        }
+
         @Specialization
-        protected Object changeClass(BaseSqueakObject receiver, BaseSqueakObject argument) {
+        protected Object doNativeObject(NativeObject receiver, NativeObject argument) {
+            receiver.setSqClass(argument.getSqClass());
+            receiver.convertStorage(argument);
+            throw new PrimitiveWithoutResultException();
+        }
+
+        @Specialization
+        protected Object doSqueakObject(BaseSqueakObject receiver, BaseSqueakObject argument) {
             receiver.setSqClass(argument.getSqClass());
             throw new PrimitiveWithoutResultException();
         }

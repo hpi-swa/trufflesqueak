@@ -7,41 +7,31 @@ import java.util.Arrays;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
-import de.hpi.swa.trufflesqueak.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions;
-import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
-public class WordsObject extends NativeObject {
-    @CompilationFinal(dimensions = 1) private int[] ints;
+public class NativeWordsStorage extends NativeObjectStorage {
+    @CompilationFinal(dimensions = 1) protected int[] ints;
     @CompilationFinal private static final long INTEGER_MAX = (long) (Math.pow(2, Integer.SIZE) - 1);
 
-    public WordsObject(SqueakImageContext image) {
-        super(image);
-    }
-
-    public WordsObject(SqueakImageContext image, ClassObject classObject, int size) {
-        super(image, classObject);
+    public NativeWordsStorage(int size) {
         ints = new int[size];
     }
 
-    public WordsObject(SqueakImageContext image, ClassObject classObject, int[] ints) {
-        super(image, classObject);
+    public NativeWordsStorage(int[] ints) {
         this.ints = ints;
     }
 
-    private WordsObject(WordsObject original) {
-        this(original.image, original.getSqClass(), Arrays.copyOf(original.ints, original.ints.length));
+    private NativeWordsStorage(NativeWordsStorage original) {
+        this(Arrays.copyOf(original.ints, original.ints.length));
     }
 
     @Override
-    public BaseSqueakObject shallowCopy() {
-        return new WordsObject(this);
+    public NativeObjectStorage shallowCopy() {
+        return new NativeWordsStorage(this);
     }
 
     @Override
     public void fillin(SqueakImageChunk chunk) {
-        super.fillin(chunk);
         CompilerDirectives.transferToInterpreterAndInvalidate();
         ints = chunk.getWords();
     }
@@ -77,19 +67,21 @@ public class WordsObject extends NativeObject {
     @Override
     public void shortAtPut0(long index, long value) {
         long wordIndex = (index - 1) / 2;
-        long word = (int) at0(wordIndex);
+        long word = (int) getNativeAt0(wordIndex);
         if ((index - 1) % 2 == 0) {
             word = (word & 0xffff0000) | (value & 0xffff);
         } else {
             word = (value << 16) | (word & 0xffff);
         }
-        atput0(wordIndex, word);
+        setNativeAt0(wordIndex, word);
     }
 
+    @Override
     public int getInt(int index) {
         return ints[index];
     }
 
+    @Override
     public void setInt(int index, int value) {
         ints[index] = value;
     }
@@ -101,22 +93,6 @@ public class WordsObject extends NativeObject {
         } else {
             Arrays.fill(ints, (byte) value);
         }
-    }
-
-    @Override
-    public boolean become(BaseSqueakObject other) {
-        if (!(other instanceof WordsObject)) {
-            throw new PrimitiveExceptions.PrimitiveFailed();
-        }
-        if (!super.become(other)) {
-            throw new SqueakException("Should not fail");
-        }
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        WordsObject otherWordsObject = ((WordsObject) other);
-        int[] otherWords = otherWordsObject.ints;
-        otherWordsObject.ints = this.ints;
-        this.ints = otherWords;
-        return true;
     }
 
     @Override
@@ -132,6 +108,17 @@ public class WordsObject extends NativeObject {
         return byteBuffer.array();
     }
 
+    @Override
+    public void setBytes(byte[] bytes) {
+        final int size = bytes.length / getElementSize();
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        ints = new int[size];
+        for (int i = 0; i < ints.length; i++) {
+            ints[i] = ((bytes[i + 3]) << 24) | ((bytes[i + 2]) << 16) | ((bytes[i + 1]) << 8) | bytes[i];
+        }
+    }
+
+    @Override
     public int[] getWords() {
         return ints;
     }

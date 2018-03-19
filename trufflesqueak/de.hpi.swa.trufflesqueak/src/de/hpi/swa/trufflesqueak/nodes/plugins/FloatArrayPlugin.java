@@ -7,7 +7,7 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
-import de.hpi.swa.trufflesqueak.model.WordsObject;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
@@ -48,7 +48,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected double doAt(WordsObject receiver, long index) {
+        protected double doAt(NativeObject receiver, long index) {
             return Float.intBitsToFloat(receiver.getInt(((int) index) - 1));
         }
     }
@@ -62,7 +62,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected double doAtPut(WordsObject receiver, long index, double value) {
+        protected double doAtPut(NativeObject receiver, long index, double value) {
             receiver.setInt(((int) index) - 1, Float.floatToIntBits((float) value));
             return value;
         }
@@ -107,7 +107,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected boolean doEqual(WordsObject receiver, WordsObject other) {
+        protected boolean doEqual(NativeObject receiver, NativeObject other) {
             int[] words = receiver.getWords();
             int wordsLength = words.length;
             int[] otherWords = other.getWords();
@@ -132,7 +132,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected long doHash(WordsObject receiver) {
+        protected long doHash(NativeObject receiver) {
             int[] words = receiver.getWords();
             long hash = 0;
             for (int word : words) {
@@ -211,7 +211,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected double doSum(WordsObject receiver) {
+        protected double doSum(NativeObject receiver) {
             int[] words = receiver.getWords();
             double sum = 0;
             for (int word : words) {

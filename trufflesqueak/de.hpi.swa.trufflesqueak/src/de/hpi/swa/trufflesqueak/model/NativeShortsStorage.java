@@ -7,41 +7,31 @@ import java.util.Arrays;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
-import de.hpi.swa.trufflesqueak.SqueakImageContext;
-import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions;
-import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
-public class ShortsObject extends NativeObject {
-    @CompilationFinal(dimensions = 1) private short[] shorts;
+public class NativeShortsStorage extends NativeObjectStorage {
+    @CompilationFinal(dimensions = 1) protected short[] shorts;
     @CompilationFinal private static final long SHORT_MAX = (long) (Math.pow(2, Short.SIZE) - 1);
 
-    public ShortsObject(SqueakImageContext image) {
-        super(image);
-    }
-
-    public ShortsObject(SqueakImageContext image, ClassObject classObject, int size) {
-        super(image, classObject);
+    public NativeShortsStorage(int size) {
         shorts = new short[size];
     }
 
-    public ShortsObject(SqueakImageContext image, ClassObject classObject, short[] shorts) {
-        super(image, classObject);
+    public NativeShortsStorage(short[] shorts) {
         this.shorts = shorts;
     }
 
-    private ShortsObject(ShortsObject original) {
-        this(original.image, original.getSqClass(), Arrays.copyOf(original.shorts, original.shorts.length));
+    private NativeShortsStorage(NativeShortsStorage original) {
+        this(Arrays.copyOf(original.shorts, original.shorts.length));
     }
 
     @Override
-    public BaseSqueakObject shallowCopy() {
-        return new ShortsObject(this);
+    public NativeObjectStorage shallowCopy() {
+        return new NativeShortsStorage(this);
     }
 
     @Override
     public void fillin(SqueakImageChunk chunk) {
-        super.fillin(chunk);
         CompilerDirectives.transferToInterpreterAndInvalidate();
         shorts = chunk.getShorts();
     }
@@ -79,22 +69,6 @@ public class ShortsObject extends NativeObject {
     }
 
     @Override
-    public boolean become(BaseSqueakObject other) {
-        if (!(other instanceof ShortsObject)) {
-            throw new PrimitiveExceptions.PrimitiveFailed();
-        }
-        if (!super.become(other)) {
-            throw new SqueakException("Should not fail");
-        }
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        ShortsObject otherShortsObject = ((ShortsObject) other);
-        short[] otherShorts = otherShortsObject.shorts;
-        otherShortsObject.shorts = this.shorts;
-        this.shorts = otherShorts;
-        return true;
-    }
-
-    @Override
     public final int size() {
         return shorts.length;
     }
@@ -105,6 +79,16 @@ public class ShortsObject extends NativeObject {
         ShortBuffer shortBuffer = byteBuffer.asShortBuffer();
         shortBuffer.put(shorts);
         return byteBuffer.array();
+    }
+
+    @Override
+    public void setBytes(byte[] bytes) {
+        final int size = bytes.length / getElementSize();
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        shorts = new short[size];
+        for (int i = 0; i < shorts.length; i++) {
+            shorts[i] = (short) (((bytes[i + 1]) << 8) | bytes[i]);
+        }
     }
 
     @Override

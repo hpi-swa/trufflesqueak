@@ -16,7 +16,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
-import de.hpi.swa.trufflesqueak.model.BytesObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -78,7 +77,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doCreate(PointersObject receiver, BytesObject fullPath) {
+        protected Object doCreate(PointersObject receiver, NativeObject fullPath) {
             File directory = new File(fullPath.toString());
             if (directory.delete()) {
                 return receiver;
@@ -110,7 +109,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "isString(fullPath)")
-        protected Object doLookup(@SuppressWarnings("unused") PointersObject receiver, BytesObject fullPath, BytesObject fName) {
+        protected Object doLookup(@SuppressWarnings("unused") PointersObject receiver, NativeObject fullPath, NativeObject fName) {
             String pathName = fullPath.toString();
             String fileName = fName.toString();
             File path;
