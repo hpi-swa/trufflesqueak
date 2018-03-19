@@ -607,6 +607,50 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(index = 38, numArguments = 2)
+    protected static abstract class PrimFloatAtNode extends AbstractArithmeticPrimitiveNode {
+        protected PrimFloatAtNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected final static long doDouble(final double receiver, final long index) {
+            long doubleBits = Double.doubleToLongBits(receiver);
+            if (index == 1) {
+                if (receiver >= 0) {
+                    return Math.abs(doubleBits >> 32);
+                } else {
+                    return ~Math.abs(doubleBits >> 32) + 1 & 0xffffffffL;
+                }
+            } else if (index == 2) {
+                return Math.abs((int) doubleBits);
+            } else {
+                throw new PrimitiveFailed();
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 39, numArguments = 3)
+    protected static abstract class PrimFloatAtPutNode extends AbstractArithmeticPrimitiveNode {
+        protected PrimFloatAtPutNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected final static double doDouble(final double receiver, final long index, final long value) {
+            long doubleBits = Double.doubleToLongBits(receiver);
+            if (index == 1) {
+                return Double.longBitsToDouble(value >> 32 | (int) doubleBits);
+            } else if (index == 2) {
+                return Double.longBitsToDouble(doubleBits & 0xffffffff00000000L | ((Long) value).intValue());
+            } else {
+                throw new PrimitiveFailed();
+            }
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(index = 40, numArguments = 2)
     protected static abstract class PrimAsFloatNode extends AbstractArithmeticPrimitiveNode {
         protected PrimAsFloatNode(CompiledMethodObject method) {
