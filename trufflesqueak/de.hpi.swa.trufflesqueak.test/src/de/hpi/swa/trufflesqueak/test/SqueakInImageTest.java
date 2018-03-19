@@ -50,7 +50,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "AllNamePolicyTest", TEST_TYPE.PASSING,
                     "AllocationTest", TEST_TYPE.IGNORE,
                     "ArbitraryObjectSocketTestCase", TEST_TYPE.IGNORE,
-                    "ArrayLiteralTest", TEST_TYPE.NOT_TERMINATING,
+                    "ArrayLiteralTest", TEST_TYPE.PASSING,
                     "ArrayTest", TEST_TYPE.PASSING,
                     "Ascii85ConverterTest", TEST_TYPE.PASSING,
                     "AssociationTest", TEST_TYPE.PASSING,
@@ -76,11 +76,11 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "BrowserTest", TEST_TYPE.FAILING,
                     "BrowseTest", TEST_TYPE.PASSING,
                     "ByteArrayTest", TEST_TYPE.PASSING,
-                    "BytecodeDecodingTests", TEST_TYPE.FAILING,
+                    "BytecodeDecodingTests", TEST_TYPE.NOT_TERMINATING,
                     "ByteEncoderTest", TEST_TYPE.PASSING,
-                    "CategorizerTest", TEST_TYPE.FAILING,
+                    "CategorizerTest", TEST_TYPE.PASSING,
                     "ChainedSortFunctionTest", TEST_TYPE.PASSING,
-                    "ChangeHooksTest", TEST_TYPE.FAILING,
+                    // "ChangeHooksTest", TEST_TYPE.NOT_TERMINATING,
                     "ChangeSetClassChangesTest", TEST_TYPE.FAILING,
                     "CharacterScannerTest", TEST_TYPE.PASSING,
                     "CharacterSetComplementTest", TEST_TYPE.PASSING,
@@ -93,22 +93,22 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "ClassBuilderTest", TEST_TYPE.FAILING,
                     "ClassDescriptionTest", TEST_TYPE.PASSING,
                     "ClassFactoryForTestCaseTest", TEST_TYPE.IGNORE,
-                    "ClassRemovalTest", TEST_TYPE.FAILING,
+                    "ClassRemovalTest", TEST_TYPE.PASSING,
                     "ClassRenameFixTest", TEST_TYPE.FAILING,
-                    "ClassTest", TEST_TYPE.FAILING,
+                    "ClassTest", TEST_TYPE.NOT_TERMINATING,
                     "ClassTestCase", TEST_TYPE.NOT_TERMINATING,
-                    "ClassTraitTest", TEST_TYPE.NOT_TERMINATING,
-                    "ClassVarScopeTest", TEST_TYPE.FAILING,
+                    "ClassTraitTest", TEST_TYPE.PASSING,
+                    "ClassVarScopeTest", TEST_TYPE.NOT_TERMINATING,
                     "ClipboardTest", TEST_TYPE.PASSING,
-                    "ClosureCompilerTest", TEST_TYPE.FAILING, // requires sources
-                    "ClosureTests", TEST_TYPE.FAILING,
+                    "ClosureCompilerTest", TEST_TYPE.NOT_TERMINATING, // requires sources
+                    "ClosureTests", TEST_TYPE.PASSING,
                     "CogVMBaseImageTests", TEST_TYPE.FAILING,
                     "CollectionTest", TEST_TYPE.PASSING,
                     "ColorTest", TEST_TYPE.PASSING,
                     "CompiledMethodComparisonTest", TEST_TYPE.NOT_TERMINATING,
-                    "CompiledMethodTest", TEST_TYPE.FAILING,
+                    "CompiledMethodTest", TEST_TYPE.PASSING,
                     "CompiledMethodTrailerTest", TEST_TYPE.PASSING,
-                    "CompilerExceptionsTest", TEST_TYPE.PROCESS_SWITCHING,
+                    "CompilerExceptionsTest", TEST_TYPE.PASSING,
                     "CompilerNotifyingTest", TEST_TYPE.FAILING,
                     "CompilerSyntaxErrorNotifyingTest", TEST_TYPE.FAILING,
                     "CompilerTest", TEST_TYPE.PASSING,
@@ -120,10 +120,10 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "DateAndTimeTest", TEST_TYPE.NOT_TERMINATING, // does not terminate sometimes (side effects?)
                     "DateTest", TEST_TYPE.PASSING,
                     "DebuggerExtensionsTest", TEST_TYPE.FAILING,
-                    "DebuggerUnwindBug", TEST_TYPE.FAILING,
+                    "DebuggerUnwindBug", TEST_TYPE.PROCESS_SWITCHING,
                     "DecompilerTests", TEST_TYPE.NOT_TERMINATING,
                     "DelayTest", TEST_TYPE.PROCESS_SWITCHING,
-                    "DependencyBrowserTest", TEST_TYPE.FAILING,
+                    "DependencyBrowserTest", TEST_TYPE.IGNORE,
                     "DependentsArrayTest", TEST_TYPE.PASSING,
                     "DictionaryTest", TEST_TYPE.FAILING,
                     "DosFileDirectoryTests", TEST_TYPE.PASSING,
@@ -143,7 +143,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "FileDirectoryTest", TEST_TYPE.PASSING,
                     "FileList2ModalDialogsTest", TEST_TYPE.FAILING,
                     "FileListTest", TEST_TYPE.IGNORE,
-                    "FileStreamTest", TEST_TYPE.FAILING,
+                    "FileStreamTest", TEST_TYPE.PASSING,
                     "FileUrlTest", TEST_TYPE.PASSING,
                     "FlapTabTests", TEST_TYPE.PROCESS_SWITCHING,
                     "FloatArrayTest", TEST_TYPE.FAILING,
@@ -161,8 +161,8 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "HashAndEqualsTestCase", TEST_TYPE.PASSING,
                     "HashedCollectionTest", TEST_TYPE.PASSING,
                     "HashTesterTest", TEST_TYPE.PASSING,
-                    "HeapTest", TEST_TYPE.NOT_TERMINATING,
-                    "HelpBrowserTest", TEST_TYPE.NOT_TERMINATING,
+                    "HeapTest", TEST_TYPE.PASSING,
+                    "HelpBrowserTest", TEST_TYPE.PASSING,
                     "HelpIconsTest", TEST_TYPE.PASSING,
                     "HelpTopicListItemWrapperTest", TEST_TYPE.PASSING,
                     "HelpTopicTest", TEST_TYPE.PASSING,
@@ -179,21 +179,21 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "InstVarRefLocatorTest", TEST_TYPE.PASSING,
                     "IntegerArrayTest", TEST_TYPE.PASSING,
                     "IntegerDigitLogicTest", TEST_TYPE.PASSING,
-                    "IntegerTest", TEST_TYPE.NOT_TERMINATING,
+                    "IntegerTest", TEST_TYPE.PASSING,
                     "IntervalTest", TEST_TYPE.PASSING,
                     "IslandVMTweaksTestCase", TEST_TYPE.FAILING,
                     "JPEGReadWriter2Test", TEST_TYPE.FAILING,
                     "KeyedSetTest", TEST_TYPE.PASSING,
-                    "LangEnvBugs", TEST_TYPE.NOT_TERMINATING,
+                    "LangEnvBugs", TEST_TYPE.FAILING,
                     "LargeNegativeIntegerTest", TEST_TYPE.PASSING,
                     "LargePositiveIntegerTest", TEST_TYPE.PASSING,
                     "LayoutFrameTest", TEST_TYPE.PASSING,
                     "LinkedListTest", TEST_TYPE.PASSING,
-                    "LocaleTest", TEST_TYPE.PROCESS_SWITCHING,
+                    "LocaleTest", TEST_TYPE.FAILING,
                     "LongTestCaseTest", TEST_TYPE.PASSING,
                     "LongTestCaseTestUnderTest", TEST_TYPE.PASSING,
                     "MacFileDirectoryTest", TEST_TYPE.PASSING,
-                    "MailAddressParserTest", TEST_TYPE.PROCESS_SWITCHING,
+                    "MailAddressParserTest", TEST_TYPE.FAILING,
                     "MailDateAndTimeTest", TEST_TYPE.PASSING,
                     "MailMessageTest", TEST_TYPE.FAILING,
                     "MatrixTest", TEST_TYPE.PASSING,
@@ -233,18 +233,18 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "MethodHighlightingTests", TEST_TYPE.PASSING,
                     "MethodPragmaTest", TEST_TYPE.FAILING,
                     "MethodPropertiesTest", TEST_TYPE.PASSING,
-                    "MethodReferenceTest", TEST_TYPE.FAILING,
+                    "MethodReferenceTest", TEST_TYPE.PASSING,
                     "MIMEDocumentTest", TEST_TYPE.FLAKY,
                     "MirrorPrimitiveTests", TEST_TYPE.FAILING,
                     "MiscPrimitivePluginTest", TEST_TYPE.FAILING, // failing in Squeak
-                    "MonitorTest", TEST_TYPE.NOT_TERMINATING,
+                    "MonitorTest", TEST_TYPE.PROCESS_SWITCHING,
                     "MonthTest", TEST_TYPE.PASSING,
                     "MorphBugs", TEST_TYPE.PASSING,
                     "MorphicEventDispatcherTests", TEST_TYPE.FAILING,
                     "MorphicEventFilterTests", TEST_TYPE.FAILING,
-                    "MorphicEventTests", TEST_TYPE.NOT_TERMINATING,
+                    "MorphicEventTests", TEST_TYPE.FAILING,
                     "MorphicExtrasSymbolExtensionsTest", TEST_TYPE.PASSING,
-                    "MorphicToolBuilderTests", TEST_TYPE.NOT_TERMINATING,
+                    "MorphicToolBuilderTests", TEST_TYPE.FAILING,
                     "MorphicUIManagerTest", TEST_TYPE.FAILING,
                     "MorphTest", TEST_TYPE.PASSING,
                     "MultiByteFileStreamTest", TEST_TYPE.IGNORE,
@@ -265,27 +265,26 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "PCCByLiteralsTest", TEST_TYPE.IGNORE,
                     "PluggableMenuItemSpecTests", TEST_TYPE.PASSING,
                     "PluggableTextMorphTest", TEST_TYPE.PASSING,
-                    "PNGReadWriterTest", TEST_TYPE.FAILING,
+                    "PNGReadWriterTest", TEST_TYPE.NOT_TERMINATING,
                     "PointTest", TEST_TYPE.PASSING,
                     "PolygonMorphTest", TEST_TYPE.PASSING,
                     "PreferencesTest", TEST_TYPE.REQUIRES_STARTUP,
-                    "PrimCallControllerAbstractTest", TEST_TYPE.NOT_TERMINATING,
-                    "ProcessSpecificTest", TEST_TYPE.NOT_TERMINATING,
+                    "ProcessSpecificTest", TEST_TYPE.PROCESS_SWITCHING,
                     "ProcessTerminateBug", TEST_TYPE.PROCESS_SWITCHING,
                     "ProcessTest", TEST_TYPE.PROCESS_SWITCHING,
-                    "PromiseTest", TEST_TYPE.NOT_TERMINATING,
+                    "PromiseTest", TEST_TYPE.PROCESS_SWITCHING,
                     "ProtoObjectTest", TEST_TYPE.PASSING,
                     "PureBehaviorTest", TEST_TYPE.NOT_TERMINATING,
                     "RandomTest", TEST_TYPE.NOT_TERMINATING,
                     "ReadStreamTest", TEST_TYPE.PASSING,
                     "ReadWriteStreamTest", TEST_TYPE.PASSING,
-                    "RecentMessagesTest", TEST_TYPE.FAILING,
+                    "RecentMessagesTest", TEST_TYPE.PASSING,
                     "RectangleTest", TEST_TYPE.PASSING,
                     "ReferenceStreamTest", TEST_TYPE.FLAKY,
                     "ReleaseTest", TEST_TYPE.NOT_TERMINATING,
-                    "RemoteStringTest", TEST_TYPE.NOT_TERMINATING,
+                    "RemoteStringTest", TEST_TYPE.PASSING,
                     "RemovePrefixNamePolicyTest", TEST_TYPE.PASSING,
-                    "RenderBugz", TEST_TYPE.NOT_TERMINATING,
+                    "RenderBugz", TEST_TYPE.PROCESS_SWITCHING,
                     "ResumableTestFailureTestCase", TEST_TYPE.PASSING,
                     "RunArrayTest", TEST_TYPE.PASSING,
                     "RWBinaryOrTextStreamTest", TEST_TYPE.FAILING,
@@ -298,19 +297,19 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "ScrollPaneLeftBarTest", TEST_TYPE.PASSING,
                     "ScrollPaneRetractableBarsTest", TEST_TYPE.PASSING,
                     "ScrollPaneTest", TEST_TYPE.PASSING,
-                    "SecureHashAlgorithmTest", TEST_TYPE.NOT_TERMINATING,
+                    "SecureHashAlgorithmTest", TEST_TYPE.FAILING,
                     "SemaphoreTest", TEST_TYPE.PROCESS_SWITCHING,
                     "SequenceableCollectionTest", TEST_TYPE.PASSING,
                     "SetTest", TEST_TYPE.PASSING,
                     "SetWithNilTest", TEST_TYPE.FAILING,
-                    "SharedQueue2Test", TEST_TYPE.NOT_TERMINATING,
+                    "SharedQueue2Test", TEST_TYPE.PROCESS_SWITCHING,
                     "SHParserST80Test", TEST_TYPE.BROKEN_IN_SQUEAK,
                     "SimpleSwitchMorphTest", TEST_TYPE.PASSING,
                     "SimpleTestResourceTestCase", TEST_TYPE.PASSING,
                     "SliderTest", TEST_TYPE.PASSING,
                     "SmallIntegerTest", TEST_TYPE.PASSING,
                     "SmalltalkImageTest", TEST_TYPE.PASSING,
-                    "SmartRefStreamTest", TEST_TYPE.FAILING,
+                    "SmartRefStreamTest", TEST_TYPE.NOT_TERMINATING,
                     "SMDependencyTest", TEST_TYPE.PASSING,
                     "SMTPClientTest", TEST_TYPE.IGNORE,
                     "SocketStreamTest", TEST_TYPE.FAILING,
@@ -324,25 +323,25 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "StackTest", TEST_TYPE.PASSING,
                     "StandardSourceFileArrayTest", TEST_TYPE.PASSING,
                     "StickynessBugz", TEST_TYPE.PASSING,
-                    "StopwatchTest", TEST_TYPE.NOT_TERMINATING,
+                    "StopwatchTest", TEST_TYPE.PROCESS_SWITCHING,
                     "StringSocketTestCase", TEST_TYPE.FAILING,
                     "StringTest", TEST_TYPE.FAILING,
                     "SumBugs", TEST_TYPE.PASSING,
-                    "SUnitExtensionsTest", TEST_TYPE.NOT_TERMINATING,
-                    "SUnitTest", TEST_TYPE.NOT_TERMINATING,
-                    "SUnitToolBuilderTests", TEST_TYPE.PROCESS_SWITCHING,
+                    "SUnitExtensionsTest", TEST_TYPE.PROCESS_SWITCHING,
+                    "SUnitTest", TEST_TYPE.PROCESS_SWITCHING,
+                    "SUnitToolBuilderTests", TEST_TYPE.NOT_TERMINATING,
                     "SymbolTest", TEST_TYPE.PASSING,
                     "SystemChangeErrorHandling", TEST_TYPE.FLAKY,
                     "SystemChangeFileTest", TEST_TYPE.IGNORE,
                     "SystemChangeNotifierTest", TEST_TYPE.FLAKY,
                     "SystemChangeTestRoot", TEST_TYPE.PASSING,
                     "SystemDictionaryTest", TEST_TYPE.PASSING,
-                    "SystemNavigationTest", TEST_TYPE.FAILING,
+                    "SystemNavigationTest", TEST_TYPE.PASSING,
                     "SystemOrganizerTest", TEST_TYPE.PASSING,
                     "SystemVersionTest", TEST_TYPE.PASSING,
                     "TestIndenting", TEST_TYPE.PASSING,
                     "TestNewParagraphFix", TEST_TYPE.PASSING,
-                    "TestObjectsAsMethods", TEST_TYPE.FAILING,
+                    "TestObjectsAsMethods", TEST_TYPE.PASSING,
                     "TestParagraphFix", TEST_TYPE.PASSING,
                     "TestSpaceshipOperator", TEST_TYPE.PASSING,
                     "TestURI", TEST_TYPE.PASSING,
@@ -353,7 +352,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "TextAndTextStreamTest", TEST_TYPE.PASSING,
                     "TextAttributesScanningTest", TEST_TYPE.FAILING,
                     "TextDiffBuilderTest", TEST_TYPE.PASSING,
-                    "TextEditorTest", TEST_TYPE.PROCESS_SWITCHING,
+                    "TextEditorTest", TEST_TYPE.PASSING,
                     "TextEmphasisTest", TEST_TYPE.PASSING,
                     "TextFontChangeTest", TEST_TYPE.PASSING,
                     "TextFontReferenceTest", TEST_TYPE.PASSING,
@@ -374,11 +373,11 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "TraitFileOutTest", TEST_TYPE.NOT_TERMINATING,
                     "TraitMethodDescriptionTest", TEST_TYPE.NOT_TERMINATING,
                     "TraitsTestCase", TEST_TYPE.PASSING,
-                    "TraitSystemTest", TEST_TYPE.NOT_TERMINATING,
-                    "TraitTest", TEST_TYPE.NOT_TERMINATING,
+                    "TraitSystemTest", TEST_TYPE.PASSING,
+                    "TraitTest", TEST_TYPE.PASSING,
                     "TrueTest", TEST_TYPE.PASSING,
                     "UndefinedObjectTest", TEST_TYPE.PASSING,
-                    "UnderscoreSelectorsTest", TEST_TYPE.NOT_TERMINATING,
+                    "UnderscoreSelectorsTest", TEST_TYPE.PASSING,
                     "UnimplementedCallBugz", TEST_TYPE.PASSING,
                     "UnixFileDirectoryTests", TEST_TYPE.PASSING,
                     "UrlTest", TEST_TYPE.PASSING,
@@ -393,13 +392,13 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "WeakFinalizersTest", TEST_TYPE.PASSING,
                     "WeakIdentityKeyDictionaryTest", TEST_TYPE.PASSING,
                     "WeakMessageSendTest", TEST_TYPE.FAILING,
-                    "WeakRegistryTest", TEST_TYPE.NOT_TERMINATING,
+                    "WeakRegistryTest", TEST_TYPE.PROCESS_SWITCHING,
                     "WeakSetInspectorTest", TEST_TYPE.PASSING,
                     "WeakSetTest", TEST_TYPE.FAILING,
                     "WebClientServerTest", TEST_TYPE.FAILING,
                     "WeekTest", TEST_TYPE.PASSING,
                     "WideCharacterSetTest", TEST_TYPE.FAILING,
-                    "WideStringTest", TEST_TYPE.NOT_TERMINATING,
+                    "WideStringTest", TEST_TYPE.FAILING,
                     "Win32VMTest", TEST_TYPE.PASSING,
                     "WordArrayTest", TEST_TYPE.PASSING,
                     "WorldStateTest", TEST_TYPE.NOT_TERMINATING,
@@ -508,16 +507,12 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
 
     @Test
     public void testYFailingSqueakTests() {
-        List<String> passing = new ArrayList<>();
-        String[] testClasses = getSqueakTests(TEST_TYPE.FAILING);
-        printHeader(TEST_TYPE.FAILING, testClasses);
-        for (int i = 0; i < testClasses.length; i++) {
-            String result = runTestCase(testClasses[i]);
-            if (result.contains("passed")) {
-                passing.add(result);
-            }
-        }
-        failIfNotEmpty(passing);
+        testAndFailOnPassing(TEST_TYPE.FAILING);
+    }
+
+    @Test
+    public void testYProcessSwitchingSqueakTests() {
+        testAndFailOnPassing(TEST_TYPE.PROCESS_SWITCHING);
     }
 
     @Ignore
@@ -572,12 +567,14 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
          * Set author initials and disable timeout logic by patching TestCase>>#timeout:after: (uses
          * processes -> incompatible to running headless).
          */
-        evaluate("Utilities setAuthorInitials: 'TruffleSqueak'");
-        evaluate("FileDirectory startUp");
-        // TODO: run 'FileDirectory startUp'?
-        // evaluate(String.format("FileDirectory setDefaultDirectory: '%s/images'", getImagesPathName()));
+        evaluate("FileDirectory startUp"); // initializes paths and opens sources file.
+        evaluate("FileStream startUp");
+        evaluate("Utilities setAuthorInitials: 'TruffleSqueak'"); // needs to happen after `FileDirectory startUp`.
         Object patchResult = evaluate(
                         "TestCase addSelectorSilently: #timeout:after: withMethod: (TestCase compile: 'timeout: aBlock after: seconds ^ aBlock value' notifying: nil trailer: (CompiledMethodTrailer empty) ifFail: [^ nil]) method");
+        assertNotEquals(image.nil, patchResult);
+        patchResult = evaluate(
+                        "BlockClosure addSelectorSilently: #valueWithin:onTimeout: withMethod: (BlockClosure compile: 'valueWithin: aDuration onTimeout: timeoutBlock ^ self value' notifying: nil trailer: (CompiledMethodTrailer empty) ifFail: [^ nil]) method");
         assertNotEquals(image.nil, patchResult);
     }
 
@@ -651,6 +648,19 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
         }
         image.getOutput().println(result);
         return testClassName + ": " + result;
+    }
+
+    private static void testAndFailOnPassing(String type) {
+        List<String> passing = new ArrayList<>();
+        String[] testClasses = getSqueakTests(type);
+        printHeader(type, testClasses);
+        for (int i = 0; i < testClasses.length; i++) {
+            String result = runTestCase(testClasses[i]);
+            if (result.contains("passed")) {
+                passing.add(result);
+            }
+        }
+        failIfNotEmpty(passing);
     }
 
     private static String extractFailuresAndErrorsFromTestResult(Object result) {
