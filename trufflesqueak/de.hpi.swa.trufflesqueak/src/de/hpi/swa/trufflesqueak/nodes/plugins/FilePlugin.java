@@ -376,25 +376,25 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         @TruffleBoundary
         protected long doWrite(@SuppressWarnings("unused") PointersObject receiver, long fileDescriptor, NativeObject content, long startIndex, long count) {
-            String chars = content.toString();
+            byte[] bytes = content.getBytes();
             long elementSize = content.getElementSize();
             int byteStart = (int) ((startIndex - 1) * elementSize);
-            int byteEnd = (int) (Math.min(startIndex - 1 + count, chars.length()) * elementSize);
+            int byteEnd = (int) (Math.min(startIndex - 1 + count, bytes.length) * elementSize);
             if (fileDescriptor == STDIO_HANDLES.IN) {
                 throw new PrimitiveFailed();
             } else if (fileDescriptor == STDIO_HANDLES.OUT) {
-                code.image.getOutput().append(chars, byteStart, byteEnd);
+                code.image.getOutput().append(content.toString(), byteStart, byteEnd);
                 code.image.getOutput().flush();
             } else if (fileDescriptor == STDIO_HANDLES.ERROR) {
-                code.image.getError().append(chars, byteStart, byteEnd);
+                code.image.getError().append(content.toString(), byteStart, byteEnd);
                 code.image.getError().flush();
-            } else { // TODO: writing to files is currently disabled during development
-                // try {
-                // RandomAccessFile file = files.get(fileDescriptor);
-                // file.writeChars(chars);
-                // } catch (NullPointerException | IOException e) {
-                // throw new PrimitiveFailed();
-                // }
+            } else {
+                try {
+                    RandomAccessFile file = files.get(fileDescriptor);
+                    file.write(bytes);
+                } catch (NullPointerException | IOException e) {
+                    throw new PrimitiveFailed();
+                }
             }
             return (byteEnd - byteStart) / elementSize;
         }
