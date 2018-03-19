@@ -2,22 +2,22 @@ package de.hpi.swa.trufflesqueak.nodes.context;
 
 import com.oracle.truffle.api.dsl.Specialization;
 
+import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
-import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
-import de.hpi.swa.trufflesqueak.nodes.AbstractNodeWithCode;
+import de.hpi.swa.trufflesqueak.nodes.AbstractNodeWithImage;
 
-public abstract class SqueakLookupClassNode extends AbstractNodeWithCode {
-    public static SqueakLookupClassNode create(CompiledCodeObject code) {
-        return SqueakLookupClassNodeGen.create(code);
+public abstract class SqueakLookupClassNode extends AbstractNodeWithImage {
+    public static SqueakLookupClassNode create(SqueakImageContext image) {
+        return SqueakLookupClassNodeGen.create(image);
     }
 
-    protected SqueakLookupClassNode(CompiledCodeObject code) {
-        super(code);
+    protected SqueakLookupClassNode(SqueakImageContext image) {
+        super(image);
     }
 
     public abstract ClassObject executeLookup(Object receiver);
@@ -25,53 +25,53 @@ public abstract class SqueakLookupClassNode extends AbstractNodeWithCode {
     @Specialization
     protected ClassObject squeakClass(boolean object) {
         if (object) {
-            return code.image.trueClass;
+            return image.trueClass;
         } else {
-            return code.image.falseClass;
+            return image.falseClass;
         }
     }
 
     protected boolean isNil(Object object) {
-        return object == code.image.nil;
+        return object == image.nil;
     }
 
     @Specialization
     protected ClassObject squeakClass(long object) {
         if (object < LargeIntegerObject.SMALLINTEGER32_MIN) {
-            return code.image.largeNegativeIntegerClass;
+            return image.largeNegativeIntegerClass;
         } else if (object <= LargeIntegerObject.SMALLINTEGER32_MAX) {
-            return code.image.smallIntegerClass;
+            return image.smallIntegerClass;
         } else {
-            return code.image.largePositiveIntegerClass;
+            return image.largePositiveIntegerClass;
         }
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected ClassObject squeakClass(char object) {
-        return code.image.characterClass;
+        return image.characterClass;
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected ClassObject squeakClass(double object) {
-        return code.image.floatClass;
+        return image.floatClass;
     }
 
     @Specialization
     protected ClassObject squeakClass(@SuppressWarnings("unused") BlockClosureObject ch) {
-        return code.image.blockClosureClass;
+        return image.blockClosureClass;
     }
 
     @Specialization
     protected ClassObject squeakClass(@SuppressWarnings("unused") ContextObject ch) {
-        return code.image.methodContextClass;
+        return image.methodContextClass;
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected ClassObject nilClass(NilObject object) {
-        return code.image.nilClass;
+        return image.nilClass;
     }
 
     @Specialization

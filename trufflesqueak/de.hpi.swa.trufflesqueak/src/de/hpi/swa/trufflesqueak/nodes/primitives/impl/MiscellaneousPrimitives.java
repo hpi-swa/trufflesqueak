@@ -643,7 +643,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected PrimBitBltSimulateNode(CompiledMethodObject method, String moduleName, String functionName) {
             super(method, moduleName, functionName);
-            lookupClassNode = SqueakLookupClassNode.create(method);
+            lookupClassNode = SqueakLookupClassNode.create(method.image);
         }
 
         @Override

@@ -71,6 +71,7 @@ public class ExecuteTopLevelContextNode extends RootNode {
                 contextWriteNode.executeWrite(frame, activeContext);
                 // FIXME: do not create node here
                 executeContextNode = insert(ExecuteContextNode.create(code));
+                // doIt: activeContext.printSqStackTrace();
                 Object result = executeContextNode.executeNonVirtualized(frame, activeContext);
                 activeContext = unwindContextChain(sender, sender, result);
                 image.trace("Local Return on top-level, new context is " + activeContext);

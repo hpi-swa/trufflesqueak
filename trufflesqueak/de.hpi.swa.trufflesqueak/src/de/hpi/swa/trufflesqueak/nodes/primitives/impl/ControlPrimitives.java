@@ -27,6 +27,8 @@ import de.hpi.swa.trufflesqueak.nodes.DispatchNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.LookupNode;
 import de.hpi.swa.trufflesqueak.nodes.LookupNodeGen;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.SendDoesNotUnderstandNode;
+import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.SendObjectAsMethodNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ReceiverAndArgumentsNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ReceiverNode;
@@ -84,10 +86,14 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Child protected SqueakLookupClassNode lookupClassNode;
         @Child protected LookupNode lookupNode = LookupNodeGen.create();
         @Child protected DispatchNode dispatchNode = DispatchNodeGen.create();
+        @Child private SendDoesNotUnderstandNode sendDoesNotUnderstandNode;
+        @Child private SendObjectAsMethodNode sendObjectAsMethodNode;
 
         protected AbstractPerformPrimitiveNode(CompiledMethodObject method) {
             super(method);
-            lookupClassNode = SqueakLookupClassNodeGen.create(code);
+            lookupClassNode = SqueakLookupClassNodeGen.create(code.image);
+            sendDoesNotUnderstandNode = SendDoesNotUnderstandNode.create(code.image);
+            sendObjectAsMethodNode = SendObjectAsMethodNode.create(code.image);
         }
 
         protected ClassObject lookup(Object receiver) {
@@ -109,11 +115,12 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             } else {
                 rcvrAndArgs = new Object[]{receiver};
             }
-            CompiledCodeObject lookupResult = (CompiledCodeObject) lookupNode.executeLookup(rcvrClass, selector);
+            Object lookupResult = lookupNode.executeLookup(rcvrClass, selector);
             Object contextOrMarker = FrameAccess.getContextOrMarker(frame);
-            if (lookupResult.isDoesNotUnderstand()) {
-                Object[] rcvrAndSelector = new Object[]{rcvrAndArgs[0], selector};
-                return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndSelector, contextOrMarker);
+            if (!(lookupResult instanceof CompiledCodeObject)) {
+                return sendObjectAsMethodNode.execute(frame, selector, rcvrAndArgs, lookupResult, contextOrMarker);
+            } else if (((CompiledCodeObject) lookupResult).isDoesNotUnderstand()) {
+                return sendDoesNotUnderstandNode.execute(frame, selector, rcvrAndArgs, rcvrClass, lookupResult, contextOrMarker);
             } else {
                 return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndArgs, contextOrMarker);
             }
@@ -330,7 +337,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected PrimClassNode(CompiledMethodObject method) {
             super(method);
-            node = SqueakLookupClassNode.create(code);
+            node = SqueakLookupClassNode.create(code.image);
         }
 
         @Specialization

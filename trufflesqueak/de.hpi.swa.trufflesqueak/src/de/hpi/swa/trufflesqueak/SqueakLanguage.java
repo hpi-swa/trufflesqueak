@@ -11,7 +11,6 @@ import com.oracle.truffle.api.instrumentation.ProvidedTags;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
-import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
@@ -50,13 +49,13 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
     }
 
     @Override
-    protected Object findMetaObject(SqueakImageContext context, Object value) {
+    protected Object findMetaObject(SqueakImageContext image, Object value) {
         // TODO: return ContextObject instead?
         if (value instanceof FrameMarker) {
-            return context.nilClass;
+            return image.nilClass;
         }
         try {
-            return SqueakLookupClassNode.create(new CompiledMethodObject(context)).executeLookup(value);
+            return SqueakLookupClassNode.create(image).executeLookup(value);
         } catch (UnsupportedSpecializationException e) {
             return null;
         }

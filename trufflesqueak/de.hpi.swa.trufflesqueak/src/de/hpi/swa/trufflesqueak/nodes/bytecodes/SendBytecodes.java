@@ -1,24 +1,29 @@
 package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 
+import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveWithoutResultException;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakException.SqueakTestException;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.MESSAGE;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.model.SpecialSelectorObject;
+import de.hpi.swa.trufflesqueak.nodes.AbstractNodeWithImage;
 import de.hpi.swa.trufflesqueak.nodes.DispatchNode;
 import de.hpi.swa.trufflesqueak.nodes.LookupNode;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PopNReversedStackNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
+import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 
 public final class SendBytecodes {
 
@@ -28,6 +33,8 @@ public final class SendBytecodes {
         @Child protected SqueakLookupClassNode lookupClassNode;
         @Child private LookupNode lookupNode = LookupNode.create();
         @Child private DispatchNode dispatchNode = DispatchNode.create();
+        @Child private SendDoesNotUnderstandNode sendDoesNotUnderstandNode;
+        @Child private SendObjectAsMethodNode sendObjectAsMethodNode;
         @Child private PopNReversedStackNode popNReversedNode;
         @Child private PushStackNode pushNode;
         @Child private FrameSlotReadNode readContextNode;
@@ -36,10 +43,12 @@ public final class SendBytecodes {
             super(code, index, numBytecodes);
             selector = sel;
             argumentCount = argcount;
-            lookupClassNode = SqueakLookupClassNode.create(code);
+            lookupClassNode = SqueakLookupClassNode.create(code.image);
             pushNode = PushStackNode.create(code);
             popNReversedNode = PopNReversedStackNode.create(code, 1 + argumentCount);
             readContextNode = FrameSlotReadNode.create(code.thisContextOrMarkerSlot);
+            sendDoesNotUnderstandNode = SendDoesNotUnderstandNode.create(code.image);
+            sendObjectAsMethodNode = SendObjectAsMethodNode.create(code.image);
         }
 
         @Override
@@ -58,30 +67,18 @@ public final class SendBytecodes {
             code.image.interrupt.sendOrBackwardJumpTrigger(frame);
             Object[] rcvrAndArgs = (Object[]) popNReversedNode.executeRead(frame);
             ClassObject rcvrClass = lookupClassNode.executeLookup(rcvrAndArgs[0]);
-            CompiledCodeObject lookupResult = (CompiledCodeObject) lookupNode.executeLookup(rcvrClass, selector);
+            Object lookupResult = lookupNode.executeLookup(rcvrClass, selector);
             Object contextOrMarker = readContextNode.executeRead(frame);
-            if (lookupResult.toString().equals("Metaclass (ToolSet)>>debugError:")) { // TODO: remove when no longer needed for testing
+            String lookupString = lookupResult.toString();
+            if (!(lookupResult instanceof CompiledCodeObject)) {
+                return sendObjectAsMethodNode.execute(frame, selector, rcvrAndArgs, lookupResult, contextOrMarker);
+            } else if (lookupString.equals("Metaclass (ToolSet)>>debugError:")) { // TODO: remove when no longer needed for testing
                 throw new SqueakTestException(code.image, "Tried to call ToolSet class>>debugError: to open debugger");
-            } else if (lookupResult.isDoesNotUnderstand()) {
-                return sendDoesNotUnderstand(frame, rcvrAndArgs, rcvrClass, lookupResult, contextOrMarker);
+            } else if (((CompiledCodeObject) lookupResult).isDoesNotUnderstand()) {
+                return sendDoesNotUnderstandNode.execute(frame, selector, rcvrAndArgs, rcvrClass, lookupResult, contextOrMarker);
             } else {
                 return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndArgs, contextOrMarker);
             }
-        }
-
-        private Object sendDoesNotUnderstand(VirtualFrame frame, Object[] rcvrAndArgs, ClassObject rcvrClass, CompiledCodeObject lookupDNU, Object contextOrMarker) {
-            ClassObject messageClass = (ClassObject) code.image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.ClassMessage);
-            PointersObject message = (PointersObject) messageClass.newInstance();
-            message.atput0(MESSAGE.SELECTOR, selector);
-            Object[] arguments = new Object[rcvrAndArgs.length - 1];
-            for (int i = 0; i < arguments.length; i++) {
-                arguments[i] = rcvrAndArgs[1 + i];
-            }
-            message.atput0(MESSAGE.ARGUMENTS, code.image.newList(arguments));
-            if (message.instsize() > MESSAGE.LOOKUP_CLASS) { // early versions do not have lookupClass
-                message.atput0(MESSAGE.LOOKUP_CLASS, rcvrClass);
-            }
-            return dispatchNode.executeDispatch(frame, lookupDNU, new Object[]{rcvrAndArgs[0], message}, contextOrMarker);
         }
 
         public Object getSelector() {
@@ -144,15 +141,19 @@ public final class SendBytecodes {
 
     public static class SingleExtendedSuperNode extends AbstractSendNode {
         protected static class SqueakLookupClassSuperNode extends SqueakLookupClassNode {
+            @CompilationFinal private final CompiledCodeObject code;
+
             public SqueakLookupClassSuperNode(CompiledCodeObject code) {
-                super(code);
+                super(code.image);
+                this.code = code; // storing both, image and code, because of class hierarchy
             }
 
             @Override
             public ClassObject executeLookup(Object receiver) {
-                Object superclass = code.getCompiledInClass().getSuperclass();
+                ClassObject compiledInClass = code.getCompiledInClass();
+                Object superclass = compiledInClass.getSuperclass();
                 if (superclass == code.image.nil) {
-                    return code.getCompiledInClass();
+                    return compiledInClass;
                 } else {
                     return (ClassObject) superclass;
                 }
@@ -171,6 +172,69 @@ public final class SendBytecodes {
         @Override
         public String toString() {
             return "sendSuper: " + selector.toString();
+        }
+    }
+
+    public static class SendDoesNotUnderstandNode extends AbstractNodeWithImage {
+        @Child private DispatchNode dispatchNode = DispatchNode.create();
+        @CompilationFinal private ClassObject messageClass;
+
+        public static SendDoesNotUnderstandNode create(SqueakImageContext image) {
+            return new SendDoesNotUnderstandNode(image);
+        }
+
+        private SendDoesNotUnderstandNode(SqueakImageContext image) {
+            super(image);
+        }
+
+        public Object execute(VirtualFrame frame, Object selector, Object[] rcvrAndArgs, ClassObject rcvrClass, Object lookupDNU, Object contextOrMarker) {
+            PointersObject message = (PointersObject) getMessageClass().newInstance();
+            message.atput0(MESSAGE.SELECTOR, selector);
+            Object[] arguments = ArrayUtils.allButFirst(rcvrAndArgs);
+            message.atput0(MESSAGE.ARGUMENTS, image.newList(arguments));
+            if (message.instsize() > MESSAGE.LOOKUP_CLASS) { // early versions do not have lookupClass
+                message.atput0(MESSAGE.LOOKUP_CLASS, rcvrClass);
+            }
+            return dispatchNode.executeDispatch(frame, lookupDNU, new Object[]{rcvrAndArgs[0], message}, contextOrMarker);
+        }
+
+        private ClassObject getMessageClass() {
+            if (messageClass == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                messageClass = (ClassObject) image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.ClassMessage);
+            }
+            return messageClass;
+        }
+    }
+
+    public static class SendObjectAsMethodNode extends AbstractNodeWithImage {
+        @Child private DispatchNode dispatchNode = DispatchNode.create();
+        @Child private LookupNode lookupNode = LookupNode.create();
+        @Child protected SqueakLookupClassNode lookupClassNode;
+        @CompilationFinal private NativeObject runWithIn;
+
+        public static SendObjectAsMethodNode create(SqueakImageContext image) {
+            return new SendObjectAsMethodNode(image);
+        }
+
+        private SendObjectAsMethodNode(SqueakImageContext image) {
+            super(image);
+            lookupClassNode = SqueakLookupClassNode.create(image);
+        }
+
+        public Object execute(VirtualFrame frame, Object selector, Object[] rcvrAndArgs, Object lookupResult, Object contextOrMarker) {
+            Object[] arguments = ArrayUtils.allButFirst(rcvrAndArgs);
+            ClassObject rcvrClass = lookupClassNode.executeLookup(lookupResult);
+            Object newLookupResult = lookupNode.executeLookup(rcvrClass, getRunWithIn());
+            return dispatchNode.executeDispatch(frame, newLookupResult, new Object[]{lookupResult, selector, image.newList(arguments), rcvrAndArgs[0]}, contextOrMarker);
+        }
+
+        private NativeObject getRunWithIn() {
+            if (runWithIn == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                runWithIn = (NativeObject) image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SelectorRunWithIn);
+            }
+            return runWithIn;
         }
     }
 }
