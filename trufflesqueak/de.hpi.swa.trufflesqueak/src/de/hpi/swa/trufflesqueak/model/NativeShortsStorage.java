@@ -87,7 +87,7 @@ public class NativeShortsStorage extends NativeObjectStorage {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         shorts = new short[size];
         for (int i = 0; i < shorts.length; i++) {
-            shorts[i] = (short) (((bytes[i + 1]) << 8) | bytes[i]);
+            shorts[i] = (short) (((bytes[i + 1] & 0xFF) << 8) | (bytes[i] & 0xFF));
         }
     }
 

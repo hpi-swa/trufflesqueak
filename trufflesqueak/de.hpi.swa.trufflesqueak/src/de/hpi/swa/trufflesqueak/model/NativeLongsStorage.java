@@ -81,8 +81,8 @@ public class NativeLongsStorage extends NativeObjectStorage {
         longs = new long[size];
         for (int i = 0; i < longs.length; i++) {
             //@formatter:off
-            longs[i] = ((bytes[i + 7]) << 56) | ((bytes[i + 6]) << 48) | ((bytes[i + 5]) << 40) | ((bytes[i + 4]) << 32)
-                     | ((bytes[i + 3]) << 24) | ((bytes[i + 2]) << 16) | ((bytes[i + 1]) << 8)  | bytes[i];
+            longs[i] = (((long) bytes[i + 7]) << 56) | (((long) bytes[i + 6]) << 48) | (((long) bytes[i + 5]) << 40) | (((long) bytes[i + 4]) << 32)
+                     | (((long) bytes[i + 3]) << 24) | (((long) bytes[i + 2]) << 16) | (((long) bytes[i + 1]) << 8)  | bytes[i];
             //@formatter:on
         }
     }
