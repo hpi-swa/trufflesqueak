@@ -170,7 +170,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         protected Object doAtEnd(@SuppressWarnings("unused") PointersObject receiver, long fileDescriptor) {
             try {
                 RandomAccessFile file = files.get(fileDescriptor);
-                return code.image.wrap(file.getFilePointer() >= file.length());
+                return code.image.wrap(file.getFilePointer() >= file.length() - 1);
             } catch (NullPointerException | IOException e) {
                 throw new PrimitiveFailed();
             }
