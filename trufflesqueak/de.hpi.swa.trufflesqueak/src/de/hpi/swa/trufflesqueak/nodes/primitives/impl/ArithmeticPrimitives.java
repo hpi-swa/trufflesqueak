@@ -399,8 +399,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 10, numArguments = 2)
-    protected static abstract class PrimSmallIntegerDivideNode extends AbstractArithmeticPrimitiveNode {
-        protected PrimSmallIntegerDivideNode(CompiledMethodObject method) {
+    protected static abstract class PrimDivideSmallIntegerNode extends AbstractArithmeticPrimitiveNode {
+        protected PrimDivideSmallIntegerNode(CompiledMethodObject method) {
             super(method);
         }
 
@@ -420,58 +420,28 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {11, 31}, numArguments = 2)
-    protected static abstract class PrimModNode extends AbstractArithmeticPrimitiveNode {
-        protected PrimModNode(CompiledMethodObject method) {
+    @SqueakPrimitive(index = 11, numArguments = 2)
+    protected static abstract class PrimFloorModSmallIntegerNode extends AbstractArithmeticPrimitiveNode {
+        protected PrimFloorModSmallIntegerNode(CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization
+        @Specialization(guards = {"isSmallInteger(a)", "isSmallInteger(a)"})
         protected long doLong(final long a, final long b) {
             return Math.floorMod(a, b);
-        }
-
-        @Specialization
-        protected Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.mod(b);
-        }
-
-        @Specialization
-        protected Object doLong(final long a, final LargeIntegerObject b) {
-            return doLargeInteger(asLargeInteger(a), b);
-        }
-
-        @Specialization
-        protected Object doLargeInteger(final LargeIntegerObject a, final long b) {
-            return doLargeInteger(a, asLargeInteger(b));
         }
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {12, 32}, numArguments = 2)
-    protected static abstract class PrimFloorDivideNode extends AbstractArithmeticPrimitiveNode {
-        protected PrimFloorDivideNode(CompiledMethodObject method) {
+    @SqueakPrimitive(index = 12, numArguments = 2)
+    protected static abstract class PrimFloorDivideSmallIntegerNode extends AbstractArithmeticPrimitiveNode {
+        protected PrimFloorDivideSmallIntegerNode(CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization(rewriteOn = ArithmeticException.class)
+        @Specialization(guards = {"isSmallInteger(a)", "isSmallInteger(b)"})
         protected final static long doLong(final long a, final long b) {
             return Math.floorDiv(a, b);
-        }
-
-        @Specialization
-        protected final static Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.divide(b);
-        }
-
-        @Specialization
-        protected final Object doLong(final long a, final LargeIntegerObject b) {
-            return doLargeInteger(asLargeInteger(a), b);
-        }
-
-        @Specialization
-        protected final Object doLargeInteger(final LargeIntegerObject a, final long b) {
-            return doLargeInteger(a, asLargeInteger(b));
         }
     }
 
@@ -530,8 +500,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 30, numArguments = 2)
-    protected static abstract class PrimLargeIntegerDivideNode extends AbstractArithmeticPrimitiveNode {
-        protected PrimLargeIntegerDivideNode(CompiledMethodObject method) {
+    protected static abstract class PrimDivideLargeIntegerNode extends AbstractArithmeticPrimitiveNode {
+        protected PrimDivideLargeIntegerNode(CompiledMethodObject method) {
             super(method);
         }
 
@@ -567,6 +537,62 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Fallback
         public final static long doZeroDivide(final Object a, final Object b) {
             throw new PrimitiveFailed();
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 31, numArguments = 2)
+    protected static abstract class PrimFloorModLargeIntegerNode extends AbstractArithmeticPrimitiveNode {
+        protected PrimFloorModLargeIntegerNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = {"!isSmallInteger(a)"})
+        protected long doLong(final long a, final long b) {
+            return Math.floorMod(a, b);
+        }
+
+        @Specialization
+        protected Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
+            return a.floorMod(b);
+        }
+
+        @Specialization
+        protected Object doLong(final long a, final LargeIntegerObject b) {
+            return doLargeInteger(asLargeInteger(a), b);
+        }
+
+        @Specialization
+        protected Object doLargeInteger(final LargeIntegerObject a, final long b) {
+            return doLargeInteger(a, asLargeInteger(b));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 32, numArguments = 2)
+    protected static abstract class PrimFloorDivideLargeIntegerNode extends AbstractArithmeticPrimitiveNode {
+        protected PrimFloorDivideLargeIntegerNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = {"!isSmallInteger(a)", "!isSmallInteger(b)"})
+        protected final static long doLong(final long a, final long b) {
+            return Math.floorDiv(a, b);
+        }
+
+        @Specialization
+        protected final static Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
+            return a.floorDivide(b);
+        }
+
+        @Specialization
+        protected final Object doLong(final long a, final LargeIntegerObject b) {
+            return doLargeInteger(asLargeInteger(a), b);
+        }
+
+        @Specialization
+        protected final Object doLargeInteger(final LargeIntegerObject a, final long b) {
+            return doLargeInteger(a, asLargeInteger(b));
         }
     }
 

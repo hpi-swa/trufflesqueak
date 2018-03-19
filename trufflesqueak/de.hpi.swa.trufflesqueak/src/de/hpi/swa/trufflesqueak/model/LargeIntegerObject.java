@@ -191,6 +191,25 @@ public class LargeIntegerObject extends NativeObject {
     }
 
     @TruffleBoundary
+    public Object floorDivide(LargeIntegerObject b) {
+        return reduceIfPossible(floorDivide(integer, b.integer));
+    }
+
+    private static BigInteger floorDivide(BigInteger x, BigInteger y) {
+        BigInteger r = x.divide(y);
+        // if the signs are different and modulo not zero, round down
+        if (x.signum() != y.signum() && !r.multiply(y).equals(x)) {
+            r = r.subtract(BigInteger.ONE);
+        }
+        return r;
+    }
+
+    @TruffleBoundary
+    public Object floorMod(LargeIntegerObject b) {
+        return reduceIfPossible(integer.subtract(floorDivide(integer, b.integer).multiply(b.integer)));
+    }
+
+    @TruffleBoundary
     public LargeIntegerObject divideNoReduce(LargeIntegerObject b) {
         return newFromBigInteger(integer.divide(b.integer));
     }
@@ -213,11 +232,6 @@ public class LargeIntegerObject extends NativeObject {
     @TruffleBoundary
     public double doubleValue() {
         return integer.doubleValue();
-    }
-
-    @TruffleBoundary
-    public Object mod(LargeIntegerObject b) {
-        return reduceIfPossible(integer.mod(b.integer.abs()));
     }
 
     @TruffleBoundary
