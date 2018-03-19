@@ -367,6 +367,25 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(name = "primitiveFileTruncate", numArguments = 3)
+    protected static abstract class PrimFileTruncateNode extends AbstractPrimitiveNode {
+        protected PrimFileTruncateNode(CompiledMethodObject code) {
+            super(code);
+        }
+
+        @Specialization
+        protected Object doTruncate(PointersObject receiver, long fileDescriptor, long to) {
+            try {
+                RandomAccessFile file = files.get(fileDescriptor);
+                file.setLength(to);
+            } catch (NullPointerException | IOException e) {
+                throw new PrimitiveFailed();
+            }
+            return receiver;
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveFileWrite", numArguments = 5)
     protected static abstract class PrimFileWriteNode extends AbstractPrimitiveNode {
         protected PrimFileWriteNode(CompiledMethodObject code) {
