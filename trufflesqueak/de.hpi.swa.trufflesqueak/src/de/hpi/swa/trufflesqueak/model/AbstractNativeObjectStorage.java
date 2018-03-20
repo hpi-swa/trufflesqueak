@@ -3,7 +3,7 @@ package de.hpi.swa.trufflesqueak.model;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
-public abstract class NativeObjectStorage {
+public abstract class AbstractNativeObjectStorage {
 
     public abstract void fillin(SqueakImageChunk chunk);
 
@@ -29,7 +29,7 @@ public abstract class NativeObjectStorage {
 
     public abstract byte getElementSize();
 
-    public abstract NativeObjectStorage shallowCopy();
+    public abstract AbstractNativeObjectStorage shallowCopy();
 
     @SuppressWarnings("unused")
     public void setByte(int index, byte value) {

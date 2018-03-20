@@ -1,13 +1,13 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public class LargeIntegerObject extends NativeObject {
@@ -40,7 +40,7 @@ public class LargeIntegerObject extends NativeObject {
             assert array.length == size;
             byteArray = array;
         }
-        this.storage = new NativeBytesStorage(swapOrderInPlace(byteArray));
+        this.storage = new NativeBytesStorage(ArrayUtils.swapOrderInPlace(byteArray));
     }
 
     public LargeIntegerObject(SqueakImageContext img, ClassObject klass, byte[] bytes) {
@@ -74,7 +74,7 @@ public class LargeIntegerObject extends NativeObject {
 
     private void derivedBigIntegerFromBytes() {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        byte[] bigEndianBytes = swapOrder(storage.getBytes());
+        byte[] bigEndianBytes = ArrayUtils.swapOrderCopy(storage.getBytes());
         if (bigEndianBytes.length == 0) {
             integer = BigInteger.ZERO;
         } else {
@@ -87,19 +87,6 @@ public class LargeIntegerObject extends NativeObject {
 
     public boolean isNegative() {
         return getSqClass() == image.largeNegativeIntegerClass;
-    }
-
-    private static byte[] swapOrder(byte[] bytes) {
-        return swapOrderInPlace(Arrays.copyOf(bytes, bytes.length));
-    }
-
-    private static byte[] swapOrderInPlace(byte[] bytes) {
-        for (int i = 0; i < bytes.length / 2; i++) {
-            byte b = bytes[i];
-            bytes[i] = bytes[bytes.length - 1 - i];
-            bytes[bytes.length - 1 - i] = b;
-        }
-        return bytes;
     }
 
     public BigInteger getValue() {

@@ -10,7 +10,7 @@ import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public class NativeObject extends SqueakObject {
-    @CompilationFinal protected NativeObjectStorage storage;
+    @CompilationFinal protected AbstractNativeObjectStorage storage;
 
     public static NativeObject newNativeBytes(SqueakImageContext img, ClassObject klass, int size) {
         return new NativeObject(img, klass, new NativeBytesStorage(size));
@@ -48,7 +48,7 @@ public class NativeObject extends SqueakObject {
         super(img);
     }
 
-    public NativeObject(SqueakImageContext img, NativeObjectStorage storage) {
+    public NativeObject(SqueakImageContext img, AbstractNativeObjectStorage storage) {
         super(img);
         this.storage = storage;
     }
@@ -57,7 +57,7 @@ public class NativeObject extends SqueakObject {
         super(image, classObject);
     }
 
-    protected NativeObject(SqueakImageContext image, ClassObject classObject, NativeObjectStorage storage) {
+    protected NativeObject(SqueakImageContext image, ClassObject classObject, AbstractNativeObjectStorage storage) {
         this(image, classObject);
         this.storage = storage;
     }
@@ -82,7 +82,7 @@ public class NativeObject extends SqueakObject {
         }
         CompilerDirectives.transferToInterpreterAndInvalidate();
         NativeObject otherNativeObject = (NativeObject) other;
-        NativeObjectStorage otherStorage = otherNativeObject.storage;
+        AbstractNativeObjectStorage otherStorage = otherNativeObject.storage;
         otherNativeObject.storage = this.storage;
         this.storage = otherStorage;
         return true;

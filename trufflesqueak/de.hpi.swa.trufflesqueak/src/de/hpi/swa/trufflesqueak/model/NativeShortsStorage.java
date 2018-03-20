@@ -1,6 +1,7 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.ShortBuffer;
 import java.util.Arrays;
 
@@ -9,7 +10,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
-public class NativeShortsStorage extends NativeObjectStorage {
+public class NativeShortsStorage extends AbstractNativeObjectStorage {
     @CompilationFinal(dimensions = 1) protected short[] shorts;
     @CompilationFinal private static final long SHORT_MAX = (long) (Math.pow(2, Short.SIZE) - 1);
 
@@ -26,7 +27,7 @@ public class NativeShortsStorage extends NativeObjectStorage {
     }
 
     @Override
-    public NativeObjectStorage shallowCopy() {
+    public AbstractNativeObjectStorage shallowCopy() {
         return new NativeShortsStorage(this);
     }
 
@@ -76,6 +77,7 @@ public class NativeShortsStorage extends NativeObjectStorage {
     @Override
     public byte[] getBytes() {
         ByteBuffer byteBuffer = ByteBuffer.allocate(shorts.length * 4);
+        byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
         ShortBuffer shortBuffer = byteBuffer.asShortBuffer();
         shortBuffer.put(shorts);
         return byteBuffer.array();
@@ -87,7 +89,7 @@ public class NativeShortsStorage extends NativeObjectStorage {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         shorts = new short[size];
         for (int i = 0; i < shorts.length; i++) {
-            shorts[i] = (short) (((bytes[i + 1] & 0xFF) << 8) | (bytes[i] & 0xFF));
+            shorts[i] = (short) (((bytes[i] & 0xFF) << 8) | (bytes[i + 1] & 0xFF));
         }
     }
 

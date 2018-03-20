@@ -1,6 +1,7 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.LongBuffer;
 import java.util.Arrays;
 
@@ -10,7 +11,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
-public class NativeLongsStorage extends NativeObjectStorage {
+public class NativeLongsStorage extends AbstractNativeObjectStorage {
     @CompilationFinal(dimensions = 1) protected long[] longs;
 
     public NativeLongsStorage(int size) {
@@ -26,7 +27,7 @@ public class NativeLongsStorage extends NativeObjectStorage {
     }
 
     @Override
-    public NativeObjectStorage shallowCopy() {
+    public AbstractNativeObjectStorage shallowCopy() {
         return new NativeLongsStorage(this);
     }
 
@@ -69,6 +70,7 @@ public class NativeLongsStorage extends NativeObjectStorage {
     @Override
     public byte[] getBytes() {
         ByteBuffer byteBuffer = ByteBuffer.allocate(longs.length * 4);
+        byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
         LongBuffer longBuffer = byteBuffer.asLongBuffer();
         longBuffer.put(longs);
         return byteBuffer.array();
@@ -81,8 +83,8 @@ public class NativeLongsStorage extends NativeObjectStorage {
         longs = new long[size];
         for (int i = 0; i < longs.length; i++) {
             //@formatter:off
-            longs[i] = (((long) bytes[i + 7]) << 56) | (((long) bytes[i + 6]) << 48) | (((long) bytes[i + 5]) << 40) | (((long) bytes[i + 4]) << 32)
-                     | (((long) bytes[i + 3]) << 24) | (((long) bytes[i + 2]) << 16) | (((long) bytes[i + 1]) << 8)  | bytes[i];
+            longs[i] = (((long) bytes[i    ]) << 56) | (((long) bytes[i + 1]) << 48) | (((long) bytes[i + 2]) << 40) | (((long) bytes[i + 3]) << 32)
+                     | (((long) bytes[i + 4]) << 24) | (((long) bytes[i + 5]) << 16) | (((long) bytes[i + 6]) << 8)  | bytes[i+ 7];
             //@formatter:on
         }
     }

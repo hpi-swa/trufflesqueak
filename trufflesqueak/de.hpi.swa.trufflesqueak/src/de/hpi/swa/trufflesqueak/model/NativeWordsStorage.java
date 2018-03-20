@@ -1,6 +1,7 @@
 package de.hpi.swa.trufflesqueak.model;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.util.Arrays;
 
@@ -9,7 +10,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
-public class NativeWordsStorage extends NativeObjectStorage {
+public class NativeWordsStorage extends AbstractNativeObjectStorage {
     @CompilationFinal(dimensions = 1) protected int[] ints;
     @CompilationFinal private static final long INTEGER_MAX = (long) (Math.pow(2, Integer.SIZE) - 1);
 
@@ -26,7 +27,7 @@ public class NativeWordsStorage extends NativeObjectStorage {
     }
 
     @Override
-    public NativeObjectStorage shallowCopy() {
+    public AbstractNativeObjectStorage shallowCopy() {
         return new NativeWordsStorage(this);
     }
 
@@ -103,6 +104,7 @@ public class NativeWordsStorage extends NativeObjectStorage {
     @Override
     public byte[] getBytes() {
         ByteBuffer byteBuffer = ByteBuffer.allocate(ints.length * 4);
+        byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
         IntBuffer intBuffer = byteBuffer.asIntBuffer();
         intBuffer.put(ints);
         return byteBuffer.array();
@@ -114,7 +116,7 @@ public class NativeWordsStorage extends NativeObjectStorage {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         ints = new int[size];
         for (int i = 0; i < ints.length; i++) {
-            ints[i] = ((bytes[i + 3]) << 24) | ((bytes[i + 2]) << 16) | ((bytes[i + 1]) << 8) | bytes[i];
+            ints[i] = ((bytes[i + 1]) << 24) | ((bytes[i + 2]) << 16) | ((bytes[i + 3]) << 8) | bytes[i];
         }
     }
 

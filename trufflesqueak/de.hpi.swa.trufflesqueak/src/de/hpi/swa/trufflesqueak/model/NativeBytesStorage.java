@@ -7,7 +7,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
-public class NativeBytesStorage extends NativeObjectStorage {
+public class NativeBytesStorage extends AbstractNativeObjectStorage {
     @CompilationFinal(dimensions = 1) protected byte[] bytes;
     @CompilationFinal private static final long BYTE_MAX = (long) (Math.pow(2, Byte.SIZE) - 1);
 
@@ -24,7 +24,7 @@ public class NativeBytesStorage extends NativeObjectStorage {
     }
 
     @Override
-    public NativeObjectStorage shallowCopy() {
+    public AbstractNativeObjectStorage shallowCopy() {
         return new NativeBytesStorage(this);
     }
 
