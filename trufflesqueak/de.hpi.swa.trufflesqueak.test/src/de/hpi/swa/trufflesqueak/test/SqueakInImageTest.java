@@ -382,7 +382,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "UnixFileDirectoryTests", TEST_TYPE.PASSING,
                     "UrlTest", TEST_TYPE.PASSING,
                     "UserInterfaceThemeTest", TEST_TYPE.NOT_TERMINATING,
-                    "UTF16TextConverterTest", TEST_TYPE.FAILING,
+                    "UTF16TextConverterTest", TEST_TYPE.BROKEN_IN_SQUEAK,
                     "UTF32TextConverterTest", TEST_TYPE.FAILING,
                     "UTF8TextConverterTest", TEST_TYPE.FAILING,
                     "UTF8EdgeCaseTest", TEST_TYPE.FAILING, // failing in Squeak

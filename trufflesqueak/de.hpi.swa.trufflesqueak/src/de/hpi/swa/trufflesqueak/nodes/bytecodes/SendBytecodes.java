@@ -72,7 +72,7 @@ public final class SendBytecodes {
             String lookupString = lookupResult.toString();
             if (!(lookupResult instanceof CompiledCodeObject)) {
                 return sendObjectAsMethodNode.execute(frame, selector, rcvrAndArgs, lookupResult, contextOrMarker);
-            } else if (lookupString.equals("Metaclass (ToolSet)>>debugError:")) { // TODO: remove when no longer needed for testing
+            } else if (code.image.config.getReceiver() != null && lookupString.equals("Metaclass (ToolSet)>>debugError:")) { // TODO: remove when no longer needed for testing
                 throw new SqueakTestException(code.image, "Tried to call ToolSet class>>debugError: to open debugger");
             } else if (((CompiledCodeObject) lookupResult).isDoesNotUnderstand()) {
                 return sendDoesNotUnderstandNode.execute(frame, selector, rcvrAndArgs, rcvrClass, lookupResult, contextOrMarker);
