@@ -274,7 +274,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primDigitCompare")
+    @SqueakPrimitive(name = "primDigitCompare", numArguments = 2)
     public static abstract class PrimDigitCompareNode extends AbstractArithmeticPrimitiveNode {
 
         public PrimDigitCompareNode(CompiledMethodObject method) {
