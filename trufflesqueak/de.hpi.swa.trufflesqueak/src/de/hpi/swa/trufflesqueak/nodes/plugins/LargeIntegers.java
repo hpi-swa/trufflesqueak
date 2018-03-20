@@ -8,6 +8,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -15,6 +16,7 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodes.ReturnReceiverNo
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.AbstractArithmeticBinaryPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ArithmeticPrimitives.AbstractArithmeticPrimitiveNode;
 
 public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
@@ -25,8 +27,8 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primAnyBitFromTo") // TODO: implement primitive
-    public static abstract class PrimAnyBitFromToNode extends AbstractArithmeticPrimitiveNode {
+    @SqueakPrimitive(name = "primAnyBitFromTo", numArguments = 3) // TODO: implement primitive
+    public static abstract class PrimAnyBitFromToNode extends AbstractArithmeticBinaryPrimitiveNode {
 
         public PrimAnyBitFromToNode(CompiledMethodObject method) {
             super(method);
@@ -36,14 +38,15 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {1, 21, 41}, name = "primDigitAdd", numArguments = 2)
-    public static abstract class PrimAddNode extends AbstractArithmeticPrimitiveNode {
+    public static abstract class PrimAddNode extends AbstractArithmeticBinaryPrimitiveNode {
 
         public PrimAddNode(CompiledMethodObject method) {
             super(method);
         }
 
+        @Override
         @Specialization(rewriteOn = ArithmeticException.class)
-        protected final static long doLong(final long a, final long b) {
+        protected final Object doLong(final long a, final long b) {
             return Math.addExact(a, b);
         }
 
@@ -52,46 +55,35 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             return doLargeInteger(asLargeInteger(a), asLargeInteger(argument));
         }
 
+        @Override
         @Specialization
-        protected final static Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
+        protected final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
             return a.add(b);
         }
 
+        @Override
         @Specialization
-        protected final static double doDouble(final double a, final double b) {
+        protected final Object doDouble(final double a, final double b) {
             return a + b;
         }
 
+        @Override
         @Specialization
-        protected final Object doLong(final long a, final LargeIntegerObject b) {
-            return doLargeInteger(asLargeInteger(a), b);
-        }
-
-        @Specialization
-        protected final Object doLargeInteger(final LargeIntegerObject a, final long b) {
-            return doLargeInteger(a, asLargeInteger(b));
-        }
-
-        @Specialization
-        protected final static double doLong(final long a, final double b) {
-            return doDouble(a, b);
-        }
-
-        @Specialization
-        protected final static double doDouble(final double a, final long b) {
-            return doDouble(a, (double) b);
+        protected final Object doFloat(final FloatObject a, final FloatObject b) {
+            return asFloatObject(a.getValue() + b.getValue());
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {2, 22, 42}, name = "primDigitSubtract", numArguments = 2)
-    public static abstract class PrimSubstractNode extends AbstractArithmeticPrimitiveNode {
+    public static abstract class PrimSubstractNode extends AbstractArithmeticBinaryPrimitiveNode {
         public PrimSubstractNode(CompiledMethodObject method) {
             super(method);
         }
 
+        @Override
         @Specialization(rewriteOn = ArithmeticException.class)
-        protected final static long doLong(final long a, final long b) {
+        protected final Object doLong(final long a, final long b) {
             return Math.subtractExact(a, b);
         }
 
@@ -100,46 +92,35 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             return doLargeInteger(asLargeInteger(a), asLargeInteger(b));
         }
 
+        @Override
         @Specialization
-        protected final static Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
+        protected final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
             return a.subtract(b);
         }
 
+        @Override
         @Specialization
-        protected final static double doDouble(final double a, final double b) {
+        protected final Object doDouble(final double a, final double b) {
             return a - b;
         }
 
+        @Override
         @Specialization
-        protected final Object doLong(final long a, final LargeIntegerObject b) {
-            return doLargeInteger(asLargeInteger(a), b);
-        }
-
-        @Specialization
-        protected final static double doLong(final long a, final double b) {
-            return doDouble(a, b);
-        }
-
-        @Specialization
-        protected final Object doLargeInteger(final LargeIntegerObject a, final long b) {
-            return doLargeInteger(a, asLargeInteger(b));
-        }
-
-        @Specialization
-        protected final static double doDouble(final double a, final long b) {
-            return doDouble(a, (double) b);
+        protected final Object doFloat(final FloatObject a, final FloatObject b) {
+            return asFloatObject(a.getValue() - b.getValue());
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {9, 29, 49}, name = "primDigitMultiplyNegative", numArguments = 2)
-    public static abstract class PrimMultiplyNode extends AbstractArithmeticPrimitiveNode {
+    public static abstract class PrimMultiplyNode extends AbstractArithmeticBinaryPrimitiveNode {
         public PrimMultiplyNode(CompiledMethodObject method) {
             super(method);
         }
 
+        @Override
         @Specialization(rewriteOn = ArithmeticException.class)
-        protected final static long doLong(final long a, final long b) {
+        protected final Object doLong(final long a, final long b) {
             return Math.multiplyExact(a, b);
         }
 
@@ -148,34 +129,22 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             return doLargeInteger(asLargeInteger(a), asLargeInteger(b));
         }
 
+        @Override
         @Specialization
-        protected final static Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
+        protected final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
             return a.multiply(b);
         }
 
+        @Override
         @Specialization
-        protected final static double doDouble(final double a, final double b) {
+        protected final Object doDouble(final double a, final double b) {
             return a * b;
         }
 
+        @Override
         @Specialization
-        protected final Object doLong(final long a, final LargeIntegerObject b) {
-            return doLargeInteger(asLargeInteger(a), b);
-        }
-
-        @Specialization
-        protected final static double doLong(final long a, final double b) {
-            return doDouble(a, b);
-        }
-
-        @Specialization
-        protected final Object doLargeInteger(final LargeIntegerObject a, final long b) {
-            return doLargeInteger(a, asLargeInteger(b));
-        }
-
-        @Specialization
-        protected final static double doDouble(final double a, final long b) {
-            return doDouble(a, (double) b);
+        protected final Object doFloat(final FloatObject a, final FloatObject b) {
+            return asFloatObject(a.getValue() * b.getValue());
         }
     }
 

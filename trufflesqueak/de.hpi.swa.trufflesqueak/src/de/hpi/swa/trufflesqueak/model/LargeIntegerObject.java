@@ -15,6 +15,8 @@ public class LargeIntegerObject extends NativeObject {
     @CompilationFinal public static final long SMALLINTEGER32_MAX = 0x3fffffff;
     @CompilationFinal public static final long SMALLINTEGER64_MIN = -0x1000000000000000L;
     @CompilationFinal public static final long SMALLINTEGER64_MAX = 0xfffffffffffffffL;
+    @CompilationFinal public final static long MASK_32BIT = 0xffffffffL;
+    @CompilationFinal public final static long MASK_64BIT = 0xffffffffffffffffL;
 
     @CompilationFinal private BigInteger integer;
 
@@ -139,7 +141,7 @@ public class LargeIntegerObject extends NativeObject {
         if (value.bitLength() > Long.SIZE - 1) {
             return newFromBigInteger(value);
         } else {
-            return value.longValue() & 0xffffffffffffffffL;
+            return value.longValue() & MASK_64BIT;
         }
     }
 
@@ -150,7 +152,7 @@ public class LargeIntegerObject extends NativeObject {
 
     @TruffleBoundary
     public final long reduceToLong() throws ArithmeticException {
-        return integer.longValueExact() & 0xffffffffffffffffL;
+        return integer.longValueExact() & MASK_64BIT;
     }
 
     private final LargeIntegerObject newFromBigInteger(BigInteger value) {
@@ -162,8 +164,8 @@ public class LargeIntegerObject extends NativeObject {
     }
 
     @TruffleBoundary
-    public static LargeIntegerObject valueOf(CompiledCodeObject code, long a) {
-        return newFromBigInteger(code.image, BigInteger.valueOf(a));
+    public static LargeIntegerObject valueOf(SqueakImageContext image, long a) {
+        return newFromBigInteger(image, BigInteger.valueOf(a));
     }
 
     /*

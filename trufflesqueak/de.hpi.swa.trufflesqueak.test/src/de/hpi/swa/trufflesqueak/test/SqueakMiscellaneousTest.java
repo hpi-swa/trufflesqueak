@@ -8,6 +8,7 @@ import org.junit.Test;
 
 import de.hpi.swa.trufflesqueak.instrumentation.CompiledCodeObjectPrinter;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
+import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.MiscellaneousBytecodes.DupNode;
@@ -186,17 +187,21 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
         SqueakImageChunk chunk = newFloatChunk();
         chunk.data().add(0);
         chunk.data().add(1072693248);
-        assertEquals(1.0, chunk.asObject());
+        assertEquals(1.0, getDouble(chunk), 0);
 
         chunk = newFloatChunk();
         chunk.data().add((int) 2482401462L);
         chunk.data().add(1065322751);
-        assertEquals(0.007699011184197404, chunk.asObject());
+        assertEquals(0.007699011184197404, getDouble(chunk), 0);
 
         chunk = newFloatChunk();
         chunk.data().add(876402988);
         chunk.data().add(1075010976);
-        assertEquals(4.841431442464721, chunk.asObject());
+        assertEquals(4.841431442464721, getDouble(chunk), 0);
+    }
+
+    private static double getDouble(SqueakImageChunk chunk) {
+        return ((FloatObject) chunk.asObject()).getValue();
     }
 
     private static SqueakImageChunk newFloatChunk() {

@@ -5,6 +5,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
@@ -43,7 +44,11 @@ public abstract class AbstractPrimitiveNode extends AbstractNodeWithCode {
         return receiver.isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassSemaphore);
     }
 
-    protected final LargeIntegerObject asLargeInteger(long value) {
-        return LargeIntegerObject.valueOf(code, value);
+    protected final LargeIntegerObject asLargeInteger(final long value) {
+        return LargeIntegerObject.valueOf(code.image, value);
+    }
+
+    protected final FloatObject asFloatObject(final double value) {
+        return FloatObject.valueOf(code.image, value);
     }
 }

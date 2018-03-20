@@ -1,6 +1,5 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
-import com.oracle.truffle.api.dsl.ImplicitCast;
 import com.oracle.truffle.api.dsl.TypeSystem;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
@@ -31,10 +30,4 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
                 BaseSqueakObject.class})
 
 public abstract class SqueakTypes {
-
-    @ImplicitCast
-    public static double castFromFloatObject(FloatObject object) {
-        return object.getValue();
-    }
-
 }

@@ -100,9 +100,9 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveEqual", numArguments = 2)
-    public static abstract class PrimFloatAarrayEqualNode extends AbstractPrimitiveNode {
+    public static abstract class PrimFloatArrayEqualNode extends AbstractPrimitiveNode {
 
-        public PrimFloatAarrayEqualNode(CompiledMethodObject method) {
+        public PrimFloatArrayEqualNode(CompiledMethodObject method) {
             super(method);
         }
 

@@ -10,62 +10,78 @@ import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
-public class FloatObject extends SqueakObject {
+public class FloatObject extends NativeObject {
+    @CompilationFinal public static final int PRECISION = 53;
+    @CompilationFinal public static final int EMIN = -1022;
+    @CompilationFinal public static final int EMAX = 1023;
+
     @CompilationFinal private double value;
 
+    public static FloatObject valueOf(SqueakImageContext image, double value) {
+        return new FloatObject(image, value);
+    }
+
     public FloatObject(SqueakImageContext image) {
-        super(image, image.floatClass);
+        super(image, image.floatClass, new NativeWordsStorage(2));
     }
 
     public FloatObject(FloatObject original) {
-        this(original.image);
+        super(original.image, original.getSqClass(), original.storage.shallowCopy());
         this.value = original.value;
     }
 
     public FloatObject(SqueakImageContext image, double value) {
         this(image);
-        this.value = value;
+        long doubleBits = Double.doubleToLongBits(value);
+        long high = doubleBits >> 32;
+        long low = doubleBits & LargeIntegerObject.MASK_32BIT;
+        setWords(high, low);
+        assert this.value == value || Double.isNaN(value);
+    }
+
+    public FloatObject(SqueakImageContext image, long high, long low) {
+        this(image);
+        setWords(high, low);
     }
 
     @Override
     public void fillin(SqueakImageChunk chunk) {
-        throw new SqueakException("Not implemented by FloatObject");
+        super.fillin(chunk);
+        int[] words = chunk.getWords();
+        assert words.length == 2;
+        setWords(words[1], words[0]);
     }
 
     @Override
     public Object at0(long index) {
-        Long bits = Double.doubleToLongBits(value);
+        return super.at0(index);
+    }
+
+    @Override
+    public void atput0(long index, Object object) {
+        super.atput0(index, object);
+        Long doubleBits = Double.doubleToLongBits(value);
         if (index == 0) {
-            return (bits >> 32) & 0xffffffff;
+            setWords((long) object, doubleBits.intValue());
         } else if (index == 1) {
-            return bits & 0xffffffff;
+            setWords(doubleBits >> 32, ((Long) object).intValue());
         } else {
             throw new SqueakException("FloatObject only has two slots");
         }
     }
 
-    @Override
-    public void atput0(long index, Object object) {
+    private void setWords(final long high, final long low) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        Long bits = Double.doubleToLongBits(value);
-        long objectMasked = (long) object & 0xffffffff;
-        if (index == 0) {
-            value = Double.longBitsToDouble(objectMasked << 32 | bits & 0xffffffff);
-        } else if (index == 1) {
-            value = Double.longBitsToDouble((bits >> 32) << 32 | objectMasked);
-        } else {
-            throw new SqueakException("FloatObject only has two slots");
-        }
+        long highMasked = high & LargeIntegerObject.MASK_32BIT;
+        long lowMasked = low & LargeIntegerObject.MASK_32BIT;
+        super.atput0(0, highMasked);
+        super.atput0(1, lowMasked);
+        this.value = Double.longBitsToDouble((highMasked << 32) | lowMasked);
     }
 
     @Override
     public final int size() {
         return 2;
-    }
-
-    @Override
-    public final int instsize() {
-        return 0;
     }
 
     public double getValue() {
@@ -96,13 +112,13 @@ public class FloatObject extends SqueakObject {
         return new FloatObject(this);
     }
 
-    public static double bytesAsFloatObject(byte[] someBytes) {
+    public static FloatObject bytesAsFloatObject(SqueakImageContext image, byte[] bytes) {
         ByteBuffer buf = ByteBuffer.allocate(8); // 2 * 32 bit
         buf.order(ByteOrder.nativeOrder());
-        buf.put(someBytes);
+        buf.put(bytes);
         buf.rewind();
         long low = Integer.toUnsignedLong(buf.asIntBuffer().get(0));
         long high = Integer.toUnsignedLong(buf.asIntBuffer().get(1));
-        return Double.longBitsToDouble(high << 32 | low);
+        return new FloatObject(image, high, low);
     }
 }

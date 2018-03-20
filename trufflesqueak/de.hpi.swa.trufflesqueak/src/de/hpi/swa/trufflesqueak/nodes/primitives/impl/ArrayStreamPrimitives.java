@@ -65,23 +65,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "!isSmallInteger(receiver)")
         protected final Object doLong(final long receiver, final long index) {
-            return doNativeObject(LargeIntegerObject.valueOf(code, receiver), index);
-        }
-
-        @Specialization
-        protected static final long doDouble(final double receiver, final long index) {
-            long doubleBits = Double.doubleToLongBits(receiver);
-            if (index == 1) {
-                if (receiver >= 0) {
-                    return Math.abs(doubleBits >> 32);
-                } else {
-                    return ~Math.abs(doubleBits >> 32) + 1 & 0xffffffffL;
-                }
-            } else if (index == 2) {
-                return Math.abs((int) doubleBits);
-            } else {
-                throw new PrimitiveFailed();
-            }
+            return doNativeObject(asLargeInteger(receiver), index);
         }
 
         @Specialization

@@ -16,6 +16,7 @@ import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.MUTEX;
@@ -325,6 +326,11 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        protected final static boolean doFloat(final FloatObject a, final FloatObject b) {
+            return a == b || doDouble(a.getValue(), b.getValue());
+        }
+
+        @Specialization
         protected final static boolean doObject(final Object a, final Object b) {
             return a.equals(b);
         }
@@ -550,6 +556,11 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final static boolean doDouble(final double a, final double b) {
             return a != b;
+        }
+
+        @Specialization
+        protected final static boolean doFloat(final FloatObject a, final FloatObject b) {
+            return a != b && !doDouble(a.getValue(), b.getValue());
         }
 
         @Specialization
