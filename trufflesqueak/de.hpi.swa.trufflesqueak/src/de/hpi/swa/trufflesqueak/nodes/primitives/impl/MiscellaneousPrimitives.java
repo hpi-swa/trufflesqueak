@@ -23,6 +23,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.SimulationPrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
@@ -31,7 +32,9 @@ import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
+import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.DispatchNode;
+import de.hpi.swa.trufflesqueak.nodes.GetOrCreateContextNode;
 import de.hpi.swa.trufflesqueak.nodes.LookupNode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNode;
@@ -570,6 +573,19 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 255, numArguments = 2)
+    protected static abstract class PrimMetaFailNode extends AbstractPrimitiveNode {
+        public PrimMetaFailNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final Object doFail(@SuppressWarnings("unused") final PointersObject proxy, final long reasonCode) {
+            throw new SimulationPrimitiveFailed(reasonCode);
+        }
+    }
+
     /*
      * A simulation primitive is neither a SqueakPrimitive nor a GenerateNodeFactory. Instead, it is
      * directly used by PrimitiveNodeFactory.
@@ -582,11 +598,13 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         @CompilationFinal protected final boolean bitBltSimulationNotFound = code.image.simulatePrimitiveArgs == code.image.nil;
         @Child protected LookupNode lookupNode = LookupNode.create();
         @Child protected DispatchNode dispatchNode = DispatchNode.create();
+        @Child protected GetOrCreateContextNode getOrCreateContextNode;
 
         protected AbstractSimulationPrimitiveNode(CompiledMethodObject method, String moduleName, String functionName) {
             super(method);
             this.moduleName = moduleName;
             this.functionName = code.image.wrap(functionName);
+            getOrCreateContextNode = GetOrCreateContextNode.create(method);
         }
 
         @Override
@@ -605,6 +623,13 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
             code.image.interrupt.setDisabled(true);
             try {
                 return dispatchNode.executeDispatch(frame, getSimulateMethod(receiver), newRcvrAndArgs, getContextOrMarker(frame));
+            } catch (SimulationPrimitiveFailed e) {
+                // TODO: put error into `ec`?
+                // if (e.getReason() != 0) {
+                // ContextObject thisContext = getOrCreateContextNode.executeGet(frame, true);
+                // thisContext.atTempPut(0, code.image.lookupError(e.getReason()));
+                // }
+                throw new PrimitiveFailed();
             } finally {
                 code.image.interrupt.setDisabled(false);
             }
