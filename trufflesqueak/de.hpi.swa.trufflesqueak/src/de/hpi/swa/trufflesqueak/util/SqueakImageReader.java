@@ -15,7 +15,7 @@ import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
-import de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitives.AbstractSimulationPrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitives.SimulationPrimitiveNode;
 
 @SuppressWarnings("unused")
 public class SqueakImageReader {
@@ -305,7 +305,7 @@ public class SqueakImageReader {
                 if (((NativeObject) chunkObject).getSqClass() == image.doesNotUnderstand.getSqClass() && chunkObject.toString().equals("asSymbol")) {
                     image.asSymbol = (NativeObject) chunkObject;
                 } else if (((NativeObject) chunkObject).getSqClass() == image.doesNotUnderstand.getSqClass() &&
-                                chunkObject.toString().equals(AbstractSimulationPrimitiveNode.SIMULATE_PRIMITIVE_SELECTOR)) {
+                                chunkObject.toString().equals(SimulationPrimitiveNode.SIMULATE_PRIMITIVE_SELECTOR)) {
                     image.simulatePrimitiveArgs = (NativeObject) chunkObject;
                 }
             }
