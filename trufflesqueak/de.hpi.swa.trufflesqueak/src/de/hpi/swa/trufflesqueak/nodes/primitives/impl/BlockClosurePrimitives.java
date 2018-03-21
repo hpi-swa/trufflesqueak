@@ -94,7 +94,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
             ContextObject current = receiver;
             while (current != previousContextOrNil) {
                 BaseSqueakObject sender = current.getSender();
-                if (sender == code.image.nil) {
+                if (sender == code.image.nil || sender == previousContextOrNil) {
                     break;
                 } else {
                     current = (ContextObject) sender;
