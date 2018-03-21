@@ -57,7 +57,11 @@ public abstract class GetOrCreateContextNode extends AbstractNodeWithCode {
         long framePC = FrameUtil.getLongSafe(frame, method.instructionPointerSlot);
         long frameSP = FrameUtil.getLongSafe(frame, method.stackPointerSlot);
         context.atput0(CONTEXT.METHOD, method);
-        context.setInstructionPointer(framePC);
+        if (framePC >= 0) {
+            context.setInstructionPointer(framePC);
+        } else { // context has been terminated
+            context.atput0(CONTEXT.INSTRUCTION_POINTER, method.image.nil);
+        }
         context.setStackPointer(frameSP + 1); // frame sp is zero-based
         BlockClosureObject closure = FrameAccess.getClosure(frame);
         context.atput0(CONTEXT.CLOSURE_OR_NIL, closure == null ? method.image.nil : closure);
