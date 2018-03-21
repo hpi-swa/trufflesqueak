@@ -132,15 +132,14 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected long doFind(@SuppressWarnings("unused") BaseSqueakObject receiver, NativeObject string, NativeObject inclusionMap, long start) {
-            byte[] inclusionBytes = inclusionMap.getBytes();
-            if (inclusionBytes.length != 256) {
+            if (inclusionMap.size() != 256) {
                 return 0;
             }
             byte[] stringBytes = string.getBytes();
             int stringSize = stringBytes.length;
             int index = (int) start;
             for (; index <= stringSize; index++) {
-                if (inclusionBytes[Byte.toUnsignedInt(stringBytes[index - 1])] != 0) {
+                if (inclusionMap.getNativeAt0((int) string.getNativeAt0(index - 1)) != 0) {
                     break;
                 }
             }

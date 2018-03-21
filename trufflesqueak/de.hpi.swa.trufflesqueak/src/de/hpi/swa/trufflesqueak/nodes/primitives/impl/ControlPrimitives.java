@@ -526,7 +526,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final Object doYield(VirtualFrame frame, PointersObject scheduler) {
             yieldProcessNode.executeYield(frame, scheduler);
-            throw new SqueakException("Yield failed");
+            return scheduler;
         }
 
     }
