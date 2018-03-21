@@ -24,7 +24,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.SimulationPrimitiveFailed;
-import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
@@ -655,7 +654,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
                         return result;
                     }
                 }
-                throw new SqueakException("Unable to find " + code.image.simulatePrimitiveArgs + " in " + receiver);
+                throw new PrimitiveFailed(); // otherwise fail (e.g. Form>>primPixelValueAtX:y:)
             }
             return simulationMethod;
         }
