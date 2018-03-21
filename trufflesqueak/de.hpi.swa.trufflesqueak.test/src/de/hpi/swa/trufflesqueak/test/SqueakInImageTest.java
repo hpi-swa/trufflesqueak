@@ -24,7 +24,6 @@ import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.TEST_RESULT;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
-import de.hpi.swa.trufflesqueak.nodes.InvokeNode;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class SqueakInImageTest extends AbstractSqueakTestCase {
@@ -536,7 +535,6 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                 if (System.currentTimeMillis() > endTimeMillis) {
                     image.getOutput().println("did not terminate in time");
                     thread.interrupt();
-                    InvokeNode.callDepth = 0; // reset StackOverflow protection
                     break;
                 }
                 try {
