@@ -301,11 +301,10 @@ public class SqueakImageReader {
             if (chunkObject instanceof BaseSqueakObject) {
                 ((BaseSqueakObject) chunkObject).fillin(chunk);
             }
-            if (chunkObject instanceof NativeObject) {
-                if (((NativeObject) chunkObject).getSqClass() == image.doesNotUnderstand.getSqClass() && chunkObject.toString().equals("asSymbol")) {
+            if (chunkObject instanceof NativeObject && ((NativeObject) chunkObject).getSqClass() == image.doesNotUnderstand.getSqClass()) { // check ByteSymbols
+                if (chunkObject.toString().equals("asSymbol")) {
                     image.asSymbol = (NativeObject) chunkObject;
-                } else if (((NativeObject) chunkObject).getSqClass() == image.doesNotUnderstand.getSqClass() &&
-                                chunkObject.toString().equals(SimulationPrimitiveNode.SIMULATE_PRIMITIVE_SELECTOR)) {
+                } else if (chunkObject.toString().equals(SimulationPrimitiveNode.SIMULATE_PRIMITIVE_SELECTOR)) {
                     image.simulatePrimitiveArgs = (NativeObject) chunkObject;
                 }
             }
