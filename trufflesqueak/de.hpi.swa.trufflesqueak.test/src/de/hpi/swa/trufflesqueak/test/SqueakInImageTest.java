@@ -565,9 +565,13 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
          * Set author initials and disable timeout logic by patching TestCase>>#timeout:after: (uses
          * processes -> incompatible to running headless).
          */
-        evaluate("FileDirectory startUp"); // initializes paths and opens sources file.
-        evaluate("FileStream startUp");
+        System.out.println("Modifying StartUpList for testing...");
+        evaluate("{EventSensor. Project} do: [:ea | Smalltalk removeFromStartUpList: ea]");
+        System.out.println("Processing StartUpList...");
+        evaluate("Smalltalk processStartUpList: true");
+        System.out.println("Setting author initials...");
         evaluate("Utilities setAuthorInitials: 'TruffleSqueak'"); // needs to happen after `FileDirectory startUp`.
+        System.out.println("Patching timeout methods...");
         Object patchResult = evaluate(
                         "TestCase addSelectorSilently: #timeout:after: withMethod: (TestCase compile: 'timeout: aBlock after: seconds ^ aBlock value' notifying: nil trailer: (CompiledMethodTrailer empty) ifFail: [^ nil]) method");
         assertNotEquals(image.nil, patchResult);
