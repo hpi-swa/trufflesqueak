@@ -40,6 +40,30 @@ public final class ObjectLayouts {
         public static final int MAX_STACK_SIZE = LARGE_FRAMESIZE - TEMP_FRAME_START;
     }
 
+    public static final class ERROR_TABLE {
+        public static final int GENERIC_ERROR = 0; // nil
+        public static final int BAD_RECEIVER = 1;
+        public static final int BAD_ARGUMENT = 2;
+        public static final int BAD_INDEX = 3;
+        public static final int BAD_NUMBER_OF_ARGUMENTS = 4;
+        public static final int INAPPROPRIATE_OPERATION = 5;
+        public static final int UNSUPPORTED_OPERATION = 6;
+        public static final int NO_MODIFICATION = 7;
+        public static final int INSUFFICIENT_OBJECT_MEMORY = 8;
+        public static final int INSUFFICIENT_C_MEMORY = 9;
+        public static final int NOT_FOUND = 10;
+        public static final int BAD_METHOD = 11;
+        public static final int INTERNAL_ERROR_IN_NAMED_PRIMITIVE_MACHINERY = 12;
+        public static final int OBJECT_MAY_MOVE = 13;
+        public static final int RESOURCE_LIMIT_EXCEEDED = 14;
+        public static final int OBJECT_IS_PINNED = 15;
+        public static final int PRIMITIVE_WRITE_BEYOND_END_OF_OBJECT = 16;
+        public static final int OBJECT_MOVED = 17;
+        public static final int OBJECT_NOT_PINNED = 18;
+        public static final int CALLBACK_ERROR = 19;
+        public static final int OPERATING_SYSTEM_ERROR = 20;
+    }
+
     public static final class FORM {
         public static final int BITS = 0;
         public static final int WIDTH = 1;

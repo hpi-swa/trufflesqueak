@@ -24,6 +24,7 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.ERROR_TABLE;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.trufflesqueak.model.SqueakObject;
 import de.hpi.swa.trufflesqueak.nodes.GetAllInstancesNode;
@@ -63,7 +64,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected final BaseSqueakObject performPointersBecomeOneWay(VirtualFrame frame, ListObject fromArray, ListObject toArray, boolean copyHash) {
             if (fromArray.size() != toArray.size()) {
-                throw new PrimitiveFailed("bad argument");
+                throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
             }
             Object[] fromPointers = fromArray.getPointers();
             Object[] toPointers = toArray.getPointers();
@@ -264,13 +265,13 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization
         protected BaseSqueakObject arrayBecome(VirtualFrame frame, Object receiver, ListObject argument) {
-            throw new PrimitiveFailed("bad receiver");
+            throw new PrimitiveFailed(ERROR_TABLE.BAD_RECEIVER);
         }
 
         @SuppressWarnings("unused")
         @Specialization
         protected BaseSqueakObject arrayBecome(VirtualFrame frame, ListObject receiver, Object argument) {
-            throw new PrimitiveFailed("bad argument");
+            throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
         }
     }
 
@@ -671,13 +672,13 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization
         protected BaseSqueakObject arrayBecome(VirtualFrame frame, Object receiver, ListObject argument, boolean copyHash) {
-            throw new PrimitiveFailed("bad receiver");
+            throw new PrimitiveFailed(ERROR_TABLE.BAD_RECEIVER);
         }
 
         @SuppressWarnings("unused")
         @Specialization
         protected BaseSqueakObject arrayBecome(VirtualFrame frame, ListObject receiver, Object argument, boolean copyHash) {
-            throw new PrimitiveFailed("bad argument");
+            throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
         }
     }
 }

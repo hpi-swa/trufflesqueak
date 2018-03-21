@@ -12,6 +12,7 @@ import de.hpi.swa.trufflesqueak.exceptions.Returns.LocalReturn;
 import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.nodes.GetOrCreateContextNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushLiteralConstantNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushLiteralVariableNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.PushBytecodes.PushReceiverVariableNode;
@@ -34,12 +35,14 @@ import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitives.Primitiv
 public final class MiscellaneousBytecodes {
 
     public static class CallPrimitiveNode extends AbstractBytecodeNode {
+        @Child private GetOrCreateContextNode getOrCreateContextNode;
         @Child private AbstractPrimitiveNode primitiveNode;
         @CompilationFinal private final int primitiveIndex;
 
         public CallPrimitiveNode(CompiledCodeObject code, int index, int numBytecodes, int byte1, int byte2) {
             super(code, index, numBytecodes);
             assert code instanceof CompiledMethodObject;
+            getOrCreateContextNode = GetOrCreateContextNode.create(code);
             if (!code.hasPrimitive()) {
                 primitiveIndex = 0;
                 primitiveNode = PrimitiveFailedNode.create((CompiledMethodObject) code);
@@ -55,7 +58,13 @@ public final class MiscellaneousBytecodes {
             CompilerAsserts.compilationConstant(index);
             try {
                 throw new FreshReturn(new LocalReturn(primitiveNode.executePrimitive(frame)));
-            } catch (UnsupportedSpecializationException | PrimitiveFailed e) {
+            } catch (PrimitiveFailed e) { // TODO: support `error: ec`
+// if (e.getReasonCode() != ERROR_TABLE.GENERIC_ERROR) { // handle `error: ec`
+// ContextObject thisContext = getOrCreateContextNode.executeGet(frame, true);
+// Object error = code.image.lookupError(e.getReasonCode());
+// thisContext.atTempPut(0, error);
+// }
+            } catch (UnsupportedSpecializationException e) {
             }
         }
 

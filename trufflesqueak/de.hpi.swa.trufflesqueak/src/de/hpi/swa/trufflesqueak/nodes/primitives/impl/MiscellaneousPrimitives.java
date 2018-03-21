@@ -629,12 +629,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
             try {
                 return dispatchNode.executeDispatch(frame, getSimulateMethod(receiver), newRcvrAndArgs, getContextOrMarker(frame));
             } catch (SimulationPrimitiveFailed e) {
-                // TODO: put error into `ec`?
-                // if (e.getReason() != 0) {
-                // ContextObject thisContext = getOrCreateContextNode.executeGet(frame, true);
-                // thisContext.atTempPut(0, code.image.lookupError(e.getReason()));
-                // }
-                throw new PrimitiveFailed();
+                throw new PrimitiveFailed(e.getReasonCode());
             } finally {
                 code.image.interrupt.setDisabled(false);
             }

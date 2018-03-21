@@ -19,6 +19,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
+import de.hpi.swa.trufflesqueak.model.ObjectLayouts.ERROR_TABLE;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.MUTEX;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SEMAPHORE;
@@ -259,7 +260,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             } else {
                 BaseSqueakObject oldList = (BaseSqueakObject) receiver.at0(PROCESS.LIST);
                 if (oldList == code.image.nil) {
-                    throw new PrimitiveFailed("PrimErrBadReceiver");
+                    throw new PrimitiveFailed(ERROR_TABLE.BAD_RECEIVER);
                 }
                 removeProcessNode.executeRemove(receiver, oldList);
                 receiver.atput0(PROCESS.LIST, code.image.nil);
