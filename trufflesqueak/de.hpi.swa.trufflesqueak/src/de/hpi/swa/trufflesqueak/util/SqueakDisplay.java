@@ -163,7 +163,9 @@ public final class SqueakDisplay {
                         break;
                     case 32: // use words directly
                         assert bitmap.getWords().length / width / height == 1;
-                        bufferedImage.setRGB(0, 0, width, height, bitmap.getWords(), 0, width);
+                        final int drawWidth = Math.min(width, frame.getWidth());
+                        final int drawHeight = Math.min(height, frame.getHeight());
+                        bufferedImage.setRGB(0, 0, drawWidth, drawHeight, bitmap.getWords(), 0, width);
                         break;
                     default:
                         throw new SqueakException("Unsupported form depth: " + depth);
@@ -231,9 +233,7 @@ public final class SqueakDisplay {
         @Override
         @TruffleBoundary
         public void forceRect(int left, int right, int top, int bottom) {
-            // TODO: repaint rect only instead of everything
-            // canvas.repaint(left, top, right - left, bottom - top);
-            canvas.repaint();
+            canvas.repaint(left, top, right - left, bottom - top);
         }
 
         @Override
