@@ -320,7 +320,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "StackTest", TEST_TYPE.PASSING,
                     "StandardSourceFileArrayTest", TEST_TYPE.PASSING,
                     "StickynessBugz", TEST_TYPE.PASSING,
-                    "StopwatchTest", TEST_TYPE.FAILING,
+                    "StopwatchTest", TEST_TYPE.FLAKY,
                     "StringSocketTestCase", TEST_TYPE.FAILING,
                     "StringTest", TEST_TYPE.FAILING,
                     "SumBugs", TEST_TYPE.PASSING,
