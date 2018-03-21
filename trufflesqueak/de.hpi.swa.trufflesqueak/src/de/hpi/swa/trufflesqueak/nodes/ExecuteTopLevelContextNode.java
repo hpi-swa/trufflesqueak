@@ -77,9 +77,6 @@ public class ExecuteTopLevelContextNode extends RootNode {
                 image.trace("Local Return on top-level, new context is " + activeContext);
             } catch (ProcessSwitch ps) {
                 image.trace("Switching from " + activeContext + " to " + ps.getNewContext());
-                if (image.config.isTesting()) {
-                    throw new SqueakException.SqueakTestException(image, "Process switch detected during testing (scheduler not available)");
-                }
                 activeContext = ps.getNewContext();
             } catch (NonLocalReturn nlr) {
                 BaseSqueakObject target = nlr.hasArrivedAtTargetContext() ? sender : nlr.getTargetContext();

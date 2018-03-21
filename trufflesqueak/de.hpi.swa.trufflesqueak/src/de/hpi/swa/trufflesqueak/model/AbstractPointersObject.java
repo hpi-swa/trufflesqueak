@@ -67,7 +67,6 @@ public abstract class AbstractPointersObject extends SqueakObject {
     public void pointersBecomeOneWay(Object[] from, Object[] to, boolean copyHash) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         // TODO: super.pointersBecomeOneWay(from, to); ?
-        // TODO: verify if a copy of the pointers is needed, otherwise modify pointers in place?
         for (int i = 0; i < from.length; i++) {
             Object fromPointer = from[i];
             for (int j = 0; j < pointers.length; j++) {

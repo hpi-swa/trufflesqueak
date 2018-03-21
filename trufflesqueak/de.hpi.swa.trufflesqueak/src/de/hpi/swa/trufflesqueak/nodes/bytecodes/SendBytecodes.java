@@ -7,7 +7,6 @@ import com.oracle.truffle.api.instrumentation.StandardTags;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveWithoutResultException;
-import de.hpi.swa.trufflesqueak.exceptions.SqueakException.SqueakTestException;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
@@ -60,7 +59,6 @@ public final class SendBytecodes {
                 return; // ignoring result
             }
             pushNode.executeWrite(frame, result);
-            // TODO: Object as Method
         }
 
         public Object executeSend(VirtualFrame frame) {
@@ -69,11 +67,8 @@ public final class SendBytecodes {
             ClassObject rcvrClass = lookupClassNode.executeLookup(rcvrAndArgs[0]);
             Object lookupResult = lookupNode.executeLookup(rcvrClass, selector);
             Object contextOrMarker = readContextNode.executeRead(frame);
-            String lookupString = lookupResult.toString();
             if (!(lookupResult instanceof CompiledCodeObject)) {
                 return sendObjectAsMethodNode.execute(frame, selector, rcvrAndArgs, lookupResult, contextOrMarker);
-            } else if (code.image.config.getReceiver() != null && lookupString.equals("Metaclass (ToolSet)>>debugError:")) { // TODO: remove when no longer needed for testing
-                throw new SqueakTestException(code.image, "Tried to call ToolSet class>>debugError: to open debugger");
             } else if (((CompiledCodeObject) lookupResult).isDoesNotUnderstand()) {
                 return sendDoesNotUnderstandNode.execute(frame, selector, rcvrAndArgs, rcvrClass, lookupResult, contextOrMarker);
             } else {
