@@ -59,7 +59,7 @@ public abstract class PrimitiveNodeFactory {
 
     @TruffleBoundary
     public static AbstractPrimitiveNode forName(CompiledMethodObject method, String moduleName, String functionName) {
-        if (moduleName.equals("BitBltPlugin") || moduleName.equals("B2DPlugin")) {
+        if (moduleName.equals("BitBltPlugin") || moduleName.equals("B2DPlugin") || moduleName.equals("BalloonPlugin")) {
             return SimulationPrimitiveNode.create(method, moduleName, functionName, new SqueakNode[]{ReceiverAndArgumentsNode.create(method)});
         }
         for (AbstractPrimitiveFactoryHolder plugin : plugins) {
