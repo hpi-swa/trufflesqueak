@@ -1,7 +1,5 @@
 package de.hpi.swa.trufflesqueak.model;
 
-import java.util.Arrays;
-
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -10,6 +8,7 @@ import com.oracle.truffle.api.frame.Frame;
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.GetOrCreateContextNode;
+import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
@@ -31,8 +30,7 @@ public class ContextObject extends AbstractPointersObject {
 
     private ContextObject(SqueakImageContext image, int size) {
         this(image);
-        pointers = new Object[CONTEXT.TEMP_FRAME_START + size];
-        Arrays.fill(pointers, image.nil); // initialize all with nil
+        this.pointers = ArrayUtils.withAll(CONTEXT.TEMP_FRAME_START + size, image.nil);
     }
 
     public static ContextObject create(SqueakImageContext image, int size, FrameMarker frameMarker) {
