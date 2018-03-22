@@ -10,7 +10,6 @@ import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
-import de.hpi.swa.trufflesqueak.nodes.GetOrCreateContextNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.SendSelectorNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PopStackNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
@@ -20,31 +19,29 @@ public final class JumpBytecodes {
     public static class ConditionalJumpNode extends UnconditionalJumpNode {
         public static final int FALSE_SUCCESSOR = 0;
         public static final int TRUE_SUCCESSOR = 1;
+        @CompilationFinal private static NativeObject mustBeBooleanSelector;
         @CompilationFinal private final Boolean isIfTrue;
         @Child private PopStackNode popNode;
         @Child private PushStackNode pushNode;
         @Child private SendSelectorNode sendMustBeBooleanNode;
-        @Child private GetOrCreateContextNode getOrCreateContextNode;
         @CompilationFinal(dimensions = 1) private final int[] successorExecutionCount = new int[2];
 
         public ConditionalJumpNode(CompiledCodeObject code, int index, int numBytecodes, int bytecode) {
             super(code, index, numBytecodes, bytecode);
             isIfTrue = false;
-            initializeChildNodes(code);
+            initializeChildNodes();
         }
 
         public ConditionalJumpNode(CompiledCodeObject code, int index, int numBytecodes, int bytecode, int parameter, boolean condition) {
             super(code, index, numBytecodes, bytecode, parameter);
             isIfTrue = condition;
-            initializeChildNodes(code);
+            initializeChildNodes();
         }
 
-        private void initializeChildNodes(CompiledCodeObject codeObject) {
-            popNode = PopStackNode.create(codeObject);
-            pushNode = PushStackNode.create(codeObject);
-            NativeObject mustBeBooleanSelector = (NativeObject) codeObject.image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SelectorMustBeBoolean);
-            sendMustBeBooleanNode = new SendSelectorNode(codeObject, -1, 1, mustBeBooleanSelector, 1);
-            getOrCreateContextNode = GetOrCreateContextNode.create(codeObject);
+        private void initializeChildNodes() {
+            popNode = PopStackNode.create(code);
+            pushNode = PushStackNode.create(code);
+            sendMustBeBooleanNode = new SendSelectorNode(code, -1, 1, getMustBeBooleanSelector(), 0);
         }
 
         public boolean executeCondition(VirtualFrame frame) {
@@ -54,7 +51,6 @@ public final class JumpBytecodes {
             } else {
                 CompilerDirectives.transferToInterpreter();
                 pushNode.executeWrite(frame, value);
-                pushNode.executeWrite(frame, getOrCreateContextNode.executeGet(frame));
                 sendMustBeBooleanNode.executeSend(frame);
                 throw new SqueakException("Should not be reached");
             }
@@ -111,6 +107,14 @@ public final class JumpBytecodes {
             } else {
                 return "jumpFalse: " + offset;
             }
+        }
+
+        private NativeObject getMustBeBooleanSelector() {
+            if (mustBeBooleanSelector == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                mustBeBooleanSelector = (NativeObject) code.image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SelectorMustBeBoolean);
+            }
+            return mustBeBooleanSelector;
         }
     }
 
