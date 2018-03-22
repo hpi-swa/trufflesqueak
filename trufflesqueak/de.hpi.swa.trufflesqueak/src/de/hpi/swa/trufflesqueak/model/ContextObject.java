@@ -14,7 +14,7 @@ import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
 public class ContextObject extends AbstractPointersObject {
     @CompilationFinal private FrameMarker frameMarker;
-    private boolean isDirty;
+    @CompilationFinal private boolean isDirty;
 
     public static ContextObject create(SqueakImageContext image) {
         return new ContextObject(image);
@@ -68,6 +68,7 @@ public class ContextObject extends AbstractPointersObject {
         assert index >= 0 && value != null;
         if (index == CONTEXT.SENDER_OR_NIL) {
             image.trace("Sender of " + toString() + " set to " + value);
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             isDirty = true;
         }
         super.atput0(index, value);
