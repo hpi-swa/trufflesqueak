@@ -7,6 +7,7 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -63,9 +64,14 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected double doAtPut(NativeObject receiver, long index, double value) {
+        protected double doDouble(NativeObject receiver, long index, double value) {
             receiver.setInt(((int) index) - 1, Float.floatToIntBits((float) value));
             return value;
+        }
+
+        @Specialization
+        protected double doFloat(NativeObject receiver, long index, FloatObject value) {
+            return doDouble(receiver, index, value.getValue());
         }
     }
 
