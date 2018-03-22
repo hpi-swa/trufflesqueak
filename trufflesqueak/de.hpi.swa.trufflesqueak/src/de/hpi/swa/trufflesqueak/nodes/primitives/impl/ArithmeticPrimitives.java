@@ -292,8 +292,9 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         /*
-         * nil checks
+         * Specializations for quick nil checks.
          */
+
         @SuppressWarnings("unused")
         @Specialization
         protected final static boolean doNil(final long a, final NilObject b) {
@@ -351,8 +352,9 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         /*
-         * nil checks
+         * Specializations for quick nil checks.
          */
+
         @SuppressWarnings("unused")
         @Specialization
         protected final static boolean doNil(final long a, final NilObject b) {
