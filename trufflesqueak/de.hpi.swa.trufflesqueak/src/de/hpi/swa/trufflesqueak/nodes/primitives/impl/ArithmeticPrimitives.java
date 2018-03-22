@@ -420,9 +420,19 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"isSmallInteger(a)", "isSmallInteger(b)"})
+        /*
+         * The primitive normally fails if argument is not a SmallInteger. Supporting LargeIntegers anyway
+         * as it does not change the behavior.
+         */
+
+        @Specialization(guards = {"isSmallInteger(a)"})
         protected final static long doLong(final long a, final long b) {
             return Math.floorDiv(a, b);
+        }
+
+        @Specialization(guards = {"isSmallInteger(a)"})
+        protected final long doLongLargeInteger(final long a, final LargeIntegerObject b) {
+            return (long) asLargeInteger(a).floorDivide(b); // if a is SmallInteger, result must be SmallInteger
         }
     }
 
