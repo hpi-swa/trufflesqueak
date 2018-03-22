@@ -14,6 +14,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.EmptyObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
+import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
@@ -71,6 +72,15 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final long doNativeObject(final NativeObject receiver, final long index) {
             return receiver.getNativeAt0(index - 1);
+        }
+
+        @Specialization
+        protected static final Object doList(final ListObject receiver, final long index) {
+            try {
+                return doSqueakObject(receiver, index);
+            } catch (ArrayIndexOutOfBoundsException e) { // Array>>atWrap: optimization
+                return receiver.at0(Math.floorMod(index - 1, receiver.size()));
+            }
         }
 
         @Specialization
