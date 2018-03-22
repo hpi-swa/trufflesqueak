@@ -8,7 +8,6 @@ import java.io.PrintWriter;
 import java.math.BigInteger;
 
 import com.oracle.truffle.api.CallTarget;
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
@@ -204,13 +203,12 @@ public class SqueakImageContext {
     }
 
     public Object wrap(Object obj) {
-        CompilerAsserts.neverPartOfCompilation();
         if (obj == null) {
             return nil;
         } else if (obj instanceof Boolean) {
             return wrap((boolean) obj);
         } else if (obj instanceof Integer) {
-            return wrap(Long.valueOf((Integer) obj));
+            return wrap((long) Long.valueOf((Integer) obj));
         } else if (obj instanceof Long) {
             return wrap((long) obj);
         } else if (obj instanceof BigInteger) {
