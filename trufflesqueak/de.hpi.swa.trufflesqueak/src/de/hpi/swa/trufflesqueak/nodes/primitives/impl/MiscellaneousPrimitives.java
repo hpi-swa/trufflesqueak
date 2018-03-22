@@ -10,18 +10,22 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
+import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.SimulationPrimitiveFailed;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
@@ -39,6 +43,7 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.MiscellaneousPrimitivesFactory.SimulationPrimitiveNodeGen;
 import de.hpi.swa.trufflesqueak.util.InterruptHandlerNode;
@@ -321,14 +326,14 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 149, numArguments = 2)
-    protected static abstract class PrimSystemAttributeNode extends AbstractPrimitiveNode {
-        protected PrimSystemAttributeNode(CompiledMethodObject method) {
+    protected static abstract class PrimGetAttributeNode extends AbstractPrimitiveNode {
+        protected PrimGetAttributeNode(CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
         @TruffleBoundary
-        protected Object getSystemAttribute(@SuppressWarnings("unused") Object image, long longIndex) {
+        protected Object doGet(@SuppressWarnings("unused") Object image, long longIndex) {
             int index = (int) longIndex;
             if (index == 0) {
                 String separator = System.getProperty("file.separator");
@@ -345,18 +350,30 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
                 }
             }
             switch (index) {
-                case 1001:
+                case 1001:  // this platform's operating system 'Mac OS', 'Win32', 'unix', ...
                     return code.image.wrap(code.image.os.getSqOSName());
-                case 1002:
+                case 1002:  // operating system version
                     return code.image.wrap(System.getProperty("os.version"));
-                case 1003:
+                case 1003:  // this platform's processor type
                     return code.image.wrap("intel");
-                case 1004:
+                case 1004:  // vm version
                     return code.image.wrap(System.getProperty("java.version"));
-                case 1201:
+                case 1005:  // window system name
+                    return code.image.wrap("Aqua");
+                case 1006:  // vm build id
+                    return code.image.wrap(SqueakLanguage.NAME + " on " + Truffle.getRuntime().getName());
+                // case 1007: // Interpreter class (Cog VM only)
+                // case 1008: // Cogit class (Cog VM only)
+                // case 1009: // Platform source version (Cog VM only?)
+                case 1201: // max filename length (Mac OS only)
                     if (code.image.os.isMacOS()) {
                         return code.image.wrap("255");
                     }
+                    break;
+                // case 1202: // file last error (Mac OS only)
+                // case 10001: // hardware details (Win32 only)
+                // case 10002: // operating system details (Win32 only)
+                // case 10003: // graphics hardware details (Win32 only)
             }
             return code.image.nil;
         }
@@ -371,7 +388,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object copy(@SuppressWarnings("unused") BaseSqueakObject receiver) {
-            return code.image.wrap(Math.pow(2, 22) - 1);
+            return asFloatObject(Math.pow(2, 22) - 1);
         }
     }
 
@@ -581,6 +598,37 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final Object doFail(@SuppressWarnings("unused") final PointersObject proxy, final long reasonCode) {
             throw new SimulationPrimitiveFailed(reasonCode);
+        }
+    }
+
+    /*
+     * List all plugins as external modules (prim 572 is for builtins but is not used).
+     */
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 573, numArguments = 2)
+    protected static abstract class PrimListExternalModuleNode extends AbstractPrimitiveNode {
+        @CompilationFinal private static List<String> externalModuleNames;
+
+        public PrimListExternalModuleNode(CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected final Object doGet(@SuppressWarnings("unused") final BaseSqueakObject receiver, final long index) {
+            try {
+                return code.image.wrap(getList().get((int) index - 1));
+            } catch (IndexOutOfBoundsException e) {
+                return code.image.nil;
+            }
+        }
+
+        private static List<String> getList() {
+            if (externalModuleNames == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                externalModuleNames = new ArrayList<>(PrimitiveNodeFactory.getPluginNames());
+                Collections.sort(externalModuleNames);
+            }
+            return externalModuleNames;
         }
     }
 

@@ -1,8 +1,10 @@
 package de.hpi.swa.trufflesqueak.nodes.primitives;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -43,6 +45,7 @@ public abstract class PrimitiveNodeFactory {
                     new LargeIntegers(),
                     new MiscPrimitivePlugin(),
                     new TruffleSqueakPlugin()};
+    @CompilationFinal(dimensions = 1) private static final String[] simulatedPlugins = new String[]{"BitBltPlugin", "B2DPlugin", "BalloonPlugin"};
     @CompilationFinal private static Map<Integer, NodeFactory<? extends AbstractPrimitiveNode>> primitiveTable;
 
     @TruffleBoundary
@@ -59,8 +62,10 @@ public abstract class PrimitiveNodeFactory {
 
     @TruffleBoundary
     public static AbstractPrimitiveNode forName(CompiledMethodObject method, String moduleName, String functionName) {
-        if (moduleName.equals("BitBltPlugin") || moduleName.equals("B2DPlugin") || moduleName.equals("BalloonPlugin")) {
-            return SimulationPrimitiveNode.create(method, moduleName, functionName, new SqueakNode[]{ReceiverAndArgumentsNode.create(method)});
+        for (int i = 0; i < simulatedPlugins.length; i++) {
+            if (moduleName.equals(simulatedPlugins[i])) {
+                return SimulationPrimitiveNode.create(method, moduleName, functionName, new SqueakNode[]{ReceiverAndArgumentsNode.create(method)});
+            }
         }
         for (AbstractPrimitiveFactoryHolder plugin : plugins) {
             if (!plugin.getClass().getSimpleName().equals(moduleName)) {
@@ -80,6 +85,17 @@ public abstract class PrimitiveNodeFactory {
             }
         }
         return PrimitiveFailedNode.create(method);
+    }
+
+    public static Set<String> getPluginNames() {
+        HashSet<String> names = new HashSet<>(plugins.length);
+        for (AbstractPrimitiveFactoryHolder plugin : plugins) {
+            names.add(plugin.getClass().getSimpleName());
+        }
+        for (int i = 0; i < simulatedPlugins.length; i++) {
+            names.add(simulatedPlugins[i] + " (simulated)");
+        }
+        return names;
     }
 
     private static AbstractPrimitiveNode createInstance(CompiledMethodObject method, NodeFactory<? extends AbstractPrimitiveNode> nodeFactory, SqueakPrimitive primitive) {
