@@ -21,6 +21,7 @@ import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
@@ -122,17 +123,22 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final Object doLong(final long xPos, final LargeIntegerObject yPos) {
+        protected final Object doLongLargeInteger(final long xPos, final LargeIntegerObject yPos) {
             return code.image.newPoint(xPos, yPos);
         }
 
         @Specialization
-        protected final Object doLong(final long xPos, final double yPos) {
+        protected final Object doLongDouble(final long xPos, final double yPos) {
             return code.image.newPoint(xPos, yPos);
         }
 
         @Specialization
-        protected final Object doLargeInteger(final LargeIntegerObject xPos, final long yPos) {
+        protected final Object doLongFloat(final long xPos, final FloatObject yPos) {
+            return code.image.newPoint(xPos, yPos);
+        }
+
+        @Specialization
+        protected final Object doLargeIntegerLong(final LargeIntegerObject xPos, final long yPos) {
             return code.image.newPoint(xPos, yPos);
         }
 
@@ -142,12 +148,22 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final Object doLargeInteger(final LargeIntegerObject xPos, final double yPos) {
+        protected final Object doLargeIntegerDouble(final LargeIntegerObject xPos, final double yPos) {
             return code.image.newPoint(xPos, yPos);
         }
 
         @Specialization
-        protected final Object doDouble(final double xPos, final long yPos) {
+        protected final Object doLargeIntegerFloat(final LargeIntegerObject xPos, final FloatObject yPos) {
+            return code.image.newPoint(xPos, yPos);
+        }
+
+        @Specialization
+        protected final Object doDoubleLong(final double xPos, final long yPos) {
+            return code.image.newPoint(xPos, yPos);
+        }
+
+        @Specialization
+        protected final Object doDoubleLargeInteger(final double xPos, final LargeIntegerObject yPos) {
             return code.image.newPoint(xPos, yPos);
         }
 
@@ -157,7 +173,27 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final Object doDouble(final double xPos, final LargeIntegerObject yPos) {
+        protected final Object doDoubleFloat(final double xPos, final FloatObject yPos) {
+            return code.image.newPoint(xPos, yPos);
+        }
+
+        @Specialization
+        protected final Object doFloatLong(final FloatObject xPos, final long yPos) {
+            return code.image.newPoint(xPos, yPos);
+        }
+
+        @Specialization
+        protected final Object doFloatDouble(final FloatObject xPos, final double yPos) {
+            return code.image.newPoint(xPos, yPos);
+        }
+
+        @Specialization
+        protected final Object doFloatLargeInteger(final FloatObject xPos, final LargeIntegerObject yPos) {
+            return code.image.newPoint(xPos, yPos);
+        }
+
+        @Specialization
+        protected final Object doFloat(final FloatObject xPos, final FloatObject yPos) {
             return code.image.newPoint(xPos, yPos);
         }
     }

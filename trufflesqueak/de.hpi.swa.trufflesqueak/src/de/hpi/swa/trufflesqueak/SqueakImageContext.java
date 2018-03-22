@@ -21,6 +21,7 @@ import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
+import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -272,8 +273,8 @@ public class SqueakImageContext {
     }
 
     public PointersObject newPoint(Object xPos, Object yPos) {
-        assert xPos instanceof Long || xPos instanceof LargeIntegerObject || xPos instanceof Double;
-        assert yPos instanceof Long || yPos instanceof LargeIntegerObject || yPos instanceof Double;
+        assert xPos instanceof Long || xPos instanceof LargeIntegerObject || xPos instanceof Double || xPos instanceof FloatObject;
+        assert yPos instanceof Long || yPos instanceof LargeIntegerObject || yPos instanceof Double || yPos instanceof FloatObject;
         ClassObject pointClass = (ClassObject) specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.ClassPoint);
         PointersObject newPoint = (PointersObject) pointClass.newInstance();
         newPoint.atput0(POINT.X, xPos);
