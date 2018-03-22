@@ -24,6 +24,7 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
+import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.ERROR_TABLE;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
@@ -373,36 +374,46 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected long doChar(char obj) {
-            return obj;
+        protected static final long doNil(@SuppressWarnings("unused") final NilObject obj) {
+            return 1L;
         }
 
         @Specialization
-        protected long doLong(long obj) {
-            return obj;
-        }
-
-        @Specialization
-        protected long doLargeInteger(LargeIntegerObject obj) {
-            return obj.hashCode();
-        }
-
-        @Specialization
-        protected long doDouble(double receiver) {
-            return (long) receiver;
-        }
-
-        @Specialization
-        protected long doBoolean(boolean obj) {
-            if (obj == code.image.sqTrue) {
-                return 3L;
-            } else {
+        protected final long doBoolean(final boolean obj) {
+            if (obj == code.image.sqFalse) {
                 return 2L;
+            } else {
+                return 3L;
             }
         }
 
         @Specialization
-        protected long doBaseSqueakObject(BaseSqueakObject obj) {
+        protected static final long doChar(final char obj) {
+            return obj;
+        }
+
+        @Specialization
+        protected static final long doLong(final long obj) {
+            return obj;
+        }
+
+        @Specialization
+        protected static final long doLargeInteger(final LargeIntegerObject obj) {
+            return obj.hashCode();
+        }
+
+        @Specialization
+        protected static final long doDouble(final double receiver) {
+            return (long) receiver;
+        }
+
+        @Specialization
+        protected static final long doFloat(final FloatObject receiver) {
+            return doDouble(receiver.getValue());
+        }
+
+        @Specialization
+        protected static final long doBaseSqueakObject(final BaseSqueakObject obj) {
             return obj.squeakHash();
         }
     }
