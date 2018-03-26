@@ -52,6 +52,7 @@ import de.hpi.swa.trufflesqueak.nodes.process.ResumeProcessNode;
 import de.hpi.swa.trufflesqueak.nodes.process.SignalSemaphoreNode;
 import de.hpi.swa.trufflesqueak.nodes.process.WakeHighestPriorityNode;
 import de.hpi.swa.trufflesqueak.nodes.process.YieldProcessNode;
+import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
@@ -102,21 +103,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             return lookupClassNode.executeLookup(receiver);
         }
 
-        protected Object dispatch(VirtualFrame frame, Object receiver, Object selector, Object arguments, ClassObject rcvrClass) {
-            Object[] rcvrAndArgs;
-            if (arguments instanceof ListObject) {
-                ListObject list = (ListObject) arguments;
-                int numArgs = list.size();
-                rcvrAndArgs = new Object[1 + numArgs];
-                rcvrAndArgs[0] = receiver;
-                for (int i = 0; i < numArgs; i++) {
-                    rcvrAndArgs[1 + i] = list.at0(i);
-                }
-            } else if (arguments != null) {
-                rcvrAndArgs = new Object[]{receiver, arguments};
-            } else {
-                rcvrAndArgs = new Object[]{receiver};
-            }
+        protected Object dispatch(VirtualFrame frame, Object selector, Object[] rcvrAndArgs, ClassObject rcvrClass) {
             Object lookupResult = lookupNode.executeLookup(rcvrClass, selector);
             Object contextOrMarker = FrameAccess.getContextOrMarker(frame);
             if (!(lookupResult instanceof CompiledCodeObject)) {
@@ -147,16 +134,23 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected Object perform(VirtualFrame frame, Object[] rcvrAndArgs) {
             long numRcvrAndArgs = rcvrAndArgs.length;
-            if (numRcvrAndArgs != 2 && numRcvrAndArgs != 3) {
+            if (numRcvrAndArgs < 2 || numRcvrAndArgs > 8) {
                 throw new PrimitiveFailed();
             }
             Object receiver = rcvrAndArgs[0];
             Object selector = rcvrAndArgs[1];
             ClassObject rcvrClass = lookup(receiver);
             if (numRcvrAndArgs == 2) {
-                return dispatch(frame, receiver, selector, null, rcvrClass);
+                return dispatch(frame, selector, new Object[]{receiver}, rcvrClass);
+            } else {
+                // remove selector from rcvrAndArgs
+                Object[] newRcvrAndArgs = new Object[rcvrAndArgs.length - 1];
+                newRcvrAndArgs[0] = receiver;
+                for (int i = 2; i < rcvrAndArgs.length; i++) {
+                    newRcvrAndArgs[i - 1] = rcvrAndArgs[i];
+                }
+                return dispatch(frame, selector, newRcvrAndArgs, rcvrClass);
             }
-            return dispatch(frame, receiver, selector, rcvrAndArgs[2], rcvrClass);
         }
     }
 
@@ -169,7 +163,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object perform(VirtualFrame frame, Object receiver, Object selector, ListObject arguments) {
-            return dispatch(frame, receiver, selector, arguments, lookup(receiver));
+            return dispatch(frame, selector, arguments.unwrappedWithFirst(receiver), lookup(receiver));
         }
     }
 
@@ -286,16 +280,36 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 100, numArguments = 4)
+    @SqueakPrimitive(index = 100, variableArguments = true)
     protected static abstract class PrimPerformWithArgumentsInSuperclassNode extends AbstractPerformPrimitiveNode {
 
         protected PrimPerformWithArgumentsInSuperclassNode(CompiledMethodObject method) {
             super(method);
         }
 
+        @Override
+        public final Object executeWithArguments(VirtualFrame frame, Object... rcvrAndArgs) {
+            return doPerform(frame, rcvrAndArgs);
+        }
+
         @Specialization
-        protected Object perform(VirtualFrame frame, Object receiver, Object selector, ListObject arguments, ClassObject superClass) {
-            return dispatch(frame, receiver, selector, arguments, superClass);
+        protected final Object doPerform(final VirtualFrame frame, final Object[] rvcrAndArgs) {
+            int numRcvrAndArgs = rvcrAndArgs.length;
+            if (numRcvrAndArgs == 4) { // Object>>#perform:withArguments:inSuperclass:
+                return dispatchRcvrAndArgs(frame, rvcrAndArgs);
+            } else if (numRcvrAndArgs == 5) { // Context>>#object:perform:withArguments:inClass:
+                return dispatchRcvrAndArgs(frame, ArrayUtils.allButFirst(rvcrAndArgs)); // use first arg as receiver
+            } else {
+                throw new PrimitiveFailed();
+            }
+        }
+
+        private final Object dispatchRcvrAndArgs(final VirtualFrame frame, final Object[] rvcrAndArgs) {
+            Object receiver = rvcrAndArgs[0];
+            Object selector = rvcrAndArgs[1];
+            ListObject arguments = (ListObject) rvcrAndArgs[2];
+            ClassObject superClass = (ClassObject) rvcrAndArgs[3];
+            return dispatch(frame, selector, arguments.unwrappedWithFirst(receiver), superClass);
         }
     }
 
@@ -667,7 +681,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 188, variableArguments = true)
+    @SqueakPrimitive(index = 188, numArguments = 3)
     protected static abstract class PrimExecuteMethodArgsArray extends AbstractPerformPrimitiveNode {
         @Child private DispatchNode dispatchNode = DispatchNode.create();
 
@@ -675,22 +689,8 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Override
-        public final Object executeWithArguments(VirtualFrame frame, Object... rcvrAndArgs) {
-            return doExecute(frame, rcvrAndArgs);
-        }
-
         @Specialization
-        protected Object doExecute(VirtualFrame frame, Object[] rcvrAndArgs) {
-            if (3 < rcvrAndArgs.length || rcvrAndArgs.length > 5) {
-                throw new PrimitiveFailed();
-            }
-            if (!(rcvrAndArgs[1] instanceof ListObject) || !(rcvrAndArgs[2] instanceof CompiledMethodObject)) {
-                throw new PrimitiveFailed();
-            }
-            Object receiver = rcvrAndArgs[0];
-            ListObject argArray = (ListObject) rcvrAndArgs[1];
-            CompiledCodeObject codeObject = (CompiledCodeObject) rcvrAndArgs[2];
+        protected Object doExecute(VirtualFrame frame, Object receiver, ListObject argArray, CompiledCodeObject codeObject) {
             int numArgs = argArray.size();
             Object[] dispatchRcvrAndArgs = new Object[1 + numArgs];
             dispatchRcvrAndArgs[0] = receiver;

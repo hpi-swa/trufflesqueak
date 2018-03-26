@@ -28,4 +28,13 @@ public class ListObject extends AbstractPointersObject {
     public String toString() {
         return "ListObject: " + getSqClass();
     }
+
+    public Object[] unwrappedWithFirst(final Object firstValue) {
+        Object[] result = new Object[1 + size()];
+        result[0] = firstValue;
+        for (int i = 1; i < result.length; i++) {
+            result[i] = at0(i - 1);
+        }
+        return result;
+    }
 }
