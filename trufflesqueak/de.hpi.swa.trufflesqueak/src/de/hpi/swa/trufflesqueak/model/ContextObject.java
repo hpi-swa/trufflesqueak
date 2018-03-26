@@ -174,7 +174,12 @@ public class ContextObject extends AbstractPointersObject {
         if (at0(CONTEXT.METHOD) == image.nil) {
             return "CTX without method";
         } else {
-            return "CTX " + getMethod();
+            BlockClosureObject closure = getClosure();
+            if (closure != null) {
+                return "CTX [] in " + getMethod();
+            } else {
+                return "CTX " + getMethod();
+            }
         }
     }
 

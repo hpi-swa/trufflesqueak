@@ -105,10 +105,10 @@ public final class PushBytecodes {
             return getSuccessorIndex();
         }
 
-        private BlockClosureObject createClosure(VirtualFrame frame) {
+        private final BlockClosureObject createClosure(final VirtualFrame frame) {
             Object receiver = receiverNode.executeRead(frame);
             Object[] copiedValues = (Object[]) popNReversedNode.executeRead(frame);
-            ContextObject thisContext = getOrCreateContextNode.executeGet(frame);
+            ContextObject thisContext = getOrCreateContextNode.executeGet(frame, true); // TODO: context might not need to be forced
             return new BlockClosureObject(getBlock(), receiver, copiedValues, thisContext, code.thisContextOrMarkerSlot);
         }
 
