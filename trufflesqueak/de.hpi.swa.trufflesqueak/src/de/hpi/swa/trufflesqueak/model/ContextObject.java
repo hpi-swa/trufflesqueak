@@ -94,10 +94,9 @@ public class ContextObject extends AbstractPointersObject {
     public Object[] getReceiverAndArguments() {
         int numArgs = getCodeObject().getNumArgsAndCopiedValues();
         Object[] arguments = new Object[1 + numArgs];
-        BlockClosureObject closure = getClosure();
-        arguments[0] = closure != null ? closure.getReceiver() : at0(CONTEXT.RECEIVER);
+        arguments[0] = getReceiver();
         for (int i = 0; i < numArgs; i++) {
-            arguments[1 + i] = at0(CONTEXT.TEMP_FRAME_START + i);
+            arguments[1 + i] = atTemp(i);
         }
         return arguments;
     }
