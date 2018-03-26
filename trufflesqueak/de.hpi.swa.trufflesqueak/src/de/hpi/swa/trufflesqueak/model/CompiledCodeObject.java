@@ -31,7 +31,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
         STACK_POINTER,
     }
 
-    private static final int BYTES_PER_WORD = 4;
+    protected static final int BYTES_PER_WORD = 4;
 
     // frame info
     @CompilationFinal private FrameDescriptor frameDescriptor;
@@ -267,6 +267,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
             return literals[index / BYTES_PER_WORD];
         } else {
             int realIndex = index - getBytecodeOffset() - getOffset();
+            assert realIndex >= 0;
             return Byte.toUnsignedLong(bytes[realIndex]);
         }
     }

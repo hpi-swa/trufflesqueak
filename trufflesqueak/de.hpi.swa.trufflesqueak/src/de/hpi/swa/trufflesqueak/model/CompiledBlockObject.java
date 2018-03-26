@@ -41,6 +41,17 @@ public class CompiledBlockObject extends CompiledCodeObject {
     }
 
     @Override
+    public Object at0(long longIndex) {
+        int index = (int) longIndex;
+        if (index < getBytecodeOffset() - getOffset()) {
+            assert index % BYTES_PER_WORD == 0;
+            return literals[index / BYTES_PER_WORD];
+        } else {
+            return getMethod().at0(longIndex);
+        }
+    }
+
+    @Override
     public NativeObject getCompiledInSelector() {
         return outerMethod.getCompiledInSelector();
     }
