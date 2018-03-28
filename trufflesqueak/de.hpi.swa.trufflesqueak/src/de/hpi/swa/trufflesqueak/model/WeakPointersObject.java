@@ -53,12 +53,12 @@ public class WeakPointersObject extends ListObject {
     }
 
     @Override
-    public void atput0(long i, Object obj) {
+    public void atput0(long index, Object obj) {
         assert obj != null; // null indicates a problem
-        if (obj instanceof BaseSqueakObject) {
-            super.atput0(i, new WeakReference<>(obj));
+        if (index < instsize()) { // store into instance variable
+            super.atput0(index, obj);
         } else {
-            super.atput0(i, obj);
+            super.atput0(index, new WeakReference<>(obj));
         }
     }
 
