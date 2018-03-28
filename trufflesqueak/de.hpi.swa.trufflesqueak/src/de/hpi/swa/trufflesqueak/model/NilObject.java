@@ -25,7 +25,7 @@ public class NilObject extends BaseSqueakObject {
 
     @Override
     public Object at0(long l) {
-        return null;
+        throw new IndexOutOfBoundsException();
     }
 
     @Override
