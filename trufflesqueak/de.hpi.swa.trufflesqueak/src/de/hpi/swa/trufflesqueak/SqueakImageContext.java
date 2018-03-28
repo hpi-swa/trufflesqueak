@@ -17,7 +17,6 @@ import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
-import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
@@ -321,13 +320,13 @@ public class SqueakImageContext {
                 }
                 Object method = FrameAccess.getMethod(current);
                 Object sender = FrameAccess.getSender(current);
-                BlockClosureObject closure = FrameAccess.getClosure(current);
                 Object[] arguments = FrameAccess.getArguments(current);
                 String[] argumentStrings = new String[arguments.length];
                 for (int i = 0; i < arguments.length; i++) {
                     argumentStrings[i] = arguments[i].toString();
                 }
-                getOutput().println(String.format("%s #(%s) [sender: %s, closure: %s]", method, String.join(", ", argumentStrings), sender, closure));
+                String prefix = FrameAccess.getClosure(current) == null ? "" : "[] in ";
+                getOutput().println(String.format("%s%s #(%s) [sender: %s]", prefix, method, String.join(", ", argumentStrings), sender));
                 return null;
             }
         });
