@@ -607,7 +607,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 573, numArguments = 2)
     protected static abstract class PrimListExternalModuleNode extends AbstractPrimitiveNode {
-        @CompilationFinal private static List<String> externalModuleNames;
+        @CompilationFinal private List<String> externalModuleNames;
 
         public PrimListExternalModuleNode(CompiledMethodObject method) {
             super(method);
@@ -622,7 +622,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        private static List<String> getList() {
+        private List<String> getList() {
             if (externalModuleNames == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 externalModuleNames = new ArrayList<>(PrimitiveNodeFactory.getPluginNames());
