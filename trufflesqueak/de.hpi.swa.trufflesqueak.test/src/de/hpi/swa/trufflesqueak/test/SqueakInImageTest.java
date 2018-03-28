@@ -92,7 +92,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "ClassDescriptionTest", TEST_TYPE.PASSING,
                     "ClassFactoryForTestCaseTest", TEST_TYPE.IGNORE,
                     "ClassRemovalTest", TEST_TYPE.PASSING,
-                    "ClassRenameFixTest", TEST_TYPE.FAILING,
+                    "ClassRenameFixTest", TEST_TYPE.PASSING,
                     "ClassTest", TEST_TYPE.NOT_TERMINATING, // fails, but is very slow
                     "ClassTraitTest", TEST_TYPE.PASSING,
                     "ClassVarScopeTest", TEST_TYPE.NOT_TERMINATING, // passes, but is very slow
@@ -127,7 +127,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "DoubleByteArrayTest", TEST_TYPE.FLAKY, // passes sometimes, one failure in Squeak (BROKEN_IN_SQUEAK)
                     "DoubleWordArrayTest", TEST_TYPE.FLAKY, // two errors in Squeak (BROKEN_IN_SQUEAK)
                     "DurationTest", TEST_TYPE.PASSING,
-                    "EnvironmentTest", TEST_TYPE.FAILING,
+                    "EnvironmentTest", TEST_TYPE.PASSING,
                     "EPSCanvasTest", TEST_TYPE.NOT_TERMINATING,
                     "EtoysStringExtensionTest", TEST_TYPE.PASSING,
                     "EventManagerTest", TEST_TYPE.PASSING,
@@ -146,7 +146,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "FloatArrayTest", TEST_TYPE.PASSING,
                     "FloatCollectionTest", TEST_TYPE.PASSING,
                     "FloatTest", TEST_TYPE.FAILING,
-                    "FontTest", TEST_TYPE.FAILING,
+                    "FontTest", TEST_TYPE.PASSING,
                     "FormCanvasTest", TEST_TYPE.FAILING,
                     "FormTest", TEST_TYPE.PASSING,
                     "FractionTest", TEST_TYPE.PASSING,
@@ -249,7 +249,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "NamePolicyTest", TEST_TYPE.PASSING,
                     "NumberParsingTest", TEST_TYPE.PASSING,
                     "NumberTest", TEST_TYPE.PASSING,
-                    "ObjectFinalizerTests", TEST_TYPE.FAILING,
+                    "ObjectFinalizerTests", TEST_TYPE.PASSING,
                     "ObjectTest", TEST_TYPE.FAILING,
                     "OrderedCollectionInspectorTest", TEST_TYPE.PASSING,
                     "OrderedCollectionTest", TEST_TYPE.PASSING,
@@ -298,7 +298,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "SemaphoreTest", TEST_TYPE.FAILING,
                     "SequenceableCollectionTest", TEST_TYPE.PASSING,
                     "SetTest", TEST_TYPE.PASSING,
-                    "SetWithNilTest", TEST_TYPE.FAILING,
+                    "SetWithNilTest", TEST_TYPE.PASSING,
                     "SharedQueue2Test", TEST_TYPE.FAILING,
                     "SHParserST80Test", TEST_TYPE.BROKEN_IN_SQUEAK,
                     "SimpleSwitchMorphTest", TEST_TYPE.PASSING,
@@ -324,8 +324,8 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "StringSocketTestCase", TEST_TYPE.FAILING,
                     "StringTest", TEST_TYPE.FAILING,
                     "SumBugs", TEST_TYPE.PASSING,
-                    "SUnitExtensionsTest", TEST_TYPE.FAILING,
-                    "SUnitTest", TEST_TYPE.FAILING,
+                    "SUnitExtensionsTest", TEST_TYPE.FLAKY,
+                    "SUnitTest", TEST_TYPE.FLAKY,
                     "SUnitToolBuilderTests", TEST_TYPE.NOT_TERMINATING,
                     "SymbolTest", TEST_TYPE.PASSING,
                     "SystemChangeErrorHandling", TEST_TYPE.FLAKY,
@@ -380,7 +380,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "UrlTest", TEST_TYPE.PASSING,
                     "UserInterfaceThemeTest", TEST_TYPE.NOT_TERMINATING,
                     "UTF16TextConverterTest", TEST_TYPE.BROKEN_IN_SQUEAK,
-                    "UTF32TextConverterTest", TEST_TYPE.FAILING,
+                    "UTF32TextConverterTest", TEST_TYPE.PASSING,
                     "UTF8TextConverterTest", TEST_TYPE.FAILING,
                     "UTF8EdgeCaseTest", TEST_TYPE.FAILING, // failing in Squeak
                     "UUIDPrimitivesTest", TEST_TYPE.PASSING,
@@ -388,18 +388,18 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "VersionNumberTest", TEST_TYPE.PASSING,
                     "WeakFinalizersTest", TEST_TYPE.PASSING,
                     "WeakIdentityKeyDictionaryTest", TEST_TYPE.PASSING,
-                    "WeakMessageSendTest", TEST_TYPE.FAILING,
-                    "WeakRegistryTest", TEST_TYPE.FAILING,
+                    "WeakMessageSendTest", TEST_TYPE.PASSING,
+                    "WeakRegistryTest", TEST_TYPE.FAILING, // uses Delays
                     "WeakSetInspectorTest", TEST_TYPE.PASSING,
-                    "WeakSetTest", TEST_TYPE.FAILING,
+                    "WeakSetTest", TEST_TYPE.PASSING,
                     "WebClientServerTest", TEST_TYPE.FAILING,
                     "WeekTest", TEST_TYPE.PASSING,
-                    "WideCharacterSetTest", TEST_TYPE.FAILING,
+                    "WideCharacterSetTest", TEST_TYPE.PASSING,
                     "WideStringTest", TEST_TYPE.NOT_TERMINATING,
                     "Win32VMTest", TEST_TYPE.PASSING,
                     "WordArrayTest", TEST_TYPE.PASSING,
                     "WorldStateTest", TEST_TYPE.NOT_TERMINATING,
-                    "WriteStreamTest", TEST_TYPE.FAILING,
+                    "WriteStreamTest", TEST_TYPE.PASSING,
                     "XMLParserTest", TEST_TYPE.PASSING,
                     "YearMonthWeekTest", TEST_TYPE.PASSING,
                     "YearTest", TEST_TYPE.PASSING,};
@@ -559,7 +559,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
          * processes -> incompatible to running headless).
          */
         System.out.println("Modifying StartUpList for testing...");
-        evaluate("{EventSensor. Project} do: [:ea | Smalltalk removeFromStartUpList: ea]");
+        evaluate("{EventSensor. Project. ProcessorScheduler. WeakArray} do: [:ea | Smalltalk removeFromStartUpList: ea]");
         System.out.println("Processing StartUpList...");
         evaluate("Smalltalk processStartUpList: true");
         System.out.println("Setting author initials...");
