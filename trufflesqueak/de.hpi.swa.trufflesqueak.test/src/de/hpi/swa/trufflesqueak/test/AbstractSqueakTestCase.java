@@ -74,6 +74,11 @@ public abstract class AbstractSqueakTestCase {
         for (int i = 0; i < arguments.length; i++) {
             testContext.push(arguments[i]);
         }
+        // Initialize temps with nil in newContext.
+        int numTemps = code.getNumTemps();
+        for (int i = 0; i < numTemps - arguments.length; i++) {
+            testContext.push(code.image.nil);
+        }
         testContext.setFrameMarker(new FrameMarker());
         return ExecuteTopLevelContextNode.create(null, testContext);
     }
