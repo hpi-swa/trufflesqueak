@@ -389,7 +389,7 @@ public class SqueakInImageTest extends AbstractSqueakTestCase {
                     "WeakFinalizersTest", TEST_TYPE.PASSING,
                     "WeakIdentityKeyDictionaryTest", TEST_TYPE.PASSING,
                     "WeakMessageSendTest", TEST_TYPE.PASSING,
-                    "WeakRegistryTest", TEST_TYPE.FAILING, // uses Delays
+                    "WeakRegistryTest", TEST_TYPE.FLAKY, // uses Delays
                     "WeakSetInspectorTest", TEST_TYPE.PASSING,
                     "WeakSetTest", TEST_TYPE.PASSING,
                     "WebClientServerTest", TEST_TYPE.FAILING,
