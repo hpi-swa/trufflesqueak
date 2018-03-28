@@ -65,7 +65,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected double doDouble(NativeObject receiver, long index, double value) {
-            receiver.setInt(((int) index) - 1, Float.floatToIntBits((float) value));
+            receiver.setInt(((int) index) - 1, Float.floatToRawIntBits((float) value));
             return value;
         }
 
