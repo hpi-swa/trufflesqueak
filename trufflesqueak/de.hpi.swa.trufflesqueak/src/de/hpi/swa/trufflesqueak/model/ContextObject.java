@@ -195,7 +195,9 @@ public class ContextObject extends AbstractPointersObject {
         if (sp > 0) {
             setStackPointer(sp - 1);
         }
-        return atStack(sp);
+        Object value = atStack(sp);
+        atStackPut(sp, image.nil);
+        return value;
     }
 
     public Object[] popNReversed(int numPop) {
@@ -204,6 +206,7 @@ public class ContextObject extends AbstractPointersObject {
         Object[] result = new Object[numPop];
         for (int i = 0; i < numPop; i++) {
             result[numPop - 1 - i] = atStack(sp - i);
+            atStackPut(sp - i, image.nil);
         }
         setStackPointer(sp - numPop);
         return result;

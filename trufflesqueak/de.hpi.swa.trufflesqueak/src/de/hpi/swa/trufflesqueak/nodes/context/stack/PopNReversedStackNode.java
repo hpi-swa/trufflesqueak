@@ -8,9 +8,11 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode;
 
 public abstract class PopNReversedStackNode extends AbstractStackNode {
     @Child private FrameStackReadNode readNode;
+    @Child private FrameStackWriteNode writeNode;
     @CompilationFinal private final int numPop;
 
     public static PopNReversedStackNode create(CompiledCodeObject code, int numPop) {
@@ -21,6 +23,7 @@ public abstract class PopNReversedStackNode extends AbstractStackNode {
         super(code);
         this.numPop = numPop;
         readNode = FrameStackReadNode.create();
+        writeNode = FrameStackWriteNode.create();
     }
 
     @ExplodeLoop
@@ -32,6 +35,7 @@ public abstract class PopNReversedStackNode extends AbstractStackNode {
         Object[] result = new Object[numPop];
         for (int i = 0; i < numPop; i++) {
             result[numPop - 1 - i] = readNode.execute(frame, (int) sp - i);
+            writeNode.execute(frame, (int) sp - i, code.image.nil);
         }
         setFrameStackPointer(frame, sp - numPop);
         return result;
