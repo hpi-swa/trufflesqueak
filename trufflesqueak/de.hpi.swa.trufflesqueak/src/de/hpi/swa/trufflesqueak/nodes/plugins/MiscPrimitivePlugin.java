@@ -207,7 +207,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             long hash = initialHash & 0xfffffff;
             long low;
             for (byte value : string.getBytes()) {
-                hash += value;
+                hash += value & 0xff;
                 low = hash & 16383;
                 hash = (0x260D * low + (((0x260d * (hash >> 14) + (0x0065 * low)) & 16383) * 16384)) & 0x0fffffff;
             }
