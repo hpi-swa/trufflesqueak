@@ -33,6 +33,7 @@ import de.hpi.swa.trufflesqueak.nodes.GetAllInstancesNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode;
+import de.hpi.swa.trufflesqueak.nodes.helpers.IsNumericNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.SqueakPrimitive;
@@ -114,87 +115,14 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 18, numArguments = 2)
     protected static abstract class PrimMakePointNode extends AbstractPrimitiveNode {
+        @Child protected IsNumericNode isNumericNode = IsNumericNode.create();
+
         protected PrimMakePointNode(CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization
-        protected final Object doLong(final long xPos, final long yPos) {
-            return code.image.newPoint(xPos, yPos);
-        }
-
-        @Specialization
-        protected final Object doLongLargeInteger(final long xPos, final LargeIntegerObject yPos) {
-            return code.image.newPoint(xPos, yPos);
-        }
-
-        @Specialization
-        protected final Object doLongDouble(final long xPos, final double yPos) {
-            return code.image.newPoint(xPos, yPos);
-        }
-
-        @Specialization
-        protected final Object doLongFloat(final long xPos, final FloatObject yPos) {
-            return code.image.newPoint(xPos, yPos);
-        }
-
-        @Specialization
-        protected final Object doLargeIntegerLong(final LargeIntegerObject xPos, final long yPos) {
-            return code.image.newPoint(xPos, yPos);
-        }
-
-        @Specialization
-        protected final Object doLargeInteger(final LargeIntegerObject xPos, final LargeIntegerObject yPos) {
-            return code.image.newPoint(xPos, yPos);
-        }
-
-        @Specialization
-        protected final Object doLargeIntegerDouble(final LargeIntegerObject xPos, final double yPos) {
-            return code.image.newPoint(xPos, yPos);
-        }
-
-        @Specialization
-        protected final Object doLargeIntegerFloat(final LargeIntegerObject xPos, final FloatObject yPos) {
-            return code.image.newPoint(xPos, yPos);
-        }
-
-        @Specialization
-        protected final Object doDoubleLong(final double xPos, final long yPos) {
-            return code.image.newPoint(xPos, yPos);
-        }
-
-        @Specialization
-        protected final Object doDoubleLargeInteger(final double xPos, final LargeIntegerObject yPos) {
-            return code.image.newPoint(xPos, yPos);
-        }
-
-        @Specialization
-        protected final Object doDouble(final double xPos, final double yPos) {
-            return code.image.newPoint(xPos, yPos);
-        }
-
-        @Specialization
-        protected final Object doDoubleFloat(final double xPos, final FloatObject yPos) {
-            return code.image.newPoint(xPos, yPos);
-        }
-
-        @Specialization
-        protected final Object doFloatLong(final FloatObject xPos, final long yPos) {
-            return code.image.newPoint(xPos, yPos);
-        }
-
-        @Specialization
-        protected final Object doFloatDouble(final FloatObject xPos, final double yPos) {
-            return code.image.newPoint(xPos, yPos);
-        }
-
-        @Specialization
-        protected final Object doFloatLargeInteger(final FloatObject xPos, final LargeIntegerObject yPos) {
-            return code.image.newPoint(xPos, yPos);
-        }
-
-        @Specialization
-        protected final Object doFloat(final FloatObject xPos, final FloatObject yPos) {
+        @Specialization(guards = {"isNumericNode.execute(xPos)", "isNumericNode.execute(yPos)"})
+        protected final Object doObject(final Object xPos, final Object yPos) {
             return code.image.newPoint(xPos, yPos);
         }
     }
