@@ -110,6 +110,11 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
+        @SuppressWarnings("unused")
+        @Specialization
+        protected final static Object compress(BaseSqueakObject bitmap, Object bm, Object from) {
+            throw new PrimitiveFailed();
+        }
     }
 
     @GenerateNodeFactory
@@ -120,6 +125,11 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
+        @SuppressWarnings("unused")
+        @Specialization
+        protected final static Object decompress(BaseSqueakObject bitmap, Object bm, Object from, long index) {
+            throw new PrimitiveFailed();
+        }
     }
 
     @GenerateNodeFactory
