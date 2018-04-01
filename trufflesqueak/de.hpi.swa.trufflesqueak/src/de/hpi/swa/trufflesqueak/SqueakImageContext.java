@@ -312,6 +312,7 @@ public class SqueakImageContext {
     public void printSqStackTrace() {
         boolean isTravisBuild = System.getenv().containsKey("TRAVIS");
         final int[] depth = new int[1];
+        Object[] lastSender = new Object[]{null};
         getOutput().println("== Squeak stack trace ===========================================================");
         Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Object>() {
 
@@ -325,17 +326,20 @@ public class SqueakImageContext {
                     return null;
                 }
                 Object method = FrameAccess.getMethod(current);
-                Object sender = FrameAccess.getSender(current);
+                lastSender[0] = FrameAccess.getSender(current);
                 Object[] arguments = FrameAccess.getArguments(current);
                 String[] argumentStrings = new String[arguments.length];
                 for (int i = 0; i < arguments.length; i++) {
                     argumentStrings[i] = arguments[i].toString();
                 }
                 String prefix = FrameAccess.getClosure(current) == null ? "" : "[] in ";
-                getOutput().println(String.format("%s%s #(%s) [sender: %s]", prefix, method, String.join(", ", argumentStrings), sender));
+                getOutput().println(String.format("%s%s #(%s) [sender: %s]", prefix, method, String.join(", ", argumentStrings), lastSender[0]));
                 return null;
             }
         });
-        getOutput().println("== " + depth[0] + " frames =======================================================================");
+        getOutput().println("== " + depth[0] + " Truffle frames ================================================================");
+        if (lastSender[0] instanceof ContextObject) {
+            ((ContextObject) lastSender[0]).printSqStackTrace();
+        }
     }
 }
