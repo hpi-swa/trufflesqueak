@@ -299,6 +299,12 @@ public class SqueakImageContext {
         }
     }
 
+    public void traceVerbose(String message) {
+        if (config.isTracing() && config.isVerbose()) {
+            getOutput().println(message);
+        }
+    }
+
     /*
      * Helper function for debugging purposes.
      */
