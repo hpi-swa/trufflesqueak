@@ -118,6 +118,15 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    private static abstract class AbstractPrimitiveWithPushNode extends AbstractPrimitiveNode {
+        @Child protected StackPushNode pushNode;
+
+        protected AbstractPrimitiveWithPushNode(CompiledMethodObject method) {
+            super(method);
+            pushNode = StackPushNode.create(method);
+        }
+    }
+
     @GenerateNodeFactory
     @SqueakPrimitive(index = 83, variableArguments = true)
     protected static abstract class PrimPerformNode extends AbstractPerformPrimitiveNode {
@@ -171,7 +180,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 85)
-    protected static abstract class PrimSignalNode extends AbstractPrimitiveNode {
+    protected static abstract class PrimSignalNode extends AbstractPrimitiveWithPushNode {
         @Child private SignalSemaphoreNode signalSemaphoreNode;
 
         protected PrimSignalNode(CompiledMethodObject method) {
@@ -181,14 +190,15 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "isSemaphore(receiver)")
         protected BaseSqueakObject doSignal(VirtualFrame frame, PointersObject receiver) {
+            pushNode.executeWrite(frame, receiver); // keep receiver on stack
             signalSemaphoreNode.executeSignal(frame, receiver);
-            return receiver;
+            throw new PrimitiveWithoutResultException();
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 86)
-    protected static abstract class PrimWaitNode extends AbstractPrimitiveNode {
+    protected static abstract class PrimWaitNode extends AbstractPrimitiveWithPushNode {
         @Child private WakeHighestPriorityNode wakeHighestPriorityNode;
         @Child private LinkProcessToListNode linkProcessToListNode;
         @Child private GetActiveProcessNode getActiveProcessNode;
@@ -202,6 +212,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "isSemaphore(receiver)")
         protected BaseSqueakObject doWait(VirtualFrame frame, PointersObject receiver) {
+            pushNode.executeWrite(frame, receiver); // keep receiver on stack
             long excessSignals = (long) receiver.at0(SEMAPHORE.EXCESS_SIGNALS);
             if (excessSignals > 0) {
                 receiver.atput0(SEMAPHORE.EXCESS_SIGNALS, excessSignals - 1);
@@ -210,13 +221,13 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 linkProcessToListNode.executeLink(activeProcess, receiver);
                 wakeHighestPriorityNode.executeWake(frame);
             }
-            return receiver;
+            throw new PrimitiveWithoutResultException();
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 87)
-    protected static abstract class PrimResumeNode extends AbstractPrimitiveNode {
+    protected static abstract class PrimResumeNode extends AbstractPrimitiveWithPushNode {
         @Child private ResumeProcessNode resumeProcessNode;
 
         protected PrimResumeNode(CompiledMethodObject method) {
@@ -226,32 +237,31 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected BaseSqueakObject doResume(VirtualFrame frame, PointersObject receiver) {
+            pushNode.executeWrite(frame, receiver); // keep receiver on stack before resuming other process
             resumeProcessNode.executeResume(frame, receiver);
-            return receiver;
+            throw new PrimitiveWithoutResultException();
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 88)
-    protected static abstract class PrimSuspendNode extends AbstractPrimitiveNode {
+    protected static abstract class PrimSuspendNode extends AbstractPrimitiveWithPushNode {
         @Child private WakeHighestPriorityNode wakeHighestPriorityNode;
         @Child private RemoveProcessFromListNode removeProcessNode;
         @Child private GetActiveProcessNode getActiveProcessNode;
-        @Child private StackPushNode pushStackNode;
 
         protected PrimSuspendNode(CompiledMethodObject method) {
             super(method);
             removeProcessNode = RemoveProcessFromListNode.create(method.image);
             wakeHighestPriorityNode = WakeHighestPriorityNode.create(method.image);
             getActiveProcessNode = GetActiveProcessNode.create(method.image);
-            pushStackNode = StackPushNode.create(method);
         }
 
         @Specialization
         protected BaseSqueakObject doSuspend(VirtualFrame frame, PointersObject receiver) {
             PointersObject activeProcess = getActiveProcessNode.executeGet();
             if (receiver == activeProcess) {
-                pushStackNode.executeWrite(frame, code.image.nil);
+                pushNode.executeWrite(frame, code.image.nil);
                 wakeHighestPriorityNode.executeWake(frame);
             } else {
                 BaseSqueakObject oldList = (BaseSqueakObject) receiver.at0(PROCESS.LIST);
@@ -260,7 +270,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 }
                 removeProcessNode.executeRemove(receiver, oldList);
                 receiver.atput0(PROCESS.LIST, code.image.nil);
-                pushStackNode.executeWrite(frame, oldList);
+                pushNode.executeWrite(frame, oldList);
             }
             throw new PrimitiveWithoutResultException(); // result already pushed above
         }
@@ -542,7 +552,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 167)
-    protected static abstract class PrimYieldNode extends AbstractPrimitiveNode {
+    protected static abstract class PrimYieldNode extends AbstractPrimitiveWithPushNode {
         @Child private YieldProcessNode yieldProcessNode;
 
         public PrimYieldNode(CompiledMethodObject method) {
@@ -552,8 +562,9 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doYield(VirtualFrame frame, PointersObject scheduler) {
+            pushNode.executeWrite(frame, scheduler); // keep receiver on stack
             yieldProcessNode.executeYield(frame, scheduler);
-            return scheduler;
+            throw new PrimitiveWithoutResultException();
         }
 
     }
@@ -598,7 +609,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 185)
-    protected static abstract class PrimExitCriticalSectionNode extends AbstractPrimitiveNode {
+    protected static abstract class PrimExitCriticalSectionNode extends AbstractPrimitiveWithPushNode {
         @Child private IsEmptyListNode isEmptyListNode;
         @Child private RemoveFirstLinkOfListNode removeFirstLinkOfListNode;
         @Child private ResumeProcessNode resumeProcessNode;
@@ -612,6 +623,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object doExit(VirtualFrame frame, PointersObject mutex) {
+            pushNode.executeWrite(frame, mutex); // keep receiver on stack
             if (isEmptyListNode.executeIsEmpty(mutex)) {
                 mutex.atput0(MUTEX.OWNER, code.image.nil);
             } else {
@@ -619,24 +631,22 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 mutex.atput0(MUTEX.OWNER, owningProcess);
                 resumeProcessNode.executeResume(frame, owningProcess);
             }
-            return mutex;
+            throw new PrimitiveWithoutResultException();
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 186)
-    protected static abstract class PrimEnterCriticalSectionNode extends AbstractPrimitiveNode {
+    protected static abstract class PrimEnterCriticalSectionNode extends AbstractPrimitiveWithPushNode {
         @Child private GetActiveProcessNode getActiveProcessNode;
         @Child private LinkProcessToListNode linkProcessToListNode;
         @Child private WakeHighestPriorityNode wakeHighestPriorityNode;
-        @Child private StackPushNode pushStackNode;
 
         public PrimEnterCriticalSectionNode(CompiledMethodObject method) {
             super(method);
             getActiveProcessNode = GetActiveProcessNode.create(method.image);
             linkProcessToListNode = LinkProcessToListNode.create(method.image);
             wakeHighestPriorityNode = WakeHighestPriorityNode.create(method.image);
-            pushStackNode = StackPushNode.create(method);
         }
 
         @Override
@@ -656,11 +666,11 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             Object owner = mutex.at0(MUTEX.OWNER);
             if (owner == code.image.nil) {
                 mutex.atput0(MUTEX.OWNER, activeProcess);
-                pushStackNode.executeWrite(frame, code.image.sqFalse);
+                pushNode.executeWrite(frame, code.image.sqFalse);
             } else if (owner == activeProcess) {
-                pushStackNode.executeWrite(frame, code.image.sqTrue);
+                pushNode.executeWrite(frame, code.image.sqTrue);
             } else {
-                pushStackNode.executeWrite(frame, code.image.sqFalse);
+                pushNode.executeWrite(frame, code.image.sqFalse);
                 linkProcessToListNode.executeLink(activeProcess, mutex);
                 wakeHighestPriorityNode.executeWake(frame);
             }
