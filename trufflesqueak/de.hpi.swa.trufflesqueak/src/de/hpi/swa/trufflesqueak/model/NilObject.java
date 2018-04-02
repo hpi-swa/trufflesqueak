@@ -51,4 +51,9 @@ public class NilObject extends BaseSqueakObject {
     public long squeakHash() {
         return 1L;
     }
+
+    @Override
+    public final boolean isNil() {
+        return true;
+    }
 }

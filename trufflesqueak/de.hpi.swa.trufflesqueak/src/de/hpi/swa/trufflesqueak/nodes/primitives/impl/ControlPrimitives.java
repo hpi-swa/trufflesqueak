@@ -253,7 +253,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 wakeHighestPriorityNode.executeWake(frame);
             } else {
                 BaseSqueakObject oldList = (BaseSqueakObject) receiver.at0(PROCESS.LIST);
-                if (oldList == code.image.nil) {
+                if (oldList.isNil()) {
                     throw new PrimitiveFailed(ERROR_TABLE.BAD_RECEIVER);
                 }
                 removeProcessNode.executeRemove(receiver, oldList);

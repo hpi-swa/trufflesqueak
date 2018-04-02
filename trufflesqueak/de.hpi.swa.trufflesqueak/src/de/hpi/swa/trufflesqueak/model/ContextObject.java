@@ -278,7 +278,7 @@ public class ContextObject extends AbstractPointersObject {
             }
             image.getOutput().println(String.format("%s #(%s)", current, String.join(", ", argumentStrings)));
             BaseSqueakObject sender = current.getSender();
-            if (sender == image.nil) {
+            if (sender.isNil()) {
                 break;
             } else {
                 current = (ContextObject) sender;

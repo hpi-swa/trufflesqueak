@@ -76,6 +76,10 @@ public abstract class BaseSqueakObject implements TruffleObject {
         return size() - instsize();
     }
 
+    public boolean isNil() {
+        return false;
+    }
+
     public boolean isSpecialKindAt(long index) {
         return getSqClass().equals(image.specialObjectsArray.at0(index));
     }

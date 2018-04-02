@@ -89,8 +89,8 @@ public class ExecuteTopLevelContextNode extends RootNode {
         }
     }
 
-    private ContextObject unwindContextChain(BaseSqueakObject startContext, BaseSqueakObject targetContext, Object returnValue) {
-        if (startContext == image.nil) {
+    private static final ContextObject unwindContextChain(BaseSqueakObject startContext, BaseSqueakObject targetContext, Object returnValue) {
+        if (startContext.isNil()) {
             throw new TopLevelReturn(returnValue);
         }
         if (!(targetContext instanceof ContextObject)) {
@@ -99,7 +99,7 @@ public class ExecuteTopLevelContextNode extends RootNode {
         ContextObject context = (ContextObject) startContext;
         while (context != targetContext) {
             BaseSqueakObject sender = context.getSender();
-            if (sender == image.nil) {
+            if (sender.isNil()) {
                 throw new SqueakException("Unable to unwind context chain");
             }
             context.terminate();

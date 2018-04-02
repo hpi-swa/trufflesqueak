@@ -30,7 +30,7 @@ public class RemoveProcessFromListNode extends AbstractNodeWithImage {
             BaseSqueakObject temp = first;
             BaseSqueakObject next;
             while (true) {
-                if (temp == image.nil) {
+                if (temp.isNil()) {
                     throw new PrimitiveFailed();
                 }
                 next = (BaseSqueakObject) temp.at0(LINK.NEXT_LINK);

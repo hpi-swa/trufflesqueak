@@ -309,7 +309,7 @@ public class SqueakImageReader {
                 }
             }
         }
-        if (image.asSymbol == image.nil) {
+        if (image.asSymbol.isNil()) {
             throw new SqueakException("Unable to find asSymbol selector");
         }
     }

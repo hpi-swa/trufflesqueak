@@ -641,7 +641,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         @CompilationFinal protected CompiledMethodObject simulationMethod; // different method per simulation
         @CompilationFinal protected final String moduleName;
         @CompilationFinal protected final NativeObject functionName;
-        @CompilationFinal protected final boolean bitBltSimulationNotFound = code.image.simulatePrimitiveArgs == code.image.nil;
+        @CompilationFinal protected final boolean bitBltSimulationNotFound = code.image.simulatePrimitiveArgs.isNil();
         @Child protected LookupNode lookupNode = LookupNode.create();
         @Child protected DispatchNode dispatchNode = DispatchNode.create();
         @Child protected SqueakLookupClassNode lookupClassNode;

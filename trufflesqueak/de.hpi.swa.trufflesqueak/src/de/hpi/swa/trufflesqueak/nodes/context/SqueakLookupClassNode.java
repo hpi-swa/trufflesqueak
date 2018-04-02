@@ -31,10 +31,6 @@ public abstract class SqueakLookupClassNode extends AbstractNodeWithImage {
         }
     }
 
-    protected boolean isNil(Object object) {
-        return object == image.nil;
-    }
-
     @Specialization
     protected ClassObject squeakClass(long object) {
         if (object < LargeIntegerObject.SMALLINTEGER32_MIN) {
