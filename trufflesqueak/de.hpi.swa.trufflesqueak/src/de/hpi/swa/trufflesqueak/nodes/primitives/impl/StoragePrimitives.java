@@ -487,7 +487,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected BaseSqueakObject doNext(VirtualFrame frame, @SuppressWarnings("unused") BaseSqueakObject receiver) {
+        protected BaseSqueakObject doNext(VirtualFrame frame, BaseSqueakObject receiver) {
             List<BaseSqueakObject> allInstances = getAllInstancesNode.execute(frame);
             int index = allInstances.indexOf(receiver);
             if (0 <= index && index + 1 < allInstances.size()) {

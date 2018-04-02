@@ -394,7 +394,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         @TruffleBoundary
-        protected long doWrite(@SuppressWarnings("unused") PointersObject receiver, long fileDescriptor, NativeObject content, long startIndex, long count) {
+        protected long doWrite(PointersObject receiver, long fileDescriptor, NativeObject content, long startIndex, long count) {
             byte[] bytes = content.getBytes();
             long elementSize = content.getElementSize();
             int byteStart = (int) ((startIndex - 1) * elementSize);

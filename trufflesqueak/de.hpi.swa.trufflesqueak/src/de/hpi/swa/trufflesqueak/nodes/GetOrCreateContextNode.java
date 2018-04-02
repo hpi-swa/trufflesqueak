@@ -83,6 +83,6 @@ public abstract class GetOrCreateContextNode extends AbstractNodeWithCode {
 
     @Specialization(guards = {"!isVirtualized(frame)"})
     protected ContextObject doGet(VirtualFrame frame, @SuppressWarnings("unused") boolean forceContext) {
-        return (ContextObject) FrameAccess.getContextOrMarker(frame);
+        return (ContextObject) FrameAccess.getContextOrMarker(frame, code.thisContextOrMarkerSlot);
     }
 }

@@ -320,7 +320,7 @@ public final class SqueakDisplay {
             } else {
                 DataBuffer buf = new DataBufferInt(cursorWords, (CURSOR_WIDTH * CURSOR_HEIGHT / 8) * 1);
                 SampleModel sm = new MultiPixelPackedSampleModel(DataBuffer.TYPE_INT, CURSOR_WIDTH, CURSOR_HEIGHT, 1);
-                WritableRaster raster = Raster.createWritableRaster(sm, buf, new Point(0, 0));
+                WritableRaster raster = Raster.createWritableRaster(sm, buf, null);
                 Image cursorImage = new BufferedImage(cursorModel, raster, true, null);
                 cursor = toolkit.createCustomCursor(cursorImage, new Point(0, 0), "TruffleSqueak Cursor");
             }
