@@ -3,6 +3,7 @@ package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -19,6 +20,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
+import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.ERROR_TABLE;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.MUTEX;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.PROCESS;
@@ -336,18 +338,28 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final static boolean doDouble(final double a, final double b) {
-            return a == b;
+        protected final boolean doDouble(final double a, final double b) {
+            if (Double.isNaN(a) && Double.isNaN(b)) {
+                return code.image.sqTrue;
+            } else {
+                return a == b;
+            }
         }
 
         @Specialization
-        protected final static boolean doFloat(final FloatObject a, final FloatObject b) {
+        protected final boolean doFloat(final FloatObject a, final FloatObject b) {
             return a == b || doDouble(a.getValue(), b.getValue());
         }
 
+        @SuppressWarnings("unused")
         @Specialization
-        protected final static boolean doObject(final Object a, final Object b) {
-            return a.equals(b);
+        protected final boolean doObject(final NilObject a, final NilObject b) {
+            return code.image.sqTrue;
+        }
+
+        @Fallback
+        protected final static boolean doSqueakObject(final Object a, final Object b) {
+            return a == b;
         }
     }
 
