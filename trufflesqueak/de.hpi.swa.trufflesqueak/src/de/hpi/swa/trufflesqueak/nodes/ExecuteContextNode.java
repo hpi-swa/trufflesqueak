@@ -19,7 +19,7 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNod
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotWriteNode;
-import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
+import de.hpi.swa.trufflesqueak.nodes.context.stack.StackPushNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
@@ -31,7 +31,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
     @Child private FrameSlotReadNode contextReadNode;
     @Child private FrameSlotReadNode instructionPointerReadNode;
     @Child private FrameSlotWriteNode instructionPointerWriteNode;
-    @Child private PushStackNode pushStackNode;
+    @Child private StackPushNode pushStackNode;
 
     public static ExecuteContextNode create(CompiledCodeObject code) {
         return new ExecuteContextNode(code);
@@ -47,7 +47,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
         contextReadNode = FrameSlotReadNode.create(code.thisContextOrMarkerSlot);
         instructionPointerReadNode = FrameSlotReadNode.create(code.instructionPointerSlot);
         instructionPointerWriteNode = FrameSlotWriteNode.create(code.instructionPointerSlot);
-        pushStackNode = PushStackNode.create(code);
+        pushStackNode = StackPushNode.create(code);
     }
 
     public Object executeVirtualized(VirtualFrame frame) {

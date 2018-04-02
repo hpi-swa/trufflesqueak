@@ -20,8 +20,8 @@ import de.hpi.swa.trufflesqueak.nodes.DispatchNode;
 import de.hpi.swa.trufflesqueak.nodes.LookupNode;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
-import de.hpi.swa.trufflesqueak.nodes.context.stack.PopNReversedStackNode;
-import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
+import de.hpi.swa.trufflesqueak.nodes.context.stack.StackPopNReversedNode;
+import de.hpi.swa.trufflesqueak.nodes.context.stack.StackPushNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 
 public final class SendBytecodes {
@@ -34,8 +34,8 @@ public final class SendBytecodes {
         @Child private DispatchNode dispatchNode = DispatchNode.create();
         @Child private SendDoesNotUnderstandNode sendDoesNotUnderstandNode;
         @Child private SendObjectAsMethodNode sendObjectAsMethodNode;
-        @Child private PopNReversedStackNode popNReversedNode;
-        @Child private PushStackNode pushNode;
+        @Child private StackPopNReversedNode popNReversedNode;
+        @Child private StackPushNode pushNode;
         @Child private FrameSlotReadNode readContextNode;
 
         private AbstractSendNode(CompiledCodeObject code, int index, int numBytecodes, Object sel, int argcount) {
@@ -43,8 +43,8 @@ public final class SendBytecodes {
             selector = sel;
             argumentCount = argcount;
             lookupClassNode = SqueakLookupClassNode.create(code.image);
-            pushNode = PushStackNode.create(code);
-            popNReversedNode = PopNReversedStackNode.create(code, 1 + argumentCount);
+            pushNode = StackPushNode.create(code);
+            popNReversedNode = StackPopNReversedNode.create(code, 1 + argumentCount);
             readContextNode = FrameSlotReadNode.create(code.thisContextOrMarkerSlot);
             sendDoesNotUnderstandNode = SendDoesNotUnderstandNode.create(code.image);
             sendObjectAsMethodNode = SendObjectAsMethodNode.create(code.image);

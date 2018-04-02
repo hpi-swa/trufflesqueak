@@ -12,7 +12,7 @@ import de.hpi.swa.trufflesqueak.SqueakLanguage;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotWriteNode;
-import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
+import de.hpi.swa.trufflesqueak.nodes.context.stack.StackPushNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
@@ -23,7 +23,7 @@ public abstract class EnterCodeNode extends RootNode {
     @Child private FrameSlotWriteNode contextWriteNode;
     @Child private FrameSlotWriteNode instructionPointerWriteNode;
     @Child private FrameSlotWriteNode stackPointerWriteNode;
-    @Child private PushStackNode pushStackNode;
+    @Child private StackPushNode pushStackNode;
 
     public static EnterCodeNode create(SqueakLanguage language, CompiledCodeObject code) {
         return EnterCodeNodeGen.create(language, code);
@@ -37,7 +37,7 @@ public abstract class EnterCodeNode extends RootNode {
         contextWriteNode = FrameSlotWriteNode.create(code.thisContextOrMarkerSlot);
         instructionPointerWriteNode = FrameSlotWriteNode.create(code.instructionPointerSlot);
         stackPointerWriteNode = FrameSlotWriteNode.create(code.stackPointerSlot);
-        pushStackNode = PushStackNode.create(code);
+        pushStackNode = StackPushNode.create(code);
     }
 
     private void initializeSlots(VirtualFrame frame) {

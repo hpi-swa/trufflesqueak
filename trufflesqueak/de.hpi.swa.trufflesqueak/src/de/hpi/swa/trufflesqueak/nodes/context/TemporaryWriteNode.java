@@ -9,7 +9,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotWriteNode;
-import de.hpi.swa.trufflesqueak.nodes.context.stack.AbstractWriteNode;
+import de.hpi.swa.trufflesqueak.nodes.helpers.AbstractWriteNode;
 
 public abstract class TemporaryWriteNode extends AbstractWriteNode {
     @Child private FrameSlotWriteNode frameSlotWriteNode;

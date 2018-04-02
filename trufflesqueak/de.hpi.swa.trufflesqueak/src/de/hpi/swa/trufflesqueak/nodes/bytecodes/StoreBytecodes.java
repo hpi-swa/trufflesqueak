@@ -11,8 +11,8 @@ import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtPutNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.context.TemporaryReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.TemporaryWriteNode;
-import de.hpi.swa.trufflesqueak.nodes.context.stack.PopStackNode;
-import de.hpi.swa.trufflesqueak.nodes.context.stack.TopStackNode;
+import de.hpi.swa.trufflesqueak.nodes.context.stack.StackPopNode;
+import de.hpi.swa.trufflesqueak.nodes.context.stack.StackTopNode;
 
 public final class StoreBytecodes {
 
@@ -99,7 +99,7 @@ public final class StoreBytecodes {
     }
 
     public static class PopIntoAssociationNode extends AbstractStoreIntoAssociationNode {
-        @Child private PopStackNode popNode;
+        @Child private StackPopNode popNode;
 
         public PopIntoAssociationNode(CompiledCodeObject code, int index, int numBytecodes, long variableIndex) {
             super(code, index, numBytecodes, variableIndex);
@@ -112,7 +112,7 @@ public final class StoreBytecodes {
 
         @Override
         protected SqueakNode getValueNode() {
-            return PopStackNode.create(code);
+            return StackPopNode.create(code);
         }
     }
 
@@ -129,7 +129,7 @@ public final class StoreBytecodes {
 
         @Override
         protected SqueakNode getValueNode() {
-            return PopStackNode.create(code);
+            return StackPopNode.create(code);
         }
     }
 
@@ -146,16 +146,16 @@ public final class StoreBytecodes {
 
         @Override
         protected SqueakNode getValueNode() {
-            return PopStackNode.create(code);
+            return StackPopNode.create(code);
         }
     }
 
     public static class PopIntoTemporaryLocationNode extends AbstractStoreIntoTempNode {
-        @Child private PopStackNode popNode;
+        @Child private StackPopNode popNode;
 
         public PopIntoTemporaryLocationNode(CompiledCodeObject code, int index, int numBytecodes, long tempIndex) {
             super(code, index, numBytecodes, tempIndex);
-            popNode = PopStackNode.create(code);
+            popNode = StackPopNode.create(code);
         }
 
         @Override
@@ -170,7 +170,7 @@ public final class StoreBytecodes {
     }
 
     public static class StoreIntoAssociationNode extends AbstractStoreIntoAssociationNode {
-        @Child private TopStackNode topNode;
+        @Child private StackTopNode topNode;
 
         public StoreIntoAssociationNode(CompiledCodeObject code, int index, int numBytecodes, long variableIndex) {
             super(code, index, numBytecodes, variableIndex);
@@ -183,12 +183,12 @@ public final class StoreBytecodes {
 
         @Override
         protected SqueakNode getValueNode() {
-            return TopStackNode.create(code);
+            return StackTopNode.create(code);
         }
     }
 
     public static class StoreIntoReceiverVariableNode extends AbstractStoreIntoReceiverVariableNode {
-        @Child private TopStackNode topNode;
+        @Child private StackTopNode topNode;
 
         public StoreIntoReceiverVariableNode(CompiledCodeObject code, int index, int numBytecodes, long receiverIndex) {
             super(code, index, numBytecodes, receiverIndex);
@@ -201,7 +201,7 @@ public final class StoreBytecodes {
 
         @Override
         protected SqueakNode getValueNode() {
-            return TopStackNode.create(code);
+            return StackTopNode.create(code);
         }
     }
 
@@ -218,16 +218,16 @@ public final class StoreBytecodes {
 
         @Override
         protected SqueakNode getValueNode() {
-            return TopStackNode.create(code);
+            return StackTopNode.create(code);
         }
     }
 
     public static class StoreIntoTempNode extends AbstractStoreIntoTempNode {
-        @Child private TopStackNode topNode;
+        @Child private StackTopNode topNode;
 
         public StoreIntoTempNode(CompiledCodeObject code, int index, int numBytecodes, long tempIndex) {
             super(code, index, numBytecodes, tempIndex);
-            topNode = TopStackNode.create(code);
+            topNode = StackTopNode.create(code);
         }
 
         @Override

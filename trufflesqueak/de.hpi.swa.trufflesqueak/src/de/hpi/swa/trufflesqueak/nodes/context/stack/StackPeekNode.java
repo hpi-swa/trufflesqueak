@@ -6,17 +6,15 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 
-public abstract class PeekStackNode extends AbstractStackNode {
+public abstract class StackPeekNode extends AbstractStackNode {
     @CompilationFinal private final int offset;
-    @Child private FrameStackReadNode readNode = FrameStackReadNode.create();
 
-    public static PeekStackNode create(CompiledCodeObject code, int offset) {
-        return PeekStackNodeGen.create(code, offset);
+    public static StackPeekNode create(CompiledCodeObject code, int offset) {
+        return StackPeekNodeGen.create(code, offset);
     }
 
-    protected PeekStackNode(CompiledCodeObject code, int offset) {
+    protected StackPeekNode(CompiledCodeObject code, int offset) {
         super(code);
         this.offset = offset;
     }

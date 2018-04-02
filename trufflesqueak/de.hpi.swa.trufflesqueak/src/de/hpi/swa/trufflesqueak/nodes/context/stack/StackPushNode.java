@@ -8,17 +8,18 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode;
+import de.hpi.swa.trufflesqueak.nodes.helpers.AbstractWriteNode;
 
-public abstract class PushStackNode extends AbstractWriteNode {
+public abstract class StackPushNode extends AbstractWriteNode {
     @Child private FrameStackWriteNode writeNode = FrameStackWriteNode.create();
     @Child private FrameSlotReadNode stackPointerReadNode;
     @Child private FrameSlotWriteNode stackPointerWriteNode;
 
-    public static PushStackNode create(CompiledCodeObject code) {
-        return PushStackNodeGen.create(code);
+    public static StackPushNode create(CompiledCodeObject code) {
+        return StackPushNodeGen.create(code);
     }
 
-    protected PushStackNode(CompiledCodeObject code) {
+    protected StackPushNode(CompiledCodeObject code) {
         super(code);
         stackPointerReadNode = FrameSlotReadNode.create(code.stackPointerSlot);
         stackPointerWriteNode = FrameSlotWriteNode.create(code.stackPointerSlot);

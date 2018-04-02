@@ -17,14 +17,14 @@ import de.hpi.swa.trufflesqueak.nodes.context.MethodLiteralNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ObjectAtNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.context.TemporaryReadNode;
-import de.hpi.swa.trufflesqueak.nodes.context.stack.PopNReversedStackNode;
-import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
+import de.hpi.swa.trufflesqueak.nodes.context.stack.StackPopNReversedNode;
+import de.hpi.swa.trufflesqueak.nodes.context.stack.StackPushNode;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 
 public final class PushBytecodes {
 
     private static abstract class AbstractPushNode extends AbstractBytecodeNode {
-        @Child protected PushStackNode pushNode;
+        @Child protected StackPushNode pushNode;
 
         protected AbstractPushNode(CompiledCodeObject code, int index) {
             this(code, index, 1);
@@ -32,7 +32,7 @@ public final class PushBytecodes {
 
         protected AbstractPushNode(CompiledCodeObject code, int index, int numBytecodes) {
             super(code, index, numBytecodes);
-            pushNode = PushStackNode.create(code);
+            pushNode = StackPushNode.create(code);
         }
     }
 
@@ -61,7 +61,7 @@ public final class PushBytecodes {
         @CompilationFinal protected final int numArgs;
         @CompilationFinal protected final int numCopied;
         @Child protected GetOrCreateContextNode getOrCreateContextNode;
-        @Child protected PopNReversedStackNode popNReversedNode;
+        @Child protected StackPopNReversedNode popNReversedNode;
         @Child protected ReceiverNode receiverNode;
 
         public static PushClosureNode create(CompiledCodeObject code, int index, int numBytecodes, int i, int j, int k) {
@@ -74,7 +74,7 @@ public final class PushBytecodes {
             numCopied = (i >> 4) & 0xF;
             blockSize = (j << 8) | k;
             getOrCreateContextNode = GetOrCreateContextNode.create(code);
-            popNReversedNode = PopNReversedStackNode.create(code, numCopied);
+            popNReversedNode = StackPopNReversedNode.create(code, numCopied);
             receiverNode = ReceiverNode.create(code);
 
         }
@@ -108,7 +108,7 @@ public final class PushBytecodes {
         private final BlockClosureObject createClosure(final VirtualFrame frame) {
             Object receiver = receiverNode.executeRead(frame);
             Object[] copiedValues = (Object[]) popNReversedNode.executeRead(frame);
-            ContextObject thisContext = getOrCreateContextNode.executeGet(frame, true); // TODO: context might not need to be forced
+            ContextObject thisContext = getOrCreateContextNode.executeGet(frame, false); // TODO: context might not need to be forced
             return new BlockClosureObject(getBlock(), receiver, copiedValues, thisContext, code.thisContextOrMarkerSlot);
         }
 
@@ -182,13 +182,13 @@ public final class PushBytecodes {
     }
 
     public static class PushNewArrayNode extends AbstractPushNode {
-        @Child private PopNReversedStackNode popNReversedNode;
+        @Child private StackPopNReversedNode popNReversedNode;
         @CompilationFinal private final int arraySize;
 
         public PushNewArrayNode(CompiledCodeObject code, int index, int numBytecodes, int param) {
             super(code, index, numBytecodes);
             arraySize = param & 127;
-            popNReversedNode = param > 127 ? PopNReversedStackNode.create(code, arraySize) : null;
+            popNReversedNode = param > 127 ? StackPopNReversedNode.create(code, arraySize) : null;
         }
 
         @Override
@@ -271,14 +271,14 @@ public final class PushBytecodes {
     }
 
     public static class PushTemporaryLocationNode extends AbstractBytecodeNode {
-        @Child private PushStackNode pushNode;
+        @Child private StackPushNode pushNode;
         @Child private SqueakNode tempNode;
         @CompilationFinal private final int tempIndex;
 
         public PushTemporaryLocationNode(CompiledCodeObject code, int index, int numBytecodes, int tempIndex) {
             super(code, index, numBytecodes);
             this.tempIndex = tempIndex;
-            pushNode = PushStackNode.create(code);
+            pushNode = StackPushNode.create(code);
             tempNode = TemporaryReadNode.create(code, tempIndex);
         }
 

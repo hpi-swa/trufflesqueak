@@ -14,13 +14,13 @@ import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.SendSelectorNode;
 import de.hpi.swa.trufflesqueak.nodes.context.TemporaryReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.TemporaryWriteNode;
-import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
+import de.hpi.swa.trufflesqueak.nodes.context.stack.StackPushNode;
 
 public abstract class AboutToReturnNode extends AbstractNodeWithCode {
     @Child protected BlockActivationNode dispatch = BlockActivationNodeGen.create();
     private static BaseSqueakObject aboutToReturnSelector;
     @Child private SendSelectorNode sendAboutToReturnNode;
-    @Child private PushStackNode pushNode;
+    @Child private StackPushNode pushNode;
     @Child private SqueakNode blockArgumentNode;
     @Child private SqueakNode completeTempReadNode;
     @Child private TemporaryWriteNode completeTempWriteNode;
@@ -35,7 +35,7 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
             aboutToReturnSelector = (BaseSqueakObject) method.image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SelectorAboutToReturn);
         }
         sendAboutToReturnNode = new SendSelectorNode(method, -1, -1, aboutToReturnSelector, 2);
-        pushNode = PushStackNode.create(method);
+        pushNode = StackPushNode.create(method);
         blockArgumentNode = TemporaryReadNode.create(method, 0);
         completeTempReadNode = TemporaryReadNode.create(method, 1);
         completeTempWriteNode = TemporaryWriteNode.create(method, 1);

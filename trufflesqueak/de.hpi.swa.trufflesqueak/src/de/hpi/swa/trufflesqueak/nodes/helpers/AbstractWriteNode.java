@@ -1,4 +1,4 @@
-package de.hpi.swa.trufflesqueak.nodes.context.stack;
+package de.hpi.swa.trufflesqueak.nodes.helpers;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 

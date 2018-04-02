@@ -25,9 +25,9 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.PopIntoTemporaryL
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.StoreIntoAssociationNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.StoreIntoReceiverVariableNode;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.StoreBytecodes.StoreIntoTempNode;
-import de.hpi.swa.trufflesqueak.nodes.context.stack.PopStackNode;
-import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
-import de.hpi.swa.trufflesqueak.nodes.context.stack.TopStackNode;
+import de.hpi.swa.trufflesqueak.nodes.context.stack.StackPopNode;
+import de.hpi.swa.trufflesqueak.nodes.context.stack.StackPushNode;
+import de.hpi.swa.trufflesqueak.nodes.context.stack.StackTopNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.trufflesqueak.nodes.primitives.impl.ControlPrimitives.PrimitiveFailedNode;
@@ -107,13 +107,13 @@ public final class MiscellaneousBytecodes {
     }
 
     public static class DupNode extends UnknownBytecodeNode {
-        @Child private PushStackNode pushNode;
-        @Child private TopStackNode topNode;
+        @Child private StackPushNode pushNode;
+        @Child private StackTopNode topNode;
 
         public DupNode(CompiledCodeObject code, int index, int numBytecodes) {
             super(code, index, numBytecodes, -1);
-            topNode = TopStackNode.create(code);
-            pushNode = PushStackNode.create(code);
+            topNode = StackTopNode.create(code);
+            pushNode = StackPushNode.create(code);
         }
 
         @Override
@@ -187,11 +187,11 @@ public final class MiscellaneousBytecodes {
     }
 
     public static class PopNode extends UnknownBytecodeNode {
-        @Child private PopStackNode popNode;
+        @Child private StackPopNode popNode;
 
         public PopNode(CompiledCodeObject code, int index, int numBytecodes) {
             super(code, index, numBytecodes, -1);
-            popNode = PopStackNode.create(code);
+            popNode = StackPopNode.create(code);
         }
 
         @Override

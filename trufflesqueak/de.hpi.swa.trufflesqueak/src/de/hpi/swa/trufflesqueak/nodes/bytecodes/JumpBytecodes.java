@@ -11,8 +11,8 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.trufflesqueak.nodes.bytecodes.SendBytecodes.SendSelectorNode;
-import de.hpi.swa.trufflesqueak.nodes.context.stack.PopStackNode;
-import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
+import de.hpi.swa.trufflesqueak.nodes.context.stack.StackPopNode;
+import de.hpi.swa.trufflesqueak.nodes.context.stack.StackPushNode;
 
 public final class JumpBytecodes {
 
@@ -21,8 +21,8 @@ public final class JumpBytecodes {
         public static final int TRUE_SUCCESSOR = 1;
         @CompilationFinal private static NativeObject mustBeBooleanSelector;
         @CompilationFinal private final Boolean isIfTrue;
-        @Child private PopStackNode popNode;
-        @Child private PushStackNode pushNode;
+        @Child private StackPopNode popNode;
+        @Child private StackPushNode pushNode;
         @Child private SendSelectorNode sendMustBeBooleanNode;
         @CompilationFinal(dimensions = 1) private final int[] successorExecutionCount = new int[2];
 
@@ -39,8 +39,8 @@ public final class JumpBytecodes {
         }
 
         private void initializeChildNodes() {
-            popNode = PopStackNode.create(code);
-            pushNode = PushStackNode.create(code);
+            popNode = StackPopNode.create(code);
+            pushNode = StackPushNode.create(code);
             sendMustBeBooleanNode = new SendSelectorNode(code, -1, 1, getMustBeBooleanSelector(), 0);
         }
 

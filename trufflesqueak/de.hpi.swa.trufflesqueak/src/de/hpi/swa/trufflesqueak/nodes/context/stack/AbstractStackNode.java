@@ -6,10 +6,12 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithCode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotWriteNode;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
 
 public abstract class AbstractStackNode extends SqueakNodeWithCode {
     @Child private FrameSlotReadNode stackPointerReadNode;
     @Child private FrameSlotWriteNode stackPointerWriteNode;
+    @Child protected FrameStackReadNode readNode = FrameStackReadNode.create();
 
     public AbstractStackNode(CompiledCodeObject code) {
         super(code);

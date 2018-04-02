@@ -195,9 +195,7 @@ public class ContextObject extends AbstractPointersObject {
         if (sp > 0) {
             setStackPointer(sp - 1);
         }
-        Object value = atStack(sp);
-        atStackPut(sp, image.nil);
-        return value;
+        return atStackAndClear(sp);
     }
 
     public Object[] popNReversed(int numPop) {
@@ -205,8 +203,7 @@ public class ContextObject extends AbstractPointersObject {
         assert sp - numPop >= 0;
         Object[] result = new Object[numPop];
         for (int i = 0; i < numPop; i++) {
-            result[numPop - 1 - i] = atStack(sp - i);
-            atStackPut(sp - i, image.nil);
+            result[numPop - 1 - i] = atStackAndClear(sp - i);
         }
         setStackPointer(sp - numPop);
         return result;
@@ -230,6 +227,14 @@ public class ContextObject extends AbstractPointersObject {
 
     public void atStackPut(long argumentIndex, Object value) {
         atput0(CONTEXT.TEMP_FRAME_START - 1 + argumentIndex, value);
+    }
+
+    public Object atStackAndClear(long argumentIndex) {
+        Object value = atStack(argumentIndex);
+        if (argumentIndex > CONTEXT.RECEIVER + getMethod().getNumTemps()) { // do not modify receiver and temps
+            atStackPut(argumentIndex, image.nil);
+        }
+        return value;
     }
 
     public BlockClosureObject getClosure() {

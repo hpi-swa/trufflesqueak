@@ -18,7 +18,7 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.ReturnBytecodesFactory.ReturnTop
 import de.hpi.swa.trufflesqueak.nodes.context.ReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameArgumentNode;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotReadNode;
-import de.hpi.swa.trufflesqueak.nodes.context.stack.PopStackNode;
+import de.hpi.swa.trufflesqueak.nodes.context.stack.StackPopNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class ReturnBytecodes {
@@ -131,7 +131,7 @@ public final class ReturnBytecodes {
     }
 
     public static abstract class ReturnTopFromMethodNode extends AbstractReturnNode {
-        @Child protected PopStackNode popNode;
+        @Child protected StackPopNode popNode;
 
         public static ReturnTopFromMethodNode create(CompiledCodeObject code, int index) {
             return ReturnTopFromMethodNodeGen.create(code, index);
@@ -139,7 +139,7 @@ public final class ReturnBytecodes {
 
         protected ReturnTopFromMethodNode(CompiledCodeObject code, int index) {
             super(code, index);
-            popNode = PopStackNode.create(code);
+            popNode = StackPopNode.create(code);
         }
 
         @Override

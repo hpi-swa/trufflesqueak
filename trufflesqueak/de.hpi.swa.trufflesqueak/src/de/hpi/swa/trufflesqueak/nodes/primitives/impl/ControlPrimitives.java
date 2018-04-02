@@ -36,7 +36,7 @@ import de.hpi.swa.trufflesqueak.nodes.context.ReceiverAndArgumentsNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNodeGen;
-import de.hpi.swa.trufflesqueak.nodes.context.stack.PushStackNode;
+import de.hpi.swa.trufflesqueak.nodes.context.stack.StackPushNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.PrimitiveNodeFactory;
@@ -235,14 +235,14 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Child private WakeHighestPriorityNode wakeHighestPriorityNode;
         @Child private RemoveProcessFromListNode removeProcessNode;
         @Child private GetActiveProcessNode getActiveProcessNode;
-        @Child private PushStackNode pushStackNode;
+        @Child private StackPushNode pushStackNode;
 
         protected PrimSuspendNode(CompiledMethodObject method) {
             super(method);
             removeProcessNode = RemoveProcessFromListNode.create(method.image);
             wakeHighestPriorityNode = WakeHighestPriorityNode.create(method.image);
             getActiveProcessNode = GetActiveProcessNode.create(method.image);
-            pushStackNode = PushStackNode.create(method);
+            pushStackNode = StackPushNode.create(method);
         }
 
         @Specialization
@@ -617,14 +617,14 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Child private GetActiveProcessNode getActiveProcessNode;
         @Child private LinkProcessToListNode linkProcessToListNode;
         @Child private WakeHighestPriorityNode wakeHighestPriorityNode;
-        @Child private PushStackNode pushStackNode;
+        @Child private StackPushNode pushStackNode;
 
         public PrimEnterCriticalSectionNode(CompiledMethodObject method) {
             super(method);
             getActiveProcessNode = GetActiveProcessNode.create(method.image);
             linkProcessToListNode = LinkProcessToListNode.create(method.image);
             wakeHighestPriorityNode = WakeHighestPriorityNode.create(method.image);
-            pushStackNode = PushStackNode.create(method);
+            pushStackNode = StackPushNode.create(method);
         }
 
         @Override

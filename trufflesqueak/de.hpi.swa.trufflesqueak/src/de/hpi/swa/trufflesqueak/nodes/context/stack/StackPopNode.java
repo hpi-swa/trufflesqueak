@@ -5,21 +5,14 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackReadNode;
-import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode;
 
-public abstract class PopStackNode extends AbstractStackNode {
-    @Child private FrameStackReadNode readNode;
-    @Child private FrameStackWriteNode writeNode;
-
-    public static PopStackNode create(CompiledCodeObject code) {
-        return PopStackNodeGen.create(code);
+public abstract class StackPopNode extends AbstractStackPopNode {
+    public static StackPopNode create(CompiledCodeObject code) {
+        return StackPopNodeGen.create(code);
     }
 
-    protected PopStackNode(CompiledCodeObject code) {
+    protected StackPopNode(CompiledCodeObject code) {
         super(code);
-        readNode = FrameStackReadNode.create();
-        writeNode = FrameStackWriteNode.create();
     }
 
     @Specialization(guards = {"isVirtualized(frame)"})
@@ -28,9 +21,7 @@ public abstract class PopStackNode extends AbstractStackNode {
         long sp = frameStackPointer(frame);
         assert sp >= 0;
         setFrameStackPointer(frame, sp - 1);
-        Object value = readNode.execute(frame, (int) sp);
-        writeNode.execute(frame, (int) sp, code.image.nil);
-        return value;
+        return atStackAndClear(frame, (int) sp);
     }
 
     @Specialization(guards = {"!isVirtualized(frame)"})
