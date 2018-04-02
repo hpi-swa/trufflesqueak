@@ -51,6 +51,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
     }
 
     public Object executeVirtualized(VirtualFrame frame) {
+        code.image.interrupt.sendOrBackwardJumpTrigger(frame);
         try {
             startBytecode(frame);
             throw new SqueakException("Method did not return");
@@ -67,6 +68,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
     public Object executeNonVirtualized(VirtualFrame frame, ContextObject newContext) {
         // maybe persist newContext, so there's no need to lookup the context to update its pc.
         assert newContext.getCodeObject() == FrameAccess.getMethod(frame);
+        code.image.interrupt.sendOrBackwardJumpTrigger(frame);
         try {
             long initialPC = newContext.getInstructionPointer();
             if (initialPC == 0) {
@@ -101,14 +103,13 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
                 storeInstructionPointer(frame, node);
                 if (node instanceof ConditionalJumpNode) {
                     ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
-                    boolean condition = jumpNode.executeCondition(frame);
+                    final boolean condition = jumpNode.executeCondition(frame);
                     if (CompilerDirectives.injectBranchProbability(jumpNode.getBranchProbability(ConditionalJumpNode.TRUE_SUCCESSOR), condition)) {
                         int successor = jumpNode.getJumpSuccessor();
                         if (CompilerDirectives.inInterpreter()) {
                             jumpNode.increaseBranchProbability(ConditionalJumpNode.TRUE_SUCCESSOR);
                             if (successor <= pc) {
                                 backJumpCounter++;
-                                code.image.interrupt.sendOrBackwardJumpTrigger(frame);
                             }
                         }
                         pc = successor;
@@ -120,7 +121,6 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
                             jumpNode.increaseBranchProbability(ConditionalJumpNode.FALSE_SUCCESSOR);
                             if (successor <= pc) {
                                 backJumpCounter++;
-                                code.image.interrupt.sendOrBackwardJumpTrigger(frame);
                             }
                         }
                         pc = successor;
@@ -132,7 +132,6 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
                     if (CompilerDirectives.inInterpreter()) {
                         if (successor <= pc) {
                             backJumpCounter++;
-                            code.image.interrupt.sendOrBackwardJumpTrigger(frame);
                         }
                     }
                     pc = successor;

@@ -62,7 +62,6 @@ public final class SendBytecodes {
         }
 
         public Object executeSend(VirtualFrame frame) {
-            code.image.interrupt.sendOrBackwardJumpTrigger(frame);
             Object[] rcvrAndArgs = (Object[]) popNReversedNode.executeRead(frame);
             ClassObject rcvrClass = lookupClassNode.executeLookup(rcvrAndArgs[0]);
             Object lookupResult = lookupNode.executeLookup(rcvrClass, selector);

@@ -49,7 +49,10 @@ public class InterruptHandlerNode extends Node {
         disabled = value;
     }
 
-    public void sendOrBackwardJumpTrigger(VirtualFrame frame) { // Check for interrupts at sends and backward jumps
+    /*
+     * Check for interrupts on sends and backward jumps.
+     */
+    public void sendOrBackwardJumpTrigger(VirtualFrame frame) { // TODO: call on backward jumps
         if (disabled || interruptCheckCounter-- > 0) {
             return; // only really check every 100 times or so
         }
