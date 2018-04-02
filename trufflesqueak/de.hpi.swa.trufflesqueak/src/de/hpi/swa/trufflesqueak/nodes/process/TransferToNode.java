@@ -4,7 +4,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.ProcessSwitch;
-import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.PROCESS;
@@ -26,13 +25,8 @@ public class TransferToNode extends AbstractNodeWithImage {
     }
 
     public void executeTransferTo(VirtualFrame frame, BaseSqueakObject activeProcess, BaseSqueakObject newProcess) {
-        BaseSqueakObject activeContext = GetOrCreateContextNode.getOrCreate(frame).getSender();
-        // assert activeContext != image.nil : "activeContext expected";
-        if (activeContext == image.nil) { // TODO: use assertion from above again, the exception is only needed for testing
-            image.printSqStackTrace();
-            throw new SqueakException("activeContext expected, this is likely due to a process switch when running a testcase");
-        }
         // Record a process to be awakened on the next interpreter cycle.
+        BaseSqueakObject activeContext = GetOrCreateContextNode.getOrCreate(frame);
         PointersObject scheduler = getSchedulerNode.executeGet();
         assert newProcess != scheduler.at0(PROCESS_SCHEDULER.ACTIVE_PROCESS); // trying to switch to already active process
         scheduler.atput0(PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
