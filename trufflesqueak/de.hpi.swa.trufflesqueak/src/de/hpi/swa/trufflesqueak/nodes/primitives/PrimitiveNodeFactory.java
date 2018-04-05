@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -46,14 +45,20 @@ public abstract class PrimitiveNodeFactory {
                     new MiscPrimitivePlugin(),
                     new TruffleSqueakPlugin()};
     @CompilationFinal(dimensions = 1) private static final String[] simulatedPlugins = new String[]{"BitBltPlugin", "B2DPlugin", "BalloonPlugin"};
-    @CompilationFinal private static Map<Integer, NodeFactory<? extends AbstractPrimitiveNode>> primitiveTable;
+    @CompilationFinal private static final Map<Integer, NodeFactory<? extends AbstractPrimitiveNode>> primitiveTable;
+
+    static {
+        primitiveTable = new HashMap<>();
+        fillPrimitiveTable(indexPrimitives);
+        fillPrimitiveTable(plugins);
+    }
 
     @TruffleBoundary
     public static AbstractPrimitiveNode forIndex(CompiledMethodObject method, int primitiveIndex) {
         if (264 <= primitiveIndex && primitiveIndex <= 520) {
             return ControlPrimitives.PrimQuickReturnReceiverVariableNode.create(method, primitiveIndex - 264);
         }
-        NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = getPrimitiveTable().get(primitiveIndex);
+        NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = primitiveTable.get(primitiveIndex);
         if (nodeFactory != null) {
             return createInstance(method, nodeFactory, nodeFactory.getNodeClass().getAnnotation(SqueakPrimitive.class));
         }
@@ -110,29 +115,20 @@ public abstract class PrimitiveNodeFactory {
         return nodeFactory.createNode(method, arguments);
     }
 
-    private static Map<Integer, NodeFactory<? extends AbstractPrimitiveNode>> getPrimitiveTable() {
-        if (primitiveTable == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            primitiveTable = new HashMap<>();
-            fillPrimitiveTable(indexPrimitives);
-            fillPrimitiveTable(plugins);
-        }
-        return primitiveTable;
-    }
-
     private static void fillPrimitiveTable(AbstractPrimitiveFactoryHolder[] primitiveFactories) {
         for (AbstractPrimitiveFactoryHolder primitiveFactory : primitiveFactories) {
             List<? extends NodeFactory<? extends AbstractPrimitiveNode>> nodeFactories = primitiveFactory.getFactories();
             for (NodeFactory<? extends AbstractPrimitiveNode> nodeFactory : nodeFactories) {
                 Class<? extends AbstractPrimitiveNode> primitiveClass = nodeFactory.getNodeClass();
                 SqueakPrimitive primitive = primitiveClass.getAnnotation(SqueakPrimitive.class);
-                if (primitive != null) {
-                    if (primitive.index() > 0) {
-                        addEntryToPrimitiveTable(primitive.index(), nodeFactory);
-                    }
-                    for (int index : primitive.indices()) {
-                        addEntryToPrimitiveTable(index, nodeFactory);
-                    }
+                if (primitive == null) {
+                    continue;
+                }
+                if (primitive.index() > 0) {
+                    addEntryToPrimitiveTable(primitive.index(), nodeFactory);
+                }
+                for (int index : primitive.indices()) {
+                    addEntryToPrimitiveTable(index, nodeFactory);
                 }
             }
         }
