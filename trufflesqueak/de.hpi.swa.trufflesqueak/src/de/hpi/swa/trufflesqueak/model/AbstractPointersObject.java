@@ -68,10 +68,10 @@ public abstract class AbstractPointersObject extends SqueakObject {
         for (int i = 0; i < from.length; i++) {
             Object fromPointer = from[i];
             for (int j = 0; j < pointers.length; j++) {
-                Object newPointer = pointers[j];
+                Object newPointer = at0(j);
                 if (newPointer == fromPointer) {
                     Object toPointer = to[i];
-                    pointers[j] = toPointer;
+                    atput0(j, toPointer);
                     if (copyHash && fromPointer instanceof BaseSqueakObject && toPointer instanceof SqueakObject) {
                         ((SqueakObject) toPointer).setSqueakHash(((BaseSqueakObject) fromPointer).squeakHash());
                     }
