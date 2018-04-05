@@ -39,6 +39,15 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         return FilePluginFactory.getFactories();
     }
 
+    @TruffleBoundary
+    private static final RandomAccessFile getFileOrPrimFail(final long fileDescriptor) {
+        RandomAccessFile handle = files.get(fileDescriptor);
+        if (handle == null) {
+            throw new PrimitiveFailed();
+        }
+        return handle;
+    }
+
     protected static abstract class AbstractFilePluginPrimitiveNode extends AbstractPrimitiveNode {
 
         protected AbstractFilePluginPrimitiveNode(CompiledMethodObject method) {
@@ -169,9 +178,9 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected Object doAtEnd(@SuppressWarnings("unused") PointersObject receiver, long fileDescriptor) {
             try {
-                RandomAccessFile file = files.get(fileDescriptor);
+                RandomAccessFile file = getFileOrPrimFail(fileDescriptor);
                 return code.image.wrap(file.getFilePointer() >= file.length() - 1);
-            } catch (NullPointerException | IOException e) {
+            } catch (IOException e) {
                 throw new PrimitiveFailed();
             }
         }
@@ -188,9 +197,8 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected Object doClose(PointersObject receiver, long fileDescriptor) {
             try {
-                RandomAccessFile file = files.get(fileDescriptor);
-                file.close();
-            } catch (NullPointerException | IOException e) {
+                getFileOrPrimFail(fileDescriptor).close();
+            } catch (IOException e) {
                 throw new PrimitiveFailed();
             }
             return receiver;
@@ -240,9 +248,8 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected Object doGet(@SuppressWarnings("unused") PointersObject receiver, long fileDescriptor) {
             try {
-                RandomAccessFile file = files.get(fileDescriptor);
-                return file.getFilePointer();
-            } catch (NullPointerException | IOException e) {
+                return code.image.wrap(getFileOrPrimFail(fileDescriptor).getFilePointer());
+            } catch (IOException e) {
                 throw new PrimitiveFailed();
             }
         }
@@ -256,6 +263,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
+        @TruffleBoundary
         @Specialization(guards = "isString(nativeFileName)")
         protected Object doOpen(@SuppressWarnings("unused") PointersObject receiver, NativeObject nativeFileName, Boolean writableFlag) {
             String fileName = nativeFileName.toString();
@@ -284,13 +292,12 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             int count = (int) longCount;
             byte[] buffer = new byte[count];
             try {
-                RandomAccessFile file = files.get(fileDescriptor);
-                long read = file.read(buffer, 0, count);
+                long read = getFileOrPrimFail(fileDescriptor).read(buffer, 0, count);
                 for (int index = 0; index < read; index++) {
                     target.atput0(startIndex - 1 + index, (long) buffer[index]);
                 }
                 return read;
-            } catch (NullPointerException | IOException e) {
+            } catch (IOException e) {
                 throw new PrimitiveFailed();
             }
         }
@@ -325,9 +332,8 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected Object doSet(PointersObject receiver, long fileDescriptor, long position) {
             try {
-                RandomAccessFile file = files.get(fileDescriptor);
-                file.seek(position);
-            } catch (NullPointerException | IOException e) {
+                getFileOrPrimFail(fileDescriptor).seek(position);
+            } catch (IOException e) {
                 throw new PrimitiveFailed();
             }
             return receiver;
@@ -345,9 +351,8 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected Object doSize(@SuppressWarnings("unused") PointersObject receiver, long fileDescriptor) {
             try {
-                RandomAccessFile file = files.get(fileDescriptor);
-                return code.image.wrap(file.length());
-            } catch (NullPointerException | IOException e) {
+                return code.image.wrap(getFileOrPrimFail(fileDescriptor).length());
+            } catch (IOException e) {
                 throw new PrimitiveFailed();
             }
         }
@@ -376,9 +381,8 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected Object doTruncate(PointersObject receiver, long fileDescriptor, long to) {
             try {
-                RandomAccessFile file = files.get(fileDescriptor);
-                file.setLength(to);
-            } catch (NullPointerException | IOException e) {
+                getFileOrPrimFail(fileDescriptor).setLength(to);
+            } catch (IOException e) {
                 throw new PrimitiveFailed();
             }
             return receiver;
@@ -393,7 +397,6 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        @TruffleBoundary
         protected long doWrite(PointersObject receiver, long fileDescriptor, NativeObject content, long startIndex, long count) {
             byte[] bytes = content.getBytes();
             long elementSize = content.getElementSize();
@@ -412,9 +415,8 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
                     doWrite(receiver, STDIO_HANDLES.ERROR, content, startIndex, count);
                 }
                 try {
-                    RandomAccessFile file = files.get(fileDescriptor);
-                    file.write(bytes);
-                } catch (NullPointerException | IOException e) {
+                    getFileOrPrimFail(fileDescriptor).write(bytes);
+                } catch (IOException e) {
                     throw new PrimitiveFailed();
                 }
             }
