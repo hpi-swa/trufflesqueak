@@ -44,13 +44,13 @@ public class ClassObject extends AbstractPointersObject {
     }
 
     @Override
-    public boolean isClass() {
+    public final boolean isClass() {
         assert image.metaclass == getSqClass() || image.metaclass == getSqClass().getSqClass();
         return true;
     }
 
     @Override
-    public String nameAsClass() {
+    public final String nameAsClass() {
         assert isClass();
         if (isAMetaclass()) {
             // metaclasses store their singleton instance in the last field
@@ -67,20 +67,20 @@ public class ClassObject extends AbstractPointersObject {
         return "UnknownClass";
     }
 
-    private boolean isMetaclass() {
+    private final boolean isMetaclass() {
         return this == image.metaclass;
     }
 
-    private boolean isAMetaclass() {
+    private final boolean isAMetaclass() {
         return this.getSqClass() == image.metaclass;
     }
 
-    private boolean instancesAreClasses() {
+    private final boolean instancesAreClasses() {
         return isMetaclass() || isAMetaclass();
     }
 
     @Override
-    public void fillin(SqueakImageChunk chunk) {
+    public final void fillin(SqueakImageChunk chunk) {
         super.fillin(chunk);
         // initialize the subclasses set
         setFormat((long) at0(CLASS.FORMAT));
@@ -88,7 +88,7 @@ public class ClassObject extends AbstractPointersObject {
         setSuperclass(superclass != null ? superclass : image.nil);
     }
 
-    public void setFormat(long format) {
+    public final void setFormat(long format) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         super.atput0(CLASS.FORMAT, format);
         if (instSpec >= 0) { // only invalidate if not initialized
@@ -98,7 +98,7 @@ public class ClassObject extends AbstractPointersObject {
         instanceSize = (int) (format & 0xffff);
     }
 
-    public void setSuperclass(Object superclass) {
+    public final void setSuperclass(Object superclass) {
         Object oldSuperclass = getSuperclass();
         super.atput0(CLASS.SUPERCLASS, superclass);
         if (oldSuperclass instanceof ClassObject) {
@@ -112,32 +112,32 @@ public class ClassObject extends AbstractPointersObject {
         }
     }
 
-    private void invalidateMethodLookup() {
+    private final void invalidateMethodLookup() {
         methodLookupStable.invalidate();
     }
 
-    private void attachSubclass(ClassObject classObject) {
+    private final void attachSubclass(ClassObject classObject) {
         subclasses.add(classObject);
     }
 
-    private void detachSubclass(ClassObject classObject) {
+    private final void detachSubclass(ClassObject classObject) {
         subclasses.remove(classObject);
     }
 
-    public Object getSuperclass() {
+    public final Object getSuperclass() {
         return at0(CLASS.SUPERCLASS);
     }
 
-    public Object getMethodDict() {
+    public final Object getMethodDict() {
         return at0(CLASS.METHOD_DICT);
     }
 
-    public Object getName() {
+    public final Object getName() {
         return at0(CLASS.NAME);
     }
 
     @Override
-    public void atput0(long idx, Object obj) {
+    public final void atput0(long idx, Object obj) {
         if (idx == CLASS.FORMAT) {
             setFormat((long) obj);
         } else if (idx == CLASS.SUPERCLASS) {
@@ -147,17 +147,17 @@ public class ClassObject extends AbstractPointersObject {
         }
     }
 
-    public Assumption getMethodLookupStable() {
+    public final Assumption getMethodLookupStable() {
         return methodLookupStable.getAssumption();
     }
 
-    public Assumption getClassFormatStable() {
+    public final Assumption getClassFormatStable() {
         return classFormatStable.getAssumption();
     }
 
     // TODO: cache the methoddict in a better structure than what Squeak provides
     // ... or use the Squeak hash to decide where to put stuff
-    private Object lookup(Predicate<Object> predicate) {
+    private final Object lookup(Predicate<Object> predicate) {
         Object lookupClass = this;
         while (lookupClass instanceof ClassObject) {
             Object methodDict = ((ClassObject) lookupClass).getMethodDict();
@@ -177,7 +177,7 @@ public class ClassObject extends AbstractPointersObject {
         return getDoesNotUnderstandMethod();
     }
 
-    private CompiledMethodObject getDoesNotUnderstandMethod() {
+    private final CompiledMethodObject getDoesNotUnderstandMethod() {
         if (doesNotUnderstandMethod == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             doesNotUnderstandMethod = (CompiledMethodObject) lookup(image.doesNotUnderstand);
@@ -185,24 +185,24 @@ public class ClassObject extends AbstractPointersObject {
         return doesNotUnderstandMethod;
     }
 
-    public Object lookup(NativeObject selector) {
+    public final Object lookup(NativeObject selector) {
         return lookup(methodSelector -> methodSelector == selector);
     }
 
     @TruffleBoundary
-    public Object lookup(String selector) {
+    public final Object lookup(String selector) {
         return lookup(methodSelector -> methodSelector != null && methodSelector.toString().equals(selector));
     }
 
-    public boolean isVariable() {
+    public final boolean isVariable() {
         return instSpec >= 2 && (instSpec <= 4 || instSpec >= 9);
     }
 
-    public Object newInstance() {
+    public final Object newInstance() {
         return newInstance(0);
     }
 
-    public Object newInstance(long extraSize) {
+    public final Object newInstance(long extraSize) {
         int size = instanceSize + ((int) extraSize);
         //@formatter:off
         switch (instSpec) {
@@ -256,16 +256,16 @@ public class ClassObject extends AbstractPointersObject {
         //@formatter:on
     }
 
-    public int getBasicInstanceSize() {
+    public final int getBasicInstanceSize() {
         return instanceSize;
     }
 
     @Override
-    public BaseSqueakObject shallowCopy() {
+    public final BaseSqueakObject shallowCopy() {
         return new ClassObject(this);
     }
 
-    public long classByteSizeOfInstance(long numElements) {
+    public final long classByteSizeOfInstance(long numElements) {
         int numWords = instanceSize;
         if (instSpec < 9) {                   // 32 bit
             numWords += numElements;
