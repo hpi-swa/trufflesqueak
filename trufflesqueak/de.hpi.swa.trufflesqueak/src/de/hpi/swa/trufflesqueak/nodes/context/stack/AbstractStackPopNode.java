@@ -14,7 +14,7 @@ public abstract class AbstractStackPopNode extends AbstractStackNode {
 
     protected final Object atStackAndClear(final VirtualFrame frame, final int index) {
         Object value = readNode.execute(frame, index);
-        if (index > 1 + code.getNumTemps()) { // do not modify receiver and temps
+        if (index > 1 + code.getNumArgsAndCopiedValues() + code.getNumTemps()) { // do not modify receiver, args, and temps
             writeNode.execute(frame, index, code.image.nil);
         }
         return value;

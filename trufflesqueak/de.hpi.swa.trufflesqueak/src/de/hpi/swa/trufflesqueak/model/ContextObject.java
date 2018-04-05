@@ -230,7 +230,8 @@ public class ContextObject extends AbstractPointersObject {
 
     public Object atStackAndClear(long argumentIndex) {
         Object value = atStack(argumentIndex);
-        if (argumentIndex > CONTEXT.RECEIVER + getMethod().getNumTemps()) { // do not modify receiver and temps
+        CompiledCodeObject code = getMethod();
+        if (argumentIndex > 1 + code.getNumArgsAndCopiedValues() + code.getNumTemps()) { // do not modify receiver, args, and temps
             atStackPut(argumentIndex, image.nil);
         }
         return value;
