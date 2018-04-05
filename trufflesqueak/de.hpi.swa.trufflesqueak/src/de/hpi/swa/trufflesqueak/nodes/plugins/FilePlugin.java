@@ -408,6 +408,9 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
                 code.image.getError().append(content.toString(), byteStart, byteEnd);
                 code.image.getError().flush();
             } else {
+                if (code.image.config.isVerbose()) { // also print to stderr
+                    doWrite(receiver, STDIO_HANDLES.ERROR, content, startIndex, count);
+                }
                 try {
                     RandomAccessFile file = files.get(fileDescriptor);
                     file.write(bytes);
