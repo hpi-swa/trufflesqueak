@@ -1,5 +1,6 @@
 package de.hpi.swa.trufflesqueak.nodes;
 
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.GenerateWrapper;
@@ -11,6 +12,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.SourceSection;
 
 @GenerateWrapper
+@ReportPolymorphism
 @TypeSystemReference(SqueakTypes.class)
 public abstract class SqueakNode extends Node implements InstrumentableNode {
     public abstract Object executeRead(VirtualFrame frame);
