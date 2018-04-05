@@ -374,7 +374,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 111)
+    @SqueakPrimitive(index = 111, variableArguments = true) // Object>>class and Context>>objectClass:
     protected static abstract class PrimClassNode extends AbstractPrimitiveNode {
         private @Child SqueakLookupClassNode node;
 
@@ -383,9 +383,14 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             node = SqueakLookupClassNode.create(code.image);
         }
 
+        @Override
+        public final Object executeWithArguments(VirtualFrame frame, Object... rcvrAndArgs) {
+            return doClass(rcvrAndArgs);
+        }
+
         @Specialization
-        protected ClassObject doClass(Object arg) {
-            return node.executeLookup(arg);
+        protected final ClassObject doClass(Object[] rcvrAndArgs) {
+            return node.executeLookup(rcvrAndArgs[rcvrAndArgs.length - 1]);
         }
     }
 
