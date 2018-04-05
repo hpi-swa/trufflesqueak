@@ -21,9 +21,9 @@ public final class TruffleSqueakPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "debugPrint")
-    protected static abstract class PrimPrintArgs extends AbstractPrimitiveNode {
-        protected PrimPrintArgs(CompiledMethodObject code) {
+    @SqueakPrimitive(name = "debugPrint", numArguments = 2)
+    protected static abstract class PrimPrintArgsNode extends AbstractPrimitiveNode {
+        protected PrimPrintArgsNode(CompiledMethodObject code) {
             super(code);
         }
 
