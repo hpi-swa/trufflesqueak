@@ -4,6 +4,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags;
+import com.oracle.truffle.api.instrumentation.Tag;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveWithoutResultException;
@@ -80,7 +81,7 @@ public final class SendBytecodes {
         }
 
         @Override
-        protected boolean isTaggedWith(Class<?> tag) {
+        public boolean hasTag(Class<? extends Tag> tag) {
             return ((tag == StandardTags.StatementTag.class) || (tag == StandardTags.CallTag.class));
         }
 
@@ -186,7 +187,8 @@ public final class SendBytecodes {
             message.atput0(MESSAGE.SELECTOR, selector);
             Object[] arguments = ArrayUtils.allButFirst(rcvrAndArgs);
             message.atput0(MESSAGE.ARGUMENTS, image.newList(arguments));
-            if (message.instsize() > MESSAGE.LOOKUP_CLASS) { // early versions do not have lookupClass
+            if (message.instsize() > MESSAGE.LOOKUP_CLASS) { // early versions do not have
+                                                             // lookupClass
                 message.atput0(MESSAGE.LOOKUP_CLASS, rcvrClass);
             }
             return dispatchNode.executeDispatch(frame, lookupDNU, new Object[]{rcvrAndArgs[0], message}, contextOrMarker);

@@ -44,11 +44,6 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
     }
 
     @Override
-    protected Object findExportedSymbol(SqueakImageContext context, String globalName, boolean onlyExplicit) {
-        return null; // TODO: not sure what to return here
-    }
-
-    @Override
     protected Object findMetaObject(SqueakImageContext image, Object value) {
         // TODO: return ContextObject instead?
         if (value instanceof FrameMarker) {
@@ -61,8 +56,7 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
         }
     }
 
-    @Override
-    protected Object getLanguageGlobal(SqueakImageContext context) {
-        return context.smalltalk;
+    public static final SqueakImageContext getContext() {
+        return null; // FIXME
     }
 }

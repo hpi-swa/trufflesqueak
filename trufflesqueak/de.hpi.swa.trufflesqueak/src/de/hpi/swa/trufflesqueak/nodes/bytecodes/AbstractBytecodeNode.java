@@ -2,15 +2,12 @@ package de.hpi.swa.trufflesqueak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.instrumentation.Instrumentable;
-import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.source.SourceSection;
 
 import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithCode;
 
-@Instrumentable(factory = AbstractBytecodeNodeWrapper.class)
 public abstract class AbstractBytecodeNode extends SqueakNodeWithCode {
     @CompilationFinal protected final int numBytecodes;
     @CompilationFinal protected final int index;
@@ -65,11 +62,6 @@ public abstract class AbstractBytecodeNode extends SqueakNodeWithCode {
             sourceSection = code.getSource().createSection(lineNumber);
         }
         return sourceSection;
-    }
-
-    @Override
-    protected boolean isTaggedWith(Class<?> tag) {
-        return tag == StandardTags.StatementTag.class;
     }
 
     public void setLineNumber(int lineNumber) {

@@ -4,7 +4,6 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.LoopNode;
 
@@ -201,10 +200,5 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
     @TruffleBoundary
     public String toString() {
         return code.toString();
-    }
-
-    @Override
-    protected boolean isTaggedWith(Class<?> tag) {
-        return tag == StandardTags.RootTag.class;
     }
 }

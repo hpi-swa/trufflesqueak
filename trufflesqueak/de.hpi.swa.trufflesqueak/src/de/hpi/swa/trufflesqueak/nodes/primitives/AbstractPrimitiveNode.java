@@ -2,6 +2,11 @@ package de.hpi.swa.trufflesqueak.nodes.primitives;
 
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.GenerateWrapper;
+import com.oracle.truffle.api.instrumentation.InstrumentableNode;
+import com.oracle.truffle.api.instrumentation.ProbeNode;
+import com.oracle.truffle.api.instrumentation.StandardTags;
+import com.oracle.truffle.api.instrumentation.Tag;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
@@ -13,11 +18,16 @@ import de.hpi.swa.trufflesqueak.model.PointersObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNodeWithCode;
 import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 
+@GenerateWrapper
 @NodeChild(value = "arguments", type = SqueakNode[].class)
-public abstract class AbstractPrimitiveNode extends AbstractNodeWithCode {
+public abstract class AbstractPrimitiveNode extends AbstractNodeWithCode implements InstrumentableNode {
 
     public AbstractPrimitiveNode(CompiledMethodObject method) {
         super(method);
+    }
+
+    public AbstractPrimitiveNode(AbstractPrimitiveNode original) {
+        super(original.code);
     }
 
     public Object executeWithArguments(VirtualFrame frame, Object... arguments) {
@@ -50,5 +60,18 @@ public abstract class AbstractPrimitiveNode extends AbstractNodeWithCode {
 
     protected final FloatObject asFloatObject(final double value) {
         return FloatObject.valueOf(code.image, value);
+    }
+
+    @Override
+    public boolean hasTag(Class<? extends Tag> tag) {
+        return tag == StandardTags.StatementTag.class;
+    }
+
+    public boolean isInstrumentable() {
+        return true;
+    }
+
+    public WrapperNode createWrapper(ProbeNode probe) {
+        return new AbstractPrimitiveNodeWrapper(this, this, probe);
     }
 }

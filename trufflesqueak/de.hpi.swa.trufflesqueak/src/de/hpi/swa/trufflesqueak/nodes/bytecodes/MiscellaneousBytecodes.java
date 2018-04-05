@@ -4,6 +4,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.instrumentation.StandardTags.StatementTag;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
@@ -69,7 +70,7 @@ public final class MiscellaneousBytecodes {
         }
 
         @Override
-        protected boolean isTaggedWith(Class<?> tag) {
+        public boolean hasTag(Class<? extends Tag> tag) {
             return tag == StatementTag.class;
         }
 

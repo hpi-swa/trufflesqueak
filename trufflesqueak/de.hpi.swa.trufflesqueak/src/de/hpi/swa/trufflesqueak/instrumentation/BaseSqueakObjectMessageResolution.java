@@ -2,7 +2,6 @@ package de.hpi.swa.trufflesqueak.instrumentation;
 
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
-import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
@@ -72,7 +71,7 @@ public class BaseSqueakObjectMessageResolution {
     @Resolve(message = "KEYS")
     public abstract static class BaseSqueakObjectPropertiesNode extends Node {
         public Object access(@SuppressWarnings("unused") Object receiver) {
-            return JavaInterop.asTruffleObject(new String[0]);
+            return null; // FIXME
         }
     }
 }
