@@ -3,6 +3,7 @@ package de.hpi.swa.trufflesqueak.model;
 import java.lang.ref.WeakReference;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
+import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 // TODO: Validate that weak objects are working correctly
@@ -65,6 +66,12 @@ public class WeakPointersObject extends ListObject {
     @Override
     public BaseSqueakObject shallowCopy() {
         return new WeakPointersObject(this);
+    }
+
+    @Override
+    public boolean become(BaseSqueakObject other) {
+        // TODO: implement or remove?
+        throw new SqueakException("become not implemented for WeakPointerObjects");
     }
 
     private void convertToWeakReferences() {
