@@ -28,7 +28,7 @@ public class TransferToNode extends AbstractNodeWithImage {
         // Record a process to be awakened on the next interpreter cycle.
         BaseSqueakObject activeContext = GetOrCreateContextNode.getOrCreate(frame);
         PointersObject scheduler = getSchedulerNode.executeGet();
-        assert newProcess != scheduler.at0(PROCESS_SCHEDULER.ACTIVE_PROCESS); // trying to switch to already active process
+        assert newProcess != scheduler.at0(PROCESS_SCHEDULER.ACTIVE_PROCESS) : "trying to switch to already active process";
         scheduler.atput0(PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
         activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, activeContext);
         ContextObject newActiveContext = (ContextObject) newProcess.at0(PROCESS.SUSPENDED_CONTEXT);

@@ -327,13 +327,14 @@ public class SqueakImageContext {
                 }
                 Object method = FrameAccess.getMethod(current);
                 lastSender[0] = FrameAccess.getSender(current);
+                Object contextOrMarker = FrameAccess.getContextOrMarker(current);
                 Object[] arguments = FrameAccess.getArguments(current);
                 String[] argumentStrings = new String[arguments.length];
                 for (int i = 0; i < arguments.length; i++) {
                     argumentStrings[i] = arguments[i].toString();
                 }
                 String prefix = FrameAccess.getClosure(current) == null ? "" : "[] in ";
-                getOutput().println(String.format("%s%s #(%s) [sender: %s]", prefix, method, String.join(", ", argumentStrings), lastSender[0]));
+                getOutput().println(String.format("%s%s #(%s) [this: %s, sender: %s]", prefix, method, String.join(", ", argumentStrings), contextOrMarker, lastSender[0]));
                 return null;
             }
         });

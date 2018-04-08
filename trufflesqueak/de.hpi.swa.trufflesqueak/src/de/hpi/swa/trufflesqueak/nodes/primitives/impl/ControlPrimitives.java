@@ -78,8 +78,8 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object fail(@SuppressWarnings("unused") VirtualFrame frame) {
-            if (code.image.config.isVerbose()) {
-                System.out.println("Primitive not yet written: " + code.toString());
+            if (code.image.config.isVerbose() && !code.image.config.isTracing()) {
+                code.image.getOutput().println("Primitive not yet written: " + code.toString());
             }
             throw new PrimitiveFailed();
         }
@@ -237,7 +237,8 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected BaseSqueakObject doResume(VirtualFrame frame, PointersObject receiver) {
-            pushNode.executeWrite(frame, receiver); // keep receiver on stack before resuming other process
+            // keep receiver on stack before resuming other process
+            pushNode.executeWrite(frame, receiver);
             resumeProcessNode.executeResume(frame, receiver);
             throw new PrimitiveWithoutResultException();
         }
@@ -310,7 +311,8 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             if (numRcvrAndArgs == 4) { // Object>>#perform:withArguments:inSuperclass:
                 return dispatchRcvrAndArgs(frame, rvcrAndArgs);
             } else if (numRcvrAndArgs == 5) { // Context>>#object:perform:withArguments:inClass:
-                return dispatchRcvrAndArgs(frame, ArrayUtils.allButFirst(rvcrAndArgs)); // use first arg as receiver
+                // use first argument as receiver
+                return dispatchRcvrAndArgs(frame, ArrayUtils.allButFirst(rvcrAndArgs));
             } else {
                 throw new PrimitiveFailed();
             }
@@ -373,8 +375,11 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    /*
+     * primitiveClass (see Object>>class and Context>>objectClass:).
+     */
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 111, variableArguments = true) // Object>>class and Context>>objectClass:
+    @SqueakPrimitive(index = 111, variableArguments = true)
     protected static abstract class PrimClassNode extends AbstractPrimitiveNode {
         private @Child SqueakLookupClassNode node;
 
