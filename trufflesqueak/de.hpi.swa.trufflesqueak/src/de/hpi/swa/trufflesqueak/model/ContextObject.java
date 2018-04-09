@@ -238,6 +238,25 @@ public class ContextObject extends AbstractPointersObject {
         return value;
     }
 
+    @Override
+    public final void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        for (int i = 0; i < from.length; i++) {
+            Object fromPointer = from[i];
+            // skip sender (for performance), pc, and sp
+            for (int j = CONTEXT.METHOD; j < size(); j++) {
+                Object newPointer = at0(j);
+                if (newPointer == fromPointer) {
+                    Object toPointer = to[i];
+                    atput0(j, toPointer);
+                    if (copyHash && fromPointer instanceof BaseSqueakObject && toPointer instanceof SqueakObject) {
+                        ((SqueakObject) toPointer).setSqueakHash(((BaseSqueakObject) fromPointer).squeakHash());
+                    }
+                }
+            }
+        }
+    }
+
     public BlockClosureObject getClosure() {
         Object closureOrNil = at0(CONTEXT.CLOSURE_OR_NIL);
         return closureOrNil == image.nil ? null : (BlockClosureObject) closureOrNil;
