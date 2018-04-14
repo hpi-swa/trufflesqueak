@@ -4,7 +4,7 @@ python:
 addons:
   apt:
     packages:
-      - oracle-java9-installer
+      - oracle-java8-installer
 install:
   - pip install astroid==1.1.0
   - pip install pylint==1.1.0

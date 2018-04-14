@@ -29,7 +29,7 @@ suite = {
                 # "tools:CHROMEINSPECTOR",
             ],
             "checkstyle": "de.hpi.swa.trufflesqueak",
-            "javaCompliance": "1.9",
+            "javaCompliance": "1.8",
             "annotationProcessors": ["truffle:TRUFFLE_DSL_PROCESSOR"],
             "workingSets": "TruffleSqueak",
         },
@@ -38,7 +38,7 @@ suite = {
             "sourceDirs": ["src"],
             "dependencies": ["de.hpi.swa.trufflesqueak", "mx:JUNIT"],
             "checkstyle": "de.hpi.swa.trufflesqueak.test",
-            "javaCompliance": "1.9",
+            "javaCompliance": "1.8",
             "workingSets": "TruffleSqueak",
         },
     },
@@ -68,7 +68,7 @@ suite = {
 
         "TRUFFLESQUEAK_TEST": {
             "path": "trufflesqueak_test.jar",
-            "javaCompliance": "1.9",
+            "javaCompliance": "1.8",
             "dependencies": [
                 "de.hpi.swa.trufflesqueak.test",
             ],

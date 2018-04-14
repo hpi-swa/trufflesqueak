@@ -314,7 +314,7 @@ public class SqueakImageContext {
         final int[] depth = new int[1];
         Object[] lastSender = new Object[]{null};
         getOutput().println("== Squeak stack trace ===========================================================");
-        Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<>() {
+        Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Object>() {
 
             @Override
             public Object visitFrame(FrameInstance frameInstance) {
