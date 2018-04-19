@@ -12,66 +12,76 @@ import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNodeWithImage;
 
 public abstract class SqueakLookupClassNode extends AbstractNodeWithImage {
-    public static SqueakLookupClassNode create(SqueakImageContext image) {
+    public static SqueakLookupClassNode create(final SqueakImageContext image) {
         return SqueakLookupClassNodeGen.create(image);
     }
 
-    protected SqueakLookupClassNode(SqueakImageContext image) {
+    protected SqueakLookupClassNode(final SqueakImageContext image) {
         super(image);
     }
 
     public abstract ClassObject executeLookup(Object receiver);
 
-    @Specialization
-    protected ClassObject squeakClass(boolean object) {
-        if (object) {
-            return image.trueClass;
-        } else {
-            return image.falseClass;
-        }
+    @Specialization(guards = "object == image.sqTrue")
+    protected final ClassObject doTrue(@SuppressWarnings("unused") final boolean object) {
+        return image.trueClass;
+    }
+
+    @Specialization(guards = "object != image.sqTrue")
+    protected final ClassObject doFalse(@SuppressWarnings("unused") final boolean object) {
+        return image.falseClass;
+    }
+
+    @Specialization(guards = "isLargeNegative(value)")
+    protected final ClassObject doLargeNegative(@SuppressWarnings("unused") final long value) {
+        return image.largeNegativeIntegerClass;
+    }
+
+    @Specialization(guards = "isLargePositive(value)")
+    protected final ClassObject doLargePositive(@SuppressWarnings("unused") final long value) {
+        return image.largePositiveIntegerClass;
+    }
+
+    @Specialization(guards = {"!isLargePositive(value)", "!isLargeNegative(value)"})
+    protected final ClassObject doSmallInteger(@SuppressWarnings("unused") final long value) {
+        return image.smallIntegerClass;
     }
 
     @Specialization
-    protected ClassObject squeakClass(long object) {
-        if (object < LargeIntegerObject.SMALLINTEGER32_MIN) {
-            return image.largeNegativeIntegerClass;
-        } else if (object <= LargeIntegerObject.SMALLINTEGER32_MAX) {
-            return image.smallIntegerClass;
-        } else {
-            return image.largePositiveIntegerClass;
-        }
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    protected ClassObject squeakClass(char object) {
+    protected final ClassObject squeakClass(@SuppressWarnings("unused") final char object) {
         return image.characterClass;
     }
 
-    @SuppressWarnings("unused")
     @Specialization
-    protected ClassObject squeakClass(double object) {
+    protected final ClassObject squeakClass(@SuppressWarnings("unused") final double object) {
         return image.floatClass;
     }
 
     @Specialization
-    protected ClassObject squeakClass(@SuppressWarnings("unused") BlockClosureObject ch) {
+    protected final ClassObject squeakClass(@SuppressWarnings("unused") final BlockClosureObject ch) {
         return image.blockClosureClass;
     }
 
     @Specialization
-    protected ClassObject squeakClass(@SuppressWarnings("unused") ContextObject ch) {
+    protected final ClassObject squeakClass(@SuppressWarnings("unused") final ContextObject ch) {
         return image.methodContextClass;
     }
 
-    @SuppressWarnings("unused")
     @Specialization
-    protected ClassObject nilClass(NilObject object) {
+    protected final ClassObject nilClass(@SuppressWarnings("unused") final NilObject object) {
         return image.nilClass;
     }
 
     @Specialization
-    protected ClassObject squeakClass(BaseSqueakObject object) {
+    protected static final ClassObject squeakClass(final BaseSqueakObject object) {
         return object.getSqClass();
+    }
+
+    protected static final boolean isLargeNegative(final long value) {
+        return value < LargeIntegerObject.SMALLINTEGER32_MIN;
+    }
+
+    protected static final boolean isLargePositive(final long value) {
+        return value > LargeIntegerObject.SMALLINTEGER32_MAX;
     }
 }
