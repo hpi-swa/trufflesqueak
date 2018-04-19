@@ -12,9 +12,6 @@ PACKAGE_NAME = 'de.hpi.swa.trufflesqueak'
 
 _suite = mx.suite('trufflesqueak')
 _compiler = mx.suite("compiler", fatalIfMissing=False)
-_images = os.path.join(_suite.dir, "images")
-
-os.environ["TRUFFLESQUEAK_ROOT"] = _suite.dir
 
 
 def _graal_vm_args(args, jdk):

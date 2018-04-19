@@ -32,7 +32,6 @@ import de.hpi.swa.trufflesqueak.nodes.process.GetActiveProcessNode;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class SqueakSUnitTest extends AbstractSqueakTestCase {
-    private static final String IMAGE_PATH = getImagesPathName() + File.separator + "test.image";
     private static Object smalltalkDictionary;
     private static Object smalltalkAssociation;
     private static Object evaluateSymbol;
@@ -551,12 +550,13 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
 
     @BeforeClass
     public static void loadTestImage() {
-        image = new SqueakImageContext(IMAGE_PATH);
+        String imagePath = getPathToTestImage();
+        image = new SqueakImageContext(imagePath);
         image.getOutput().println();
         System.out.println("== Running " + SqueakLanguage.NAME + " SUnit Tests on " + Truffle.getRuntime().getName() + " ==");
-        image.getOutput().println("Loading test image at " + IMAGE_PATH + "...");
+        image.getOutput().println("Loading test image at " + imagePath + "...");
         try {
-            image.fillInFrom(new FileInputStream(IMAGE_PATH));
+            image.fillInFrom(new FileInputStream(imagePath));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -585,8 +585,16 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
         assertNotEquals(image.nil, patchResult);
     }
 
-    private static String getImagesPathName() {
-        return System.getenv("TRUFFLESQUEAK_ROOT") + File.separator + "images";
+    private static String getPathToTestImage() {
+        File currentDirectory = new File(System.getProperty("user.dir"));
+        while (currentDirectory != null) {
+            String pathToImage = currentDirectory.getAbsolutePath() + File.separator + "images" + File.separator + "test.image";
+            if (new File(pathToImage).exists()) {
+                return pathToImage;
+            }
+            currentDirectory = currentDirectory.getParentFile();
+        }
+        throw new RuntimeException("Unable to locate test image.");
     }
 
     private static Object getSmalltalkDictionary() {
