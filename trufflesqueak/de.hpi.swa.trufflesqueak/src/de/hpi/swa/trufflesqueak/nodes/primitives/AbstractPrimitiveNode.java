@@ -10,8 +10,10 @@ import com.oracle.truffle.api.instrumentation.Tag;
 
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.EmptyObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
+import de.hpi.swa.trufflesqueak.model.NativeObject;
 import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.trufflesqueak.model.PointersObject;
@@ -48,6 +50,14 @@ public abstract class AbstractPrimitiveNode extends AbstractNodeWithCode impleme
 
     protected static final boolean isNil(Object obj) {
         return obj instanceof NilObject;
+    }
+
+    protected static final boolean isNativeObject(final BaseSqueakObject object) {
+        return object instanceof NativeObject;
+    }
+
+    protected static final boolean isEmptyObject(final BaseSqueakObject object) {
+        return object instanceof EmptyObject;
     }
 
     protected static final boolean isSemaphore(PointersObject receiver) {

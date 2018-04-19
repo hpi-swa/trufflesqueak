@@ -73,7 +73,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
             return receiver.getNativeAt0(index - 1);
         }
 
-        @Specialization
+        @Specialization(guards = "!isNativeObject(receiver)")
         protected static final Object doSqueakObject(final BaseSqueakObject receiver, final long index) {
             return receiver.at0(index - 1 + receiver.instsize());
         }
@@ -147,7 +147,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
             return doNativeObject(asLargeInteger(receiver), index, value);
         }
 
-        @Specialization
+        @Specialization(guards = {"!isNativeObject(receiver)", "!isEmptyObject(receiver)"})
         protected Object doSqueakObject(final BaseSqueakObject receiver, final long index, final Object value) {
             receiver.atput0(index - 1 + receiver.instsize(), value);
             return value;
@@ -162,37 +162,37 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected long size(@SuppressWarnings("unused") char obj) {
+        protected static final long size(@SuppressWarnings("unused") final char obj) {
             return 0;
         }
 
         @Specialization
-        protected long size(@SuppressWarnings("unused") boolean o) {
+        protected static final long size(@SuppressWarnings("unused") final boolean o) {
             return 0;
         }
 
         @Specialization(guards = "!isSmallInteger(value)")
-        protected long doLong(final long value) {
+        protected final long doLong(final long value) {
             return doNativeObject(asLargeInteger(value));
         }
 
         @Specialization
-        protected long doString(final String s) {
+        protected static final long doString(final String s) {
             return s.getBytes().length;
         }
 
         @Specialization
-        protected long doNativeObject(NativeObject obj) {
+        protected static final long doNativeObject(final NativeObject obj) {
             return obj.size();
         }
 
         @Specialization
-        protected long size(@SuppressWarnings("unused") double o) {
+        protected static final long size(@SuppressWarnings("unused") final double o) {
             return 2; // Float in words
         }
 
         @Specialization(guards = {"!isNil(obj)", "hasVariableClass(obj)"})
-        protected long size(BaseSqueakObject obj) {
+        protected static final long size(final BaseSqueakObject obj) {
             return obj.varsize();
         }
 
@@ -209,12 +209,12 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 63, numArguments = 2)
     protected static abstract class PrimStringAtNode extends AbstractPrimitiveNode {
-        protected PrimStringAtNode(CompiledMethodObject method) {
+        protected PrimStringAtNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Override
-        public final Object executeWithArguments(VirtualFrame frame, Object... arguments) {
+        public final Object executeWithArguments(final VirtualFrame frame, final Object... arguments) {
             try {
                 return executeWithArgumentsSpecialized(frame, arguments);
             } catch (IndexOutOfBoundsException e) {
@@ -223,7 +223,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Override
-        public final Object executePrimitive(VirtualFrame frame) {
+        public final Object executePrimitive(final VirtualFrame frame) {
             try {
                 return executeStringAt(frame);
             } catch (IndexOutOfBoundsException e) {
@@ -231,10 +231,10 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        public abstract Object executeStringAt(VirtualFrame frame);
+        public abstract Object executeStringAt(final VirtualFrame frame);
 
         @Specialization
-        protected char doNativeObject(NativeObject obj, long idx) {
+        protected static final char doNativeObject(final NativeObject obj, final long idx) {
             int intValue = ((Long) obj.getNativeAt0(idx - 1)).intValue();
             return (char) intValue;
         }
@@ -243,12 +243,12 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 64, numArguments = 3)
     protected static abstract class PrimStringAtPutNode extends AbstractPrimitiveNode {
-        protected PrimStringAtPutNode(CompiledMethodObject method) {
+        protected PrimStringAtPutNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Override
-        public final Object executeWithArguments(VirtualFrame frame, Object... arguments) {
+        public final Object executeWithArguments(final VirtualFrame frame, final Object... arguments) {
             try {
                 return executeWithArgumentsSpecialized(frame, arguments);
             } catch (IndexOutOfBoundsException | IllegalArgumentException e) {
@@ -257,7 +257,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Override
-        public final Object executePrimitive(VirtualFrame frame) {
+        public final Object executePrimitive(final VirtualFrame frame) {
             try {
                 return executeStringAtPut(frame);
             } catch (IndexOutOfBoundsException | IllegalArgumentException e) {
@@ -265,16 +265,16 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        public abstract Object executeStringAtPut(VirtualFrame frame);
+        public abstract Object executeStringAtPut(final VirtualFrame frame);
 
         @Specialization
-        protected char doNativeObject(NativeObject obj, long idx, char value) {
+        protected static final char doNativeObject(final NativeObject obj, final long idx, final char value) {
             obj.setNativeAt0(idx - 1, value);
             return value;
         }
 
         @Specialization
-        protected char doNativeObject(NativeObject obj, long idx, long value) {
+        protected static final char doNativeObject(final NativeObject obj, final long idx, final long value) {
             assert value >= 0;
             obj.setNativeAt0(idx - 1, value);
             return (char) ((Long) value).intValue();
@@ -284,12 +284,12 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 143, numArguments = 2)
     protected static abstract class PrimShortAtNode extends AbstractPrimitiveNode {
-        protected PrimShortAtNode(CompiledMethodObject method) {
+        protected PrimShortAtNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected long doNativeObject(final NativeObject receiver, final long index) {
+        protected static final long doNativeObject(final NativeObject receiver, final long index) {
             try {
                 return receiver.shortAt0(index);
             } catch (IndexOutOfBoundsException e) {
@@ -301,12 +301,12 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 144, numArguments = 3)
     protected static abstract class PrimShortAtPutNode extends AbstractPrimitiveNode {
-        protected PrimShortAtPutNode(CompiledMethodObject method) {
+        protected PrimShortAtPutNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected long doNativeObject(final NativeObject receiver, final long index, final long value) {
+        protected static final long doNativeObject(final NativeObject receiver, final long index, final long value) {
             if (!(-0x8000 <= value && value <= 0x8000)) {
                 throw new PrimitiveFailed();
             }
@@ -318,12 +318,12 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 210, numArguments = 2)
     protected static abstract class PrimContextAtNode extends AbstractPrimitiveNode {
-        protected PrimContextAtNode(CompiledMethodObject method) {
+        protected PrimContextAtNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected Object doContextObject(final ContextObject receiver, final long index) {
+        protected static final Object doContextObject(final ContextObject receiver, final long index) {
             try {
                 return receiver.atTemp(index - 1);
             } catch (IndexOutOfBoundsException e) {
@@ -335,12 +335,12 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 211, numArguments = 3)
     protected static abstract class PrimContextAtPut extends AbstractPrimitiveNode {
-        protected PrimContextAtPut(CompiledMethodObject method) {
+        protected PrimContextAtPut(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected Object doContextObject(final ContextObject receiver, final long index, final Object value) {
+        protected static final Object doContextObject(final ContextObject receiver, final long index, final Object value) {
             try {
                 receiver.atTempPut(index - 1, value);
             } catch (IndexOutOfBoundsException e) {
