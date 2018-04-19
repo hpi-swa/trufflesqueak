@@ -230,10 +230,10 @@ public class ContextObject extends AbstractPointersObject {
 
     public Object atStackAndClear(long argumentIndex) {
         Object value = atStack(argumentIndex);
-        CompiledCodeObject code = getMethod();
+// CompiledCodeObject code = getMethod();
 // if (argumentIndex > 1 + code.getNumArgsAndCopiedValues() + code.getNumTemps()) {
 // only nil out stack values, not receiver, args, or temps
-        atStackPut(argumentIndex, image.nil);
+// atStackPut(argumentIndex, image.nil);
 // }
         return value;
     }
