@@ -4,11 +4,8 @@ import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
-import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
-import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.LargeIntegerObject;
-import de.hpi.swa.trufflesqueak.model.NilObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNodeWithImage;
 
 public abstract class SqueakLookupClassNode extends AbstractNodeWithImage {
@@ -48,33 +45,18 @@ public abstract class SqueakLookupClassNode extends AbstractNodeWithImage {
     }
 
     @Specialization
-    protected final ClassObject squeakClass(@SuppressWarnings("unused") final char object) {
+    protected final ClassObject squeakClass(@SuppressWarnings("unused") final char value) {
         return image.characterClass;
     }
 
     @Specialization
-    protected final ClassObject squeakClass(@SuppressWarnings("unused") final double object) {
+    protected final ClassObject squeakClass(@SuppressWarnings("unused") final double value) {
         return image.floatClass;
     }
 
     @Specialization
-    protected final ClassObject squeakClass(@SuppressWarnings("unused") final BlockClosureObject ch) {
-        return image.blockClosureClass;
-    }
-
-    @Specialization
-    protected final ClassObject squeakClass(@SuppressWarnings("unused") final ContextObject ch) {
-        return image.methodContextClass;
-    }
-
-    @Specialization
-    protected final ClassObject nilClass(@SuppressWarnings("unused") final NilObject object) {
-        return image.nilClass;
-    }
-
-    @Specialization
-    protected static final ClassObject squeakClass(final BaseSqueakObject object) {
-        return object.getSqClass();
+    protected static final ClassObject squeakClass(final BaseSqueakObject value) {
+        return value.getSqClass();
     }
 
     protected static final boolean isLargeNegative(final long value) {
