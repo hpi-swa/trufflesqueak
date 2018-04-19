@@ -10,6 +10,6 @@ install:
   - pip install pylint==1.1.0
   - git clone --depth 1 https://github.com/graalvm/mx
 before_script:
-  - test/download-test-image.sh
+  - scripts/download-test-image.sh
 script:
   - mx/mx gate

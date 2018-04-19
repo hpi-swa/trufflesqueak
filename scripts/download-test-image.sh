@@ -1,7 +1,11 @@
 #!/bin/bash
 set -e
 
-readonly TARGET_DIR="${TRAVIS_BUILD_DIR}/images"
+if [[ "${TRAVIS}" == "true" ]]; then
+  readonly TARGET_DIR="${TRAVIS_BUILD_DIR}/images"
+else
+  readonly TARGET_DIR="images"
+fi
 
 mkdir "${TARGET_DIR}" > /dev/null
 pushd "${TARGET_DIR}"
