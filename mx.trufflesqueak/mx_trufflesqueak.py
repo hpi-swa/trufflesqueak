@@ -71,27 +71,27 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
 
     parser = argparse.ArgumentParser(prog='mx squeak')
     parser.add_argument('-A', '--assertions',
-                        help='Enable assertion',
+                        help='enable assertion',
                         dest='assertions',
                         action='store_true', default=False)
     parser.add_argument('-B', '--no-background',
-                        help='Disable background compilation',
+                        help='disable background compilation',
                         dest='background_compilation',
                         action='store_false', default=True)
-    parser.add_argument('--igv', action='store_true', help='Dump to igv')
+    parser.add_argument('--igv', action='store_true', help='dump to igv')
     parser.add_argument('-l', '--low-level',
-                        help='Enable low-level optimization output',
+                        help='enable low-level optimization output',
                         dest='low_level', action='store_true', default=False)
     parser.add_argument('--machine-code',
-                        help='Print machine code',
+                        help='print machine code',
                         dest='print_machine_code', action='store_true',
                         default=False)
     parser.add_argument(
         '-ti', '--trace-invalid',
-        help='Trace assumption invalidation and transfers to interpreter',
+        help='trace assumption invalidation and transfers to interpreter',
         dest='trace_invalidation', action='store_true', default=False)
     parser.add_argument('-w', '--perf-warnings',
-                        help='Enable performance warnings',
+                        help='enable performance warnings',
                         dest='perf_warnings',
                         action='store_true', default=False)
     parser.add_argument('squeak_args', nargs=argparse.REMAINDER)
