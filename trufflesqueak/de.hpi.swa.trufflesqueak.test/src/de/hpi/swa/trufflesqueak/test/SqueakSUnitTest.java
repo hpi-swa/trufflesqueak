@@ -11,9 +11,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
@@ -475,15 +475,15 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
         assertTrue(resultString.contains("sends/sec"));
     }
 
-    @Ignore
     @Test
     public void testInspectSqueakTest() {
+        assumeNotOnTravisCI();
         runTestCase("ByteArrayTest");
     }
 
-    @Ignore
     @Test
     public void testInspectSqueakTestSelector() {
+        assumeNotOnTravisCI();
         image.getOutput().println(evaluate("(WordArrayTest run: #testCannotPutNegativeValue) asString"));
     }
 
@@ -515,9 +515,9 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
         testAndFailOnPassing(TEST_TYPE.FAILING);
     }
 
-    @Ignore
     @Test
     public void testZNotTerminatingSqueakTests() {
+        assumeNotOnTravisCI();
         int timeoutSeconds = 15;
         List<String> passing = new ArrayList<>();
         String[] testClasses = getSqueakTests(TEST_TYPE.NOT_TERMINATING);
@@ -580,9 +580,27 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
         Object patchResult = evaluate(
                         "TestCase addSelectorSilently: #timeout:after: withMethod: (TestCase compile: 'timeout: aBlock after: seconds ^ aBlock value' notifying: nil trailer: (CompiledMethodTrailer empty) ifFail: [^ nil]) method");
         assertNotEquals(image.nil, patchResult);
+        if (!runsOnTravisCI()) {
+            // Print Errors to stderr.
+            patchResult = evaluate(
+                            "TestCase addSelectorSilently: #runCase withMethod: (TestCase compile: 'runCase [self setUp. [self performTest] ensure: [self tearDown]] on: Error do: [:e | e printVerboseOn: FileStream stderr. e signal]' notifying: nil trailer: (CompiledMethodTrailer empty) ifFail: [^ nil]) method");
+            assertNotEquals(image.nil, patchResult);
+        }
         patchResult = evaluate(
                         "BlockClosure addSelectorSilently: #valueWithin:onTimeout: withMethod: (BlockClosure compile: 'valueWithin: aDuration onTimeout: timeoutBlock ^ self value' notifying: nil trailer: (CompiledMethodTrailer empty) ifFail: [^ nil]) method");
         assertNotEquals(image.nil, patchResult);
+    }
+
+    private static boolean runsOnTravisCI() {
+        try {
+            return System.getenv("TRAVIS").equals("true");
+        } catch (NullPointerException e) {
+            return false; // ${TRAVIS} environment variable not set
+        }
+    }
+
+    private static void assumeNotOnTravisCI() {
+        Assume.assumeFalse("TestCase skipped on Travis CI.", runsOnTravisCI());
     }
 
     private static String getPathToTestImage() {
