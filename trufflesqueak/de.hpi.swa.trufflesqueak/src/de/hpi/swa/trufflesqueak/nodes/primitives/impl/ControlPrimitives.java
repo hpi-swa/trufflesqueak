@@ -3,10 +3,16 @@ package de.hpi.swa.trufflesqueak.nodes.primitives.impl;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameInstance;
+import com.oracle.truffle.api.frame.FrameInstanceVisitor;
+import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions.PrimitiveFailed;
@@ -17,6 +23,7 @@ import de.hpi.swa.trufflesqueak.model.BaseSqueakObject;
 import de.hpi.swa.trufflesqueak.model.ClassObject;
 import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.model.CompiledMethodObject;
+import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.model.FloatObject;
 import de.hpi.swa.trufflesqueak.model.ListObject;
 import de.hpi.swa.trufflesqueak.model.NativeObject;
@@ -38,6 +45,7 @@ import de.hpi.swa.trufflesqueak.nodes.context.ReceiverAndArgumentsNode;
 import de.hpi.swa.trufflesqueak.nodes.context.ReceiverNode;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.trufflesqueak.nodes.context.SqueakLookupClassNodeGen;
+import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.trufflesqueak.nodes.context.stack.StackPushNode;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.trufflesqueak.nodes.primitives.AbstractPrimitiveNode;
@@ -548,13 +556,55 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {130, 131})
     protected static abstract class PrimFullGCNode extends AbstractPrimitiveNode {
+        @Child FrameStackWriteNode stackWriteNode = FrameStackWriteNode.create();
 
         protected PrimFullGCNode(CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization
-        protected Object get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"isVirtualized(frame)"})
+        protected Object doGCVirtualized(VirtualFrame frame, BaseSqueakObject receiver) {
+            nilOutTruffleFrameSlots();
+            System.gc();
+            return code.image.wrap(Runtime.getRuntime().freeMemory());
+        }
+
+        @TruffleBoundary
+        private void nilOutTruffleFrameSlots() {
+            Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Object>() {
+                @Override
+                public ContextObject visitFrame(FrameInstance frameInstance) {
+                    Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_WRITE);
+                    if (current.getArguments().length < FrameAccess.RCVR_AND_ARGS_START) {
+                        return null;
+                    }
+
+                    CompiledCodeObject method = FrameAccess.getMethod(current);
+                    int frameSP = (int) FrameUtil.getLongSafe(current, method.stackPointerSlot);
+                    if (frameSP <= 0) {
+                        return null;
+                    }
+                    for (int i = frameSP; i < method.getNumStackSlots(); i++) {
+                        stackWriteNode.execute(current, i, code.image.nil);
+                    }
+                    return null;
+                }
+            });
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"!isVirtualized(frame)"})
+        protected Object doGC(VirtualFrame frame, BaseSqueakObject receiver) {
+            BaseSqueakObject current = getContext(frame);
+            while (!current.isNil()) {
+                ContextObject contextObject = (ContextObject) current;
+                int sp = (int) contextObject.getStackPointer();
+                for (int i = sp; i < contextObject.getMethod().frameSize(); i++) {
+                    contextObject.atput0(i, code.image.nil);
+                }
+                current = contextObject.getSender();
+            }
             System.gc();
             return code.image.wrap(Runtime.getRuntime().freeMemory());
         }
