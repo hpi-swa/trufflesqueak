@@ -477,13 +477,13 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
 
     @Test
     public void testInspectSqueakTest() {
-        assumeNotOnTravisCI();
+        assumeNotOnMXGate();
         runTestCase("ByteArrayTest");
     }
 
     @Test
     public void testInspectSqueakTestSelector() {
-        assumeNotOnTravisCI();
+        assumeNotOnMXGate();
         image.getOutput().println(evaluate("(WordArrayTest run: #testCannotPutNegativeValue) asString"));
     }
 
@@ -517,7 +517,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
 
     @Test
     public void testZNotTerminatingSqueakTests() {
-        assumeNotOnTravisCI();
+        assumeNotOnMXGate();
         int timeoutSeconds = 15;
         List<String> passing = new ArrayList<>();
         String[] testClasses = getSqueakTests(TEST_TYPE.NOT_TERMINATING);
@@ -580,7 +580,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
         Object patchResult = evaluate(
                         "TestCase addSelectorSilently: #timeout:after: withMethod: (TestCase compile: 'timeout: aBlock after: seconds ^ aBlock value' notifying: nil trailer: (CompiledMethodTrailer empty) ifFail: [^ nil]) method");
         assertNotEquals(image.nil, patchResult);
-        if (!runsOnTravisCI()) {
+        if (!runsOnMXGate()) {
             // Print Errors to stderr.
             patchResult = evaluate(
                             "TestCase addSelectorSilently: #runCase withMethod: (TestCase compile: 'runCase [self setUp. [self performTest] ensure: [self tearDown]] on: Error do: [:e | e printVerboseOn: FileStream stderr. e signal]' notifying: nil trailer: (CompiledMethodTrailer empty) ifFail: [^ nil]) method");
@@ -591,16 +591,16 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
         assertNotEquals(image.nil, patchResult);
     }
 
-    private static boolean runsOnTravisCI() {
+    private static boolean runsOnMXGate() {
         try {
-            return System.getenv("TRAVIS").equals("true");
+            return System.getenv("MX_GATE").equals("true");
         } catch (NullPointerException e) {
-            return false; // ${TRAVIS} environment variable not set
+            return false; // ${MX_GATE} environment variable not set
         }
     }
 
-    private static void assumeNotOnTravisCI() {
-        Assume.assumeFalse("TestCase skipped on Travis CI.", runsOnTravisCI());
+    private static void assumeNotOnMXGate() {
+        Assume.assumeFalse("TestCase skipped on `mx gate`.", runsOnMXGate());
     }
 
     private static String getPathToTestImage() {

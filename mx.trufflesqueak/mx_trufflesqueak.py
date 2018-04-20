@@ -117,6 +117,7 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
 
 
 def _trufflesqueak_gate_runner(args, tasks):
+    os.environ['MX_GATE'] = "true"
     unittest_args = []
     jacocoArgs = mx_gate.get_jacoco_agent_args()
     if jacocoArgs:
