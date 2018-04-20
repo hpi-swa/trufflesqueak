@@ -5,7 +5,7 @@ import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public class NilObject extends BaseSqueakObject {
 
-    public NilObject(SqueakImageContext img) {
+    public NilObject(final SqueakImageContext img) {
         super(img);
     }
 
@@ -15,7 +15,7 @@ public class NilObject extends BaseSqueakObject {
     }
 
     @Override
-    public void fillin(SqueakImageChunk chunk) {
+    public void fillin(final SqueakImageChunk chunk) {
     }
 
     @Override
@@ -24,12 +24,12 @@ public class NilObject extends BaseSqueakObject {
     }
 
     @Override
-    public Object at0(long l) {
+    public Object at0(final long l) {
         throw new IndexOutOfBoundsException();
     }
 
     @Override
-    public void atput0(long idx, Object object) {
+    public void atput0(final long idx, final Object object) {
     }
 
     @Override

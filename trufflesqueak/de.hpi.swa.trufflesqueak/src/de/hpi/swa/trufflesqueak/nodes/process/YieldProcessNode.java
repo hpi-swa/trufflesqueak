@@ -16,11 +16,11 @@ public class YieldProcessNode extends AbstractNodeWithImage {
     @Child private TransferToNode transferToNode;
     @Child private WakeHighestPriorityNode wakeHighestPriorityNode;
 
-    public static YieldProcessNode create(SqueakImageContext image) {
+    public static YieldProcessNode create(final SqueakImageContext image) {
         return new YieldProcessNode(image);
     }
 
-    protected YieldProcessNode(SqueakImageContext image) {
+    protected YieldProcessNode(final SqueakImageContext image) {
         super(image);
         getActiveProcessNode = GetActiveProcessNode.create(image);
         isEmptyListNode = IsEmptyListNode.create(image);
@@ -29,11 +29,11 @@ public class YieldProcessNode extends AbstractNodeWithImage {
         wakeHighestPriorityNode = WakeHighestPriorityNode.create(image);
     }
 
-    public void executeYield(VirtualFrame frame, PointersObject scheduler) {
-        PointersObject activeProcess = getActiveProcessNode.executeGet();
-        long priority = (long) activeProcess.at0(PROCESS.PRIORITY);
-        ListObject processLists = (ListObject) scheduler.at0(PROCESS_SCHEDULER.PROCESS_LISTS);
-        PointersObject processList = (PointersObject) processLists.at0(priority - 1);
+    public void executeYield(final VirtualFrame frame, final PointersObject scheduler) {
+        final PointersObject activeProcess = getActiveProcessNode.executeGet();
+        final long priority = (long) activeProcess.at0(PROCESS.PRIORITY);
+        final ListObject processLists = (ListObject) scheduler.at0(PROCESS_SCHEDULER.PROCESS_LISTS);
+        final PointersObject processList = (PointersObject) processLists.at0(priority - 1);
         if (!isEmptyListNode.executeIsEmpty(processList)) {
             linkProcessToListNode.executeLink(activeProcess, processList);
             wakeHighestPriorityNode.executeWake(frame);

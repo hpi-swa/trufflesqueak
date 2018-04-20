@@ -17,50 +17,50 @@ public class FloatObject extends NativeObject {
 
     @CompilationFinal private double value;
 
-    public static FloatObject valueOf(SqueakImageContext image, double value) {
+    public static FloatObject valueOf(final SqueakImageContext image, final double value) {
         return new FloatObject(image, value);
     }
 
-    public FloatObject(SqueakImageContext image) {
+    public FloatObject(final SqueakImageContext image) {
         super(image, image.floatClass, new NativeWordsStorage(2));
     }
 
-    public FloatObject(FloatObject original) {
+    public FloatObject(final FloatObject original) {
         super(original.image, original.getSqClass(), original.storage.shallowCopy());
         this.value = original.value;
     }
 
-    public FloatObject(SqueakImageContext image, double value) {
+    public FloatObject(final SqueakImageContext image, final double value) {
         this(image);
-        long doubleBits = Double.doubleToLongBits(value);
-        long high = doubleBits >> 32;
-        long low = doubleBits & LargeIntegerObject.MASK_32BIT;
+        final long doubleBits = Double.doubleToLongBits(value);
+        final long high = doubleBits >> 32;
+        final long low = doubleBits & LargeIntegerObject.MASK_32BIT;
         setWords(high, low);
         assert this.value == value || Double.isNaN(value);
     }
 
-    public FloatObject(SqueakImageContext image, long high, long low) {
+    public FloatObject(final SqueakImageContext image, final long high, final long low) {
         this(image);
         setWords(high, low);
     }
 
     @Override
-    public void fillin(SqueakImageChunk chunk) {
+    public void fillin(final SqueakImageChunk chunk) {
         super.fillin(chunk);
-        int[] words = chunk.getWords();
+        final int[] words = chunk.getWords();
         assert words.length == 2;
         setWords(words[1], words[0]);
     }
 
     @Override
-    public Object at0(long index) {
+    public Object at0(final long index) {
         return super.at0(index);
     }
 
     @Override
-    public void atput0(long index, Object object) {
+    public void atput0(final long index, final Object object) {
         super.atput0(index, object);
-        Long doubleBits = Double.doubleToLongBits(value);
+        final Long doubleBits = Double.doubleToLongBits(value);
         if (index == 0) {
             setWords((long) object, doubleBits.intValue());
         } else if (index == 1) {
@@ -72,8 +72,8 @@ public class FloatObject extends NativeObject {
 
     private void setWords(final long high, final long low) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        long highMasked = high & LargeIntegerObject.MASK_32BIT;
-        long lowMasked = low & LargeIntegerObject.MASK_32BIT;
+        final long highMasked = high & LargeIntegerObject.MASK_32BIT;
+        final long lowMasked = low & LargeIntegerObject.MASK_32BIT;
         super.atput0(0, highMasked);
         super.atput0(1, lowMasked);
         this.value = Double.longBitsToDouble((highMasked << 32) | lowMasked);
@@ -94,7 +94,7 @@ public class FloatObject extends NativeObject {
     }
 
     @Override
-    public boolean equals(Object b) {
+    public boolean equals(final Object b) {
         if (b instanceof FloatObject) {
             return value == value;
         } else {
@@ -112,13 +112,13 @@ public class FloatObject extends NativeObject {
         return new FloatObject(this);
     }
 
-    public static FloatObject bytesAsFloatObject(SqueakImageContext image, byte[] bytes) {
-        ByteBuffer buf = ByteBuffer.allocate(8); // 2 * 32 bit
+    public static FloatObject bytesAsFloatObject(final SqueakImageContext image, final byte[] bytes) {
+        final ByteBuffer buf = ByteBuffer.allocate(8); // 2 * 32 bit
         buf.order(ByteOrder.nativeOrder());
         buf.put(bytes);
         buf.rewind();
-        long low = Integer.toUnsignedLong(buf.asIntBuffer().get(0));
-        long high = Integer.toUnsignedLong(buf.asIntBuffer().get(1));
+        final long low = Integer.toUnsignedLong(buf.asIntBuffer().get(0));
+        final long high = Integer.toUnsignedLong(buf.asIntBuffer().get(1));
         return new FloatObject(image, high, low);
     }
 }

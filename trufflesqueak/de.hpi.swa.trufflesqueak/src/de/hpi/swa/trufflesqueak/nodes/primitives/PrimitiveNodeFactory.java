@@ -54,11 +54,11 @@ public abstract class PrimitiveNodeFactory {
     }
 
     @TruffleBoundary
-    public static AbstractPrimitiveNode forIndex(CompiledMethodObject method, int primitiveIndex) {
+    public static AbstractPrimitiveNode forIndex(final CompiledMethodObject method, final int primitiveIndex) {
         if (264 <= primitiveIndex && primitiveIndex <= 520) {
             return ControlPrimitives.PrimQuickReturnReceiverVariableNode.create(method, primitiveIndex - 264);
         }
-        NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = primitiveTable.get(primitiveIndex);
+        final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = primitiveTable.get(primitiveIndex);
         if (nodeFactory != null) {
             return createInstance(method, nodeFactory, nodeFactory.getNodeClass().getAnnotation(SqueakPrimitive.class));
         }
@@ -66,7 +66,7 @@ public abstract class PrimitiveNodeFactory {
     }
 
     @TruffleBoundary
-    public static AbstractPrimitiveNode forName(CompiledMethodObject method, String moduleName, String functionName) {
+    public static AbstractPrimitiveNode forName(final CompiledMethodObject method, final String moduleName, final String functionName) {
         for (int i = 0; i < simulatedPlugins.length; i++) {
             if (moduleName.equals(simulatedPlugins[i])) {
                 return SimulationPrimitiveNode.create(method, moduleName, functionName, new SqueakNode[]{ReceiverAndArgumentsNode.create(method)});
@@ -77,10 +77,10 @@ public abstract class PrimitiveNodeFactory {
                 continue;
             }
             try {
-                List<? extends NodeFactory<? extends AbstractPrimitiveNode>> nodeFactories = plugin.getFactories();
+                final List<? extends NodeFactory<? extends AbstractPrimitiveNode>> nodeFactories = plugin.getFactories();
                 for (NodeFactory<? extends AbstractPrimitiveNode> nodeFactory : nodeFactories) {
-                    Class<? extends AbstractPrimitiveNode> primitiveClass = nodeFactory.getNodeClass();
-                    SqueakPrimitive primitive = primitiveClass.getAnnotation(SqueakPrimitive.class);
+                    final Class<? extends AbstractPrimitiveNode> primitiveClass = nodeFactory.getNodeClass();
+                    final SqueakPrimitive primitive = primitiveClass.getAnnotation(SqueakPrimitive.class);
                     if (functionName.equals(primitive.name())) {
                         return createInstance(method, nodeFactory, primitive);
                     }
@@ -93,7 +93,7 @@ public abstract class PrimitiveNodeFactory {
     }
 
     public static Set<String> getPluginNames() {
-        HashSet<String> names = new HashSet<>(plugins.length);
+        final HashSet<String> names = new HashSet<>(plugins.length);
         for (AbstractPrimitiveFactoryHolder plugin : plugins) {
             names.add(plugin.getClass().getSimpleName());
         }
@@ -103,24 +103,24 @@ public abstract class PrimitiveNodeFactory {
         return names;
     }
 
-    private static AbstractPrimitiveNode createInstance(CompiledMethodObject method, NodeFactory<? extends AbstractPrimitiveNode> nodeFactory, SqueakPrimitive primitive) {
+    private static AbstractPrimitiveNode createInstance(final CompiledMethodObject method, final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory, final SqueakPrimitive primitive) {
         if (primitive.variableArguments()) {
             return nodeFactory.createNode(method, new SqueakNode[]{ReceiverAndArgumentsNode.create(method)});
         }
-        int numArgs = primitive.numArguments();
-        SqueakNode[] arguments = new SqueakNode[numArgs];
+        final int numArgs = primitive.numArguments();
+        final SqueakNode[] arguments = new SqueakNode[numArgs];
         for (int i = 0; i < numArgs; i++) {
             arguments[i] = ArgumentNode.create(method, i);
         }
         return nodeFactory.createNode(method, arguments);
     }
 
-    private static void fillPrimitiveTable(AbstractPrimitiveFactoryHolder[] primitiveFactories) {
+    private static void fillPrimitiveTable(final AbstractPrimitiveFactoryHolder[] primitiveFactories) {
         for (AbstractPrimitiveFactoryHolder primitiveFactory : primitiveFactories) {
-            List<? extends NodeFactory<? extends AbstractPrimitiveNode>> nodeFactories = primitiveFactory.getFactories();
+            final List<? extends NodeFactory<? extends AbstractPrimitiveNode>> nodeFactories = primitiveFactory.getFactories();
             for (NodeFactory<? extends AbstractPrimitiveNode> nodeFactory : nodeFactories) {
-                Class<? extends AbstractPrimitiveNode> primitiveClass = nodeFactory.getNodeClass();
-                SqueakPrimitive primitive = primitiveClass.getAnnotation(SqueakPrimitive.class);
+                final Class<? extends AbstractPrimitiveNode> primitiveClass = nodeFactory.getNodeClass();
+                final SqueakPrimitive primitive = primitiveClass.getAnnotation(SqueakPrimitive.class);
                 if (primitive == null) {
                     continue;
                 }
@@ -134,7 +134,7 @@ public abstract class PrimitiveNodeFactory {
         }
     }
 
-    private static void addEntryToPrimitiveTable(int index, NodeFactory<? extends AbstractPrimitiveNode> nodeFactory) {
+    private static void addEntryToPrimitiveTable(final int index, final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory) {
         assert !primitiveTable.containsKey(index); // primitives are not allowed to override others
         primitiveTable.put(index, nodeFactory);
     }

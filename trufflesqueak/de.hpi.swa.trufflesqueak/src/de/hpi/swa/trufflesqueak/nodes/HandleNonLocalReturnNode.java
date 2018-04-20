@@ -15,11 +15,11 @@ public abstract class HandleNonLocalReturnNode extends AbstractNodeWithCode {
     @Child private TerminateContextNode terminateNode;
     @Child private AboutToReturnNode aboutToReturnNode;
 
-    public static HandleNonLocalReturnNode create(CompiledCodeObject code) {
+    public static HandleNonLocalReturnNode create(final CompiledCodeObject code) {
         return HandleNonLocalReturnNodeGen.create(code);
     }
 
-    public HandleNonLocalReturnNode(CompiledCodeObject code) {
+    public HandleNonLocalReturnNode(final CompiledCodeObject code) {
         super(code);
         terminateNode = TerminateContextNode.create(code);
         if (code instanceof CompiledMethodObject) {
@@ -30,13 +30,13 @@ public abstract class HandleNonLocalReturnNode extends AbstractNodeWithCode {
     public abstract Object executeHandle(VirtualFrame frame, NonLocalReturn nlr);
 
     @Specialization(guards = "isVirtualized(frame)")
-    protected Object handleVirtualized(VirtualFrame frame, NonLocalReturn nlr) {
+    protected Object handleVirtualized(final VirtualFrame frame, final NonLocalReturn nlr) {
         CompilerDirectives.ensureVirtualizedHere(frame);
         if (aboutToReturnNode != null && code.isUnwindMarked()) { // handle ensure: or ifCurtailed:
             aboutToReturnNode.executeAboutToReturn(frame, nlr);
         }
         terminateNode.executeTerminate(frame);
-        FrameMarker frameMarker = getFrameMarker(frame);
+        final FrameMarker frameMarker = getFrameMarker(frame);
         if (nlr.getTargetContext().getFrameMarker() == frameMarker) {
             return nlr.getReturnValue();
         } else {
@@ -45,14 +45,14 @@ public abstract class HandleNonLocalReturnNode extends AbstractNodeWithCode {
     }
 
     @Specialization(guards = "!isVirtualized(frame)")
-    protected Object handle(VirtualFrame frame, NonLocalReturn nlr) {
+    protected Object handle(final VirtualFrame frame, final NonLocalReturn nlr) {
         if (aboutToReturnNode != null && code.isUnwindMarked()) { // handle ensure: or ifCurtailed:
             aboutToReturnNode.executeAboutToReturn(frame, nlr);
         }
-        ContextObject context = getContext(frame);
+        final ContextObject context = getContext(frame);
         if (context.isDirty()) {
-            ContextObject sender = context.getNotNilSender(); // sender has changed
-            ContextObject target = nlr.getTargetContext().getNotNilSender();
+            final ContextObject sender = context.getNotNilSender(); // sender has changed
+            final ContextObject target = nlr.getTargetContext().getNotNilSender();
             terminateNode.executeTerminate(frame);
             throw new NonVirtualReturn(nlr.getReturnValue(), target, sender);
         } else {

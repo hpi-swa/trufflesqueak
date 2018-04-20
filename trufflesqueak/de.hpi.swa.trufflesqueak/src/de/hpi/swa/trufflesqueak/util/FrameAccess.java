@@ -17,7 +17,7 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 
 public class FrameAccess {
     /**
-     * TruffleSqueak frame arguments:
+     * TruffleSqueak frame arguments.
      *
      * <pre>
      * CompiledCodeObject
@@ -35,7 +35,7 @@ public class FrameAccess {
     @CompilationFinal public static final int RCVR_AND_ARGS_START = 3;
 
     /**
-     * TruffleSqueak frame slots:
+     * TruffleSqueak frame slots.
      *
      * <pre>
      * thisContextOrMarker
@@ -46,30 +46,30 @@ public class FrameAccess {
      */
     @CompilationFinal public static final int CONTEXT_OR_MARKER = 0;
 
-    public final static CompiledCodeObject getMethod(Frame frame) {
+    public static final CompiledCodeObject getMethod(final Frame frame) {
         CompilerAsserts.neverPartOfCompilation();
         return (CompiledCodeObject) frame.getArguments()[METHOD];
     }
 
-    public final static Object getSender(Frame frame) {
+    public static final Object getSender(final Frame frame) {
         CompilerAsserts.neverPartOfCompilation();
         return frame.getArguments()[SENDER_OR_SENDER_MARKER];
     }
 
-    public final static BlockClosureObject getClosure(Frame frame) {
+    public static final BlockClosureObject getClosure(final Frame frame) {
         CompilerAsserts.neverPartOfCompilation();
         return (BlockClosureObject) frame.getArguments()[CLOSURE_OR_NULL];
     }
 
-    public final static Object getReceiver(Frame frame) {
+    public static final Object getReceiver(final Frame frame) {
         CompilerAsserts.neverPartOfCompilation();
         return frame.getArguments()[RECEIVER];
     }
 
-    public final static Object[] getArguments(Frame frame) {
+    public static final Object[] getArguments(final Frame frame) {
         CompilerAsserts.neverPartOfCompilation();
         int index = 0;
-        Object[] arguments = new Object[frame.getArguments().length - RCVR_AND_ARGS_START];
+        final Object[] arguments = new Object[frame.getArguments().length - RCVR_AND_ARGS_START];
         for (Object argument : frame.getArguments()) {
             if (index >= RCVR_AND_ARGS_START) {
                 arguments[index - RCVR_AND_ARGS_START] = argument;
@@ -79,7 +79,7 @@ public class FrameAccess {
         return arguments;
     }
 
-    public final static Object getContextOrMarker(Frame frame, FrameSlot contextOrMarkerSlot) {
+    public static final Object getContextOrMarker(final Frame frame, final FrameSlot contextOrMarkerSlot) {
         try {
             return frame.getObject(contextOrMarkerSlot);
         } catch (FrameSlotTypeException e) {
@@ -87,17 +87,17 @@ public class FrameAccess {
         }
     }
 
-    public final static Object getContextOrMarker(Frame frame) {
+    public static final Object getContextOrMarker(final Frame frame) {
         // TODO: should not be used
         return getContextOrMarker(frame, getContextOrMarkerSlot(frame));
     }
 
-    public final static FrameSlot getContextOrMarkerSlot(Frame frame) {
+    public static final FrameSlot getContextOrMarkerSlot(final Frame frame) {
         return frame.getFrameDescriptor().getSlots().get(CONTEXT_OR_MARKER);
     }
 
-    public final static Object[] newWith(CompiledCodeObject code, Object sender, BlockClosureObject closure, Object[] frameArgs) {
-        Object[] arguments = new Object[RCVR_AND_ARGS_START + frameArgs.length];
+    public static final Object[] newWith(final CompiledCodeObject code, final Object sender, final BlockClosureObject closure, final Object[] frameArgs) {
+        final Object[] arguments = new Object[RCVR_AND_ARGS_START + frameArgs.length];
         arguments[METHOD] = code;
         arguments[SENDER_OR_SENDER_MARKER] = sender;
         arguments[CLOSURE_OR_NULL] = closure;
@@ -108,15 +108,15 @@ public class FrameAccess {
     }
 
     @TruffleBoundary
-    public final static Frame findFrameForMarker(FrameMarker frameMarker) {
+    public static final Frame findFrameForMarker(final FrameMarker frameMarker) {
         return Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Frame>() {
             @Override
-            public Frame visitFrame(FrameInstance frameInstance) {
-                Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
+            public Frame visitFrame(final FrameInstance frameInstance) {
+                final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
                 if (current.getFrameDescriptor().getSize() <= 0) {
                     return null;
                 }
-                Object contextOrMarker = getContextOrMarker(current);
+                final Object contextOrMarker = getContextOrMarker(current);
                 if (isMatchingMarker(frameMarker, contextOrMarker)) {
                     return frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
                 }
@@ -125,7 +125,7 @@ public class FrameAccess {
         });
     }
 
-    public final static boolean isMatchingMarker(FrameMarker frameMarker, Object contextOrMarker) {
+    public static final boolean isMatchingMarker(final FrameMarker frameMarker, final Object contextOrMarker) {
         return frameMarker == contextOrMarker || (contextOrMarker instanceof ContextObject && frameMarker == ((ContextObject) contextOrMarker).getFrameMarker());
     }
 }

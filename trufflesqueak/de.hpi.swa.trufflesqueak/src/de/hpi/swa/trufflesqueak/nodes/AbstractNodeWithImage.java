@@ -12,7 +12,7 @@ import de.hpi.swa.trufflesqueak.SqueakImageContext;
 public abstract class AbstractNodeWithImage extends Node {
     @CompilationFinal protected final SqueakImageContext image;
 
-    protected AbstractNodeWithImage(SqueakImageContext image) {
+    protected AbstractNodeWithImage(final SqueakImageContext image) {
         this.image = image;
     }
 }

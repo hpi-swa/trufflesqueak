@@ -14,15 +14,15 @@ import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 public class NativeLongsStorage extends AbstractNativeObjectStorage {
     @CompilationFinal(dimensions = 1) protected long[] longs;
 
-    public NativeLongsStorage(int size) {
+    public NativeLongsStorage(final int size) {
         longs = new long[size];
     }
 
-    public NativeLongsStorage(long[] longs) {
+    public NativeLongsStorage(final long[] longs) {
         this.longs = longs;
     }
 
-    private NativeLongsStorage(NativeLongsStorage original) {
+    private NativeLongsStorage(final NativeLongsStorage original) {
         this(Arrays.copyOf(original.longs, original.longs.length));
     }
 
@@ -32,33 +32,33 @@ public class NativeLongsStorage extends AbstractNativeObjectStorage {
     }
 
     @Override
-    public void fillin(SqueakImageChunk chunk) {
+    public void fillin(final SqueakImageChunk chunk) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         longs = chunk.getLongs();
     }
 
     @Override
-    public long getNativeAt0(long longIndex) {
+    public long getNativeAt0(final long longIndex) {
         return longs[(int) longIndex];
     }
 
     @Override
-    public void setNativeAt0(long longIndex, long value) {
+    public void setNativeAt0(final long longIndex, final long value) {
         longs[(int) longIndex] = (int) value;
     }
 
     @Override
-    public long shortAt0(long index) {
+    public long shortAt0(final long index) {
         throw new SqueakException("Not yet implemented: shortAt0"); // TODO: implement
     }
 
     @Override
-    public void shortAtPut0(long longIndex, long value) {
+    public void shortAtPut0(final long longIndex, final long value) {
         throw new SqueakException("Not yet implemented: shortAtPut0"); // TODO: implement
     }
 
     @Override
-    public void fillWith(Object value) {
+    public void fillWith(final Object value) {
         Arrays.fill(longs, (long) value);
     }
 
@@ -69,22 +69,22 @@ public class NativeLongsStorage extends AbstractNativeObjectStorage {
 
     @Override
     public byte[] getBytes() {
-        ByteBuffer byteBuffer = ByteBuffer.allocate(longs.length * 4);
+        final ByteBuffer byteBuffer = ByteBuffer.allocate(longs.length * 4);
         byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-        LongBuffer longBuffer = byteBuffer.asLongBuffer();
+        final LongBuffer longBuffer = byteBuffer.asLongBuffer();
         longBuffer.put(longs);
         return byteBuffer.array();
     }
 
     @Override
-    public void setBytes(byte[] bytes) {
+    public void setBytes(final byte[] bytes) {
         final int size = bytes.length / getElementSize();
         CompilerDirectives.transferToInterpreterAndInvalidate();
         longs = new long[size];
         for (int i = 0; i < longs.length; i++) {
             //@formatter:off
             longs[i] = (((long) bytes[i    ]) << 56) | (((long) bytes[i + 1]) << 48) | (((long) bytes[i + 2]) << 40) | (((long) bytes[i + 3]) << 32)
-                     | (((long) bytes[i + 4]) << 24) | (((long) bytes[i + 5]) << 16) | (((long) bytes[i + 6]) << 8)  | bytes[i+ 7];
+                     | (((long) bytes[i + 4]) << 24) | (((long) bytes[i + 5]) << 16) | (((long) bytes[i + 6]) << 8)  | bytes[i + 7];
             //@formatter:on
         }
     }

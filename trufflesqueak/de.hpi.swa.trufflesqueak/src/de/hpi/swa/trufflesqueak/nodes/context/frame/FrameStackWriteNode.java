@@ -14,7 +14,7 @@ public abstract class FrameStackWriteNode extends Node {
 
     public abstract Object execute(Frame frame, int stackIndex, Object value);
 
-    protected FrameSlot getFrameSlotForIndex(VirtualFrame frame, int index) {
+    protected FrameSlot getFrameSlotForIndex(final VirtualFrame frame, final int index) {
         assert index >= 0;
         return frame.getFrameDescriptor().findFrameSlot(index);
     }
@@ -23,10 +23,10 @@ public abstract class FrameStackWriteNode extends Node {
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"index == cachedIndex"}, limit = "SQUEAK_MAX_STACK_SIZE")
-    protected Object writeInt(VirtualFrame frame, int index, Object value,
-                    @Cached("index") int cachedIndex,
-                    @Cached("getFrameSlotForIndex(frame, index)") FrameSlot slot,
-                    @Cached("create(slot)") FrameSlotWriteNode writeNode) {
+    protected Object writeInt(final VirtualFrame frame, final int index, final Object value,
+                    @Cached("index") final int cachedIndex,
+                    @Cached("getFrameSlotForIndex(frame, index)") final FrameSlot slot,
+                    @Cached("create(slot)") final FrameSlotWriteNode writeNode) {
         writeNode.executeWrite(frame, value);
         return null;
     }

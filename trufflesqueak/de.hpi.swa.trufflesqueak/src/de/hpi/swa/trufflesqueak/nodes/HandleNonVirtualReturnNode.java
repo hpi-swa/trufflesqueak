@@ -13,19 +13,19 @@ import de.hpi.swa.trufflesqueak.util.FrameMarker;
 @ImportStatic(FrameAccess.class)
 public abstract class HandleNonVirtualReturnNode extends AbstractNodeWithCode {
 
-    public static HandleNonVirtualReturnNode create(CompiledCodeObject code) {
+    public static HandleNonVirtualReturnNode create(final CompiledCodeObject code) {
         return HandleNonVirtualReturnNodeGen.create(code);
     }
 
-    public HandleNonVirtualReturnNode(CompiledCodeObject code) {
+    public HandleNonVirtualReturnNode(final CompiledCodeObject code) {
         super(code);
     }
 
     public abstract Object executeHandle(VirtualFrame frame, NonVirtualReturn nvr);
 
     @Specialization(guards = "isVirtualized(frame)")
-    protected Object handleVirtualized(VirtualFrame frame, NonVirtualReturn nvr) {
-        FrameMarker frameMarker = getFrameMarker(frame);
+    protected Object handleVirtualized(final VirtualFrame frame, final NonVirtualReturn nvr) {
+        final FrameMarker frameMarker = getFrameMarker(frame);
         if (nvr.getTargetContext().getFrameMarker() == frameMarker) {
             return nvr.getReturnValue();
         } else {
@@ -34,8 +34,8 @@ public abstract class HandleNonVirtualReturnNode extends AbstractNodeWithCode {
     }
 
     @Specialization(guards = "!isVirtualized(frame)")
-    protected Object handle(VirtualFrame frame, NonVirtualReturn nvr) {
-        ContextObject context = getContext(frame);
+    protected Object handle(final VirtualFrame frame, final NonVirtualReturn nvr) {
+        final ContextObject context = getContext(frame);
         if (nvr.getTargetContext().getFrameMarker() == context.getFrameMarker()) {
             return nvr.getReturnValue();
         } else {

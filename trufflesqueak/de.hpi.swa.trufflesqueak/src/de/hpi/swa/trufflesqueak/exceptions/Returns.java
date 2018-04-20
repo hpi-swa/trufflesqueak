@@ -7,11 +7,11 @@ import com.oracle.truffle.api.nodes.ControlFlowException;
 import de.hpi.swa.trufflesqueak.model.ContextObject;
 
 public final class Returns {
-    private static abstract class AbstractReturn extends ControlFlowException {
+    private abstract static class AbstractReturn extends ControlFlowException {
         @CompilationFinal private static final long serialVersionUID = 1L;
         @CompilationFinal protected final Object returnValue;
 
-        public AbstractReturn(final Object result) {
+        private AbstractReturn(final Object result) {
             returnValue = result;
         }
 
@@ -28,12 +28,12 @@ public final class Returns {
             returnValue = result;
         }
 
-        public final AbstractReturn getReturnException() {
+        public AbstractReturn getReturnException() {
             return returnValue;
         }
 
         @Override
-        public final String toString() {
+        public String toString() {
             return "Fresh (value: " + returnValue + ")";
         }
     }
@@ -41,12 +41,12 @@ public final class Returns {
     public static final class LocalReturn extends AbstractReturn {
         @CompilationFinal private static final long serialVersionUID = 1L;
 
-        public LocalReturn(Object result) {
+        public LocalReturn(final Object result) {
             super(result);
         }
 
         @Override
-        public final String toString() {
+        public String toString() {
             return "LR (value: " + returnValue + ")";
         }
     }
@@ -61,21 +61,21 @@ public final class Returns {
             this.targetContext = targetContext;
         }
 
-        public final ContextObject getTargetContext() {
+        public ContextObject getTargetContext() {
             return targetContext;
         }
 
-        public final boolean hasArrivedAtTargetContext() {
+        public boolean hasArrivedAtTargetContext() {
             return arrivedAtTargetContext;
         }
 
-        public final void setArrivedAtTargetContext() {
+        public void setArrivedAtTargetContext() {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             arrivedAtTargetContext = true;
         }
 
         @Override
-        public final String toString() {
+        public String toString() {
             return "NLR (value: " + returnValue + ", arrived: " + arrivedAtTargetContext + ", target: " + targetContext + ")";
         }
     }
@@ -95,16 +95,16 @@ public final class Returns {
             this.currentContext = currentContext;
         }
 
-        public final ContextObject getTargetContext() {
+        public ContextObject getTargetContext() {
             return targetContext;
         }
 
-        public final ContextObject getCurrentContext() {
+        public ContextObject getCurrentContext() {
             return currentContext;
         }
 
         @Override
-        public final String toString() {
+        public String toString() {
             return "NVR (value: " + returnValue + ", current: " + currentContext + ", target: " + targetContext + ")";
         }
     }

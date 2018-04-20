@@ -16,19 +16,19 @@ public abstract class FrameArgumentNode extends Node {
     @CompilationFinal private final ValueProfile primitiveProfile = PrimitiveValueProfile.createEqualityProfile();
     @CompilationFinal private final ValueProfile classProfile = ValueProfile.createClassProfile();
 
-    public static FrameArgumentNode create(int argumentIndex) {
+    public static FrameArgumentNode create(final int argumentIndex) {
         return FrameArgumentNodeGen.create(argumentIndex);
     }
 
-    protected FrameArgumentNode(int argumentIndex) {
+    protected FrameArgumentNode(final int argumentIndex) {
         this.argumentIndex = argumentIndex;
     }
 
     public abstract Object executeRead(VirtualFrame frame);
 
     @Specialization
-    protected Object doArgument(VirtualFrame frame) {
-        Object value = frame.getArguments()[argumentIndex];
+    protected Object doArgument(final VirtualFrame frame) {
+        final Object value = frame.getArguments()[argumentIndex];
         if (objectProfile.profile(value instanceof BaseSqueakObject)) {
             return classProfile.profile(value);
         } else {

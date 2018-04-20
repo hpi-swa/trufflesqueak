@@ -15,35 +15,35 @@ public abstract class StackPushNode extends AbstractWriteNode {
     @Child private FrameSlotReadNode stackPointerReadNode;
     @Child private FrameSlotWriteNode stackPointerWriteNode;
 
-    public static StackPushNode create(CompiledCodeObject code) {
+    public static StackPushNode create(final CompiledCodeObject code) {
         return StackPushNodeGen.create(code);
     }
 
-    protected StackPushNode(CompiledCodeObject code) {
+    protected StackPushNode(final CompiledCodeObject code) {
         super(code);
         stackPointerReadNode = FrameSlotReadNode.create(code.stackPointerSlot);
         stackPointerWriteNode = FrameSlotWriteNode.create(code.stackPointerSlot);
     }
 
-    protected long getFrameStackPointer(VirtualFrame frame) {
+    protected long getFrameStackPointer(final VirtualFrame frame) {
         return (long) stackPointerReadNode.executeRead(frame);
     }
 
-    protected void setFrameStackPointer(VirtualFrame frame, long value) {
+    protected void setFrameStackPointer(final VirtualFrame frame, final long value) {
         stackPointerWriteNode.executeWrite(frame, value);
     }
 
     @Specialization(guards = {"isVirtualized(frame)"})
-    protected void doWriteVirtualized(VirtualFrame frame, Object value) {
+    protected void doWriteVirtualized(final VirtualFrame frame, final Object value) {
         CompilerDirectives.ensureVirtualizedHere(frame);
         assert value != null;
-        long newSP = getFrameStackPointer(frame) + 1;
+        final long newSP = getFrameStackPointer(frame) + 1;
         writeNode.execute(frame, (int) newSP, value);
         setFrameStackPointer(frame, newSP);
     }
 
     @Specialization(guards = {"!isVirtualized(frame)"})
-    protected void doWrite(VirtualFrame frame, Object value) {
+    protected void doWrite(final VirtualFrame frame, final Object value) {
         assert value != null;
         getContext(frame).push(value);
     }

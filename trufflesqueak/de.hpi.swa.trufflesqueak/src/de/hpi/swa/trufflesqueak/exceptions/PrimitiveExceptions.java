@@ -10,7 +10,7 @@ public final class PrimitiveExceptions {
         private static final long serialVersionUID = 1L;
         @CompilationFinal private final long reasonCode;
 
-        public AbstractPrimitiveFailed(long reasonCode) {
+        public AbstractPrimitiveFailed(final long reasonCode) {
             this.reasonCode = reasonCode;
         }
 
@@ -26,7 +26,7 @@ public final class PrimitiveExceptions {
             this(ERROR_TABLE.GENERIC_ERROR);
         }
 
-        public PrimitiveFailed(long reasonCode) {
+        public PrimitiveFailed(final long reasonCode) {
             super(reasonCode);
         }
     }

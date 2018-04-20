@@ -23,12 +23,12 @@ public abstract class SqueakNode extends Node implements InstrumentableNode {
      *
      * @param createSection - the new section
      */
-    public void setSourceSection(SourceSection createSection) {
+    public void setSourceSection(final SourceSection createSection) {
         // no op
     }
 
     @Override
-    public boolean hasTag(Class<? extends Tag> tag) {
+    public boolean hasTag(final Class<? extends Tag> tag) {
         return tag == StandardTags.StatementTag.class;
     }
 
@@ -36,7 +36,7 @@ public abstract class SqueakNode extends Node implements InstrumentableNode {
         return true;
     }
 
-    public WrapperNode createWrapper(ProbeNode probe) {
+    public WrapperNode createWrapper(final ProbeNode probe) {
         return new SqueakNodeWrapper(this, probe);
     }
 }

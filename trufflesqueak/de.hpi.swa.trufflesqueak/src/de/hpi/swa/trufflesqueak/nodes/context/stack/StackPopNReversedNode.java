@@ -11,22 +11,22 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 public abstract class StackPopNReversedNode extends AbstractStackPopNode {
     @CompilationFinal private final int numPop;
 
-    public static StackPopNReversedNode create(CompiledCodeObject code, int numPop) {
+    public static StackPopNReversedNode create(final CompiledCodeObject code, final int numPop) {
         return StackPopNReversedNodeGen.create(code, numPop);
     }
 
-    protected StackPopNReversedNode(CompiledCodeObject code, int numPop) {
+    protected StackPopNReversedNode(final CompiledCodeObject code, final int numPop) {
         super(code);
         this.numPop = numPop;
     }
 
     @ExplodeLoop
     @Specialization(guards = {"isVirtualized(frame)"})
-    protected Object[] doPopNVirtualized(VirtualFrame frame) {
+    protected Object[] doPopNVirtualized(final VirtualFrame frame) {
         CompilerDirectives.ensureVirtualizedHere(frame);
-        long sp = frameStackPointer(frame);
+        final long sp = frameStackPointer(frame);
         assert sp - numPop >= -1;
-        Object[] result = new Object[numPop];
+        final Object[] result = new Object[numPop];
         for (int i = 0; i < numPop; i++) {
             result[numPop - 1 - i] = atStackAndClear(frame, (int) (sp - i));
         }
@@ -36,7 +36,7 @@ public abstract class StackPopNReversedNode extends AbstractStackPopNode {
 
     @ExplodeLoop
     @Specialization(guards = {"!isVirtualized(frame)"})
-    protected Object[] doPopN(VirtualFrame frame) {
+    protected Object[] doPopN(final VirtualFrame frame) {
         return getContext(frame).popNReversed(numPop);
     }
 }

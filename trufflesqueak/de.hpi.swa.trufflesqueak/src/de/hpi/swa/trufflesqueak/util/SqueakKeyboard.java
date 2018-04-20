@@ -70,7 +70,7 @@ public class SqueakKeyboard implements KeyListener {
     @CompilationFinal private final Deque<Character> keys = new ArrayDeque<>(TYPEAHEAD_LIMIT);
     private int modifierKeys = 0;
 
-    public SqueakKeyboard(JavaDisplay display) {
+    public SqueakKeyboard(final JavaDisplay display) {
         this.display = display;
     }
 
@@ -86,7 +86,7 @@ public class SqueakKeyboard implements KeyListener {
         return modifierKeys;
     }
 
-    public void keyTyped(KeyEvent e) {
+    public void keyTyped(final KeyEvent e) {
         if (e.getKeyChar() == '\n') { // Ignore the return key, mapSpecialKey() took care of it
             return;
         }
@@ -94,56 +94,62 @@ public class SqueakKeyboard implements KeyListener {
         addEvent(e, EVENT_KEY.CHAR);
     }
 
-    public void keyPressed(KeyEvent e) {
+    public void keyPressed(final KeyEvent e) {
         modifierKeys = mapModifierKey(e);
-        char keyChar = mapSpecialKey(e);
+        final char keyChar = mapSpecialKey(e);
         if (keyChar != KeyEvent.CHAR_UNDEFINED) {
             enqueue(keyChar);
             addEvent(e, EVENT_KEY.DOWN);
         }
     }
 
-    public void keyReleased(KeyEvent e) {
+    public void keyReleased(final KeyEvent e) {
         modifierKeys = mapModifierKey(e);
         addEvent(e, EVENT_KEY.UP);
     }
 
-    private void addEvent(KeyEvent e, long keyEventType) {
+    private void addEvent(final KeyEvent e, final long keyEventType) {
         display.addEvent(new long[]{EVENT_TYPE.KEYBOARD, display.getEventTime(), keycode(e.getKeyChar()), keyEventType, modifierKeys, e.getKeyChar(), 0, 0});
     }
 
-    private void enqueue(char keyChar) {
+    private void enqueue(final char keyChar) {
         if (keys.size() < TYPEAHEAD_LIMIT) {
             keys.add(keyChar);
         }
     }
 
-    private static int mapModifierKey(KeyEvent e) {
+    private static int mapModifierKey(final KeyEvent e) {
         int modifiers = 0;
-        if (e.isShiftDown())
+        if (e.isShiftDown()) {
             modifiers |= SHIFT_KEY;
-        if (e.isControlDown())
+        }
+        if (e.isControlDown()) {
             modifiers |= CONTROL_KEY;
-        if (e.isAltDown() || e.isMetaDown())
+        }
+        if (e.isAltDown() || e.isMetaDown()) {
             modifiers |= COMMAND_KEY;
+        }
 
         return modifiers;
     }
 
-    private static char mapSpecialKey(KeyEvent e) {
+    private static char mapSpecialKey(final KeyEvent e) {
         int specialKeyIndex = 0;
-        while (specialKeyIndex < JAVA_KEYS.length && JAVA_KEYS[specialKeyIndex] != e.getKeyCode())
+        while (specialKeyIndex < JAVA_KEYS.length && JAVA_KEYS[specialKeyIndex] != e.getKeyCode()) {
             specialKeyIndex++;
-        if (specialKeyIndex < JAVA_KEYS.length)
+        }
+        if (specialKeyIndex < JAVA_KEYS.length) {
             return SQUEAK_KEYS[specialKeyIndex];
+        }
 
-        if (e.isAltDown())
+        if (e.isAltDown()) {
             return Character.toLowerCase((char) e.getKeyCode());
+        }
 
         return KeyEvent.CHAR_UNDEFINED;
     }
 
-    private static int keycode(Character c) {
+    private static int keycode(final Character c) {
         return c.charValue() & 255;
     }
 }

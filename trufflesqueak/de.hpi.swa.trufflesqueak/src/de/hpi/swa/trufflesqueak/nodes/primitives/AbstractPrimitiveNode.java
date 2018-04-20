@@ -24,15 +24,15 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNode;
 @NodeChild(value = "arguments", type = SqueakNode[].class)
 public abstract class AbstractPrimitiveNode extends AbstractNodeWithCode implements InstrumentableNode {
 
-    public AbstractPrimitiveNode(CompiledMethodObject method) {
+    public AbstractPrimitiveNode(final CompiledMethodObject method) {
         super(method);
     }
 
-    public AbstractPrimitiveNode(AbstractPrimitiveNode original) {
+    public AbstractPrimitiveNode(final AbstractPrimitiveNode original) {
         super(original.code);
     }
 
-    public Object executeWithArguments(VirtualFrame frame, Object... arguments) {
+    public Object executeWithArguments(final VirtualFrame frame, final Object... arguments) {
         return executeWithArgumentsSpecialized(frame, arguments);
     }
 
@@ -40,15 +40,15 @@ public abstract class AbstractPrimitiveNode extends AbstractNodeWithCode impleme
 
     protected abstract Object executeWithArgumentsSpecialized(VirtualFrame frame, Object... arguments);
 
-    protected static final boolean isSmallInteger(long value) {
+    protected static final boolean isSmallInteger(final long value) {
         return LargeIntegerObject.SMALLINTEGER32_MIN <= value && value <= LargeIntegerObject.SMALLINTEGER32_MAX;
     }
 
-    protected static final boolean hasVariableClass(BaseSqueakObject obj) {
+    protected static final boolean hasVariableClass(final BaseSqueakObject obj) {
         return obj.getSqClass().isVariable();
     }
 
-    protected static final boolean isNil(Object obj) {
+    protected static final boolean isNil(final Object obj) {
         return obj instanceof NilObject;
     }
 
@@ -60,7 +60,7 @@ public abstract class AbstractPrimitiveNode extends AbstractNodeWithCode impleme
         return object instanceof EmptyObject;
     }
 
-    protected static final boolean isSemaphore(PointersObject receiver) {
+    protected static final boolean isSemaphore(final PointersObject receiver) {
         return receiver.isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassSemaphore);
     }
 
@@ -73,7 +73,7 @@ public abstract class AbstractPrimitiveNode extends AbstractNodeWithCode impleme
     }
 
     @Override
-    public boolean hasTag(Class<? extends Tag> tag) {
+    public boolean hasTag(final Class<? extends Tag> tag) {
         return tag == StandardTags.StatementTag.class;
     }
 
@@ -81,7 +81,7 @@ public abstract class AbstractPrimitiveNode extends AbstractNodeWithCode impleme
         return true;
     }
 
-    public WrapperNode createWrapper(ProbeNode probe) {
+    public WrapperNode createWrapper(final ProbeNode probe) {
         return new AbstractPrimitiveNodeWrapper(this, this, probe);
     }
 }

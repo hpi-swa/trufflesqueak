@@ -6,7 +6,7 @@ public class SqueakQuit extends ControlFlowException {
     private static final long serialVersionUID = 1L;
     private final int exitCode;
 
-    public SqueakQuit(int exitCode) {
+    public SqueakQuit(final int exitCode) {
         this.exitCode = exitCode;
     }
 

@@ -24,7 +24,7 @@ public class InterruptHandlerNode extends Node {
     private int pendingFinalizationSignals = 0;
     @Child private SignalSemaphoreNode signalSemaporeNode;
 
-    public static InterruptHandlerNode create(SqueakImageContext image, SqueakConfig config) {
+    public static InterruptHandlerNode create(final SqueakImageContext image, final SqueakConfig config) {
         if (config.disableInterruptHandler()) {
             return new DummyInterruptHandlerNode(image);
         } else {
@@ -32,7 +32,7 @@ public class InterruptHandlerNode extends Node {
         }
     }
 
-    protected InterruptHandlerNode(SqueakImageContext image) {
+    protected InterruptHandlerNode(final SqueakImageContext image) {
         this.image = image;
         signalSemaporeNode = SignalSemaphoreNode.create(image);
     }
@@ -41,26 +41,28 @@ public class InterruptHandlerNode extends Node {
         interruptPending = true;
     }
 
-    public void nextWakeupTick(long msTime) {
+    public void nextWakeupTick(final long msTime) {
         nextWakeupTick = msTime;
     }
 
-    public void setDisabled(boolean value) {
+    public void setDisabled(final boolean value) {
         disabled = value;
     }
 
     /*
      * Check for interrupts on sends and backward jumps.
      */
-    public void sendOrBackwardJumpTrigger(VirtualFrame frame) { // TODO: call on backward jumps
+    public void sendOrBackwardJumpTrigger(final VirtualFrame frame) { // TODO: call on backward
+                                                                      // jumps
         if (disabled || interruptCheckCounter-- > 0) {
             return; // only really check every 100 times or so
         }
         executeCheck(frame);
     }
 
-    public void executeCheck(VirtualFrame frame) { // Check for interrupts at sends and backward jumps
-        long now = System.currentTimeMillis();
+    public void executeCheck(final VirtualFrame frame) { // Check for interrupts at sends and
+                                                         // backward jumps
+        final long now = System.currentTimeMillis();
         if (now < lastTick) { // millisecond clock wrapped"
             nextPollTick = now + (nextPollTick - lastTick);
             if (nextWakeupTick != 0) {
@@ -93,25 +95,25 @@ public class InterruptHandlerNode extends Node {
         }
     }
 
-    private void signalSemaporeIfNotNil(VirtualFrame frame, int semaphoreIndex) {
-        Object semaphoreObject = image.specialObjectsArray.at0(semaphoreIndex);
+    private void signalSemaporeIfNotNil(final VirtualFrame frame, final int semaphoreIndex) {
+        final Object semaphoreObject = image.specialObjectsArray.at0(semaphoreIndex);
         if (semaphoreObject != image.nil) {
             signalSemaporeNode.executeSignal(frame, (PointersObject) semaphoreObject);
         }
     }
 
     protected static final class DummyInterruptHandlerNode extends InterruptHandlerNode {
-        protected DummyInterruptHandlerNode(SqueakImageContext image) {
+        protected DummyInterruptHandlerNode(final SqueakImageContext image) {
             super(image);
             image.getOutput().println("Interrupt handler disabled...");
         }
 
         @Override
-        public void sendOrBackwardJumpTrigger(VirtualFrame frame) {
+        public void sendOrBackwardJumpTrigger(final VirtualFrame frame) {
         }
 
         @Override
-        public void executeCheck(VirtualFrame frame) {
+        public void executeCheck(final VirtualFrame frame) {
         }
     }
 }

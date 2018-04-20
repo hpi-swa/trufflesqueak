@@ -32,11 +32,11 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
     @Child private FrameSlotWriteNode instructionPointerWriteNode;
     @Child private StackPushNode pushStackNode;
 
-    public static ExecuteContextNode create(CompiledCodeObject code) {
+    public static ExecuteContextNode create(final CompiledCodeObject code) {
         return new ExecuteContextNode(code);
     }
 
-    protected ExecuteContextNode(CompiledCodeObject code) {
+    protected ExecuteContextNode(final CompiledCodeObject code) {
         super(code);
         bytecodeNodes = new SqueakBytecodeDecoder(code).decode();
         CompilerAsserts.compilationConstant(bytecodeNodes.length);
@@ -49,7 +49,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
         pushStackNode = StackPushNode.create(code);
     }
 
-    public Object executeVirtualized(VirtualFrame frame) {
+    public Object executeVirtualized(final VirtualFrame frame) {
         code.image.interrupt.sendOrBackwardJumpTrigger(frame);
         try {
             startBytecode(frame);
@@ -64,18 +64,18 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
         }
     }
 
-    public Object executeNonVirtualized(VirtualFrame frame, ContextObject newContext) {
+    public Object executeNonVirtualized(final VirtualFrame frame, final ContextObject newContext) {
         // maybe persist newContext, so there's no need to lookup the context to update its pc.
         assert newContext.getCodeObject() == FrameAccess.getMethod(frame);
         code.image.interrupt.sendOrBackwardJumpTrigger(frame);
         try {
-            long initialPC = newContext.getInstructionPointer();
+            final long initialPC = newContext.getInstructionPointer();
             if (initialPC == 0) {
                 startBytecode(frame);
             } else {
                 // avoid optimizing the cases in which a context is resumed
                 CompilerDirectives.transferToInterpreter();
-                resumeBytecode(frame.materialize(), initialPC);
+                resumeBytecode(frame, initialPC);
             }
             throw new SqueakException("Method did not return");
         } catch (LocalReturn lr) {
@@ -92,7 +92,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
      * Inspired by Sulong's LLVMDispatchBasicBlockNode (https://goo.gl/4LMzfX).
      */
     @ExplodeLoop(kind = ExplodeLoop.LoopExplosionKind.MERGE_EXPLODE)
-    protected void startBytecode(VirtualFrame frame) {
+    protected void startBytecode(final VirtualFrame frame) {
         int pc = 0;
         int backJumpCounter = 0;
         AbstractBytecodeNode node = bytecodeNodes[pc];
@@ -101,10 +101,10 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
                 CompilerAsserts.partialEvaluationConstant(pc);
                 storeInstructionPointer(frame, node);
                 if (node instanceof ConditionalJumpNode) {
-                    ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
+                    final ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
                     final boolean condition = jumpNode.executeCondition(frame);
                     if (CompilerDirectives.injectBranchProbability(jumpNode.getBranchProbability(ConditionalJumpNode.TRUE_SUCCESSOR), condition)) {
-                        int successor = jumpNode.getJumpSuccessor();
+                        final int successor = jumpNode.getJumpSuccessor();
                         if (CompilerDirectives.inInterpreter()) {
                             jumpNode.increaseBranchProbability(ConditionalJumpNode.TRUE_SUCCESSOR);
                             if (successor <= pc) {
@@ -115,7 +115,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
                         node = bytecodeNodes[pc];
                         continue;
                     } else {
-                        int successor = jumpNode.getSuccessorIndex();
+                        final int successor = jumpNode.getSuccessorIndex();
                         if (CompilerDirectives.inInterpreter()) {
                             jumpNode.increaseBranchProbability(ConditionalJumpNode.FALSE_SUCCESSOR);
                             if (successor <= pc) {
@@ -127,7 +127,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
                         continue;
                     }
                 } else if (node instanceof UnconditionalJumpNode) {
-                    int successor = ((UnconditionalJumpNode) node).getJumpSuccessor();
+                    final int successor = ((UnconditionalJumpNode) node).getJumpSuccessor();
                     if (CompilerDirectives.inInterpreter()) {
                         if (successor <= pc) {
                             backJumpCounter++;
@@ -164,7 +164,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
     /*
      * Non-optimized version of startBytecode that is used to resume contexts.
      */
-    protected void resumeBytecode(VirtualFrame frame, long initialPC) {
+    protected void resumeBytecode(final VirtualFrame frame, final long initialPC) {
         int pc = (int) initialPC;
         AbstractBytecodeNode node = bytecodeNodes[pc];
         while (pc >= 0) {
@@ -187,8 +187,8 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
         }
     }
 
-    private void storeInstructionPointer(VirtualFrame frame, AbstractBytecodeNode node) {
-        Object contextOrMarker = contextReadNode.executeRead(frame);
+    private void storeInstructionPointer(final VirtualFrame frame, final AbstractBytecodeNode node) {
+        final Object contextOrMarker = contextReadNode.executeRead(frame);
         if (contextOrMarker instanceof ContextObject) {
             ((ContextObject) contextOrMarker).setInstructionPointer(node.getSuccessorIndex());
         } else {

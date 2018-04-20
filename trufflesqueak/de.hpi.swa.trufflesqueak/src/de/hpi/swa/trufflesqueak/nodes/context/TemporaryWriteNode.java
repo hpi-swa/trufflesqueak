@@ -15,17 +15,18 @@ public abstract class TemporaryWriteNode extends AbstractWriteNode {
     @Child private FrameSlotWriteNode frameSlotWriteNode;
     @CompilationFinal private final long tempIndex;
 
-    public static TemporaryWriteNode create(CompiledCodeObject code, long tempIndex) {
+    public static TemporaryWriteNode create(final CompiledCodeObject code, final long tempIndex) {
         return TemporaryWriteNodeGen.create(code, tempIndex);
     }
 
-    public TemporaryWriteNode(CompiledCodeObject code, long tempIndex) {
+    public TemporaryWriteNode(final CompiledCodeObject code, final long tempIndex) {
         super(code);
         this.tempIndex = tempIndex;
-        // Perform checks to ensure a correct FrameSlotWriteNode is created, otherwise fail which happens
+        // Perform checks to ensure a correct FrameSlotWriteNode is created, otherwise fail which
+        // happens
         // when the decoder is decoding garbage.
         if (0 <= tempIndex && tempIndex <= CONTEXT.MAX_STACK_SIZE && code.canBeVirtualized()) {
-            FrameSlot stackSlot = code.getStackSlot((int) tempIndex);
+            final FrameSlot stackSlot = code.getStackSlot((int) tempIndex);
             if (stackSlot != null) {
                 frameSlotWriteNode = FrameSlotWriteNode.create(stackSlot);
             }
@@ -33,14 +34,14 @@ public abstract class TemporaryWriteNode extends AbstractWriteNode {
     }
 
     @Specialization(guards = {"isVirtualized(frame)"})
-    protected void doWriteVirtualized(VirtualFrame frame, Object value) {
+    protected void doWriteVirtualized(final VirtualFrame frame, final Object value) {
         CompilerDirectives.ensureVirtualizedHere(frame);
         assert value != null;
         frameSlotWriteNode.executeWrite(frame, value);
     }
 
     @Specialization(guards = {"!isVirtualized(frame)"})
-    protected void doWrite(VirtualFrame frame, Object value) {
+    protected void doWrite(final VirtualFrame frame, final Object value) {
         assert value != null;
         getContext(frame).atTempPut(tempIndex, value);
     }

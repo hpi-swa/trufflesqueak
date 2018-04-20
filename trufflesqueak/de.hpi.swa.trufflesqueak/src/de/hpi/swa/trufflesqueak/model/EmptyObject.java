@@ -4,16 +4,16 @@ import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.exceptions.PrimitiveExceptions;
 
 public class EmptyObject extends SqueakObject {
-    public EmptyObject(SqueakImageContext img) {
+    public EmptyObject(final SqueakImageContext img) {
         super(img);
     }
 
-    public EmptyObject(SqueakImageContext image, ClassObject classObject) {
+    public EmptyObject(final SqueakImageContext image, final ClassObject classObject) {
         super(image, classObject);
     }
 
     @Override
-    public boolean become(BaseSqueakObject other) {
+    public boolean become(final BaseSqueakObject other) {
         if (!(other instanceof EmptyObject)) {
             throw new PrimitiveExceptions.PrimitiveFailed();
         }
@@ -31,12 +31,12 @@ public class EmptyObject extends SqueakObject {
     }
 
     @Override
-    public Object at0(long idx) {
+    public Object at0(final long idx) {
         throw new IndexOutOfBoundsException();
     }
 
     @Override
-    public void atput0(long idx, Object obj) {
+    public void atput0(final long idx, final Object obj) {
         throw new IndexOutOfBoundsException();
     }
 

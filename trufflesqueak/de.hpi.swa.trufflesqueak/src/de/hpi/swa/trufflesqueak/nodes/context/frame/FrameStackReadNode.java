@@ -13,7 +13,7 @@ public abstract class FrameStackReadNode extends Node {
 
     public abstract Object execute(Frame frame, int stackIndex);
 
-    protected FrameSlot getFrameSlotForIndex(Frame frame, int index) {
+    protected FrameSlot getFrameSlotForIndex(final Frame frame, final int index) {
         assert index >= 0;
         return frame.getFrameDescriptor().findFrameSlot(index);
     }
@@ -22,10 +22,10 @@ public abstract class FrameStackReadNode extends Node {
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"index == cachedIndex"}, limit = "SQUEAK_MAX_STACK_SIZE")
-    protected Object readInt(Frame frame, int index,
-                    @Cached("index") int cachedIndex,
-                    @Cached("getFrameSlotForIndex(frame, index)") FrameSlot slot,
-                    @Cached("create(slot)") FrameSlotReadNode readNode) {
+    protected Object readInt(final Frame frame, final int index,
+                    @Cached("index") final int cachedIndex,
+                    @Cached("getFrameSlotForIndex(frame, index)") final FrameSlot slot,
+                    @Cached("create(slot)") final FrameSlotReadNode readNode) {
         return readNode.executeRead(frame);
     }
 }

@@ -14,24 +14,24 @@ public abstract class ArgumentNode extends SqueakNodeWithCode {
     @CompilationFinal private final long argumentIndex;
     @Child private FrameArgumentNode frameArgumentNode;
 
-    public static ArgumentNode create(CompiledCodeObject code, int argumentIndex) {
+    public static ArgumentNode create(final CompiledCodeObject code, final int argumentIndex) {
         return ArgumentNodeGen.create(code, argumentIndex);
     }
 
-    protected ArgumentNode(CompiledCodeObject code, int argumentIndex) {
+    protected ArgumentNode(final CompiledCodeObject code, final int argumentIndex) {
         super(code);
         frameArgumentNode = FrameArgumentNode.create(FrameAccess.RCVR_AND_ARGS_START + argumentIndex);
         this.argumentIndex = argumentIndex;
     }
 
     @Specialization(guards = {"isVirtualized(frame)"})
-    protected Object doVirtualized(VirtualFrame frame) {
+    protected Object doVirtualized(final VirtualFrame frame) {
         CompilerDirectives.ensureVirtualizedHere(frame);
         return frameArgumentNode.executeRead(frame);
     }
 
     @Specialization(guards = {"!isVirtualized(frame)"})
-    protected Object doUnvirtualized(VirtualFrame frame) {
+    protected Object doUnvirtualized(final VirtualFrame frame) {
         return getContext(frame).atStack(argumentIndex);
     }
 }

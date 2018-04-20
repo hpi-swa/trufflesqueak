@@ -409,7 +409,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
                     "WriteStreamTest", TEST_TYPE.FAILING,
                     "XMLParserTest", TEST_TYPE.PASSING,
                     "YearMonthWeekTest", TEST_TYPE.PASSING,
-                    "YearTest", TEST_TYPE.PASSING,};
+                    "YearTest", TEST_TYPE.PASSING};
 
     @Test
     public void test1AsSymbol() {
@@ -444,7 +444,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
 
     @Test
     public void test5OnError() {
-        Object result = evaluate("[self error: 'foobar'] on: Error do: [:err| ^ err messageText]");
+        final Object result = evaluate("[self error: 'foobar'] on: Error do: [:err| ^ err messageText]");
         assertEquals("foobar", result.toString());
         assertEquals("foobar", evaluate("[[self error: 'foobar'] value] on: Error do: [:err| ^ err messageText]").toString());
         assertEquals(image.sqTrue, evaluate("[[self error: 'foobar'] on: ZeroDivide do: [:e|]] on: Error do: [:err| ^ true]"));
@@ -470,7 +470,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
 
     @Test
     public void test9TinyBenchmarks() {
-        String resultString = evaluate("1 tinyBenchmarks").toString();
+        final String resultString = evaluate("1 tinyBenchmarks").toString();
         assertTrue(resultString.contains("bytecodes/sec"));
         assertTrue(resultString.contains("sends/sec"));
     }
@@ -489,11 +489,11 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
 
     @Test
     public void testWPassingSqueakTests() {
-        List<String> failing = new ArrayList<>();
-        String[] testClasses = getSqueakTests(TEST_TYPE.PASSING);
+        final List<String> failing = new ArrayList<>();
+        final String[] testClasses = getSqueakTests(TEST_TYPE.PASSING);
         printHeader(TEST_TYPE.PASSING, testClasses);
         for (int i = 0; i < testClasses.length; i++) {
-            String result = runTestCase(testClasses[i]);
+            final String result = runTestCase(testClasses[i]);
             if (!result.contains("passed")) {
                 failing.add(result);
             }
@@ -503,7 +503,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
 
     @Test
     public void testXFlakySqueakTests() {
-        String[] testClasses = getSqueakTests(TEST_TYPE.FLAKY);
+        final String[] testClasses = getSqueakTests(TEST_TYPE.FLAKY);
         printHeader(TEST_TYPE.FLAKY, testClasses);
         for (int i = 0; i < testClasses.length; i++) {
             runTestCase(testClasses[i]);
@@ -518,20 +518,20 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
     @Test
     public void testZNotTerminatingSqueakTests() {
         assumeNotOnMXGate();
-        int timeoutSeconds = 15;
-        List<String> passing = new ArrayList<>();
-        String[] testClasses = getSqueakTests(TEST_TYPE.NOT_TERMINATING);
+        final int timeoutSeconds = 15;
+        final List<String> passing = new ArrayList<>();
+        final String[] testClasses = getSqueakTests(TEST_TYPE.NOT_TERMINATING);
         printHeader(TEST_TYPE.NOT_TERMINATING, testClasses);
         for (int i = 0; i < testClasses.length; i++) {
-            String testClass = testClasses[i];
-            Thread thread = new Thread(new Runnable() {
+            final String testClass = testClasses[i];
+            final Thread thread = new Thread(new Runnable() {
                 @Override
                 public void run() {
                     passing.add(runTestCase(testClass));
                 }
             });
             thread.start();
-            long endTimeMillis = System.currentTimeMillis() + timeoutSeconds * 1000;
+            final long endTimeMillis = System.currentTimeMillis() + timeoutSeconds * 1000;
             while (thread.isAlive()) {
                 if (System.currentTimeMillis() > endTimeMillis) {
                     image.getOutput().println("did not terminate in time");
@@ -550,10 +550,10 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
 
     @BeforeClass
     public static void loadTestImage() {
-        String imagePath = getPathToTestImage();
+        final String imagePath = getPathToTestImage();
         image = new SqueakImageContext(imagePath);
         image.getOutput().println();
-        System.out.println("== Running " + SqueakLanguage.NAME + " SUnit Tests on " + Truffle.getRuntime().getName() + " ==");
+        image.getOutput().println("== Running " + SqueakLanguage.NAME + " SUnit Tests on " + Truffle.getRuntime().getName() + " ==");
         image.getOutput().println("Loading test image at " + imagePath + "...");
         try {
             image.fillInFrom(new FileInputStream(imagePath));
@@ -564,26 +564,32 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
     }
 
     private static void patchImageForTesting() {
-        PointersObject activeProcess = GetActiveProcessNode.create(image).executeGet();
+        final PointersObject activeProcess = GetActiveProcessNode.create(image).executeGet();
         activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, image.nil);
-        System.out.println("Modifying StartUpList for testing...");
+        image.getOutput().println("Modifying StartUpList for testing...");
         evaluate("{EventSensor. Project. ProcessorScheduler. WeakArray} do: [:ea | Smalltalk removeFromStartUpList: ea]");
-        System.out.println("Processing StartUpList...");
+        image.getOutput().println("Processing StartUpList...");
         evaluate("Smalltalk processStartUpList: true");
-        System.out.println("Setting author initials...");
+        image.getOutput().println("Setting author initials...");
         evaluate("Utilities setAuthorInitials: 'TruffleSqueak'");
-        System.out.println("Patching timeout methods...");
-        Object patchResult = evaluate(
-                        "TestCase addSelectorSilently: #timeout:after: withMethod: (TestCase compile: 'timeout: aBlock after: seconds ^ aBlock value' notifying: nil trailer: (CompiledMethodTrailer empty) ifFail: [^ nil]) method");
+        image.getOutput().println("Patching timeout methods...");
+        Object patchResult = evaluate(String.join(" ",
+                        "TestCase addSelectorSilently: #timeout:after: withMethod:",
+                        "(TestCase compile: 'timeout: aBlock after: seconds ^ aBlock value'",
+                        "notifying: nil trailer: (CompiledMethodTrailer empty) ifFail: [^ nil]) method"));
         assertNotEquals(image.nil, patchResult);
         if (!runsOnMXGate()) {
             // Print Errors to stderr.
-            patchResult = evaluate(
-                            "TestCase addSelectorSilently: #runCase withMethod: (TestCase compile: 'runCase [self setUp. [self performTest] ensure: [self tearDown]] on: Error do: [:e | e printVerboseOn: FileStream stderr. e signal]' notifying: nil trailer: (CompiledMethodTrailer empty) ifFail: [^ nil]) method");
+            patchResult = evaluate(String.join(" ",
+                            "TestCase addSelectorSilently: #runCase withMethod:",
+                            "(TestCase compile: 'runCase [self setUp. [self performTest] ensure: [self tearDown]] on: Error do: [:e | e printVerboseOn: FileStream stderr. e signal]'",
+                            "notifying: nil trailer: (CompiledMethodTrailer empty) ifFail: [^ nil]) method"));
             assertNotEquals(image.nil, patchResult);
         }
-        patchResult = evaluate(
-                        "BlockClosure addSelectorSilently: #valueWithin:onTimeout: withMethod: (BlockClosure compile: 'valueWithin: aDuration onTimeout: timeoutBlock ^ self value' notifying: nil trailer: (CompiledMethodTrailer empty) ifFail: [^ nil]) method");
+        patchResult = evaluate(String.join(" ",
+                        "BlockClosure addSelectorSilently: #valueWithin:onTimeout: withMethod:",
+                        "(BlockClosure compile: 'valueWithin: aDuration onTimeout: timeoutBlock ^ self value'",
+                        "notifying: nil trailer: (CompiledMethodTrailer empty) ifFail: [^ nil]) method"));
         assertNotEquals(image.nil, patchResult);
     }
 
@@ -602,7 +608,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
     private static String getPathToTestImage() {
         File currentDirectory = new File(System.getProperty("user.dir"));
         while (currentDirectory != null) {
-            String pathToImage = currentDirectory.getAbsolutePath() + File.separator + "images" + File.separator + "test.image";
+            final String pathToImage = currentDirectory.getAbsolutePath() + File.separator + "images" + File.separator + "test.image";
             if (new File(pathToImage).exists()) {
                 return pathToImage;
             }
@@ -639,25 +645,25 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
         return compilerSymbol;
     }
 
-    private static Object asSymbol(String value) {
-        String fakeMethodName = "fakeAsSymbol" + value.hashCode();
-        CompiledCodeObject method = makeMethod(
+    private static Object asSymbol(final String value) {
+        final String fakeMethodName = "fakeAsSymbol" + value.hashCode();
+        final CompiledCodeObject method = makeMethod(
                         new Object[]{4L, image.asSymbol, image.wrap(value), image.newSymbol(fakeMethodName), getSmalltalkAssociation()},
                         new int[]{0x21, 0xD0, 0x7C});
         return runMethod(method, getSmalltalkDictionary());
     }
 
-    private static Object evaluate(String expression) {
+    private static Object evaluate(final String expression) {
         // ^ (Smalltalk at: #Compiler) evaluate: '{expression}'
-        String fakeMethodName = "fakeEvaluate" + expression.hashCode();
-        CompiledCodeObject method = makeMethod(
+        final String fakeMethodName = "fakeEvaluate" + expression.hashCode();
+        final CompiledCodeObject method = makeMethod(
                         new Object[]{6L, getEvaluateSymbol(), getSmalltalkAssociation(), getCompilerSymbol(), image.wrap(expression), asSymbol(fakeMethodName), getSmalltalkAssociation()},
                         new int[]{0x41, 0x22, 0xC0, 0x23, 0xE0, 0x7C});
         return runMethod(method, getSmalltalkDictionary());
     }
 
-    private static String[] getSqueakTests(String type) {
-        List<String> result = new ArrayList<>();
+    private static String[] getSqueakTests(final String type) {
+        final List<String> result = new ArrayList<>();
         for (int i = 0; i < squeakTests.length; i += 2) {
             if (squeakTests[i + 1].equals(type)) {
                 result.add((String) squeakTests[i]);
@@ -666,7 +672,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
         return result.toArray(new String[0]);
     }
 
-    private static String runTestCase(String testClassName) {
+    private static String runTestCase(final String testClassName) {
         image.getOutput().print(testClassName + ": ");
         image.getOutput().flush();
         String result;
@@ -679,12 +685,12 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
         return testClassName + ": " + result;
     }
 
-    private static void testAndFailOnPassing(String type) {
-        List<String> passing = new ArrayList<>();
-        String[] testClasses = getSqueakTests(type);
+    private static void testAndFailOnPassing(final String type) {
+        final List<String> passing = new ArrayList<>();
+        final String[] testClasses = getSqueakTests(type);
         printHeader(type, testClasses);
         for (int i = 0; i < testClasses.length; i++) {
-            String result = runTestCase(testClasses[i]);
+            final String result = runTestCase(testClasses[i]);
             if (result.contains("passed")) {
                 passing.add(result);
             }
@@ -692,22 +698,22 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
         failIfNotEmpty(passing);
     }
 
-    private static String extractFailuresAndErrorsFromTestResult(Object result) {
+    private static String extractFailuresAndErrorsFromTestResult(final Object result) {
         if (!(result instanceof BaseSqueakObject) || !result.toString().equals("a TestResult")) {
             return "did not return a TestResult, got " + result.toString();
         }
-        BaseSqueakObject testResult = (BaseSqueakObject) result;
-        List<String> output = new ArrayList<>();
-        BaseSqueakObject failureArray = (BaseSqueakObject) ((BaseSqueakObject) testResult.at0(TEST_RESULT.FAILURES)).at0(1);
+        final BaseSqueakObject testResult = (BaseSqueakObject) result;
+        final List<String> output = new ArrayList<>();
+        final BaseSqueakObject failureArray = (BaseSqueakObject) ((BaseSqueakObject) testResult.at0(TEST_RESULT.FAILURES)).at0(1);
         for (int i = 0; i < failureArray.size(); i++) {
-            BaseSqueakObject value = (BaseSqueakObject) failureArray.at0(i);
+            final BaseSqueakObject value = (BaseSqueakObject) failureArray.at0(i);
             if (!value.isNil()) {
                 output.add(value.at0(0) + " (E)");
             }
         }
-        BaseSqueakObject errorArray = (BaseSqueakObject) ((BaseSqueakObject) testResult.at0(TEST_RESULT.ERRORS)).at0(0);
+        final BaseSqueakObject errorArray = (BaseSqueakObject) ((BaseSqueakObject) testResult.at0(TEST_RESULT.ERRORS)).at0(0);
         for (int i = 0; i < errorArray.size(); i++) {
-            BaseSqueakObject value = (BaseSqueakObject) errorArray.at0(i);
+            final BaseSqueakObject value = (BaseSqueakObject) errorArray.at0(i);
             if (!value.isNil()) {
                 output.add(value.at0(0) + " (F)");
             }
@@ -718,13 +724,13 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
         return String.join(", ", output);
     }
 
-    private static void failIfNotEmpty(List<String> list) {
+    private static void failIfNotEmpty(final List<String> list) {
         if (!list.isEmpty()) {
             fail(String.join("\n", list));
         }
     }
 
-    private static void printHeader(String type, String[] testClasses) {
+    private static void printHeader(final String type, final String[] testClasses) {
         image.getOutput().println();
         image.getOutput().println(String.format("== %s %s Squeak Tests ====================", testClasses.length, type));
     }

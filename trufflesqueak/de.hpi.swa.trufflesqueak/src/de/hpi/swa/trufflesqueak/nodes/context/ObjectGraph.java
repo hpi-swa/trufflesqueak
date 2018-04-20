@@ -23,10 +23,10 @@ public class ObjectGraph {
     @CompilationFinal private final HashSet<BaseSqueakObject> classesWithNoInstances;
     @CompilationFinal private final ListObject specialObjectsArray;
 
-    public ObjectGraph(SqueakImageContext image) {
+    public ObjectGraph(final SqueakImageContext image) {
         specialObjectsArray = image.specialObjectsArray;
         // TODO: BlockContext missing.
-        BaseSqueakObject[] classes = new BaseSqueakObject[]{image.smallIntegerClass, image.characterClass, image.floatClass};
+        final BaseSqueakObject[] classes = new BaseSqueakObject[]{image.smallIntegerClass, image.characterClass, image.floatClass};
         classesWithNoInstances = new HashSet<>(Arrays.asList(classes));
     }
 
@@ -38,24 +38,24 @@ public class ObjectGraph {
         return traceInstances(null, false);
     }
 
-    public List<BaseSqueakObject> allInstances(ClassObject classObj) {
+    public List<BaseSqueakObject> allInstances(final ClassObject classObj) {
         return traceInstances(classObj, false);
     }
 
-    public List<BaseSqueakObject> someInstance(ClassObject classObj) {
+    public List<BaseSqueakObject> someInstance(final ClassObject classObj) {
         return traceInstances(classObj, true);
     }
 
-    private List<BaseSqueakObject> traceInstances(ClassObject classObj, boolean isSomeInstance) {
-        List<BaseSqueakObject> result = new ArrayList<>();
-        Set<BaseSqueakObject> seen = new HashSet<>(1000000);
-        Deque<BaseSqueakObject> pending = new ArrayDeque<>(256);
+    private List<BaseSqueakObject> traceInstances(final ClassObject classObj, final boolean isSomeInstance) {
+        final List<BaseSqueakObject> result = new ArrayList<>();
+        final Set<BaseSqueakObject> seen = new HashSet<>(1000000);
+        final Deque<BaseSqueakObject> pending = new ArrayDeque<>(256);
         pending.add(specialObjectsArray);
         while (!pending.isEmpty()) {
-            BaseSqueakObject currentObject = pending.pop();
+            final BaseSqueakObject currentObject = pending.pop();
             if (!seen.contains(currentObject)) {
                 seen.add(currentObject);
-                ClassObject sqClass = currentObject.getSqClass();
+                final ClassObject sqClass = currentObject.getSqClass();
                 if (classObj == null || classObj.equals(sqClass)) {
                     result.add(currentObject);
                     if (isSomeInstance) {
@@ -68,9 +68,9 @@ public class ObjectGraph {
         return result;
     }
 
-    private static List<BaseSqueakObject> tracePointers(BaseSqueakObject currentObject) {
-        List<BaseSqueakObject> result = new ArrayList<>(32);
-        ClassObject sqClass = currentObject.getSqClass();
+    private static List<BaseSqueakObject> tracePointers(final BaseSqueakObject currentObject) {
+        final List<BaseSqueakObject> result = new ArrayList<>(32);
+        final ClassObject sqClass = currentObject.getSqClass();
         if (sqClass != null) {
             result.add(sqClass);
         }
@@ -84,7 +84,7 @@ public class ObjectGraph {
         return result;
     }
 
-    private static void addBaseSqueakObjects(List<BaseSqueakObject> list, Object[] objects) {
+    private static void addBaseSqueakObjects(final List<BaseSqueakObject> list, final Object[] objects) {
         for (Object object : objects) {
             if (object instanceof BaseSqueakObject && !(object instanceof NativeObject)) {
                 list.add((BaseSqueakObject) object);

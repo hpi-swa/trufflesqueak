@@ -17,29 +17,29 @@ import de.hpi.swa.trufflesqueak.util.FrameMarker;
 
 @ImportStatic(FrameAccess.class)
 public abstract class GetOrCreateContextNode extends AbstractNodeWithCode {
-    public static GetOrCreateContextNode create(CompiledCodeObject code) {
+    public static GetOrCreateContextNode create(final CompiledCodeObject code) {
         return GetOrCreateContextNodeGen.create(code);
     }
 
     @Child private static FrameStackReadNode frameStackReadNode = FrameStackReadNode.create();
 
-    protected GetOrCreateContextNode(CompiledCodeObject code) {
+    protected GetOrCreateContextNode(final CompiledCodeObject code) {
         super(code);
     }
 
-    public final ContextObject executeGet(Frame frame) {
+    public final ContextObject executeGet(final Frame frame) {
         return executeGet(frame, true);  // TODO: only force context when necessary
     }
 
     public abstract ContextObject executeGet(Frame frame, boolean forceContext);
 
     @Specialization(guards = {"isVirtualized(frame)"})
-    protected ContextObject doCreateVirtualized(VirtualFrame frame, boolean forceContext) {
+    protected ContextObject doCreateVirtualized(final VirtualFrame frame, final boolean forceContext) {
         return materialize(frame, forceContext);
     }
 
-    public static ContextObject getOrCreate(Frame frame) {
-        Object contextOrMarker = FrameAccess.getContextOrMarker(frame);
+    public static ContextObject getOrCreate(final Frame frame) {
+        final Object contextOrMarker = FrameAccess.getContextOrMarker(frame);
         if (contextOrMarker instanceof ContextObject) {
             return (ContextObject) contextOrMarker;
         } else {
@@ -47,15 +47,15 @@ public abstract class GetOrCreateContextNode extends AbstractNodeWithCode {
         }
     }
 
-    private static ContextObject materialize(Frame frame, boolean forceContext) {
+    private static ContextObject materialize(final Frame frame, final boolean forceContext) {
         CompilerDirectives.transferToInterpreter();
-        CompiledCodeObject method = FrameAccess.getMethod(frame);
-        FrameMarker frameMarker = (FrameMarker) FrameAccess.getContextOrMarker(frame);
-        ContextObject context = ContextObject.create(method.image, method.frameSize(), frameMarker);
+        final CompiledCodeObject method = FrameAccess.getMethod(frame);
+        final FrameMarker frameMarker = (FrameMarker) FrameAccess.getContextOrMarker(frame);
+        final ContextObject context = ContextObject.create(method.image, method.frameSize(), frameMarker);
 
         context.setSender(FrameAccess.getSender(frame));
-        long framePC = FrameUtil.getLongSafe(frame, method.instructionPointerSlot);
-        long frameSP = FrameUtil.getLongSafe(frame, method.stackPointerSlot);
+        final long framePC = FrameUtil.getLongSafe(frame, method.instructionPointerSlot);
+        final long frameSP = FrameUtil.getLongSafe(frame, method.stackPointerSlot);
         context.atput0(CONTEXT.METHOD, method);
         if (framePC >= 0) {
             context.setInstructionPointer(framePC);
@@ -63,13 +63,13 @@ public abstract class GetOrCreateContextNode extends AbstractNodeWithCode {
             context.atput0(CONTEXT.INSTRUCTION_POINTER, method.image.nil);
         }
         context.setStackPointer(frameSP + 1); // frame sp is zero-based
-        BlockClosureObject closure = FrameAccess.getClosure(frame);
+        final BlockClosureObject closure = FrameAccess.getClosure(frame);
         context.atput0(CONTEXT.CLOSURE_OR_NIL, closure == null ? method.image.nil : closure);
         context.atput0(CONTEXT.RECEIVER, FrameAccess.getReceiver(frame));
 
         // Copy args and temps
         for (int i = 0; i <= frameSP; i++) {
-            Object tempValue = frameStackReadNode.execute(frame, i);
+            final Object tempValue = frameStackReadNode.execute(frame, i);
             assert tempValue != null;
             context.atTempPut(i, tempValue);
         }
@@ -82,7 +82,7 @@ public abstract class GetOrCreateContextNode extends AbstractNodeWithCode {
     }
 
     @Specialization(guards = {"!isVirtualized(frame)"})
-    protected ContextObject doGet(VirtualFrame frame, @SuppressWarnings("unused") boolean forceContext) {
+    protected ContextObject doGet(final VirtualFrame frame, @SuppressWarnings("unused") final boolean forceContext) {
         return (ContextObject) FrameAccess.getContextOrMarker(frame, code.thisContextOrMarkerSlot);
     }
 }

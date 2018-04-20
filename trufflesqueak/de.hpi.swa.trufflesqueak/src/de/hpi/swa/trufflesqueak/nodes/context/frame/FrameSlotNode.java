@@ -7,7 +7,7 @@ import com.oracle.truffle.api.nodes.Node;
 public abstract class FrameSlotNode extends Node {
     @CompilationFinal protected final FrameSlot slot;
 
-    protected FrameSlotNode(FrameSlot frameSlot) {
+    protected FrameSlotNode(final FrameSlot frameSlot) {
         slot = frameSlot;
     }
 }

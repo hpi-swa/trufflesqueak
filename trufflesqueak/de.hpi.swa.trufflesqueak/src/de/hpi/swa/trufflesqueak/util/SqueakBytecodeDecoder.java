@@ -42,16 +42,16 @@ public class SqueakBytecodeDecoder {
     @CompilationFinal(dimensions = 1) private final byte[] bc;
     private int currentIndex = 0;
 
-    public SqueakBytecodeDecoder(CompiledCodeObject code) {
+    public SqueakBytecodeDecoder(final CompiledCodeObject code) {
         this.code = code;
         this.bc = code.getBytes();
     }
 
     public AbstractBytecodeNode[] decode() {
-        AbstractBytecodeNode[] nodes = new AbstractBytecodeNode[bc.length];
+        final AbstractBytecodeNode[] nodes = new AbstractBytecodeNode[bc.length];
         int i = 1;
         while (currentIndex < bc.length) {
-            int index = currentIndex;
+            final int index = currentIndex;
             nodes[index] = decodeNextByte();
             nodes[index].setLineNumber(i);
             i++;
@@ -72,8 +72,8 @@ public class SqueakBytecodeDecoder {
     }
 
     private AbstractBytecodeNode decodeNextByte() {
-        int index = currentIndex;
-        int b = nextByte();
+        final int index = currentIndex;
+        final int b = nextByte();
         //@formatter:off
         switch (b) {
             case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:

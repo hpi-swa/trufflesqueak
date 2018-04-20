@@ -17,36 +17,38 @@ import org.graalvm.polyglot.Source.Builder;
 import com.oracle.truffle.api.Truffle;
 
 public class TruffleSqueakMain extends AbstractLanguageLauncher {
-    private static void executeImage(String... args) throws RuntimeException {
-        System.out.println("== Running " + SqueakLanguage.NAME + " on " + Truffle.getRuntime().getName() + " ==");
-        new TruffleSqueakMain().launch(args);
-    }
+    private SqueakConfig config;
 
-    public static void main(String[] args) throws RuntimeException {
+    public static void main(final String[] args) throws RuntimeException {
         if (args.length >= 1) {
             executeImage(args);
         } else {
-            JFileChooser squeakImageChooser = new JFileChooser();
-            long result = squeakImageChooser.showOpenDialog(null);
+            final JFileChooser squeakImageChooser = new JFileChooser();
+            final long result = squeakImageChooser.showOpenDialog(null);
             if (result == JFileChooser.APPROVE_OPTION) {
                 executeImage(squeakImageChooser.getSelectedFile().getAbsolutePath());
             }
         }
     }
 
-    private SqueakConfig config;
+    private static void executeImage(final String... args) throws RuntimeException {
+        // Checkstyle: stop
+        System.out.println("== Running " + SqueakLanguage.NAME + " on " + Truffle.getRuntime().getName() + " ==");
+        // Checkstyle: resume
+        new TruffleSqueakMain().launch(args);
+    }
 
     @Override
-    protected List<String> preprocessArguments(List<String> arguments, Map<String, String> polyglotOptions) {
+    protected List<String> preprocessArguments(final List<String> arguments, final Map<String, String> polyglotOptions) {
         config = new SqueakConfig(arguments.toArray(new String[0]));
         return config.getUnrecognized();
     }
 
     @Override
-    protected void launch(Context.Builder contextBuilder) {
+    protected void launch(final Context.Builder contextBuilder) {
         contextBuilder.arguments(getLanguageId(), config.toStringArgs());
         try (Context ctx = contextBuilder.build()) {
-            Builder sourceBuilder = Source.newBuilder(getLanguageId(), new File(config.getImagePath()));
+            final Builder sourceBuilder = Source.newBuilder(getLanguageId(), new File(config.getImagePath()));
             sourceBuilder.interactive(true);
             ctx.eval(sourceBuilder.build());
         } catch (IOException e) {
@@ -60,12 +62,14 @@ public class TruffleSqueakMain extends AbstractLanguageLauncher {
     }
 
     @Override
-    protected void printHelp(OptionCategory maxCategory) {
+    protected void printHelp(final OptionCategory maxCategory) {
+        // Checkstyle: stop
         System.out.println("squeak <image> [-r <receiver>] [-m <method>] [-t|--trace] [-v|--verbose] [--|--args <image args>]");
+        // Checkstyle: resume
     }
 
     @Override
-    protected void collectArguments(Set<String> options) {
+    protected void collectArguments(final Set<String> options) {
         options.add("-r");
         options.add("-m");
         options.add("--trace");

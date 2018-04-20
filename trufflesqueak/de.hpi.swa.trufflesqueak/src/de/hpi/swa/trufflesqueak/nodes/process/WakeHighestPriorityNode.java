@@ -17,11 +17,11 @@ public class WakeHighestPriorityNode extends AbstractNodeWithImage {
     @Child private IsEmptyListNode isEmptyListNode;
     @Child private TransferToNode transferToNode;
 
-    public static WakeHighestPriorityNode create(SqueakImageContext image) {
+    public static WakeHighestPriorityNode create(final SqueakImageContext image) {
         return new WakeHighestPriorityNode(image);
     }
 
-    protected WakeHighestPriorityNode(SqueakImageContext image) {
+    protected WakeHighestPriorityNode(final SqueakImageContext image) {
         super(image);
         removeFirstLinkOfListNode = RemoveFirstLinkOfListNode.create(image);
         getActiveProcessNode = GetActiveProcessNode.create(image);
@@ -30,11 +30,11 @@ public class WakeHighestPriorityNode extends AbstractNodeWithImage {
         transferToNode = TransferToNode.create(image);
     }
 
-    public void executeWake(VirtualFrame frame) {
+    public void executeWake(final VirtualFrame frame) {
         // Return the highest priority process that is ready to run.
         // Note: It is a fatal VM error if there is no runnable process.
-        PointersObject scheduler = getSchedulerNode.executeGet();
-        ListObject schedLists = (ListObject) scheduler.at0(PROCESS_SCHEDULER.PROCESS_LISTS);
+        final PointersObject scheduler = getSchedulerNode.executeGet();
+        final ListObject schedLists = (ListObject) scheduler.at0(PROCESS_SCHEDULER.PROCESS_LISTS);
         long p = schedLists.size() - 1;  // index of last indexable field
         BaseSqueakObject processList;
         do {
@@ -43,8 +43,8 @@ public class WakeHighestPriorityNode extends AbstractNodeWithImage {
             }
             processList = (BaseSqueakObject) schedLists.at0(p--);
         } while (isEmptyListNode.executeIsEmpty(processList));
-        PointersObject activeProcess = getActiveProcessNode.executeGet();
-        BaseSqueakObject newProcess = removeFirstLinkOfListNode.executeRemove(processList);
+        final PointersObject activeProcess = getActiveProcessNode.executeGet();
+        final BaseSqueakObject newProcess = removeFirstLinkOfListNode.executeRemove(processList);
         transferToNode.executeTransferTo(frame, activeProcess, newProcess);
     }
 }

@@ -12,12 +12,12 @@ public class OSDetector {
     private final OSType currentOS;
 
     public OSDetector() {
-        String OS = System.getProperty("os.name", "generic").toLowerCase();
-        if ((OS.indexOf("mac") >= 0) || (OS.indexOf("darwin") >= 0)) {
+        final String os = System.getProperty("os.name", "generic").toLowerCase();
+        if ((os.indexOf("mac") >= 0) || (os.indexOf("darwin") >= 0)) {
             currentOS = OSType.MacOS;
-        } else if (OS.indexOf("win") >= 0) {
+        } else if (os.indexOf("win") >= 0) {
             currentOS = OSType.Windows;
-        } else if (OS.indexOf("nux") >= 0) {
+        } else if (os.indexOf("nux") >= 0) {
             currentOS = OSType.Linux;
         } else {
             currentOS = OSType.Other;

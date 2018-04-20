@@ -13,11 +13,11 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 public abstract class TerminateContextNode extends AbstractNodeWithCode {
     @Child private FrameSlotWriteNode instructionPointerWriteNode;
 
-    public static TerminateContextNode create(CompiledCodeObject code) {
+    public static TerminateContextNode create(final CompiledCodeObject code) {
         return TerminateContextNodeGen.create(code);
     }
 
-    protected TerminateContextNode(CompiledCodeObject code) {
+    protected TerminateContextNode(final CompiledCodeObject code) {
         super(code);
         instructionPointerWriteNode = FrameSlotWriteNode.create(code.instructionPointerSlot);
     }
@@ -25,7 +25,7 @@ public abstract class TerminateContextNode extends AbstractNodeWithCode {
     protected abstract void executeTerminate(VirtualFrame frame);
 
     @Specialization(guards = {"isVirtualized(frame)"})
-    protected void doTerminateVirtualized(VirtualFrame frame) {
+    protected void doTerminateVirtualized(final VirtualFrame frame) {
         CompilerDirectives.ensureVirtualizedHere(frame);
         // TODO: check the below is actually needed (see also GetOrCreateContextNode.materialize())
         instructionPointerWriteNode.executeWrite(frame, -1); // cannot set nil, -1 instead.
@@ -33,7 +33,7 @@ public abstract class TerminateContextNode extends AbstractNodeWithCode {
     }
 
     @Specialization(guards = {"!isVirtualized(frame)"})
-    protected void doTerminate(VirtualFrame frame) {
+    protected void doTerminate(final VirtualFrame frame) {
         getContext(frame).terminate();
     }
 }

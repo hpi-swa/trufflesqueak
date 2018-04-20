@@ -28,9 +28,9 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primAnyBitFromTo", numArguments = 3) // TODO: implement primitive
-    public static abstract class PrimAnyBitFromToNode extends AbstractArithmeticBinaryPrimitiveNode {
+    public abstract static class PrimAnyBitFromToNode extends AbstractArithmeticBinaryPrimitiveNode {
 
-        public PrimAnyBitFromToNode(CompiledMethodObject method) {
+        public PrimAnyBitFromToNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -38,9 +38,9 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {1, 21, 41}, name = "primDigitAdd", numArguments = 2)
-    public static abstract class PrimAddNode extends AbstractArithmeticBinaryPrimitiveNode {
+    public abstract static class PrimAddNode extends AbstractArithmeticBinaryPrimitiveNode {
 
-        public PrimAddNode(CompiledMethodObject method) {
+        public PrimAddNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -76,8 +76,8 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {2, 22, 42}, name = "primDigitSubtract", numArguments = 2)
-    public static abstract class PrimSubstractNode extends AbstractArithmeticBinaryPrimitiveNode {
-        public PrimSubstractNode(CompiledMethodObject method) {
+    public abstract static class PrimSubstractNode extends AbstractArithmeticBinaryPrimitiveNode {
+        public PrimSubstractNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -113,8 +113,8 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {9, 29, 49}, name = "primDigitMultiplyNegative", numArguments = 2)
-    public static abstract class PrimMultiplyNode extends AbstractArithmeticBinaryPrimitiveNode {
-        public PrimMultiplyNode(CompiledMethodObject method) {
+    public abstract static class PrimMultiplyNode extends AbstractArithmeticBinaryPrimitiveNode {
+        public PrimMultiplyNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -150,18 +150,18 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {14, 34}, name = "primDigitBitAnd", numArguments = 2)
-    public static abstract class PrimBitAndNode extends AbstractArithmeticPrimitiveNode {
-        public PrimBitAndNode(CompiledMethodObject method) {
+    public abstract static class PrimBitAndNode extends AbstractArithmeticPrimitiveNode {
+        public PrimBitAndNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected final static long doLong(final long receiver, final long arg) {
+        protected static final long doLong(final long receiver, final long arg) {
             return receiver & arg;
         }
 
         @Specialization
-        protected final static Object doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject arg) {
+        protected static final Object doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject arg) {
             return receiver.and(arg);
         }
 
@@ -178,18 +178,18 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {15, 35}, name = "primDigitBitOr", numArguments = 2)
-    public static abstract class PrimBitOrNode extends AbstractArithmeticPrimitiveNode {
-        public PrimBitOrNode(CompiledMethodObject method) {
+    public abstract static class PrimBitOrNode extends AbstractArithmeticPrimitiveNode {
+        public PrimBitOrNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected final static long bitOr(final long receiver, final long arg) {
+        protected static final long bitOr(final long receiver, final long arg) {
             return receiver | arg;
         }
 
         @Specialization
-        protected final static Object doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject arg) {
+        protected static final Object doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject arg) {
             return receiver.or(arg);
         }
 
@@ -206,59 +206,61 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {17, 37}, name = "primDigitBitShiftMagnitude", numArguments = 2)
-    public static abstract class PrimBitShiftNode extends AbstractArithmeticPrimitiveNode {
+    public abstract static class PrimBitShiftNode extends AbstractArithmeticPrimitiveNode {
 
-        public PrimBitShiftNode(CompiledMethodObject method) {
+        public PrimBitShiftNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization(guards = {"arg >= 0"})
         protected final Object doLong(final long receiver, final long arg) {
-            // Always use BigInteger as its hard to detect if long shift causes an overflow (e.g. 58 << 58).
+            // Always use BigInteger as its hard to detect if long shift causes an overflow (e.g. 58
+            // << 58).
             return doLargeInteger(asLargeInteger(receiver), arg);
         }
 
         @Specialization(guards = {"arg < 0"})
         protected final Object doLongNegative(final long receiver, final long arg) {
-            // Always use BigInteger as its hard to detect if long shift causes an overflow (e.g. 58 << 58).
+            // Always use BigInteger as its hard to detect if long shift causes an overflow (e.g. 58
+            // << 58).
             return doLargeIntegerNegative(asLargeInteger(receiver), arg);
         }
 
         @Specialization(guards = {"arg >= 0"})
-        protected final static Object doLargeInteger(final LargeIntegerObject receiver, final long arg) {
+        protected static final Object doLargeInteger(final LargeIntegerObject receiver, final long arg) {
             return receiver.shiftLeft((int) arg);
         }
 
         @Specialization(guards = {"arg < 0"})
-        protected final static Object doLargeIntegerNegative(final LargeIntegerObject receiver, final long arg) {
+        protected static final Object doLargeIntegerNegative(final LargeIntegerObject receiver, final long arg) {
             return receiver.shiftRight((int) -arg);
         }
 
         @Specialization(guards = {"arg >= 0"})
-        protected final static Object doNativeObject(final NativeObject receiver, final long arg) {
+        protected static final Object doNativeObject(final NativeObject receiver, final long arg) {
             return doLargeInteger(receiver.normalize(), arg);
         }
 
         @Specialization(guards = {"arg < 0"})
-        protected final static Object doNativeObjectNegative(final NativeObject receiver, final long arg) {
+        protected static final Object doNativeObjectNegative(final NativeObject receiver, final long arg) {
             return doLargeIntegerNegative(receiver.normalize(), arg);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {16, 36}, name = "primDigitBitXor", numArguments = 2)
-    protected static abstract class PrimBitXorNode extends AbstractArithmeticPrimitiveNode {
-        protected PrimBitXorNode(CompiledMethodObject method) {
+    protected abstract static class PrimBitXorNode extends AbstractArithmeticPrimitiveNode {
+        protected PrimBitXorNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected final static long doLong(final long receiver, final long b) {
+        protected static final long doLong(final long receiver, final long b) {
             return receiver ^ b;
         }
 
         @Specialization
-        protected final static Object doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject arg) {
+        protected static final Object doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject arg) {
             return receiver.xor(arg);
         }
 
@@ -275,9 +277,9 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primDigitCompare", numArguments = 2)
-    public static abstract class PrimDigitCompareNode extends AbstractArithmeticPrimitiveNode {
+    public abstract static class PrimDigitCompareNode extends AbstractArithmeticPrimitiveNode {
 
-        public PrimDigitCompareNode(CompiledMethodObject method) {
+        public PrimDigitCompareNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -286,7 +288,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             if (a == b) {
                 return 0;
             }
-            int compare = Long.toString(a).compareTo(Long.toString(b));
+            final int compare = Long.toString(a).compareTo(Long.toString(b));
             if (compare > 0) {
                 return 1;
             } else if (compare < 0) {
@@ -301,7 +303,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             if (a.equals(b)) {
                 return 0;
             }
-            int compare = a.toString().compareTo(b.toString());
+            final int compare = a.toString().compareTo(b.toString());
             if (compare > 0) {
                 return 1;
             } else if (compare < 0) {
@@ -324,8 +326,8 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primDigitDivNegative", numArguments = 3)
-    public static abstract class PrimDigitDivNegativeNode extends AbstractArithmeticPrimitiveNode {
-        public PrimDigitDivNegativeNode(CompiledMethodObject method) {
+    public abstract static class PrimDigitDivNegativeNode extends AbstractArithmeticPrimitiveNode {
+        public PrimDigitDivNegativeNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -335,7 +337,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             if ((negative && divide >= 0) || (!negative && divide < 0)) {
                 divide = Math.negateExact(divide);
             }
-            long remainder = rcvr % arg;
+            final long remainder = rcvr % arg;
             return code.image.newListWith(divide, remainder);
         }
 
@@ -350,7 +352,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             if (negative != divide.isNegative()) {
                 divide = divide.negateNoReduce();
             }
-            Object remainder = rcvr.remainder(arg);
+            final Object remainder = rcvr.remainder(arg);
             return code.image.newListWith(divide.reduceIfPossible(), remainder);
         }
 
@@ -367,19 +369,20 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primMontgomeryDigitLength") // TODO: implement primitive
-    public static abstract class PrimMontgomeryDigitLengthNode extends AbstractArithmeticPrimitiveNode {
+    public abstract static class PrimMontgomeryDigitLengthNode extends AbstractArithmeticPrimitiveNode {
 
-        public PrimMontgomeryDigitLengthNode(CompiledMethodObject method) {
+        public PrimMontgomeryDigitLengthNode(final CompiledMethodObject method) {
             super(method);
         }
 
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primMontgomeryTimesModulo", numArguments = 4) // TODO: implement primitive
-    public static abstract class PrimMontgomeryTimesModuloNode extends AbstractArithmeticPrimitiveNode {
+    @SqueakPrimitive(name = "primMontgomeryTimesModulo", numArguments = 4) // TODO: implement
+                                                                           // primitive
+    public abstract static class PrimMontgomeryTimesModuloNode extends AbstractArithmeticPrimitiveNode {
 
-        public PrimMontgomeryTimesModuloNode(CompiledMethodObject method) {
+        public PrimMontgomeryTimesModuloNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -387,26 +390,26 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = {"primNormalizePositive", "primNormalizeNegative"})
-    public static abstract class PrimNormalizeNode extends AbstractArithmeticPrimitiveNode {
+    public abstract static class PrimNormalizeNode extends AbstractArithmeticPrimitiveNode {
         @Child private ReturnReceiverNode receiverNode;
 
-        public PrimNormalizeNode(CompiledMethodObject method) {
+        public PrimNormalizeNode(final CompiledMethodObject method) {
             super(method);
             receiverNode = ReturnReceiverNode.create(method, -1);
         }
 
         @Specialization
-        protected long doLong(long value) {
+        protected long doLong(final long value) {
             return value;
         }
 
         @Specialization
-        public Object doLargeInteger(LargeIntegerObject value) {
+        public Object doLargeInteger(final LargeIntegerObject value) {
             return value.reduceIfPossible();
         }
 
         @Specialization
-        protected Object doNativeObject(NativeObject value) {
+        protected Object doNativeObject(final NativeObject value) {
             return value.normalize().reduceIfPossible();
         }
     }

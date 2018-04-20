@@ -18,7 +18,7 @@ public class SqueakConfig {
     @CompilationFinal private final List<String> unrecognized = new ArrayList<>();
 
     @SuppressWarnings("hiding")
-    public SqueakConfig(String[] args) {
+    public SqueakConfig(final String[] args) {
         this.imagePath = args.length > 0 ? args[0] : "unknown";
         boolean verbose = false;
         boolean tracing = false;
@@ -73,7 +73,7 @@ public class SqueakConfig {
     }
 
     public String[] toStringArgs() {
-        List<String> sb = new ArrayList<>();
+        final List<String> sb = new ArrayList<>();
         sb.add(imagePath);
         if (verbose) {
             sb.add("-v");

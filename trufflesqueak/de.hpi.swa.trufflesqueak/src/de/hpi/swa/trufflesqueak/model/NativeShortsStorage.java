@@ -14,15 +14,15 @@ public class NativeShortsStorage extends AbstractNativeObjectStorage {
     @CompilationFinal(dimensions = 1) protected short[] shorts;
     @CompilationFinal private static final long SHORT_MAX = (long) (Math.pow(2, Short.SIZE) - 1);
 
-    public NativeShortsStorage(int size) {
+    public NativeShortsStorage(final int size) {
         shorts = new short[size];
     }
 
-    public NativeShortsStorage(short[] shorts) {
+    public NativeShortsStorage(final short[] shorts) {
         this.shorts = shorts;
     }
 
-    private NativeShortsStorage(NativeShortsStorage original) {
+    private NativeShortsStorage(final NativeShortsStorage original) {
         this(Arrays.copyOf(original.shorts, original.shorts.length));
     }
 
@@ -32,18 +32,18 @@ public class NativeShortsStorage extends AbstractNativeObjectStorage {
     }
 
     @Override
-    public void fillin(SqueakImageChunk chunk) {
+    public void fillin(final SqueakImageChunk chunk) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         shorts = chunk.getShorts();
     }
 
     @Override
-    public long getNativeAt0(long longIndex) {
+    public long getNativeAt0(final long longIndex) {
         return Short.toUnsignedLong(shorts[(int) longIndex]);
     }
 
     @Override
-    public void setNativeAt0(long longIndex, long value) {
+    public void setNativeAt0(final long longIndex, final long value) {
         if (value < 0 || value > SHORT_MAX) { // check for overflow
             throw new IllegalArgumentException("Illegal value for ShortsObject: " + value);
         }
@@ -51,17 +51,17 @@ public class NativeShortsStorage extends AbstractNativeObjectStorage {
     }
 
     @Override
-    public long shortAt0(long index) {
+    public long shortAt0(final long index) {
         return getNativeAt0(index);
     }
 
     @Override
-    public void shortAtPut0(long index, long value) {
+    public void shortAtPut0(final long index, final long value) {
         setNativeAt0(index, value);
     }
 
     @Override
-    public void fillWith(Object value) {
+    public void fillWith(final Object value) {
         if (value instanceof Long) {
             Arrays.fill(shorts, ((Long) value).shortValue());
         } else {
@@ -76,15 +76,15 @@ public class NativeShortsStorage extends AbstractNativeObjectStorage {
 
     @Override
     public byte[] getBytes() {
-        ByteBuffer byteBuffer = ByteBuffer.allocate(shorts.length * 4);
+        final ByteBuffer byteBuffer = ByteBuffer.allocate(shorts.length * 4);
         byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-        ShortBuffer shortBuffer = byteBuffer.asShortBuffer();
+        final ShortBuffer shortBuffer = byteBuffer.asShortBuffer();
         shortBuffer.put(shorts);
         return byteBuffer.array();
     }
 
     @Override
-    public void setBytes(byte[] bytes) {
+    public void setBytes(final byte[] bytes) {
         final int size = bytes.length / getElementSize();
         CompilerDirectives.transferToInterpreterAndInvalidate();
         shorts = new short[size];

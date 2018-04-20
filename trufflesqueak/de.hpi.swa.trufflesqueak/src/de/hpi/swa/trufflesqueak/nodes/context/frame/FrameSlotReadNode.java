@@ -11,67 +11,67 @@ import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 
 public abstract class FrameSlotReadNode extends FrameSlotNode {
 
-    public static FrameSlotReadNode create(FrameSlot frameSlot) {
+    public static FrameSlotReadNode create(final FrameSlot frameSlot) {
         return FrameSlotReadNodeGen.create(frameSlot);
     }
 
-    protected FrameSlotReadNode(FrameSlot frameSlot) {
+    protected FrameSlotReadNode(final FrameSlot frameSlot) {
         super(frameSlot);
     }
 
     public abstract Object executeRead(Frame frame);
 
     @Specialization(guards = "isInt(frame)")
-    protected long readInt(VirtualFrame frame) {
+    protected long readInt(final VirtualFrame frame) {
         return FrameUtil.getIntSafe(frame, slot);
     }
 
     @Specialization(guards = "isLong(frame)")
-    protected long readLong(VirtualFrame frame) {
+    protected long readLong(final VirtualFrame frame) {
         return FrameUtil.getLongSafe(frame, slot);
     }
 
     @Specialization(guards = "isDouble(frame)")
-    protected double readDouble(VirtualFrame frame) {
+    protected double readDouble(final VirtualFrame frame) {
         return FrameUtil.getDoubleSafe(frame, slot);
     }
 
     @Specialization(guards = "isBoolean(frame)")
-    protected boolean readBool(VirtualFrame frame) {
+    protected boolean readBool(final VirtualFrame frame) {
         return FrameUtil.getBooleanSafe(frame, slot);
     }
 
     @Specialization(guards = "isObject(frame)")
-    protected Object readObject(VirtualFrame frame) {
+    protected Object readObject(final VirtualFrame frame) {
         return FrameUtil.getObjectSafe(frame, slot);
     }
 
     @Specialization(guards = "isIllegal(frame)")
-    protected Object readIllegal(@SuppressWarnings("unused") VirtualFrame frame) {
+    protected Object readIllegal(@SuppressWarnings("unused") final VirtualFrame frame) {
         throw new SqueakException("Trying to read from illegal slot");
     }
 
-    protected boolean isInt(VirtualFrame frame) {
+    protected boolean isInt(final VirtualFrame frame) {
         return frame.isInt(slot);
     }
 
-    protected boolean isLong(VirtualFrame frame) {
+    protected boolean isLong(final VirtualFrame frame) {
         return frame.isLong(slot);
     }
 
-    protected boolean isDouble(VirtualFrame frame) {
+    protected boolean isDouble(final VirtualFrame frame) {
         return frame.isDouble(slot);
     }
 
-    protected boolean isBoolean(VirtualFrame frame) {
+    protected boolean isBoolean(final VirtualFrame frame) {
         return frame.isBoolean(slot);
     }
 
-    protected boolean isObject(VirtualFrame frame) {
+    protected boolean isObject(final VirtualFrame frame) {
         return frame.isObject(slot);
     }
 
-    protected boolean isIllegal(@SuppressWarnings("unused") VirtualFrame frame) {
+    protected boolean isIllegal(@SuppressWarnings("unused") final VirtualFrame frame) {
         return slot.getKind() == FrameSlotKind.Illegal;
     }
 }

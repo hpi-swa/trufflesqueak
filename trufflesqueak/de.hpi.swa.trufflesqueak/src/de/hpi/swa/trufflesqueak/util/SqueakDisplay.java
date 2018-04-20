@@ -57,7 +57,7 @@ public final class SqueakDisplay {
 
     private static final long[] NULL_EVENT = new long[]{EVENT_TYPE.NONE, 0, 0, 0, 0, 0, 0, 0};
 
-    public static AbstractSqueakDisplay create(SqueakImageContext image, boolean noDisplay) {
+    public static AbstractSqueakDisplay create(final SqueakImageContext image, final boolean noDisplay) {
         if (!GraphicsEnvironment.isHeadless() && !noDisplay) {
             return new JavaDisplay(image);
         } else {
@@ -65,7 +65,7 @@ public final class SqueakDisplay {
         }
     }
 
-    public static abstract class AbstractSqueakDisplay {
+    public abstract static class AbstractSqueakDisplay {
         public abstract void forceRect(int left, int right, int top, int bottom);
 
         public abstract Dimension getSize();
@@ -108,14 +108,14 @@ public final class SqueakDisplay {
         @CompilationFinal public final SqueakKeyboard keyboard;
         @CompilationFinal private final Deque<long[]> deferredEvents = new ArrayDeque<>();
 
-        @CompilationFinal private final static Toolkit toolkit = Toolkit.getDefaultToolkit();
-        @CompilationFinal(dimensions = 1) private final static byte[] blackAndWhite = new byte[]{(byte) 0, (byte) 255};
-        @CompilationFinal(dimensions = 1) private final static byte[] alphaComponent = new byte[]{(byte) 255};
-        @CompilationFinal private final static ColorModel cursorModel = new IndexColorModel(1, 1, blackAndWhite, blackAndWhite, blackAndWhite, alphaComponent);
+        @CompilationFinal private static final Toolkit toolkit = Toolkit.getDefaultToolkit();
+        @CompilationFinal(dimensions = 1) private static final byte[] blackAndWhite = new byte[]{(byte) 0, (byte) 255};
+        @CompilationFinal(dimensions = 1) private static final byte[] alphaComponent = new byte[]{(byte) 255};
+        @CompilationFinal private static final ColorModel cursorModel = new IndexColorModel(1, 1, blackAndWhite, blackAndWhite, blackAndWhite, alphaComponent);
 
         private boolean deferUpdates = false;
 
-        public JavaDisplay(SqueakImageContext image) {
+        public JavaDisplay(final SqueakImageContext image) {
             this.image = image;
             mouse = new SqueakMouse(this);
             keyboard = new SqueakKeyboard(this);
@@ -130,13 +130,13 @@ public final class SqueakDisplay {
             frame.setResizable(true);
             frame.addComponentListener(new ComponentAdapter() {
                 @Override
-                public void componentResized(ComponentEvent evt) {
+                public void componentResized(final ComponentEvent evt) {
                     canvas.resizeTo(frame.getSize());
                 }
             });
         }
 
-        class Canvas extends JComponent {
+        private final class Canvas extends JComponent {
             private static final long serialVersionUID = 1L;
             @CompilationFinal private BufferedImage bufferedImage;
             @CompilationFinal private NativeObject bitmap;
@@ -149,7 +149,7 @@ public final class SqueakDisplay {
             }
 
             @Override
-            public void paintComponent(Graphics g) {
+            public void paintComponent(final Graphics g) {
                 if (bitmap == null) {
                     return;
                 }
@@ -175,13 +175,13 @@ public final class SqueakDisplay {
             }
 
             private int[] decodeColors() {
-                int shift = 4 - depth;
+                final int shift = 4 - depth;
                 int pixelmask = ((1 << depth) - 1) << shift;
-                int[] table = PIXEL_LOOKUP_TABLE[depth - 1];
-                int[] words = bitmap.getWords();
-                int[] rgb = new int[words.length];
+                final int[] table = PIXEL_LOOKUP_TABLE[depth - 1];
+                final int[] words = bitmap.getWords();
+                final int[] rgb = new int[words.length];
                 for (int i = 0; i < words.length; i++) {
-                    int pixel = (words[i] & pixelmask) >> (shift - i * depth);
+                    final int pixel = (words[i] & pixelmask) >> (shift - i * depth);
                     rgb[i] = table[pixel];
                     pixelmask >>= depth;
                 }
@@ -189,15 +189,15 @@ public final class SqueakDisplay {
             }
 
             private Raster get16bitRaster() {
-                int[] words = bitmap.getWords();
+                final int[] words = bitmap.getWords();
                 assert words.length * 2 / width / height == 1;
-                DirectColorModel colorModel = new DirectColorModel(16,
+                final DirectColorModel colorModel = new DirectColorModel(16,
                                 0x001f, // red
                                 0x03e0, // green
                                 0x7c00, // blue
                                 0x8000  // alpha
                 );
-                WritableRaster raster = colorModel.createCompatibleWritableRaster(width, height);
+                final WritableRaster raster = colorModel.createCompatibleWritableRaster(width, height);
                 int word, high, low, x, y;
                 Object pixel = null;
                 for (int i = 0; i < words.length; i++) {
@@ -214,14 +214,14 @@ public final class SqueakDisplay {
                 return raster;
             }
 
-            private void resizeTo(Dimension newSize) {
+            private void resizeTo(final Dimension newSize) {
                 setSize(newSize);
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 bufferedImage = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
                 repaint();
             }
 
-            private void setSqDisplay(PointersObject sqDisplay) {
+            private void setSqDisplay(final PointersObject sqDisplay) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 this.bitmap = (NativeObject) sqDisplay.at0(FORM.BITS);
                 this.width = ((Long) sqDisplay.at0(FORM.WIDTH)).intValue();
@@ -232,7 +232,7 @@ public final class SqueakDisplay {
 
         @Override
         @TruffleBoundary
-        public void forceRect(int left, int right, int top, int bottom) {
+        public void forceRect(final int left, final int right, final int top, final int bottom) {
             canvas.repaint(left, top, right - left, bottom - top);
         }
 
@@ -262,7 +262,7 @@ public final class SqueakDisplay {
         }
 
         @Override
-        public void adjustDisplay(long depth, long width, long height, boolean fullscreen) {
+        public void adjustDisplay(final long depth, final long width, final long height, final boolean fullscreen) {
             canvas.depth = ((Long) depth).intValue();
             canvas.width = ((Long) width).intValue();
             canvas.height = ((Long) height).intValue();
@@ -271,7 +271,7 @@ public final class SqueakDisplay {
         }
 
         @Override
-        public void setFullscreen(boolean enable) {
+        public void setFullscreen(final boolean enable) {
             if (enable) {
                 frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
                 frame.setUndecorated(true);
@@ -282,7 +282,7 @@ public final class SqueakDisplay {
         }
 
         @Override
-        public void setSqDisplay(PointersObject sqDisplay) {
+        public void setSqDisplay(final PointersObject sqDisplay) {
             canvas.setSqDisplay(sqDisplay);
         }
 
@@ -312,16 +312,16 @@ public final class SqueakDisplay {
         }
 
         @Override
-        public void setCursor(int[] cursorWords) {
-            Dimension bestCursorSize = toolkit.getBestCursorSize(CURSOR_WIDTH, CURSOR_HEIGHT);
-            Cursor cursor;
+        public void setCursor(final int[] cursorWords) {
+            final Dimension bestCursorSize = toolkit.getBestCursorSize(CURSOR_WIDTH, CURSOR_HEIGHT);
+            final Cursor cursor;
             if (bestCursorSize.width == 0 || bestCursorSize.height == 0) {
                 cursor = Cursor.getDefaultCursor();
             } else {
-                DataBuffer buf = new DataBufferInt(cursorWords, (CURSOR_WIDTH * CURSOR_HEIGHT / 8) * 1);
-                SampleModel sm = new MultiPixelPackedSampleModel(DataBuffer.TYPE_INT, CURSOR_WIDTH, CURSOR_HEIGHT, 1);
-                WritableRaster raster = Raster.createWritableRaster(sm, buf, null);
-                Image cursorImage = new BufferedImage(cursorModel, raster, true, null);
+                final DataBuffer buf = new DataBufferInt(cursorWords, (CURSOR_WIDTH * CURSOR_HEIGHT / 8) * 1);
+                final SampleModel sm = new MultiPixelPackedSampleModel(DataBuffer.TYPE_INT, CURSOR_WIDTH, CURSOR_HEIGHT, 1);
+                final WritableRaster raster = Raster.createWritableRaster(sm, buf, null);
+                final Image cursorImage = new BufferedImage(cursorModel, raster, true, null);
                 cursor = toolkit.createCustomCursor(cursorImage, new Point(0, 0), "TruffleSqueak Cursor");
             }
             canvas.setCursor(cursor);
@@ -335,7 +335,7 @@ public final class SqueakDisplay {
             return NULL_EVENT;
         }
 
-        public void addEvent(long[] event) {
+        public void addEvent(final long[] event) {
             deferredEvents.add(event);
         }
 
@@ -344,14 +344,14 @@ public final class SqueakDisplay {
         }
 
         @Override
-        public void setDeferUpdates(boolean flag) {
+        public void setDeferUpdates(final boolean flag) {
             deferUpdates = flag;
         }
     }
 
     private static class NullDisplay extends AbstractSqueakDisplay {
         @Override
-        public void forceRect(int left, int right, int top, int bottom) {
+        public void forceRect(final int left, final int right, final int top, final int bottom) {
         }
 
         @Override
@@ -360,7 +360,7 @@ public final class SqueakDisplay {
         }
 
         @Override
-        public void setFullscreen(boolean enable) {
+        public void setFullscreen(final boolean enable) {
         }
 
         @Override
@@ -376,7 +376,7 @@ public final class SqueakDisplay {
         }
 
         @Override
-        public void setSqDisplay(PointersObject sqDisplay) {
+        public void setSqDisplay(final PointersObject sqDisplay) {
         }
 
         @Override
@@ -405,7 +405,7 @@ public final class SqueakDisplay {
         }
 
         @Override
-        public void setCursor(int[] cursorWords) {
+        public void setCursor(final int[] cursorWords) {
         }
 
         @Override
@@ -414,11 +414,11 @@ public final class SqueakDisplay {
         }
 
         @Override
-        public void setDeferUpdates(boolean flag) {
+        public void setDeferUpdates(final boolean flag) {
         }
 
         @Override
-        public void adjustDisplay(long depth, long width, long height, boolean fullscreen) {
+        public void adjustDisplay(final long depth, final long width, final long height, final boolean fullscreen) {
         }
     }
 

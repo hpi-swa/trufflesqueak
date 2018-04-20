@@ -3,8 +3,8 @@ package de.hpi.swa.trufflesqueak.util;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.ShortBuffer;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.model.BlockClosureObject;
@@ -33,16 +33,16 @@ public class SqueakImageChunk {
     private final SqueakImageReader reader;
     protected final int format;
     private final int hash;
-    private final Vector<Integer> data;
+    private final List<Integer> data;
     private final SqueakImageContext image;
 
-    public SqueakImageChunk(SqueakImageReader reader,
-                    SqueakImageContext image,
-                    long size,
-                    int format,
-                    int classid,
-                    int hash,
-                    int pos) {
+    public SqueakImageChunk(final SqueakImageReader reader,
+                    final SqueakImageContext image,
+                    final long size,
+                    final int format,
+                    final int classid,
+                    final int hash,
+                    final int pos) {
         this.reader = reader;
         this.image = image;
         this.size = size;
@@ -50,10 +50,10 @@ public class SqueakImageChunk {
         this.classid = classid;
         this.hash = hash;
         this.pos = pos;
-        this.data = new Vector<>();
+        this.data = new ArrayList<>();
     }
 
-    public void append(int nextInt) {
+    public void append(final int nextInt) {
         data.add(nextInt);
     }
 
@@ -65,7 +65,7 @@ public class SqueakImageChunk {
         data.remove(data.size() - 1);
     }
 
-    public Vector<Integer> data() {
+    public List<Integer> data() {
         return data;
     }
 
@@ -143,7 +143,7 @@ public class SqueakImageChunk {
         return sqClass;
     }
 
-    public void setSqClass(ClassObject baseSqueakObject) {
+    public void setSqClass(final ClassObject baseSqueakObject) {
         this.sqClass = baseSqueakObject;
     }
 
@@ -151,7 +151,7 @@ public class SqueakImageChunk {
         return getPointers(data.size());
     }
 
-    public Object[] getPointers(int end) {
+    public Object[] getPointers(final int end) {
         if (pointers == null) {
             pointers = new Object[end];
             for (int i = 0; i < end; i++) {
@@ -161,11 +161,11 @@ public class SqueakImageChunk {
         return pointers;
     }
 
-    private Object decodePointer(int ptr) {
+    private Object decodePointer(final int ptr) {
         if ((ptr & 3) == 0) {
-            SqueakImageChunk chunk = reader.chunktable.get(ptr);
+            final SqueakImageChunk chunk = reader.chunktable.get(ptr);
             if (chunk == null) {
-                System.err.println("Bogus pointer: " + ptr + ". Treating as smallint.");
+                image.getError().println("Bogus pointer: " + ptr + ". Treating as smallint.");
                 return image.wrap(ptr >> 1);
             } else {
                 return chunk.asObject();
@@ -182,10 +182,10 @@ public class SqueakImageChunk {
         return getBytes(0);
     }
 
-    public byte[] getBytes(int start) {
-        byte[] bytes = new byte[((data.size() - start) * 4) - getPadding()];
-        List<Integer> subList = data.subList(start, data.size());
-        ByteBuffer buf = ByteBuffer.allocate(subList.size() * 4);
+    public byte[] getBytes(final int start) {
+        final byte[] bytes = new byte[((data.size() - start) * 4) - getPadding()];
+        final List<Integer> subList = data.subList(start, data.size());
+        final ByteBuffer buf = ByteBuffer.allocate(subList.size() * 4);
         buf.order(ByteOrder.nativeOrder());
         for (int i : subList) {
             buf.putInt(i);
@@ -197,13 +197,13 @@ public class SqueakImageChunk {
     }
 
     public short[] getShorts() {
-        short[] shorts = new short[(data.size() * 2) - getPadding()];
-        ByteBuffer buf = ByteBuffer.allocate(data.size() * 2);
+        final short[] shorts = new short[(data.size() * 2) - getPadding()];
+        final ByteBuffer buf = ByteBuffer.allocate(data.size() * 2);
         buf.order(ByteOrder.nativeOrder());
         for (int i : data) {
             buf.putInt(i);
         }
-        ShortBuffer shortBuffer = buf.asShortBuffer();
+        final ShortBuffer shortBuffer = buf.asShortBuffer();
         for (int i = 0; i < shorts.length; i++) {
             shorts[i] = shortBuffer.get(i);
         }
@@ -211,7 +211,7 @@ public class SqueakImageChunk {
     }
 
     public int[] getWords() {
-        int[] ints = new int[data.size()];
+        final int[] ints = new int[data.size()];
         for (int i = 0; i < ints.length; i++) {
             ints[i] = data.get(i);
         }
@@ -219,7 +219,7 @@ public class SqueakImageChunk {
     }
 
     public long[] getLongs() {
-        long[] longs = new long[data.size()];
+        final long[] longs = new long[data.size()];
         for (int i = 0; i < longs.length; i++) {
             longs[i] = data.get(i);
         }

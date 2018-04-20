@@ -10,23 +10,23 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 public abstract class StackPeekNode extends AbstractStackNode {
     @CompilationFinal private final int offset;
 
-    public static StackPeekNode create(CompiledCodeObject code, int offset) {
+    public static StackPeekNode create(final CompiledCodeObject code, final int offset) {
         return StackPeekNodeGen.create(code, offset);
     }
 
-    protected StackPeekNode(CompiledCodeObject code, int offset) {
+    protected StackPeekNode(final CompiledCodeObject code, final int offset) {
         super(code);
         this.offset = offset;
     }
 
     @Specialization(guards = {"isVirtualized(frame)"})
-    protected Object doPeekVirtualized(VirtualFrame frame) {
+    protected Object doPeekVirtualized(final VirtualFrame frame) {
         CompilerDirectives.ensureVirtualizedHere(frame);
         return readNode.execute(frame, (int) frameStackPointer(frame) - offset);
     }
 
     @Specialization(guards = {"!isVirtualized(frame)"})
-    protected Object doPeek(VirtualFrame frame) {
+    protected Object doPeek(final VirtualFrame frame) {
         return getContext(frame).peek(offset);
     }
 }

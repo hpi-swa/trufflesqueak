@@ -14,23 +14,23 @@ public class PutToSleepNode extends AbstractNodeWithImage {
     @Child private LinkProcessToListNode linkProcessToList;
     @Child private GetSchedulerNode getSchedulerNode;
 
-    public static PutToSleepNode create(SqueakImageContext image) {
+    public static PutToSleepNode create(final SqueakImageContext image) {
         return new PutToSleepNode(image);
     }
 
-    protected PutToSleepNode(SqueakImageContext image) {
+    protected PutToSleepNode(final SqueakImageContext image) {
         super(image);
         linkProcessToList = LinkProcessToListNode.create(image);
         getSchedulerNode = GetSchedulerNode.create(image);
     }
 
-    protected void executePutToSleep(BaseSqueakObject process) {
+    protected void executePutToSleep(final BaseSqueakObject process) {
         CompilerDirectives.transferToInterpreter();
         // Save the given process on the scheduler process list for its priority.
-        long priority = (long) process.at0(PROCESS.PRIORITY);
-        PointersObject scheduler = getSchedulerNode.executeGet();
-        ListObject processLists = (ListObject) scheduler.at0(PROCESS_SCHEDULER.PROCESS_LISTS);
-        PointersObject processList = (PointersObject) processLists.at0(priority - 1);
+        final long priority = (long) process.at0(PROCESS.PRIORITY);
+        final PointersObject scheduler = getSchedulerNode.executeGet();
+        final ListObject processLists = (ListObject) scheduler.at0(PROCESS_SCHEDULER.PROCESS_LISTS);
+        final PointersObject processList = (PointersObject) processLists.at0(priority - 1);
         linkProcessToList.executeLink(process, processList);
     }
 }

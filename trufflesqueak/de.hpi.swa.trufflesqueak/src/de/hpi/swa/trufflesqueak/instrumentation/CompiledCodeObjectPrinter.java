@@ -8,13 +8,13 @@ import de.hpi.swa.trufflesqueak.util.SqueakBytecodeDecoder;
 
 public class CompiledCodeObjectPrinter {
 
-    public static String getString(CompiledCodeObject code) {
-        StringBuilder sb = new StringBuilder();
+    public static String getString(final CompiledCodeObject code) {
+        final StringBuilder sb = new StringBuilder();
         long index = 1;
         long indent = 0;
-        byte[] bytes = code.getBytes();
+        final byte[] bytes = code.getBytes();
         // TODO: is a new BytecodeSequenceNode needed here?
-        AbstractBytecodeNode[] bytecodeNodes = new SqueakBytecodeDecoder(code).decode();
+        final AbstractBytecodeNode[] bytecodeNodes = new SqueakBytecodeDecoder(code).decode();
         for (AbstractBytecodeNode node : bytecodeNodes) {
             if (node == null) {
                 continue;
@@ -23,7 +23,7 @@ public class CompiledCodeObjectPrinter {
             for (int j = 0; j < indent; j++) {
                 sb.append(" ");
             }
-            long numBytecodes = node.getNumBytecodes();
+            final long numBytecodes = node.getNumBytecodes();
             sb.append("<");
             for (int j = node.getIndex(); j < node.getIndex() + numBytecodes; j++) {
                 if (j > node.getIndex()) {

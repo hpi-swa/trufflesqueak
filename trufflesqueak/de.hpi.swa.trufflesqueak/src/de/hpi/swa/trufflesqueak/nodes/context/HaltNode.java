@@ -9,12 +9,12 @@ import de.hpi.swa.trufflesqueak.nodes.bytecodes.AbstractBytecodeNode;
 
 public class HaltNode extends AbstractBytecodeNode {
 
-    public HaltNode(CompiledCodeObject code, int index) {
+    public HaltNode(final CompiledCodeObject code, final int index) {
         super(code, index);
     }
 
     @Override
-    public void executeVoid(VirtualFrame frame) {
+    public void executeVoid(final VirtualFrame frame) {
     }
 
     @Override
@@ -23,7 +23,7 @@ public class HaltNode extends AbstractBytecodeNode {
     }
 
     @Override
-    public boolean hasTag(Class<? extends Tag> tag) {
+    public boolean hasTag(final Class<? extends Tag> tag) {
         return tag == DebuggerTags.AlwaysHalt.class;
     }
 }

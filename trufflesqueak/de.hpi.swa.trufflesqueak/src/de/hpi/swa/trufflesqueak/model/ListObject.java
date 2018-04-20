@@ -3,19 +3,19 @@ package de.hpi.swa.trufflesqueak.model;
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 
 public class ListObject extends AbstractPointersObject {
-    public ListObject(SqueakImageContext img) {
+    public ListObject(final SqueakImageContext img) {
         super(img);
     }
 
-    public ListObject(SqueakImageContext image, ClassObject sqClass) {
+    public ListObject(final SqueakImageContext image, final ClassObject sqClass) {
         super(image, sqClass);
     }
 
-    public ListObject(SqueakImageContext image, ClassObject sqClass, Object[] objects) {
+    public ListObject(final SqueakImageContext image, final ClassObject sqClass, final Object[] objects) {
         super(image, sqClass, objects);
     }
 
-    public ListObject(SqueakImageContext image, ClassObject sqClass, int size) {
+    public ListObject(final SqueakImageContext image, final ClassObject sqClass, final int size) {
         super(image, sqClass, size);
     }
 
@@ -30,7 +30,7 @@ public class ListObject extends AbstractPointersObject {
     }
 
     public Object[] unwrappedWithFirst(final Object firstValue) {
-        Object[] result = new Object[1 + size()];
+        final Object[] result = new Object[1 + size()];
         result[0] = firstValue;
         for (int i = 1; i < result.length; i++) {
             result[i] = at0(i - 1);

@@ -9,7 +9,7 @@ public class SqueakImageFlags {
     @CompilationFinal private boolean preemptionYields;
     @CompilationFinal private boolean newFinalization;
 
-    public void initialize(int headerFlags) {
+    public void initialize(final int headerFlags) {
         fullScreenFlag = headerFlags & 1;
         imageFloatsBigEndian = (headerFlags & 2) == 0 ? 1 : 0;
         flagInterpretedMethods = (headerFlags & 8) != 0;

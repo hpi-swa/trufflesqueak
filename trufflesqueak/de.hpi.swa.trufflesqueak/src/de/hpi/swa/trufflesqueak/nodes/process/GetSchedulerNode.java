@@ -8,16 +8,16 @@ import de.hpi.swa.trufflesqueak.nodes.AbstractNodeWithImage;
 
 public class GetSchedulerNode extends AbstractNodeWithImage {
 
-    public static GetSchedulerNode create(SqueakImageContext image) {
+    public static GetSchedulerNode create(final SqueakImageContext image) {
         return new GetSchedulerNode(image);
     }
 
-    protected GetSchedulerNode(SqueakImageContext image) {
+    protected GetSchedulerNode(final SqueakImageContext image) {
         super(image);
     }
 
     protected PointersObject executeGet() {
-        PointersObject association = (PointersObject) image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SchedulerAssociation);
+        final PointersObject association = (PointersObject) image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SchedulerAssociation);
         return (PointersObject) association.at0(ASSOCIATION.VALUE);
     }
 }

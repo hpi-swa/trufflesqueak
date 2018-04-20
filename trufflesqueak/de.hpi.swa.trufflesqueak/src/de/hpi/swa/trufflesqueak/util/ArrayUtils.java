@@ -18,7 +18,7 @@ public class ArrayUtils {
 
     public static final byte[] swapOrderInPlace(final byte[] bytes) {
         for (int i = 0; i < bytes.length / 2; i++) {
-            byte b = bytes[i];
+            final byte b = bytes[i];
             bytes[i] = bytes[bytes.length - 1 - i];
             bytes[bytes.length - 1 - i] = b;
         }

@@ -34,9 +34,9 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 90)
-    protected static abstract class PrimMousePointNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimMousePointNode extends AbstractPrimitiveNode {
 
-        protected PrimMousePointNode(CompiledMethodObject method) {
+        protected PrimMousePointNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -48,10 +48,11 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 91, numArguments = 2)
-    protected static abstract class PrimTestDisplayDepthNode extends AbstractPrimitiveNode {
-        private static final int[] SUPPORTED_DEPTHS = new int[]{32}; // TODO: support all depths? {1, 2, 4, 8, 16, 32}
+    protected abstract static class PrimTestDisplayDepthNode extends AbstractPrimitiveNode {
+        private static final int[] SUPPORTED_DEPTHS = new int[]{32}; // TODO: support all depths?
+                                                                     // {1, 2, 4, 8, 16, 32}
 
-        protected PrimTestDisplayDepthNode(CompiledMethodObject method) {
+        protected PrimTestDisplayDepthNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -68,9 +69,9 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 92, numArguments = 5)
-    protected static abstract class PrimSetDisplayModeNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimSetDisplayModeNode extends AbstractPrimitiveNode {
 
-        protected PrimSetDisplayModeNode(CompiledMethodObject method) {
+        protected PrimSetDisplayModeNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -83,15 +84,15 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 94, numArguments = 2)
-    protected static abstract class PrimGetNextEventNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimGetNextEventNode extends AbstractPrimitiveNode {
 
-        protected PrimGetNextEventNode(CompiledMethodObject method) {
+        protected PrimGetNextEventNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected Object doGetNext(PointersObject eventSensor, ListObject targetArray) {
-            long[] nextEvent = code.image.display.getNextEvent();
+        protected Object doGetNext(final PointersObject eventSensor, final ListObject targetArray) {
+            final long[] nextEvent = code.image.display.getNextEvent();
             for (int i = 0; i < SqueakDisplay.EVENT_SIZE; i++) {
                 targetArray.atput0(i, nextEvent[i]);
             }
@@ -101,57 +102,57 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 96, variableArguments = true)
-    protected static abstract class PrimCopyBitsNode extends SimulationPrimitiveNode {
+    protected abstract static class PrimCopyBitsNode extends SimulationPrimitiveNode {
 
-        protected PrimCopyBitsNode(CompiledMethodObject method) {
+        protected PrimCopyBitsNode(final CompiledMethodObject method) {
             super(method, "BitBltPlugin", "primitiveCopyBits");
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 101, variableArguments = true)
-    protected static abstract class PrimBeCursorNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimBeCursorNode extends AbstractPrimitiveNode {
 
-        protected PrimBeCursorNode(CompiledMethodObject method) {
+        protected PrimBeCursorNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Override
-        public final Object executeWithArguments(VirtualFrame frame, Object... rcvrAndArgs) {
+        public final Object executeWithArguments(final VirtualFrame frame, final Object... rcvrAndArgs) {
             return beCursor(rcvrAndArgs);
         }
 
         @Specialization
-        protected Object beCursor(Object[] rcvrAndArgs) {
-            Object cursorObject = rcvrAndArgs[0];
+        protected Object beCursor(final Object[] rcvrAndArgs) {
+            final Object cursorObject = rcvrAndArgs[0];
             if (!(cursorObject instanceof PointersObject)) {
                 throw new SqueakException("Unexpected cursorObject: " + cursorObject.toString());
             }
-            PointersObject cursor = (PointersObject) cursorObject;
+            final PointersObject cursor = (PointersObject) cursorObject;
             int[] words = ((NativeObject) cursor.at0(FORM.BITS)).getWords();
-            long width = (long) cursor.at0(FORM.WIDTH);
-            long height = (long) cursor.at0(FORM.HEIGHT);
+            final long width = (long) cursor.at0(FORM.WIDTH);
+            final long height = (long) cursor.at0(FORM.HEIGHT);
             if (width != SqueakDisplay.CURSOR_WIDTH || height != SqueakDisplay.CURSOR_HEIGHT) {
                 throw new SqueakException("Unexpected cursor width: " + width + " or height: " + height);
             }
-            long depth = (long) cursor.at0(FORM.DEPTH);
+            final long depth = (long) cursor.at0(FORM.DEPTH);
             if (depth != 1) {
                 throw new SqueakException("Unexpected cursor depth: " + depth);
             }
             if (rcvrAndArgs.length == 2) {
-                Object maskObject = rcvrAndArgs[1];
+                final Object maskObject = rcvrAndArgs[1];
                 if (!(maskObject instanceof PointersObject)) {
                     throw new SqueakException("Unexpected maskObject: " + maskObject.toString());
                 }
-                int[] mask = ((NativeObject) ((PointersObject) maskObject).at0(FORM.BITS)).getWords();
+                final int[] mask = ((NativeObject) ((PointersObject) maskObject).at0(FORM.BITS)).getWords();
                 words = mergeCursorWithMask(words, mask);
             }
             code.image.display.setCursor(words);
             return rcvrAndArgs[0];
         }
 
-        private static int[] mergeCursorWithMask(int[] cursorWords, int[] maskWords) {
-            int[] words = new int[16];
+        private static int[] mergeCursorWithMask(final int[] cursorWords, final int[] maskWords) {
+            final int[] words = new int[16];
             for (int i = 0; i < words.length; i++) {
                 words[i] = cursorWords[i] ^= ~maskWords[i];
             }
@@ -179,14 +180,14 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 102)
-    protected static abstract class PrimBeDisplayNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimBeDisplayNode extends AbstractPrimitiveNode {
 
-        protected PrimBeDisplayNode(CompiledMethodObject method) {
+        protected PrimBeDisplayNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected boolean beDisplay(PointersObject receiver) {
+        protected boolean beDisplay(final PointersObject receiver) {
             if (receiver.size() < 4) {
                 throw new PrimitiveFailed();
             }
@@ -199,13 +200,13 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 105, numArguments = 5)
-    protected static abstract class PrimReplaceFromToNode extends AbstractPrimitiveNode {
-        protected PrimReplaceFromToNode(CompiledMethodObject method) {
+    protected abstract static class PrimReplaceFromToNode extends AbstractPrimitiveNode {
+        protected PrimReplaceFromToNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Override
-        public final Object executeWithArguments(VirtualFrame frame, Object... arguments) {
+        public final Object executeWithArguments(final VirtualFrame frame, final Object... arguments) {
             try {
                 return executeWithArgumentsSpecialized(frame, arguments);
             } catch (IndexOutOfBoundsException | IllegalArgumentException e) {
@@ -214,7 +215,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Override
-        public final Object executePrimitive(VirtualFrame frame) {
+        public final Object executePrimitive(final VirtualFrame frame) {
             try {
                 return executeReplace(frame);
             } catch (IndexOutOfBoundsException | IllegalArgumentException e) {
@@ -225,23 +226,23 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         public abstract Object executeReplace(VirtualFrame frame);
 
         @Specialization
-        protected Object replace(LargeIntegerObject rcvr, long start, long stop, LargeIntegerObject repl, long replStart) {
+        protected Object replace(final LargeIntegerObject rcvr, final long start, final long stop, final LargeIntegerObject repl, final long replStart) {
             return replaceInLarge(rcvr, start, stop, repl.getBytes(), replStart);
         }
 
         @Specialization
-        protected Object replace(LargeIntegerObject rcvr, long start, long stop, long repl, long replStart) {
+        protected Object replace(final LargeIntegerObject rcvr, final long start, final long stop, final long repl, final long replStart) {
             return replaceInLarge(rcvr, start, stop, asLargeInteger(repl).getBytes(), replStart);
         }
 
         @Specialization
-        protected Object replace(LargeIntegerObject rcvr, long start, long stop, NativeObject repl, long replStart) {
+        protected Object replace(final LargeIntegerObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
             return replaceInLarge(rcvr, start, stop, repl.getBytes(), replStart);
         }
 
-        private static Object replaceInLarge(LargeIntegerObject rcvr, long start, long stop, byte[] replBytes, long replStart) {
-            byte[] rcvrBytes = rcvr.getBytes();
-            int repOff = (int) (replStart - start);
+        private static Object replaceInLarge(final LargeIntegerObject rcvr, final long start, final long stop, final byte[] replBytes, final long replStart) {
+            final byte[] rcvrBytes = rcvr.getBytes();
+            final int repOff = (int) (replStart - start);
             for (int i = (int) (start - 1); i < stop; i++) {
                 rcvrBytes[i] = replBytes[repOff + i];
             }
@@ -250,9 +251,9 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object replace(NativeObject rcvr, long start, long stop, LargeIntegerObject repl, long replStart) {
-            int repOff = (int) (replStart - start);
-            byte[] replBytes = repl.getBytes();
+        protected Object replace(final NativeObject rcvr, final long start, final long stop, final LargeIntegerObject repl, final long replStart) {
+            final int repOff = (int) (replStart - start);
+            final byte[] replBytes = repl.getBytes();
             for (int i = (int) (start - 1); i < stop; i++) {
                 rcvr.setNativeAt0(i, replBytes[repOff + i]);
             }
@@ -260,8 +261,8 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object replace(NativeObject rcvr, long start, long stop, NativeObject repl, long replStart) {
-            int repOff = (int) (replStart - start);
+        protected Object replace(final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
+            final int repOff = (int) (replStart - start);
             for (int i = (int) (start - 1); i < stop; i++) {
                 rcvr.setNativeAt0(i, repl.getNativeAt0(repOff + i));
             }
@@ -269,10 +270,10 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object replace(NativeObject rcvr, long start, long stop, ListObject repl, long replStart) {
-            int repOff = (int) (replStart - start);
+        protected Object replace(final NativeObject rcvr, final long start, final long stop, final ListObject repl, final long replStart) {
+            final int repOff = (int) (replStart - start);
             for (int i = (int) (start - 1); i < stop; i++) {
-                Object value = repl.at0(repOff + i);
+                final Object value = repl.at0(repOff + i);
                 if (value instanceof Character) {
                     rcvr.setNativeAt0(i, Character.getNumericValue((Character) value));
                 } else {
@@ -283,8 +284,8 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doListObject(ListObject rcvr, long start, long stop, ListObject repl, long replStart) {
-            long repOff = replStart - start;
+        protected Object doListObject(final ListObject rcvr, final long start, final long stop, final ListObject repl, final long replStart) {
+            final long repOff = replStart - start;
             for (int i = (int) (start - 1); i < stop; i++) {
                 rcvr.atput0(i, repl.at0(repOff + i));
             }
@@ -294,43 +295,43 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 106)
-    protected static abstract class PrimScreenSizeNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimScreenSizeNode extends AbstractPrimitiveNode {
 
-        protected PrimScreenSizeNode(CompiledMethodObject method) {
+        protected PrimScreenSizeNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected BaseSqueakObject get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
+        protected BaseSqueakObject get(@SuppressWarnings("unused") final BaseSqueakObject receiver) {
             return code.image.wrap(code.image.display.getSize());
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 107)
-    protected static abstract class PrimMouseButtonsNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimMouseButtonsNode extends AbstractPrimitiveNode {
 
-        protected PrimMouseButtonsNode(CompiledMethodObject method) {
+        protected PrimMouseButtonsNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected Object get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
+        protected Object get(@SuppressWarnings("unused") final BaseSqueakObject receiver) {
             return code.image.wrap(code.image.display.getLastMouseButton());
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 108)
-    protected static abstract class PrimKeyboardNextNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimKeyboardNextNode extends AbstractPrimitiveNode {
 
-        protected PrimKeyboardNextNode(CompiledMethodObject method) {
+        protected PrimKeyboardNextNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected Object get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
-            int keyboardNext = code.image.display.keyboardNext();
+        protected Object get(@SuppressWarnings("unused") final BaseSqueakObject receiver) {
+            final int keyboardNext = code.image.display.keyboardNext();
             if (keyboardNext == 0) {
                 return code.image.nil;
             } else {
@@ -341,15 +342,15 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 109)
-    protected static abstract class PrimKeyboardPeekNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimKeyboardPeekNode extends AbstractPrimitiveNode {
 
-        protected PrimKeyboardPeekNode(CompiledMethodObject method) {
+        protected PrimKeyboardPeekNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected Object get(@SuppressWarnings("unused") BaseSqueakObject receiver) {
-            int keyboardPeek = code.image.display.keyboardPeek();
+        protected Object get(@SuppressWarnings("unused") final BaseSqueakObject receiver) {
+            final int keyboardPeek = code.image.display.keyboardPeek();
             if (keyboardPeek == 0) {
                 return code.image.nil;
             } else {
@@ -360,14 +361,14 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 126, numArguments = 2)
-    protected static abstract class PrimDeferDisplayUpdatesNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimDeferDisplayUpdatesNode extends AbstractPrimitiveNode {
 
-        public PrimDeferDisplayUpdatesNode(CompiledMethodObject method) {
+        public PrimDeferDisplayUpdatesNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected BaseSqueakObject doDefer(BaseSqueakObject receiver, boolean flag) {
+        protected BaseSqueakObject doDefer(final BaseSqueakObject receiver, final boolean flag) {
             code.image.display.setDeferUpdates(flag);
             return receiver;
         }
@@ -375,14 +376,14 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 127, numArguments = 5)
-    protected static abstract class PrimDrawRectNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimDrawRectNode extends AbstractPrimitiveNode {
 
-        protected PrimDrawRectNode(CompiledMethodObject method) {
+        protected PrimDrawRectNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected BaseSqueakObject get(BaseSqueakObject receiver, long left, long right, long top, long bottom) {
+        protected BaseSqueakObject get(final BaseSqueakObject receiver, final long left, final long right, final long top, final long bottom) {
             if (receiver != code.image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.TheDisplay)) {
                 return code.image.nil;
             }
@@ -396,14 +397,14 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 133)
-    protected static abstract class PrimSetInterruptKeyNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimSetInterruptKeyNode extends AbstractPrimitiveNode {
 
-        protected PrimSetInterruptKeyNode(CompiledMethodObject method) {
+        protected PrimSetInterruptKeyNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected BaseSqueakObject set(BaseSqueakObject receiver) {
+        protected BaseSqueakObject set(final BaseSqueakObject receiver) {
             // TODO: interrupt key is obsolete in image, but maybe still needed in the vm?
             return receiver;
         }
@@ -411,14 +412,14 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 140)
-    protected static abstract class PrimBeepNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimBeepNode extends AbstractPrimitiveNode {
 
-        protected PrimBeepNode(CompiledMethodObject method) {
+        protected PrimBeepNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected BaseSqueakObject doBeep(BaseSqueakObject receiver) {
+        protected BaseSqueakObject doBeep(final BaseSqueakObject receiver) {
             try {
                 Toolkit.getDefaultToolkit().beep();
             } catch (AWTError e) {

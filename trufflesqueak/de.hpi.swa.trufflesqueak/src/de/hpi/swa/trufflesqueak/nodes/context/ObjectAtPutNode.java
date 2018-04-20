@@ -16,28 +16,28 @@ public abstract class ObjectAtPutNode extends AbstractObjectAtNode {
     @CompilationFinal private final ValueProfile classProfile = ValueProfile.createClassProfile();
     @CompilationFinal private final long index;
 
-    public static ObjectAtPutNode create(long index, SqueakNode object, SqueakNode value) {
+    public static ObjectAtPutNode create(final long index, final SqueakNode object, final SqueakNode value) {
         return ObjectAtPutNodeGen.create(index, object, value);
     }
 
-    protected ObjectAtPutNode(long variableIndex) {
+    protected ObjectAtPutNode(final long variableIndex) {
         index = variableIndex;
     }
 
     public abstract void executeWrite(VirtualFrame frame);
 
     @Specialization
-    protected void write(NativeObject object, long value) {
+    protected void write(final NativeObject object, final long value) {
         classProfile.profile(object).setNativeAt0(index, value);
     }
 
     @Specialization(guards = "!isNativeObject(object)")
-    protected void write(BaseSqueakObject object, long value) {
+    protected void write(final BaseSqueakObject object, final long value) {
         classProfile.profile(object).atput0(index, value);
     }
 
     @Specialization
-    protected void write(BaseSqueakObject object, Object value) {
+    protected void write(final BaseSqueakObject object, final Object value) {
         classProfile.profile(object).atput0(index, value);
     }
 

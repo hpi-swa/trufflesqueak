@@ -14,15 +14,15 @@ public class NativeWordsStorage extends AbstractNativeObjectStorage {
     @CompilationFinal(dimensions = 1) protected int[] ints;
     @CompilationFinal private static final long INTEGER_MAX = (long) (Math.pow(2, Integer.SIZE) - 1);
 
-    public NativeWordsStorage(int size) {
+    public NativeWordsStorage(final int size) {
         ints = new int[size];
     }
 
-    public NativeWordsStorage(int[] ints) {
+    public NativeWordsStorage(final int[] ints) {
         this.ints = ints;
     }
 
-    private NativeWordsStorage(NativeWordsStorage original) {
+    private NativeWordsStorage(final NativeWordsStorage original) {
         this(Arrays.copyOf(original.ints, original.ints.length));
     }
 
@@ -32,18 +32,18 @@ public class NativeWordsStorage extends AbstractNativeObjectStorage {
     }
 
     @Override
-    public void fillin(SqueakImageChunk chunk) {
+    public void fillin(final SqueakImageChunk chunk) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         ints = chunk.getWords();
     }
 
     @Override
-    public long getNativeAt0(long index) {
+    public long getNativeAt0(final long index) {
         return Integer.toUnsignedLong(ints[(int) index]);
     }
 
     @Override
-    public void setNativeAt0(long longIndex, long value) {
+    public void setNativeAt0(final long longIndex, final long value) {
         if (value < 0 || value > INTEGER_MAX) { // check for overflow
             throw new IllegalArgumentException("Illegal value for WordsObject: " + value);
         }
@@ -51,8 +51,8 @@ public class NativeWordsStorage extends AbstractNativeObjectStorage {
     }
 
     @Override
-    public long shortAt0(long index) {
-        int word = ints[((int) index - 1) / 2];
+    public long shortAt0(final long index) {
+        final int word = ints[((int) index - 1) / 2];
         int shortValue;
         if ((index - 1) % 2 == 0) {
             shortValue = word & 0xffff;
@@ -66,8 +66,8 @@ public class NativeWordsStorage extends AbstractNativeObjectStorage {
     }
 
     @Override
-    public void shortAtPut0(long index, long value) {
-        long wordIndex = (index - 1) / 2;
+    public void shortAtPut0(final long index, final long value) {
+        final long wordIndex = (index - 1) / 2;
         long word = (int) getNativeAt0(wordIndex);
         if ((index - 1) % 2 == 0) {
             word = (word & 0xffff0000) | (value & 0xffff);
@@ -78,17 +78,17 @@ public class NativeWordsStorage extends AbstractNativeObjectStorage {
     }
 
     @Override
-    public int getInt(int index) {
+    public int getInt(final int index) {
         return ints[index];
     }
 
     @Override
-    public void setInt(int index, int value) {
+    public void setInt(final int index, final int value) {
         ints[index] = value;
     }
 
     @Override
-    public void fillWith(Object value) {
+    public void fillWith(final Object value) {
         if (value instanceof Long) {
             Arrays.fill(ints, ((Long) value).intValue());
         } else {
@@ -103,15 +103,15 @@ public class NativeWordsStorage extends AbstractNativeObjectStorage {
 
     @Override
     public byte[] getBytes() {
-        ByteBuffer byteBuffer = ByteBuffer.allocate(ints.length * 4);
+        final ByteBuffer byteBuffer = ByteBuffer.allocate(ints.length * 4);
         byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-        IntBuffer intBuffer = byteBuffer.asIntBuffer();
+        final IntBuffer intBuffer = byteBuffer.asIntBuffer();
         intBuffer.put(ints);
         return byteBuffer.array();
     }
 
     @Override
-    public void setBytes(byte[] bytes) {
+    public void setBytes(final byte[] bytes) {
         final int size = bytes.length / getElementSize();
         CompilerDirectives.transferToInterpreterAndInvalidate();
         ints = new int[size];

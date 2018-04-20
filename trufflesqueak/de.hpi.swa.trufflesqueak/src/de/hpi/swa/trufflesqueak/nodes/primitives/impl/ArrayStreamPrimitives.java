@@ -29,13 +29,13 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 60, numArguments = 2)
-    protected static abstract class PrimBasicAtNode extends AbstractPrimitiveNode {
-        protected PrimBasicAtNode(CompiledMethodObject method) {
+    protected abstract static class PrimBasicAtNode extends AbstractPrimitiveNode {
+        protected PrimBasicAtNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Override
-        public final Object executeWithArguments(VirtualFrame frame, Object... arguments) {
+        public final Object executeWithArguments(final VirtualFrame frame, final Object... arguments) {
             try {
                 return executeWithArgumentsSpecialized(frame, arguments);
             } catch (IndexOutOfBoundsException e) {
@@ -44,7 +44,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Override
-        public final Object executePrimitive(VirtualFrame frame) {
+        public final Object executePrimitive(final VirtualFrame frame) {
             try {
                 return executeAt(frame);
             } catch (IndexOutOfBoundsException e) {
@@ -81,13 +81,13 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 61, numArguments = 3)
-    protected static abstract class PrimBasicAtPutNode extends AbstractPrimitiveNode {
-        protected PrimBasicAtPutNode(CompiledMethodObject method) {
+    protected abstract static class PrimBasicAtPutNode extends AbstractPrimitiveNode {
+        protected PrimBasicAtPutNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Override
-        public final Object executeWithArguments(VirtualFrame frame, Object... arguments) {
+        public final Object executeWithArguments(final VirtualFrame frame, final Object... arguments) {
             try {
                 return executeWithArgumentsSpecialized(frame, arguments);
             } catch (IndexOutOfBoundsException | IllegalArgumentException e) {
@@ -96,7 +96,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Override
-        public final Object executePrimitive(VirtualFrame frame) {
+        public final Object executePrimitive(final VirtualFrame frame) {
             try {
                 return executeAtPut(frame);
             } catch (IndexOutOfBoundsException | IllegalArgumentException e) {
@@ -156,8 +156,8 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 62)
-    protected static abstract class PrimSizeNode extends AbstractArithmeticPrimitiveNode {
-        protected PrimSizeNode(CompiledMethodObject method) {
+    protected abstract static class PrimSizeNode extends AbstractArithmeticPrimitiveNode {
+        protected PrimSizeNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -201,14 +201,14 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
          * "The number of indexable fields of fixed-length objects is 0" (see Object>>basicSize).
          */
         @Fallback
-        protected final static long doObject(@SuppressWarnings("unused") Object receiver) {
+        protected static final long doObject(@SuppressWarnings("unused") final Object receiver) {
             return 0;
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 63, numArguments = 2)
-    protected static abstract class PrimStringAtNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimStringAtNode extends AbstractPrimitiveNode {
         protected PrimStringAtNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -231,18 +231,18 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        public abstract Object executeStringAt(final VirtualFrame frame);
+        public abstract Object executeStringAt(VirtualFrame frame);
 
         @Specialization
         protected static final char doNativeObject(final NativeObject obj, final long idx) {
-            int intValue = ((Long) obj.getNativeAt0(idx - 1)).intValue();
+            final int intValue = ((Long) obj.getNativeAt0(idx - 1)).intValue();
             return (char) intValue;
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 64, numArguments = 3)
-    protected static abstract class PrimStringAtPutNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimStringAtPutNode extends AbstractPrimitiveNode {
         protected PrimStringAtPutNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -265,7 +265,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        public abstract Object executeStringAtPut(final VirtualFrame frame);
+        public abstract Object executeStringAtPut(VirtualFrame frame);
 
         @Specialization
         protected static final char doNativeObject(final NativeObject obj, final long idx, final char value) {
@@ -283,7 +283,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 143, numArguments = 2)
-    protected static abstract class PrimShortAtNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimShortAtNode extends AbstractPrimitiveNode {
         protected PrimShortAtNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -300,7 +300,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 144, numArguments = 3)
-    protected static abstract class PrimShortAtPutNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimShortAtPutNode extends AbstractPrimitiveNode {
         protected PrimShortAtPutNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -317,7 +317,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 210, numArguments = 2)
-    protected static abstract class PrimContextAtNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimContextAtNode extends AbstractPrimitiveNode {
         protected PrimContextAtNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -334,7 +334,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 211, numArguments = 3)
-    protected static abstract class PrimContextAtPut extends AbstractPrimitiveNode {
+    protected abstract static class PrimContextAtPut extends AbstractPrimitiveNode {
         protected PrimContextAtPut(final CompiledMethodObject method) {
             super(method);
         }

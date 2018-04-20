@@ -15,11 +15,11 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 public abstract class HandleLocalReturnNode extends AbstractNodeWithCode {
     @Child private TerminateContextNode terminateNode;
 
-    public static HandleLocalReturnNode create(CompiledCodeObject code) {
+    public static HandleLocalReturnNode create(final CompiledCodeObject code) {
         return HandleLocalReturnNodeGen.create(code);
     }
 
-    public HandleLocalReturnNode(CompiledCodeObject code) {
+    public HandleLocalReturnNode(final CompiledCodeObject code) {
         super(code);
         terminateNode = TerminateContextNode.create(code);
     }
@@ -27,17 +27,17 @@ public abstract class HandleLocalReturnNode extends AbstractNodeWithCode {
     public abstract Object executeHandle(VirtualFrame frame, LocalReturn lr);
 
     @Specialization(guards = "isVirtualized(frame)")
-    protected Object handleVirtualized(VirtualFrame frame, LocalReturn lr) {
+    protected Object handleVirtualized(final VirtualFrame frame, final LocalReturn lr) {
         CompilerDirectives.ensureVirtualizedHere(frame);
         terminateNode.executeTerminate(frame);
         return lr.getReturnValue();
     }
 
     @Specialization(guards = "!isVirtualized(frame)")
-    protected Object handle(VirtualFrame frame, LocalReturn lr) {
-        ContextObject context = getContext(frame);
+    protected Object handle(final VirtualFrame frame, final LocalReturn lr) {
+        final ContextObject context = getContext(frame);
         if (context.isDirty()) {
-            ContextObject sender = context.getNotNilSender(); // sender has changed
+            final ContextObject sender = context.getNotNilSender(); // sender has changed
             terminateNode.executeTerminate(frame);
             throw new NonVirtualReturn(lr.getReturnValue(), sender, sender);
         } else {

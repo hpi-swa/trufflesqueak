@@ -17,28 +17,28 @@ public abstract class AbstractNodeWithCode extends Node {
     @CompilationFinal protected final CompiledCodeObject code;
     @Child protected FrameSlotReadNode contextOrMarkerReadNode;
 
-    protected AbstractNodeWithCode(CompiledCodeObject code) {
+    protected AbstractNodeWithCode(final CompiledCodeObject code) {
         this.code = code;
         contextOrMarkerReadNode = FrameSlotReadNode.create(code.thisContextOrMarkerSlot);
     }
 
-    protected AbstractNodeWithCode(AbstractNodeWithCode original) {
+    protected AbstractNodeWithCode(final AbstractNodeWithCode original) {
         this(original.code);
     }
 
-    protected boolean isVirtualized(VirtualFrame frame) {
+    protected boolean isVirtualized(final VirtualFrame frame) {
         return contextOrMarkerReadNode.executeRead(frame) instanceof FrameMarker;
     }
 
-    protected Object getContextOrMarker(VirtualFrame frame) {
+    protected Object getContextOrMarker(final VirtualFrame frame) {
         return contextOrMarkerReadNode.executeRead(frame);
     }
 
-    protected ContextObject getContext(VirtualFrame frame) {
+    protected ContextObject getContext(final VirtualFrame frame) {
         return (ContextObject) contextOrMarkerReadNode.executeRead(frame);
     }
 
-    protected FrameMarker getFrameMarker(VirtualFrame frame) {
+    protected FrameMarker getFrameMarker(final VirtualFrame frame) {
         return (FrameMarker) contextOrMarkerReadNode.executeRead(frame);
     }
 }

@@ -15,11 +15,11 @@ public abstract class GetAllInstancesNode extends AbstractNodeWithCode {
     @Child private GetActiveProcessNode getActiveProcessNode;
     @Child private GetOrCreateContextNode getOrCreateContextNode;
 
-    public static GetAllInstancesNode create(CompiledCodeObject code) {
+    public static GetAllInstancesNode create(final CompiledCodeObject code) {
         return GetAllInstancesNodeGen.create(code);
     }
 
-    protected GetAllInstancesNode(CompiledCodeObject code) {
+    protected GetAllInstancesNode(final CompiledCodeObject code) {
         super(code);
         getActiveProcessNode = GetActiveProcessNode.create(code.image);
         getOrCreateContextNode = GetOrCreateContextNode.create(code);
@@ -28,8 +28,8 @@ public abstract class GetAllInstancesNode extends AbstractNodeWithCode {
     public abstract List<BaseSqueakObject> execute(VirtualFrame frame);
 
     @Specialization
-    protected List<BaseSqueakObject> getInstancesArray(VirtualFrame frame) {
-        PointersObject activeProcess = getActiveProcessNode.executeGet();
+    protected List<BaseSqueakObject> getInstancesArray(final VirtualFrame frame) {
+        final PointersObject activeProcess = getActiveProcessNode.executeGet();
         activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, getOrCreateContextNode.executeGet(frame));
         try {
             return code.image.objects.allInstances();

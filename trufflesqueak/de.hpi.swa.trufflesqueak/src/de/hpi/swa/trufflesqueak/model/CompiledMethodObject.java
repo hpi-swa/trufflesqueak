@@ -3,23 +3,23 @@ package de.hpi.swa.trufflesqueak.model;
 import de.hpi.swa.trufflesqueak.SqueakImageContext;
 
 public class CompiledMethodObject extends CompiledCodeObject {
-    public CompiledMethodObject(SqueakImageContext img) {
+    public CompiledMethodObject(final SqueakImageContext img) {
         super(img);
     }
 
-    public CompiledMethodObject(SqueakImageContext img, byte[] bc, Object[] lits) {
+    public CompiledMethodObject(final SqueakImageContext img, final byte[] bc, final Object[] lits) {
         this(img);
         literals = lits;
         decodeHeader();
         bytes = bc;
     }
 
-    public CompiledMethodObject(SqueakImageContext img, ClassObject klass, int size) {
+    public CompiledMethodObject(final SqueakImageContext img, final ClassObject klass, final int size) {
         super(img, klass);
         bytes = new byte[size];
     }
 
-    private CompiledMethodObject(CompiledMethodObject compiledMethodObject) {
+    private CompiledMethodObject(final CompiledMethodObject compiledMethodObject) {
         super(compiledMethodObject);
     }
 
@@ -58,11 +58,11 @@ public class CompiledMethodObject extends CompiledCodeObject {
         return null;
     }
 
-    public void setCompiledInClass(ClassObject newClass) {
+    public void setCompiledInClass(final ClassObject newClass) {
         if (literals.length == 0) {
             return;
         }
-        Object baseSqueakObject = literals[literals.length - 1];
+        final Object baseSqueakObject = literals[literals.length - 1];
         if (baseSqueakObject instanceof PointersObject) {
             if (((PointersObject) baseSqueakObject).size() == 2) {
                 ((PointersObject) baseSqueakObject).atput0(1, newClass);
@@ -79,7 +79,7 @@ public class CompiledMethodObject extends CompiledCodeObject {
         return this;
     }
 
-    public void setHeader(long header) {
+    public void setHeader(final long header) {
         literals = new Object[]{header};
         decodeHeader();
         literals = new Object[1 + numLiterals];
@@ -100,12 +100,12 @@ public class CompiledMethodObject extends CompiledCodeObject {
     }
 
     @Override
-    public void pointersBecomeOneWay(Object[] from, Object[] to, boolean copyHash) {
+    public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
         super.pointersBecomeOneWay(from, to, copyHash);
-        ClassObject oldClass = getCompiledInClass();
+        final ClassObject oldClass = getCompiledInClass();
         for (int i = 0; i < from.length; i++) {
             if (from[i] == oldClass) {
-                ClassObject newClass = (ClassObject) to[i];  // must be a ClassObject
+                final ClassObject newClass = (ClassObject) to[i];  // must be a ClassObject
                 setCompiledInClass(newClass);
                 if (copyHash) {
                     newClass.setSqueakHash(oldClass.squeakHash());

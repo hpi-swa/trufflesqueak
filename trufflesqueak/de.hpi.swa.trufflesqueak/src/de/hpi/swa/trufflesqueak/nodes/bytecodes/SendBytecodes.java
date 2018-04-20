@@ -27,7 +27,7 @@ import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 
 public final class SendBytecodes {
 
-    public static abstract class AbstractSendNode extends AbstractBytecodeNode {
+    public abstract static class AbstractSendNode extends AbstractBytecodeNode {
         @CompilationFinal protected final Object selector;
         @CompilationFinal private final int argumentCount;
         @Child protected SqueakLookupClassNode lookupClassNode;
@@ -39,7 +39,7 @@ public final class SendBytecodes {
         @Child private StackPushNode pushNode;
         @Child private FrameSlotReadNode readContextNode;
 
-        private AbstractSendNode(CompiledCodeObject code, int index, int numBytecodes, Object sel, int argcount) {
+        private AbstractSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object sel, final int argcount) {
             super(code, index, numBytecodes);
             selector = sel;
             argumentCount = argcount;
@@ -52,8 +52,8 @@ public final class SendBytecodes {
         }
 
         @Override
-        public void executeVoid(VirtualFrame frame) {
-            Object result;
+        public void executeVoid(final VirtualFrame frame) {
+            final Object result;
             try {
                 result = executeSend(frame);
             } catch (PrimitiveWithoutResultException e) {
@@ -62,11 +62,11 @@ public final class SendBytecodes {
             pushNode.executeWrite(frame, result);
         }
 
-        public Object executeSend(VirtualFrame frame) {
-            Object[] rcvrAndArgs = (Object[]) popNReversedNode.executeRead(frame);
-            ClassObject rcvrClass = lookupClassNode.executeLookup(rcvrAndArgs[0]);
-            Object lookupResult = lookupNode.executeLookup(rcvrClass, selector);
-            Object contextOrMarker = readContextNode.executeRead(frame);
+        public Object executeSend(final VirtualFrame frame) {
+            final Object[] rcvrAndArgs = (Object[]) popNReversedNode.executeRead(frame);
+            final ClassObject rcvrClass = lookupClassNode.executeLookup(rcvrAndArgs[0]);
+            final Object lookupResult = lookupNode.executeLookup(rcvrClass, selector);
+            final Object contextOrMarker = readContextNode.executeRead(frame);
             if (!(lookupResult instanceof CompiledCodeObject)) {
                 return sendObjectAsMethodNode.execute(frame, selector, rcvrAndArgs, lookupResult, contextOrMarker);
             } else if (((CompiledCodeObject) lookupResult).isDoesNotUnderstand()) {
@@ -81,7 +81,7 @@ public final class SendBytecodes {
         }
 
         @Override
-        public boolean hasTag(Class<? extends Tag> tag) {
+        public boolean hasTag(final Class<? extends Tag> tag) {
             return ((tag == StandardTags.StatementTag.class) || (tag == StandardTags.CallTag.class));
         }
 
@@ -92,44 +92,44 @@ public final class SendBytecodes {
     }
 
     public static class SecondExtendedSendNode extends AbstractSendNode {
-        public SecondExtendedSendNode(CompiledCodeObject code, int index, int numBytecodes, int i) {
+        public SecondExtendedSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int i) {
             super(code, index, numBytecodes, code.getLiteral(i & 63), i >> 6);
         }
     }
 
     public static class SendLiteralSelectorNode extends AbstractSendNode {
-        public static AbstractBytecodeNode create(CompiledCodeObject code, int index, int numBytecodes, int literalIndex, int argCount) {
-            Object selector = code.getLiteral(literalIndex);
+        public static AbstractBytecodeNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int argCount) {
+            final Object selector = code.getLiteral(literalIndex);
 // if (selector != null && selector.toString().equals("halt")) {
 // return new HaltNode(code, index);
 // }
             return new SendLiteralSelectorNode(code, index, numBytecodes, selector, argCount);
         }
 
-        public SendLiteralSelectorNode(CompiledCodeObject code, int index, int numBytecodes, Object selector, int argCount) {
+        public SendLiteralSelectorNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object selector, final int argCount) {
             super(code, index, numBytecodes, selector, argCount);
         }
     }
 
     public static class SendSelectorNode extends AbstractSendNode {
-        public static SendSelectorNode createForSpecialSelector(CompiledCodeObject code, int index, int selectorIndex) {
-            SpecialSelectorObject specialSelector = code.image.specialSelectorsArray[selectorIndex];
+        public static SendSelectorNode createForSpecialSelector(final CompiledCodeObject code, final int index, final int selectorIndex) {
+            final SpecialSelectorObject specialSelector = code.image.specialSelectorsArray[selectorIndex];
             return new SendSelectorNode(code, index, 1, specialSelector, specialSelector.getNumArguments());
         }
 
-        public SendSelectorNode(CompiledCodeObject code, int index, int numBytecodes, BaseSqueakObject sel, int argcount) {
+        public SendSelectorNode(final CompiledCodeObject code, final int index, final int numBytecodes, final BaseSqueakObject sel, final int argcount) {
             super(code, index, numBytecodes, sel, argcount);
         }
     }
 
     public static class SendSelfSelector extends AbstractSendNode {
-        public SendSelfSelector(CompiledCodeObject code, int index, int numBytecodes, Object selector, int numArgs) {
+        public SendSelfSelector(final CompiledCodeObject code, final int index, final int numBytecodes, final Object selector, final int numArgs) {
             super(code, index, numBytecodes, selector, numArgs);
         }
     }
 
     public static class SingleExtendedSendNode extends AbstractSendNode {
-        public SingleExtendedSendNode(CompiledCodeObject code, int index, int numBytecodes, int param) {
+        public SingleExtendedSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int param) {
             super(code, index, numBytecodes, code.getLiteral(param & 31), param >> 5);
         }
     }
@@ -138,15 +138,15 @@ public final class SendBytecodes {
         protected static class SqueakLookupClassSuperNode extends SqueakLookupClassNode {
             @CompilationFinal private final CompiledCodeObject code;
 
-            public SqueakLookupClassSuperNode(CompiledCodeObject code) {
+            public SqueakLookupClassSuperNode(final CompiledCodeObject code) {
                 super(code.image);
                 this.code = code; // storing both, image and code, because of class hierarchy
             }
 
             @Override
-            public ClassObject executeLookup(Object receiver) {
-                ClassObject compiledInClass = code.getCompiledInClass();
-                Object superclass = compiledInClass.getSuperclass();
+            public ClassObject executeLookup(final Object receiver) {
+                final ClassObject compiledInClass = code.getCompiledInClass();
+                final Object superclass = compiledInClass.getSuperclass();
                 if (superclass == code.image.nil) {
                     return compiledInClass;
                 } else {
@@ -155,11 +155,11 @@ public final class SendBytecodes {
             }
         }
 
-        public SingleExtendedSuperNode(CompiledCodeObject code, int index, int numBytecodes, int rawByte) {
+        public SingleExtendedSuperNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int rawByte) {
             this(code, index, numBytecodes, rawByte & 31, rawByte >> 5);
         }
 
-        public SingleExtendedSuperNode(CompiledCodeObject code, int index, int numBytecodes, int literalIndex, int numArgs) {
+        public SingleExtendedSuperNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int numArgs) {
             super(code, index, numBytecodes, code.getLiteral(literalIndex), numArgs);
             lookupClassNode = new SqueakLookupClassSuperNode(code);
         }
@@ -170,22 +170,22 @@ public final class SendBytecodes {
         }
     }
 
-    public static class SendDoesNotUnderstandNode extends AbstractNodeWithImage {
+    public static final class SendDoesNotUnderstandNode extends AbstractNodeWithImage {
         @Child private DispatchNode dispatchNode = DispatchNode.create();
         @CompilationFinal private ClassObject messageClass;
 
-        public static SendDoesNotUnderstandNode create(SqueakImageContext image) {
+        public static SendDoesNotUnderstandNode create(final SqueakImageContext image) {
             return new SendDoesNotUnderstandNode(image);
         }
 
-        private SendDoesNotUnderstandNode(SqueakImageContext image) {
+        private SendDoesNotUnderstandNode(final SqueakImageContext image) {
             super(image);
         }
 
-        public Object execute(VirtualFrame frame, Object selector, Object[] rcvrAndArgs, ClassObject rcvrClass, Object lookupDNU, Object contextOrMarker) {
-            PointersObject message = (PointersObject) getMessageClass().newInstance();
+        public Object execute(final VirtualFrame frame, final Object selector, final Object[] rcvrAndArgs, final ClassObject rcvrClass, final Object lookupDNU, final Object contextOrMarker) {
+            final PointersObject message = (PointersObject) getMessageClass().newInstance();
             message.atput0(MESSAGE.SELECTOR, selector);
-            Object[] arguments = ArrayUtils.allButFirst(rcvrAndArgs);
+            final Object[] arguments = ArrayUtils.allButFirst(rcvrAndArgs);
             message.atput0(MESSAGE.ARGUMENTS, image.newList(arguments));
             if (message.instsize() > MESSAGE.LOOKUP_CLASS) { // early versions do not have
                                                              // lookupClass
@@ -203,25 +203,25 @@ public final class SendBytecodes {
         }
     }
 
-    public static class SendObjectAsMethodNode extends AbstractNodeWithImage {
+    public static final class SendObjectAsMethodNode extends AbstractNodeWithImage {
         @Child private DispatchNode dispatchNode = DispatchNode.create();
         @Child private LookupNode lookupNode = LookupNode.create();
         @Child protected SqueakLookupClassNode lookupClassNode;
         @CompilationFinal private NativeObject runWithIn;
 
-        public static SendObjectAsMethodNode create(SqueakImageContext image) {
+        public static SendObjectAsMethodNode create(final SqueakImageContext image) {
             return new SendObjectAsMethodNode(image);
         }
 
-        private SendObjectAsMethodNode(SqueakImageContext image) {
+        private SendObjectAsMethodNode(final SqueakImageContext image) {
             super(image);
             lookupClassNode = SqueakLookupClassNode.create(image);
         }
 
-        public Object execute(VirtualFrame frame, Object selector, Object[] rcvrAndArgs, Object lookupResult, Object contextOrMarker) {
-            Object[] arguments = ArrayUtils.allButFirst(rcvrAndArgs);
-            ClassObject rcvrClass = lookupClassNode.executeLookup(lookupResult);
-            Object newLookupResult = lookupNode.executeLookup(rcvrClass, getRunWithIn());
+        public Object execute(final VirtualFrame frame, final Object selector, final Object[] rcvrAndArgs, final Object lookupResult, final Object contextOrMarker) {
+            final Object[] arguments = ArrayUtils.allButFirst(rcvrAndArgs);
+            final ClassObject rcvrClass = lookupClassNode.executeLookup(lookupResult);
+            final Object newLookupResult = lookupNode.executeLookup(rcvrClass, getRunWithIn());
             return dispatchNode.executeDispatch(frame, newLookupResult, new Object[]{lookupResult, selector, image.newList(arguments), rcvrAndArgs[0]}, contextOrMarker);
         }
 

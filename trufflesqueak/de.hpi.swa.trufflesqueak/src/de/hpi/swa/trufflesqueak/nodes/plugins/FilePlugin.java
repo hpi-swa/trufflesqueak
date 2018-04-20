@@ -40,36 +40,36 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @TruffleBoundary
-    private static final RandomAccessFile getFileOrPrimFail(final long fileDescriptor) {
-        RandomAccessFile handle = files.get(fileDescriptor);
+    private static RandomAccessFile getFileOrPrimFail(final long fileDescriptor) {
+        final RandomAccessFile handle = files.get(fileDescriptor);
         if (handle == null) {
             throw new PrimitiveFailed();
         }
         return handle;
     }
 
-    protected static abstract class AbstractFilePluginPrimitiveNode extends AbstractPrimitiveNode {
+    protected abstract static class AbstractFilePluginPrimitiveNode extends AbstractPrimitiveNode {
 
-        protected AbstractFilePluginPrimitiveNode(CompiledMethodObject method) {
+        protected AbstractFilePluginPrimitiveNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        protected boolean isString(NativeObject obj) {
+        protected boolean isString(final NativeObject obj) {
             return obj.isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassString);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveDirectoryCreate", numArguments = 2)
-    protected static abstract class PrimDirectoryCreateNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimDirectoryCreateNode extends AbstractPrimitiveNode {
 
-        protected PrimDirectoryCreateNode(CompiledMethodObject method) {
+        protected PrimDirectoryCreateNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
         protected static final Object doCreate(final PointersObject receiver, final NativeObject fullPath) {
-            File directory = new File(fullPath.toString());
+            final File directory = new File(fullPath.toString());
             if (directory.mkdir()) {
                 return receiver;
             }
@@ -79,15 +79,15 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveDirectoryDelete", numArguments = 2)
-    protected static abstract class PrimDirectoryDeleteNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimDirectoryDeleteNode extends AbstractPrimitiveNode {
 
-        protected PrimDirectoryDeleteNode(CompiledMethodObject method) {
+        protected PrimDirectoryDeleteNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
         protected static final Object doCreate(final PointersObject receiver, final NativeObject fullPath) {
-            File directory = new File(fullPath.toString());
+            final File directory = new File(fullPath.toString());
             if (directory.delete()) {
                 return receiver;
             }
@@ -97,9 +97,9 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveDirectoryDelimitor")
-    protected static abstract class PrimDirectoryDelimitorNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimDirectoryDelimitorNode extends AbstractPrimitiveNode {
 
-        protected PrimDirectoryDelimitorNode(CompiledMethodObject method) {
+        protected PrimDirectoryDelimitorNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -111,24 +111,24 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveDirectoryEntry", numArguments = 3)
-    protected static abstract class PrimDirectoryEntryNode extends AbstractFilePluginPrimitiveNode {
+    protected abstract static class PrimDirectoryEntryNode extends AbstractFilePluginPrimitiveNode {
 
-        protected PrimDirectoryEntryNode(CompiledMethodObject method) {
+        protected PrimDirectoryEntryNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization(guards = "isString(fullPath)")
         protected final Object doLookup(@SuppressWarnings("unused") final PointersObject receiver, final NativeObject fullPath, final NativeObject fName) {
-            String pathName = fullPath.toString();
-            String fileName = fName.toString();
-            File path;
+            final String pathName = fullPath.toString();
+            final String fileName = fName.toString();
+            final File path;
             if (fileName.equals(".")) {
                 path = new File(pathName);
             } else {
                 path = new File(pathName + File.separator + fileName);
             }
             if (path.exists()) {
-                Object[] result = new Object[]{path.getName(), path.lastModified(), path.lastModified(), path.isDirectory(), path.length()};
+                final Object[] result = new Object[]{path.getName(), path.lastModified(), path.lastModified(), path.isDirectory(), path.length()};
                 return code.image.wrap(result);
             }
             return code.image.nil;
@@ -137,15 +137,15 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveDirectoryLookup", numArguments = 3)
-    protected static abstract class PrimDirectoryLookupNode extends AbstractFilePluginPrimitiveNode {
+    protected abstract static class PrimDirectoryLookupNode extends AbstractFilePluginPrimitiveNode {
 
-        protected PrimDirectoryLookupNode(CompiledMethodObject method) {
+        protected PrimDirectoryLookupNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization(guards = "isString(nativePathName)")
         protected final Object doLookup(@SuppressWarnings("unused") final PointersObject receiver, final NativeObject nativePathName, final long longIndex) {
-            int index = (int) longIndex;
+            final int index = (int) longIndex;
             if (index < 0) {
                 throw new PrimitiveFailed();
             }
@@ -153,14 +153,14 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             if (pathName.length() == 0) {
                 pathName = "/";
             }
-            File directory = new File(pathName);
+            final File directory = new File(pathName);
             if (!directory.isDirectory()) {
                 throw new PrimitiveFailed();
             }
-            File[] paths = directory.listFiles();
+            final File[] paths = directory.listFiles();
             if (index < paths.length) {
-                File path = paths[index];
-                Object[] result = new Object[]{path.getName(), path.lastModified(), path.lastModified(), path.isDirectory(), path.length()};
+                final File path = paths[index];
+                final Object[] result = new Object[]{path.getName(), path.lastModified(), path.lastModified(), path.isDirectory(), path.length()};
                 return code.image.wrap(result);
             }
             return code.image.nil;
@@ -169,16 +169,16 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveFileAtEnd", numArguments = 2)
-    protected static abstract class PrimFileAtEndNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimFileAtEndNode extends AbstractPrimitiveNode {
 
-        protected PrimFileAtEndNode(CompiledMethodObject method) {
+        protected PrimFileAtEndNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
         protected final Object doAtEnd(@SuppressWarnings("unused") final PointersObject receiver, final long fileDescriptor) {
             try {
-                RandomAccessFile file = getFileOrPrimFail(fileDescriptor);
+                final RandomAccessFile file = getFileOrPrimFail(fileDescriptor);
                 return code.image.wrap(file.getFilePointer() >= file.length() - 1);
             } catch (IOException e) {
                 throw new PrimitiveFailed();
@@ -188,9 +188,9 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveFileClose", numArguments = 2)
-    protected static abstract class PrimFileCloseNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimFileCloseNode extends AbstractPrimitiveNode {
 
-        protected PrimFileCloseNode(CompiledMethodObject method) {
+        protected PrimFileCloseNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -207,15 +207,15 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveFileDelete", numArguments = 2)
-    protected static abstract class PrimFileDeleteNode extends AbstractFilePluginPrimitiveNode {
+    protected abstract static class PrimFileDeleteNode extends AbstractFilePluginPrimitiveNode {
 
-        protected PrimFileDeleteNode(CompiledMethodObject method) {
+        protected PrimFileDeleteNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization(guards = "isString(nativeFileName)")
         protected static final Object doDelete(final PointersObject receiver, final NativeObject nativeFileName) {
-            File file = new File(nativeFileName.toString());
+            final File file = new File(nativeFileName.toString());
             if (file.delete()) {
                 return receiver;
             }
@@ -225,9 +225,9 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveFileFlush", numArguments = 2)
-    protected static abstract class PrimFileFlushNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimFileFlushNode extends AbstractPrimitiveNode {
 
-        protected PrimFileFlushNode(CompiledMethodObject method) {
+        protected PrimFileFlushNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -239,9 +239,9 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveFileGetPosition", numArguments = 2)
-    protected static abstract class PrimFileGetPositionNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimFileGetPositionNode extends AbstractPrimitiveNode {
 
-        protected PrimFileGetPositionNode(CompiledMethodObject method) {
+        protected PrimFileGetPositionNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -257,20 +257,20 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveFileOpen", numArguments = 3)
-    protected static abstract class PrimFileOpenNode extends AbstractFilePluginPrimitiveNode {
+    protected abstract static class PrimFileOpenNode extends AbstractFilePluginPrimitiveNode {
 
-        protected PrimFileOpenNode(CompiledMethodObject method) {
+        protected PrimFileOpenNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @TruffleBoundary
         @Specialization(guards = "isString(nativeFileName)")
         protected static final Object doOpen(@SuppressWarnings("unused") final PointersObject receiver, final NativeObject nativeFileName, final Boolean writableFlag) {
-            String fileName = nativeFileName.toString();
-            String mode = writableFlag ? "rw" : "r";
+            final String fileName = nativeFileName.toString();
+            final String mode = writableFlag ? "rw" : "r";
             try {
-                RandomAccessFile file = new RandomAccessFile(fileName, mode);
-                long fileId = file.hashCode();
+                final RandomAccessFile file = new RandomAccessFile(fileName, mode);
+                final long fileId = file.hashCode();
                 files.put(fileId, file);
                 return fileId;
             } catch (FileNotFoundException e) {
@@ -281,19 +281,19 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveFileRead", numArguments = 5)
-    protected static abstract class PrimFileReadNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimFileReadNode extends AbstractPrimitiveNode {
 
-        protected PrimFileReadNode(CompiledMethodObject method) {
+        protected PrimFileReadNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
         protected static final Object doRead(@SuppressWarnings("unused") final PointersObject receiver, final long fileDescriptor, final BaseSqueakObject target, final long startIndex,
                         final long longCount) {
-            int count = (int) longCount;
-            byte[] buffer = new byte[count];
+            final int count = (int) longCount;
+            final byte[] buffer = new byte[count];
             try {
-                long read = getFileOrPrimFail(fileDescriptor).read(buffer, 0, count);
+                final long read = getFileOrPrimFail(fileDescriptor).read(buffer, 0, count);
                 for (int index = 0; index < read; index++) {
                     target.atput0(startIndex - 1 + index, (long) buffer[index]);
                 }
@@ -306,15 +306,15 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveFileRename", numArguments = 3)
-    protected static abstract class PrimFileRenameNode extends AbstractFilePluginPrimitiveNode {
+    protected abstract static class PrimFileRenameNode extends AbstractFilePluginPrimitiveNode {
 
-        protected PrimFileRenameNode(CompiledMethodObject method) {
+        protected PrimFileRenameNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization(guards = {"isString(oldName)", "isString(newName)"})
         protected static final Object doRename(final PointersObject receiver, final NativeObject oldName, final NativeObject newName) {
-            File file = new File(oldName.toString());
+            final File file = new File(oldName.toString());
             if (file.renameTo(new File(newName.toString()))) {
                 return receiver;
             }
@@ -324,9 +324,9 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveFileSetPosition", numArguments = 3)
-    protected static abstract class PrimFileSetPositionNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimFileSetPositionNode extends AbstractPrimitiveNode {
 
-        protected PrimFileSetPositionNode(CompiledMethodObject method) {
+        protected PrimFileSetPositionNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -343,9 +343,9 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveFileSize", numArguments = 2)
-    protected static abstract class PrimFileSizeNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimFileSizeNode extends AbstractPrimitiveNode {
 
-        protected PrimFileSizeNode(CompiledMethodObject method) {
+        protected PrimFileSizeNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -361,8 +361,8 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveFileStdioHandles")
-    protected static abstract class PrimFileStdioHandlesNode extends AbstractPrimitiveNode {
-        protected PrimFileStdioHandlesNode(CompiledMethodObject code) {
+    protected abstract static class PrimFileStdioHandlesNode extends AbstractPrimitiveNode {
+        protected PrimFileStdioHandlesNode(final CompiledMethodObject code) {
             super(code);
         }
 
@@ -374,8 +374,8 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveFileTruncate", numArguments = 3)
-    protected static abstract class PrimFileTruncateNode extends AbstractPrimitiveNode {
-        protected PrimFileTruncateNode(CompiledMethodObject code) {
+    protected abstract static class PrimFileTruncateNode extends AbstractPrimitiveNode {
+        protected PrimFileTruncateNode(final CompiledMethodObject code) {
             super(code);
         }
 
@@ -392,17 +392,17 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveFileWrite", numArguments = 5)
-    protected static abstract class PrimFileWriteNode extends AbstractPrimitiveNode {
-        protected PrimFileWriteNode(CompiledMethodObject code) {
+    protected abstract static class PrimFileWriteNode extends AbstractPrimitiveNode {
+        protected PrimFileWriteNode(final CompiledMethodObject code) {
             super(code);
         }
 
         @Specialization
         protected final long doWrite(final PointersObject receiver, final long fileDescriptor, final NativeObject content, final long startIndex, final long count) {
-            byte[] bytes = content.getBytes();
-            long elementSize = content.getElementSize();
-            int byteStart = (int) ((startIndex - 1) * elementSize);
-            int byteEnd = (int) (Math.min(startIndex - 1 + count, bytes.length) * elementSize);
+            final byte[] bytes = content.getBytes();
+            final long elementSize = content.getElementSize();
+            final int byteStart = (int) ((startIndex - 1) * elementSize);
+            final int byteEnd = (int) (Math.min(startIndex - 1 + count, bytes.length) * elementSize);
             if (fileDescriptor == STDIO_HANDLES.IN) {
                 throw new PrimitiveFailed();
             } else if (fileDescriptor == STDIO_HANDLES.OUT) {

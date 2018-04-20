@@ -16,17 +16,17 @@ public abstract class BlockActivationNode extends Node {
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"block.getCompiledBlock() == cachedCompiledBlock"}, assumptions = {"callTargetStable"})
-    protected static Object doDirect(BlockClosureObject block, Object[] arguments,
-                    @Cached("block.getCompiledBlock()") CompiledBlockObject cachedCompiledBlock,
-                    @Cached("block.getCallTarget()") RootCallTarget cachedTarget,
-                    @Cached("block.getCallTargetStable()") Assumption callTargetStable,
-                    @Cached("create(cachedTarget)") DirectCallNode callNode) {
+    protected static Object doDirect(final BlockClosureObject block, final Object[] arguments,
+                    @Cached("block.getCompiledBlock()") final CompiledBlockObject cachedCompiledBlock,
+                    @Cached("block.getCallTarget()") final RootCallTarget cachedTarget,
+                    @Cached("block.getCallTargetStable()") final Assumption callTargetStable,
+                    @Cached("create(cachedTarget)") final DirectCallNode callNode) {
         return callNode.call(arguments);
     }
 
     @Specialization(replaces = "doDirect")
-    protected static Object doIndirect(BlockClosureObject block, Object[] arguments,
-                    @Cached("create()") IndirectCallNode callNode) {
+    protected static Object doIndirect(final BlockClosureObject block, final Object[] arguments,
+                    @Cached("create()") final IndirectCallNode callNode) {
         return callNode.call(block.getCallTarget(), arguments);
     }
 }

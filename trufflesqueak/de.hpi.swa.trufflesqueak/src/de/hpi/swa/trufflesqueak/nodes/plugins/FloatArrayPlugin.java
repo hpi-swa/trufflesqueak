@@ -23,9 +23,9 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveAddFloatArray", numArguments = 2) // TODO: implement primitive
-    public static abstract class PrimAddFloatArrayNode extends AbstractPrimitiveNode {
+    public abstract static class PrimAddFloatArrayNode extends AbstractPrimitiveNode {
 
-        public PrimAddFloatArrayNode(CompiledMethodObject method) {
+        public PrimAddFloatArrayNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -33,9 +33,9 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveAddScalar", numArguments = 2) // TODO: implement primitive
-    public static abstract class PrimAddScalarNode extends AbstractPrimitiveNode {
+    public abstract static class PrimAddScalarNode extends AbstractPrimitiveNode {
 
-        public PrimAddScalarNode(CompiledMethodObject method) {
+        public PrimAddScalarNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -43,43 +43,43 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveAt", numArguments = 2)
-    public static abstract class PrimFloatArrayAtNode extends AbstractPrimitiveNode {
+    public abstract static class PrimFloatArrayAtNode extends AbstractPrimitiveNode {
 
-        public PrimFloatArrayAtNode(CompiledMethodObject method) {
+        public PrimFloatArrayAtNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected double doAt(NativeObject receiver, long index) {
+        protected double doAt(final NativeObject receiver, final long index) {
             return Float.intBitsToFloat(receiver.getInt(((int) index) - 1));
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveAtPut", numArguments = 3)
-    public static abstract class PrimFloatArrayAtPutNode extends AbstractPrimitiveNode {
+    public abstract static class PrimFloatArrayAtPutNode extends AbstractPrimitiveNode {
 
-        public PrimFloatArrayAtPutNode(CompiledMethodObject method) {
+        public PrimFloatArrayAtPutNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected double doDouble(NativeObject receiver, long index, double value) {
+        protected double doDouble(final NativeObject receiver, final long index, final double value) {
             receiver.setInt(((int) index) - 1, Float.floatToRawIntBits((float) value));
             return value;
         }
 
         @Specialization
-        protected double doFloat(NativeObject receiver, long index, FloatObject value) {
+        protected double doFloat(final NativeObject receiver, final long index, final FloatObject value) {
             return doDouble(receiver, index, value.getValue());
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveDivFloatArray", numArguments = 2) // TODO: implement primitive
-    public static abstract class PrimDivFloatArrayNode extends AbstractPrimitiveNode {
+    public abstract static class PrimDivFloatArrayNode extends AbstractPrimitiveNode {
 
-        public PrimDivFloatArrayNode(CompiledMethodObject method) {
+        public PrimDivFloatArrayNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -87,9 +87,9 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveDivScalar", numArguments = 2) // TODO: implement primitive
-    public static abstract class PrimDivScalarNode extends AbstractPrimitiveNode {
+    public abstract static class PrimDivScalarNode extends AbstractPrimitiveNode {
 
-        public PrimDivScalarNode(CompiledMethodObject method) {
+        public PrimDivScalarNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -97,9 +97,9 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveDotProduct", numArguments = 2) // TODO: implement primitive
-    public static abstract class PrimDotProductNode extends AbstractPrimitiveNode {
+    public abstract static class PrimDotProductNode extends AbstractPrimitiveNode {
 
-        public PrimDotProductNode(CompiledMethodObject method) {
+        public PrimDotProductNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -107,17 +107,17 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveEqual", numArguments = 2)
-    public static abstract class PrimFloatArrayEqualNode extends AbstractPrimitiveNode {
+    public abstract static class PrimFloatArrayEqualNode extends AbstractPrimitiveNode {
 
-        public PrimFloatArrayEqualNode(CompiledMethodObject method) {
+        public PrimFloatArrayEqualNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected boolean doEqual(NativeObject receiver, NativeObject other) {
-            int[] words = receiver.getWords();
-            int wordsLength = words.length;
-            int[] otherWords = other.getWords();
+        protected boolean doEqual(final NativeObject receiver, final NativeObject other) {
+            final int[] words = receiver.getWords();
+            final int wordsLength = words.length;
+            final int[] otherWords = other.getWords();
             if (wordsLength != otherWords.length) {
                 return code.image.sqFalse;
             }
@@ -134,22 +134,22 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
          */
         @SuppressWarnings("unused")
         @Specialization
-        protected boolean doNilCase(NativeObject receiver, NilObject other) {
+        protected boolean doNilCase(final NativeObject receiver, final NilObject other) {
             return code.image.sqFalse;
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveHashArray")
-    public static abstract class PrimHashArrayNode extends AbstractPrimitiveNode {
+    public abstract static class PrimHashArrayNode extends AbstractPrimitiveNode {
 
-        public PrimHashArrayNode(CompiledMethodObject method) {
+        public PrimHashArrayNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected long doHash(NativeObject receiver) {
-            int[] words = receiver.getWords();
+        protected long doHash(final NativeObject receiver) {
+            final int[] words = receiver.getWords();
             long hash = 0;
             for (int word : words) {
                 hash += word;
@@ -160,9 +160,9 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveLength", numArguments = 2) // TODO: implement primitive
-    public static abstract class PrimFloatArrayLengthNode extends AbstractPrimitiveNode {
+    public abstract static class PrimFloatArrayLengthNode extends AbstractPrimitiveNode {
 
-        public PrimFloatArrayLengthNode(CompiledMethodObject method) {
+        public PrimFloatArrayLengthNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -170,9 +170,9 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveMulFloatArray", numArguments = 2) // TODO: implement primitive
-    public static abstract class PrimMulFloatArrayNode extends AbstractPrimitiveNode {
+    public abstract static class PrimMulFloatArrayNode extends AbstractPrimitiveNode {
 
-        public PrimMulFloatArrayNode(CompiledMethodObject method) {
+        public PrimMulFloatArrayNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -180,9 +180,9 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveMulScalar", numArguments = 2) // TODO: implement primitive
-    public static abstract class PrimMulScalarNode extends AbstractPrimitiveNode {
+    public abstract static class PrimMulScalarNode extends AbstractPrimitiveNode {
 
-        public PrimMulScalarNode(CompiledMethodObject method) {
+        public PrimMulScalarNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -190,9 +190,9 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveNormalize", numArguments = 2) // TODO: implement primitive
-    public static abstract class PrimFloatArrayNormalizeNode extends AbstractPrimitiveNode {
+    public abstract static class PrimFloatArrayNormalizeNode extends AbstractPrimitiveNode {
 
-        public PrimFloatArrayNormalizeNode(CompiledMethodObject method) {
+        public PrimFloatArrayNormalizeNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -200,9 +200,9 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveSubFloatArray", numArguments = 2) // TODO: implement primitive
-    public static abstract class PrimSubFloatArrayNode extends AbstractPrimitiveNode {
+    public abstract static class PrimSubFloatArrayNode extends AbstractPrimitiveNode {
 
-        public PrimSubFloatArrayNode(CompiledMethodObject method) {
+        public PrimSubFloatArrayNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -210,9 +210,9 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveSubScalar", numArguments = 2) // TODO: implement primitive
-    public static abstract class PrimSubScalar extends AbstractPrimitiveNode {
+    public abstract static class PrimSubScalar extends AbstractPrimitiveNode {
 
-        public PrimSubScalar(CompiledMethodObject method) {
+        public PrimSubScalar(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -220,15 +220,15 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveSum")
-    public static abstract class PrimFloatArraySumNode extends AbstractPrimitiveNode {
+    public abstract static class PrimFloatArraySumNode extends AbstractPrimitiveNode {
 
-        public PrimFloatArraySumNode(CompiledMethodObject method) {
+        public PrimFloatArraySumNode(final CompiledMethodObject method) {
             super(method);
         }
 
         @Specialization
-        protected double doSum(NativeObject receiver) {
-            int[] words = receiver.getWords();
+        protected double doSum(final NativeObject receiver) {
+            final int[] words = receiver.getWords();
             double sum = 0;
             for (int word : words) {
                 sum += Float.intBitsToFloat(word);

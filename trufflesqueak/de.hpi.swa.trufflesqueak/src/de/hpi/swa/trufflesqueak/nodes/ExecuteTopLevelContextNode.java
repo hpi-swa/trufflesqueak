@@ -21,18 +21,18 @@ import de.hpi.swa.trufflesqueak.model.ContextObject;
 import de.hpi.swa.trufflesqueak.nodes.context.frame.FrameSlotWriteNode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
-public class ExecuteTopLevelContextNode extends RootNode {
+public final class ExecuteTopLevelContextNode extends RootNode {
     @CompilationFinal private final SqueakImageContext image;
     @CompilationFinal private final ContextObject initialContext;
     @CompilationFinal private final EnterCodeNode enterActiveCodeNode;
     @Child private FrameSlotWriteNode instructionPointerWriteNode;
     @Child private FrameSlotWriteNode contextWriteNode;
 
-    public static ExecuteTopLevelContextNode create(SqueakLanguage language, ContextObject context) {
+    public static ExecuteTopLevelContextNode create(final SqueakLanguage language, final ContextObject context) {
         return new ExecuteTopLevelContextNode(language, context, context.getCodeObject());
     }
 
-    private ExecuteTopLevelContextNode(SqueakLanguage language, ContextObject context, CompiledCodeObject code) {
+    private ExecuteTopLevelContextNode(final SqueakLanguage language, final ContextObject context, final CompiledCodeObject code) {
         super(language, code.getFrameDescriptor());
         this.image = code.image;
         this.initialContext = context;
@@ -42,13 +42,13 @@ public class ExecuteTopLevelContextNode extends RootNode {
     }
 
     @Override
-    public Object execute(VirtualFrame frame) {
+    public Object execute(final VirtualFrame frame) {
         try {
             executeLoop();
         } catch (TopLevelReturn e) {
             return e.getReturnValue();
         } catch (SqueakQuit e) {
-            System.out.println(e.toString());
+            image.getOutput().println(e.toString());
             System.exit(e.getExitCode());
         } finally {
             image.display.close();
@@ -61,25 +61,25 @@ public class ExecuteTopLevelContextNode extends RootNode {
     public void executeLoop() {
         ContextObject activeContext = initialContext;
         while (true) {
-            BaseSqueakObject sender = activeContext.getSender();
+            final BaseSqueakObject sender = activeContext.getSender();
             try {
-                CompiledCodeObject code = activeContext.getCodeObject();
+                final CompiledCodeObject code = activeContext.getCodeObject();
                 code.invalidateCanBeVirtualizedAssumption();
-                Object[] frameArgs = activeContext.getReceiverAndArguments();
-                BlockClosureObject closure = activeContext.getClosure();
-                MaterializedFrame frame = Truffle.getRuntime().createMaterializedFrame(FrameAccess.newWith(code, sender, closure, frameArgs), code.getFrameDescriptor());
+                final Object[] frameArgs = activeContext.getReceiverAndArguments();
+                final BlockClosureObject closure = activeContext.getClosure();
+                final MaterializedFrame frame = Truffle.getRuntime().createMaterializedFrame(FrameAccess.newWith(code, sender, closure, frameArgs), code.getFrameDescriptor());
                 contextWriteNode.executeWrite(frame, activeContext);
                 // FIXME: do not create node here
                 executeContextNode = insert(ExecuteContextNode.create(code));
                 // doIt: activeContext.printSqStackTrace();
-                Object result = executeContextNode.executeNonVirtualized(frame, activeContext);
+                final Object result = executeContextNode.executeNonVirtualized(frame, activeContext);
                 activeContext = unwindContextChain(sender, sender, result);
                 image.traceVerbose("Local Return on top-level, new context is " + activeContext);
             } catch (ProcessSwitch ps) {
                 image.trace("Switching from " + activeContext + " to " + ps.getNewContext());
                 activeContext = ps.getNewContext();
             } catch (NonLocalReturn nlr) {
-                BaseSqueakObject target = nlr.hasArrivedAtTargetContext() ? sender : nlr.getTargetContext();
+                final BaseSqueakObject target = nlr.hasArrivedAtTargetContext() ? sender : nlr.getTargetContext();
                 activeContext = unwindContextChain(sender, target, nlr.getReturnValue());
                 image.traceVerbose("Non Local Return on top-level, new context is " + activeContext);
             } catch (NonVirtualReturn nvr) {
@@ -89,7 +89,7 @@ public class ExecuteTopLevelContextNode extends RootNode {
         }
     }
 
-    private static final ContextObject unwindContextChain(BaseSqueakObject startContext, BaseSqueakObject targetContext, Object returnValue) {
+    private static ContextObject unwindContextChain(final BaseSqueakObject startContext, final BaseSqueakObject targetContext, final Object returnValue) {
         if (startContext.isNil()) {
             throw new TopLevelReturn(returnValue);
         }
@@ -98,7 +98,7 @@ public class ExecuteTopLevelContextNode extends RootNode {
         }
         ContextObject context = (ContextObject) startContext;
         while (context != targetContext) {
-            BaseSqueakObject sender = context.getSender();
+            final BaseSqueakObject sender = context.getSender();
             if (sender.isNil()) {
                 throw new SqueakException("Unable to unwind context chain");
             }

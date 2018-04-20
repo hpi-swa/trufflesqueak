@@ -10,29 +10,29 @@ import de.hpi.swa.trufflesqueak.SqueakImageContext;
 import de.hpi.swa.trufflesqueak.util.ArrayUtils;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
-public class LargeIntegerObject extends NativeObject {
+public final class LargeIntegerObject extends NativeObject {
     @CompilationFinal public static final long SMALLINTEGER32_MIN = -0x40000000;
     @CompilationFinal public static final long SMALLINTEGER32_MAX = 0x3fffffff;
     @CompilationFinal public static final long SMALLINTEGER64_MIN = -0x1000000000000000L;
     @CompilationFinal public static final long SMALLINTEGER64_MAX = 0xfffffffffffffffL;
-    @CompilationFinal public final static long MASK_32BIT = 0xffffffffL;
-    @CompilationFinal public final static long MASK_64BIT = 0xffffffffffffffffL;
+    @CompilationFinal public static final long MASK_32BIT = 0xffffffffL;
+    @CompilationFinal public static final long MASK_64BIT = 0xffffffffffffffffL;
 
     @CompilationFinal private BigInteger integer;
 
-    public LargeIntegerObject(SqueakImageContext img) {
+    public LargeIntegerObject(final SqueakImageContext img) {
         super(img, null, new NativeBytesStorage(0));
     }
 
-    public LargeIntegerObject(SqueakImageContext img, BigInteger integer) {
+    public LargeIntegerObject(final SqueakImageContext img, final BigInteger integer) {
         super(img, integer.compareTo(BigInteger.ZERO) >= 0 ? img.largePositiveIntegerClass : img.largeNegativeIntegerClass);
         this.integer = integer;
-        byte[] byteArray;
-        byte[] array = integer.abs().toByteArray();
-        int size = (integer.bitLength() + 7) / 8;
+        final byte[] byteArray;
+        final byte[] array = integer.abs().toByteArray();
+        final int size = (integer.bitLength() + 7) / 8;
         if (array.length > size) {
             byteArray = new byte[size];
-            int offset = array.length - size;
+            final int offset = array.length - size;
             for (int i = 0; i < byteArray.length; i++) {
                 byteArray[i] = array[offset + i];
             }
@@ -43,38 +43,38 @@ public class LargeIntegerObject extends NativeObject {
         this.storage = new NativeBytesStorage(ArrayUtils.swapOrderInPlace(byteArray));
     }
 
-    public LargeIntegerObject(SqueakImageContext img, ClassObject klass, byte[] bytes) {
+    public LargeIntegerObject(final SqueakImageContext img, final ClassObject klass, final byte[] bytes) {
         super(img, klass);
         this.storage = new NativeBytesStorage(bytes);
         derivedBigIntegerFromBytes();
     }
 
-    public LargeIntegerObject(SqueakImageContext image, ClassObject klass, int size) {
+    public LargeIntegerObject(final SqueakImageContext image, final ClassObject klass, final int size) {
         super(image, klass);
         this.storage = new NativeBytesStorage(size);
         integer = BigInteger.ZERO;
     }
 
-    public LargeIntegerObject(LargeIntegerObject original) {
+    public LargeIntegerObject(final LargeIntegerObject original) {
         super(original);
         integer = original.integer;
     }
 
     @Override
-    public void fillin(SqueakImageChunk chunk) {
+    public void fillin(final SqueakImageChunk chunk) {
         super.fillin(chunk);
         derivedBigIntegerFromBytes();
     }
 
     @Override
-    public void setNativeAt0(long index, long object) {
+    public void setNativeAt0(final long index, final long object) {
         super.setNativeAt0(index, object);
         derivedBigIntegerFromBytes();
     }
 
     private void derivedBigIntegerFromBytes() {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        byte[] bigEndianBytes = ArrayUtils.swapOrderCopy(storage.getBytes());
+        final byte[] bigEndianBytes = ArrayUtils.swapOrderCopy(storage.getBytes());
         if (bigEndianBytes.length == 0) {
             integer = BigInteger.ZERO;
         } else {
@@ -94,7 +94,7 @@ public class LargeIntegerObject extends NativeObject {
     }
 
     @TruffleBoundary
-    public static int byteSize(BigInteger value) {
+    public static int byteSize(final BigInteger value) {
         return value.abs().toByteArray().length;
     }
 
@@ -105,7 +105,7 @@ public class LargeIntegerObject extends NativeObject {
     }
 
     @Override
-    public boolean equals(Object other) {
+    public boolean equals(final Object other) {
         if (other instanceof LargeIntegerObject) {
             return integer.equals(((LargeIntegerObject) other).integer);
         } else {
@@ -124,7 +124,7 @@ public class LargeIntegerObject extends NativeObject {
     }
 
     @TruffleBoundary
-    protected final Object reduceIfPossible(BigInteger value) {
+    protected Object reduceIfPossible(final BigInteger value) {
         if (value.bitLength() > Long.SIZE - 1) {
             return newFromBigInteger(value);
         } else {
@@ -133,25 +133,25 @@ public class LargeIntegerObject extends NativeObject {
     }
 
     @TruffleBoundary
-    public final Object reduceIfPossible() {
+    public Object reduceIfPossible() {
         return reduceIfPossible(integer);
     }
 
     @TruffleBoundary
-    public final long reduceToLong() throws ArithmeticException {
+    public long reduceToLong() throws ArithmeticException {
         return integer.longValueExact() & MASK_64BIT;
     }
 
-    private final LargeIntegerObject newFromBigInteger(BigInteger value) {
+    private LargeIntegerObject newFromBigInteger(final BigInteger value) {
         return newFromBigInteger(image, value);
     }
 
-    private final static LargeIntegerObject newFromBigInteger(SqueakImageContext image, BigInteger value) {
+    private static LargeIntegerObject newFromBigInteger(final SqueakImageContext image, final BigInteger value) {
         return new LargeIntegerObject(image, value);
     }
 
     @TruffleBoundary
-    public static LargeIntegerObject valueOf(SqueakImageContext image, long a) {
+    public static LargeIntegerObject valueOf(final SqueakImageContext image, final long a) {
         return newFromBigInteger(image, BigInteger.valueOf(a));
     }
 
@@ -160,31 +160,31 @@ public class LargeIntegerObject extends NativeObject {
      */
 
     @TruffleBoundary
-    public Object add(LargeIntegerObject b) {
+    public Object add(final LargeIntegerObject b) {
         return reduceIfPossible(integer.add(b.integer));
     }
 
     @TruffleBoundary
-    public Object subtract(LargeIntegerObject b) {
+    public Object subtract(final LargeIntegerObject b) {
         return reduceIfPossible(integer.subtract(b.integer));
     }
 
     @TruffleBoundary
-    public Object multiply(LargeIntegerObject b) {
+    public Object multiply(final LargeIntegerObject b) {
         return reduceIfPossible(integer.multiply(b.integer));
     }
 
     @TruffleBoundary
-    public Object divide(LargeIntegerObject b) {
+    public Object divide(final LargeIntegerObject b) {
         return reduceIfPossible(integer.divide(b.integer));
     }
 
     @TruffleBoundary
-    public Object floorDivide(LargeIntegerObject b) {
+    public Object floorDivide(final LargeIntegerObject b) {
         return reduceIfPossible(floorDivide(integer, b.integer));
     }
 
-    private static BigInteger floorDivide(BigInteger x, BigInteger y) {
+    private static BigInteger floorDivide(final BigInteger x, final BigInteger y) {
         BigInteger r = x.divide(y);
         // if the signs are different and modulo not zero, round down
         if (x.signum() != y.signum() && !r.multiply(y).equals(x)) {
@@ -194,17 +194,17 @@ public class LargeIntegerObject extends NativeObject {
     }
 
     @TruffleBoundary
-    public Object floorMod(LargeIntegerObject b) {
+    public Object floorMod(final LargeIntegerObject b) {
         return reduceIfPossible(integer.subtract(floorDivide(integer, b.integer).multiply(b.integer)));
     }
 
     @TruffleBoundary
-    public LargeIntegerObject divideNoReduce(LargeIntegerObject b) {
+    public LargeIntegerObject divideNoReduce(final LargeIntegerObject b) {
         return newFromBigInteger(integer.divide(b.integer));
     }
 
     @TruffleBoundary
-    public Object remainder(LargeIntegerObject b) {
+    public Object remainder(final LargeIntegerObject b) {
         return reduceIfPossible(integer.remainder(b.integer));
     }
 
@@ -214,7 +214,7 @@ public class LargeIntegerObject extends NativeObject {
     }
 
     @TruffleBoundary
-    public int compareTo(LargeIntegerObject b) {
+    public int compareTo(final LargeIntegerObject b) {
         return integer.compareTo(b.integer);
     }
 
@@ -238,37 +238,37 @@ public class LargeIntegerObject extends NativeObject {
      */
 
     @TruffleBoundary
-    public Object and(LargeIntegerObject b) {
+    public Object and(final LargeIntegerObject b) {
         return reduceIfPossible(integer.and(b.integer));
     }
 
     @TruffleBoundary
-    public Object or(LargeIntegerObject b) {
+    public Object or(final LargeIntegerObject b) {
         return reduceIfPossible(integer.or(b.integer));
     }
 
     @TruffleBoundary
-    public Object xor(LargeIntegerObject b) {
+    public Object xor(final LargeIntegerObject b) {
         return reduceIfPossible(integer.xor(b.integer));
     }
 
     @TruffleBoundary
-    public Object shiftLeft(int b) {
+    public Object shiftLeft(final int b) {
         return reduceIfPossible(integer.shiftLeft(b));
     }
 
     @TruffleBoundary
-    public Object shiftRight(int b) {
+    public Object shiftRight(final int b) {
         return reduceIfPossible(integer.shiftRight(b));
     }
 
     @Override
-    public void setByte(int index, byte value) {
+    public void setByte(final int index, final byte value) {
         super.setByte(index, value);
         derivedBigIntegerFromBytes();
     }
 
-    public void setBytes(byte[] bytes) {
+    public void setBytes(final byte[] bytes) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         storage.setBytes(bytes);
         derivedBigIntegerFromBytes();

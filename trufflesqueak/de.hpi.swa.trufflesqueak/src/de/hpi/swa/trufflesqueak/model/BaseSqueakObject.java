@@ -12,11 +12,11 @@ public abstract class BaseSqueakObject implements TruffleObject {
     private static final int IDENTITY_HASH_MASK = 0x400000 - 1;
     public final SqueakImageContext image;
 
-    public BaseSqueakObject(SqueakImageContext img) {
+    public BaseSqueakObject(final SqueakImageContext img) {
         image = img;
     }
 
-    public static boolean isInstance(TruffleObject obj) {
+    public static boolean isInstance(final TruffleObject obj) {
         return obj instanceof BaseSqueakObject;
     }
 
@@ -34,7 +34,7 @@ public abstract class BaseSqueakObject implements TruffleObject {
      *
      * @param newCls
      */
-    public void setSqClass(ClassObject newCls) {
+    public void setSqClass(final ClassObject newCls) {
         throw new SqueakException("cannot do this");
     }
 
@@ -54,7 +54,7 @@ public abstract class BaseSqueakObject implements TruffleObject {
         }
     }
 
-    public boolean become(@SuppressWarnings("unused") BaseSqueakObject other) {
+    public boolean become(@SuppressWarnings("unused") final BaseSqueakObject other) {
         return false;
     }
 
@@ -80,11 +80,11 @@ public abstract class BaseSqueakObject implements TruffleObject {
         return false;
     }
 
-    public boolean isSpecialKindAt(long index) {
+    public boolean isSpecialKindAt(final long index) {
         return getSqClass().equals(image.specialObjectsArray.at0(index));
     }
 
-    public boolean isSpecialClassAt(long index) {
+    public boolean isSpecialClassAt(final long index) {
         return this.equals(image.specialObjectsArray.at0(index));
     }
 
@@ -94,6 +94,6 @@ public abstract class BaseSqueakObject implements TruffleObject {
     }
 
     @SuppressWarnings("unused")
-    public void pointersBecomeOneWay(Object[] from, Object[] to, boolean copyHash) {
+    public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
     }
 }

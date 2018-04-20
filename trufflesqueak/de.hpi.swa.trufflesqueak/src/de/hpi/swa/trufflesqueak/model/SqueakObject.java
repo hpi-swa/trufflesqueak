@@ -10,18 +10,18 @@ public abstract class SqueakObject extends BaseSqueakObject {
     @CompilationFinal private long hash;
     @CompilationFinal private ClassObject sqClass;
 
-    public SqueakObject(SqueakImageContext img) {
+    public SqueakObject(final SqueakImageContext img) {
         this(img, null);
     }
 
-    public SqueakObject(SqueakImageContext img, ClassObject klass) {
+    public SqueakObject(final SqueakImageContext img, final ClassObject klass) {
         super(img);
         hash = 0;
         sqClass = klass;
     }
 
     @Override
-    public void fillin(SqueakImageChunk chunk) {
+    public void fillin(final SqueakImageChunk chunk) {
         hash = chunk.getHash();
         sqClass = chunk.getSqClass();
     }
@@ -32,18 +32,18 @@ public abstract class SqueakObject extends BaseSqueakObject {
     }
 
     @Override
-    public void setSqClass(ClassObject newCls) {
+    public void setSqClass(final ClassObject newCls) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         sqClass = newCls;
     }
 
     @Override
-    public boolean become(BaseSqueakObject other) {
+    public boolean become(final BaseSqueakObject other) {
         if (this == other || !(other instanceof SqueakObject)) {
             return false;
         }
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        ClassObject otherSqClass = ((SqueakObject) other).sqClass;
+        final ClassObject otherSqClass = ((SqueakObject) other).sqClass;
         ((SqueakObject) other).sqClass = this.sqClass;
         this.sqClass = otherSqClass;
         return true;
@@ -57,17 +57,17 @@ public abstract class SqueakObject extends BaseSqueakObject {
         return hash;
     }
 
-    public void setSqueakHash(long hash) {
+    public void setSqueakHash(final long hash) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         this.hash = hash;
     }
 
     @Override
-    public void pointersBecomeOneWay(Object[] from, Object[] to, boolean copyHash) {
-        ClassObject oldClass = getSqClass();
+    public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
+        final ClassObject oldClass = getSqClass();
         for (int i = 0; i < from.length; i++) {
             if (from[i] == oldClass) {
-                ClassObject newClass = (ClassObject) to[i]; // must be a ClassObject
+                final ClassObject newClass = (ClassObject) to[i]; // must be a ClassObject
                 setSqClass(newClass);
                 newClass.setSqueakHash(oldClass.squeakHash());
             }

@@ -8,17 +8,17 @@ import de.hpi.swa.trufflesqueak.nodes.AbstractNodeWithImage;
 public class GetActiveProcessNode extends AbstractNodeWithImage {
     @Child private GetSchedulerNode getSchedulerNode;
 
-    public static GetActiveProcessNode create(SqueakImageContext image) {
+    public static GetActiveProcessNode create(final SqueakImageContext image) {
         return new GetActiveProcessNode(image);
     }
 
-    protected GetActiveProcessNode(SqueakImageContext image) {
+    protected GetActiveProcessNode(final SqueakImageContext image) {
         super(image);
         getSchedulerNode = GetSchedulerNode.create(image);
     }
 
     public PointersObject executeGet() {
-        PointersObject scheduler = getSchedulerNode.executeGet();
+        final PointersObject scheduler = getSchedulerNode.executeGet();
         return (PointersObject) scheduler.at0(PROCESS_SCHEDULER.ACTIVE_PROCESS);
     }
 }

@@ -22,22 +22,22 @@ public abstract class LookupNode extends Node {
     @SuppressWarnings("unused")
     @Specialization(limit = "LOOKUP_CACHE_SIZE", guards = {"sqClass == cachedSqClass",
                     "selector == cachedSelector"}, assumptions = {"methodLookupStable"})
-    protected static Object doDirect(ClassObject sqClass, NativeObject selector,
-                    @Cached("sqClass") ClassObject cachedSqClass,
-                    @Cached("selector") NativeObject cachedSelector,
-                    @Cached("cachedSqClass.getMethodLookupStable()") Assumption methodLookupStable,
-                    @Cached("cachedSqClass.lookup(cachedSelector)") Object cachedMethod) {
+    protected static Object doDirect(final ClassObject sqClass, final NativeObject selector,
+                    @Cached("sqClass") final ClassObject cachedSqClass,
+                    @Cached("selector") final NativeObject cachedSelector,
+                    @Cached("cachedSqClass.getMethodLookupStable()") final Assumption methodLookupStable,
+                    @Cached("cachedSqClass.lookup(cachedSelector)") final Object cachedMethod) {
         return cachedMethod;
     }
 
     @Specialization(replaces = "doDirect")
-    protected static Object doIndirect(ClassObject sqClass, NativeObject selector) {
+    protected static Object doIndirect(final ClassObject sqClass, final NativeObject selector) {
         return sqClass.lookup(selector);
     }
 
     @SuppressWarnings("unused")
     @Fallback
-    protected static Object fail(Object sqClass, Object selector) {
+    protected static Object fail(final Object sqClass, final Object selector) {
         throw new SqueakException("failed to lookup generic selector object on generic class");
     }
 }

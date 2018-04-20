@@ -11,15 +11,15 @@ public class NativeBytesStorage extends AbstractNativeObjectStorage {
     @CompilationFinal(dimensions = 1) protected byte[] bytes;
     @CompilationFinal private static final long BYTE_MAX = (long) (Math.pow(2, Byte.SIZE) - 1);
 
-    public NativeBytesStorage(int size) {
+    public NativeBytesStorage(final int size) {
         bytes = new byte[size];
     }
 
-    public NativeBytesStorage(byte[] bytes) {
+    public NativeBytesStorage(final byte[] bytes) {
         this.bytes = bytes;
     }
 
-    protected NativeBytesStorage(NativeBytesStorage original) {
+    protected NativeBytesStorage(final NativeBytesStorage original) {
         this(Arrays.copyOf(original.bytes, original.bytes.length));
     }
 
@@ -29,18 +29,18 @@ public class NativeBytesStorage extends AbstractNativeObjectStorage {
     }
 
     @Override
-    public void fillin(SqueakImageChunk chunk) {
+    public void fillin(final SqueakImageChunk chunk) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         bytes = chunk.getBytes();
     }
 
     @Override
-    public long getNativeAt0(long longIndex) {
+    public long getNativeAt0(final long longIndex) {
         return Byte.toUnsignedLong(bytes[(int) longIndex]);
     }
 
     @Override
-    public void setNativeAt0(long longIndex, long value) {
+    public void setNativeAt0(final long longIndex, final long value) {
         if (value < 0 || value > BYTE_MAX) { // check for overflow
             throw new IllegalArgumentException("Illegal value for BytesObject: " + value);
         }
@@ -48,9 +48,9 @@ public class NativeBytesStorage extends AbstractNativeObjectStorage {
     }
 
     @Override
-    public long shortAt0(long index) {
-        long offset = (index - 1) * 2;
-        int byte0 = (byte) getNativeAt0(offset);
+    public long shortAt0(final long index) {
+        final long offset = (index - 1) * 2;
+        final int byte0 = (byte) getNativeAt0(offset);
         int byte1 = (int) getNativeAt0(offset + 1) << 8;
 
         if ((byte1 & 0x8000) != 0) {
@@ -60,16 +60,16 @@ public class NativeBytesStorage extends AbstractNativeObjectStorage {
     }
 
     @Override
-    public void shortAtPut0(long index, long value) {
-        Long byte0 = value & 0xff;
-        Long byte1 = value & 0xff00;
-        long offset = (index - 1) * 2;
+    public void shortAtPut0(final long index, final long value) {
+        final Long byte0 = value & 0xff;
+        final Long byte1 = value & 0xff00;
+        final long offset = (index - 1) * 2;
         setNativeAt0(offset, byte0.byteValue());
         setNativeAt0(offset + 1, byte1.byteValue());
     }
 
     @Override
-    public void fillWith(Object value) {
+    public void fillWith(final Object value) {
         if (value instanceof Long) {
             Arrays.fill(bytes, ((Long) value).byteValue());
         } else {
@@ -88,13 +88,13 @@ public class NativeBytesStorage extends AbstractNativeObjectStorage {
     }
 
     @Override
-    public void setBytes(byte[] bytes) {
+    public void setBytes(final byte[] bytes) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         this.bytes = bytes;
     }
 
     @Override
-    public void setByte(int index, byte value) {
+    public void setByte(final int index, final byte value) {
         bytes[index] = value;
     }
 

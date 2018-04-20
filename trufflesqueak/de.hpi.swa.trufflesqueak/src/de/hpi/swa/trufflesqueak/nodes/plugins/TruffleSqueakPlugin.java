@@ -22,22 +22,22 @@ public final class TruffleSqueakPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "debugPrint", numArguments = 2)
-    protected static abstract class PrimPrintArgsNode extends AbstractPrimitiveNode {
-        protected PrimPrintArgsNode(CompiledMethodObject code) {
+    protected abstract static class PrimPrintArgsNode extends AbstractPrimitiveNode {
+        protected PrimPrintArgsNode(final CompiledMethodObject code) {
             super(code);
         }
 
         @TruffleBoundary
-        private static void debugPrint(Object o) {
+        private void debugPrint(final Object o) {
             if (o instanceof NativeObject) {
-                System.out.println(((NativeObject) o).toString());
+                code.image.getOutput().println(((NativeObject) o).toString());
             } else {
-                System.out.println(o.toString());
+                code.image.getOutput().println(o.toString());
             }
         }
 
         @Specialization
-        protected Object printArgs(Object receiver, Object value) {
+        protected Object printArgs(final Object receiver, final Object value) {
             code.image.getOutput().println(value.toString());
             return receiver;
         }

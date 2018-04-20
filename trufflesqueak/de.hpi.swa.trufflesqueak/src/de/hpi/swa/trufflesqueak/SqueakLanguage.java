@@ -21,15 +21,15 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
     public static final String NAME = "Squeak/Smalltalk";
 
     @Override
-    protected SqueakImageContext createContext(Env env) {
-        PrintWriter out = new PrintWriter(env.out(), true);
-        PrintWriter err = new PrintWriter(env.err(), true);
+    protected SqueakImageContext createContext(final Env env) {
+        final PrintWriter out = new PrintWriter(env.out(), true);
+        final PrintWriter err = new PrintWriter(env.err(), true);
         return new SqueakImageContext(this, env, out, err);
     }
 
     @Override
-    protected CallTarget parse(ParsingRequest request) throws Exception {
-        SqueakImageContext image = this.getContextReference().get();
+    protected CallTarget parse(final ParsingRequest request) throws Exception {
+        final SqueakImageContext image = this.getContextReference().get();
         image.fillInFrom(new FileInputStream(request.getSource().getPath()));
         if (image.config.isCustomContext()) {
             return image.getCustomContext();
@@ -39,12 +39,12 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
     }
 
     @Override
-    protected boolean isObjectOfLanguage(Object object) {
+    protected boolean isObjectOfLanguage(final Object object) {
         return object instanceof BaseSqueakObject;
     }
 
     @Override
-    protected Object findMetaObject(SqueakImageContext image, Object value) {
+    protected Object findMetaObject(final SqueakImageContext image, final Object value) {
         // TODO: return ContextObject instead?
         if (value instanceof FrameMarker) {
             return image.nilClass;
@@ -56,7 +56,7 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
         }
     }
 
-    public static final SqueakImageContext getContext() {
+    public static SqueakImageContext getContext() {
         return null; // FIXME
     }
 }

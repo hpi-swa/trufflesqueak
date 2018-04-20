@@ -26,13 +26,13 @@ public final class JumpBytecodes {
         @Child private SendSelectorNode sendMustBeBooleanNode;
         @CompilationFinal(dimensions = 1) private final int[] successorExecutionCount = new int[2];
 
-        public ConditionalJumpNode(CompiledCodeObject code, int index, int numBytecodes, int bytecode) {
+        public ConditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode) {
             super(code, index, numBytecodes, bytecode);
             isIfTrue = false;
             initializeChildNodes();
         }
 
-        public ConditionalJumpNode(CompiledCodeObject code, int index, int numBytecodes, int bytecode, int parameter, boolean condition) {
+        public ConditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode, final int parameter, final boolean condition) {
             super(code, index, numBytecodes, bytecode, parameter);
             isIfTrue = condition;
             initializeChildNodes();
@@ -44,8 +44,8 @@ public final class JumpBytecodes {
             sendMustBeBooleanNode = new SendSelectorNode(code, -1, 1, getMustBeBooleanSelector(), 0);
         }
 
-        public boolean executeCondition(VirtualFrame frame) {
-            Object value = popNode.executeRead(frame);
+        public boolean executeCondition(final VirtualFrame frame) {
+            final Object value = popNode.executeRead(frame);
             if (value instanceof Boolean) {
                 return value == isIfTrue;
             } else {
@@ -57,7 +57,7 @@ public final class JumpBytecodes {
         }
 
         @Override
-        public int executeInt(VirtualFrame frame) {
+        public int executeInt(final VirtualFrame frame) {
             if (executeCondition(frame)) {
                 return getJumpSuccessor();
             } else {
@@ -69,12 +69,12 @@ public final class JumpBytecodes {
          * Inspired by Sulong's LLVMBasicBlockNode (https://goo.gl/AVMg4K).
          */
         @ExplodeLoop
-        public double getBranchProbability(long successorIndex) {
-            double successorBranchProbability;
+        public double getBranchProbability(final long successorIndex) {
+            final double successorBranchProbability;
             long succCount = 0;
             long totalExecutionCount = 0;
             for (int i = 0; i < successorExecutionCount.length; i++) {
-                long v = successorExecutionCount[i];
+                final long v = successorExecutionCount[i];
                 if (successorIndex == i) {
                     succCount = v;
                 }
@@ -90,13 +90,13 @@ public final class JumpBytecodes {
             return successorBranchProbability;
         }
 
-        public void increaseBranchProbability(int successorIndex) {
+        public void increaseBranchProbability(final int successorIndex) {
             CompilerAsserts.neverPartOfCompilation();
             successorExecutionCount[successorIndex]++;
         }
 
         @Override
-        protected int longJumpOffset(int bytecode, int parameter) {
+        protected int longJumpOffset(final int bytecode, final int parameter) {
             return ((bytecode & 3) << 8) + parameter;
         }
 
@@ -121,23 +121,23 @@ public final class JumpBytecodes {
     public static class UnconditionalJumpNode extends AbstractBytecodeNode {
         @CompilationFinal protected final int offset;
 
-        public UnconditionalJumpNode(CompiledCodeObject code, int index, int numBytecodes, int bytecode) {
+        public UnconditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode) {
             super(code, index, numBytecodes);
             this.offset = shortJumpOffset(bytecode);
         }
 
-        public UnconditionalJumpNode(CompiledCodeObject code, int index, int numBytecodes, int bytecode, int parameter) {
+        public UnconditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode, final int parameter) {
             super(code, index, numBytecodes);
             this.offset = longJumpOffset(bytecode, parameter);
         }
 
         @Override
-        public int executeInt(VirtualFrame frame) {
+        public int executeInt(final VirtualFrame frame) {
             return getJumpSuccessor();
         }
 
         @Override
-        public void executeVoid(VirtualFrame frame) {
+        public void executeVoid(final VirtualFrame frame) {
             throw new SqueakException("Jumps cannot be executed like other bytecode nodes");
         }
 
@@ -145,11 +145,11 @@ public final class JumpBytecodes {
             return getSuccessorIndex() + offset;
         }
 
-        protected int longJumpOffset(int bytecode, int parameter) {
+        protected int longJumpOffset(final int bytecode, final int parameter) {
             return (((bytecode & 7) - 4) << 8) + parameter;
         }
 
-        protected int shortJumpOffset(int bytecode) {
+        protected int shortJumpOffset(final int bytecode) {
             return (bytecode & 7) + 1;
         }
 

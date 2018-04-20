@@ -14,29 +14,29 @@ public abstract class AbstractBytecodeNode extends SqueakNodeWithCode {
     @CompilationFinal private SourceSection sourceSection;
     @CompilationFinal private int lineNumber = 1;
 
-    protected AbstractBytecodeNode(AbstractBytecodeNode original) {
+    protected AbstractBytecodeNode(final AbstractBytecodeNode original) {
         super(original.code);
         index = original.index;
         numBytecodes = original.numBytecodes;
         setSourceSection(original.getSourceSection());
     }
 
-    public AbstractBytecodeNode(CompiledCodeObject code, int index) {
+    public AbstractBytecodeNode(final CompiledCodeObject code, final int index) {
         this(code, index, 1);
     }
 
-    public AbstractBytecodeNode(CompiledCodeObject code, int index, int numBytecodes) {
+    public AbstractBytecodeNode(final CompiledCodeObject code, final int index, final int numBytecodes) {
         super(code);
         this.index = index;
         this.numBytecodes = numBytecodes;
     }
 
     @Override
-    public Object executeRead(VirtualFrame frame) {
+    public Object executeRead(final VirtualFrame frame) {
         throw new SqueakException("Should call executeVoid instead");
     }
 
-    public int executeInt(VirtualFrame frame) {
+    public int executeInt(final VirtualFrame frame) {
         assert index >= 0; // Inner nodes are not allowed to be executed here
         executeVoid(frame);
         return getSuccessorIndex();
@@ -64,12 +64,12 @@ public abstract class AbstractBytecodeNode extends SqueakNodeWithCode {
         return sourceSection;
     }
 
-    public void setLineNumber(int lineNumber) {
+    public void setLineNumber(final int lineNumber) {
         this.lineNumber = lineNumber;
     }
 
     @Override
-    public void setSourceSection(SourceSection section) {
+    public void setSourceSection(final SourceSection section) {
         sourceSection = section;
     }
 }

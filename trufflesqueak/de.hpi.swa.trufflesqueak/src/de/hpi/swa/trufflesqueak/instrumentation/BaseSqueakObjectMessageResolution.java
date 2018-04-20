@@ -15,39 +15,39 @@ public class BaseSqueakObjectMessageResolution {
     @Resolve(message = "WRITE")
     public abstract static class BaseSqueakObjectWriteNode extends Node {
         @SuppressWarnings("unused")
-        public Object access(BaseSqueakObject receiver, Object name, Object value) {
+        public Object access(final BaseSqueakObject receiver, final Object name, final Object value) {
             throw new RuntimeException("Not yet implemented");
         }
     }
 
     @Resolve(message = "READ")
     public abstract static class BaseSqueakObjectReadNode extends Node {
-        public Object access(BaseSqueakObject receiver, int index) {
+        public Object access(final BaseSqueakObject receiver, final int index) {
             return receiver.at0(index);
         }
     }
 
     @Resolve(message = "HAS_SIZE")
     public abstract static class BaseSqueakObjectHasSizeNode extends Node {
-        public Object access(@SuppressWarnings("unused") BaseSqueakObject receiver) {
+        public Object access(@SuppressWarnings("unused") final BaseSqueakObject receiver) {
             return true;
         }
 
-        public Object access(@SuppressWarnings("unused") FrameMarker marker) {
+        public Object access(@SuppressWarnings("unused") final FrameMarker marker) {
             return false;
         }
     }
 
     @Resolve(message = "HAS_KEYS")
     public abstract static class BaseSqueakObjectHasKeysNode extends Node {
-        public Object access(@SuppressWarnings("unused") Object receiver) {
+        public Object access(@SuppressWarnings("unused") final Object receiver) {
             return false;
         }
     }
 
     @Resolve(message = "GET_SIZE")
     public abstract static class BaseSqueakObjectGetSizeNode extends Node {
-        public Object access(BaseSqueakObject receiver) {
+        public Object access(final BaseSqueakObject receiver) {
             return receiver.size();
         }
     }
@@ -55,7 +55,7 @@ public class BaseSqueakObjectMessageResolution {
     @Resolve(message = "INVOKE")
     public abstract static class BaseSqueakObjectInvokeNode extends Node {
         @SuppressWarnings("unused")
-        public Object access(BaseSqueakObject receiver, String name, Object[] arguments) {
+        public Object access(final BaseSqueakObject receiver, final String name, final Object[] arguments) {
             return "BaseSqueakObjectInvokeNode";
         }
     }
@@ -63,14 +63,14 @@ public class BaseSqueakObjectMessageResolution {
     @Resolve(message = "KEY_INFO")
     public abstract static class BaseSqueakObjectPropertyInfoNode extends Node {
         @SuppressWarnings("unused")
-        public int access(BaseSqueakObject receiver, Object name) {
+        public int access(final BaseSqueakObject receiver, final Object name) {
             return 0;
         }
     }
 
     @Resolve(message = "KEYS")
     public abstract static class BaseSqueakObjectPropertiesNode extends Node {
-        public Object access(@SuppressWarnings("unused") Object receiver) {
+        public Object access(@SuppressWarnings("unused") final Object receiver) {
             return null; // FIXME
         }
     }

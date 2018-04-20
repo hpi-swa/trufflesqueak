@@ -7,22 +7,22 @@ import de.hpi.swa.trufflesqueak.exceptions.SqueakException;
 import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 // TODO: Validate that weak objects are working correctly
-public class WeakPointersObject extends ListObject {
+public final class WeakPointersObject extends ListObject {
 
-    public WeakPointersObject(SqueakImageContext img) {
+    public WeakPointersObject(final SqueakImageContext img) {
         super(img);
     }
 
-    public WeakPointersObject(SqueakImageContext img, ClassObject sqClass, Object[] ptrs) {
+    public WeakPointersObject(final SqueakImageContext img, final ClassObject sqClass, final Object[] ptrs) {
         super(img, sqClass, ptrs);
         convertToWeakReferences();
     }
 
-    public WeakPointersObject(SqueakImageContext img, ClassObject classObject, int size) {
+    public WeakPointersObject(final SqueakImageContext img, final ClassObject classObject, final int size) {
         super(img, classObject, size);
     }
 
-    public WeakPointersObject(WeakPointersObject original) {
+    public WeakPointersObject(final WeakPointersObject original) {
         super(original.image, original.getSqClass());
         this.pointers = original.pointers.clone();
     }
@@ -33,16 +33,16 @@ public class WeakPointersObject extends ListObject {
     }
 
     @Override
-    public void fillin(SqueakImageChunk chunk) {
+    public void fillin(final SqueakImageChunk chunk) {
         super.fillin(chunk);
         convertToWeakReferences();
     }
 
     @Override
-    public Object at0(long i) {
-        Object value = super.at0(i);
+    public Object at0(final long i) {
+        final Object value = super.at0(i);
         if (value instanceof WeakReference) {
-            Object wrappedValue = ((WeakReference<?>) value).get();
+            final Object wrappedValue = ((WeakReference<?>) value).get();
             if (wrappedValue == null) {
                 return image.nil;
             } else {
@@ -54,7 +54,7 @@ public class WeakPointersObject extends ListObject {
     }
 
     @Override
-    public void atput0(long index, Object obj) {
+    public void atput0(final long index, final Object obj) {
         assert obj != null; // null indicates a problem
         if (index < instsize()) { // store into instance variable
             super.atput0(index, obj);
@@ -69,14 +69,14 @@ public class WeakPointersObject extends ListObject {
     }
 
     @Override
-    public boolean become(BaseSqueakObject other) {
+    public boolean become(final BaseSqueakObject other) {
         // TODO: implement or remove?
         throw new SqueakException("become not implemented for WeakPointerObjects");
     }
 
     private void convertToWeakReferences() {
         for (int i = 0; i < pointers.length; i++) {
-            Object pointer = pointers[i];
+            final Object pointer = pointers[i];
             if (pointer instanceof BaseSqueakObject) {
                 pointers[i] = new WeakReference<>(pointer);
             } else {

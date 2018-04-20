@@ -43,7 +43,7 @@ import de.hpi.swa.trufflesqueak.util.SqueakDisplay.AbstractSqueakDisplay;
 import de.hpi.swa.trufflesqueak.util.SqueakImageFlags;
 import de.hpi.swa.trufflesqueak.util.SqueakImageReader;
 
-public class SqueakImageContext {
+public final class SqueakImageContext {
     // Special objects
     @CompilationFinal public final NilObject nil = new NilObject(this);
     @CompilationFinal public final boolean sqFalse = false;
@@ -93,25 +93,25 @@ public class SqueakImageContext {
     @CompilationFinal public final SpecialSelectorObject bitOr = new SpecialSelectorObject(this);
     @CompilationFinal public final SpecialSelectorObject at = new SpecialSelectorObject(this);
     @CompilationFinal public final SpecialSelectorObject atput = new SpecialSelectorObject(this, 2);
-    @CompilationFinal public final SpecialSelectorObject size_ = new SpecialSelectorObject(this, 0);
+    @CompilationFinal public final SpecialSelectorObject sqSize = new SpecialSelectorObject(this, 0);
     @CompilationFinal public final SpecialSelectorObject next = new SpecialSelectorObject(this, 0);
     @CompilationFinal public final SpecialSelectorObject nextPut = new SpecialSelectorObject(this);
     @CompilationFinal public final SpecialSelectorObject atEnd = new SpecialSelectorObject(this, 0);
     @CompilationFinal public final SpecialSelectorObject equivalent = new SpecialSelectorObject(this);
     @CompilationFinal public final SpecialSelectorObject klass = new SpecialSelectorObject(this, 0);
     @CompilationFinal public final SpecialSelectorObject blockCopy = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject value_ = new SpecialSelectorObject(this, 0);
+    @CompilationFinal public final SpecialSelectorObject sqValue = new SpecialSelectorObject(this, 0);
     @CompilationFinal public final SpecialSelectorObject valueWithArg = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject do_ = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject new_ = new SpecialSelectorObject(this, 0);
+    @CompilationFinal public final SpecialSelectorObject sqDo = new SpecialSelectorObject(this);
+    @CompilationFinal public final SpecialSelectorObject sqNew = new SpecialSelectorObject(this, 0);
     @CompilationFinal public final SpecialSelectorObject newWithArg = new SpecialSelectorObject(this);
     @CompilationFinal public final SpecialSelectorObject x = new SpecialSelectorObject(this, 0);
     @CompilationFinal public final SpecialSelectorObject y = new SpecialSelectorObject(this, 0);
 
     @CompilationFinal(dimensions = 1) public final SpecialSelectorObject[] specialSelectorsArray = new SpecialSelectorObject[]{
                     plus, minus, lt, gt, le, ge, eq, ne, times, divide, modulo, pointAt, bitShift,
-                    floorDivide, bitAnd, bitOr, at, atput, size_, next, nextPut, atEnd, equivalent,
-                    klass, blockCopy, value_, valueWithArg, do_, new_, newWithArg, x, y
+                    floorDivide, bitAnd, bitOr, at, atput, sqSize, next, nextPut, atEnd, equivalent,
+                    klass, blockCopy, sqValue, valueWithArg, sqDo, sqNew, newWithArg, x, y
     };
 
     @CompilationFinal public final SqueakConfig config;
@@ -125,20 +125,20 @@ public class SqueakImageContext {
     @CompilationFinal public BaseSqueakObject asSymbol = nil; // for testing
     @CompilationFinal public BaseSqueakObject simulatePrimitiveArgs = nil;
 
-    public SqueakImageContext(SqueakLanguage squeakLanguage, SqueakLanguage.Env environ,
-                    PrintWriter out, PrintWriter err) {
+    public SqueakImageContext(final SqueakLanguage squeakLanguage, final SqueakLanguage.Env environ,
+                    final PrintWriter out, final PrintWriter err) {
         language = squeakLanguage;
         env = environ;
         output = out;
         error = err;
-        String[] applicationArguments = env.getApplicationArguments();
+        final String[] applicationArguments = env.getApplicationArguments();
         config = new SqueakConfig(applicationArguments);
         display = SqueakDisplay.create(this, config.isCustomContext());
         interrupt = InterruptHandlerNode.create(this, config);
     }
 
     // for testing
-    public SqueakImageContext(String imagePath) {
+    public SqueakImageContext(final String imagePath) {
         language = null;
         env = null;
         output = new PrintWriter(System.out, true);
@@ -150,22 +150,22 @@ public class SqueakImageContext {
 
     public CallTarget getActiveContext() {
         // TODO: maybe there is a better way to do the below
-        PointersObject activeProcess = GetActiveProcessNode.create(this).executeGet();
-        ContextObject activeContext = (ContextObject) activeProcess.at0(PROCESS.SUSPENDED_CONTEXT);
+        final PointersObject activeProcess = GetActiveProcessNode.create(this).executeGet();
+        final ContextObject activeContext = (ContextObject) activeProcess.at0(PROCESS.SUSPENDED_CONTEXT);
         activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, nil);
         output.println("Resuming active context for " + activeContext.getMethod() + "...");
         return Truffle.getRuntime().createCallTarget(ExecuteTopLevelContextNode.create(language, activeContext));
     }
 
     public CallTarget getCustomContext() {
-        Object receiver = config.getReceiver();
-        String selector = config.getSelector();
-        ClassObject receiverClass = receiver instanceof Long ? smallIntegerClass : nilClass;
-        CompiledCodeObject lookupResult = (CompiledCodeObject) receiverClass.lookup(selector);
+        final Object receiver = config.getReceiver();
+        final String selector = config.getSelector();
+        final ClassObject receiverClass = receiver instanceof Long ? smallIntegerClass : nilClass;
+        final CompiledCodeObject lookupResult = (CompiledCodeObject) receiverClass.lookup(selector);
         if (lookupResult.getCompiledInSelector() == doesNotUnderstand) {
             throw new SqueakException(receiver + " >> " + selector + " could not be found!");
         }
-        ContextObject customContext = ContextObject.create(this, lookupResult.frameSize());
+        final ContextObject customContext = ContextObject.create(this, lookupResult.frameSize());
         customContext.atput0(CONTEXT.METHOD, lookupResult);
         customContext.atput0(CONTEXT.INSTRUCTION_POINTER, (long) customContext.getCodeObject().getInitialPC());
         customContext.atput0(CONTEXT.RECEIVER, receiver);
@@ -174,7 +174,7 @@ public class SqueakImageContext {
         customContext.setSender(nil);
         customContext.setFrameMarker(new FrameMarker());
         // if there were arguments, they would need to be pushed before the temps
-        long numTemps = lookupResult.getNumTemps() - lookupResult.getNumArgsAndCopiedValues();
+        final long numTemps = lookupResult.getNumTemps() - lookupResult.getNumArgsAndCopiedValues();
         for (int i = 0; i < numTemps; i++) {
             customContext.push(nil);
         }
@@ -183,7 +183,7 @@ public class SqueakImageContext {
         return Truffle.getRuntime().createCallTarget(ExecuteTopLevelContextNode.create(getLanguage(), customContext));
     }
 
-    public void fillInFrom(FileInputStream inputStream) throws IOException {
+    public void fillInFrom(final FileInputStream inputStream) throws IOException {
         SqueakImageReader.readImage(this, inputStream);
         if (!display.isHeadless() && simulatePrimitiveArgs == nil) {
             throw new SqueakException("Unable to find BitBlt simulation in image, cannot run with display.");
@@ -202,7 +202,7 @@ public class SqueakImageContext {
         return language;
     }
 
-    public Object wrap(Object obj) {
+    public Object wrap(final Object obj) {
         if (obj == null) {
             return nil;
         } else if (obj instanceof Boolean) {
@@ -227,65 +227,66 @@ public class SqueakImageContext {
         throw new SqueakException("Don't know how to wrap " + obj);
     }
 
-    public Object wrap(boolean value) {
+    public Object wrap(final boolean value) {
         return value ? sqTrue : sqFalse;
     }
 
-    public long wrap(long l) {
+    @SuppressWarnings("static-method")
+    public long wrap(final long l) {
         return l;
     }
 
-    public BaseSqueakObject wrap(BigInteger i) {
+    public BaseSqueakObject wrap(final BigInteger i) {
         return new LargeIntegerObject(this, i);
     }
 
-    public NativeObject wrap(String s) {
+    public NativeObject wrap(final String s) {
         return NativeObject.newNativeBytes(this, stringClass, s.getBytes());
     }
 
-    public char wrap(char character) {
+    public static char wrap(final char character) {
         return character;
     }
 
-    public ListObject wrap(Object... elements) {
-        Object[] wrappedElements = new Object[elements.length];
+    public ListObject wrap(final Object... elements) {
+        final Object[] wrappedElements = new Object[elements.length];
         for (int i = 0; i < elements.length; i++) {
             wrappedElements[i] = wrap(elements[i]);
         }
         return newList(wrappedElements);
     }
 
-    public PointersObject wrap(Point point) {
+    public PointersObject wrap(final Point point) {
         return newPoint((long) point.getX(), (long) point.getY());
     }
 
-    public PointersObject wrap(Dimension dimension) {
+    public PointersObject wrap(final Dimension dimension) {
         return newPoint((long) dimension.getWidth(), (long) dimension.getHeight());
     }
 
-    public ListObject newList(Object[] elements) {
+    public ListObject newList(final Object[] elements) {
         return new ListObject(this, arrayClass, elements);
     }
 
-    public ListObject newListWith(Object... elements) {
+    public ListObject newListWith(final Object... elements) {
         return newList(elements);
     }
 
-    public PointersObject newPoint(Object xPos, Object yPos) {
+    public PointersObject newPoint(final Object xPos, final Object yPos) {
         assert xPos instanceof Long || xPos instanceof LargeIntegerObject || xPos instanceof Double || xPos instanceof FloatObject;
         assert yPos instanceof Long || yPos instanceof LargeIntegerObject || yPos instanceof Double || yPos instanceof FloatObject;
-        ClassObject pointClass = (ClassObject) specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.ClassPoint);
-        PointersObject newPoint = (PointersObject) pointClass.newInstance();
+        final ClassObject pointClass = (ClassObject) specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.ClassPoint);
+        final PointersObject newPoint = (PointersObject) pointClass.newInstance();
         newPoint.atput0(POINT.X, xPos);
         newPoint.atput0(POINT.Y, yPos);
         return newPoint;
     }
 
-    public NativeObject newSymbol(String value) {
+    public NativeObject newSymbol(final String value) {
         return NativeObject.newNativeBytes(this, doesNotUnderstand.getSqClass(), value.getBytes());
     }
 
-    public void registerSemaphore(BaseSqueakObject semaphore, long index) {
+    public void registerSemaphore(final BaseSqueakObject semaphore, final long index) {
         specialObjectsArray.atput0(index, semaphore.isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassSemaphore) ? semaphore : nil);
     }
 
@@ -293,13 +294,13 @@ public class SqueakImageContext {
         return ((ListObject) specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.PrimErrTableIndex)).at0(reasonCode);
     }
 
-    public void trace(String message) {
+    public void trace(final String message) {
         if (config.isTracing()) {
             getOutput().println(message);
         }
     }
 
-    public void traceVerbose(String message) {
+    public void traceVerbose(final String message) {
         if (config.isTracing() && config.isVerbose()) {
             getOutput().println(message);
         }
@@ -310,30 +311,30 @@ public class SqueakImageContext {
      */
     @TruffleBoundary
     public void printSqStackTrace() {
-        boolean isTravisBuild = System.getenv().containsKey("TRAVIS");
+        final boolean isTravisBuild = System.getenv().containsKey("TRAVIS");
         final int[] depth = new int[1];
-        Object[] lastSender = new Object[]{null};
+        final Object[] lastSender = new Object[]{null};
         getOutput().println("== Squeak stack trace ===========================================================");
         Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Object>() {
 
             @Override
-            public Object visitFrame(FrameInstance frameInstance) {
+            public Object visitFrame(final FrameInstance frameInstance) {
                 if (depth[0]++ > 50 && isTravisBuild) {
                     return null;
                 }
-                Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
+                final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
                 if (current.getArguments().length < FrameAccess.RCVR_AND_ARGS_START) {
                     return null;
                 }
-                Object method = FrameAccess.getMethod(current);
+                final Object method = FrameAccess.getMethod(current);
                 lastSender[0] = FrameAccess.getSender(current);
-                Object contextOrMarker = FrameAccess.getContextOrMarker(current);
-                Object[] arguments = FrameAccess.getArguments(current);
-                String[] argumentStrings = new String[arguments.length];
+                final Object contextOrMarker = FrameAccess.getContextOrMarker(current);
+                final Object[] arguments = FrameAccess.getArguments(current);
+                final String[] argumentStrings = new String[arguments.length];
                 for (int i = 0; i < arguments.length; i++) {
                     argumentStrings[i] = arguments[i].toString();
                 }
-                String prefix = FrameAccess.getClosure(current) == null ? "" : "[] in ";
+                final String prefix = FrameAccess.getClosure(current) == null ? "" : "[] in ";
                 getOutput().println(String.format("%s%s #(%s) [this: %s, sender: %s]", prefix, method, String.join(", ", argumentStrings), contextOrMarker, lastSender[0]));
                 return null;
             }

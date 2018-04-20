@@ -15,23 +15,23 @@ import de.hpi.swa.trufflesqueak.nodes.GetOrCreateContextNode;
 public class TransferToNode extends AbstractNodeWithImage {
     @Child private GetSchedulerNode getSchedulerNode;
 
-    public static TransferToNode create(SqueakImageContext image) {
+    public static TransferToNode create(final SqueakImageContext image) {
         return new TransferToNode(image);
     }
 
-    protected TransferToNode(SqueakImageContext image) {
+    protected TransferToNode(final SqueakImageContext image) {
         super(image);
         getSchedulerNode = GetSchedulerNode.create(image);
     }
 
-    public void executeTransferTo(VirtualFrame frame, BaseSqueakObject activeProcess, BaseSqueakObject newProcess) {
+    public void executeTransferTo(final VirtualFrame frame, final BaseSqueakObject activeProcess, final BaseSqueakObject newProcess) {
         // Record a process to be awakened on the next interpreter cycle.
-        BaseSqueakObject activeContext = GetOrCreateContextNode.getOrCreate(frame);
-        PointersObject scheduler = getSchedulerNode.executeGet();
+        final BaseSqueakObject activeContext = GetOrCreateContextNode.getOrCreate(frame);
+        final PointersObject scheduler = getSchedulerNode.executeGet();
         assert newProcess != scheduler.at0(PROCESS_SCHEDULER.ACTIVE_PROCESS) : "trying to switch to already active process";
         scheduler.atput0(PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
         activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, activeContext);
-        ContextObject newActiveContext = (ContextObject) newProcess.at0(PROCESS.SUSPENDED_CONTEXT);
+        final ContextObject newActiveContext = (ContextObject) newProcess.at0(PROCESS.SUSPENDED_CONTEXT);
         newProcess.atput0(PROCESS.SUSPENDED_CONTEXT, image.nil);
         throw new ProcessSwitch(newActiveContext);
     }

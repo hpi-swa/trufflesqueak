@@ -24,9 +24,9 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
         // (1 ifNil: [true]) class
         // pushConstant: 1, dup, pushConstant: nil, send: ==, jumpFalse: 24, pop,
         // pushConstant: true, send: class, pop, returnSelf
-        int[] bytes = {0x76, 0x88, 0x73, 0xc6, 0x99, 0x87, 0x71, 0xc7, 0x87, 0x78};
-        CompiledCodeObject code = makeMethod(bytes);
-        AbstractBytecodeNode[] bytecodeNodes = new SqueakBytecodeDecoder(code).decode();
+        final int[] bytes = {0x76, 0x88, 0x73, 0xc6, 0x99, 0x87, 0x71, 0xc7, 0x87, 0x78};
+        final CompiledCodeObject code = makeMethod(bytes);
+        final AbstractBytecodeNode[] bytecodeNodes = new SqueakBytecodeDecoder(code).decode();
         assertEquals(bytes.length, bytecodeNodes.length);
         assertSame(PushConstantNode.class, bytecodeNodes[0].getClass());
         assertSame(DupNode.class, bytecodeNodes[1].getClass());
@@ -46,9 +46,10 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
 
     @Test
     public void testSource() {
-        Object[] literals = new Object[]{14548994L, image.nil, image.nil}; // header with numTemp=55
-        CompiledCodeObject code = makeMethod(literals, 0x70, 0x68, 0x10, 0x8F, 0x10, 0x00, 0x02, 0x10, 0x7D, 0xC9, 0x7C);
-        CharSequence source = CompiledCodeObjectPrinter.getString(code);
+        final Object[] literals = new Object[]{14548994L, image.nil, image.nil}; // header with
+                                                                                 // numTemp=55
+        final CompiledCodeObject code = makeMethod(literals, 0x70, 0x68, 0x10, 0x8F, 0x10, 0x00, 0x02, 0x10, 0x7D, 0xC9, 0x7C);
+        final CharSequence source = CompiledCodeObjectPrinter.getString(code);
         //@formatter:off
         assertEquals(
             "1 <70> self\n" +
@@ -64,8 +65,8 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
 
     @Test
     public void testSourceAllBytecodes() {
-        Object[] literals = new Object[]{17104899L, 21, 42, 63};
-        CompiledCodeObject code = makeMethod(literals,
+        final Object[] literals = new Object[]{17104899L, 21, 42, 63};
+        final CompiledCodeObject code = makeMethod(literals,
         //@formatter:off
             15, 31, 63, 95, 96, 97, 98, 99, 103, 111, 112, 113, 114, 115, 116,
             117, 118, 119, 120, 121, 122, 123, 124, 126, 127,
@@ -95,7 +96,7 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
             189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201,
             202, 203, 204, 205, 206, 207, 208, 225, 242
         );
-        CharSequence source = CompiledCodeObjectPrinter.getString(code);
+        final CharSequence source = CompiledCodeObjectPrinter.getString(code);
         assertEquals(
             "1 <0F> pushRcvr: 15\n" +
             "2 <1F> pushTemp: 15\n" +
@@ -200,12 +201,12 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
         assertEquals(4.841431442464721, getDouble(chunk), 0);
     }
 
-    private static double getDouble(SqueakImageChunk chunk) {
+    private static double getDouble(final SqueakImageChunk chunk) {
         return ((FloatObject) chunk.asObject()).getValue();
     }
 
     private static SqueakImageChunk newFloatChunk() {
-        SqueakImageChunk chunk = new SqueakImageChunk(
+        final SqueakImageChunk chunk = new SqueakImageChunk(
                         null,
                         image,
                         2, // 2 words

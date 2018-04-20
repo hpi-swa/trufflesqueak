@@ -32,17 +32,17 @@ public abstract class AbstractNativeObjectStorage {
     public abstract AbstractNativeObjectStorage shallowCopy();
 
     @SuppressWarnings("unused")
-    public void setByte(int index, byte value) {
+    public void setByte(final int index, final byte value) {
         throw new SqueakException("Needs to be overidden by subclass");
     }
 
     @SuppressWarnings("unused")
-    public int getInt(int index) {
+    public int getInt(final int index) {
         throw new SqueakException("Needs to be overidden by subclass");
     }
 
     @SuppressWarnings("unused")
-    public void setInt(int index, int value) {
+    public void setInt(final int index, final int value) {
         throw new SqueakException("Needs to be overidden by subclass");
     }
 }

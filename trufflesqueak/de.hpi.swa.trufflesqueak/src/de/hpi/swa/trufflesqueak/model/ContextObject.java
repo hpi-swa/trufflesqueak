@@ -16,33 +16,33 @@ public class ContextObject extends AbstractPointersObject {
     @CompilationFinal private FrameMarker frameMarker;
     @CompilationFinal private boolean isDirty;
 
-    public static ContextObject create(SqueakImageContext image) {
+    public static ContextObject create(final SqueakImageContext image) {
         return new ContextObject(image);
     }
 
-    private ContextObject(SqueakImageContext image) {
+    private ContextObject(final SqueakImageContext image) {
         super(image, image.methodContextClass);
     }
 
-    public static ContextObject create(SqueakImageContext image, int size) {
+    public static ContextObject create(final SqueakImageContext image, final int size) {
         return new ContextObject(image, size);
     }
 
-    private ContextObject(SqueakImageContext image, int size) {
+    private ContextObject(final SqueakImageContext image, final int size) {
         this(image);
         this.pointers = ArrayUtils.withAll(CONTEXT.TEMP_FRAME_START + size, image.nil);
     }
 
-    public static ContextObject create(SqueakImageContext image, int size, FrameMarker frameMarker) {
+    public static ContextObject create(final SqueakImageContext image, final int size, final FrameMarker frameMarker) {
         return new ContextObject(image, size, frameMarker);
     }
 
-    private ContextObject(SqueakImageContext image, int size, FrameMarker frameMarker) {
+    private ContextObject(final SqueakImageContext image, final int size, final FrameMarker frameMarker) {
         this(image, size);
         this.frameMarker = frameMarker;
     }
 
-    public ContextObject(ContextObject original) {
+    public ContextObject(final ContextObject original) {
         super(original.image, original.image.methodContextClass);
         pointers = original.pointers.clone();
         frameMarker = original.frameMarker;
@@ -55,7 +55,7 @@ public class ContextObject extends AbstractPointersObject {
     }
 
     @Override
-    public Object at0(long index) {
+    public Object at0(final long index) {
         assert index >= 0;
         if (index == CONTEXT.SENDER_OR_NIL) {
             return getSender(); // sender might need to be reconstructed
@@ -64,7 +64,7 @@ public class ContextObject extends AbstractPointersObject {
     }
 
     @Override
-    public void atput0(long index, Object value) {
+    public void atput0(final long index, final Object value) {
         assert index >= 0 && value != null;
         if (index == CONTEXT.SENDER_OR_NIL) {
             image.traceVerbose("Sender of " + toString() + " set to " + value);
@@ -75,7 +75,7 @@ public class ContextObject extends AbstractPointersObject {
     }
 
     public CompiledCodeObject getCodeObject() {
-        BlockClosureObject closure = getClosure();
+        final BlockClosureObject closure = getClosure();
         if (closure != null) {
             return closure.getCompiledBlock();
         }
@@ -92,8 +92,8 @@ public class ContextObject extends AbstractPointersObject {
     }
 
     public Object[] getReceiverAndArguments() {
-        int numArgs = getCodeObject().getNumArgsAndCopiedValues();
-        Object[] arguments = new Object[1 + numArgs];
+        final int numArgs = getCodeObject().getNumArgsAndCopiedValues();
+        final Object[] arguments = new Object[1 + numArgs];
         arguments[0] = getReceiver();
         for (int i = 0; i < numArgs; i++) {
             arguments[1 + i] = atTemp(i);
@@ -110,7 +110,7 @@ public class ContextObject extends AbstractPointersObject {
     }
 
     public BaseSqueakObject getSender() {
-        Object sender = super.at0(CONTEXT.SENDER_OR_NIL);
+        final Object sender = super.at0(CONTEXT.SENDER_OR_NIL);
         if (sender instanceof ContextObject) {
             return (BaseSqueakObject) sender;
         } else if (sender instanceof NilObject) {
@@ -118,9 +118,9 @@ public class ContextObject extends AbstractPointersObject {
         } else {
             CompilerDirectives.transferToInterpreter();
             assert sender instanceof FrameMarker;
-            Frame frame = FrameAccess.findFrameForMarker((FrameMarker) sender);
+            final Frame frame = FrameAccess.findFrameForMarker((FrameMarker) sender);
             assert frame != null : "Frame for context to reconstruct does not exist anymore";
-            BaseSqueakObject reconstructedSender = GetOrCreateContextNode.getOrCreate(frame);
+            final BaseSqueakObject reconstructedSender = GetOrCreateContextNode.getOrCreate(frame);
             assert reconstructedSender != null;
             setSender(reconstructedSender);
             return reconstructedSender;
@@ -135,25 +135,25 @@ public class ContextObject extends AbstractPointersObject {
     /*
      * Set sender without flagging context as dirty.
      */
-    public void setSender(Object sender) {
+    public void setSender(final Object sender) {
         super.atput0(CONTEXT.SENDER_OR_NIL, sender);
     }
 
-    public void push(Object value) {
+    public void push(final Object value) {
         assert value != null;
-        long newSP = getStackPointer() + 1;
+        final long newSP = getStackPointer() + 1;
         assert newSP <= CONTEXT.MAX_STACK_SIZE;
         atStackPut(newSP, value);
         setStackPointer(newSP);
     }
 
     public long getInstructionPointer() {
-        CompiledCodeObject code = getCodeObject();
+        final CompiledCodeObject code = getCodeObject();
         return decodeSqPC((long) at0(CONTEXT.INSTRUCTION_POINTER), code);
     }
 
-    public void setInstructionPointer(long newPC) {
-        long encodedPC = encodeSqPC(newPC, getCodeObject());
+    public void setInstructionPointer(final long newPC) {
+        final long encodedPC = encodeSqPC(newPC, getCodeObject());
         assert encodedPC >= 0;
         atput0(CONTEXT.INSTRUCTION_POINTER, encodedPC);
     }
@@ -162,7 +162,7 @@ public class ContextObject extends AbstractPointersObject {
         return (long) at0(CONTEXT.STACKPOINTER);
     }
 
-    public void setStackPointer(long newSP) {
+    public void setStackPointer(final long newSP) {
         assert 0 <= newSP && newSP <= CONTEXT.MAX_STACK_SIZE;
         atput0(CONTEXT.STACKPOINTER, newSP);
     }
@@ -172,7 +172,7 @@ public class ContextObject extends AbstractPointersObject {
         if (at0(CONTEXT.METHOD) == image.nil) {
             return "CTX without method";
         } else {
-            BlockClosureObject closure = getClosure();
+            final BlockClosureObject closure = getClosure();
             if (closure != null) {
                 return "CTX [] in " + getMethod();
             } else {
@@ -185,22 +185,22 @@ public class ContextObject extends AbstractPointersObject {
         return peek(0);
     }
 
-    public Object peek(int offset) {
+    public Object peek(final int offset) {
         return atStack(getStackPointer() - offset);
     }
 
     public Object pop() {
-        long sp = getStackPointer();
+        final long sp = getStackPointer();
         if (sp > 0) {
             setStackPointer(sp - 1);
         }
         return atStackAndClear(sp);
     }
 
-    public Object[] popNReversed(int numPop) {
-        long sp = getStackPointer();
+    public Object[] popNReversed(final int numPop) {
+        final long sp = getStackPointer();
         assert sp - numPop >= 0;
-        Object[] result = new Object[numPop];
+        final Object[] result = new Object[numPop];
         for (int i = 0; i < numPop; i++) {
             result[numPop - 1 - i] = atStackAndClear(sp - i);
         }
@@ -212,24 +212,24 @@ public class ContextObject extends AbstractPointersObject {
         return at0(CONTEXT.RECEIVER);
     }
 
-    public Object atTemp(long argumentIndex) {
+    public Object atTemp(final long argumentIndex) {
         return at0(CONTEXT.TEMP_FRAME_START + argumentIndex);
     }
 
-    public void atTempPut(long argumentIndex, Object value) {
+    public void atTempPut(final long argumentIndex, final Object value) {
         atput0(CONTEXT.TEMP_FRAME_START + argumentIndex, value);
     }
 
-    public Object atStack(long argumentIndex) {
+    public Object atStack(final long argumentIndex) {
         return at0(CONTEXT.TEMP_FRAME_START - 1 + argumentIndex);
     }
 
-    public void atStackPut(long argumentIndex, Object value) {
+    public void atStackPut(final long argumentIndex, final Object value) {
         atput0(CONTEXT.TEMP_FRAME_START - 1 + argumentIndex, value);
     }
 
-    public Object atStackAndClear(long argumentIndex) {
-        Object value = atStack(argumentIndex);
+    public Object atStackAndClear(final long argumentIndex) {
+        final Object value = atStack(argumentIndex);
 // CompiledCodeObject code = getMethod();
 // if (argumentIndex > 1 + code.getNumArgsAndCopiedValues() + code.getNumTemps()) {
 // only nil out stack values, not receiver, args, or temps
@@ -242,12 +242,12 @@ public class ContextObject extends AbstractPointersObject {
     public final void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         for (int i = 0; i < from.length; i++) {
-            Object fromPointer = from[i];
+            final Object fromPointer = from[i];
             // skip sender (for performance), pc, and sp
             for (int j = CONTEXT.METHOD; j < size(); j++) {
-                Object newPointer = at0(j);
+                final Object newPointer = at0(j);
                 if (newPointer == fromPointer) {
-                    Object toPointer = to[i];
+                    final Object toPointer = to[i];
                     atput0(j, toPointer);
                     if (copyHash && fromPointer instanceof BaseSqueakObject && toPointer instanceof SqueakObject) {
                         ((SqueakObject) toPointer).setSqueakHash(((BaseSqueakObject) fromPointer).squeakHash());
@@ -258,7 +258,7 @@ public class ContextObject extends AbstractPointersObject {
     }
 
     public BlockClosureObject getClosure() {
-        Object closureOrNil = at0(CONTEXT.CLOSURE_OR_NIL);
+        final Object closureOrNil = at0(CONTEXT.CLOSURE_OR_NIL);
         return closureOrNil == image.nil ? null : (BlockClosureObject) closureOrNil;
     }
 
@@ -266,18 +266,18 @@ public class ContextObject extends AbstractPointersObject {
         return frameMarker;
     }
 
-    public void setFrameMarker(FrameMarker frameMarker) {
+    public void setFrameMarker(final FrameMarker frameMarker) {
         this.frameMarker = frameMarker;
     }
 
     /*
      * pc is offset by the initial pc
      */
-    public static long encodeSqPC(long pc, CompiledCodeObject code) {
+    public static long encodeSqPC(final long pc, final CompiledCodeObject code) {
         return pc + code.getInitialPC() + code.getOffset();
     }
 
-    public static long decodeSqPC(long pc, CompiledCodeObject code) {
+    public static long decodeSqPC(final long pc, final CompiledCodeObject code) {
         return pc - code.getInitialPC() - code.getOffset();
     }
 
@@ -292,13 +292,13 @@ public class ContextObject extends AbstractPointersObject {
     public void printSqStackTrace() {
         ContextObject current = this;
         while (true) {
-            Object[] rcvrAndArgs = current.getReceiverAndArguments();
-            String[] argumentStrings = new String[rcvrAndArgs.length];
+            final Object[] rcvrAndArgs = current.getReceiverAndArguments();
+            final String[] argumentStrings = new String[rcvrAndArgs.length];
             for (int i = 0; i < rcvrAndArgs.length; i++) {
                 argumentStrings[i] = rcvrAndArgs[i].toString();
             }
             image.getOutput().println(String.format("%s #(%s)", current, String.join(", ", argumentStrings)));
-            BaseSqueakObject sender = current.getSender();
+            final BaseSqueakObject sender = current.getSender();
             if (sender.isNil()) {
                 break;
             } else {

@@ -25,11 +25,11 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
     @Child private SqueakNode completeTempReadNode;
     @Child private TemporaryWriteNode completeTempWriteNode;
 
-    public static AboutToReturnNode create(CompiledMethodObject code) {
+    public static AboutToReturnNode create(final CompiledMethodObject code) {
         return AboutToReturnNodeGen.create(code);
     }
 
-    protected AboutToReturnNode(CompiledMethodObject method) {
+    protected AboutToReturnNode(final CompiledMethodObject method) {
         super(method);
         if (aboutToReturnSelector == null) {
             aboutToReturnSelector = (BaseSqueakObject) method.image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SelectorAboutToReturn);
@@ -45,17 +45,17 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
 
     /*
      * Virtualized version of Context>>aboutToReturn:through:, more specifically
-     * Context>>resume:through:. This is only called if code.isUnwindMarked(), so there is no need to
-     * unwind contexts here as this is already happening when NonLocalReturns are handled. Note that
-     * this however does not check if the current context isDead nor does it terminate contexts (this
-     * may be a problem).
+     * Context>>resume:through:. This is only called if code.isUnwindMarked(), so there is no need
+     * to unwind contexts here as this is already happening when NonLocalReturns are handled. Note
+     * that this however does not check if the current context isDead nor does it terminate contexts
+     * (this may be a problem).
      */
     @Specialization(guards = {"isVirtualized(frame)"})
-    protected void doAboutToReturnVirtualized(VirtualFrame frame, @SuppressWarnings("unused") NonLocalReturn nlr) {
+    protected void doAboutToReturnVirtualized(final VirtualFrame frame, @SuppressWarnings("unused") final NonLocalReturn nlr) {
         CompilerDirectives.ensureVirtualizedHere(frame);
         if (completeTempReadNode.executeRead(frame) == code.image.nil) {
             completeTempWriteNode.executeWrite(frame, code.image.sqTrue);
-            BlockClosureObject block = (BlockClosureObject) blockArgumentNode.executeRead(frame);
+            final BlockClosureObject block = (BlockClosureObject) blockArgumentNode.executeRead(frame);
             try {
                 dispatch.executeBlock(block, block.getFrameArguments(frame));
             } catch (LocalReturn blockLR) { // ignore
@@ -68,8 +68,8 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
     }
 
     @Specialization(guards = {"!isVirtualized(frame)"})
-    protected void doAboutToReturn(VirtualFrame frame, NonLocalReturn nlr) {
-        ContextObject context = getContext(frame);
+    protected void doAboutToReturn(final VirtualFrame frame, final NonLocalReturn nlr) {
+        final ContextObject context = getContext(frame);
         pushNode.executeWrite(frame, nlr.getTargetContext());
         pushNode.executeWrite(frame, nlr.getReturnValue());
         pushNode.executeWrite(frame, context);

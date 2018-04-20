@@ -17,24 +17,24 @@ public abstract class SqueakNodeWithCode extends SqueakNode {
     @CompilationFinal protected final CompiledCodeObject code;
     @Child private FrameSlotReadNode contextOrMarkerReadNode;
 
-    public SqueakNodeWithCode(CompiledCodeObject code) {
+    public SqueakNodeWithCode(final CompiledCodeObject code) {
         this.code = code;
         contextOrMarkerReadNode = FrameSlotReadNode.create(code.thisContextOrMarkerSlot);
     }
 
-    protected boolean isVirtualized(VirtualFrame frame) {
+    protected boolean isVirtualized(final VirtualFrame frame) {
         return contextOrMarkerReadNode.executeRead(frame) instanceof FrameMarker;
     }
 
-    protected Object getContextOrMarker(VirtualFrame frame) {
+    protected Object getContextOrMarker(final VirtualFrame frame) {
         return contextOrMarkerReadNode.executeRead(frame);
     }
 
-    protected ContextObject getContext(VirtualFrame frame) {
+    protected ContextObject getContext(final VirtualFrame frame) {
         return (ContextObject) contextOrMarkerReadNode.executeRead(frame);
     }
 
-    protected FrameMarker getFrameMarker(VirtualFrame frame) {
+    protected FrameMarker getFrameMarker(final VirtualFrame frame) {
         return (FrameMarker) contextOrMarkerReadNode.executeRead(frame);
     }
 }

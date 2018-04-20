@@ -23,33 +23,33 @@ import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public final class ReturnBytecodes {
 
-    protected static abstract class AbstractReturnNode extends AbstractBytecodeNode {
+    protected abstract static class AbstractReturnNode extends AbstractBytecodeNode {
         @Child protected FrameSlotReadNode readContextNode;
         @Child protected FrameArgumentNode readClosureNode;
 
-        protected AbstractReturnNode(CompiledCodeObject code, int index) {
+        protected AbstractReturnNode(final CompiledCodeObject code, final int index) {
             super(code, index);
             readContextNode = FrameSlotReadNode.create(code.thisContextOrMarkerSlot);
             readClosureNode = FrameArgumentNode.create(FrameAccess.CLOSURE_OR_NULL);
         }
 
-        protected boolean hasClosure(VirtualFrame frame) {
+        protected boolean hasClosure(final VirtualFrame frame) {
             return readClosureNode.executeRead(frame) instanceof BlockClosureObject;
         }
 
-        protected boolean isDirty(VirtualFrame frame) {
+        protected boolean isDirty(final VirtualFrame frame) {
             return getContext(frame).isDirty();
         }
 
         @Specialization(guards = {"!hasClosure(frame)", "isVirtualized(frame) || !isDirty(frame)"})
-        protected Object executeLocalReturn(VirtualFrame frame) {
+        protected Object executeLocalReturn(final VirtualFrame frame) {
             throw new FreshReturn(new LocalReturn(getReturnValue(frame)));
         }
 
         @Specialization(guards = {"hasClosure(frame) || !isVirtualized(frame)", "hasClosure(frame) || isDirty(frame)"})
-        protected Object executeNonLocalReturn(VirtualFrame frame) {
-            ContextObject outerContext;
-            BlockClosureObject block = (BlockClosureObject) readClosureNode.executeRead(frame);
+        protected Object executeNonLocalReturn(final VirtualFrame frame) {
+            final ContextObject outerContext;
+            final BlockClosureObject block = (BlockClosureObject) readClosureNode.executeRead(frame);
             if (block != null) {
                 outerContext = block.getHomeContext();
             } else {
@@ -58,25 +58,25 @@ public final class ReturnBytecodes {
             throw new FreshReturn(new NonLocalReturn(getReturnValue(frame), outerContext));
         }
 
-        protected Object getReturnValue(@SuppressWarnings("unused") VirtualFrame frame) {
+        protected Object getReturnValue(@SuppressWarnings("unused") final VirtualFrame frame) {
             throw new SqueakException("Needs to be overriden");
         }
     }
 
-    public static abstract class ReturnConstantNode extends AbstractReturnNode {
+    public abstract static class ReturnConstantNode extends AbstractReturnNode {
         @CompilationFinal private final Object constant;
 
-        public static ReturnConstantNode create(CompiledCodeObject code, int index, Object value) {
+        public static ReturnConstantNode create(final CompiledCodeObject code, final int index, final Object value) {
             return ReturnConstantNodeGen.create(code, index, value);
         }
 
-        protected ReturnConstantNode(CompiledCodeObject code, int index, Object obj) {
+        protected ReturnConstantNode(final CompiledCodeObject code, final int index, final Object obj) {
             super(code, index);
             constant = obj;
         }
 
         @Override
-        protected Object getReturnValue(VirtualFrame frame) {
+        protected Object getReturnValue(final VirtualFrame frame) {
             return constant;
         }
 
@@ -86,20 +86,20 @@ public final class ReturnBytecodes {
         }
     }
 
-    public static abstract class ReturnReceiverNode extends AbstractReturnNode {
+    public abstract static class ReturnReceiverNode extends AbstractReturnNode {
         @Child private ReceiverNode receiverNode;
 
-        public static ReturnReceiverNode create(CompiledCodeObject code, int index) {
+        public static ReturnReceiverNode create(final CompiledCodeObject code, final int index) {
             return ReturnReceiverNodeGen.create(code, index);
         }
 
-        protected ReturnReceiverNode(CompiledCodeObject code, int index) {
+        protected ReturnReceiverNode(final CompiledCodeObject code, final int index) {
             super(code, index);
             receiverNode = ReceiverNode.create(code);
         }
 
         @Override
-        protected Object getReturnValue(VirtualFrame frame) {
+        protected Object getReturnValue(final VirtualFrame frame) {
             return receiverNode.executeRead(frame);
         }
 
@@ -109,18 +109,18 @@ public final class ReturnBytecodes {
         }
     }
 
-    public static abstract class ReturnTopFromBlockNode extends ReturnTopFromMethodNode {
+    public abstract static class ReturnTopFromBlockNode extends ReturnTopFromMethodNode {
 
-        public static ReturnTopFromBlockNode create(CompiledCodeObject code, int index) {
+        public static ReturnTopFromBlockNode create(final CompiledCodeObject code, final int index) {
             return ReturnTopFromBlockNodeGen.create(code, index);
         }
 
-        protected ReturnTopFromBlockNode(CompiledCodeObject code, int index) {
+        protected ReturnTopFromBlockNode(final CompiledCodeObject code, final int index) {
             super(code, index);
         }
 
         @Override
-        protected boolean hasClosure(VirtualFrame frame) {
+        protected boolean hasClosure(final VirtualFrame frame) {
             return false;
         }
 
@@ -130,20 +130,20 @@ public final class ReturnBytecodes {
         }
     }
 
-    public static abstract class ReturnTopFromMethodNode extends AbstractReturnNode {
+    public abstract static class ReturnTopFromMethodNode extends AbstractReturnNode {
         @Child protected StackPopNode popNode;
 
-        public static ReturnTopFromMethodNode create(CompiledCodeObject code, int index) {
+        public static ReturnTopFromMethodNode create(final CompiledCodeObject code, final int index) {
             return ReturnTopFromMethodNodeGen.create(code, index);
         }
 
-        protected ReturnTopFromMethodNode(CompiledCodeObject code, int index) {
+        protected ReturnTopFromMethodNode(final CompiledCodeObject code, final int index) {
             super(code, index);
             popNode = StackPopNode.create(code);
         }
 
         @Override
-        protected Object getReturnValue(VirtualFrame frame) {
+        protected Object getReturnValue(final VirtualFrame frame) {
             return popNode.executeRead(frame);
         }
 

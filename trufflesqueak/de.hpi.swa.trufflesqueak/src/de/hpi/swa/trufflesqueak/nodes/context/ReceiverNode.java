@@ -9,22 +9,22 @@ import de.hpi.swa.trufflesqueak.nodes.SqueakNodeWithCode;
 import de.hpi.swa.trufflesqueak.util.FrameAccess;
 
 public abstract class ReceiverNode extends SqueakNodeWithCode {
-    public static ReceiverNode create(CompiledCodeObject code) {
+    public static ReceiverNode create(final CompiledCodeObject code) {
         return ReceiverNodeGen.create(code);
     }
 
-    protected ReceiverNode(CompiledCodeObject code) {
+    protected ReceiverNode(final CompiledCodeObject code) {
         super(code);
     }
 
     @Specialization(guards = {"isVirtualized(frame)"})
-    protected Object doReceiverVirtualized(VirtualFrame frame) {
+    protected Object doReceiverVirtualized(final VirtualFrame frame) {
         CompilerDirectives.ensureVirtualizedHere(frame);
         return frame.getArguments()[FrameAccess.RECEIVER];
     }
 
     @Specialization(guards = {"!isVirtualized(frame)"})
-    protected Object doReceiver(VirtualFrame frame) {
+    protected Object doReceiver(final VirtualFrame frame) {
         return getContext(frame).getReceiver();
     }
 }

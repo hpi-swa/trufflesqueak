@@ -30,7 +30,7 @@ public abstract class DispatchNode extends Node {
     public abstract Object executeDispatch(VirtualFrame frame, Object method, Object[] receiverAndArguments, Object contextOrMarker);
 
     @Specialization(guards = {"264 <= method.primitiveIndex()", "method.primitiveIndex() <= 520"})
-    protected Object doPrimitiveQuickReturnReceiver(CompiledMethodObject method, Object[] receiverAndArguments, @SuppressWarnings("unused") Object contextOrMarker) {
+    protected Object doPrimitiveQuickReturnReceiver(final CompiledMethodObject method, final Object[] receiverAndArguments, @SuppressWarnings("unused") final Object contextOrMarker) {
         assert receiverAndArguments[0] instanceof BaseSqueakObject;
         return ((BaseSqueakObject) receiverAndArguments[0]).at0(method.primitiveIndex() - 264);
     }
@@ -39,30 +39,30 @@ public abstract class DispatchNode extends Node {
     @Specialization(guards = {"method == cachedMethod", "method.hasPrimitive()", "primitiveNode != null"}, assumptions = {"callTargetStable"}, rewriteOn = {
                     PrimitiveFailed.class,
                     UnsupportedSpecializationException.class})
-    protected Object doPrimitiveEagerly(VirtualFrame frame, CompiledMethodObject method, Object[] receiverAndArguments, Object contextOrMarker,
-                    @Cached("method") CompiledMethodObject cachedMethod,
-                    @Cached("method.getCallTargetStable()") Assumption callTargetStable,
-                    @Cached("forIndex(method, method.primitiveIndex())") AbstractPrimitiveNode primitiveNode) {
+    protected Object doPrimitiveEagerly(final VirtualFrame frame, final CompiledMethodObject method, final Object[] receiverAndArguments, final Object contextOrMarker,
+                    @Cached("method") final CompiledMethodObject cachedMethod,
+                    @Cached("method.getCallTargetStable()") final Assumption callTargetStable,
+                    @Cached("forIndex(method, method.primitiveIndex())") final AbstractPrimitiveNode primitiveNode) {
         return primitiveNode.executeWithArguments(frame, receiverAndArguments);
     }
 
     @Specialization(guards = {"method == cachedMethod"}, assumptions = {"callTargetStable"}, replaces = "doPrimitiveEagerly")
-    protected Object doDirect(CompiledCodeObject method, Object[] receiverAndArguments, Object contextOrMarker,
-                    @Cached("method") CompiledCodeObject cachedMethod,
-                    @Cached("create()") InvokeNode invokeNode,
-                    @SuppressWarnings("unused") @Cached("method.getCallTargetStable()") Assumption callTargetStable) {
+    protected Object doDirect(final CompiledCodeObject method, final Object[] receiverAndArguments, final Object contextOrMarker,
+                    @Cached("method") final CompiledCodeObject cachedMethod,
+                    @Cached("create()") final InvokeNode invokeNode,
+                    @SuppressWarnings("unused") @Cached("method.getCallTargetStable()") final Assumption callTargetStable) {
         return invokeNode.executeInvoke(cachedMethod, FrameAccess.newWith(method, contextOrMarker, null, receiverAndArguments));
     }
 
     @Specialization(replaces = "doDirect")
-    protected Object doIndirect(CompiledCodeObject method, Object[] receiverAndArguments, Object contextOrMarker,
-                    @Cached("create()") InvokeNode invokeNode) {
+    protected Object doIndirect(final CompiledCodeObject method, final Object[] receiverAndArguments, final Object contextOrMarker,
+                    @Cached("create()") final InvokeNode invokeNode) {
         return invokeNode.executeInvoke(method, FrameAccess.newWith(method, contextOrMarker, null, receiverAndArguments));
     }
 
     @SuppressWarnings("unused")
     @Fallback
-    protected Object fail(Object method, Object[] receiverAndArguments, Object contextOrMarker) {
+    protected Object fail(final Object method, final Object[] receiverAndArguments, final Object contextOrMarker) {
         throw new SqueakException("failed to lookup generic selector object on generic class");
     }
 }

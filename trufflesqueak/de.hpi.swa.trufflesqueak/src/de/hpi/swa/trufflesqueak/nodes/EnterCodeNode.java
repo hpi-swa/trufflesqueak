@@ -25,11 +25,11 @@ public abstract class EnterCodeNode extends RootNode {
     @Child private FrameSlotWriteNode stackPointerWriteNode;
     @Child private StackPushNode pushStackNode;
 
-    public static EnterCodeNode create(SqueakLanguage language, CompiledCodeObject code) {
+    public static EnterCodeNode create(final SqueakLanguage language, final CompiledCodeObject code) {
         return EnterCodeNodeGen.create(language, code);
     }
 
-    protected EnterCodeNode(SqueakLanguage language, CompiledCodeObject code) {
+    protected EnterCodeNode(final SqueakLanguage language, final CompiledCodeObject code) {
         super(language, code.getFrameDescriptor());
         this.code = code;
         createContextNode = GetOrCreateContextNode.create(code);
@@ -40,7 +40,7 @@ public abstract class EnterCodeNode extends RootNode {
         pushStackNode = StackPushNode.create(code);
     }
 
-    private void initializeSlots(VirtualFrame frame) {
+    private void initializeSlots(final VirtualFrame frame) {
         contextWriteNode.executeWrite(frame, new FrameMarker());
         instructionPointerWriteNode.executeWrite(frame, 0L);
         stackPointerWriteNode.executeWrite(frame, -1L);
@@ -48,17 +48,17 @@ public abstract class EnterCodeNode extends RootNode {
 
     @ExplodeLoop
     @Specialization(assumptions = {"code.getCanBeVirtualizedAssumption()"})
-    protected Object enterVirtualized(VirtualFrame frame) {
+    protected Object enterVirtualized(final VirtualFrame frame) {
         CompilerDirectives.ensureVirtualized(frame);
         initializeSlots(frame);
-        int numArgsAndCopiedValues = code.getNumArgsAndCopiedValues();
+        final int numArgsAndCopiedValues = code.getNumArgsAndCopiedValues();
         // Push arguments and copied values onto the newContext.
-        Object[] arguments = frame.getArguments();
+        final Object[] arguments = frame.getArguments();
         for (int i = 0; i < numArgsAndCopiedValues; i++) {
             pushStackNode.executeWrite(frame, arguments[FrameAccess.RCVR_AND_ARGS_START + 1 + i]);
         }
         // Initialize temps with nil in newContext.
-        int numTemps = code.getNumTemps();
+        final int numTemps = code.getNumTemps();
         for (int i = 0; i < numTemps - numArgsAndCopiedValues; i++) {
             pushStackNode.executeWrite(frame, code.image.nil);
         }
@@ -68,18 +68,18 @@ public abstract class EnterCodeNode extends RootNode {
 
     @ExplodeLoop
     @Specialization(guards = {"!code.getCanBeVirtualizedAssumption().isValid()"})
-    protected Object enter(VirtualFrame frame) {
+    protected Object enter(final VirtualFrame frame) {
         initializeSlots(frame);
-        ContextObject newContext = createContextNode.executeGet(frame, true);
+        final ContextObject newContext = createContextNode.executeGet(frame, true);
         contextWriteNode.executeWrite(frame, newContext);
         // Push arguments and copied values onto the newContext.
-        Object[] arguments = frame.getArguments();
-        int numArgsAndCopiedValues = code.getNumArgsAndCopiedValues();
+        final Object[] arguments = frame.getArguments();
+        final int numArgsAndCopiedValues = code.getNumArgsAndCopiedValues();
         for (int i = 0; i < numArgsAndCopiedValues; i++) {
             newContext.push(arguments[FrameAccess.RCVR_AND_ARGS_START + 1 + i]);
         }
         // Initialize temps with nil in newContext.
-        int numTemps = code.getNumTemps();
+        final int numTemps = code.getNumTemps();
         for (int i = 0; i < numTemps - numArgsAndCopiedValues; i++) {
             newContext.push(code.image.nil);
         }

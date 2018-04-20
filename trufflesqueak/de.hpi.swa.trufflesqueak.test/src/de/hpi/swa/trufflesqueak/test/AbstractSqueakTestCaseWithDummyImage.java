@@ -7,24 +7,24 @@ import de.hpi.swa.trufflesqueak.util.SqueakImageChunk;
 
 public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSqueakTestCase {
 
-    private static class DummyFormatChunk extends SqueakImageChunk {
+    private static final class DummyFormatChunk extends SqueakImageChunk {
 
-        public DummyFormatChunk(int format) {
+        private DummyFormatChunk(final int format) {
             super(null, null, 0, format, 0, 0, 0);
         }
 
         @Override
         public Object[] getPointers() {
-            Object[] pointers = new Object[6];
+            final Object[] pointers = new Object[6];
             pointers[2] = (long) format; // FORMAT_INDEX
             return pointers;
         }
     }
 
-    private static class DummyPointersChunk extends SqueakImageChunk {
+    private static final class DummyPointersChunk extends SqueakImageChunk {
         private Object[] dummyPointers;
 
-        public DummyPointersChunk(Object[] pointers) {
+        private DummyPointersChunk(final Object[] pointers) {
             super(null, null, 0, 0, 0, 0, 0);
             this.dummyPointers = pointers;
         }
@@ -56,17 +56,17 @@ public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSquea
         image.bitOr.setBytes("bitOr".getBytes());
         image.at.setBytes("at".getBytes());
         image.atput.setBytes("atput".getBytes());
-        image.size_.setBytes("size".getBytes());
+        image.sqSize.setBytes("size".getBytes());
         image.next.setBytes("next".getBytes());
         image.nextPut.setBytes("nextPut".getBytes());
         image.atEnd.setBytes("atEnd".getBytes());
         image.equivalent.setBytes("equivalent".getBytes());
         image.klass.setBytes("klass".getBytes());
         image.blockCopy.setBytes("blockCopy".getBytes());
-        image.value_.setBytes("value".getBytes());
+        image.sqValue.setBytes("value".getBytes());
         image.valueWithArg.setBytes("valueWithArg".getBytes());
-        image.do_.setBytes("do".getBytes());
-        image.new_.setBytes("new".getBytes());
+        image.sqDo.setBytes("do".getBytes());
+        image.sqNew.setBytes("new".getBytes());
         image.newWithArg.setBytes("newWithArg".getBytes());
         image.x.setBytes("x".getBytes());
         image.y.setBytes("y".getBytes());

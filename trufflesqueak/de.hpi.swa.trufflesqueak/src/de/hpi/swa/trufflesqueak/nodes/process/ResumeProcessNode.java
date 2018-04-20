@@ -12,21 +12,21 @@ public class ResumeProcessNode extends AbstractNodeWithImage {
     @Child private PutToSleepNode putToSleepNode;
     @Child private TransferToNode transferToNode;
 
-    public static ResumeProcessNode create(SqueakImageContext image) {
+    public static ResumeProcessNode create(final SqueakImageContext image) {
         return new ResumeProcessNode(image);
     }
 
-    protected ResumeProcessNode(SqueakImageContext image) {
+    protected ResumeProcessNode(final SqueakImageContext image) {
         super(image);
         getActiveProcessNode = GetActiveProcessNode.create(image);
         putToSleepNode = PutToSleepNode.create(image);
         transferToNode = TransferToNode.create(image);
     }
 
-    public void executeResume(VirtualFrame frame, BaseSqueakObject newProcess) {
-        BaseSqueakObject activeProcess = getActiveProcessNode.executeGet();
-        long activePriority = (long) activeProcess.at0(PROCESS.PRIORITY);
-        long newPriority = (long) newProcess.at0(PROCESS.PRIORITY);
+    public void executeResume(final VirtualFrame frame, final BaseSqueakObject newProcess) {
+        final BaseSqueakObject activeProcess = getActiveProcessNode.executeGet();
+        final long activePriority = (long) activeProcess.at0(PROCESS.PRIORITY);
+        final long newPriority = (long) newProcess.at0(PROCESS.PRIORITY);
         if (newPriority > activePriority) {
             putToSleepNode.executePutToSleep(activeProcess);
             transferToNode.executeTransferTo(frame, activeProcess, newProcess);

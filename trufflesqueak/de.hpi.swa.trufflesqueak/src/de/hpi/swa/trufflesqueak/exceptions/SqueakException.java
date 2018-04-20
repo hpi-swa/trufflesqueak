@@ -6,7 +6,7 @@ public class SqueakException extends ControlFlowException {
     private static final long serialVersionUID = 1L;
     private final String message;
 
-    public SqueakException(String message) {
+    public SqueakException(final String message) {
         this.message = message;
     }
 

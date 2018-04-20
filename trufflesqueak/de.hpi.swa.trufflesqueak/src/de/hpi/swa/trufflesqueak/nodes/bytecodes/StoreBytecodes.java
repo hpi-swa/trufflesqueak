@@ -16,10 +16,10 @@ import de.hpi.swa.trufflesqueak.nodes.context.stack.StackTopNode;
 
 public final class StoreBytecodes {
 
-    private static abstract class AbstractStoreIntoAssociationNode extends AbstractStoreIntoNode {
+    private abstract static class AbstractStoreIntoAssociationNode extends AbstractStoreIntoNode {
         protected final long variableIndex;
 
-        private AbstractStoreIntoAssociationNode(CompiledCodeObject code, int index, int numBytecodes, long variableIndex) {
+        private AbstractStoreIntoAssociationNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long variableIndex) {
             super(code, index, numBytecodes);
             this.variableIndex = variableIndex;
             storeNode = ObjectAtPutNode.create(ASSOCIATION.VALUE, new MethodLiteralNode(code, variableIndex), getValueNode());
@@ -31,15 +31,15 @@ public final class StoreBytecodes {
         }
     }
 
-    private static abstract class AbstractStoreIntoNode extends AbstractBytecodeNode {
+    private abstract static class AbstractStoreIntoNode extends AbstractBytecodeNode {
         @Child protected ObjectAtPutNode storeNode;
 
-        private AbstractStoreIntoNode(CompiledCodeObject code, int index, int numBytecodes) {
+        private AbstractStoreIntoNode(final CompiledCodeObject code, final int index, final int numBytecodes) {
             super(code, index, numBytecodes);
         }
 
         @Override
-        public void executeVoid(VirtualFrame frame) {
+        public void executeVoid(final VirtualFrame frame) {
             storeNode.executeWrite(frame);
         }
 
@@ -48,10 +48,10 @@ public final class StoreBytecodes {
         protected abstract SqueakNode getValueNode();
     }
 
-    private static abstract class AbstractStoreIntoReceiverVariableNode extends AbstractStoreIntoNode {
+    private abstract static class AbstractStoreIntoReceiverVariableNode extends AbstractStoreIntoNode {
         protected final long receiverIndex;
 
-        private AbstractStoreIntoReceiverVariableNode(CompiledCodeObject code, int index, int numBytecodes, long receiverIndex) {
+        private AbstractStoreIntoReceiverVariableNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long receiverIndex) {
             super(code, index, numBytecodes);
             this.receiverIndex = receiverIndex;
             storeNode = ObjectAtPutNode.create(receiverIndex, ReceiverNode.create(code), getValueNode());
@@ -63,11 +63,11 @@ public final class StoreBytecodes {
         }
     }
 
-    private static abstract class AbstractStoreIntoRemoteTempNode extends AbstractStoreIntoNode {
+    private abstract static class AbstractStoreIntoRemoteTempNode extends AbstractStoreIntoNode {
         @CompilationFinal private final long indexInArray;
         @CompilationFinal private final long indexOfArray;
 
-        private AbstractStoreIntoRemoteTempNode(CompiledCodeObject code, int index, int numBytecodes, long indexInArray, long indexOfArray) {
+        private AbstractStoreIntoRemoteTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long indexInArray, final long indexOfArray) {
             super(code, index, numBytecodes);
             this.indexInArray = indexInArray;
             this.indexOfArray = indexOfArray;
@@ -80,11 +80,11 @@ public final class StoreBytecodes {
         }
     }
 
-    private static abstract class AbstractStoreIntoTempNode extends AbstractBytecodeNode {
+    private abstract static class AbstractStoreIntoTempNode extends AbstractBytecodeNode {
         @Child TemporaryWriteNode storeNode;
         protected final long tempIndex;
 
-        private AbstractStoreIntoTempNode(CompiledCodeObject code, int index, int numBytecodes, long tempIndex) {
+        private AbstractStoreIntoTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long tempIndex) {
             super(code, index, numBytecodes);
             this.tempIndex = tempIndex;
             this.storeNode = TemporaryWriteNode.create(code, tempIndex);
@@ -101,7 +101,7 @@ public final class StoreBytecodes {
     public static class PopIntoAssociationNode extends AbstractStoreIntoAssociationNode {
         @Child private StackPopNode popNode;
 
-        public PopIntoAssociationNode(CompiledCodeObject code, int index, int numBytecodes, long variableIndex) {
+        public PopIntoAssociationNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long variableIndex) {
             super(code, index, numBytecodes, variableIndex);
         }
 
@@ -118,7 +118,7 @@ public final class StoreBytecodes {
 
     public static class PopIntoReceiverVariableNode extends AbstractStoreIntoReceiverVariableNode {
 
-        public PopIntoReceiverVariableNode(CompiledCodeObject code, int index, int numBytecodes, long receiverIndex) {
+        public PopIntoReceiverVariableNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long receiverIndex) {
             super(code, index, numBytecodes, receiverIndex);
         }
 
@@ -135,7 +135,7 @@ public final class StoreBytecodes {
 
     public static class PopIntoRemoteTempNode extends AbstractStoreIntoRemoteTempNode {
 
-        public PopIntoRemoteTempNode(CompiledCodeObject code, int index, int numBytecodes, long indexInArray, long indexOfArray) {
+        public PopIntoRemoteTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long indexInArray, final long indexOfArray) {
             super(code, index, numBytecodes, indexInArray, indexOfArray);
         }
 
@@ -153,13 +153,13 @@ public final class StoreBytecodes {
     public static class PopIntoTemporaryLocationNode extends AbstractStoreIntoTempNode {
         @Child private StackPopNode popNode;
 
-        public PopIntoTemporaryLocationNode(CompiledCodeObject code, int index, int numBytecodes, long tempIndex) {
+        public PopIntoTemporaryLocationNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long tempIndex) {
             super(code, index, numBytecodes, tempIndex);
             popNode = StackPopNode.create(code);
         }
 
         @Override
-        public void executeVoid(VirtualFrame frame) {
+        public void executeVoid(final VirtualFrame frame) {
             storeNode.executeWrite(frame, popNode.executeRead(frame));
         }
 
@@ -172,7 +172,7 @@ public final class StoreBytecodes {
     public static class StoreIntoAssociationNode extends AbstractStoreIntoAssociationNode {
         @Child private StackTopNode topNode;
 
-        public StoreIntoAssociationNode(CompiledCodeObject code, int index, int numBytecodes, long variableIndex) {
+        public StoreIntoAssociationNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long variableIndex) {
             super(code, index, numBytecodes, variableIndex);
         }
 
@@ -190,7 +190,7 @@ public final class StoreBytecodes {
     public static class StoreIntoReceiverVariableNode extends AbstractStoreIntoReceiverVariableNode {
         @Child private StackTopNode topNode;
 
-        public StoreIntoReceiverVariableNode(CompiledCodeObject code, int index, int numBytecodes, long receiverIndex) {
+        public StoreIntoReceiverVariableNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long receiverIndex) {
             super(code, index, numBytecodes, receiverIndex);
         }
 
@@ -207,7 +207,7 @@ public final class StoreBytecodes {
 
     public static class StoreIntoRemoteTempNode extends AbstractStoreIntoRemoteTempNode {
 
-        public StoreIntoRemoteTempNode(CompiledCodeObject code, int index, int numBytecodes, long indexInArray, long indexOfArray) {
+        public StoreIntoRemoteTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long indexInArray, final long indexOfArray) {
             super(code, index, numBytecodes, indexInArray, indexOfArray);
         }
 
@@ -225,13 +225,13 @@ public final class StoreBytecodes {
     public static class StoreIntoTempNode extends AbstractStoreIntoTempNode {
         @Child private StackTopNode topNode;
 
-        public StoreIntoTempNode(CompiledCodeObject code, int index, int numBytecodes, long tempIndex) {
+        public StoreIntoTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long tempIndex) {
             super(code, index, numBytecodes, tempIndex);
             topNode = StackTopNode.create(code);
         }
 
         @Override
-        public void executeVoid(VirtualFrame frame) {
+        public void executeVoid(final VirtualFrame frame) {
             storeNode.executeWrite(frame, topNode.executeRead(frame));
         }
 

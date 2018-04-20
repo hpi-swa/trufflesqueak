@@ -9,19 +9,19 @@ import de.hpi.swa.trufflesqueak.nodes.AbstractNodeWithImage;
 
 public class RemoveProcessFromListNode extends AbstractNodeWithImage {
 
-    public static RemoveProcessFromListNode create(SqueakImageContext image) {
+    public static RemoveProcessFromListNode create(final SqueakImageContext image) {
         return new RemoveProcessFromListNode(image);
     }
 
-    protected RemoveProcessFromListNode(SqueakImageContext image) {
+    protected RemoveProcessFromListNode(final SqueakImageContext image) {
         super(image);
     }
 
-    public void executeRemove(BaseSqueakObject process, BaseSqueakObject list) {
-        BaseSqueakObject first = (BaseSqueakObject) list.at0(LINKED_LIST.FIRST_LINK);
-        BaseSqueakObject last = (BaseSqueakObject) list.at0(LINKED_LIST.LAST_LINK);
+    public void executeRemove(final BaseSqueakObject process, final BaseSqueakObject list) {
+        final BaseSqueakObject first = (BaseSqueakObject) list.at0(LINKED_LIST.FIRST_LINK);
+        final BaseSqueakObject last = (BaseSqueakObject) list.at0(LINKED_LIST.LAST_LINK);
         if (process.equals(first)) {
-            Object next = process.at0(LINK.NEXT_LINK);
+            final Object next = process.at0(LINK.NEXT_LINK);
             list.atput0(LINKED_LIST.FIRST_LINK, next);
             if (process.equals(last)) {
                 list.atput0(LINKED_LIST.LAST_LINK, image.nil);

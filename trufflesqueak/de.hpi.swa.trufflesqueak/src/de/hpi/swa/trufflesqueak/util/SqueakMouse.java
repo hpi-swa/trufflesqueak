@@ -16,11 +16,11 @@ public class SqueakMouse extends MouseInputAdapter {
     private Point position = new Point(0, 0);
     private int buttons = 0;
 
-    private final static int RED = 4;
-    private final static int YELLOW = 2;
-    private final static int BLUE = 1;
+    private static final int RED = 4;
+    private static final int YELLOW = 2;
+    private static final int BLUE = 1;
 
-    public SqueakMouse(JavaDisplay display) {
+    public SqueakMouse(final JavaDisplay display) {
         this.display = display;
     }
 
@@ -33,40 +33,42 @@ public class SqueakMouse extends MouseInputAdapter {
     }
 
     @Override
-    public void mouseMoved(MouseEvent e) {
+    public void mouseMoved(final MouseEvent e) {
         position = e.getPoint();
         addEvent(e);
     }
 
     @Override
-    public void mouseDragged(MouseEvent e) {
+    public void mouseDragged(final MouseEvent e) {
         position = e.getPoint();
         addEvent(e);
     }
 
     @Override
-    public void mousePressed(MouseEvent e) {
+    public void mousePressed(final MouseEvent e) {
         buttons |= mapButton(e);
         addEvent(e);
     }
 
     @Override
-    public void mouseReleased(MouseEvent e) {
+    public void mouseReleased(final MouseEvent e) {
         buttons &= ~mapButton(e);
         addEvent(e);
     }
 
-    private void addEvent(MouseEvent e) {
+    private void addEvent(final MouseEvent e) {
         display.addEvent(new long[]{EVENT_TYPE.MOUSE, display.getEventTime(), e.getX(), e.getY(), buttons, display.keyboard.modifierKeys(), 0, 0});
     }
 
-    private static int mapButton(MouseEvent e) {
+    private static int mapButton(final MouseEvent e) {
         switch (e.getButton()) {
             case MouseEvent.BUTTON1:
-                if (e.isControlDown())
+                if (e.isControlDown()) {
                     return YELLOW;
-                if (e.isAltDown())
+                }
+                if (e.isAltDown()) {
                     return BLUE;
+                }
                 return RED;
             case MouseEvent.BUTTON2:
                 return BLUE;    // middle (frame menu)

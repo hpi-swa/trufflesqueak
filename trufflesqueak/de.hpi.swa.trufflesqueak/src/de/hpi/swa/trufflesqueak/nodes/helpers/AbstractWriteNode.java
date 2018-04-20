@@ -6,7 +6,7 @@ import de.hpi.swa.trufflesqueak.model.CompiledCodeObject;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNodeWithCode;
 
 public abstract class AbstractWriteNode extends AbstractNodeWithCode {
-    public AbstractWriteNode(CompiledCodeObject code) {
+    public AbstractWriteNode(final CompiledCodeObject code) {
         super(code);
     }
 

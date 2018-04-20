@@ -6,15 +6,15 @@ import de.hpi.swa.trufflesqueak.model.ObjectLayouts.LINKED_LIST;
 import de.hpi.swa.trufflesqueak.nodes.AbstractNodeWithImage;
 
 public class IsEmptyListNode extends AbstractNodeWithImage {
-    public static IsEmptyListNode create(SqueakImageContext image) {
+    public static IsEmptyListNode create(final SqueakImageContext image) {
         return new IsEmptyListNode(image);
     }
 
-    protected IsEmptyListNode(SqueakImageContext image) {
+    protected IsEmptyListNode(final SqueakImageContext image) {
         super(image);
     }
 
-    public boolean executeIsEmpty(BaseSqueakObject list) {
+    public boolean executeIsEmpty(final BaseSqueakObject list) {
         return list.at0(LINKED_LIST.FIRST_LINK) == image.nil;
     }
 }
