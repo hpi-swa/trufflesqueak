@@ -1,7 +1,5 @@
 /bin/
 *src_gen*
-/trufflesqueak/de.hpi.swa.trufflesqueak/nbproject/private/
-/trufflesqueak/de.hpi.swa.trufflesqueak.test/nbproject/private/
 .idea
 mxbuild
 *.pyc
@@ -17,7 +15,7 @@ mxbuild
 workingsets.xml
 env
 *.cfg
-trufflesqueak/de.hpi.swa.trufflesqueak/dumps
+*dumps
 *nbproject*
 build.xml
 coverage

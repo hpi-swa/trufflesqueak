@@ -1,5 +1,8 @@
-# TruffleSqueak [![Build Status][travis_badge]][travis]
-A Squeak/Smalltalk VM written in Truffle.
+# GraalSqueak [![Build Status][travis_badge]][travis]
+A [Squeak/Smalltalk][squeak] implementation for the [GraalVM][graalvm].
 
-[travis_badge]: https://travis-ci.com/hpi-swa-lab/trufflesqueak.svg?token=7fqzGEv22MQpvpU7RhK5&branch=master
-[travis]: https://travis-ci.com/hpi-swa-lab/trufflesqueak
+
+[graalvm]: http://www.graalvm.org/
+[squeak]: https://squeak.org
+[travis]: https://travis-ci.com/hpi-swa-lab/graalsqueak
+[travis_badge]: https://travis-ci.com/hpi-swa-lab/graalsqueak.svg?token=7fqzGEv22MQpvpU7RhK5&branch=master
