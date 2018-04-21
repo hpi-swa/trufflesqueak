@@ -394,8 +394,8 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final BaseSqueakObject doDefer(final BaseSqueakObject receiver, final boolean flag) {
-            code.image.display.setDeferUpdates(flag);
+        protected static final BaseSqueakObject doDefer(final BaseSqueakObject receiver, @SuppressWarnings("unused") final boolean flag) {
+            // TODO: uncomment: code.image.display.setDeferUpdates(flag);
             return receiver;
         }
     }

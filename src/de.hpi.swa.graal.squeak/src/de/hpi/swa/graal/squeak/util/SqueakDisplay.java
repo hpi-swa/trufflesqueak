@@ -150,7 +150,7 @@ public final class SqueakDisplay {
 
             @Override
             public void paintComponent(final Graphics g) {
-                if (bitmap == null) {
+                if (deferUpdates || bitmap == null) {
                     return;
                 }
                 //@formatter:off
