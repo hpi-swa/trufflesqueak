@@ -150,7 +150,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
                     "FileStreamTest", TEST_TYPE.PASSING,
                     "FileUrlTest", TEST_TYPE.PASSING,
                     "FlapTabTests", TEST_TYPE.FLAKY,
-                    "FloatArrayTest", TEST_TYPE.PASSING,
+                    "FloatArrayTest", TEST_TYPE.FLAKY,
                     "FloatCollectionTest", TEST_TYPE.PASSING,
                     "FloatTest", TEST_TYPE.FAILING,
                     "FontTest", TEST_TYPE.FAILING,

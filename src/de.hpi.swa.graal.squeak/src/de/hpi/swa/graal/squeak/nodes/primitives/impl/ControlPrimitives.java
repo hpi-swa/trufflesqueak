@@ -599,9 +599,11 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             BaseSqueakObject current = getContext(frame);
             while (!current.isNil()) {
                 final ContextObject contextObject = (ContextObject) current;
-                final int sp = (int) contextObject.getStackPointer();
-                for (int i = sp; i < contextObject.getMethod().frameSize(); i++) {
-                    contextObject.atput0(i, code.image.nil);
+                if (contextObject.hasMethod()) {
+                    final int sp = (int) contextObject.getStackPointer();
+                    for (int i = sp; i < contextObject.getMethod().frameSize(); i++) {
+                        contextObject.atput0(i, code.image.nil);
+                    }
                 }
                 current = contextObject.getSender();
             }

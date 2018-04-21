@@ -93,7 +93,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
         return source;
     }
 
-    public int frameSize() {
+    public final int frameSize() {
         return needsLargeFrame ? CONTEXT.LARGE_FRAMESIZE : CONTEXT.SMALL_FRAMESIZE;
     }
 
