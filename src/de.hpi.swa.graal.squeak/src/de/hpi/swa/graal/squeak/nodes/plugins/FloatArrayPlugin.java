@@ -73,6 +73,11 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
         protected double doFloat(final NativeObject receiver, final long index, final FloatObject value) {
             return doDouble(receiver, index, value.getValue());
         }
+
+        @Specialization
+        protected double doFloat(final NativeObject receiver, final long index, final long value) {
+            return doDouble(receiver, index, value);
+        }
     }
 
     @GenerateNodeFactory
