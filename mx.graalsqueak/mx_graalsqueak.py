@@ -123,7 +123,7 @@ def _graalsqueak_gate_runner(args, tasks):
     if jacocoArgs:
         unittest_args.extend(jacocoArgs)
     unittest_args.extend(['--suite', 'graalsqueak'])
-    with mx_gate.Task("TestGraalSqueak", tasks, tags=['graalsqueak']) as t:
+    with mx_gate.Task("TestGraalSqueak", tasks, tags=['test']) as t:
         if t:
             mx_unittest.unittest(unittest_args)
 
