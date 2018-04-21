@@ -162,22 +162,22 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         // TODO: properly support arbitrary-sized 32 bit ARGB forms
-// private static int[] mergeCursorWithMask(int[] cursorWords, int[] maskWords) {
-// int[] words = new int[16];
-// int cursorWord, maskWord, bit, merged;
-// for (int y = 0; y < SqueakDisplay.CURSOR_HEIGHT; y++) {
-// cursorWord = cursorWords[y];
-// maskWord = maskWords[y];
-// bit = 0x80000000;
-// merged = 0;
-// for (int x = 0; x < SqueakDisplay.CURSOR_WIDTH; x++) {
-// merged = merged | ((maskWord & bit) >> x) | ((cursorWord & bit) >> (x + 1));
-// bit = bit >>> 1;
-// }
-// words[y] = merged;
-// }
-// return words;
-// }
+        // private static int[] mergeCursorWithMask(int[] cursorWords, int[] maskWords) {
+        // int[] words = new int[16];
+        // int cursorWord, maskWord, bit, merged;
+        // for (int y = 0; y < SqueakDisplay.CURSOR_HEIGHT; y++) {
+        // cursorWord = cursorWords[y];
+        // maskWord = maskWords[y];
+        // bit = 0x80000000;
+        // merged = 0;
+        // for (int x = 0; x < SqueakDisplay.CURSOR_WIDTH; x++) {
+        // merged = merged | ((maskWord & bit) >> x) | ((cursorWord & bit) >> (x + 1));
+        // bit = bit >>> 1;
+        // }
+        // words[y] = merged;
+        // }
+        // return words;
+        // }
     }
 
     @GenerateNodeFactory

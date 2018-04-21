@@ -234,11 +234,11 @@ public final class ContextObject extends AbstractPointersObject {
 
     public Object atStackAndClear(final long argumentIndex) {
         final Object value = atStack(argumentIndex);
-// CompiledCodeObject code = getMethod();
-// if (argumentIndex > 1 + code.getNumArgsAndCopiedValues() + code.getNumTemps()) {
-// only nil out stack values, not receiver, args, or temps
-// atStackPut(argumentIndex, image.nil);
-// }
+        // CompiledCodeObject code = getMethod();
+        // if (argumentIndex > 1 + code.getNumArgsAndCopiedValues() + code.getNumTemps()) {
+        // only nil out stack values, not receiver, args, or temps
+        // atStackPut(argumentIndex, image.nil);
+        // }
         return value;
     }
 

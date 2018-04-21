@@ -62,11 +62,11 @@ public final class MiscellaneousBytecodes {
             try {
                 throw new FreshReturn(new LocalReturn(primitiveNode.executePrimitive(frame)));
             } catch (PrimitiveFailed e) { // TODO: support `error: ec`
-// if (e.getReasonCode() != ERROR_TABLE.GENERIC_ERROR) { // handle `error: ec`
-// ContextObject thisContext = getOrCreateContextNode.executeGet(frame, true);
-// Object error = code.image.lookupError(e.getReasonCode());
-// thisContext.atTempPut(0, error);
-// }
+                // if (e.getReasonCode() != ERROR_TABLE.GENERIC_ERROR) { // handle `error: ec`
+                // ContextObject thisContext = getOrCreateContextNode.executeGet(frame, true);
+                // Object error = code.image.lookupError(e.getReasonCode());
+                // thisContext.atTempPut(0, error);
+                // }
             } catch (UnsupportedSpecializationException e) {
                 if (DEBUG_UNSUPPORTED_SPECIALIZATION_EXCEPTIONS) {
                     debugUnsupportedSpecializationException(e);

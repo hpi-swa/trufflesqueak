@@ -103,10 +103,10 @@ public class NativeBytesStorage extends AbstractNativeObjectStorage {
         return 1;
     }
 
-// @Override
-// public void setSqClass(ClassObject newCls) {
-// if(newCls == image.largePositiveIntegerClass || this.getSqClass() ==
-// image.largeNegativeIntegerClass)
-// super.setSqClass(newCls);
-// }
+    // @Override
+    // public void setSqClass(ClassObject newCls) {
+    // if(newCls == image.largePositiveIntegerClass || this.getSqClass() ==
+    // image.largeNegativeIntegerClass)
+    // super.setSqClass(newCls);
+    // }
 }
