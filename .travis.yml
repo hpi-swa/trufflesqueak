@@ -52,6 +52,11 @@ install:
         fi
       fi
   - |
+      if [[ ${GATE} == *test* ]]
+      then
+        scripts/download-test-image.sh
+      fi
+  - |
       if [ "${JDK}" == "jdk8" ]
       then
         JDK_TAR=${TRAVIS_BUILD_DIR}/../jdk.tar.gz
