@@ -10,7 +10,7 @@ import de.hpi.swa.graal.squeak.SqueakImageContext;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.util.SqueakImageChunk;
 
-public class FloatObject extends NativeObject {
+public final class FloatObject extends NativeObject {
     @CompilationFinal public static final int PRECISION = 53;
     @CompilationFinal public static final int EMIN = -1022;
     @CompilationFinal public static final int EMAX = 1023;
@@ -80,7 +80,7 @@ public class FloatObject extends NativeObject {
     }
 
     @Override
-    public final int size() {
+    public int size() {
         return 2;
     }
 

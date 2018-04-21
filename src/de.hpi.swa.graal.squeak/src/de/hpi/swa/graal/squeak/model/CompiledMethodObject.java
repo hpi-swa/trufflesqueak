@@ -2,7 +2,7 @@ package de.hpi.swa.graal.squeak.model;
 
 import de.hpi.swa.graal.squeak.SqueakImageContext;
 
-public class CompiledMethodObject extends CompiledCodeObject {
+public final class CompiledMethodObject extends CompiledCodeObject {
     public CompiledMethodObject(final SqueakImageContext img) {
         super(img);
     }
@@ -95,7 +95,7 @@ public class CompiledMethodObject extends CompiledCodeObject {
     }
 
     @Override
-    public final int getOffset() {
+    public int getOffset() {
         return 0; // methods always start at the beginning
     }
 

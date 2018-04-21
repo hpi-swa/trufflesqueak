@@ -19,7 +19,7 @@ import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ListObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 
-public class ObjectGraph {
+public final class ObjectGraph {
     @CompilationFinal private final HashSet<BaseSqueakObject> classesWithNoInstances;
     @CompilationFinal private final ListObject specialObjectsArray;
 

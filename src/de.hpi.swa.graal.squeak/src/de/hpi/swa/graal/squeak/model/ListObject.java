@@ -2,7 +2,7 @@ package de.hpi.swa.graal.squeak.model;
 
 import de.hpi.swa.graal.squeak.SqueakImageContext;
 
-public class ListObject extends AbstractPointersObject {
+public final class ListObject extends AbstractPointersObject {
     public ListObject(final SqueakImageContext img) {
         super(img);
     }

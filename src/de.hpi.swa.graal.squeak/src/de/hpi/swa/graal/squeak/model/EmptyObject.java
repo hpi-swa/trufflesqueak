@@ -3,7 +3,7 @@ package de.hpi.swa.graal.squeak.model;
 import de.hpi.swa.graal.squeak.SqueakImageContext;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions;
 
-public class EmptyObject extends SqueakObject {
+public final class EmptyObject extends SqueakObject {
     public EmptyObject(final SqueakImageContext img) {
         super(img);
     }
@@ -21,12 +21,12 @@ public class EmptyObject extends SqueakObject {
     }
 
     @Override
-    public final int size() {
+    public int size() {
         return 0;
     }
 
     @Override
-    public final int instsize() {
+    public int instsize() {
         return 0;
     }
 

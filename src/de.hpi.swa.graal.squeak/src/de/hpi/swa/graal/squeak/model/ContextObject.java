@@ -12,7 +12,7 @@ import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.FrameMarker;
 
-public class ContextObject extends AbstractPointersObject {
+public final class ContextObject extends AbstractPointersObject {
     @CompilationFinal private FrameMarker frameMarker;
     @CompilationFinal private boolean isDirty;
 
@@ -239,7 +239,7 @@ public class ContextObject extends AbstractPointersObject {
     }
 
     @Override
-    public final void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
+    public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         for (int i = 0; i < from.length; i++) {
             final Object fromPointer = from[i];

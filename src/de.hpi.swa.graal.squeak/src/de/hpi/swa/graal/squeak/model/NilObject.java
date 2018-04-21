@@ -3,7 +3,7 @@ package de.hpi.swa.graal.squeak.model;
 import de.hpi.swa.graal.squeak.SqueakImageContext;
 import de.hpi.swa.graal.squeak.util.SqueakImageChunk;
 
-public class NilObject extends BaseSqueakObject {
+public final class NilObject extends BaseSqueakObject {
 
     public NilObject(final SqueakImageContext img) {
         super(img);
@@ -19,7 +19,7 @@ public class NilObject extends BaseSqueakObject {
     }
 
     @Override
-    public final ClassObject getSqClass() {
+    public ClassObject getSqClass() {
         return image.nilClass;
     }
 
@@ -33,12 +33,12 @@ public class NilObject extends BaseSqueakObject {
     }
 
     @Override
-    public final int size() {
+    public int size() {
         return 0;
     }
 
     @Override
-    public final int instsize() {
+    public int instsize() {
         return 0;
     }
 
@@ -53,7 +53,7 @@ public class NilObject extends BaseSqueakObject {
     }
 
     @Override
-    public final boolean isNil() {
+    public boolean isNil() {
         return true;
     }
 }

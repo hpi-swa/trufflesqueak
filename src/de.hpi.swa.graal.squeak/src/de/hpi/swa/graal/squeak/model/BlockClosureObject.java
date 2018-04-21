@@ -20,7 +20,7 @@ import de.hpi.swa.graal.squeak.nodes.EnterCodeNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.SqueakImageChunk;
 
-public class BlockClosureObject extends BaseSqueakObject {
+public final class BlockClosureObject extends BaseSqueakObject {
     @CompilationFinal private Object receiver;
     @CompilationFinal(dimensions = 1) private Object[] copied;
     @CompilationFinal private ContextObject outerContext;
@@ -149,17 +149,17 @@ public class BlockClosureObject extends BaseSqueakObject {
     }
 
     @Override
-    public final ClassObject getSqClass() {
+    public ClassObject getSqClass() {
         return image.blockClosureClass;
     }
 
     @Override
-    public final int size() {
+    public int size() {
         return copied.length + instsize();
     }
 
     @Override
-    public final int instsize() {
+    public int instsize() {
         return BLOCK_CLOSURE.FIRST_COPIED_VALUE;
     }
 

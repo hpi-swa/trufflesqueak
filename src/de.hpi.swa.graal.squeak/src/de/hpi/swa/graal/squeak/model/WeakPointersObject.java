@@ -7,7 +7,7 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.util.SqueakImageChunk;
 
 // TODO: Validate that weak objects are working correctly
-public final class WeakPointersObject extends ListObject {
+public final class WeakPointersObject extends AbstractPointersObject {
 
     public WeakPointersObject(final SqueakImageContext img) {
         super(img);
