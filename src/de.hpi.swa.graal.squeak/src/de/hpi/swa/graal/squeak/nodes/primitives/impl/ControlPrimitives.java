@@ -478,7 +478,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             throw new PrimitiveWithoutResultException();
         }
 
-        @Specialization
+        @Specialization(guards = "!isNativeObject(receiver)")
         protected Object doSqueakObject(final BaseSqueakObject receiver, final BaseSqueakObject argument) {
             receiver.setSqClass(argument.getSqClass());
             throw new PrimitiveWithoutResultException();
@@ -812,7 +812,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected BaseSqueakObject doForceUpdate(final BaseSqueakObject receiver) {
+        protected final BaseSqueakObject doForceUpdate(final BaseSqueakObject receiver) {
             code.image.display.forceUpdate();
             return receiver;
         }
@@ -826,7 +826,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected BaseSqueakObject doFullScreen(final BaseSqueakObject receiver, final boolean enable) {
+        protected final BaseSqueakObject doFullScreen(final BaseSqueakObject receiver, final boolean enable) {
             code.image.display.setFullscreen(enable);
             return receiver;
         }

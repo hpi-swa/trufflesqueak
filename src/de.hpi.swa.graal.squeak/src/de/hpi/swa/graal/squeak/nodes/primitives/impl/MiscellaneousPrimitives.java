@@ -171,7 +171,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected BaseSqueakObject get(final BaseSqueakObject receiver, @SuppressWarnings("unused") final long numBytes) {
+        protected static final BaseSqueakObject doSet(final BaseSqueakObject receiver, @SuppressWarnings("unused") final long numBytes) {
             // TODO: do something with numBytes
             return receiver;
         }
@@ -186,7 +186,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected BaseSqueakObject get(final BaseSqueakObject receiver, final BaseSqueakObject semaphore) {
+        protected final BaseSqueakObject get(final BaseSqueakObject receiver, final BaseSqueakObject semaphore) {
             code.image.registerSemaphore(semaphore, SPECIAL_OBJECT_INDEX.TheInterruptSemaphore);
             return receiver;
         }
@@ -201,7 +201,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected long doClock(@SuppressWarnings("unused") final ClassObject receiver) {
+        protected final long doClock(@SuppressWarnings("unused") final ClassObject receiver) {
             return code.image.wrap(System.currentTimeMillis() - code.image.startUpMillis);
         }
     }
@@ -215,7 +215,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected BaseSqueakObject doSignal(final BaseSqueakObject receiver, final BaseSqueakObject semaphore, final long msTime) {
+        protected final BaseSqueakObject doSignal(final BaseSqueakObject receiver, final BaseSqueakObject semaphore, final long msTime) {
             signalAtMilliseconds(semaphore, msTime);
             return receiver;
         }

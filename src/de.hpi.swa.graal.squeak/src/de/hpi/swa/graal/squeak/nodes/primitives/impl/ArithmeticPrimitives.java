@@ -291,32 +291,10 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return a.getValue() == b.getValue();
         }
 
-        /*
-         * Specializations for quick nil checks.
-         */
-
         @SuppressWarnings("unused")
-        @Specialization
-        protected static final boolean doNil(final long a, final NilObject b) {
-            return false;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization
-        protected static final boolean doNil(final LargeIntegerObject a, final NilObject b) {
-            return false;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization
-        protected static final boolean doNil(final double a, final NilObject b) {
-            return false;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization
-        protected static final boolean doNil(final FloatObject a, final NilObject b) {
-            return false;
+        @Specialization // Specialization for quick nil checks.
+        protected final boolean doNil(final Object a, final NilObject b) {
+            return code.image.sqFalse;
         }
     }
 
@@ -351,32 +329,10 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return a.getValue() != b.getValue();
         }
 
-        /*
-         * Specializations for quick nil checks.
-         */
-
         @SuppressWarnings("unused")
-        @Specialization
-        protected static final boolean doNil(final long a, final NilObject b) {
-            return true;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization
-        protected static final boolean doNil(final LargeIntegerObject a, final NilObject b) {
-            return true;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization
-        protected static final boolean doNil(final double a, final NilObject b) {
-            return true;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization
-        protected static final boolean doNil(final FloatObject a, final NilObject b) {
-            return true;
+        @Specialization // Specialization for quick nil checks.
+        protected final boolean doNil(final Object a, final NilObject b) {
+            return code.image.sqTrue;
         }
     }
 

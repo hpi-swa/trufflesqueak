@@ -115,15 +115,24 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
             super(method);
         }
 
+        @Specialization
+        protected static final Object doTerminate(final ContextObject receiver, final ContextObject previousContext) {
+            return terminateTo(receiver, previousContext);
+        }
+
+        @Specialization
+        protected static final Object doTerminate(final ContextObject receiver, final NilObject nil) {
+            return terminateTo(receiver, nil);
+        }
+
         /*
          * Terminate all the Contexts between me and previousContext, if previousContext is on my
          * Context stack. Make previousContext my sender.
          */
-        @Specialization
-        protected Object doTerminate(final ContextObject receiver, final ContextObject previousContext) {
+        private static Object terminateTo(final ContextObject receiver, final BaseSqueakObject previousContext) {
             if (hasSender(receiver, previousContext)) {
                 ContextObject currentContext = receiver.getNotNilSender();
-                while (!currentContext.equals(previousContext)) {
+                while (currentContext != previousContext) {
                     final ContextObject sendingContext = currentContext.getNotNilSender();
                     currentContext.terminate();
                     currentContext = sendingContext;
@@ -136,13 +145,13 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         /*
          * Answer whether the receiver is strictly above context on the stack (Context>>hasSender:).
          */
-        private static boolean hasSender(final ContextObject context, final ContextObject previousContext) {
-            if (context.equals(previousContext)) {
+        private static boolean hasSender(final ContextObject context, final BaseSqueakObject previousContext) {
+            if (context == previousContext) {
                 return false;
             }
             BaseSqueakObject sender = context.getSender();
             while (!sender.isNil()) {
-                if (sender.equals(previousContext)) {
+                if (sender == previousContext) {
                     return true;
                 }
                 sender = ((ContextObject) sender).getSender();

@@ -21,19 +21,17 @@ import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.ListObject;
-import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.ERROR_TABLE;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
+import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.SqueakObject;
 import de.hpi.swa.graal.squeak.nodes.GetAllInstancesNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
-import de.hpi.swa.graal.squeak.nodes.helpers.IsNumericNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
@@ -115,13 +113,11 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 18, numArguments = 2)
     protected abstract static class PrimMakePointNode extends AbstractPrimitiveNode {
-        @Child protected IsNumericNode isNumericNode = IsNumericNode.create();
-
         protected PrimMakePointNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization(guards = {"isNumericNode.execute(xPos)", "isNumericNode.execute(yPos)"})
+        @Specialization
         protected final Object doObject(final Object xPos, final Object yPos) {
             return code.image.newPoint(xPos, yPos);
         }
@@ -175,6 +171,11 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(replaces = "newDirect")
         protected Object newIndirect(final ClassObject receiver) {
             return receiver.newInstance();
+        }
+
+        @Specialization
+        protected Object doPointers(final PointersObject receiver) {
+            return receiver.shallowCopy(); // FIXME: BehaviorTest>>#testChange
         }
     }
 
@@ -249,25 +250,31 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Override
         public final Object executeWithArguments(final VirtualFrame frame, final Object... rcvrAndArgs) {
-            return doAt(rcvrAndArgs);
-        }
-
-        @Specialization
-        protected Object doAt(final Object[] rcvrAndArgs) {
-            final BaseSqueakObject receiver;
-            final long index;
             switch (rcvrAndArgs.length) {
                 case 2:
-                    receiver = (BaseSqueakObject) rcvrAndArgs[0];
-                    index = (long) rcvrAndArgs[1];
-                    break;
+                    return doAtTwo(rcvrAndArgs);
                 case 3:
-                    receiver = (BaseSqueakObject) rcvrAndArgs[1];
-                    index = (long) rcvrAndArgs[2];
-                    break;
+                    return doAtThree(rcvrAndArgs);
                 default:
                     throw new PrimitiveFailed();
             }
+        }
+
+        @Specialization(guards = "rcvrAndArgs.length == 2")
+        protected static final Object doAtTwo(final Object[] rcvrAndArgs) {
+            final BaseSqueakObject receiver = (BaseSqueakObject) rcvrAndArgs[0];
+            final long index = (long) rcvrAndArgs[1];
+            try {
+                return receiver.at0(index - 1);
+            } catch (IndexOutOfBoundsException e) {
+                throw new PrimitiveFailed();
+            }
+        }
+
+        @Specialization(guards = "rcvrAndArgs.length == 3")
+        protected static final Object doAtThree(final Object[] rcvrAndArgs) {
+            final BaseSqueakObject receiver = (BaseSqueakObject) rcvrAndArgs[1];
+            final long index = (long) rcvrAndArgs[2];
             try {
                 return receiver.at0(index - 1);
             } catch (IndexOutOfBoundsException e) {
@@ -284,7 +291,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object atput(final BaseSqueakObject receiver, final long idx, final Object value) {
+        protected static final Object doAtPut(final BaseSqueakObject receiver, final long idx, final Object value) {
             try {
                 receiver.atput0(idx - 1, value);
             } catch (IndexOutOfBoundsException e) {
@@ -297,13 +304,9 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {75, 171, 175})
     protected abstract static class PrimIdentityHashNode extends AbstractPrimitiveNode {
+
         protected PrimIdentityHashNode(final CompiledMethodObject method) {
             super(method);
-        }
-
-        @Specialization
-        protected static final long doNil(@SuppressWarnings("unused") final NilObject obj) {
-            return 1L;
         }
 
         @Specialization
@@ -326,18 +329,8 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final long doLargeInteger(final LargeIntegerObject obj) {
-            return obj.hashCode();
-        }
-
-        @Specialization
         protected static final long doDouble(final double receiver) {
             return (long) receiver;
-        }
-
-        @Specialization
-        protected static final long doFloat(final FloatObject receiver) {
-            return doDouble(receiver.getValue());
         }
 
         @Specialization
@@ -378,7 +371,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             return code.image.nil;
         }
 
-        @Specialization
+        @Specialization(guards = "!hasNoInstances(sqObject)")
         protected BaseSqueakObject someInstance(final BaseSqueakObject sqObject) {
             final List<BaseSqueakObject> instances = code.image.objects.allInstances(sqObject.getSqClass());
             int index;
@@ -554,7 +547,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object value(final BaseSqueakObject receiver, final long index) {
+        protected static final Object doSlotAt(final BaseSqueakObject receiver, final long index) {
             try {
                 return receiver.at0(index - 1);
             } catch (IndexOutOfBoundsException e) {
@@ -572,7 +565,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object value(final BaseSqueakObject receiver, final long index, final Object value) {
+        protected static final Object doSlotAtPut(final BaseSqueakObject receiver, final long index, final Object value) {
             try {
                 receiver.atput0(index - 1, value);
                 return value;

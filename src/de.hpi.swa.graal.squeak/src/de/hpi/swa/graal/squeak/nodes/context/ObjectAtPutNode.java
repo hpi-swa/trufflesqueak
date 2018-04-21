@@ -27,17 +27,12 @@ public abstract class ObjectAtPutNode extends AbstractObjectAtNode {
     public abstract void executeWrite(VirtualFrame frame);
 
     @Specialization
-    protected void write(final NativeObject object, final long value) {
+    protected final void doNativeObject(final NativeObject object, final long value) {
         classProfile.profile(object).setNativeAt0(index, value);
     }
 
     @Specialization(guards = "!isNativeObject(object)")
-    protected void write(final BaseSqueakObject object, final long value) {
-        classProfile.profile(object).atput0(index, value);
-    }
-
-    @Specialization
-    protected void write(final BaseSqueakObject object, final Object value) {
+    protected final void doSqueakObject(final BaseSqueakObject object, final Object value) {
         classProfile.profile(object).atput0(index, value);
     }
 

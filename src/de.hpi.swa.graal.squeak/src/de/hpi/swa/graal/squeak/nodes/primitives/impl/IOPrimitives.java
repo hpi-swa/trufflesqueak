@@ -11,6 +11,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
+import de.hpi.swa.graal.squeak.model.AbstractPointersObject;
 import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
@@ -19,6 +20,7 @@ import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.FORM;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.model.SqueakObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
@@ -41,7 +43,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object mousePoint() {
+        protected final Object doMousePoint() {
             return code.image.wrap(code.image.display.getLastMousePosition());
         }
     }
@@ -91,7 +93,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doGetNext(final PointersObject eventSensor, final ListObject targetArray) {
+        protected final Object doGetNext(final PointersObject eventSensor, final ListObject targetArray) {
             final long[] nextEvent = code.image.display.getNextEvent();
             for (int i = 0; i < SqueakDisplay.EVENT_SIZE; i++) {
                 targetArray.atput0(i, nextEvent[i]);
@@ -119,11 +121,11 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Override
         public final Object executeWithArguments(final VirtualFrame frame, final Object... rcvrAndArgs) {
-            return beCursor(rcvrAndArgs);
+            return doCursor(rcvrAndArgs);
         }
 
         @Specialization
-        protected Object beCursor(final Object[] rcvrAndArgs) {
+        protected final Object doCursor(final Object[] rcvrAndArgs) {
             final Object cursorObject = rcvrAndArgs[0];
             if (!(cursorObject instanceof PointersObject)) {
                 throw new SqueakException("Unexpected cursorObject: " + cursorObject.toString());
@@ -187,14 +189,14 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected boolean beDisplay(final PointersObject receiver) {
+        protected final boolean doDisplay(final PointersObject receiver) {
             if (receiver.size() < 4) {
                 throw new PrimitiveFailed();
             }
             code.image.display.setSqDisplay(receiver);
             code.image.display.open();
             code.image.specialObjectsArray.atput0(SPECIAL_OBJECT_INDEX.TheDisplay, receiver);
-            return true;
+            return code.image.sqTrue;
         }
     }
 
@@ -226,17 +228,17 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         public abstract Object executeReplace(VirtualFrame frame);
 
         @Specialization
-        protected Object replace(final LargeIntegerObject rcvr, final long start, final long stop, final LargeIntegerObject repl, final long replStart) {
+        protected static final Object replace(final LargeIntegerObject rcvr, final long start, final long stop, final LargeIntegerObject repl, final long replStart) {
             return replaceInLarge(rcvr, start, stop, repl.getBytes(), replStart);
         }
 
         @Specialization
-        protected Object replace(final LargeIntegerObject rcvr, final long start, final long stop, final long repl, final long replStart) {
+        protected final Object replace(final LargeIntegerObject rcvr, final long start, final long stop, final long repl, final long replStart) {
             return replaceInLarge(rcvr, start, stop, asLargeInteger(repl).getBytes(), replStart);
         }
 
         @Specialization
-        protected Object replace(final LargeIntegerObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
+        protected static final Object replace(final LargeIntegerObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
             return replaceInLarge(rcvr, start, stop, repl.getBytes(), replStart);
         }
 
@@ -251,7 +253,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object replace(final NativeObject rcvr, final long start, final long stop, final LargeIntegerObject repl, final long replStart) {
+        protected static final Object replace(final NativeObject rcvr, final long start, final long stop, final LargeIntegerObject repl, final long replStart) {
             final int repOff = (int) (replStart - start);
             final byte[] replBytes = repl.getBytes();
             for (int i = (int) (start - 1); i < stop; i++) {
@@ -261,7 +263,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object replace(final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
+        protected static final Object replace(final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
             final int repOff = (int) (replStart - start);
             for (int i = (int) (start - 1); i < stop; i++) {
                 rcvr.setNativeAt0(i, repl.getNativeAt0(repOff + i));
@@ -269,22 +271,46 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
+        @Specialization(guards = "replStart == 1")
+        protected static final Object replace(final NativeObject rcvr, final long start, final long stop, final long repl, @SuppressWarnings("unused") final long replStart) {
+            for (int i = (int) (start - 1); i < stop; i++) {
+                rcvr.setNativeAt0(i, repl);
+            }
+            return rcvr;
+        }
+
         @Specialization
-        protected Object replace(final NativeObject rcvr, final long start, final long stop, final ListObject repl, final long replStart) {
+        protected static final Object replace(final NativeObject rcvr, final long start, final long stop, final AbstractPointersObject repl, final long replStart) {
             final int repOff = (int) (replStart - start);
             for (int i = (int) (start - 1); i < stop; i++) {
                 final Object value = repl.at0(repOff + i);
                 if (value instanceof Character) {
                     rcvr.setNativeAt0(i, Character.getNumericValue((Character) value));
-                } else {
+                } else if (value instanceof Long) {
                     rcvr.setNativeAt0(i, (long) value);
+                } else {
+                    throw new PrimitiveFailed();
                 }
             }
             return rcvr;
         }
 
         @Specialization
-        protected Object doListObject(final ListObject rcvr, final long start, final long stop, final ListObject repl, final long replStart) {
+        protected static final Object doListObject(final AbstractPointersObject rcvr, final long start, final long stop, final ListObject repl, final long replStart) {
+            return doSqueakObject(rcvr, start, stop, repl, replStart);
+        }
+
+        @Specialization
+        protected static final Object doListObject(final AbstractPointersObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
+            return doSqueakObject(rcvr, start, stop, repl, replStart);
+        }
+
+        @Specialization
+        protected static final Object replace(final CompiledMethodObject rcvr, final long start, final long stop, final CompiledMethodObject repl, final long replStart) {
+            return doSqueakObject(rcvr, start, stop, repl, replStart);
+        }
+
+        private static Object doSqueakObject(final SqueakObject rcvr, final long start, final long stop, final SqueakObject repl, final long replStart) {
             final long repOff = replStart - start;
             for (int i = (int) (start - 1); i < stop; i++) {
                 rcvr.atput0(i, repl.at0(repOff + i));
@@ -302,7 +328,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected BaseSqueakObject get(@SuppressWarnings("unused") final BaseSqueakObject receiver) {
+        protected final BaseSqueakObject doSize(@SuppressWarnings("unused") final BaseSqueakObject receiver) {
             return code.image.wrap(code.image.display.getSize());
         }
     }
@@ -316,7 +342,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object get(@SuppressWarnings("unused") final BaseSqueakObject receiver) {
+        protected final Object doMouseButtons(@SuppressWarnings("unused") final BaseSqueakObject receiver) {
             return code.image.wrap(code.image.display.getLastMouseButton());
         }
     }
@@ -330,7 +356,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object get(@SuppressWarnings("unused") final BaseSqueakObject receiver) {
+        protected final Object doNext(@SuppressWarnings("unused") final BaseSqueakObject receiver) {
             final int keyboardNext = code.image.display.keyboardNext();
             if (keyboardNext == 0) {
                 return code.image.nil;
@@ -349,7 +375,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object get(@SuppressWarnings("unused") final BaseSqueakObject receiver) {
+        protected final Object doPeek(@SuppressWarnings("unused") final BaseSqueakObject receiver) {
             final int keyboardPeek = code.image.display.keyboardPeek();
             if (keyboardPeek == 0) {
                 return code.image.nil;
@@ -368,7 +394,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected BaseSqueakObject doDefer(final BaseSqueakObject receiver, final boolean flag) {
+        protected final BaseSqueakObject doDefer(final BaseSqueakObject receiver, final boolean flag) {
             code.image.display.setDeferUpdates(flag);
             return receiver;
         }
@@ -382,14 +408,12 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization
-        protected BaseSqueakObject get(final BaseSqueakObject receiver, final long left, final long right, final long top, final long bottom) {
-            if (receiver != code.image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.TheDisplay)) {
-                return code.image.nil;
-            }
-            if (!((left <= right) && (top <= bottom))) {
-                return code.image.nil;
-            }
+        protected static final boolean inBounds(final long left, final long right, final long top, final long bottom) {
+            return (left <= right) && (top <= bottom);
+        }
+
+        @Specialization(guards = "inBounds(left, right, top, bottom)")
+        protected final BaseSqueakObject doDraw(final PointersObject receiver, final long left, final long right, final long top, final long bottom) {
             code.image.display.forceRect((int) left, (int) right, (int) top, (int) bottom);
             return receiver;
         }
@@ -404,7 +428,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected BaseSqueakObject set(final BaseSqueakObject receiver) {
+        protected static final BaseSqueakObject set(final BaseSqueakObject receiver) {
             // TODO: interrupt key is obsolete in image, but maybe still needed in the vm?
             return receiver;
         }
@@ -419,7 +443,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected BaseSqueakObject doBeep(final BaseSqueakObject receiver) {
+        protected final BaseSqueakObject doBeep(final BaseSqueakObject receiver) {
             try {
                 Toolkit.getDefaultToolkit().beep();
             } catch (AWTError e) {
