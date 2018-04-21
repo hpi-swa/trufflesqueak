@@ -1,15 +1,17 @@
-language: python
-python:
-  - "2.7"
-addons:
-  apt:
-    packages:
-      - oracle-java8-installer
-install:
-  - pip install astroid==1.1.0
-  - pip install pylint==1.1.0
-  - git clone --depth 1 https://github.com/graalvm/mx
-before_script:
-  - scripts/download-test-image.sh
-script:
-  - mx/mx gate
+language: java
+jdk: oraclejdk8
+sudo: false
+
+install: |
+  git clone --depth 1 https://github.com/graalvm/mx
+  pip install astroid==1.1.0
+  pip install pylint==1.1.0
+  export ECLIPSE_TAR=eclipse.tar.gz
+  export ECLIPSE_URL=http://archive.eclipse.org/eclipse/downloads/drops4/R-4.6.3-201703010400/eclipse-SDK-4.6.3-linux-gtk-x86_64.tar.gz
+  wget ${ECLIPSE_URL} -O ${ECLIPSE_TAR}
+  tar -C ${TRAVIS_BUILD_DIR}/.. -xzf ${ECLIPSE_TAR}
+  export ECLIPSE_EXE=${TRAVIS_BUILD_DIR}/../eclipse/eclipse
+
+before_script: scripts/download-test-image.sh
+
+script: mx/mx gate
