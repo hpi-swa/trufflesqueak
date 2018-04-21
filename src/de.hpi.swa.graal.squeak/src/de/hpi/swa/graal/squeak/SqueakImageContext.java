@@ -273,8 +273,6 @@ public final class SqueakImageContext {
     }
 
     public PointersObject newPoint(final Object xPos, final Object yPos) {
-        assert xPos instanceof Long || xPos instanceof LargeIntegerObject || xPos instanceof Double || xPos instanceof FloatObject;
-        assert yPos instanceof Long || yPos instanceof LargeIntegerObject || yPos instanceof Double || yPos instanceof FloatObject;
         final ClassObject pointClass = (ClassObject) specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.ClassPoint);
         final PointersObject newPoint = (PointersObject) pointClass.newInstance();
         newPoint.atput0(POINT.X, xPos);

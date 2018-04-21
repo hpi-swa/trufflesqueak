@@ -82,6 +82,10 @@ public final class ContextObject extends AbstractPointersObject {
         return getMethod();
     }
 
+    public boolean hasMethod() {
+        return at0(CONTEXT.METHOD) instanceof CompiledCodeObject;
+    }
+
     public CompiledCodeObject getMethod() {
         return (CompiledCodeObject) at0(CONTEXT.METHOD);
     }
@@ -169,15 +173,15 @@ public final class ContextObject extends AbstractPointersObject {
 
     @Override
     public String toString() {
-        if (at0(CONTEXT.METHOD) == image.nil) {
-            return "CTX without method";
-        } else {
+        if (hasMethod()) {
             final BlockClosureObject closure = getClosure();
             if (closure != null) {
                 return "CTX [] in " + getMethod();
             } else {
                 return "CTX " + getMethod();
             }
+        } else {
+            return "CTX without method";
         }
     }
 
