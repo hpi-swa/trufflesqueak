@@ -680,7 +680,9 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
         try {
             result = extractFailuresAndErrorsFromTestResult(evaluate(testClassName + " buildSuite run"));
         } catch (Exception e) {
-            e.printStackTrace();
+            if (!runsOnMXGate()) {
+                e.printStackTrace();
+            }
             result = "failed with an error: " + e.toString();
         }
         image.getOutput().println(result);

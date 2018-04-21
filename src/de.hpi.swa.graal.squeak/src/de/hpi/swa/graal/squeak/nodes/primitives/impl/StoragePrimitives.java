@@ -93,6 +93,9 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                     final CompiledCodeObject codeObject = FrameAccess.getMethod(current);
                     for (int i = 0; i < codeObject.frameSize(); i++) {
                         final Object stackObject = stackReadNode.execute(current, i);
+                        if (stackObject == null) {
+                            return null; // this slot and all following have not been used
+                        }
                         for (int j = 0; j < fromPointers.length; j++) {
                             final Object fromPointer = fromPointers[j];
                             if (stackObject == fromPointer) {
