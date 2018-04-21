@@ -214,4 +214,11 @@
     <property name="onCommentFormat" value="Checkstyle: resume"/>
     <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Disable all checks"/>
   </module>
+  <module name="RegexpMultiline">
+    <property name="severity" value="ignore"/>
+    <property name="format" value="\@Specialization\n[\t ]*.*\(final [BaseSqueak]+Object.*\)"/>
+    <property name="message" value="Unguarded specialization for generic type (@Fallback needed?)"/>
+    <property name="fileExtensions" value="java"/>
+    <metadata name="net.sf.eclipsecs.core.lastEnabledSeverity" value="info"/>
+  </module>
 </module>
