@@ -98,9 +98,9 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
                     "ClassFactoryForTestCaseTest", TEST_TYPE.IGNORE,
                     "ClassRemovalTest", TEST_TYPE.PASSING,
                     "ClassRenameFixTest", TEST_TYPE.FAILING,
-                    "ClassTest", TEST_TYPE.NOT_TERMINATING, // fails, but is very slow
+                    "ClassTest", TEST_TYPE.IGNORE, // fails, and is very slow
                     "ClassTraitTest", TEST_TYPE.PASSING,
-                    "ClassVarScopeTest", TEST_TYPE.NOT_TERMINATING, // passes, but is very slow
+                    "ClassVarScopeTest", TEST_TYPE.IGNORE, // passes, but is very slow
                     "ClipboardTest", TEST_TYPE.PASSING,
                     "ClosureCompilerTest", TEST_TYPE.NOT_TERMINATING, // requires sources
                     "ClosureTests", TEST_TYPE.PASSING,
@@ -123,7 +123,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
                     "DateTest", TEST_TYPE.PASSING,
                     "DebuggerExtensionsTest", TEST_TYPE.FAILING,
                     "DebuggerUnwindBug", TEST_TYPE.FAILING,
-                    "DecompilerTests", TEST_TYPE.NOT_TERMINATING,
+                    "DecompilerTests", TEST_TYPE.IGNORE, // slow
                     "DelayTest", TEST_TYPE.FLAKY,
                     "DependencyBrowserTest", TEST_TYPE.IGNORE,
                     "DependentsArrayTest", TEST_TYPE.FAILING,
@@ -135,11 +135,11 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
                                                             // (BROKEN_IN_SQUEAK)
                     "DurationTest", TEST_TYPE.PASSING,
                     "EnvironmentTest", TEST_TYPE.FAILING,
-                    "EPSCanvasTest", TEST_TYPE.NOT_TERMINATING,
+                    "EPSCanvasTest", TEST_TYPE.PASSING,
                     "EtoysStringExtensionTest", TEST_TYPE.PASSING,
                     "EventManagerTest", TEST_TYPE.PASSING,
                     "ExceptionTests", TEST_TYPE.FAILING,
-                    "ExpandedSourceFileArrayTest", TEST_TYPE.PASSING,
+                    "ExpandedSourceFileArrayTest", TEST_TYPE.FLAKY,
                     "ExplicitNamePolicyTest", TEST_TYPE.PASSING,
                     "ExtendedNumberParserTest", TEST_TYPE.PASSING,
                     "FalseTest", TEST_TYPE.PASSING,
@@ -165,7 +165,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
                     "HashAndEqualsTestCase", TEST_TYPE.PASSING,
                     "HashedCollectionTest", TEST_TYPE.FLAKY,
                     "HashTesterTest", TEST_TYPE.PASSING,
-                    "HeapTest", TEST_TYPE.FAILING,
+                    "HeapTest", TEST_TYPE.FLAKY,
                     "HelpBrowserTest", TEST_TYPE.IGNORE, // very slow
                     "HelpIconsTest", TEST_TYPE.PASSING,
                     "HelpTopicListItemWrapperTest", TEST_TYPE.PASSING,
@@ -237,7 +237,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
                     "MethodHighlightingTests", TEST_TYPE.FAILING,
                     "MethodPragmaTest", TEST_TYPE.FAILING,
                     "MethodPropertiesTest", TEST_TYPE.FAILING,
-                    "MethodReferenceTest", TEST_TYPE.PASSING,
+                    "MethodReferenceTest", TEST_TYPE.FLAKY,
                     "MIMEDocumentTest", TEST_TYPE.FLAKY,
                     "MirrorPrimitiveTests", TEST_TYPE.FAILING,
                     "MiscPrimitivePluginTest", TEST_TYPE.FAILING, // failing in Squeak
@@ -264,7 +264,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
                     "PackageDependencyTest", TEST_TYPE.NOT_TERMINATING,
                     "PackagePaneBrowserTest", TEST_TYPE.PASSING,
                     "ParserEditingTest", TEST_TYPE.PASSING,
-                    "PasteUpMorphTest", TEST_TYPE.FAILING,
+                    "PasteUpMorphTest", TEST_TYPE.FLAKY,
                     "PCCByCompilationTest", TEST_TYPE.IGNORE,
                     "PCCByLiteralsTest", TEST_TYPE.IGNORE,
                     "PluggableMenuItemSpecTests", TEST_TYPE.PASSING,
@@ -296,7 +296,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
                     "RxParserTest", TEST_TYPE.PASSING,
                     "ScaledDecimalTest", TEST_TYPE.PASSING,
                     "ScannerTest", TEST_TYPE.FLAKY,
-                    "ScheduleTest", TEST_TYPE.PASSING,
+                    "ScheduleTest", TEST_TYPE.FLAKY,
                     "ScrollBarTest", TEST_TYPE.FAILING,
                     "ScrollPaneLeftBarTest", TEST_TYPE.FAILING,
                     "ScrollPaneRetractableBarsTest", TEST_TYPE.IGNORE,
@@ -313,7 +313,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
                     "SliderTest", TEST_TYPE.PASSING,
                     "SmallIntegerTest", TEST_TYPE.PASSING,
                     "SmalltalkImageTest", TEST_TYPE.PASSING,
-                    "SmartRefStreamTest", TEST_TYPE.NOT_TERMINATING,
+                    "SmartRefStreamTest", TEST_TYPE.IGNORE, // flaky and slow
                     "SMDependencyTest", TEST_TYPE.PASSING,
                     "SMTPClientTest", TEST_TYPE.IGNORE,
                     "SocketStreamTest", TEST_TYPE.FAILING,
@@ -363,14 +363,14 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
                     "TextKernTest", TEST_TYPE.PASSING,
                     "TextLineEndingsTest", TEST_TYPE.PASSING,
                     "TextLineTest", TEST_TYPE.PASSING,
-                    "TextMorphTest", TEST_TYPE.PASSING,
+                    "TextMorphTest", TEST_TYPE.FLAKY,
                     "TextStyleTest", TEST_TYPE.PASSING,
                     "TextTest", TEST_TYPE.PASSING,
                     "ThirtyTwoBitRegisterTest", TEST_TYPE.NOT_TERMINATING,
                     "TileMorphTest", TEST_TYPE.FLAKY,
                     "TimespanDoSpanAYearTest", TEST_TYPE.PASSING,
                     "TimespanDoTest", TEST_TYPE.PASSING,
-                    "TimespanTest", TEST_TYPE.PASSING,
+                    "TimespanTest", TEST_TYPE.FLAKY,
                     "TimeStampTest", TEST_TYPE.PASSING,
                     "TimeTest", TEST_TYPE.PASSING,
                     "TraitCompositionTest", TEST_TYPE.NOT_TERMINATING,
@@ -408,7 +408,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
                     "WorldStateTest", TEST_TYPE.NOT_TERMINATING,
                     "WriteStreamTest", TEST_TYPE.FAILING,
                     "XMLParserTest", TEST_TYPE.PASSING,
-                    "YearMonthWeekTest", TEST_TYPE.PASSING,
+                    "YearMonthWeekTest", TEST_TYPE.FLAKY,
                     "YearTest", TEST_TYPE.PASSING};
 
     @Test
@@ -567,10 +567,11 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
         final PointersObject activeProcess = GetActiveProcessNode.create(image).executeGet();
         activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, image.nil);
         image.getOutput().println("Modifying StartUpList for testing...");
-        evaluate("{EventSensor. Project. ProcessorScheduler. WeakArray} do: [:ea | Smalltalk removeFromStartUpList: ea]");
+        evaluate("{EventSensor. Project} do: [:ea | Smalltalk removeFromStartUpList: ea]");
         image.getOutput().println("Processing StartUpList...");
         evaluate("Smalltalk processStartUpList: true");
-        image.getOutput().println("Setting author initials...");
+        image.getOutput().println("Setting author information...");
+        evaluate("Utilities authorName: 'GraalSqueak'");
         evaluate("Utilities setAuthorInitials: 'GraalSqueak'");
         image.getOutput().println("Patching timeout methods...");
         Object patchResult = evaluate(String.join(" ",
@@ -679,6 +680,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
         try {
             result = extractFailuresAndErrorsFromTestResult(evaluate(testClassName + " buildSuite run"));
         } catch (Exception e) {
+            e.printStackTrace();
             result = "failed with an error: " + e.toString();
         }
         image.getOutput().println(result);
