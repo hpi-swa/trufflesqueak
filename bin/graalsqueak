@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -e
+
+readonly BASE_DIRECTORY="$(cd "$(dirname "${BASH_SOURCE[0]}")/../" && pwd)"
+readonly MX_PATH_SELF_CONTAINED="${BASE_DIRECTORY}/mx/mx"
+
+MX_EXEC="mx"
+MX_PARAMETERS=""
+if [[ "$@" == *"-v "* ]]; then  # enable mx's verbose mode, too.
+  MX_PARAMETERS+="-v"
+fi
+
+if [[ ! $(which "${MX_EXEC}" 2> /dev/null) ]]; then
+  if [[ ! -f "${MX_PATH_SELF_CONTAINED}" ]]; then
+    read -p "mx not found. Would you like to clone it now? (y/N): " user_input
+    if [[ "${user_input}" = "y" ]]; then
+      pushd "${BASE_DIRECTORY}" > /dev/null
+      git clone https://github.com/graalvm/mx.git
+      popd > /dev/null
+    else
+      exit
+    fi
+  fi
+  MX_EXEC="${MX_PATH_SELF_CONTAINED}"
+fi
+
+${MX_EXEC} ${MX_PARAMETERS} build
+${MX_EXEC} ${MX_PARAMETERS} \
+  --dynamicimports /compiler \
+  --user-home "${BASE_DIRECTORY}" \
+    squeak $@

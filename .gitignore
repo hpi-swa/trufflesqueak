@@ -1,6 +1,6 @@
-/bin/
 *src_gen*
 .idea
+mx
 mxbuild
 *.pyc
 *.jar

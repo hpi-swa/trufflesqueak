@@ -11,13 +11,16 @@ import mx_unittest
 PACKAGE_NAME = 'de.hpi.swa.graal.squeak'
 
 _suite = mx.suite('graalsqueak')
-_compiler = mx.suite("compiler", fatalIfMissing=False)
+_compiler = mx.suite('compiler', fatalIfMissing=False)
 
 
 def _graal_vm_args(args, jdk):
-    graal_args = [
-        '-Dgraal.TraceTruffleCompilation=true',
-    ]
+    graal_args = []
+
+    if args.trace_compilation:
+        graal_args += [
+            '-Dgraal.TraceTruffleCompilation=true',
+        ]
 
     if args.perf_warnings:
         graal_args += [
@@ -87,9 +90,17 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
                         dest='print_machine_code', action='store_true',
                         default=False)
     parser.add_argument(
+        '-t', '--trace-compilation',
+        help='trace truffle compilation',
+        dest='trace_compilation', action='store_true', default=False)
+    parser.add_argument(
         '-ti', '--trace-invalid',
         help='trace assumption invalidation and transfers to interpreter',
         dest='trace_invalidation', action='store_true', default=False)
+    parser.add_argument('-v', '--verbose',
+                        help='enable verbose output',
+                        dest='verbose',
+                        action='store_true', default=False)
     parser.add_argument('-w', '--perf-warnings',
                         help='enable performance warnings',
                         dest='perf_warnings',
@@ -112,20 +123,21 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
     if extra_vm_args:
         vm_args.extend(extra_vm_args)
 
-    vm_args.append("de.hpi.swa.graalsqueak.GraalSqueakMain")
+    vm_args.append('de.hpi.swa.graal.squeak.GraalSqueakMain')
     return mx.run_java(vm_args + parsed_args.squeak_args, jdk=jdk, **kwargs)
 
 
 def _graalsqueak_gate_runner(args, tasks):
-    os.environ['MX_GATE'] = "true"
+    os.environ['MX_GATE'] = 'true'
     unittest_args = []
     jacocoArgs = mx_gate.get_jacoco_agent_args()
     if jacocoArgs:
         unittest_args.extend(jacocoArgs)
     unittest_args.extend(['--suite', 'graalsqueak'])
-    with mx_gate.Task("TestGraalSqueak", tasks, tags=['test']) as t:
+    with mx_gate.Task('TestGraalSqueak', tasks, tags=['test']) as t:
         if t:
             mx_unittest.unittest(unittest_args)
+
 
 mx.update_commands(_suite, {
     'squeak': [_squeak, '[Squeak args|@VM options]'],
