@@ -14,7 +14,7 @@ import de.hpi.swa.graal.squeak.exceptions.Returns.LocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
-import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
+import de.hpi.swa.graal.squeak.model.ObjectLayouts.ERROR_TABLE;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushLiteralConstantNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushLiteralVariableNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushReceiverVariableNode;
@@ -38,14 +38,14 @@ public final class MiscellaneousBytecodes {
 
     public static class CallPrimitiveNode extends AbstractBytecodeNode {
         @CompilationFinal private static final boolean DEBUG_UNSUPPORTED_SPECIALIZATION_EXCEPTIONS = false;
-        @Child private GetOrCreateContextNode getOrCreateContextNode;
+        @Child private StackPushNode pushNode;
         @Child private AbstractPrimitiveNode primitiveNode;
         @CompilationFinal private final int primitiveIndex;
 
         public CallPrimitiveNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int byte1, final int byte2) {
             super(code, index, numBytecodes);
             assert code instanceof CompiledMethodObject;
-            getOrCreateContextNode = GetOrCreateContextNode.create(code);
+            pushNode = StackPushNode.create(code);
             if (!code.hasPrimitive()) {
                 primitiveIndex = 0;
                 primitiveNode = PrimitiveFailedNode.create((CompiledMethodObject) code);
@@ -61,12 +61,10 @@ public final class MiscellaneousBytecodes {
             CompilerAsserts.compilationConstant(index);
             try {
                 throw new FreshReturn(new LocalReturn(primitiveNode.executePrimitive(frame)));
-            } catch (PrimitiveFailed e) { // TODO: support `error: ec`
-                // if (e.getReasonCode() != ERROR_TABLE.GENERIC_ERROR) { // handle `error: ec`
-                // ContextObject thisContext = getOrCreateContextNode.executeGet(frame, true);
-                // Object error = code.image.lookupError(e.getReasonCode());
-                // thisContext.atTempPut(0, error);
-                // }
+            } catch (PrimitiveFailed e) {
+                if (e.getReasonCode() != ERROR_TABLE.GENERIC_ERROR) { // handle `error: ec`
+                    pushNode.executeWrite(frame, code.image.lookupError(e.getReasonCode()));
+                }
             } catch (UnsupportedSpecializationException e) {
                 if (DEBUG_UNSUPPORTED_SPECIALIZATION_EXCEPTIONS) {
                     debugUnsupportedSpecializationException(e);
