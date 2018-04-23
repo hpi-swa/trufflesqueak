@@ -96,6 +96,10 @@ public class SqueakKeyboard implements KeyListener {
 
     public void keyPressed(final KeyEvent e) {
         modifierKeys = mapModifierKey(e);
+        if (e.isMetaDown() && e.getKeyChar() == '.') {
+            display.image.interrupt.setInterruptPending();
+            return;
+        }
         final char keyChar = mapSpecialKey(e);
         if (keyChar != KeyEvent.CHAR_UNDEFINED) {
             enqueue(keyChar);

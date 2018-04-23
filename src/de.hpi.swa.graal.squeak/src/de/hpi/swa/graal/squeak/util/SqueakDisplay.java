@@ -100,7 +100,7 @@ public final class SqueakDisplay {
     }
 
     public static class JavaDisplay extends AbstractSqueakDisplay {
-        @CompilationFinal private final SqueakImageContext image;
+        @CompilationFinal public final SqueakImageContext image;
         @CompilationFinal private final JFrame frame = new JFrame("GraalSqueak");
         @CompilationFinal private final Canvas canvas = new Canvas();
 
