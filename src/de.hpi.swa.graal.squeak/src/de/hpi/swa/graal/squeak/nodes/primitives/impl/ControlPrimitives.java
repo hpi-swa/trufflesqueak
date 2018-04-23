@@ -1,5 +1,7 @@
 package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 
+import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -26,6 +28,7 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.MUTEX;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SEMAPHORE;
 import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.DispatchNode;
 import de.hpi.swa.graal.squeak.nodes.DispatchNodeGen;
 import de.hpi.swa.graal.squeak.nodes.LookupNode;
@@ -557,9 +560,24 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization
-        protected Object doGC(final VirtualFrame frame, final BaseSqueakObject receiver) {
+        protected final Object doGC(final VirtualFrame frame, final BaseSqueakObject receiver) {
             System.gc();
+            finalizeWeakPointersObjects(frame);
             return code.image.wrap(Runtime.getRuntime().freeMemory());
+        }
+
+        private void finalizeWeakPointersObjects(final VirtualFrame frame) {
+            final ReferenceQueue<Object> queue = WeakPointersObject.weakPointersQueue;
+            Reference<? extends Object> element = queue.poll();
+            int count = 0;
+            while (element != null) {
+                count++;
+                element = queue.poll();
+            }
+            code.image.traceVerbose(count + " WeakPointersObjects have been garbage collected.");
+            if (count > 0) {
+                code.image.interrupt.triggerPendingFinalizations(frame);
+            }
         }
     }
 

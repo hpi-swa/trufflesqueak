@@ -21,7 +21,7 @@ public class InterruptHandlerNode extends Node {
     private long lastTick = 0;
     private boolean interruptPending = false;
     private boolean disabled = false;
-    private int pendingFinalizationSignals = 0;
+    private boolean pendingFinalizationSignals = false;
     @Child private SignalSemaphoreNode signalSemaporeNode;
 
     public static InterruptHandlerNode create(final SqueakImageContext image, final SqueakConfig config) {
@@ -49,19 +49,22 @@ public class InterruptHandlerNode extends Node {
         disabled = value;
     }
 
+    public void triggerPendingFinalizations(final VirtualFrame frame) {
+        pendingFinalizationSignals = true;
+        executeCheck(frame);
+    }
+
     /*
-     * Check for interrupts on sends and backward jumps.
+     * Check for interrupts on sends and backward jumps. TODO: call on backward jumps
      */
-    public void sendOrBackwardJumpTrigger(final VirtualFrame frame) { // TODO: call on backward
-                                                                      // jumps
+    public void sendOrBackwardJumpTrigger(final VirtualFrame frame) {
         if (disabled || interruptCheckCounter-- > 0) {
             return; // only really check every 100 times or so
         }
         executeCheck(frame);
     }
 
-    public void executeCheck(final VirtualFrame frame) { // Check for interrupts at sends and
-                                                         // backward jumps
+    public void executeCheck(final VirtualFrame frame) {
         final long now = System.currentTimeMillis();
         if (now < lastTick) { // millisecond clock wrapped"
             nextPollTick = now + (nextPollTick - lastTick);
@@ -89,8 +92,8 @@ public class InterruptHandlerNode extends Node {
             nextWakeupTick = 0; // reset timer interrupt
             signalSemaporeIfNotNil(frame, SPECIAL_OBJECT_INDEX.TheTimerSemaphore);
         }
-        if (pendingFinalizationSignals > 0) { // signal any pending finalizations
-            pendingFinalizationSignals = 0;
+        if (pendingFinalizationSignals) { // signal any pending finalizations
+            pendingFinalizationSignals = false;
             signalSemaporeIfNotNil(frame, SPECIAL_OBJECT_INDEX.TheFinalizationSemaphore);
         }
     }

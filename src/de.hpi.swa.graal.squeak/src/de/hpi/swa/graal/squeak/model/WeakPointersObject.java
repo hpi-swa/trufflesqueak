@@ -1,6 +1,9 @@
 package de.hpi.swa.graal.squeak.model;
 
+import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
+
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
 import de.hpi.swa.graal.squeak.SqueakImageContext;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
@@ -8,6 +11,7 @@ import de.hpi.swa.graal.squeak.util.SqueakImageChunk;
 
 // TODO: Validate that weak objects are working correctly
 public final class WeakPointersObject extends AbstractPointersObject {
+    @CompilationFinal public static final ReferenceQueue<Object> weakPointersQueue = new ReferenceQueue<>();
 
     public WeakPointersObject(final SqueakImageContext img) {
         super(img);
@@ -56,10 +60,10 @@ public final class WeakPointersObject extends AbstractPointersObject {
     @Override
     public void atput0(final long index, final Object obj) {
         assert obj != null; // null indicates a problem
-        if (index < instsize()) { // store into instance variable
-            super.atput0(index, obj);
+        if (obj instanceof BaseSqueakObject && index >= instsize()) { // store into variable part
+            super.atput0(index, new WeakReference<>(obj, weakPointersQueue));
         } else {
-            super.atput0(index, new WeakReference<>(obj));
+            super.atput0(index, obj);
         }
     }
 
@@ -78,7 +82,7 @@ public final class WeakPointersObject extends AbstractPointersObject {
         for (int i = 0; i < pointers.length; i++) {
             final Object pointer = pointers[i];
             if (pointer instanceof BaseSqueakObject) {
-                pointers[i] = new WeakReference<>(pointer);
+                pointers[i] = new WeakReference<>(pointer, weakPointersQueue);
             } else {
                 pointers[i] = pointer;
             }
