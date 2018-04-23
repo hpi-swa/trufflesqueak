@@ -11,7 +11,7 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.util.SqueakDisplay.EVENT_TYPE;
 import de.hpi.swa.graal.squeak.util.SqueakDisplay.JavaDisplay;
 
-public class SqueakMouse extends MouseInputAdapter {
+public final class SqueakMouse extends MouseInputAdapter {
     @CompilationFinal private final JavaDisplay display;
     private Point position = new Point(0, 0);
     private int buttons = 0;

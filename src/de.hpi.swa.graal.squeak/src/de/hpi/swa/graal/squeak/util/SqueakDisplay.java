@@ -99,7 +99,7 @@ public final class SqueakDisplay {
         public abstract void adjustDisplay(long depth, long width, long height, boolean fullscreen);
     }
 
-    public static class JavaDisplay extends AbstractSqueakDisplay {
+    public static final class JavaDisplay extends AbstractSqueakDisplay {
         @CompilationFinal public final SqueakImageContext image;
         @CompilationFinal private final JFrame frame = new JFrame("GraalSqueak");
         @CompilationFinal private final Canvas canvas = new Canvas();
@@ -349,7 +349,7 @@ public final class SqueakDisplay {
         }
     }
 
-    private static class NullDisplay extends AbstractSqueakDisplay {
+    private static final class NullDisplay extends AbstractSqueakDisplay {
         @Override
         public void forceRect(final int left, final int right, final int top, final int bottom) {
         }

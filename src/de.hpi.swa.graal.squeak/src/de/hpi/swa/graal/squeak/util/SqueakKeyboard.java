@@ -10,7 +10,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import de.hpi.swa.graal.squeak.util.SqueakDisplay.EVENT_TYPE;
 import de.hpi.swa.graal.squeak.util.SqueakDisplay.JavaDisplay;
 
-public class SqueakKeyboard implements KeyListener {
+public final class SqueakKeyboard implements KeyListener {
     /**
      * The size of the character queue.
      */
