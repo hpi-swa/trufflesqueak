@@ -137,6 +137,8 @@ def _graalsqueak_gate_runner(args, tasks):
     with mx_gate.Task('TestGraalSqueak', tasks, tags=['test']) as t:
         if t:
             mx_unittest.unittest(unittest_args)
+    if jacocoArgs:
+        mx.command_function('jacocoreport')(['--format', 'xml', '.'])
 
 
 mx.update_commands(_suite, {
