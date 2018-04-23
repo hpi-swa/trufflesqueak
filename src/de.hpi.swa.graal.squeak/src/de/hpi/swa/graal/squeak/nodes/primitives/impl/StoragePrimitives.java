@@ -7,6 +7,7 @@ import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -192,28 +193,26 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(limit = "NEW_CACHE_SIZE", guards = {"receiver == cachedReceiver"}, assumptions = {"classFormatStable"})
-        protected Object newWithArgDirect(final ClassObject receiver, final long size,
+        @Specialization(limit = "NEW_CACHE_SIZE", assumptions = {"classFormatStable"}, guards = {"receiver == cachedReceiver", "isInstantiable(receiver, size)"})
+        protected static final Object newWithArgDirect(final ClassObject receiver, final long size,
                         @Cached("receiver") final ClassObject cachedReceiver,
                         @Cached("cachedReceiver.getClassFormatStable()") final Assumption classFormatStable) {
-            if (!cachedReceiver.isVariable() && size != 0) {
-                throw new PrimitiveFailed();
-            }
-            if (size < 0) {
-                throw new PrimitiveFailed();
-            }
             return cachedReceiver.newInstance(size);
         }
 
-        @Specialization(replaces = "newWithArgDirect")
-        protected Object newWithArg(final ClassObject receiver, final long size) {
-            if (!receiver.isVariable() && size != 0) {
-                throw new PrimitiveFailed();
-            }
-            if (size < 0) {
-                throw new PrimitiveFailed();
-            }
+        @Specialization(replaces = "newWithArgDirect", guards = "isInstantiable(receiver, size)")
+        protected static final Object newWithArg(final ClassObject receiver, final long size) {
             return receiver.newInstance(size);
+        }
+
+        protected static final boolean isInstantiable(final ClassObject receiver, final long size) {
+            return size == 0 || (receiver.isVariable() && size >= 0);
+        }
+
+        @SuppressWarnings("unused")
+        @Fallback
+        protected static final Object doBadArgument(final Object receiver, final Object value) {
+            throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
         }
     }
 
