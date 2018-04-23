@@ -9,7 +9,7 @@ fi
 
 mkdir "${TARGET_DIR}" > /dev/null
 pushd "${TARGET_DIR}"
-wget -q https://www.hpi.uni-potsdam.de/hirschfeld/artifacts/graalsqueak/TestImageWithVMMaker.zip
+wget -q https://dl.bintray.com/hpi-swa-lab/GraalSqueak/images/TestImageWithVMMaker.zip
 unzip TestImageWithVMMaker.zip
 mv *.image test.image
 mv *.changes test.changes
