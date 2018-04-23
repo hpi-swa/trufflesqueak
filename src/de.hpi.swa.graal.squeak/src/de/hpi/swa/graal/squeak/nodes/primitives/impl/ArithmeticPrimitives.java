@@ -292,7 +292,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
-        @Specialization // Specialization for quick nil checks.
+        @Specialization(guards = "!isNil(a)") // Specialization for quick nil checks.
         protected final boolean doNil(final Object a, final NilObject b) {
             return code.image.sqFalse;
         }
@@ -330,7 +330,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
-        @Specialization // Specialization for quick nil checks.
+        @Specialization(guards = "!isNil(a)") // Specialization for quick nil checks.
         protected final boolean doNil(final Object a, final NilObject b) {
             return code.image.sqTrue;
         }
