@@ -3,16 +3,10 @@ package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameInstance;
-import com.oracle.truffle.api.frame.FrameInstanceVisitor;
-import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
@@ -23,7 +17,6 @@ import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
-import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.ListObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
@@ -563,50 +556,8 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"isVirtualized(frame)"})
-        protected Object doGCVirtualized(final VirtualFrame frame, final BaseSqueakObject receiver) {
-            nilOutTruffleFrameSlots();
-            System.gc();
-            return code.image.wrap(Runtime.getRuntime().freeMemory());
-        }
-
-        @TruffleBoundary
-        private void nilOutTruffleFrameSlots() {
-            Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Object>() {
-                @Override
-                public ContextObject visitFrame(final FrameInstance frameInstance) {
-                    final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_WRITE);
-                    if (current.getArguments().length < FrameAccess.RCVR_AND_ARGS_START) {
-                        return null;
-                    }
-
-                    final CompiledCodeObject method = FrameAccess.getMethod(current);
-                    final int frameSP = (int) FrameUtil.getLongSafe(current, method.stackPointerSlot);
-                    if (frameSP <= 0) {
-                        return null;
-                    }
-                    for (int i = frameSP; i < method.getNumStackSlots(); i++) {
-                        stackWriteNode.execute(current, i, code.image.nil);
-                    }
-                    return null;
-                }
-            });
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"!isVirtualized(frame)"})
+        @Specialization
         protected Object doGC(final VirtualFrame frame, final BaseSqueakObject receiver) {
-            BaseSqueakObject current = getContext(frame);
-            while (!current.isNil()) {
-                final ContextObject contextObject = (ContextObject) current;
-                if (contextObject.hasMethod()) {
-                    final int sp = (int) contextObject.getStackPointer();
-                    for (int i = sp; i < contextObject.getMethod().frameSize(); i++) {
-                        contextObject.atput0(i, code.image.nil);
-                    }
-                }
-                current = contextObject.getSender();
-            }
             System.gc();
             return code.image.wrap(Runtime.getRuntime().freeMemory());
         }
