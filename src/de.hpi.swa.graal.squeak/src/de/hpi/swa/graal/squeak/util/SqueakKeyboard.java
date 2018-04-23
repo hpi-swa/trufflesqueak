@@ -87,11 +87,12 @@ public final class SqueakKeyboard implements KeyListener {
     }
 
     public void keyTyped(final KeyEvent e) {
-        if (e.getKeyChar() == '\n') { // Ignore the return key, mapSpecialKey() took care of it
-            return;
+        if (e.getKeyChar() == '\n') {
+            // Ignore the return key, mapSpecialKey() took care of it
+        } else {
+            enqueue(e.getKeyChar());
+            addEvent(e, EVENT_KEY.CHAR);
         }
-        enqueue(e.getKeyChar());
-        addEvent(e, EVENT_KEY.CHAR);
     }
 
     public void keyPressed(final KeyEvent e) {

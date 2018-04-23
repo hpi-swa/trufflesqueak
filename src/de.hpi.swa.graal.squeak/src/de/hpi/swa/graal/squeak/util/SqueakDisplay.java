@@ -120,9 +120,10 @@ public final class SqueakDisplay {
             mouse = new SqueakMouse(this);
             keyboard = new SqueakKeyboard(this);
 
+            // install event listeners
             canvas.addMouseListener(mouse);
             canvas.addMouseMotionListener(mouse);
-            canvas.addKeyListener(keyboard);
+            frame.addKeyListener(keyboard);
 
             frame.setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
