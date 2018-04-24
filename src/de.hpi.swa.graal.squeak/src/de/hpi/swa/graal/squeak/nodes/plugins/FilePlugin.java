@@ -295,7 +295,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 final long read = getFileOrPrimFail(fileDescriptor).read(buffer, 0, count);
                 for (int index = 0; index < read; index++) {
-                    target.atput0(startIndex - 1 + index, (long) buffer[index]);
+                    target.atput0(startIndex - 1 + index, buffer[index] & 0xffL);
                 }
                 return read;
             } catch (IOException e) {
