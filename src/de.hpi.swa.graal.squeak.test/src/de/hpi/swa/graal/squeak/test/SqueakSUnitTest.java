@@ -575,25 +575,13 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
         image.getOutput().println("Setting author information...");
         evaluate("Utilities authorName: 'GraalSqueak'");
         evaluate("Utilities setAuthorInitials: 'GraalSqueak'");
-        image.getOutput().println("Patching timeout methods...");
-        Object patchResult = evaluate(String.join(" ",
-                        "TestCase addSelectorSilently: #timeout:after: withMethod:",
-                        "(TestCase compile: 'timeout: aBlock after: seconds ^ aBlock value'",
-                        "notifying: nil trailer: (CompiledMethodTrailer empty) ifFail: [^ nil]) method"));
-        assertNotEquals(image.nil, patchResult);
+
+        patchMethod("TestCase", "timeout:after:", "timeout: aBlock after: seconds ^ aBlock value");
+        patchMethod("BlockClosure", "valueWithin:onTimeout:", "valueWithin: aDuration onTimeout: timeoutBlock ^ self value");
         if (!runsOnMXGate()) {
-            // Print Errors to stderr.
-            patchResult = evaluate(String.join(" ",
-                            "TestCase addSelectorSilently: #runCase withMethod:",
-                            "(TestCase compile: 'runCase [self setUp. [self performTest] ensure: [self tearDown]] on: Error do: [:e | e printVerboseOn: FileStream stderr. e signal]'",
-                            "notifying: nil trailer: (CompiledMethodTrailer empty) ifFail: [^ nil]) method"));
-            assertNotEquals(image.nil, patchResult);
+            patchMethod("TestCase", "runCase", "runCase [self setUp. [self performTest] ensure: [self tearDown]] on: Error do: [:e | e printVerboseOn: FileStream stderr. e signal]");
         }
-        patchResult = evaluate(String.join(" ",
-                        "BlockClosure addSelectorSilently: #valueWithin:onTimeout: withMethod:",
-                        "(BlockClosure compile: 'valueWithin: aDuration onTimeout: timeoutBlock ^ self value'",
-                        "notifying: nil trailer: (CompiledMethodTrailer empty) ifFail: [^ nil]) method"));
-        assertNotEquals(image.nil, patchResult);
+        patchMethod("Project class", "uiManager", "uiManager ^ MorphicUIManager new");
     }
 
     private static boolean runsOnMXGate() {
@@ -663,6 +651,14 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
                         new Object[]{6L, getEvaluateSymbol(), getSmalltalkAssociation(), getCompilerSymbol(), image.wrap(expression), asSymbol(fakeMethodName), getSmalltalkAssociation()},
                         new int[]{0x41, 0x22, 0xC0, 0x23, 0xE0, 0x7C});
         return runMethod(method, getSmalltalkDictionary());
+    }
+
+    private static void patchMethod(final String className, final String selector, final String body) {
+        image.getOutput().println("Patching " + className + ">>#" + selector + "...");
+        final Object patchResult = evaluate(String.join(" ",
+                        className, "addSelectorSilently:", "#" + selector, "withMethod: (", className, "compile: '" + body + "'",
+                        "notifying: nil trailer: (CompiledMethodTrailer empty) ifFail: [^ nil]) method"));
+        assertNotEquals(image.nil, patchResult);
     }
 
     private static String[] getSqueakTests(final String type) {
