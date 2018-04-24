@@ -110,10 +110,10 @@ public final class SqueakDisplay {
         @CompilationFinal public final SqueakKeyboard keyboard;
         @CompilationFinal private final Deque<long[]> deferredEvents = new ArrayDeque<>();
 
-        @CompilationFinal private static final Toolkit toolkit = Toolkit.getDefaultToolkit();
-        @CompilationFinal(dimensions = 1) private static final byte[] blackAndWhite = new byte[]{(byte) 0, (byte) 255};
-        @CompilationFinal(dimensions = 1) private static final byte[] alphaComponent = new byte[]{(byte) 255};
-        @CompilationFinal private static final ColorModel cursorModel = new IndexColorModel(1, 1, blackAndWhite, blackAndWhite, blackAndWhite, alphaComponent);
+        @CompilationFinal private static final Toolkit TOOLKIT = Toolkit.getDefaultToolkit();
+        @CompilationFinal(dimensions = 1) private static final byte[] BLACK_AND_WHITE = new byte[]{(byte) 0, (byte) 255};
+        @CompilationFinal(dimensions = 1) private static final byte[] ALPHA_COMPONENT = new byte[]{(byte) 255};
+        @CompilationFinal private static final ColorModel CURSOR_MODEL = new IndexColorModel(1, 1, BLACK_AND_WHITE, BLACK_AND_WHITE, BLACK_AND_WHITE, ALPHA_COMPONENT);
 
         private boolean deferUpdates = false;
 
@@ -321,7 +321,7 @@ public final class SqueakDisplay {
 
         @Override
         public void setCursor(final int[] cursorWords) {
-            final Dimension bestCursorSize = toolkit.getBestCursorSize(CURSOR_WIDTH, CURSOR_HEIGHT);
+            final Dimension bestCursorSize = TOOLKIT.getBestCursorSize(CURSOR_WIDTH, CURSOR_HEIGHT);
             final Cursor cursor;
             if (bestCursorSize.width == 0 || bestCursorSize.height == 0) {
                 cursor = Cursor.getDefaultCursor();
@@ -329,8 +329,8 @@ public final class SqueakDisplay {
                 final DataBuffer buf = new DataBufferInt(cursorWords, (CURSOR_WIDTH * CURSOR_HEIGHT / 8) * 1);
                 final SampleModel sm = new MultiPixelPackedSampleModel(DataBuffer.TYPE_INT, CURSOR_WIDTH, CURSOR_HEIGHT, 1);
                 final WritableRaster raster = Raster.createWritableRaster(sm, buf, null);
-                final Image cursorImage = new BufferedImage(cursorModel, raster, true, null);
-                cursor = toolkit.createCustomCursor(cursorImage, new Point(0, 0), "GraalSqueak Cursor");
+                final Image cursorImage = new BufferedImage(CURSOR_MODEL, raster, true, null);
+                cursor = TOOLKIT.createCustomCursor(cursorImage, new Point(0, 0), "GraalSqueak Cursor");
             }
             canvas.setCursor(cursor);
         }
@@ -364,6 +364,7 @@ public final class SqueakDisplay {
 
     private static final class NullDisplay extends AbstractSqueakDisplay {
         @CompilationFinal private static final Dimension DEFAULT_DIMENSION = new Dimension(1024, 768);
+        @CompilationFinal private static final Point NULL_POINT = new Point(0, 0);
 
         @Override
         public void forceRect(final int left, final int right, final int top, final int bottom) {
@@ -402,7 +403,7 @@ public final class SqueakDisplay {
 
         @Override
         public Point getLastMousePosition() {
-            return new Point(0, 0);
+            return NULL_POINT;
         }
 
         @Override
