@@ -36,6 +36,7 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.FORM;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 
 public final class SqueakDisplay {
+    @CompilationFinal private static final String DEFAULT_WINDOW_TITLE = "GraalSqueak";
     @CompilationFinal public static final int CURSOR_WIDTH = 16;
     @CompilationFinal public static final int CURSOR_HEIGHT = 16;
 
@@ -96,11 +97,13 @@ public final class SqueakDisplay {
         public abstract void adjustDisplay(long depth, long width, long height, boolean fullscreen);
 
         public abstract void resizeTo(int width, int height);
+
+        public abstract void setWindowTitle(String title);
     }
 
     public static final class JavaDisplay extends AbstractSqueakDisplay {
         @CompilationFinal public final SqueakImageContext image;
-        @CompilationFinal private final JFrame frame = new JFrame("GraalSqueak");
+        @CompilationFinal private final JFrame frame = new JFrame(DEFAULT_WINDOW_TITLE);
         @CompilationFinal private final Canvas canvas = new Canvas();
 
         @CompilationFinal public final SqueakMouse mouse;
@@ -124,6 +127,7 @@ public final class SqueakDisplay {
             canvas.addMouseMotionListener(mouse);
             frame.addKeyListener(keyboard);
 
+            frame.setTitle(DEFAULT_WINDOW_TITLE + " (" + image.config.getImagePath() + ")");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.getContentPane().add(canvas);
             frame.setResizable(true);
@@ -347,6 +351,11 @@ public final class SqueakDisplay {
         public void setDeferUpdates(final boolean flag) {
             deferUpdates = flag;
         }
+
+        @Override
+        public void setWindowTitle(final String title) {
+            frame.setTitle(title);
+        }
     }
 
     private static final class NullDisplay extends AbstractSqueakDisplay {
@@ -425,6 +434,10 @@ public final class SqueakDisplay {
 
         @Override
         public void resizeTo(final int width, final int height) {
+        }
+
+        @Override
+        public void setWindowTitle(final String title) {
         }
     }
 
