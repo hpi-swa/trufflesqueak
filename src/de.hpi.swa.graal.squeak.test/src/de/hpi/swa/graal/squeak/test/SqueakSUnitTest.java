@@ -65,7 +65,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
                     "BindingPolicyTest", TEST_TYPE.PASSING,
                     "BitBltClipBugs", TEST_TYPE.PASSING,
                     "BitBltSimulationTest", TEST_TYPE.PASSING,
-                    "BitBltTest", TEST_TYPE.NOT_TERMINATING,
+                    "BitBltTest", TEST_TYPE.IGNORE, // passing, but very slow
                     "BitmapBugz", TEST_TYPE.PASSING,
                     "BitmapStreamTests", TEST_TYPE.IGNORE, // OOM error
                     "BitSetTest", TEST_TYPE.PASSING,
@@ -97,7 +97,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
                     "ClassDescriptionTest", TEST_TYPE.PASSING,
                     "ClassFactoryForTestCaseTest", TEST_TYPE.IGNORE,
                     "ClassRemovalTest", TEST_TYPE.PASSING,
-                    "ClassRenameFixTest", TEST_TYPE.FAILING,
+                    "ClassRenameFixTest", TEST_TYPE.FLAKY,
                     "ClassTest", TEST_TYPE.IGNORE, // fails, and is very slow
                     "ClassTraitTest", TEST_TYPE.PASSING,
                     "ClassVarScopeTest", TEST_TYPE.IGNORE, // passes, but is very slow
@@ -234,7 +234,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
                     "MessageSetTest", TEST_TYPE.FAILING,
                     "MessageTraceTest", TEST_TYPE.FAILING,
                     "MethodContextTest", TEST_TYPE.PASSING,
-                    "MethodHighlightingTests", TEST_TYPE.FAILING,
+                    "MethodHighlightingTests", TEST_TYPE.FLAKY,
                     "MethodPragmaTest", TEST_TYPE.FAILING,
                     "MethodPropertiesTest", TEST_TYPE.PASSING,
                     "MethodReferenceTest", TEST_TYPE.FLAKY,
@@ -279,7 +279,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
                     "PromiseTest", TEST_TYPE.PASSING,
                     "ProtoObjectTest", TEST_TYPE.PASSING,
                     "PureBehaviorTest", TEST_TYPE.NOT_TERMINATING,
-                    "RandomTest", TEST_TYPE.NOT_TERMINATING,
+                    "RandomTest", TEST_TYPE.IGNORE, // passing, but very slow
                     "ReadStreamTest", TEST_TYPE.PASSING,
                     "ReadWriteStreamTest", TEST_TYPE.PASSING,
                     "RecentMessagesTest", TEST_TYPE.PASSING,
@@ -381,7 +381,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
                     "TraitTest", TEST_TYPE.IGNORE, // passing, but very slow
                     "TrueTest", TEST_TYPE.PASSING,
                     "UndefinedObjectTest", TEST_TYPE.PASSING,
-                    "UnderscoreSelectorsTest", TEST_TYPE.FAILING,
+                    "UnderscoreSelectorsTest", TEST_TYPE.FLAKY,
                     "UnimplementedCallBugz", TEST_TYPE.PASSING,
                     "UnixFileDirectoryTests", TEST_TYPE.PASSING,
                     "UrlTest", TEST_TYPE.FLAKY,
@@ -397,7 +397,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
                     "WeakIdentityKeyDictionaryTest", TEST_TYPE.PASSING,
                     "WeakMessageSendTest", TEST_TYPE.FAILING,
                     "WeakRegistryTest", TEST_TYPE.FLAKY, // uses Delays
-                    "WeakSetInspectorTest", TEST_TYPE.PASSING,
+                    "WeakSetInspectorTest", TEST_TYPE.IGNORE, // doesn't terminate sometimes on JDK8
                     "WeakSetTest", TEST_TYPE.PASSING,
                     "WebClientServerTest", TEST_TYPE.FAILING,
                     "WeekTest", TEST_TYPE.PASSING,
@@ -478,7 +478,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
     @Test
     public void testInspectSqueakTest() {
         assumeNotOnMXGate();
-        runTestCase("ByteArrayTest");
+        runTestCase("ArrayTest");
     }
 
     @Test
