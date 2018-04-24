@@ -35,7 +35,6 @@ public final class SqueakImageReader {
     private int oldBaseAddress;
     private int specialObjectsPointer;
     private int lastHash;
-    private int headerFlags;
     private int extraVMMemory;
     private short numStackPages;
     private short cogCodeSize;
@@ -104,7 +103,7 @@ public final class SqueakImageReader {
         lastHash = nextInt();
         final int lastWindowSize = nextInt();
         image.display.resizeTo((lastWindowSize >> 16) & 0xffff, lastWindowSize & 0xffff);
-        headerFlags = nextInt();
+        final int headerFlags = nextInt();
         image.flags.initialize(headerFlags);
         extraVMMemory = nextInt();
     }

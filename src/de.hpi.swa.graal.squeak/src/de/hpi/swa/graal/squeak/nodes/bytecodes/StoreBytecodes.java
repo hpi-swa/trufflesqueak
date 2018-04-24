@@ -17,7 +17,7 @@ import de.hpi.swa.graal.squeak.nodes.context.stack.StackTopNode;
 public final class StoreBytecodes {
 
     private abstract static class AbstractStoreIntoAssociationNode extends AbstractStoreIntoNode {
-        protected final long variableIndex;
+        @CompilationFinal protected final long variableIndex;
 
         private AbstractStoreIntoAssociationNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long variableIndex) {
             super(code, index, numBytecodes);
@@ -49,7 +49,7 @@ public final class StoreBytecodes {
     }
 
     private abstract static class AbstractStoreIntoReceiverVariableNode extends AbstractStoreIntoNode {
-        protected final long receiverIndex;
+        @CompilationFinal protected final long receiverIndex;
 
         private AbstractStoreIntoReceiverVariableNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long receiverIndex) {
             super(code, index, numBytecodes);
@@ -81,8 +81,8 @@ public final class StoreBytecodes {
     }
 
     private abstract static class AbstractStoreIntoTempNode extends AbstractBytecodeNode {
-        @Child TemporaryWriteNode storeNode;
-        protected final long tempIndex;
+        @CompilationFinal protected final long tempIndex;
+        @Child protected TemporaryWriteNode storeNode;
 
         private AbstractStoreIntoTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long tempIndex) {
             super(code, index, numBytecodes);
