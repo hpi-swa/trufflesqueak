@@ -76,7 +76,8 @@ public final class SqueakMouse extends MouseInputAdapter {
                 return YELLOW;  // right (pane menu)
             case MouseEvent.NOBUTTON:
                 return 0;
+            default:
+                throw new SqueakException("Unknown mouse button in event");
         }
-        throw new SqueakException("unknown mouse button in event");
     }
 }

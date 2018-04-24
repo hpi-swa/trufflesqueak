@@ -13,7 +13,6 @@ public class YieldProcessNode extends AbstractNodeWithImage {
     @Child private GetActiveProcessNode getActiveProcessNode;
     @Child private IsEmptyListNode isEmptyListNode;
     @Child private LinkProcessToListNode linkProcessToListNode;
-    @Child private TransferToNode transferToNode;
     @Child private WakeHighestPriorityNode wakeHighestPriorityNode;
 
     public static YieldProcessNode create(final SqueakImageContext image) {
@@ -25,7 +24,6 @@ public class YieldProcessNode extends AbstractNodeWithImage {
         getActiveProcessNode = GetActiveProcessNode.create(image);
         isEmptyListNode = IsEmptyListNode.create(image);
         linkProcessToListNode = LinkProcessToListNode.create(image);
-        transferToNode = TransferToNode.create(image);
         wakeHighestPriorityNode = WakeHighestPriorityNode.create(image);
     }
 

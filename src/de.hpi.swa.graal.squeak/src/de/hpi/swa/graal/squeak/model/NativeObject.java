@@ -7,7 +7,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import de.hpi.swa.graal.squeak.SqueakImageContext;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
-import de.hpi.swa.graal.squeak.util.SqueakImageChunk;
+import de.hpi.swa.graal.squeak.util.AbstractImageChunk;
 
 public class NativeObject extends SqueakObject {
     @CompilationFinal protected AbstractNativeObjectStorage storage;
@@ -67,7 +67,7 @@ public class NativeObject extends SqueakObject {
     }
 
     @Override
-    public void fillin(final SqueakImageChunk chunk) {
+    public void fillin(final AbstractImageChunk chunk) {
         super.fillin(chunk);
         storage.fillin(chunk);
     }

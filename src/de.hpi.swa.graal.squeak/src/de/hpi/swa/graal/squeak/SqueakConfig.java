@@ -60,6 +60,7 @@ public class SqueakConfig {
                     break;
                 default:
                     unrecognized.add(args[i]);
+                    break;
             }
         }
 
@@ -83,11 +84,11 @@ public class SqueakConfig {
         }
         if (receiver != null) {
             sb.add("-r");
-            sb.add(receiver.toString());
+            sb.add(receiver);
         }
         if (selector != null) {
             sb.add("-m");
-            sb.add(selector.toString());
+            sb.add(selector);
         }
         if (disableInterrupts) {
             sb.add("-d");
@@ -124,7 +125,7 @@ public class SqueakConfig {
     }
 
     public Object getReceiver() {
-        if (receiver.equals("nil")) {
+        if ("nil".equals(receiver)) {
             return null;
         } else {
             return Long.parseLong(receiver);

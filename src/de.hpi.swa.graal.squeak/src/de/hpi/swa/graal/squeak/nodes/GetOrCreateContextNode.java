@@ -17,11 +17,11 @@ import de.hpi.swa.graal.squeak.util.FrameMarker;
 
 @ImportStatic(FrameAccess.class)
 public abstract class GetOrCreateContextNode extends AbstractNodeWithCode {
+    @Child private static FrameStackReadNode frameStackReadNode = FrameStackReadNode.create();
+
     public static GetOrCreateContextNode create(final CompiledCodeObject code) {
         return GetOrCreateContextNodeGen.create(code);
     }
-
-    @Child private static FrameStackReadNode frameStackReadNode = FrameStackReadNode.create();
 
     protected GetOrCreateContextNode(final CompiledCodeObject code) {
         super(code);

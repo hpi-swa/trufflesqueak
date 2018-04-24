@@ -4,7 +4,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
 import de.hpi.swa.graal.squeak.SqueakImageContext;
-import de.hpi.swa.graal.squeak.util.SqueakImageChunk;
+import de.hpi.swa.graal.squeak.util.AbstractImageChunk;
 
 public abstract class SqueakObject extends BaseSqueakObject {
     @CompilationFinal private long hash;
@@ -21,7 +21,7 @@ public abstract class SqueakObject extends BaseSqueakObject {
     }
 
     @Override
-    public void fillin(final SqueakImageChunk chunk) {
+    public void fillin(final AbstractImageChunk chunk) {
         hash = chunk.getHash();
         sqClass = chunk.getSqClass();
     }

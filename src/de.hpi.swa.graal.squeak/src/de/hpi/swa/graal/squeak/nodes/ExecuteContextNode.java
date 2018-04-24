@@ -28,7 +28,6 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
     @Child private HandleNonVirtualReturnNode handleNonVirtualReturnNode;
     @Child private FrameSlotReadNode contextReadNode;
-    @Child private FrameSlotReadNode instructionPointerReadNode;
     @Child private FrameSlotWriteNode instructionPointerWriteNode;
     @Child private StackPushNode pushStackNode;
 
@@ -44,7 +43,6 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
         handleNonLocalReturnNode = HandleNonLocalReturnNode.create(code);
         handleNonVirtualReturnNode = HandleNonVirtualReturnNode.create(code);
         contextReadNode = FrameSlotReadNode.create(code.thisContextOrMarkerSlot);
-        instructionPointerReadNode = FrameSlotReadNode.create(code.instructionPointerSlot);
         instructionPointerWriteNode = FrameSlotWriteNode.create(code.instructionPointerSlot);
         pushStackNode = StackPushNode.create(code);
     }

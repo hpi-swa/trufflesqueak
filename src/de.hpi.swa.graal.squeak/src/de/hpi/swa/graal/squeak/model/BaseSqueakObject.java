@@ -6,7 +6,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import de.hpi.swa.graal.squeak.SqueakImageContext;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.instrumentation.BaseSqueakObjectMessageResolutionForeign;
-import de.hpi.swa.graal.squeak.util.SqueakImageChunk;
+import de.hpi.swa.graal.squeak.util.AbstractImageChunk;
 
 public abstract class BaseSqueakObject implements TruffleObject {
     private static final int IDENTITY_HASH_MASK = 0x400000 - 1;
@@ -20,7 +20,7 @@ public abstract class BaseSqueakObject implements TruffleObject {
         return obj instanceof BaseSqueakObject;
     }
 
-    public abstract void fillin(SqueakImageChunk chunk);
+    public abstract void fillin(AbstractImageChunk chunk);
 
     @Override
     public String toString() {

@@ -37,7 +37,7 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.StoreBytecodes.PopIntoRemoteTempN
 import de.hpi.swa.graal.squeak.nodes.bytecodes.StoreBytecodes.PopIntoTemporaryLocationNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.StoreBytecodes.StoreIntoRemoteTempNode;
 
-public class SqueakBytecodeDecoder {
+public final class SqueakBytecodeDecoder {
     @CompilationFinal private final CompiledCodeObject code;
     @CompilationFinal(dimensions = 1) private final byte[] bc;
     private int currentIndex = 0;
@@ -184,8 +184,9 @@ public class SqueakBytecodeDecoder {
             case 240: case 241: case 242: case 243: case 244: case 245: case 246: case 247:
             case 248: case 249: case 250: case 251: case 252: case 253: case 254: case 255:
                 return SendLiteralSelectorNode.create(code, index, 1, b & 0xF, 2);
+            default:
+                throw new SqueakException("Unknown bytecode: " + b);
         }
         //@formatter:on
-        throw new SqueakException("Unknown bytecode: " + b);
     }
 }

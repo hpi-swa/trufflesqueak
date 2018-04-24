@@ -22,7 +22,7 @@ import de.hpi.swa.graal.squeak.instrumentation.CompiledCodeObjectPrinter;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.EnterCodeNode;
 import de.hpi.swa.graal.squeak.util.BitSplitter;
-import de.hpi.swa.graal.squeak.util.SqueakImageChunk;
+import de.hpi.swa.graal.squeak.util.AbstractImageChunk;
 
 public abstract class CompiledCodeObject extends SqueakObject {
     public enum SLOT_IDENTIFIER {
@@ -176,16 +176,12 @@ public abstract class CompiledCodeObject extends SqueakObject {
         return stackSlots[i];
     }
 
-    public long convertTempIndexToStackIndex(final long tempIndex) {
-        return tempIndex - getNumArgsAndCopiedValues();
-    }
-
     public long getNumStackSlots() {
         return stackSlots.length;
     }
 
     @Override
-    public void fillin(final SqueakImageChunk chunk) {
+    public void fillin(final AbstractImageChunk chunk) {
         super.fillin(chunk);
         final List<Integer> data = chunk.data();
         final int header = data.get(0) >> 1; // header is a tagged small integer

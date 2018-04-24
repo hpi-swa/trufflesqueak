@@ -170,7 +170,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
         @Specialization(guards = {"receiver.hasVirtualSender()"})
         @TruffleBoundary
-        Object findNextVirtualized(final ContextObject receiver) {
+        protected final Object findNextVirtualized(final ContextObject receiver) {
             final ContextObject handlerContext = Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<ContextObject>() {
                 boolean foundMyself = false;
                 final FrameMarker frameMarker = receiver.getFrameMarker();
@@ -204,7 +204,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         @Specialization(guards = {"!receiver.hasVirtualSender()"})
-        Object findNext(final ContextObject receiver) {
+        protected final Object findNext(final ContextObject receiver) {
             ContextObject context = receiver;
             while (true) {
                 if (context.getMethod().isExceptionHandlerMarked()) {
@@ -349,7 +349,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         @Specialization
-        long doSize(final ContextObject receiver) {
+        protected static final long doSize(final ContextObject receiver) {
             return receiver.varsize();
         }
     }

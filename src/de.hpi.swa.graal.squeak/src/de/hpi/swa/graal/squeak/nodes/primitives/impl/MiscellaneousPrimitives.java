@@ -374,6 +374,8 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
                 // case 10001: // hardware details (Win32 only)
                 // case 10002: // operating system details (Win32 only)
                 // case 10003: // graphics hardware details (Win32 only)
+                default:
+                    return code.image.nil;
             }
             return code.image.nil;
         }

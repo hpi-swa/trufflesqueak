@@ -11,6 +11,10 @@ import de.hpi.swa.graal.squeak.util.SqueakDisplay.EVENT_TYPE;
 import de.hpi.swa.graal.squeak.util.SqueakDisplay.JavaDisplay;
 
 public final class SqueakKeyboard implements KeyListener {
+    @CompilationFinal private final JavaDisplay display;
+    @CompilationFinal private final Deque<Character> keys = new ArrayDeque<>(TYPEAHEAD_LIMIT);
+    private int modifierKeys = 0;
+
     /**
      * The size of the character queue.
      */
@@ -65,10 +69,6 @@ public final class SqueakKeyboard implements KeyListener {
                     KeyEvent.VK_DOWN,
                     KeyEvent.VK_BACK_QUOTE,
     };
-
-    @CompilationFinal private final JavaDisplay display;
-    @CompilationFinal private final Deque<Character> keys = new ArrayDeque<>(TYPEAHEAD_LIMIT);
-    private int modifierKeys = 0;
 
     public SqueakKeyboard(final JavaDisplay display) {
         this.display = display;

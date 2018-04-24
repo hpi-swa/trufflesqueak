@@ -2,7 +2,7 @@ package de.hpi.swa.graal.squeak.util;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
-public class SqueakImageFlags {
+public final class SqueakImageFlags {
     @CompilationFinal private int fullScreenFlag = 0;
     @CompilationFinal private int imageFloatsBigEndian;
     @CompilationFinal private boolean flagInterpretedMethods;

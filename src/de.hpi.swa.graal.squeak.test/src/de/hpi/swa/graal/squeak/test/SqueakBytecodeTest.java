@@ -4,6 +4,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -55,7 +56,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
                 final Object result = createContext(code, rcvr).execute(frame);
                 assertSame(image.sqTrue, result);
             } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
-                assertTrue("broken test", false);
+                fail("broken test");
             }
         }
     }
@@ -74,7 +75,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
                 final Object result = createContext(code, rcvr).execute(frame);
                 assertSame(expectedResults[i], result);
             } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
-                assertTrue("broken test", false);
+                fail("broken test");
             }
         }
     }
@@ -93,7 +94,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
                 final Object result = createContext(code, rcvr).execute(frame);
                 assertSame(image.sqFalse, result);
             } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
-                assertTrue("broken test", false);
+                fail("broken test");
             }
         }
     }
@@ -151,7 +152,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
             bytecode = 126 + i;
             try {
                 runMethod(rcvr, bytecode);
-                assertTrue("Exception expected", false);
+                fail("Exception expected");
             } catch (SqueakException e) {
                 assertEquals("Unknown/uninterpreted bytecode " + bytecode, e.getMessage());
             }
@@ -182,7 +183,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
             try {
                 assertSame(image.sqTrue, method.execute(frame));
             } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
-                assertTrue("broken test", false);
+                fail("broken test");
             }
         }
     }
@@ -200,7 +201,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
                 final Object result = createContext(code, rcvr).execute(frame);
                 assertSame(expectedResults[i], result);
             } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
-                assertTrue("broken test", false);
+                fail("broken test");
             }
         }
     }
@@ -218,7 +219,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
                 final Object result = createContext(code, rcvr).execute(frame);
                 assertSame(image.sqFalse, result);
             } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
-                assertTrue("broken test", false);
+                fail("broken test");
             }
         }
     }
@@ -248,7 +249,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
             try {
                 assertSame(1L, createContext(code, rcvr).execute(frame));
             } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
-                assertTrue("broken test", false);
+                fail("broken test");
             }
         }
     }
@@ -274,7 +275,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
                 final PointersObject literal = (PointersObject) code.getLiteral(i);
                 assertSame(image.sqTrue, literal.getPointers()[ASSOCIATION.VALUE]);
             } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
-                assertTrue("broken test", false);
+                fail("broken test");
             }
         }
     }
@@ -304,7 +305,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
             try {
                 assertSame(1L, createContext(code, rcvr).execute(frame));
             } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
-                assertTrue("broken test", false);
+                fail("broken test");
             }
         }
     }
@@ -328,7 +329,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
                 final PointersObject literal = (PointersObject) code.getLiteral(i);
                 assertSame(image.sqTrue, literal.getPointers()[ASSOCIATION.VALUE]);
             } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
-                assertTrue("broken test", false);
+                fail("broken test");
             }
         }
     }
@@ -359,7 +360,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
                 final Object result = createContext(code, rcvr).execute(frame);
                 assertSame(expectedResults[i], result);
             } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
-                assertTrue("broken test", false);
+                fail("broken test");
             }
         }
     }
@@ -377,7 +378,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
                 final Object result = createContext(code, rcvr).execute(frame);
                 assertSame(image.sqFalse, result);
             } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
-                assertTrue("broken test", false);
+                fail("broken test");
             }
         }
     }
@@ -429,7 +430,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
                 final PointersObject literal = (PointersObject) code.getLiteral(i);
                 assertSame(image.sqTrue, literal.getPointers()[ASSOCIATION.VALUE]);
             } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
-                assertTrue("broken test", false);
+                fail("broken test");
             }
         }
     }
@@ -511,7 +512,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
             final Object result = createContext(code, rcvr).execute(frame);
             assertSame(image.sqTrue, result);
         } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
-            assertTrue("broken test", false);
+            fail("broken test");
         }
     }
 
@@ -533,7 +534,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
             assertEquals(image.sqFalse, resultList.at0(0));
             assertEquals(image.sqFalse, resultList.at0(1));
         } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
-            assertTrue("broken test", false);
+            fail("broken test");
         }
     }
 
@@ -555,7 +556,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
             assertEquals(image.sqFalse, resultList.at0(0));
             assertEquals(image.sqTrue, resultList.at0(1));
         } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
-            assertTrue("broken test", false);
+            fail("broken test");
         }
     }
 

@@ -412,7 +412,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        Object get(@SuppressWarnings("unused") final BaseSqueakObject receiver) {
+        protected final Object doBytesLeft(@SuppressWarnings("unused") final BaseSqueakObject receiver) {
             return code.image.wrap(Runtime.getRuntime().freeMemory());
         }
     }

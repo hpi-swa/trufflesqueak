@@ -24,9 +24,8 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
 public final class ExecuteTopLevelContextNode extends RootNode {
     @CompilationFinal private final SqueakImageContext image;
     @CompilationFinal private final ContextObject initialContext;
-    @CompilationFinal private final EnterCodeNode enterActiveCodeNode;
-    @Child private FrameSlotWriteNode instructionPointerWriteNode;
     @Child private FrameSlotWriteNode contextWriteNode;
+    @Child private ExecuteContextNode executeContextNode;
 
     public static ExecuteTopLevelContextNode create(final SqueakLanguage language, final ContextObject context) {
         return new ExecuteTopLevelContextNode(language, context, context.getCodeObject());
@@ -36,8 +35,6 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         super(language, code.getFrameDescriptor());
         this.image = code.image;
         this.initialContext = context;
-        enterActiveCodeNode = EnterCodeNode.create(language, code);
-        instructionPointerWriteNode = FrameSlotWriteNode.create(code.instructionPointerSlot);
         contextWriteNode = FrameSlotWriteNode.create(code.thisContextOrMarkerSlot);
     }
 
@@ -55,8 +52,6 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         }
         throw new SqueakException("Top level context did not return");
     }
-
-    @Child ExecuteContextNode executeContextNode;
 
     public void executeLoop() {
         ContextObject activeContext = initialContext;

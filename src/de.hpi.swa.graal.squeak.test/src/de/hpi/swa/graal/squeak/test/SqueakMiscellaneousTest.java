@@ -17,6 +17,7 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushConstantNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodes.ReturnReceiverNode;
 import de.hpi.swa.graal.squeak.util.SqueakBytecodeDecoder;
 import de.hpi.swa.graal.squeak.util.SqueakImageChunk;
+import de.hpi.swa.graal.squeak.util.AbstractImageChunk;
 
 public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImage {
     @Test
@@ -185,7 +186,7 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
 
     @Test
     public void testFloatDecoding() {
-        SqueakImageChunk chunk = newFloatChunk();
+        AbstractImageChunk chunk = newFloatChunk();
         chunk.data().add(0);
         chunk.data().add(1072693248);
         assertEquals(1.0, getDouble(chunk), 0);
@@ -201,12 +202,12 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
         assertEquals(4.841431442464721, getDouble(chunk), 0);
     }
 
-    private static double getDouble(final SqueakImageChunk chunk) {
+    private static double getDouble(final AbstractImageChunk chunk) {
         return ((FloatObject) chunk.asObject()).getValue();
     }
 
-    private static SqueakImageChunk newFloatChunk() {
-        final SqueakImageChunk chunk = new SqueakImageChunk(
+    private static AbstractImageChunk newFloatChunk() {
+        final AbstractImageChunk chunk = new SqueakImageChunk(
                         null,
                         image,
                         2, // 2 words

@@ -36,9 +36,6 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.FORM;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 
 public final class SqueakDisplay {
-    @CompilationFinal public static final int DEFAULT_WIDTH = 1024;
-    @CompilationFinal public static final int DEFAULT_HEIGHT = 768;
-    @CompilationFinal public static final Dimension DEFAULT_DIMENSION = new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT);
     @CompilationFinal public static final int CURSOR_WIDTH = 16;
     @CompilationFinal public static final int CURSOR_HEIGHT = 16;
 
@@ -97,6 +94,8 @@ public final class SqueakDisplay {
         public abstract void setDeferUpdates(boolean flag);
 
         public abstract void adjustDisplay(long depth, long width, long height, boolean fullscreen);
+
+        public abstract void resizeTo(int width, int height);
     }
 
     public static final class JavaDisplay extends AbstractSqueakDisplay {
@@ -125,7 +124,6 @@ public final class SqueakDisplay {
             canvas.addMouseMotionListener(mouse);
             frame.addKeyListener(keyboard);
 
-            frame.setSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.getContentPane().add(canvas);
             frame.setResizable(true);
@@ -144,10 +142,6 @@ public final class SqueakDisplay {
             @CompilationFinal private int width;
             @CompilationFinal private int height;
             @CompilationFinal private int depth;
-
-            private Canvas() {
-                resizeTo(DEFAULT_DIMENSION);
-            }
 
             @Override
             public void paintComponent(final Graphics g) {
@@ -272,6 +266,11 @@ public final class SqueakDisplay {
         }
 
         @Override
+        public void resizeTo(final int width, final int height) {
+            frame.setSize(width, height);
+        }
+
+        @Override
         public void setFullscreen(final boolean enable) {
             if (enable) {
                 frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
@@ -351,6 +350,8 @@ public final class SqueakDisplay {
     }
 
     private static final class NullDisplay extends AbstractSqueakDisplay {
+        @CompilationFinal private static final Dimension DEFAULT_DIMENSION = new Dimension(1024, 768);
+
         @Override
         public void forceRect(final int left, final int right, final int top, final int bottom) {
         }
@@ -421,20 +422,24 @@ public final class SqueakDisplay {
         @Override
         public void adjustDisplay(final long depth, final long width, final long height, final boolean fullscreen) {
         }
+
+        @Override
+        public void resizeTo(final int width, final int height) {
+        }
     }
 
-    static final int[] PIXEL_LOOKUP_1BIT = {0xffffffff, 0xff000000};
+    private static final int[] PIXEL_LOOKUP_1BIT = {0xffffffff, 0xff000000};
 
-    static final int[] PIXEL_LOOKUP_2BIT = {0xff000000, 0xff848484, 0xffc6c6c6, 0xffffffff};
+    private static final int[] PIXEL_LOOKUP_2BIT = {0xff000000, 0xff848484, 0xffc6c6c6, 0xffffffff};
 
-    static final int[] PIXEL_LOOKUP_4BIT = {
+    private static final int[] PIXEL_LOOKUP_4BIT = {
                     0xff000000, 0xff000084, 0xff008400, 0xff008484,
                     0xff840000, 0xff840084, 0xff848400, 0xff848484,
                     0xffc6c6c6, 0xff0000ff, 0xff00ff00, 0xff00ffff,
                     0xffff0000, 0xffff00ff, 0xffffff00, 0xffffffff
     };
 
-    static final int[] PIXEL_LOOKUP_8BIT = {
+    private static final int[] PIXEL_LOOKUP_8BIT = {
                     0xffffffff, 0xff000000, 0xffffffff, 0xff7f7f7f, 0xffff0000, 0xff00ff00,
                     0xff0000ff, 0xff00ffff, 0xffffff00, 0xffff00ff, 0xff1f1f1f, 0xff3f3f3f,
                     0xff5f5f5f, 0xff9f9f9f, 0xffbfbfbf, 0xffdfdfdf, 0xff070707, 0xff0f0f0f,
@@ -479,7 +484,7 @@ public final class SqueakDisplay {
                     0xffff65cb, 0xffff98cb, 0xffffcbcb, 0xffffffcb, 0xffff00ff, 0xffff32ff,
                     0xffff65ff, 0xffff98ff, 0xffffcbff, 0xffffffff
     };
-    static final int[][] PIXEL_LOOKUP_TABLE = {
+    private static final int[][] PIXEL_LOOKUP_TABLE = {
                     PIXEL_LOOKUP_1BIT,
                     PIXEL_LOOKUP_2BIT,
                     null,

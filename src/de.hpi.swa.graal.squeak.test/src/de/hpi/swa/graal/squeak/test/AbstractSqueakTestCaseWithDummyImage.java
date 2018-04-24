@@ -3,11 +3,11 @@ package de.hpi.swa.graal.squeak.test;
 import org.junit.BeforeClass;
 
 import de.hpi.swa.graal.squeak.SqueakImageContext;
-import de.hpi.swa.graal.squeak.util.SqueakImageChunk;
+import de.hpi.swa.graal.squeak.util.AbstractImageChunk;
 
 public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSqueakTestCase {
 
-    private static final class DummyFormatChunk extends SqueakImageChunk {
+    private static final class DummyFormatChunk extends AbstractImageChunk {
 
         private DummyFormatChunk(final int format) {
             super(null, null, 0, format, 0, 0, 0);
@@ -21,7 +21,7 @@ public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSquea
         }
     }
 
-    private static final class DummyPointersChunk extends SqueakImageChunk {
+    private static final class DummyPointersChunk extends AbstractImageChunk {
         private Object[] dummyPointers;
 
         private DummyPointersChunk(final Object[] pointers) {

@@ -26,13 +26,13 @@ import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 
 public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
+    @CompilationFinal private static final Map<Long, RandomAccessFile> files = new HashMap<>();
+
     private static final class STDIO_HANDLES {
         private static final long IN = 0;
         private static final long OUT = 1;
         private static final long ERROR = 2;
     }
-
-    @CompilationFinal private static final Map<Long, RandomAccessFile> files = new HashMap<>();
 
     @Override
     public List<? extends NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
@@ -122,7 +122,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             final String pathName = fullPath.toString();
             final String fileName = fName.toString();
             final File path;
-            if (fileName.equals(".")) {
+            if (".".equals(fileName)) {
                 path = new File(pathName);
             } else {
                 path = new File(pathName + File.separator + fileName);

@@ -8,7 +8,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
 import de.hpi.swa.graal.squeak.SqueakImageContext;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
-import de.hpi.swa.graal.squeak.util.SqueakImageChunk;
+import de.hpi.swa.graal.squeak.util.AbstractImageChunk;
 
 public final class FloatObject extends NativeObject {
     @CompilationFinal public static final int PRECISION = 53;
@@ -45,7 +45,7 @@ public final class FloatObject extends NativeObject {
     }
 
     @Override
-    public void fillin(final SqueakImageChunk chunk) {
+    public void fillin(final AbstractImageChunk chunk) {
         super.fillin(chunk);
         final int[] words = chunk.getWords();
         assert words.length == 2;

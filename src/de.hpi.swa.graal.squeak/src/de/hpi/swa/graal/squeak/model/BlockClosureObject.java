@@ -18,7 +18,7 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.BLOCK_CLOSURE;
 import de.hpi.swa.graal.squeak.nodes.EnterCodeNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
-import de.hpi.swa.graal.squeak.util.SqueakImageChunk;
+import de.hpi.swa.graal.squeak.util.AbstractImageChunk;
 
 public final class BlockClosureObject extends BaseSqueakObject {
     @CompilationFinal private Object receiver;
@@ -60,7 +60,7 @@ public final class BlockClosureObject extends BaseSqueakObject {
     }
 
     @Override
-    public void fillin(final SqueakImageChunk chunk) {
+    public void fillin(final AbstractImageChunk chunk) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         final Object[] pointers = chunk.getPointers();
         assert pointers.length >= BLOCK_CLOSURE.FIRST_COPIED_VALUE;
@@ -130,6 +130,7 @@ public final class BlockClosureObject extends BaseSqueakObject {
                 break;
             default:
                 copied[index - BLOCK_CLOSURE.FIRST_COPIED_VALUE] = obj;
+                break;
         }
     }
 

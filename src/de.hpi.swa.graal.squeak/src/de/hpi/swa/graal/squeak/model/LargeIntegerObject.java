@@ -8,7 +8,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.graal.squeak.SqueakImageContext;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
-import de.hpi.swa.graal.squeak.util.SqueakImageChunk;
+import de.hpi.swa.graal.squeak.util.AbstractImageChunk;
 
 public final class LargeIntegerObject extends NativeObject {
     @CompilationFinal public static final long SMALLINTEGER32_MIN = -0x40000000;
@@ -61,7 +61,7 @@ public final class LargeIntegerObject extends NativeObject {
     }
 
     @Override
-    public void fillin(final SqueakImageChunk chunk) {
+    public void fillin(final AbstractImageChunk chunk) {
         super.fillin(chunk);
         derivedBigIntegerFromBytes();
     }

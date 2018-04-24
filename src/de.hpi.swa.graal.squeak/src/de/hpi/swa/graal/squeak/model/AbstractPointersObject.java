@@ -7,7 +7,7 @@ import de.hpi.swa.graal.squeak.SqueakImageContext;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
-import de.hpi.swa.graal.squeak.util.SqueakImageChunk;
+import de.hpi.swa.graal.squeak.util.AbstractImageChunk;
 
 public abstract class AbstractPointersObject extends SqueakObject {
     @CompilationFinal(dimensions = 1) protected Object[] pointers;
@@ -30,7 +30,7 @@ public abstract class AbstractPointersObject extends SqueakObject {
     }
 
     @Override
-    public void fillin(final SqueakImageChunk chunk) {
+    public void fillin(final AbstractImageChunk chunk) {
         super.fillin(chunk);
         pointers = chunk.getPointers();
     }
