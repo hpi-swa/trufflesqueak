@@ -100,9 +100,6 @@ public final class SendBytecodes {
     public static class SendLiteralSelectorNode extends AbstractSendNode {
         public static AbstractBytecodeNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int argCount) {
             final Object selector = code.getLiteral(literalIndex);
-            // if (selector != null && selector.toString().equals("halt")) {
-            // return new HaltNode(code, index);
-            // }
             return new SendLiteralSelectorNode(code, index, numBytecodes, selector, argCount);
         }
 

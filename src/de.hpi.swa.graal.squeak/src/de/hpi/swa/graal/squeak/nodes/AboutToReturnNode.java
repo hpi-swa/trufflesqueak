@@ -18,7 +18,6 @@ import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 
 public abstract class AboutToReturnNode extends AbstractNodeWithCode {
     @Child protected BlockActivationNode dispatch = BlockActivationNodeGen.create();
-    private static BaseSqueakObject aboutToReturnSelector;
     @Child private SendSelectorNode sendAboutToReturnNode;
     @Child private StackPushNode pushNode;
     @Child private SqueakNode blockArgumentNode;
@@ -31,14 +30,15 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
 
     protected AboutToReturnNode(final CompiledMethodObject method) {
         super(method);
-        if (aboutToReturnSelector == null) {
-            aboutToReturnSelector = (BaseSqueakObject) method.image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SelectorAboutToReturn);
-        }
-        sendAboutToReturnNode = new SendSelectorNode(method, -1, -1, aboutToReturnSelector, 2);
+        sendAboutToReturnNode = new SendSelectorNode(method, -1, -1, aboutToReturnSelector(method), 2);
         pushNode = StackPushNode.create(method);
         blockArgumentNode = TemporaryReadNode.create(method, 0);
         completeTempReadNode = TemporaryReadNode.create(method, 1);
         completeTempWriteNode = TemporaryWriteNode.create(method, 1);
+    }
+
+    private static BaseSqueakObject aboutToReturnSelector(final CompiledMethodObject method) {
+        return (BaseSqueakObject) method.image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SelectorAboutToReturn);
     }
 
     public abstract void executeAboutToReturn(VirtualFrame frame, NonLocalReturn nlr);

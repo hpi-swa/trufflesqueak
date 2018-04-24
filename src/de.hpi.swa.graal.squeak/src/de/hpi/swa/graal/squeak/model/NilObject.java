@@ -16,6 +16,7 @@ public final class NilObject extends BaseSqueakObject {
 
     @Override
     public void fillin(final AbstractImageChunk chunk) {
+        // nothing to fill in
     }
 
     @Override
@@ -30,6 +31,7 @@ public final class NilObject extends BaseSqueakObject {
 
     @Override
     public void atput0(final long idx, final Object object) {
+        throw new IndexOutOfBoundsException();
     }
 
     @Override

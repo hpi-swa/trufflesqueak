@@ -24,12 +24,6 @@ public final class SqueakKeyboard implements KeyListener {
     private static final int CONTROL_KEY = 16;
     private static final int COMMAND_KEY = 64;
 
-    private static final class EVENT_KEY {
-        private static final long CHAR = 0;
-        private static final long DOWN = 1;
-        private static final long UP = 2;
-    }
-
     /**
      * See ParagraphEditor class>>initializeCmdKeyShortcuts.
      */
@@ -70,6 +64,12 @@ public final class SqueakKeyboard implements KeyListener {
                     KeyEvent.VK_BACK_QUOTE,
     };
 
+    private static final class EVENT_KEY {
+        private static final long CHAR = 0;
+        private static final long DOWN = 1;
+        private static final long UP = 2;
+    }
+
     public SqueakKeyboard(final JavaDisplay display) {
         this.display = display;
     }
@@ -87,9 +87,7 @@ public final class SqueakKeyboard implements KeyListener {
     }
 
     public void keyTyped(final KeyEvent e) {
-        if (e.getKeyChar() == '\n') {
-            // Ignore the return key, mapSpecialKey() took care of it
-        } else {
+        if (e.getKeyChar() != '\n') { // Ignore the return key, mapSpecialKey() took care of it
             enqueue(e.getKeyChar());
             addEvent(e, EVENT_KEY.CHAR);
         }

@@ -197,7 +197,11 @@ public final class SqueakDisplay {
                                 0x8000  // alpha
                 );
                 final WritableRaster raster = colorModel.createCompatibleWritableRaster(width, height);
-                int word, high, low, x, y;
+                int word;
+                int high;
+                int low;
+                int x;
+                int y;
                 Object pixel = null;
                 for (int i = 0; i < words.length; i++) {
                     word = words[i];
@@ -363,6 +367,7 @@ public final class SqueakDisplay {
 
         @Override
         public void forceRect(final int left, final int right, final int top, final int bottom) {
+            // ignore
         }
 
         @Override
@@ -372,22 +377,27 @@ public final class SqueakDisplay {
 
         @Override
         public void setFullscreen(final boolean enable) {
+            // ignore
         }
 
         @Override
         public void forceUpdate() {
+            // ignore
         }
 
         @Override
         public void open() {
+            // ignore
         }
 
         @Override
         public void close() {
+            // ignore
         }
 
         @Override
         public void setSqDisplay(final PointersObject sqDisplay) {
+            // ignore
         }
 
         @Override
@@ -417,6 +427,7 @@ public final class SqueakDisplay {
 
         @Override
         public void setCursor(final int[] cursorWords) {
+            // ignore
         }
 
         @Override
@@ -426,18 +437,22 @@ public final class SqueakDisplay {
 
         @Override
         public void setDeferUpdates(final boolean flag) {
+            // ignore
         }
 
         @Override
         public void adjustDisplay(final long depth, final long width, final long height, final boolean fullscreen) {
+            // ignore
         }
 
         @Override
         public void resizeTo(final int width, final int height) {
+            // ignore
         }
 
         @Override
         public void setWindowTitle(final String title) {
+            // ignore
         }
     }
 

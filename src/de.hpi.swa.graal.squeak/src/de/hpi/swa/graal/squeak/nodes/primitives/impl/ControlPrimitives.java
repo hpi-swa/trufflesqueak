@@ -553,7 +553,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {130, 131})
     protected abstract static class PrimFullGCNode extends AbstractPrimitiveNode {
-        @Child FrameStackWriteNode stackWriteNode = FrameStackWriteNode.create();
+        @Child private FrameStackWriteNode stackWriteNode = FrameStackWriteNode.create();
 
         protected PrimFullGCNode(final CompiledMethodObject method) {
             super(method);

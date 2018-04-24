@@ -31,17 +31,10 @@ public final class SqueakImageReader {
     private final ByteBuffer intBuf = ByteBuffer.allocate(4);
     private final ByteBuffer longBuf = ByteBuffer.allocate(8);
     private int headerSize;
-    private int endOfMemory;
     private int oldBaseAddress;
     private int specialObjectsPointer;
-    private int lastHash;
-    private int extraVMMemory;
-    private short numStackPages;
-    private short cogCodeSize;
-    private int edenBytes;
     private short maxExternalSemaphoreTableSize;
     private int firstSegmentSize;
-    private int freeOldSpace;
     private int position = 0;
     private List<AbstractImageChunk> chunklist = new ArrayList<>();
     protected HashMap<Integer, AbstractImageChunk> chunktable = new HashMap<>();
@@ -97,25 +90,25 @@ public final class SqueakImageReader {
 
     private void readBaseHeader(final SqueakImageContext image) throws IOException {
         headerSize = nextInt();
-        endOfMemory = nextInt();
+        nextInt(); // endOfMemory
         oldBaseAddress = nextInt();
         specialObjectsPointer = nextInt();
-        lastHash = nextInt();
+        nextInt(); // 1 word last used hash
         final int lastWindowSize = nextInt();
         image.display.resizeTo((lastWindowSize >> 16) & 0xffff, lastWindowSize & 0xffff);
         final int headerFlags = nextInt();
         image.flags.initialize(headerFlags);
-        extraVMMemory = nextInt();
+        nextInt(); // extraVMMemory
     }
 
     private void readSpurHeader() throws IOException {
-        numStackPages = nextShort();
-        cogCodeSize = nextShort();
-        edenBytes = nextInt();
+        nextShort(); // numStackPages
+        nextShort(); // cogCodeSize
+        nextInt(); // edenBytes
         maxExternalSemaphoreTableSize = nextShort();
         nextShort(); // re-align
         firstSegmentSize = nextInt();
-        freeOldSpace = nextInt();
+        nextInt(); // freeOldSpace
     }
 
     private void readHeader(final SqueakImageContext image) throws IOException {
@@ -162,7 +155,6 @@ public final class SqueakImageReader {
     }
 
     private AbstractImageChunk readObject(final SqueakImageContext image) throws IOException {
-        log("o");
         int pos = position;
         assert pos % 8 == 0;
         long headerWord = nextLong();
@@ -197,12 +189,6 @@ public final class SqueakImageReader {
             }
         }
         return chunk;
-    }
-
-    private void log(final String string) {
-        if (output != null) {
-            // output.write(string);
-        }
     }
 
     private static long wordsFor(final long size) {
@@ -270,13 +256,16 @@ public final class SqueakImageReader {
     private void initObjects(final SqueakImageContext image) {
         initPrebuiltConstant(image);
         initPrebuiltSelectors(image);
-
         // connect all instances to their classes
         output.println("Connecting classes...");
         for (AbstractImageChunk chunk : chunklist) {
             chunk.setSqClass(classOf(chunk, image));
         }
+        instantiateClasses(image);
+        fillInObjects(image);
+    }
 
+    private void instantiateClasses(final SqueakImageContext image) {
         // find all metaclasses and instantiate their singleton instances as class objects
         output.println("Instantiating classes...");
         for (int classtablePtr : chunklist.get(HIDDEN_ROOTS_CHUNK).data()) {
@@ -293,7 +282,9 @@ public final class SqueakImageReader {
                 }
             }
         }
+    }
 
+    private void fillInObjects(final SqueakImageContext image) {
         output.println("Filling in objects...");
         for (AbstractImageChunk chunk : chunklist) {
             final Object chunkObject = chunk.asObject();

@@ -61,11 +61,9 @@ public final class CompiledMethodObject extends CompiledCodeObject {
             return;
         }
         final Object baseSqueakObject = literals[literals.length - 1];
-        if (baseSqueakObject instanceof PointersObject) {
-            if (((PointersObject) baseSqueakObject).size() == 2) {
-                ((PointersObject) baseSqueakObject).atput0(1, newClass);
-                return;
-            }
+        if (baseSqueakObject instanceof PointersObject && ((PointersObject) baseSqueakObject).size() == 2) {
+            ((PointersObject) baseSqueakObject).atput0(1, newClass);
+            return;
         }
         if (baseSqueakObject instanceof ClassObject) {
             literals[literals.length - 1] = newClass;

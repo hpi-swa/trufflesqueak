@@ -194,7 +194,7 @@ public abstract class CompiledCodeObject extends SqueakObject {
         bytes = chunk.getBytes(ptrs.length);
     }
 
-    void decodeHeader() {
+    protected void decodeHeader() {
         final int hdr = getHeader();
         final int[] splitHeader = BitSplitter.splitter(hdr, new int[]{15, 1, 1, 1, 6, 4, 2, 1});
         numLiterals = splitHeader[0];

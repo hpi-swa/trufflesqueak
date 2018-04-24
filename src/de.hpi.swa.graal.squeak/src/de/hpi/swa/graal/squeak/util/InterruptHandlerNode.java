@@ -112,10 +112,12 @@ public class InterruptHandlerNode extends Node {
 
         @Override
         public void sendOrBackwardJumpTrigger(final VirtualFrame frame) {
+            // ignore
         }
 
         @Override
         public void executeCheck(final VirtualFrame frame) {
+            // ignore
         }
     }
 }

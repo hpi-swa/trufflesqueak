@@ -21,6 +21,7 @@ import com.oracle.truffle.api.Truffle;
 
 import de.hpi.swa.graal.squeak.SqueakImageContext;
 import de.hpi.swa.graal.squeak.SqueakLanguage;
+import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
@@ -605,7 +606,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
             }
             currentDirectory = currentDirectory.getParentFile();
         }
-        throw new RuntimeException("Unable to locate test image.");
+        throw new SqueakException("Unable to locate test image.");
     }
 
     private static Object getSmalltalkDictionary() {

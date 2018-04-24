@@ -126,10 +126,8 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
                     }
                 } else if (node instanceof UnconditionalJumpNode) {
                     final int successor = ((UnconditionalJumpNode) node).getJumpSuccessor();
-                    if (CompilerDirectives.inInterpreter()) {
-                        if (successor <= pc) {
-                            backJumpCounter++;
-                        }
+                    if (CompilerDirectives.inInterpreter() && successor <= pc) {
+                        backJumpCounter++;
                     }
                     pc = successor;
                     node = bytecodeNodes[pc];

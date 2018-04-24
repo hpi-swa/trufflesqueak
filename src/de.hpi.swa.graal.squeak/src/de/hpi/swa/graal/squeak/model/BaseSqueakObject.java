@@ -95,5 +95,6 @@ public abstract class BaseSqueakObject implements TruffleObject {
 
     @SuppressWarnings("unused")
     public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
+        // do nothing by default
     }
 }
