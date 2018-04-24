@@ -247,6 +247,7 @@ public final class SqueakImageContext {
         return character;
     }
 
+    @TruffleBoundary
     public ListObject wrap(final Object... elements) {
         final Object[] wrappedElements = new Object[elements.length];
         for (int i = 0; i < elements.length; i++) {
