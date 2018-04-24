@@ -1,6 +1,7 @@
 package de.hpi.swa.graal.squeak.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -95,7 +96,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         while (context != targetContext) {
             final BaseSqueakObject sender = context.getSender();
             if (sender.isNil()) {
-                image.getError().println("Unable to unwind context chain (sender: " + sender + "; target: " + targetContext + ")");
+                handleNilSender(startContext, targetContext);
                 context = (ContextObject) targetContext;
                 break;
             }
@@ -104,5 +105,11 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         }
         context.push(returnValue);
         return context;
+    }
+
+    @TruffleBoundary
+    private void handleNilSender(final BaseSqueakObject startContext, final BaseSqueakObject targetContext) {
+        image.getError().println("Unable to unwind context chain (start: " + startContext + "; target: " + targetContext + ")");
+        ((ContextObject) startContext).printSqStackTrace();
     }
 }
