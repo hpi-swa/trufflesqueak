@@ -664,8 +664,13 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             return asFloatObject(a.getValue() / b.getValue());
         }
 
+        @Specialization(guards = {"b != 0", "isSmallInteger(b)"})
+        protected final FloatObject doFloatLong(final FloatObject a, final long b) {
+            return asFloatObject(doDouble(a.getValue(), b));
+        }
+
         @Specialization(guards = {"!isZero(b)"})
-        protected final FloatObject doFloatLong(final FloatObject a, final double b) {
+        protected final FloatObject doFloatDouble(final FloatObject a, final double b) {
             return asFloatObject(doDouble(a.getValue(), b));
         }
 
