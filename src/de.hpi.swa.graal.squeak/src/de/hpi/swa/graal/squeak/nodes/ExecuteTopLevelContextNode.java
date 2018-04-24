@@ -84,7 +84,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         }
     }
 
-    private static ContextObject unwindContextChain(final BaseSqueakObject startContext, final BaseSqueakObject targetContext, final Object returnValue) {
+    private ContextObject unwindContextChain(final BaseSqueakObject startContext, final BaseSqueakObject targetContext, final Object returnValue) {
         if (startContext.isNil()) {
             throw new TopLevelReturn(returnValue);
         }
@@ -95,7 +95,9 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         while (context != targetContext) {
             final BaseSqueakObject sender = context.getSender();
             if (sender.isNil()) {
-                throw new SqueakException("Unable to unwind context chain");
+                image.getError().println("Unable to unwind context chain (sender: " + sender + "; target: " + targetContext + ")");
+                context = (ContextObject) targetContext;
+                break;
             }
             context.terminate();
             context = (ContextObject) sender;
