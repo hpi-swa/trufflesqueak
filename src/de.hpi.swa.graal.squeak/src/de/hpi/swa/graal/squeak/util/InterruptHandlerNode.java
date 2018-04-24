@@ -49,9 +49,8 @@ public class InterruptHandlerNode extends Node {
         disabled = value;
     }
 
-    public void triggerPendingFinalizations(final VirtualFrame frame) {
+    public void setPendingFinalizations() {
         pendingFinalizationSignals = true;
-        executeCheck(frame);
     }
 
     /*

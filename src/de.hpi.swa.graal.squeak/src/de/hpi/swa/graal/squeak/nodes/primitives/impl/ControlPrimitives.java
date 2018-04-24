@@ -5,6 +5,7 @@ import java.lang.ref.ReferenceQueue;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -562,11 +563,14 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final Object doGC(final VirtualFrame frame, final BaseSqueakObject receiver) {
             System.gc();
-            finalizeWeakPointersObjects(frame);
+            if (hasPendingFinalizations()) {
+                code.image.interrupt.setPendingFinalizations();
+            }
             return code.image.wrap(Runtime.getRuntime().freeMemory());
         }
 
-        private void finalizeWeakPointersObjects(final VirtualFrame frame) {
+        @TruffleBoundary
+        private boolean hasPendingFinalizations() {
             final ReferenceQueue<Object> queue = WeakPointersObject.weakPointersQueue;
             Reference<? extends Object> element = queue.poll();
             int count = 0;
@@ -575,9 +579,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 element = queue.poll();
             }
             code.image.traceVerbose(count + " WeakPointersObjects have been garbage collected.");
-            if (count > 0) {
-                code.image.interrupt.triggerPendingFinalizations(frame);
-            }
+            return count > 0;
         }
     }
 
