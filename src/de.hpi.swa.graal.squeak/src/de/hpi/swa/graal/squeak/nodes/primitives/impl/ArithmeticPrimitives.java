@@ -625,7 +625,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 40, numArguments = 2)
+    @SqueakPrimitive(index = 40)
     protected abstract static class PrimAsFloatNode extends AbstractArithmeticPrimitiveNode {
         protected PrimAsFloatNode(final CompiledMethodObject method) {
             super(method);
