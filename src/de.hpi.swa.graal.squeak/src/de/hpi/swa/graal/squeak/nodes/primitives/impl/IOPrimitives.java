@@ -11,16 +11,18 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
-import de.hpi.swa.graal.squeak.model.AbstractPointersObject;
 import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
+import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.ListObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.model.ObjectLayouts.ERROR_TABLE;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.FORM;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.SqueakObject;
+import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
@@ -202,8 +204,8 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 105, numArguments = 5)
-    protected abstract static class PrimReplaceFromToNode extends AbstractPrimitiveNode {
-        protected PrimReplaceFromToNode(final CompiledMethodObject method) {
+    protected abstract static class PrimStringReplaceNode extends AbstractPrimitiveNode {
+        protected PrimStringReplaceNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -227,23 +229,19 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         public abstract Object executeReplace(VirtualFrame frame);
 
-        @Specialization
-        protected static final Object replace(final LargeIntegerObject rcvr, final long start, final long stop, final LargeIntegerObject repl, final long replStart) {
-            return replaceInLarge(rcvr, start, stop, repl.getBytes(), replStart);
-        }
-
-        @Specialization
+        @Specialization(guards = "!isSmallInteger(repl)")
         protected final Object replace(final LargeIntegerObject rcvr, final long start, final long stop, final long repl, final long replStart) {
-            return replaceInLarge(rcvr, start, stop, asLargeInteger(repl).getBytes(), replStart);
+            final LargeIntegerObject largeInteger = asLargeInteger(repl);
+            if (hasValidBounds(rcvr, start, stop, largeInteger, replStart)) {
+                throw new PrimitiveFailed(ERROR_TABLE.BAD_INDEX);
+            }
+            return doLargeIntegerNative(rcvr, start, stop, largeInteger, replStart);
         }
 
-        @Specialization
-        protected static final Object replace(final LargeIntegerObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
-            return replaceInLarge(rcvr, start, stop, repl.getBytes(), replStart);
-        }
-
-        private static Object replaceInLarge(final LargeIntegerObject rcvr, final long start, final long stop, final byte[] replBytes, final long replStart) {
+        @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
+        protected static final Object doLargeIntegerNative(final LargeIntegerObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
             final byte[] rcvrBytes = rcvr.getBytes();
+            final byte[] replBytes = repl.getBytes();
             final int repOff = (int) (replStart - start);
             for (int i = (int) (start - 1); i < stop; i++) {
                 rcvrBytes[i] = replBytes[repOff + i];
@@ -252,18 +250,8 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization
-        protected static final Object replace(final NativeObject rcvr, final long start, final long stop, final LargeIntegerObject repl, final long replStart) {
-            final int repOff = (int) (replStart - start);
-            final byte[] replBytes = repl.getBytes();
-            for (int i = (int) (start - 1); i < stop; i++) {
-                rcvr.setNativeAt0(i, replBytes[repOff + i]);
-            }
-            return rcvr;
-        }
-
-        @Specialization
-        protected static final Object replace(final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
+        @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
+        protected static final Object doNativeObject(final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
             final int repOff = (int) (replStart - start);
             for (int i = (int) (start - 1); i < stop; i++) {
                 rcvr.setNativeAt0(i, repl.getNativeAt0(repOff + i));
@@ -271,42 +259,23 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization(guards = "replStart == 1")
-        protected static final Object replace(final NativeObject rcvr, final long start, final long stop, final long repl, @SuppressWarnings("unused") final long replStart) {
-            for (int i = (int) (start - 1); i < stop; i++) {
-                rcvr.setNativeAt0(i, repl);
-            }
-            return rcvr;
-        }
-
-        @Specialization
-        protected static final Object replace(final NativeObject rcvr, final long start, final long stop, final AbstractPointersObject repl, final long replStart) {
-            final int repOff = (int) (replStart - start);
-            for (int i = (int) (start - 1); i < stop; i++) {
-                final Object value = repl.at0(repOff + i);
-                if (value instanceof Character) {
-                    rcvr.setNativeAt0(i, Character.getNumericValue((Character) value));
-                } else if (value instanceof Long) {
-                    rcvr.setNativeAt0(i, (long) value);
-                } else {
-                    throw new PrimitiveFailed();
-                }
-            }
-            return rcvr;
-        }
-
-        @Specialization
-        protected static final Object doListObject(final AbstractPointersObject rcvr, final long start, final long stop, final ListObject repl, final long replStart) {
+        @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
+        protected static final Object doListObject(final ListObject rcvr, final long start, final long stop, final ListObject repl, final long replStart) {
             return doSqueakObject(rcvr, start, stop, repl, replStart);
         }
 
-        @Specialization
-        protected static final Object doListObject(final AbstractPointersObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
+        @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
+        protected static final Object doPointers(final PointersObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart) {
             return doSqueakObject(rcvr, start, stop, repl, replStart);
         }
 
-        @Specialization
-        protected static final Object replace(final CompiledMethodObject rcvr, final long start, final long stop, final CompiledMethodObject repl, final long replStart) {
+        @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
+        protected static final Object doWeakPointers(final WeakPointersObject rcvr, final long start, final long stop, final WeakPointersObject repl, final long replStart) {
+            return doSqueakObject(rcvr, start, stop, repl, replStart);
+        }
+
+        @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
+        protected static final Object doCodeObject(final CompiledCodeObject rcvr, final long start, final long stop, final CompiledCodeObject repl, final long replStart) {
             return doSqueakObject(rcvr, start, stop, repl, replStart);
         }
 
@@ -316,6 +285,17 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 rcvr.atput0(i, repl.at0(repOff + i));
             }
             return rcvr;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "!hasValidBounds(rcvr, start, stop, repl, replStart)")
+        protected static final Object doBadIndex(final SqueakObject rcvr, final long start, final long stop, final SqueakObject repl, final long replStart) {
+            throw new PrimitiveFailed(ERROR_TABLE.BAD_INDEX);
+        }
+
+        protected static final boolean hasValidBounds(final BaseSqueakObject array, final long start, final long stop, final BaseSqueakObject repl, final long replStart) {
+            return (start >= 1 && (start - 1) <= stop && (stop + array.instsize()) <= array.size()) &&
+                            (replStart >= 1 && (stop - start + replStart + repl.instsize() <= repl.size()));
         }
     }
 
