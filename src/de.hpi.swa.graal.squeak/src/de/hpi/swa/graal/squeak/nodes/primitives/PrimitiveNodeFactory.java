@@ -13,7 +13,6 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
 import de.hpi.swa.graal.squeak.nodes.context.ArgumentNode;
-import de.hpi.swa.graal.squeak.nodes.context.ReceiverAndArgumentsNode;
 import de.hpi.swa.graal.squeak.nodes.plugins.FilePlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.FloatArrayPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.GraalSqueakPlugin;
@@ -28,6 +27,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitives.Primitive
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.IOPrimitives;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives.SimulationPrimitiveNode;
+import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitivesFactory.SimulationPrimitiveNodeFactory;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.StoragePrimitives;
 
 public abstract class PrimitiveNodeFactory {
@@ -62,7 +62,7 @@ public abstract class PrimitiveNodeFactory {
         }
         final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = primitiveTable.get(primitiveIndex);
         if (nodeFactory != null) {
-            return createInstance(method, nodeFactory, nodeFactory.getNodeClass().getAnnotation(SqueakPrimitive.class));
+            return createInstance(method, nodeFactory);
         }
         return null;
     }
@@ -71,7 +71,13 @@ public abstract class PrimitiveNodeFactory {
     public static AbstractPrimitiveNode forName(final CompiledMethodObject method, final String moduleName, final String functionName) {
         for (int i = 0; i < simulatedPlugins.length; i++) {
             if (moduleName.equals(simulatedPlugins[i])) {
-                return SimulationPrimitiveNode.create(method, moduleName, functionName, new SqueakNode[]{ReceiverAndArgumentsNode.create(method)});
+                final NodeFactory<SimulationPrimitiveNode> nodeFactory = SimulationPrimitiveNodeFactory.getInstance();
+                final int primitiveArity = nodeFactory.getExecutionSignature().size();
+                final SqueakNode[] argumentNodes = new SqueakNode[primitiveArity];
+                for (int j = 0; j < primitiveArity; j++) {
+                    argumentNodes[j] = ArgumentNode.create(method, j);
+                }
+                return nodeFactory.createNode(method, primitiveArity, moduleName, functionName, argumentNodes);
             }
         }
         for (AbstractPrimitiveFactoryHolder plugin : plugins) {
@@ -84,7 +90,7 @@ public abstract class PrimitiveNodeFactory {
                     final Class<? extends AbstractPrimitiveNode> primitiveClass = nodeFactory.getNodeClass();
                     final SqueakPrimitive primitive = primitiveClass.getAnnotation(SqueakPrimitive.class);
                     if (functionName.equals(primitive.name())) {
-                        return createInstance(method, nodeFactory, primitive);
+                        return createInstance(method, nodeFactory);
                     }
                 }
             } catch (RuntimeException e) {
@@ -105,16 +111,13 @@ public abstract class PrimitiveNodeFactory {
         return names;
     }
 
-    private static AbstractPrimitiveNode createInstance(final CompiledMethodObject method, final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory, final SqueakPrimitive primitive) {
-        if (primitive.variableArguments()) {
-            return nodeFactory.createNode(method, new SqueakNode[]{ReceiverAndArgumentsNode.create(method)});
+    private static AbstractPrimitiveNode createInstance(final CompiledMethodObject method, final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory) {
+        final int primitiveArity = nodeFactory.getExecutionSignature().size();
+        final SqueakNode[] argumentNodes = new SqueakNode[primitiveArity];
+        for (int i = 0; i < primitiveArity; i++) {
+            argumentNodes[i] = ArgumentNode.create(method, i);
         }
-        final int numArgs = primitive.numArguments();
-        final SqueakNode[] arguments = new SqueakNode[numArgs];
-        for (int i = 0; i < numArgs; i++) {
-            arguments[i] = ArgumentNode.create(method, i);
-        }
-        return nodeFactory.createNode(method, arguments);
+        return nodeFactory.createNode(method, primitiveArity, argumentNodes);
     }
 
     private static void fillPrimitiveTable(final AbstractPrimitiveFactoryHolder[] primitiveFactories) {

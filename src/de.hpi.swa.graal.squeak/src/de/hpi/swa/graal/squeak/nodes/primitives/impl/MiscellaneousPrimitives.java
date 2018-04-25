@@ -39,13 +39,12 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.DispatchNode;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
 import de.hpi.swa.graal.squeak.nodes.LookupNode;
-import de.hpi.swa.graal.squeak.nodes.SqueakNode;
 import de.hpi.swa.graal.squeak.nodes.context.SqueakLookupClassNode;
+import de.hpi.swa.graal.squeak.nodes.helpers.NotProvided;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
-import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitivesFactory.SimulationPrimitiveNodeGen;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerNode;
 
 public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
@@ -62,8 +61,8 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         @CompilationFinal private static final long USEC_TO_NANO = 1000;
         @CompilationFinal private final long timeZoneOffsetMicroseconds;
 
-        private AbstractClockPrimitiveNode(final CompiledMethodObject method) {
-            super(method);
+        private AbstractClockPrimitiveNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
             final Calendar rightNow = Calendar.getInstance();
             timeZoneOffsetMicroseconds = (((long) rightNow.get(Calendar.ZONE_OFFSET)) + rightNow.get(Calendar.DST_OFFSET)) * 1000;
         }
@@ -80,8 +79,8 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
     private abstract static class AbstractSignalAtPrimitiveNode extends AbstractPrimitiveNode {
 
-        protected AbstractSignalAtPrimitiveNode(final CompiledMethodObject method) {
-            super(method);
+        protected AbstractSignalAtPrimitiveNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         protected void signalAtMilliseconds(final BaseSqueakObject semaphore, final long msTime) {
@@ -99,8 +98,8 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 77)
     protected abstract static class PrimSomeInstanceNode extends AbstractPrimitiveNode {
 
-        protected PrimSomeInstanceNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimSomeInstanceNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         protected boolean isSmallIntegerClass(final ClassObject classObject) {
@@ -137,8 +136,8 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 121)
     protected abstract static class PrimImageNameNode extends AbstractPrimitiveNode {
 
-        protected PrimImageNameNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimImageNameNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -151,8 +150,8 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 124, numArguments = 2)
     protected abstract static class PrimLowSpaceSemaphoreNode extends AbstractPrimitiveNode {
 
-        protected PrimLowSpaceSemaphoreNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimLowSpaceSemaphoreNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -166,8 +165,8 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 125, numArguments = 2)
     protected abstract static class PrimSetLowSpaceThresholdNode extends AbstractPrimitiveNode {
 
-        protected PrimSetLowSpaceThresholdNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimSetLowSpaceThresholdNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -181,8 +180,8 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 134, numArguments = 2)
     protected abstract static class PrimInterruptSemaphoreNode extends AbstractPrimitiveNode {
 
-        protected PrimInterruptSemaphoreNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimInterruptSemaphoreNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -196,8 +195,8 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 135)
     protected abstract static class PrimMillisecondClockNode extends AbstractPrimitiveNode {
 
-        protected PrimMillisecondClockNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimMillisecondClockNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -210,8 +209,8 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 136, numArguments = 3)
     protected abstract static class PrimSignalAtMillisecondsNode extends AbstractSignalAtPrimitiveNode {
 
-        protected PrimSignalAtMillisecondsNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimSignalAtMillisecondsNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -225,8 +224,8 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 137)
     protected abstract static class PrimSecondClockNode extends AbstractClockPrimitiveNode {
 
-        protected PrimSecondClockNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimSecondClockNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -236,45 +235,42 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 141, variableArguments = true)
+    @SqueakPrimitive(index = 141)
     protected abstract static class PrimClipboardTextNode extends AbstractPrimitiveNode {
         @CompilationFinal private final boolean isHeadless = GraphicsEnvironment.isHeadless();
         private String headlessClipboardContents = "";
 
-        protected PrimClipboardTextNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimClipboardTextNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
-        @Override
-        public final Object executeWithArguments(final VirtualFrame frame, final Object... rcvrAndArgs) {
-            return executeWithArgumentsSpecialized(frame, new Object[]{rcvrAndArgs});
-        }
-
+        @SuppressWarnings("unused")
         @Specialization
-        protected Object doClipboard(final Object[] rcvrAndArgs) {
-            if (rcvrAndArgs.length == 1) {
-                String text;
-                if (!isHeadless) {
-                    try {
-                        text = (String) getClipboard().getData(DataFlavor.stringFlavor);
-                    } catch (UnsupportedFlavorException | IOException | IllegalStateException e) {
-                        text = "";
-                    }
-                } else {
-                    text = headlessClipboardContents;
+        protected Object doClipboard(final Object receiver, final NotProvided value) {
+            String text;
+            if (!isHeadless) {
+                try {
+                    text = (String) getClipboard().getData(DataFlavor.stringFlavor);
+                } catch (UnsupportedFlavorException | IOException | IllegalStateException e) {
+                    text = "";
                 }
-                return code.image.wrap(text);
-            } else if (rcvrAndArgs.length == 2 && (rcvrAndArgs[1] instanceof NativeObject)) {
-                final String text = ((NativeObject) rcvrAndArgs[1]).toString();
-                if (!isHeadless) {
-                    final StringSelection selection = new StringSelection(text);
-                    getClipboard().setContents(selection, selection);
-                } else {
-                    headlessClipboardContents = text;
-                }
-                return rcvrAndArgs[1];
+            } else {
+                text = headlessClipboardContents;
             }
-            throw new PrimitiveFailed();
+            return code.image.wrap(text);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected Object doClipboard(final Object receiver, final NativeObject value) {
+            final String text = value.toString();
+            if (!isHeadless) {
+                final StringSelection selection = new StringSelection(text);
+                getClipboard().setContents(selection, selection);
+            } else {
+                headlessClipboardContents = text;
+            }
+            return value;
         }
 
         private static Clipboard getClipboard() {
@@ -286,8 +282,8 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 142)
     protected abstract static class PrimVMPathNode extends AbstractPrimitiveNode {
 
-        protected PrimVMPathNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimVMPathNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -300,8 +296,8 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 145, numArguments = 2)
     protected abstract static class PrimConstantFillNode extends AbstractPrimitiveNode {
 
-        protected PrimConstantFillNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimConstantFillNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -314,8 +310,8 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 148)
     protected abstract static class PrimShallowCopyNode extends AbstractPrimitiveNode {
-        protected PrimShallowCopyNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimShallowCopyNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -332,8 +328,8 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 149, numArguments = 2)
     protected abstract static class PrimGetAttributeNode extends AbstractPrimitiveNode {
-        protected PrimGetAttributeNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimGetAttributeNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -389,8 +385,8 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 176)
     protected abstract static class PrimMaxIdentityHashNode extends AbstractPrimitiveNode {
-        protected PrimMaxIdentityHashNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimMaxIdentityHashNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -403,8 +399,8 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 177)
     protected abstract static class PrimAllInstancesNode extends AbstractPrimitiveNode {
 
-        protected PrimAllInstancesNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimAllInstancesNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         protected boolean hasNoInstances(final ClassObject classObject) {
@@ -433,8 +429,8 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 240)
     protected abstract static class PrimUTCClockNode extends AbstractClockPrimitiveNode {
 
-        protected PrimUTCClockNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimUTCClockNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -447,8 +443,8 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 241)
     protected abstract static class PrimLocalMicrosecondsClockNode extends AbstractClockPrimitiveNode {
 
-        protected PrimLocalMicrosecondsClockNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimLocalMicrosecondsClockNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -461,8 +457,8 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 242, numArguments = 3)
     protected abstract static class PrimSignalAtUTCMicrosecondsNode extends AbstractSignalAtPrimitiveNode {
 
-        protected PrimSignalAtUTCMicrosecondsNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimSignalAtUTCMicrosecondsNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -474,53 +470,44 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 254, variableArguments = true)
+    @SqueakPrimitive(index = 254)
     protected abstract static class PrimVMParametersNode extends AbstractPrimitiveNode {
-        protected PrimVMParametersNode(final CompiledMethodObject method) {
-            super(method);
+        protected static final int PARAMS_ARRAY_SIZE = 71;
+
+        protected PrimVMParametersNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
-        @Override
-        public final Object executeWithArguments(final VirtualFrame frame, final Object... rcvrAndArgs) {
-            return executeWithArgumentsSpecialized(frame, new Object[]{rcvrAndArgs});
-        }
+        /**
+         * Behaviour depends on argument count:
+         *
+         * <pre>
+         * 0 args: return an Array of VM parameter values;
+         * 1 arg:  return the indicated VM parameter;
+         * 2 args: set the VM indicated parameter.
+         * </pre>
+         */
 
+        @SuppressWarnings("unused")
         @Specialization
-        protected Object getVMParameters(final Object[] rcvrAndArgs) {
-            final int paramsArraySize = 71;
-            /**
-             * Behaviour depends on argument count:
-             *
-             * <pre>
-             * 0 args: return an Array of VM parameter values;
-             * 1 arg:  return the indicated VM parameter;
-             * 2 args: set the VM indicated parameter.
-             * </pre>
-             */
-            switch (rcvrAndArgs.length) {
-                case 1:
-                    final Object[] vmParameters = new Object[paramsArraySize];
-                    for (int i = 0; i < paramsArraySize; i++) {
-                        vmParameters[i] = vmParameterAt(i);
-                    }
-                    return code.image.newList(vmParameters);
-                case 2:
-                    final int index;
-                    try {
-                        index = ((Long) rcvrAndArgs[1]).intValue();
-                    } catch (ClassCastException e) {
-                        throw new PrimitiveFailed();
-                    }
-                    if (index < 1 || index > paramsArraySize) {
-                        throw new PrimitiveFailed();
-                    } else {
-                        return vmParameterAt(index);
-                    }
-                case 3:
-                    return code.image.nil; // ignore writes
-                default:
-                    throw new PrimitiveFailed();
+        protected Object getVMParameters(final Object receiver, final NotProvided index, final NotProvided value) {
+            final Object[] vmParameters = new Object[PARAMS_ARRAY_SIZE];
+            for (int i = 0; i < PARAMS_ARRAY_SIZE; i++) {
+                vmParameters[i] = vmParameterAt(i);
             }
+            return code.image.newList(vmParameters);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"index >= 1", "index < PARAMS_ARRAY_SIZE"})
+        protected Object getVMParameters(final Object receiver, final long index, final NotProvided value) {
+            return vmParameterAt((int) index);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "!isNotProvided(value)")
+        protected Object getVMParameters(final Object receiver, final long index, final Object value) {
+            return code.image.nil; // ignore writes
         }
 
         private Object vmParameterAt(final int index) {
@@ -598,8 +585,8 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 255, numArguments = 2)
     protected abstract static class PrimMetaFailNode extends AbstractPrimitiveNode {
-        public PrimMetaFailNode(final CompiledMethodObject method) {
-            super(method);
+        public PrimMetaFailNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -616,8 +603,8 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimListExternalModuleNode extends AbstractPrimitiveNode {
         @CompilationFinal private List<String> externalModuleNames;
 
-        public PrimListExternalModuleNode(final CompiledMethodObject method) {
-            super(method);
+        public PrimListExternalModuleNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -643,6 +630,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
      * A simulation primitive is neither a SqueakPrimitive nor a GenerateNodeFactory. Instead, it is
      * directly used by PrimitiveNodeFactory.
      */
+    @GenerateNodeFactory
     public abstract static class SimulationPrimitiveNode extends AbstractPrimitiveNode {
         @CompilationFinal public static final String SIMULATE_PRIMITIVE_SELECTOR = "simulatePrimitive:args:";
         @CompilationFinal protected CompiledMethodObject simulationMethod; // different method per
@@ -655,31 +643,80 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         @Child protected SqueakLookupClassNode lookupClassNode;
         @Child protected GetOrCreateContextNode getOrCreateContextNode;
 
-        public static SimulationPrimitiveNode create(final CompiledMethodObject method, final String moduleName, final String functionName, final SqueakNode[] arguments) {
-            return SimulationPrimitiveNodeGen.create(method, moduleName, functionName, arguments);
-        }
-
-        protected SimulationPrimitiveNode(final CompiledMethodObject method, final String moduleName, final String functionName) {
-            super(method);
+        protected SimulationPrimitiveNode(final CompiledMethodObject method, final int numArguments, final String moduleName, final String functionName) {
+            super(method, numArguments);
             this.moduleName = moduleName;
             this.functionName = code.image.wrap(functionName);
             lookupClassNode = SqueakLookupClassNode.create(method.image);
             getOrCreateContextNode = GetOrCreateContextNode.create(method);
         }
 
-        @Override
-        public final Object executeWithArguments(final VirtualFrame frame, final Object... rcvrAndArgs) {
-            return doSimulation(frame, rcvrAndArgs);
+        @SuppressWarnings("unused")
+        @Specialization
+        protected final Object doSimulation(final VirtualFrame frame, final Object receiver, final NotProvided arg1, final NotProvided arg2, final NotProvided arg3,
+                        final NotProvided arg4, final NotProvided arg5, final NotProvided arg6, final NotProvided arg7, final NotProvided arg8) {
+            return doSimulation(frame, receiver, code.image.newList(new Object[]{}));
         }
 
-        @Specialization
-        protected Object doSimulation(final VirtualFrame frame, final Object[] rcvrAndArguments) {
-            final Object receiver = rcvrAndArguments[0];
-            final Object[] arguments = new Object[rcvrAndArguments.length - 1];
-            for (int i = 0; i < arguments.length; i++) {
-                arguments[i] = rcvrAndArguments[1 + i];
-            }
-            final Object[] newRcvrAndArgs = new Object[]{receiver, functionName, code.image.newList(arguments)};
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"!isNotProvided(arg1)"})
+        protected final Object doSimulation(final VirtualFrame frame, final Object receiver, final Object arg1, final NotProvided arg2, final NotProvided arg3,
+                        final NotProvided arg4, final NotProvided arg5, final NotProvided arg6, final NotProvided arg7, final NotProvided arg8) {
+            return doSimulation(frame, receiver, code.image.newList(new Object[]{arg1}));
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)"})
+        protected final Object doSimulation(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final NotProvided arg3,
+                        final NotProvided arg4, final NotProvided arg5, final NotProvided arg6, final NotProvided arg7, final NotProvided arg8) {
+            return doSimulation(frame, receiver, code.image.newList(new Object[]{arg1, arg2}));
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)"})
+        protected final Object doSimulation(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3,
+                        final NotProvided arg4, final NotProvided arg5, final NotProvided arg6, final NotProvided arg7, final NotProvided arg8) {
+            return doSimulation(frame, receiver, code.image.newList(new Object[]{arg1, arg2, arg3}));
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)"})
+        protected final Object doSimulation(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4,
+                        final NotProvided arg5, final NotProvided arg6, final NotProvided arg7, final NotProvided arg8) {
+            return doSimulation(frame, receiver, code.image.newList(new Object[]{arg1, arg2, arg3, arg4}));
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)"})
+        protected final Object doSimulation(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4,
+                        final Object arg5, final NotProvided arg6, final NotProvided arg7, final NotProvided arg8) {
+            return doSimulation(frame, receiver, code.image.newList(new Object[]{arg1, arg2, arg3, arg4, arg5}));
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)", "!isNotProvided(arg6)"})
+        protected final Object doSimulation(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4,
+                        final Object arg5, final Object arg6, final NotProvided arg7, final NotProvided arg8) {
+            return doSimulation(frame, receiver, code.image.newList(new Object[]{arg1, arg2, arg3, arg4, arg5, arg6}));
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)", "!isNotProvided(arg6)",
+                        "!isNotProvided(arg7)"})
+        protected final Object doSimulation(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4,
+                        final Object arg5, final Object arg6, final Object arg7, final NotProvided arg8) {
+            return doSimulation(frame, receiver, code.image.newList(new Object[]{arg1, arg2, arg3, arg4, arg5, arg6, arg7}));
+        }
+
+        @Specialization(guards = {"!isNotProvided(arg1)", "!isNotProvided(arg2)", "!isNotProvided(arg3)", "!isNotProvided(arg4)", "!isNotProvided(arg5)", "!isNotProvided(arg6)",
+                        "!isNotProvided(arg7)", "!isNotProvided(arg8)"})
+        protected final Object doSimulation(final VirtualFrame frame, final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4,
+                        final Object arg5, final Object arg6, final Object arg7, final Object arg8) {
+            return doSimulation(frame, receiver, code.image.newList(new Object[]{arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8}));
+        }
+
+        private Object doSimulation(final VirtualFrame frame, final Object receiver, final ListObject arguments) {
+            final Object[] newRcvrAndArgs = new Object[]{receiver, functionName, arguments};
             code.image.interrupt.setDisabled(true);
             try {
                 return dispatchNode.executeDispatch(frame, getSimulateMethod(receiver), newRcvrAndArgs, getContextOrMarker(frame));

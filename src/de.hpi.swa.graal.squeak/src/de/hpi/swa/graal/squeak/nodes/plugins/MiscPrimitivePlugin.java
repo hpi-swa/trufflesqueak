@@ -23,8 +23,8 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     public abstract static class AbstractMiscPrimitiveNode extends AbstractPrimitiveNode {
 
-        public AbstractMiscPrimitiveNode(final CompiledMethodObject method) {
-            super(method);
+        public AbstractMiscPrimitiveNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         protected static boolean isASCIIOrder(final NativeObject order) {
@@ -42,8 +42,8 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(name = "primitiveCompareString", numArguments = 4)
     public abstract static class PrimCompareStringNode extends AbstractMiscPrimitiveNode {
 
-        public PrimCompareStringNode(final CompiledMethodObject method) {
-            super(method);
+        public PrimCompareStringNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization(guards = "isASCIIOrder(order)")
@@ -104,43 +104,43 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveCompressToByteArray", numArguments = 3) // TODO: implement
-                                                                              // primitive
-    public abstract static class PrimCompressToByteArray extends AbstractMiscPrimitiveNode {
+    @SqueakPrimitive(name = "primitiveCompressToByteArray", numArguments = 3)
+    public abstract static class PrimCompressToByteArrayNode extends AbstractMiscPrimitiveNode {
 
-        public PrimCompressToByteArray(final CompiledMethodObject method) {
-            super(method);
+        public PrimCompressToByteArrayNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @SuppressWarnings("unused")
         @Specialization
         protected static final Object compress(final BaseSqueakObject bitmap, final Object bm, final Object from) {
+            // TODO: implement primitive
             throw new PrimitiveFailed();
         }
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveDecompressFromByteArray", numArguments = 4) // TODO: implement
-                                                                                  // primitive
-    public abstract static class PrimDecompressFromByteArray extends AbstractMiscPrimitiveNode {
+    @SqueakPrimitive(name = "primitiveDecompressFromByteArray", numArguments = 4)
+    public abstract static class PrimDecompressFromByteArrayNode extends AbstractMiscPrimitiveNode {
 
-        public PrimDecompressFromByteArray(final CompiledMethodObject method) {
-            super(method);
+        public PrimDecompressFromByteArrayNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @SuppressWarnings("unused")
         @Specialization
         protected static final Object decompress(final BaseSqueakObject bitmap, final Object bm, final Object from, final long index) {
+            // TODO: implement primitive
             throw new PrimitiveFailed();
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveFindFirstInString", numArguments = 4)
-    public abstract static class PrimFindFirstInString extends AbstractMiscPrimitiveNode {
+    public abstract static class PrimFindFirstInStringNode extends AbstractMiscPrimitiveNode {
 
-        public PrimFindFirstInString(final CompiledMethodObject method) {
-            super(method);
+        public PrimFindFirstInStringNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -166,10 +166,10 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveFindSubstring", numArguments = 5)
-    public abstract static class PrimFindSubstring extends AbstractMiscPrimitiveNode {
+    public abstract static class PrimFindSubstringNode extends AbstractMiscPrimitiveNode {
 
-        public PrimFindSubstring(final CompiledMethodObject method) {
-            super(method);
+        public PrimFindSubstringNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization(guards = "isASCIIOrder(matchTable)")
@@ -187,10 +187,10 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveIndexOfAsciiInString", numArguments = 4)
-    public abstract static class PrimIndexOfAsciiInString extends AbstractMiscPrimitiveNode {
+    public abstract static class PrimIndexOfAsciiInStringNode extends AbstractMiscPrimitiveNode {
 
-        public PrimIndexOfAsciiInString(final CompiledMethodObject method) {
-            super(method);
+        public PrimIndexOfAsciiInStringNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -210,10 +210,10 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveStringHash", numArguments = 3)
-    public abstract static class PrimStringHash extends AbstractMiscPrimitiveNode {
+    public abstract static class PrimStringHashNode extends AbstractMiscPrimitiveNode {
 
-        public PrimStringHash(final CompiledMethodObject method) {
-            super(method);
+        public PrimStringHashNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -231,10 +231,10 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveTranslateStringWithTable", numArguments = 5)
-    public abstract static class PrimTranslateStringWithTable extends AbstractMiscPrimitiveNode {
+    public abstract static class PrimTranslateStringWithTableNode extends AbstractMiscPrimitiveNode {
 
-        public PrimTranslateStringWithTable(final CompiledMethodObject method) {
-            super(method);
+        public PrimTranslateStringWithTableNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization

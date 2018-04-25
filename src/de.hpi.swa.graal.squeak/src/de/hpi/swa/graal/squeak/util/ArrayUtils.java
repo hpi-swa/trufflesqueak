@@ -30,4 +30,17 @@ public class ArrayUtils {
         Arrays.fill(array, element);
         return array;
     }
+
+    public static final Object[] fillWith(final Object[] input, final int newSize, final Object fill) {
+        final int inputSize = input.length;
+        if (inputSize >= newSize) {
+            return input;
+        } else {
+            final Object[] array = new Object[newSize];
+            for (int i = 0; i < array.length; i++) {
+                array[i] = i < inputSize ? input[i] : fill;
+            }
+            return array;
+        }
+    }
 }

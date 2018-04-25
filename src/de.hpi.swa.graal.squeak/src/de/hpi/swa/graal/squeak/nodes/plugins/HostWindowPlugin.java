@@ -18,8 +18,8 @@ public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveWindowClose", numArguments = 2)
     protected abstract static class PrimHostWindowCloseNode extends AbstractPrimitiveNode {
-        protected PrimHostWindowCloseNode(final CompiledMethodObject code) {
-            super(code);
+        protected PrimHostWindowCloseNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization(guards = {"id == 1"})
@@ -32,8 +32,8 @@ public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveHostWindowPosition", numArguments = 2)
     protected abstract static class PrimHostWindowPositionNode extends AbstractPrimitiveNode {
-        protected PrimHostWindowPositionNode(final CompiledMethodObject code) {
-            super(code);
+        protected PrimHostWindowPositionNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @SuppressWarnings("unused")
@@ -46,8 +46,8 @@ public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveHostWindowSizeSet", numArguments = 4)
     protected abstract static class PrimHostWindowSizeSetNode extends AbstractPrimitiveNode {
-        protected PrimHostWindowSizeSetNode(final CompiledMethodObject code) {
-            super(code);
+        protected PrimHostWindowSizeSetNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization(guards = {"id == 1"})
@@ -60,8 +60,8 @@ public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveHostWindowTitle", numArguments = 3)
     protected abstract static class PrimHostWindowTitleNode extends AbstractPrimitiveNode {
-        protected PrimHostWindowTitleNode(final CompiledMethodObject code) {
-            super(code);
+        protected PrimHostWindowTitleNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization(guards = {"id == 1"})

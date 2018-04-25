@@ -30,8 +30,8 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 60, numArguments = 2)
     protected abstract static class PrimBasicAtNode extends AbstractPrimitiveNode {
-        protected PrimBasicAtNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimBasicAtNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Override
@@ -82,8 +82,8 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 61, numArguments = 3)
     protected abstract static class PrimBasicAtPutNode extends AbstractPrimitiveNode {
-        protected PrimBasicAtPutNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimBasicAtPutNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Override
@@ -157,8 +157,8 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 62)
     protected abstract static class PrimSizeNode extends AbstractArithmeticPrimitiveNode {
-        protected PrimSizeNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimSizeNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -209,8 +209,8 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 63, numArguments = 2)
     protected abstract static class PrimStringAtNode extends AbstractPrimitiveNode {
-        protected PrimStringAtNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimStringAtNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Override
@@ -243,8 +243,8 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 64, numArguments = 3)
     protected abstract static class PrimStringAtPutNode extends AbstractPrimitiveNode {
-        protected PrimStringAtPutNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimStringAtPutNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Override
@@ -284,8 +284,8 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 143, numArguments = 2)
     protected abstract static class PrimShortAtNode extends AbstractPrimitiveNode {
-        protected PrimShortAtNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimShortAtNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -301,8 +301,8 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 144, numArguments = 3)
     protected abstract static class PrimShortAtPutNode extends AbstractPrimitiveNode {
-        protected PrimShortAtPutNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimShortAtPutNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -318,8 +318,8 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 210, numArguments = 2)
     protected abstract static class PrimContextAtNode extends AbstractPrimitiveNode {
-        protected PrimContextAtNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimContextAtNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -334,9 +334,9 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 211, numArguments = 3)
-    protected abstract static class PrimContextAtPut extends AbstractPrimitiveNode {
-        protected PrimContextAtPut(final CompiledMethodObject method) {
-            super(method);
+    protected abstract static class PrimContextAtPutNode extends AbstractPrimitiveNode {
+        protected PrimContextAtPutNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization

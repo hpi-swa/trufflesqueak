@@ -23,8 +23,8 @@ public final class GraalSqueakPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "debugPrint", numArguments = 2)
     protected abstract static class PrimPrintArgsNode extends AbstractPrimitiveNode {
-        protected PrimPrintArgsNode(final CompiledMethodObject code) {
-            super(code);
+        protected PrimPrintArgsNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @TruffleBoundary

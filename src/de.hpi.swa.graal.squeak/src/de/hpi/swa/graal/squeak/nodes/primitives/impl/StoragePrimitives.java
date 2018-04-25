@@ -34,6 +34,7 @@ import de.hpi.swa.graal.squeak.nodes.GetAllInstancesNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
+import de.hpi.swa.graal.squeak.nodes.helpers.NotProvided;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
@@ -49,8 +50,8 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     private abstract static class AbstractInstancesPrimitiveNode extends AbstractPrimitiveNode {
         @Child protected GetAllInstancesNode getAllInstancesNode;
 
-        protected AbstractInstancesPrimitiveNode(final CompiledMethodObject method) {
-            super(method);
+        protected AbstractInstancesPrimitiveNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
             getAllInstancesNode = GetAllInstancesNode.create(method);
         }
     }
@@ -60,8 +61,8 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Child private FrameStackWriteNode stackWriteNode = FrameStackWriteNode.create();
         @Child private FrameSlotReadNode stackPointerReadNode;
 
-        protected AbstractArrayBecomeOneWayPrimitiveNode(final CompiledMethodObject method) {
-            super(method);
+        protected AbstractArrayBecomeOneWayPrimitiveNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
             stackPointerReadNode = FrameSlotReadNode.create(method.stackPointerSlot);
         }
 
@@ -118,8 +119,8 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 18, numArguments = 2)
     protected abstract static class PrimMakePointNode extends AbstractPrimitiveNode {
-        protected PrimMakePointNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimMakePointNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -131,8 +132,8 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 68, numArguments = 2)
     protected abstract static class PrimCompiledMethodObjectAtNode extends AbstractPrimitiveNode {
-        protected PrimCompiledMethodObjectAtNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimCompiledMethodObjectAtNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -145,8 +146,8 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 69, numArguments = 3)
     protected abstract static class PrimCompiledMethodObjectAtPutNode extends AbstractPrimitiveNode {
-        protected PrimCompiledMethodObjectAtPutNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimCompiledMethodObjectAtPutNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -161,8 +162,8 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimNewNode extends AbstractPrimitiveNode {
         @CompilationFinal protected static final int NEW_CACHE_SIZE = 3;
 
-        protected PrimNewNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimNewNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @SuppressWarnings("unused")
@@ -189,8 +190,8 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimNewArgNode extends AbstractPrimitiveNode {
         @CompilationFinal protected static final int NEW_CACHE_SIZE = 3;
 
-        protected PrimNewArgNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimNewArgNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @SuppressWarnings("unused")
@@ -221,9 +222,9 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 72, numArguments = 2)
     protected abstract static class PrimArrayBecomeOneWayNode extends AbstractArrayBecomeOneWayPrimitiveNode {
 
-        protected PrimArrayBecomeOneWayNode(final CompiledMethodObject method) {
+        protected PrimArrayBecomeOneWayNode(final CompiledMethodObject method, final int numArguments) {
             // FIXME: this primitive does not correctly perform a one way become yet
-            super(method);
+            super(method, numArguments);
         }
 
         @Specialization
@@ -245,21 +246,14 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 73, variableArguments = true)
+    @SqueakPrimitive(index = 73)
     protected abstract static class PrimInstVarAtNode extends AbstractPrimitiveNode {
-        protected PrimInstVarAtNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimInstVarAtNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
-        @Override
-        public final Object executeWithArguments(final VirtualFrame frame, final Object... rcvrAndArgs) {
-            return executeWithArgumentsSpecialized(frame, new Object[]{rcvrAndArgs});
-        }
-
-        @Specialization(guards = "rcvrAndArgs.length == 2")
-        protected static final Object doAtTwo(final Object[] rcvrAndArgs) {
-            final BaseSqueakObject receiver = (BaseSqueakObject) rcvrAndArgs[0];
-            final long index = (long) rcvrAndArgs[1];
+        @Specialization
+        protected static final Object doAt(final BaseSqueakObject receiver, final long index, @SuppressWarnings("unused") final NotProvided value) {
             try {
                 return receiver.at0(index - 1);
             } catch (IndexOutOfBoundsException e) {
@@ -267,12 +261,10 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        @Specialization(guards = "rcvrAndArgs.length == 3")
-        protected static final Object doAtThree(final Object[] rcvrAndArgs) {
-            final BaseSqueakObject receiver = (BaseSqueakObject) rcvrAndArgs[1];
-            final long index = (long) rcvrAndArgs[2];
+        @Specialization
+        protected static final Object doAt(@SuppressWarnings("unused") final Object receiver, final BaseSqueakObject target, final long index) {
             try {
-                return receiver.at0(index - 1);
+                return target.at0(index - 1);
             } catch (IndexOutOfBoundsException e) {
                 throw new PrimitiveFailed();
             }
@@ -282,8 +274,8 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 74, numArguments = 3)
     protected abstract static class PrimInstVarAtPutNode extends AbstractPrimitiveNode {
-        protected PrimInstVarAtPutNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimInstVarAtPutNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -301,8 +293,8 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = {75, 171, 175})
     protected abstract static class PrimIdentityHashNode extends AbstractPrimitiveNode {
 
-        protected PrimIdentityHashNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimIdentityHashNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -338,8 +330,8 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 76, numArguments = 2)
     protected abstract static class PrimStoreStackPointerNode extends AbstractPrimitiveNode {
-        protected PrimStoreStackPointerNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimStoreStackPointerNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -353,8 +345,8 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 78)
     protected abstract static class PrimNextInstanceNode extends AbstractPrimitiveNode {
 
-        protected PrimNextInstanceNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimNextInstanceNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         protected boolean hasNoInstances(final BaseSqueakObject sqObject) {
@@ -388,8 +380,8 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 79, numArguments = 3)
     protected abstract static class PrimNewMethodNode extends AbstractPrimitiveNode {
 
-        protected PrimNewMethodNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimNewMethodNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         protected boolean isCompiledMethodClass(final ClassObject receiver) {
@@ -408,8 +400,8 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 128, numArguments = 2)
     protected abstract static class PrimBecomeNode extends AbstractPrimitiveNode {
 
-        protected PrimBecomeNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimBecomeNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -443,8 +435,8 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 129)
     protected abstract static class PrimSpecialObjectsArrayNode extends AbstractPrimitiveNode {
 
-        protected PrimSpecialObjectsArrayNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimSpecialObjectsArrayNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -457,8 +449,8 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 138)
     protected abstract static class PrimSomeObjectNode extends AbstractInstancesPrimitiveNode {
 
-        protected PrimSomeObjectNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimSomeObjectNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -471,8 +463,8 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 139)
     protected abstract static class PrimNextObjectNode extends AbstractInstancesPrimitiveNode {
 
-        protected PrimNextObjectNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimNextObjectNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -488,46 +480,36 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 170, variableArguments = true)
+    @SqueakPrimitive(index = 170)
     protected abstract static class PrimCharacterValueNode extends AbstractPrimitiveNode {
 
-        protected PrimCharacterValueNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Override
-        public final Object executeWithArguments(final VirtualFrame frame, final Object... rcvrAndArgs) {
-            return executeWithArgumentsSpecialized(frame, new Object[]{rcvrAndArgs});
+        protected PrimCharacterValueNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
-        protected char doCharValue(final Object[] rcvrAndArgs) {
-            final Object value;
-            switch (rcvrAndArgs.length) {
-                case 1:
-                    value = rcvrAndArgs[0];
-                    break;
-                case 2:
-                    value = rcvrAndArgs[1];
-                    break;
-                default:
-                    throw new PrimitiveFailed();
-            }
-            final long longValue;
+        protected char doLong(final long receiver, @SuppressWarnings("unused") final NotProvided target) {
+            return (char) Math.toIntExact(receiver);
+        }
+
+        @Specialization
+        protected char doLargeInteger(final LargeIntegerObject receiver, @SuppressWarnings("unused") final NotProvided target) {
             try {
-                if (value instanceof Long) {
-                    longValue = (long) value;
-                } else if (value instanceof LargeIntegerObject) {
-                    try {
-                        longValue = ((LargeIntegerObject) value).reduceToLong();
-                    } catch (ArithmeticException e) {
-                        code.image.getError().println("Letting primitive 170 fail: " + e.toString());
-                        throw new PrimitiveFailed();
-                    }
-                } else {
-                    throw new PrimitiveFailed();
-                }
-                return (char) Math.toIntExact(longValue);
+                return (char) Math.toIntExact(receiver.reduceToLong());
+            } catch (ArithmeticException e) {
+                throw new PrimitiveFailed();
+            }
+        }
+
+        @Specialization
+        protected char doLong(@SuppressWarnings("unused") final Object receiver, final long target) {
+            return (char) Math.toIntExact(target);
+        }
+
+        @Specialization
+        protected char doLargeInteger(@SuppressWarnings("unused") final Object receiver, final LargeIntegerObject target) {
+            try {
+                return (char) Math.toIntExact(target.reduceToLong());
             } catch (ArithmeticException e) {
                 throw new PrimitiveFailed();
             }
@@ -538,8 +520,8 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 173, numArguments = 2)
     protected abstract static class PrimSlotAtNode extends AbstractPrimitiveNode {
 
-        protected PrimSlotAtNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimSlotAtNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -556,8 +538,8 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 174, numArguments = 3)
     protected abstract static class PrimSlotAtPutNode extends AbstractPrimitiveNode {
 
-        protected PrimSlotAtPutNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimSlotAtPutNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -575,8 +557,8 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 178)
     protected abstract static class PrimAllObjectsNode extends AbstractInstancesPrimitiveNode {
 
-        protected PrimAllObjectsNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimAllObjectsNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -587,32 +569,21 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 181, variableArguments = true)
+    @SqueakPrimitive(index = 181)
     protected abstract static class PrimSizeInBytesOfInstanceNode extends AbstractPrimitiveNode {
 
-        protected PrimSizeInBytesOfInstanceNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Override
-        public final Object executeWithArguments(final VirtualFrame frame, final Object... rcvrAndArgs) {
-            return executeWithArgumentsSpecialized(frame, new Object[]{rcvrAndArgs});
+        protected PrimSizeInBytesOfInstanceNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
-        protected long doSize(final Object[] rcvrAndArgs) {
-            if (!(rcvrAndArgs[0] instanceof ClassObject)) {
-                throw new PrimitiveFailed();
-            }
-            final ClassObject receiver = (ClassObject) rcvrAndArgs[0];
-            switch (rcvrAndArgs.length) {
-                case 1:
-                    return receiver.classByteSizeOfInstance(0);
-                case 2:
-                    return receiver.classByteSizeOfInstance((long) rcvrAndArgs[1]);
-                default:
-                    throw new PrimitiveFailed();
-            }
+        protected long doSize(final ClassObject receiver, @SuppressWarnings("unused") final NotProvided value) {
+            return receiver.classByteSizeOfInstance(0);
+        }
+
+        @Specialization
+        protected long doSize(final ClassObject receiver, final long size) {
+            return receiver.classByteSizeOfInstance(size);
         }
     }
 
@@ -623,8 +594,8 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Child private FrameStackWriteNode stackWriteNode = FrameStackWriteNode.create();
         @Child private FrameSlotReadNode stackPointerReadNode;
 
-        protected PrimArrayBecomeOneWayCopyHashNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimArrayBecomeOneWayCopyHashNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
             stackPointerReadNode = FrameSlotReadNode.create(method.stackPointerSlot);
         }
 

@@ -23,6 +23,7 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.SqueakObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
+import de.hpi.swa.graal.squeak.nodes.helpers.NotProvided;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
@@ -40,8 +41,8 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 90)
     protected abstract static class PrimMousePointNode extends AbstractPrimitiveNode {
 
-        protected PrimMousePointNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimMousePointNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -56,8 +57,8 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         private static final int[] SUPPORTED_DEPTHS = new int[]{32}; // TODO: support all depths?
                                                                      // {1, 2, 4, 8, 16, 32}
 
-        protected PrimTestDisplayDepthNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimTestDisplayDepthNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -75,8 +76,8 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 92, numArguments = 5)
     protected abstract static class PrimSetDisplayModeNode extends AbstractPrimitiveNode {
 
-        protected PrimSetDisplayModeNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimSetDisplayModeNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -90,8 +91,8 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 94, numArguments = 2)
     protected abstract static class PrimGetNextEventNode extends AbstractPrimitiveNode {
 
-        protected PrimGetNextEventNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimGetNextEventNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -105,54 +106,51 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 96, variableArguments = true)
+    @SqueakPrimitive(index = 96)
     protected abstract static class PrimCopyBitsNode extends SimulationPrimitiveNode {
 
-        protected PrimCopyBitsNode(final CompiledMethodObject method) {
-            super(method, "BitBltPlugin", "primitiveCopyBits");
+        protected PrimCopyBitsNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments, "BitBltPlugin", "primitiveCopyBits");
         }
+
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 101, variableArguments = true)
+    @SqueakPrimitive(index = 101)
     protected abstract static class PrimBeCursorNode extends AbstractPrimitiveNode {
 
-        protected PrimBeCursorNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Override
-        public final Object executeWithArguments(final VirtualFrame frame, final Object... rcvrAndArgs) {
-            return executeWithArgumentsSpecialized(frame, new Object[]{rcvrAndArgs});
+        protected PrimBeCursorNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
-        protected final Object doCursor(final Object[] rcvrAndArgs) {
-            final Object cursorObject = rcvrAndArgs[0];
-            if (!(cursorObject instanceof PointersObject)) {
-                throw new SqueakException("Unexpected cursorObject: " + cursorObject.toString());
-            }
-            final PointersObject cursor = (PointersObject) cursorObject;
-            int[] words = ((NativeObject) cursor.at0(FORM.BITS)).getWords();
-            final long width = (long) cursor.at0(FORM.WIDTH);
-            final long height = (long) cursor.at0(FORM.HEIGHT);
+        protected final Object doCursor(final PointersObject receiver, @SuppressWarnings("unused") final NotProvided mask) {
+            final int[] words = validateAndExtractWords(receiver);
+            code.image.display.setCursor(words);
+            return receiver;
+        }
+
+        @Specialization
+        protected final Object doCursor(final PointersObject receiver, final PointersObject maskObject) {
+            int[] words = validateAndExtractWords(receiver);
+            final int[] mask = ((NativeObject) maskObject.at0(FORM.BITS)).getWords();
+            words = mergeCursorWithMask(words, mask);
+            code.image.display.setCursor(words);
+            return receiver;
+        }
+
+        private static int[] validateAndExtractWords(final PointersObject receiver) {
+            final int[] words = ((NativeObject) receiver.at0(FORM.BITS)).getWords();
+            final long width = (long) receiver.at0(FORM.WIDTH);
+            final long height = (long) receiver.at0(FORM.HEIGHT);
             if (width != SqueakDisplay.CURSOR_WIDTH || height != SqueakDisplay.CURSOR_HEIGHT) {
                 throw new SqueakException("Unexpected cursor width: " + width + " or height: " + height);
             }
-            final long depth = (long) cursor.at0(FORM.DEPTH);
+            final long depth = (long) receiver.at0(FORM.DEPTH);
             if (depth != 1) {
                 throw new SqueakException("Unexpected cursor depth: " + depth);
             }
-            if (rcvrAndArgs.length == 2) {
-                final Object maskObject = rcvrAndArgs[1];
-                if (!(maskObject instanceof PointersObject)) {
-                    throw new SqueakException("Unexpected maskObject: " + maskObject.toString());
-                }
-                final int[] mask = ((NativeObject) ((PointersObject) maskObject).at0(FORM.BITS)).getWords();
-                words = mergeCursorWithMask(words, mask);
-            }
-            code.image.display.setCursor(words);
-            return rcvrAndArgs[0];
+            return words;
         }
 
         private static int[] mergeCursorWithMask(final int[] cursorWords, final int[] maskWords) {
@@ -186,8 +184,8 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 102)
     protected abstract static class PrimBeDisplayNode extends AbstractPrimitiveNode {
 
-        protected PrimBeDisplayNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimBeDisplayNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -205,8 +203,8 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 105, numArguments = 5)
     protected abstract static class PrimStringReplaceNode extends AbstractPrimitiveNode {
-        protected PrimStringReplaceNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimStringReplaceNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Override
@@ -303,8 +301,8 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 106)
     protected abstract static class PrimScreenSizeNode extends AbstractPrimitiveNode {
 
-        protected PrimScreenSizeNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimScreenSizeNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -317,8 +315,8 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 107)
     protected abstract static class PrimMouseButtonsNode extends AbstractPrimitiveNode {
 
-        protected PrimMouseButtonsNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimMouseButtonsNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -331,8 +329,8 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 108)
     protected abstract static class PrimKeyboardNextNode extends AbstractPrimitiveNode {
 
-        protected PrimKeyboardNextNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimKeyboardNextNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -350,8 +348,8 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 109)
     protected abstract static class PrimKeyboardPeekNode extends AbstractPrimitiveNode {
 
-        protected PrimKeyboardPeekNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimKeyboardPeekNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -369,8 +367,8 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 126, numArguments = 2)
     protected abstract static class PrimDeferDisplayUpdatesNode extends AbstractPrimitiveNode {
 
-        public PrimDeferDisplayUpdatesNode(final CompiledMethodObject method) {
-            super(method);
+        public PrimDeferDisplayUpdatesNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -384,8 +382,8 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 127, numArguments = 5)
     protected abstract static class PrimDrawRectNode extends AbstractPrimitiveNode {
 
-        protected PrimDrawRectNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimDrawRectNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         protected static final boolean inBounds(final long left, final long right, final long top, final long bottom) {
@@ -403,8 +401,8 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 133)
     protected abstract static class PrimSetInterruptKeyNode extends AbstractPrimitiveNode {
 
-        protected PrimSetInterruptKeyNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimSetInterruptKeyNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization
@@ -418,8 +416,8 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 140)
     protected abstract static class PrimBeepNode extends AbstractPrimitiveNode {
 
-        protected PrimBeepNode(final CompiledMethodObject method) {
-            super(method);
+        protected PrimBeepNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
         }
 
         @Specialization

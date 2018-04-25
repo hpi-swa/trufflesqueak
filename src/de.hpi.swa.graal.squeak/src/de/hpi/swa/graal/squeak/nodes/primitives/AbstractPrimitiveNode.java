@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.primitives;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.GenerateWrapper;
@@ -19,17 +20,21 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
+import de.hpi.swa.graal.squeak.nodes.helpers.NotProvided;
 
 @GenerateWrapper
 @NodeChild(value = "arguments", type = SqueakNode[].class)
 public abstract class AbstractPrimitiveNode extends AbstractNodeWithCode implements InstrumentableNode {
+    @CompilationFinal public final int numArguments;
 
-    public AbstractPrimitiveNode(final CompiledMethodObject method) {
+    public AbstractPrimitiveNode(final CompiledMethodObject method, final int numArguments) {
         super(method);
+        this.numArguments = numArguments;
     }
 
     public AbstractPrimitiveNode(final AbstractPrimitiveNode original) {
         super(original.code);
+        this.numArguments = original.numArguments;
     }
 
     public Object executeWithArguments(final VirtualFrame frame, final Object... arguments) {
@@ -50,6 +55,10 @@ public abstract class AbstractPrimitiveNode extends AbstractNodeWithCode impleme
 
     protected static final boolean isNil(final Object obj) {
         return obj instanceof NilObject;
+    }
+
+    protected static final boolean isNotProvided(final Object obj) {
+        return NotProvided.isInstance(obj);
     }
 
     protected static final boolean isNativeObject(final BaseSqueakObject object) {

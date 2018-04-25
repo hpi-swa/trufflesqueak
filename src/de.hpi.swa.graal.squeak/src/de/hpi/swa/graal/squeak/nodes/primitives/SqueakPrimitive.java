@@ -14,6 +14,4 @@ public @interface SqueakPrimitive {
     String[] names() default {};
 
     int numArguments() default 1;
-
-    boolean variableArguments() default false;
 }

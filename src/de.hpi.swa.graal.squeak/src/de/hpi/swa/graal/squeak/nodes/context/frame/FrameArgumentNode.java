@@ -9,6 +9,7 @@ import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
+import de.hpi.swa.graal.squeak.nodes.helpers.NotProvided;
 
 public abstract class FrameArgumentNode extends Node {
     @CompilationFinal private final int argumentIndex;
@@ -28,7 +29,12 @@ public abstract class FrameArgumentNode extends Node {
 
     @Specialization
     protected Object doArgument(final VirtualFrame frame) {
-        final Object value = frame.getArguments()[argumentIndex];
+        final Object value;
+        try {
+            value = frame.getArguments()[argumentIndex];
+        } catch (ArrayIndexOutOfBoundsException e) {
+            return NotProvided.INSTANCE;
+        }
         if (objectProfile.profile(value instanceof BaseSqueakObject)) {
             return classProfile.profile(value);
         } else {
