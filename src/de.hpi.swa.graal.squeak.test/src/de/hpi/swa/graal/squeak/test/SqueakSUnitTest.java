@@ -261,7 +261,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
                     "ObjectTest", TEST_TYPE.FAILING,
                     "OrderedCollectionInspectorTest", TEST_TYPE.FLAKY,
                     "OrderedCollectionTest", TEST_TYPE.PASSING,
-                    "OrderedDictionaryTest", TEST_TYPE.PASSING,
+                    "OrderedDictionaryTest", TEST_TYPE.FLAKY,
                     "PackageDependencyTest", TEST_TYPE.NOT_TERMINATING,
                     "PackagePaneBrowserTest", TEST_TYPE.PASSING,
                     "ParserEditingTest", TEST_TYPE.PASSING,
@@ -396,7 +396,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
                     "VersionNumberTest", TEST_TYPE.PASSING,
                     "WeakFinalizersTest", TEST_TYPE.PASSING,
                     "WeakIdentityKeyDictionaryTest", TEST_TYPE.PASSING,
-                    "WeakMessageSendTest", TEST_TYPE.FAILING,
+                    "WeakMessageSendTest", TEST_TYPE.FLAKY,
                     "WeakRegistryTest", TEST_TYPE.FLAKY, // uses Delays
                     "WeakSetInspectorTest", TEST_TYPE.IGNORE, // doesn't terminate sometimes on JDK8
                     "WeakSetTest", TEST_TYPE.PASSING,
