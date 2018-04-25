@@ -307,7 +307,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
                     "SequenceableCollectionTest", TEST_TYPE.FLAKY,
                     "SetTest", TEST_TYPE.PASSING,
                     "SetWithNilTest", TEST_TYPE.PASSING,
-                    "SharedQueue2Test", TEST_TYPE.PASSING,
+                    "SharedQueue2Test", TEST_TYPE.IGNORE, // passing, sometimes blocks on CI
                     "SHParserST80Test", TEST_TYPE.BROKEN_IN_SQUEAK,
                     "SimpleSwitchMorphTest", TEST_TYPE.PASSING,
                     "SimpleTestResourceTestCase", TEST_TYPE.PASSING,
@@ -399,7 +399,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
                     "WeakMessageSendTest", TEST_TYPE.FLAKY,
                     "WeakRegistryTest", TEST_TYPE.FLAKY, // uses Delays
                     "WeakSetInspectorTest", TEST_TYPE.IGNORE, // doesn't terminate sometimes on JDK8
-                    "WeakSetTest", TEST_TYPE.PASSING,
+                    "WeakSetTest", TEST_TYPE.IGNORE, // passing, sometimes blocks on CI
                     "WebClientServerTest", TEST_TYPE.FAILING,
                     "WeekTest", TEST_TYPE.PASSING,
                     "WideCharacterSetTest", TEST_TYPE.FAILING,
