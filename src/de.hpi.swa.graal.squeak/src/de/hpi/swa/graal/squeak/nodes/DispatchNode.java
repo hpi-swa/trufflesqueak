@@ -29,16 +29,19 @@ public abstract class DispatchNode extends Node {
 
     public abstract Object executeDispatch(VirtualFrame frame, Object method, Object[] receiverAndArguments, Object contextOrMarker);
 
-    @Specialization(guards = {"264 <= method.primitiveIndex()", "method.primitiveIndex() <= 520"})
+    protected static final boolean isQuickReturnReceiverVariable(final int primitiveIndex) {
+        return 264 <= primitiveIndex && primitiveIndex <= 520;
+    }
+
+    @Specialization(guards = {"isQuickReturnReceiverVariable(method.primitiveIndex())"})
     protected Object doPrimitiveQuickReturnReceiver(final CompiledMethodObject method, final Object[] receiverAndArguments, @SuppressWarnings("unused") final Object contextOrMarker) {
         assert receiverAndArguments[0] instanceof BaseSqueakObject;
         return ((BaseSqueakObject) receiverAndArguments[0]).at0(method.primitiveIndex() - 264);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"method == cachedMethod", "method.hasPrimitive()", "primitiveNode != null"}, assumptions = {"callTargetStable"}, rewriteOn = {
-                    PrimitiveFailed.class,
-                    UnsupportedSpecializationException.class})
+    @Specialization(guards = {"!isQuickReturnReceiverVariable(method.primitiveIndex())", "method == cachedMethod", "method.hasPrimitive()", "primitiveNode != null"}, assumptions = {
+                    "callTargetStable"}, rewriteOn = {PrimitiveFailed.class, UnsupportedSpecializationException.class})
     protected Object doPrimitiveEagerly(final VirtualFrame frame, final CompiledMethodObject method, final Object[] receiverAndArguments, final Object contextOrMarker,
                     @Cached("method") final CompiledMethodObject cachedMethod,
                     @Cached("method.getCallTargetStable()") final Assumption callTargetStable,
