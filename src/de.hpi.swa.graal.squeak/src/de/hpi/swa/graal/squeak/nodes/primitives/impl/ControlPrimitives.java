@@ -42,7 +42,6 @@ import de.hpi.swa.graal.squeak.nodes.context.ReceiverAndArgumentsNode;
 import de.hpi.swa.graal.squeak.nodes.context.ReceiverNode;
 import de.hpi.swa.graal.squeak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.graal.squeak.nodes.context.SqueakLookupClassNodeGen;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
@@ -551,9 +550,8 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {130, 131})
+    @SqueakPrimitive(index = 130)
     protected abstract static class PrimFullGCNode extends AbstractPrimitiveNode {
-        @Child private FrameStackWriteNode stackWriteNode = FrameStackWriteNode.create();
 
         protected PrimFullGCNode(final CompiledMethodObject method) {
             super(method);
@@ -580,6 +578,22 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             }
             code.image.traceVerbose(count + " WeakPointersObjects have been garbage collected.");
             return count > 0;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 131)
+    protected abstract static class PrimIncrementalGCNode extends AbstractPrimitiveNode {
+
+        protected PrimIncrementalGCNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected final Object doGC(final VirtualFrame frame, final BaseSqueakObject receiver) {
+            System.gc();
+            return code.image.wrap(Runtime.getRuntime().freeMemory());
         }
     }
 
