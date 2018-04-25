@@ -253,14 +253,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Override
         public final Object executeWithArguments(final VirtualFrame frame, final Object... rcvrAndArgs) {
-            switch (rcvrAndArgs.length) {
-                case 2:
-                    return doAtTwo(rcvrAndArgs);
-                case 3:
-                    return doAtThree(rcvrAndArgs);
-                default:
-                    throw new PrimitiveFailed();
-            }
+            return executeWithArgumentsSpecialized(frame, new Object[]{rcvrAndArgs});
         }
 
         @Specialization(guards = "rcvrAndArgs.length == 2")
@@ -504,7 +497,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Override
         public final Object executeWithArguments(final VirtualFrame frame, final Object... rcvrAndArgs) {
-            return doCharValue(rcvrAndArgs);
+            return executeWithArgumentsSpecialized(frame, new Object[]{rcvrAndArgs});
         }
 
         @Specialization
@@ -603,7 +596,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Override
         public final Object executeWithArguments(final VirtualFrame frame, final Object... rcvrAndArgs) {
-            return doSize(rcvrAndArgs);
+            return executeWithArgumentsSpecialized(frame, new Object[]{rcvrAndArgs});
         }
 
         @Specialization

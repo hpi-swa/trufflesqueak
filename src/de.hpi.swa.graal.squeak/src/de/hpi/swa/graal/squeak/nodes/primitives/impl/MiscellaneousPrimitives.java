@@ -245,6 +245,11 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
+        @Override
+        public final Object executeWithArguments(final VirtualFrame frame, final Object... rcvrAndArgs) {
+            return executeWithArgumentsSpecialized(frame, new Object[]{rcvrAndArgs});
+        }
+
         @Specialization
         protected Object doClipboard(final Object[] rcvrAndArgs) {
             if (rcvrAndArgs.length == 1) {
@@ -477,7 +482,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Override
         public final Object executeWithArguments(final VirtualFrame frame, final Object... rcvrAndArgs) {
-            return getVMParameters(rcvrAndArgs);
+            return executeWithArgumentsSpecialized(frame, new Object[]{rcvrAndArgs});
         }
 
         @Specialization

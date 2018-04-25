@@ -144,7 +144,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Override
         public final Object executeWithArguments(final VirtualFrame frame, final Object... rcvrAndArgs) {
-            return perform(frame, rcvrAndArgs);
+            return executeWithArgumentsSpecialized(frame, new Object[]{rcvrAndArgs});
         }
 
         @Specialization
@@ -307,7 +307,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Override
         public final Object executeWithArguments(final VirtualFrame frame, final Object... rcvrAndArgs) {
-            return doPerform(frame, rcvrAndArgs);
+            return executeWithArgumentsSpecialized(frame, new Object[]{rcvrAndArgs});
         }
 
         @Specialization
@@ -395,7 +395,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Override
         public final Object executeWithArguments(final VirtualFrame frame, final Object... rcvrAndArgs) {
-            return doClass(rcvrAndArgs);
+            return executeWithArgumentsSpecialized(frame, new Object[]{rcvrAndArgs});
         }
 
         @Specialization
@@ -427,7 +427,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Override
         public final Object executeWithArguments(final VirtualFrame frame, final Object... rcvrAndArgs) {
-            return doQuit(rcvrAndArgs);
+            return executeWithArgumentsSpecialized(frame, new Object[]{rcvrAndArgs});
         }
 
         @Specialization

@@ -121,7 +121,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Override
         public final Object executeWithArguments(final VirtualFrame frame, final Object... rcvrAndArgs) {
-            return doCursor(rcvrAndArgs);
+            return executeWithArgumentsSpecialized(frame, new Object[]{rcvrAndArgs});
         }
 
         @Specialization
