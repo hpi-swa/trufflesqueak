@@ -203,7 +203,7 @@ public final class SendBytecodes {
     public static final class SendObjectAsMethodNode extends AbstractNodeWithImage {
         @Child private DispatchNode dispatchNode = DispatchNode.create();
         @Child private LookupNode lookupNode = LookupNode.create();
-        @Child protected SqueakLookupClassNode lookupClassNode;
+        @Child private SqueakLookupClassNode lookupClassNode;
         @CompilationFinal private NativeObject runWithIn;
 
         public static SendObjectAsMethodNode create(final SqueakImageContext image) {

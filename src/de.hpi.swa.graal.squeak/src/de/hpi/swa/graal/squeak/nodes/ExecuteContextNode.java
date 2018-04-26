@@ -158,7 +158,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
     }
 
     /*
-     * Non-optimized version of startBytecode that is used to resume contexts.
+     * Non-optimized version of startBytecode which is used to resume contexts.
      */
     protected void resumeBytecode(final VirtualFrame frame, final long initialPC) {
         int pc = (int) initialPC;

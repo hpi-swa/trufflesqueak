@@ -22,7 +22,7 @@ public final class Returns {
 
     public static final class FreshReturn extends ControlFlowException {
         @CompilationFinal private static final long serialVersionUID = 1L;
-        @CompilationFinal protected final AbstractReturn returnValue;
+        @CompilationFinal private final AbstractReturn returnValue;
 
         public FreshReturn(final AbstractReturn result) {
             returnValue = result;

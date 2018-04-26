@@ -184,7 +184,7 @@ public final class SqueakImageContext {
 
     public void fillInFrom(final FileInputStream inputStream) throws IOException {
         SqueakImageReader.readImage(this, inputStream);
-        if (!display.isHeadless() && simulatePrimitiveArgs == nil) {
+        if (!display.isHeadless() && simulatePrimitiveArgs.isNil()) {
             throw new SqueakException("Unable to find BitBlt simulation in image, cannot run with display.");
         }
     }

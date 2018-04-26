@@ -46,7 +46,7 @@ public final class JumpBytecodes {
 
         public boolean executeCondition(final VirtualFrame frame) {
             final Object value = popNode.executeRead(frame);
-            if (value instanceof Boolean) {
+            if (value instanceof Boolean) { // TODO: this could be another node
                 return value == isIfTrue;
             } else {
                 CompilerDirectives.transferToInterpreter();

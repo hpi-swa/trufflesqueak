@@ -187,7 +187,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 71, numArguments = 2)
     protected abstract static class PrimNewArgNode extends AbstractPrimitiveNode {
-        static final int NEW_CACHE_SIZE = 3;
+        @CompilationFinal protected static final int NEW_CACHE_SIZE = 3;
 
         protected PrimNewArgNode(final CompiledMethodObject method) {
             super(method);

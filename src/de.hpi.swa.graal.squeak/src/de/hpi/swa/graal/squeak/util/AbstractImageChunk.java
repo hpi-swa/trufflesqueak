@@ -165,7 +165,7 @@ public abstract class AbstractImageChunk {
 
     private Object decodePointer(final int ptr) {
         if ((ptr & 3) == 0) {
-            final AbstractImageChunk chunk = reader.chunktable.get(ptr);
+            final AbstractImageChunk chunk = reader.getChunk(ptr);
             if (chunk == null) {
                 image.getError().println("Bogus pointer: " + ptr + ". Treating as smallint.");
                 return image.wrap(ptr >> 1);

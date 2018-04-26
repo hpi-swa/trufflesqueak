@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+
 import de.hpi.swa.graal.squeak.SqueakImageContext;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
@@ -20,24 +22,24 @@ import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives.Sim
 
 @SuppressWarnings("unused")
 public final class SqueakImageReader {
-    public static final Object NIL_OBJECT_PLACEHOLDER = new Object();
-    private static final int SPECIAL_SELECTORS_INDEX = 23;
-    private static final int FREE_OBJECT_CLASS_INDEX_PUN = 0;
-    private static final long SLOTS_MASK = 0xFF << 56;
-    private static final long OVERFLOW_SLOTS = 255;
-    private static final int HIDDEN_ROOTS_CHUNK = 4; // nil, false, true, freeList, hiddenRoots
-    private final BufferedInputStream stream;
-    private final ByteBuffer shortBuf = ByteBuffer.allocate(2);
-    private final ByteBuffer intBuf = ByteBuffer.allocate(4);
-    private final ByteBuffer longBuf = ByteBuffer.allocate(8);
+    @CompilationFinal static final Object NIL_OBJECT_PLACEHOLDER = new Object();
+    @CompilationFinal private static final int SPECIAL_SELECTORS_INDEX = 23;
+    @CompilationFinal private static final int FREE_OBJECT_CLASS_INDEX_PUN = 0;
+    @CompilationFinal private static final long SLOTS_MASK = 0xFF << 56;
+    @CompilationFinal private static final long OVERFLOW_SLOTS = 255;
+    @CompilationFinal private static final int HIDDEN_ROOTS_CHUNK = 4;
+    @CompilationFinal private final BufferedInputStream stream;
+    @CompilationFinal private final ByteBuffer shortBuf = ByteBuffer.allocate(2);
+    @CompilationFinal private final ByteBuffer intBuf = ByteBuffer.allocate(4);
+    @CompilationFinal private final ByteBuffer longBuf = ByteBuffer.allocate(8);
+    @CompilationFinal private final List<AbstractImageChunk> chunklist = new ArrayList<>();
+    @CompilationFinal private final HashMap<Integer, AbstractImageChunk> chunktable = new HashMap<>();
     private int headerSize;
     private int oldBaseAddress;
     private int specialObjectsPointer;
     private short maxExternalSemaphoreTableSize;
     private int firstSegmentSize;
     private int position = 0;
-    private List<AbstractImageChunk> chunklist = new ArrayList<>();
-    protected HashMap<Integer, AbstractImageChunk> chunktable = new HashMap<>();
     private PrintWriter output;
 
     public static void readImage(final SqueakImageContext squeakImageContext, final FileInputStream inputStream) throws IOException {
@@ -323,5 +325,9 @@ public final class SqueakImageReader {
 
     private static int minorClassIndexOf(final int classid) {
         return classid & ((1 << 10) - 1);
+    }
+
+    public AbstractImageChunk getChunk(final int ptr) {
+        return chunktable.get(ptr);
     }
 }
