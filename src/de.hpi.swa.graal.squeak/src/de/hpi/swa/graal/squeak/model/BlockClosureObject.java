@@ -47,8 +47,8 @@ public final class BlockClosureObject extends BaseSqueakObject {
     }
 
     private BlockClosureObject(final BlockClosureObject original) {
-        super(original.block.image);
-        this.block = (CompiledBlockObject) original.block.shallowCopy();
+        super(original.image);
+        this.block = (CompiledBlockObject) original.getCompiledBlock().shallowCopy();
         this.outerContext = original.outerContext;
         if (original.receiver instanceof BaseSqueakObject) {
             this.receiver = ((BaseSqueakObject) original.receiver).shallowCopy();
