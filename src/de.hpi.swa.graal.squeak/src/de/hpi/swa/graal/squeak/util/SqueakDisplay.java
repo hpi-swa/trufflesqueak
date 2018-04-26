@@ -115,6 +115,7 @@ public final class SqueakDisplay {
         @CompilationFinal(dimensions = 1) private static final byte[] ALPHA_COMPONENT = new byte[]{(byte) 255};
         @CompilationFinal private static final ColorModel CURSOR_MODEL = new IndexColorModel(1, 1, BLACK_AND_WHITE, BLACK_AND_WHITE, BLACK_AND_WHITE, ALPHA_COMPONENT);
 
+        private Dimension windowSize = null;
         private boolean deferUpdates = false;
 
         public JavaDisplay(final SqueakImageContext image) {
@@ -280,13 +281,17 @@ public final class SqueakDisplay {
 
         @Override
         public void setFullscreen(final boolean enable) {
+            frame.dispose();
+            frame.setUndecorated(enable);
+            frame.setExtendedState(enable ? JFrame.MAXIMIZED_BOTH : JFrame.NORMAL);
             if (enable) {
-                frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
-                frame.setUndecorated(true);
+                windowSize = frame.getSize();
             } else {
-                frame.setExtendedState(JFrame.NORMAL);
-                frame.setUndecorated(false);
+                frame.setPreferredSize(windowSize);
+                frame.pack();
+                frame.setLocationRelativeTo(null);
             }
+            frame.setVisible(true);
         }
 
         @Override
