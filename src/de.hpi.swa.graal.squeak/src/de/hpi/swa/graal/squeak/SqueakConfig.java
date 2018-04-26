@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -19,7 +20,8 @@ public class SqueakConfig {
 
     @SuppressWarnings("hiding")
     public SqueakConfig(final String[] args) {
-        this.imagePath = args.length > 0 ? args[0].trim() : "unknown";
+        assert args.length > 0;
+        this.imagePath = new File(args[0].trim()).getAbsolutePath();
         boolean verbose = false;
         boolean tracing = false;
         boolean disableInterrupts = false;
