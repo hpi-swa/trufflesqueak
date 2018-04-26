@@ -9,7 +9,6 @@ import de.hpi.swa.graal.squeak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.util.FrameMarker;
 
 public abstract class HandleNonLocalReturnNode extends AbstractNodeWithCode {
     @Child private TerminateContextNode terminateNode;
@@ -36,12 +35,10 @@ public abstract class HandleNonLocalReturnNode extends AbstractNodeWithCode {
             aboutToReturnNode.executeAboutToReturn(frame, nlr);
         }
         terminateNode.executeTerminate(frame);
-        final FrameMarker frameMarker = getFrameMarker(frame);
-        if (nlr.getTargetContext().getFrameMarker() == frameMarker) {
-            return nlr.getReturnValue();
-        } else {
-            throw nlr;
+        if (nlr.getTargetContext().getFrameMarker() == getFrameMarker(frame)) {
+            nlr.setArrivedAtTargetContext();
         }
+        throw nlr;
     }
 
     @Specialization(guards = "!isVirtualized(frame)")
