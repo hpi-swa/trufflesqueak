@@ -74,7 +74,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                 image.trace("Switching from " + activeContext + " to " + ps.getNewContext());
                 activeContext = ps.getNewContext();
             } catch (NonLocalReturn nlr) {
-                final BaseSqueakObject target = nlr.hasArrivedAtTargetContext() ? sender : nlr.getTargetContext();
+                final BaseSqueakObject target = nlr.hasArrivedAtTargetContext() ? sender : nlr.getTargetContext().getSender();
                 activeContext = unwindContextChain(sender, target, nlr.getReturnValue());
                 image.traceVerbose("Non Local Return on top-level, new context is " + activeContext);
             } catch (NonVirtualReturn nvr) {
