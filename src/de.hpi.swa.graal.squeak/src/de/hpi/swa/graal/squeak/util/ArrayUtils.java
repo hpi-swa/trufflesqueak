@@ -5,11 +5,7 @@ import java.util.Arrays;
 public class ArrayUtils {
 
     public static final Object[] allButFirst(final Object[] values) {
-        final Object[] result = new Object[values.length - 1];
-        for (int i = 0; i < result.length; i++) {
-            result[i] = values[1 + i];
-        }
-        return result;
+        return Arrays.copyOfRange(values, 1, values.length);
     }
 
     public static final byte[] swapOrderCopy(final byte[] bytes) {
@@ -36,10 +32,8 @@ public class ArrayUtils {
         if (inputSize >= newSize) {
             return input;
         } else {
-            final Object[] array = new Object[newSize];
-            for (int i = 0; i < array.length; i++) {
-                array[i] = i < inputSize ? input[i] : fill;
-            }
+            final Object[] array = Arrays.copyOf(input, newSize);
+            Arrays.fill(array, inputSize, newSize, fill);
             return array;
         }
     }
