@@ -88,7 +88,7 @@ public final class SqueakDisplay {
 
         public abstract boolean isHeadless();
 
-        public abstract void setCursor(int[] cursorWords);
+        public abstract void setCursor(int[] cursorWords, int depth);
 
         public abstract long[] getNextEvent();
 
@@ -111,9 +111,9 @@ public final class SqueakDisplay {
         @CompilationFinal private final Deque<long[]> deferredEvents = new ArrayDeque<>();
 
         @CompilationFinal private static final Toolkit TOOLKIT = Toolkit.getDefaultToolkit();
-        @CompilationFinal(dimensions = 1) private static final byte[] BLACK_AND_WHITE = new byte[]{(byte) 0, (byte) 255};
-        @CompilationFinal(dimensions = 1) private static final byte[] ALPHA_COMPONENT = new byte[]{(byte) 255};
-        @CompilationFinal private static final ColorModel CURSOR_MODEL = new IndexColorModel(1, 1, BLACK_AND_WHITE, BLACK_AND_WHITE, BLACK_AND_WHITE, ALPHA_COMPONENT);
+        @CompilationFinal(dimensions = 1) private static final byte[] BLACK_AND_WHITE = new byte[]{(byte) 255, (byte) 0};
+        @CompilationFinal(dimensions = 1) private static final byte[] ALPHA_COMPONENT = new byte[]{(byte) 0, (byte) 255};
+        @CompilationFinal private static final ColorModel CURSOR_MODEL = new IndexColorModel(1, 2, BLACK_AND_WHITE, BLACK_AND_WHITE, BLACK_AND_WHITE, ALPHA_COMPONENT);
 
         private Dimension windowSize = null;
         private boolean deferUpdates = false;
@@ -325,16 +325,16 @@ public final class SqueakDisplay {
         }
 
         @Override
-        public void setCursor(final int[] cursorWords) {
+        public void setCursor(final int[] cursorWords, final int depth) {
             final Dimension bestCursorSize = TOOLKIT.getBestCursorSize(CURSOR_WIDTH, CURSOR_HEIGHT);
             final Cursor cursor;
             if (bestCursorSize.width == 0 || bestCursorSize.height == 0) {
                 cursor = Cursor.getDefaultCursor();
             } else {
-                final DataBuffer buf = new DataBufferInt(cursorWords, (CURSOR_WIDTH * CURSOR_HEIGHT / 8) * 1);
-                final SampleModel sm = new MultiPixelPackedSampleModel(DataBuffer.TYPE_INT, CURSOR_WIDTH, CURSOR_HEIGHT, 1);
+                final DataBuffer buf = new DataBufferInt(cursorWords, (CURSOR_WIDTH * CURSOR_HEIGHT / 8) * depth);
+                final SampleModel sm = new MultiPixelPackedSampleModel(DataBuffer.TYPE_INT, CURSOR_WIDTH, CURSOR_HEIGHT, depth);
                 final WritableRaster raster = Raster.createWritableRaster(sm, buf, null);
-                final Image cursorImage = new BufferedImage(CURSOR_MODEL, raster, true, null);
+                final Image cursorImage = new BufferedImage(CURSOR_MODEL, raster, false, null);
                 cursor = TOOLKIT.createCustomCursor(cursorImage, new Point(0, 0), "GraalSqueak Cursor");
             }
             canvas.setCursor(cursor);
@@ -432,7 +432,7 @@ public final class SqueakDisplay {
         }
 
         @Override
-        public void setCursor(final int[] cursorWords) {
+        public void setCursor(final int[] cursorWords, final int depth) {
             // ignore
         }
 

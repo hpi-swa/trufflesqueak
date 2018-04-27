@@ -125,17 +125,20 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doCursor(final PointersObject receiver, @SuppressWarnings("unused") final NotProvided mask) {
-            final int[] words = validateAndExtractWords(receiver);
-            code.image.display.setCursor(words);
+            code.image.display.setCursor(validateAndExtractWords(receiver), extractDepth(receiver));
             return receiver;
         }
 
         @Specialization
         protected final Object doCursor(final PointersObject receiver, final PointersObject maskObject) {
-            int[] words = validateAndExtractWords(receiver);
-            final int[] mask = ((NativeObject) maskObject.at0(FORM.BITS)).getWords();
-            words = mergeCursorWithMask(words, mask);
-            code.image.display.setCursor(words);
+            final int[] words = validateAndExtractWords(receiver);
+            final int depth = extractDepth(receiver);
+            if (depth == 1) {
+                final int[] mask = ((NativeObject) maskObject.at0(FORM.BITS)).getWords();
+                code.image.display.setCursor(mergeCursorWithMask(words, mask), 2);
+            } else {
+                code.image.display.setCursor(words, depth);
+            }
             return receiver;
         }
 
@@ -146,38 +149,32 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             if (width != SqueakDisplay.CURSOR_WIDTH || height != SqueakDisplay.CURSOR_HEIGHT) {
                 throw new SqueakException("Unexpected cursor width: " + width + " or height: " + height);
             }
-            final long depth = (long) receiver.at0(FORM.DEPTH);
-            if (depth != 1) {
-                throw new SqueakException("Unexpected cursor depth: " + depth);
-            }
             return words;
+        }
+
+        private static int extractDepth(final PointersObject receiver) {
+            return ((Long) receiver.at0(FORM.DEPTH)).intValue();
         }
 
         private static int[] mergeCursorWithMask(final int[] cursorWords, final int[] maskWords) {
-            final int[] words = new int[16];
-            for (int i = 0; i < words.length; i++) {
-                words[i] = cursorWords[i] ^= ~maskWords[i];
+            final int[] words = new int[SqueakDisplay.CURSOR_HEIGHT];
+            int cursorWord;
+            int maskWord;
+            int bit;
+            int merged;
+            for (int y = 0; y < SqueakDisplay.CURSOR_HEIGHT; y++) {
+                cursorWord = (int) (Integer.toUnsignedLong(cursorWords[y]));
+                maskWord = (int) (Integer.toUnsignedLong(maskWords[y]));
+                bit = 0x80000000;
+                merged = 0;
+                for (int x = 0; x < SqueakDisplay.CURSOR_WIDTH; x++) {
+                    merged = merged | ((maskWord & bit) >> x) | ((cursorWord & bit) >> (x + 1));
+                    bit = bit >>> 1;
+                }
+                words[y] = merged;
             }
             return words;
         }
-
-        // TODO: properly support arbitrary-sized 32 bit ARGB forms
-        // private static int[] mergeCursorWithMask(int[] cursorWords, int[] maskWords) {
-        // int[] words = new int[16];
-        // int cursorWord, maskWord, bit, merged;
-        // for (int y = 0; y < SqueakDisplay.CURSOR_HEIGHT; y++) {
-        // cursorWord = cursorWords[y];
-        // maskWord = maskWords[y];
-        // bit = 0x80000000;
-        // merged = 0;
-        // for (int x = 0; x < SqueakDisplay.CURSOR_WIDTH; x++) {
-        // merged = merged | ((maskWord & bit) >> x) | ((cursorWord & bit) >> (x + 1));
-        // bit = bit >>> 1;
-        // }
-        // words[y] = merged;
-        // }
-        // return words;
-        // }
     }
 
     @GenerateNodeFactory
