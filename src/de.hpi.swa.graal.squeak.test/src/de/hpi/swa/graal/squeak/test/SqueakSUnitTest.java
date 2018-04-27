@@ -25,14 +25,15 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
-import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.TEST_RESULT;
+import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.process.GetActiveProcessNode;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class SqueakSUnitTest extends AbstractSqueakTestCase {
+    private static final int TIMEOUT_IN_SECONDS = 5 * 60;
     private static Object smalltalkDictionary;
     private static Object smalltalkAssociation;
     private static Object evaluateSymbol;
@@ -521,34 +522,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
     @Test
     public void testZNotTerminatingSqueakTests() {
         assumeNotOnMXGate();
-        final int timeoutSeconds = 15;
-        final List<String> passing = new ArrayList<>();
-        final String[] testClasses = getSqueakTests(TEST_TYPE.NOT_TERMINATING);
-        printHeader(TEST_TYPE.NOT_TERMINATING, testClasses);
-        for (int i = 0; i < testClasses.length; i++) {
-            final String testClass = testClasses[i];
-            final Thread thread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    passing.add(runTestCase(testClass));
-                }
-            });
-            thread.start();
-            final long endTimeMillis = System.currentTimeMillis() + timeoutSeconds * 1000;
-            while (thread.isAlive()) {
-                if (System.currentTimeMillis() > endTimeMillis) {
-                    image.getOutput().println("did not terminate in time");
-                    thread.interrupt();
-                    break;
-                }
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException t) {
-                }
-            }
-
-        }
-        failIfNotEmpty(passing);
+        testAndFailOnPassing(TEST_TYPE.NOT_TERMINATING);
     }
 
     @BeforeClass
@@ -673,19 +647,42 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
     }
 
     private static String runTestCase(final String testClassName) {
+        final String timeoutErrorMessage = "did not terminate in " + TIMEOUT_IN_SECONDS + "s";
+        final String[] result = new String[]{timeoutErrorMessage};
+
         image.getOutput().print(testClassName + ": ");
         image.getOutput().flush();
-        String result;
+
+        final Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                result[0] = invokeTestCase(testClassName);
+            }
+        });
+        final long startTime = System.currentTimeMillis();
+        thread.start();
         try {
-            result = extractFailuresAndErrorsFromTestResult(evaluate(testClassName + " buildSuite run"));
+            thread.join(TIMEOUT_IN_SECONDS * 1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        if (thread.isAlive()) {
+            thread.interrupt();
+        }
+        final double timeToRun = (System.currentTimeMillis() - startTime) / 1000.0;
+        image.getOutput().println(result[0] + " [" + timeToRun + "s]");
+        return testClassName + ": " + result[0];
+    }
+
+    private static String invokeTestCase(final String testClassName) {
+        try {
+            return extractFailuresAndErrorsFromTestResult(evaluate(testClassName + " buildSuite run"));
         } catch (Exception e) {
             if (!runsOnMXGate()) {
                 e.printStackTrace();
             }
-            result = "failed with an error: " + e.toString();
+            return "failed with an error: " + e.toString();
         }
-        image.getOutput().println(result);
-        return testClassName + ": " + result;
     }
 
     private static void testAndFailOnPassing(final String type) {
