@@ -11,11 +11,11 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.process.SignalSemaphoreNode;
 
 public class InterruptHandlerNode extends Node {
-    @CompilationFinal private final SqueakImageContext image;
     @CompilationFinal private static final int interruptCheckCounterSize = 1000;
-    @CompilationFinal public static final int interruptChecksEveryNms = 3;
+    @CompilationFinal private static final int interruptChecksEveryNms = 3;
+    @CompilationFinal private final SqueakImageContext image;
     private int interruptCheckCounter = 0;
-    private static int interruptCheckCounterFeedbackReset = interruptCheckCounterSize;
+    private int interruptCheckCounterFeedbackReset = interruptCheckCounterSize;
     private long nextPollTick = 0;
     private long nextWakeupTick = 0;
     private long lastTick = 0;
@@ -53,6 +53,17 @@ public class InterruptHandlerNode extends Node {
         pendingFinalizationSignals = true;
     }
 
+    public void reset() { // for testing purposes
+        interruptCheckCounter = 0;
+        interruptCheckCounterFeedbackReset = interruptCheckCounterSize;
+        nextPollTick = 0;
+        nextWakeupTick = 0;
+        lastTick = 0;
+        interruptPending = false;
+        disabled = false;
+        pendingFinalizationSignals = false;
+    }
+
     /*
      * Check for interrupts on sends and backward jumps. TODO: call on backward jumps
      */
@@ -72,7 +83,7 @@ public class InterruptHandlerNode extends Node {
             }
         }
         // Feedback logic attempts to keep interrupt response around 3ms...
-        if ((now - lastTick) < interruptChecksEveryNms) {
+        if ((now - lastTick) < getInterruptChecksEveryNms()) {
             interruptCheckCounterFeedbackReset += 10;
         } else {
             if (interruptCheckCounterFeedbackReset <= interruptCheckCounterSize) {
@@ -102,6 +113,10 @@ public class InterruptHandlerNode extends Node {
         if (semaphoreObject != image.nil) {
             signalSemaporeNode.executeSignal(frame, (PointersObject) semaphoreObject);
         }
+    }
+
+    public static int getInterruptChecksEveryNms() {
+        return interruptChecksEveryNms;
     }
 
     protected static final class DummyInterruptHandlerNode extends InterruptHandlerNode {

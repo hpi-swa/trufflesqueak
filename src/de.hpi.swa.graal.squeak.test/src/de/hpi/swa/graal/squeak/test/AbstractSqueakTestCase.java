@@ -1,6 +1,6 @@
 package de.hpi.swa.graal.squeak.test;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -53,7 +53,7 @@ public abstract class AbstractSqueakTestCase {
         try {
             result = createContext(code, receiver, arguments).execute(frame);
         } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
-            assertTrue("broken test", false);
+            fail("broken test");
         }
         return result;
     }
@@ -74,7 +74,7 @@ public abstract class AbstractSqueakTestCase {
         for (int i = 0; i < arguments.length; i++) {
             testContext.push(arguments[i]);
         }
-        // Initialize temps with nil in newContext.
+        // Initialize temporary variables with nil in newContext.
         final int numTemps = code.getNumTemps();
         for (int i = 0; i < numTemps - arguments.length; i++) {
             testContext.push(code.image.nil);

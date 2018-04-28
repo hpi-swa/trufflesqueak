@@ -531,7 +531,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
                 case 23: // bytes of extra memory to reserve for VM buffers, plugins, etc (stored in image file header).
                 case 24: // memory threshold above which shrinking object memory (rw)
                 case 25: // memory headroom when growing object memory (rw)
-                case 26: return InterruptHandlerNode.interruptChecksEveryNms; // interruptChecksEveryNms - force an ioProcessEvents every N milliseconds (rw)
+                case 26: return InterruptHandlerNode.getInterruptChecksEveryNms(); // interruptChecksEveryNms - force an ioProcessEvents every N milliseconds (rw)
                 case 27: // number of times mark loop iterated for current IGC/FGC (read-only) includes ALL marking
                 case 28: // number of times sweep loop iterated for current IGC/FGC (read-only)
                 case 29: // number of times make forward loop iterated for current IGC/FGC (read-only)

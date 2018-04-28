@@ -619,12 +619,19 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
         return runMethod(method, getSmalltalkDictionary());
     }
 
+    /*
+     * Executes a fake Smalltalk method equivalent to:
+     *
+     * `^ (Smalltalk at: #Compiler) evaluate: expression`
+     *
+     */
     private static Object evaluate(final String expression) {
-        // ^ (Smalltalk at: #Compiler) evaluate: '{expression}'
+        //
         final String fakeMethodName = "fakeEvaluate" + expression.hashCode();
         final CompiledCodeObject method = makeMethod(
                         new Object[]{6L, getEvaluateSymbol(), getSmalltalkAssociation(), getCompilerSymbol(), image.wrap(expression), asSymbol(fakeMethodName), getSmalltalkAssociation()},
                         new int[]{0x41, 0x22, 0xC0, 0x23, 0xE0, 0x7C});
+        image.interrupt.reset(); // Avoid incorrect state across executions
         return runMethod(method, getSmalltalkDictionary());
     }
 
