@@ -191,7 +191,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 84, numArguments = 3)
+    @SqueakPrimitive(index = 84)
     protected abstract static class PrimPerformWithArgumentsNode extends AbstractPerformPrimitiveNode {
         protected PrimPerformWithArgumentsNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -341,7 +341,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 110, numArguments = 2)
+    @SqueakPrimitive(index = 110)
     protected abstract static class PrimIdenticalNode extends AbstractPrimitiveNode {
         protected PrimIdenticalNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -460,7 +460,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 115, numArguments = 2)
+    @SqueakPrimitive(index = 115)
     protected abstract static class PrimChangeClassNode extends AbstractPrimitiveNode {
         protected PrimChangeClassNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -623,7 +623,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 169, numArguments = 2) // complements 110
+    @SqueakPrimitive(index = 169) // complements 110
     protected abstract static class PrimNotIdenticalNode extends AbstractPrimitiveNode {
         protected PrimNotIdenticalNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -756,7 +756,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 188, numArguments = 3)
+    @SqueakPrimitive(index = 188)
     protected abstract static class PrimExecuteMethodArgsArrayNode extends AbstractPerformPrimitiveNode {
         @Child private DispatchNode dispatchNode = DispatchNode.create();
 
@@ -778,7 +778,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 230, numArguments = 2)
+    @SqueakPrimitive(index = 230)
     protected abstract static class PrimRelinquishProcessorNode extends AbstractPrimitiveNode {
 
         public PrimRelinquishProcessorNode(final CompiledMethodObject method, final int numArguments) {
@@ -812,7 +812,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 233, numArguments = 2)
+    @SqueakPrimitive(index = 233)
     protected abstract static class PrimSetFullScreenNode extends AbstractPrimitiveNode {
         protected PrimSetFullScreenNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);

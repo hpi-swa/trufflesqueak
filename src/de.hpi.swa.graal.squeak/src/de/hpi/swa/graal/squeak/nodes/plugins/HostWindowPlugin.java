@@ -16,7 +16,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveWindowClose", numArguments = 2)
+    @SqueakPrimitive(name = "primitiveWindowClose")
     protected abstract static class PrimHostWindowCloseNode extends AbstractPrimitiveNode {
         protected PrimHostWindowCloseNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -30,7 +30,7 @@ public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveHostWindowPosition", numArguments = 2)
+    @SqueakPrimitive(name = "primitiveHostWindowPosition")
     protected abstract static class PrimHostWindowPositionNode extends AbstractPrimitiveNode {
         protected PrimHostWindowPositionNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -44,7 +44,7 @@ public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveHostWindowSizeSet", numArguments = 4)
+    @SqueakPrimitive(name = "primitiveHostWindowSizeSet")
     protected abstract static class PrimHostWindowSizeSetNode extends AbstractPrimitiveNode {
         protected PrimHostWindowSizeSetNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -58,7 +58,7 @@ public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveHostWindowTitle", numArguments = 3)
+    @SqueakPrimitive(name = "primitiveHostWindowTitle")
     protected abstract static class PrimHostWindowTitleNode extends AbstractPrimitiveNode {
         protected PrimHostWindowTitleNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);

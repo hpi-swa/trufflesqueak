@@ -117,7 +117,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 18, numArguments = 2)
+    @SqueakPrimitive(index = 18)
     protected abstract static class PrimMakePointNode extends AbstractPrimitiveNode {
         protected PrimMakePointNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -130,7 +130,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 68, numArguments = 2)
+    @SqueakPrimitive(index = 68)
     protected abstract static class PrimCompiledMethodObjectAtNode extends AbstractPrimitiveNode {
         protected PrimCompiledMethodObjectAtNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -144,7 +144,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 69, numArguments = 3)
+    @SqueakPrimitive(index = 69)
     protected abstract static class PrimCompiledMethodObjectAtPutNode extends AbstractPrimitiveNode {
         protected PrimCompiledMethodObjectAtPutNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -186,7 +186,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 71, numArguments = 2)
+    @SqueakPrimitive(index = 71)
     protected abstract static class PrimNewArgNode extends AbstractPrimitiveNode {
         @CompilationFinal protected static final int NEW_CACHE_SIZE = 3;
 
@@ -219,7 +219,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 72, numArguments = 2)
+    @SqueakPrimitive(index = 72)
     protected abstract static class PrimArrayBecomeOneWayNode extends AbstractArrayBecomeOneWayPrimitiveNode {
 
         protected PrimArrayBecomeOneWayNode(final CompiledMethodObject method, final int numArguments) {
@@ -272,7 +272,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 74, numArguments = 3)
+    @SqueakPrimitive(index = 74)
     protected abstract static class PrimInstVarAtPutNode extends AbstractPrimitiveNode {
         protected PrimInstVarAtPutNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -328,7 +328,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 76, numArguments = 2)
+    @SqueakPrimitive(index = 76)
     protected abstract static class PrimStoreStackPointerNode extends AbstractPrimitiveNode {
         protected PrimStoreStackPointerNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -377,7 +377,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 79, numArguments = 3)
+    @SqueakPrimitive(index = 79)
     protected abstract static class PrimNewMethodNode extends AbstractPrimitiveNode {
 
         protected PrimNewMethodNode(final CompiledMethodObject method, final int numArguments) {
@@ -397,7 +397,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 128, numArguments = 2)
+    @SqueakPrimitive(index = 128)
     protected abstract static class PrimBecomeNode extends AbstractPrimitiveNode {
 
         protected PrimBecomeNode(final CompiledMethodObject method, final int numArguments) {
@@ -517,7 +517,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 173, numArguments = 2)
+    @SqueakPrimitive(index = 173)
     protected abstract static class PrimSlotAtNode extends AbstractPrimitiveNode {
 
         protected PrimSlotAtNode(final CompiledMethodObject method, final int numArguments) {
@@ -535,7 +535,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 174, numArguments = 3)
+    @SqueakPrimitive(index = 174)
     protected abstract static class PrimSlotAtPutNode extends AbstractPrimitiveNode {
 
         protected PrimSlotAtPutNode(final CompiledMethodObject method, final int numArguments) {
@@ -588,7 +588,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 249, numArguments = 3)
+    @SqueakPrimitive(index = 249)
     protected abstract static class PrimArrayBecomeOneWayCopyHashNode extends AbstractArrayBecomeOneWayPrimitiveNode {
         @Child private FrameStackReadNode stackReadNode = FrameStackReadNode.create();
         @Child private FrameStackWriteNode stackWriteNode = FrameStackWriteNode.create();

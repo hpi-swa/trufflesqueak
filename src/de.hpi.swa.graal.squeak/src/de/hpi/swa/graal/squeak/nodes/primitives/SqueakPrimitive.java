@@ -12,6 +12,4 @@ public @interface SqueakPrimitive {
     String name() default "";
 
     String[] names() default {};
-
-    int numArguments() default 1;
 }

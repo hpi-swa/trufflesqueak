@@ -39,7 +39,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveCompareString", numArguments = 4)
+    @SqueakPrimitive(name = "primitiveCompareString")
     public abstract static class PrimCompareStringNode extends AbstractMiscPrimitiveNode {
 
         public PrimCompareStringNode(final CompiledMethodObject method, final int numArguments) {
@@ -104,7 +104,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveCompressToByteArray", numArguments = 3)
+    @SqueakPrimitive(name = "primitiveCompressToByteArray")
     public abstract static class PrimCompressToByteArrayNode extends AbstractMiscPrimitiveNode {
 
         public PrimCompressToByteArrayNode(final CompiledMethodObject method, final int numArguments) {
@@ -120,7 +120,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveDecompressFromByteArray", numArguments = 4)
+    @SqueakPrimitive(name = "primitiveDecompressFromByteArray")
     public abstract static class PrimDecompressFromByteArrayNode extends AbstractMiscPrimitiveNode {
 
         public PrimDecompressFromByteArrayNode(final CompiledMethodObject method, final int numArguments) {
@@ -136,7 +136,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveFindFirstInString", numArguments = 4)
+    @SqueakPrimitive(name = "primitiveFindFirstInString")
     public abstract static class PrimFindFirstInStringNode extends AbstractMiscPrimitiveNode {
 
         public PrimFindFirstInStringNode(final CompiledMethodObject method, final int numArguments) {
@@ -165,7 +165,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveFindSubstring", numArguments = 5)
+    @SqueakPrimitive(name = "primitiveFindSubstring")
     public abstract static class PrimFindSubstringNode extends AbstractMiscPrimitiveNode {
 
         public PrimFindSubstringNode(final CompiledMethodObject method, final int numArguments) {
@@ -186,7 +186,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveIndexOfAsciiInString", numArguments = 4)
+    @SqueakPrimitive(name = "primitiveIndexOfAsciiInString")
     public abstract static class PrimIndexOfAsciiInStringNode extends AbstractMiscPrimitiveNode {
 
         public PrimIndexOfAsciiInStringNode(final CompiledMethodObject method, final int numArguments) {
@@ -209,7 +209,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveStringHash", numArguments = 3)
+    @SqueakPrimitive(name = "primitiveStringHash")
     public abstract static class PrimStringHashNode extends AbstractMiscPrimitiveNode {
 
         public PrimStringHashNode(final CompiledMethodObject method, final int numArguments) {
@@ -230,7 +230,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveTranslateStringWithTable", numArguments = 5)
+    @SqueakPrimitive(name = "primitiveTranslateStringWithTable")
     public abstract static class PrimTranslateStringWithTableNode extends AbstractMiscPrimitiveNode {
 
         public PrimTranslateStringWithTableNode(final CompiledMethodObject method, final int numArguments) {

@@ -133,7 +133,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {3, 23, 43}, numArguments = 2)
+    @SqueakPrimitive(indices = {3, 23, 43})
     protected abstract static class PrimLessThanNode extends AbstractArithmeticBinaryPrimitiveNode {
         protected PrimLessThanNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -165,7 +165,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {4, 24, 44}, numArguments = 2)
+    @SqueakPrimitive(indices = {4, 24, 44})
     protected abstract static class PrimGreaterThanNode extends AbstractArithmeticBinaryPrimitiveNode {
         protected PrimGreaterThanNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -197,7 +197,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {5, 25, 45}, numArguments = 2)
+    @SqueakPrimitive(indices = {5, 25, 45})
     protected abstract static class PrimLessOrEqualNode extends AbstractArithmeticBinaryPrimitiveNode {
         protected PrimLessOrEqualNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -229,7 +229,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {6, 26, 46}, numArguments = 2)
+    @SqueakPrimitive(indices = {6, 26, 46})
     protected abstract static class PrimGreaterOrEqualNode extends AbstractArithmeticBinaryPrimitiveNode {
         protected PrimGreaterOrEqualNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -261,7 +261,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {7, 27, 47}, numArguments = 2)
+    @SqueakPrimitive(indices = {7, 27, 47})
     protected abstract static class PrimEqualNode extends AbstractArithmeticBinaryPrimitiveNode {
         protected PrimEqualNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -299,7 +299,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {8, 28, 48}, numArguments = 2)
+    @SqueakPrimitive(indices = {8, 28, 48})
     protected abstract static class PrimNotEqualNode extends AbstractArithmeticBinaryPrimitiveNode {
         protected PrimNotEqualNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -337,7 +337,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 10, numArguments = 2)
+    @SqueakPrimitive(index = 10)
     protected abstract static class PrimDivideSmallIntegerNode extends AbstractArithmeticPrimitiveNode {
         protected PrimDivideSmallIntegerNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -360,7 +360,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 11, numArguments = 2)
+    @SqueakPrimitive(index = 11)
     protected abstract static class PrimFloorModSmallIntegerNode extends AbstractArithmeticPrimitiveNode {
         protected PrimFloorModSmallIntegerNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -373,7 +373,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 12, numArguments = 2)
+    @SqueakPrimitive(index = 12)
     protected abstract static class PrimFloorDivideSmallIntegerNode extends AbstractArithmeticPrimitiveNode {
         protected PrimFloorDivideSmallIntegerNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -397,7 +397,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 13, numArguments = 2)
+    @SqueakPrimitive(index = 13)
     protected abstract static class PrimQuoSmallIntegerNode extends AbstractArithmeticPrimitiveNode {
         protected PrimQuoSmallIntegerNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -416,7 +416,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 20, numArguments = 2)
+    @SqueakPrimitive(index = 20)
     protected abstract static class PrimRemLargeIntegersNode extends AbstractArithmeticPrimitiveNode {
         protected PrimRemLargeIntegersNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -450,7 +450,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 30, numArguments = 2)
+    @SqueakPrimitive(index = 30)
     protected abstract static class PrimDivideLargeIntegerNode extends AbstractArithmeticPrimitiveNode {
         protected PrimDivideLargeIntegerNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -495,7 +495,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 31, numArguments = 2)
+    @SqueakPrimitive(index = 31)
     protected abstract static class PrimFloorModLargeIntegerNode extends AbstractArithmeticPrimitiveNode {
         protected PrimFloorModLargeIntegerNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -523,7 +523,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 32, numArguments = 2)
+    @SqueakPrimitive(index = 32)
     protected abstract static class PrimFloorDivideLargeIntegerNode extends AbstractArithmeticPrimitiveNode {
         protected PrimFloorDivideLargeIntegerNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -551,7 +551,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 33, numArguments = 2)
+    @SqueakPrimitive(index = 33)
     protected abstract static class PrimQuoLargeIntegerNode extends AbstractArithmeticPrimitiveNode {
         protected PrimQuoLargeIntegerNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -588,7 +588,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 38, numArguments = 2)
+    @SqueakPrimitive(index = 38)
     protected abstract static class PrimFloatAtNode extends AbstractArithmeticPrimitiveNode {
         protected PrimFloatAtNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -606,7 +606,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 39, numArguments = 3)
+    @SqueakPrimitive(index = 39)
     protected abstract static class PrimFloatAtPutNode extends AbstractArithmeticPrimitiveNode {
         protected PrimFloatAtPutNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -638,7 +638,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 50, numArguments = 2)
+    @SqueakPrimitive(index = 50)
     protected abstract static class PrimFloatDivideNode extends AbstractArithmeticPrimitiveNode {
         protected PrimFloatDivideNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -728,7 +728,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 54, numArguments = 2)
+    @SqueakPrimitive(index = 54)
     protected abstract static class PrimFloatTimesTwoPowerNode extends AbstractArithmeticPrimitiveNode {
         @CompilationFinal private static final int UNDERFLOW_LIMIT = FloatObject.EMIN - FloatObject.PRECISION + 1;
 

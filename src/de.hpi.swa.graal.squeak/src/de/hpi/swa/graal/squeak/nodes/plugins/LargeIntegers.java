@@ -27,7 +27,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primAnyBitFromTo", numArguments = 3) // TODO: implement primitive
+    @SqueakPrimitive(name = "primAnyBitFromTo") // TODO: implement primitive
     public abstract static class PrimAnyBitFromToNode extends AbstractArithmeticBinaryPrimitiveNode {
 
         public PrimAnyBitFromToNode(final CompiledMethodObject method, final int numArguments) {
@@ -37,7 +37,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {1, 21, 41}, name = "primDigitAdd", numArguments = 2)
+    @SqueakPrimitive(indices = {1, 21, 41}, name = "primDigitAdd")
     public abstract static class PrimAddNode extends AbstractArithmeticBinaryPrimitiveNode {
 
         public PrimAddNode(final CompiledMethodObject method, final int numArguments) {
@@ -75,7 +75,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {2, 22, 42}, name = "primDigitSubtract", numArguments = 2)
+    @SqueakPrimitive(indices = {2, 22, 42}, name = "primDigitSubtract")
     public abstract static class PrimSubstractNode extends AbstractArithmeticBinaryPrimitiveNode {
         public PrimSubstractNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -112,7 +112,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {9, 29, 49}, name = "primDigitMultiplyNegative", numArguments = 2)
+    @SqueakPrimitive(indices = {9, 29, 49}, name = "primDigitMultiplyNegative")
     public abstract static class PrimMultiplyNode extends AbstractArithmeticBinaryPrimitiveNode {
         public PrimMultiplyNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -149,7 +149,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {14, 34}, name = "primDigitBitAnd", numArguments = 2)
+    @SqueakPrimitive(indices = {14, 34}, name = "primDigitBitAnd")
     public abstract static class PrimBitAndNode extends AbstractArithmeticPrimitiveNode {
         public PrimBitAndNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -177,7 +177,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {15, 35}, name = "primDigitBitOr", numArguments = 2)
+    @SqueakPrimitive(indices = {15, 35}, name = "primDigitBitOr")
     public abstract static class PrimBitOrNode extends AbstractArithmeticPrimitiveNode {
         public PrimBitOrNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -205,7 +205,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {17, 37}, name = "primDigitBitShiftMagnitude", numArguments = 2)
+    @SqueakPrimitive(indices = {17, 37}, name = "primDigitBitShiftMagnitude")
     public abstract static class PrimBitShiftNode extends AbstractArithmeticPrimitiveNode {
 
         public PrimBitShiftNode(final CompiledMethodObject method, final int numArguments) {
@@ -267,7 +267,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {16, 36}, name = "primDigitBitXor", numArguments = 2)
+    @SqueakPrimitive(indices = {16, 36}, name = "primDigitBitXor")
     protected abstract static class PrimBitXorNode extends AbstractArithmeticPrimitiveNode {
         protected PrimBitXorNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -295,7 +295,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primDigitCompare", numArguments = 2)
+    @SqueakPrimitive(name = "primDigitCompare")
     public abstract static class PrimDigitCompareNode extends AbstractArithmeticPrimitiveNode {
 
         public PrimDigitCompareNode(final CompiledMethodObject method, final int numArguments) {
@@ -344,7 +344,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primDigitDivNegative", numArguments = 3)
+    @SqueakPrimitive(name = "primDigitDivNegative")
     public abstract static class PrimDigitDivNegativeNode extends AbstractArithmeticPrimitiveNode {
         public PrimDigitDivNegativeNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -397,7 +397,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primMontgomeryTimesModulo", numArguments = 4) // TODO: implement
+    @SqueakPrimitive(name = "primMontgomeryTimesModulo") // TODO: implement
                                                                            // primitive
     public abstract static class PrimMontgomeryTimesModuloNode extends AbstractArithmeticPrimitiveNode {
 

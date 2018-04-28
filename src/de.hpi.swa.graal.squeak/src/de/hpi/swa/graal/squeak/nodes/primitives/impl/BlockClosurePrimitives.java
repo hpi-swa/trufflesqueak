@@ -38,7 +38,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 195, numArguments = 2)
+    @SqueakPrimitive(index = 195)
     protected abstract static class PrimFindNextUnwindContextUpToNode extends AbstractPrimitiveNode {
 
         public PrimFindNextUnwindContextUpToNode(final CompiledMethodObject method, final int numArguments) {
@@ -108,7 +108,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 196, numArguments = 2)
+    @SqueakPrimitive(index = 196)
     protected abstract static class PrimTerminateToNode extends AbstractPrimitiveNode {
 
         public PrimTerminateToNode(final CompiledMethodObject method, final int numArguments) {
@@ -231,7 +231,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 200, numArguments = 3)
+    @SqueakPrimitive(index = 200)
     public abstract static class PrimClosureCopyWithCopiedValuesNode extends AbstractPrimitiveNode {
 
         protected PrimClosureCopyWithCopiedValuesNode(final CompiledMethodObject method, final int numArguments) {
@@ -271,7 +271,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 202, numArguments = 2)
+    @SqueakPrimitive(index = 202)
     protected abstract static class PrimClosureValue1Node extends AbstractClosureValuePrimitiveNode {
 
         protected PrimClosureValue1Node(final CompiledMethodObject method, final int numArguments) {
@@ -285,7 +285,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 203, numArguments = 3)
+    @SqueakPrimitive(index = 203)
     protected abstract static class PrimClosureValue2Node extends AbstractClosureValuePrimitiveNode {
 
         protected PrimClosureValue2Node(final CompiledMethodObject method, final int numArguments) {
@@ -299,7 +299,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 204, numArguments = 4)
+    @SqueakPrimitive(index = 204)
     protected abstract static class PrimClosureValue3Node extends AbstractClosureValuePrimitiveNode {
 
         protected PrimClosureValue3Node(final CompiledMethodObject method, final int numArguments) {
@@ -313,7 +313,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 205, numArguments = 5)
+    @SqueakPrimitive(index = 205)
     protected abstract static class PrimClosureValue4Node extends AbstractClosureValuePrimitiveNode {
 
         protected PrimClosureValue4Node(final CompiledMethodObject method, final int numArguments) {
@@ -327,7 +327,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {206, 222}, numArguments = 2)
+    @SqueakPrimitive(indices = {206, 222})
     protected abstract static class PrimClosureValueAryNode extends AbstractClosureValuePrimitiveNode {
 
         protected PrimClosureValueAryNode(final CompiledMethodObject method, final int numArguments) {

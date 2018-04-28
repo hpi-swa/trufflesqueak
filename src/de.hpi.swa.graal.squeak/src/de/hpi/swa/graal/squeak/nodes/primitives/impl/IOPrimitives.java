@@ -52,7 +52,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 91, numArguments = 2)
+    @SqueakPrimitive(index = 91)
     protected abstract static class PrimTestDisplayDepthNode extends AbstractPrimitiveNode {
         private static final int[] SUPPORTED_DEPTHS = new int[]{32}; // TODO: support all depths?
                                                                      // {1, 2, 4, 8, 16, 32}
@@ -73,7 +73,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 92, numArguments = 5)
+    @SqueakPrimitive(index = 92)
     protected abstract static class PrimSetDisplayModeNode extends AbstractPrimitiveNode {
 
         protected PrimSetDisplayModeNode(final CompiledMethodObject method, final int numArguments) {
@@ -88,7 +88,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 94, numArguments = 2)
+    @SqueakPrimitive(index = 94)
     protected abstract static class PrimGetNextEventNode extends AbstractPrimitiveNode {
 
         protected PrimGetNextEventNode(final CompiledMethodObject method, final int numArguments) {
@@ -198,7 +198,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 105, numArguments = 5)
+    @SqueakPrimitive(index = 105)
     protected abstract static class PrimStringReplaceNode extends AbstractPrimitiveNode {
         protected PrimStringReplaceNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -361,7 +361,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 126, numArguments = 2)
+    @SqueakPrimitive(index = 126)
     protected abstract static class PrimDeferDisplayUpdatesNode extends AbstractPrimitiveNode {
 
         public PrimDeferDisplayUpdatesNode(final CompiledMethodObject method, final int numArguments) {
@@ -376,7 +376,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 127, numArguments = 5)
+    @SqueakPrimitive(index = 127)
     protected abstract static class PrimDrawRectNode extends AbstractPrimitiveNode {
 
         protected PrimDrawRectNode(final CompiledMethodObject method, final int numArguments) {

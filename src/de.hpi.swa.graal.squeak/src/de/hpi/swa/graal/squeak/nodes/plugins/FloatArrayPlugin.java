@@ -22,7 +22,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveAddFloatArray", numArguments = 2) // TODO: implement primitive
+    @SqueakPrimitive(name = "primitiveAddFloatArray") // TODO: implement primitive
     public abstract static class PrimAddFloatArrayNode extends AbstractPrimitiveNode {
 
         public PrimAddFloatArrayNode(final CompiledMethodObject method, final int numArguments) {
@@ -32,7 +32,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveAddScalar", numArguments = 2) // TODO: implement primitive
+    @SqueakPrimitive(name = "primitiveAddScalar") // TODO: implement primitive
     public abstract static class PrimAddScalarNode extends AbstractPrimitiveNode {
 
         public PrimAddScalarNode(final CompiledMethodObject method, final int numArguments) {
@@ -42,7 +42,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveAt", numArguments = 2)
+    @SqueakPrimitive(name = "primitiveAt")
     public abstract static class PrimFloatArrayAtNode extends AbstractPrimitiveNode {
 
         public PrimFloatArrayAtNode(final CompiledMethodObject method, final int numArguments) {
@@ -56,7 +56,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveAtPut", numArguments = 3)
+    @SqueakPrimitive(name = "primitiveAtPut")
     public abstract static class PrimFloatArrayAtPutNode extends AbstractPrimitiveNode {
 
         public PrimFloatArrayAtPutNode(final CompiledMethodObject method, final int numArguments) {
@@ -81,7 +81,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveDivFloatArray", numArguments = 2) // TODO: implement primitive
+    @SqueakPrimitive(name = "primitiveDivFloatArray") // TODO: implement primitive
     public abstract static class PrimDivFloatArrayNode extends AbstractPrimitiveNode {
 
         public PrimDivFloatArrayNode(final CompiledMethodObject method, final int numArguments) {
@@ -91,7 +91,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveDivScalar", numArguments = 2) // TODO: implement primitive
+    @SqueakPrimitive(name = "primitiveDivScalar") // TODO: implement primitive
     public abstract static class PrimDivScalarNode extends AbstractPrimitiveNode {
 
         public PrimDivScalarNode(final CompiledMethodObject method, final int numArguments) {
@@ -101,7 +101,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveDotProduct", numArguments = 2) // TODO: implement primitive
+    @SqueakPrimitive(name = "primitiveDotProduct") // TODO: implement primitive
     public abstract static class PrimDotProductNode extends AbstractPrimitiveNode {
 
         public PrimDotProductNode(final CompiledMethodObject method, final int numArguments) {
@@ -111,7 +111,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveEqual", numArguments = 2)
+    @SqueakPrimitive(name = "primitiveEqual")
     public abstract static class PrimFloatArrayEqualNode extends AbstractPrimitiveNode {
 
         public PrimFloatArrayEqualNode(final CompiledMethodObject method, final int numArguments) {
@@ -164,7 +164,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveLength", numArguments = 2) // TODO: implement primitive
+    @SqueakPrimitive(name = "primitiveLength") // TODO: implement primitive
     public abstract static class PrimFloatArrayLengthNode extends AbstractPrimitiveNode {
 
         public PrimFloatArrayLengthNode(final CompiledMethodObject method, final int numArguments) {
@@ -174,7 +174,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveMulFloatArray", numArguments = 2) // TODO: implement primitive
+    @SqueakPrimitive(name = "primitiveMulFloatArray") // TODO: implement primitive
     public abstract static class PrimMulFloatArrayNode extends AbstractPrimitiveNode {
 
         public PrimMulFloatArrayNode(final CompiledMethodObject method, final int numArguments) {
@@ -184,7 +184,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveMulScalar", numArguments = 2) // TODO: implement primitive
+    @SqueakPrimitive(name = "primitiveMulScalar") // TODO: implement primitive
     public abstract static class PrimMulScalarNode extends AbstractPrimitiveNode {
 
         public PrimMulScalarNode(final CompiledMethodObject method, final int numArguments) {
@@ -194,7 +194,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveNormalize", numArguments = 2) // TODO: implement primitive
+    @SqueakPrimitive(name = "primitiveNormalize") // TODO: implement primitive
     public abstract static class PrimFloatArrayNormalizeNode extends AbstractPrimitiveNode {
 
         public PrimFloatArrayNormalizeNode(final CompiledMethodObject method, final int numArguments) {
@@ -204,7 +204,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveSubFloatArray", numArguments = 2) // TODO: implement primitive
+    @SqueakPrimitive(name = "primitiveSubFloatArray") // TODO: implement primitive
     public abstract static class PrimSubFloatArrayNode extends AbstractPrimitiveNode {
 
         public PrimSubFloatArrayNode(final CompiledMethodObject method, final int numArguments) {
@@ -214,7 +214,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveSubScalar", numArguments = 2) // TODO: implement primitive
+    @SqueakPrimitive(name = "primitiveSubScalar") // TODO: implement primitive
     public abstract static class PrimSubScalarNode extends AbstractPrimitiveNode {
 
         public PrimSubScalarNode(final CompiledMethodObject method, final int numArguments) {
