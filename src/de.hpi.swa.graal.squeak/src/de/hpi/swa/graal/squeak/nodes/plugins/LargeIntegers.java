@@ -6,6 +6,7 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
+import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
@@ -387,24 +388,33 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primMontgomeryDigitLength") // TODO: implement primitive
+    @SqueakPrimitive(name = "primMontgomeryDigitLength")
     public abstract static class PrimMontgomeryDigitLengthNode extends AbstractArithmeticPrimitiveNode {
 
         public PrimMontgomeryDigitLengthNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
+        @SuppressWarnings("unused")
+        @Specialization
+        protected static final long doDigitLength(final Object receiver) {
+            return 8L; // TODO: update when primMontgomeryTimesModulo is implemented
+        }
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primMontgomeryTimesModulo") // TODO: implement
-                                                                           // primitive
+    @SqueakPrimitive(name = "primMontgomeryTimesModulo")
     public abstract static class PrimMontgomeryTimesModuloNode extends AbstractArithmeticPrimitiveNode {
 
         public PrimMontgomeryTimesModuloNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
+        @SuppressWarnings("unused")
+        @Specialization
+        protected static final Object doFail(final Object receiver, final Object a, final Object m, final Object mInv) {
+            throw new PrimitiveFailed(); // TODO: implement primitive
+        }
     }
 
     @GenerateNodeFactory
