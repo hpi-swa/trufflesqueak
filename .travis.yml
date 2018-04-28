@@ -77,5 +77,6 @@ after_success:
       if [[ ${GATE} == *test* ]]
       then
         bash <(curl -s https://codecov.io/bash)
+        jdk_switcher use oraclejdk8
         java -jar ~/codacy-coverage-reporter.jar report -l Java -r jacoco.xml
       fi
