@@ -19,6 +19,7 @@ python:
 addons:
   apt:
     packages:
+      - jq
       - python-pip
       - python-virtualenv
       - wget
@@ -55,6 +56,7 @@ install:
       if [[ ${GATE} == *test* ]]
       then
         scripts/download-test-image.sh
+        wget -q -O ~/codacy-coverage-reporter.jar $(curl https://api.github.com/repos/codacy/codacy-coverage-reporter/releases/latest | jq -r .assets[0].browser_download_url)
         MX_OPTS="--jacocout coverage"
       fi
   - |
@@ -75,4 +77,5 @@ after_success:
       if [[ ${GATE} == *test* ]]
       then
         bash <(curl -s https://codecov.io/bash)
+        java -jar ~/codacy-coverage-reporter.jar report -l Java -r jacoco.xml
       fi
