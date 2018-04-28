@@ -398,7 +398,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
                     "WeakFinalizersTest", TEST_TYPE.PASSING,
                     "WeakIdentityKeyDictionaryTest", TEST_TYPE.PASSING,
                     "WeakMessageSendTest", TEST_TYPE.FLAKY,
-                    "WeakRegistryTest", TEST_TYPE.FLAKY, // uses Delays
+                    "WeakRegistryTest", TEST_TYPE.NOT_TERMINATING, // flaky and slow (uses Delays)
                     "WeakSetInspectorTest", TEST_TYPE.IGNORE, // doesn't terminate sometimes on JDK8
                     "WeakSetTest", TEST_TYPE.IGNORE, // passing, sometimes blocks on CI
                     "WebClientServerTest", TEST_TYPE.FAILING,
