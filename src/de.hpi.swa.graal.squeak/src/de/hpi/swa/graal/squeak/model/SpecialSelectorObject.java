@@ -3,7 +3,7 @@ package de.hpi.swa.graal.squeak.model;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
-import de.hpi.swa.graal.squeak.SqueakImageContext;
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
 public final class SpecialSelectorObject extends NativeObject {
     @CompilationFinal private final int numArguments;

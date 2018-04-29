@@ -1,6 +1,6 @@
 package de.hpi.swa.graal.squeak.model;
 
-import de.hpi.swa.graal.squeak.SqueakImageContext;
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
 public final class PointersObject extends AbstractPointersObject {
     public PointersObject(final SqueakImageContext img) {

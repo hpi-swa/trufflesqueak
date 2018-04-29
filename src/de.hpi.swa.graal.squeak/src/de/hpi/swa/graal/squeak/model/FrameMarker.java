@@ -1,4 +1,4 @@
-package de.hpi.swa.graal.squeak.util;
+package de.hpi.swa.graal.squeak.model;
 
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;

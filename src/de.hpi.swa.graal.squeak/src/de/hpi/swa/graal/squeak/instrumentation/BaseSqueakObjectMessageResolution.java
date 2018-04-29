@@ -5,7 +5,7 @@ import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
-import de.hpi.swa.graal.squeak.util.FrameMarker;
+import de.hpi.swa.graal.squeak.model.FrameMarker;
 
 // refer to com.oracle.truffle.api.interop.Message for documentation
 

@@ -9,7 +9,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
-import de.hpi.swa.graal.squeak.util.AbstractImageChunk;
+import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 
 public class NativeLongsStorage extends AbstractNativeObjectStorage {
     @CompilationFinal(dimensions = 1) protected long[] longs;

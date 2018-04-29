@@ -9,7 +9,7 @@ import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
-import de.hpi.swa.graal.squeak.nodes.helpers.NotProvided;
+import de.hpi.swa.graal.squeak.model.NotProvided;
 
 public abstract class FrameArgumentNode extends Node {
     @CompilationFinal private final int argumentIndex;

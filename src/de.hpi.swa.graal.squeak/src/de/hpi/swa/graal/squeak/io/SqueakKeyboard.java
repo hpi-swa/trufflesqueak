@@ -1,4 +1,4 @@
-package de.hpi.swa.graal.squeak.util;
+package de.hpi.swa.graal.squeak.io;
 
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -7,11 +7,8 @@ import java.util.Deque;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
-import de.hpi.swa.graal.squeak.util.SqueakDisplay.EVENT_TYPE;
-import de.hpi.swa.graal.squeak.util.SqueakDisplay.JavaDisplay;
-
 public final class SqueakKeyboard implements KeyListener {
-    @CompilationFinal private final JavaDisplay display;
+    @CompilationFinal private final SqueakDisplayJFrame display;
     @CompilationFinal private final Deque<Character> keys = new ArrayDeque<>(TYPEAHEAD_LIMIT);
     private int modifierKeys = 0;
 
@@ -70,7 +67,7 @@ public final class SqueakKeyboard implements KeyListener {
         private static final long UP = 2;
     }
 
-    public SqueakKeyboard(final JavaDisplay display) {
+    public SqueakKeyboard(final SqueakDisplayJFrame display) {
         this.display = display;
     }
 
@@ -112,7 +109,7 @@ public final class SqueakKeyboard implements KeyListener {
     }
 
     private void addEvent(final KeyEvent e, final long keyEventType) {
-        display.addEvent(new long[]{EVENT_TYPE.KEYBOARD, display.getEventTime(), keycode(e.getKeyChar()), keyEventType, modifierKeys, e.getKeyChar(), 0, 0});
+        display.addEvent(new long[]{SqueakIOConstants.EVENT_TYPE.KEYBOARD, display.getEventTime(), keycode(e.getKeyChar()), keyEventType, modifierKeys, e.getKeyChar(), 0, 0});
     }
 
     private void enqueue(final char keyChar) {

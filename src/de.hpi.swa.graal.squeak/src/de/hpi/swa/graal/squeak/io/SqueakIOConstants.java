@@ -1,8 +1,12 @@
-package de.hpi.swa.graal.squeak.util;
+package de.hpi.swa.graal.squeak.io;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
-public final class SqueakPixelLookup {
+public final class SqueakIOConstants {
+
+    @CompilationFinal public static final int CURSOR_WIDTH = 16;
+    @CompilationFinal public static final int CURSOR_HEIGHT = 16;
+
     @CompilationFinal(dimensions = 1) private static final int[] PIXEL_LOOKUP_1BIT = {0xffffffff, 0xff000000};
 
     @CompilationFinal(dimensions = 1) private static final int[] PIXEL_LOOKUP_2BIT = {0xff000000, 0xff848484, 0xffc6c6c6, 0xffffffff};
@@ -59,7 +63,7 @@ public final class SqueakPixelLookup {
                     0xffff65cb, 0xffff98cb, 0xffffcbcb, 0xffffffcb, 0xffff00ff, 0xffff32ff,
                     0xffff65ff, 0xffff98ff, 0xffffcbff, 0xffffffff
     };
-    @CompilationFinal(dimensions = 1) public static final int[][] TABLE = {
+    @CompilationFinal(dimensions = 1) public static final int[][] PIXEL_LOOKUP_TABLE = {
                     PIXEL_LOOKUP_1BIT,
                     PIXEL_LOOKUP_2BIT,
                     null,
@@ -69,4 +73,18 @@ public final class SqueakPixelLookup {
                     null,
                     PIXEL_LOOKUP_8BIT
     };
+
+    @CompilationFinal public static final int EVENT_SIZE = 8;
+    @CompilationFinal(dimensions = 1) public static final long[] NULL_EVENT = new long[]{EVENT_TYPE.NONE, 0, 0, 0, 0, 0, 0, 0};
+
+    public static final class EVENT_TYPE {
+        public static final long NONE = 0;
+        public static final long MOUSE = 1;
+        public static final long KEYBOARD = 2;
+        public static final long DRAG_DROP_FILES = 3;
+        public static final long MENU = 4;
+        public static final long WINDOW = 5;
+        public static final long COMPLEX = 6;
+        public static final long MOUSE_WHEEL = 7;
+    }
 }

@@ -3,8 +3,8 @@ package de.hpi.swa.graal.squeak.model;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
-import de.hpi.swa.graal.squeak.SqueakImageContext;
-import de.hpi.swa.graal.squeak.util.AbstractImageChunk;
+import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
 public abstract class SqueakObject extends BaseSqueakObject {
     @CompilationFinal private long hash;

@@ -8,7 +8,7 @@ import java.util.Arrays;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
-import de.hpi.swa.graal.squeak.util.AbstractImageChunk;
+import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 
 public class NativeShortsStorage extends AbstractNativeObjectStorage {
     @CompilationFinal(dimensions = 1) protected short[] shorts;

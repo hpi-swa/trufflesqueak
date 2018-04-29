@@ -1,6 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.process;
 
-import de.hpi.swa.graal.squeak.SqueakImageContext;
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.LINKED_LIST;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;

@@ -1,6 +1,4 @@
-package de.hpi.swa.graal.squeak.util;
-
-import de.hpi.swa.graal.squeak.SqueakImageContext;
+package de.hpi.swa.graal.squeak.image;
 
 public final class SqueakImageChunk extends AbstractImageChunk {
 

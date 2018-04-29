@@ -5,9 +5,9 @@ import java.lang.ref.WeakReference;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
-import de.hpi.swa.graal.squeak.SqueakImageContext;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
-import de.hpi.swa.graal.squeak.util.AbstractImageChunk;
+import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
 // TODO: Validate that weak objects are working correctly
 public final class WeakPointersObject extends AbstractPointersObject {

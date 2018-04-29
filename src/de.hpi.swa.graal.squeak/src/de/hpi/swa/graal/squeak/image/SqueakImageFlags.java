@@ -1,4 +1,4 @@
-package de.hpi.swa.graal.squeak.util;
+package de.hpi.swa.graal.squeak.image;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 

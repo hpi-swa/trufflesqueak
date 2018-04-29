@@ -2,7 +2,7 @@ package de.hpi.swa.graal.squeak.nodes.process;
 
 import com.oracle.truffle.api.CompilerDirectives;
 
-import de.hpi.swa.graal.squeak.SqueakImageContext;
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
 import de.hpi.swa.graal.squeak.model.ListObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;

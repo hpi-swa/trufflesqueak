@@ -8,8 +8,8 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
+import de.hpi.swa.graal.squeak.nodes.AbstractWriteNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotWriteNode;
-import de.hpi.swa.graal.squeak.nodes.helpers.AbstractWriteNode;
 
 public abstract class TemporaryWriteNode extends AbstractWriteNode {
     @Child private FrameSlotWriteNode frameSlotWriteNode;

@@ -1,4 +1,4 @@
-package de.hpi.swa.graal.squeak;
+package de.hpi.swa.graal.squeak.image;
 
 import java.awt.Dimension;
 import java.awt.Point;
@@ -15,11 +15,15 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 
+import de.hpi.swa.graal.squeak.SqueakConfig;
+import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
+import de.hpi.swa.graal.squeak.io.SqueakDisplay;
 import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
+import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.ListObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
@@ -34,13 +38,8 @@ import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.graal.squeak.nodes.context.ObjectGraph;
 import de.hpi.swa.graal.squeak.nodes.process.GetActiveProcessNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
-import de.hpi.swa.graal.squeak.util.FrameMarker;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerNode;
 import de.hpi.swa.graal.squeak.util.OSDetector;
-import de.hpi.swa.graal.squeak.util.SqueakDisplay;
-import de.hpi.swa.graal.squeak.util.SqueakDisplay.AbstractSqueakDisplay;
-import de.hpi.swa.graal.squeak.util.SqueakImageFlags;
-import de.hpi.swa.graal.squeak.util.SqueakImageReader;
 
 public final class SqueakImageContext {
     // Special objects
@@ -114,7 +113,7 @@ public final class SqueakImageContext {
     };
 
     @CompilationFinal public final SqueakConfig config;
-    @CompilationFinal public final AbstractSqueakDisplay display;
+    @CompilationFinal public final SqueakDisplay display;
     @CompilationFinal public final ObjectGraph objects = new ObjectGraph(this);
     @CompilationFinal public final OSDetector os = new OSDetector();
     @CompilationFinal public final SqueakImageFlags flags = new SqueakImageFlags();

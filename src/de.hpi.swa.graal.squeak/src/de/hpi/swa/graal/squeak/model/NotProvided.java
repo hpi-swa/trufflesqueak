@@ -1,8 +1,13 @@
-package de.hpi.swa.graal.squeak.nodes.helpers;
+package de.hpi.swa.graal.squeak.model;
 
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
 
+import de.hpi.swa.graal.squeak.instrumentation.BaseSqueakObjectMessageResolutionForeign;
+
+/*
+ * Represents not provided values to enable optional arguments in specializations.
+ */
 public final class NotProvided implements TruffleObject {
 
     public static final NotProvided INSTANCE = new NotProvided();
@@ -15,8 +20,7 @@ public final class NotProvided implements TruffleObject {
     }
 
     public ForeignAccess getForeignAccess() {
-        // TODO Auto-generated method stub
-        return null;
+        return BaseSqueakObjectMessageResolutionForeign.ACCESS;
     }
 
 }

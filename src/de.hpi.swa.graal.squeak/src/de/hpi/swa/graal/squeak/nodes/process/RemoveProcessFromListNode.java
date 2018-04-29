@@ -1,7 +1,7 @@
 package de.hpi.swa.graal.squeak.nodes.process;
 
-import de.hpi.swa.graal.squeak.SqueakImageContext;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.LINK;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.LINKED_LIST;

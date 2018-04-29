@@ -10,6 +10,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.graal.squeak.io.SqueakIOConstants;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
@@ -17,18 +18,17 @@ import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.ListObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.ERROR_TABLE;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.FORM;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.SqueakObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
-import de.hpi.swa.graal.squeak.nodes.helpers.NotProvided;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives.SimulationPrimitiveNode;
-import de.hpi.swa.graal.squeak.util.SqueakDisplay;
 
 public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -98,7 +98,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final Object doGetNext(final PointersObject eventSensor, final ListObject targetArray) {
             final long[] nextEvent = code.image.display.getNextEvent();
-            for (int i = 0; i < SqueakDisplay.EVENT_SIZE; i++) {
+            for (int i = 0; i < SqueakIOConstants.EVENT_SIZE; i++) {
                 targetArray.atput0(i, nextEvent[i]);
             }
             return eventSensor;
@@ -146,7 +146,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             final int[] words = ((NativeObject) receiver.at0(FORM.BITS)).getWords();
             final long width = (long) receiver.at0(FORM.WIDTH);
             final long height = (long) receiver.at0(FORM.HEIGHT);
-            if (width != SqueakDisplay.CURSOR_WIDTH || height != SqueakDisplay.CURSOR_HEIGHT) {
+            if (width != SqueakIOConstants.CURSOR_WIDTH || height != SqueakIOConstants.CURSOR_HEIGHT) {
                 throw new SqueakException("Unexpected cursor width: " + width + " or height: " + height);
             }
             return words;
@@ -157,17 +157,17 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         private static int[] mergeCursorWithMask(final int[] cursorWords, final int[] maskWords) {
-            final int[] words = new int[SqueakDisplay.CURSOR_HEIGHT];
+            final int[] words = new int[SqueakIOConstants.CURSOR_HEIGHT];
             int cursorWord;
             int maskWord;
             int bit;
             int merged;
-            for (int y = 0; y < SqueakDisplay.CURSOR_HEIGHT; y++) {
+            for (int y = 0; y < SqueakIOConstants.CURSOR_HEIGHT; y++) {
                 cursorWord = (int) (Integer.toUnsignedLong(cursorWords[y]));
                 maskWord = (int) (Integer.toUnsignedLong(maskWords[y]));
                 bit = 0x80000000;
                 merged = 0;
-                for (int x = 0; x < SqueakDisplay.CURSOR_WIDTH; x++) {
+                for (int x = 0; x < SqueakIOConstants.CURSOR_WIDTH; x++) {
                     merged = merged | ((maskWord & bit) >> x) | ((cursorWord & bit) >> (x + 1));
                     bit = bit >>> 1;
                 }

@@ -1,7 +1,7 @@
 package de.hpi.swa.graal.squeak.model;
 
-import de.hpi.swa.graal.squeak.SqueakImageContext;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions;
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
 public final class EmptyObject extends SqueakObject {
     public EmptyObject(final SqueakImageContext img) {

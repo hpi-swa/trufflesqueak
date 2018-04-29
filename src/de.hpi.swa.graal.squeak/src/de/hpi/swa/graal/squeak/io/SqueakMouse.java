@@ -1,4 +1,4 @@
-package de.hpi.swa.graal.squeak.util;
+package de.hpi.swa.graal.squeak.io;
 
 import java.awt.Point;
 import java.awt.event.MouseEvent;
@@ -8,11 +8,9 @@ import javax.swing.event.MouseInputAdapter;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
-import de.hpi.swa.graal.squeak.util.SqueakDisplay.EVENT_TYPE;
-import de.hpi.swa.graal.squeak.util.SqueakDisplay.JavaDisplay;
 
 public final class SqueakMouse extends MouseInputAdapter {
-    @CompilationFinal private final JavaDisplay display;
+    @CompilationFinal private final SqueakDisplayJFrame display;
     private Point position = new Point(0, 0);
     private int buttons = 0;
 
@@ -20,7 +18,7 @@ public final class SqueakMouse extends MouseInputAdapter {
     private static final int YELLOW = 2;
     private static final int BLUE = 1;
 
-    public SqueakMouse(final JavaDisplay display) {
+    public SqueakMouse(final SqueakDisplayJFrame display) {
         this.display = display;
     }
 
@@ -57,7 +55,7 @@ public final class SqueakMouse extends MouseInputAdapter {
     }
 
     private void addEvent(final MouseEvent e) {
-        display.addEvent(new long[]{EVENT_TYPE.MOUSE, display.getEventTime(), e.getX(), e.getY(), buttons, display.keyboard.modifierKeys(), 0, 0});
+        display.addEvent(new long[]{SqueakIOConstants.EVENT_TYPE.MOUSE, display.getEventTime(), e.getX(), e.getY(), buttons, display.keyboard.modifierKeys(), 0, 0});
     }
 
     private static int mapButton(final MouseEvent e) {

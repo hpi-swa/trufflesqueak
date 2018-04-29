@@ -6,6 +6,8 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
+import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
+import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.instrumentation.CompiledCodeObjectPrinter;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
@@ -15,9 +17,7 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodes.DupNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodes.PopNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushConstantNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodes.ReturnReceiverNode;
-import de.hpi.swa.graal.squeak.util.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.util.SqueakBytecodeDecoder;
-import de.hpi.swa.graal.squeak.util.SqueakImageChunk;
 
 public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImage {
     private static final String ALL_BYTECODES_EXPECTED_RESULT = String.join("\n", "1 <0F> pushRcvr: 15",

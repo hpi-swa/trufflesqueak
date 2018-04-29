@@ -5,10 +5,10 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
+import de.hpi.swa.graal.squeak.nodes.AbstractWriteNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotWriteNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
-import de.hpi.swa.graal.squeak.nodes.helpers.AbstractWriteNode;
 
 public abstract class StackPushNode extends AbstractWriteNode {
     @Child private FrameStackWriteNode writeNode = FrameStackWriteNode.create();
