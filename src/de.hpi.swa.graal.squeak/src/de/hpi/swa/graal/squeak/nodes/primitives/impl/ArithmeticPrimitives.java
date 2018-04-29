@@ -559,7 +559,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {
                         "b != 0",                                 // fail on division by zero
-                        "isMinValueDividedByMinusOne(a, b)"})     // handle special case separately
+                        "!isMinValueDividedByMinusOne(a, b)"})     // handle special case separately
         public static final long doLong(final long a, final long b) {
             return a / b;
         }
