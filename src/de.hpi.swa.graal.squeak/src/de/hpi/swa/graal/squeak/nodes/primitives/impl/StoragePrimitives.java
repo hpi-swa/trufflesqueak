@@ -90,7 +90,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                 public Frame visitFrame(final FrameInstance frameInstance) {
                     final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_WRITE);
                     final Object stackPointer = stackPointerReadNode.executeRead(current);
-                    if (stackPointer == null || current.getFrameDescriptor().getSize() <= FrameAccess.RCVR_AND_ARGS_START) {
+                    if (stackPointer == null || current.getFrameDescriptor().getSize() <= FrameAccess.RECEIVER) {
                         return null;
                     }
                     final CompiledCodeObject codeObject = FrameAccess.getMethod(current);

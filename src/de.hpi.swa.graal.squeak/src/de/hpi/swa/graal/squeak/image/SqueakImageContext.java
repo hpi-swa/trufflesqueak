@@ -320,13 +320,13 @@ public final class SqueakImageContext {
                     return null;
                 }
                 final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
-                if (current.getArguments().length < FrameAccess.RCVR_AND_ARGS_START) {
+                if (current.getArguments().length < FrameAccess.RECEIVER) {
                     return null;
                 }
                 final Object method = FrameAccess.getMethod(current);
                 lastSender[0] = FrameAccess.getSender(current);
                 final Object contextOrMarker = FrameAccess.getContextOrMarker(current);
-                final Object[] arguments = FrameAccess.getArguments(current);
+                final Object[] arguments = FrameAccess.getReceiverAndArguments(current);
                 final String[] argumentStrings = new String[arguments.length];
                 for (int i = 0; i < arguments.length; i++) {
                     argumentStrings[i] = arguments[i].toString();

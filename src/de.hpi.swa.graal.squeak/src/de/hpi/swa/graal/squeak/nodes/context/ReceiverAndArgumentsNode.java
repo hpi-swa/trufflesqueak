@@ -21,9 +21,9 @@ public abstract class ReceiverAndArgumentsNode extends SqueakNodeWithCode {
     protected Object[] doRcvrAndArgsVirtualized(final VirtualFrame frame) {
         CompilerDirectives.ensureVirtualizedHere(frame);
         final Object[] frameArguments = frame.getArguments();
-        final Object[] rcvrAndArgs = new Object[frameArguments.length - FrameAccess.RCVR_AND_ARGS_START];
+        final Object[] rcvrAndArgs = new Object[frameArguments.length - FrameAccess.RECEIVER];
         for (int i = 0; i < rcvrAndArgs.length; i++) {
-            rcvrAndArgs[i] = frameArguments[FrameAccess.RCVR_AND_ARGS_START + i];
+            rcvrAndArgs[i] = frameArguments[FrameAccess.RECEIVER + i];
         }
         return rcvrAndArgs;
     }

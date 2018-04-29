@@ -21,8 +21,9 @@ public abstract class ArgumentNode extends SqueakNodeWithCode {
 
     protected ArgumentNode(final CompiledCodeObject code, final int argumentIndex) {
         super(code);
-        frameArgumentNode = FrameArgumentNode.create(FrameAccess.RCVR_AND_ARGS_START + argumentIndex);
         this.argumentIndex = argumentIndex;
+        // argumentIndex == 0 returns receiver
+        frameArgumentNode = FrameArgumentNode.create(FrameAccess.RECEIVER + argumentIndex);
     }
 
     @Specialization(guards = {"isVirtualized(frame)", "argumentIndex <= code.getNumArgs()"})

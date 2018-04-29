@@ -1,5 +1,7 @@
 package de.hpi.swa.graal.squeak.util;
 
+import java.util.Arrays;
+
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -33,7 +35,7 @@ public class FrameAccess {
     @CompilationFinal public static final int SENDER_OR_SENDER_MARKER = 1;
     @CompilationFinal public static final int CLOSURE_OR_NULL = 2;
     @CompilationFinal public static final int RECEIVER = 3;
-    @CompilationFinal public static final int RCVR_AND_ARGS_START = 3;
+    @CompilationFinal public static final int ARGUMENTS_START = 4;
 
     /**
      * GraalSqueak frame slots.
@@ -67,17 +69,9 @@ public class FrameAccess {
         return frame.getArguments()[RECEIVER];
     }
 
-    public static final Object[] getArguments(final Frame frame) {
+    public static final Object[] getReceiverAndArguments(final Frame frame) {
         CompilerAsserts.neverPartOfCompilation();
-        int index = 0;
-        final Object[] arguments = new Object[frame.getArguments().length - RCVR_AND_ARGS_START];
-        for (Object argument : frame.getArguments()) {
-            if (index >= RCVR_AND_ARGS_START) {
-                arguments[index - RCVR_AND_ARGS_START] = argument;
-            }
-            index++;
-        }
-        return arguments;
+        return Arrays.copyOfRange(frame.getArguments(), RECEIVER, frame.getArguments().length);
     }
 
     public static final Object getContextOrMarker(final Frame frame, final FrameSlot contextOrMarkerSlot) {
@@ -98,12 +92,12 @@ public class FrameAccess {
     }
 
     public static final Object[] newWith(final CompiledCodeObject code, final Object sender, final BlockClosureObject closure, final Object[] frameArgs) {
-        final Object[] arguments = new Object[RCVR_AND_ARGS_START + frameArgs.length];
+        final Object[] arguments = new Object[RECEIVER + frameArgs.length];
         arguments[METHOD] = code;
         arguments[SENDER_OR_SENDER_MARKER] = sender;
         arguments[CLOSURE_OR_NULL] = closure;
         for (int i = 0; i < frameArgs.length; i++) {
-            arguments[RCVR_AND_ARGS_START + i] = frameArgs[i];
+            arguments[RECEIVER + i] = frameArgs[i];
         }
         return arguments;
     }

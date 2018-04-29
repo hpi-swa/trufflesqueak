@@ -55,7 +55,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                 @Override
                 public ContextObject visitFrame(final FrameInstance frameInstance) {
                     final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
-                    if (current.getArguments().length < FrameAccess.RCVR_AND_ARGS_START) {
+                    if (current.getArguments().length < FrameAccess.RECEIVER) {
                         return null;
                     }
                     final Object contextOrMarker = FrameAccess.getContextOrMarker(current);
@@ -178,7 +178,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                 @Override
                 public ContextObject visitFrame(final FrameInstance frameInstance) {
                     final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
-                    if (current.getArguments().length < FrameAccess.RCVR_AND_ARGS_START) {
+                    if (current.getArguments().length < FrameAccess.RECEIVER) {
                         return null;
                     }
                     if (!foundMyself) {

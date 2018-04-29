@@ -207,23 +207,19 @@ public final class BlockClosureObject extends BaseSqueakObject {
         if (blockObject.getNumArgs() != objects.length) {
             throw new PrimitiveFailed();
         }
-        final Object[] arguments = new Object[FrameAccess.RCVR_AND_ARGS_START + /*
-                                                                                 * METHOD +
-                                                                                 * CLOSURE_OR_NULL
-                                                                                 */
-                        1 /* receiver */ +
+        final Object[] arguments = new Object[FrameAccess.ARGUMENTS_START +
                         objects.length +
                         copied.length];
         arguments[FrameAccess.METHOD] = blockObject;
         // Sender is thisContext (or marker)
         arguments[FrameAccess.SENDER_OR_SENDER_MARKER] = FrameAccess.getContextOrMarker(frame, getContextOrMarkerSlot(frame));
         arguments[FrameAccess.CLOSURE_OR_NULL] = this;
-        arguments[FrameAccess.RCVR_AND_ARGS_START] = getReceiver();
+        arguments[FrameAccess.RECEIVER] = getReceiver();
         for (int i = 0; i < objects.length; i++) {
-            arguments[FrameAccess.RCVR_AND_ARGS_START + 1 + i] = objects[i];
+            arguments[FrameAccess.ARGUMENTS_START + i] = objects[i];
         }
         for (int i = 0; i < copied.length; i++) {
-            arguments[FrameAccess.RCVR_AND_ARGS_START + 1 + objects.length + i] = copied[i];
+            arguments[FrameAccess.ARGUMENTS_START + objects.length + i] = copied[i];
         }
         return arguments;
     }

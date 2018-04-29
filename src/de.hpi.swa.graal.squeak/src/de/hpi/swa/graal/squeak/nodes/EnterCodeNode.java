@@ -55,7 +55,7 @@ public abstract class EnterCodeNode extends RootNode {
         // Push arguments and copied values onto the newContext.
         final Object[] arguments = frame.getArguments();
         for (int i = 0; i < numArgsAndCopiedValues; i++) {
-            pushStackNode.executeWrite(frame, arguments[FrameAccess.RCVR_AND_ARGS_START + 1 + i]);
+            pushStackNode.executeWrite(frame, arguments[FrameAccess.ARGUMENTS_START + i]);
         }
         // Initialize temps with nil in newContext.
         final int numTemps = code.getNumTemps();
@@ -76,7 +76,7 @@ public abstract class EnterCodeNode extends RootNode {
         final Object[] arguments = frame.getArguments();
         final int numArgsAndCopiedValues = code.getNumArgsAndCopiedValues();
         for (int i = 0; i < numArgsAndCopiedValues; i++) {
-            newContext.push(arguments[FrameAccess.RCVR_AND_ARGS_START + 1 + i]);
+            newContext.push(arguments[FrameAccess.ARGUMENTS_START + i]);
         }
         // Initialize temps with nil in newContext.
         final int numTemps = code.getNumTemps();
