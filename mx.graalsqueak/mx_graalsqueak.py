@@ -2,9 +2,7 @@ import os
 import argparse
 
 import mx
-
 import mx_gate
-
 import mx_unittest
 
 
@@ -127,20 +125,41 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
 
 def _graalsqueak_gate_runner(args, tasks):
     os.environ['MX_GATE'] = 'true'
-    unittest_args = []
-    jacocoArgs = mx_gate.get_jacoco_agent_args()
-    if jacocoArgs:
-        unittest_args.extend(jacocoArgs)
+    unittest_args = _get_jacoco_agent_args()
     unittest_args.extend(['--suite', 'graalsqueak'])
     with mx_gate.Task('TestGraalSqueak', tasks, tags=['test']) as t:
         if t:
             mx_unittest.unittest(unittest_args)
-    if jacocoArgs:
-        mx.command_function('jacocoreport')(['--format', 'xml', '.'])
+    with mx_gate.Task('CodeCoverageReport', tasks, tags=['test']) as t:
+        if t:
+            mx.command_function('jacocoreport')(['--format', 'xml', '.'])
+
+
+def _get_jacoco_agent_args():
+    jacocoagent = mx.library('JACOCOAGENT', True)
+
+    includes = []
+    baseExcludes = []
+    for p in mx.projects(limit_to_primary=True):
+        projsetting = getattr(p, 'jacoco', '')
+        if projsetting == 'exclude':
+            baseExcludes.append(p.name)
+        if projsetting == 'include':
+            includes.append(p.name + '.*')
+
+    excludes = [package + '.*' for package in baseExcludes]
+    agentOptions = {
+                    'append': 'false',
+                    'inclbootstrapclasses': 'false',
+                    'includes': ':'.join(includes),
+                    'excludes': ':'.join(excludes),
+                    'destfile': 'jacoco.exec'
+    }
+    return ['-javaagent:' + jacocoagent.get_path(True) + '=' +
+            ','.join([k + '=' + v for k, v in agentOptions.items()])]
 
 
 mx.update_commands(_suite, {
     'squeak': [_squeak, '[Squeak args|@VM options]'],
 })
 mx_gate.add_gate_runner(_suite, _graalsqueak_gate_runner)
-mx_gate.add_jacoco_includes(['%s.*' % PACKAGE_NAME])
