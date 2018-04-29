@@ -1,6 +1,7 @@
 package de.hpi.swa.graal.squeak.model;
 
 public final class ObjectLayouts {
+
     public static final class ASSOCIATION {
         public static final int KEY = 0;
         public static final int VALUE = 1;
@@ -187,5 +188,8 @@ public final class ObjectLayouts {
     public static final class WEAK_FINALIZER_ITEM {
         public static final int LIST = 0;
         public static final int NEXT = 1;
+    }
+
+    private ObjectLayouts() {
     }
 }

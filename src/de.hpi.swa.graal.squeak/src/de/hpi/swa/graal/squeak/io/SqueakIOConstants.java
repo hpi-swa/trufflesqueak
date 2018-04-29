@@ -87,4 +87,7 @@ public final class SqueakIOConstants {
         public static final long COMPLEX = 6;
         public static final long MOUSE_WHEEL = 7;
     }
+
+    private SqueakIOConstants() {
+    }
 }
