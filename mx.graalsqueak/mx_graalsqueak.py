@@ -57,11 +57,9 @@ def _graal_vm_args(args, jdk):
     if not args.background_compilation:
         graal_args += ['-Dgraal.TruffleBackgroundCompilation=false']
 
-    graal_path = mx.classpath('compiler:GRAAL', jdk=jdk)
     graal_args += [
-        '-XX:+UseJVMCICompiler',
         '-Djvmci.Compiler=graal',
-        '-Djvmci.class.path.append=%s' % graal_path
+        '-XX:+UseJVMCICompiler',
     ]
     return graal_args
 
