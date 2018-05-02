@@ -77,6 +77,10 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
                         help='disable background compilation',
                         dest='background_compilation',
                         action='store_false', default=True)
+    parser.add_argument('-d', '--disable-interrupts',
+                        help='disable interrupt handler',
+                        dest='disable_interrupts',
+                        action='store_true', default=False)
     parser.add_argument('--igv', action='store_true', help='dump to igv')
     parser.add_argument('-l', '--low-level',
                         help='enable low-level optimization output',
@@ -85,14 +89,24 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
                         help='print machine code',
                         dest='print_machine_code', action='store_true',
                         default=False)
+    parser.add_argument('-m', '--method',
+                        help='method selector when receiver is provided',
+                        dest='method')
+    parser.add_argument('-r', '--receiver',
+                        help='SmallInteger to be used as receiver',
+                        dest='receiver')
     parser.add_argument(
-        '-t', '--trace-compilation',
+        '-tc', '--trace-compilation',
         help='trace truffle compilation',
         dest='trace_compilation', action='store_true', default=False)
     parser.add_argument(
         '-ti', '--trace-invalid',
         help='trace assumption invalidation and transfers to interpreter',
         dest='trace_invalidation', action='store_true', default=False)
+    parser.add_argument(
+        '-ts', '--trace-squeak',
+        help='trace Squeak process switches, ...',
+        dest='trace_squeak', action='store_true', default=False)
     parser.add_argument('-v', '--verbose',
                         help='enable verbose output',
                         dest='verbose',
@@ -101,7 +115,12 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
                         help='enable performance warnings',
                         dest='perf_warnings',
                         action='store_true', default=False)
-    parser.add_argument('squeak_args', nargs=argparse.REMAINDER)
+    parser.add_argument('image',
+                        help='path to Squeak image file',
+                        nargs='?')
+    parser.add_argument('image_arguments',
+                        help='image arguments',
+                        nargs=argparse.REMAINDER)
     parsed_args = parser.parse_args(raw_args)
 
     vm_args = ['-cp', mx.classpath(PACKAGE_NAME)]
@@ -119,8 +138,32 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
     if extra_vm_args:
         vm_args.extend(extra_vm_args)
 
-    vm_args.append('de.hpi.swa.graal.squeak.GraalSqueakMain')
-    return mx.run_java(vm_args + parsed_args.squeak_args, jdk=jdk, **kwargs)
+    vm_args.append('%s.GraalSqueakMain' % PACKAGE_NAME)
+
+    if parsed_args.receiver and not parsed_args.method:
+        parser.error('--method required when --receiver is provided')
+    if not parsed_args.receiver and parsed_args.method:
+        parser.error('--receiver required when --method is provided')
+
+    squeak_arguments = []
+    if parsed_args.disable_interrupts:
+        squeak_arguments.append('--disable-interrupts')
+    if parsed_args.receiver and parsed_args.method:
+        squeak_arguments.extend(['--receiver', parsed_args.receiver,
+                                 '--method', parsed_args.method])
+    if parsed_args.trace_squeak:
+        squeak_arguments.append('--trace')
+    if parsed_args.verbose:
+        squeak_arguments.append('--verbose')
+    if parsed_args.image_arguments:
+        squeak_arguments.extend(['--args'] + parsed_args.image_arguments)
+
+    if parsed_args.image:
+        squeak_arguments = [parsed_args.image] + squeak_arguments
+    else:
+        if len(squeak_arguments) > 0:
+            parser.error('an image needs to be explicitly provided')
+    return mx.run_java(vm_args + squeak_arguments, jdk=jdk, **kwargs)
 
 
 def _graalsqueak_gate_runner(args, tasks):
