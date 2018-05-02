@@ -11,9 +11,9 @@ A [Squeak/Smalltalk][squeak] implementation for the [GraalVM][graalvm].
    Oracle Labs JDK's home directory.
 4. Run [`bin/graalsqueak`][graalsqueak] to build and start GraalSqueak with
    [mx] using the Oracle Labs JDK.
-5. Open a Squeak/Smalltalk trunk image with [`VMMaker.oscog-nice.1812`][vmmaker]  
-   (or run [`scripts/download-test-image.sh`][test_image] to download the
-   pre-configured test image).
+5. Open the pre-configured
+   [Squeak/Smalltalk image for GraalSqueak][graalsqueak_image]
+   (incl. [VMMaker] for BitBlt/Balloon simulation).
 
 To list all available options, run `bin/graalsqueak -h`.
 
@@ -84,6 +84,7 @@ Please [report any issues here on GitHub][issues] and open
 [graal]: https://github.com/oracle/graal
 [graalsqueak]: bin/graalsqueak
 [graalsqueakmain]: src/de.hpi.swa.graal.squeak/src/de/hpi/swa/graal/squeak/GraalSqueakMain.java
+[graalsqueak_image]: https://dl.bintray.com/hpi-swa-lab/GraalSqueak/images/GraalSqueakTrunkImage.zip
 [graalvm]: http://www.graalvm.org/
 [graalvm_download]: http://www.graalvm.org/downloads/
 [issues]: ../../issues/new
