@@ -1,16 +1,9 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -e
 
-if [[ "${TRAVIS}" == "true" ]]; then
-  readonly TARGET_DIR="${TRAVIS_BUILD_DIR}/images"
-else
-  readonly TARGET_DIR="images"
-fi
+readonly BASE_DIRECTORY="$(cd "$(dirname "${BASH_SOURCE[0]}")/../" && pwd)"
+source "${BASE_DIRECTORY}/scripts/helpers.sh"
 
-mkdir "${TARGET_DIR}" > /dev/null
-pushd "${TARGET_DIR}"
-wget -q https://dl.bintray.com/hpi-swa-lab/GraalSqueak/images/TestImageWithVMMaker.zip
-unzip TestImageWithVMMaker.zip
-mv *.image test.image
-mv *.changes test.changes
-popd > /dev/null
+ensure_test_image
+
+echo "Test image should be located at '${BASE_DIRECTORY}/images/test.image'."
