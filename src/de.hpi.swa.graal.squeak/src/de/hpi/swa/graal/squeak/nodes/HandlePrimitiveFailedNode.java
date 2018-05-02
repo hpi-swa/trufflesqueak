@@ -2,7 +2,6 @@ package de.hpi.swa.graal.squeak.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -28,17 +27,17 @@ public abstract class HandlePrimitiveFailedNode extends AbstractNodeWithCode {
     public abstract void executeHandle(VirtualFrame frame, PrimitiveFailed e);
 
     /*
-     * Lookup error symbol in error table and push it to stack. The fallback code pops the symbol
-     * into the error temporary if any.
+     * Look up error symbol in error table and push it to stack. The fallback code pops the error
+     * symbol into the corresponding temporary variable.
      */
     @Specialization(guards = "followedByExtendedStore()")
-    protected void doHandle(final VirtualFrame frame, final PrimitiveFailed e) {
+    protected final void doHandle(final VirtualFrame frame, final PrimitiveFailed e) {
         pushNode.executeWrite(frame, getErrorTable().at0(e.getReasonCode()));
     }
 
     @SuppressWarnings("unused")
-    @Fallback
-    protected final void doFallback(final VirtualFrame frame, final PrimitiveFailed e) {
+    @Specialization(guards = "!followedByExtendedStore()")
+    protected static final void doNothing(final VirtualFrame frame, final PrimitiveFailed e) {
         // do nothing
     }
 
