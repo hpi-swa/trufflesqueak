@@ -45,7 +45,7 @@ ensure_test_image() {
 
   mkdir "${target_dir}"
   pushd "${target_dir}" > /dev/null
-  curl -sLO "${IMAGE_URL}"
+  curl -LO "${IMAGE_URL}"
   unzip "${IMAGE_NAME}"
   mv *.image test.image
   mv *.changes test.changes
