@@ -592,11 +592,9 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimArrayBecomeOneWayCopyHashNode extends AbstractArrayBecomeOneWayPrimitiveNode {
         @Child private FrameStackReadNode stackReadNode = FrameStackReadNode.create();
         @Child private FrameStackWriteNode stackWriteNode = FrameStackWriteNode.create();
-        @Child private FrameSlotReadNode stackPointerReadNode;
 
         protected PrimArrayBecomeOneWayCopyHashNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
-            stackPointerReadNode = FrameSlotReadNode.create(method.stackPointerSlot);
         }
 
         @Specialization

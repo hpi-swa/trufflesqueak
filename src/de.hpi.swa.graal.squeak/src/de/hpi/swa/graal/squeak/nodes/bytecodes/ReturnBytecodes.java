@@ -37,7 +37,7 @@ public final class ReturnBytecodes {
             return readClosureNode.executeRead(frame) instanceof BlockClosureObject;
         }
 
-        protected boolean isDirty(final VirtualFrame frame) {
+        protected final boolean isDirty(final VirtualFrame frame) {
             return getContext(frame).isDirty();
         }
 
