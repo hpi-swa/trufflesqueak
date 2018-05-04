@@ -25,12 +25,6 @@ public abstract class BaseSqueakObject implements TruffleObject {
         this.sqClass = klass;
     }
 
-    protected BaseSqueakObject(final SqueakImageContext image, final ClassObject klass, final long hash) {
-        this.image = image;
-        this.hash = hash;
-        this.sqClass = klass;
-    }
-
     public static final boolean isInstance(final TruffleObject obj) {
         return obj instanceof BaseSqueakObject;
     }
@@ -45,13 +39,22 @@ public abstract class BaseSqueakObject implements TruffleObject {
         return "a " + getSqClassName();
     }
 
+    public final long squeakHash() {
+        return hash;
+    }
+
+    public final void setSqueakHash(final long hash) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        this.hash = hash;
+    }
+
     public final ClassObject getSqClass() {
         return sqClass;
     }
 
     public final void setSqClass(final ClassObject newCls) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        sqClass = newCls;
+        this.sqClass = newCls;
     }
 
     public boolean isClass() {
@@ -102,15 +105,6 @@ public abstract class BaseSqueakObject implements TruffleObject {
         other.sqClass = this.sqClass;
         this.sqClass = otherSqClass;
         return true;
-    }
-
-    public final long squeakHash() {
-        return hash;
-    }
-
-    public final void setSqueakHash(final long hash) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        this.hash = hash;
     }
 
     public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
