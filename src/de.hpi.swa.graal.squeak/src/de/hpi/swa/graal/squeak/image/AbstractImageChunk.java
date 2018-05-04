@@ -18,7 +18,7 @@ import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.ListObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.model.SqueakObject;
+import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 
 public abstract class AbstractImageChunk {
@@ -70,7 +70,7 @@ public abstract class AbstractImageChunk {
         return data;
     }
 
-    public SqueakObject asClassObject() {
+    public BaseSqueakObject asClassObject() {
         if (object == null) {
             assert format == 1;
             object = new ClassObject(image);

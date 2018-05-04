@@ -24,7 +24,7 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.EnterCodeNode;
 import de.hpi.swa.graal.squeak.util.BitSplitter;
 
-public abstract class CompiledCodeObject extends SqueakObject {
+public abstract class CompiledCodeObject extends BaseSqueakObject {
     public enum SLOT_IDENTIFIER {
         THIS_CONTEXT_OR_MARKER,
         INSTRUCTION_POINTER,

@@ -252,8 +252,8 @@ public final class ContextObject extends AbstractPointersObject {
                 if (newPointer == fromPointer) {
                     final Object toPointer = to[i];
                     atput0(j, toPointer);
-                    if (copyHash && fromPointer instanceof BaseSqueakObject && toPointer instanceof SqueakObject) {
-                        ((SqueakObject) toPointer).setSqueakHash(((BaseSqueakObject) fromPointer).squeakHash());
+                    if (copyHash && fromPointer instanceof BaseSqueakObject && toPointer instanceof BaseSqueakObject) {
+                        ((BaseSqueakObject) toPointer).setSqueakHash(((BaseSqueakObject) fromPointer).squeakHash());
                     }
                 }
             }

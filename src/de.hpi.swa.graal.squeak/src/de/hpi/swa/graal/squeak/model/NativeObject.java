@@ -9,7 +9,7 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
-public class NativeObject extends SqueakObject {
+public class NativeObject extends BaseSqueakObject {
     @CompilationFinal protected AbstractNativeObjectStorage storage;
 
     public static NativeObject newNativeBytes(final SqueakImageContext img, final ClassObject klass, final int size) {

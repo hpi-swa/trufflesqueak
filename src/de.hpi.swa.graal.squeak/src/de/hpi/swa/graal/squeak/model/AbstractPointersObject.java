@@ -9,7 +9,7 @@ import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
-public abstract class AbstractPointersObject extends SqueakObject {
+public abstract class AbstractPointersObject extends BaseSqueakObject {
     @CompilationFinal(dimensions = 1) protected Object[] pointers;
 
     public AbstractPointersObject(final SqueakImageContext img) {
@@ -72,8 +72,8 @@ public abstract class AbstractPointersObject extends SqueakObject {
                 if (newPointer == fromPointer) {
                     final Object toPointer = to[i];
                     atput0(j, toPointer);
-                    if (copyHash && fromPointer instanceof BaseSqueakObject && toPointer instanceof SqueakObject) {
-                        ((SqueakObject) toPointer).setSqueakHash(((BaseSqueakObject) fromPointer).squeakHash());
+                    if (copyHash && fromPointer instanceof BaseSqueakObject && toPointer instanceof BaseSqueakObject) {
+                        ((BaseSqueakObject) toPointer).setSqueakHash(((BaseSqueakObject) fromPointer).squeakHash());
                     }
                 }
             }

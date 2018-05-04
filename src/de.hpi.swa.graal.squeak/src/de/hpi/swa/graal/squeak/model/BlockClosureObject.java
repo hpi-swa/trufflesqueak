@@ -32,12 +32,12 @@ public final class BlockClosureObject extends BaseSqueakObject {
     @CompilationFinal private FrameSlot contextOrMarkerSlot;
 
     public BlockClosureObject(final SqueakImageContext image) {
-        super(image);
+        super(image, image.blockClosureClass);
         this.copied = new Object[0]; // ensure copied is set
     }
 
     public BlockClosureObject(final CompiledBlockObject compiledBlock, final Object receiver, final Object[] copied, final ContextObject outerContext, final FrameSlot contextOrMarkerSlot) {
-        super(compiledBlock.image);
+        super(compiledBlock.image, compiledBlock.image.blockClosureClass);
         assert outerContext.getFrameMarker() != null;
         this.block = compiledBlock;
         this.outerContext = outerContext;
@@ -47,7 +47,7 @@ public final class BlockClosureObject extends BaseSqueakObject {
     }
 
     private BlockClosureObject(final BlockClosureObject original) {
-        super(original.image);
+        super(original.image, original.image.blockClosureClass);
         this.block = (CompiledBlockObject) original.getCompiledBlock().shallowCopy();
         this.outerContext = original.outerContext;
         if (original.receiver instanceof BaseSqueakObject) {
@@ -147,11 +147,6 @@ public final class BlockClosureObject extends BaseSqueakObject {
         copied = ((BlockClosureObject) other).copied;
         ((BlockClosureObject) other).copied = otherCopied;
         return true;
-    }
-
-    @Override
-    public ClassObject getSqClass() {
-        return image.blockClosureClass;
     }
 
     @Override
@@ -256,8 +251,8 @@ public final class BlockClosureObject extends BaseSqueakObject {
                 if (newPointer == fromPointer) {
                     final Object toPointer = to[i];
                     newPointers[j] = toPointer;
-                    if (copyHash && fromPointer instanceof BaseSqueakObject && toPointer instanceof SqueakObject) {
-                        ((SqueakObject) toPointer).setSqueakHash(((BaseSqueakObject) fromPointer).squeakHash());
+                    if (copyHash && fromPointer instanceof BaseSqueakObject && toPointer instanceof BaseSqueakObject) {
+                        ((BaseSqueakObject) toPointer).setSqueakHash(((BaseSqueakObject) fromPointer).squeakHash());
                     }
                 }
             }
