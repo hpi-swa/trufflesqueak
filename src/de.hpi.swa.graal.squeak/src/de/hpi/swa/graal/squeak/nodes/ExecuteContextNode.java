@@ -16,8 +16,8 @@ import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
+import de.hpi.swa.graal.squeak.nodes.context.UpdateInstructionPointerNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotWriteNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.SqueakBytecodeDecoder;
@@ -28,7 +28,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
     @Child private HandleNonVirtualReturnNode handleNonVirtualReturnNode;
     @Child private FrameSlotReadNode contextReadNode;
-    @Child private FrameSlotWriteNode instructionPointerWriteNode;
+    @Child private UpdateInstructionPointerNode updateInstructionPointerNode;
     @Child private StackPushNode pushStackNode;
 
     public static ExecuteContextNode create(final CompiledCodeObject code) {
@@ -43,7 +43,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
         handleNonLocalReturnNode = HandleNonLocalReturnNode.create(code);
         handleNonVirtualReturnNode = HandleNonVirtualReturnNode.create(code);
         contextReadNode = FrameSlotReadNode.create(code.thisContextOrMarkerSlot);
-        instructionPointerWriteNode = FrameSlotWriteNode.create(code.instructionPointerSlot);
+        updateInstructionPointerNode = UpdateInstructionPointerNode.create(code);
         pushStackNode = StackPushNode.create(code);
     }
 
@@ -97,7 +97,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
         try {
             while (pc >= 0) {
                 CompilerAsserts.partialEvaluationConstant(pc);
-                storeInstructionPointer(frame, node);
+                updateInstructionPointerNode.executeUpdate(frame, node.getSuccessorIndex());
                 if (node instanceof ConditionalJumpNode) {
                     final ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
                     final boolean condition = jumpNode.executeCondition(frame);
@@ -164,7 +164,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
         int pc = (int) initialPC;
         AbstractBytecodeNode node = bytecodeNodes[pc];
         while (pc >= 0) {
-            storeInstructionPointer(frame, node);
+            updateInstructionPointerNode.executeUpdate(frame, node.getSuccessorIndex());
             try {
                 pc = node.executeInt(frame);
             } catch (FreshReturn fr) {
@@ -180,15 +180,6 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
                 }
             }
             node = bytecodeNodes[pc];
-        }
-    }
-
-    private void storeInstructionPointer(final VirtualFrame frame, final AbstractBytecodeNode node) {
-        final Object contextOrMarker = contextReadNode.executeRead(frame);
-        if (contextOrMarker instanceof ContextObject) {
-            ((ContextObject) contextOrMarker).setInstructionPointer(node.getSuccessorIndex());
-        } else {
-            instructionPointerWriteNode.executeWrite(frame, (long) node.getSuccessorIndex());
         }
     }
 

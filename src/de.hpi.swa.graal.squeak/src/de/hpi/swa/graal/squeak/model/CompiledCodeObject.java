@@ -101,8 +101,8 @@ public abstract class CompiledCodeObject extends SqueakObject {
     protected void prepareFrameDescriptor() {
         frameDescriptor = new FrameDescriptor();
         thisContextOrMarkerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.THIS_CONTEXT_OR_MARKER, FrameSlotKind.Object);
-        instructionPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.INSTRUCTION_POINTER, FrameSlotKind.Long);
-        stackPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.STACK_POINTER, FrameSlotKind.Long);
+        instructionPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.INSTRUCTION_POINTER, FrameSlotKind.Int);
+        stackPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.STACK_POINTER, FrameSlotKind.Int);
         if (canBeVirtualized()) {
             final long numStackSlots = frameSize() + getSqClass().getBasicInstanceSize();
             stackSlots = new FrameSlot[(int) numStackSlots];
