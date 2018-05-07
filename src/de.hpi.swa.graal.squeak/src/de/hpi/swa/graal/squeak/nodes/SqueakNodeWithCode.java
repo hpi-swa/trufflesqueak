@@ -22,19 +22,19 @@ public abstract class SqueakNodeWithCode extends SqueakNode {
         contextOrMarkerReadNode = FrameSlotReadNode.create(code.thisContextOrMarkerSlot);
     }
 
-    protected boolean isVirtualized(final VirtualFrame frame) {
+    protected final boolean isVirtualized(final VirtualFrame frame) {
         return contextOrMarkerReadNode.executeRead(frame) instanceof FrameMarker;
     }
 
-    protected Object getContextOrMarker(final VirtualFrame frame) {
+    protected final Object getContextOrMarker(final VirtualFrame frame) {
         return contextOrMarkerReadNode.executeRead(frame);
     }
 
-    protected ContextObject getContext(final VirtualFrame frame) {
+    protected final ContextObject getContext(final VirtualFrame frame) {
         return (ContextObject) contextOrMarkerReadNode.executeRead(frame);
     }
 
-    protected FrameMarker getFrameMarker(final VirtualFrame frame) {
+    protected final FrameMarker getFrameMarker(final VirtualFrame frame) {
         return (FrameMarker) contextOrMarkerReadNode.executeRead(frame);
     }
 }
