@@ -75,7 +75,35 @@ public final class SqueakIOConstants {
     };
 
     @CompilationFinal public static final int EVENT_SIZE = 8;
-    @CompilationFinal(dimensions = 1) public static final long[] NULL_EVENT = new long[]{EVENT_TYPE.NONE, 0, 0, 0, 0, 0, 0, 0};
+    @CompilationFinal(dimensions = 1) public static final long[] NULL_EVENT = new long[]{EVENT_TYPE.NONE};
+
+    public enum MOUSE_EVENT {
+        DOWN,
+        MOVE,
+        UP
+    }
+
+    public static final class KEYBOARD_EVENT {
+        public static final long CHAR = 0;
+        public static final long DOWN = 1;
+        public static final long UP = 2;
+    }
+
+    public static final class KEYBOARD {
+        public static final int SHIFT = 8;
+        public static final int CTRL = 16;
+        public static final int ALT = 32;
+        public static final int CMD = 64;
+        public static final int ALL = SHIFT + CTRL + ALT + CMD;
+        public static final int INTERRUPT_KEYCODE = 2175;
+    }
+
+    public static final class MOUSE {
+        public static final int BLUE = 1;
+        public static final int YELLOW = 2;
+        public static final int RED = 4;
+        public static final int ALL = BLUE + YELLOW + RED;
+    }
 
     public static final class EVENT_TYPE {
         public static final long NONE = 0;

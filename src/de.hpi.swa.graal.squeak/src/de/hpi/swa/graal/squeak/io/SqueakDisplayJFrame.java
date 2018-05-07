@@ -8,6 +8,7 @@ import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.InputEvent;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.DataBuffer;
@@ -30,6 +31,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.io.SqueakIOConstants.KEYBOARD;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.FORM;
 import de.hpi.swa.graal.squeak.model.PointersObject;
@@ -43,12 +45,14 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
     @CompilationFinal public final SqueakMouse mouse;
     @CompilationFinal public final SqueakKeyboard keyboard;
     @CompilationFinal private final Deque<long[]> deferredEvents = new ArrayDeque<>();
+    @CompilationFinal public boolean usesEventQueue = false;
 
     @CompilationFinal private static final Toolkit TOOLKIT = Toolkit.getDefaultToolkit();
     @CompilationFinal(dimensions = 1) private static final byte[] BLACK_AND_WHITE = new byte[]{(byte) 255, (byte) 0};
     @CompilationFinal(dimensions = 1) private static final byte[] ALPHA_COMPONENT = new byte[]{(byte) 0, (byte) 255};
     @CompilationFinal private static final ColorModel CURSOR_MODEL = new IndexColorModel(1, 2, BLACK_AND_WHITE, BLACK_AND_WHITE, BLACK_AND_WHITE, ALPHA_COMPONENT);
 
+    public int buttons = 0;
     private Dimension windowSize = null;
     private boolean deferUpdates = false;
 
@@ -240,7 +244,7 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
 
     @Override
     public int getLastMouseButton() {
-        return mouse.getButtons() & 7 | keyboard.modifierKeys();
+        return buttons;
     }
 
     @Override
@@ -279,11 +283,24 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
         if (!deferredEvents.isEmpty()) {
             return deferredEvents.removeFirst();
         }
+        if (!usesEventQueue) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            usesEventQueue = true;
+        }
         return SqueakIOConstants.NULL_EVENT;
     }
 
-    public void addEvent(final long[] event) {
-        deferredEvents.add(event);
+    public void addEvent(final long eventType, final long value3, final long value4, final long value5, final long value6) {
+        deferredEvents.add(new long[]{eventType, getEventTime(), value3, value4, value5, value6});
+    }
+
+    public int recordModifiers(final InputEvent e) {
+        final int shiftValue = e.isShiftDown() ? KEYBOARD.SHIFT : 0;
+        final int ctrlValue = e.isControlDown() && !e.isAltDown() ? KEYBOARD.CTRL : 0;
+        final int cmdValue = e.isMetaDown() || (e.isAltDown() && !e.isControlDown()) ? KEYBOARD.CMD : 0;
+        final int modifiers = shiftValue + ctrlValue + cmdValue;
+        buttons = (buttons & ~KEYBOARD.ALL) | modifiers;
+        return modifiers;
     }
 
     public long getEventTime() {

@@ -97,7 +97,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final Object doGetNext(final PointersObject eventSensor, final ListObject targetArray) {
             final long[] nextEvent = code.image.display.getNextEvent();
-            for (int i = 0; i < SqueakIOConstants.EVENT_SIZE; i++) {
+            for (int i = 0; i < nextEvent.length; i++) {
                 targetArray.atput0(i, nextEvent[i]);
             }
             return eventSensor;
