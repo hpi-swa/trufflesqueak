@@ -18,10 +18,10 @@ public abstract class StackPopNode extends AbstractStackPopNode {
     @Specialization(guards = {"isVirtualized(frame)"})
     public Object doPopVirtualized(final VirtualFrame frame) {
         CompilerDirectives.ensureVirtualizedHere(frame);
-        final long sp = frameStackPointer(frame);
+        final int sp = frameStackPointer(frame);
         assert sp >= 0;
         setFrameStackPointer(frame, sp - 1);
-        return atStackAndClear(frame, (int) sp);
+        return atStackAndClear(frame, sp);
     }
 
     @Specialization(guards = {"!isVirtualized(frame)"})

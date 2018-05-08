@@ -12,7 +12,7 @@ _suite = mx.suite('graalsqueak')
 _compiler = mx.suite('compiler', fatalIfMissing=False)
 
 
-def _graal_vm_args(args, jdk):
+def _graal_vm_args(args):
     graal_args = []
 
     if args.trace_compilation:
@@ -125,11 +125,8 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
 
     vm_args = ['-cp', mx.classpath(PACKAGE_NAME)]
 
-    if not jdk:
-        jdk = mx.get_jdk(tag='jvmci')
-
     if _compiler:
-        vm_args.extend(_graal_vm_args(parsed_args, jdk))
+        vm_args.extend(_graal_vm_args(parsed_args))
 
     # default: assertion checking is enabled
     if parsed_args.assertions:
@@ -163,6 +160,10 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
     else:
         if len(squeak_arguments) > 0:
             parser.error('an image needs to be explicitly provided')
+
+    if not jdk:
+        jdk = mx.get_jdk(tag='jvmci' if _compiler else None)
+
     return mx.run_java(vm_args + squeak_arguments, jdk=jdk, **kwargs)
 
 

@@ -10,8 +10,8 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
-import de.hpi.swa.graal.squeak.io.SqueakIOConstants;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
+import de.hpi.swa.graal.squeak.io.SqueakIOConstants;
 import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -23,7 +23,6 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.ERROR_TABLE;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.FORM;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.model.SqueakObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
@@ -98,7 +97,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final Object doGetNext(final PointersObject eventSensor, final ListObject targetArray) {
             final long[] nextEvent = code.image.display.getNextEvent();
-            for (int i = 0; i < SqueakIOConstants.EVENT_SIZE; i++) {
+            for (int i = 0; i < nextEvent.length; i++) {
                 targetArray.atput0(i, nextEvent[i]);
             }
             return eventSensor;
@@ -274,7 +273,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return doSqueakObject(rcvr, start, stop, repl, replStart);
         }
 
-        private static Object doSqueakObject(final SqueakObject rcvr, final long start, final long stop, final SqueakObject repl, final long replStart) {
+        private static Object doSqueakObject(final BaseSqueakObject rcvr, final long start, final long stop, final BaseSqueakObject repl, final long replStart) {
             final long repOff = replStart - start;
             for (int i = (int) (start - 1); i < stop; i++) {
                 rcvr.atput0(i, repl.at0(repOff + i));
@@ -284,7 +283,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "!hasValidBounds(rcvr, start, stop, repl, replStart)")
-        protected static final Object doBadIndex(final SqueakObject rcvr, final long start, final long stop, final SqueakObject repl, final long replStart) {
+        protected static final Object doBadIndex(final BaseSqueakObject rcvr, final long start, final long stop, final BaseSqueakObject repl, final long replStart) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_INDEX);
         }
 

@@ -30,7 +30,6 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.ERROR_TABLE;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.model.SqueakObject;
 import de.hpi.swa.graal.squeak.nodes.GetAllInstancesNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadNode;
@@ -104,8 +103,8 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                             if (stackObject == fromPointer) {
                                 final Object toPointer = toPointers[j];
                                 stackWriteNode.execute(current, i, toPointer);
-                                if (fromPointer instanceof BaseSqueakObject && toPointer instanceof SqueakObject) {
-                                    ((SqueakObject) toPointer).setSqueakHash(((BaseSqueakObject) fromPointer).squeakHash());
+                                if (fromPointer instanceof BaseSqueakObject && toPointer instanceof BaseSqueakObject) {
+                                    ((BaseSqueakObject) toPointer).setSqueakHash(((BaseSqueakObject) fromPointer).squeakHash());
                                 }
                             }
                         }
@@ -592,11 +591,9 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimArrayBecomeOneWayCopyHashNode extends AbstractArrayBecomeOneWayPrimitiveNode {
         @Child private FrameStackReadNode stackReadNode = FrameStackReadNode.create();
         @Child private FrameStackWriteNode stackWriteNode = FrameStackWriteNode.create();
-        @Child private FrameSlotReadNode stackPointerReadNode;
 
         protected PrimArrayBecomeOneWayCopyHashNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
-            stackPointerReadNode = FrameSlotReadNode.create(method.stackPointerSlot);
         }
 
         @Specialization

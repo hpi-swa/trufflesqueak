@@ -14,7 +14,7 @@ import de.hpi.swa.graal.squeak.exceptions.Returns.LocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.ERROR_TABLE;
+import de.hpi.swa.graal.squeak.nodes.HandlePrimitiveFailedNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushLiteralConstantNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushLiteralVariableNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushReceiverVariableNode;
@@ -38,14 +38,13 @@ public final class MiscellaneousBytecodes {
 
     public static class CallPrimitiveNode extends AbstractBytecodeNode {
         @CompilationFinal private static final boolean DEBUG_UNSUPPORTED_SPECIALIZATION_EXCEPTIONS = false;
-        @Child private StackPushNode pushNode;
+        @Child private HandlePrimitiveFailedNode handlePrimFailed;
         @Child private AbstractPrimitiveNode primitiveNode;
         @CompilationFinal private final int primitiveIndex;
 
         public CallPrimitiveNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int byte1, final int byte2) {
             super(code, index, numBytecodes);
             assert code instanceof CompiledMethodObject;
-            pushNode = StackPushNode.create(code);
             if (!code.hasPrimitive()) {
                 primitiveIndex = 0;
                 primitiveNode = PrimitiveFailedNode.create((CompiledMethodObject) code);
@@ -53,6 +52,7 @@ public final class MiscellaneousBytecodes {
                 primitiveIndex = byte1 + (byte2 << 8);
                 primitiveNode = PrimitiveNodeFactory.forIndex((CompiledMethodObject) code, primitiveIndex);
                 primitiveNode = primitiveNode != null ? primitiveNode : PrimitiveFailedNode.create((CompiledMethodObject) code);
+                handlePrimFailed = HandlePrimitiveFailedNode.create(code);
             }
         }
 
@@ -62,8 +62,8 @@ public final class MiscellaneousBytecodes {
             try {
                 throw new FreshReturn(new LocalReturn(primitiveNode.executePrimitive(frame)));
             } catch (PrimitiveFailed e) {
-                if (e.getReasonCode() != ERROR_TABLE.GENERIC_ERROR) { // handle `error: ec`
-                    pushNode.executeWrite(frame, code.image.lookupError(e.getReasonCode()));
+                if (handlePrimFailed != null) {
+                    handlePrimFailed.executeHandle(frame, e);
                 }
             } catch (UnsupportedSpecializationException e) {
                 if (DEBUG_UNSUPPORTED_SPECIALIZATION_EXCEPTIONS) {

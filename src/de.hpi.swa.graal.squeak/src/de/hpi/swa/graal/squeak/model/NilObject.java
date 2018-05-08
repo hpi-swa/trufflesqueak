@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.model;
 
-import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
 public final class NilObject extends BaseSqueakObject {
@@ -12,16 +11,6 @@ public final class NilObject extends BaseSqueakObject {
     @Override
     public String toString() {
         return "nil";
-    }
-
-    @Override
-    public void fillin(final AbstractImageChunk chunk) {
-        // nothing to fill in
-    }
-
-    @Override
-    public ClassObject getSqClass() {
-        return image.nilClass;
     }
 
     @Override
@@ -47,11 +36,6 @@ public final class NilObject extends BaseSqueakObject {
     @Override
     public BaseSqueakObject shallowCopy() {
         return this;
-    }
-
-    @Override
-    public long squeakHash() {
-        return 1L;
     }
 
     @Override

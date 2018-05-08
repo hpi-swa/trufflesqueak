@@ -287,10 +287,6 @@ public final class SqueakImageContext {
         specialObjectsArray.atput0(index, semaphore.isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassSemaphore) ? semaphore : nil);
     }
 
-    public Object lookupError(final long reasonCode) {
-        return ((ListObject) specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.PrimErrTableIndex)).at0(reasonCode);
-    }
-
     public void trace(final String message) {
         if (config.isTracing()) {
             getOutput().println(message);

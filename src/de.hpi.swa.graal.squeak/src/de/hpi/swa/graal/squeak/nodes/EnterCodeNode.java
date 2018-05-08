@@ -42,8 +42,8 @@ public abstract class EnterCodeNode extends RootNode {
 
     private void initializeSlots(final VirtualFrame frame) {
         contextWriteNode.executeWrite(frame, new FrameMarker());
-        instructionPointerWriteNode.executeWrite(frame, 0L);
-        stackPointerWriteNode.executeWrite(frame, -1L);
+        instructionPointerWriteNode.executeWrite(frame, 0);
+        stackPointerWriteNode.executeWrite(frame, -1);
     }
 
     @ExplodeLoop
@@ -62,7 +62,7 @@ public abstract class EnterCodeNode extends RootNode {
         for (int i = 0; i < numTemps - numArgsAndCopiedValues; i++) {
             pushStackNode.executeWrite(frame, code.image.nil);
         }
-        assert FrameUtil.getLongSafe(frame, code.stackPointerSlot) + 1 >= numTemps;
+        assert FrameUtil.getIntSafe(frame, code.stackPointerSlot) + 1 >= numTemps;
         return executeContextNode.executeVirtualized(frame);
     }
 

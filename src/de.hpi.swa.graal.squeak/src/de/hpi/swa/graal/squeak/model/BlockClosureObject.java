@@ -32,12 +32,12 @@ public final class BlockClosureObject extends BaseSqueakObject {
     @CompilationFinal private FrameSlot contextOrMarkerSlot;
 
     public BlockClosureObject(final SqueakImageContext image) {
-        super(image);
+        super(image, image.blockClosureClass);
         this.copied = new Object[0]; // ensure copied is set
     }
 
     public BlockClosureObject(final CompiledBlockObject compiledBlock, final Object receiver, final Object[] copied, final ContextObject outerContext, final FrameSlot contextOrMarkerSlot) {
-        super(compiledBlock.image);
+        super(compiledBlock.image, compiledBlock.image.blockClosureClass);
         assert outerContext.getFrameMarker() != null;
         this.block = compiledBlock;
         this.outerContext = outerContext;
@@ -47,7 +47,7 @@ public final class BlockClosureObject extends BaseSqueakObject {
     }
 
     private BlockClosureObject(final BlockClosureObject original) {
-        super(original.image);
+        super(original.image, original.image.blockClosureClass);
         this.block = (CompiledBlockObject) original.getCompiledBlock().shallowCopy();
         this.outerContext = original.outerContext;
         if (original.receiver instanceof BaseSqueakObject) {
@@ -64,9 +64,9 @@ public final class BlockClosureObject extends BaseSqueakObject {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         final Object[] pointers = chunk.getPointers();
         assert pointers.length >= BLOCK_CLOSURE.FIRST_COPIED_VALUE;
-        outerContext = (ContextObject) pointers[0];
-        pc = (long) pointers[1];
-        numArgs = (long) pointers[2];
+        outerContext = (ContextObject) pointers[BLOCK_CLOSURE.OUTER_CONTEXT];
+        pc = (long) pointers[BLOCK_CLOSURE.INITIAL_PC];
+        numArgs = (long) pointers[BLOCK_CLOSURE.ARGUMENT_COUNT];
         copied = new Object[pointers.length - BLOCK_CLOSURE.FIRST_COPIED_VALUE];
         for (int i = 0; i < copied.length; i++) {
             copied[i] = pointers[BLOCK_CLOSURE.FIRST_COPIED_VALUE + i];
@@ -143,15 +143,10 @@ public final class BlockClosureObject extends BaseSqueakObject {
             throw new SqueakException("Should not fail");
         }
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        final Object[] stack2 = copied;
+        final Object[] otherCopied = copied;
         copied = ((BlockClosureObject) other).copied;
-        ((BlockClosureObject) other).copied = stack2;
+        ((BlockClosureObject) other).copied = otherCopied;
         return true;
-    }
-
-    @Override
-    public ClassObject getSqClass() {
-        return image.blockClosureClass;
     }
 
     @Override
@@ -242,12 +237,12 @@ public final class BlockClosureObject extends BaseSqueakObject {
     @Override
     public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        final Object[] newPointers = new Object[3 + copied.length];
-        newPointers[0] = outerContext;
-        newPointers[1] = getPC();
-        newPointers[2] = getNumArgs();
+        final Object[] newPointers = new Object[BLOCK_CLOSURE.FIRST_COPIED_VALUE + copied.length];
+        newPointers[BLOCK_CLOSURE.OUTER_CONTEXT] = outerContext;
+        newPointers[BLOCK_CLOSURE.INITIAL_PC] = getPC();
+        newPointers[BLOCK_CLOSURE.ARGUMENT_COUNT] = getNumArgs();
         for (int i = 0; i < copied.length; i++) {
-            newPointers[3 + i] = copied[i];
+            newPointers[BLOCK_CLOSURE.FIRST_COPIED_VALUE + i] = copied[i];
         }
         for (int i = 0; i < from.length; i++) {
             final Object fromPointer = from[i];
@@ -256,17 +251,17 @@ public final class BlockClosureObject extends BaseSqueakObject {
                 if (newPointer == fromPointer) {
                     final Object toPointer = to[i];
                     newPointers[j] = toPointer;
-                    if (copyHash && fromPointer instanceof BaseSqueakObject && toPointer instanceof SqueakObject) {
-                        ((SqueakObject) toPointer).setSqueakHash(((BaseSqueakObject) fromPointer).squeakHash());
+                    if (copyHash && fromPointer instanceof BaseSqueakObject && toPointer instanceof BaseSqueakObject) {
+                        ((BaseSqueakObject) toPointer).setSqueakHash(((BaseSqueakObject) fromPointer).squeakHash());
                     }
                 }
             }
         }
-        outerContext = (ContextObject) newPointers[0];
-        pc = (long) newPointers[1];
-        numArgs = ((Long) newPointers[2]).intValue();
+        outerContext = (ContextObject) newPointers[BLOCK_CLOSURE.OUTER_CONTEXT];
+        pc = (long) newPointers[BLOCK_CLOSURE.INITIAL_PC];
+        numArgs = ((Long) newPointers[BLOCK_CLOSURE.ARGUMENT_COUNT]).intValue();
         for (int i = 0; i < copied.length; i++) {
-            copied[i] = newPointers[3 + i];
+            copied[i] = newPointers[BLOCK_CLOSURE.FIRST_COPIED_VALUE + i];
         }
     }
 

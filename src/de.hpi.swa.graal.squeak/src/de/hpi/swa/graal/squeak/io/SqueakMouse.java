@@ -8,15 +8,13 @@ import javax.swing.event.MouseInputAdapter;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
+import de.hpi.swa.graal.squeak.io.SqueakIOConstants.EVENT_TYPE;
+import de.hpi.swa.graal.squeak.io.SqueakIOConstants.MOUSE;
+import de.hpi.swa.graal.squeak.io.SqueakIOConstants.MOUSE_EVENT;
 
 public final class SqueakMouse extends MouseInputAdapter {
     @CompilationFinal private final SqueakDisplayJFrame display;
     private Point position = new Point(0, 0);
-    private int buttons = 0;
-
-    private static final int RED = 4;
-    private static final int YELLOW = 2;
-    private static final int BLUE = 1;
 
     public SqueakMouse(final SqueakDisplayJFrame display) {
         this.display = display;
@@ -26,56 +24,56 @@ public final class SqueakMouse extends MouseInputAdapter {
         return position;
     }
 
-    public int getButtons() {
-        return buttons;
-    }
-
     @Override
     public void mouseMoved(final MouseEvent e) {
-        position = e.getPoint();
-        addEvent(e);
-    }
-
-    @Override
-    public void mouseDragged(final MouseEvent e) {
-        position = e.getPoint();
-        addEvent(e);
+        if (display.usesEventQueue) {
+            recordMouseEvent(MOUSE_EVENT.MOVE, e);
+        } else {
+            position = e.getPoint();
+        }
     }
 
     @Override
     public void mousePressed(final MouseEvent e) {
-        buttons |= mapButton(e);
-        addEvent(e);
+        recordMouseEvent(MOUSE_EVENT.DOWN, e);
     }
 
     @Override
     public void mouseReleased(final MouseEvent e) {
-        buttons &= ~mapButton(e);
-        addEvent(e);
+        recordMouseEvent(MOUSE_EVENT.UP, e);
     }
 
-    private void addEvent(final MouseEvent e) {
-        display.addEvent(new long[]{SqueakIOConstants.EVENT_TYPE.MOUSE, display.getEventTime(), e.getX(), e.getY(), buttons, display.keyboard.modifierKeys(), 0, 0});
+    private void recordMouseEvent(final MOUSE_EVENT type, final MouseEvent e) {
+        int buttons = display.buttons & MOUSE.ALL;
+        switch (type) {
+            case DOWN:
+                buttons = mapButton(e);
+                break;
+            case MOVE:
+                break; // nothing more to do
+            case UP:
+                buttons = 0;
+                break;
+        }
+
+        display.buttons = buttons | display.recordModifiers(e);
+        if (display.usesEventQueue) {
+            display.addEvent(EVENT_TYPE.MOUSE, e.getX(), e.getY(), display.buttons & MOUSE.ALL, display.buttons >> 3);
+        }
     }
 
     private static int mapButton(final MouseEvent e) {
         switch (e.getButton()) {
             case MouseEvent.BUTTON1:
-                if (e.isControlDown()) {
-                    return YELLOW;
-                }
-                if (e.isAltDown()) {
-                    return BLUE;
-                }
-                return RED;
+                return MOUSE.RED;
             case MouseEvent.BUTTON2:
-                return BLUE;    // middle (frame menu)
+                return MOUSE.BLUE;    // middle (frame menu)
             case MouseEvent.BUTTON3:
-                return YELLOW;  // right (pane menu)
+                return MOUSE.YELLOW;  // right (pane menu)
             case MouseEvent.NOBUTTON:
                 return 0;
             default:
-                throw new SqueakException("Unknown mouse button in event");
+                throw new SqueakException("Unknown mouse button in event: " + e);
         }
     }
 }

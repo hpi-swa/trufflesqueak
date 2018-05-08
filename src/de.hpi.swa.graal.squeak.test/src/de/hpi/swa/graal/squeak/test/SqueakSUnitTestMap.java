@@ -230,7 +230,7 @@ public final class SqueakSUnitTestMap {
                     "PolygonMorphTest", TEST_TYPE.PASSING,
                     "PreferencesTest", TEST_TYPE.FAILING,
                     "ProcessSpecificTest", TEST_TYPE.PASSING,
-                    "ProcessTerminateBug", TEST_TYPE.PASSING,
+                    "ProcessTerminateBug", TEST_TYPE.FLAKY,
                     "ProcessTest", TEST_TYPE.PASSING,
                     "PromiseTest", TEST_TYPE.PASSING,
                     "ProtoObjectTest", TEST_TYPE.PASSING,
@@ -350,11 +350,11 @@ public final class SqueakSUnitTestMap {
                     "UUIDTest", TEST_TYPE.PASSING,
                     "VersionNumberTest", TEST_TYPE.PASSING,
                     "WeakFinalizersTest", TEST_TYPE.PASSING,
-                    "WeakIdentityKeyDictionaryTest", TEST_TYPE.PASSING,
+                    "WeakIdentityKeyDictionaryTest", TEST_TYPE.FLAKY,
                     "WeakMessageSendTest", TEST_TYPE.PASSING,
                     "WeakRegistryTest", TEST_TYPE.NOT_TERMINATING, // flaky and slow (uses Delays)
                     "WeakSetInspectorTest", TEST_TYPE.IGNORE, // doesn't terminate sometimes on JDK8
-                    "WeakSetTest", TEST_TYPE.PASSING,
+                    "WeakSetTest", TEST_TYPE.FLAKY,
                     "WebClientServerTest", TEST_TYPE.FAILING,
                     "WeekTest", TEST_TYPE.PASSING,
                     "WideCharacterSetTest", TEST_TYPE.FAILING,

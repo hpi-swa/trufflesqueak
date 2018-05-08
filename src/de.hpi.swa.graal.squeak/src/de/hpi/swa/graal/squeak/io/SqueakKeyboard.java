@@ -7,149 +7,80 @@ import java.util.Deque;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
+import de.hpi.swa.graal.squeak.io.SqueakIOConstants.EVENT_TYPE;
+import de.hpi.swa.graal.squeak.io.SqueakIOConstants.KEYBOARD;
+import de.hpi.swa.graal.squeak.io.SqueakIOConstants.KEYBOARD_EVENT;
+
 public final class SqueakKeyboard implements KeyListener {
+    @CompilationFinal private static final int TYPEAHEAD_LIMIT = 8;
     @CompilationFinal private final SqueakDisplayJFrame display;
-    @CompilationFinal private final Deque<Character> keys = new ArrayDeque<>(TYPEAHEAD_LIMIT);
-    private int modifierKeys = 0;
-
-    /**
-     * The size of the character queue.
-     */
-    private static final int TYPEAHEAD_LIMIT = 8;
-
-    private static final int SHIFT_KEY = 8;
-    private static final int CONTROL_KEY = 16;
-    private static final int COMMAND_KEY = 64;
-
-    /**
-     * See ParagraphEditor class>>initializeCmdKeyShortcuts.
-     */
-    private static final char CURSOR_HOME = 1,
-                    CURSOR_END = 4,
-                    CR_WITH_IDENT = 13,
-                    SELECT_CURRENT_TYPE_IN = 27,
-                    CURSOR_LEFT = 28,
-                    CURSOR_RIGHT = 29,
-                    CURSOR_UP = 30,
-                    CURSOR_DOWN = 31;
-
-    /**
-     * Squeak keys that do not map to Java key events. Order *MUST* match that of JAVA_KEYS.
-     */
-    private static final char[] SQUEAK_KEYS = {
-                    CURSOR_HOME,
-                    CURSOR_END,
-                    CR_WITH_IDENT,
-                    CURSOR_LEFT,
-                    CURSOR_RIGHT,
-                    CURSOR_UP,
-                    CURSOR_DOWN,
-                    SELECT_CURRENT_TYPE_IN,
-    };
-
-    /**
-     * Counterpart of squeak keys. Order *MUST* match that of SQUEAK_KEYS.
-     */
-    private static final int[] JAVA_KEYS = {
-                    KeyEvent.VK_HOME,
-                    KeyEvent.VK_END,
-                    KeyEvent.VK_ENTER,
-                    KeyEvent.VK_LEFT,
-                    KeyEvent.VK_RIGHT,
-                    KeyEvent.VK_UP,
-                    KeyEvent.VK_DOWN,
-                    KeyEvent.VK_BACK_QUOTE,
-    };
-
-    private static final class EVENT_KEY {
-        private static final long CHAR = 0;
-        private static final long DOWN = 1;
-        private static final long UP = 2;
-    }
+    @CompilationFinal private final Deque<Integer> keys = new ArrayDeque<>(TYPEAHEAD_LIMIT);
 
     public SqueakKeyboard(final SqueakDisplayJFrame display) {
         this.display = display;
     }
 
     public int nextKey() {
-        return keys.isEmpty() ? 0 : keycode(keys.removeFirst());
+        return keys.isEmpty() ? 0 : keys.removeFirst();
     }
 
     public int peekKey() {
-        return keys.isEmpty() ? 0 : keycode(keys.peek());
-    }
-
-    public int modifierKeys() {
-        return modifierKeys;
+        return keys.isEmpty() ? 0 : keys.peek();
     }
 
     public void keyTyped(final KeyEvent e) {
-        if (e.getKeyChar() != '\n') { // Ignore the return key, mapSpecialKey() took care of it
-            enqueue(e.getKeyChar());
-            addEvent(e, EVENT_KEY.CHAR);
+        display.recordModifiers(e);
+        if (mapSqueakCode(e) < 0) {
+            recordKeyboardEvent(e.getKeyChar());
         }
     }
 
     public void keyPressed(final KeyEvent e) {
-        modifierKeys = mapModifierKey(e);
-        if (e.isMetaDown() && e.getKeyChar() == '.') {
-            display.image.interrupt.setInterruptPending();
-            return;
-        }
-        final char keyChar = mapSpecialKey(e);
-        if (keyChar != KeyEvent.CHAR_UNDEFINED) {
-            enqueue(keyChar);
-            addEvent(e, EVENT_KEY.DOWN);
+        display.recordModifiers(e);
+        final int squeakCode = mapSqueakCode(e);
+        if (squeakCode >= 0) {
+            recordKeyboardEvent(squeakCode);
+        } else if ((e.isMetaDown() || (e.isAltDown() && !e.isControlDown())) && e.getKeyChar() != KeyEvent.CHAR_UNDEFINED) {
+            recordKeyboardEvent(e.getKeyChar());
         }
     }
 
     public void keyReleased(final KeyEvent e) {
-        modifierKeys = mapModifierKey(e);
-        addEvent(e, EVENT_KEY.UP);
+        display.recordModifiers(e);
     }
 
-    private void addEvent(final KeyEvent e, final long keyEventType) {
-        display.addEvent(new long[]{SqueakIOConstants.EVENT_TYPE.KEYBOARD, display.getEventTime(), keycode(e.getKeyChar()), keyEventType, modifierKeys, e.getKeyChar(), 0, 0});
-    }
-
-    private void enqueue(final char keyChar) {
-        if (keys.size() < TYPEAHEAD_LIMIT) {
-            keys.add(keyChar);
+    private void recordKeyboardEvent(final int key) {
+        final int buttonsShifted = display.buttons >> 3;
+        final int code = buttonsShifted << 8 | key;
+        if (code == KEYBOARD.INTERRUPT_KEYCODE) {
+            display.image.interrupt.setInterruptPending();
+        } else if (display.usesEventQueue) {
+            display.addEvent(EVENT_TYPE.KEYBOARD, key, KEYBOARD_EVENT.CHAR, buttonsShifted, key);
+        } else {
+            keys.push(code);
         }
     }
 
-    private static int mapModifierKey(final KeyEvent e) {
-        int modifiers = 0;
-        if (e.isShiftDown()) {
-            modifiers |= SHIFT_KEY;
+    private static int mapSqueakCode(final KeyEvent e) {
+        //@formatter:off
+        switch(e.getExtendedKeyCode()) {
+            case 8: return 8;    // Backspace
+            case 9:  return 9;   // Tab
+            case 13: return 13;  // Return
+            case 27: return 27;  // Escape
+            case 32: return 32;  // Space
+            case 33: return 11;  // PageUp
+            case 34: return 12;  // PageDown
+            case 35: return 4;   // End
+            case 36: return 1;   // Home
+            case 37: return 28;  // Left
+            case 38: return 30;  // Up
+            case 39: return 29;  // Right
+            case 40: return 31;  // Down
+            case 45: return 5;   // Insert
+            case 46: return 127; // Delete
+            default: return -1;
         }
-        if (e.isControlDown()) {
-            modifiers |= CONTROL_KEY;
-        }
-        if (e.isAltDown() || e.isMetaDown()) {
-            modifiers |= COMMAND_KEY;
-        }
-
-        return modifiers;
-    }
-
-    private static char mapSpecialKey(final KeyEvent e) {
-        int specialKeyIndex = 0;
-        while (specialKeyIndex < JAVA_KEYS.length && JAVA_KEYS[specialKeyIndex] != e.getKeyCode()) {
-            specialKeyIndex++;
-        }
-        if (specialKeyIndex < JAVA_KEYS.length) {
-            return SQUEAK_KEYS[specialKeyIndex];
-        }
-
-        if (e.isAltDown()) {
-            return Character.toLowerCase((char) e.getKeyCode());
-        }
-
-        return KeyEvent.CHAR_UNDEFINED;
-    }
-
-    private static int keycode(final Character c) {
-        return c.charValue() & 255;
+        //@formatter:on
     }
 }

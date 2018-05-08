@@ -22,7 +22,7 @@ public abstract class FrameSlotReadNode extends FrameSlotNode {
     public abstract Object executeRead(Frame frame);
 
     @Specialization(guards = "isInt(frame)")
-    protected long readInt(final VirtualFrame frame) {
+    protected int readInt(final VirtualFrame frame) {
         return FrameUtil.getIntSafe(frame, slot);
     }
 

@@ -1,13 +1,16 @@
 package de.hpi.swa.graal.squeak.nodes.context.frame;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
+
+@ImportStatic(CONTEXT.class)
 public abstract class FrameStackReadNode extends Node {
-    protected static final int SQUEAK_MAX_STACK_SIZE = 200;
 
     public static FrameStackReadNode create() {
         return FrameStackReadNodeGen.create();
@@ -21,7 +24,7 @@ public abstract class FrameStackReadNode extends Node {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"index == cachedIndex"}, limit = "SQUEAK_MAX_STACK_SIZE")
+    @Specialization(guards = {"index == cachedIndex"}, limit = "MAX_STACK_SIZE")
     protected static final Object readInt(final Frame frame, final int index,
                     @Cached("index") final int cachedIndex,
                     @Cached("getFrameSlotForIndex(frame, index)") final FrameSlot slot,
