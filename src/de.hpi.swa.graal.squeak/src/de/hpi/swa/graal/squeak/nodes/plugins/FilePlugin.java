@@ -86,7 +86,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final Object doCreate(final PointersObject receiver, final NativeObject fullPath) {
+        protected static final Object doDelete(final PointersObject receiver, final NativeObject fullPath) {
             final File directory = new File(fullPath.toString());
             if (directory.delete()) {
                 return receiver;
@@ -118,7 +118,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "isString(fullPath)")
-        protected final Object doLookup(@SuppressWarnings("unused") final PointersObject receiver, final NativeObject fullPath, final NativeObject fName) {
+        protected final Object doEntry(@SuppressWarnings("unused") final PointersObject receiver, final NativeObject fullPath, final NativeObject fName) {
             final String pathName = fullPath.toString();
             final String fileName = fName.toString();
             final File path;
