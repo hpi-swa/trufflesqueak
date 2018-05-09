@@ -9,8 +9,7 @@ import com.oracle.truffle.api.instrumentation.StandardTags.StatementTag;
 import com.oracle.truffle.api.instrumentation.Tag;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
-import de.hpi.swa.graal.squeak.exceptions.Returns.FreshReturn;
-import de.hpi.swa.graal.squeak.exceptions.Returns.LocalReturn;
+import de.hpi.swa.graal.squeak.exceptions.Returns.FreshLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -60,7 +59,7 @@ public final class MiscellaneousBytecodes {
         public void executeVoid(final VirtualFrame frame) {
             CompilerAsserts.compilationConstant(index);
             try {
-                throw new FreshReturn(new LocalReturn(primitiveNode.executePrimitive(frame)));
+                throw new FreshLocalReturn(primitiveNode.executePrimitive(frame));
             } catch (PrimitiveFailed e) {
                 if (handlePrimFailed != null) {
                     handlePrimFailed.executeHandle(frame, e);

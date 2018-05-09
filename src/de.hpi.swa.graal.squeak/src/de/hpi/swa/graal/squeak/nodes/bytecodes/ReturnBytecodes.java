@@ -4,9 +4,8 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.graal.squeak.exceptions.Returns.FreshReturn;
-import de.hpi.swa.graal.squeak.exceptions.Returns.LocalReturn;
-import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
+import de.hpi.swa.graal.squeak.exceptions.Returns.FreshLocalReturn;
+import de.hpi.swa.graal.squeak.exceptions.Returns.FreshNonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
@@ -43,7 +42,7 @@ public final class ReturnBytecodes {
 
         @Specialization(guards = {"!hasClosure(frame)", "isVirtualized(frame) || !isDirty(frame)"})
         protected Object executeLocalReturn(final VirtualFrame frame) {
-            throw new FreshReturn(new LocalReturn(getReturnValue(frame)));
+            throw new FreshLocalReturn(getReturnValue(frame));
         }
 
         @Specialization(guards = {"hasClosure(frame) || !isVirtualized(frame)", "hasClosure(frame) || isDirty(frame)"})
@@ -55,7 +54,7 @@ public final class ReturnBytecodes {
             } else {
                 outerContext = (ContextObject) readContextNode.executeRead(frame);
             }
-            throw new FreshReturn(new NonLocalReturn(getReturnValue(frame), outerContext));
+            throw new FreshNonLocalReturn(getReturnValue(frame), outerContext);
         }
 
         protected Object getReturnValue(@SuppressWarnings("unused") final VirtualFrame frame) {

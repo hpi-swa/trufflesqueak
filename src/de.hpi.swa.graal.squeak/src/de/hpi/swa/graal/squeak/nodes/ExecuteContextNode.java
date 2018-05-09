@@ -7,7 +7,8 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.LoopNode;
 
-import de.hpi.swa.graal.squeak.exceptions.Returns.FreshReturn;
+import de.hpi.swa.graal.squeak.exceptions.Returns.FreshLocalReturn;
+import de.hpi.swa.graal.squeak.exceptions.Returns.FreshNonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.LocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
@@ -135,8 +136,10 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
                 } else {
                     try {
                         pc = node.executeInt(frame);
-                    } catch (FreshReturn fr) {
-                        throw fr.getReturnException();
+                    } catch (FreshLocalReturn fr) {
+                        fr.raise();
+                    } catch (FreshNonLocalReturn fr) {
+                        fr.raise();
                     } catch (LocalReturn lr) {
                         pushStackNode.executeWrite(frame, lr.getReturnValue());
                     } catch (NonLocalReturn nlr) {
@@ -167,8 +170,10 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
             updateInstructionPointerNode.executeUpdate(frame, node.getSuccessorIndex());
             try {
                 pc = node.executeInt(frame);
-            } catch (FreshReturn fr) {
-                throw fr.getReturnException();
+            } catch (FreshLocalReturn fr) {
+                fr.raise();
+            } catch (FreshNonLocalReturn fr) {
+                fr.raise();
             } catch (LocalReturn lr) {
                 pushStackNode.executeWrite(frame, lr.getReturnValue());
             } catch (NonLocalReturn nlr) {
