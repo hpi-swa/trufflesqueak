@@ -13,6 +13,7 @@ import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.EmptyObject;
+import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.SqueakObjectAt0Node;
@@ -72,15 +73,25 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "!isSmallInteger(receiver)")
         protected final Object doLong(final long receiver, final long index) {
-            return doNativeObject(asLargeInteger(receiver), index);
+            return asLargeInteger(receiver).getNativeAt0(index - 1);
         }
 
         @Specialization
-        protected static final long doNativeObject(final NativeObject receiver, final long index) {
+        protected static final long doNative(final NativeObject receiver, final long index) {
             return receiver.getNativeAt0(index - 1);
         }
 
-        @Specialization(guards = "!isNativeObject(receiver)")
+        @Specialization
+        protected static final long doLargeInteger(final LargeIntegerObject receiver, final long index) {
+            return receiver.getNativeAt0(index - 1);
+        }
+
+        @Specialization
+        protected static final long doFloat(final FloatObject receiver, final long index) {
+            return receiver.getNativeAt0(index - 1);
+        }
+
+        @Specialization(guards = {"!isNativeObject(receiver)", "!isLargeInteger(receiver)", "!isFloat(receiver)"})
         protected final Object doSqueakObject(final AbstractSqueakObject receiver, final long index) {
             return at0Node.execute(receiver, index - 1 + instSizeNode.execute(receiver));
         }
@@ -137,9 +148,9 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doNativeObject(final NativeObject receiver, final long idx, final LargeIntegerObject value) {
+        protected Object doNativeObject(final NativeObject receiver, final long index, final LargeIntegerObject value) {
             try {
-                receiver.atput0(idx - 1, value.reduceToLong());
+                receiver.atput0(index - 1, value.reduceToLong());
             } catch (IllegalArgumentException | ArithmeticException e) {
                 throw new PrimitiveFailed();
             }
@@ -154,7 +165,12 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "!isSmallInteger(receiver)")
         protected Object doSqueakObject(final long receiver, final long index, final long value) {
-            return doNativeObject(asLargeInteger(receiver), index, value);
+            try {
+                asLargeInteger(receiver).setNativeAt0(index - 1, value);
+            } catch (IllegalArgumentException e) {
+                throw new PrimitiveFailed();
+            }
+            return value;
         }
 
         @Specialization(guards = {"!isNativeObject(receiver)", "!isEmptyObject(receiver)"})
@@ -186,7 +202,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "!isSmallInteger(value)")
         protected final long doLong(final long value) {
-            return doNativeObject(asLargeInteger(value));
+            return asLargeInteger(value).size();
         }
 
         @Specialization
@@ -195,8 +211,18 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final long doNativeObject(final NativeObject obj) {
+        protected static final long doNative(final NativeObject obj) {
             return obj.size();
+        }
+
+        @Specialization
+        protected static final long doLargeInteger(final LargeIntegerObject obj) {
+            return obj.size();
+        }
+
+        @Specialization
+        protected static final long doFloat(@SuppressWarnings("unused") final FloatObject obj) {
+            return FloatObject.size();
         }
 
         @Specialization

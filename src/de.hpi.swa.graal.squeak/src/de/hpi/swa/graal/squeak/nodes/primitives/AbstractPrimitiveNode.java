@@ -65,6 +65,14 @@ public abstract class AbstractPrimitiveNode extends AbstractNodeWithCode impleme
         return object instanceof NativeObject;
     }
 
+    protected static final boolean isLargeInteger(final AbstractSqueakObject object) {
+        return object instanceof LargeIntegerObject;
+    }
+
+    protected static final boolean isFloat(final AbstractSqueakObject object) {
+        return object instanceof FloatObject;
+    }
+
     protected static final boolean isEmptyObject(final AbstractSqueakObject object) {
         return object instanceof EmptyObject;
     }

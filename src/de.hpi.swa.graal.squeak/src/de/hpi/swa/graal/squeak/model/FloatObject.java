@@ -9,9 +9,12 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.model.storages.AbstractNativeObjectStorage;
 import de.hpi.swa.graal.squeak.model.storages.NativeWordsStorage;
 
-public final class FloatObject extends NativeObject {
+public final class FloatObject extends AbstractSqueakObject {
+    @CompilationFinal private AbstractNativeObjectStorage storage;
+
     @CompilationFinal public static final int PRECISION = 53;
     @CompilationFinal public static final int EMIN = -1022;
     @CompilationFinal public static final int EMAX = 1023;
@@ -23,12 +26,14 @@ public final class FloatObject extends NativeObject {
     }
 
     public FloatObject(final SqueakImageContext image) {
-        super(image, image.floatClass, new NativeWordsStorage(2));
+        super(image, image.floatClass);
+        storage = new NativeWordsStorage(2);
     }
 
     public FloatObject(final FloatObject original) {
-        super(original.image, original.getSqClass(), original.storage.shallowCopy());
-        this.value = original.value;
+        super(original.image, original.getSqClass());
+        storage = original.storage.shallowCopy();
+        value = original.value;
     }
 
     public FloatObject(final SqueakImageContext image, final double value) {
@@ -53,14 +58,26 @@ public final class FloatObject extends NativeObject {
         setWords(words[1], words[0]);
     }
 
-    @Override
     public Object at0(final long index) {
-        return super.at0(index);
+        return storage.getNativeAt0(index);
     }
 
-    @Override
+    private void basicAtPut0(final long index, final Object object) {
+        if (object instanceof LargeIntegerObject) {
+            final long longValue;
+            try {
+                longValue = ((LargeIntegerObject) object).reduceToLong();
+            } catch (ArithmeticException e) {
+                throw new IllegalArgumentException(e.toString());
+            }
+            storage.setNativeAt0(index, longValue);
+        } else {
+            storage.setNativeAt0(index, (long) object);
+        }
+    }
+
     public void atput0(final long index, final Object object) {
-        super.atput0(index, object);
+        basicAtPut0(index, object);
         final Long doubleBits = Double.doubleToLongBits(value);
         if (index == 0) {
             setWords((long) object, doubleBits.intValue());
@@ -71,17 +88,24 @@ public final class FloatObject extends NativeObject {
         }
     }
 
+    public long getNativeAt0(final long index) {
+        return storage.getNativeAt0(index);
+    }
+
     private void setWords(final long high, final long low) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         final long highMasked = high & LargeIntegerObject.MASK_32BIT;
         final long lowMasked = low & LargeIntegerObject.MASK_32BIT;
-        super.atput0(0, highMasked);
-        super.atput0(1, lowMasked);
+        basicAtPut0(0, highMasked);
+        basicAtPut0(1, lowMasked);
         this.value = Double.longBitsToDouble((highMasked << 32) | lowMasked);
     }
 
-    @Override
-    public int size() {
+    public byte[] getBytes() {
+        return storage.getBytes();
+    }
+
+    public static int size() {
         return 2;
     }
 
@@ -108,7 +132,6 @@ public final class FloatObject extends NativeObject {
         return super.hashCode();
     }
 
-    @Override
     public AbstractSqueakObject shallowCopy() {
         return new FloatObject(this);
     }

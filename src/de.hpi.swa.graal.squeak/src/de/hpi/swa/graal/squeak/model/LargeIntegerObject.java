@@ -8,10 +8,13 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.model.storages.AbstractNativeObjectStorage;
 import de.hpi.swa.graal.squeak.model.storages.NativeBytesStorage;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
-public final class LargeIntegerObject extends NativeObject {
+public final class LargeIntegerObject extends AbstractSqueakObject {
+    @CompilationFinal protected AbstractNativeObjectStorage storage;
+
     @CompilationFinal public static final long SMALLINTEGER32_MIN = -0x40000000;
     @CompilationFinal public static final long SMALLINTEGER32_MAX = 0x3fffffff;
     @CompilationFinal public static final long SMALLINTEGER64_MIN = -0x1000000000000000L;
@@ -22,7 +25,8 @@ public final class LargeIntegerObject extends NativeObject {
     @CompilationFinal private BigInteger integer;
 
     public LargeIntegerObject(final SqueakImageContext img) {
-        super(img, null, new NativeBytesStorage(0));
+        super(img);
+        this.storage = new NativeBytesStorage(0);
     }
 
     public LargeIntegerObject(final SqueakImageContext img, final BigInteger integer) {
@@ -57,20 +61,43 @@ public final class LargeIntegerObject extends NativeObject {
     }
 
     public LargeIntegerObject(final LargeIntegerObject original) {
-        super(original);
+        super(original.image, original.getSqClass());
+        storage = original.storage.shallowCopy();
         integer = original.integer;
     }
 
     @Override
     public void fillin(final AbstractImageChunk chunk) {
         super.fillin(chunk);
+        storage.fillin(chunk);
         derivedBigIntegerFromBytes();
     }
 
-    @Override
-    public void setNativeAt0(final long index, final long object) {
-        super.setNativeAt0(index, object);
+    public void atput0(final long index, final Object object) {
+        if (object instanceof LargeIntegerObject) {
+            final long longValue;
+            try {
+                longValue = ((LargeIntegerObject) object).reduceToLong();
+            } catch (ArithmeticException e) {
+                throw new IllegalArgumentException(e.toString());
+            }
+            storage.setNativeAt0(index, longValue);
+        } else {
+            storage.setNativeAt0(index, (long) object);
+        }
+    }
+
+    public long getNativeAt0(final long index) {
+        return storage.getNativeAt0(index);
+    }
+
+    public void setNativeAt0(final long index, final long value) {
+        storage.setNativeAt0(index, value);
         derivedBigIntegerFromBytes();
+    }
+
+    public int size() {
+        return storage.size();
     }
 
     private void derivedBigIntegerFromBytes() {
@@ -119,7 +146,6 @@ public final class LargeIntegerObject extends NativeObject {
         return super.hashCode();
     }
 
-    @Override
     public AbstractSqueakObject shallowCopy() {
         return new LargeIntegerObject(this);
     }
@@ -263,9 +289,8 @@ public final class LargeIntegerObject extends NativeObject {
         return reduceIfPossible(integer.shiftRight(b));
     }
 
-    @Override
     public void setByte(final int index, final byte value) {
-        super.setByte(index, value);
+        storage.setByte(index, value);
         derivedBigIntegerFromBytes();
     }
 
@@ -273,5 +298,9 @@ public final class LargeIntegerObject extends NativeObject {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         storage.setBytes(bytes);
         derivedBigIntegerFromBytes();
+    }
+
+    public byte[] getBytes() {
+        return storage.getBytes();
     }
 }

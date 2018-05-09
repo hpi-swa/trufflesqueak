@@ -13,8 +13,9 @@ import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.io.SqueakIOConstants;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
-import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
+import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
+import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
@@ -233,7 +234,38 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             if (hasValidBounds(rcvr, start, stop, largeInteger, replStart)) {
                 throw new PrimitiveFailed(ERROR_TABLE.BAD_INDEX);
             }
-            return doLargeIntegerNative(rcvr, start, stop, largeInteger, replStart);
+            final byte[] rcvrBytes = rcvr.getBytes();
+            final byte[] replBytes = largeInteger.getBytes();
+            final int repOff = (int) (replStart - start);
+            for (int i = (int) (start - 1); i < stop; i++) {
+                rcvrBytes[i] = replBytes[repOff + i];
+            }
+            rcvr.setBytes(rcvrBytes);
+            return rcvr;
+        }
+
+        @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
+        protected static final Object doLargeInteger(final LargeIntegerObject rcvr, final long start, final long stop, final LargeIntegerObject repl, final long replStart) {
+            final byte[] rcvrBytes = rcvr.getBytes();
+            final byte[] replBytes = repl.getBytes();
+            final int repOff = (int) (replStart - start);
+            for (int i = (int) (start - 1); i < stop; i++) {
+                rcvrBytes[i] = replBytes[repOff + i];
+            }
+            rcvr.setBytes(rcvrBytes);
+            return rcvr;
+        }
+
+        @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
+        protected static final Object doLargeIntegerFloat(final LargeIntegerObject rcvr, final long start, final long stop, final FloatObject repl, final long replStart) {
+            final byte[] rcvrBytes = rcvr.getBytes();
+            final byte[] replBytes = repl.getBytes();
+            final int repOff = (int) (replStart - start);
+            for (int i = (int) (start - 1); i < stop; i++) {
+                rcvrBytes[i] = replBytes[repOff + i];
+            }
+            rcvr.setBytes(rcvrBytes);
+            return rcvr;
         }
 
         @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
@@ -258,7 +290,34 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
-        protected static final Object doList(final PointersObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart) {
+        protected static final Object doNativeLargeInteger(final NativeObject rcvr, final long start, final long stop, final LargeIntegerObject repl, final long replStart) {
+            final int repOff = (int) (replStart - start);
+            for (int i = (int) (start - 1); i < stop; i++) {
+                rcvr.setNativeAt0(i, repl.getNativeAt0(repOff + i));
+            }
+            return rcvr;
+        }
+
+        @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
+        protected static final Object doNativeFloat(final NativeObject rcvr, final long start, final long stop, final FloatObject repl, final long replStart) {
+            final int repOff = (int) (replStart - start);
+            for (int i = (int) (start - 1); i < stop; i++) {
+                rcvr.setNativeAt0(i, repl.getNativeAt0(repOff + i));
+            }
+            return rcvr;
+        }
+
+        @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
+        protected static final Object doPointers(final PointersObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart) {
+            final long repOff = replStart - start;
+            for (int i = (int) (start - 1); i < stop; i++) {
+                rcvr.atput0(i, repl.at0(repOff + i));
+            }
+            return rcvr;
+        }
+
+        @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
+        protected static final Object doPointersWeakPointers(final PointersObject rcvr, final long start, final long stop, final WeakPointersObject repl, final long replStart) {
             final long repOff = replStart - start;
             for (int i = (int) (start - 1); i < stop; i++) {
                 rcvr.atput0(i, repl.at0(repOff + i));
@@ -276,7 +335,25 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
-        protected static final Object doCode(final CompiledCodeObject rcvr, final long start, final long stop, final CompiledCodeObject repl, final long replStart) {
+        protected static final Object doWeakPointersPointers(final WeakPointersObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart) {
+            final long repOff = replStart - start;
+            for (int i = (int) (start - 1); i < stop; i++) {
+                rcvr.atput0(i, repl.at0(repOff + i));
+            }
+            return rcvr;
+        }
+
+        @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
+        protected static final Object doBlock(final CompiledBlockObject rcvr, final long start, final long stop, final CompiledBlockObject repl, final long replStart) {
+            final long repOff = replStart - start;
+            for (int i = (int) (start - 1); i < stop; i++) {
+                rcvr.atput0(i, repl.at0(repOff + i));
+            }
+            return rcvr;
+        }
+
+        @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
+        protected static final Object doMethod(final CompiledMethodObject rcvr, final long start, final long stop, final CompiledMethodObject repl, final long replStart) {
             final long repOff = replStart - start;
             for (int i = (int) (start - 1); i < stop; i++) {
                 rcvr.atput0(i, repl.at0(repOff + i));

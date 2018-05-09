@@ -23,6 +23,18 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         super(compiledMethodObject);
     }
 
+    public Object at0(final long longIndex) {
+        final int index = (int) longIndex;
+        if (index < getBytecodeOffset() - getOffset()) {
+            assert index % BYTES_PER_WORD == 0;
+            return literals[index / BYTES_PER_WORD];
+        } else {
+            final int realIndex = index - getBytecodeOffset() - getOffset();
+            assert realIndex >= 0;
+            return Byte.toUnsignedLong(bytes[realIndex]);
+        }
+    }
+
     @Override
     public NativeObject getCompiledInSelector() {
         if (literals.length > 1) {

@@ -1,6 +1,7 @@
 package de.hpi.swa.graal.squeak.nodes;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
@@ -9,12 +10,13 @@ import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.EmptyObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
+import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 
-public abstract class SqueakObjectAtPut0Node extends AbstractSqueakObjectNode {
+public abstract class SqueakObjectAtPut0Node extends Node {
 
     public static SqueakObjectAtPut0Node create() {
         return SqueakObjectAtPut0NodeGen.create();
@@ -42,8 +44,13 @@ public abstract class SqueakObjectAtPut0Node extends AbstractSqueakObjectNode {
         obj.atput0(index, value);
     }
 
-    @Specialization(guards = {"!isFloat(obj)"})
+    @Specialization
     protected static final void doNative(final NativeObject obj, final long index, final Object value) {
+        obj.atput0(index, value);
+    }
+
+    @Specialization
+    protected static final void doLargeInteger(final LargeIntegerObject obj, final long index, final Object value) {
         obj.atput0(index, value);
     }
 

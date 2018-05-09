@@ -161,27 +161,27 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         return 0;
     }
 
-    public int getNumArgsAndCopiedValues() {
+    public final int getNumArgsAndCopiedValues() {
         return numArgs + getNumCopiedValues();
     }
 
-    public int getNumLiterals() {
+    public final int getNumLiterals() {
         return numLiterals;
     }
 
-    public FrameSlot getStackSlot(final int i) {
+    public final FrameSlot getStackSlot(final int i) {
         if (i >= stackSlots.length) { // This is fine, ignore for decoder
             return null;
         }
         return stackSlots[i];
     }
 
-    public long getNumStackSlots() {
+    public final long getNumStackSlots() {
         return stackSlots.length;
     }
 
     @Override
-    public void fillin(final AbstractImageChunk chunk) {
+    public final void fillin(final AbstractImageChunk chunk) {
         super.fillin(chunk);
         final List<Integer> data = chunk.data();
         final int header = data.get(0) >> 1; // header is a tagged small integer
@@ -194,7 +194,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         bytes = chunk.getBytes(ptrs.length);
     }
 
-    protected void decodeHeader() {
+    protected final void decodeHeader() {
         final int hdr = getHeader();
         final int[] splitHeader = BitSplitter.splitter(hdr, new int[]{15, 1, 1, 1, 6, 4, 2, 1});
         numLiterals = splitHeader[0];
@@ -208,7 +208,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         prepareFrameDescriptor();
     }
 
-    public int getHeader() {
+    public final int getHeader() {
         final Object object = literals[0];
         assert object instanceof Long;
         return ((Long) object).intValue();
@@ -249,19 +249,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         return getBytecodeOffset() + bytes.length;
     }
 
-    public Object at0(final long longIndex) {
-        final int index = (int) longIndex;
-        if (index < getBytecodeOffset() - getOffset()) {
-            assert index % BYTES_PER_WORD == 0;
-            return literals[index / BYTES_PER_WORD];
-        } else {
-            final int realIndex = index - getBytecodeOffset() - getOffset();
-            assert realIndex >= 0;
-            return Byte.toUnsignedLong(bytes[realIndex]);
-        }
-    }
-
-    public void atput0(final long longIndex, final Object obj) {
+    public final void atput0(final long longIndex, final Object obj) {
         final int index = (int) longIndex;
         assert index >= 0;
         if (index < getBytecodeOffset()) {
@@ -281,7 +269,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         }
     }
 
-    public Object getLiteral(final long longIndex) {
+    public final Object getLiteral(final long longIndex) {
         final int index = (int) longIndex;
         final int literalIndex = 1 + index; // skip header
         if (literalIndex < literals.length) {
@@ -291,7 +279,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         }
     }
 
-    public void setLiteral(final long longIndex, final Object obj) {
+    public final void setLiteral(final long longIndex, final Object obj) {
         final int index = (int) longIndex;
         if (index == 0) {
             assert obj instanceof Long;
@@ -316,7 +304,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         }
     }
 
-    public Object[] getLiterals() {
+    public final Object[] getLiterals() {
         return literals;
     }
 

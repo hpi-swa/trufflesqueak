@@ -42,7 +42,6 @@ public final class CompiledBlockObject extends CompiledCodeObject {
         offset = original.offset;
     }
 
-    @Override
     public Object at0(final long longIndex) {
         final int index = (int) longIndex;
         if (index < getBytecodeOffset() - getOffset()) {
