@@ -4,6 +4,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.model.storages.NativeBytesStorage;
 
 public final class SpecialSelectorObject extends NativeObject {
     @CompilationFinal private final int numArguments;

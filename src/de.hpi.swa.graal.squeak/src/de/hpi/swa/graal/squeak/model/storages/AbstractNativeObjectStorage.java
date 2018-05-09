@@ -1,4 +1,4 @@
-package de.hpi.swa.graal.squeak.model;
+package de.hpi.swa.graal.squeak.model.storages;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.AbstractImageChunk;

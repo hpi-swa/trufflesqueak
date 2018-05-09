@@ -1,4 +1,4 @@
-package de.hpi.swa.graal.squeak.model;
+package de.hpi.swa.graal.squeak.model.storages;
 
 import java.util.Arrays;
 

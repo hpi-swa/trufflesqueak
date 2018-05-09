@@ -8,6 +8,11 @@ import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.model.storages.AbstractNativeObjectStorage;
+import de.hpi.swa.graal.squeak.model.storages.NativeBytesStorage;
+import de.hpi.swa.graal.squeak.model.storages.NativeLongsStorage;
+import de.hpi.swa.graal.squeak.model.storages.NativeShortsStorage;
+import de.hpi.swa.graal.squeak.model.storages.NativeWordsStorage;
 
 public class NativeObject extends AbstractSqueakObject {
     @CompilationFinal protected AbstractNativeObjectStorage storage;
