@@ -11,8 +11,8 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
-import de.hpi.swa.graal.squeak.model.ListObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodes.ReturnReceiverNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
@@ -352,7 +352,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(rewriteOn = ArithmeticException.class)
-        protected final ListObject doLong(final long rcvr, final long arg, final boolean negative) {
+        protected final PointersObject doLong(final long rcvr, final long arg, final boolean negative) {
             long divide = rcvr / arg;
             if ((negative && divide >= 0) || (!negative && divide < 0)) {
                 divide = Math.negateExact(divide);
@@ -362,12 +362,12 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final ListObject doLongWithOverflow(final long rcvr, final long arg, final boolean negative) {
+        protected final PointersObject doLongWithOverflow(final long rcvr, final long arg, final boolean negative) {
             return doLargeInteger(asLargeInteger(rcvr), asLargeInteger(arg), negative);
         }
 
         @Specialization
-        protected final ListObject doLargeInteger(final LargeIntegerObject rcvr, final LargeIntegerObject arg, final boolean negative) {
+        protected final PointersObject doLargeInteger(final LargeIntegerObject rcvr, final LargeIntegerObject arg, final boolean negative) {
             LargeIntegerObject divide = rcvr.divideNoReduce(arg);
             if (negative != divide.isNegative()) {
                 divide = divide.negateNoReduce();
@@ -377,12 +377,12 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final ListObject doLong(final long rcvr, final LargeIntegerObject arg, final boolean negative) {
+        protected final PointersObject doLong(final long rcvr, final LargeIntegerObject arg, final boolean negative) {
             return doLargeInteger(asLargeInteger(rcvr), arg, negative);
         }
 
         @Specialization
-        protected final ListObject doLargeInteger(final LargeIntegerObject rcvr, final long arg, final boolean negative) {
+        protected final PointersObject doLargeInteger(final LargeIntegerObject rcvr, final long arg, final boolean negative) {
             return doLargeInteger(rcvr, asLargeInteger(arg), negative);
         }
     }

@@ -16,7 +16,6 @@ import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
-import de.hpi.swa.graal.squeak.model.ListObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.ERROR_TABLE;
@@ -97,7 +96,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final Object doGetNext(final PointersObject eventSensor, final ListObject targetArray) {
+        protected final Object doGetNext(final PointersObject eventSensor, final PointersObject targetArray) {
             final long[] nextEvent = code.image.display.getNextEvent();
             for (int i = 0; i < nextEvent.length; i++) {
                 targetArray.atput0(i, nextEvent[i]);
@@ -259,16 +258,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
-        protected static final Object doList(final ListObject rcvr, final long start, final long stop, final ListObject repl, final long replStart) {
-            final long repOff = replStart - start;
-            for (int i = (int) (start - 1); i < stop; i++) {
-                rcvr.atput0(i, repl.at0(repOff + i));
-            }
-            return rcvr;
-        }
-
-        @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
-        protected static final Object doPointers(final PointersObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart) {
+        protected static final Object doList(final PointersObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart) {
             final long repOff = replStart - start;
             for (int i = (int) (start - 1); i < stop; i++) {
                 rcvr.atput0(i, repl.at0(repOff + i));

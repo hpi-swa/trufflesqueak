@@ -2,9 +2,9 @@ package de.hpi.swa.graal.squeak.nodes;
 
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.graal.squeak.model.AbstractPointersObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
+import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
@@ -12,9 +12,10 @@ import de.hpi.swa.graal.squeak.model.EmptyObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
+import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 
-public abstract class SqueakObjectAt0Node extends AbstractBaseSqueakObjectNode {
+public abstract class SqueakObjectAt0Node extends AbstractSqueakObjectNode {
 
     public static SqueakObjectAt0Node create() {
         return SqueakObjectAt0NodeGen.create();
@@ -22,13 +23,18 @@ public abstract class SqueakObjectAt0Node extends AbstractBaseSqueakObjectNode {
 
     public abstract Object execute(AbstractSqueakObject obj, long index);
 
-    @Specialization(guards = {"!isContext(obj)", "!isWeakPointers(obj)"})
-    protected static final Object doAbstractPointers(final AbstractPointersObject obj, final long index) {
+    @Specialization
+    protected static final Object doAbstractPointers(final PointersObject obj, final long index) {
         return obj.at0(index);
     }
 
     @Specialization
-    protected static final Object doPointers(final ContextObject obj, final long index) {
+    protected static final Object doContext(final ContextObject obj, final long index) {
+        return obj.at0(index);
+    }
+
+    @Specialization
+    protected static final Object doClass(final ClassObject obj, final long index) {
         return obj.at0(index);
     }
 

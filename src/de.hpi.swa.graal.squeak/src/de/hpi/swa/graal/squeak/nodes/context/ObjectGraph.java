@@ -11,17 +11,18 @@ import java.util.Set;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.model.AbstractPointersObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
-import de.hpi.swa.graal.squeak.model.ListObject;
+import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 
 public final class ObjectGraph {
     @CompilationFinal private final HashSet<AbstractSqueakObject> classesWithNoInstances;
-    @CompilationFinal private final ListObject specialObjectsArray;
+    @CompilationFinal private final PointersObject specialObjectsArray;
 
     public ObjectGraph(final SqueakImageContext image) {
         specialObjectsArray = image.specialObjectsArray;
@@ -76,8 +77,14 @@ public final class ObjectGraph {
         }
         if (currentObject instanceof CompiledMethodObject) {
             addBaseSqueakObjects(result, ((CompiledMethodObject) currentObject).getLiterals());
-        } else if (currentObject instanceof AbstractPointersObject) {
-            addBaseSqueakObjects(result, ((AbstractPointersObject) currentObject).getPointers());
+        } else if (currentObject instanceof PointersObject) {
+            addBaseSqueakObjects(result, ((PointersObject) currentObject).getPointers());
+        } else if (currentObject instanceof ClassObject) {
+            addBaseSqueakObjects(result, ((ClassObject) currentObject).getPointers());
+        } else if (currentObject instanceof ContextObject) {
+            addBaseSqueakObjects(result, ((ContextObject) currentObject).getPointers());
+        } else if (currentObject instanceof WeakPointersObject) {
+            addBaseSqueakObjects(result, ((WeakPointersObject) currentObject).getPointers());
         } else if (currentObject instanceof BlockClosureObject) {
             addBaseSqueakObjects(result, ((BlockClosureObject) currentObject).getTraceableObjects());
         }

@@ -5,13 +5,17 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
 
+import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions;
+import de.hpi.swa.graal.squeak.exceptions.SqueakException;
+import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
-public final class ContextObject extends AbstractPointersObject {
+public final class ContextObject extends AbstractSqueakObject {
+    @CompilationFinal(dimensions = 1) protected Object[] pointers;
     @CompilationFinal private FrameMarker frameMarker;
     @CompilationFinal private boolean isDirty;
 
@@ -54,15 +58,19 @@ public final class ContextObject extends AbstractPointersObject {
     }
 
     @Override
+    public void fillin(final AbstractImageChunk chunk) {
+        super.fillin(chunk);
+        pointers = chunk.getPointers();
+    }
+
     public Object at0(final long index) {
         assert index >= 0;
         if (index == CONTEXT.SENDER_OR_NIL) {
             return getSender(); // sender might need to be reconstructed
         }
-        return super.at0(index);
+        return pointers[(int) index];
     }
 
-    @Override
     public void atput0(final long index, final Object value) {
         assert index >= 0 && value != null;
         if (index == CONTEXT.SENDER_OR_NIL) {
@@ -70,7 +78,8 @@ public final class ContextObject extends AbstractPointersObject {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             isDirty = true;
         }
-        super.atput0(index, value);
+        assert value != null; // null indicates a problem
+        pointers[(int) index] = value;
     }
 
     public CompiledCodeObject getCodeObject() {
@@ -108,11 +117,11 @@ public final class ContextObject extends AbstractPointersObject {
     }
 
     public boolean hasVirtualSender() {
-        return super.at0(CONTEXT.SENDER_OR_NIL) instanceof FrameMarker;
+        return pointers[CONTEXT.SENDER_OR_NIL] instanceof FrameMarker;
     }
 
     public AbstractSqueakObject getSender() {
-        final Object sender = super.at0(CONTEXT.SENDER_OR_NIL);
+        final Object sender = pointers[CONTEXT.SENDER_OR_NIL];
         if (sender instanceof ContextObject) {
             return (AbstractSqueakObject) sender;
         } else if (sender instanceof NilObject) {
@@ -138,7 +147,7 @@ public final class ContextObject extends AbstractPointersObject {
      * Set sender without flagging context as dirty.
      */
     public void setSender(final Object sender) {
-        super.atput0(CONTEXT.SENDER_OR_NIL, sender);
+        pointers[CONTEXT.SENDER_OR_NIL] = sender;
     }
 
     public void push(final Object value) {
@@ -181,6 +190,18 @@ public final class ContextObject extends AbstractPointersObject {
         } else {
             return "CTX without method";
         }
+    }
+
+    public int size() {
+        return pointers.length;
+    }
+
+    public int instsize() {
+        return getSqClass().getBasicInstanceSize();
+    }
+
+    public Object[] getPointers() {
+        return pointers;
     }
 
     public Object top() {
@@ -238,6 +259,21 @@ public final class ContextObject extends AbstractPointersObject {
             atStackPut(argumentIndex, image.nil);
         }
         return value;
+    }
+
+    @Override
+    public boolean become(final AbstractSqueakObject other) {
+        if (!(other instanceof ContextObject)) {
+            throw new PrimitiveExceptions.PrimitiveFailed();
+        }
+        if (!super.become(other)) {
+            throw new SqueakException("Should not fail");
+        }
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        final Object[] pointers2 = ((ContextObject) other).pointers;
+        ((ContextObject) other).pointers = this.pointers;
+        pointers = pointers2;
+        return true;
     }
 
     @Override

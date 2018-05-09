@@ -8,6 +8,7 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -15,10 +16,8 @@ import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.EmptyObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
-import de.hpi.swa.graal.squeak.model.ListObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 
 public abstract class AbstractImageChunk {
@@ -90,14 +89,14 @@ public abstract class AbstractImageChunk {
                 assert this.getSqClass() != image.metaclass && (this.getSqClass() == null || this.getSqClass().getSqClass() != image.metaclass);
                 object = new PointersObject(image);
             } else if (format == 2) { // indexable fields
-                object = new ListObject(image);
+                object = new PointersObject(image);
             } else if (format == 3) { // fixed and indexable fields
                 if (this.getSqClass() == image.methodContextClass) {
                     object = ContextObject.create(image);
                 } else if (this.getSqClass() == image.blockClosureClass) {
                     object = new BlockClosureObject(image);
                 } else {
-                    object = new ListObject(image);
+                    object = new PointersObject(image);
                 }
             } else if (format == 4) { // indexable weak fields
                 object = new WeakPointersObject(image);

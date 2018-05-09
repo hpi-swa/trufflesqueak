@@ -5,7 +5,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
-import de.hpi.swa.graal.squeak.model.ListObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
@@ -34,7 +33,7 @@ public class WakeHighestPriorityNode extends AbstractNodeWithImage {
         // Return the highest priority process that is ready to run.
         // Note: It is a fatal VM error if there is no runnable process.
         final PointersObject scheduler = getSchedulerNode.executeGet();
-        final ListObject schedLists = (ListObject) scheduler.at0(PROCESS_SCHEDULER.PROCESS_LISTS);
+        final PointersObject schedLists = (PointersObject) scheduler.at0(PROCESS_SCHEDULER.PROCESS_LISTS);
         long p = schedLists.size() - 1;  // index of last indexable field
         AbstractSqueakObject processList;
         do {

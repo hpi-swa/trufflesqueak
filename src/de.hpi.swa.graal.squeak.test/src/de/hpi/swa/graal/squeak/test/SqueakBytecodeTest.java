@@ -17,18 +17,17 @@ import org.junit.rules.ExpectedException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
-import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonVirtualReturn;
+import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
-import de.hpi.swa.graal.squeak.model.ListObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.ASSOCIATION;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
+import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
 
 public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
@@ -458,8 +457,8 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
         // pushNewArray (size 127), returnTop
         CompiledCodeObject cm = makeMethod(new Object[]{makeHeader(0, 0, 0, false, true)}, 138, 127, 124);
         Object result = runMethod(cm, rcvr);
-        assertTrue(result instanceof ListObject);
-        ListObject resultList = ((ListObject) result);
+        assertTrue(result instanceof PointersObject);
+        PointersObject resultList = ((PointersObject) result);
         assertEquals(127, resultList.size());
 
         // pushNewArray and pop
@@ -473,8 +472,8 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
         intbytes[arraySize + 2] = 124; // returnTop
         cm = makeMethod(new Object[]{makeHeader(0, 0, 0, false, true)}, intbytes);
         result = runMethod(cm, rcvr);
-        assertTrue(result instanceof ListObject);
-        resultList = ((ListObject) result);
+        assertTrue(result instanceof PointersObject);
+        resultList = ((PointersObject) result);
         assertEquals(arraySize, resultList.size());
         for (int i = 0; i < arraySize; i++) {
             assertEquals(i % 2 == 0 ? image.sqTrue : image.sqFalse, resultList.at0(i));
@@ -528,8 +527,8 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
         final VirtualFrame frame = createTestFrame(code);
         try {
             final Object result = createContext(code, rcvr).execute(frame);
-            assertTrue(result instanceof ListObject);
-            final ListObject resultList = ((ListObject) result);
+            assertTrue(result instanceof PointersObject);
+            final PointersObject resultList = ((PointersObject) result);
             assertEquals(2, resultList.size());
             assertEquals(image.sqFalse, resultList.at0(0));
             assertEquals(image.sqFalse, resultList.at0(1));
@@ -550,8 +549,8 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
         final VirtualFrame frame = createTestFrame(code);
         try {
             final Object result = createContext(code, rcvr).execute(frame);
-            assertTrue(result instanceof ListObject);
-            final ListObject resultList = ((ListObject) result);
+            assertTrue(result instanceof PointersObject);
+            final PointersObject resultList = ((PointersObject) result);
             assertEquals(2, resultList.size());
             assertEquals(image.sqFalse, resultList.at0(0));
             assertEquals(image.sqTrue, resultList.at0(1));

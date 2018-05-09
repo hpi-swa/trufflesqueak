@@ -36,7 +36,6 @@ import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.EmptyObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
-import de.hpi.swa.graal.squeak.model.ListObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
@@ -118,7 +117,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "isSmallIntegerClass(classObject)")
-        protected ListObject allInstances(final ClassObject classObject) {
+        protected PointersObject allInstances(final ClassObject classObject) {
             throw new PrimitiveFailed();
         }
 
@@ -133,7 +132,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Fallback
-        protected ListObject allInstances(final Object object) {
+        protected PointersObject allInstances(final Object object) {
             throw new PrimitiveFailed();
         }
     }
@@ -356,11 +355,6 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doList(final ListObject receiver) {
-            return receiver.shallowCopy();
-        }
-
-        @Specialization
         protected Object doNative(final NativeObject receiver) {
             return receiver.shallowCopy();
         }
@@ -465,18 +459,18 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "hasNoInstances(classObject)")
-        protected ListObject noInstances(final ClassObject classObject) {
+        protected PointersObject noInstances(final ClassObject classObject) {
             return code.image.newList(new Object[0]);
         }
 
         @Specialization
-        protected ListObject allInstances(final ClassObject classObject) {
+        protected PointersObject allInstances(final ClassObject classObject) {
             return code.image.newList(code.image.objects.allInstances(classObject).toArray());
         }
 
         @SuppressWarnings("unused")
         @Fallback
-        protected ListObject allInstances(final Object object) {
+        protected PointersObject allInstances(final Object object) {
             throw new PrimitiveFailed();
         }
     }
@@ -771,7 +765,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
             return doSimulation(frame, receiver, code.image.newList(new Object[]{arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8}));
         }
 
-        private Object doSimulation(final VirtualFrame frame, final Object receiver, final ListObject arguments) {
+        private Object doSimulation(final VirtualFrame frame, final Object receiver, final PointersObject arguments) {
             final Object[] newRcvrAndArgs = new Object[]{receiver, functionName, arguments};
             code.image.interrupt.setDisabled(true);
             try {

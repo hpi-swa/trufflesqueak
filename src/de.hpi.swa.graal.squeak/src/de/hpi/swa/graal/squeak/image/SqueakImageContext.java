@@ -25,7 +25,6 @@ import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
-import de.hpi.swa.graal.squeak.model.ListObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
@@ -46,14 +45,14 @@ public final class SqueakImageContext {
     @CompilationFinal public final NilObject nil = new NilObject(this);
     @CompilationFinal public final boolean sqFalse = false;
     @CompilationFinal public final boolean sqTrue = true;
-    @CompilationFinal public final ListObject specialObjectsArray = new ListObject(this);
+    @CompilationFinal public final PointersObject specialObjectsArray = new PointersObject(this);
     @CompilationFinal public final PointersObject schedulerAssociation = new PointersObject(this);
     @CompilationFinal public final ClassObject characterClass = new ClassObject(this);
     @CompilationFinal public final ClassObject smallIntegerClass = new ClassObject(this);
     @CompilationFinal public final ClassObject arrayClass = new ClassObject(this);
     @CompilationFinal public final PointersObject smalltalk = new PointersObject(this);
     @CompilationFinal public final NativeObject doesNotUnderstand = NativeObject.newNativeBytes(this, null, 0);
-    @CompilationFinal public final ListObject specialSelectors = new ListObject(this);
+    @CompilationFinal public final PointersObject specialSelectors = new PointersObject(this);
     @CompilationFinal public final NativeObject mustBeBoolean = NativeObject.newNativeBytes(this, null, 0);
     @CompilationFinal public final ClassObject metaclass = new ClassObject(this);
     @CompilationFinal public final ClassObject methodContextClass = new ClassObject(this);
@@ -247,7 +246,7 @@ public final class SqueakImageContext {
     }
 
     @TruffleBoundary
-    public ListObject wrap(final Object... elements) {
+    public PointersObject wrap(final Object... elements) {
         final Object[] wrappedElements = new Object[elements.length];
         for (int i = 0; i < elements.length; i++) {
             wrappedElements[i] = wrap(elements[i]);
@@ -263,11 +262,11 @@ public final class SqueakImageContext {
         return newPoint((long) dimension.getWidth(), (long) dimension.getHeight());
     }
 
-    public ListObject newList(final Object[] elements) {
-        return new ListObject(this, arrayClass, elements);
+    public PointersObject newList(final Object[] elements) {
+        return new PointersObject(this, arrayClass, elements);
     }
 
-    public ListObject newListWith(final Object... elements) {
+    public PointersObject newListWith(final Object... elements) {
         return newList(elements);
     }
 

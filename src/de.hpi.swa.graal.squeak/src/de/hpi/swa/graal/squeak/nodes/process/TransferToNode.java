@@ -10,9 +10,9 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
+import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
 import de.hpi.swa.graal.squeak.nodes.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.SqueakObjectAtPut0Node;
-import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
 
 public class TransferToNode extends AbstractNodeWithImage {
     @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();

@@ -25,7 +25,6 @@ import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
-import de.hpi.swa.graal.squeak.model.ListObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.TEST_RESULT;
@@ -102,6 +101,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
         final String resultString = evaluate("1 tinyBenchmarks").toString();
         assertTrue(resultString.contains("bytecodes/sec"));
         assertTrue(resultString.contains("sends/sec"));
+        image.getOutput().println("tinyBenchmarks: " + resultString);
     }
 
     @Test
@@ -338,14 +338,14 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
         }
         final PointersObject testResult = (PointersObject) result;
         final List<String> output = new ArrayList<>();
-        final ListObject failureArray = (ListObject) ((PointersObject) testResult.at0(TEST_RESULT.FAILURES)).at0(1);
+        final PointersObject failureArray = (PointersObject) ((PointersObject) testResult.at0(TEST_RESULT.FAILURES)).at0(1);
         for (int i = 0; i < failureArray.size(); i++) {
             final AbstractSqueakObject value = (AbstractSqueakObject) failureArray.at0(i);
             if (!value.isNil()) {
                 output.add(((PointersObject) value).at0(0) + " (E)");
             }
         }
-        final ListObject errorArray = (ListObject) ((PointersObject) testResult.at0(TEST_RESULT.ERRORS)).at0(0);
+        final PointersObject errorArray = (PointersObject) ((PointersObject) testResult.at0(TEST_RESULT.ERRORS)).at0(0);
         for (int i = 0; i < errorArray.size(); i++) {
             final AbstractSqueakObject value = (AbstractSqueakObject) errorArray.at0(i);
             if (!value.isNil()) {

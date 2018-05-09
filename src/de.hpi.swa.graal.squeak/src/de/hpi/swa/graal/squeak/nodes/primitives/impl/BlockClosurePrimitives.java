@@ -19,9 +19,9 @@ import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
-import de.hpi.swa.graal.squeak.model.ListObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
+import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.BlockActivationNode;
 import de.hpi.swa.graal.squeak.nodes.BlockActivationNodeGen;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
@@ -240,7 +240,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
         @SuppressWarnings("unused")
         @Specialization
-        protected Object doCopy(final VirtualFrame frame, final ContextObject outerContext, final long numArgs, final ListObject copiedValues) {
+        protected Object doCopy(final VirtualFrame frame, final ContextObject outerContext, final long numArgs, final PointersObject copiedValues) {
             throw new SqueakException("Not implemented and not used in Squeak anymore");
         }
     }
@@ -335,7 +335,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         @Specialization
-        protected Object value(final VirtualFrame frame, final BlockClosureObject block, final ListObject argArray) {
+        protected Object value(final VirtualFrame frame, final BlockClosureObject block, final PointersObject argArray) {
             return dispatch.executeBlock(block, block.getFrameArguments(frame, argArray.getPointers()));
         }
     }

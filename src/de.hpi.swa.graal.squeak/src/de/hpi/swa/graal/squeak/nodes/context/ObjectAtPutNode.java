@@ -8,8 +8,8 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.nodes.SqueakObjectAtPut0Node;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
+import de.hpi.swa.graal.squeak.nodes.SqueakObjectAtPut0Node;
 
 @NodeChild(value = "objectNode", type = SqueakNode.class)
 @NodeChild(value = "valueNode", type = SqueakNode.class)

@@ -21,7 +21,6 @@ import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
-import de.hpi.swa.graal.squeak.model.ListObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
@@ -31,13 +30,13 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SEMAPHORE;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
-import de.hpi.swa.graal.squeak.nodes.SqueakObjectAt0Node;
-import de.hpi.swa.graal.squeak.nodes.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.DispatchNode;
 import de.hpi.swa.graal.squeak.nodes.DispatchNodeGen;
 import de.hpi.swa.graal.squeak.nodes.LookupNode;
 import de.hpi.swa.graal.squeak.nodes.LookupNodeGen;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
+import de.hpi.swa.graal.squeak.nodes.SqueakObjectAt0Node;
+import de.hpi.swa.graal.squeak.nodes.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.SendDoesNotUnderstandNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.SendObjectAsMethodNode;
 import de.hpi.swa.graal.squeak.nodes.context.ObjectAtNode;
@@ -200,7 +199,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object perform(final VirtualFrame frame, final Object receiver, final Object selector, final ListObject arguments) {
+        protected Object perform(final VirtualFrame frame, final Object receiver, final Object selector, final PointersObject arguments) {
             return dispatch(frame, selector, arguments.unwrappedWithFirst(receiver), lookup(receiver));
         }
     }
@@ -328,14 +327,14 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final Object doPerform(final VirtualFrame frame, final Object receiver, final Object selector, final ListObject arguments, final ClassObject superClass,
+        protected final Object doPerform(final VirtualFrame frame, final Object receiver, final Object selector, final PointersObject arguments, final ClassObject superClass,
                         @SuppressWarnings("unused") final NotProvided np) {
             // Object>>#perform:withArguments:inSuperclass:
             return dispatch(frame, selector, arguments.unwrappedWithFirst(receiver), superClass);
         }
 
         @Specialization
-        protected final Object doPerform(final VirtualFrame frame, @SuppressWarnings("unused") final Object receiver, final Object object, final Object selector, final ListObject arguments,
+        protected final Object doPerform(final VirtualFrame frame, @SuppressWarnings("unused") final Object receiver, final Object object, final Object selector, final PointersObject arguments,
                         final ClassObject superClass) {
             // Context>>#object:perform:withArguments:inClass:
             return dispatch(frame, selector, arguments.unwrappedWithFirst(object), superClass);
@@ -770,7 +769,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doExecute(final VirtualFrame frame, final Object receiver, final ListObject argArray, final CompiledCodeObject codeObject) {
+        protected Object doExecute(final VirtualFrame frame, final Object receiver, final PointersObject argArray, final CompiledCodeObject codeObject) {
             final int numArgs = argArray.size();
             final Object[] dispatchRcvrAndArgs = new Object[1 + numArgs];
             dispatchRcvrAndArgs[0] = receiver;
