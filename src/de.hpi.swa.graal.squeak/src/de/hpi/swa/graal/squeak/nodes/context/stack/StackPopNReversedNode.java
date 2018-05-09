@@ -34,7 +34,6 @@ public abstract class StackPopNReversedNode extends AbstractStackPopNode {
         return result;
     }
 
-    @ExplodeLoop
     @Specialization(guards = {"!isVirtualized(frame)"})
     protected Object[] doPopN(final VirtualFrame frame) {
         return getContext(frame).popNReversed(numPop);
