@@ -119,7 +119,7 @@ public final class LargeIntegerObject extends NativeObject {
     }
 
     @Override
-    public BaseSqueakObject shallowCopy() {
+    public AbstractSqueakObject shallowCopy() {
         return new LargeIntegerObject(this);
     }
 

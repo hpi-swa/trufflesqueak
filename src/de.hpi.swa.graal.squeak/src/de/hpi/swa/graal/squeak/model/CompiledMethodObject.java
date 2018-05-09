@@ -26,15 +26,15 @@ public final class CompiledMethodObject extends CompiledCodeObject {
     @Override
     public NativeObject getCompiledInSelector() {
         if (literals.length > 1) {
-            Object lit = literals[literals.length - 2];
+            final Object lit = literals[literals.length - 2];
             if (lit == null) {
                 return null;
             } else if (lit instanceof NativeObject) {
                 return (NativeObject) lit;
-            } else if ((lit instanceof BaseSqueakObject) && ((BaseSqueakObject) lit).size() >= 2) {
-                lit = ((BaseSqueakObject) lit).at0(1);
-                if (lit instanceof NativeObject) {
-                    return (NativeObject) lit;
+            } else if ((lit instanceof ListObject) && ((ListObject) lit).size() >= 2) {
+                final Object secondValue = ((ListObject) lit).at0(1);
+                if (secondValue instanceof NativeObject) {
+                    return (NativeObject) secondValue;
                 }
             }
         }
@@ -85,8 +85,7 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         }
     }
 
-    @Override
-    public BaseSqueakObject shallowCopy() {
+    public AbstractSqueakObject shallowCopy() {
         return new CompiledMethodObject(this);
     }
 

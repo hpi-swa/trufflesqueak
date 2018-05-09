@@ -29,7 +29,7 @@ public final class ClassObject extends AbstractPointersObject {
     }
 
     private ClassObject(final ClassObject original) {
-        this(original.image, original.getSqClass(), original.pointers.clone());
+        this(original.image, original.getSqClass(), original.pointers);
         instSpec = original.instSpec;
         instanceSize = original.instanceSize;
     }
@@ -163,11 +163,11 @@ public final class ClassObject extends AbstractPointersObject {
             final Object methodDict = ((ClassObject) lookupClass).getMethodDict();
             if (methodDict instanceof ListObject) {
                 final Object values = ((ListObject) methodDict).at0(METHOD_DICT.VALUES);
-                if (values instanceof BaseSqueakObject) {
-                    for (int i = METHOD_DICT.NAMES; i < ((BaseSqueakObject) methodDict).size(); i++) {
-                        final Object methodSelector = ((BaseSqueakObject) methodDict).at0(i);
+                if (values instanceof ListObject) {
+                    for (int i = METHOD_DICT.NAMES; i < ((ListObject) methodDict).size(); i++) {
+                        final Object methodSelector = ((ListObject) methodDict).at0(i);
                         if (predicate.test(methodSelector)) {
-                            return ((BaseSqueakObject) values).at0(i - METHOD_DICT.NAMES);
+                            return ((ListObject) values).at0(i - METHOD_DICT.NAMES);
                         }
                     }
                 }
@@ -260,8 +260,7 @@ public final class ClassObject extends AbstractPointersObject {
         return instanceSize;
     }
 
-    @Override
-    public BaseSqueakObject shallowCopy() {
+    public AbstractSqueakObject shallowCopy() {
         return new ClassObject(this);
     }
 

@@ -19,7 +19,7 @@ import de.hpi.swa.graal.squeak.SqueakConfig;
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.io.SqueakDisplay;
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
@@ -120,8 +120,8 @@ public final class SqueakImageContext {
     @CompilationFinal public final InterruptHandlerNode interrupt;
     @CompilationFinal public final long startUpMillis = System.currentTimeMillis();
 
-    @CompilationFinal public BaseSqueakObject asSymbol = nil; // for testing
-    @CompilationFinal public BaseSqueakObject simulatePrimitiveArgs = nil;
+    @CompilationFinal public AbstractSqueakObject asSymbol = nil; // for testing
+    @CompilationFinal public AbstractSqueakObject simulatePrimitiveArgs = nil;
 
     public SqueakImageContext(final SqueakLanguage squeakLanguage, final SqueakLanguage.Env environ,
                     final PrintWriter out, final PrintWriter err) {
@@ -234,7 +234,7 @@ public final class SqueakImageContext {
         return l;
     }
 
-    public BaseSqueakObject wrap(final BigInteger i) {
+    public AbstractSqueakObject wrap(final BigInteger i) {
         return new LargeIntegerObject(this, i);
     }
 
@@ -283,7 +283,7 @@ public final class SqueakImageContext {
         return NativeObject.newNativeBytes(this, doesNotUnderstand.getSqClass(), value.getBytes());
     }
 
-    public void registerSemaphore(final BaseSqueakObject semaphore, final long index) {
+    public void registerSemaphore(final AbstractSqueakObject semaphore, final long index) {
         specialObjectsArray.atput0(index, semaphore.isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassSemaphore) ? semaphore : nil);
     }
 

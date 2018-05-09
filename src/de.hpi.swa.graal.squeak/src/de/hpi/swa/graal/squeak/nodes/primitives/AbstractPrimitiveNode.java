@@ -9,7 +9,7 @@ import com.oracle.truffle.api.instrumentation.ProbeNode;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
 
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.EmptyObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
@@ -49,7 +49,7 @@ public abstract class AbstractPrimitiveNode extends AbstractNodeWithCode impleme
         return LargeIntegerObject.SMALLINTEGER32_MIN <= value && value <= LargeIntegerObject.SMALLINTEGER32_MAX;
     }
 
-    protected static final boolean hasVariableClass(final BaseSqueakObject obj) {
+    protected static final boolean hasVariableClass(final AbstractSqueakObject obj) {
         return obj.getSqClass().isVariable();
     }
 
@@ -61,11 +61,11 @@ public abstract class AbstractPrimitiveNode extends AbstractNodeWithCode impleme
         return NotProvided.isInstance(obj);
     }
 
-    protected static final boolean isNativeObject(final BaseSqueakObject object) {
+    protected static final boolean isNativeObject(final AbstractSqueakObject object) {
         return object instanceof NativeObject;
     }
 
-    protected static final boolean isEmptyObject(final BaseSqueakObject object) {
+    protected static final boolean isEmptyObject(final AbstractSqueakObject object) {
         return object instanceof EmptyObject;
     }
 

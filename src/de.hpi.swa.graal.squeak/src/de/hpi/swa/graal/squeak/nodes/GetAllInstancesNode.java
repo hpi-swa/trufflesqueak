@@ -5,7 +5,7 @@ import java.util.List;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.PointersObject;
@@ -25,10 +25,10 @@ public abstract class GetAllInstancesNode extends AbstractNodeWithCode {
         getOrCreateContextNode = GetOrCreateContextNode.create(code);
     }
 
-    public abstract List<BaseSqueakObject> execute(VirtualFrame frame);
+    public abstract List<AbstractSqueakObject> execute(VirtualFrame frame);
 
     @Specialization
-    protected List<BaseSqueakObject> getInstancesArray(final VirtualFrame frame) {
+    protected List<AbstractSqueakObject> getInstancesArray(final VirtualFrame frame) {
         final PointersObject activeProcess = getActiveProcessNode.executeGet();
         activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, getOrCreateContextNode.executeGet(frame));
         try {

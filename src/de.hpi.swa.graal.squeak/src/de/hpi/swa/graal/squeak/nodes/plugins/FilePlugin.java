@@ -15,12 +15,13 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.nodes.SqueakObjectAtPut0Node;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
@@ -282,20 +283,21 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveFileRead")
     protected abstract static class PrimFileReadNode extends AbstractPrimitiveNode {
+        @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
 
         protected PrimFileReadNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
         @Specialization
-        protected static final Object doRead(@SuppressWarnings("unused") final PointersObject receiver, final long fileDescriptor, final BaseSqueakObject target, final long startIndex,
+        protected final Object doRead(@SuppressWarnings("unused") final PointersObject receiver, final long fileDescriptor, final AbstractSqueakObject target, final long startIndex,
                         final long longCount) {
             final int count = (int) longCount;
             final byte[] buffer = new byte[count];
             try {
                 final long read = getFileOrPrimFail(fileDescriptor).read(buffer, 0, count);
                 for (int index = 0; index < read; index++) {
-                    target.atput0(startIndex - 1 + index, buffer[index] & 0xffL);
+                    atPut0Node.execute(target, startIndex - 1 + index, buffer[index] & 0xffL);
                 }
                 return read;
             } catch (IOException e) {

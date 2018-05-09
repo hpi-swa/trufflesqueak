@@ -10,20 +10,20 @@ import java.math.BigInteger;
 
 import org.junit.Test;
 
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ListObject;
 
 public class SqueakPrimitiveTest extends AbstractSqueakTestCaseWithDummyImage {
     @Test
     public void testPrimEquivalent() {
-        final BaseSqueakObject rcvr = image.specialObjectsArray;
+        final AbstractSqueakObject rcvr = image.specialObjectsArray;
         assertTrue((boolean) runBinaryPrimitive(110, rcvr, rcvr));
         assertFalse((boolean) runBinaryPrimitive(110, rcvr, image.nil));
     }
 
     @Test
     public void testPrimReplaceFromTo() {
-        final BaseSqueakObject rcvr = new ListObject(image, image.arrayClass,
+        final ListObject rcvr = new ListObject(image, image.arrayClass,
                         new Object[]{image.nil, image.sqFalse, image.sqTrue, image.characterClass, image.metaclass,
                                         image.schedulerAssociation, image.smallIntegerClass, image.smalltalk,
                                         image.specialObjectsArray});

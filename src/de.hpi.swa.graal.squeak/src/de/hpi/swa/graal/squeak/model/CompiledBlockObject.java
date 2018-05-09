@@ -88,8 +88,7 @@ public final class CompiledBlockObject extends CompiledCodeObject {
         return offset;
     }
 
-    @Override
-    public BaseSqueakObject shallowCopy() {
+    public AbstractSqueakObject shallowCopy() {
         return new CompiledBlockObject(this);
     }
 }

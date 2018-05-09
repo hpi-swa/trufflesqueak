@@ -22,9 +22,10 @@ import com.oracle.truffle.api.Truffle;
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
+import de.hpi.swa.graal.squeak.model.ListObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.TEST_RESULT;
@@ -332,23 +333,23 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
     }
 
     private static String extractFailuresAndErrorsFromTestResult(final Object result) {
-        if (!(result instanceof BaseSqueakObject) || !result.toString().equals("a TestResult")) {
+        if (!(result instanceof AbstractSqueakObject) || !result.toString().equals("a TestResult")) {
             return "did not return a TestResult, got " + result.toString();
         }
-        final BaseSqueakObject testResult = (BaseSqueakObject) result;
+        final PointersObject testResult = (PointersObject) result;
         final List<String> output = new ArrayList<>();
-        final BaseSqueakObject failureArray = (BaseSqueakObject) ((BaseSqueakObject) testResult.at0(TEST_RESULT.FAILURES)).at0(1);
+        final ListObject failureArray = (ListObject) ((PointersObject) testResult.at0(TEST_RESULT.FAILURES)).at0(1);
         for (int i = 0; i < failureArray.size(); i++) {
-            final BaseSqueakObject value = (BaseSqueakObject) failureArray.at0(i);
+            final AbstractSqueakObject value = (AbstractSqueakObject) failureArray.at0(i);
             if (!value.isNil()) {
-                output.add(value.at0(0) + " (E)");
+                output.add(((PointersObject) value).at0(0) + " (E)");
             }
         }
-        final BaseSqueakObject errorArray = (BaseSqueakObject) ((BaseSqueakObject) testResult.at0(TEST_RESULT.ERRORS)).at0(0);
+        final ListObject errorArray = (ListObject) ((PointersObject) testResult.at0(TEST_RESULT.ERRORS)).at0(0);
         for (int i = 0; i < errorArray.size(); i++) {
-            final BaseSqueakObject value = (BaseSqueakObject) errorArray.at0(i);
+            final AbstractSqueakObject value = (AbstractSqueakObject) errorArray.at0(i);
             if (!value.isNil()) {
-                output.add(value.at0(0) + " (F)");
+                output.add(((PointersObject) value).at0(0) + " (F)");
             }
         }
         if (output.size() == 0) {

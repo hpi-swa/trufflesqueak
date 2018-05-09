@@ -8,7 +8,7 @@ import com.oracle.truffle.api.instrumentation.Tag;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveWithoutResultException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
@@ -114,7 +114,7 @@ public final class SendBytecodes {
             return new SendSelectorNode(code, index, 1, specialSelector, specialSelector.getNumArguments());
         }
 
-        public SendSelectorNode(final CompiledCodeObject code, final int index, final int numBytecodes, final BaseSqueakObject sel, final int argcount) {
+        public SendSelectorNode(final CompiledCodeObject code, final int index, final int numBytecodes, final AbstractSqueakObject sel, final int argcount) {
             super(code, index, numBytecodes, sel, argcount);
         }
     }

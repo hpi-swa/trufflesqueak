@@ -6,7 +6,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.exceptions.Returns.LocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
@@ -37,8 +37,8 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
         completeTempWriteNode = TemporaryWriteNode.create(method, 1);
     }
 
-    private static BaseSqueakObject aboutToReturnSelector(final CompiledMethodObject method) {
-        return (BaseSqueakObject) method.image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SelectorAboutToReturn);
+    private static AbstractSqueakObject aboutToReturnSelector(final CompiledMethodObject method) {
+        return (AbstractSqueakObject) method.image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SelectorAboutToReturn);
     }
 
     public abstract void executeAboutToReturn(VirtualFrame frame, NonLocalReturn nlr);

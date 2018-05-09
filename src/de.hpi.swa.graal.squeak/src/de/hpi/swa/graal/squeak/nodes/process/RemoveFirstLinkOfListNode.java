@@ -3,12 +3,16 @@ package de.hpi.swa.graal.squeak.nodes.process;
 import com.oracle.truffle.api.CompilerDirectives;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.LINK;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.LINKED_LIST;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
+import de.hpi.swa.graal.squeak.nodes.SqueakObjectAt0Node;
+import de.hpi.swa.graal.squeak.nodes.SqueakObjectAtPut0Node;
 
 public class RemoveFirstLinkOfListNode extends AbstractNodeWithImage {
+    @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
+    @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
 
     public static RemoveFirstLinkOfListNode create(final SqueakImageContext image) {
         return new RemoveFirstLinkOfListNode(image);
@@ -18,18 +22,18 @@ public class RemoveFirstLinkOfListNode extends AbstractNodeWithImage {
         super(image);
     }
 
-    public BaseSqueakObject executeRemove(final BaseSqueakObject list) {
+    public AbstractSqueakObject executeRemove(final AbstractSqueakObject list) {
         CompilerDirectives.transferToInterpreter();
         // Remove the first process from the given linked list.
-        final BaseSqueakObject first = (BaseSqueakObject) list.at0(LINKED_LIST.FIRST_LINK);
-        final BaseSqueakObject last = (BaseSqueakObject) list.at0(LINKED_LIST.LAST_LINK);
+        final AbstractSqueakObject first = (AbstractSqueakObject) at0Node.execute(list, LINKED_LIST.FIRST_LINK);
+        final AbstractSqueakObject last = (AbstractSqueakObject) at0Node.execute(list, LINKED_LIST.LAST_LINK);
         if (first.equals(last)) {
-            list.atput0(LINKED_LIST.FIRST_LINK, image.nil);
-            list.atput0(LINKED_LIST.LAST_LINK, image.nil);
+            atPut0Node.execute(list, LINKED_LIST.FIRST_LINK, image.nil);
+            atPut0Node.execute(list, LINKED_LIST.LAST_LINK, image.nil);
         } else {
-            list.atput0(LINKED_LIST.FIRST_LINK, first.at0(LINK.NEXT_LINK));
+            atPut0Node.execute(list, LINKED_LIST.FIRST_LINK, at0Node.execute(first, LINK.NEXT_LINK));
         }
-        first.atput0(LINK.NEXT_LINK, image.nil);
+        atPut0Node.execute(first, LINK.NEXT_LINK, image.nil);
         return first;
     }
 }

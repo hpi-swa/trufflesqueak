@@ -9,7 +9,7 @@ import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
-public abstract class AbstractPointersObject extends BaseSqueakObject {
+public abstract class AbstractPointersObject extends AbstractSqueakObject {
     @CompilationFinal(dimensions = 1) protected Object[] pointers;
 
     public AbstractPointersObject(final SqueakImageContext img) {
@@ -35,19 +35,17 @@ public abstract class AbstractPointersObject extends BaseSqueakObject {
         pointers = chunk.getPointers();
     }
 
-    @Override
     public Object at0(final long i) {
         return pointers[(int) i];
     }
 
-    @Override
     public void atput0(final long i, final Object obj) {
         assert obj != null; // null indicates a problem
         pointers[(int) i] = obj;
     }
 
     @Override
-    public boolean become(final BaseSqueakObject other) {
+    public boolean become(final AbstractSqueakObject other) {
         if (!(other instanceof AbstractPointersObject)) {
             throw new PrimitiveExceptions.PrimitiveFailed();
         }
@@ -72,20 +70,18 @@ public abstract class AbstractPointersObject extends BaseSqueakObject {
                 if (newPointer == fromPointer) {
                     final Object toPointer = to[i];
                     atput0(j, toPointer);
-                    if (copyHash && fromPointer instanceof BaseSqueakObject && toPointer instanceof BaseSqueakObject) {
-                        ((BaseSqueakObject) toPointer).setSqueakHash(((BaseSqueakObject) fromPointer).squeakHash());
+                    if (copyHash && fromPointer instanceof AbstractSqueakObject && toPointer instanceof AbstractSqueakObject) {
+                        ((AbstractSqueakObject) toPointer).setSqueakHash(((AbstractSqueakObject) fromPointer).squeakHash());
                     }
                 }
             }
         }
     }
 
-    @Override
     public final int size() {
         return pointers.length;
     }
 
-    @Override
     public final int instsize() {
         return getSqClass().getBasicInstanceSize();
     }

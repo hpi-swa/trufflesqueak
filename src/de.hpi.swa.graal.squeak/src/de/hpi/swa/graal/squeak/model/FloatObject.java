@@ -108,7 +108,7 @@ public final class FloatObject extends NativeObject {
     }
 
     @Override
-    public BaseSqueakObject shallowCopy() {
+    public AbstractSqueakObject shallowCopy() {
         return new FloatObject(this);
     }
 

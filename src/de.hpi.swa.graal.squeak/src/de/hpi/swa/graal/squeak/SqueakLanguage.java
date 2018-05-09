@@ -11,7 +11,7 @@ import com.oracle.truffle.api.instrumentation.ProvidedTags;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.nodes.context.SqueakLookupClassNode;
 
@@ -41,7 +41,7 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
 
     @Override
     protected boolean isObjectOfLanguage(final Object object) {
-        return object instanceof BaseSqueakObject;
+        return object instanceof AbstractSqueakObject;
     }
 
     @Override

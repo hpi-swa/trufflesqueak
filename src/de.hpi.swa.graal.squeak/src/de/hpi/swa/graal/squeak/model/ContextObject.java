@@ -89,8 +89,7 @@ public final class ContextObject extends AbstractPointersObject {
         return (CompiledCodeObject) at0(CONTEXT.METHOD);
     }
 
-    @Override
-    public BaseSqueakObject shallowCopy() {
+    public AbstractSqueakObject shallowCopy() {
         return new ContextObject(this);
     }
 
@@ -112,18 +111,18 @@ public final class ContextObject extends AbstractPointersObject {
         return super.at0(CONTEXT.SENDER_OR_NIL) instanceof FrameMarker;
     }
 
-    public BaseSqueakObject getSender() {
+    public AbstractSqueakObject getSender() {
         final Object sender = super.at0(CONTEXT.SENDER_OR_NIL);
         if (sender instanceof ContextObject) {
-            return (BaseSqueakObject) sender;
+            return (AbstractSqueakObject) sender;
         } else if (sender instanceof NilObject) {
-            return (BaseSqueakObject) sender;
+            return (AbstractSqueakObject) sender;
         } else {
             CompilerDirectives.transferToInterpreter();
             assert sender instanceof FrameMarker;
             final Frame frame = FrameAccess.findFrameForMarker((FrameMarker) sender);
             assert frame != null : "Frame for context to reconstruct does not exist anymore";
-            final BaseSqueakObject reconstructedSender = GetOrCreateContextNode.getOrCreate(frame);
+            final AbstractSqueakObject reconstructedSender = GetOrCreateContextNode.getOrCreate(frame);
             assert reconstructedSender != null;
             setSender(reconstructedSender);
             return reconstructedSender;
@@ -252,8 +251,8 @@ public final class ContextObject extends AbstractPointersObject {
                 if (newPointer == fromPointer) {
                     final Object toPointer = to[i];
                     atput0(j, toPointer);
-                    if (copyHash && fromPointer instanceof BaseSqueakObject && toPointer instanceof BaseSqueakObject) {
-                        ((BaseSqueakObject) toPointer).setSqueakHash(((BaseSqueakObject) fromPointer).squeakHash());
+                    if (copyHash && fromPointer instanceof AbstractSqueakObject && toPointer instanceof AbstractSqueakObject) {
+                        ((AbstractSqueakObject) toPointer).setSqueakHash(((AbstractSqueakObject) fromPointer).squeakHash());
                     }
                 }
             }
@@ -301,7 +300,7 @@ public final class ContextObject extends AbstractPointersObject {
                 argumentStrings[i] = rcvrAndArgs[i].toString();
             }
             image.getOutput().println(String.format("%s #(%s)", current, String.join(", ", argumentStrings)));
-            final BaseSqueakObject sender = current.getSender();
+            final AbstractSqueakObject sender = current.getSender();
             if (sender.isNil()) {
                 break;
             } else {

@@ -7,7 +7,7 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -47,7 +47,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "isASCIIOrder(order)")
-        protected static final long doAsciiOrder(@SuppressWarnings("unused") final BaseSqueakObject receiver, final NativeObject string1, final NativeObject string2,
+        protected static final long doAsciiOrder(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject string1, final NativeObject string2,
                         @SuppressWarnings("unused") final NativeObject order) {
             final byte[] bytes1 = string1.getBytes();
             final byte[] bytes2 = string2.getBytes();
@@ -75,7 +75,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "!isASCIIOrder(order)")
-        protected static final long doCollated(@SuppressWarnings("unused") final BaseSqueakObject receiver, final NativeObject string1, final NativeObject string2, final NativeObject order) {
+        protected static final long doCollated(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject string1, final NativeObject string2, final NativeObject order) {
             final byte[] bytes1 = string1.getBytes();
             final byte[] bytes2 = string2.getBytes();
             final byte[] orderBytes = order.getBytes();
@@ -113,7 +113,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization
-        protected static final Object compress(final BaseSqueakObject bitmap, final Object bm, final Object from) {
+        protected static final Object compress(final AbstractSqueakObject bitmap, final Object bm, final Object from) {
             // TODO: implement primitive
             throw new PrimitiveFailed();
         }
@@ -129,7 +129,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization
-        protected static final Object decompress(final BaseSqueakObject bitmap, final Object bm, final Object from, final long index) {
+        protected static final Object decompress(final AbstractSqueakObject bitmap, final Object bm, final Object from, final long index) {
             // TODO: implement primitive
             throw new PrimitiveFailed();
         }
@@ -144,7 +144,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected long doFind(@SuppressWarnings("unused") final BaseSqueakObject receiver, final NativeObject string, final NativeObject inclusionMap, final long start) {
+        protected long doFind(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject string, final NativeObject inclusionMap, final long start) {
             if (inclusionMap.size() != 256) {
                 return 0;
             }
@@ -173,14 +173,14 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "isASCIIOrder(matchTable)")
-        protected long doFindAscii(@SuppressWarnings("unused") final BaseSqueakObject receiver, final NativeObject key, final NativeObject body, final long start,
+        protected long doFindAscii(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject key, final NativeObject body, final long start,
                         @SuppressWarnings("unused") final NativeObject matchTable) {
             return body.toString().indexOf(key.toString(), (int) start - 1) + 1;
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = "!isASCIIOrder(matchTable)")
-        protected long doFindWithMatchTable(final BaseSqueakObject receiver, final NativeObject key, final NativeObject body, final long start, final NativeObject matchTable) {
+        protected long doFindWithMatchTable(final AbstractSqueakObject receiver, final NativeObject key, final NativeObject body, final long start, final NativeObject matchTable) {
             throw new PrimitiveFailed(); // TODO: implement primitive
         }
     }
@@ -194,7 +194,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected long doNativeObject(@SuppressWarnings("unused") final BaseSqueakObject receiver, final long value, final NativeObject string, final long start) {
+        protected long doNativeObject(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long value, final NativeObject string, final long start) {
             if (start < 0) {
                 throw new PrimitiveFailed();
             }
@@ -217,7 +217,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected long doNativeObject(@SuppressWarnings("unused") final BaseSqueakObject receiver, final NativeObject string, final long initialHash) {
+        protected long doNativeObject(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject string, final long initialHash) {
             long hash = initialHash & 0xfffffff;
             long low;
             for (byte value : string.getBytes()) {
@@ -238,7 +238,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected NativeObject doNativeObject(@SuppressWarnings("unused") final BaseSqueakObject receiver, final NativeObject string, final long start, final long stop, final NativeObject table) {
+        protected NativeObject doNativeObject(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject string, final long start, final long stop, final NativeObject table) {
             for (int i = (int) start - 1; i < stop; i++) {
                 final Long tableValue = (long) table.at0(((Long) string.getNativeAt0(i)).intValue());
                 string.setByte(i, tableValue.byteValue());

@@ -2,7 +2,7 @@ package de.hpi.swa.graal.squeak.nodes;
 
 import com.oracle.truffle.api.dsl.TypeSystem;
 
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
@@ -27,7 +27,7 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
                 NativeObject.class,
                 CompiledBlockObject.class,
                 CompiledMethodObject.class,
-                BaseSqueakObject.class})
+                AbstractSqueakObject.class})
 
 public abstract class SqueakTypes {
 }

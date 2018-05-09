@@ -9,7 +9,7 @@ import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
@@ -84,7 +84,7 @@ public abstract class AbstractSqueakTestCase {
     }
 
     protected Object runMethod(final Object receiver, final int... intbytes) {
-        return runMethod(receiver, new BaseSqueakObject[0], intbytes);
+        return runMethod(receiver, new AbstractSqueakObject[0], intbytes);
     }
 
     protected Object runMethod(final Object receiver, final Object[] arguments, final int... intbytes) {

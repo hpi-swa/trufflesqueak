@@ -19,8 +19,7 @@ public final class ListObject extends AbstractPointersObject {
         super(image, sqClass, size);
     }
 
-    @Override
-    public BaseSqueakObject shallowCopy() {
+    public AbstractSqueakObject shallowCopy() {
         return new ListObject(image, getSqClass(), getPointers().clone());
     }
 

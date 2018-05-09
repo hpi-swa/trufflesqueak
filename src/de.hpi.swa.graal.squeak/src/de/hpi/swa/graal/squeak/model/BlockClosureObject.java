@@ -20,7 +20,7 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.BLOCK_CLOSURE;
 import de.hpi.swa.graal.squeak.nodes.EnterCodeNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
-public final class BlockClosureObject extends BaseSqueakObject {
+public final class BlockClosureObject extends AbstractSqueakObject {
     @CompilationFinal private Object receiver;
     @CompilationFinal(dimensions = 1) private Object[] copied;
     @CompilationFinal private ContextObject outerContext;
@@ -48,14 +48,10 @@ public final class BlockClosureObject extends BaseSqueakObject {
 
     private BlockClosureObject(final BlockClosureObject original) {
         super(original.image, original.image.blockClosureClass);
-        this.block = (CompiledBlockObject) original.getCompiledBlock().shallowCopy();
+        this.block = original.getCompiledBlock();
         this.outerContext = original.outerContext;
-        if (original.receiver instanceof BaseSqueakObject) {
-            this.receiver = ((BaseSqueakObject) original.receiver).shallowCopy();
-        } else {
-            this.receiver = original.receiver;
-        }
-        this.copied = original.copied.clone();
+        this.receiver = original.receiver;
+        this.copied = original.copied;
         this.contextOrMarkerSlot = original.contextOrMarkerSlot;
     }
 
@@ -97,7 +93,6 @@ public final class BlockClosureObject extends BaseSqueakObject {
         return contextOrMarkerSlot;
     }
 
-    @Override
     public Object at0(final long longIndex) {
         final int index = (int) longIndex;
         switch (index) {
@@ -112,7 +107,6 @@ public final class BlockClosureObject extends BaseSqueakObject {
         }
     }
 
-    @Override
     public void atput0(final long longIndex, final Object obj) {
         final int index = (int) longIndex;
         switch (index) {
@@ -135,7 +129,7 @@ public final class BlockClosureObject extends BaseSqueakObject {
     }
 
     @Override
-    public boolean become(final BaseSqueakObject other) {
+    public boolean become(final AbstractSqueakObject other) {
         if (!(other instanceof BlockClosureObject)) {
             throw new PrimitiveExceptions.PrimitiveFailed();
         }
@@ -149,13 +143,11 @@ public final class BlockClosureObject extends BaseSqueakObject {
         return true;
     }
 
-    @Override
     public int size() {
         return copied.length + instsize();
     }
 
-    @Override
-    public int instsize() {
+    public static int instsize() {
         return BLOCK_CLOSURE.FIRST_COPIED_VALUE;
     }
 
@@ -229,8 +221,7 @@ public final class BlockClosureObject extends BaseSqueakObject {
         return outerContext;
     }
 
-    @Override
-    public BaseSqueakObject shallowCopy() {
+    public AbstractSqueakObject shallowCopy() {
         return new BlockClosureObject(this);
     }
 
@@ -251,8 +242,8 @@ public final class BlockClosureObject extends BaseSqueakObject {
                 if (newPointer == fromPointer) {
                     final Object toPointer = to[i];
                     newPointers[j] = toPointer;
-                    if (copyHash && fromPointer instanceof BaseSqueakObject && toPointer instanceof BaseSqueakObject) {
-                        ((BaseSqueakObject) toPointer).setSqueakHash(((BaseSqueakObject) fromPointer).squeakHash());
+                    if (copyHash && fromPointer instanceof AbstractSqueakObject && toPointer instanceof AbstractSqueakObject) {
+                        ((AbstractSqueakObject) toPointer).setSqueakHash(((AbstractSqueakObject) fromPointer).squeakHash());
                     }
                 }
             }

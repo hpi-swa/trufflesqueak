@@ -20,7 +20,7 @@ import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonVirtualReturn;
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
@@ -37,7 +37,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
     @Test
     public void testPushReceiverVariables() {
         final Object[] expectedResults = getTestObjects(16);
-        final BaseSqueakObject rcvr = new PointersObject(image, image.arrayClass, expectedResults);
+        final AbstractSqueakObject rcvr = new PointersObject(image, image.arrayClass, expectedResults);
         for (int i = 0; i < expectedResults.length; i++) {
             assertSame(expectedResults[i], runMethod(rcvr, i, 124));
         }
@@ -47,7 +47,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
     public void testPopAndPushTemporaryLocations() {
         final Object[] literals = new Object[]{2097154L, image.nil, image.nil}; // header with
                                                                                 // numTemp=8
-        final BaseSqueakObject rcvr = image.specialObjectsArray;
+        final AbstractSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < 8; i++) {
             // push true, popIntoTemp i, pushTemp i, returnTop
             final CompiledCodeObject code = makeMethod(literals, 113, 104 + i, 16 + i, 124);
@@ -67,7 +67,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
         final Object[] expectedResults = getTestObjects(32);
         final List<Object> literalsList = new ArrayList<>(Arrays.asList(new Object[]{68419598L}));
         literalsList.addAll(Arrays.asList(expectedResults));
-        final BaseSqueakObject rcvr = image.specialObjectsArray;
+        final AbstractSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < expectedResults.length; i++) {
             final CompiledCodeObject code = makeMethod(literalsList.toArray(), bytecodeStart + i, 124);
             final VirtualFrame frame = createTestFrame(code);
@@ -86,7 +86,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
         final Object[] expectedResults = getTestObjects(32);
         final List<Object> literalsList = new ArrayList<>(Arrays.asList(new Object[]{68419598L}));
         literalsList.addAll(Arrays.asList(expectedResults));
-        final BaseSqueakObject rcvr = image.specialObjectsArray;
+        final AbstractSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < 32; i++) {
             final CompiledCodeObject code = makeMethod(literalsList.toArray(), bytecodeStart + i, 124);
             final VirtualFrame frame = createTestFrame(code);
@@ -116,13 +116,13 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
 
     @Test
     public void testPushReceiver() {
-        final BaseSqueakObject rcvr = image.specialObjectsArray;
+        final AbstractSqueakObject rcvr = image.specialObjectsArray;
         assertSame(rcvr, runMethod(rcvr, 112, 124));
     }
 
     @Test
     public void testPushConstants() {
-        final BaseSqueakObject rcvr = image.specialObjectsArray;
+        final AbstractSqueakObject rcvr = image.specialObjectsArray;
         final Object[] expectedResults = {true, false, image.nil, -1L, 0L, 1L, 2L};
         for (int i = 0; i < expectedResults.length; i++) {
             assertSame(expectedResults[i], runMethod(rcvr, 113 + i, 124));
@@ -131,13 +131,13 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
 
     @Test
     public void testReturnReceiver() {
-        final BaseSqueakObject rcvr = image.specialObjectsArray;
+        final AbstractSqueakObject rcvr = image.specialObjectsArray;
         assertSame(rcvr, runMethod(rcvr, 120));
     }
 
     @Test
     public void testReturnConstants() {
-        final BaseSqueakObject rcvr = image.specialObjectsArray;
+        final AbstractSqueakObject rcvr = image.specialObjectsArray;
         final Object[] expectedResults = {true, false, image.nil};
         for (int i = 0; i < expectedResults.length; i++) {
             assertSame(expectedResults[i], runMethod(rcvr, 121 + i));
@@ -146,7 +146,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
 
     @Test
     public void testUnknownBytecodes() {
-        final BaseSqueakObject rcvr = image.specialObjectsArray;
+        final AbstractSqueakObject rcvr = image.specialObjectsArray;
         int bytecode;
         for (int i = 0; i < 1; i++) {
             bytecode = 126 + i;
@@ -162,7 +162,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
     @Test
     public void testExtendedPushReceiverVariables() {
         final Object[] expectedResults = getTestObjects(64);
-        final BaseSqueakObject rcvr = new PointersObject(image, image.arrayClass, expectedResults);
+        final AbstractSqueakObject rcvr = new PointersObject(image, image.arrayClass, expectedResults);
         for (int i = 0; i < expectedResults.length; i++) {
             assertSame(expectedResults[i], runMethod(rcvr, 128, i, 124));
         }
@@ -174,7 +174,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
         final Object[] literals = new Object[]{makeHeader(0, maxNumTemps, 0, false, true)}; // header
                                                                                             // with
         // numTemp=55
-        final BaseSqueakObject rcvr = image.specialObjectsArray;
+        final AbstractSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < maxNumTemps; i++) {
             // push true, popIntoTemp i, pushTemp i, returnTop
             final CompiledCodeObject code = makeMethod(literals, 113, 130, 64 + i, 128, 64 + i, 124);
@@ -193,7 +193,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
         final Object[] expectedResults = getTestObjects(64);
         final List<Object> literalsList = new ArrayList<>(Arrays.asList(new Object[]{68419598L}));
         literalsList.addAll(Arrays.asList(expectedResults));
-        final BaseSqueakObject rcvr = image.specialObjectsArray;
+        final AbstractSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < expectedResults.length; i++) {
             final CompiledCodeObject code = makeMethod(literalsList.toArray(), 128, 128 + i, 124);
             final VirtualFrame frame = createTestFrame(code);
@@ -211,7 +211,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
         final Object[] expectedResults = getTestObjects(64);
         final List<Object> literalsList = new ArrayList<>(Arrays.asList(new Object[]{68419598L}));
         literalsList.addAll(Arrays.asList(expectedResults));
-        final BaseSqueakObject rcvr = image.specialObjectsArray;
+        final AbstractSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < expectedResults.length; i++) {
             final CompiledCodeObject code = makeMethod(literalsList.toArray(), 128, 192 + i, 124);
             final VirtualFrame frame = createTestFrame(code);
@@ -241,7 +241,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
     public void testExtendedStoreIntoTemporaryVariables() {
         final int maxNumTemps = CONTEXT.MAX_STACK_SIZE - 2; // two stack slots required for code
         final Object[] literals = new Object[]{makeHeader(0, maxNumTemps, 0, false, true)};
-        final BaseSqueakObject rcvr = image.specialObjectsArray;
+        final AbstractSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < maxNumTemps; i++) {
             // push true, push 1, storeIntoTemp i, pop, pushTemp i, returnTop
             final CompiledCodeObject code = makeMethod(literals, 113, 118, 129, 64 + i, 135, 128, 64 + i, 124);
@@ -264,7 +264,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
         for (int i = 0; i < 64; i++) {
             literalsList.add(testObject);
         }
-        final BaseSqueakObject rcvr = image.specialObjectsArray;
+        final AbstractSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < 64; i++) {
             // push true, storeIntoLiteral i, returnTop
             final CompiledCodeObject code = makeMethod(literalsList.toArray(), 113, 129, 192 + i, 124);
@@ -297,7 +297,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
     public void testExtendedPopIntoTemporaryVariables() {
         final int maxNumTemps = CONTEXT.MAX_STACK_SIZE - 2; // two stack slots required for code
         final Object[] literals = new Object[]{makeHeader(0, maxNumTemps, 0, false, true), image.nil, image.nil};
-        final BaseSqueakObject rcvr = image.specialObjectsArray;
+        final AbstractSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < maxNumTemps; i++) {
             // push true, push 1, popIntoTemp i, pushTemp i, quickReturnTop
             final CompiledCodeObject code = makeMethod(literals, 113, 118, 130, 64 + i, 128, 64 + i, 124);
@@ -318,7 +318,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
         for (int i = 0; i < maxNumLiterals; i++) {
             literalsList.add(testObject);
         }
-        final BaseSqueakObject rcvr = image.specialObjectsArray;
+        final AbstractSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < maxNumLiterals; i++) {
             // push true, popIntoLiteral i, returnTop
             final CompiledCodeObject code = makeMethod(literalsList.toArray(), 113, 130, 192 + i, 124);
@@ -341,7 +341,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
     @Test
     public void testDoubleExtendedPushReceiverVariables() {
         final Object[] expectedResults = getTestObjects(255);
-        final BaseSqueakObject rcvr = new PointersObject(image, image.arrayClass, expectedResults);
+        final AbstractSqueakObject rcvr = new PointersObject(image, image.arrayClass, expectedResults);
         for (int i = 0; i < expectedResults.length; i++) {
             assertSame(expectedResults[i], runMethod(rcvr, 132, 64, i, 124));
         }
@@ -352,7 +352,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
         final Object[] expectedResults = getTestObjects(255);
         final List<Object> literalsList = new ArrayList<>(Arrays.asList(new Object[]{68419598L}));
         literalsList.addAll(Arrays.asList(expectedResults));
-        final BaseSqueakObject rcvr = image.specialObjectsArray;
+        final AbstractSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < expectedResults.length; i++) {
             final CompiledCodeObject code = makeMethod(literalsList.toArray(), 132, 96, i, 124);
             final VirtualFrame frame = createTestFrame(code);
@@ -370,7 +370,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
         final Object[] expectedResults = getTestObjects(255);
         final List<Object> literalsList = new ArrayList<>(Arrays.asList(new Object[]{68419598L}));
         literalsList.addAll(Arrays.asList(expectedResults));
-        final BaseSqueakObject rcvr = image.specialObjectsArray;
+        final AbstractSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < expectedResults.length; i++) {
             final CompiledCodeObject code = makeMethod(literalsList.toArray(), 132, 128, i, 124);
             final VirtualFrame frame = createTestFrame(code);
@@ -419,7 +419,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
         for (int i = 0; i < numberOfAssociations; i++) {
             literalsList.add(testObject);
         }
-        final BaseSqueakObject rcvr = image.specialObjectsArray;
+        final AbstractSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < numberOfAssociations; i++) {
             // push true, storeIntoLiteral i, returnTop
             final CompiledCodeObject code = makeMethod(literalsList.toArray(), 113, 132, 224, i, 124);
@@ -439,7 +439,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
 
     @Test
     public void testPop() {
-        final BaseSqueakObject rcvr = image.specialObjectsArray;
+        final AbstractSqueakObject rcvr = image.specialObjectsArray;
         // push true, push false, pop, return top
         assertSame(runMethod(rcvr, 113, 114, 135, 124), image.sqTrue);
     }
@@ -454,7 +454,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
 
     @Test
     public void testPushNewArray() {
-        final BaseSqueakObject rcvr = image.specialObjectsArray;
+        final AbstractSqueakObject rcvr = image.specialObjectsArray;
         // pushNewArray (size 127), returnTop
         CompiledCodeObject cm = makeMethod(new Object[]{makeHeader(0, 0, 0, false, true)}, 138, 127, 124);
         Object result = runMethod(cm, rcvr);
@@ -503,7 +503,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
     public void testPushRemoteTemp() {
         final Object[] literals = new Object[]{2097154L, image.nil, image.nil}; // header with
                                                                                 // numTemp=8
-        final BaseSqueakObject rcvr = image.specialObjectsArray;
+        final AbstractSqueakObject rcvr = image.specialObjectsArray;
         // push true, pushNewArray (size 1 and pop), popIntoTemp 2, pushRemoteTemp
         // (at(0), temp 2), returnTop
         final CompiledCodeObject code = makeMethod(literals, 113, 138, 128 + 1, 104 + 2, 140, 0, 2, 124);
@@ -520,7 +520,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
     public void testStoreRemoteTemp() {
         final Object[] literals = new Object[]{2097154L, image.nil, image.nil}; // header with
                                                                                 // numTemp=8
-        final BaseSqueakObject rcvr = image.specialObjectsArray;
+        final AbstractSqueakObject rcvr = image.specialObjectsArray;
         // pushNewArray (size 2), popIntoTemp 3, push true, push false,
         // storeIntoRemoteTemp (0, temp 3), storeIntoRemoteTemp (1, temp 3), pushTemp 3,
         // returnTop
@@ -542,7 +542,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
     public void testStoreAndPopRemoteTemp() {
         final Object[] literals = new Object[]{2097154L, image.nil, image.nil}; // header with
                                                                                 // numTemp=8
-        final BaseSqueakObject rcvr = image.specialObjectsArray;
+        final AbstractSqueakObject rcvr = image.specialObjectsArray;
         // pushNewArray (size 2), popIntoTemp 3, push true, push false,
         // storeIntoRemoteTemp (0, temp 3), storeIntoRemoteTemp (1, temp 3), pushTemp 3,
         // returnTop
@@ -582,7 +582,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
         // ...
         // x <75> pushConstant: 0
         // x+1 <7C> returnTop
-        final BaseSqueakObject rcvr = image.specialObjectsArray;
+        final AbstractSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < 8; i++) {
             final int length = 4 + i;
             final int[] intBytes = new int[length];
@@ -617,7 +617,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
         // 20 <7C> returnTop
         // 21 <75> pushConstant: 0
         // 22 <7C> returnTop
-        final BaseSqueakObject rcvr = image.specialObjectsArray;
+        final AbstractSqueakObject rcvr = image.specialObjectsArray;
         assertSame(1L, runMethod(rcvr, 113, 0x99, 0x76, 0x7C, 0x75, 0x7C));
         assertSame(0L, runMethod(rcvr, 114, 0x99, 0x76, 0x7C, 0x75, 0x7C));
 

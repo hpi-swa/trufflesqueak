@@ -3,11 +3,13 @@ package de.hpi.swa.graal.squeak.nodes.process;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
+import de.hpi.swa.graal.squeak.nodes.SqueakObjectAt0Node;
 
 public class ResumeProcessNode extends AbstractNodeWithImage {
+    @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
     @Child private GetActiveProcessNode getActiveProcessNode;
     @Child private PutToSleepNode putToSleepNode;
     @Child private TransferToNode transferToNode;
@@ -23,10 +25,10 @@ public class ResumeProcessNode extends AbstractNodeWithImage {
         transferToNode = TransferToNode.create(image);
     }
 
-    public void executeResume(final VirtualFrame frame, final BaseSqueakObject newProcess) {
-        final BaseSqueakObject activeProcess = getActiveProcessNode.executeGet();
-        final long activePriority = (long) activeProcess.at0(PROCESS.PRIORITY);
-        final long newPriority = (long) newProcess.at0(PROCESS.PRIORITY);
+    public void executeResume(final VirtualFrame frame, final AbstractSqueakObject newProcess) {
+        final AbstractSqueakObject activeProcess = getActiveProcessNode.executeGet();
+        final long activePriority = (long) at0Node.execute(activeProcess, PROCESS.PRIORITY);
+        final long newPriority = (long) at0Node.execute(newProcess, PROCESS.PRIORITY);
         if (newPriority > activePriority) {
             putToSleepNode.executePutToSleep(activeProcess);
             transferToNode.executeTransferTo(frame, activeProcess, newProcess);

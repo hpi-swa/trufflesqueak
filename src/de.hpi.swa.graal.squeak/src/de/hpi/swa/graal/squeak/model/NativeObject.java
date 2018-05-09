@@ -9,7 +9,7 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
-public class NativeObject extends BaseSqueakObject {
+public class NativeObject extends AbstractSqueakObject {
     @CompilationFinal protected AbstractNativeObjectStorage storage;
 
     public static NativeObject newNativeBytes(final SqueakImageContext img, final ClassObject klass, final int size) {
@@ -73,7 +73,7 @@ public class NativeObject extends BaseSqueakObject {
     }
 
     @Override
-    public boolean become(final BaseSqueakObject other) {
+    public boolean become(final AbstractSqueakObject other) {
         if (!(other instanceof NativeObject)) {
             throw new PrimitiveExceptions.PrimitiveFailed();
         }
@@ -94,12 +94,10 @@ public class NativeObject extends BaseSqueakObject {
         return new String(getBytes());
     }
 
-    @Override
     public Object at0(final long index) {
         return getNativeAt0(index);
     }
 
-    @Override
     public void atput0(final long index, final Object object) {
         if (object instanceof LargeIntegerObject) {
             final long longValue;
@@ -130,11 +128,6 @@ public class NativeObject extends BaseSqueakObject {
         storage.shortAtPut0(longIndex, value);
     }
 
-    @Override
-    public final int instsize() {
-        return 0;
-    }
-
     public byte[] getBytes() {
         return storage.getBytes();
     }
@@ -147,7 +140,6 @@ public class NativeObject extends BaseSqueakObject {
         storage.fillWith(value);
     }
 
-    @Override
     public int size() {
         return storage.size();
     }
@@ -160,8 +152,7 @@ public class NativeObject extends BaseSqueakObject {
         return new LargeIntegerObject(image, getSqClass(), getBytes());
     }
 
-    @Override
-    public BaseSqueakObject shallowCopy() {
+    public AbstractSqueakObject shallowCopy() {
         return new NativeObject(this);
     }
 

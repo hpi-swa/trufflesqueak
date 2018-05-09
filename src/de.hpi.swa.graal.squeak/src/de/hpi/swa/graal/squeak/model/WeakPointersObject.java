@@ -60,20 +60,19 @@ public final class WeakPointersObject extends AbstractPointersObject {
     @Override
     public void atput0(final long index, final Object obj) {
         assert obj != null; // null indicates a problem
-        if (obj instanceof BaseSqueakObject && index >= instsize()) { // store into variable part
+        if (obj instanceof AbstractSqueakObject && index >= instsize()) { // store into variable part
             super.atput0(index, new WeakReference<>(obj, weakPointersQueue));
         } else {
             super.atput0(index, obj);
         }
     }
 
-    @Override
-    public BaseSqueakObject shallowCopy() {
+    public AbstractSqueakObject shallowCopy() {
         return new WeakPointersObject(this);
     }
 
     @Override
-    public boolean become(final BaseSqueakObject other) {
+    public boolean become(final AbstractSqueakObject other) {
         // TODO: implement or remove?
         throw new SqueakException("become not implemented for WeakPointerObjects");
     }
@@ -81,7 +80,7 @@ public final class WeakPointersObject extends AbstractPointersObject {
     private void convertToWeakReferences() {
         for (int i = 0; i < pointers.length; i++) {
             final Object pointer = pointers[i];
-            if (pointer instanceof BaseSqueakObject) {
+            if (pointer instanceof AbstractSqueakObject) {
                 pointers[i] = new WeakReference<>(pointer, weakPointersQueue);
             } else {
                 pointers[i] = pointer;

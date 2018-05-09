@@ -9,12 +9,16 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.EmptyObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.nodes.SqueakObjectAt0Node;
+import de.hpi.swa.graal.squeak.nodes.SqueakObjectAtPut0Node;
+import de.hpi.swa.graal.squeak.nodes.SqueakObjectInstSizeNode;
+import de.hpi.swa.graal.squeak.nodes.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
@@ -30,6 +34,9 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 60)
     protected abstract static class PrimBasicAtNode extends AbstractPrimitiveNode {
+        @Child private SqueakObjectInstSizeNode instSizeNode = SqueakObjectInstSizeNode.create();
+        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
+
         protected PrimBasicAtNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
@@ -74,14 +81,17 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "!isNativeObject(receiver)")
-        protected static final Object doSqueakObject(final BaseSqueakObject receiver, final long index) {
-            return receiver.at0(index - 1 + receiver.instsize());
+        protected final Object doSqueakObject(final AbstractSqueakObject receiver, final long index) {
+            return at0Node.execute(receiver, index - 1 + instSizeNode.execute(receiver));
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 61)
     protected abstract static class PrimBasicAtPutNode extends AbstractPrimitiveNode {
+        @Child private SqueakObjectInstSizeNode instSizeNode = SqueakObjectInstSizeNode.create();
+        @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
+
         protected PrimBasicAtPutNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
@@ -148,8 +158,8 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"!isNativeObject(receiver)", "!isEmptyObject(receiver)"})
-        protected Object doSqueakObject(final BaseSqueakObject receiver, final long index, final Object value) {
-            receiver.atput0(index - 1 + receiver.instsize(), value);
+        protected Object doSqueakObject(final AbstractSqueakObject receiver, final long index, final Object value) {
+            atPut0Node.execute(receiver, index - 1 + instSizeNode.execute(receiver), value);
             return value;
         }
     }
@@ -157,6 +167,9 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 62)
     protected abstract static class PrimSizeNode extends AbstractArithmeticPrimitiveNode {
+        @Child private SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
+        @Child private SqueakObjectInstSizeNode instSizeNode = SqueakObjectInstSizeNode.create();
+
         protected PrimSizeNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
@@ -192,8 +205,8 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"!isNil(obj)", "hasVariableClass(obj)"})
-        protected static final long size(final BaseSqueakObject obj) {
-            return obj.varsize();
+        protected final long size(final AbstractSqueakObject obj) {
+            return sizeNode.execute(obj) - instSizeNode.execute(obj);
         }
 
         /*

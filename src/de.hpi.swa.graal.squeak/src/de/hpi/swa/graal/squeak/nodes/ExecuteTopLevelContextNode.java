@@ -15,7 +15,7 @@ import de.hpi.swa.graal.squeak.exceptions.Returns.TopLevelReturn;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.exceptions.SqueakQuit;
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
@@ -57,7 +57,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     public void executeLoop() {
         ContextObject activeContext = initialContext;
         while (true) {
-            final BaseSqueakObject sender = activeContext.getSender();
+            final AbstractSqueakObject sender = activeContext.getSender();
             try {
                 final CompiledCodeObject code = activeContext.getCodeObject();
                 final Object[] frameArgs = activeContext.getReceiverAndArguments();
@@ -74,7 +74,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                 image.trace("Switching from " + activeContext + " to " + ps.getNewContext());
                 activeContext = ps.getNewContext();
             } catch (NonLocalReturn nlr) {
-                final BaseSqueakObject target = nlr.hasArrivedAtTargetContext() ? sender : nlr.getTargetContext().getSender();
+                final AbstractSqueakObject target = nlr.hasArrivedAtTargetContext() ? sender : nlr.getTargetContext().getSender();
                 activeContext = unwindContextChain(sender, target, nlr.getReturnValue());
                 image.traceVerbose("Non Local Return on top-level, new context is " + activeContext);
             } catch (NonVirtualReturn nvr) {
@@ -84,7 +84,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         }
     }
 
-    private ContextObject unwindContextChain(final BaseSqueakObject startContext, final BaseSqueakObject targetContext, final Object returnValue) {
+    private ContextObject unwindContextChain(final AbstractSqueakObject startContext, final AbstractSqueakObject targetContext, final Object returnValue) {
         if (startContext.isNil()) {
             throw new TopLevelReturn(returnValue);
         }
@@ -93,7 +93,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         }
         ContextObject context = (ContextObject) startContext;
         while (context != targetContext) {
-            final BaseSqueakObject sender = context.getSender();
+            final AbstractSqueakObject sender = context.getSender();
             if (sender.isNil()) {
                 handleNilSender(startContext, targetContext);
                 context = (ContextObject) targetContext;
@@ -107,7 +107,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     }
 
     @TruffleBoundary
-    private void handleNilSender(final BaseSqueakObject startContext, final BaseSqueakObject targetContext) {
+    private void handleNilSender(final AbstractSqueakObject startContext, final AbstractSqueakObject targetContext) {
         image.getError().println("Unable to unwind context chain (start: " + startContext + "; target: " + targetContext + ")");
         ((ContextObject) startContext).printSqStackTrace();
     }

@@ -24,7 +24,7 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.EnterCodeNode;
 import de.hpi.swa.graal.squeak.util.BitSplitter;
 
-public abstract class CompiledCodeObject extends BaseSqueakObject {
+public abstract class CompiledCodeObject extends AbstractSqueakObject {
     public enum SLOT_IDENTIFIER {
         THIS_CONTEXT_OR_MARKER,
         INSTRUCTION_POINTER,
@@ -215,7 +215,7 @@ public abstract class CompiledCodeObject extends BaseSqueakObject {
     }
 
     @Override
-    public boolean become(final BaseSqueakObject other) {
+    public boolean become(final AbstractSqueakObject other) {
         if (!(other instanceof CompiledMethodObject)) {
             throw new PrimitiveExceptions.PrimitiveFailed();
         }
@@ -245,17 +245,10 @@ public abstract class CompiledCodeObject extends BaseSqueakObject {
 
     public abstract int getOffset(); // offset in the method's bytecode
 
-    @Override
     public final int size() {
         return getBytecodeOffset() + bytes.length;
     }
 
-    @Override
-    public final int instsize() {
-        return 0;
-    }
-
-    @Override
     public Object at0(final long longIndex) {
         final int index = (int) longIndex;
         if (index < getBytecodeOffset() - getOffset()) {
@@ -268,7 +261,6 @@ public abstract class CompiledCodeObject extends BaseSqueakObject {
         }
     }
 
-    @Override
     public void atput0(final long longIndex, final Object obj) {
         final int index = (int) longIndex;
         assert index >= 0;
