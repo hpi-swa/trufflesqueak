@@ -46,8 +46,8 @@ public abstract class SqueakObjectAt0Node extends Node {
     }
 
     @Specialization
-    protected static final Object doNative(final NativeObject obj, final long index) {
-        return obj.at0(index);
+    protected static final long doNative(final NativeObject obj, final long index) {
+        return obj.getNativeAt0(index);
     }
 
     @Specialization

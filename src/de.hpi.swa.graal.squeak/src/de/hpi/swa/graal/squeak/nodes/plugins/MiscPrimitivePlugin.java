@@ -240,7 +240,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected NativeObject doNativeObject(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject string, final long start, final long stop, final NativeObject table) {
             for (int i = (int) start - 1; i < stop; i++) {
-                final Long tableValue = (long) table.at0(((Long) string.getNativeAt0(i)).intValue());
+                final Long tableValue = table.getNativeAt0(string.getNativeAt0(i));
                 string.setByte(i, tableValue.byteValue());
             }
             return string;

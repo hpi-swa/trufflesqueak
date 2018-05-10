@@ -99,24 +99,6 @@ public class NativeObject extends AbstractSqueakObject {
         return new String(getBytes());
     }
 
-    public final Object at0(final long index) {
-        return getNativeAt0(index);
-    }
-
-    public final void atput0(final long index, final Object object) {
-        if (object instanceof LargeIntegerObject) {
-            final long longValue;
-            try {
-                longValue = ((LargeIntegerObject) object).reduceToLong();
-            } catch (ArithmeticException e) {
-                throw new IllegalArgumentException(e.toString());
-            }
-            storage.setNativeAt0(index, longValue);
-        } else {
-            storage.setNativeAt0(index, (long) object);
-        }
-    }
-
     public final long getNativeAt0(final long index) {
         return storage.getNativeAt0(index);
     }

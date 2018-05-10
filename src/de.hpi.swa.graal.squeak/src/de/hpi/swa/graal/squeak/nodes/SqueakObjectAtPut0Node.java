@@ -45,8 +45,13 @@ public abstract class SqueakObjectAtPut0Node extends Node {
     }
 
     @Specialization
-    protected static final void doNative(final NativeObject obj, final long index, final Object value) {
-        obj.atput0(index, value);
+    protected static final void doNativeLong(final NativeObject obj, final long index, final long value) {
+        obj.setNativeAt0(index, value);
+    }
+
+    @Specialization
+    protected static final void doNativeLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
+        obj.setNativeAt0(index, value.reduceToLong());
     }
 
     @Specialization
