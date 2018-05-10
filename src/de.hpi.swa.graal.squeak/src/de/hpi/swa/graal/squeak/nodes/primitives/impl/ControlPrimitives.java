@@ -21,6 +21,7 @@ import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
+import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
@@ -463,9 +464,65 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doNativeObject(final NativeObject receiver, final NativeObject argument) {
+        protected Object doNative(final NativeObject receiver, final NativeObject argument) {
             receiver.setSqClass(argument.getSqClass());
             receiver.convertStorage(argument);
+            throw new PrimitiveWithoutResultException();
+        }
+
+        @Specialization
+        protected Object doNativeLargeInteger(final NativeObject receiver, final LargeIntegerObject argument) {
+            receiver.setSqClass(argument.getSqClass());
+            receiver.convertToBytesStorage();
+            throw new PrimitiveWithoutResultException();
+        }
+
+        @Specialization
+        protected Object doNativeFloat(final NativeObject receiver, final FloatObject argument) {
+            receiver.setSqClass(argument.getSqClass());
+            receiver.convertToBytesStorage();
+            throw new PrimitiveWithoutResultException();
+        }
+
+        @Specialization
+        protected Object doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject argument) {
+            receiver.setSqClass(argument.getSqClass());
+            receiver.setBytes(argument.getBytes());
+            throw new PrimitiveWithoutResultException();
+        }
+
+        @Specialization
+        protected Object doLargeIntegerNative(final LargeIntegerObject receiver, final NativeObject argument) {
+            receiver.setSqClass(argument.getSqClass());
+            receiver.setBytes(argument.getBytes());
+            throw new PrimitiveWithoutResultException();
+        }
+
+        @Specialization
+        protected Object doLargeIntegerFloat(final LargeIntegerObject receiver, final FloatObject argument) {
+            receiver.setSqClass(argument.getSqClass());
+            receiver.setBytes(argument.getBytes());
+            throw new PrimitiveWithoutResultException();
+        }
+
+        @Specialization
+        protected Object doFloat(final FloatObject receiver, final FloatObject argument) {
+            receiver.setSqClass(argument.getSqClass());
+            receiver.setBytes(argument.getBytes());
+            throw new PrimitiveWithoutResultException();
+        }
+
+        @Specialization
+        protected Object doFloatLargeInteger(final FloatObject receiver, final LargeIntegerObject argument) {
+            receiver.setSqClass(argument.getSqClass());
+            receiver.setBytes(argument.getBytes());
+            throw new PrimitiveWithoutResultException();
+        }
+
+        @Specialization
+        protected Object doFloatNative(final FloatObject receiver, final NativeObject argument) {
+            receiver.setSqClass(argument.getSqClass());
+            receiver.setBytes(argument.getBytes());
             throw new PrimitiveWithoutResultException();
         }
 

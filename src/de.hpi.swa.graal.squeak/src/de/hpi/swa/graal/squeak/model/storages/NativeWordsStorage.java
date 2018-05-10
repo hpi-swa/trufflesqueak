@@ -125,6 +125,11 @@ public class NativeWordsStorage extends AbstractNativeObjectStorage {
         return ints;
     }
 
+    public void setWords(final int[] words) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        this.ints = words;
+    }
+
     @Override
     public byte getElementSize() {
         return 4;

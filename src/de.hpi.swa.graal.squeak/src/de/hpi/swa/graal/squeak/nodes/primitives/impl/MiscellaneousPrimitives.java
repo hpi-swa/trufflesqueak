@@ -36,6 +36,7 @@ import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.EmptyObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
+import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
@@ -357,6 +358,16 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object doNative(final NativeObject receiver) {
+            return receiver.shallowCopy();
+        }
+
+        @Specialization
+        protected Object doLargeInteger(final LargeIntegerObject receiver) {
+            return receiver.shallowCopy();
+        }
+
+        @Specialization
+        protected Object doFloat(final FloatObject receiver) {
             return receiver.shallowCopy();
         }
 

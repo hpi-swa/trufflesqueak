@@ -9,11 +9,10 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.model.storages.AbstractNativeObjectStorage;
 import de.hpi.swa.graal.squeak.model.storages.NativeWordsStorage;
 
 public final class FloatObject extends AbstractSqueakObject {
-    @CompilationFinal private AbstractNativeObjectStorage storage;
+    @CompilationFinal private NativeWordsStorage storage;
 
     @CompilationFinal public static final int PRECISION = 53;
     @CompilationFinal public static final int EMIN = -1022;
@@ -32,7 +31,7 @@ public final class FloatObject extends AbstractSqueakObject {
 
     public FloatObject(final FloatObject original) {
         super(original.image, original.getSqClass());
-        storage = original.storage.shallowCopy();
+        storage = (NativeWordsStorage) original.storage.shallowCopy();
         value = original.value;
     }
 
@@ -103,6 +102,10 @@ public final class FloatObject extends AbstractSqueakObject {
         basicAtPut0(0, highMasked);
         basicAtPut0(1, lowMasked);
         this.value = Double.longBitsToDouble((highMasked << 32) | lowMasked);
+    }
+
+    public void setBytes(final byte[] bytes) {
+        storage.setBytes(bytes);
     }
 
     public byte[] getBytes() {

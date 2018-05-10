@@ -8,12 +8,11 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.model.storages.AbstractNativeObjectStorage;
 import de.hpi.swa.graal.squeak.model.storages.NativeBytesStorage;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 public final class LargeIntegerObject extends AbstractSqueakObject {
-    @CompilationFinal protected AbstractNativeObjectStorage storage;
+    @CompilationFinal protected NativeBytesStorage storage;
 
     @CompilationFinal public static final long SMALLINTEGER32_MIN = -0x40000000;
     @CompilationFinal public static final long SMALLINTEGER32_MAX = 0x3fffffff;
@@ -62,7 +61,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
 
     public LargeIntegerObject(final LargeIntegerObject original) {
         super(original.image, original.getSqClass());
-        storage = original.storage.shallowCopy();
+        storage = (NativeBytesStorage) original.storage.shallowCopy();
         integer = original.integer;
     }
 

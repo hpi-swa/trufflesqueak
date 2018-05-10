@@ -197,4 +197,9 @@ public class NativeObject extends AbstractSqueakObject {
         }
         storage.setBytes(oldBytes);
     }
+
+    public final void convertToBytesStorage() {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        storage = new NativeBytesStorage(getBytes());
+    }
 }
