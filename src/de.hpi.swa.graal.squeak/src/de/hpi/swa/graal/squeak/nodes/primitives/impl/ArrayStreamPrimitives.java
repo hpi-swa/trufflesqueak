@@ -128,7 +128,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         public abstract Object executeAtPut(VirtualFrame frame);
 
         @Specialization
-        protected char doNativeObject(final NativeObject receiver, final long index, final char value) {
+        protected char doNativeChar(final NativeObject receiver, final long index, final char value) {
             try {
                 receiver.setNativeAt0(index - 1, value);
             } catch (IllegalArgumentException e) {
@@ -138,7 +138,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected long doNativeObject(final NativeObject receiver, final long index, final long value) {
+        protected long doNativeLong(final NativeObject receiver, final long index, final long value) {
             try {
                 receiver.setNativeAt0(index - 1, value);
             } catch (IllegalArgumentException e) {
@@ -148,7 +148,67 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doNativeObject(final NativeObject receiver, final long index, final LargeIntegerObject value) {
+        protected Object doNativeLargeInteger(final NativeObject receiver, final long index, final LargeIntegerObject value) {
+            try {
+                receiver.atput0(index - 1, value.reduceToLong());
+            } catch (IllegalArgumentException | ArithmeticException e) {
+                throw new PrimitiveFailed();
+            }
+            return value;
+        }
+
+        @Specialization
+        protected char doLargeIntegerChar(final LargeIntegerObject receiver, final long index, final char value) {
+            try {
+                receiver.setNativeAt0(index - 1, value);
+            } catch (IllegalArgumentException e) {
+                throw new PrimitiveFailed();
+            }
+            return value;
+        }
+
+        @Specialization
+        protected long doLargeIntegerLong(final LargeIntegerObject receiver, final long index, final long value) {
+            try {
+                receiver.setNativeAt0(index - 1, value);
+            } catch (IllegalArgumentException e) {
+                throw new PrimitiveFailed();
+            }
+            return value;
+        }
+
+        @Specialization
+        protected Object doLargeInteger(final LargeIntegerObject receiver, final long index, final LargeIntegerObject value) {
+            try {
+                receiver.atput0(index - 1, value.reduceToLong());
+            } catch (IllegalArgumentException | ArithmeticException e) {
+                throw new PrimitiveFailed();
+            }
+            return value;
+        }
+
+        @Specialization
+        protected char doFloatChar(final FloatObject receiver, final long index, final char value) {
+            try {
+                receiver.setNativeAt0(index - 1, value);
+            } catch (IllegalArgumentException e) {
+                throw new PrimitiveFailed();
+            }
+            return value;
+        }
+
+        @Specialization
+        protected long doFloatLong(final FloatObject receiver, final long index, final long value) {
+            try {
+                receiver.setNativeAt0(index - 1, value);
+            } catch (IllegalArgumentException e) {
+                throw new PrimitiveFailed();
+            }
+            return value;
+        }
+
+        @Specialization
+        protected Object doFloatLargeInteger(final FloatObject receiver, final long index, final LargeIntegerObject value) {
             try {
                 receiver.atput0(index - 1, value.reduceToLong());
             } catch (IllegalArgumentException | ArithmeticException e) {

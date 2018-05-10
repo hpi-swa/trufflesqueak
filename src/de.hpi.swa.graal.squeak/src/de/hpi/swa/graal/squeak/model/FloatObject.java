@@ -92,6 +92,10 @@ public final class FloatObject extends AbstractSqueakObject {
         return storage.getNativeAt0(index);
     }
 
+    public void setNativeAt0(final long index, final long value) {
+        storage.setNativeAt0(index, value);
+    }
+
     private void setWords(final long high, final long low) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         final long highMasked = high & LargeIntegerObject.MASK_32BIT;
