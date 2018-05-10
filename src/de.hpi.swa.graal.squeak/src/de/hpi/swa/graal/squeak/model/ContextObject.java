@@ -82,7 +82,7 @@ public final class ContextObject extends AbstractSqueakObject {
         pointers[(int) index] = value;
     }
 
-    public CompiledCodeObject getCodeObject() {
+    public CompiledCodeObject getClosureOrMethod() {
         final BlockClosureObject closure = getClosure();
         if (closure != null) {
             return closure.getCompiledBlock();
@@ -100,16 +100,6 @@ public final class ContextObject extends AbstractSqueakObject {
 
     public AbstractSqueakObject shallowCopy() {
         return new ContextObject(this);
-    }
-
-    public Object[] getReceiverAndArguments() {
-        final int numArgs = getCodeObject().getNumArgsAndCopiedValues();
-        final Object[] arguments = new Object[1 + numArgs];
-        arguments[0] = getReceiver();
-        for (int i = 0; i < numArgs; i++) {
-            arguments[1 + i] = atTemp(i);
-        }
-        return arguments;
     }
 
     public boolean isDirty() {
@@ -159,14 +149,12 @@ public final class ContextObject extends AbstractSqueakObject {
     }
 
     public long getInstructionPointer() {
-        final CompiledCodeObject code = getCodeObject();
-        return decodeSqPC((long) at0(CONTEXT.INSTRUCTION_POINTER), code);
+        return (long) at0(CONTEXT.INSTRUCTION_POINTER);
     }
 
     public void setInstructionPointer(final long newPC) {
-        final long encodedPC = encodeSqPC(newPC, getCodeObject());
-        assert encodedPC >= 0;
-        atput0(CONTEXT.INSTRUCTION_POINTER, encodedPC);
+        assert newPC >= 0;
+        atput0(CONTEXT.INSTRUCTION_POINTER, newPC);
     }
 
     public long getStackPointer() {
@@ -212,25 +200,6 @@ public final class ContextObject extends AbstractSqueakObject {
         return atStack(getStackPointer() - offset);
     }
 
-    public Object pop() {
-        final long sp = getStackPointer();
-        if (sp > 0) {
-            setStackPointer(sp - 1);
-        }
-        return atStackAndClear(sp);
-    }
-
-    public Object[] popNReversed(final int numPop) {
-        final long sp = getStackPointer();
-        assert sp - numPop >= 0;
-        final Object[] result = new Object[numPop];
-        for (int i = 0; i < numPop; i++) {
-            result[numPop - 1 - i] = atStackAndClear(sp - i);
-        }
-        setStackPointer(sp - numPop);
-        return result;
-    }
-
     public Object getReceiver() {
         return at0(CONTEXT.RECEIVER);
     }
@@ -249,16 +218,6 @@ public final class ContextObject extends AbstractSqueakObject {
 
     public void atStackPut(final long argumentIndex, final Object value) {
         atput0(CONTEXT.TEMP_FRAME_START - 1 + argumentIndex, value);
-    }
-
-    public Object atStackAndClear(final long argumentIndex) {
-        final Object value = atStack(argumentIndex);
-        final CompiledCodeObject code = getMethod();
-        if (argumentIndex >= 1 + code.getNumArgsAndCopiedValues() + code.getNumTemps()) {
-            // only nil out stack values, not receiver, arguments, or temporary variables
-            atStackPut(argumentIndex, image.nil);
-        }
-        return value;
     }
 
     @Override
@@ -308,19 +267,17 @@ public final class ContextObject extends AbstractSqueakObject {
         this.frameMarker = frameMarker;
     }
 
-    /*
-     * pc is offset by the initial pc
-     */
-    public static long encodeSqPC(final long pc, final CompiledCodeObject code) {
-        return pc + code.getInitialPC() + code.getOffset();
-    }
-
-    public static long decodeSqPC(final long pc, final CompiledCodeObject code) {
-        return pc - code.getInitialPC() - code.getOffset();
-    }
-
     public boolean isUnwindContext() {
         return getMethod().isUnwindMarked();
+    }
+
+    public Object[] getReceiverAndNArguments(final int numArgs) {
+        final Object[] arguments = new Object[1 + numArgs];
+        arguments[0] = getReceiver();
+        for (int i = 0; i < numArgs; i++) {
+            arguments[1 + i] = atTemp(i);
+        }
+        return arguments;
     }
 
     /*
@@ -329,8 +286,15 @@ public final class ContextObject extends AbstractSqueakObject {
     @TruffleBoundary
     public void printSqStackTrace() {
         ContextObject current = this;
+        int numArgsAndCopiedValues;
         while (true) {
-            final Object[] rcvrAndArgs = current.getReceiverAndArguments();
+            final CompiledCodeObject code = current.getClosureOrMethod();
+            if (code instanceof CompiledBlockObject) {
+                numArgsAndCopiedValues = ((CompiledBlockObject) code).getNumArgs() + ((CompiledBlockObject) code).getNumCopiedValues();
+            } else {
+                numArgsAndCopiedValues = ((CompiledMethodObject) code).getNumArgs();
+            }
+            final Object[] rcvrAndArgs = current.getReceiverAndNArguments(numArgsAndCopiedValues);
             final String[] argumentStrings = new String[rcvrAndArgs.length];
             for (int i = 0; i < rcvrAndArgs.length; i++) {
                 argumentStrings[i] = rcvrAndArgs[i].toString();

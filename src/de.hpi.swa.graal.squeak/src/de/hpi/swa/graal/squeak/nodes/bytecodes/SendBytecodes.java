@@ -17,6 +17,8 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.SpecialSelectorObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
+import de.hpi.swa.graal.squeak.nodes.CompiledCodeNodes.GetCompiledMethodNode;
+import de.hpi.swa.graal.squeak.nodes.CompiledCodeNodes.IsDoesNotUnderstandNode;
 import de.hpi.swa.graal.squeak.nodes.DispatchNode;
 import de.hpi.swa.graal.squeak.nodes.LookupNode;
 import de.hpi.swa.graal.squeak.nodes.context.SqueakLookupClassNode;
@@ -35,6 +37,7 @@ public final class SendBytecodes {
         @Child private DispatchNode dispatchNode = DispatchNode.create();
         @Child private SendDoesNotUnderstandNode sendDoesNotUnderstandNode;
         @Child private SendObjectAsMethodNode sendObjectAsMethodNode;
+        @Child private IsDoesNotUnderstandNode isDoesNotUnderstandNode;
         @Child private StackPopNReversedNode popNReversedNode;
         @Child private StackPushNode pushNode;
         @Child private FrameSlotReadNode readContextNode;
@@ -49,6 +52,7 @@ public final class SendBytecodes {
             readContextNode = FrameSlotReadNode.create(code.thisContextOrMarkerSlot);
             sendDoesNotUnderstandNode = SendDoesNotUnderstandNode.create(code.image);
             sendObjectAsMethodNode = SendObjectAsMethodNode.create(code.image);
+            isDoesNotUnderstandNode = IsDoesNotUnderstandNode.create(code.image);
         }
 
         @Override
@@ -69,7 +73,7 @@ public final class SendBytecodes {
             final Object contextOrMarker = readContextNode.executeRead(frame);
             if (!(lookupResult instanceof CompiledCodeObject)) {
                 return sendObjectAsMethodNode.execute(frame, selector, rcvrAndArgs, lookupResult, contextOrMarker);
-            } else if (((CompiledCodeObject) lookupResult).isDoesNotUnderstand()) {
+            } else if (isDoesNotUnderstandNode.execute(lookupResult)) {
                 return sendDoesNotUnderstandNode.execute(frame, selector, rcvrAndArgs, rcvrClass, lookupResult, contextOrMarker);
             } else {
                 return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndArgs, contextOrMarker);
@@ -133,6 +137,7 @@ public final class SendBytecodes {
 
     public static class SingleExtendedSuperNode extends AbstractSendNode {
         protected static class SqueakLookupClassSuperNode extends SqueakLookupClassNode {
+            @Child private GetCompiledMethodNode getMethodNode = GetCompiledMethodNode.create();
             @CompilationFinal private final CompiledCodeObject code;
 
             public SqueakLookupClassSuperNode(final CompiledCodeObject code) {
@@ -142,7 +147,7 @@ public final class SendBytecodes {
 
             @Override
             public ClassObject executeLookup(final Object receiver) {
-                final ClassObject compiledInClass = code.getCompiledInClass();
+                final ClassObject compiledInClass = getMethodNode.execute(code).getCompiledInClass();
                 final Object superclass = compiledInClass.getSuperclass();
                 if (superclass == code.image.nil) {
                     return compiledInClass;

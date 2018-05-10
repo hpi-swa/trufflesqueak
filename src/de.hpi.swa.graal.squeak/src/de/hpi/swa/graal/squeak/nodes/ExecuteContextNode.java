@@ -14,6 +14,7 @@ import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
+import de.hpi.swa.graal.squeak.nodes.CompiledCodeNodes.CalculcatePCOffsetNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
@@ -31,6 +32,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
     @Child private FrameSlotReadNode contextReadNode;
     @Child private UpdateInstructionPointerNode updateInstructionPointerNode;
     @Child private StackPushNode pushStackNode;
+    @Child private CalculcatePCOffsetNode calculcatePCOffsetNode = CalculcatePCOffsetNode.create();
 
     public static ExecuteContextNode create(final CompiledCodeObject code) {
         return new ExecuteContextNode(code);
@@ -65,10 +67,10 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
 
     public Object executeNonVirtualized(final VirtualFrame frame, final ContextObject newContext) {
         // maybe persist newContext, so there's no need to lookup the context to update its pc.
-        assert newContext.getCodeObject() == FrameAccess.getMethod(frame);
+        assert newContext.getClosureOrMethod() == FrameAccess.getMethod(frame);
         code.image.interrupt.sendOrBackwardJumpTrigger(frame);
         try {
-            final long initialPC = newContext.getInstructionPointer();
+            final long initialPC = getAndDecodeSqueakPC(newContext);
             if (initialPC == 0) {
                 startBytecode(frame);
             } else {
@@ -85,6 +87,10 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
             // } catch (NonVirtualReturn nvr) {
             // return handleNonVirtualReturnNode.executeHandle(frame, nvr);
         }
+    }
+
+    private long getAndDecodeSqueakPC(final ContextObject newContext) {
+        return newContext.getInstructionPointer() - calculcatePCOffsetNode.execute(newContext.getClosureOrMethod());
     }
 
     /*

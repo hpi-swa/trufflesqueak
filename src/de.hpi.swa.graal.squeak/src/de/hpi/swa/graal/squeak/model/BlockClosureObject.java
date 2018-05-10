@@ -72,7 +72,7 @@ public final class BlockClosureObject extends AbstractSqueakObject {
     public long getPC() {
         if (pc == -1) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            pc = block.getInitialPC() + block.getOffset();
+            pc = block.getInitialPC();
         }
         return pc;
     }
@@ -179,11 +179,17 @@ public final class BlockClosureObject extends AbstractSqueakObject {
         if (block == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             final CompiledCodeObject code = outerContext.getMethod();
-            final int offset = (int) pc - code.getInitialPC();
+            final CompiledMethodObject method;
+            if (code instanceof CompiledMethodObject) {
+                method = (CompiledMethodObject) code;
+            } else {
+                method = ((CompiledBlockObject) code).getMethod();
+            }
+            final int offset = (int) pc - method.getInitialPC();
             final int j = code.getBytes()[offset - 2];
             final int k = code.getBytes()[offset - 1];
             final int blockSize = (j << 8) | (k & 0xff);
-            block = CompiledBlockObject.create(code, ((Long) numArgs).intValue(), copied.length, offset, blockSize);
+            block = CompiledBlockObject.create(code, method, ((Long) numArgs).intValue(), copied.length, offset, blockSize);
         }
         return block;
     }

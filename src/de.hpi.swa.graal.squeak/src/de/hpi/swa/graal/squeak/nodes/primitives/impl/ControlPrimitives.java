@@ -30,6 +30,7 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SEMAPHORE;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
+import de.hpi.swa.graal.squeak.nodes.CompiledCodeNodes.IsDoesNotUnderstandNode;
 import de.hpi.swa.graal.squeak.nodes.DispatchNode;
 import de.hpi.swa.graal.squeak.nodes.DispatchNodeGen;
 import de.hpi.swa.graal.squeak.nodes.LookupNode;
@@ -99,12 +100,14 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Child protected DispatchNode dispatchNode = DispatchNodeGen.create();
         @Child private SendDoesNotUnderstandNode sendDoesNotUnderstandNode;
         @Child private SendObjectAsMethodNode sendObjectAsMethodNode;
+        @Child private IsDoesNotUnderstandNode isDoesNotUnderstandNode;
 
         protected AbstractPerformPrimitiveNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
             lookupClassNode = SqueakLookupClassNodeGen.create(code.image);
             sendDoesNotUnderstandNode = SendDoesNotUnderstandNode.create(code.image);
             sendObjectAsMethodNode = SendObjectAsMethodNode.create(code.image);
+            isDoesNotUnderstandNode = IsDoesNotUnderstandNode.create(code.image);
         }
 
         protected ClassObject lookup(final Object receiver) {
@@ -116,7 +119,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             final Object contextOrMarker = FrameAccess.getContextOrMarker(frame);
             if (!(lookupResult instanceof CompiledCodeObject)) {
                 return sendObjectAsMethodNode.execute(frame, selector, rcvrAndArgs, lookupResult, contextOrMarker);
-            } else if (((CompiledCodeObject) lookupResult).isDoesNotUnderstand()) {
+            } else if (isDoesNotUnderstandNode.execute(lookupResult)) {
                 return sendDoesNotUnderstandNode.execute(frame, selector, rcvrAndArgs, rcvrClass, lookupResult, contextOrMarker);
             } else {
                 return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndArgs, contextOrMarker);
@@ -140,7 +143,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected PrimPerformNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
-            rcvrAndArgsNode = ReceiverAndArgumentsNode.create(method);
+            rcvrAndArgsNode = ReceiverAndArgumentsNode.create(method.thisContextOrMarkerSlot);
         }
 
         @SuppressWarnings("unused")

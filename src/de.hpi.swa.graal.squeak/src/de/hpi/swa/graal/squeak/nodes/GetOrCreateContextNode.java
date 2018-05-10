@@ -12,6 +12,7 @@ import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
+import de.hpi.swa.graal.squeak.nodes.CompiledCodeNodes.CalculcatePCOffsetNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
@@ -58,7 +59,7 @@ public abstract class GetOrCreateContextNode extends AbstractNodeWithCode {
         final long frameSP = FrameUtil.getIntSafe(frame, method.stackPointerSlot);
         context.atput0(CONTEXT.METHOD, method);
         if (framePC >= 0) {
-            context.setInstructionPointer(framePC);
+            context.setInstructionPointer(framePC + CalculcatePCOffsetNode.create().execute(method));
         } else { // context has been terminated
             context.atput0(CONTEXT.INSTRUCTION_POINTER, method.image.nil);
         }

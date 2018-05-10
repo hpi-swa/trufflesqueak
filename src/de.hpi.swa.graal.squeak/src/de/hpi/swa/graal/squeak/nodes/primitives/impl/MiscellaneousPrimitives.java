@@ -42,6 +42,7 @@ import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
+import de.hpi.swa.graal.squeak.nodes.CompiledCodeNodes.IsDoesNotUnderstandNode;
 import de.hpi.swa.graal.squeak.nodes.DispatchNode;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
 import de.hpi.swa.graal.squeak.nodes.LookupNode;
@@ -692,6 +693,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         @Child protected DispatchNode dispatchNode = DispatchNode.create();
         @Child protected SqueakLookupClassNode lookupClassNode;
         @Child protected GetOrCreateContextNode getOrCreateContextNode;
+        @Child private IsDoesNotUnderstandNode isDoesNotUnderstandNode;
 
         protected SimulationPrimitiveNode(final CompiledMethodObject method, final int numArguments, final String moduleName, final String functionName) {
             super(method, numArguments);
@@ -699,6 +701,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
             this.functionName = code.image.wrap(functionName);
             lookupClassNode = SqueakLookupClassNode.create(method.image);
             getOrCreateContextNode = GetOrCreateContextNode.create(method);
+            isDoesNotUnderstandNode = IsDoesNotUnderstandNode.create(method.image);
         }
 
         @SuppressWarnings("unused")
@@ -791,7 +794,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
                 }
                 if (lookupResult instanceof CompiledMethodObject) {
                     final CompiledMethodObject result = (CompiledMethodObject) lookupResult;
-                    if (!result.isDoesNotUnderstand()) {
+                    if (!isDoesNotUnderstandNode.execute(result)) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
                         simulationMethod = result;
                         return result;

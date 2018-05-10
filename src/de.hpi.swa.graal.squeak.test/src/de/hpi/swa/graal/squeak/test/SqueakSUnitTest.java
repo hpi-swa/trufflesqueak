@@ -23,7 +23,7 @@ import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
-import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
+import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
@@ -240,7 +240,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
 
     private static Object asSymbol(final String value) {
         final String fakeMethodName = "fakeAsSymbol" + value.hashCode();
-        final CompiledCodeObject method = makeMethod(
+        final CompiledMethodObject method = makeMethod(
                         new Object[]{4L, image.asSymbol, image.wrap(value), image.newSymbol(fakeMethodName), getSmalltalkAssociation()},
                         new int[]{0x21, 0xD0, 0x7C});
         return runMethod(method, getSmalltalkDictionary());
@@ -255,7 +255,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
     private static Object evaluate(final String expression) {
         //
         final String fakeMethodName = "fakeEvaluate" + expression.hashCode();
-        final CompiledCodeObject method = makeMethod(
+        final CompiledMethodObject method = makeMethod(
                         new Object[]{6L, getEvaluateSymbol(), getSmalltalkAssociation(), getCompilerSymbol(), image.wrap(expression), asSymbol(fakeMethodName), getSmalltalkAssociation()},
                         new int[]{0x41, 0x22, 0xC0, 0x23, 0xE0, 0x7C});
         image.interrupt.reset(); // Avoid incorrect state across executions

@@ -21,7 +21,7 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.io.SqueakDisplay;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
-import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
+import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
@@ -158,20 +158,20 @@ public final class SqueakImageContext {
         final Object receiver = config.getReceiver();
         final String selector = config.getSelector();
         final ClassObject receiverClass = receiver instanceof Long ? smallIntegerClass : nilClass;
-        final CompiledCodeObject lookupResult = (CompiledCodeObject) receiverClass.lookup(selector);
+        final CompiledMethodObject lookupResult = (CompiledMethodObject) receiverClass.lookup(selector);
         if (lookupResult.getCompiledInSelector() == doesNotUnderstand) {
             throw new SqueakException(receiver + " >> " + selector + " could not be found!");
         }
         final ContextObject customContext = ContextObject.create(this, lookupResult.frameSize());
         customContext.atput0(CONTEXT.METHOD, lookupResult);
-        customContext.atput0(CONTEXT.INSTRUCTION_POINTER, (long) customContext.getCodeObject().getInitialPC());
+        customContext.atput0(CONTEXT.INSTRUCTION_POINTER, (long) lookupResult.getInitialPC());
         customContext.atput0(CONTEXT.RECEIVER, receiver);
         customContext.atput0(CONTEXT.STACKPOINTER, 1L);
         customContext.atput0(CONTEXT.CLOSURE_OR_NIL, nil);
         customContext.setSender(nil);
         customContext.setFrameMarker(new FrameMarker());
         // if there were arguments, they would need to be pushed before the temps
-        final long numTemps = lookupResult.getNumTemps() - lookupResult.getNumArgsAndCopiedValues();
+        final long numTemps = lookupResult.getNumTemps() - lookupResult.getNumArgs();
         for (int i = 0; i < numTemps; i++) {
             customContext.push(nil);
         }

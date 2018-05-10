@@ -59,10 +59,6 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
     @CompilationFinal private RootCallTarget callTarget;
     @CompilationFinal private final CyclicAssumption callTargetStable = new CyclicAssumption("Compiled method assumption");
 
-    public abstract NativeObject getCompiledInSelector();
-
-    public abstract ClassObject getCompiledInClass();
-
     protected CompiledCodeObject(final SqueakImageContext img, final ClassObject klass) {
         super(img, klass);
         if (alwaysNonVirtualized) {
@@ -86,7 +82,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         invalidateAndCreateNewCallTargets();
     }
 
-    public Source getSource() {
+    public final Source getSource() {
         if (source == null) {
             source = Source.newBuilder(CompiledCodeObjectPrinter.getString(this)).mimeType(SqueakLanguage.MIME_TYPE).name(toString()).build();
         }
@@ -98,7 +94,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
     }
 
     @TruffleBoundary
-    protected void prepareFrameDescriptor() {
+    protected final void prepareFrameDescriptor() {
         frameDescriptor = new FrameDescriptor();
         thisContextOrMarkerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.THIS_CONTEXT_OR_MARKER, FrameSlotKind.Object);
         instructionPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.INSTRUCTION_POINTER, FrameSlotKind.Int);
@@ -112,7 +108,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         }
     }
 
-    public RootCallTarget getCallTarget() {
+    public final RootCallTarget getCallTarget() {
         if (callTarget == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             callTarget = invalidateAndCreateNewCallTargets();
@@ -126,43 +122,20 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         return Truffle.getRuntime().createCallTarget(EnterCodeNode.create(image.getLanguage(), this));
     }
 
-    public Assumption getCallTargetStable() {
+    public final Assumption getCallTargetStable() {
         return callTargetStable.getAssumption();
     }
 
-    @Override
-    public String toString() {
-        String className = "UnknownClass";
-        String selector = "unknownSelector";
-        final ClassObject classObject = getCompiledInClass();
-        if (classObject != null) {
-            className = classObject.nameAsClass();
-        }
-        final NativeObject selectorObj = getCompiledInSelector();
-        if (selectorObj != null) {
-            selector = selectorObj.toString();
-        }
-        return className + ">>" + selector;
-    }
-
-    public FrameDescriptor getFrameDescriptor() {
+    public final FrameDescriptor getFrameDescriptor() {
         return frameDescriptor;
-    }
-
-    public int getNumTemps() {
-        return numTemps;
     }
 
     public final int getNumArgs() {
         return numArgs;
     }
 
-    public int getNumCopiedValues() {
-        return 0;
-    }
-
-    public final int getNumArgsAndCopiedValues() {
-        return numArgs + getNumCopiedValues();
+    public final int getNumTemps() {
+        return numTemps;
     }
 
     public final int getNumLiterals() {
@@ -215,7 +188,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
     }
 
     @Override
-    public boolean become(final AbstractSqueakObject other) {
+    public final boolean become(final AbstractSqueakObject other) {
         if (!(other instanceof CompiledMethodObject)) {
             throw new PrimitiveExceptions.PrimitiveFailed();
         }
@@ -230,20 +203,9 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         return true;
     }
 
-    /*
-     * Answer the program counter for the receiver's first bytecode.
-     *
-     */
-    public int getInitialPC() {
-        // pc is offset by header + numLiterals, +1 for one-based addressing
-        return getBytecodeOffset() + 1;
-    }
-
-    public int getBytecodeOffset() {
+    public final int getBytecodeOffset() {
         return (1 + numLiterals) * BYTES_PER_WORD; // header plus numLiterals
     }
-
-    public abstract int getOffset(); // offset in the method's bytecode
 
     public final int size() {
         return getBytecodeOffset() + bytes.length;
@@ -292,11 +254,11 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         }
     }
 
-    public boolean hasPrimitive() {
+    public final boolean hasPrimitive() {
         return hasPrimitive;
     }
 
-    public int primitiveIndex() {
+    public final int primitiveIndex() {
         if (hasPrimitive && bytes.length >= 3) {
             return Byte.toUnsignedInt(bytes[1]) + (Byte.toUnsignedInt(bytes[2]) << 8);
         } else {
@@ -308,37 +270,31 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         return literals;
     }
 
-    public byte[] getBytes() {
+    public final byte[] getBytes() {
         return bytes;
     }
 
-    public abstract CompiledMethodObject getMethod();
-
-    public boolean canBeVirtualized() {
+    public final boolean canBeVirtualized() {
         return canBeVirtualized.isValid();
     }
 
-    public Assumption getCanBeVirtualizedAssumption() {
+    public final Assumption getCanBeVirtualizedAssumption() {
         return canBeVirtualized;
     }
 
-    public void invalidateCanBeVirtualizedAssumption() {
+    public final void invalidateCanBeVirtualizedAssumption() {
         canBeVirtualized.invalidate();
     }
 
-    public boolean isUnwindMarked() {
+    public final boolean isUnwindMarked() {
         return hasPrimitive() && primitiveIndex() == 198;
     }
 
-    public boolean isExceptionHandlerMarked() {
+    public final boolean isExceptionHandlerMarked() {
         return hasPrimitive() && primitiveIndex() == 199;
     }
 
-    public boolean isDoesNotUnderstand() {
-        return getCompiledInSelector() == image.doesNotUnderstand;
-    }
-
-    public static long makeHeader(final int numArgs, final int numTemps, final int numLiterals, final boolean hasPrimitive, final boolean needsLargeFrame) {
+    public static final long makeHeader(final int numArgs, final int numTemps, final int numLiterals, final boolean hasPrimitive, final boolean needsLargeFrame) {
         long header = 0;
         header += (numArgs & 0x0F) << 24;
         header += (numTemps & 0x3F) << 18;

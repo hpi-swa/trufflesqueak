@@ -9,6 +9,7 @@ import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
+import de.hpi.swa.graal.squeak.nodes.CompiledCodeNodes.GetCompiledMethodNode;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodesFactory.PushClosureNodeGen;
@@ -63,6 +64,7 @@ public final class PushBytecodes {
         @Child protected GetOrCreateContextNode getOrCreateContextNode;
         @Child protected StackPopNReversedNode popNReversedNode;
         @Child protected ReceiverNode receiverNode;
+        @Child private GetCompiledMethodNode getMethodNode = GetCompiledMethodNode.create();
 
         public static PushClosureNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int i, final int j, final int k) {
             return PushClosureNodeGen.create(code, index, numBytecodes, i, j, k);
@@ -76,13 +78,12 @@ public final class PushBytecodes {
             getOrCreateContextNode = GetOrCreateContextNode.create(code);
             popNReversedNode = StackPopNReversedNode.create(code, numCopied);
             receiverNode = ReceiverNode.create(code);
-
         }
 
         private CompiledBlockObject getBlock() {
             if (block == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                block = CompiledBlockObject.create(code, numArgs, numCopied, index + numBytecodes, blockSize);
+                block = CompiledBlockObject.create(code, getMethodNode.execute(code), numArgs, numCopied, index + numBytecodes, blockSize);
             }
             return block;
         }
