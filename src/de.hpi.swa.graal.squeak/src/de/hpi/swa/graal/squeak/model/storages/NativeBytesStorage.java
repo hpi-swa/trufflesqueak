@@ -9,7 +9,7 @@ import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 
 public class NativeBytesStorage extends AbstractNativeObjectStorage {
     @CompilationFinal(dimensions = 1) protected byte[] bytes;
-    @CompilationFinal private static final long BYTE_MAX = (long) (Math.pow(2, Byte.SIZE) - 1);
+    @CompilationFinal public static final long BYTE_MAX = (long) (Math.pow(2, Byte.SIZE) - 1);
 
     public NativeBytesStorage(final int size) {
         bytes = new byte[size];

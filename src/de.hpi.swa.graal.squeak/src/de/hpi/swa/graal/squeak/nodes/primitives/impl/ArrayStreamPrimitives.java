@@ -180,7 +180,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected Object doLargeInteger(final LargeIntegerObject receiver, final long index, final LargeIntegerObject value) {
             try {
-                receiver.atput0(index - 1, value.reduceToLong());
+                receiver.setNativeAt0(index - 1, value.reduceToLong());
             } catch (IllegalArgumentException | ArithmeticException e) {
                 throw new PrimitiveFailed();
             }
