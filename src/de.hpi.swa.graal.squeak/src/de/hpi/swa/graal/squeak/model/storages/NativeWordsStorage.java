@@ -12,7 +12,7 @@ import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 
 public class NativeWordsStorage extends AbstractNativeObjectStorage {
     @CompilationFinal(dimensions = 1) protected int[] ints;
-    @CompilationFinal private static final long INTEGER_MAX = (long) (Math.pow(2, Integer.SIZE) - 1);
+    @CompilationFinal public static final long INTEGER_MAX = (long) (Math.pow(2, Integer.SIZE) - 1);
 
     public NativeWordsStorage(final int size) {
         ints = new int[size];
@@ -116,7 +116,7 @@ public class NativeWordsStorage extends AbstractNativeObjectStorage {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         ints = new int[size];
         for (int i = 0; i < ints.length; i++) {
-            ints[i] = ((bytes[i + 1]) << 24) | ((bytes[i + 2]) << 16) | ((bytes[i + 3]) << 8) | bytes[i];
+            ints[i] = ((bytes[i]) << 24) | ((bytes[i + 1]) << 16) | ((bytes[i + 2]) << 8) | bytes[3];
         }
     }
 

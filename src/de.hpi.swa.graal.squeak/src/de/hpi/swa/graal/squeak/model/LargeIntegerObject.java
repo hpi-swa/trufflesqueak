@@ -65,7 +65,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
 
     public void setNativeAt0(final long index, final long value) {
         if (value < 0 || value > NativeBytesStorage.BYTE_MAX) { // check for overflow
-            throw new IllegalArgumentException("Illegal value for BytesObject: " + value);
+            throw new IllegalArgumentException("Illegal value for LargeIntegerObject: " + value);
         }
         bytes[(int) index] = (byte) value;
         integerDirty = true;

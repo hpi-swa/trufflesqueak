@@ -52,7 +52,7 @@ public abstract class SqueakObjectAt0Node extends Node {
 
     @Specialization
     protected static final Object doFloat(final FloatObject obj, final long index) {
-        return obj.at0(index);
+        return obj.getNativeAt0(index);
     }
 
     @Specialization

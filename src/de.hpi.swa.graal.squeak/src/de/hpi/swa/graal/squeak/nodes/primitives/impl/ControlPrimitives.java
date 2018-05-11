@@ -695,12 +695,16 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final boolean doDouble(final double a, final double b) {
-            return a != b;
+        protected final boolean doDouble(final double a, final double b) {
+            if (Double.isNaN(a) && Double.isNaN(b)) {
+                return code.image.sqFalse;
+            } else {
+                return a != b;
+            }
         }
 
         @Specialization
-        protected static final boolean doFloat(final FloatObject a, final FloatObject b) {
+        protected final boolean doFloat(final FloatObject a, final FloatObject b) {
             return a != b && !doDouble(a.getValue(), b.getValue());
         }
 
