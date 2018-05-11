@@ -2,6 +2,7 @@
 .idea
 mx
 mxbuild
+images
 *.pyc
 *.jar
 *.src.zip
