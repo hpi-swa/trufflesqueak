@@ -47,7 +47,7 @@ public class GraalSqueakMain extends AbstractLanguageLauncher {
     @Override
     protected void launch(final Context.Builder contextBuilder) {
         contextBuilder.arguments(getLanguageId(), config.toStringArgs());
-        try (Context ctx = contextBuilder.build()) {
+        try (Context ctx = contextBuilder.allowAllAccess(true).build()) {
             final Builder sourceBuilder = Source.newBuilder(getLanguageId(), new File(config.getImagePath()));
             sourceBuilder.interactive(true);
             ctx.eval(sourceBuilder.build());

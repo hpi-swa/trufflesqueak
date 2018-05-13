@@ -2,6 +2,7 @@ package de.hpi.swa.graal.squeak.image;
 
 import java.awt.Dimension;
 import java.awt.Point;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -23,6 +24,7 @@ import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
+import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
@@ -69,7 +71,7 @@ public final class SqueakImageContext {
     @CompilationFinal private final SqueakLanguage language;
     @CompilationFinal private final PrintWriter output;
     @CompilationFinal private final PrintWriter error;
-    @CompilationFinal private final SqueakLanguage.Env env;
+    @CompilationFinal public final SqueakLanguage.Env env;
 
     // Special selectors
     @CompilationFinal public final SpecialSelectorObject plus = new SpecialSelectorObject(this);
@@ -208,6 +210,8 @@ public final class SqueakImageContext {
             return wrap((long) Long.valueOf((Integer) obj));
         } else if (obj instanceof Long) {
             return wrap((long) obj);
+        } else if (obj instanceof Double) {
+            return wrap((double) obj);
         } else if (obj instanceof BigInteger) {
             return wrap((BigInteger) obj);
         } else if (obj instanceof String) {
@@ -235,6 +239,10 @@ public final class SqueakImageContext {
 
     public AbstractSqueakObject wrap(final BigInteger i) {
         return new LargeIntegerObject(this, i);
+    }
+
+    public FloatObject wrap(final double value) {
+        return new FloatObject(this, value);
     }
 
     public NativeObject wrap(final String s) {
@@ -284,6 +292,10 @@ public final class SqueakImageContext {
 
     public void registerSemaphore(final AbstractSqueakObject semaphore, final long index) {
         specialObjectsArray.atput0(index, semaphore.isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassSemaphore) ? semaphore : nil);
+    }
+
+    public String imageRelativeFilePathFor(final String fileName) {
+        return config.getImageDirectory() + File.separator + fileName;
     }
 
     public void trace(final String message) {
