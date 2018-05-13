@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.util;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
@@ -10,30 +11,31 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.process.SignalSemaphoreNode;
 
-public class InterruptHandlerNode extends Node {
-    @CompilationFinal private static final int interruptCheckCounterSize = 1000;
-    @CompilationFinal private static final int interruptChecksEveryNms = 3;
+public final class InterruptHandlerNode extends Node {
+    @CompilationFinal private static final int INTERRUPT_CHECK_COUNTER_SIZE = 1000;
+    @CompilationFinal private static final int INTERRUPT_CHECKS_EVERY_NMS = 3;
     @CompilationFinal private final SqueakImageContext image;
+    @CompilationFinal private final boolean disabled;
     private int interruptCheckCounter = 0;
-    private int interruptCheckCounterFeedbackReset = interruptCheckCounterSize;
+    private int interruptCheckCounterFeedbackReset = INTERRUPT_CHECK_COUNTER_SIZE;
     private long nextPollTick = 0;
     private long nextWakeupTick = 0;
     private long lastTick = 0;
     private boolean interruptPending = false;
-    private boolean disabled = false;
+    private boolean disabledTemporarily = false;
     private boolean pendingFinalizationSignals = false;
     @Child private SignalSemaphoreNode signalSemaporeNode;
 
     public static InterruptHandlerNode create(final SqueakImageContext image, final SqueakConfig config) {
-        if (config.disableInterruptHandler()) {
-            return new DummyInterruptHandlerNode(image);
-        } else {
-            return new InterruptHandlerNode(image);
-        }
+        return new InterruptHandlerNode(image, config);
     }
 
-    protected InterruptHandlerNode(final SqueakImageContext image) {
+    protected InterruptHandlerNode(final SqueakImageContext image, final SqueakConfig config) {
         this.image = image;
+        disabled = config.disableInterruptHandler();
+        if (disabled) {
+            image.getOutput().println("Interrupt handler disabled...");
+        }
         signalSemaporeNode = SignalSemaphoreNode.create(image);
     }
 
@@ -41,12 +43,20 @@ public class InterruptHandlerNode extends Node {
         interruptPending = true;
     }
 
-    public void nextWakeupTick(final long msTime) {
+    public void setNextWakeupTick(final long msTime) {
         nextWakeupTick = msTime;
     }
 
-    public void setDisabled(final boolean value) {
-        disabled = value;
+    public long getNextWakeupTick() {
+        return nextWakeupTick;
+    }
+
+    public void disable() {
+        disabledTemporarily = true;
+    }
+
+    public void enable() {
+        disabledTemporarily = false;
     }
 
     public void setPendingFinalizations() {
@@ -54,13 +64,14 @@ public class InterruptHandlerNode extends Node {
     }
 
     public void reset() { // for testing purposes
+        CompilerDirectives.transferToInterpreterAndInvalidate();
         interruptCheckCounter = 0;
-        interruptCheckCounterFeedbackReset = interruptCheckCounterSize;
+        interruptCheckCounterFeedbackReset = INTERRUPT_CHECK_COUNTER_SIZE;
         nextPollTick = 0;
         nextWakeupTick = 0;
         lastTick = 0;
         interruptPending = false;
-        disabled = false;
+        disabledTemporarily = false;
         pendingFinalizationSignals = false;
     }
 
@@ -68,7 +79,11 @@ public class InterruptHandlerNode extends Node {
      * Check for interrupts on sends and backward jumps. TODO: call on backward jumps
      */
     public void sendOrBackwardJumpTrigger(final VirtualFrame frame) {
-        if (disabled || interruptCheckCounter-- > 0) {
+        if (disabled || disabledTemporarily) {
+            return;
+        }
+        // Decrement counter in separate if-statement (should not happen at all when disabled).
+        if (interruptCheckCounter-- > 0) {
             return; // only really check every 100 times or so
         }
         executeCheck(frame);
@@ -86,8 +101,8 @@ public class InterruptHandlerNode extends Node {
         if ((now - lastTick) < getInterruptChecksEveryNms()) {
             interruptCheckCounterFeedbackReset += 10;
         } else {
-            if (interruptCheckCounterFeedbackReset <= interruptCheckCounterSize) {
-                interruptCheckCounterFeedbackReset = interruptCheckCounterSize;
+            if (interruptCheckCounterFeedbackReset <= INTERRUPT_CHECK_COUNTER_SIZE) {
+                interruptCheckCounterFeedbackReset = INTERRUPT_CHECK_COUNTER_SIZE;
             } else {
                 interruptCheckCounterFeedbackReset -= 12;
             }
@@ -116,23 +131,6 @@ public class InterruptHandlerNode extends Node {
     }
 
     public static int getInterruptChecksEveryNms() {
-        return interruptChecksEveryNms;
-    }
-
-    protected static final class DummyInterruptHandlerNode extends InterruptHandlerNode {
-        protected DummyInterruptHandlerNode(final SqueakImageContext image) {
-            super(image);
-            image.getOutput().println("Interrupt handler disabled...");
-        }
-
-        @Override
-        public void sendOrBackwardJumpTrigger(final VirtualFrame frame) {
-            // ignore
-        }
-
-        @Override
-        public void executeCheck(final VirtualFrame frame) {
-            // ignore
-        }
+        return INTERRUPT_CHECKS_EVERY_NMS;
     }
 }

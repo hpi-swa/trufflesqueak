@@ -93,10 +93,10 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         protected void signalAtMilliseconds(final AbstractSqueakObject semaphore, final long msTime) {
             if (semaphore.isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassSemaphore)) {
                 code.image.registerSemaphore(semaphore, SPECIAL_OBJECT_INDEX.TheTimerSemaphore);
-                code.image.interrupt.nextWakeupTick(msTime);
+                code.image.interrupt.setNextWakeupTick(msTime);
             } else {
                 code.image.registerSemaphore(code.image.nil, SPECIAL_OBJECT_INDEX.TheTimerSemaphore);
-                code.image.interrupt.nextWakeupTick(0);
+                code.image.interrupt.setNextWakeupTick(0);
             }
         }
     }
@@ -781,13 +781,13 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
         private Object doSimulation(final VirtualFrame frame, final Object receiver, final PointersObject arguments) {
             final Object[] newRcvrAndArgs = new Object[]{receiver, functionName, arguments};
-            code.image.interrupt.setDisabled(true);
+            code.image.interrupt.disable();
             try {
                 return dispatchNode.executeDispatch(frame, getSimulateMethod(receiver), newRcvrAndArgs, getContextOrMarker(frame));
             } catch (SimulationPrimitiveFailed e) {
                 throw new PrimitiveFailed(e.getReasonCode());
             } finally {
-                code.image.interrupt.setDisabled(false);
+                code.image.interrupt.enable();
             }
         }
 
