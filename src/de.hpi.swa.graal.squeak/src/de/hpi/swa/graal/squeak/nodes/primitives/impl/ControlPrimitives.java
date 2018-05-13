@@ -5,6 +5,7 @@ import java.lang.ref.ReferenceQueue;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
@@ -839,14 +840,20 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @Specialization
+        @Specialization(guards = {"!code.image.config.disableInterruptHandler()"})
         protected AbstractSqueakObject doRelinquish(final VirtualFrame frame, final AbstractSqueakObject receiver, final long timeMicroseconds) {
             code.image.interrupt.executeCheck(frame);
             try {
                 TimeUnit.MICROSECONDS.sleep(timeMicroseconds);
             } catch (InterruptedException e) {
+                CompilerDirectives.transferToInterpreter();
                 e.printStackTrace();
             }
+            return receiver;
+        }
+
+        @Specialization(guards = {"code.image.config.disableInterruptHandler()"})
+        protected AbstractSqueakObject doNothing(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final long timeMicroseconds) {
             return receiver;
         }
     }
