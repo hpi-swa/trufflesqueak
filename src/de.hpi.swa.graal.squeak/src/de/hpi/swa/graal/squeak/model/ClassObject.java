@@ -47,12 +47,6 @@ public final class ClassObject extends AbstractSqueakObject {
     }
 
     @Override
-    public boolean isClass() {
-        assert image.metaclass == getSqClass() || image.metaclass == getSqClass().getSqClass();
-        return true;
-    }
-
-    @Override
     public String nameAsClass() {
         assert isClass();
         if (isAMetaclass()) {

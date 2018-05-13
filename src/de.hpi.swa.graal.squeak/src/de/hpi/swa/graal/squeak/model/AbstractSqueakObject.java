@@ -57,10 +57,6 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         this.sqClass = newCls;
     }
 
-    public boolean isClass() {
-        return false;
-    }
-
     public String nameAsClass() {
         return "???NotAClass";
     }
@@ -73,8 +69,13 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         }
     }
 
-    public boolean isNil() {
-        return false;
+    public final boolean isClass() {
+        assert !(this instanceof ClassObject) || (image.metaclass == getSqClass() || image.metaclass == getSqClass().getSqClass());
+        return this instanceof ClassObject;
+    }
+
+    public final boolean isNil() {
+        return this instanceof NilObject;
     }
 
     public final boolean isSpecialKindAt(final long index) {

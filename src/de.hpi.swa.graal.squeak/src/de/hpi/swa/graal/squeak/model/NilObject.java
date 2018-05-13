@@ -16,9 +16,4 @@ public final class NilObject extends AbstractSqueakObject {
     public AbstractSqueakObject shallowCopy() {
         return this;
     }
-
-    @Override
-    public boolean isNil() {
-        return true;
-    }
 }
