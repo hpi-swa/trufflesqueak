@@ -118,13 +118,13 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
     @Test
     public void testInspectSqueakTest() {
         assumeNotOnMXGate();
-        runTestCase("ArrayTest");
+        runTestCase("MiscPrimitivePluginTest");
     }
 
     @Test
     public void testInspectSqueakTestSelector() {
         assumeNotOnMXGate();
-        image.getOutput().println(evaluate("(WordArrayTest run: #testCannotPutNegativeValue) asString"));
+        image.getOutput().println(evaluate("(MiscPrimitivePluginTest run: #testDecompressFromByteArrayAt) asString"));
     }
 
     @Test
@@ -179,10 +179,11 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
     private static void patchImageForTesting() {
         final PointersObject activeProcess = GetActiveProcessNode.create(image).executeGet();
         activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, image.nil);
-        image.getOutput().println("Modifying StartUpList for testing...");
-        evaluate("{EventSensor. Project} do: [:ea | Smalltalk removeFromStartUpList: ea]");
-        image.getOutput().println("Processing StartUpList...");
-        evaluate("Smalltalk processStartUpList: true");
+        // image.getOutput().println("Modifying StartUpList for testing...");
+        // evaluate("{EventSensor. Project} do: [:ea | Smalltalk removeFromStartUpList: ea]");
+        // image.getOutput().println("Processing StartUpList...");
+        // evaluate("Smalltalk processStartUpList: true");
+        evaluate("FileStream startUp: true");
         image.getOutput().println("Setting author information...");
         evaluate("Utilities authorName: 'GraalSqueak'");
         evaluate("Utilities setAuthorInitials: 'GraalSqueak'");
