@@ -23,8 +23,9 @@ public final class SqueakConfig {
     public SqueakConfig(final String[] args) {
         assert args.length > 0;
         final File imageFile = new File(args[0].trim());
+        final File parentFile = imageFile.getParentFile();
         this.imagePath = imageFile.getAbsolutePath();
-        this.imageDirectory = imageFile.getParentFile().getAbsolutePath();
+        this.imageDirectory = parentFile == null ? null : parentFile.getAbsolutePath();
         boolean verbose = false;
         boolean tracing = false;
         boolean disableInterrupts = false;
