@@ -3,7 +3,6 @@ package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -841,19 +840,24 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"!code.image.config.disableInterruptHandler()"})
-        protected AbstractSqueakObject doRelinquish(final VirtualFrame frame, final AbstractSqueakObject receiver, final long timeMicroseconds) {
-            code.image.interrupt.executeCheck(frame);
+        protected final AbstractSqueakObject doRelinquish(final VirtualFrame frame, final AbstractSqueakObject receiver, final long timeMicroseconds) {
+            code.image.interrupt.executeCheck(frame.materialize());
+            sleepFor(timeMicroseconds / 1000);
+            return receiver;
+        }
+
+        @TruffleBoundary
+        private static void sleepFor(final long millis) {
             try {
-                TimeUnit.MICROSECONDS.sleep(timeMicroseconds);
+                Thread.sleep(millis);
             } catch (InterruptedException e) {
                 CompilerDirectives.transferToInterpreter();
                 e.printStackTrace();
             }
-            return receiver;
         }
 
         @Specialization(guards = {"code.image.config.disableInterruptHandler()"})
-        protected AbstractSqueakObject doNothing(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final long timeMicroseconds) {
+        protected static final AbstractSqueakObject doNothing(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final long timeMicroseconds) {
             return receiver;
         }
     }
