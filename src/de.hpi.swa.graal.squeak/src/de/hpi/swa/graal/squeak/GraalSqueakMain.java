@@ -58,7 +58,7 @@ public class GraalSqueakMain extends AbstractLanguageLauncher {
 
     @Override
     protected String getLanguageId() {
-        return SqueakLanguage.NAME.toLowerCase();
+        return SqueakLanguage.ID;
     }
 
     @Override
