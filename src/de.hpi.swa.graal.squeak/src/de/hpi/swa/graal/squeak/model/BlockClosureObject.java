@@ -28,7 +28,7 @@ public final class BlockClosureObject extends AbstractSqueakObject {
     @CompilationFinal private long pc = -1;
     @CompilationFinal private long numArgs = -1;
     @CompilationFinal private RootCallTarget callTarget;
-    @CompilationFinal private final CyclicAssumption callTargetStable = new CyclicAssumption("Compiled method assumption");
+    @CompilationFinal private final CyclicAssumption callTargetStable = new CyclicAssumption("BlockClosurObject assumption");
     @CompilationFinal private FrameSlot contextOrMarkerSlot;
 
     public BlockClosureObject(final SqueakImageContext image) {

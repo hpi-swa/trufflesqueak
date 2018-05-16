@@ -52,12 +52,12 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
     @CompilationFinal private boolean altInstructionSet;
     @CompilationFinal public static boolean alwaysNonVirtualized = false;
 
-    @CompilationFinal private final Assumption canBeVirtualized = Truffle.getRuntime().createAssumption("Does not need a materialized context");
+    @CompilationFinal private final Assumption canBeVirtualized = Truffle.getRuntime().createAssumption("CompiledCodeObject: does not need a materialized context");
 
     @CompilationFinal private Source source;
 
     @CompilationFinal private RootCallTarget callTarget;
-    @CompilationFinal private final CyclicAssumption callTargetStable = new CyclicAssumption("Compiled method assumption");
+    @CompilationFinal private final CyclicAssumption callTargetStable = new CyclicAssumption("CompiledCodeObject assumption");
 
     protected CompiledCodeObject(final SqueakImageContext img, final ClassObject klass) {
         super(img, klass);
