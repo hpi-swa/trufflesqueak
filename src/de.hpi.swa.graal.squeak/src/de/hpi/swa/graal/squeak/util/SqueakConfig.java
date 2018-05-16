@@ -1,4 +1,4 @@
-package de.hpi.swa.graal.squeak;
+package de.hpi.swa.graal.squeak.util;
 
 import java.io.File;
 import java.util.ArrayList;
