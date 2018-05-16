@@ -647,12 +647,18 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 255)
     protected abstract static class PrimMetaFailNode extends AbstractPrimitiveNode {
+        private static final boolean DEBUG_META_PRIMITIVE_FAILURES = false;
+
         public PrimMetaFailNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
         @Specialization
-        protected static final Object doFail(@SuppressWarnings("unused") final PointersObject proxy, final long reasonCode) {
+        protected final Object doFail(@SuppressWarnings("unused") final PointersObject proxy, final long reasonCode) {
+            if (DEBUG_META_PRIMITIVE_FAILURES) {
+                final String target = Truffle.getRuntime().getCallerFrame().getCallTarget().toString();
+                code.image.getError().println("Simulation primitive failed: " + target + "; reasonCode: " + reasonCode);
+            }
             throw new SimulationPrimitiveFailed(reasonCode);
         }
     }
