@@ -81,7 +81,7 @@ public class NativeLongsStorage extends AbstractNativeObjectStorage {
         final int size = bytes.length / getElementSize();
         CompilerDirectives.transferToInterpreterAndInvalidate();
         longs = new long[size];
-        for (int i = 0; i < longs.length; i++) {
+        for (int i = 0; i < size; i++) {
             //@formatter:off
             longs[i] = (((long) bytes[i    ]) << 56) | (((long) bytes[i + 1]) << 48) | (((long) bytes[i + 2]) << 40) | (((long) bytes[i + 3]) << 32)
                      | (((long) bytes[i + 4]) << 24) | (((long) bytes[i + 5]) << 16) | (((long) bytes[i + 6]) << 8)  | bytes[i + 7];
@@ -91,6 +91,6 @@ public class NativeLongsStorage extends AbstractNativeObjectStorage {
 
     @Override
     public byte getElementSize() {
-        return 4;
+        return 8;
     }
 }
