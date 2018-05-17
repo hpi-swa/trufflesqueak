@@ -57,7 +57,7 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
             completeTempWriteNode.executeWrite(frame, code.image.sqTrue);
             final BlockClosureObject block = (BlockClosureObject) blockArgumentNode.executeRead(frame);
             try {
-                dispatch.executeBlock(block, block.getFrameArguments(frame));
+                dispatch.executeBlock(block, block.getFrameArguments(getContextOrMarker(frame)));
             } catch (LocalReturn blockLR) { // ignore
             } catch (NonLocalReturn blockNLR) {
                 if (!blockNLR.hasArrivedAtTargetContext()) {

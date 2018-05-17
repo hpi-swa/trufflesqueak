@@ -255,7 +255,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
         @Specialization
         protected Object doClosure(final VirtualFrame frame, final BlockClosureObject block) {
-            return dispatch.executeBlock(block, block.getFrameArguments(frame));
+            return dispatch.executeBlock(block, block.getFrameArguments(getContextOrMarker(frame)));
         }
 
         // Additional specializations to speed up eager sends
@@ -280,7 +280,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
         @Specialization
         protected Object value(final VirtualFrame frame, final BlockClosureObject block, final Object arg) {
-            return dispatch.executeBlock(block, block.getFrameArguments(frame, arg));
+            return dispatch.executeBlock(block, block.getFrameArguments(getContextOrMarker(frame), arg));
         }
     }
 
@@ -294,7 +294,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
         @Specialization
         protected Object value(final VirtualFrame frame, final BlockClosureObject block, final Object arg1, final Object arg2) {
-            return dispatch.executeBlock(block, block.getFrameArguments(frame, arg1, arg2));
+            return dispatch.executeBlock(block, block.getFrameArguments(getContextOrMarker(frame), arg1, arg2));
         }
     }
 
@@ -308,7 +308,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
         @Specialization
         protected Object value(final VirtualFrame frame, final BlockClosureObject block, final Object arg1, final Object arg2, final Object arg3) {
-            return dispatch.executeBlock(block, block.getFrameArguments(frame, arg1, arg2, arg3));
+            return dispatch.executeBlock(block, block.getFrameArguments(getContextOrMarker(frame), arg1, arg2, arg3));
         }
     }
 
@@ -322,7 +322,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
         @Specialization
         protected Object value(final VirtualFrame frame, final BlockClosureObject block, final Object arg1, final Object arg2, final Object arg3, final Object arg4) {
-            return dispatch.executeBlock(block, block.getFrameArguments(frame, arg1, arg2, arg3, arg4));
+            return dispatch.executeBlock(block, block.getFrameArguments(getContextOrMarker(frame), arg1, arg2, arg3, arg4));
         }
     }
 
@@ -336,7 +336,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
         @Specialization
         protected Object value(final VirtualFrame frame, final BlockClosureObject block, final PointersObject argArray) {
-            return dispatch.executeBlock(block, block.getFrameArguments(frame, argArray.getPointers()));
+            return dispatch.executeBlock(block, block.getFrameArguments(getContextOrMarker(frame), argArray.getPointers()));
         }
     }
 

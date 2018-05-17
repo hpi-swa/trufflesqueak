@@ -2,6 +2,8 @@ package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -10,6 +12,7 @@ import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.nodes.CompiledCodeNodes.GetCompiledMethodNode;
+import de.hpi.swa.graal.squeak.nodes.EnterCodeNode;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodesFactory.PushClosureNodeGen;
@@ -58,6 +61,7 @@ public final class PushBytecodes {
 
     public abstract static class PushClosureNode extends AbstractPushNode {
         @CompilationFinal protected CompiledBlockObject block;
+        @CompilationFinal private RootCallTarget blockCallTarget;
         @CompilationFinal protected final int blockSize;
         @CompilationFinal protected final int numArgs;
         @CompilationFinal protected final int numCopied;
@@ -84,6 +88,7 @@ public final class PushBytecodes {
             if (block == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 block = CompiledBlockObject.create(code, getMethodNode.execute(code), numArgs, numCopied, index + numBytecodes, blockSize);
+                blockCallTarget = Truffle.getRuntime().createCallTarget(EnterCodeNode.create(block.image.getLanguage(), block));
             }
             return block;
         }
@@ -109,9 +114,8 @@ public final class PushBytecodes {
         private BlockClosureObject createClosure(final VirtualFrame frame) {
             final Object receiver = receiverNode.executeRead(frame);
             final Object[] copiedValues = (Object[]) popNReversedNode.executeRead(frame);
-            // TODO: context might not need to be forced
             final ContextObject thisContext = getOrCreateContextNode.executeGet(frame, false);
-            return new BlockClosureObject(getBlock(), receiver, copiedValues, thisContext, code.thisContextOrMarkerSlot);
+            return new BlockClosureObject(getBlock(), blockCallTarget, receiver, copiedValues, thisContext);
         }
 
         @Override
