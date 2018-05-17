@@ -12,6 +12,7 @@ import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeGetBytesNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -127,16 +128,101 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveDecompressFromByteArray")
     public abstract static class PrimDecompressFromByteArrayNode extends AbstractMiscPrimitiveNode {
+        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
+        @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
+        @Child private SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
 
         public PrimDecompressFromByteArrayNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        @SuppressWarnings("unused")
         @Specialization
-        protected static final Object decompress(final AbstractSqueakObject bitmap, final Object bm, final Object from, final long index) {
-            // TODO: implement primitive
-            throw new PrimitiveFailed();
+        protected final Object doDecompress(final AbstractSqueakObject receiver, final NativeObject bm, final NativeObject ba, final long index) {
+            /**
+             * <pre>
+                 Decompress the body of a byteArray encoded by compressToByteArray (qv)...
+                 The format is simply a sequence of run-coded pairs, {N D}*.
+                     N is a run-length * 4 + data code.
+                     D, the data, depends on the data code...
+                         0   skip N words, D is absent
+                             (could be used to skip from one raster line to the next)
+                         1   N words with all 4 bytes = D (1 byte)
+                         2   N words all = D (4 bytes)
+                         3   N words follow in D (4N bytes)
+                     S and N are encoded as follows (see decodeIntFrom:)...
+                         0-223   0-223
+                         224-254 (0-30)*256 + next byte (0-7935)
+                         255     next 4 bytes
+                 NOTE:  If fed with garbage, this routine could read past the end of ba, but it should fail before writing past the ned of bm.
+             * </pre>
+             */
+
+            long i = index;
+            final int end = sizeNode.execute(ba);
+            long k = 1;
+            final int pastEnd = sizeNode.execute(bm) + 1;
+            while (i <= end) {
+                // Decode next run start N
+                long anInt = (long) at0Node.execute(ba, i - 1);
+                i++;
+                if (!(anInt <= 223)) {
+                    if (anInt <= 254) {
+                        anInt = (anInt - 224) * 256 + (long) at0Node.execute(ba, i - 1);
+                        i++;
+                    } else {
+                        anInt = 0;
+                        for (int j = 1; j <= 4; j++) {
+                            anInt = (anInt << 8) + (long) at0Node.execute(ba, i - 1);
+                            i++;
+                        }
+                    }
+                }
+                final long n = anInt >> 2;
+                if (k + n > pastEnd) {
+                    throw new PrimitiveFailed();
+                }
+                switch ((int) anInt & 3) {
+                    case 0: // skip
+                        break;
+                    case 1: { // n consecutive words of 4 bytes = the following byte
+                        long data = (long) at0Node.execute(ba, i - 1);
+                        i++;
+                        data |= data << 8;
+                        data |= data << 16;
+                        for (int j = 1; j <= n; j++) {
+                            atPut0Node.execute(bm, k - 1, data);
+                            k++;
+                        }
+                        break;
+                    }
+                    case 2: { // n consecutive words = 4 following bytes
+                        long data = 0;
+                        for (int j = 1; j <= 4; j++) {
+                            data = (data << 8) | (long) at0Node.execute(ba, i - 1);
+                            i++;
+                        }
+                        for (int j = 1; j <= n; j++) {
+                            atPut0Node.execute(bm, k - 1, data);
+                            k++;
+                        }
+                        break;
+                    }
+
+                    case 3: { // n consecutive words from the data
+                        for (int m = 1; m <= n; m++) {
+                            long data = 0;
+                            for (int j = 1; j <= 4; j++) {
+                                data = (data << 8) | (long) at0Node.execute(ba, i - 1);
+                                i++;
+                            }
+                            atPut0Node.execute(bm, k - 1, data);
+                            k++;
+                        }
+                        break;
+                    }
+                }
+            }
+            return receiver;
         }
     }
 
