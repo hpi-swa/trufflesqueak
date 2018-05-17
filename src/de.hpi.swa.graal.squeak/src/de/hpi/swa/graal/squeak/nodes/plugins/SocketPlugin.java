@@ -1,6 +1,12 @@
 package de.hpi.swa.graal.squeak.nodes.plugins;
 
 import java.util.List;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.SocketAddress;
+import java.util.Map;
+import java.util.HashMap;
 
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -31,6 +37,8 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         private static final long ThisEndClosed = 4;
     }
 
+    static Map<Integer, Socket> sockets = new HashMap<>();
+
     // NetNameResolver
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveResolverStatus")
@@ -40,20 +48,33 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected long doStatus(@SuppressWarnings("unused") final Object receiver) {
+        protected long doWork(@SuppressWarnings("unused") final Object receiver) {
             return Resolver.Ready;
         }
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveResolverStartNameLookup")
-    protected abstract static class PrimResolverStartNameLookup extends AbstractPrimitiveNode {
-        protected PrimResolverStartNameLookup(final CompiledMethodObject method, final int numArguments) {
+    @SqueakPrimitive(name = "primitiveInitializeNetwork")
+    protected abstract static class PrimInitializeNetworkNode extends AbstractPrimitiveNode {
+        protected PrimInitializeNetworkNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
         @Specialization
-        protected long doStart(@SuppressWarnings("unused") final Object receiver, final Object hostName) {
+        protected Object doWork(@SuppressWarnings("unused") final Object receiver) {
+            return receiver;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(name = "primitiveResolverStartNameLookup")
+    protected abstract static class PrimResolverStartNameLookupNode extends AbstractPrimitiveNode {
+        protected PrimResolverStartNameLookupNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @Specialization
+        protected long doWork(@SuppressWarnings("unused") final Object receiver, final Object hostName) {
             return 0;
             // TODO
         }
@@ -61,14 +82,14 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveResolverNameLookupResult")
-    protected abstract static class PrimResolverNameLookupResult extends AbstractPrimitiveNode {
-        protected PrimResolverNameLookupResult(final CompiledMethodObject method, final int numArguments) {
+    protected abstract static class PrimResolverNameLookupResultNode extends AbstractPrimitiveNode {
+        protected PrimResolverNameLookupResultNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
         @Specialization
-        protected Object doGet(@SuppressWarnings("unused") final Object receiver) {
-            return null;
+        protected Object doWork(@SuppressWarnings("unused") final Object receiver) {
+            return 0;
             // TODO
         }
     }
@@ -76,27 +97,34 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     // Socket
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveSocketConnectToPort")
-    protected abstract static class PrimSocketConnectToPort extends AbstractPrimitiveNode {
-        protected PrimSocketConnectToPort(final CompiledMethodObject method, final int numArguments) {
+    protected abstract static class PrimSocketConnectToPortNode extends AbstractPrimitiveNode {
+        protected PrimSocketConnectToPortNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
         @Specialization
-        protected long doConnect(@SuppressWarnings("unused") final Object receiver, final Object socketID, final Object hostAddress, final Object port) {
-            // TODO
+        protected long doWork(@SuppressWarnings("unused") final Object receiver, final int socketID, final String hostAddress, final int port) {
+            final Socket socket = sockets.get(socketID);
+            final SocketAddress endpoint = new InetSocketAddress(hostAddress, port);
+            try {
+                socket.connect(endpoint);
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
             return 0;
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveSocketConnectionStatus")
-    protected abstract static class PrimSocketConnectionStatus extends AbstractPrimitiveNode {
-        protected PrimSocketConnectionStatus(final CompiledMethodObject method, final int numArguments) {
+    protected abstract static class PrimSocketConnectionStatusNode extends AbstractPrimitiveNode {
+        protected PrimSocketConnectionStatusNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
         @Specialization
-        protected long doStatus(@SuppressWarnings("unused") final Object receiver, final Object socketID) {
+        protected long doWork(@SuppressWarnings("unused") final Object receiver, final Object socketID) {
             return SocketStatus.Unconnected;
             // TODO
         }
@@ -110,7 +138,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doCreate(final PointersObject receiver, final long netType, final long socketType, final long rcvBufSize, final long semaIndex, final long aReadSema,
+        protected Object doWork(final PointersObject receiver, final long netType, final long socketType, final long rcvBufSize, final long semaIndex, final long aReadSema,
                         final long aWriteSema) {
             return receiver;
         }
