@@ -119,11 +119,91 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
+        // expects i to be a 1-based (Squeak) index
+        private static final long encodeBytesOf(final long anInt, final NativeObject ba, final long i) {
+            for (int j = 0; j <= 3; j++) {
+                ba.setNativeAt0(i + j - 1, anInt >> ((3 - j) * 8) & 0xFF);
+            }
+            return i + 4;
+        }
+
+        // expects i to be a 1-based (Squeak) index
+        private static final long encodeInt(final long anInt, final NativeObject ba, final long i) {
+            if (anInt <= 223) {
+                ba.setNativeAt0(i - 1, anInt);
+                return i + 1;
+            }
+            if (anInt <= 7935) {
+                ba.setNativeAt0(i - 1, anInt / 256 + 224);
+                ba.setNativeAt0(i + 1 - 1, anInt % 256);
+                return i + 2;
+            }
+            ba.setNativeAt0(i - 1, 255);
+            return encodeBytesOf(anInt, ba, i + 1);
+        }
+
         @SuppressWarnings("unused")
         @Specialization
-        protected static final Object compress(final AbstractSqueakObject bitmap, final Object bm, final Object from) {
-            // TODO: implement primitive
-            throw new PrimitiveFailed();
+        protected static final Object compress(final BaseSqueakObject receiver, final NativeObject bm, final NativeObject ba) {
+            // "Store a run-coded compression of the receiver into the byteArray ba,
+            // and return the last index stored into. ba is assumed to be large enough.
+            // The encoding is as follows...
+            // S {N D}*.
+            // S is the size of the original bitmap, followed by run-coded pairs.
+            // N is a run-length * 4 + data code.
+            // D, the data, depends on the data code...
+            // 0 skip N words, D is absent
+            // 1 N words with all 4 bytes = D (1 byte)
+            // 2 N words all = D (4 bytes)
+            // 3 N words follow in D (4N bytes)
+            // S and N are encoded as follows...
+            // 0-223 0-223
+            // 224-254 (0-30)*256 + next byte (0-7935)
+            // 255 next 4 bytes"
+            final long size = bm.size();
+            long i = encodeInt(size, ba, 1);
+            long k = 1;
+            while (k <= size) {
+                long word = bm.getNativeAt0(k - 1);
+                long lowByte = word & 0xFF;
+                boolean eqBytes = (word >> 8 & 0xFF) == lowByte &&
+                                ((word >> 16 & 0xFF) == lowByte && (word >> 24 & 0xFF) == lowByte);
+                long j = k;
+                while (j < size && word == bm.getNativeAt0(j + 1 - 1)) {
+                    j++;
+                }
+                if (j > k) {
+                    if (eqBytes) {
+                        i = encodeInt((j - k + 1) * 4 + 1, ba, i);
+                        ba.setNativeAt0(i - 1, lowByte);
+                        i++;
+                    } else {
+                        i = encodeInt((j - k + 1) * 4 + 2, ba, i);
+                        i = encodeBytesOf(word, ba, i);
+                    }
+                    k = j + 1;
+                } else {
+                    if (eqBytes) {
+                        i = encodeInt(1 * 4 + 1, ba, i);
+                        ba.setNativeAt0(i - 1, lowByte);
+                        i++;
+                        k++;
+                    } else {
+                        while (j < size && bm.getNativeAt0(j - 1) != bm.getNativeAt0(j + 1 - 1)) {
+                            j++;
+                        }
+                        if (j == size) {
+                            j++;
+                        }
+                        i = encodeInt((j - k) * 4 + 3, ba, i);
+                        for (long m = k; m <= j - 1; m++) {
+                            i = encodeBytesOf(bm.getNativeAt0(m - 1), ba, i);
+                        }
+                        k = j;
+                    }
+                }
+            }
+            return i - 1;
         }
     }
 
