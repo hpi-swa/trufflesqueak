@@ -4,6 +4,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
@@ -15,6 +16,7 @@ public final class InterruptHandlerNode extends Node {
     @CompilationFinal private static final int INTERRUPT_CHECKS_EVERY_NMS = 3;
     @CompilationFinal private final SqueakImageContext image;
     @CompilationFinal private final boolean disabled;
+    private final ConditionProfile countingProfile = ConditionProfile.createCountingProfile();
     private int interruptCheckCounter = 0;
     private int interruptCheckCounterFeedbackReset = INTERRUPT_CHECK_COUNTER_SIZE;
     private long nextPollTick = 0;
@@ -82,7 +84,7 @@ public final class InterruptHandlerNode extends Node {
             return;
         }
         // Decrement counter in separate if-statement (should not happen at all when disabled).
-        if (interruptCheckCounter-- > 0) {
+        if (countingProfile.profile(interruptCheckCounter-- > 0)) {
             return; // only really check every 100 times or so
         }
         executeCheck(frame);
