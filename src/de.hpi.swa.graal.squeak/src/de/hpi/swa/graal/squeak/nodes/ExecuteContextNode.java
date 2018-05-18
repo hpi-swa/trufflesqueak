@@ -3,10 +3,12 @@ package de.hpi.swa.graal.squeak.nodes;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.LoopNode;
 
+import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
 import de.hpi.swa.graal.squeak.exceptions.Returns.FreshLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.FreshNonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.LocalReturn;
@@ -51,7 +53,9 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
     }
 
     public Object executeVirtualized(final VirtualFrame frame) {
-        code.image.interrupt.sendOrBackwardJumpTrigger(frame);
+        if (!code.hasPrimitive() && bytecodeNodes.length > 32) {
+            code.image.interrupt.sendOrBackwardJumpTrigger(frame);
+        }
         try {
             startBytecode(frame);
             throw new SqueakException("Method did not return");
@@ -68,7 +72,9 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
     public Object executeNonVirtualized(final VirtualFrame frame, final ContextObject newContext) {
         // maybe persist newContext, so there's no need to lookup the context to update its pc.
         assert newContext.getClosureOrMethod() == FrameAccess.getMethod(frame);
-        code.image.interrupt.sendOrBackwardJumpTrigger(frame);
+        if (!code.hasPrimitive() && bytecodeNodes.length > 32) {
+            code.image.interrupt.sendOrBackwardJumpTrigger(frame);
+        }
         try {
             final long initialPC = getAndDecodeSqueakPC(newContext);
             if (initialPC == 0) {
@@ -81,6 +87,10 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
             throw new SqueakException("Method did not return");
         } catch (LocalReturn lr) {
             return handleLocalReturnNode.executeHandle(frame, lr);
+        } catch (ProcessSwitch ps) {
+            final Object ctx = FrameUtil.getObjectSafe(frame, code.thisContextOrMarkerSlot);
+            assert ctx instanceof ContextObject && !((ContextObject) ctx).hasVirtualSender();
+            throw ps;
         } catch (NonLocalReturn nlr) {
             return handleNonLocalReturnNode.executeHandle(frame, nlr);
             // TODO: use handleNonVirtualReturnNode again

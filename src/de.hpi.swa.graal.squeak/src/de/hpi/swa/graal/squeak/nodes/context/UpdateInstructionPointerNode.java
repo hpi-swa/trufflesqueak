@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes.context;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -27,7 +26,6 @@ public abstract class UpdateInstructionPointerNode extends AbstractNodeWithCode 
 
     @Specialization(guards = {"isVirtualized(frame)"})
     protected final void doUpdateVirtualized(final VirtualFrame frame, final int value) {
-        CompilerDirectives.ensureVirtualizedHere(frame);
         instructionPointerWriteNode.executeWrite(frame, value);
     }
 

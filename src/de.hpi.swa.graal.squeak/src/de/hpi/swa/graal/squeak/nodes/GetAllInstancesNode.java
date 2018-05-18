@@ -30,7 +30,7 @@ public abstract class GetAllInstancesNode extends AbstractNodeWithCode {
     @Specialization
     protected List<AbstractSqueakObject> getInstancesArray(final VirtualFrame frame) {
         final PointersObject activeProcess = getActiveProcessNode.executeGet();
-        activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, getOrCreateContextNode.executeGet(frame));
+        activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, getOrCreateContextNode.executeGet(frame, false));
         try {
             return code.image.objects.allInstances();
         } finally {

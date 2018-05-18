@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes.context;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -28,13 +27,13 @@ public abstract class ReceiverAndArgumentsNode extends Node {
     public abstract Object executeGet(VirtualFrame frame);
 
     protected final boolean isVirtualized(final VirtualFrame frame) {
-        return contextOrMarkerReadNode.executeRead(frame) instanceof FrameMarker;
+        final Object contextOrMarker = contextOrMarkerReadNode.executeRead(frame);
+        return contextOrMarker instanceof FrameMarker || !((ContextObject) contextOrMarker).isDirty();
     }
 
     @Specialization(guards = {"isVirtualized(frame)"})
     @ExplodeLoop
     protected static final Object[] doRcvrAndArgsVirtualized(final VirtualFrame frame) {
-        CompilerDirectives.ensureVirtualizedHere(frame);
         final Object[] frameArguments = frame.getArguments();
         final Object[] rcvrAndArgs = new Object[frameArguments.length - FrameAccess.RECEIVER];
         for (int i = 0; i < rcvrAndArgs.length; i++) {

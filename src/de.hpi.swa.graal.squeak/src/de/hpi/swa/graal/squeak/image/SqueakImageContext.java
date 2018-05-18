@@ -24,7 +24,6 @@ import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
-import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
@@ -171,7 +170,6 @@ public final class SqueakImageContext {
         customContext.atput0(CONTEXT.STACKPOINTER, 1L);
         customContext.atput0(CONTEXT.CLOSURE_OR_NIL, nil);
         customContext.setSender(nil);
-        customContext.setFrameMarker(new FrameMarker());
         // if there were arguments, they would need to be pushed before the temps
         final long numTemps = lookupResult.getNumTemps() - lookupResult.getNumArgs();
         for (int i = 0; i < numTemps; i++) {

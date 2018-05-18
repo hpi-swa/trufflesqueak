@@ -27,6 +27,11 @@ public abstract class AbstractNodeWithCode extends Node {
     }
 
     protected final boolean isVirtualized(final VirtualFrame frame) {
+        final Object contextOrMarker = contextOrMarkerReadNode.executeRead(frame);
+        return contextOrMarker instanceof FrameMarker || !((ContextObject) contextOrMarker).isDirty();
+    }
+
+    protected final boolean isFullyVirtualized(final VirtualFrame frame) {
         return contextOrMarkerReadNode.executeRead(frame) instanceof FrameMarker;
     }
 

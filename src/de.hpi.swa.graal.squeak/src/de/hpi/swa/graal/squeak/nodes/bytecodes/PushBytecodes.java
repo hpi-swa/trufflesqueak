@@ -100,7 +100,6 @@ public final class PushBytecodes {
 
         @Specialization(guards = "isVirtualized(frame)")
         protected int doPushVirtualized(final VirtualFrame frame) {
-            CompilerDirectives.ensureVirtualizedHere(frame);
             pushNode.executeWrite(frame, createClosure(frame));
             return getSuccessorIndex();
         }
@@ -114,7 +113,7 @@ public final class PushBytecodes {
         private BlockClosureObject createClosure(final VirtualFrame frame) {
             final Object receiver = receiverNode.executeRead(frame);
             final Object[] copiedValues = (Object[]) popNReversedNode.executeRead(frame);
-            final ContextObject thisContext = getOrCreateContextNode.executeGet(frame, false);
+            final ContextObject thisContext = getOrCreateContextNode.executeGet(frame, false, false);
             return new BlockClosureObject(getBlock(), blockCallTarget, receiver, copiedValues, thisContext);
         }
 

@@ -18,7 +18,6 @@ import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.model.PointersObject;
@@ -50,7 +49,6 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         protected Object doFindNextVirtualized(final ContextObject receiver, final ContextObject previousContext) {
             final ContextObject handlerContext = Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<ContextObject>() {
                 boolean foundMyself = false;
-                final FrameMarker frameMarker = receiver.getFrameMarker();
 
                 @Override
                 public ContextObject visitFrame(final FrameInstance frameInstance) {
@@ -60,17 +58,17 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                     }
                     final Object contextOrMarker = FrameAccess.getContextOrMarker(current);
                     if (!foundMyself) {
-                        if (FrameAccess.isMatchingMarker(frameMarker, contextOrMarker)) {
+                        if (receiver.equals(contextOrMarker)) {
                             foundMyself = true;
                         }
                     } else {
-                        if (previousContext != null && FrameAccess.isMatchingMarker(previousContext.getFrameMarker(), contextOrMarker)) {
+                        if (previousContext != null && previousContext.equals(contextOrMarker)) {
                             return null;
                         } else {
                             final CompiledCodeObject frameMethod = FrameAccess.getMethod(current);
                             if (frameMethod.isUnwindMarked()) {
                                 final Frame currentMaterializable = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
-                                return GetOrCreateContextNode.getOrCreate(currentMaterializable);
+                                return GetOrCreateContextNode.getOrCreateFull(currentMaterializable, false);
                             }
                         }
                     }
@@ -173,7 +171,6 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         protected final Object findNextVirtualized(final ContextObject receiver) {
             final ContextObject handlerContext = Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<ContextObject>() {
                 boolean foundMyself = false;
-                final FrameMarker frameMarker = receiver.getFrameMarker();
 
                 @Override
                 public ContextObject visitFrame(final FrameInstance frameInstance) {
@@ -183,14 +180,14 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                     }
                     if (!foundMyself) {
                         final Object contextOrMarker = FrameAccess.getContextOrMarker(current);
-                        if (FrameAccess.isMatchingMarker(frameMarker, contextOrMarker)) {
+                        if (receiver.equals(contextOrMarker)) {
                             foundMyself = true;
                         }
                     } else {
                         final CompiledCodeObject frameMethod = FrameAccess.getMethod(current);
                         if (frameMethod.isExceptionHandlerMarked()) {
                             final Frame currentMaterializable = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
-                            return GetOrCreateContextNode.getOrCreate(currentMaterializable);
+                            return GetOrCreateContextNode.getOrCreateFull(currentMaterializable, false);
                         }
                     }
                     return null;

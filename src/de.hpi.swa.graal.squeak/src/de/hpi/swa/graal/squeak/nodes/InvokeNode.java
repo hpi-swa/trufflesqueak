@@ -20,7 +20,8 @@ public abstract class InvokeNode extends Node {
     @Specialization(guards = "code.getCallTarget() == callTarget", limit = "1")
     protected Object doInvoke(@SuppressWarnings("unused") final CompiledCodeObject code, final Object[] arguments,
                     @SuppressWarnings("unused") @Cached("code.getCallTarget()") final RootCallTarget callTarget,
-                    @Cached("create(callTarget)") final DirectCallNode callNode) {
+                    @SuppressWarnings("unused") @Cached("code.getSplitCallTarget()") final RootCallTarget splitCallTarget,
+                    @Cached("create(splitCallTarget)") final DirectCallNode callNode) {
         return callNode.call(arguments);
     }
 

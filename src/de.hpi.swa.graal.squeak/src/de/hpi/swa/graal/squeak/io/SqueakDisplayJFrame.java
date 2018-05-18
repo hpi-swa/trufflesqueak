@@ -185,6 +185,7 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
     }
 
     @Override
+    @TruffleBoundary
     public void open() {
         if (!frame.isVisible()) {
             frame.setVisible(true);
@@ -218,6 +219,7 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
     }
 
     @Override
+    @TruffleBoundary
     public void setFullscreen(final boolean enable) {
         frame.dispose();
         frame.setUndecorated(enable);
@@ -233,6 +235,7 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
     }
 
     @Override
+    @TruffleBoundary
     public void setSqDisplay(final PointersObject sqDisplay) {
         canvas.setSqDisplay(sqDisplay);
     }
@@ -263,6 +266,7 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
     }
 
     @Override
+    @TruffleBoundary
     public void setCursor(final int[] cursorWords, final int depth) {
         final Dimension bestCursorSize = TOOLKIT.getBestCursorSize(SqueakIOConstants.CURSOR_WIDTH, SqueakIOConstants.CURSOR_HEIGHT);
         final Cursor cursor;
@@ -279,6 +283,7 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
     }
 
     @Override
+    @TruffleBoundary
     public long[] getNextEvent() {
         if (!deferredEvents.isEmpty()) {
             return deferredEvents.removeFirst();
@@ -313,6 +318,7 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
     }
 
     @Override
+    @TruffleBoundary
     public void setWindowTitle(final String title) {
         frame.setTitle(title);
     }

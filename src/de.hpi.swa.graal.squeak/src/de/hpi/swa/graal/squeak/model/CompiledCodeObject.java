@@ -79,7 +79,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         this.literals = literals;
         decodeHeader();
         this.bytes = bytes;
-        invalidateAndCreateNewCallTargets();
+        createNewCallTarget();
     }
 
     public final Source getSource() {
@@ -108,18 +108,20 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         }
     }
 
+    public RootCallTarget getSplitCallTarget() {
+        return getCallTarget();
+    }
+
     public final RootCallTarget getCallTarget() {
         if (callTarget == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            callTarget = invalidateAndCreateNewCallTargets();
+            createNewCallTarget();
         }
         return callTarget;
     }
 
-    @TruffleBoundary
-    private RootCallTarget invalidateAndCreateNewCallTargets() {
-        callTargetStable.invalidate();
-        return Truffle.getRuntime().createCallTarget(EnterCodeNode.create(image.getLanguage(), this));
+    private void createNewCallTarget() {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        callTarget = Truffle.getRuntime().createCallTarget(EnterCodeNode.create(image.getLanguage(), this));
     }
 
     public final Assumption getCallTargetStable() {
@@ -196,10 +198,13 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
             throw new SqueakException("Should not fail");
         }
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        final Object[] literals2 = ((CompiledCodeObject) other).literals;
-        final byte[] bytes2 = ((CompiledCodeObject) other).bytes;
-        ((CompiledCodeObject) other).setLiteralsAndBytes(literals, bytes);
+        final CompiledCodeObject otherCodeObject = (CompiledCodeObject) other;
+        final Object[] literals2 = otherCodeObject.literals;
+        final byte[] bytes2 = otherCodeObject.bytes;
+        otherCodeObject.setLiteralsAndBytes(literals, bytes);
         this.setLiteralsAndBytes(literals2, bytes2);
+// otherCodeObject.callTargetStable.invalidate();
+// callTargetStable.invalidate();
         return true;
     }
 

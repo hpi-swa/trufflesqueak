@@ -7,7 +7,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 @ImportStatic(FrameAccess.class)
@@ -25,8 +24,7 @@ public abstract class HandleNonVirtualReturnNode extends AbstractNodeWithCode {
 
     @Specialization(guards = "isVirtualized(frame)")
     protected Object handleVirtualized(final VirtualFrame frame, final NonVirtualReturn nvr) {
-        final FrameMarker frameMarker = getFrameMarker(frame);
-        if (nvr.getTargetContext().getFrameMarker() == frameMarker) {
+        if (nvr.getTargetContext().equals(getContextOrMarker(frame))) {
             return nvr.getReturnValue();
         } else {
             throw nvr;
@@ -36,7 +34,7 @@ public abstract class HandleNonVirtualReturnNode extends AbstractNodeWithCode {
     @Specialization(guards = "!isVirtualized(frame)")
     protected Object handle(final VirtualFrame frame, final NonVirtualReturn nvr) {
         final ContextObject context = getContext(frame);
-        if (nvr.getTargetContext().getFrameMarker() == context.getFrameMarker()) {
+        if (context.equals(nvr.getTargetContext())) {
             return nvr.getReturnValue();
         } else {
             throw nvr;

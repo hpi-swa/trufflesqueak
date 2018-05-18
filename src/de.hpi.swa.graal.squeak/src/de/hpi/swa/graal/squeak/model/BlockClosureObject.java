@@ -34,7 +34,6 @@ public final class BlockClosureObject extends AbstractSqueakObject {
 
     public BlockClosureObject(final CompiledBlockObject compiledBlock, final RootCallTarget callTarget, final Object receiver, final Object[] copied, final ContextObject outerContext) {
         super(compiledBlock.image, compiledBlock.image.blockClosureClass);
-        assert outerContext.getFrameMarker() != null;
         this.block = compiledBlock;
         this.callTarget = callTarget;
         this.outerContext = outerContext;

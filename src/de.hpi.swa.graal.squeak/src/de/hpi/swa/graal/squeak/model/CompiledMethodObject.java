@@ -1,5 +1,14 @@
 package de.hpi.swa.graal.squeak.model;
 
+import java.util.Arrays;
+
+import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.NodeUtil;
+import com.oracle.truffle.api.nodes.RootNode;
+
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
 public final class CompiledMethodObject extends CompiledCodeObject {
@@ -133,4 +142,27 @@ public final class CompiledMethodObject extends CompiledCodeObject {
             }
         }
     }
+
+    @Override
+    @ExplodeLoop
+    public RootCallTarget getSplitCallTarget() {
+        final RootCallTarget target = getCallTarget();
+        final NativeObject selector = getCompiledInSelector();
+        for (int i = 0; i < image.specialSelectorsArray.length; i++) {
+            if (Arrays.equals(image.specialSelectorsArray[i].getBytes(), selector.getBytes())) {
+                return split(target);
+            }
+        }
+        return target;
+    }
+
+    /**
+     * Replicate the CallTarget to let each builtin call site executes its own AST.
+     */
+    private static RootCallTarget split(final RootCallTarget callTarget) {
+        CompilerAsserts.neverPartOfCompilation();
+        final RootNode rootNode = callTarget.getRootNode();
+        return Truffle.getRuntime().createCallTarget(NodeUtil.cloneNode(rootNode));
+    }
+
 }

@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes.context.stack;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -18,7 +17,6 @@ public abstract class StackPopNode extends AbstractStackPopNode {
 
     @Specialization(guards = {"isVirtualized(frame)"})
     public Object doPopVirtualized(final VirtualFrame frame) {
-        CompilerDirectives.ensureVirtualizedHere(frame);
         final int sp = frameStackPointer(frame);
         assert sp >= 0;
         setFrameStackPointer(frame, sp - 1);

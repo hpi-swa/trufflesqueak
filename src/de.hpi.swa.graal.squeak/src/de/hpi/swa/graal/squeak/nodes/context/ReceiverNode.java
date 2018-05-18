@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes.context;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -19,7 +18,6 @@ public abstract class ReceiverNode extends SqueakNodeWithCode {
 
     @Specialization(guards = {"isVirtualized(frame)"})
     protected Object doReceiverVirtualized(final VirtualFrame frame) {
-        CompilerDirectives.ensureVirtualizedHere(frame);
         return frame.getArguments()[FrameAccess.RECEIVER];
     }
 

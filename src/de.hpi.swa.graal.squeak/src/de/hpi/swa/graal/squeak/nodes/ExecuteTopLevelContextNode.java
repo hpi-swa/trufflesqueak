@@ -2,8 +2,6 @@ package de.hpi.swa.graal.squeak.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
 
@@ -16,13 +14,11 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.exceptions.SqueakQuit;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
-import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.nodes.CompiledCodeNodes.GetNumAllArgumentsNode;
 import de.hpi.swa.graal.squeak.nodes.context.ReceiverAndArgumentsNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotWriteNode;
-import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public final class ExecuteTopLevelContextNode extends RootNode {
     @CompilationFinal private final SqueakImageContext image;
@@ -65,14 +61,11 @@ public final class ExecuteTopLevelContextNode extends RootNode {
             final AbstractSqueakObject sender = activeContext.getSender();
             try {
                 final CompiledCodeObject code = activeContext.getClosureOrMethod();
-                final Object[] frameArgs = activeContext.getReceiverAndNArguments(numAllArgumentsNode.execute(code));
-                final BlockClosureObject closure = activeContext.getClosure();
-                final MaterializedFrame frame = Truffle.getRuntime().createMaterializedFrame(FrameAccess.newWith(code, sender, closure, frameArgs), code.getFrameDescriptor());
-                contextWriteNode.executeWrite(frame, activeContext);
                 // FIXME: do not create node here
                 executeContextNode = insert(ExecuteContextNode.create(code));
                 // doIt: activeContext.printSqStackTrace();
-                final Object result = executeContextNode.executeNonVirtualized(frame, activeContext);
+                final Object result = executeContextNode.executeNonVirtualized(activeContext.getTruffleFrame(numAllArgumentsNode.execute(code)), activeContext);
+                image.traceVerbose("Local Return on top-level: sender: " + sender.toString());
                 activeContext = unwindContextChain(sender, sender, result);
                 image.traceVerbose("Local Return on top-level, new context is " + activeContext);
             } catch (ProcessSwitch ps) {
@@ -100,7 +93,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         while (context != targetContext) {
             final AbstractSqueakObject sender = context.getSender();
             if (sender.isNil()) {
-                handleNilSender(startContext, targetContext);
+                handleNilSender(startContext, targetContext); // FIXME
                 context = (ContextObject) targetContext;
                 break;
             }

@@ -12,6 +12,7 @@ public final class Returns {
         @CompilationFinal protected final Object returnValue;
 
         private AbstractReturn(final Object result) {
+            assert result != null;
             returnValue = result;
         }
 
@@ -43,6 +44,7 @@ public final class Returns {
 
         public FreshNonLocalReturn(final Object returnValue, final ContextObject targetContext) {
             super(returnValue);
+            assert targetContext.getSender() != targetContext.image.nil;
             this.targetContext = targetContext;
         }
 
@@ -109,6 +111,8 @@ public final class Returns {
 
         public NonVirtualReturn(final Object returnValue, final ContextObject targetContext, final ContextObject currentContext) {
             super(returnValue);
+            assert !targetContext.hasVirtualSender();
+            assert !currentContext.hasVirtualSender();
             this.targetContext = targetContext;
             this.currentContext = currentContext;
         }

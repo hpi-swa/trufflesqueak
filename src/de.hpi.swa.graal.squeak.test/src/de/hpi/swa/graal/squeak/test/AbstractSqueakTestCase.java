@@ -13,7 +13,6 @@ import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
@@ -78,7 +77,6 @@ public abstract class AbstractSqueakTestCase {
         for (int i = 0; i < numTemps - arguments.length; i++) {
             testContext.push(code.image.nil);
         }
-        testContext.setFrameMarker(new FrameMarker());
         return ExecuteTopLevelContextNode.create(null, testContext);
     }
 

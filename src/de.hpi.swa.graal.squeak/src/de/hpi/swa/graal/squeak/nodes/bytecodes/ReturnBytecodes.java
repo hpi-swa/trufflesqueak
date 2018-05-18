@@ -36,16 +36,16 @@ public final class ReturnBytecodes {
             return readClosureNode.executeRead(frame) instanceof BlockClosureObject;
         }
 
-        protected final boolean isDirty(final VirtualFrame frame) {
-            return getContext(frame).isDirty();
+        protected final boolean hasModifiedSender(final VirtualFrame frame) {
+            return getContext(frame).hasModifiedSender();
         }
 
-        @Specialization(guards = {"!hasClosure(frame)", "isVirtualized(frame) || !isDirty(frame)"})
+        @Specialization(guards = {"!hasClosure(frame)", "isVirtualized(frame) || !hasModifiedSender(frame)"})
         protected Object executeLocalReturn(final VirtualFrame frame) {
             throw new FreshLocalReturn(getReturnValue(frame));
         }
 
-        @Specialization(guards = {"hasClosure(frame) || !isVirtualized(frame)", "hasClosure(frame) || isDirty(frame)"})
+        @Specialization(guards = {"hasClosure(frame) || !isVirtualized(frame)", "hasClosure(frame) || hasModifiedSender(frame)"})
         protected Object executeNonLocalReturn(final VirtualFrame frame) {
             final ContextObject outerContext;
             final BlockClosureObject block = (BlockClosureObject) readClosureNode.executeRead(frame);
