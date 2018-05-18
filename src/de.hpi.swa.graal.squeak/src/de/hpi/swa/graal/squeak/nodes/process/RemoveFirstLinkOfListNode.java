@@ -1,7 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes.process;
 
-import com.oracle.truffle.api.CompilerDirectives;
-
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.LINK;
@@ -23,7 +21,6 @@ public class RemoveFirstLinkOfListNode extends AbstractNodeWithImage {
     }
 
     public AbstractSqueakObject executeRemove(final AbstractSqueakObject list) {
-        CompilerDirectives.transferToInterpreter();
         // Remove the first process from the given linked list.
         final AbstractSqueakObject first = (AbstractSqueakObject) at0Node.execute(list, LINKED_LIST.FIRST_LINK);
         final AbstractSqueakObject last = (AbstractSqueakObject) at0Node.execute(list, LINKED_LIST.LAST_LINK);
