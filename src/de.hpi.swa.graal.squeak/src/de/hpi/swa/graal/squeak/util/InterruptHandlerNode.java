@@ -2,6 +2,8 @@ package de.hpi.swa.graal.squeak.util;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -87,10 +89,11 @@ public final class InterruptHandlerNode extends Node {
         if (countingProfile.profile(interruptCheckCounter-- > 0)) {
             return; // only really check every 100 times or so
         }
-        executeCheck(frame);
+        executeCheck(frame.materialize());
     }
 
-    public void executeCheck(final VirtualFrame frame) {
+    @TruffleBoundary
+    public void executeCheck(final MaterializedFrame frame) {
         final long now = System.currentTimeMillis();
         if (now < lastTick) { // millisecond clock wrapped"
             nextPollTick = now + (nextPollTick - lastTick);
