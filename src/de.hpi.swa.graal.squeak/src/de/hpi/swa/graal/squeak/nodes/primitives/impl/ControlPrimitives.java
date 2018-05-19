@@ -43,6 +43,7 @@ import de.hpi.swa.graal.squeak.nodes.context.ReceiverAndArgumentsNode;
 import de.hpi.swa.graal.squeak.nodes.context.ReceiverNode;
 import de.hpi.swa.graal.squeak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.graal.squeak.nodes.context.SqueakLookupClassNodeGen;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
@@ -60,7 +61,6 @@ import de.hpi.swa.graal.squeak.nodes.process.SignalSemaphoreNode;
 import de.hpi.swa.graal.squeak.nodes.process.WakeHighestPriorityNode;
 import de.hpi.swa.graal.squeak.nodes.process.YieldProcessNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
-import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -96,11 +96,13 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Child protected SqueakLookupClassNode lookupClassNode;
         @Child protected LookupNode lookupNode = LookupNodeGen.create();
         @Child private DispatchSendNode dispatchSendNode;
+        @Child private FrameSlotReadNode contextOrMarkerNode;
 
         protected AbstractPerformPrimitiveNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
             lookupClassNode = SqueakLookupClassNodeGen.create(code.image);
             dispatchSendNode = DispatchSendNode.create(code.image);
+            contextOrMarkerNode = FrameSlotReadNode.create(code.thisContextOrMarkerSlot);
         }
 
         protected ClassObject lookup(final Object receiver) {
@@ -109,7 +111,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected Object dispatch(final VirtualFrame frame, final NativeObject selector, final Object[] rcvrAndArgs, final ClassObject rcvrClass) {
             final Object lookupResult = lookupNode.executeLookup(rcvrClass, selector);
-            final Object contextOrMarker = FrameAccess.getContextOrMarker(frame);
+            final Object contextOrMarker = contextOrMarkerNode.executeRead(frame);
             return dispatchSendNode.executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs, contextOrMarker);
         }
     }
@@ -813,9 +815,11 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 188)
     protected abstract static class PrimExecuteMethodArgsArrayNode extends AbstractPerformPrimitiveNode {
         @Child private DispatchNode dispatchNode = DispatchNode.create();
+        @Child private FrameSlotReadNode contextOrMarkerNode;
 
         protected PrimExecuteMethodArgsArrayNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
+            contextOrMarkerNode = FrameSlotReadNode.create(method.thisContextOrMarkerSlot);
         }
 
         @Specialization
@@ -826,7 +830,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             for (int i = 0; i < numArgs; i++) {
                 dispatchRcvrAndArgs[1 + i] = argArray.at0(i);
             }
-            final Object thisContext = FrameAccess.getContextOrMarker(frame);
+            final Object thisContext = contextOrMarkerNode.executeRead(frame);
             return dispatchNode.executeDispatch(frame, codeObject, dispatchRcvrAndArgs, thisContext);
         }
     }

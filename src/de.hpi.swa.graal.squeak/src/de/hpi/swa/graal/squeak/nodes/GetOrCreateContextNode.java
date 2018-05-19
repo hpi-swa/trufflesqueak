@@ -4,6 +4,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
@@ -12,6 +13,7 @@ import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.nodes.CompiledCodeNodes.CalculcatePCOffsetNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameArgumentNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotWriteNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
@@ -24,7 +26,8 @@ public abstract class GetOrCreateContextNode extends AbstractNodeWithCode {
     @Child private CalculcatePCOffsetNode calcNode = CalculcatePCOffsetNode.create();
     @Child private FrameSlotReadNode pcNode;
     @Child private FrameSlotReadNode spNode;
-    @Child private FrameSlotReadNode contextNode;
+    @Child private FrameSlotReadNode contextReadNode;
+    @Child private FrameSlotWriteNode contextWriteNode;
 
     public static GetOrCreateContextNode create(final CompiledCodeObject code) {
         return GetOrCreateContextNodeGen.create(code);
@@ -34,7 +37,8 @@ public abstract class GetOrCreateContextNode extends AbstractNodeWithCode {
         super(code);
         pcNode = FrameSlotReadNode.create(code.instructionPointerSlot);
         spNode = FrameSlotReadNode.create(code.stackPointerSlot);
-        contextNode = FrameSlotReadNode.create(code.thisContextOrMarkerSlot);
+        contextReadNode = FrameSlotReadNode.create(code.thisContextOrMarkerSlot);
+        contextWriteNode = FrameSlotWriteNode.create(code.thisContextOrMarkerSlot);
     }
 
     public final ContextObject executeGet(final Frame frame, final boolean invalidateCanBeVirtualizedAssumption) {
@@ -57,7 +61,7 @@ public abstract class GetOrCreateContextNode extends AbstractNodeWithCode {
         if (invalidateCanBeVirtualizedAssumption) {
             method.invalidateCanBeVirtualizedAssumption();
         }
-        frame.setObject(method.thisContextOrMarkerSlot, context);
+        contextWriteNode.executeWrite(frame, context);
         if (fullSenderChain) {
             forceSenderChain(method, context);
         }

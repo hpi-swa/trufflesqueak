@@ -24,6 +24,7 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.BlockActivationNode;
 import de.hpi.swa.graal.squeak.nodes.BlockActivationNodeGen;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
@@ -39,9 +40,11 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @GenerateNodeFactory
     @SqueakPrimitive(index = 195)
     protected abstract static class PrimFindNextUnwindContextUpToNode extends AbstractPrimitiveNode {
+        @Child private FrameSlotReadNode contextOrMarkerNode;
 
         public PrimFindNextUnwindContextUpToNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
+            contextOrMarkerNode = FrameSlotReadNode.create(method.thisContextOrMarkerSlot);
         }
 
         @Specialization(guards = {"receiver.hasVirtualSender()"})
@@ -52,11 +55,11 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
                 @Override
                 public ContextObject visitFrame(final FrameInstance frameInstance) {
-                    final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
+                    final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
                     if (current.getArguments().length < FrameAccess.RECEIVER) {
                         return null;
                     }
-                    final Object contextOrMarker = FrameAccess.getContextOrMarker(current);
+                    final Object contextOrMarker = contextOrMarkerNode.executeRead(current);
                     if (!foundMyself) {
                         if (receiver.equals(contextOrMarker)) {
                             foundMyself = true;
@@ -67,8 +70,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         } else {
                             final CompiledCodeObject frameMethod = FrameAccess.getMethod(current);
                             if (frameMethod.isUnwindMarked()) {
-                                final Frame currentMaterializable = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
-                                return GetOrCreateContextNode.getOrCreateFull(currentMaterializable, false);
+                                return GetOrCreateContextNode.getOrCreateFull(current.materialize(), false);
                             }
                         }
                     }
@@ -161,9 +163,11 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @GenerateNodeFactory
     @SqueakPrimitive(index = 197)
     protected abstract static class PrimNextHandlerContextNode extends AbstractPrimitiveNode {
+        @Child private FrameSlotReadNode contextOrMarkerNode;
 
         protected PrimNextHandlerContextNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
+            contextOrMarkerNode = FrameSlotReadNode.create(method.thisContextOrMarkerSlot);
         }
 
         @Specialization(guards = {"receiver.hasVirtualSender()"})
@@ -174,20 +178,19 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
                 @Override
                 public ContextObject visitFrame(final FrameInstance frameInstance) {
-                    final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
+                    final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
                     if (current.getArguments().length < FrameAccess.RECEIVER) {
                         return null;
                     }
                     if (!foundMyself) {
-                        final Object contextOrMarker = FrameAccess.getContextOrMarker(current);
+                        final Object contextOrMarker = contextOrMarkerNode.executeRead(current);
                         if (receiver.equals(contextOrMarker)) {
                             foundMyself = true;
                         }
                     } else {
                         final CompiledCodeObject frameMethod = FrameAccess.getMethod(current);
                         if (frameMethod.isExceptionHandlerMarked()) {
-                            final Frame currentMaterializable = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
-                            return GetOrCreateContextNode.getOrCreateFull(currentMaterializable, false);
+                            return GetOrCreateContextNode.getOrCreateFull(current.materialize(), false);
                         }
                     }
                     return null;
