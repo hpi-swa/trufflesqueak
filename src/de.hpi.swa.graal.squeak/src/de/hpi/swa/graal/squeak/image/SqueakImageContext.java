@@ -7,6 +7,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -296,16 +298,25 @@ public final class SqueakImageContext {
         return config.getImageDirectory() + File.separator + fileName;
     }
 
-    public void trace(final String message) {
+    public void trace(final Object... arguments) {
         if (config.isTracing()) {
-            getOutput().println(message);
+            printToStdout(arguments);
         }
     }
 
-    public void traceVerbose(final String message) {
+    public void traceVerbose(final Object... arguments) {
         if (config.isTracing() && config.isVerbose()) {
-            getOutput().println(message);
+            printToStdout(arguments);
         }
+    }
+
+    @TruffleBoundary
+    private void printToStdout(final Object[] arguments) {
+        final List<String> strings = new ArrayList<>();
+        for (int i = 0; i < arguments.length; i++) {
+            strings.add(arguments[i].toString());
+        }
+        getOutput().println(String.join(" ", strings));
     }
 
     /*

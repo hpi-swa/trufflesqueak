@@ -632,7 +632,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 count++;
                 element = queue.poll();
             }
-            code.image.traceVerbose(count + " WeakPointersObjects have been garbage collected.");
+            code.image.traceVerbose(count, " WeakPointersObjects have been garbage collected.");
             return count > 0;
         }
     }

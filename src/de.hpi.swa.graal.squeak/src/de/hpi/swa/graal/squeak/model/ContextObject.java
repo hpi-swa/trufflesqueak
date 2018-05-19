@@ -116,7 +116,7 @@ public final class ContextObject extends AbstractSqueakObject {
     public void atput0(final long index, final Object value) {
         assert index >= 0 && value != null;
         if (index == CONTEXT.SENDER_OR_NIL) {
-            image.traceVerbose("Sender of " + toString() + " set to " + value);
+            image.traceVerbose("Sender of", this, " set to", value);
             CompilerDirectives.transferToInterpreterAndInvalidate();
             hasModifiedSender = true;
         }
