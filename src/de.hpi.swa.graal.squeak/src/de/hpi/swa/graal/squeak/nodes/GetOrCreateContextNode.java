@@ -66,7 +66,7 @@ public abstract class GetOrCreateContextNode extends AbstractNodeWithCode {
     }
 
     @TruffleBoundary
-    public static ContextObject getOrCreateFull(final Frame frame, final boolean invalidateCanBeVirtualizedAssumption) {
+    public static ContextObject getOrCreateFull(final MaterializedFrame frame, final boolean invalidateCanBeVirtualizedAssumption) {
         final Object contextOrMarker = FrameAccess.getContextOrMarker(frame);
         if (contextOrMarker instanceof ContextObject) {
             return (ContextObject) contextOrMarker;

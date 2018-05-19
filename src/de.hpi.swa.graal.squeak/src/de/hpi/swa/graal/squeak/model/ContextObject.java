@@ -180,7 +180,7 @@ public final class ContextObject extends AbstractSqueakObject {
         if (senderOrMarker instanceof FrameMarker) {
             CompilerDirectives.transferToInterpreter();
             final Frame frame = FrameAccess.findFrameForMarker((FrameMarker) senderOrMarker);
-            actualSender = GetOrCreateContextNode.getOrCreateFull(frame, false);
+            actualSender = GetOrCreateContextNode.getOrCreateFull(frame.materialize(), false);
             assert actualSender != null;
         } else {
             actualSender = (AbstractSqueakObject) senderOrMarker;
@@ -386,7 +386,7 @@ public final class ContextObject extends AbstractSqueakObject {
         if (senderOrMarker instanceof FrameMarker) {
             final Frame senderFrame = FrameAccess.findFrameForMarker((FrameMarker) senderOrMarker);
             if (senderFrame != null) {
-                setSender(GetOrCreateContextNode.getOrCreateFull(senderFrame, false));
+                setSender(GetOrCreateContextNode.getOrCreateFull(senderFrame.materialize(), false));
             } else {
                 setSender(image.nil);
             }
