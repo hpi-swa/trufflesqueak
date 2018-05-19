@@ -203,8 +203,8 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         final byte[] bytes2 = otherCodeObject.bytes;
         otherCodeObject.setLiteralsAndBytes(literals, bytes);
         this.setLiteralsAndBytes(literals2, bytes2);
-// otherCodeObject.callTargetStable.invalidate();
-// callTargetStable.invalidate();
+        otherCodeObject.callTargetStable.invalidate();
+        callTargetStable.invalidate();
         return true;
     }
 
