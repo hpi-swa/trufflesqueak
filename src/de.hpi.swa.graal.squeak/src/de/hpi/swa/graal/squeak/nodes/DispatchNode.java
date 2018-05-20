@@ -40,7 +40,7 @@ public abstract class DispatchNode extends Node {
     @Specialization(guards = {"isQuickReturnReceiverVariable(method.primitiveIndex())"})
     protected Object doPrimitiveQuickReturnReceiver(final CompiledMethodObject method, final Object[] receiverAndArguments, @SuppressWarnings("unused") final Object contextOrMarker) {
         assert receiverAndArguments[0] instanceof AbstractSqueakObject;
-        return at0Node.execute((AbstractSqueakObject) receiverAndArguments[0], method.primitiveIndex() - 264);
+        return at0Node.execute(receiverAndArguments[0], method.primitiveIndex() - 264);
     }
 
     @SuppressWarnings("unused")

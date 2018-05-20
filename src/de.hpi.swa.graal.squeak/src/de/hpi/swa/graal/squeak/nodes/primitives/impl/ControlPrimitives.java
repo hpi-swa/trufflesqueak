@@ -37,6 +37,7 @@ import de.hpi.swa.graal.squeak.nodes.LookupNode;
 import de.hpi.swa.graal.squeak.nodes.LookupNodeGen;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
 import de.hpi.swa.graal.squeak.nodes.SqueakObjectAt0Node;
+import de.hpi.swa.graal.squeak.nodes.SqueakObjectAtPut0Node;
 import de.hpi.swa.graal.squeak.nodes.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.context.ObjectAtNode;
 import de.hpi.swa.graal.squeak.nodes.context.ReceiverAndArgumentsNode;
@@ -268,6 +269,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Child private WakeHighestPriorityNode wakeHighestPriorityNode;
         @Child private RemoveProcessFromListNode removeProcessNode;
         @Child private GetActiveProcessNode getActiveProcessNode;
+        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
 
         protected PrimSuspendNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -283,8 +285,8 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 pushNode.executeWrite(frame, code.image.nil);
                 wakeHighestPriorityNode.executeWake(frame);
             } else {
-                final AbstractSqueakObject oldList = (AbstractSqueakObject) receiver.at0(PROCESS.LIST);
-                if (oldList.isNil()) {
+                final Object oldList = at0Node.execute(receiver, PROCESS.LIST);
+                if (oldList == code.image.nil) {
                     throw new PrimitiveFailed(ERROR_TABLE.BAD_RECEIVER);
                 }
                 removeProcessNode.executeRemove(receiver, oldList);
@@ -722,6 +724,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Child private IsEmptyListNode isEmptyListNode;
         @Child private RemoveFirstLinkOfListNode removeFirstLinkOfListNode;
         @Child private ResumeProcessNode resumeProcessNode;
+        @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
 
         public PrimExitCriticalSectionNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -736,7 +739,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             if (isEmptyListNode.executeIsEmpty(mutex)) {
                 mutex.atput0(MUTEX.OWNER, code.image.nil);
             } else {
-                final AbstractSqueakObject owningProcess = removeFirstLinkOfListNode.executeRemove(mutex);
+                final Object owningProcess = removeFirstLinkOfListNode.executeRemove(mutex);
                 mutex.atput0(MUTEX.OWNER, owningProcess);
                 resumeProcessNode.executeResume(frame, owningProcess);
             }

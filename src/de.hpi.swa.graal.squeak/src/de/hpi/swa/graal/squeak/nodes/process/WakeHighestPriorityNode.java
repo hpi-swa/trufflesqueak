@@ -4,7 +4,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
@@ -35,15 +34,15 @@ public class WakeHighestPriorityNode extends AbstractNodeWithImage {
         final PointersObject scheduler = getSchedulerNode.executeGet();
         final PointersObject schedLists = (PointersObject) scheduler.at0(PROCESS_SCHEDULER.PROCESS_LISTS);
         long p = schedLists.size() - 1;  // index of last indexable field
-        AbstractSqueakObject processList;
+        Object processList;
         do {
             if (p < 0) {
                 throw new SqueakException("scheduler could not find a runnable process");
             }
-            processList = (AbstractSqueakObject) schedLists.at0(p--);
+            processList = schedLists.at0(p--);
         } while (isEmptyListNode.executeIsEmpty(processList));
         final PointersObject activeProcess = getActiveProcessNode.executeGet();
-        final AbstractSqueakObject newProcess = removeFirstLinkOfListNode.executeRemove(processList);
+        final Object newProcess = removeFirstLinkOfListNode.executeRemove(processList);
         transferToNode.executeTransferTo(frame, activeProcess, newProcess);
     }
 }

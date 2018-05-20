@@ -1,9 +1,10 @@
 package de.hpi.swa.graal.squeak.nodes;
 
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
@@ -22,7 +23,7 @@ public abstract class SqueakObjectAtPut0Node extends Node {
         return SqueakObjectAtPut0NodeGen.create();
     }
 
-    public abstract void execute(AbstractSqueakObject obj, long index, Object value);
+    public abstract void execute(Object obj, long index, Object value);
 
     @Specialization(guards = {"!obj.isClass()"})
     protected static final void doAbstractPointers(final PointersObject obj, final long index, final Object value) {
@@ -96,4 +97,9 @@ public abstract class SqueakObjectAtPut0Node extends Node {
         throw new IndexOutOfBoundsException();
     }
 
+    @SuppressWarnings("unused")
+    @Fallback
+    protected static final void doFallback(final Object obj, final long index, final Object value) {
+        throw new SqueakException("Object does not support atput0: " + obj);
+    }
 }
