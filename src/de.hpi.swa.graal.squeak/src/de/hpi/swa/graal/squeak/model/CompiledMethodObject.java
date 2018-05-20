@@ -46,6 +46,7 @@ public final class CompiledMethodObject extends CompiledCodeObject {
 
     @Override
     public String toString() {
+        CompilerAsserts.neverPartOfCompilation();
         String className = "UnknownClass";
         String selector = "unknownSelector";
         final ClassObject classObject = getCompiledInClass();
@@ -60,6 +61,7 @@ public final class CompiledMethodObject extends CompiledCodeObject {
     }
 
     public NativeObject getCompiledInSelector() {
+        CompilerAsserts.neverPartOfCompilation("Do not use getCompiledInSelector() in compiled code");
         if (literals.length > 1) {
             final Object lit = literals[literals.length - 2];
             if (lit == null) {
