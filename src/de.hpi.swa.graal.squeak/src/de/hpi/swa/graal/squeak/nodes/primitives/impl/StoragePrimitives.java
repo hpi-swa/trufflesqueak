@@ -32,6 +32,7 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.GetAllInstancesNode;
 import de.hpi.swa.graal.squeak.nodes.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.SqueakObjectAtPut0Node;
+import de.hpi.swa.graal.squeak.nodes.SqueakObjectPointersBecomeOneWayNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
@@ -57,6 +58,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     protected abstract static class AbstractArrayBecomeOneWayPrimitiveNode extends AbstractInstancesPrimitiveNode {
+        @Child private SqueakObjectPointersBecomeOneWayNode pointersBecomeNode = SqueakObjectPointersBecomeOneWayNode.create();
         @Child private FrameStackReadNode stackReadNode = FrameStackReadNode.create();
         @Child private FrameStackWriteNode stackWriteNode = FrameStackWriteNode.create();
         @Child private FrameSlotReadNode stackPointerReadNode;
@@ -80,7 +82,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             for (Iterator<AbstractSqueakObject> iterator = instances.iterator(); iterator.hasNext();) {
                 final AbstractSqueakObject instance = iterator.next();
                 if (instance != null && instance.getSqClass() != null) {
-                    instance.pointersBecomeOneWay(fromPointers, toPointers, copyHash);
+                    pointersBecomeNode.execute(instance, fromPointers, toPointers, copyHash);
                 }
             }
             patchTruffleFrames(fromPointers, toPointers);
