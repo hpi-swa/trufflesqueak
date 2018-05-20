@@ -73,16 +73,21 @@ public abstract class GetOrCreateContextNode extends AbstractNodeWithCode {
     public static ContextObject getOrCreateFull(final MaterializedFrame frame, final boolean invalidateCanBeVirtualizedAssumption) {
         final Object contextOrMarker = FrameAccess.getContextOrMarker(frame);
         if (contextOrMarker instanceof ContextObject) {
-            return (ContextObject) contextOrMarker;
-        } else {
-            CompilerDirectives.transferToInterpreter();
-            final CompiledCodeObject method = FrameAccess.getMethod(frame);
-            final ContextObject context = ContextObject.create(method.image, method.frameSize(), frame.materialize());
-
+            final ContextObject context = (ContextObject) contextOrMarker;
+            final CompiledCodeObject method = context.getMethod();
             if (invalidateCanBeVirtualizedAssumption) {
                 method.invalidateCanBeVirtualizedAssumption();
             }
+            forceSenderChain(method, context);
+            return context;
+        } else {
+            CompilerDirectives.transferToInterpreter();
+            final CompiledCodeObject method = FrameAccess.getMethod(frame);
+            final ContextObject context = ContextObject.create(method.image, method.frameSize(), frame);
             frame.setObject(method.thisContextOrMarkerSlot, context);
+            if (invalidateCanBeVirtualizedAssumption) {
+                method.invalidateCanBeVirtualizedAssumption();
+            }
             forceSenderChain(method, context);
             return context;
         }

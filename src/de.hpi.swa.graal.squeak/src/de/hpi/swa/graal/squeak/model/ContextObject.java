@@ -165,15 +165,11 @@ public final class ContextObject extends AbstractSqueakObject {
     }
 
     public AbstractSqueakObject getSender(final boolean force) {
-        if (isDirty) {
-            final Object sender = pointers[CONTEXT.SENDER_OR_NIL];
-            if (sender instanceof ContextObject) {
-                return (AbstractSqueakObject) sender;
-            } else if (sender instanceof NilObject) {
-                return (AbstractSqueakObject) sender;
-            } else {
-                throw new SqueakException("Unexpected sender object: " + sender);
-            }
+        final Object sender = pointers[CONTEXT.SENDER_OR_NIL];
+        if (sender instanceof ContextObject) {
+            return (AbstractSqueakObject) sender;
+        } else if (sender instanceof NilObject) {
+            return (AbstractSqueakObject) sender;
         }
         final Object senderOrMarker = truffleFrame.getArguments()[FrameAccess.SENDER_OR_SENDER_MARKER];
         final AbstractSqueakObject actualSender;
@@ -378,22 +374,25 @@ public final class ContextObject extends AbstractSqueakObject {
     }
 
     public void materialize() {
-        if (truffleFrame == null || isDirty) {
+        if (truffleFrame == null) {
             return; // nothing to do
         }
-        final CompiledCodeObject blockOrMethod = getMethod();
-        final Object senderOrMarker = FrameAccess.getSender(truffleFrame);
-        if (senderOrMarker instanceof FrameMarker) {
-            final Frame senderFrame = FrameAccess.findFrameForMarker((FrameMarker) senderOrMarker);
-            if (senderFrame != null) {
+        if (pointers[CONTEXT.SENDER_OR_NIL] == null) {
+            // Materialize sender if sender is a FrameMarker
+            final Object senderOrMarker = FrameAccess.getSender(truffleFrame);
+            if (senderOrMarker instanceof FrameMarker) {
+                final Frame senderFrame = FrameAccess.findFrameForMarker((FrameMarker) senderOrMarker);
+                if (senderFrame == null) {
+                    throw new SqueakException("Unable to find senderFrame for FrameMaker");
+                }
                 setSender(GetOrCreateContextNode.getOrCreateFull(senderFrame.materialize(), false));
-            } else {
-                setSender(image.nil);
             }
-        } else {
-            assert senderOrMarker instanceof ContextObject;
-            setSender(senderOrMarker);
         }
+        if (isDirty) {
+            return; // nothing more to do
+        }
+        final CompiledCodeObject blockOrMethod = getMethod();
+
         final long framePC = FrameUtil.getIntSafe(truffleFrame, getMethod().instructionPointerSlot);
         final long frameSP = FrameUtil.getIntSafe(truffleFrame, getMethod().stackPointerSlot);
         atput0(CONTEXT.METHOD, blockOrMethod);

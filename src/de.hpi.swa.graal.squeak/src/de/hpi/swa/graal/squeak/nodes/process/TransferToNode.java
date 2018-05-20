@@ -36,6 +36,7 @@ public class TransferToNode extends AbstractNodeWithImage {
         scheduler.atput0(PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
         atPut0Node.execute(activeProcess, PROCESS.SUSPENDED_CONTEXT, activeContext);
         final ContextObject newActiveContext = (ContextObject) at0Node.execute(newProcess, PROCESS.SUSPENDED_CONTEXT);
+        newActiveContext.materialize();
         atPut0Node.execute(newProcess, PROCESS.SUSPENDED_CONTEXT, image.nil);
         throw new ProcessSwitch(newActiveContext);
     }
