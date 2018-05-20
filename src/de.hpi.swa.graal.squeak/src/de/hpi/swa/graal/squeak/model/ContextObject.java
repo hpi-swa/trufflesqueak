@@ -377,9 +377,11 @@ public final class ContextObject extends AbstractSqueakObject {
         if (truffleFrame == null) {
             return; // nothing to do
         }
+        CompilerDirectives.transferToInterpreter();
+        final Object[] frameArguments = truffleFrame.getArguments();
         if (pointers[CONTEXT.SENDER_OR_NIL] == null) {
             // Materialize sender if sender is a FrameMarker
-            final Object senderOrMarker = FrameAccess.getSender(truffleFrame);
+            final Object senderOrMarker = frameArguments[FrameAccess.SENDER_OR_SENDER_MARKER];
             if (senderOrMarker instanceof FrameMarker) {
                 final Frame senderFrame = FrameAccess.findFrameForMarker((FrameMarker) senderOrMarker);
                 if (senderFrame == null) {
@@ -393,8 +395,8 @@ public final class ContextObject extends AbstractSqueakObject {
         }
         final CompiledCodeObject blockOrMethod = getMethod();
 
-        final long framePC = FrameUtil.getIntSafe(truffleFrame, getMethod().instructionPointerSlot);
-        final long frameSP = FrameUtil.getIntSafe(truffleFrame, getMethod().stackPointerSlot);
+        final long framePC = FrameUtil.getIntSafe(truffleFrame, blockOrMethod.instructionPointerSlot);
+        final long frameSP = FrameUtil.getIntSafe(truffleFrame, blockOrMethod.stackPointerSlot);
         atput0(CONTEXT.METHOD, blockOrMethod);
         if (framePC >= 0) {
             setInstructionPointer(framePC + CalculcatePCOffsetNode.create().execute(blockOrMethod));
@@ -402,8 +404,8 @@ public final class ContextObject extends AbstractSqueakObject {
             atput0(CONTEXT.INSTRUCTION_POINTER, blockOrMethod.image.nil);
         }
         setStackPointer(frameSP + 1); // frame sp is zero-based
-        final BlockClosureObject closure = FrameAccess.getClosure(truffleFrame);
+        final BlockClosureObject closure = (BlockClosureObject) frameArguments[FrameAccess.CLOSURE_OR_NULL];
         atput0(CONTEXT.CLOSURE_OR_NIL, closure == null ? blockOrMethod.image.nil : closure);
-        atput0(CONTEXT.RECEIVER, FrameAccess.getReceiver(truffleFrame));
+        atput0(CONTEXT.RECEIVER, frameArguments[FrameAccess.RECEIVER]);
     }
 }
