@@ -67,13 +67,13 @@ public final class CompiledCodeNodes {
         public abstract boolean execute(Object obj);
 
         @Specialization
-        protected static final boolean doBlock(@SuppressWarnings("unused") final CompiledBlockObject obj) {
-            return false; // block cannot be doesNotUnderstand
-        }
-
-        @Specialization
         protected final boolean doMethod(final CompiledMethodObject obj) {
-            return obj.getCompiledInSelector() == image.doesNotUnderstand;
+            final Object[] literals = obj.getLiterals();
+            final int numLiterals = obj.getNumLiterals();
+            if (numLiterals < 2) {
+                return false;
+            }
+            return literals[literals.length - 2] == image.doesNotUnderstand;
         }
 
         @Fallback
