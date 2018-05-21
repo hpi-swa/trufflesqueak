@@ -70,7 +70,7 @@ public abstract class MaterializeContextObjectNode extends AbstractNodeWithImage
         } else { // context has been terminated
             context.atput0(CONTEXT.INSTRUCTION_POINTER, image.nil);
         }
-        context.setStackPointer((long) spNode.executeRead(frame) + 1); // frame sp is zero-based
+        context.setStackPointer((int) spNode.executeRead(frame) + 1); // frame sp is zero-based
         final Object closure = closureNode.executeRead(frame);
         context.atput0(CONTEXT.CLOSURE_OR_NIL, closure == null ? image.nil : closure);
         context.atput0(CONTEXT.RECEIVER, receiverNode.executeRead(frame));
