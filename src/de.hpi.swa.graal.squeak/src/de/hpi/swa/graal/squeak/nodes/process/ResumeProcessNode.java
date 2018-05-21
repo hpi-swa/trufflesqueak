@@ -5,8 +5,8 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
-import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 import de.hpi.swa.graal.squeak.nodes.SqueakObjectAt0Node;
@@ -17,15 +17,15 @@ public abstract class ResumeProcessNode extends AbstractNodeWithImage {
     @Child private PutToSleepNode putToSleepNode;
     @Child private TransferToNode transferToNode;
 
-    public static ResumeProcessNode create(final SqueakImageContext image) {
-        return ResumeProcessNodeGen.create(image);
+    public static ResumeProcessNode create(final CompiledCodeObject code) {
+        return ResumeProcessNodeGen.create(code);
     }
 
-    protected ResumeProcessNode(final SqueakImageContext image) {
-        super(image);
+    protected ResumeProcessNode(final CompiledCodeObject code) {
+        super(code.image);
         getActiveProcessNode = GetActiveProcessNode.create(image);
         putToSleepNode = PutToSleepNode.create(image);
-        transferToNode = TransferToNode.create(image);
+        transferToNode = TransferToNode.create(code);
     }
 
     public abstract void executeResume(VirtualFrame frame, Object newProcess);

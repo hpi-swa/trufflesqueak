@@ -174,7 +174,6 @@ public final class ContextObject extends AbstractSqueakObject {
         final Object senderOrMarker = truffleFrame.getArguments()[FrameAccess.SENDER_OR_SENDER_MARKER];
         final AbstractSqueakObject actualSender;
         if (senderOrMarker instanceof FrameMarker) {
-            CompilerDirectives.transferToInterpreter();
             final Frame frame = FrameAccess.findFrameForMarker((FrameMarker) senderOrMarker);
             actualSender = GetOrCreateContextNode.getOrCreateFull(frame.materialize(), false);
             assert actualSender != null;
@@ -373,11 +372,22 @@ public final class ContextObject extends AbstractSqueakObject {
         }
     }
 
+    public MaterializedFrame getTruffleFrame() {
+        return truffleFrame;
+    }
+
+    public boolean hasTruffleFrame() {
+        return truffleFrame != null;
+    }
+
+    public boolean hasMaterializedSender() {
+        return pointers[CONTEXT.SENDER_OR_NIL] != null;
+    }
+
     public void materialize() {
         if (truffleFrame == null) {
             return; // nothing to do
         }
-        CompilerDirectives.transferToInterpreter();
         final Object[] frameArguments = truffleFrame.getArguments();
         if (pointers[CONTEXT.SENDER_OR_NIL] == null) {
             // Materialize sender if sender is a FrameMarker

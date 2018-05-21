@@ -204,7 +204,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected PrimSignalNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
-            signalSemaphoreNode = SignalSemaphoreNode.create(method.image);
+            signalSemaphoreNode = SignalSemaphoreNode.create(method);
         }
 
         @Specialization(guards = "isSemaphore(receiver)")
@@ -225,7 +225,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected PrimWaitNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
             linkProcessToListNode = LinkProcessToListNode.create(method.image);
-            wakeHighestPriorityNode = WakeHighestPriorityNode.create(method.image);
+            wakeHighestPriorityNode = WakeHighestPriorityNode.create(method);
             getActiveProcessNode = GetActiveProcessNode.create(method.image);
         }
 
@@ -251,7 +251,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected PrimResumeNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
-            resumeProcessNode = ResumeProcessNode.create(method.image);
+            resumeProcessNode = ResumeProcessNode.create(method);
         }
 
         @Specialization
@@ -274,7 +274,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected PrimSuspendNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
             removeProcessNode = RemoveProcessFromListNode.create(method.image);
-            wakeHighestPriorityNode = WakeHighestPriorityNode.create(method.image);
+            wakeHighestPriorityNode = WakeHighestPriorityNode.create(method);
             getActiveProcessNode = GetActiveProcessNode.create(method.image);
         }
 
@@ -664,7 +664,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         public PrimYieldNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
-            yieldProcessNode = YieldProcessNode.create(method.image);
+            yieldProcessNode = YieldProcessNode.create(method);
         }
 
         @Specialization
@@ -730,7 +730,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
             isEmptyListNode = IsEmptyListNode.create(method.image);
             removeFirstLinkOfListNode = RemoveFirstLinkOfListNode.create(method.image);
-            resumeProcessNode = ResumeProcessNode.create(method.image);
+            resumeProcessNode = ResumeProcessNode.create(method);
         }
 
         @Specialization
@@ -758,7 +758,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
             getActiveProcessNode = GetActiveProcessNode.create(method.image);
             linkProcessToListNode = LinkProcessToListNode.create(method.image);
-            wakeHighestPriorityNode = WakeHighestPriorityNode.create(method.image);
+            wakeHighestPriorityNode = WakeHighestPriorityNode.create(method);
         }
 
         @Override

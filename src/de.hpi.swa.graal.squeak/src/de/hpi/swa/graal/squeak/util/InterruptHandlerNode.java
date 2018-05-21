@@ -14,6 +14,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.process.SignalSemaphoreNode;
@@ -37,11 +38,15 @@ public final class InterruptHandlerNode extends Node {
 
     protected InterruptHandlerNode(final SqueakImageContext image, final SqueakConfig config) {
         this.image = image;
-        signalSemaporeNode = SignalSemaphoreNode.create(image);
+
         disabled = config.disableInterruptHandler();
         if (disabled) {
             image.getOutput().println("Interrupt handler disabled...");
         }
+    }
+
+    public void initializeSignalSemaphoreNode(final CompiledCodeObject method) {
+        signalSemaporeNode = SignalSemaphoreNode.create(method);
     }
 
     public void start() {

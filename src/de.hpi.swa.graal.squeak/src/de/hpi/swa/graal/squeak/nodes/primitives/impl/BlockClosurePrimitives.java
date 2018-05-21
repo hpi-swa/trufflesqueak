@@ -41,15 +41,17 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @SqueakPrimitive(index = 195)
     protected abstract static class PrimFindNextUnwindContextUpToNode extends AbstractPrimitiveNode {
         @Child private FrameSlotReadNode contextOrMarkerNode;
+        @Child private GetOrCreateContextNode contextNode;
 
         public PrimFindNextUnwindContextUpToNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
             contextOrMarkerNode = FrameSlotReadNode.create(method.thisContextOrMarkerSlot);
+            contextNode = GetOrCreateContextNode.create(method);
         }
 
         @Specialization(guards = {"receiver.hasVirtualSender()"})
         @TruffleBoundary
-        protected Object doFindNextVirtualized(final ContextObject receiver, final ContextObject previousContext) {
+        protected final Object doFindNextVirtualized(final ContextObject receiver, final ContextObject previousContext) {
             final ContextObject handlerContext = Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<ContextObject>() {
                 boolean foundMyself = false;
 
@@ -70,7 +72,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         } else {
                             final CompiledCodeObject frameMethod = FrameAccess.getMethod(current);
                             if (frameMethod.isUnwindMarked()) {
-                                return GetOrCreateContextNode.getOrCreateFull(current.materialize(), false);
+                                return contextNode.executeGet(current, false);
                             }
                         }
                     }
@@ -164,10 +166,12 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @SqueakPrimitive(index = 197)
     protected abstract static class PrimNextHandlerContextNode extends AbstractPrimitiveNode {
         @Child private FrameSlotReadNode contextOrMarkerNode;
+        @Child private GetOrCreateContextNode contextNode;
 
         protected PrimNextHandlerContextNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
             contextOrMarkerNode = FrameSlotReadNode.create(method.thisContextOrMarkerSlot);
+            contextNode = GetOrCreateContextNode.create(method);
         }
 
         @Specialization(guards = {"receiver.hasVirtualSender()"})
@@ -190,7 +194,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                     } else {
                         final CompiledCodeObject frameMethod = FrameAccess.getMethod(current);
                         if (frameMethod.isExceptionHandlerMarked()) {
-                            return GetOrCreateContextNode.getOrCreateFull(current.materialize(), false);
+                            return contextNode.executeGet(current, false);
                         }
                     }
                     return null;

@@ -1,7 +1,6 @@
 package de.hpi.swa.graal.squeak.model;
 
 import com.oracle.truffle.api.Assumption;
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.RootCallTarget;
@@ -9,7 +8,6 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions;
-import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -179,24 +177,25 @@ public final class BlockClosureObject extends AbstractSqueakObject {
     }
 
     public Object[] getFrameArguments(final Object senderOrMarker, final Object... objects) {
-        CompilerAsserts.compilationConstant(objects.length);
         final CompiledBlockObject blockObject = getCompiledBlock();
-        if (blockObject.getNumArgs() != objects.length) {
-            throw new PrimitiveFailed();
+        final int numObjects = objects.length;
+        final int numCopied = copied.length;
+        if (blockObject.getNumArgs() != numObjects) { // TODO: turn this into an assertion
+            image.getError().println("number of required and provided block arguments do not match");
         }
         final Object[] arguments = new Object[FrameAccess.ARGUMENTS_START +
-                        objects.length +
-                        copied.length];
+                        numObjects +
+                        numCopied];
         arguments[FrameAccess.METHOD] = blockObject;
         // Sender is thisContext (or marker)
         arguments[FrameAccess.SENDER_OR_SENDER_MARKER] = senderOrMarker;
         arguments[FrameAccess.CLOSURE_OR_NULL] = this;
         arguments[FrameAccess.RECEIVER] = getReceiver();
-        for (int i = 0; i < objects.length; i++) {
+        for (int i = 0; i < numObjects; i++) {
             arguments[FrameAccess.ARGUMENTS_START + i] = objects[i];
         }
-        for (int i = 0; i < copied.length; i++) {
-            arguments[FrameAccess.ARGUMENTS_START + objects.length + i] = copied[i];
+        for (int i = 0; i < numCopied; i++) {
+            arguments[FrameAccess.ARGUMENTS_START + numObjects + i] = copied[i];
         }
         return arguments;
     }

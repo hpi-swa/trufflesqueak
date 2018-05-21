@@ -12,6 +12,7 @@ import org.graalvm.polyglot.Value;
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -100,6 +101,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected final Object doList(@SuppressWarnings("unused") final ClassObject receiver) {
             final Object[] languageStrings = code.image.env.getLanguages().keySet().toArray();
             return code.image.wrap(languageStrings);

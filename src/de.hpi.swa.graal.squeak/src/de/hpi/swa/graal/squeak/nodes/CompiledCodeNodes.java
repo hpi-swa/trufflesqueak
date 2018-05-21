@@ -4,6 +4,7 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
@@ -52,7 +53,6 @@ public final class CompiledCodeNodes {
         protected static final int doMethod(final CompiledMethodObject obj) {
             return obj.getNumArgs();
         }
-
     }
 
     public abstract static class IsDoesNotUnderstandNode extends AbstractNodeWithImage {
@@ -80,7 +80,6 @@ public final class CompiledCodeNodes {
         protected static final boolean doFallback(@SuppressWarnings("unused") final Object obj) {
             return false;
         }
-
     }
 
     public abstract static class CalculcatePCOffsetNode extends Node {
@@ -89,7 +88,7 @@ public final class CompiledCodeNodes {
             return CalculcatePCOffsetNodeGen.create();
         }
 
-        public abstract int execute(CompiledCodeObject obj);
+        public abstract int execute(Object obj);
 
         @Specialization
         protected static final int doBlock(final CompiledBlockObject obj) {
@@ -101,5 +100,9 @@ public final class CompiledCodeNodes {
             return obj.getInitialPC();
         }
 
+        @Fallback
+        protected static final int doFallback(final Object obj) {
+            throw new SqueakException("Unexpected object: " + obj);
+        }
     }
 }

@@ -34,8 +34,9 @@ public final class ExecuteTopLevelContextNode extends RootNode {
 
     private ExecuteTopLevelContextNode(final SqueakLanguage language, final ContextObject context, final CompiledCodeObject code) {
         super(language, code.getFrameDescriptor());
-        this.image = code.image;
-        this.initialContext = context;
+        image = code.image;
+        initialContext = context;
+        image.interrupt.initializeSignalSemaphoreNode(initialContext.getMethod());
         contextWriteNode = FrameSlotWriteNode.create(code.thisContextOrMarkerSlot);
         receiverAndArgumentsNode = ReceiverAndArgumentsNode.create(code.thisContextOrMarkerSlot);
     }

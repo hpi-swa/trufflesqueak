@@ -3,7 +3,7 @@ package de.hpi.swa.graal.squeak.nodes.process;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
-import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
@@ -15,17 +15,17 @@ public class WakeHighestPriorityNode extends AbstractNodeWithImage {
     @Child private IsEmptyListNode isEmptyListNode;
     @Child private TransferToNode transferToNode;
 
-    public static WakeHighestPriorityNode create(final SqueakImageContext image) {
-        return new WakeHighestPriorityNode(image);
+    public static WakeHighestPriorityNode create(final CompiledCodeObject code) {
+        return new WakeHighestPriorityNode(code);
     }
 
-    protected WakeHighestPriorityNode(final SqueakImageContext image) {
-        super(image);
+    protected WakeHighestPriorityNode(final CompiledCodeObject code) {
+        super(code.image);
         removeFirstLinkOfListNode = RemoveFirstLinkOfListNode.create(image);
         getActiveProcessNode = GetActiveProcessNode.create(image);
         getSchedulerNode = GetSchedulerNode.create(image);
         isEmptyListNode = IsEmptyListNode.create(image);
-        transferToNode = TransferToNode.create(image);
+        transferToNode = TransferToNode.create(code);
     }
 
     public void executeWake(final VirtualFrame frame) {

@@ -93,6 +93,7 @@ public abstract class GetOrCreateContextNode extends AbstractNodeWithCode {
         }
     }
 
+    @TruffleBoundary
     private static void forceSenderChain(final CompiledCodeObject method, final ContextObject context) {
         ContextObject current = context;
         while (true) {
