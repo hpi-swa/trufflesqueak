@@ -19,11 +19,11 @@ public abstract class AbstractStackNode extends SqueakNodeWithCode {
         stackPointerWriteNode = FrameSlotWriteNode.create(code.stackPointerSlot);
     }
 
-    protected int frameStackPointer(final VirtualFrame frame) {
+    protected final int frameStackPointer(final VirtualFrame frame) {
         return (int) stackPointerReadNode.executeRead(frame);
     }
 
-    protected void setFrameStackPointer(final VirtualFrame frame, final int value) {
+    protected final void setFrameStackPointer(final VirtualFrame frame, final int value) {
         stackPointerWriteNode.executeWrite(frame, value);
     }
 }

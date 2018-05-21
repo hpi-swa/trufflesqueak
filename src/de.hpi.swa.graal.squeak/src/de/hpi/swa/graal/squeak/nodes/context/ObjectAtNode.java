@@ -28,12 +28,12 @@ public abstract class ObjectAtNode extends AbstractObjectAtNode {
     public abstract Object executeGeneric(VirtualFrame frame);
 
     @Specialization
-    protected Object read(final NativeObject object) {
+    protected final Object read(final NativeObject object) {
         return classProfile.profile(object).getNativeAt0(index);
     }
 
     @Specialization(guards = "!isNativeObject(object)")
-    protected Object read(final AbstractSqueakObject object) {
+    protected final Object read(final AbstractSqueakObject object) {
         return at0Node.execute(classProfile.profile(object), index);
     }
 }

@@ -41,12 +41,12 @@ public final class ReturnBytecodes {
         }
 
         @Specialization(guards = {"!hasClosure(frame)", "isVirtualized(frame) || !hasModifiedSender(frame)"})
-        protected Object executeLocalReturn(final VirtualFrame frame) {
+        protected final Object executeLocalReturn(final VirtualFrame frame) {
             throw new LocalReturn(getReturnValue(frame));
         }
 
         @Specialization(guards = {"hasClosure(frame) || !isVirtualized(frame)", "hasClosure(frame) || hasModifiedSender(frame)"})
-        protected Object executeNonLocalReturn(final VirtualFrame frame) {
+        protected final Object executeNonLocalReturn(final VirtualFrame frame) {
             final ContextObject outerContext;
             final BlockClosureObject block = (BlockClosureObject) readClosureNode.executeRead(frame);
             if (block != null) {
@@ -75,7 +75,7 @@ public final class ReturnBytecodes {
         }
 
         @Override
-        protected Object getReturnValue(final VirtualFrame frame) {
+        protected final Object getReturnValue(final VirtualFrame frame) {
             return constant;
         }
 
@@ -98,7 +98,7 @@ public final class ReturnBytecodes {
         }
 
         @Override
-        protected Object getReturnValue(final VirtualFrame frame) {
+        protected final Object getReturnValue(final VirtualFrame frame) {
             return receiverNode.executeRead(frame);
         }
 
@@ -142,7 +142,7 @@ public final class ReturnBytecodes {
         }
 
         @Override
-        protected Object getReturnValue(final VirtualFrame frame) {
+        protected final Object getReturnValue(final VirtualFrame frame) {
             return popNode.executeRead(frame);
         }
 

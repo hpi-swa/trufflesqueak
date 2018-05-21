@@ -40,7 +40,7 @@ public final class PushBytecodes {
         }
     }
 
-    public static class PushActiveContextNode extends AbstractPushNode {
+    public static final class PushActiveContextNode extends AbstractPushNode {
         @Child private GetOrCreateContextNode getContextNode;
 
         public PushActiveContextNode(final CompiledCodeObject code, final int index) {
@@ -125,7 +125,7 @@ public final class PushBytecodes {
         }
     }
 
-    public static class PushConstantNode extends AbstractPushNode {
+    public static final class PushConstantNode extends AbstractPushNode {
         @CompilationFinal private final Object constant;
 
         public PushConstantNode(final CompiledCodeObject code, final int index, final Object obj) {
@@ -144,7 +144,7 @@ public final class PushBytecodes {
         }
     }
 
-    public static class PushLiteralConstantNode extends AbstractPushNode {
+    public static final class PushLiteralConstantNode extends AbstractPushNode {
         @Child private SqueakNode literalNode;
         @CompilationFinal private final int literalIndex;
 
@@ -165,7 +165,7 @@ public final class PushBytecodes {
         }
     }
 
-    public static class PushLiteralVariableNode extends AbstractPushNode {
+    public static final class PushLiteralVariableNode extends AbstractPushNode {
         @Child private ObjectAtNode valueNode;
         @CompilationFinal private final int literalIndex;
 
@@ -186,7 +186,7 @@ public final class PushBytecodes {
         }
     }
 
-    public static class PushNewArrayNode extends AbstractPushNode {
+    public static final class PushNewArrayNode extends AbstractPushNode {
         @Child private StackPopNReversedNode popNReversedNode;
         @CompilationFinal private final int arraySize;
 
@@ -212,7 +212,7 @@ public final class PushBytecodes {
         }
     }
 
-    public static class PushReceiverNode extends AbstractPushNode {
+    public static final class PushReceiverNode extends AbstractPushNode {
         @Child private ReceiverNode receiverNode;
 
         public PushReceiverNode(final CompiledCodeObject code, final int index) {
@@ -231,7 +231,7 @@ public final class PushBytecodes {
         }
     }
 
-    public static class PushReceiverVariableNode extends AbstractPushNode {
+    public static final class PushReceiverVariableNode extends AbstractPushNode {
         @Child private ObjectAtNode fetchNode;
         @CompilationFinal private final int variableIndex;
 
@@ -252,7 +252,7 @@ public final class PushBytecodes {
         }
     }
 
-    public static class PushRemoteTempNode extends AbstractPushNode {
+    public static final class PushRemoteTempNode extends AbstractPushNode {
         @Child private ObjectAtNode remoteTempNode;
         @CompilationFinal private final int indexInArray;
         @CompilationFinal private final int indexOfArray;
@@ -275,7 +275,7 @@ public final class PushBytecodes {
         }
     }
 
-    public static class PushTemporaryLocationNode extends AbstractBytecodeNode {
+    public static final class PushTemporaryLocationNode extends AbstractBytecodeNode {
         @Child private StackPushNode pushNode;
         @Child private SqueakNode tempNode;
         @CompilationFinal private final int tempIndex;

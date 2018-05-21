@@ -75,12 +75,12 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
             timeZoneOffsetMicroseconds = (((long) rightNow.get(Calendar.ZONE_OFFSET)) + rightNow.get(Calendar.DST_OFFSET)) * 1000;
         }
 
-        protected long currentMicrosecondsUTC() {
+        protected static final long currentMicrosecondsUTC() {
             final Instant now = Instant.now();
             return now.getEpochSecond() * SEC_TO_USEC + now.getNano() / USEC_TO_NANO + EPOCH_DELTA_MICROSECONDS;
         }
 
-        protected long currentMicrosecondsLocal() {
+        protected final long currentMicrosecondsLocal() {
             return currentMicrosecondsUTC() + timeZoneOffsetMicroseconds;
         }
     }
@@ -91,7 +91,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        protected void signalAtMilliseconds(final AbstractSqueakObject semaphore, final long msTime) {
+        protected final void signalAtMilliseconds(final AbstractSqueakObject semaphore, final long msTime) {
             if (semaphore.isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassSemaphore)) {
                 code.image.registerSemaphore(semaphore, SPECIAL_OBJECT_INDEX.TheTimerSemaphore);
                 code.image.interrupt.setNextWakeupTick(msTime);

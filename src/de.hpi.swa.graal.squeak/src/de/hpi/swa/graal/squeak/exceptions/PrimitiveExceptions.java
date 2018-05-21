@@ -14,7 +14,7 @@ public final class PrimitiveExceptions {
             this.reasonCode = reasonCode;
         }
 
-        public long getReasonCode() {
+        public final long getReasonCode() {
             return reasonCode;
         }
     }

@@ -49,11 +49,11 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        protected boolean isZero(final double value) {
+        protected static final boolean isZero(final double value) {
             return value == 0;
         }
 
-        protected boolean isIntegralWhenDividedBy(final long a, final long b) {
+        protected static final boolean isIntegralWhenDividedBy(final long a, final long b) {
             return a % b == 0;
         }
 

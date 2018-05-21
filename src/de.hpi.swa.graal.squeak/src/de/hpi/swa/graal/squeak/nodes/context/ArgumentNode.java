@@ -26,17 +26,17 @@ public abstract class ArgumentNode extends SqueakNodeWithCode {
     }
 
     @Specialization(guards = {"isVirtualized(frame)", "argumentIndex <= code.getNumArgs()"})
-    protected Object doVirtualized(final VirtualFrame frame) {
+    protected final Object doVirtualized(final VirtualFrame frame) {
         return frameArgumentNode.executeRead(frame);
     }
 
     @Specialization(guards = {"!isVirtualized(frame)", "argumentIndex <= code.getNumArgs()"})
-    protected Object doUnvirtualized(final VirtualFrame frame) {
+    protected final Object doUnvirtualized(final VirtualFrame frame) {
         return getContext(frame).atStack(argumentIndex);
     }
 
     @Specialization(guards = {"argumentIndex > code.getNumArgs()"})
-    protected Object doArgumentsExhausted() {
+    protected static final Object doArgumentsExhausted() {
         return NotProvided.INSTANCE;
     }
 }

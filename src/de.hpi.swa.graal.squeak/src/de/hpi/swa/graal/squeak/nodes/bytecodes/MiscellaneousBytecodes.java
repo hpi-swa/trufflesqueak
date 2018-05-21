@@ -34,7 +34,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitives.Primitive
 
 public final class MiscellaneousBytecodes {
 
-    public static class CallPrimitiveNode extends AbstractBytecodeNode {
+    public static final class CallPrimitiveNode extends AbstractBytecodeNode {
         @Child private HandlePrimitiveFailedNode handlePrimFailed;
         @Child private AbstractPrimitiveNode primitiveNode;
         @CompilationFinal private final int primitiveIndex;
@@ -86,7 +86,7 @@ public final class MiscellaneousBytecodes {
         }
     }
 
-    public abstract static class DoubleExtendedDoAnythingNode {
+    public static final class DoubleExtendedDoAnythingNode {
 
         public static AbstractBytecodeNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int second, final int third) {
             final int opType = second >> 5;
@@ -113,7 +113,7 @@ public final class MiscellaneousBytecodes {
         }
     }
 
-    public static class DupNode extends UnknownBytecodeNode {
+    public static final class DupNode extends UnknownBytecodeNode {
         @Child private StackPushNode pushNode;
         @Child private StackTopNode topNode;
 
@@ -134,7 +134,7 @@ public final class MiscellaneousBytecodes {
         }
     }
 
-    public static class ExtendedBytecodes {
+    public static final class ExtendedBytecodes {
 
         public static AbstractBytecodeNode createPopInto(final CompiledCodeObject code, final int index, final int numBytecodes, final int nextByte) {
             final long variableIndex = variableIndex(nextByte);
@@ -193,7 +193,7 @@ public final class MiscellaneousBytecodes {
         }
     }
 
-    public static class PopNode extends UnknownBytecodeNode {
+    public static final class PopNode extends UnknownBytecodeNode {
         @Child private StackPopNode popNode;
 
         public PopNode(final CompiledCodeObject code, final int index, final int numBytecodes) {

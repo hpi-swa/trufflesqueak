@@ -42,7 +42,7 @@ public final class SendBytecodes {
         }
 
         @Override
-        public void executeVoid(final VirtualFrame frame) {
+        public final void executeVoid(final VirtualFrame frame) {
             final Object result;
             try {
                 result = executeSend(frame);
@@ -52,7 +52,7 @@ public final class SendBytecodes {
             pushNode.executeWrite(frame, result);
         }
 
-        public Object executeSend(final VirtualFrame frame) {
+        public final Object executeSend(final VirtualFrame frame) {
             final Object[] rcvrAndArgs = (Object[]) popNReversedNode.executeRead(frame);
             final ClassObject rcvrClass = lookupClassNode.executeLookup(rcvrAndArgs[0]);
             final Object lookupResult = lookupNode.executeLookup(rcvrClass, selector);
@@ -60,12 +60,12 @@ public final class SendBytecodes {
             return dispatchSendNode.executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs, contextOrMarker);
         }
 
-        public Object getSelector() {
+        public final Object getSelector() {
             return selector;
         }
 
         @Override
-        public boolean hasTag(final Class<? extends Tag> tag) {
+        public final boolean hasTag(final Class<? extends Tag> tag) {
             return ((tag == StandardTags.StatementTag.class) || (tag == StandardTags.CallTag.class));
         }
 
@@ -75,13 +75,13 @@ public final class SendBytecodes {
         }
     }
 
-    public static class SecondExtendedSendNode extends AbstractSendNode {
+    public static final class SecondExtendedSendNode extends AbstractSendNode {
         public SecondExtendedSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int i) {
             super(code, index, numBytecodes, code.getLiteral(i & 63), i >> 6);
         }
     }
 
-    public static class SendLiteralSelectorNode extends AbstractSendNode {
+    public static final class SendLiteralSelectorNode extends AbstractSendNode {
         public static AbstractBytecodeNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int argCount) {
             final Object selector = code.getLiteral(literalIndex);
             return new SendLiteralSelectorNode(code, index, numBytecodes, selector, argCount);
@@ -92,7 +92,7 @@ public final class SendBytecodes {
         }
     }
 
-    public static class SendSelectorNode extends AbstractSendNode {
+    public static final class SendSelectorNode extends AbstractSendNode {
         public static SendSelectorNode createForSpecialSelector(final CompiledCodeObject code, final int index, final int selectorIndex) {
             final SpecialSelectorObject specialSelector = code.image.specialSelectorsArray[selectorIndex];
             return new SendSelectorNode(code, index, 1, specialSelector, specialSelector.getNumArguments());
@@ -103,19 +103,19 @@ public final class SendBytecodes {
         }
     }
 
-    public static class SendSelfSelector extends AbstractSendNode {
+    public static final class SendSelfSelector extends AbstractSendNode {
         public SendSelfSelector(final CompiledCodeObject code, final int index, final int numBytecodes, final Object selector, final int numArgs) {
             super(code, index, numBytecodes, selector, numArgs);
         }
     }
 
-    public static class SingleExtendedSendNode extends AbstractSendNode {
+    public static final class SingleExtendedSendNode extends AbstractSendNode {
         public SingleExtendedSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int param) {
             super(code, index, numBytecodes, code.getLiteral(param & 31), param >> 5);
         }
     }
 
-    public static class SingleExtendedSuperNode extends AbstractSendNode {
+    public static final class SingleExtendedSuperNode extends AbstractSendNode {
         protected static class SqueakLookupClassSuperNode extends SqueakLookupClassNode {
             @Child private GetCompiledMethodNode getMethodNode = GetCompiledMethodNode.create();
             @CompilationFinal private final CompiledCodeObject code;

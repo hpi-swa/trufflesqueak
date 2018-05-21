@@ -55,7 +55,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        protected boolean isString(final NativeObject obj) {
+        protected static final boolean isString(final NativeObject obj) {
             return obj.isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassString);
         }
     }

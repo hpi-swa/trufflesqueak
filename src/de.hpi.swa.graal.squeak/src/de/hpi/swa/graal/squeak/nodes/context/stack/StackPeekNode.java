@@ -19,12 +19,12 @@ public abstract class StackPeekNode extends AbstractStackNode {
     }
 
     @Specialization(guards = {"isVirtualized(frame)"})
-    protected Object doPeekVirtualized(final VirtualFrame frame) {
+    protected final Object doPeekVirtualized(final VirtualFrame frame) {
         return readNode.execute(frame, frameStackPointer(frame) - offset);
     }
 
     @Specialization(guards = {"!isVirtualized(frame)"})
-    protected Object doPeek(final VirtualFrame frame) {
+    protected final Object doPeek(final VirtualFrame frame) {
         return getContext(frame).peek(offset);
     }
 }

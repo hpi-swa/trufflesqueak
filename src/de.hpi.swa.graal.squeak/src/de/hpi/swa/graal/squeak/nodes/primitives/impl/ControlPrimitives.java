@@ -106,11 +106,11 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             contextOrMarkerNode = FrameSlotReadNode.create(code.thisContextOrMarkerSlot);
         }
 
-        protected ClassObject lookup(final Object receiver) {
+        protected final ClassObject lookup(final Object receiver) {
             return lookupClassNode.executeLookup(receiver);
         }
 
-        protected Object dispatch(final VirtualFrame frame, final NativeObject selector, final Object[] rcvrAndArgs, final ClassObject rcvrClass) {
+        protected final Object dispatch(final VirtualFrame frame, final NativeObject selector, final Object[] rcvrAndArgs, final ClassObject rcvrClass) {
             final Object lookupResult = lookupNode.executeLookup(rcvrClass, selector);
             final Object contextOrMarker = contextOrMarkerNode.executeRead(frame);
             return dispatchSendNode.executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs, contextOrMarker);
@@ -826,7 +826,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doExecute(final VirtualFrame frame, final Object receiver, final PointersObject argArray, final CompiledCodeObject codeObject) {
+        protected final Object doExecute(final VirtualFrame frame, final Object receiver, final PointersObject argArray, final CompiledCodeObject codeObject) {
             final int numArgs = argArray.size();
             final Object[] dispatchRcvrAndArgs = new Object[1 + numArgs];
             dispatchRcvrAndArgs[0] = receiver;
@@ -905,7 +905,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object returnValue(final Object receiver) {
+        protected static final Object returnValue(final Object receiver) {
             return receiver;
         }
     }
@@ -918,7 +918,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object returnValue(@SuppressWarnings("unused") final Object receiver) {
+        protected final Object returnValue(@SuppressWarnings("unused") final Object receiver) {
             return code.image.sqTrue;
         }
     }
@@ -931,7 +931,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object returnValue(@SuppressWarnings("unused") final Object receiver) {
+        protected final Object returnValue(@SuppressWarnings("unused") final Object receiver) {
             return code.image.sqFalse;
         }
     }
@@ -944,7 +944,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object returnValue(@SuppressWarnings("unused") final Object receiver) {
+        protected final Object returnValue(@SuppressWarnings("unused") final Object receiver) {
             return code.image.nil;
         }
     }
@@ -957,7 +957,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object returnValue(@SuppressWarnings("unused") final Object receiver) {
+        protected static final Object returnValue(@SuppressWarnings("unused") final Object receiver) {
             return -1L;
         }
     }
@@ -970,7 +970,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object returnValue(@SuppressWarnings("unused") final Object receiver) {
+        protected static final Object returnValue(@SuppressWarnings("unused") final Object receiver) {
             return 0L;
         }
     }
@@ -983,7 +983,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object returnValue(@SuppressWarnings("unused") final Object receiver) {
+        protected static final Object returnValue(@SuppressWarnings("unused") final Object receiver) {
             return 1L;
         }
     }
@@ -996,7 +996,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object returnValue(@SuppressWarnings("unused") final Object receiver) {
+        protected static final Object returnValue(@SuppressWarnings("unused") final Object receiver) {
             return 2L;
         }
     }
@@ -1015,7 +1015,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object receiverVariable(final VirtualFrame frame) {
+        protected final Object receiverVariable(final VirtualFrame frame) {
             return receiverVariableNode.executeGeneric(frame);
         }
     }

@@ -27,7 +27,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        protected static boolean isASCIIOrder(final NativeObject order) {
+        protected static final boolean isASCIIOrder(final NativeObject order) {
             final byte[] bytes = order.getBytes();
             for (int i = 0; i < 256; i++) {
                 if (bytes[i] != (byte) i) {

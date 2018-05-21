@@ -24,16 +24,16 @@ public abstract class StackPushNode extends AbstractWriteNode {
         stackPointerWriteNode = FrameSlotWriteNode.create(code.stackPointerSlot);
     }
 
-    protected int getFrameStackPointer(final VirtualFrame frame) {
+    protected final int getFrameStackPointer(final VirtualFrame frame) {
         return (int) stackPointerReadNode.executeRead(frame);
     }
 
-    protected void setFrameStackPointer(final VirtualFrame frame, final int value) {
+    protected final void setFrameStackPointer(final VirtualFrame frame, final int value) {
         stackPointerWriteNode.executeWrite(frame, value);
     }
 
     @Specialization(guards = {"isVirtualized(frame)"})
-    protected void doWriteVirtualized(final VirtualFrame frame, final Object value) {
+    protected final void doWriteVirtualized(final VirtualFrame frame, final Object value) {
         assert value != null;
         final int newSP = getFrameStackPointer(frame) + 1;
         writeNode.execute(frame, newSP, value);
@@ -41,7 +41,7 @@ public abstract class StackPushNode extends AbstractWriteNode {
     }
 
     @Specialization(guards = {"!isVirtualized(frame)"})
-    protected void doWrite(final VirtualFrame frame, final Object value) {
+    protected final void doWrite(final VirtualFrame frame, final Object value) {
         assert value != null;
         getContext(frame).push(value);
     }
