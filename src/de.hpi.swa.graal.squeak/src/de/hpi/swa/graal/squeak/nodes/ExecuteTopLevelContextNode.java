@@ -17,7 +17,6 @@ import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.nodes.CompiledCodeNodes.GetNumAllArgumentsNode;
-import de.hpi.swa.graal.squeak.nodes.context.ReceiverAndArgumentsNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotWriteNode;
 
 public final class ExecuteTopLevelContextNode extends RootNode {
@@ -25,7 +24,6 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     @CompilationFinal private final ContextObject initialContext;
     @Child private FrameSlotWriteNode contextWriteNode;
     @Child private ExecuteContextNode executeContextNode;
-    @Child private ReceiverAndArgumentsNode receiverAndArgumentsNode;
     @Child private GetNumAllArgumentsNode numAllArgumentsNode = GetNumAllArgumentsNode.create();
 
     public static ExecuteTopLevelContextNode create(final SqueakLanguage language, final ContextObject context) {
@@ -38,7 +36,6 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         initialContext = context;
         image.interrupt.initializeSignalSemaphoreNode(initialContext.getMethod());
         contextWriteNode = FrameSlotWriteNode.create(code.thisContextOrMarkerSlot);
-        receiverAndArgumentsNode = ReceiverAndArgumentsNode.create(code.thisContextOrMarkerSlot);
     }
 
     @Override

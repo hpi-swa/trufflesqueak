@@ -2,7 +2,7 @@ package de.hpi.swa.graal.squeak.test;
 
 public final class SqueakSUnitTestMap {
 
-    static final Object[] SQUEAK_TEST_CASES = new Object[]{"AddPrefixNamePolicyTest", TEST_TYPE.PASSING,
+    public static final Object[] SQUEAK_TEST_CASES = new Object[]{"AddPrefixNamePolicyTest", TEST_TYPE.PASSING,
                     "AliasTest", TEST_TYPE.PASSING,
                     "AllNamePolicyTest", TEST_TYPE.PASSING,
                     "AllocationTest", TEST_TYPE.IGNORE,
@@ -367,13 +367,13 @@ public final class SqueakSUnitTestMap {
                     "YearMonthWeekTest", TEST_TYPE.PASSING,
                     "YearTest", TEST_TYPE.PASSING};
 
-    static final class TEST_TYPE {
-        static final String PASSING = "Passing"; // should pass
-        static final String FAILING = "Failing"; // some/all test selectors fail/error
-        static final String NOT_TERMINATING = "Not Terminating"; // does not terminate
-        static final String BROKEN_IN_SQUEAK = "Broken in Squeak"; // not working in Squeak
-        static final String FLAKY = "Flaky"; // flaky tests
-        static final String IGNORE = "Ignored"; // unable to run (e.g. OOM, ...)
+    public static final class TEST_TYPE {
+        public static final String PASSING = "Passing"; // should pass
+        public static final String FAILING = "Failing"; // some/all test selectors fail/error
+        public static final String NOT_TERMINATING = "Not Terminating"; // does not terminate
+        public static final String BROKEN_IN_SQUEAK = "Broken in Squeak"; // not working in Squeak
+        public static final String FLAKY = "Flaky"; // flaky tests
+        public static final String IGNORE = "Ignored"; // unable to run (e.g. OOM, ...)
     }
 
 }
