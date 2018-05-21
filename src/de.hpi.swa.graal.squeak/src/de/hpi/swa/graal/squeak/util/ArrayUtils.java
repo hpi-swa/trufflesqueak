@@ -1,6 +1,11 @@
 package de.hpi.swa.graal.squeak.util;
 
 import java.util.Arrays;
+import java.util.List;
+
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 
 public class ArrayUtils {
 
@@ -36,5 +41,10 @@ public class ArrayUtils {
             Arrays.fill(array, inputSize, newSize, fill);
             return array;
         }
+    }
+
+    @TruffleBoundary
+    public static final Object[] toArray(final List<AbstractSqueakObject> list) {
+        return list.toArray(); // needs to be behind a TruffleBoundary
     }
 }

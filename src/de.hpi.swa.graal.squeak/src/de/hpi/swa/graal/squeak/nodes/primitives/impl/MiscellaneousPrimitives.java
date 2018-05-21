@@ -52,6 +52,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerNode;
 
 public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
@@ -477,7 +478,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected PointersObject allInstances(final ClassObject classObject) {
-            return code.image.newList(code.image.objects.allInstances(classObject).toArray());
+            return code.image.newList(ArrayUtils.toArray(code.image.objects.allInstances(classObject)));
         }
 
         @SuppressWarnings("unused")
