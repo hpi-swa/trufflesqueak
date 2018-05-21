@@ -19,7 +19,6 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
 import de.hpi.swa.graal.squeak.nodes.context.UpdateInstructionPointerNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.SqueakBytecodeDecoder;
