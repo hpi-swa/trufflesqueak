@@ -1,5 +1,16 @@
 package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -39,6 +50,67 @@ public final class SendBytecodes {
         @Child private StackPushNode pushNode;
         @Child private FrameSlotReadNode readContextNode;
 
+        private static class Invocation {
+            long totalTime;
+            long num;
+
+            public Invocation(long time) {
+                totalTime = time;
+                num = 1;
+            }
+
+            public void add(long time) {
+                num++;
+                totalTime += Math.max(time, 1);
+            }
+
+            public double relativeTime() {
+                return totalTime / (double) num;
+            }
+
+            public int compare(Invocation other) {
+                return relativeTime() < other.relativeTime() ? -1 : relativeTime() == other.relativeTime() ? 0 : 1;
+            }
+        }
+
+        private static HashMap<String, Invocation> calls = new HashMap<>();
+        private static long lastReport = 0;
+
+        private static void report(CompiledCodeObject lookupResult, long time) {
+            long now = System.currentTimeMillis();
+
+            if (now - lastReport > 8000) {
+                displayReport(true);
+                lastReport = now;
+            }
+
+            String s = lookupResult.toString();
+            if (calls.containsKey(s)) {
+                calls.get(s).add(time);
+            } else {
+                calls.put(s, new Invocation(time));
+            }
+        }
+
+        private static void displayReport(boolean clearAfter) {
+            System.err.println(">> " + calls.size() + " Entries.");
+            List<Entry<String, Invocation>> list = new ArrayList<>(calls.entrySet());
+            list = list.stream().filter((a) -> a.getValue().num > 100).sorted((a, b) -> b.getValue().compare(a.getValue())).collect(Collectors.toList());
+
+            // Collections.sort(list, (a, b) -> b.getValue().compare(a.getValue()));
+            int num = 0;
+            for (Entry<String, Invocation> entry : list) {
+                if (num > 30)
+                    break;
+                System.err.println(" --- " + entry.getKey() + " : " + entry.getValue().totalTime + " / " + entry.getValue().num + " (" + entry.getValue().relativeTime() + ")");
+                num++;
+            }
+            System.err.println("");
+
+            if (clearAfter)
+                calls.clear();
+        }
+
         private AbstractSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object sel, final int argcount) {
             super(code, index, numBytecodes);
             selector = sel;
@@ -72,7 +144,10 @@ public final class SendBytecodes {
             } else if (((CompiledCodeObject) lookupResult).isDoesNotUnderstand()) {
                 return sendDoesNotUnderstandNode.execute(frame, selector, rcvrAndArgs, rcvrClass, lookupResult, contextOrMarker);
             } else {
-                return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndArgs, contextOrMarker);
+                long start = System.currentTimeMillis();
+                Object ret = dispatchNode.executeDispatch(frame, lookupResult, rcvrAndArgs, contextOrMarker);
+                report((CompiledCodeObject) lookupResult, System.currentTimeMillis() - start);
+                return ret;
             }
         }
 
