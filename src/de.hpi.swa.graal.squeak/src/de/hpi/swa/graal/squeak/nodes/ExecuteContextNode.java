@@ -29,7 +29,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
     @Child private HandleNonVirtualReturnNode handleNonVirtualReturnNode;
     @Child private UpdateInstructionPointerNode updateInstructionPointerNode;
-    @Child private StackPushNode pushStackNode;
+    @Child private StackPushNode pushStackNode = StackPushNode.create();
     @Child private CalculcatePCOffsetNode calculcatePCOffsetNode = CalculcatePCOffsetNode.create();
 
     public static ExecuteContextNode create(final CompiledCodeObject code) {
@@ -44,7 +44,6 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
         handleNonLocalReturnNode = HandleNonLocalReturnNode.create(code);
         handleNonVirtualReturnNode = HandleNonVirtualReturnNode.create(code);
         updateInstructionPointerNode = UpdateInstructionPointerNode.create(code);
-        pushStackNode = StackPushNode.create(code);
     }
 
     public Object executeVirtualized(final VirtualFrame frame) {
@@ -66,7 +65,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
 
     public Object executeNonVirtualized(final VirtualFrame frame, final ContextObject newContext) {
         // maybe persist newContext, so there's no need to lookup the context to update its pc.
-        assert newContext.getClosureOrMethod() == FrameAccess.getMethod(frame);
+        assert newContext.getClosureOrMethod() == frame.getArguments()[FrameAccess.METHOD];
         if (!code.hasPrimitive() && bytecodeNodes.length > 32) {
             code.image.interrupt.sendOrBackwardJumpTrigger(frame);
         }
@@ -83,8 +82,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
         } catch (LocalReturn lr) {
             return handleLocalReturnNode.executeHandle(frame, lr);
         } catch (ProcessSwitch ps) {
-            final Object ctx = FrameUtil.getObjectSafe(frame, code.thisContextOrMarkerSlot);
-            assert ctx instanceof ContextObject && !((ContextObject) ctx).hasVirtualSender();
+            assert hasMaterializedContext(frame);
             throw ps;
         } catch (NonLocalReturn nlr) {
             return handleNonLocalReturnNode.executeHandle(frame, nlr);
@@ -92,6 +90,11 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
             // } catch (NonVirtualReturn nvr) {
             // return handleNonVirtualReturnNode.executeHandle(frame, nvr);
         }
+    }
+
+    private static boolean hasMaterializedContext(final VirtualFrame frame) {
+        final Object ctx = FrameUtil.getObjectSafe(frame, CompiledCodeObject.thisContextOrMarkerSlot);
+        return ctx instanceof ContextObject && !((ContextObject) ctx).hasVirtualSender();
     }
 
     private long getAndDecodeSqueakPC(final ContextObject newContext) {

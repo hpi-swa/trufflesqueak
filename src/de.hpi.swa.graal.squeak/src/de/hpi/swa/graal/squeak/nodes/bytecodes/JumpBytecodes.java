@@ -22,7 +22,7 @@ public final class JumpBytecodes {
         @CompilationFinal private static NativeObject mustBeBooleanSelector;
         @CompilationFinal private final Boolean isIfTrue;
         @Child private StackPopNode popNode;
-        @Child private StackPushNode pushNode;
+        @Child private StackPushNode pushNode = StackPushNode.create();
         @Child private SendSelectorNode sendMustBeBooleanNode;
         @CompilationFinal(dimensions = 1) private final int[] successorExecutionCount = new int[2];
 
@@ -40,7 +40,6 @@ public final class JumpBytecodes {
 
         private void initializeChildNodes() {
             popNode = StackPopNode.create(code);
-            pushNode = StackPushNode.create(code);
             sendMustBeBooleanNode = new SendSelectorNode(code, -1, 1, getMustBeBooleanSelector(), 0);
         }
 

@@ -5,10 +5,24 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
+import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
+
 public abstract class FrameSlotWriteNode extends AbstractFrameSlotNode {
 
     public static FrameSlotWriteNode create(final FrameSlot slot) {
         return FrameSlotWriteNodeGen.create(slot);
+    }
+
+    public static FrameSlotWriteNode createForContextOrMarker() {
+        return FrameSlotWriteNodeGen.create(CompiledCodeObject.thisContextOrMarkerSlot);
+    }
+
+    public static FrameSlotWriteNode createForInstructionPointer() {
+        return FrameSlotWriteNodeGen.create(CompiledCodeObject.instructionPointerSlot);
+    }
+
+    public static FrameSlotWriteNode createForStackPointer() {
+        return FrameSlotWriteNodeGen.create(CompiledCodeObject.stackPointerSlot);
     }
 
     protected FrameSlotWriteNode(final FrameSlot slot) {

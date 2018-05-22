@@ -18,8 +18,7 @@ public abstract class TemporaryWriteNode extends AbstractWriteNode {
         return TemporaryWriteNodeGen.create(code, tempIndex);
     }
 
-    public TemporaryWriteNode(final CompiledCodeObject code, final long tempIndex) {
-        super(code);
+    protected TemporaryWriteNode(final CompiledCodeObject code, final long tempIndex) {
         this.tempIndex = tempIndex;
         // Perform checks to ensure a correct FrameSlotWriteNode is created, otherwise fail which
         // happens

@@ -10,7 +10,7 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 @ImportStatic(FrameAccess.class)
 public abstract class TerminateContextNode extends AbstractNodeWithCode {
-    @Child private FrameSlotWriteNode instructionPointerWriteNode;
+    @Child private FrameSlotWriteNode instructionPointerWriteNode = FrameSlotWriteNode.createForInstructionPointer();
 
     public static TerminateContextNode create(final CompiledCodeObject code) {
         return TerminateContextNodeGen.create(code);
@@ -18,7 +18,6 @@ public abstract class TerminateContextNode extends AbstractNodeWithCode {
 
     protected TerminateContextNode(final CompiledCodeObject code) {
         super(code);
-        instructionPointerWriteNode = FrameSlotWriteNode.create(code.instructionPointerSlot);
     }
 
     protected abstract void executeTerminate(VirtualFrame frame);

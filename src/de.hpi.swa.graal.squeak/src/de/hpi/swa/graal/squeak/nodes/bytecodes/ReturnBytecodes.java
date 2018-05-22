@@ -23,13 +23,11 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
 public final class ReturnBytecodes {
 
     protected abstract static class AbstractReturnNode extends AbstractBytecodeNode {
-        @Child protected FrameSlotReadNode readContextNode;
-        @Child protected FrameArgumentNode readClosureNode;
+        @Child protected FrameSlotReadNode readContextNode = FrameSlotReadNode.createForContextOrMarker();
+        @Child protected FrameArgumentNode readClosureNode = FrameArgumentNode.create(FrameAccess.CLOSURE_OR_NULL);
 
         protected AbstractReturnNode(final CompiledCodeObject code, final int index) {
             super(code, index);
-            readContextNode = FrameSlotReadNode.create(code.thisContextOrMarkerSlot);
-            readClosureNode = FrameArgumentNode.create(FrameAccess.CLOSURE_OR_NULL);
         }
 
         protected boolean hasClosure(final VirtualFrame frame) {

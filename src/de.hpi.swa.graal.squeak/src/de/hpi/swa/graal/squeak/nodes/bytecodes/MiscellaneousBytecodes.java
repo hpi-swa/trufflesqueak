@@ -114,13 +114,12 @@ public final class MiscellaneousBytecodes {
     }
 
     public static final class DupNode extends UnknownBytecodeNode {
-        @Child private StackPushNode pushNode;
+        @Child private StackPushNode pushNode = StackPushNode.create();
         @Child private StackTopNode topNode;
 
         public DupNode(final CompiledCodeObject code, final int index, final int numBytecodes) {
             super(code, index, numBytecodes, -1);
             topNode = StackTopNode.create(code);
-            pushNode = StackPushNode.create(code);
         }
 
         @Override

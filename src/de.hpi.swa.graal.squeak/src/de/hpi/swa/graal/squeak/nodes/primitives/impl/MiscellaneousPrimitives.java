@@ -710,7 +710,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         @Child protected LookupNode lookupNode = LookupNode.create();
         @Child protected DispatchNode dispatchNode = DispatchNode.create();
         @Child protected SqueakLookupClassNode lookupClassNode;
-        @Child protected GetOrCreateContextNode getOrCreateContextNode;
+        @Child protected GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create();
         @Child private IsDoesNotUnderstandNode isDoesNotUnderstandNode;
 
         protected SimulationPrimitiveNode(final CompiledMethodObject method, final int numArguments, final String moduleName, final String functionName) {
@@ -718,7 +718,6 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
             this.moduleName = moduleName;
             this.functionName = code.image.wrap(functionName);
             lookupClassNode = SqueakLookupClassNode.create(method.image);
-            getOrCreateContextNode = GetOrCreateContextNode.create(method);
             isDoesNotUnderstandNode = IsDoesNotUnderstandNode.create(method.image);
         }
 

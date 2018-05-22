@@ -62,11 +62,10 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Child private SqueakObjectPointersBecomeOneWayNode pointersBecomeNode = SqueakObjectPointersBecomeOneWayNode.create();
         @Child private FrameStackReadNode stackReadNode = FrameStackReadNode.create();
         @Child private FrameStackWriteNode stackWriteNode = FrameStackWriteNode.create();
-        @Child private FrameSlotReadNode stackPointerReadNode;
+        @Child private FrameSlotReadNode stackPointerReadNode = FrameSlotReadNode.createForStackPointer();
 
         protected AbstractArrayBecomeOneWayPrimitiveNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
-            stackPointerReadNode = FrameSlotReadNode.create(method.stackPointerSlot);
         }
 
         protected static final boolean isPointers(final Object obj) {

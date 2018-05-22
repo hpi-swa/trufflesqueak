@@ -34,11 +34,12 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
     protected static final int BYTES_PER_WORD = 4;
 
     // frame info
+    @CompilationFinal private static FrameDescriptor frameDescriptorTemplate;
+    @CompilationFinal public static FrameSlot thisContextOrMarkerSlot;
+    @CompilationFinal public static FrameSlot instructionPointerSlot;
+    @CompilationFinal public static FrameSlot stackPointerSlot;
     @CompilationFinal private FrameDescriptor frameDescriptor;
-    @CompilationFinal public FrameSlot thisContextOrMarkerSlot;
     @CompilationFinal(dimensions = 1) public FrameSlot[] stackSlots;
-    @CompilationFinal public FrameSlot instructionPointerSlot;
-    @CompilationFinal public FrameSlot stackPointerSlot;
     // header info and data
     @CompilationFinal(dimensions = 1) protected Object[] literals;
     @CompilationFinal(dimensions = 1) protected byte[] bytes;
@@ -58,6 +59,13 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
 
     @CompilationFinal private RootCallTarget callTarget;
     @CompilationFinal private final CyclicAssumption callTargetStable = new CyclicAssumption("CompiledCodeObject assumption");
+
+    static {
+        frameDescriptorTemplate = new FrameDescriptor();
+        thisContextOrMarkerSlot = frameDescriptorTemplate.addFrameSlot(SLOT_IDENTIFIER.THIS_CONTEXT_OR_MARKER, FrameSlotKind.Object);
+        instructionPointerSlot = frameDescriptorTemplate.addFrameSlot(SLOT_IDENTIFIER.INSTRUCTION_POINTER, FrameSlotKind.Int);
+        stackPointerSlot = frameDescriptorTemplate.addFrameSlot(SLOT_IDENTIFIER.STACK_POINTER, FrameSlotKind.Int);
+    }
 
     protected CompiledCodeObject(final SqueakImageContext img, final ClassObject klass) {
         super(img, klass);
@@ -95,14 +103,11 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
 
     @TruffleBoundary
     protected final void prepareFrameDescriptor() {
-        frameDescriptor = new FrameDescriptor();
-        thisContextOrMarkerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.THIS_CONTEXT_OR_MARKER, FrameSlotKind.Object);
-        instructionPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.INSTRUCTION_POINTER, FrameSlotKind.Int);
-        stackPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.STACK_POINTER, FrameSlotKind.Int);
+        frameDescriptor = frameDescriptorTemplate.shallowCopy();
         if (canBeVirtualized()) {
-            final long numStackSlots = frameSize() + getSqClass().getBasicInstanceSize();
-            stackSlots = new FrameSlot[(int) numStackSlots];
-            for (int i = 0; i < stackSlots.length; i++) {
+            final int frameSize = frameSize();
+            stackSlots = new FrameSlot[frameSize];
+            for (int i = 0; i < frameSize; i++) {
                 stackSlots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Illegal);
             }
         }

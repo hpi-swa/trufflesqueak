@@ -1,7 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.context;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
@@ -14,14 +13,10 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public abstract class ReceiverAndArgumentsNode extends Node {
     @Child private GetNumAllArgumentsNode numAllArgumentsNode = GetNumAllArgumentsNode.create();
-    @Child private FrameSlotReadNode contextOrMarkerReadNode;
+    @Child private FrameSlotReadNode contextOrMarkerReadNode = FrameSlotReadNode.createForContextOrMarker();
 
-    public static ReceiverAndArgumentsNode create(final FrameSlot thisContextOrMarkerSlot) {
-        return ReceiverAndArgumentsNodeGen.create(thisContextOrMarkerSlot);
-    }
-
-    protected ReceiverAndArgumentsNode(final FrameSlot thisContextOrMarkerSlot) {
-        contextOrMarkerReadNode = FrameSlotReadNode.create(thisContextOrMarkerSlot);
+    public static ReceiverAndArgumentsNode create() {
+        return ReceiverAndArgumentsNodeGen.create();
     }
 
     public abstract Object executeGet(VirtualFrame frame);

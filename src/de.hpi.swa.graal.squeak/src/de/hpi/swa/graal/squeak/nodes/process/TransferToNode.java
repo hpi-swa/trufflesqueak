@@ -23,8 +23,8 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
 public abstract class TransferToNode extends AbstractNodeWithImage {
     @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
     @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
+    @Child private GetOrCreateContextNode contextNode = GetOrCreateContextNode.create();
     @Child private GetSchedulerNode getSchedulerNode;
-    @Child private GetOrCreateContextNode contextNode;
     @Child private MaterializeContextObjectNode materializeNode;
 
     public static TransferToNode create(final CompiledCodeObject code) {
@@ -34,7 +34,6 @@ public abstract class TransferToNode extends AbstractNodeWithImage {
     protected TransferToNode(final CompiledCodeObject code) {
         super(code.image);
         getSchedulerNode = GetSchedulerNode.create(image);
-        contextNode = GetOrCreateContextNode.create(code);
         materializeNode = MaterializeContextObjectNode.create(code);
     }
 

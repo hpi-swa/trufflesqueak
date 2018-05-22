@@ -18,7 +18,7 @@ import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 public abstract class AboutToReturnNode extends AbstractNodeWithCode {
     @Child protected BlockActivationNode dispatch = BlockActivationNodeGen.create();
     @Child private SendSelectorNode sendAboutToReturnNode;
-    @Child private StackPushNode pushNode;
+    @Child private StackPushNode pushNode = StackPushNode.create();
     @Child private SqueakNode blockArgumentNode;
     @Child private SqueakNode completeTempReadNode;
     @Child private TemporaryWriteNode completeTempWriteNode;
@@ -30,7 +30,6 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
     protected AboutToReturnNode(final CompiledMethodObject method) {
         super(method);
         sendAboutToReturnNode = new SendSelectorNode(method, -1, -1, aboutToReturnSelector(method), 2);
-        pushNode = StackPushNode.create(method);
         blockArgumentNode = TemporaryReadNode.create(method, 0);
         completeTempReadNode = TemporaryReadNode.create(method, 1);
         completeTempWriteNode = TemporaryWriteNode.create(method, 1);

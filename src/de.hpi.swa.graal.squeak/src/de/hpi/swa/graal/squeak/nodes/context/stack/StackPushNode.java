@@ -3,7 +3,6 @@ package de.hpi.swa.graal.squeak.nodes.context.stack;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractWriteNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotWriteNode;
@@ -11,17 +10,11 @@ import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
 
 public abstract class StackPushNode extends AbstractWriteNode {
     @Child private FrameStackWriteNode writeNode = FrameStackWriteNode.create();
-    @Child private FrameSlotReadNode stackPointerReadNode;
-    @Child private FrameSlotWriteNode stackPointerWriteNode;
+    @Child private FrameSlotReadNode stackPointerReadNode = FrameSlotReadNode.createForStackPointer();
+    @Child private FrameSlotWriteNode stackPointerWriteNode = FrameSlotWriteNode.createForStackPointer();
 
-    public static StackPushNode create(final CompiledCodeObject code) {
-        return StackPushNodeGen.create(code);
-    }
-
-    protected StackPushNode(final CompiledCodeObject code) {
-        super(code);
-        stackPointerReadNode = FrameSlotReadNode.create(code.stackPointerSlot);
-        stackPointerWriteNode = FrameSlotWriteNode.create(code.stackPointerSlot);
+    public static StackPushNode create() {
+        return StackPushNodeGen.create();
     }
 
     protected final int getFrameStackPointer(final VirtualFrame frame) {

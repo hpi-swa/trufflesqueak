@@ -13,7 +13,7 @@ import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 
 public abstract class HandlePrimitiveFailedNode extends AbstractNodeWithCode {
     @CompilationFinal private PointersObject errorTable;
-    @Child private StackPushNode pushNode;
+    @Child private StackPushNode pushNode = StackPushNode.create();
 
     public static HandlePrimitiveFailedNode create(final CompiledCodeObject code) {
         return HandlePrimitiveFailedNodeGen.create(code);
@@ -21,7 +21,6 @@ public abstract class HandlePrimitiveFailedNode extends AbstractNodeWithCode {
 
     public HandlePrimitiveFailedNode(final CompiledCodeObject code) {
         super(code);
-        pushNode = StackPushNode.create(code);
     }
 
     public abstract void executeHandle(VirtualFrame frame, PrimitiveFailed e);

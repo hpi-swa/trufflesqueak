@@ -37,7 +37,6 @@ import de.hpi.swa.graal.squeak.nodes.LookupNode;
 import de.hpi.swa.graal.squeak.nodes.LookupNodeGen;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
 import de.hpi.swa.graal.squeak.nodes.SqueakObjectAt0Node;
-import de.hpi.swa.graal.squeak.nodes.SqueakObjectAtPut0Node;
 import de.hpi.swa.graal.squeak.nodes.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.context.ObjectAtNode;
 import de.hpi.swa.graal.squeak.nodes.context.ReceiverAndArgumentsNode;
@@ -97,13 +96,12 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Child protected SqueakLookupClassNode lookupClassNode;
         @Child protected LookupNode lookupNode = LookupNodeGen.create();
         @Child private DispatchSendNode dispatchSendNode;
-        @Child private FrameSlotReadNode contextOrMarkerNode;
+        @Child private FrameSlotReadNode contextOrMarkerNode = FrameSlotReadNode.createForContextOrMarker();
 
         protected AbstractPerformPrimitiveNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
             lookupClassNode = SqueakLookupClassNodeGen.create(code.image);
             dispatchSendNode = DispatchSendNode.create(code.image);
-            contextOrMarkerNode = FrameSlotReadNode.create(code.thisContextOrMarkerSlot);
         }
 
         protected final ClassObject lookup(final Object receiver) {
@@ -118,11 +116,10 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     private abstract static class AbstractPrimitiveWithPushNode extends AbstractPrimitiveNode {
-        @Child protected StackPushNode pushNode;
+        @Child protected StackPushNode pushNode = StackPushNode.create();
 
         protected AbstractPrimitiveWithPushNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
-            pushNode = StackPushNode.create(method);
         }
     }
 
@@ -133,7 +130,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected PrimPerformNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
-            rcvrAndArgsNode = ReceiverAndArgumentsNode.create(method.thisContextOrMarkerSlot);
+            rcvrAndArgsNode = ReceiverAndArgumentsNode.create();
         }
 
         @SuppressWarnings("unused")
@@ -724,7 +721,6 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Child private IsEmptyListNode isEmptyListNode;
         @Child private RemoveFirstLinkOfListNode removeFirstLinkOfListNode;
         @Child private ResumeProcessNode resumeProcessNode;
-        @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
 
         public PrimExitCriticalSectionNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -818,11 +814,10 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 188)
     protected abstract static class PrimExecuteMethodArgsArrayNode extends AbstractPerformPrimitiveNode {
         @Child private DispatchNode dispatchNode = DispatchNode.create();
-        @Child private FrameSlotReadNode contextOrMarkerNode;
+        @Child private FrameSlotReadNode contextOrMarkerNode = FrameSlotReadNode.createForContextOrMarker();
 
         protected PrimExecuteMethodArgsArrayNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
-            contextOrMarkerNode = FrameSlotReadNode.create(method.thisContextOrMarkerSlot);
         }
 
         @Specialization

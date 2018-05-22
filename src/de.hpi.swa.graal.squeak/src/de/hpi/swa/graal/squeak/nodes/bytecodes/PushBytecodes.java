@@ -28,7 +28,7 @@ import de.hpi.swa.graal.squeak.util.ArrayUtils;
 public final class PushBytecodes {
 
     private abstract static class AbstractPushNode extends AbstractBytecodeNode {
-        @Child protected StackPushNode pushNode;
+        @Child protected StackPushNode pushNode = StackPushNode.create();
 
         protected AbstractPushNode(final CompiledCodeObject code, final int index) {
             this(code, index, 1);
@@ -36,16 +36,14 @@ public final class PushBytecodes {
 
         protected AbstractPushNode(final CompiledCodeObject code, final int index, final int numBytecodes) {
             super(code, index, numBytecodes);
-            pushNode = StackPushNode.create(code);
         }
     }
 
     public static final class PushActiveContextNode extends AbstractPushNode {
-        @Child private GetOrCreateContextNode getContextNode;
+        @Child private GetOrCreateContextNode getContextNode = GetOrCreateContextNode.create();
 
         public PushActiveContextNode(final CompiledCodeObject code, final int index) {
             super(code, index);
-            getContextNode = GetOrCreateContextNode.create(code);
         }
 
         @Override
@@ -65,7 +63,7 @@ public final class PushBytecodes {
         @CompilationFinal protected final int blockSize;
         @CompilationFinal protected final int numArgs;
         @CompilationFinal protected final int numCopied;
-        @Child protected GetOrCreateContextNode getOrCreateContextNode;
+        @Child protected GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create();
         @Child protected StackPopNReversedNode popNReversedNode;
         @Child protected ReceiverNode receiverNode;
         @Child private GetCompiledMethodNode getMethodNode = GetCompiledMethodNode.create();
@@ -79,7 +77,6 @@ public final class PushBytecodes {
             numArgs = i & 0xF;
             numCopied = (i >> 4) & 0xF;
             blockSize = (j << 8) | k;
-            getOrCreateContextNode = GetOrCreateContextNode.create(code);
             popNReversedNode = StackPopNReversedNode.create(code, numCopied);
             receiverNode = ReceiverNode.create(code);
         }
@@ -276,14 +273,13 @@ public final class PushBytecodes {
     }
 
     public static final class PushTemporaryLocationNode extends AbstractBytecodeNode {
-        @Child private StackPushNode pushNode;
+        @Child private StackPushNode pushNode = StackPushNode.create();
         @Child private SqueakNode tempNode;
         @CompilationFinal private final int tempIndex;
 
         public PushTemporaryLocationNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int tempIndex) {
             super(code, index, numBytecodes);
             this.tempIndex = tempIndex;
-            pushNode = StackPushNode.create(code);
             tempNode = TemporaryReadNode.create(code, tempIndex);
         }
 

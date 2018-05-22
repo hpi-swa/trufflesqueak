@@ -13,7 +13,6 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
-import de.hpi.swa.graal.squeak.nodes.CompiledCodeNodes.CalculcatePCOffsetNode;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
@@ -89,7 +88,7 @@ public final class ContextObject extends AbstractSqueakObject {
         }
         switch (index) {
             case CONTEXT.SENDER_OR_NIL:
-                return GetOrCreateContextNode.getOrCreateFull(truffleFrame, false);
+                return getSender();
             case CONTEXT.INSTRUCTION_POINTER:
                 final CompiledCodeObject blockOrMethod = getMethod();
                 final int initalPC;
@@ -98,9 +97,9 @@ public final class ContextObject extends AbstractSqueakObject {
                 } else {
                     initalPC = ((CompiledMethodObject) blockOrMethod).getInitialPC();
                 }
-                return (long) FrameUtil.getIntSafe(truffleFrame, getMethod().instructionPointerSlot) + initalPC;
+                return (long) FrameUtil.getIntSafe(truffleFrame, CompiledCodeObject.instructionPointerSlot) + initalPC;
             case CONTEXT.STACKPOINTER:
-                return (long) FrameUtil.getIntSafe(truffleFrame, getMethod().stackPointerSlot);
+                return (long) FrameUtil.getIntSafe(truffleFrame, CompiledCodeObject.stackPointerSlot) + 1;
             case CONTEXT.METHOD:
                 return truffleFrame.getArguments()[FrameAccess.METHOD];
             case CONTEXT.CLOSURE_OR_NIL:
@@ -175,7 +174,7 @@ public final class ContextObject extends AbstractSqueakObject {
         final AbstractSqueakObject actualSender;
         if (senderOrMarker instanceof FrameMarker) {
             final Frame frame = FrameAccess.findFrameForMarker((FrameMarker) senderOrMarker);
-            actualSender = GetOrCreateContextNode.getOrCreateFull(frame.materialize(), false);
+            actualSender = GetOrCreateContextNode.getOrCreateFull(frame.materialize(), false, false);
             assert actualSender != null;
         } else {
             actualSender = (AbstractSqueakObject) senderOrMarker;
@@ -339,7 +338,7 @@ public final class ContextObject extends AbstractSqueakObject {
         final BlockClosureObject closure = getClosure();
         final Object[] frameArgs = getReceiverAndNArguments(numArgs);
         final MaterializedFrame frame = Truffle.getRuntime().createMaterializedFrame(FrameAccess.newWith(closureOrMethod, sender, closure, frameArgs), getMethod().getFrameDescriptor());
-        frame.setObject(closureOrMethod.thisContextOrMarkerSlot, this);
+        frame.setObject(CompiledCodeObject.thisContextOrMarkerSlot, this);
         return frame;
     }
 
@@ -384,6 +383,7 @@ public final class ContextObject extends AbstractSqueakObject {
         return pointers[CONTEXT.SENDER_OR_NIL] != null;
     }
 
+    @TruffleBoundary
     public void materialize() {
         if (truffleFrame == null) {
             return; // nothing to do
@@ -397,25 +397,8 @@ public final class ContextObject extends AbstractSqueakObject {
                 if (senderFrame == null) {
                     throw new SqueakException("Unable to find senderFrame for FrameMaker");
                 }
-                setSender(GetOrCreateContextNode.getOrCreateFull(senderFrame.materialize(), false));
+                setSender(GetOrCreateContextNode.getOrCreateFull(senderFrame.materialize(), false, false));
             }
         }
-        if (isDirty) {
-            return; // nothing more to do
-        }
-        final CompiledCodeObject blockOrMethod = getMethod();
-
-        final long framePC = FrameUtil.getIntSafe(truffleFrame, blockOrMethod.instructionPointerSlot);
-        final long frameSP = FrameUtil.getIntSafe(truffleFrame, blockOrMethod.stackPointerSlot);
-        atput0(CONTEXT.METHOD, blockOrMethod);
-        if (framePC >= 0) {
-            setInstructionPointer(framePC + CalculcatePCOffsetNode.create().execute(blockOrMethod));
-        } else { // context has been terminated
-            atput0(CONTEXT.INSTRUCTION_POINTER, blockOrMethod.image.nil);
-        }
-        setStackPointer(frameSP + 1); // frame sp is zero-based
-        final BlockClosureObject closure = (BlockClosureObject) frameArguments[FrameAccess.CLOSURE_OR_NULL];
-        atput0(CONTEXT.CLOSURE_OR_NIL, closure == null ? blockOrMethod.image.nil : closure);
-        atput0(CONTEXT.RECEIVER, frameArguments[FrameAccess.RECEIVER]);
     }
 }

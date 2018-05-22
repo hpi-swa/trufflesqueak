@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
@@ -10,35 +9,16 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.nodes.CompiledCodeNodes.CalculcatePCOffsetNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameArgumentNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotWriteNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
-public abstract class GetOrCreateContextNode extends AbstractNodeWithCode {
-    @Child private static FrameStackReadNode frameStackReadNode = FrameStackReadNode.create();
+public abstract class GetOrCreateContextNode extends AbstractNode {
     @Child private FrameArgumentNode methodNode = FrameArgumentNode.create(FrameAccess.METHOD);
-    @Child private FrameArgumentNode closureNode = FrameArgumentNode.create(FrameAccess.CLOSURE_OR_NULL);
-    @Child private FrameArgumentNode receiverNode = FrameArgumentNode.create(FrameAccess.RECEIVER);
-    @Child private FrameArgumentNode senderNode = FrameArgumentNode.create(FrameAccess.SENDER_OR_SENDER_MARKER);
-    @Child private CalculcatePCOffsetNode calcNode = CalculcatePCOffsetNode.create();
-    @Child private FrameSlotReadNode pcNode;
-    @Child private FrameSlotReadNode spNode;
-    @Child private FrameSlotReadNode contextReadNode;
-    @Child private FrameSlotWriteNode contextWriteNode;
+    @Child private FrameSlotWriteNode contextWriteNode = FrameSlotWriteNode.createForContextOrMarker();
 
-    public static GetOrCreateContextNode create(final CompiledCodeObject code) {
-        return GetOrCreateContextNodeGen.create(code);
-    }
-
-    protected GetOrCreateContextNode(final CompiledCodeObject code) {
-        super(code);
-        pcNode = FrameSlotReadNode.create(code.instructionPointerSlot);
-        spNode = FrameSlotReadNode.create(code.stackPointerSlot);
-        contextReadNode = FrameSlotReadNode.create(code.thisContextOrMarkerSlot);
-        contextWriteNode = FrameSlotWriteNode.create(code.thisContextOrMarkerSlot);
+    public static GetOrCreateContextNode create() {
+        return GetOrCreateContextNodeGen.create();
     }
 
     public final ContextObject executeGet(final Frame frame, final boolean invalidateCanBeVirtualizedAssumption) {
@@ -70,27 +50,28 @@ public abstract class GetOrCreateContextNode extends AbstractNodeWithCode {
     }
 
     @TruffleBoundary
-    public static ContextObject getOrCreateFull(final MaterializedFrame frame, final boolean invalidateCanBeVirtualizedAssumption) {
+    public static ContextObject getOrCreateFull(final MaterializedFrame frame, final boolean invalidateCanBeVirtualizedAssumption, final boolean fullSenderChain) {
         final Object contextOrMarker = FrameAccess.getContextOrMarker(frame);
+        final ContextObject context;
+        final CompiledCodeObject method;
         if (contextOrMarker instanceof ContextObject) {
-            final ContextObject context = (ContextObject) contextOrMarker;
-            final CompiledCodeObject method = context.getMethod();
+            context = (ContextObject) contextOrMarker;
+            method = context.getMethod();
             if (invalidateCanBeVirtualizedAssumption) {
                 method.invalidateCanBeVirtualizedAssumption();
             }
-            forceSenderChain(method, context);
-            return context;
         } else {
-            CompilerDirectives.transferToInterpreter();
-            final CompiledCodeObject method = FrameAccess.getMethod(frame);
-            final ContextObject context = ContextObject.create(method.image, method.frameSize(), frame);
-            frame.setObject(method.thisContextOrMarkerSlot, context);
+            method = (CompiledCodeObject) frame.getArguments()[FrameAccess.METHOD];
+            context = ContextObject.create(method.image, method.frameSize(), frame);
+            frame.setObject(CompiledCodeObject.thisContextOrMarkerSlot, context);
             if (invalidateCanBeVirtualizedAssumption) {
                 method.invalidateCanBeVirtualizedAssumption();
             }
-            forceSenderChain(method, context);
-            return context;
         }
+        if (fullSenderChain) {
+            forceSenderChain(method, context);
+        }
+        return context;
     }
 
     @TruffleBoundary

@@ -8,11 +8,24 @@ import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
+import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 
 public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
 
     public static FrameSlotReadNode create(final FrameSlot frameSlot) {
         return FrameSlotReadNodeGen.create(frameSlot);
+    }
+
+    public static FrameSlotReadNode createForContextOrMarker() {
+        return FrameSlotReadNodeGen.create(CompiledCodeObject.thisContextOrMarkerSlot);
+    }
+
+    public static FrameSlotReadNode createForInstructionPointer() {
+        return FrameSlotReadNodeGen.create(CompiledCodeObject.instructionPointerSlot);
+    }
+
+    public static FrameSlotReadNode createForStackPointer() {
+        return FrameSlotReadNodeGen.create(CompiledCodeObject.stackPointerSlot);
     }
 
     protected FrameSlotReadNode(final FrameSlot frameSlot) {

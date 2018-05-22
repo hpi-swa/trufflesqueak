@@ -23,9 +23,9 @@ public abstract class MaterializeContextObjectNode extends AbstractNodeWithImage
     @Child private FrameArgumentNode closureNode = FrameArgumentNode.create(FrameAccess.CLOSURE_OR_NULL);
     @Child private FrameArgumentNode receiverNode = FrameArgumentNode.create(FrameAccess.RECEIVER);
     @Child private CalculcatePCOffsetNode pcOffsetNode = CalculcatePCOffsetNode.create();
-    @Child private GetOrCreateContextNode contextNode;
-    @Child private FrameSlotReadNode pcNode;
-    @Child private FrameSlotReadNode spNode;
+    @Child private FrameSlotReadNode instructionPointerReadNode = FrameSlotReadNode.createForInstructionPointer();
+    @Child private FrameSlotReadNode stackPointerReadNode = FrameSlotReadNode.createForStackPointer();
+    @Child private GetOrCreateContextNode contextNode = GetOrCreateContextNode.create();
 
     public static MaterializeContextObjectNode create(final CompiledCodeObject code) {
         return MaterializeContextObjectNodeGen.create(code);
@@ -33,9 +33,6 @@ public abstract class MaterializeContextObjectNode extends AbstractNodeWithImage
 
     protected MaterializeContextObjectNode(final CompiledCodeObject code) {
         super(code.image);
-        contextNode = GetOrCreateContextNode.create(code);
-        pcNode = FrameSlotReadNode.create(code.instructionPointerSlot);
-        spNode = FrameSlotReadNode.create(code.stackPointerSlot);
     }
 
     public abstract void execute(ContextObject context);
@@ -64,13 +61,14 @@ public abstract class MaterializeContextObjectNode extends AbstractNodeWithImage
         final MaterializedFrame frame = context.getTruffleFrame();
         final Object blockOrMethod = methodNode.executeRead(frame);
         context.atput0(CONTEXT.METHOD, blockOrMethod);
-        final long framePC = (int) pcNode.executeRead(frame);
+        final long framePC = (int) instructionPointerReadNode.executeRead(frame);
         if (framePC >= 0) {
             context.setInstructionPointer(framePC + pcOffsetNode.execute(blockOrMethod));
         } else { // context has been terminated
             context.atput0(CONTEXT.INSTRUCTION_POINTER, image.nil);
         }
-        context.setStackPointer((int) spNode.executeRead(frame) + 1); // frame sp is zero-based
+        final int frameSP = (int) stackPointerReadNode.executeRead(frame);
+        context.setStackPointer(frameSP + 1); // frame sp is zero-based
         final Object closure = closureNode.executeRead(frame);
         context.atput0(CONTEXT.CLOSURE_OR_NIL, closure == null ? image.nil : closure);
         context.atput0(CONTEXT.RECEIVER, receiverNode.executeRead(frame));

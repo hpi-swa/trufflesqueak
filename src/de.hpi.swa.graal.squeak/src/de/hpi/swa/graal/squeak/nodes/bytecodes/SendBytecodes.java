@@ -27,17 +27,15 @@ public final class SendBytecodes {
         @Child private LookupNode lookupNode = LookupNode.create();
         @Child private DispatchSendNode dispatchSendNode;
         @Child private StackPopNReversedNode popNReversedNode;
-        @Child private StackPushNode pushNode;
-        @Child private FrameSlotReadNode readContextNode;
+        @Child private StackPushNode pushNode = StackPushNode.create();
+        @Child private FrameSlotReadNode readContextNode = FrameSlotReadNode.createForContextOrMarker();
 
         private AbstractSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object sel, final int argcount) {
             super(code, index, numBytecodes);
             selector = sel instanceof NativeObject ? (NativeObject) sel : code.image.doesNotUnderstand;
             argumentCount = argcount;
             lookupClassNode = SqueakLookupClassNode.create(code.image);
-            pushNode = StackPushNode.create(code);
             popNReversedNode = StackPopNReversedNode.create(code, 1 + argumentCount);
-            readContextNode = FrameSlotReadNode.create(code.thisContextOrMarkerSlot);
             dispatchSendNode = DispatchSendNode.create(code.image);
         }
 

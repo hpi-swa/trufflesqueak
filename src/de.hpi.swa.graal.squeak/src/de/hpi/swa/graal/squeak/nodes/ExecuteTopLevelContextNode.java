@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -17,14 +18,12 @@ import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.nodes.CompiledCodeNodes.GetNumAllArgumentsNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotWriteNode;
 
 public final class ExecuteTopLevelContextNode extends RootNode {
     @CompilationFinal private final SqueakImageContext image;
     @CompilationFinal private final ContextObject initialContext;
-    @Child private FrameSlotWriteNode contextWriteNode;
-    @Child private ExecuteContextNode executeContextNode;
     @Child private GetNumAllArgumentsNode numAllArgumentsNode = GetNumAllArgumentsNode.create();
+    @Child private ExecuteContextNode executeContextNode;
 
     public static ExecuteTopLevelContextNode create(final SqueakLanguage language, final ContextObject context) {
         return new ExecuteTopLevelContextNode(language, context, context.getClosureOrMethod());
@@ -35,7 +34,6 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         image = code.image;
         initialContext = context;
         image.interrupt.initializeSignalSemaphoreNode(initialContext.getMethod());
-        contextWriteNode = FrameSlotWriteNode.create(code.thisContextOrMarkerSlot);
     }
 
     @Override
@@ -56,11 +54,16 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     public void executeLoop() {
         ContextObject activeContext = initialContext;
         while (true) {
+            CompilerDirectives.transferToInterpreter();
             final AbstractSqueakObject sender = activeContext.getSender();
             try {
                 final CompiledCodeObject code = activeContext.getClosureOrMethod();
-                // FIXME: do not create node here
-                executeContextNode = insert(ExecuteContextNode.create(code));
+                // FIXME: do not create node here?
+                if (executeContextNode == null) {
+                    executeContextNode = insert(ExecuteContextNode.create(code));
+                } else {
+                    executeContextNode.replace(ExecuteContextNode.create(code));
+                }
                 // doIt: activeContext.printSqStackTrace();
                 final Object result = executeContextNode.executeNonVirtualized(activeContext.getTruffleFrame(numAllArgumentsNode.execute(code)), activeContext);
                 image.traceVerbose("Local Return on top-level: sender: ", sender);
