@@ -22,7 +22,7 @@ import de.hpi.swa.graal.squeak.util.SqueakBytecodeDecoder;
 public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImage {
     private static final String ALL_BYTECODES_EXPECTED_RESULT = String.join("\n", "1 <0F> pushRcvr: 15",
                     "2 <1F> pushTemp: 15",
-                    "3 <3F> pushConstant: 17104899",
+                    "3 <20> pushConstant: someSelector",
                     "4 <5F> pushLit: 31",
                     "5 <60> popIntoRcvr: 0",
                     "6 <61> popIntoRcvr: 1",
@@ -48,10 +48,10 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
                     "26 <80 1F> pushRcvr: 31",
                     "27 <81 1F> storeIntoRcvr: 31",
                     "28 <82 1F> popIntoRcvr: 31",
-                    "29 <83 1F> send: 17104899",
-                    "30 <84 1F 3F> send: 17104899",
-                    "31 <85 1F> sendSuper: 17104899",
-                    "32 <86 1F> send: 17104899",
+                    "29 <83 20> send: someSelector",
+                    "30 <84 1F 01> send: someOtherSelector",
+                    "31 <85 20> sendSuper: someSelector",
+                    "32 <86 01> send: someOtherSelector",
                     "33 <87> pop",
                     "34 <88> dup",
                     "35 <89> pushThisContext:",
@@ -99,9 +99,9 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
                     "77 <CD> send: newWithArg",
                     "78 <CE> send: x",
                     "79 <CF> send: y",
-                    "80 <D0> send: 21",
-                    "81 <E1> send: 42",
-                    "82 <F2> send: 63");
+                    "80 <D0> send: someSelector",
+                    "81 <E1> send: someOtherSelector",
+                    "82 <F0> send: someSelector");
 
     @Test
     public void testIfNil() {
@@ -147,17 +147,17 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
 
     @Test
     public void testSourceAllBytecodes() {
-        final Object[] literals = new Object[]{17104899L, 21, 42, 63};
+        final Object[] literals = new Object[]{17104899L, image.wrap("someSelector"), image.wrap("someOtherSelector"), 63};
         final CompiledCodeObject code = makeMethod(literals,
-                        15, 31, 63, 95, 96, 97, 98, 99, 103, 111, 112, 113, 114, 115, 116,
+                        15, 31, 32, 95, 96, 97, 98, 99, 103, 111, 112, 113, 114, 115, 116,
                         117, 118, 119, 120, 121, 122, 123, 124, 126, 127,
                         128, 31,
                         129, 31,
                         130, 31,
-                        131, 31,
-                        132, 31, 63,
-                        133, 31,
-                        134, 31,
+                        131, 32,
+                        132, 31, 1,
+                        133, 32,
+                        134, 1,
                         135,
                         136,
                         137,
@@ -175,7 +175,7 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
                         125,
                         176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188,
                         189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201,
-                        202, 203, 204, 205, 206, 207, 208, 225, 242);
+                        202, 203, 204, 205, 206, 207, 208, 225, 240);
         final CharSequence source = CompiledCodeObjectPrinter.getString(code);
         assertEquals(ALL_BYTECODES_EXPECTED_RESULT, source);
     }

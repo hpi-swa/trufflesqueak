@@ -20,21 +20,39 @@ public final class Returns {
         }
     }
 
-    public static final class FreshReturn extends ControlFlowException {
+    public static final class FreshLocalReturn extends AbstractReturn {
         @CompilationFinal private static final long serialVersionUID = 1L;
-        @CompilationFinal private final AbstractReturn returnValue;
 
-        public FreshReturn(final AbstractReturn result) {
-            returnValue = result;
+        public FreshLocalReturn(final Object returnValue) {
+            super(returnValue);
         }
 
-        public AbstractReturn getReturnException() {
-            return returnValue;
+        public void raise() {
+            throw new LocalReturn(returnValue);
         }
 
         @Override
         public String toString() {
-            return "Fresh (value: " + returnValue + ")";
+            return "FreshLR (value: " + returnValue + ")";
+        }
+    }
+
+    public static final class FreshNonLocalReturn extends AbstractReturn {
+        @CompilationFinal private static final long serialVersionUID = 1L;
+        @CompilationFinal private ContextObject targetContext;
+
+        public FreshNonLocalReturn(final Object returnValue, final ContextObject targetContext) {
+            super(returnValue);
+            this.targetContext = targetContext;
+        }
+
+        public void raise() {
+            throw new NonLocalReturn(returnValue, targetContext);
+        }
+
+        @Override
+        public String toString() {
+            return "FreshNLR (value: " + returnValue + ", target: " + targetContext + ")";
         }
     }
 

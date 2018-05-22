@@ -13,15 +13,15 @@ import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
-import de.hpi.swa.graal.squeak.model.ListObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
+import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.BlockActivationNode;
 import de.hpi.swa.graal.squeak.nodes.BlockActivationNodeGen;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
@@ -90,10 +90,10 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         @Specialization(guards = {"!receiver.hasVirtualSender()"})
-        protected Object doFindNext(final ContextObject receiver, final BaseSqueakObject previousContextOrNil) {
+        protected Object doFindNext(final ContextObject receiver, final AbstractSqueakObject previousContextOrNil) {
             ContextObject current = receiver;
             while (current != previousContextOrNil) {
-                final BaseSqueakObject sender = current.getSender();
+                final AbstractSqueakObject sender = current.getSender();
                 if (sender.isNil() || sender == previousContextOrNil) {
                     break;
                 } else {
@@ -129,7 +129,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
          * Terminate all the Contexts between me and previousContext, if previousContext is on my
          * Context stack. Make previousContext my sender.
          */
-        private static Object terminateTo(final ContextObject receiver, final BaseSqueakObject previousContext) {
+        private static Object terminateTo(final ContextObject receiver, final AbstractSqueakObject previousContext) {
             if (hasSender(receiver, previousContext)) {
                 ContextObject currentContext = receiver.getNotNilSender();
                 while (currentContext != previousContext) {
@@ -145,11 +145,11 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         /*
          * Answer whether the receiver is strictly above context on the stack (Context>>hasSender:).
          */
-        private static boolean hasSender(final ContextObject context, final BaseSqueakObject previousContext) {
+        private static boolean hasSender(final ContextObject context, final AbstractSqueakObject previousContext) {
             if (context == previousContext) {
                 return false;
             }
-            BaseSqueakObject sender = context.getSender();
+            AbstractSqueakObject sender = context.getSender();
             while (!sender.isNil()) {
                 if (sender == previousContext) {
                     return true;
@@ -210,7 +210,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                 if (context.getMethod().isExceptionHandlerMarked()) {
                     return context;
                 }
-                final BaseSqueakObject sender = context.getSender();
+                final AbstractSqueakObject sender = context.getSender();
                 if (sender instanceof ContextObject) {
                     context = (ContextObject) sender;
                 } else {
@@ -240,7 +240,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
         @SuppressWarnings("unused")
         @Specialization
-        protected Object doCopy(final VirtualFrame frame, final ContextObject outerContext, final long numArgs, final ListObject copiedValues) {
+        protected Object doCopy(final VirtualFrame frame, final ContextObject outerContext, final long numArgs, final PointersObject copiedValues) {
             throw new SqueakException("Not implemented and not used in Squeak anymore");
         }
     }
@@ -335,7 +335,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         @Specialization
-        protected Object value(final VirtualFrame frame, final BlockClosureObject block, final ListObject argArray) {
+        protected Object value(final VirtualFrame frame, final BlockClosureObject block, final PointersObject argArray) {
             return dispatch.executeBlock(block, block.getFrameArguments(frame, argArray.getPointers()));
         }
     }
@@ -350,7 +350,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
         @Specialization
         protected static final long doSize(final ContextObject receiver) {
-            return receiver.varsize();
+            return receiver.size() - receiver.instsize();
         }
     }
 }

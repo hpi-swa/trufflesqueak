@@ -14,7 +14,7 @@ import java.util.List;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives.SimulationPrimitiveNode;
@@ -290,8 +290,8 @@ public final class SqueakImageReader {
         output.println("Filling in objects...");
         for (AbstractImageChunk chunk : chunklist) {
             final Object chunkObject = chunk.asObject();
-            if (chunkObject instanceof BaseSqueakObject) {
-                ((BaseSqueakObject) chunkObject).fillin(chunk);
+            if (chunkObject instanceof AbstractSqueakObject) {
+                ((AbstractSqueakObject) chunkObject).fillin(chunk);
             }
             if (chunkObject instanceof NativeObject && ((NativeObject) chunkObject).getSqClass() == image.doesNotUnderstand.getSqClass()) { // check
                                                                                                                                             // ByteSymbols

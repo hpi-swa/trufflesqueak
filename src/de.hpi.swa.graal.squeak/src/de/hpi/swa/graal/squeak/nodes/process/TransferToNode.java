@@ -4,15 +4,19 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
+import de.hpi.swa.graal.squeak.nodes.SqueakObjectAt0Node;
+import de.hpi.swa.graal.squeak.nodes.SqueakObjectAtPut0Node;
 
 public class TransferToNode extends AbstractNodeWithImage {
+    @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
+    @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
     @Child private GetSchedulerNode getSchedulerNode;
 
     public static TransferToNode create(final SqueakImageContext image) {
@@ -24,15 +28,15 @@ public class TransferToNode extends AbstractNodeWithImage {
         getSchedulerNode = GetSchedulerNode.create(image);
     }
 
-    public void executeTransferTo(final VirtualFrame frame, final BaseSqueakObject activeProcess, final BaseSqueakObject newProcess) {
+    public void executeTransferTo(final VirtualFrame frame, final AbstractSqueakObject activeProcess, final AbstractSqueakObject newProcess) {
         // Record a process to be awakened on the next interpreter cycle.
-        final BaseSqueakObject activeContext = GetOrCreateContextNode.getOrCreate(frame);
+        final AbstractSqueakObject activeContext = GetOrCreateContextNode.getOrCreate(frame);
         final PointersObject scheduler = getSchedulerNode.executeGet();
         assert newProcess != scheduler.at0(PROCESS_SCHEDULER.ACTIVE_PROCESS) : "trying to switch to already active process";
         scheduler.atput0(PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
-        activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, activeContext);
-        final ContextObject newActiveContext = (ContextObject) newProcess.at0(PROCESS.SUSPENDED_CONTEXT);
-        newProcess.atput0(PROCESS.SUSPENDED_CONTEXT, image.nil);
+        atPut0Node.execute(activeProcess, PROCESS.SUSPENDED_CONTEXT, activeContext);
+        final ContextObject newActiveContext = (ContextObject) at0Node.execute(newProcess, PROCESS.SUSPENDED_CONTEXT);
+        atPut0Node.execute(newProcess, PROCESS.SUSPENDED_CONTEXT, image.nil);
         throw new ProcessSwitch(newActiveContext);
     }
 }

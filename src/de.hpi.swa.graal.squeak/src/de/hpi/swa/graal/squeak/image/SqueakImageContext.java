@@ -2,6 +2,7 @@ package de.hpi.swa.graal.squeak.image;
 
 import java.awt.Dimension;
 import java.awt.Point;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -19,13 +20,13 @@ import de.hpi.swa.graal.squeak.SqueakConfig;
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.io.SqueakDisplay;
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
-import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
+import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
+import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
-import de.hpi.swa.graal.squeak.model.ListObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
@@ -46,14 +47,14 @@ public final class SqueakImageContext {
     @CompilationFinal public final NilObject nil = new NilObject(this);
     @CompilationFinal public final boolean sqFalse = false;
     @CompilationFinal public final boolean sqTrue = true;
-    @CompilationFinal public final ListObject specialObjectsArray = new ListObject(this);
+    @CompilationFinal public final PointersObject specialObjectsArray = new PointersObject(this);
     @CompilationFinal public final PointersObject schedulerAssociation = new PointersObject(this);
     @CompilationFinal public final ClassObject characterClass = new ClassObject(this);
     @CompilationFinal public final ClassObject smallIntegerClass = new ClassObject(this);
     @CompilationFinal public final ClassObject arrayClass = new ClassObject(this);
     @CompilationFinal public final PointersObject smalltalk = new PointersObject(this);
     @CompilationFinal public final NativeObject doesNotUnderstand = NativeObject.newNativeBytes(this, null, 0);
-    @CompilationFinal public final ListObject specialSelectors = new ListObject(this);
+    @CompilationFinal public final PointersObject specialSelectors = new PointersObject(this);
     @CompilationFinal public final NativeObject mustBeBoolean = NativeObject.newNativeBytes(this, null, 0);
     @CompilationFinal public final ClassObject metaclass = new ClassObject(this);
     @CompilationFinal public final ClassObject methodContextClass = new ClassObject(this);
@@ -70,7 +71,7 @@ public final class SqueakImageContext {
     @CompilationFinal private final SqueakLanguage language;
     @CompilationFinal private final PrintWriter output;
     @CompilationFinal private final PrintWriter error;
-    @CompilationFinal private final SqueakLanguage.Env env;
+    @CompilationFinal public final SqueakLanguage.Env env;
 
     // Special selectors
     @CompilationFinal public final SpecialSelectorObject plus = new SpecialSelectorObject(this);
@@ -120,8 +121,8 @@ public final class SqueakImageContext {
     @CompilationFinal public final InterruptHandlerNode interrupt;
     @CompilationFinal public final long startUpMillis = System.currentTimeMillis();
 
-    @CompilationFinal public BaseSqueakObject asSymbol = nil; // for testing
-    @CompilationFinal public BaseSqueakObject simulatePrimitiveArgs = nil;
+    @CompilationFinal public AbstractSqueakObject asSymbol = nil; // for testing
+    @CompilationFinal public AbstractSqueakObject simulatePrimitiveArgs = nil;
 
     public SqueakImageContext(final SqueakLanguage squeakLanguage, final SqueakLanguage.Env environ,
                     final PrintWriter out, final PrintWriter err) {
@@ -159,20 +160,20 @@ public final class SqueakImageContext {
         final Object receiver = config.getReceiver();
         final String selector = config.getSelector();
         final ClassObject receiverClass = receiver instanceof Long ? smallIntegerClass : nilClass;
-        final CompiledCodeObject lookupResult = (CompiledCodeObject) receiverClass.lookup(selector);
+        final CompiledMethodObject lookupResult = (CompiledMethodObject) receiverClass.lookup(selector);
         if (lookupResult.getCompiledInSelector() == doesNotUnderstand) {
             throw new SqueakException(receiver + " >> " + selector + " could not be found!");
         }
         final ContextObject customContext = ContextObject.create(this, lookupResult.frameSize());
         customContext.atput0(CONTEXT.METHOD, lookupResult);
-        customContext.atput0(CONTEXT.INSTRUCTION_POINTER, (long) customContext.getCodeObject().getInitialPC());
+        customContext.atput0(CONTEXT.INSTRUCTION_POINTER, (long) lookupResult.getInitialPC());
         customContext.atput0(CONTEXT.RECEIVER, receiver);
         customContext.atput0(CONTEXT.STACKPOINTER, 1L);
         customContext.atput0(CONTEXT.CLOSURE_OR_NIL, nil);
         customContext.setSender(nil);
         customContext.setFrameMarker(new FrameMarker());
         // if there were arguments, they would need to be pushed before the temps
-        final long numTemps = lookupResult.getNumTemps() - lookupResult.getNumArgsAndCopiedValues();
+        final long numTemps = lookupResult.getNumTemps() - lookupResult.getNumArgs();
         for (int i = 0; i < numTemps; i++) {
             customContext.push(nil);
         }
@@ -209,6 +210,8 @@ public final class SqueakImageContext {
             return wrap((long) Long.valueOf((Integer) obj));
         } else if (obj instanceof Long) {
             return wrap((long) obj);
+        } else if (obj instanceof Double) {
+            return wrap((double) obj);
         } else if (obj instanceof BigInteger) {
             return wrap((BigInteger) obj);
         } else if (obj instanceof String) {
@@ -234,8 +237,12 @@ public final class SqueakImageContext {
         return l;
     }
 
-    public BaseSqueakObject wrap(final BigInteger i) {
+    public AbstractSqueakObject wrap(final BigInteger i) {
         return new LargeIntegerObject(this, i);
+    }
+
+    public FloatObject wrap(final double value) {
+        return new FloatObject(this, value);
     }
 
     public NativeObject wrap(final String s) {
@@ -247,7 +254,7 @@ public final class SqueakImageContext {
     }
 
     @TruffleBoundary
-    public ListObject wrap(final Object... elements) {
+    public PointersObject wrap(final Object... elements) {
         final Object[] wrappedElements = new Object[elements.length];
         for (int i = 0; i < elements.length; i++) {
             wrappedElements[i] = wrap(elements[i]);
@@ -263,11 +270,11 @@ public final class SqueakImageContext {
         return newPoint((long) dimension.getWidth(), (long) dimension.getHeight());
     }
 
-    public ListObject newList(final Object[] elements) {
-        return new ListObject(this, arrayClass, elements);
+    public PointersObject newList(final Object[] elements) {
+        return new PointersObject(this, arrayClass, elements);
     }
 
-    public ListObject newListWith(final Object... elements) {
+    public PointersObject newListWith(final Object... elements) {
         return newList(elements);
     }
 
@@ -283,8 +290,12 @@ public final class SqueakImageContext {
         return NativeObject.newNativeBytes(this, doesNotUnderstand.getSqClass(), value.getBytes());
     }
 
-    public void registerSemaphore(final BaseSqueakObject semaphore, final long index) {
+    public void registerSemaphore(final AbstractSqueakObject semaphore, final long index) {
         specialObjectsArray.atput0(index, semaphore.isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassSemaphore) ? semaphore : nil);
+    }
+
+    public String imageRelativeFilePathFor(final String fileName) {
+        return config.getImageDirectory() + File.separator + fileName;
     }
 
     public void trace(final String message) {

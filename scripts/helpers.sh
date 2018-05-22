@@ -6,23 +6,23 @@ readonly MX_GIT="https://github.com/graalvm/mx.git"
 
 
 [[ -z "${BASE_DIRECTORY}" ]] && echo "${BASE_DIRECTORY} is not set" && exit
-readonly MX_PATH_SELF_CONTAINED="${BASE_DIRECTORY}/mx/mx"
+readonly MX_PATH="${BASE_DIRECTORY}/../mx"
 
 locate_mx() {
   local mx_exec="mx"
 
   if [[ ! $(which "${mx_exec}" 2> /dev/null) ]]; then
-    if [[ ! -f "${MX_PATH_SELF_CONTAINED}" ]]; then
+    if [[ ! -d "${MX_PATH}" ]]; then
       read -p "mx not found. Would you like to clone it now? (y/N): " user_input
       if [[ "${user_input}" = "y" ]]; then
         pushd "${BASE_DIRECTORY}" > /dev/null
-        git clone "${MX_GIT}"
+        git clone "${MX_GIT}" "${MX_PATH}"
         popd > /dev/null
       else
         exit 1
       fi
     fi
-    mx_exec="${MX_PATH_SELF_CONTAINED}"
+    mx_exec="${MX_PATH}/${mx_exec}"
   fi
   echo "${mx_exec}"
 }

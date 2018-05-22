@@ -10,20 +10,20 @@ import java.math.BigInteger;
 
 import org.junit.Test;
 
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
-import de.hpi.swa.graal.squeak.model.ListObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.PointersObject;
 
 public class SqueakPrimitiveTest extends AbstractSqueakTestCaseWithDummyImage {
     @Test
     public void testPrimEquivalent() {
-        final BaseSqueakObject rcvr = image.specialObjectsArray;
+        final AbstractSqueakObject rcvr = image.specialObjectsArray;
         assertTrue((boolean) runBinaryPrimitive(110, rcvr, rcvr));
         assertFalse((boolean) runBinaryPrimitive(110, rcvr, image.nil));
     }
 
     @Test
     public void testPrimReplaceFromTo() {
-        final BaseSqueakObject rcvr = new ListObject(image, image.arrayClass,
+        final PointersObject rcvr = new PointersObject(image, image.arrayClass,
                         new Object[]{image.nil, image.sqFalse, image.sqTrue, image.characterClass, image.metaclass,
                                         image.schedulerAssociation, image.smallIntegerClass, image.smalltalk,
                                         image.specialObjectsArray});
@@ -31,7 +31,7 @@ public class SqueakPrimitiveTest extends AbstractSqueakTestCaseWithDummyImage {
         for (int i = 1; i < 8; i++) {
             assertNotSame(image.nil, rcvr.at0(i));
         }
-        final Object result = runQuinaryPrimitive(105, rcvr, 1L, 6L, new ListObject(image, image.nilClass, 10), 1L);
+        final Object result = runQuinaryPrimitive(105, rcvr, 1L, 6L, new PointersObject(image, image.nilClass, 10), 1L);
         assertSame(result, rcvr);
         for (int i = 0; i < 6; i++) {
             assertSame(image.nil, rcvr.at0(i));

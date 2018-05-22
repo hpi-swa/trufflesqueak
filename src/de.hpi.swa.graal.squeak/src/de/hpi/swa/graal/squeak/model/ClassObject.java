@@ -10,13 +10,16 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
+import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CLASS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.METHOD_DICT;
+import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
-public final class ClassObject extends AbstractPointersObject {
+public final class ClassObject extends AbstractSqueakObject {
+    @CompilationFinal(dimensions = 1) protected Object[] pointers;
     @CompilationFinal private final Set<ClassObject> subclasses = new HashSet<>();
     @CompilationFinal private int instSpec = -1;
     @CompilationFinal private int instanceSize = -1;
@@ -29,7 +32,7 @@ public final class ClassObject extends AbstractPointersObject {
     }
 
     private ClassObject(final ClassObject original) {
-        this(original.image, original.getSqClass(), original.pointers.clone());
+        this(original.image, original.getSqClass(), original.pointers);
         instSpec = original.instSpec;
         instanceSize = original.instanceSize;
     }
@@ -40,13 +43,7 @@ public final class ClassObject extends AbstractPointersObject {
     }
 
     private ClassObject(final SqueakImageContext image, final ClassObject classObject, final int size) {
-        super(image, classObject, size);
-    }
-
-    @Override
-    public boolean isClass() {
-        assert image.metaclass == getSqClass() || image.metaclass == getSqClass().getSqClass();
-        return true;
+        this(image, classObject, ArrayUtils.withAll(size, image.nil));
     }
 
     @Override
@@ -54,7 +51,7 @@ public final class ClassObject extends AbstractPointersObject {
         assert isClass();
         if (isAMetaclass()) {
             // metaclasses store their singleton instance in the last field
-            final Object classInstance = at0(getPointers().length - 1);
+            final Object classInstance = at0(size() - 1);
             if (classInstance instanceof ClassObject) {
                 return "Metaclass (" + ((ClassObject) classInstance).getName() + ")";
             }
@@ -82,6 +79,7 @@ public final class ClassObject extends AbstractPointersObject {
     @Override
     public void fillin(final AbstractImageChunk chunk) {
         super.fillin(chunk);
+        pointers = chunk.getPointers();
         // initialize the subclasses set
         setFormat((long) at0(CLASS.FORMAT));
         final Object superclass = getSuperclass();
@@ -90,7 +88,7 @@ public final class ClassObject extends AbstractPointersObject {
 
     public void setFormat(final long format) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        super.atput0(CLASS.FORMAT, format);
+        pointers[CLASS.FORMAT] = format;
         if (instSpec >= 0) { // only invalidate if not initialized
             classFormatStable.invalidate();
         }
@@ -100,7 +98,7 @@ public final class ClassObject extends AbstractPointersObject {
 
     public void setSuperclass(final Object superclass) {
         final Object oldSuperclass = getSuperclass();
-        super.atput0(CLASS.SUPERCLASS, superclass);
+        pointers[CLASS.SUPERCLASS] = superclass;
         if (oldSuperclass instanceof ClassObject) {
             ((ClassObject) oldSuperclass).detachSubclass(this);
         }
@@ -110,6 +108,14 @@ public final class ClassObject extends AbstractPointersObject {
         for (ClassObject subclass : subclasses) {
             subclass.invalidateMethodLookup();
         }
+    }
+
+    public int size() {
+        return pointers.length;
+    }
+
+    public int instsize() {
+        return getSqClass().getBasicInstanceSize();
     }
 
     private void invalidateMethodLookup() {
@@ -136,14 +142,17 @@ public final class ClassObject extends AbstractPointersObject {
         return at0(CLASS.NAME);
     }
 
-    @Override
-    public void atput0(final long idx, final Object obj) {
-        if (idx == CLASS.FORMAT) {
+    public Object at0(final long index) {
+        return pointers[(int) index];
+    }
+
+    public void atput0(final long index, final Object obj) {
+        if (index == CLASS.FORMAT) {
             setFormat((long) obj);
-        } else if (idx == CLASS.SUPERCLASS) {
+        } else if (index == CLASS.SUPERCLASS) {
             setSuperclass(obj);
         } else {
-            super.atput0(idx, obj);
+            pointers[(int) index] = obj;
         }
     }
 
@@ -161,13 +170,13 @@ public final class ClassObject extends AbstractPointersObject {
         Object lookupClass = this;
         while (lookupClass instanceof ClassObject) {
             final Object methodDict = ((ClassObject) lookupClass).getMethodDict();
-            if (methodDict instanceof ListObject) {
-                final Object values = ((ListObject) methodDict).at0(METHOD_DICT.VALUES);
-                if (values instanceof BaseSqueakObject) {
-                    for (int i = METHOD_DICT.NAMES; i < ((BaseSqueakObject) methodDict).size(); i++) {
-                        final Object methodSelector = ((BaseSqueakObject) methodDict).at0(i);
+            if (methodDict instanceof PointersObject) {
+                final Object values = ((PointersObject) methodDict).at0(METHOD_DICT.VALUES);
+                if (values instanceof PointersObject) {
+                    for (int i = METHOD_DICT.NAMES; i < ((PointersObject) methodDict).size(); i++) {
+                        final Object methodSelector = ((PointersObject) methodDict).at0(i);
                         if (predicate.test(methodSelector)) {
-                            return ((BaseSqueakObject) values).at0(i - METHOD_DICT.NAMES);
+                            return ((PointersObject) values).at0(i - METHOD_DICT.NAMES);
                         }
                     }
                 }
@@ -216,14 +225,14 @@ public final class ClassObject extends AbstractPointersObject {
                     return new PointersObject(image, this, size);
                 }
             case 2: // indexed pointers
-                return new ListObject(image, this, size);
+                return new PointersObject(image, this, size);
             case 3: // mixed indexable and named pointers
                 if (this == image.methodContextClass) {
                     return ContextObject.create(image, size);
                 } else if (this == image.blockClosureClass) {
                     return new BlockClosureObject(image); // TODO: verify this is actually used
                 } else {
-                    return new ListObject(image, this, size);
+                    return new PointersObject(image, this, size);
                 }
             case 4:
                 return new WeakPointersObject(image, this, size);
@@ -260,8 +269,11 @@ public final class ClassObject extends AbstractPointersObject {
         return instanceSize;
     }
 
-    @Override
-    public BaseSqueakObject shallowCopy() {
+    public Object[] getPointers() {
+        return pointers;
+    }
+
+    public AbstractSqueakObject shallowCopy() {
         return new ClassObject(this);
     }
 
@@ -285,4 +297,39 @@ public final class ClassObject extends AbstractPointersObject {
         }
         return numWords * 4;
     }
+
+    @Override
+    public boolean become(final AbstractSqueakObject other) {
+        if (!(other instanceof ClassObject)) {
+            throw new PrimitiveExceptions.PrimitiveFailed();
+        }
+        if (!super.become(other)) {
+            throw new SqueakException("Should not fail");
+        }
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        final Object[] pointers2 = ((ClassObject) other).pointers;
+        ((ClassObject) other).pointers = this.pointers;
+        pointers = pointers2;
+        return true;
+    }
+
+    @Override
+    public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        // TODO: super.pointersBecomeOneWay(from, to); ?
+        for (int i = 0; i < from.length; i++) {
+            final Object fromPointer = from[i];
+            for (int j = 0; j < size(); j++) {
+                final Object newPointer = at0(j);
+                if (newPointer == fromPointer) {
+                    final Object toPointer = to[i];
+                    atput0(j, toPointer);
+                    if (copyHash && fromPointer instanceof AbstractSqueakObject && toPointer instanceof AbstractSqueakObject) {
+                        ((AbstractSqueakObject) toPointer).setSqueakHash(((AbstractSqueakObject) fromPointer).squeakHash());
+                    }
+                }
+            }
+        }
+    }
+
 }

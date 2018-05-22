@@ -2,15 +2,13 @@ package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags.StatementTag;
 import com.oracle.truffle.api.instrumentation.Tag;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
-import de.hpi.swa.graal.squeak.exceptions.Returns.FreshReturn;
-import de.hpi.swa.graal.squeak.exceptions.Returns.LocalReturn;
+import de.hpi.swa.graal.squeak.exceptions.Returns.FreshLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -37,7 +35,6 @@ import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitives.Primitive
 public final class MiscellaneousBytecodes {
 
     public static class CallPrimitiveNode extends AbstractBytecodeNode {
-        @CompilationFinal private static final boolean DEBUG_UNSUPPORTED_SPECIALIZATION_EXCEPTIONS = false;
         @Child private HandlePrimitiveFailedNode handlePrimFailed;
         @Child private AbstractPrimitiveNode primitiveNode;
         @CompilationFinal private final int primitiveIndex;
@@ -60,25 +57,22 @@ public final class MiscellaneousBytecodes {
         public void executeVoid(final VirtualFrame frame) {
             CompilerAsserts.compilationConstant(index);
             try {
-                throw new FreshReturn(new LocalReturn(primitiveNode.executePrimitive(frame)));
+                throw new FreshLocalReturn(primitiveNode.executePrimitive(frame));
             } catch (PrimitiveFailed e) {
                 if (handlePrimFailed != null) {
                     handlePrimFailed.executeHandle(frame, e);
                 }
+                // if (!(primitiveNode instanceof PrimitiveFailedNode)) {
+                // code.image.trace("PrimFail: " + primitiveNode);
+                // }
             } catch (UnsupportedSpecializationException e) {
-                if (DEBUG_UNSUPPORTED_SPECIALIZATION_EXCEPTIONS) {
-                    debugUnsupportedSpecializationException(e);
-                }
+                // final String message = e.getMessage();
+                // if (message.contains("[Long,PointersObject]") ||
+                // message.contains("[FloatObject,PointersObject]")) {
+                // return;
+                // }
+                // code.image.trace("UnsupportedSpecializationException: " + e);
             }
-        }
-
-        @TruffleBoundary
-        private void debugUnsupportedSpecializationException(final UnsupportedSpecializationException e) {
-            final String message = e.getMessage();
-            if (message.contains("[Long,PointersObject]") || message.contains("[FloatObject,PointersObject]")) {
-                return;
-            }
-            code.image.trace("UnsupportedSpecializationException: " + e);
         }
 
         @Override

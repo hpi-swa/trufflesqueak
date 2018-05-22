@@ -5,13 +5,17 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
 
+import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions;
+import de.hpi.swa.graal.squeak.exceptions.SqueakException;
+import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
-public final class ContextObject extends AbstractPointersObject {
+public final class ContextObject extends AbstractSqueakObject {
+    @CompilationFinal(dimensions = 1) protected Object[] pointers;
     @CompilationFinal private FrameMarker frameMarker;
     @CompilationFinal private boolean isDirty;
 
@@ -54,15 +58,19 @@ public final class ContextObject extends AbstractPointersObject {
     }
 
     @Override
+    public void fillin(final AbstractImageChunk chunk) {
+        super.fillin(chunk);
+        pointers = chunk.getPointers();
+    }
+
     public Object at0(final long index) {
         assert index >= 0;
         if (index == CONTEXT.SENDER_OR_NIL) {
             return getSender(); // sender might need to be reconstructed
         }
-        return super.at0(index);
+        return pointers[(int) index];
     }
 
-    @Override
     public void atput0(final long index, final Object value) {
         assert index >= 0 && value != null;
         if (index == CONTEXT.SENDER_OR_NIL) {
@@ -70,10 +78,11 @@ public final class ContextObject extends AbstractPointersObject {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             isDirty = true;
         }
-        super.atput0(index, value);
+        assert value != null; // null indicates a problem
+        pointers[(int) index] = value;
     }
 
-    public CompiledCodeObject getCodeObject() {
+    public CompiledCodeObject getClosureOrMethod() {
         final BlockClosureObject closure = getClosure();
         if (closure != null) {
             return closure.getCompiledBlock();
@@ -89,19 +98,8 @@ public final class ContextObject extends AbstractPointersObject {
         return (CompiledCodeObject) at0(CONTEXT.METHOD);
     }
 
-    @Override
-    public BaseSqueakObject shallowCopy() {
+    public AbstractSqueakObject shallowCopy() {
         return new ContextObject(this);
-    }
-
-    public Object[] getReceiverAndArguments() {
-        final int numArgs = getCodeObject().getNumArgsAndCopiedValues();
-        final Object[] arguments = new Object[1 + numArgs];
-        arguments[0] = getReceiver();
-        for (int i = 0; i < numArgs; i++) {
-            arguments[1 + i] = atTemp(i);
-        }
-        return arguments;
     }
 
     public boolean isDirty() {
@@ -109,21 +107,21 @@ public final class ContextObject extends AbstractPointersObject {
     }
 
     public boolean hasVirtualSender() {
-        return super.at0(CONTEXT.SENDER_OR_NIL) instanceof FrameMarker;
+        return pointers[CONTEXT.SENDER_OR_NIL] instanceof FrameMarker;
     }
 
-    public BaseSqueakObject getSender() {
-        final Object sender = super.at0(CONTEXT.SENDER_OR_NIL);
+    public AbstractSqueakObject getSender() {
+        final Object sender = pointers[CONTEXT.SENDER_OR_NIL];
         if (sender instanceof ContextObject) {
-            return (BaseSqueakObject) sender;
+            return (AbstractSqueakObject) sender;
         } else if (sender instanceof NilObject) {
-            return (BaseSqueakObject) sender;
+            return (AbstractSqueakObject) sender;
         } else {
             CompilerDirectives.transferToInterpreter();
             assert sender instanceof FrameMarker;
             final Frame frame = FrameAccess.findFrameForMarker((FrameMarker) sender);
             assert frame != null : "Frame for context to reconstruct does not exist anymore";
-            final BaseSqueakObject reconstructedSender = GetOrCreateContextNode.getOrCreate(frame);
+            final AbstractSqueakObject reconstructedSender = GetOrCreateContextNode.getOrCreate(frame);
             assert reconstructedSender != null;
             setSender(reconstructedSender);
             return reconstructedSender;
@@ -139,7 +137,7 @@ public final class ContextObject extends AbstractPointersObject {
      * Set sender without flagging context as dirty.
      */
     public void setSender(final Object sender) {
-        super.atput0(CONTEXT.SENDER_OR_NIL, sender);
+        pointers[CONTEXT.SENDER_OR_NIL] = sender;
     }
 
     public void push(final Object value) {
@@ -151,14 +149,12 @@ public final class ContextObject extends AbstractPointersObject {
     }
 
     public long getInstructionPointer() {
-        final CompiledCodeObject code = getCodeObject();
-        return decodeSqPC((long) at0(CONTEXT.INSTRUCTION_POINTER), code);
+        return (long) at0(CONTEXT.INSTRUCTION_POINTER);
     }
 
     public void setInstructionPointer(final long newPC) {
-        final long encodedPC = encodeSqPC(newPC, getCodeObject());
-        assert encodedPC >= 0;
-        atput0(CONTEXT.INSTRUCTION_POINTER, encodedPC);
+        assert newPC >= 0;
+        atput0(CONTEXT.INSTRUCTION_POINTER, newPC);
     }
 
     public long getStackPointer() {
@@ -184,31 +180,24 @@ public final class ContextObject extends AbstractPointersObject {
         }
     }
 
+    public int size() {
+        return pointers.length;
+    }
+
+    public int instsize() {
+        return getSqClass().getBasicInstanceSize();
+    }
+
+    public Object[] getPointers() {
+        return pointers;
+    }
+
     public Object top() {
         return peek(0);
     }
 
     public Object peek(final int offset) {
         return atStack(getStackPointer() - offset);
-    }
-
-    public Object pop() {
-        final long sp = getStackPointer();
-        if (sp > 0) {
-            setStackPointer(sp - 1);
-        }
-        return atStackAndClear(sp);
-    }
-
-    public Object[] popNReversed(final int numPop) {
-        final long sp = getStackPointer();
-        assert sp - numPop >= 0;
-        final Object[] result = new Object[numPop];
-        for (int i = 0; i < numPop; i++) {
-            result[numPop - 1 - i] = atStackAndClear(sp - i);
-        }
-        setStackPointer(sp - numPop);
-        return result;
     }
 
     public Object getReceiver() {
@@ -231,14 +220,19 @@ public final class ContextObject extends AbstractPointersObject {
         atput0(CONTEXT.TEMP_FRAME_START - 1 + argumentIndex, value);
     }
 
-    public Object atStackAndClear(final long argumentIndex) {
-        final Object value = atStack(argumentIndex);
-        final CompiledCodeObject code = getMethod();
-        if (argumentIndex >= 1 + code.getNumArgsAndCopiedValues() + code.getNumTemps()) {
-            // only nil out stack values, not receiver, arguments, or temporary variables
-            atStackPut(argumentIndex, image.nil);
+    @Override
+    public boolean become(final AbstractSqueakObject other) {
+        if (!(other instanceof ContextObject)) {
+            throw new PrimitiveExceptions.PrimitiveFailed();
         }
-        return value;
+        if (!super.become(other)) {
+            throw new SqueakException("Should not fail");
+        }
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        final Object[] pointers2 = ((ContextObject) other).pointers;
+        ((ContextObject) other).pointers = this.pointers;
+        pointers = pointers2;
+        return true;
     }
 
     @Override
@@ -252,8 +246,8 @@ public final class ContextObject extends AbstractPointersObject {
                 if (newPointer == fromPointer) {
                     final Object toPointer = to[i];
                     atput0(j, toPointer);
-                    if (copyHash && fromPointer instanceof BaseSqueakObject && toPointer instanceof BaseSqueakObject) {
-                        ((BaseSqueakObject) toPointer).setSqueakHash(((BaseSqueakObject) fromPointer).squeakHash());
+                    if (copyHash && fromPointer instanceof AbstractSqueakObject && toPointer instanceof AbstractSqueakObject) {
+                        ((AbstractSqueakObject) toPointer).setSqueakHash(((AbstractSqueakObject) fromPointer).squeakHash());
                     }
                 }
             }
@@ -273,19 +267,17 @@ public final class ContextObject extends AbstractPointersObject {
         this.frameMarker = frameMarker;
     }
 
-    /*
-     * pc is offset by the initial pc
-     */
-    public static long encodeSqPC(final long pc, final CompiledCodeObject code) {
-        return pc + code.getInitialPC() + code.getOffset();
-    }
-
-    public static long decodeSqPC(final long pc, final CompiledCodeObject code) {
-        return pc - code.getInitialPC() - code.getOffset();
-    }
-
     public boolean isUnwindContext() {
         return getMethod().isUnwindMarked();
+    }
+
+    public Object[] getReceiverAndNArguments(final int numArgs) {
+        final Object[] arguments = new Object[1 + numArgs];
+        arguments[0] = getReceiver();
+        for (int i = 0; i < numArgs; i++) {
+            arguments[1 + i] = atTemp(i);
+        }
+        return arguments;
     }
 
     /*
@@ -294,14 +286,21 @@ public final class ContextObject extends AbstractPointersObject {
     @TruffleBoundary
     public void printSqStackTrace() {
         ContextObject current = this;
+        int numArgsAndCopiedValues;
         while (true) {
-            final Object[] rcvrAndArgs = current.getReceiverAndArguments();
+            final CompiledCodeObject code = current.getClosureOrMethod();
+            if (code instanceof CompiledBlockObject) {
+                numArgsAndCopiedValues = ((CompiledBlockObject) code).getNumArgs() + ((CompiledBlockObject) code).getNumCopiedValues();
+            } else {
+                numArgsAndCopiedValues = ((CompiledMethodObject) code).getNumArgs();
+            }
+            final Object[] rcvrAndArgs = current.getReceiverAndNArguments(numArgsAndCopiedValues);
             final String[] argumentStrings = new String[rcvrAndArgs.length];
             for (int i = 0; i < rcvrAndArgs.length; i++) {
                 argumentStrings[i] = rcvrAndArgs[i].toString();
             }
             image.getOutput().println(String.format("%s #(%s)", current, String.join(", ", argumentStrings)));
-            final BaseSqueakObject sender = current.getSender();
+            final AbstractSqueakObject sender = current.getSender();
             if (sender.isNil()) {
                 break;
             } else {

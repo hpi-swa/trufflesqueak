@@ -2,12 +2,16 @@ package de.hpi.swa.graal.squeak.nodes.process;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.LINK;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.LINKED_LIST;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
+import de.hpi.swa.graal.squeak.nodes.SqueakObjectAt0Node;
+import de.hpi.swa.graal.squeak.nodes.SqueakObjectAtPut0Node;
 
 public class RemoveProcessFromListNode extends AbstractNodeWithImage {
+    @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
+    @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
 
     public static RemoveProcessFromListNode create(final SqueakImageContext image) {
         return new RemoveProcessFromListNode(image);
@@ -17,34 +21,34 @@ public class RemoveProcessFromListNode extends AbstractNodeWithImage {
         super(image);
     }
 
-    public void executeRemove(final BaseSqueakObject process, final BaseSqueakObject list) {
-        final BaseSqueakObject first = (BaseSqueakObject) list.at0(LINKED_LIST.FIRST_LINK);
-        final BaseSqueakObject last = (BaseSqueakObject) list.at0(LINKED_LIST.LAST_LINK);
+    public void executeRemove(final AbstractSqueakObject process, final AbstractSqueakObject list) {
+        final AbstractSqueakObject first = (AbstractSqueakObject) at0Node.execute(list, LINKED_LIST.FIRST_LINK);
+        final AbstractSqueakObject last = (AbstractSqueakObject) at0Node.execute(list, LINKED_LIST.LAST_LINK);
         if (process.equals(first)) {
-            final Object next = process.at0(LINK.NEXT_LINK);
-            list.atput0(LINKED_LIST.FIRST_LINK, next);
+            final Object next = at0Node.execute(process, LINK.NEXT_LINK);
+            atPut0Node.execute(list, LINKED_LIST.FIRST_LINK, next);
             if (process.equals(last)) {
-                list.atput0(LINKED_LIST.LAST_LINK, image.nil);
+                atPut0Node.execute(list, LINKED_LIST.LAST_LINK, image.nil);
             }
         } else {
-            BaseSqueakObject temp = first;
-            BaseSqueakObject next;
+            AbstractSqueakObject temp = first;
+            AbstractSqueakObject next;
             while (true) {
                 if (temp.isNil()) {
                     throw new PrimitiveFailed();
                 }
-                next = (BaseSqueakObject) temp.at0(LINK.NEXT_LINK);
+                next = (AbstractSqueakObject) at0Node.execute(temp, LINK.NEXT_LINK);
                 if (next.equals(process)) {
                     break;
                 }
                 temp = next;
             }
-            next = (BaseSqueakObject) process.at0(LINK.NEXT_LINK);
-            temp.atput0(LINK.NEXT_LINK, next);
+            next = (AbstractSqueakObject) at0Node.execute(process, LINK.NEXT_LINK);
+            atPut0Node.execute(temp, LINK.NEXT_LINK, next);
             if (process.equals(last)) {
-                list.atput0(LINKED_LIST.LAST_LINK, temp);
+                atPut0Node.execute(list, LINKED_LIST.LAST_LINK, temp);
             }
         }
-        process.atput0(LINK.NEXT_LINK, image.nil);
+        atPut0Node.execute(process, LINK.NEXT_LINK, image.nil);
     }
 }

@@ -7,8 +7,9 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
-public class SqueakConfig {
+public final class SqueakConfig {
     @CompilationFinal private final String imagePath;
+    @CompilationFinal private final String imageDirectory;
     @CompilationFinal private final boolean verbose;
     @CompilationFinal private final boolean tracing;
     @CompilationFinal private final boolean disableInterrupts;
@@ -21,7 +22,10 @@ public class SqueakConfig {
     @SuppressWarnings("hiding")
     public SqueakConfig(final String[] args) {
         assert args.length > 0;
-        this.imagePath = new File(args[0].trim()).getAbsolutePath();
+        final File imageFile = new File(args[0].trim());
+        final File parentFile = imageFile.getParentFile();
+        this.imagePath = imageFile.getAbsolutePath();
+        this.imageDirectory = parentFile == null ? null : parentFile.getAbsolutePath();
         boolean verbose = false;
         boolean tracing = false;
         boolean disableInterrupts = false;
@@ -124,6 +128,10 @@ public class SqueakConfig {
 
     public String getImagePath() {
         return imagePath;
+    }
+
+    public String getImageDirectory() {
+        return imageDirectory;
     }
 
     public Object getReceiver() {

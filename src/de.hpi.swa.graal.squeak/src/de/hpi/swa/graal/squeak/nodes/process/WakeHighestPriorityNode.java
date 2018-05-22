@@ -4,8 +4,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
-import de.hpi.swa.graal.squeak.model.ListObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
@@ -34,17 +33,17 @@ public class WakeHighestPriorityNode extends AbstractNodeWithImage {
         // Return the highest priority process that is ready to run.
         // Note: It is a fatal VM error if there is no runnable process.
         final PointersObject scheduler = getSchedulerNode.executeGet();
-        final ListObject schedLists = (ListObject) scheduler.at0(PROCESS_SCHEDULER.PROCESS_LISTS);
+        final PointersObject schedLists = (PointersObject) scheduler.at0(PROCESS_SCHEDULER.PROCESS_LISTS);
         long p = schedLists.size() - 1;  // index of last indexable field
-        BaseSqueakObject processList;
+        AbstractSqueakObject processList;
         do {
             if (p < 0) {
                 throw new SqueakException("scheduler could not find a runnable process");
             }
-            processList = (BaseSqueakObject) schedLists.at0(p--);
+            processList = (AbstractSqueakObject) schedLists.at0(p--);
         } while (isEmptyListNode.executeIsEmpty(processList));
         final PointersObject activeProcess = getActiveProcessNode.executeGet();
-        final BaseSqueakObject newProcess = removeFirstLinkOfListNode.executeRemove(processList);
+        final AbstractSqueakObject newProcess = removeFirstLinkOfListNode.executeRemove(processList);
         transferToNode.executeTransferTo(frame, activeProcess, newProcess);
     }
 }

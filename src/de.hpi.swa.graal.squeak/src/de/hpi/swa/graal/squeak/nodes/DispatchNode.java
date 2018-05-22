@@ -12,7 +12,7 @@ import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.nodes.context.frame.CreateArgumentsNode;
@@ -23,6 +23,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
 @ReportPolymorphism
 @ImportStatic(PrimitiveNodeFactory.class)
 public abstract class DispatchNode extends Node {
+    @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
     @Child private CreateArgumentsNode createArgumentsNode = CreateArgumentsNode.create();
     @Child private CreateEagerArgumentsNode createEagerArgumentsNode = CreateEagerArgumentsNode.create();
 
@@ -38,8 +39,8 @@ public abstract class DispatchNode extends Node {
 
     @Specialization(guards = {"isQuickReturnReceiverVariable(method.primitiveIndex())"})
     protected Object doPrimitiveQuickReturnReceiver(final CompiledMethodObject method, final Object[] receiverAndArguments, @SuppressWarnings("unused") final Object contextOrMarker) {
-        assert receiverAndArguments[0] instanceof BaseSqueakObject;
-        return ((BaseSqueakObject) receiverAndArguments[0]).at0(method.primitiveIndex() - 264);
+        assert receiverAndArguments[0] instanceof AbstractSqueakObject;
+        return at0Node.execute((AbstractSqueakObject) receiverAndArguments[0], method.primitiveIndex() - 264);
     }
 
     @SuppressWarnings("unused")

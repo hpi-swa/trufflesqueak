@@ -11,15 +11,17 @@ import com.oracle.truffle.api.instrumentation.ProvidedTags;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.nodes.context.SqueakLookupClassNode;
 
-@TruffleLanguage.Registration(name = SqueakLanguage.NAME, version = "0.1", mimeType = SqueakLanguage.MIME_TYPE)
+@TruffleLanguage.Registration(id = SqueakLanguage.ID, name = SqueakLanguage.NAME, version = SqueakLanguage.VERSION, mimeType = SqueakLanguage.MIME_TYPE, interactive = true, internal = false)
 @ProvidedTags({StandardTags.CallTag.class, StandardTags.RootTag.class, StandardTags.StatementTag.class, DebuggerTags.AlwaysHalt.class})
 public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
-    public static final String MIME_TYPE = "application/x-squeak-smalltalk";
+    public static final String ID = "squeaksmalltalk";
     public static final String NAME = "Squeak/Smalltalk";
+    public static final String MIME_TYPE = "application/x-squeak-smalltalk";
+    public static final String VERSION = "0.1";
 
     @Override
     protected SqueakImageContext createContext(final Env env) {
@@ -41,7 +43,7 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
 
     @Override
     protected boolean isObjectOfLanguage(final Object object) {
-        return object instanceof BaseSqueakObject;
+        return object instanceof AbstractSqueakObject;
     }
 
     @Override
@@ -58,6 +60,6 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
     }
 
     public static SqueakImageContext getContext() {
-        return null; // FIXME
+        return getCurrentContext(SqueakLanguage.class);
     }
 }

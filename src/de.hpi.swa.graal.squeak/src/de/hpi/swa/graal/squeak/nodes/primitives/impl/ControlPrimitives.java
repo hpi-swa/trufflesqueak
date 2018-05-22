@@ -5,6 +5,7 @@ import java.lang.ref.ReferenceQueue;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
@@ -16,12 +17,12 @@ import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveWithoutResultException;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.exceptions.SqueakQuit;
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
-import de.hpi.swa.graal.squeak.model.ListObject;
+import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
@@ -32,12 +33,12 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.SEMAPHORE;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.DispatchNode;
-import de.hpi.swa.graal.squeak.nodes.DispatchNodeGen;
+import de.hpi.swa.graal.squeak.nodes.DispatchSendNode;
 import de.hpi.swa.graal.squeak.nodes.LookupNode;
 import de.hpi.swa.graal.squeak.nodes.LookupNodeGen;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.SendDoesNotUnderstandNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.SendObjectAsMethodNode;
+import de.hpi.swa.graal.squeak.nodes.SqueakObjectAt0Node;
+import de.hpi.swa.graal.squeak.nodes.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.context.ObjectAtNode;
 import de.hpi.swa.graal.squeak.nodes.context.ReceiverAndArgumentsNode;
 import de.hpi.swa.graal.squeak.nodes.context.ReceiverNode;
@@ -95,31 +96,22 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     private abstract static class AbstractPerformPrimitiveNode extends AbstractPrimitiveNode {
         @Child protected SqueakLookupClassNode lookupClassNode;
         @Child protected LookupNode lookupNode = LookupNodeGen.create();
-        @Child protected DispatchNode dispatchNode = DispatchNodeGen.create();
-        @Child private SendDoesNotUnderstandNode sendDoesNotUnderstandNode;
-        @Child private SendObjectAsMethodNode sendObjectAsMethodNode;
+        @Child private DispatchSendNode dispatchSendNode;
 
         protected AbstractPerformPrimitiveNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
             lookupClassNode = SqueakLookupClassNodeGen.create(code.image);
-            sendDoesNotUnderstandNode = SendDoesNotUnderstandNode.create(code.image);
-            sendObjectAsMethodNode = SendObjectAsMethodNode.create(code.image);
+            dispatchSendNode = DispatchSendNode.create(code.image);
         }
 
         protected ClassObject lookup(final Object receiver) {
             return lookupClassNode.executeLookup(receiver);
         }
 
-        protected Object dispatch(final VirtualFrame frame, final Object selector, final Object[] rcvrAndArgs, final ClassObject rcvrClass) {
+        protected Object dispatch(final VirtualFrame frame, final NativeObject selector, final Object[] rcvrAndArgs, final ClassObject rcvrClass) {
             final Object lookupResult = lookupNode.executeLookup(rcvrClass, selector);
             final Object contextOrMarker = FrameAccess.getContextOrMarker(frame);
-            if (!(lookupResult instanceof CompiledCodeObject)) {
-                return sendObjectAsMethodNode.execute(frame, selector, rcvrAndArgs, lookupResult, contextOrMarker);
-            } else if (((CompiledCodeObject) lookupResult).isDoesNotUnderstand()) {
-                return sendDoesNotUnderstandNode.execute(frame, selector, rcvrAndArgs, rcvrClass, lookupResult, contextOrMarker);
-            } else {
-                return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndArgs, contextOrMarker);
-            }
+            return dispatchSendNode.executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs, contextOrMarker);
         }
     }
 
@@ -139,7 +131,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected PrimPerformNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
-            rcvrAndArgsNode = ReceiverAndArgumentsNode.create(method);
+            rcvrAndArgsNode = ReceiverAndArgumentsNode.create(method.thisContextOrMarkerSlot);
         }
 
         @SuppressWarnings("unused")
@@ -198,7 +190,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object perform(final VirtualFrame frame, final Object receiver, final Object selector, final ListObject arguments) {
+        protected Object perform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final PointersObject arguments) {
             return dispatch(frame, selector, arguments.unwrappedWithFirst(receiver), lookup(receiver));
         }
     }
@@ -214,7 +206,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "isSemaphore(receiver)")
-        protected BaseSqueakObject doSignal(final VirtualFrame frame, final PointersObject receiver) {
+        protected AbstractSqueakObject doSignal(final VirtualFrame frame, final PointersObject receiver) {
             pushNode.executeWrite(frame, receiver); // keep receiver on stack
             signalSemaphoreNode.executeSignal(frame, receiver);
             throw new PrimitiveWithoutResultException();
@@ -236,7 +228,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "isSemaphore(receiver)")
-        protected BaseSqueakObject doWait(final VirtualFrame frame, final PointersObject receiver) {
+        protected AbstractSqueakObject doWait(final VirtualFrame frame, final PointersObject receiver) {
             pushNode.executeWrite(frame, receiver); // keep receiver on stack
             final long excessSignals = (long) receiver.at0(SEMAPHORE.EXCESS_SIGNALS);
             if (excessSignals > 0) {
@@ -261,7 +253,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected BaseSqueakObject doResume(final VirtualFrame frame, final PointersObject receiver) {
+        protected AbstractSqueakObject doResume(final VirtualFrame frame, final PointersObject receiver) {
             // keep receiver on stack before resuming other process
             pushNode.executeWrite(frame, receiver);
             resumeProcessNode.executeResume(frame, receiver);
@@ -284,13 +276,13 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected BaseSqueakObject doSuspend(final VirtualFrame frame, final PointersObject receiver) {
+        protected AbstractSqueakObject doSuspend(final VirtualFrame frame, final PointersObject receiver) {
             final PointersObject activeProcess = getActiveProcessNode.executeGet();
             if (receiver == activeProcess) {
                 pushNode.executeWrite(frame, code.image.nil);
                 wakeHighestPriorityNode.executeWake(frame);
             } else {
-                final BaseSqueakObject oldList = (BaseSqueakObject) receiver.at0(PROCESS.LIST);
+                final AbstractSqueakObject oldList = (AbstractSqueakObject) receiver.at0(PROCESS.LIST);
                 if (oldList.isNil()) {
                     throw new PrimitiveFailed(ERROR_TABLE.BAD_RECEIVER);
                 }
@@ -311,7 +303,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final BaseSqueakObject doFlush(final BaseSqueakObject receiver) {
+        protected static final AbstractSqueakObject doFlush(final AbstractSqueakObject receiver) {
             // TODO: actually flush caches once there are some
             return receiver;
         }
@@ -326,14 +318,14 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final Object doPerform(final VirtualFrame frame, final Object receiver, final Object selector, final ListObject arguments, final ClassObject superClass,
+        protected final Object doPerform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final PointersObject arguments, final ClassObject superClass,
                         @SuppressWarnings("unused") final NotProvided np) {
             // Object>>#perform:withArguments:inSuperclass:
             return dispatch(frame, selector, arguments.unwrappedWithFirst(receiver), superClass);
         }
 
         @Specialization
-        protected final Object doPerform(final VirtualFrame frame, @SuppressWarnings("unused") final Object receiver, final Object object, final Object selector, final ListObject arguments,
+        protected final Object doPerform(final VirtualFrame frame, @SuppressWarnings("unused") final Object receiver, final Object object, final NativeObject selector, final PointersObject arguments,
                         final ClassObject superClass) {
             // Context>>#object:perform:withArguments:inClass:
             return dispatch(frame, selector, arguments.unwrappedWithFirst(object), superClass);
@@ -421,7 +413,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final Object doBytesLeft(@SuppressWarnings("unused") final BaseSqueakObject receiver) {
+        protected final Object doBytesLeft(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             return code.image.wrap(Runtime.getRuntime().freeMemory());
         }
     }
@@ -473,14 +465,70 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doNativeObject(final NativeObject receiver, final NativeObject argument) {
+        protected Object doNative(final NativeObject receiver, final NativeObject argument) {
             receiver.setSqClass(argument.getSqClass());
             receiver.convertStorage(argument);
             throw new PrimitiveWithoutResultException();
         }
 
+        @Specialization
+        protected Object doNativeLargeInteger(final NativeObject receiver, final LargeIntegerObject argument) {
+            receiver.setSqClass(argument.getSqClass());
+            receiver.convertToBytesStorage();
+            throw new PrimitiveWithoutResultException();
+        }
+
+        @Specialization
+        protected Object doNativeFloat(final NativeObject receiver, final FloatObject argument) {
+            receiver.setSqClass(argument.getSqClass());
+            receiver.convertToBytesStorage();
+            throw new PrimitiveWithoutResultException();
+        }
+
+        @Specialization
+        protected Object doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject argument) {
+            receiver.setSqClass(argument.getSqClass());
+            receiver.setBytes(argument.getBytes());
+            throw new PrimitiveWithoutResultException();
+        }
+
+        @Specialization
+        protected Object doLargeIntegerNative(final LargeIntegerObject receiver, final NativeObject argument) {
+            receiver.setSqClass(argument.getSqClass());
+            receiver.setBytes(argument.getBytes());
+            throw new PrimitiveWithoutResultException();
+        }
+
+        @Specialization
+        protected Object doLargeIntegerFloat(final LargeIntegerObject receiver, final FloatObject argument) {
+            receiver.setSqClass(argument.getSqClass());
+            receiver.setBytes(argument.getBytes());
+            throw new PrimitiveWithoutResultException();
+        }
+
+        @Specialization
+        protected Object doFloat(final FloatObject receiver, final FloatObject argument) {
+            receiver.setSqClass(argument.getSqClass());
+            receiver.setBytes(argument.getBytes());
+            throw new PrimitiveWithoutResultException();
+        }
+
+        @Specialization
+        protected Object doFloatLargeInteger(final FloatObject receiver, final LargeIntegerObject argument) {
+            receiver.setSqClass(argument.getSqClass());
+            receiver.setBytes(argument.getBytes());
+            throw new PrimitiveWithoutResultException();
+        }
+
+        @Specialization
+        protected Object doFloatNative(final FloatObject receiver, final NativeObject argument) {
+            receiver.setSqClass(argument.getSqClass());
+            receiver.setBytes(argument.getBytes());
+            throw new PrimitiveWithoutResultException();
+        }
+
         @Specialization(guards = "!isNativeObject(receiver)")
-        protected Object doSqueakObject(final BaseSqueakObject receiver, final BaseSqueakObject argument) {
+        protected Object doSqueakObject(final AbstractSqueakObject receiver, final AbstractSqueakObject argument) {
             receiver.setSqClass(argument.getSqClass());
             throw new PrimitiveWithoutResultException();
         }
@@ -495,7 +543,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final BaseSqueakObject doFlush(final BaseSqueakObject receiver) {
+        protected static final AbstractSqueakObject doFlush(final AbstractSqueakObject receiver) {
             // TODO: actually flush caches once there are some
             return receiver;
         }
@@ -504,16 +552,19 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 117)
     protected abstract static class PrimExternalCallNode extends AbstractPrimitiveNode {
+        @Child private SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
+        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
+
         protected PrimExternalCallNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
         @Override
         public final Object executeWithArguments(final VirtualFrame frame, final Object... receiverAndArguments) {
-            final BaseSqueakObject descriptor = code.getLiteral(0) instanceof BaseSqueakObject ? (BaseSqueakObject) code.getLiteral(0) : null;
-            if (descriptor != null && descriptor.getSqClass() != null && descriptor.size() >= 2) {
-                final Object descriptorAt0 = descriptor.at0(0);
-                final Object descriptorAt1 = descriptor.at0(1);
+            final AbstractSqueakObject descriptor = code.getLiteral(0) instanceof AbstractSqueakObject ? (AbstractSqueakObject) code.getLiteral(0) : null;
+            if (descriptor != null && descriptor.getSqClass() != null && sizeNode.execute(descriptor) >= 2) {
+                final Object descriptorAt0 = at0Node.execute(descriptor, 0);
+                final Object descriptorAt1 = at0Node.execute(descriptor, 1);
                 if (descriptorAt0 != null && descriptorAt1 != null) {
                     final String moduleName = descriptorAt0.toString();
                     final String functionName = descriptorAt1.toString();
@@ -524,12 +575,12 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             return replace(PrimitiveFailedNode.create((CompiledMethodObject) code)).executePrimitive(frame);
         }
 
-        @Specialization
+        @Specialization // FIXME: split with guards
         protected Object doExternalCall(final VirtualFrame frame) {
-            final BaseSqueakObject descriptor = code.getLiteral(0) instanceof BaseSqueakObject ? (BaseSqueakObject) code.getLiteral(0) : null;
-            if (descriptor != null && descriptor.getSqClass() != null && descriptor.size() >= 2) {
-                final Object descriptorAt0 = descriptor.at0(0);
-                final Object descriptorAt1 = descriptor.at0(1);
+            final AbstractSqueakObject descriptor = code.getLiteral(0) instanceof AbstractSqueakObject ? (AbstractSqueakObject) code.getLiteral(0) : null;
+            if (descriptor != null && descriptor.getSqClass() != null && sizeNode.execute(descriptor) >= 2) {
+                final Object descriptorAt0 = at0Node.execute(descriptor, 0);
+                final Object descriptorAt1 = at0Node.execute(descriptor, 1);
                 if (descriptorAt0 != null && descriptorAt1 != null) {
                     final String moduleName = descriptorAt0.toString();
                     final String functionName = descriptorAt1.toString();
@@ -549,7 +600,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final BaseSqueakObject doFlush(final BaseSqueakObject receiver) {
+        protected static final AbstractSqueakObject doFlush(final AbstractSqueakObject receiver) {
             // TODO: actually flush caches once there are some
             return receiver;
         }
@@ -565,7 +616,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization
-        protected final Object doGC(final VirtualFrame frame, final BaseSqueakObject receiver) {
+        protected final Object doGC(final VirtualFrame frame, final AbstractSqueakObject receiver) {
             System.gc();
             if (hasPendingFinalizations()) {
                 code.image.interrupt.setPendingFinalizations();
@@ -597,7 +648,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization
-        protected final Object doGC(final VirtualFrame frame, final BaseSqueakObject receiver) {
+        protected final Object doGC(final VirtualFrame frame, final AbstractSqueakObject receiver) {
             System.gc();
             return code.image.wrap(Runtime.getRuntime().freeMemory());
         }
@@ -645,12 +696,16 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final boolean doDouble(final double a, final double b) {
-            return a != b;
+        protected final boolean doDouble(final double a, final double b) {
+            if (Double.isNaN(a) && Double.isNaN(b)) {
+                return code.image.sqFalse;
+            } else {
+                return a != b;
+            }
         }
 
         @Specialization
-        protected static final boolean doFloat(final FloatObject a, final FloatObject b) {
+        protected final boolean doFloat(final FloatObject a, final FloatObject b) {
             return a != b && !doDouble(a.getValue(), b.getValue());
         }
 
@@ -680,7 +735,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             if (isEmptyListNode.executeIsEmpty(mutex)) {
                 mutex.atput0(MUTEX.OWNER, code.image.nil);
             } else {
-                final BaseSqueakObject owningProcess = removeFirstLinkOfListNode.executeRemove(mutex);
+                final AbstractSqueakObject owningProcess = removeFirstLinkOfListNode.executeRemove(mutex);
                 mutex.atput0(MUTEX.OWNER, owningProcess);
                 resumeProcessNode.executeResume(frame, owningProcess);
             }
@@ -765,7 +820,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doExecute(final VirtualFrame frame, final Object receiver, final ListObject argArray, final CompiledCodeObject codeObject) {
+        protected Object doExecute(final VirtualFrame frame, final Object receiver, final PointersObject argArray, final CompiledCodeObject codeObject) {
             final int numArgs = argArray.size();
             final Object[] dispatchRcvrAndArgs = new Object[1 + numArgs];
             dispatchRcvrAndArgs[0] = receiver;
@@ -785,14 +840,20 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @Specialization
-        protected BaseSqueakObject doRelinquish(final VirtualFrame frame, final BaseSqueakObject receiver, final long timeMicroseconds) {
+        @Specialization(guards = {"!code.image.config.disableInterruptHandler()"})
+        protected AbstractSqueakObject doRelinquish(final VirtualFrame frame, final AbstractSqueakObject receiver, final long timeMicroseconds) {
             code.image.interrupt.executeCheck(frame);
             try {
                 TimeUnit.MICROSECONDS.sleep(timeMicroseconds);
             } catch (InterruptedException e) {
+                CompilerDirectives.transferToInterpreter();
                 e.printStackTrace();
             }
+            return receiver;
+        }
+
+        @Specialization(guards = {"code.image.config.disableInterruptHandler()"})
+        protected AbstractSqueakObject doNothing(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final long timeMicroseconds) {
             return receiver;
         }
     }
@@ -805,7 +866,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final BaseSqueakObject doForceUpdate(final BaseSqueakObject receiver) {
+        protected final AbstractSqueakObject doForceUpdate(final AbstractSqueakObject receiver) {
             code.image.display.forceUpdate();
             return receiver;
         }
@@ -819,7 +880,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final BaseSqueakObject doFullScreen(final BaseSqueakObject receiver, final boolean enable) {
+        protected final AbstractSqueakObject doFullScreen(final AbstractSqueakObject receiver, final boolean enable) {
             code.image.display.setFullscreen(enable);
             return receiver;
         }

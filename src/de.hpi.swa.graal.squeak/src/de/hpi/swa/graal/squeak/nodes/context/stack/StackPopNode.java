@@ -5,6 +5,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
+import de.hpi.swa.graal.squeak.model.ContextObject;
 
 public abstract class StackPopNode extends AbstractStackPopNode {
     public static StackPopNode create(final CompiledCodeObject code) {
@@ -26,6 +27,11 @@ public abstract class StackPopNode extends AbstractStackPopNode {
 
     @Specialization(guards = {"!isVirtualized(frame)"})
     protected Object doPop(final VirtualFrame frame) {
-        return getContext(frame).pop();
+        final ContextObject context = getContext(frame);
+        final long sp = context.getStackPointer();
+        if (sp > 0) {
+            context.setStackPointer(sp - 1);
+        }
+        return atStackAndClear(context, sp);
     }
 }

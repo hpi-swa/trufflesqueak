@@ -601,7 +601,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object doFloatObject(final FloatObject receiver, final long index) {
-            return receiver.at0(index - 1);
+            return receiver.getNativeAt0(index - 1);
         }
     }
 
@@ -619,7 +619,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final long doFloatObject(final FloatObject receiver, final long index, final long value) {
-            receiver.atput0(index - 1, value);
+            receiver.setNativeAt0(index - 1, value);
             return value;
         }
     }

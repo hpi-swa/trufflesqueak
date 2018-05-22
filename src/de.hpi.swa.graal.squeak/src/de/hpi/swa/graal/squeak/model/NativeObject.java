@@ -8,8 +8,13 @@ import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.model.storages.AbstractNativeObjectStorage;
+import de.hpi.swa.graal.squeak.model.storages.NativeBytesStorage;
+import de.hpi.swa.graal.squeak.model.storages.NativeLongsStorage;
+import de.hpi.swa.graal.squeak.model.storages.NativeShortsStorage;
+import de.hpi.swa.graal.squeak.model.storages.NativeWordsStorage;
 
-public class NativeObject extends BaseSqueakObject {
+public class NativeObject extends AbstractSqueakObject {
     @CompilationFinal protected AbstractNativeObjectStorage storage;
 
     public static NativeObject newNativeBytes(final SqueakImageContext img, final ClassObject klass, final int size) {
@@ -73,7 +78,7 @@ public class NativeObject extends BaseSqueakObject {
     }
 
     @Override
-    public boolean become(final BaseSqueakObject other) {
+    public final boolean become(final AbstractSqueakObject other) {
         if (!(other instanceof NativeObject)) {
             throw new PrimitiveExceptions.PrimitiveFailed();
         }
@@ -90,52 +95,27 @@ public class NativeObject extends BaseSqueakObject {
 
     @TruffleBoundary
     @Override
-    public String toString() {
+    public final String toString() {
         return new String(getBytes());
     }
 
-    @Override
-    public Object at0(final long index) {
-        return getNativeAt0(index);
-    }
-
-    @Override
-    public void atput0(final long index, final Object object) {
-        if (object instanceof LargeIntegerObject) {
-            final long longValue;
-            try {
-                longValue = ((LargeIntegerObject) object).reduceToLong();
-            } catch (ArithmeticException e) {
-                throw new IllegalArgumentException(e.toString());
-            }
-            storage.setNativeAt0(index, longValue);
-        } else {
-            storage.setNativeAt0(index, (long) object);
-        }
-    }
-
-    public long getNativeAt0(final long index) {
+    public final long getNativeAt0(final long index) {
         return storage.getNativeAt0(index);
     }
 
-    public void setNativeAt0(final long index, final long value) {
+    public final void setNativeAt0(final long index, final long value) {
         storage.setNativeAt0(index, value);
     }
 
-    public long shortAt0(final long longIndex) {
+    public final long shortAt0(final long longIndex) {
         return storage.shortAt0(longIndex);
     }
 
-    public void shortAtPut0(final long longIndex, final long value) {
+    public final void shortAtPut0(final long longIndex, final long value) {
         storage.shortAtPut0(longIndex, value);
     }
 
-    @Override
-    public final int instsize() {
-        return 0;
-    }
-
-    public byte[] getBytes() {
+    public final byte[] getBytes() {
         return storage.getBytes();
     }
 
@@ -147,7 +127,6 @@ public class NativeObject extends BaseSqueakObject {
         storage.fillWith(value);
     }
 
-    @Override
     public int size() {
         return storage.size();
     }
@@ -156,28 +135,27 @@ public class NativeObject extends BaseSqueakObject {
         return storage.getElementSize();
     }
 
-    public LargeIntegerObject normalize() {
+    public final LargeIntegerObject normalize() {
         return new LargeIntegerObject(image, getSqClass(), getBytes());
     }
 
-    @Override
-    public BaseSqueakObject shallowCopy() {
+    public AbstractSqueakObject shallowCopy() {
         return new NativeObject(this);
     }
 
-    public void setByte(final int index, final byte value) {
+    public final void setByte(final int index, final byte value) {
         storage.setByte(index, value);
     }
 
-    public int getInt(final int index) {
+    public final int getInt(final int index) {
         return storage.getInt(index);
     }
 
-    public void setInt(final int index, final int value) {
+    public final void setInt(final int index, final int value) {
         storage.setInt(index, value);
     }
 
-    public void convertStorage(final NativeObject argument) {
+    public final void convertStorage(final NativeObject argument) {
         if (getElementSize() == argument.getElementSize()) {
             return; // no need to covert storage
         }
@@ -200,5 +178,10 @@ public class NativeObject extends BaseSqueakObject {
                 throw new SqueakException("Should not happen");
         }
         storage.setBytes(oldBytes);
+    }
+
+    public final void convertToBytesStorage() {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        storage = new NativeBytesStorage(getBytes());
     }
 }
