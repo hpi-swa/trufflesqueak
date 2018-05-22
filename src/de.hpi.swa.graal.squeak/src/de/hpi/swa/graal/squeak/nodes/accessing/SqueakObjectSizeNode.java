@@ -1,7 +1,8 @@
-package de.hpi.swa.graal.squeak.nodes;
+package de.hpi.swa.graal.squeak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
@@ -17,6 +18,7 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 
 public abstract class SqueakObjectSizeNode extends Node {
+    private final ValueProfile storageType = ValueProfile.createClassProfile();
 
     public static SqueakObjectSizeNode create() {
         return SqueakObjectSizeNodeGen.create();
@@ -59,9 +61,24 @@ public abstract class SqueakObjectSizeNode extends Node {
         return 0;
     }
 
-    @Specialization
-    protected static final int doNative(final NativeObject obj) {
-        return obj.size();
+    @Specialization(guards = "obj.isByteType()")
+    protected final int doNativeBytes(final NativeObject obj) {
+        return obj.getByteStorage(storageType).length;
+    }
+
+    @Specialization(guards = "obj.isShortType()")
+    protected final int doNativeShorts(final NativeObject obj) {
+        return obj.getShortStorage(storageType).length;
+    }
+
+    @Specialization(guards = "obj.isIntType()")
+    protected final int doNativeInts(final NativeObject obj) {
+        return obj.getIntStorage(storageType).length;
+    }
+
+    @Specialization(guards = "obj.isLongType()")
+    protected final int doNativeLongs(final NativeObject obj) {
+        return obj.getLongStorage(storageType).length;
     }
 
     @Specialization

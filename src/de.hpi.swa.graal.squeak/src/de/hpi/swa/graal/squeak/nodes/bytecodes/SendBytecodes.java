@@ -4,15 +4,15 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
+import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveWithoutResultException;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.model.SpecialSelectorObject;
-import de.hpi.swa.graal.squeak.nodes.CompiledCodeNodes.GetCompiledMethodNode;
 import de.hpi.swa.graal.squeak.nodes.DispatchSendNode;
 import de.hpi.swa.graal.squeak.nodes.LookupNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.GetCompiledMethodNode;
 import de.hpi.swa.graal.squeak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPopNReversedNode;
@@ -23,6 +23,7 @@ public final class SendBytecodes {
     public abstract static class AbstractSendNode extends AbstractBytecodeNode {
         @CompilationFinal protected final NativeObject selector;
         @CompilationFinal private final int argumentCount;
+        @CompilationFinal private final ValueProfile storageType = ValueProfile.createClassProfile();
         @Child protected SqueakLookupClassNode lookupClassNode;
         @Child private LookupNode lookupNode = LookupNode.create();
         @Child private DispatchSendNode dispatchSendNode;
@@ -69,7 +70,7 @@ public final class SendBytecodes {
 
         @Override
         public String toString() {
-            return "send: " + selector.toString();
+            return "send: " + new String(selector.getByteStorage(storageType));
         }
     }
 
@@ -92,8 +93,9 @@ public final class SendBytecodes {
 
     public static final class SendSelectorNode extends AbstractSendNode {
         public static SendSelectorNode createForSpecialSelector(final CompiledCodeObject code, final int index, final int selectorIndex) {
-            final SpecialSelectorObject specialSelector = code.image.specialSelectorsArray[selectorIndex];
-            return new SendSelectorNode(code, index, 1, specialSelector, specialSelector.getNumArguments());
+            final NativeObject specialSelector = code.image.specialSelectorsArray[selectorIndex];
+            final int numArguments = code.image.specialSelectorsNumArgs[selectorIndex];
+            return new SendSelectorNode(code, index, 1, specialSelector, numArguments);
         }
 
         public SendSelectorNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object selector, final int argcount) {
@@ -114,6 +116,8 @@ public final class SendBytecodes {
     }
 
     public static final class SingleExtendedSuperNode extends AbstractSendNode {
+        @CompilationFinal private final ValueProfile storageType = ValueProfile.createClassProfile();
+
         protected static class SqueakLookupClassSuperNode extends SqueakLookupClassNode {
             @Child private GetCompiledMethodNode getMethodNode = GetCompiledMethodNode.create();
             @CompilationFinal private final CompiledCodeObject code;
@@ -146,7 +150,7 @@ public final class SendBytecodes {
 
         @Override
         public String toString() {
-            return "sendSuper: " + selector.toString();
+            return "sendSuper: " + new String(selector.getByteStorage(storageType));
         }
     }
 }

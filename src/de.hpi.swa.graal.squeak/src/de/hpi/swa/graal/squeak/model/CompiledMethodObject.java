@@ -12,6 +12,7 @@ import com.oracle.truffle.api.nodes.RootNode;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
 public final class CompiledMethodObject extends CompiledCodeObject {
+
     public CompiledMethodObject(final SqueakImageContext img) {
         super(img);
     }
@@ -55,7 +56,7 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         }
         final NativeObject selectorObj = getCompiledInSelector();
         if (selectorObj != null) {
-            selector = selectorObj.toString();
+            selector = new String(selectorObj.getByteStorage(storageType));
         }
         return className + ">>" + selector;
     }
@@ -151,7 +152,7 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         final RootCallTarget target = getCallTarget();
         final NativeObject selector = getCompiledInSelector();
         for (int i = 0; i < image.specialSelectorsArray.length; i++) {
-            if (Arrays.equals(image.specialSelectorsArray[i].getBytes(), selector.getBytes())) {
+            if (Arrays.equals(image.specialSelectorsArray[i].getByteStorage(storageType), selector.getByteStorage(storageType))) {
                 return split(target);
             }
         }

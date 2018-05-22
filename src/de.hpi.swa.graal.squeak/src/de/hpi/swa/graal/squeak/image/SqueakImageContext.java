@@ -34,7 +34,6 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.POINT;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.model.SpecialSelectorObject;
 import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.graal.squeak.nodes.context.ObjectGraph;
 import de.hpi.swa.graal.squeak.nodes.process.GetActiveProcessNode;
@@ -75,43 +74,47 @@ public final class SqueakImageContext {
     @CompilationFinal public final SqueakLanguage.Env env;
 
     // Special selectors
-    @CompilationFinal public final SpecialSelectorObject plus = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject minus = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject lt = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject gt = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject le = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject ge = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject eq = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject ne = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject times = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject divide = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject modulo = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject pointAt = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject bitShift = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject floorDivide = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject bitAnd = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject bitOr = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject at = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject atput = new SpecialSelectorObject(this, 2);
-    @CompilationFinal public final SpecialSelectorObject sqSize = new SpecialSelectorObject(this, 0);
-    @CompilationFinal public final SpecialSelectorObject next = new SpecialSelectorObject(this, 0);
-    @CompilationFinal public final SpecialSelectorObject nextPut = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject atEnd = new SpecialSelectorObject(this, 0);
-    @CompilationFinal public final SpecialSelectorObject equivalent = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject klass = new SpecialSelectorObject(this, 0);
-    @CompilationFinal public final SpecialSelectorObject blockCopy = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject sqValue = new SpecialSelectorObject(this, 0);
-    @CompilationFinal public final SpecialSelectorObject valueWithArg = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject sqDo = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject sqNew = new SpecialSelectorObject(this, 0);
-    @CompilationFinal public final SpecialSelectorObject newWithArg = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject x = new SpecialSelectorObject(this, 0);
-    @CompilationFinal public final SpecialSelectorObject y = new SpecialSelectorObject(this, 0);
+    @CompilationFinal public final NativeObject plus = new NativeObject(this);
+    @CompilationFinal public final NativeObject minus = new NativeObject(this);
+    @CompilationFinal public final NativeObject lt = new NativeObject(this);
+    @CompilationFinal public final NativeObject gt = new NativeObject(this);
+    @CompilationFinal public final NativeObject le = new NativeObject(this);
+    @CompilationFinal public final NativeObject ge = new NativeObject(this);
+    @CompilationFinal public final NativeObject eq = new NativeObject(this);
+    @CompilationFinal public final NativeObject ne = new NativeObject(this);
+    @CompilationFinal public final NativeObject times = new NativeObject(this);
+    @CompilationFinal public final NativeObject divide = new NativeObject(this);
+    @CompilationFinal public final NativeObject modulo = new NativeObject(this);
+    @CompilationFinal public final NativeObject pointAt = new NativeObject(this);
+    @CompilationFinal public final NativeObject bitShift = new NativeObject(this);
+    @CompilationFinal public final NativeObject floorDivide = new NativeObject(this);
+    @CompilationFinal public final NativeObject bitAnd = new NativeObject(this);
+    @CompilationFinal public final NativeObject bitOr = new NativeObject(this);
+    @CompilationFinal public final NativeObject at = new NativeObject(this);
+    @CompilationFinal public final NativeObject atput = new NativeObject(this);
+    @CompilationFinal public final NativeObject sqSize = new NativeObject(this);
+    @CompilationFinal public final NativeObject next = new NativeObject(this);
+    @CompilationFinal public final NativeObject nextPut = new NativeObject(this);
+    @CompilationFinal public final NativeObject atEnd = new NativeObject(this);
+    @CompilationFinal public final NativeObject equivalent = new NativeObject(this);
+    @CompilationFinal public final NativeObject klass = new NativeObject(this);
+    @CompilationFinal public final NativeObject blockCopy = new NativeObject(this);
+    @CompilationFinal public final NativeObject sqValue = new NativeObject(this);
+    @CompilationFinal public final NativeObject valueWithArg = new NativeObject(this);
+    @CompilationFinal public final NativeObject sqDo = new NativeObject(this);
+    @CompilationFinal public final NativeObject sqNew = new NativeObject(this);
+    @CompilationFinal public final NativeObject newWithArg = new NativeObject(this);
+    @CompilationFinal public final NativeObject x = new NativeObject(this);
+    @CompilationFinal public final NativeObject y = new NativeObject(this);
 
-    @CompilationFinal(dimensions = 1) public final SpecialSelectorObject[] specialSelectorsArray = new SpecialSelectorObject[]{
+    @CompilationFinal(dimensions = 1) public final NativeObject[] specialSelectorsArray = new NativeObject[]{
                     plus, minus, lt, gt, le, ge, eq, ne, times, divide, modulo, pointAt, bitShift,
                     floorDivide, bitAnd, bitOr, at, atput, sqSize, next, nextPut, atEnd, equivalent,
                     klass, blockCopy, sqValue, valueWithArg, sqDo, sqNew, newWithArg, x, y
+    };
+
+    @CompilationFinal(dimensions = 1) public final int[] specialSelectorsNumArgs = new int[]{
+                    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0
     };
 
     @CompilationFinal public final SqueakConfig config;

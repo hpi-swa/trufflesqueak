@@ -17,7 +17,7 @@ import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.nodes.CompiledCodeNodes.GetNumAllArgumentsNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.GetNumAllArgumentsNode;
 
 public final class ExecuteTopLevelContextNode extends RootNode {
     @CompilationFinal private final SqueakImageContext image;
@@ -86,9 +86,6 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     private ContextObject unwindContextChain(final AbstractSqueakObject startContext, final AbstractSqueakObject targetContext, final Object returnValue) {
         if (startContext.isNil()) {
             throw new TopLevelReturn(returnValue);
-        }
-        if (!(targetContext instanceof ContextObject)) {
-            throw new SqueakException("targetContext is not a ContextObject: " + targetContext.toString());
         }
         ContextObject context = (ContextObject) startContext;
         while (context != targetContext) {

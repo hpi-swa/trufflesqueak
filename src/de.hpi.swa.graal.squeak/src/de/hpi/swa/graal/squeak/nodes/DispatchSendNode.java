@@ -13,7 +13,7 @@ import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.MESSAGE;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.nodes.CompiledCodeNodes.IsDoesNotUnderstandNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.IsDoesNotUnderstandNode;
 import de.hpi.swa.graal.squeak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 

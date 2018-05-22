@@ -1,4 +1,4 @@
-package de.hpi.swa.graal.squeak.nodes;
+package de.hpi.swa.graal.squeak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -9,10 +9,11 @@ import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
-import de.hpi.swa.graal.squeak.nodes.CompiledCodeNodesFactory.CalculcatePCOffsetNodeGen;
-import de.hpi.swa.graal.squeak.nodes.CompiledCodeNodesFactory.GetCompiledMethodNodeGen;
-import de.hpi.swa.graal.squeak.nodes.CompiledCodeNodesFactory.GetNumAllArgumentsNodeGen;
-import de.hpi.swa.graal.squeak.nodes.CompiledCodeNodesFactory.IsDoesNotUnderstandNodeGen;
+import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
+import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodesFactory.CalculcatePCOffsetNodeGen;
+import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodesFactory.GetCompiledMethodNodeGen;
+import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodesFactory.GetNumAllArgumentsNodeGen;
+import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodesFactory.IsDoesNotUnderstandNodeGen;
 
 public final class CompiledCodeNodes {
 

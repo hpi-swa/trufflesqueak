@@ -8,6 +8,7 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
@@ -24,8 +25,11 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.FORM;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
-import de.hpi.swa.graal.squeak.nodes.SqueakObjectInstSizeNode;
-import de.hpi.swa.graal.squeak.nodes.SqueakObjectSizeNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectInstSizeNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeGetBytesNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
@@ -119,6 +123,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 101)
     protected abstract static class PrimBeCursorNode extends AbstractPrimitiveNode {
+        private final ValueProfile storageType = ValueProfile.createClassProfile();
 
         protected PrimBeCursorNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -135,7 +140,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             final int[] words = validateAndExtractWords(receiver);
             final int depth = extractDepth(receiver);
             if (depth == 1) {
-                final int[] mask = ((NativeObject) maskObject.at0(FORM.BITS)).getWords();
+                final int[] mask = ((NativeObject) maskObject.at0(FORM.BITS)).getIntStorage(storageType);
                 code.image.display.setCursor(mergeCursorWithMask(words, mask), 2);
             } else {
                 code.image.display.setCursor(words, depth);
@@ -143,8 +148,8 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return receiver;
         }
 
-        private static int[] validateAndExtractWords(final PointersObject receiver) {
-            final int[] words = ((NativeObject) receiver.at0(FORM.BITS)).getWords();
+        private int[] validateAndExtractWords(final PointersObject receiver) {
+            final int[] words = ((NativeObject) receiver.at0(FORM.BITS)).getIntStorage(storageType);
             final long width = (long) receiver.at0(FORM.WIDTH);
             final long height = (long) receiver.at0(FORM.HEIGHT);
             if (width != SqueakIOConstants.CURSOR_WIDTH || height != SqueakIOConstants.CURSOR_HEIGHT) {
@@ -201,8 +206,11 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 105)
     protected abstract static class PrimStringReplaceNode extends AbstractPrimitiveNode {
+        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
+        @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
         @Child private SqueakObjectInstSizeNode instSizeNode = SqueakObjectInstSizeNode.create();
         @Child private SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
+        @Child private NativeGetBytesNode getBytesNode = NativeGetBytesNode.create();
 
         protected PrimStringReplaceNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -269,9 +277,9 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
-        protected static final Object doLargeIntegerNative(final LargeIntegerObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
+        protected final Object doLargeIntegerNative(final LargeIntegerObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
             final byte[] rcvrBytes = rcvr.getBytes();
-            final byte[] replBytes = repl.getBytes();
+            final byte[] replBytes = getBytesNode.execute(repl);
             final int repOff = (int) (replStart - start);
             for (int i = (int) (start - 1); i < stop; i++) {
                 rcvrBytes[i] = replBytes[repOff + i];
@@ -281,28 +289,28 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
-        protected static final Object doNative(final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
+        protected final Object doNative(final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
             final int repOff = (int) (replStart - start);
             for (int i = (int) (start - 1); i < stop; i++) {
-                rcvr.setNativeAt0(i, repl.getNativeAt0(repOff + i));
+                atPut0Node.execute(rcvr, i, at0Node.execute(repl, repOff + i));
             }
             return rcvr;
         }
 
         @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
-        protected static final Object doNativeLargeInteger(final NativeObject rcvr, final long start, final long stop, final LargeIntegerObject repl, final long replStart) {
+        protected final Object doNativeLargeInteger(final NativeObject rcvr, final long start, final long stop, final LargeIntegerObject repl, final long replStart) {
             final int repOff = (int) (replStart - start);
             for (int i = (int) (start - 1); i < stop; i++) {
-                rcvr.setNativeAt0(i, repl.getNativeAt0(repOff + i));
+                atPut0Node.execute(rcvr, i, repl.getNativeAt0(repOff + i));
             }
             return rcvr;
         }
 
         @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
-        protected static final Object doNativeFloat(final NativeObject rcvr, final long start, final long stop, final FloatObject repl, final long replStart) {
+        protected final Object doNativeFloat(final NativeObject rcvr, final long start, final long stop, final FloatObject repl, final long replStart) {
             final int repOff = (int) (replStart - start);
             for (int i = (int) (start - 1); i < stop; i++) {
-                rcvr.setNativeAt0(i, repl.getNativeAt0(repOff + i));
+                atPut0Node.execute(rcvr, i, repl.getNativeAt0(repOff + i));
             }
             return rcvr;
         }

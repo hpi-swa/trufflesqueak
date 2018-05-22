@@ -10,8 +10,8 @@ import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.LINK;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.LINKED_LIST;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
-import de.hpi.swa.graal.squeak.nodes.SqueakObjectAt0Node;
-import de.hpi.swa.graal.squeak.nodes.SqueakObjectAtPut0Node;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
 
 public abstract class RemoveProcessFromListNode extends AbstractNodeWithImage {
     @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();

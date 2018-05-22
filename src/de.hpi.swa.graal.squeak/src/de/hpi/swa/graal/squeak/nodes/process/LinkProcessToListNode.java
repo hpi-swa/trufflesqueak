@@ -7,7 +7,7 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.LINKED_LIST;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
-import de.hpi.swa.graal.squeak.nodes.SqueakObjectAtPut0Node;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
 
 public class LinkProcessToListNode extends AbstractNodeWithImage {
     @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();

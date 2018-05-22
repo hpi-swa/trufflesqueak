@@ -7,9 +7,8 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
-import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
-import de.hpi.swa.graal.squeak.nodes.SqueakObjectAt0Node;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 
 @NodeChild(value = "objectNode", type = SqueakNode.class)
 public abstract class ObjectAtNode extends AbstractObjectAtNode {
@@ -26,11 +25,6 @@ public abstract class ObjectAtNode extends AbstractObjectAtNode {
     }
 
     public abstract Object executeGeneric(VirtualFrame frame);
-
-    @Specialization
-    protected final Object read(final NativeObject object) {
-        return classProfile.profile(object).getNativeAt0(index);
-    }
 
     @Specialization(guards = "!isNativeObject(object)")
     protected final Object read(final AbstractSqueakObject object) {

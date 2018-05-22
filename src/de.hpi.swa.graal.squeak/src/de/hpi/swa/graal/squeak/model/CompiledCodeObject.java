@@ -11,6 +11,7 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
@@ -59,6 +60,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
 
     @CompilationFinal private RootCallTarget callTarget;
     @CompilationFinal private final CyclicAssumption callTargetStable = new CyclicAssumption("CompiledCodeObject assumption");
+    @CompilationFinal protected final ValueProfile storageType = ValueProfile.createClassProfile();
 
     static {
         frameDescriptorTemplate = new FrameDescriptor();

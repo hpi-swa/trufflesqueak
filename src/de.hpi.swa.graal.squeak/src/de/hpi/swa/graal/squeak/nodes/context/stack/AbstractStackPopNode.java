@@ -5,7 +5,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.nodes.CompiledCodeNodes.GetCompiledMethodNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.GetCompiledMethodNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
 
 public abstract class AbstractStackPopNode extends AbstractStackNode {

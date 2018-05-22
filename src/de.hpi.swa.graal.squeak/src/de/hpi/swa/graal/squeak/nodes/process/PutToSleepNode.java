@@ -6,7 +6,7 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
-import de.hpi.swa.graal.squeak.nodes.SqueakObjectAt0Node;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 
 public class PutToSleepNode extends AbstractNodeWithImage {
     @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();

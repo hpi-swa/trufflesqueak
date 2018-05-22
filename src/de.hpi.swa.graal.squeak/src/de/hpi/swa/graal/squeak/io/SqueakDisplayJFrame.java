@@ -28,6 +28,7 @@ import javax.swing.JFrame;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -80,6 +81,7 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
 
     private final class Canvas extends JComponent {
         private static final long serialVersionUID = 1L;
+        @CompilationFinal private final ValueProfile storageType = ValueProfile.createClassProfile();
         @CompilationFinal private BufferedImage bufferedImage;
         @CompilationFinal private NativeObject bitmap;
         @CompilationFinal private int width;
@@ -100,10 +102,11 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
                     bufferedImage.setData(get16bitRaster());
                     break;
                 case 32: // use words directly
-                    assert bitmap.getWords().length / width / height == 1;
+                    final int[] words = bitmap.getIntStorage(storageType);
+                    assert words.length / width / height == 1;
                     final int drawWidth = Math.min(width, frame.getWidth());
                     final int drawHeight = Math.min(height, frame.getHeight());
-                    bufferedImage.setRGB(0, 0, drawWidth, drawHeight, bitmap.getWords(), 0, width);
+                    bufferedImage.setRGB(0, 0, drawWidth, drawHeight, words, 0, width);
                     break;
                 default:
                     throw new SqueakException("Unsupported form depth: " + depth);
@@ -116,7 +119,7 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
             final int shift = 4 - depth;
             int pixelmask = ((1 << depth) - 1) << shift;
             final int[] table = SqueakIOConstants.PIXEL_LOOKUP_TABLE[depth - 1];
-            final int[] words = bitmap.getWords();
+            final int[] words = bitmap.getIntStorage(storageType);
             final int[] rgb = new int[words.length];
             for (int i = 0; i < words.length; i++) {
                 final int pixel = (words[i] & pixelmask) >> (shift - i * depth);
@@ -127,7 +130,7 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
         }
 
         private Raster get16bitRaster() {
-            final int[] words = bitmap.getWords();
+            final int[] words = bitmap.getIntStorage(storageType);
             assert words.length * 2 / width / height == 1;
             final DirectColorModel colorModel = new DirectColorModel(16,
                             0x001f, // red
@@ -166,6 +169,9 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
         private void setSqDisplay(final PointersObject sqDisplay) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             this.bitmap = (NativeObject) sqDisplay.at0(FORM.BITS);
+            if (!bitmap.isIntType()) {
+                throw new SqueakException("Display bitmap expected to be a words object");
+            }
             this.width = ((Long) sqDisplay.at0(FORM.WIDTH)).intValue();
             this.height = ((Long) sqDisplay.at0(FORM.HEIGHT)).intValue();
             this.depth = ((Long) sqDisplay.at0(FORM.DEPTH)).intValue();

@@ -8,7 +8,7 @@ import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.LINKED_LIST;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
-import de.hpi.swa.graal.squeak.nodes.SqueakObjectAt0Node;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 
 public abstract class IsEmptyListNode extends AbstractNodeWithImage {
     @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();

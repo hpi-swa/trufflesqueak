@@ -6,7 +6,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
-import de.hpi.swa.graal.squeak.nodes.CompiledCodeNodes.CalculcatePCOffsetNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.CalculcatePCOffsetNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotWriteNode;
 
 public abstract class UpdateInstructionPointerNode extends AbstractNodeWithCode {

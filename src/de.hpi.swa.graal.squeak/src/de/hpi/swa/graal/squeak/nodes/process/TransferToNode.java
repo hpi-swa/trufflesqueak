@@ -15,8 +15,8 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
-import de.hpi.swa.graal.squeak.nodes.SqueakObjectAt0Node;
-import de.hpi.swa.graal.squeak.nodes.SqueakObjectAtPut0Node;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.graal.squeak.nodes.context.MaterializeContextObjectNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 

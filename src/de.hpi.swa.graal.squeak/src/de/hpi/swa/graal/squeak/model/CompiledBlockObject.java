@@ -63,7 +63,7 @@ public final class CompiledBlockObject extends CompiledCodeObject {
         }
         final NativeObject selectorObj = getCompiledInSelector();
         if (selectorObj != null) {
-            selector = selectorObj.toString();
+            selector = new String(selectorObj.getByteStorage(storageType));
         }
         return className + ">>" + selector;
     }

@@ -9,7 +9,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.model.storages.NativeBytesStorage;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 public final class LargeIntegerObject extends AbstractSqueakObject {
@@ -64,7 +63,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     }
 
     public void setNativeAt0(final long index, final long value) {
-        if (value < 0 || value > NativeBytesStorage.BYTE_MAX) { // check for overflow
+        if (value < 0 || value > NativeObject.BYTE_MAX) { // check for overflow
             throw new IllegalArgumentException("Illegal value for LargeIntegerObject: " + value);
         }
         bytes[(int) index] = (byte) value;

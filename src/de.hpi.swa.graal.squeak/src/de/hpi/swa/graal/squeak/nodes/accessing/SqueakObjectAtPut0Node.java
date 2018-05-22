@@ -1,8 +1,9 @@
-package de.hpi.swa.graal.squeak.nodes;
+package de.hpi.swa.graal.squeak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
@@ -18,6 +19,7 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 
 public abstract class SqueakObjectAtPut0Node extends Node {
+    private final ValueProfile storageType = ValueProfile.createClassProfile();
 
     public static SqueakObjectAtPut0Node create() {
         return SqueakObjectAtPut0NodeGen.create();
@@ -45,14 +47,73 @@ public abstract class SqueakObjectAtPut0Node extends Node {
         obj.atput0(index, value);
     }
 
-    @Specialization
-    protected static final void doNativeLong(final NativeObject obj, final long index, final long value) {
-        obj.setNativeAt0(index, value);
+    @Specialization(guards = "obj.isByteType()")
+    protected final void doNativeBytes(final NativeObject obj, final long index, final long value) {
+        if (value < 0 || value > NativeObject.BYTE_MAX) { // check for overflow
+            throw new IllegalArgumentException("Illegal value for BytesObject: " + value);
+        }
+        obj.getByteStorage(storageType)[(int) index] = (byte) value;
     }
 
-    @Specialization
-    protected static final void doNativeLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
-        obj.setNativeAt0(index, value.reduceToLong());
+    @Specialization(guards = "obj.isShortType()")
+    protected final void doNativeShorts(final NativeObject obj, final long index, final long value) {
+        if (value < 0 || value > NativeObject.SHORT_MAX) { // check for overflow
+            throw new IllegalArgumentException("Illegal value for ShortsObject: " + value);
+        }
+        obj.getShortStorage(storageType)[(int) index] = (short) value;
+    }
+
+    @Specialization(guards = "obj.isIntType()")
+    protected final void doNativeInts(final NativeObject obj, final long index, final long value) {
+        if (value < 0 || value > NativeObject.INTEGER_MAX) { // check for overflow
+            throw new IllegalArgumentException("Illegal value for WordsObject: " + value);
+        }
+        obj.getIntStorage(storageType)[(int) index] = (int) value;
+    }
+
+    @Specialization(guards = "obj.isLongType()")
+    protected final void doNativeLongs(final NativeObject obj, final long index, final long value) {
+        obj.getLongStorage(storageType)[(int) index] = value;
+    }
+
+    @Specialization(guards = "obj.isByteType()")
+    protected final void doNativeBytesChar(final NativeObject obj, final long index, final char value) {
+        doNativeBytes(obj, index, value);
+    }
+
+    @Specialization(guards = "obj.isShortType()")
+    protected final void doNativeShortsChar(final NativeObject obj, final long index, final char value) {
+        doNativeShorts(obj, index, value);
+    }
+
+    @Specialization(guards = "obj.isIntType()")
+    protected final void doNativeIntsChar(final NativeObject obj, final long index, final char value) {
+        doNativeInts(obj, index, value);
+    }
+
+    @Specialization(guards = "obj.isLongType()")
+    protected final void doNativeLongsChar(final NativeObject obj, final long index, final char value) {
+        doNativeLongs(obj, index, value);
+    }
+
+    @Specialization(guards = "obj.isByteType()")
+    protected final void doNativeBytesLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
+        doNativeBytes(obj, index, value.reduceToLong());
+    }
+
+    @Specialization(guards = "obj.isShortType()")
+    protected final void doNativeShortsLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
+        doNativeShorts(obj, index, value.reduceToLong());
+    }
+
+    @Specialization(guards = "obj.isIntType()")
+    protected final void doNativeIntsLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
+        doNativeInts(obj, index, value.reduceToLong());
+    }
+
+    @Specialization(guards = "obj.isLongType()")
+    protected final void doNativeLongsLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
+        doNativeLongs(obj, index, value.reduceToLong());
     }
 
     @Specialization

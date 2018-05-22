@@ -7,7 +7,7 @@ import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
-import de.hpi.swa.graal.squeak.nodes.CompiledCodeNodes.GetNumAllArgumentsNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.GetNumAllArgumentsNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 

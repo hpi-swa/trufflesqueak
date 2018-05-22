@@ -1,4 +1,4 @@
-package de.hpi.swa.graal.squeak.nodes;
+package de.hpi.swa.graal.squeak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;

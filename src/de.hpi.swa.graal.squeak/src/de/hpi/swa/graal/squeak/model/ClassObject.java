@@ -247,7 +247,7 @@ public final class ClassObject extends AbstractSqueakObject {
                     assert size == 2;
                     return new FloatObject(image);
                 } else {
-                    return NativeObject.newNativeWords(image, this, size);
+                    return NativeObject.newNativeInts(image, this, size);
                 }
             case 12: case 13: case 14: case 15:
                 return NativeObject.newNativeShorts(image, this, size);

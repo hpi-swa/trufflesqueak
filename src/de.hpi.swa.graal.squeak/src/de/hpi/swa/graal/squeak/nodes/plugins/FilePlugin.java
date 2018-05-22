@@ -13,15 +13,15 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.nodes.SqueakObjectAtPut0Node;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
@@ -50,27 +50,34 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     protected abstract static class AbstractFilePluginPrimitiveNode extends AbstractPrimitiveNode {
+        private final ValueProfile storageType = ValueProfile.createClassProfile();
 
         protected AbstractFilePluginPrimitiveNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        protected static final boolean isString(final NativeObject obj) {
-            return obj.isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassString);
+        @TruffleBoundary
+        protected final byte[] asBytes(final NativeObject obj) {
+            return obj.getByteStorage(storageType);
+        }
+
+        @TruffleBoundary
+        protected final String asString(final NativeObject obj) {
+            return new String(asBytes(obj));
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveDirectoryCreate")
-    protected abstract static class PrimDirectoryCreateNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimDirectoryCreateNode extends AbstractFilePluginPrimitiveNode {
 
         protected PrimDirectoryCreateNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        @Specialization
-        protected static final Object doCreate(final PointersObject receiver, final NativeObject fullPath) {
-            final File directory = new File(fullPath.toString());
+        @Specialization(guards = "fullPath.isByteType()")
+        protected final Object doCreate(final PointersObject receiver, final NativeObject fullPath) {
+            final File directory = new File(asString(fullPath));
             if (directory.mkdir()) {
                 return receiver;
             }
@@ -80,15 +87,15 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveDirectoryDelete")
-    protected abstract static class PrimDirectoryDeleteNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimDirectoryDeleteNode extends AbstractFilePluginPrimitiveNode {
 
         protected PrimDirectoryDeleteNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        @Specialization
-        protected static final Object doDelete(final PointersObject receiver, final NativeObject fullPath) {
-            final File directory = new File(fullPath.toString());
+        @Specialization(guards = "fullPath.isByteType()")
+        protected final Object doDelete(final PointersObject receiver, final NativeObject fullPath) {
+            final File directory = new File(asString(fullPath));
             if (directory.delete()) {
                 return receiver;
             }
@@ -118,10 +125,10 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @Specialization(guards = "isString(fullPath)")
+        @Specialization(guards = {"fullPath.isByteType()", "fName.isByteType()"})
         protected final Object doEntry(@SuppressWarnings("unused") final PointersObject receiver, final NativeObject fullPath, final NativeObject fName) {
-            final String pathName = fullPath.toString();
-            final String fileName = fName.toString();
+            final String pathName = asString(fullPath);
+            final String fileName = asString(fName);
             final File path;
             if (".".equals(fileName)) {
                 path = new File(pathName);
@@ -144,13 +151,13 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @Specialization(guards = "isString(nativePathName)")
+        @Specialization(guards = "nativePathName.isByteType()")
         protected final Object doLookup(@SuppressWarnings("unused") final PointersObject receiver, final NativeObject nativePathName, final long longIndex) {
             final int index = (int) longIndex;
             if (index < 0) {
                 throw new PrimitiveFailed();
             }
-            String pathName = nativePathName.toString();
+            String pathName = asString(nativePathName);
             if (pathName.length() == 0) {
                 pathName = "/";
             }
@@ -214,9 +221,9 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @Specialization(guards = "isString(nativeFileName)")
-        protected static final Object doDelete(final PointersObject receiver, final NativeObject nativeFileName) {
-            final File file = new File(nativeFileName.toString());
+        @Specialization(guards = "nativeFileName.isByteType()")
+        protected final Object doDelete(final PointersObject receiver, final NativeObject nativeFileName) {
+            final File file = new File(asString(nativeFileName));
             if (file.delete()) {
                 return receiver;
             }
@@ -265,9 +272,9 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @TruffleBoundary
-        @Specialization(guards = "isString(nativeFileName)")
-        protected static final Object doOpen(@SuppressWarnings("unused") final PointersObject receiver, final NativeObject nativeFileName, final Boolean writableFlag) {
-            final String fileName = nativeFileName.toString();
+        @Specialization(guards = "nativeFileName.isByteType()")
+        protected final Object doOpen(@SuppressWarnings("unused") final PointersObject receiver, final NativeObject nativeFileName, final Boolean writableFlag) {
+            final String fileName = asString(nativeFileName);
             final String mode = writableFlag ? "rw" : "r";
             try {
                 final RandomAccessFile file = new RandomAccessFile(fileName, mode);
@@ -314,10 +321,10 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @Specialization(guards = {"isString(oldName)", "isString(newName)"})
-        protected static final Object doRename(final PointersObject receiver, final NativeObject oldName, final NativeObject newName) {
-            final File file = new File(oldName.toString());
-            if (file.renameTo(new File(newName.toString()))) {
+        @Specialization(guards = {"oldName.isByteType()", "newName.isByteType()"})
+        protected final Object doRename(final PointersObject receiver, final NativeObject oldName, final NativeObject newName) {
+            final File file = new File(asString(oldName));
+            if (file.renameTo(new File(asString(newName)))) {
                 return receiver;
             }
             throw new PrimitiveFailed();
@@ -394,24 +401,24 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveFileWrite")
-    protected abstract static class PrimFileWriteNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimFileWriteNode extends AbstractFilePluginPrimitiveNode {
+
         protected PrimFileWriteNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        @Specialization
+        @Specialization(guards = "content.isByteType()")
         protected final long doWrite(final PointersObject receiver, final long fileDescriptor, final NativeObject content, final long startIndex, final long count) {
-            final byte[] bytes = content.getBytes();
-            final long elementSize = content.getElementSize();
-            final int byteStart = (int) ((startIndex - 1) * elementSize);
-            final int byteEnd = (int) (Math.min(startIndex - 1 + count, bytes.length) * elementSize);
+            final byte[] bytes = asBytes(content);
+            final int byteStart = (int) (startIndex - 1);
+            final int byteEnd = Math.min(byteStart + (int) count, bytes.length);
             if (fileDescriptor == STDIO_HANDLES.IN) {
                 throw new PrimitiveFailed();
             } else if (fileDescriptor == STDIO_HANDLES.OUT) {
-                code.image.getOutput().append(content.toString(), byteStart, byteEnd);
+                code.image.getOutput().append(asString(content), byteStart, byteEnd);
                 code.image.getOutput().flush();
             } else if (fileDescriptor == STDIO_HANDLES.ERROR) {
-                code.image.getError().append(content.toString(), byteStart, byteEnd);
+                code.image.getError().append(asString(content), byteStart, byteEnd);
                 code.image.getError().flush();
             } else {
                 if (code.image.config.isVerbose()) { // also print to stderr
@@ -423,7 +430,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
                     throw new PrimitiveFailed();
                 }
             }
-            return (byteEnd - byteStart) / elementSize;
+            return byteEnd - byteStart;
         }
     }
 }
