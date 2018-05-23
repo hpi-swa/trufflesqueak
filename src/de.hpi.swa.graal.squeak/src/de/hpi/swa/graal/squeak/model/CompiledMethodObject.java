@@ -5,13 +5,16 @@ import java.util.Arrays;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.NodeUtil;
 import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
 public final class CompiledMethodObject extends CompiledCodeObject {
+    @CompilationFinal protected final ValueProfile storageType = ValueProfile.createClassProfile();
 
     public CompiledMethodObject(final SqueakImageContext img) {
         super(img);
@@ -56,7 +59,7 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         }
         final NativeObject selectorObj = getCompiledInSelector();
         if (selectorObj != null) {
-            selector = new String(selectorObj.getByteStorage(storageType));
+            selector = selectorObj.asString();
         }
         return className + ">>" + selector;
     }

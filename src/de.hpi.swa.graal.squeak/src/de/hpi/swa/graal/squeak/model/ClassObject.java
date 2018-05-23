@@ -53,12 +53,13 @@ public final class ClassObject extends AbstractSqueakObject {
             // metaclasses store their singleton instance in the last field
             final Object classInstance = at0(size() - 1);
             if (classInstance instanceof ClassObject) {
-                return "Metaclass (" + ((ClassObject) classInstance).getName() + ")";
+                final NativeObject name = (NativeObject) ((ClassObject) classInstance).getName();
+                return "Metaclass (" + name.asString() + ")";
             }
         } else {
             final Object nameObj = getName();
             if (nameObj instanceof NativeObject) {
-                return nameObj.toString();
+                return ((NativeObject) nameObj).asString();
             }
         }
         return "UnknownClass";

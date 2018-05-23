@@ -74,19 +74,23 @@ public final class NativeObject extends AbstractSqueakObject {
     @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation("");
-        final byte[] bytes;
         if (isByteType()) {
-            bytes = (byte[]) storage;
+            return new String((byte[]) storage);
         } else if (isShortType()) {
-            bytes = bytesFromShorts((short[]) storage);
+            return "ShortArray(size=" + ((short[]) storage).length + ")";
         } else if (isIntType()) {
-            bytes = bytesFromInts((int[]) storage);
+            return "IntArray(size=" + ((int[]) storage).length + ")";
         } else if (isLongType()) {
-            bytes = bytesFromLongs((long[]) storage);
+            return "LongArray(size=" + ((long[]) storage).length + ")";
         } else {
             throw new SqueakException("Unexpected native object type");
         }
-        return new String(bytes);
+    }
+
+    @TruffleBoundary
+    public String asString() {
+        assert isByteType();
+        return new String((byte[]) storage);
     }
 
     @Override
