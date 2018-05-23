@@ -120,7 +120,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         // expects i to be a 1-based (Squeak) index
-        private static final long encodeBytesOf(final long anInt, final NativeObject ba, final long i) {
+        private static long encodeBytesOf(final long anInt, final NativeObject ba, final long i) {
             for (int j = 0; j <= 3; j++) {
                 ba.setNativeAt0(i + j - 1, anInt >> ((3 - j) * 8) & 0xFF);
             }
@@ -128,7 +128,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         // expects i to be a 1-based (Squeak) index
-        private static final long encodeInt(final long anInt, final NativeObject ba, final long i) {
+        private static long encodeInt(final long anInt, final NativeObject ba, final long i) {
             if (anInt <= 223) {
                 ba.setNativeAt0(i - 1, anInt);
                 return i + 1;
@@ -142,9 +142,8 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             return encodeBytesOf(anInt, ba, i + 1);
         }
 
-        @SuppressWarnings("unused")
         @Specialization
-        protected static final Object compress(final BaseSqueakObject receiver, final NativeObject bm, final NativeObject ba) {
+        protected static final Object compress(@SuppressWarnings("unused") final BaseSqueakObject receiver, final NativeObject bm, final NativeObject ba) {
             // "Store a run-coded compression of the receiver into the byteArray ba,
             // and return the last index stored into. ba is assumed to be large enough.
             // The encoding is as follows...
@@ -164,16 +163,19 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             long i = encodeInt(size, ba, 1);
             long k = 1;
             while (k <= size) {
-                long word = bm.getNativeAt0(k - 1);
-                long lowByte = word & 0xFF;
-                boolean eqBytes = (word >> 8 & 0xFF) == lowByte &&
+                final long word = bm.getNativeAt0(k - 1);
+                final long lowByte = word & 0xFF;
+                final boolean eqBytes = (word >> 8 & 0xFF) == lowByte &&
                                 ((word >> 16 & 0xFF) == lowByte && (word >> 24 & 0xFF) == lowByte);
                 long j = k;
+                // scan for equal words...
                 while (j < size && word == bm.getNativeAt0(j + 1 - 1)) {
                     j++;
                 }
                 if (j > k) {
+                    // We have two or more equal words, ending at j
                     if (eqBytes) {
+                        // Actually words of equal bytes
                         i = encodeInt((j - k + 1) * 4 + 1, ba, i);
                         ba.setNativeAt0(i - 1, lowByte);
                         i++;
@@ -183,18 +185,23 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                     }
                     k = j + 1;
                 } else {
+                    // Check for word of 4 == bytes
                     if (eqBytes) {
+                        // Note 1 word of 4 == bytes
                         i = encodeInt(1 * 4 + 1, ba, i);
                         ba.setNativeAt0(i - 1, lowByte);
                         i++;
                         k++;
                     } else {
+                        // Finally, check for junk
+                        // scan for unequal words...
                         while (j < size && bm.getNativeAt0(j - 1) != bm.getNativeAt0(j + 1 - 1)) {
                             j++;
                         }
                         if (j == size) {
                             j++;
                         }
+                        // We have one or more unmatching words, ending at j-1
                         i = encodeInt((j - k) * 4 + 3, ba, i);
                         for (long m = k; m <= j - 1; m++) {
                             i = encodeBytesOf(bm.getNativeAt0(m - 1), ba, i);
