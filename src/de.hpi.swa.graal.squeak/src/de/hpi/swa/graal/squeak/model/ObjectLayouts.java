@@ -7,6 +7,24 @@ public final class ObjectLayouts {
         public static final int VALUE = 1;
     }
 
+    public static final class BIT_BLT {
+        public static final int DEST_FORM = 0;
+        public static final int SOURCE_FORM = 1;
+        public static final int HALFTONE_FORM = 2;
+        public static final int COMBINATION_RULE = 3;
+        public static final int DEST_X = 4;
+        public static final int DEST_Y = 5;
+        public static final int WIDTH = 6;
+        public static final int HEIGHT = 7;
+        public static final int SOURCE_X = 8;
+        public static final int SOURCE_Y = 9;
+        public static final int CLIP_X = 10;
+        public static final int CLIP_Y = 11;
+        public static final int CLIP_WIDTH = 12;
+        public static final int CLIP_HEIGHT = 13;
+        public static final int COLOR_MAP = 14;
+    }
+
     public static final class BLOCK_CLOSURE {
         public static final int OUTER_CONTEXT = 0;
         public static final int INITIAL_PC = 1;

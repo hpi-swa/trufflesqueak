@@ -48,12 +48,15 @@ import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.DispatchNode;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
 import de.hpi.swa.graal.squeak.nodes.LookupNode;
+import de.hpi.swa.graal.squeak.nodes.SqueakNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.IsDoesNotUnderstandNode;
+import de.hpi.swa.graal.squeak.nodes.context.ArgumentNode;
 import de.hpi.swa.graal.squeak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitivesFactory.SimulationPrimitiveNodeFactory;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerNode;
 
@@ -750,6 +753,16 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         @Child protected SqueakLookupClassNode lookupClassNode;
         @Child protected GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create();
         @Child private IsDoesNotUnderstandNode isDoesNotUnderstandNode;
+
+        public static SimulationPrimitiveNode create(final CompiledMethodObject method, final String moduleName, final String functionName) {
+            final NodeFactory<SimulationPrimitiveNode> nodeFactory = SimulationPrimitiveNodeFactory.getInstance();
+            final int primitiveArity = nodeFactory.getExecutionSignature().size();
+            final SqueakNode[] argumentNodes = new SqueakNode[primitiveArity];
+            for (int j = 0; j < primitiveArity; j++) {
+                argumentNodes[j] = ArgumentNode.create(method, j);
+            }
+            return nodeFactory.createNode(method, primitiveArity, moduleName, functionName, argumentNodes);
+        }
 
         protected SimulationPrimitiveNode(final CompiledMethodObject method, final int numArguments, final String moduleName, final String functionName) {
             super(method, numArguments);
