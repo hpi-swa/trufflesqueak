@@ -10,6 +10,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
+import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
@@ -49,7 +50,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"hasCombinationRule(receiver, 3)", "hasNilSourceForm(receiver)"})
-        protected final Object doCopyBitsCombiRule3NilSourceForm(final PointersObject receiver) {
+        protected final Object doCopyBitsCombiRule3NilSourceForm(final VirtualFrame frame, final PointersObject receiver) {
             final PointersObject destinationForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
             final NativeObject destinationBits = (NativeObject) destinationForm.at0(FORM.BITS);
             final NativeObject halftoneForm = (NativeObject) receiver.at0(BIT_BLT.HALFTONE_FORM);
@@ -58,26 +59,39 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
                 throw new SqueakException("Expected one fillValue only");
             }
             final int fillValue = fillArray[0];
+            final long destinationDepth = (long) destinationForm.at0(FORM.DEPTH);
+            if (destinationDepth != 32) { // fall back to simulation if not 32-bit
+                return doSimulation(frame, receiver);
+            }
             final int destinationWidth = (int) ((long) destinationForm.at0(FORM.WIDTH));
             final long destX = (long) receiver.at0(BIT_BLT.DEST_X);
             final long destY = (long) receiver.at0(BIT_BLT.DEST_Y);
             final long width = (long) receiver.at0(BIT_BLT.WIDTH);
             final long height = (long) receiver.at0(BIT_BLT.HEIGHT);
-
             final long clipX = (long) receiver.at0(BIT_BLT.CLIP_X);
             final long clipY = (long) receiver.at0(BIT_BLT.CLIP_Y);
             final long clipWidth = (long) receiver.at0(BIT_BLT.CLIP_WIDTH);
             final long clipHeight = (long) receiver.at0(BIT_BLT.CLIP_HEIGHT);
-            final long[] clippedValues = clipRange(-1, 0, 0, 0, width, height, destX, destY, clipX, clipY, clipWidth, clipHeight);
 
-            final long clippedX = clippedValues[2];
-            final long clippedY = clippedValues[3];
-            final long clippedWidth = clippedValues[4];
-            final long clippedHeight = clippedValues[5];
+            final long[] clippedValues = clipRange(-1, 0, 0, 0, width, height, destX, destY, clipX, clipY, clipWidth, clipHeight);
+            final long dx = clippedValues[2];
+            final long dy = clippedValues[3];
+            final int bbW = (int) clippedValues[4];
+            final int bbH = (int) clippedValues[5];
+            if (bbW <= 0 || bbH <= 0) {
+                return receiver; // "zero width or height; noop"
+            }
+            final long endX = dx + bbW;
+            final long endY = dy + bbH;
 
             final int[] ints = destinationBits.getIntStorage(destinationBitsStorageType);
-            for (int y = (int) clippedY; y < clippedY + clippedHeight; y++) {
-                for (int x = (int) clippedX; x < clippedX + clippedWidth; x++) {
+
+            if (ints.length - 1 < (endY - 1) * destinationWidth + (endX - 1)) {
+                throw new PrimitiveFailed(); // fail early in case of index out of bounce
+            }
+
+            for (int y = (int) dy; y < endY; y++) {
+                for (int x = (int) dx; x < endX; x++) {
                     ints[y * destinationWidth + x] = fillValue;
                 }
             }
