@@ -1,9 +1,11 @@
-package de.hpi.swa.graal.squeak.nodes;
+package de.hpi.swa.graal.squeak.nodes.accessing;
 
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.ValueProfile;
 
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
@@ -18,12 +20,13 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 
 public abstract class SqueakObjectAt0Node extends Node {
+    private final ValueProfile storageType = ValueProfile.createClassProfile();
 
     public static SqueakObjectAt0Node create() {
         return SqueakObjectAt0NodeGen.create();
     }
 
-    public abstract Object execute(AbstractSqueakObject obj, long index);
+    public abstract Object execute(Object obj, long index);
 
     @Specialization
     protected static final Object doAbstractPointers(final PointersObject obj, final long index) {
@@ -45,9 +48,24 @@ public abstract class SqueakObjectAt0Node extends Node {
         return obj.at0(index);
     }
 
-    @Specialization
-    protected static final long doNative(final NativeObject obj, final long index) {
-        return obj.getNativeAt0(index);
+    @Specialization(guards = "obj.isByteType()")
+    protected final long doNativeBytes(final NativeObject obj, final long index) {
+        return Byte.toUnsignedLong(obj.getByteStorage(storageType)[(int) index]);
+    }
+
+    @Specialization(guards = "obj.isShortType()")
+    protected final long doNativeShorts(final NativeObject obj, final long index) {
+        return Short.toUnsignedLong(obj.getShortStorage(storageType)[(int) index]);
+    }
+
+    @Specialization(guards = "obj.isIntType()")
+    protected final long doNativeInts(final NativeObject obj, final long index) {
+        return Integer.toUnsignedLong(obj.getIntStorage(storageType)[(int) index]);
+    }
+
+    @Specialization(guards = "obj.isLongType()")
+    protected final long doNativeLongs(final NativeObject obj, final long index) {
+        return obj.getLongStorage(storageType)[(int) index];
     }
 
     @Specialization
@@ -87,4 +105,9 @@ public abstract class SqueakObjectAt0Node extends Node {
         throw new IndexOutOfBoundsException();
     }
 
+    @SuppressWarnings("unused")
+    @Fallback
+    protected static final Object doFallback(final Object obj, final long index) {
+        throw new SqueakException("Object does not support at0: " + obj);
+    }
 }

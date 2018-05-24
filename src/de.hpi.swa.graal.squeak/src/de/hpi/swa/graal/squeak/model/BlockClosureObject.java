@@ -1,18 +1,13 @@
 package de.hpi.swa.graal.squeak.model;
 
 import com.oracle.truffle.api.Assumption;
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions;
-import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -29,30 +24,28 @@ public final class BlockClosureObject extends AbstractSqueakObject {
     @CompilationFinal private long numArgs = -1;
     @CompilationFinal private RootCallTarget callTarget;
     @CompilationFinal private final CyclicAssumption callTargetStable = new CyclicAssumption("BlockClosurObject assumption");
-    @CompilationFinal private FrameSlot contextOrMarkerSlot;
 
     public BlockClosureObject(final SqueakImageContext image) {
         super(image, image.blockClosureClass);
         this.copied = new Object[0]; // ensure copied is set
     }
 
-    public BlockClosureObject(final CompiledBlockObject compiledBlock, final Object receiver, final Object[] copied, final ContextObject outerContext, final FrameSlot contextOrMarkerSlot) {
+    public BlockClosureObject(final CompiledBlockObject compiledBlock, final RootCallTarget callTarget, final Object receiver, final Object[] copied, final ContextObject outerContext) {
         super(compiledBlock.image, compiledBlock.image.blockClosureClass);
-        assert outerContext.getFrameMarker() != null;
         this.block = compiledBlock;
+        this.callTarget = callTarget;
         this.outerContext = outerContext;
         this.receiver = receiver;
         this.copied = copied;
-        this.contextOrMarkerSlot = contextOrMarkerSlot;
     }
 
     private BlockClosureObject(final BlockClosureObject original) {
         super(original.image, original.image.blockClosureClass);
         this.block = original.getCompiledBlock();
+        this.callTarget = original.callTarget;
         this.outerContext = original.outerContext;
         this.receiver = original.receiver;
         this.copied = original.copied;
-        this.contextOrMarkerSlot = original.contextOrMarkerSlot;
     }
 
     @Override
@@ -83,14 +76,6 @@ public final class BlockClosureObject extends AbstractSqueakObject {
             numArgs = block.getNumArgs();
         }
         return numArgs;
-    }
-
-    private FrameSlot getContextOrMarkerSlot(final Frame frame) {
-        if (contextOrMarkerSlot == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            contextOrMarkerSlot = FrameAccess.getContextOrMarkerSlot(frame);
-        }
-        return contextOrMarkerSlot;
     }
 
     public Object at0(final long longIndex) {
@@ -164,10 +149,6 @@ public final class BlockClosureObject extends AbstractSqueakObject {
     }
 
     public RootCallTarget getCallTarget() {
-        if (callTarget == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            callTarget = Truffle.getRuntime().createCallTarget(EnterCodeNode.create(block.image.getLanguage(), block));
-        }
         return callTarget;
     }
 
@@ -190,29 +171,31 @@ public final class BlockClosureObject extends AbstractSqueakObject {
             final int k = code.getBytes()[offset - 1];
             final int blockSize = (j << 8) | (k & 0xff);
             block = CompiledBlockObject.create(code, method, ((Long) numArgs).intValue(), copied.length, offset, blockSize);
+            callTarget = Truffle.getRuntime().createCallTarget(EnterCodeNode.create(block.image.getLanguage(), block));
         }
         return block;
     }
 
-    public Object[] getFrameArguments(final VirtualFrame frame, final Object... objects) {
-        CompilerAsserts.compilationConstant(objects.length);
+    public Object[] getFrameArguments(final Object senderOrMarker, final Object... objects) {
         final CompiledBlockObject blockObject = getCompiledBlock();
-        if (blockObject.getNumArgs() != objects.length) {
-            throw new PrimitiveFailed();
+        final int numObjects = objects.length;
+        final int numCopied = copied.length;
+        if (blockObject.getNumArgs() != numObjects) { // TODO: turn this into an assertion
+            image.getError().println("number of required and provided block arguments do not match");
         }
         final Object[] arguments = new Object[FrameAccess.ARGUMENTS_START +
-                        objects.length +
-                        copied.length];
+                        numObjects +
+                        numCopied];
         arguments[FrameAccess.METHOD] = blockObject;
         // Sender is thisContext (or marker)
-        arguments[FrameAccess.SENDER_OR_SENDER_MARKER] = FrameAccess.getContextOrMarker(frame, getContextOrMarkerSlot(frame));
+        arguments[FrameAccess.SENDER_OR_SENDER_MARKER] = senderOrMarker;
         arguments[FrameAccess.CLOSURE_OR_NULL] = this;
         arguments[FrameAccess.RECEIVER] = getReceiver();
-        for (int i = 0; i < objects.length; i++) {
+        for (int i = 0; i < numObjects; i++) {
             arguments[FrameAccess.ARGUMENTS_START + i] = objects[i];
         }
-        for (int i = 0; i < copied.length; i++) {
-            arguments[FrameAccess.ARGUMENTS_START + objects.length + i] = copied[i];
+        for (int i = 0; i < numCopied; i++) {
+            arguments[FrameAccess.ARGUMENTS_START + numObjects + i] = copied[i];
         }
         return arguments;
     }

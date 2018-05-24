@@ -7,8 +7,10 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
@@ -16,10 +18,10 @@ import de.hpi.swa.graal.squeak.model.EmptyObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.nodes.SqueakObjectAt0Node;
-import de.hpi.swa.graal.squeak.nodes.SqueakObjectAtPut0Node;
-import de.hpi.swa.graal.squeak.nodes.SqueakObjectInstSizeNode;
-import de.hpi.swa.graal.squeak.nodes.SqueakObjectSizeNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectInstSizeNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
@@ -77,8 +79,8 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final long doNative(final NativeObject receiver, final long index) {
-            return receiver.getNativeAt0(index - 1);
+        protected final Object doNative(final NativeObject receiver, final long index) {
+            return at0Node.execute(receiver, index - 1);
         }
 
         @Specialization
@@ -130,7 +132,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected char doNativeChar(final NativeObject receiver, final long index, final char value) {
             try {
-                receiver.setNativeAt0(index - 1, value);
+                atPut0Node.execute(receiver, index - 1, value);
             } catch (IllegalArgumentException e) {
                 throw new PrimitiveFailed();
             }
@@ -140,7 +142,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected long doNativeLong(final NativeObject receiver, final long index, final long value) {
             try {
-                receiver.setNativeAt0(index - 1, value);
+                atPut0Node.execute(receiver, index - 1, value);
             } catch (IllegalArgumentException e) {
                 throw new PrimitiveFailed();
             }
@@ -150,7 +152,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected Object doNativeLargeInteger(final NativeObject receiver, final long index, final LargeIntegerObject value) {
             try {
-                receiver.setNativeAt0(index - 1, value.reduceToLong());
+                atPut0Node.execute(receiver, index - 1, value.reduceToLong());
             } catch (IllegalArgumentException | ArithmeticException e) {
                 throw new PrimitiveFailed();
             }
@@ -271,8 +273,8 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final long doNative(final NativeObject obj) {
-            return obj.size();
+        protected final long doNative(final NativeObject obj) {
+            return sizeNode.execute(obj);
         }
 
         @Specialization
@@ -308,6 +310,8 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 63)
     protected abstract static class PrimStringAtNode extends AbstractPrimitiveNode {
+        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
+
         protected PrimStringAtNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
@@ -333,8 +337,8 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         public abstract Object executeStringAt(VirtualFrame frame);
 
         @Specialization
-        protected static final char doNativeObject(final NativeObject obj, final long idx) {
-            final int intValue = ((Long) obj.getNativeAt0(idx - 1)).intValue();
+        protected final char doNativeObject(final NativeObject obj, final long idx) {
+            final int intValue = ((Long) at0Node.execute(obj, idx - 1)).intValue();
             return (char) intValue;
         }
     }
@@ -342,6 +346,8 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 64)
     protected abstract static class PrimStringAtPutNode extends AbstractPrimitiveNode {
+        @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
+
         protected PrimStringAtPutNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
@@ -367,15 +373,15 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         public abstract Object executeStringAtPut(VirtualFrame frame);
 
         @Specialization
-        protected static final char doNativeObject(final NativeObject obj, final long idx, final char value) {
-            obj.setNativeAt0(idx - 1, value);
+        protected final char doNativeObject(final NativeObject obj, final long index, final char value) {
+            atPut0Node.execute(obj, index - 1, value);
             return value;
         }
 
         @Specialization
-        protected static final char doNativeObject(final NativeObject obj, final long idx, final long value) {
+        protected final char doNativeObject(final NativeObject obj, final long index, final long value) {
             assert value >= 0;
-            obj.setNativeAt0(idx - 1, value);
+            atPut0Node.execute(obj, index - 1, value);
             return (char) ((Long) value).intValue();
         }
     }
@@ -383,34 +389,111 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 143)
     protected abstract static class PrimShortAtNode extends AbstractPrimitiveNode {
+        private final ValueProfile storageType = ValueProfile.createClassProfile();
+
         protected PrimShortAtNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        @Specialization
-        protected static final long doNativeObject(final NativeObject receiver, final long index) {
+        @Specialization(guards = "receiver.isByteType()")
+        protected final long doNativeBytes(final NativeObject receiver, final long index) {
+            final int offset = (int) ((index - 1) * 2);
+            final byte[] bytes = receiver.getByteStorage(storageType);
             try {
-                return receiver.shortAt0(index);
+                final int byte0 = (byte) Byte.toUnsignedLong(bytes[offset]);
+                int byte1 = (int) Byte.toUnsignedLong(bytes[offset + 1]) << 8;
+                if ((byte1 & 0x8000) != 0) {
+                    byte1 = 0xffff0000 | byte1;
+                }
+                return byte1 | byte0;
             } catch (IndexOutOfBoundsException e) {
                 throw new PrimitiveFailed();
             }
+        }
+
+        @Specialization(guards = "receiver.isShortType()")
+        protected final long doNativeShorts(final NativeObject receiver, final long index) {
+            try {
+                return Short.toUnsignedLong(receiver.getShortStorage(storageType)[(int) index]);
+            } catch (IndexOutOfBoundsException e) {
+                throw new PrimitiveFailed();
+            }
+        }
+
+        @Specialization(guards = "receiver.isIntType()")
+        protected final long doNativeInts(final NativeObject receiver, final long index) {
+            try {
+                final int word = receiver.getIntStorage(storageType)[((int) index - 1) / 2];
+                int shortValue;
+                if ((index - 1) % 2 == 0) {
+                    shortValue = word & 0xffff;
+                } else {
+                    shortValue = (word >> 16) & 0xffff;
+                }
+                if ((shortValue & 0x8000) != 0) {
+                    shortValue = 0xffff0000 | shortValue;
+                }
+                return shortValue;
+            } catch (IndexOutOfBoundsException e) {
+                throw new PrimitiveFailed();
+            }
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "receiver.isLongType()")
+        protected static final long doNativeLongs(final NativeObject receiver, final long index) {
+            throw new SqueakException("Not yet implemented: shortAtPut0"); // TODO: implement
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 144)
     protected abstract static class PrimShortAtPutNode extends AbstractPrimitiveNode {
+        private final ValueProfile storageType = ValueProfile.createClassProfile();
+
         protected PrimShortAtPutNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        @Specialization
-        protected static final long doNativeObject(final NativeObject receiver, final long index, final long value) {
-            if (!(-0x8000 <= value && value <= 0x8000)) {
-                throw new PrimitiveFailed();
-            }
-            receiver.shortAtPut0(index, value);
+        @Specialization(guards = {"inShortRange(value)", "receiver.isByteType()"})
+        protected final long doNativeBytes(final NativeObject receiver, final long index, final long value) {
+            final Long byte0 = value & 0xff;
+            final Long byte1 = value & 0xff00;
+            final int offset = (int) ((index - 1) * 2);
+            final byte[] bytes = receiver.getByteStorage(storageType);
+            bytes[offset] = byte0.byteValue();
+            bytes[offset + 1] = byte1.byteValue();
             return value;
+        }
+
+        @Specialization(guards = {"inShortRange(value)", "receiver.isShortType()"})
+        protected final long doNativeShorts(final NativeObject receiver, final long index, final long value) {
+            receiver.getShortStorage(storageType)[(int) index] = (short) value;
+            return value;
+        }
+
+        @Specialization(guards = {"inShortRange(value)", "receiver.isIntType()"})
+        protected final long doNativeInts(final NativeObject receiver, final long index, final long value) {
+            final int wordIndex = (int) ((index - 1) / 2);
+            final int[] ints = receiver.getIntStorage(storageType);
+            long word = (int) Integer.toUnsignedLong(ints[wordIndex]);
+            if ((index - 1) % 2 == 0) {
+                word = (word & 0xffff0000) | (value & 0xffff);
+            } else {
+                word = (value << 16) | (word & 0xffff);
+            }
+            ints[wordIndex] = (int) word;
+            return value;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"inShortRange(value)", "receiver.isLongType()"})
+        protected static final long doNativeLongs(final NativeObject receiver, final long index, final long value) {
+            throw new SqueakException("Not yet implemented: shortAtPut0"); // TODO: implement
+        }
+
+        protected static final boolean inShortRange(final long value) {
+            return -0x8000 <= value && value <= 0x8000;
         }
     }
 

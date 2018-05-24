@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -28,7 +27,6 @@ public abstract class HandleLocalReturnNode extends AbstractNodeWithCode {
 
     @Specialization(guards = "isVirtualized(frame)")
     protected Object handleVirtualized(final VirtualFrame frame, final LocalReturn lr) {
-        CompilerDirectives.ensureVirtualizedHere(frame);
         terminateNode.executeTerminate(frame);
         return lr.getReturnValue();
     }
@@ -36,7 +34,7 @@ public abstract class HandleLocalReturnNode extends AbstractNodeWithCode {
     @Specialization(guards = "!isVirtualized(frame)")
     protected Object handle(final VirtualFrame frame, final LocalReturn lr) {
         final ContextObject context = getContext(frame);
-        if (context.isDirty()) {
+        if (context.hasModifiedSender()) {
             final ContextObject newSender = context.getNotNilSender(); // sender has changed
             terminateNode.executeTerminate(frame);
             throw new NonVirtualReturn(lr.getReturnValue(), newSender, newSender);

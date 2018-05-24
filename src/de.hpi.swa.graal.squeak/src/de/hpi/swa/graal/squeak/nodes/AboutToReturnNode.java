@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -19,7 +18,7 @@ import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 public abstract class AboutToReturnNode extends AbstractNodeWithCode {
     @Child protected BlockActivationNode dispatch = BlockActivationNodeGen.create();
     @Child private SendSelectorNode sendAboutToReturnNode;
-    @Child private StackPushNode pushNode;
+    @Child private StackPushNode pushNode = StackPushNode.create();
     @Child private SqueakNode blockArgumentNode;
     @Child private SqueakNode completeTempReadNode;
     @Child private TemporaryWriteNode completeTempWriteNode;
@@ -31,7 +30,6 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
     protected AboutToReturnNode(final CompiledMethodObject method) {
         super(method);
         sendAboutToReturnNode = new SendSelectorNode(method, -1, -1, aboutToReturnSelector(method), 2);
-        pushNode = StackPushNode.create(method);
         blockArgumentNode = TemporaryReadNode.create(method, 0);
         completeTempReadNode = TemporaryReadNode.create(method, 1);
         completeTempWriteNode = TemporaryWriteNode.create(method, 1);
@@ -52,12 +50,11 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
      */
     @Specialization(guards = {"isVirtualized(frame)"})
     protected void doAboutToReturnVirtualized(final VirtualFrame frame, @SuppressWarnings("unused") final NonLocalReturn nlr) {
-        CompilerDirectives.ensureVirtualizedHere(frame);
         if (completeTempReadNode.executeRead(frame) == code.image.nil) {
             completeTempWriteNode.executeWrite(frame, code.image.sqTrue);
             final BlockClosureObject block = (BlockClosureObject) blockArgumentNode.executeRead(frame);
             try {
-                dispatch.executeBlock(block, block.getFrameArguments(frame));
+                dispatch.executeBlock(block, block.getFrameArguments(getContextOrMarker(frame)));
             } catch (LocalReturn blockLR) { // ignore
             } catch (NonLocalReturn blockNLR) {
                 if (!blockNLR.hasArrivedAtTargetContext()) {

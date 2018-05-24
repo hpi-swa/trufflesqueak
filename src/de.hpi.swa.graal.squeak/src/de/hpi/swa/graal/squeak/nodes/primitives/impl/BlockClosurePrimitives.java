@@ -18,13 +18,13 @@ import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.BlockActivationNode;
 import de.hpi.swa.graal.squeak.nodes.BlockActivationNodeGen;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
@@ -40,6 +40,8 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @GenerateNodeFactory
     @SqueakPrimitive(index = 195)
     protected abstract static class PrimFindNextUnwindContextUpToNode extends AbstractPrimitiveNode {
+        @Child private FrameSlotReadNode contextOrMarkerNode = FrameSlotReadNode.createForContextOrMarker();
+        @Child private GetOrCreateContextNode contextNode = GetOrCreateContextNode.create();
 
         public PrimFindNextUnwindContextUpToNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -47,30 +49,28 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
         @Specialization(guards = {"receiver.hasVirtualSender()"})
         @TruffleBoundary
-        protected Object doFindNextVirtualized(final ContextObject receiver, final ContextObject previousContext) {
+        protected final Object doFindNextVirtualized(final ContextObject receiver, final ContextObject previousContext) {
             final ContextObject handlerContext = Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<ContextObject>() {
                 boolean foundMyself = false;
-                final FrameMarker frameMarker = receiver.getFrameMarker();
 
                 @Override
                 public ContextObject visitFrame(final FrameInstance frameInstance) {
-                    final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
+                    final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
                     if (current.getArguments().length < FrameAccess.RECEIVER) {
                         return null;
                     }
-                    final Object contextOrMarker = FrameAccess.getContextOrMarker(current);
+                    final Object contextOrMarker = contextOrMarkerNode.executeRead(current);
                     if (!foundMyself) {
-                        if (FrameAccess.isMatchingMarker(frameMarker, contextOrMarker)) {
+                        if (receiver.equals(contextOrMarker)) {
                             foundMyself = true;
                         }
                     } else {
-                        if (previousContext != null && FrameAccess.isMatchingMarker(previousContext.getFrameMarker(), contextOrMarker)) {
+                        if (previousContext != null && previousContext.equals(contextOrMarker)) {
                             return null;
                         } else {
                             final CompiledCodeObject frameMethod = FrameAccess.getMethod(current);
                             if (frameMethod.isUnwindMarked()) {
-                                final Frame currentMaterializable = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
-                                return GetOrCreateContextNode.getOrCreate(currentMaterializable);
+                                return contextNode.executeGet(current, false);
                             }
                         }
                     }
@@ -163,6 +163,8 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @GenerateNodeFactory
     @SqueakPrimitive(index = 197)
     protected abstract static class PrimNextHandlerContextNode extends AbstractPrimitiveNode {
+        @Child private FrameSlotReadNode contextOrMarkerNode = FrameSlotReadNode.createForContextOrMarker();
+        @Child private GetOrCreateContextNode contextNode = GetOrCreateContextNode.create();
 
         protected PrimNextHandlerContextNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -173,24 +175,22 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         protected final Object findNextVirtualized(final ContextObject receiver) {
             final ContextObject handlerContext = Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<ContextObject>() {
                 boolean foundMyself = false;
-                final FrameMarker frameMarker = receiver.getFrameMarker();
 
                 @Override
                 public ContextObject visitFrame(final FrameInstance frameInstance) {
-                    final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
+                    final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
                     if (current.getArguments().length < FrameAccess.RECEIVER) {
                         return null;
                     }
                     if (!foundMyself) {
-                        final Object contextOrMarker = FrameAccess.getContextOrMarker(current);
-                        if (FrameAccess.isMatchingMarker(frameMarker, contextOrMarker)) {
+                        final Object contextOrMarker = contextOrMarkerNode.executeRead(current);
+                        if (receiver.equals(contextOrMarker)) {
                             foundMyself = true;
                         }
                     } else {
                         final CompiledCodeObject frameMethod = FrameAccess.getMethod(current);
                         if (frameMethod.isExceptionHandlerMarked()) {
-                            final Frame currentMaterializable = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
-                            return GetOrCreateContextNode.getOrCreate(currentMaterializable);
+                            return contextNode.executeGet(current, false);
                         }
                     }
                     return null;
@@ -255,7 +255,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
         @Specialization
         protected Object doClosure(final VirtualFrame frame, final BlockClosureObject block) {
-            return dispatch.executeBlock(block, block.getFrameArguments(frame));
+            return dispatch.executeBlock(block, block.getFrameArguments(getContextOrMarker(frame)));
         }
 
         // Additional specializations to speed up eager sends
@@ -280,7 +280,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
         @Specialization
         protected Object value(final VirtualFrame frame, final BlockClosureObject block, final Object arg) {
-            return dispatch.executeBlock(block, block.getFrameArguments(frame, arg));
+            return dispatch.executeBlock(block, block.getFrameArguments(getContextOrMarker(frame), arg));
         }
     }
 
@@ -294,7 +294,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
         @Specialization
         protected Object value(final VirtualFrame frame, final BlockClosureObject block, final Object arg1, final Object arg2) {
-            return dispatch.executeBlock(block, block.getFrameArguments(frame, arg1, arg2));
+            return dispatch.executeBlock(block, block.getFrameArguments(getContextOrMarker(frame), arg1, arg2));
         }
     }
 
@@ -308,7 +308,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
         @Specialization
         protected Object value(final VirtualFrame frame, final BlockClosureObject block, final Object arg1, final Object arg2, final Object arg3) {
-            return dispatch.executeBlock(block, block.getFrameArguments(frame, arg1, arg2, arg3));
+            return dispatch.executeBlock(block, block.getFrameArguments(getContextOrMarker(frame), arg1, arg2, arg3));
         }
     }
 
@@ -322,7 +322,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
         @Specialization
         protected Object value(final VirtualFrame frame, final BlockClosureObject block, final Object arg1, final Object arg2, final Object arg3, final Object arg4) {
-            return dispatch.executeBlock(block, block.getFrameArguments(frame, arg1, arg2, arg3, arg4));
+            return dispatch.executeBlock(block, block.getFrameArguments(getContextOrMarker(frame), arg1, arg2, arg3, arg4));
         }
     }
 
@@ -336,7 +336,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
         @Specialization
         protected Object value(final VirtualFrame frame, final BlockClosureObject block, final PointersObject argArray) {
-            return dispatch.executeBlock(block, block.getFrameArguments(frame, argArray.getPointers()));
+            return dispatch.executeBlock(block, block.getFrameArguments(getContextOrMarker(frame), argArray.getPointers()));
         }
     }
 

@@ -3,7 +3,6 @@ package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -36,14 +35,16 @@ import de.hpi.swa.graal.squeak.nodes.DispatchNode;
 import de.hpi.swa.graal.squeak.nodes.DispatchSendNode;
 import de.hpi.swa.graal.squeak.nodes.LookupNode;
 import de.hpi.swa.graal.squeak.nodes.LookupNodeGen;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeGetBytesNode;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
-import de.hpi.swa.graal.squeak.nodes.SqueakObjectAt0Node;
-import de.hpi.swa.graal.squeak.nodes.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.context.ObjectAtNode;
 import de.hpi.swa.graal.squeak.nodes.context.ReceiverAndArgumentsNode;
 import de.hpi.swa.graal.squeak.nodes.context.ReceiverNode;
 import de.hpi.swa.graal.squeak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.graal.squeak.nodes.context.SqueakLookupClassNodeGen;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
@@ -61,7 +62,6 @@ import de.hpi.swa.graal.squeak.nodes.process.SignalSemaphoreNode;
 import de.hpi.swa.graal.squeak.nodes.process.WakeHighestPriorityNode;
 import de.hpi.swa.graal.squeak.nodes.process.YieldProcessNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
-import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -97,6 +97,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Child protected SqueakLookupClassNode lookupClassNode;
         @Child protected LookupNode lookupNode = LookupNodeGen.create();
         @Child private DispatchSendNode dispatchSendNode;
+        @Child private FrameSlotReadNode contextOrMarkerNode = FrameSlotReadNode.createForContextOrMarker();
 
         protected AbstractPerformPrimitiveNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -104,23 +105,22 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             dispatchSendNode = DispatchSendNode.create(code.image);
         }
 
-        protected ClassObject lookup(final Object receiver) {
+        protected final ClassObject lookup(final Object receiver) {
             return lookupClassNode.executeLookup(receiver);
         }
 
-        protected Object dispatch(final VirtualFrame frame, final NativeObject selector, final Object[] rcvrAndArgs, final ClassObject rcvrClass) {
+        protected final Object dispatch(final VirtualFrame frame, final NativeObject selector, final Object[] rcvrAndArgs, final ClassObject rcvrClass) {
             final Object lookupResult = lookupNode.executeLookup(rcvrClass, selector);
-            final Object contextOrMarker = FrameAccess.getContextOrMarker(frame);
+            final Object contextOrMarker = contextOrMarkerNode.executeRead(frame);
             return dispatchSendNode.executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs, contextOrMarker);
         }
     }
 
     private abstract static class AbstractPrimitiveWithPushNode extends AbstractPrimitiveNode {
-        @Child protected StackPushNode pushNode;
+        @Child protected StackPushNode pushNode = StackPushNode.create();
 
         protected AbstractPrimitiveWithPushNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
-            pushNode = StackPushNode.create(method);
         }
     }
 
@@ -131,7 +131,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected PrimPerformNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
-            rcvrAndArgsNode = ReceiverAndArgumentsNode.create(method.thisContextOrMarkerSlot);
+            rcvrAndArgsNode = ReceiverAndArgumentsNode.create();
         }
 
         @SuppressWarnings("unused")
@@ -202,7 +202,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected PrimSignalNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
-            signalSemaphoreNode = SignalSemaphoreNode.create(method.image);
+            signalSemaphoreNode = SignalSemaphoreNode.create(method);
         }
 
         @Specialization(guards = "isSemaphore(receiver)")
@@ -223,7 +223,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected PrimWaitNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
             linkProcessToListNode = LinkProcessToListNode.create(method.image);
-            wakeHighestPriorityNode = WakeHighestPriorityNode.create(method.image);
+            wakeHighestPriorityNode = WakeHighestPriorityNode.create(method);
             getActiveProcessNode = GetActiveProcessNode.create(method.image);
         }
 
@@ -249,7 +249,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected PrimResumeNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
-            resumeProcessNode = ResumeProcessNode.create(method.image);
+            resumeProcessNode = ResumeProcessNode.create(method);
         }
 
         @Specialization
@@ -267,11 +267,12 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Child private WakeHighestPriorityNode wakeHighestPriorityNode;
         @Child private RemoveProcessFromListNode removeProcessNode;
         @Child private GetActiveProcessNode getActiveProcessNode;
+        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
 
         protected PrimSuspendNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
             removeProcessNode = RemoveProcessFromListNode.create(method.image);
-            wakeHighestPriorityNode = WakeHighestPriorityNode.create(method.image);
+            wakeHighestPriorityNode = WakeHighestPriorityNode.create(method);
             getActiveProcessNode = GetActiveProcessNode.create(method.image);
         }
 
@@ -282,8 +283,8 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 pushNode.executeWrite(frame, code.image.nil);
                 wakeHighestPriorityNode.executeWake(frame);
             } else {
-                final AbstractSqueakObject oldList = (AbstractSqueakObject) receiver.at0(PROCESS.LIST);
-                if (oldList.isNil()) {
+                final Object oldList = at0Node.execute(receiver, PROCESS.LIST);
+                if (oldList == code.image.nil) {
                     throw new PrimitiveFailed(ERROR_TABLE.BAD_RECEIVER);
                 }
                 removeProcessNode.executeRemove(receiver, oldList);
@@ -454,6 +455,8 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 115)
     protected abstract static class PrimChangeClassNode extends AbstractPrimitiveNode {
+        @Child private NativeGetBytesNode getBytesNode = NativeGetBytesNode.create();
+
         protected PrimChangeClassNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
@@ -464,24 +467,63 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             throw new PrimitiveFailed();
         }
 
-        @Specialization
+        @Specialization(guards = "receiver.haveSameStorageType(argument)")
         protected Object doNative(final NativeObject receiver, final NativeObject argument) {
             receiver.setSqClass(argument.getSqClass());
-            receiver.convertStorage(argument);
             throw new PrimitiveWithoutResultException();
         }
 
-        @Specialization
+        @Specialization(guards = {"!receiver.haveSameStorageType(argument)", "argument.isByteType()"})
+        protected Object doNativeConvertToBytes(final NativeObject receiver, final NativeObject argument) {
+            receiver.setSqClass(argument.getSqClass());
+            receiver.convertToBytesStorage(getBytesNode.execute(receiver));
+            throw new PrimitiveWithoutResultException();
+        }
+
+        @Specialization(guards = {"!receiver.haveSameStorageType(argument)", "argument.isShortType()"})
+        protected Object doNativeConvertToShorts(final NativeObject receiver, final NativeObject argument) {
+            receiver.setSqClass(argument.getSqClass());
+            receiver.convertToBytesStorage(getBytesNode.execute(receiver));
+            throw new PrimitiveWithoutResultException();
+        }
+
+        @Specialization(guards = {"!receiver.haveSameStorageType(argument)", "argument.isIntType()"})
+        protected Object doNativeConvertToInts(final NativeObject receiver, final NativeObject argument) {
+            receiver.setSqClass(argument.getSqClass());
+            receiver.convertToBytesStorage(getBytesNode.execute(receiver));
+            throw new PrimitiveWithoutResultException();
+        }
+
+        @Specialization(guards = {"!receiver.haveSameStorageType(argument)", "argument.isLongType()"})
+        protected Object doNativeConvertToLongs(final NativeObject receiver, final NativeObject argument) {
+            receiver.setSqClass(argument.getSqClass());
+            receiver.convertToBytesStorage(getBytesNode.execute(receiver));
+            throw new PrimitiveWithoutResultException();
+        }
+
+        @Specialization(guards = "receiver.isByteType()")
         protected Object doNativeLargeInteger(final NativeObject receiver, final LargeIntegerObject argument) {
             receiver.setSqClass(argument.getSqClass());
-            receiver.convertToBytesStorage();
             throw new PrimitiveWithoutResultException();
         }
 
-        @Specialization
+        @Specialization(guards = "!receiver.isByteType()")
+        protected Object doNativeLargeIntegerConvert(final NativeObject receiver, final LargeIntegerObject argument) {
+            receiver.setSqClass(argument.getSqClass());
+            receiver.convertToBytesStorage(getBytesNode.execute(receiver));
+            throw new PrimitiveWithoutResultException();
+        }
+
+        @Specialization(guards = "receiver.isByteType()")
         protected Object doNativeFloat(final NativeObject receiver, final FloatObject argument) {
             receiver.setSqClass(argument.getSqClass());
-            receiver.convertToBytesStorage();
+            throw new PrimitiveWithoutResultException();
+        }
+
+        @Specialization(guards = "!receiver.isByteType()")
+        protected Object doNativeFloatConvert(final NativeObject receiver, final FloatObject argument) {
+            receiver.setSqClass(argument.getSqClass());
+            receiver.convertToBytesStorage(getBytesNode.execute(receiver));
             throw new PrimitiveWithoutResultException();
         }
 
@@ -495,7 +537,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected Object doLargeIntegerNative(final LargeIntegerObject receiver, final NativeObject argument) {
             receiver.setSqClass(argument.getSqClass());
-            receiver.setBytes(argument.getBytes());
+            receiver.setBytes(getBytesNode.execute(argument));
             throw new PrimitiveWithoutResultException();
         }
 
@@ -523,11 +565,11 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected Object doFloatNative(final FloatObject receiver, final NativeObject argument) {
             receiver.setSqClass(argument.getSqClass());
-            receiver.setBytes(argument.getBytes());
+            receiver.setBytes(getBytesNode.execute(argument));
             throw new PrimitiveWithoutResultException();
         }
 
-        @Specialization(guards = "!isNativeObject(receiver)")
+        @Specialization(guards = {"!isNativeObject(receiver)", "!isLargeInteger(receiver)", "!isFloat(receiver)"})
         protected Object doSqueakObject(final AbstractSqueakObject receiver, final AbstractSqueakObject argument) {
             receiver.setSqClass(argument.getSqClass());
             throw new PrimitiveWithoutResultException();
@@ -552,6 +594,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 117)
     protected abstract static class PrimExternalCallNode extends AbstractPrimitiveNode {
+        @Child private NativeGetBytesNode getBytes = NativeGetBytesNode.create();
         @Child private SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
 
@@ -565,9 +608,9 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             if (descriptor != null && descriptor.getSqClass() != null && sizeNode.execute(descriptor) >= 2) {
                 final Object descriptorAt0 = at0Node.execute(descriptor, 0);
                 final Object descriptorAt1 = at0Node.execute(descriptor, 1);
-                if (descriptorAt0 != null && descriptorAt1 != null) {
-                    final String moduleName = descriptorAt0.toString();
-                    final String functionName = descriptorAt1.toString();
+                if (descriptorAt0 instanceof NativeObject && descriptorAt1 instanceof NativeObject) {
+                    final String moduleName = getBytes.executeAsString((NativeObject) descriptorAt0);
+                    final String functionName = getBytes.executeAsString((NativeObject) descriptorAt1);
                     final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.forName((CompiledMethodObject) code, moduleName, functionName);
                     return replace(primitiveNode).executeWithArguments(frame, ArrayUtils.fillWith(receiverAndArguments, primitiveNode.numArguments, NotProvided.INSTANCE));
                 }
@@ -581,9 +624,9 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             if (descriptor != null && descriptor.getSqClass() != null && sizeNode.execute(descriptor) >= 2) {
                 final Object descriptorAt0 = at0Node.execute(descriptor, 0);
                 final Object descriptorAt1 = at0Node.execute(descriptor, 1);
-                if (descriptorAt0 != null && descriptorAt1 != null) {
-                    final String moduleName = descriptorAt0.toString();
-                    final String functionName = descriptorAt1.toString();
+                if (descriptorAt0 instanceof NativeObject && descriptorAt1 instanceof NativeObject) {
+                    final String moduleName = getBytes.executeAsString((NativeObject) descriptorAt0);
+                    final String functionName = getBytes.executeAsString((NativeObject) descriptorAt1);
                     return replace(PrimitiveNodeFactory.forName((CompiledMethodObject) code, moduleName, functionName)).executePrimitive(frame);
                 }
             }
@@ -633,7 +676,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 count++;
                 element = queue.poll();
             }
-            code.image.traceVerbose(count + " WeakPointersObjects have been garbage collected.");
+            code.image.traceVerbose(count, " WeakPointersObjects have been garbage collected.");
             return count > 0;
         }
     }
@@ -661,7 +704,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         public PrimYieldNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
-            yieldProcessNode = YieldProcessNode.create(method.image);
+            yieldProcessNode = YieldProcessNode.create(method);
         }
 
         @Specialization
@@ -726,7 +769,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
             isEmptyListNode = IsEmptyListNode.create(method.image);
             removeFirstLinkOfListNode = RemoveFirstLinkOfListNode.create(method.image);
-            resumeProcessNode = ResumeProcessNode.create(method.image);
+            resumeProcessNode = ResumeProcessNode.create(method);
         }
 
         @Specialization
@@ -735,7 +778,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             if (isEmptyListNode.executeIsEmpty(mutex)) {
                 mutex.atput0(MUTEX.OWNER, code.image.nil);
             } else {
-                final AbstractSqueakObject owningProcess = removeFirstLinkOfListNode.executeRemove(mutex);
+                final Object owningProcess = removeFirstLinkOfListNode.executeRemove(mutex);
                 mutex.atput0(MUTEX.OWNER, owningProcess);
                 resumeProcessNode.executeResume(frame, owningProcess);
             }
@@ -754,7 +797,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
             getActiveProcessNode = GetActiveProcessNode.create(method.image);
             linkProcessToListNode = LinkProcessToListNode.create(method.image);
-            wakeHighestPriorityNode = WakeHighestPriorityNode.create(method.image);
+            wakeHighestPriorityNode = WakeHighestPriorityNode.create(method);
         }
 
         @Override
@@ -814,20 +857,21 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 188)
     protected abstract static class PrimExecuteMethodArgsArrayNode extends AbstractPerformPrimitiveNode {
         @Child private DispatchNode dispatchNode = DispatchNode.create();
+        @Child private FrameSlotReadNode contextOrMarkerNode = FrameSlotReadNode.createForContextOrMarker();
 
         protected PrimExecuteMethodArgsArrayNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
         @Specialization
-        protected Object doExecute(final VirtualFrame frame, final Object receiver, final PointersObject argArray, final CompiledCodeObject codeObject) {
+        protected final Object doExecute(final VirtualFrame frame, final Object receiver, final PointersObject argArray, final CompiledCodeObject codeObject) {
             final int numArgs = argArray.size();
             final Object[] dispatchRcvrAndArgs = new Object[1 + numArgs];
             dispatchRcvrAndArgs[0] = receiver;
             for (int i = 0; i < numArgs; i++) {
                 dispatchRcvrAndArgs[1 + i] = argArray.at0(i);
             }
-            final Object thisContext = FrameAccess.getContextOrMarker(frame);
+            final Object thisContext = contextOrMarkerNode.executeRead(frame);
             return dispatchNode.executeDispatch(frame, codeObject, dispatchRcvrAndArgs, thisContext);
         }
     }
@@ -841,19 +885,24 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"!code.image.config.disableInterruptHandler()"})
-        protected AbstractSqueakObject doRelinquish(final VirtualFrame frame, final AbstractSqueakObject receiver, final long timeMicroseconds) {
-            code.image.interrupt.executeCheck(frame);
+        protected final AbstractSqueakObject doRelinquish(final VirtualFrame frame, final AbstractSqueakObject receiver, final long timeMicroseconds) {
+            code.image.interrupt.executeCheck(frame.materialize());
+            sleepFor(timeMicroseconds / 1000);
+            return receiver;
+        }
+
+        @TruffleBoundary
+        private static void sleepFor(final long millis) {
             try {
-                TimeUnit.MICROSECONDS.sleep(timeMicroseconds);
+                Thread.sleep(millis);
             } catch (InterruptedException e) {
                 CompilerDirectives.transferToInterpreter();
                 e.printStackTrace();
             }
-            return receiver;
         }
 
         @Specialization(guards = {"code.image.config.disableInterruptHandler()"})
-        protected AbstractSqueakObject doNothing(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final long timeMicroseconds) {
+        protected static final AbstractSqueakObject doNothing(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final long timeMicroseconds) {
             return receiver;
         }
     }
@@ -894,7 +943,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object returnValue(final Object receiver) {
+        protected static final Object returnValue(final Object receiver) {
             return receiver;
         }
     }
@@ -907,7 +956,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object returnValue(@SuppressWarnings("unused") final Object receiver) {
+        protected final Object returnValue(@SuppressWarnings("unused") final Object receiver) {
             return code.image.sqTrue;
         }
     }
@@ -920,7 +969,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object returnValue(@SuppressWarnings("unused") final Object receiver) {
+        protected final Object returnValue(@SuppressWarnings("unused") final Object receiver) {
             return code.image.sqFalse;
         }
     }
@@ -933,7 +982,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object returnValue(@SuppressWarnings("unused") final Object receiver) {
+        protected final Object returnValue(@SuppressWarnings("unused") final Object receiver) {
             return code.image.nil;
         }
     }
@@ -946,7 +995,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object returnValue(@SuppressWarnings("unused") final Object receiver) {
+        protected static final Object returnValue(@SuppressWarnings("unused") final Object receiver) {
             return -1L;
         }
     }
@@ -959,7 +1008,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object returnValue(@SuppressWarnings("unused") final Object receiver) {
+        protected static final Object returnValue(@SuppressWarnings("unused") final Object receiver) {
             return 0L;
         }
     }
@@ -972,7 +1021,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object returnValue(@SuppressWarnings("unused") final Object receiver) {
+        protected static final Object returnValue(@SuppressWarnings("unused") final Object receiver) {
             return 1L;
         }
     }
@@ -985,7 +1034,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object returnValue(@SuppressWarnings("unused") final Object receiver) {
+        protected static final Object returnValue(@SuppressWarnings("unused") final Object receiver) {
             return 2L;
         }
     }
@@ -1004,7 +1053,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object receiverVariable(final VirtualFrame frame) {
+        protected final Object receiverVariable(final VirtualFrame frame) {
             return receiverVariableNode.executeGeneric(frame);
         }
     }

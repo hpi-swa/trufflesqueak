@@ -1,6 +1,7 @@
 package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.source.SourceSection;
 
@@ -48,28 +49,29 @@ public abstract class AbstractBytecodeNode extends SqueakNodeWithCode {
         return index + numBytecodes;
     }
 
-    public int getIndex() {
+    public final int getIndex() {
         return index;
     }
 
-    public int getNumBytecodes() {
+    public final int getNumBytecodes() {
         return numBytecodes;
     }
 
     @Override
-    public SourceSection getSourceSection() {
+    @TruffleBoundary
+    public final SourceSection getSourceSection() {
         if (sourceSection == null) {
             sourceSection = code.getSource().createSection(lineNumber);
         }
         return sourceSection;
     }
 
-    public void setLineNumber(final int lineNumber) {
+    public final void setLineNumber(final int lineNumber) {
         this.lineNumber = lineNumber;
     }
 
     @Override
-    public void setSourceSection(final SourceSection section) {
+    public final void setSourceSection(final SourceSection section) {
         sourceSection = section;
     }
 }

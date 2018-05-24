@@ -293,12 +293,15 @@ public final class SqueakImageReader {
             if (chunkObject instanceof AbstractSqueakObject) {
                 ((AbstractSqueakObject) chunkObject).fillin(chunk);
             }
-            if (chunkObject instanceof NativeObject && ((NativeObject) chunkObject).getSqClass() == image.doesNotUnderstand.getSqClass()) { // check
-                                                                                                                                            // ByteSymbols
-                if (chunkObject.toString().equals("asSymbol")) {
-                    image.asSymbol = (NativeObject) chunkObject;
-                } else if (chunkObject.toString().equals(SimulationPrimitiveNode.SIMULATE_PRIMITIVE_SELECTOR)) {
-                    image.simulatePrimitiveArgs = (NativeObject) chunkObject;
+            if (chunkObject instanceof NativeObject) {
+                final NativeObject nativeChunkObject = (NativeObject) chunkObject;
+                if (nativeChunkObject.isByteType()) {
+                    final String stringValue = nativeChunkObject.asString();
+                    if ("asSymbol".equals(stringValue)) {
+                        image.asSymbol = (NativeObject) chunkObject;
+                    } else if (SimulationPrimitiveNode.SIMULATE_PRIMITIVE_SELECTOR.equals(stringValue)) {
+                        image.simulatePrimitiveArgs = (NativeObject) chunkObject;
+                    }
                 }
             }
         }

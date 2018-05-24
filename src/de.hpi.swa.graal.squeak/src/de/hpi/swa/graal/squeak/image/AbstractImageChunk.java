@@ -105,20 +105,20 @@ public abstract class AbstractImageChunk {
             } else if (format <= 8) {
                 assert false; // unused
             } else if (format == 9) { // 64-bit integers
-                object = NativeObject.newNativeLongs(image, null, null);
+                object = NativeObject.newNativeLongs(image, null, 0);
             } else if (format <= 11) { // 32-bit integers
                 if (this.getSqClass() == image.floatClass) {
                     object = FloatObject.bytesAsFloatObject(image, getBytes());
                 } else {
-                    object = NativeObject.newNativeWords(image, null, null);
+                    object = NativeObject.newNativeInts(image, null, 0);
                 }
             } else if (format <= 15) { // 16-bit integers
-                object = NativeObject.newNativeShorts(image, null, null);
+                object = NativeObject.newNativeShorts(image, null, 0);
             } else if (format <= 23) { // bytes
                 if (this.getSqClass() == image.largePositiveIntegerClass || this.getSqClass() == image.largeNegativeIntegerClass) {
                     object = new LargeIntegerObject(image);
                 } else {
-                    object = NativeObject.newNativeBytes(image, null, null);
+                    object = NativeObject.newNativeBytes(image, null, 0);
                 }
             } else if (format <= 31) { // compiled methods
                 object = new CompiledMethodObject(image);

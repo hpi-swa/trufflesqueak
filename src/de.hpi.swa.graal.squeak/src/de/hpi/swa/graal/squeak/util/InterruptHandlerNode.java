@@ -1,30 +1,36 @@
 package de.hpi.swa.graal.squeak.util;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
-import de.hpi.swa.graal.squeak.SqueakConfig;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.process.SignalSemaphoreNode;
 
 public final class InterruptHandlerNode extends Node {
-    @CompilationFinal private static final int INTERRUPT_CHECK_COUNTER_SIZE = 1000;
-    @CompilationFinal private static final int INTERRUPT_CHECKS_EVERY_NMS = 3;
+    @CompilationFinal private static final int INTERRUPT_CHECKS_EVERY_N_MILLISECONDS = 3;
     @CompilationFinal private final SqueakImageContext image;
     @CompilationFinal private final boolean disabled;
-    private int interruptCheckCounter = 0;
-    private int interruptCheckCounterFeedbackReset = INTERRUPT_CHECK_COUNTER_SIZE;
-    private long nextPollTick = 0;
+    @CompilationFinal private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+    @CompilationFinal private final ConditionProfile countingProfile = ConditionProfile.createCountingProfile();
+    @Child private SignalSemaphoreNode signalSemaporeNode;
     private long nextWakeupTick = 0;
-    private long lastTick = 0;
     private boolean interruptPending = false;
     private boolean disabledTemporarily = false;
     private boolean pendingFinalizationSignals = false;
-    @Child private SignalSemaphoreNode signalSemaporeNode;
+    private volatile boolean shouldTrigger = false;
 
     public static InterruptHandlerNode create(final SqueakImageContext image, final SqueakConfig config) {
         return new InterruptHandlerNode(image, config);
@@ -32,11 +38,26 @@ public final class InterruptHandlerNode extends Node {
 
     protected InterruptHandlerNode(final SqueakImageContext image, final SqueakConfig config) {
         this.image = image;
+
         disabled = config.disableInterruptHandler();
         if (disabled) {
             image.getOutput().println("Interrupt handler disabled...");
         }
-        signalSemaporeNode = SignalSemaphoreNode.create(image);
+    }
+
+    public void initializeSignalSemaphoreNode(final CompiledCodeObject method) {
+        signalSemaporeNode = SignalSemaphoreNode.create(method);
+    }
+
+    public void start() {
+        if (disabled) {
+            return;
+        }
+        executor.scheduleWithFixedDelay(new Runnable() {
+            public void run() {
+                shouldTrigger = true;
+            }
+        }, INTERRUPT_CHECKS_EVERY_N_MILLISECONDS, INTERRUPT_CHECKS_EVERY_N_MILLISECONDS, TimeUnit.MILLISECONDS);
     }
 
     public void setInterruptPending() {
@@ -63,57 +84,30 @@ public final class InterruptHandlerNode extends Node {
         pendingFinalizationSignals = true;
     }
 
-    public void reset() { // for testing purposes
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        interruptCheckCounter = 0;
-        interruptCheckCounterFeedbackReset = INTERRUPT_CHECK_COUNTER_SIZE;
-        nextPollTick = 0;
-        nextWakeupTick = 0;
-        lastTick = 0;
-        interruptPending = false;
-        disabledTemporarily = false;
-        pendingFinalizationSignals = false;
-    }
-
-    /*
-     * Check for interrupts on sends and backward jumps. TODO: call on backward jumps
-     */
     public void sendOrBackwardJumpTrigger(final VirtualFrame frame) {
-        if (disabled || disabledTemporarily) {
+        if (disabled) {
+            return; //
+        }
+        if (CompilerDirectives.inCompiledCode() && !CompilerDirectives.inCompilationRoot()) {
+            return; // do not trigger in inlined code
+        }
+        if (disabledTemporarily) {
             return;
         }
-        // Decrement counter in separate if-statement (should not happen at all when disabled).
-        if (interruptCheckCounter-- > 0) {
-            return; // only really check every 100 times or so
+        if (countingProfile.profile(!shouldTrigger)) {
+            return;
         }
-        executeCheck(frame);
+        executeCheck(frame.materialize());
     }
 
-    public void executeCheck(final VirtualFrame frame) {
-        final long now = System.currentTimeMillis();
-        if (now < lastTick) { // millisecond clock wrapped"
-            nextPollTick = now + (nextPollTick - lastTick);
-            if (nextWakeupTick != 0) {
-                nextWakeupTick = now + (nextWakeupTick - lastTick);
-            }
-        }
-        // Feedback logic attempts to keep interrupt response around 3ms...
-        if ((now - lastTick) < getInterruptChecksEveryNms()) {
-            interruptCheckCounterFeedbackReset += 10;
-        } else {
-            if (interruptCheckCounterFeedbackReset <= INTERRUPT_CHECK_COUNTER_SIZE) {
-                interruptCheckCounterFeedbackReset = INTERRUPT_CHECK_COUNTER_SIZE;
-            } else {
-                interruptCheckCounterFeedbackReset -= 12;
-            }
-        }
-        interruptCheckCounter = interruptCheckCounterFeedbackReset;
-        lastTick = now; // used to detect wrap around of millisecond clock
+    @TruffleBoundary
+    public void executeCheck(final MaterializedFrame frame) {
+        shouldTrigger = false;
         if (interruptPending) {
             interruptPending = false; // reset interrupt flag
             signalSemaporeIfNotNil(frame, SPECIAL_OBJECT_INDEX.TheInterruptSemaphore);
         }
-        if ((nextWakeupTick != 0) && (now >= nextWakeupTick)) {
+        if ((nextWakeupTick != 0) && (System.currentTimeMillis() >= nextWakeupTick)) {
             nextWakeupTick = 0; // reset timer interrupt
             signalSemaporeIfNotNil(frame, SPECIAL_OBJECT_INDEX.TheTimerSemaphore);
         }
@@ -123,7 +117,7 @@ public final class InterruptHandlerNode extends Node {
         }
     }
 
-    private void signalSemaporeIfNotNil(final VirtualFrame frame, final int semaphoreIndex) {
+    private void signalSemaporeIfNotNil(final MaterializedFrame frame, final int semaphoreIndex) {
         final Object semaphoreObject = image.specialObjectsArray.at0(semaphoreIndex);
         if (semaphoreObject != image.nil) {
             signalSemaporeNode.executeSignal(frame, (PointersObject) semaphoreObject);
@@ -131,6 +125,18 @@ public final class InterruptHandlerNode extends Node {
     }
 
     public static int getInterruptChecksEveryNms() {
-        return INTERRUPT_CHECKS_EVERY_NMS;
+        return INTERRUPT_CHECKS_EVERY_N_MILLISECONDS;
+    }
+
+    /*
+     * TESTING
+     */
+
+    public void reset() {
+        CompilerAsserts.neverPartOfCompilation("Resetting interrupt handler only supported for testing purposes");
+        nextWakeupTick = 0;
+        interruptPending = false;
+        disabledTemporarily = false;
+        pendingFinalizationSignals = false;
     }
 }

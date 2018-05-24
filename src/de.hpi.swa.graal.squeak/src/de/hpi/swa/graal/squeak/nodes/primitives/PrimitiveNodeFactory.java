@@ -13,6 +13,7 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
 import de.hpi.swa.graal.squeak.nodes.context.ArgumentNode;
+import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.FilePlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.FloatArrayPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.GraalSqueakPlugin;
@@ -28,7 +29,6 @@ import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitives.Primitive
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.IOPrimitives;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives.SimulationPrimitiveNode;
-import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitivesFactory.SimulationPrimitiveNodeFactory;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.StoragePrimitives;
 
 public abstract class PrimitiveNodeFactory {
@@ -41,6 +41,7 @@ public abstract class PrimitiveNodeFactory {
                     new MiscellaneousPrimitives(),
                     new StoragePrimitives()};
     @CompilationFinal(dimensions = 1) private static final AbstractPrimitiveFactoryHolder[] plugins = new AbstractPrimitiveFactoryHolder[]{
+                    new BitBltPlugin(),
                     new FilePlugin(),
                     new FloatArrayPlugin(),
                     new GraalSqueakPlugin(),
@@ -48,7 +49,7 @@ public abstract class PrimitiveNodeFactory {
                     new LargeIntegers(),
                     new MiscPrimitivePlugin(),
                     new PolyglotPlugin()};
-    @CompilationFinal(dimensions = 1) private static final String[] simulatedPlugins = new String[]{"BitBltPlugin", "B2DPlugin", "BalloonPlugin"};
+    @CompilationFinal(dimensions = 1) private static final String[] simulatedPlugins = new String[]{"B2DPlugin", "BalloonPlugin"};
     @CompilationFinal private static final Map<Integer, NodeFactory<? extends AbstractPrimitiveNode>> primitiveTable;
 
     static {
@@ -73,17 +74,12 @@ public abstract class PrimitiveNodeFactory {
     public static AbstractPrimitiveNode forName(final CompiledMethodObject method, final String moduleName, final String functionName) {
         for (int i = 0; i < simulatedPlugins.length; i++) {
             if (moduleName.equals(simulatedPlugins[i])) {
-                final NodeFactory<SimulationPrimitiveNode> nodeFactory = SimulationPrimitiveNodeFactory.getInstance();
-                final int primitiveArity = nodeFactory.getExecutionSignature().size();
-                final SqueakNode[] argumentNodes = new SqueakNode[primitiveArity];
-                for (int j = 0; j < primitiveArity; j++) {
-                    argumentNodes[j] = ArgumentNode.create(method, j);
-                }
-                return nodeFactory.createNode(method, primitiveArity, moduleName, functionName, argumentNodes);
+                return SimulationPrimitiveNode.create(method, moduleName, functionName);
             }
         }
         for (AbstractPrimitiveFactoryHolder plugin : plugins) {
-            if (!plugin.getClass().getSimpleName().equals(moduleName)) {
+            final String pluginName = plugin.getClass().getSimpleName();
+            if (!pluginName.equals(moduleName)) {
                 continue;
             }
             try {
@@ -94,6 +90,9 @@ public abstract class PrimitiveNodeFactory {
                     if (functionName.equals(primitive.name())) {
                         return createInstance(method, nodeFactory);
                     }
+                }
+                if (plugin.useSimulationAsFallback()) {
+                    return SimulationPrimitiveNode.create(method, pluginName, functionName);
                 }
             } catch (RuntimeException e) {
                 break;

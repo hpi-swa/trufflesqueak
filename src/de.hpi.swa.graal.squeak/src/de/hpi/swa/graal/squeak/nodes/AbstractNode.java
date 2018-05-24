@@ -1,29 +1,26 @@
 package de.hpi.swa.graal.squeak.nodes;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
 
-import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 
-/**
- * This is the base class for Squeak bytecode evaluation.
- */
+@ReportPolymorphism
 @TypeSystemReference(SqueakTypes.class)
-public abstract class SqueakNodeWithCode extends SqueakNode {
-    @CompilationFinal protected final CompiledCodeObject code;
-    @Child private FrameSlotReadNode contextOrMarkerReadNode = FrameSlotReadNode.createForContextOrMarker();
-
-    public SqueakNodeWithCode(final CompiledCodeObject code) {
-        this.code = code;
-    }
+public abstract class AbstractNode extends Node {
+    @Child protected FrameSlotReadNode contextOrMarkerReadNode = FrameSlotReadNode.createForContextOrMarker();
 
     protected final boolean isVirtualized(final VirtualFrame frame) {
         final Object contextOrMarker = contextOrMarkerReadNode.executeRead(frame);
         return contextOrMarker instanceof FrameMarker || !((ContextObject) contextOrMarker).isDirty();
+    }
+
+    protected final boolean isFullyVirtualized(final VirtualFrame frame) {
+        return contextOrMarkerReadNode.executeRead(frame) instanceof FrameMarker;
     }
 
     protected final Object getContextOrMarker(final VirtualFrame frame) {

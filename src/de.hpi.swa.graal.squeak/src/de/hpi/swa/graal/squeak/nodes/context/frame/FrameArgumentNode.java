@@ -30,7 +30,7 @@ public abstract class FrameArgumentNode extends Node {
     public abstract Object executeRead(VirtualFrame frame);
 
     @Specialization
-    protected Object doArgument(final VirtualFrame frame) {
+    protected final Object doArgument(final VirtualFrame frame) {
         final Object value;
         try {
             value = frame.getArguments()[argumentIndex];

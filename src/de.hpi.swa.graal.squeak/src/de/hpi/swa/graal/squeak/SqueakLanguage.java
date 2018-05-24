@@ -34,6 +34,7 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
     protected CallTarget parse(final ParsingRequest request) throws Exception {
         final SqueakImageContext image = this.getContextReference().get();
         image.fillInFrom(new FileInputStream(request.getSource().getPath()));
+        image.interrupt.start();
         if (image.config.isCustomContext()) {
             return image.getCustomContext();
         } else {

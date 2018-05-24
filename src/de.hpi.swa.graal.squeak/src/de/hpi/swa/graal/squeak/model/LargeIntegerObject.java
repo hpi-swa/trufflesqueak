@@ -9,7 +9,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.model.storages.NativeBytesStorage;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 public final class LargeIntegerObject extends AbstractSqueakObject {
@@ -64,7 +63,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     }
 
     public void setNativeAt0(final long index, final long value) {
-        if (value < 0 || value > NativeBytesStorage.BYTE_MAX) { // check for overflow
+        if (value < 0 || value > NativeObject.BYTE_MAX) { // check for overflow
             throw new IllegalArgumentException("Illegal value for LargeIntegerObject: " + value);
         }
         bytes[(int) index] = (byte) value;
@@ -112,20 +111,21 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     }
 
     private static byte[] derivedBytesFromBigInteger(final BigInteger integer) {
-        final byte[] byteArray;
         final byte[] array = integer.abs().toByteArray();
-        final int size = (integer.bitLength() + 7) / 8;
-        if (array.length > size) {
-            byteArray = new byte[size];
-            final int offset = array.length - size;
-            for (int i = 0; i < byteArray.length; i++) {
-                byteArray[i] = array[offset + i];
-            }
-        } else {
-            assert array.length == size;
-            byteArray = array;
+        final int length = array.length;
+        if (length <= 1) {
+            return array;
         }
-        return ArrayUtils.swapOrderInPlace(byteArray);
+        int skipped = 0;
+        for (int i = 0; i < length; i++) {
+            if (array[i] == 0) {
+                skipped++;
+                continue;
+            } else {
+                break;
+            }
+        }
+        return ArrayUtils.swapOrderInPlace(Arrays.copyOfRange(array, skipped, length));
     }
 
     public boolean isNegative() {
@@ -172,7 +172,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
 
     @TruffleBoundary
     public long reduceToLong() throws ArithmeticException {
-        return integer.longValueExact() & MASK_64BIT;
+        return getBigInteger().longValueExact();
     }
 
     private LargeIntegerObject newFromBigInteger(final BigInteger value) {

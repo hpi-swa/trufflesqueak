@@ -1,8 +1,21 @@
 package de.hpi.swa.graal.squeak.model;
 
+import java.util.Arrays;
+
+import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.NodeUtil;
+import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.profiles.ValueProfile;
+
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
 public final class CompiledMethodObject extends CompiledCodeObject {
+    @CompilationFinal protected final ValueProfile storageType = ValueProfile.createClassProfile();
+
     public CompiledMethodObject(final SqueakImageContext img) {
         super(img);
     }
@@ -37,6 +50,7 @@ public final class CompiledMethodObject extends CompiledCodeObject {
 
     @Override
     public String toString() {
+        CompilerAsserts.neverPartOfCompilation();
         String className = "UnknownClass";
         String selector = "unknownSelector";
         final ClassObject classObject = getCompiledInClass();
@@ -45,12 +59,13 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         }
         final NativeObject selectorObj = getCompiledInSelector();
         if (selectorObj != null) {
-            selector = selectorObj.toString();
+            selector = selectorObj.asString();
         }
         return className + ">>" + selector;
     }
 
     public NativeObject getCompiledInSelector() {
+        CompilerAsserts.neverPartOfCompilation("Do not use getCompiledInSelector() in compiled code");
         if (literals.length > 1) {
             final Object lit = literals[literals.length - 2];
             if (lit == null) {
@@ -133,4 +148,27 @@ public final class CompiledMethodObject extends CompiledCodeObject {
             }
         }
     }
+
+    @Override
+    @ExplodeLoop
+    public RootCallTarget getSplitCallTarget() {
+        final RootCallTarget target = getCallTarget();
+        final NativeObject selector = getCompiledInSelector();
+        for (int i = 0; i < image.specialSelectorsArray.length; i++) {
+            if (Arrays.equals(image.specialSelectorsArray[i].getByteStorage(storageType), selector.getByteStorage(storageType))) {
+                return split(target);
+            }
+        }
+        return target;
+    }
+
+    /**
+     * Replicate the CallTarget to let each builtin call site executes its own AST.
+     */
+    private static RootCallTarget split(final RootCallTarget callTarget) {
+        CompilerAsserts.neverPartOfCompilation();
+        final RootNode rootNode = callTarget.getRootNode();
+        return Truffle.getRuntime().createCallTarget(NodeUtil.cloneNode(rootNode));
+    }
+
 }

@@ -5,7 +5,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
 
-public class LiteralConstantNode extends SqueakNode {
+public final class LiteralConstantNode extends SqueakNode {
     @Child private SqueakNode literalNode;
 
     public LiteralConstantNode(final CompiledCodeObject code, final long literalIndex) {

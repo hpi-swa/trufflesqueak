@@ -53,12 +53,13 @@ public final class ClassObject extends AbstractSqueakObject {
             // metaclasses store their singleton instance in the last field
             final Object classInstance = at0(size() - 1);
             if (classInstance instanceof ClassObject) {
-                return "Metaclass (" + ((ClassObject) classInstance).getName() + ")";
+                final NativeObject name = (NativeObject) ((ClassObject) classInstance).getName();
+                return "Metaclass (" + name.asString() + ")";
             }
         } else {
             final Object nameObj = getName();
             if (nameObj instanceof NativeObject) {
-                return nameObj.toString();
+                return ((NativeObject) nameObj).asString();
             }
         }
         return "UnknownClass";
@@ -247,7 +248,7 @@ public final class ClassObject extends AbstractSqueakObject {
                     assert size == 2;
                     return new FloatObject(image);
                 } else {
-                    return NativeObject.newNativeWords(image, this, size);
+                    return NativeObject.newNativeInts(image, this, size);
                 }
             case 12: case 13: case 14: case 15:
                 return NativeObject.newNativeShorts(image, this, size);

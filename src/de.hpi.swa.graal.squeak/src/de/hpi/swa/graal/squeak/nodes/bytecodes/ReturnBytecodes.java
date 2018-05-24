@@ -4,8 +4,8 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.graal.squeak.exceptions.Returns.FreshLocalReturn;
-import de.hpi.swa.graal.squeak.exceptions.Returns.FreshNonLocalReturn;
+import de.hpi.swa.graal.squeak.exceptions.Returns.LocalReturn;
+import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
@@ -23,30 +23,28 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
 public final class ReturnBytecodes {
 
     protected abstract static class AbstractReturnNode extends AbstractBytecodeNode {
-        @Child protected FrameSlotReadNode readContextNode;
-        @Child protected FrameArgumentNode readClosureNode;
+        @Child protected FrameSlotReadNode readContextNode = FrameSlotReadNode.createForContextOrMarker();
+        @Child protected FrameArgumentNode readClosureNode = FrameArgumentNode.create(FrameAccess.CLOSURE_OR_NULL);
 
         protected AbstractReturnNode(final CompiledCodeObject code, final int index) {
             super(code, index);
-            readContextNode = FrameSlotReadNode.create(code.thisContextOrMarkerSlot);
-            readClosureNode = FrameArgumentNode.create(FrameAccess.CLOSURE_OR_NULL);
         }
 
         protected boolean hasClosure(final VirtualFrame frame) {
             return readClosureNode.executeRead(frame) instanceof BlockClosureObject;
         }
 
-        protected final boolean isDirty(final VirtualFrame frame) {
-            return getContext(frame).isDirty();
+        protected final boolean hasModifiedSender(final VirtualFrame frame) {
+            return getContext(frame).hasModifiedSender();
         }
 
-        @Specialization(guards = {"!hasClosure(frame)", "isVirtualized(frame) || !isDirty(frame)"})
-        protected Object executeLocalReturn(final VirtualFrame frame) {
-            throw new FreshLocalReturn(getReturnValue(frame));
+        @Specialization(guards = {"!hasClosure(frame)", "isVirtualized(frame) || !hasModifiedSender(frame)"})
+        protected final Object executeLocalReturn(final VirtualFrame frame) {
+            throw new LocalReturn(getReturnValue(frame));
         }
 
-        @Specialization(guards = {"hasClosure(frame) || !isVirtualized(frame)", "hasClosure(frame) || isDirty(frame)"})
-        protected Object executeNonLocalReturn(final VirtualFrame frame) {
+        @Specialization(guards = {"hasClosure(frame) || !isVirtualized(frame)", "hasClosure(frame) || hasModifiedSender(frame)"})
+        protected final Object executeNonLocalReturn(final VirtualFrame frame) {
             final ContextObject outerContext;
             final BlockClosureObject block = (BlockClosureObject) readClosureNode.executeRead(frame);
             if (block != null) {
@@ -54,7 +52,7 @@ public final class ReturnBytecodes {
             } else {
                 outerContext = (ContextObject) readContextNode.executeRead(frame);
             }
-            throw new FreshNonLocalReturn(getReturnValue(frame), outerContext);
+            throw new NonLocalReturn(getReturnValue(frame), outerContext);
         }
 
         protected Object getReturnValue(@SuppressWarnings("unused") final VirtualFrame frame) {
@@ -75,7 +73,7 @@ public final class ReturnBytecodes {
         }
 
         @Override
-        protected Object getReturnValue(final VirtualFrame frame) {
+        protected final Object getReturnValue(final VirtualFrame frame) {
             return constant;
         }
 
@@ -98,7 +96,7 @@ public final class ReturnBytecodes {
         }
 
         @Override
-        protected Object getReturnValue(final VirtualFrame frame) {
+        protected final Object getReturnValue(final VirtualFrame frame) {
             return receiverNode.executeRead(frame);
         }
 
@@ -142,7 +140,7 @@ public final class ReturnBytecodes {
         }
 
         @Override
-        protected Object getReturnValue(final VirtualFrame frame) {
+        protected final Object getReturnValue(final VirtualFrame frame) {
             return popNode.executeRead(frame);
         }
 

@@ -2,9 +2,11 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 
 import java.util.List;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
@@ -208,6 +210,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {17, 37}, name = "primDigitBitShiftMagnitude")
     public abstract static class PrimBitShiftNode extends AbstractArithmeticPrimitiveNode {
+        private final ValueProfile storageType = ValueProfile.createClassProfile();
 
         public PrimBitShiftNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -246,14 +249,14 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             return receiver.shiftRight((int) -arg);
         }
 
-        @Specialization(guards = {"arg >= 0"})
-        protected static final Object doNativeObject(final NativeObject receiver, final long arg) {
-            return doLargeInteger(receiver.normalize(), arg);
+        @Specialization(guards = {"arg >= 0", "receiver.isByteType()"})
+        protected final Object doNativeObject(final NativeObject receiver, final long arg) {
+            return doLargeInteger(receiver.normalize(storageType), arg);
         }
 
-        @Specialization(guards = {"arg < 0"})
-        protected static final Object doNativeObjectNegative(final NativeObject receiver, final long arg) {
-            return doLargeIntegerNegative(receiver.normalize(), arg);
+        @Specialization(guards = {"arg < 0", "receiver.isByteType()"})
+        protected final Object doNativeObjectNegative(final NativeObject receiver, final long arg) {
+            return doLargeIntegerNegative(receiver.normalize(storageType), arg);
         }
 
         protected static final boolean isLShiftLongOverflow(final long receiver, final long arg) {
@@ -304,6 +307,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected long doLong(final long a, final long b) {
             if (a == b) {
                 return 0;
@@ -319,6 +323,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected long doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
             if (a.equals(b)) {
                 return 0;
@@ -335,12 +340,20 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected long doLong(final long a, final LargeIntegerObject b) {
-            return doLargeInteger(asLargeInteger(a), b);
+            try {
+                return doLong(a, b.reduceToLong());
+            } catch (ArithmeticException e) {
+                return -1L; // If `b` does not fit into a long, it must be larger
+            }
         }
 
         @Specialization
         protected long doLargeInteger(final LargeIntegerObject a, final long b) {
-            return doLargeInteger(a, asLargeInteger(b));
+            try {
+                return doLong(a.reduceToLong(), b);
+            } catch (ArithmeticException e) {
+                return 1L; // If `a` does not fit into a long, it must be larger
+            }
         }
     }
 
@@ -420,6 +433,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(names = {"primNormalizePositive", "primNormalizeNegative"})
     public abstract static class PrimNormalizeNode extends AbstractArithmeticPrimitiveNode {
+        private final ValueProfile storageType = ValueProfile.createClassProfile();
         @Child private ReturnReceiverNode receiverNode;
 
         public PrimNormalizeNode(final CompiledMethodObject method, final int numArguments) {
@@ -428,18 +442,18 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected long doLong(final long value) {
+        protected static final long doLong(final long value) {
             return value;
         }
 
         @Specialization
-        public Object doLargeInteger(final LargeIntegerObject value) {
+        public static final Object doLargeInteger(final LargeIntegerObject value) {
             return value.reduceIfPossible();
         }
 
-        @Specialization
-        protected Object doNativeObject(final NativeObject value) {
-            return value.normalize().reduceIfPossible();
+        @Specialization(guards = "receiver.isByteType()")
+        protected final Object doNativeObject(final NativeObject receiver) {
+            return receiver.normalize(storageType);
         }
     }
 }

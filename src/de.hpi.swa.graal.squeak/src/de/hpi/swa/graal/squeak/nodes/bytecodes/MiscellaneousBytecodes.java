@@ -1,18 +1,20 @@
 package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags.StatementTag;
 import com.oracle.truffle.api.instrumentation.Tag;
+import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
-import de.hpi.swa.graal.squeak.exceptions.Returns.FreshLocalReturn;
+import de.hpi.swa.graal.squeak.exceptions.Returns.LocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.nodes.HandlePrimitiveFailedNode;
+import de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodesFactory.CallPrimitiveNodeGen;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushLiteralConstantNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushLiteralVariableNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushReceiverVariableNode;
@@ -30,38 +32,33 @@ import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackTopNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
-import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitives.PrimitiveFailedNode;
 
 public final class MiscellaneousBytecodes {
 
-    public static class CallPrimitiveNode extends AbstractBytecodeNode {
+    public abstract static class CallPrimitiveNode extends AbstractBytecodeNode {
         @Child private HandlePrimitiveFailedNode handlePrimFailed;
-        @Child private AbstractPrimitiveNode primitiveNode;
+        @Child protected AbstractPrimitiveNode primitiveNode;
         @CompilationFinal private final int primitiveIndex;
+        @CompilationFinal private final ValueProfile primitiveNodeProfile = ValueProfile.createClassProfile();
+
+        public static CallPrimitiveNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int byte1, final int byte2) {
+            return CallPrimitiveNodeGen.create(code, index, numBytecodes, byte1, byte2);
+        }
 
         public CallPrimitiveNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int byte1, final int byte2) {
             super(code, index, numBytecodes);
             assert code instanceof CompiledMethodObject;
-            if (!code.hasPrimitive()) {
-                primitiveIndex = 0;
-                primitiveNode = PrimitiveFailedNode.create((CompiledMethodObject) code);
-            } else {
-                primitiveIndex = byte1 + (byte2 << 8);
-                primitiveNode = PrimitiveNodeFactory.forIndex((CompiledMethodObject) code, primitiveIndex);
-                primitiveNode = primitiveNode != null ? primitiveNode : PrimitiveFailedNode.create((CompiledMethodObject) code);
-                handlePrimFailed = HandlePrimitiveFailedNode.create(code);
-            }
+            primitiveIndex = byte1 + (byte2 << 8);
+            primitiveNode = PrimitiveNodeFactory.forIndex((CompiledMethodObject) code, primitiveIndex);
+            handlePrimFailed = HandlePrimitiveFailedNode.create(code);
         }
 
-        @Override
-        public void executeVoid(final VirtualFrame frame) {
-            CompilerAsserts.compilationConstant(index);
+        @Specialization(guards = {"code.hasPrimitive()", "primitiveNode != null"})
+        protected final int doPrimitive(final VirtualFrame frame) {
             try {
-                throw new FreshLocalReturn(primitiveNode.executePrimitive(frame));
+                throw new LocalReturn(primitiveNodeProfile.profile(primitiveNode).executePrimitive(frame));
             } catch (PrimitiveFailed e) {
-                if (handlePrimFailed != null) {
-                    handlePrimFailed.executeHandle(frame, e);
-                }
+                handlePrimFailed.executeHandle(frame, e);
                 // if (!(primitiveNode instanceof PrimitiveFailedNode)) {
                 // code.image.trace("PrimFail: " + primitiveNode);
                 // }
@@ -73,6 +70,12 @@ public final class MiscellaneousBytecodes {
                 // }
                 // code.image.trace("UnsupportedSpecializationException: " + e);
             }
+            return getSuccessorIndex(); // continue with fallback code
+        }
+
+        @Specialization(guards = {"!code.hasPrimitive() || primitiveNode == null"})
+        protected final int doFallback(@SuppressWarnings("unused") final VirtualFrame frame) {
+            return getSuccessorIndex(); // continue with fallback code immediately
         }
 
         @Override
@@ -86,7 +89,7 @@ public final class MiscellaneousBytecodes {
         }
     }
 
-    public abstract static class DoubleExtendedDoAnythingNode {
+    public static final class DoubleExtendedDoAnythingNode {
 
         public static AbstractBytecodeNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int second, final int third) {
             final int opType = second >> 5;
@@ -113,14 +116,13 @@ public final class MiscellaneousBytecodes {
         }
     }
 
-    public static class DupNode extends UnknownBytecodeNode {
-        @Child private StackPushNode pushNode;
+    public static final class DupNode extends UnknownBytecodeNode {
+        @Child private StackPushNode pushNode = StackPushNode.create();
         @Child private StackTopNode topNode;
 
         public DupNode(final CompiledCodeObject code, final int index, final int numBytecodes) {
             super(code, index, numBytecodes, -1);
             topNode = StackTopNode.create(code);
-            pushNode = StackPushNode.create(code);
         }
 
         @Override
@@ -134,7 +136,7 @@ public final class MiscellaneousBytecodes {
         }
     }
 
-    public static class ExtendedBytecodes {
+    public static final class ExtendedBytecodes {
 
         public static AbstractBytecodeNode createPopInto(final CompiledCodeObject code, final int index, final int numBytecodes, final int nextByte) {
             final long variableIndex = variableIndex(nextByte);
@@ -193,7 +195,7 @@ public final class MiscellaneousBytecodes {
         }
     }
 
-    public static class PopNode extends UnknownBytecodeNode {
+    public static final class PopNode extends UnknownBytecodeNode {
         @Child private StackPopNode popNode;
 
         public PopNode(final CompiledCodeObject code, final int index, final int numBytecodes) {

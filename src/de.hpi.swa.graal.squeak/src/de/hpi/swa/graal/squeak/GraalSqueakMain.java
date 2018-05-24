@@ -16,6 +16,8 @@ import org.graalvm.polyglot.Source.Builder;
 
 import com.oracle.truffle.api.Truffle;
 
+import de.hpi.swa.graal.squeak.util.SqueakConfig;
+
 public class GraalSqueakMain extends AbstractLanguageLauncher {
     private SqueakConfig config;
 

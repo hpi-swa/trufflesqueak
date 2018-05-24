@@ -5,7 +5,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
 import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.model.storages.NativeWordsStorage;
 
 public final class FloatObject extends AbstractSqueakObject {
     @CompilationFinal public static final int PRECISION = 53;
@@ -58,7 +57,7 @@ public final class FloatObject extends AbstractSqueakObject {
     }
 
     public void setNativeAt0(final long index, final long value) {
-        if (value < 0 || value > NativeWordsStorage.INTEGER_MAX) { // check for overflow
+        if (value < 0 || value > NativeObject.INTEGER_MAX) { // check for overflow
             throw new IllegalArgumentException("Illegal value for FloatObject: " + value);
         }
         if (index == 0) {

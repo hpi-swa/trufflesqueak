@@ -2,7 +2,7 @@ package de.hpi.swa.graal.squeak.test;
 
 public final class SqueakSUnitTestMap {
 
-    static final Object[] SQUEAK_TEST_CASES = new Object[]{"AddPrefixNamePolicyTest", TEST_TYPE.PASSING,
+    public static final Object[] SQUEAK_TEST_CASES = new Object[]{"AddPrefixNamePolicyTest", TEST_TYPE.PASSING,
                     "AliasTest", TEST_TYPE.PASSING,
                     "AllNamePolicyTest", TEST_TYPE.PASSING,
                     "AllocationTest", TEST_TYPE.IGNORE,
@@ -16,7 +16,7 @@ public final class SqueakSUnitTestMap {
                     "Base64MimeConverterTest", TEST_TYPE.PASSING,
                     "BasicBehaviorClassMetaclassTest", TEST_TYPE.PASSING,
                     "BasicTypeTest", TEST_TYPE.PASSING,
-                    "BecomeTest", TEST_TYPE.PASSING,
+                    "BecomeTest", TEST_TYPE.FAILING,
                     "BehaviorTest", TEST_TYPE.FAILING,
                     "BindingPolicyTest", TEST_TYPE.PASSING,
                     "BitBltClipBugs", TEST_TYPE.PASSING,
@@ -90,7 +90,7 @@ public final class SqueakSUnitTestMap {
                     "DoubleWordArrayTest", TEST_TYPE.FLAKY, // two errors in Squeak
                                                             // (BROKEN_IN_SQUEAK)
                     "DurationTest", TEST_TYPE.PASSING,
-                    "EnvironmentTest", TEST_TYPE.FAILING,
+                    "EnvironmentTest", TEST_TYPE.PASSING,
                     "EPSCanvasTest", TEST_TYPE.PASSING,
                     "EtoysStringExtensionTest", TEST_TYPE.PASSING,
                     "EventManagerTest", TEST_TYPE.PASSING,
@@ -109,7 +109,7 @@ public final class SqueakSUnitTestMap {
                     "FloatArrayTest", TEST_TYPE.PASSING,
                     "FloatCollectionTest", TEST_TYPE.PASSING,
                     "FloatTest", TEST_TYPE.FAILING,
-                    "FontTest", TEST_TYPE.FAILING,
+                    "FontTest", TEST_TYPE.PASSING,
                     "FormCanvasTest", TEST_TYPE.FAILING,
                     "FormTest", TEST_TYPE.PASSING,
                     "FractionTest", TEST_TYPE.PASSING,
@@ -228,7 +228,7 @@ public final class SqueakSUnitTestMap {
                     "PNGReadWriterTest", TEST_TYPE.NOT_TERMINATING,
                     "PointTest", TEST_TYPE.PASSING,
                     "PolygonMorphTest", TEST_TYPE.PASSING,
-                    "PreferencesTest", TEST_TYPE.FAILING,
+                    "PreferencesTest", TEST_TYPE.PASSING,
                     "ProcessSpecificTest", TEST_TYPE.PASSING,
                     "ProcessTerminateBug", TEST_TYPE.FLAKY,
                     "ProcessTest", TEST_TYPE.PASSING,
@@ -343,7 +343,7 @@ public final class SqueakSUnitTestMap {
                     "UrlTest", TEST_TYPE.PASSING,
                     "UserInterfaceThemeTest", TEST_TYPE.NOT_TERMINATING,
                     "UTF16TextConverterTest", TEST_TYPE.BROKEN_IN_SQUEAK,
-                    "UTF32TextConverterTest", TEST_TYPE.FAILING,
+                    "UTF32TextConverterTest", TEST_TYPE.PASSING,
                     "UTF8TextConverterTest", TEST_TYPE.FAILING, // FIXME: NullPointerException
                     "UTF8EdgeCaseTest", TEST_TYPE.FAILING, // failing in Squeak
                     "UUIDPrimitivesTest", TEST_TYPE.PASSING,
@@ -357,23 +357,23 @@ public final class SqueakSUnitTestMap {
                     "WeakSetTest", TEST_TYPE.FLAKY,
                     "WebClientServerTest", TEST_TYPE.FAILING,
                     "WeekTest", TEST_TYPE.PASSING,
-                    "WideCharacterSetTest", TEST_TYPE.FAILING,
+                    "WideCharacterSetTest", TEST_TYPE.PASSING,
                     "WideStringTest", TEST_TYPE.NOT_TERMINATING,
                     "Win32VMTest", TEST_TYPE.PASSING,
                     "WordArrayTest", TEST_TYPE.PASSING,
                     "WorldStateTest", TEST_TYPE.NOT_TERMINATING,
-                    "WriteStreamTest", TEST_TYPE.FAILING,
+                    "WriteStreamTest", TEST_TYPE.PASSING,
                     "XMLParserTest", TEST_TYPE.PASSING,
                     "YearMonthWeekTest", TEST_TYPE.PASSING,
                     "YearTest", TEST_TYPE.PASSING};
 
-    static final class TEST_TYPE {
-        static final String PASSING = "Passing"; // should pass
-        static final String FAILING = "Failing"; // some/all test selectors fail/error
-        static final String NOT_TERMINATING = "Not Terminating"; // does not terminate
-        static final String BROKEN_IN_SQUEAK = "Broken in Squeak"; // not working in Squeak
-        static final String FLAKY = "Flaky"; // flaky tests
-        static final String IGNORE = "Ignored"; // unable to run (e.g. OOM, ...)
+    public static final class TEST_TYPE {
+        public static final String PASSING = "Passing"; // should pass
+        public static final String FAILING = "Failing"; // some/all test selectors fail/error
+        public static final String NOT_TERMINATING = "Not Terminating"; // does not terminate
+        public static final String BROKEN_IN_SQUEAK = "Broken in Squeak"; // not working in Squeak
+        public static final String FLAKY = "Flaky"; // flaky tests
+        public static final String IGNORE = "Ignored"; // unable to run (e.g. OOM, ...)
     }
 
 }

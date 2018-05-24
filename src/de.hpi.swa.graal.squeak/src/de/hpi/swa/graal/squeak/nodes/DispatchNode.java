@@ -15,6 +15,7 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.context.frame.CreateArgumentsNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.CreateEagerArgumentsNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
@@ -40,7 +41,7 @@ public abstract class DispatchNode extends Node {
     @Specialization(guards = {"isQuickReturnReceiverVariable(method.primitiveIndex())"})
     protected Object doPrimitiveQuickReturnReceiver(final CompiledMethodObject method, final Object[] receiverAndArguments, @SuppressWarnings("unused") final Object contextOrMarker) {
         assert receiverAndArguments[0] instanceof AbstractSqueakObject;
-        return at0Node.execute((AbstractSqueakObject) receiverAndArguments[0], method.primitiveIndex() - 264);
+        return at0Node.execute(receiverAndArguments[0], method.primitiveIndex() - 264);
     }
 
     @SuppressWarnings("unused")

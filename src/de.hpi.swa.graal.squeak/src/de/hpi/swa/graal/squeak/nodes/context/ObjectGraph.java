@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
@@ -47,6 +48,7 @@ public final class ObjectGraph {
         return traceInstances(classObj, true);
     }
 
+    @TruffleBoundary
     private List<AbstractSqueakObject> traceInstances(final ClassObject classObj, final boolean isSomeInstance) {
         final List<AbstractSqueakObject> result = new ArrayList<>();
         final Set<AbstractSqueakObject> seen = new HashSet<>(1000000);

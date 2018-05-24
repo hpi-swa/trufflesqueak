@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
@@ -24,6 +25,7 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
@@ -43,15 +45,19 @@ import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
-import de.hpi.swa.graal.squeak.nodes.CompiledCodeNodes.IsDoesNotUnderstandNode;
 import de.hpi.swa.graal.squeak.nodes.DispatchNode;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
 import de.hpi.swa.graal.squeak.nodes.LookupNode;
+import de.hpi.swa.graal.squeak.nodes.SqueakNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.IsDoesNotUnderstandNode;
+import de.hpi.swa.graal.squeak.nodes.context.ArgumentNode;
 import de.hpi.swa.graal.squeak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitivesFactory.SimulationPrimitiveNodeFactory;
+import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerNode;
 
 public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
@@ -74,12 +80,12 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
             timeZoneOffsetMicroseconds = (((long) rightNow.get(Calendar.ZONE_OFFSET)) + rightNow.get(Calendar.DST_OFFSET)) * 1000;
         }
 
-        protected long currentMicrosecondsUTC() {
+        protected static final long currentMicrosecondsUTC() {
             final Instant now = Instant.now();
             return now.getEpochSecond() * SEC_TO_USEC + now.getNano() / USEC_TO_NANO + EPOCH_DELTA_MICROSECONDS;
         }
 
-        protected long currentMicrosecondsLocal() {
+        protected final long currentMicrosecondsLocal() {
             return currentMicrosecondsUTC() + timeZoneOffsetMicroseconds;
         }
     }
@@ -90,7 +96,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        protected void signalAtMilliseconds(final AbstractSqueakObject semaphore, final long msTime) {
+        protected final void signalAtMilliseconds(final AbstractSqueakObject semaphore, final long msTime) {
             if (semaphore.isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassSemaphore)) {
                 code.image.registerSemaphore(semaphore, SPECIAL_OBJECT_INDEX.TheTimerSemaphore);
                 code.image.interrupt.setNextWakeupTick(msTime);
@@ -302,14 +308,33 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 145)
     protected abstract static class PrimConstantFillNode extends AbstractPrimitiveNode {
+        private final ValueProfile storageType = ValueProfile.createClassProfile();
 
         protected PrimConstantFillNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        @Specialization
-        protected AbstractSqueakObject doFill(final NativeObject receiver, final Object value) {
-            receiver.fillWith(value);
+        @Specialization(guards = "receiver.isByteType()")
+        protected final NativeObject doNativeBytes(final NativeObject receiver, final long value) {
+            Arrays.fill(receiver.getByteStorage(storageType), (byte) value);
+            return receiver;
+        }
+
+        @Specialization(guards = "receiver.isShortType()")
+        protected final NativeObject doNativeShorts(final NativeObject receiver, final long value) {
+            Arrays.fill(receiver.getShortStorage(storageType), (short) value);
+            return receiver;
+        }
+
+        @Specialization(guards = "receiver.isIntType()")
+        protected final NativeObject doNativeInts(final NativeObject receiver, final long value) {
+            Arrays.fill(receiver.getIntStorage(storageType), (int) value);
+            return receiver;
+        }
+
+        @Specialization(guards = "receiver.isLongType()")
+        protected final NativeObject doNativeLongs(final NativeObject receiver, final long value) {
+            Arrays.fill(receiver.getLongStorage(storageType), value);
             return receiver;
         }
     }
@@ -317,72 +342,89 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 148)
     protected abstract static class PrimShallowCopyNode extends AbstractPrimitiveNode {
+        private final ValueProfile storageType = ValueProfile.createClassProfile();
+
         protected PrimShallowCopyNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
         @Specialization
-        protected Object doDouble(final double value) {
+        protected final Object doDouble(final double value) {
             return new FloatObject(code.image, value);
         }
 
         @Specialization
-        protected Object doClosure(final BlockClosureObject receiver) {
+        protected static final Object doClosure(final BlockClosureObject receiver) {
             return receiver.shallowCopy();
         }
 
         @Specialization
-        protected Object doClass(final ClassObject receiver) {
+        protected static final Object doClass(final ClassObject receiver) {
             return receiver.shallowCopy();
         }
 
         @Specialization
-        protected Object doBlock(final CompiledBlockObject receiver) {
+        protected static final Object doBlock(final CompiledBlockObject receiver) {
             return receiver.shallowCopy();
         }
 
         @Specialization
-        protected Object doMethod(final CompiledMethodObject receiver) {
+        protected static final Object doMethod(final CompiledMethodObject receiver) {
             return receiver.shallowCopy();
         }
 
         @Specialization
-        protected Object doContext(final ContextObject receiver) {
+        protected static final Object doContext(final ContextObject receiver) {
             return receiver.shallowCopy();
         }
 
         @Specialization
-        protected Object doEmpty(final EmptyObject receiver) {
+        protected static final Object doEmpty(final EmptyObject receiver) {
+            return receiver.shallowCopy();
+        }
+
+        @Specialization(guards = "receiver.isByteType()")
+        protected final Object doNativeBytes(final NativeObject receiver) {
+            return NativeObject.newNativeBytes(code.image, receiver.getSqClass(), receiver.getByteStorage(storageType).clone());
+        }
+
+        @Specialization(guards = "receiver.isShortType()")
+        protected final Object doNativeShorts(final NativeObject receiver) {
+            return NativeObject.newNativeShorts(code.image, receiver.getSqClass(), receiver.getShortStorage(storageType).clone());
+        }
+
+        @Specialization(guards = "receiver.isIntType()")
+        protected final Object doNativeInts(final NativeObject receiver) {
+            return NativeObject.newNativeInts(code.image, receiver.getSqClass(), receiver.getIntStorage(storageType).clone());
+        }
+
+        @Specialization(guards = "receiver.isLongType()")
+        protected final Object doNativeLongs(final NativeObject receiver) {
+            return NativeObject.newNativeLongs(code.image, receiver.getSqClass(), receiver.getLongStorage(storageType).clone());
+        }
+
+        @Specialization
+        protected static final Object doLargeInteger(final LargeIntegerObject receiver) {
             return receiver.shallowCopy();
         }
 
         @Specialization
-        protected Object doNative(final NativeObject receiver) {
+        protected static final Object doFloat(final FloatObject receiver) {
             return receiver.shallowCopy();
         }
 
         @Specialization
-        protected Object doLargeInteger(final LargeIntegerObject receiver) {
+        protected static final Object doNil(final NilObject receiver) {
             return receiver.shallowCopy();
         }
 
         @Specialization
-        protected Object doFloat(final FloatObject receiver) {
+        protected static final Object doPointers(final PointersObject receiver) {
             return receiver.shallowCopy();
         }
 
         @Specialization
-        protected Object doNil(final NilObject receiver) {
-            return receiver.shallowCopy();
-        }
-
-        @Specialization
-        protected Object doPointers(final PointersObject receiver) {
-            return receiver.shallowCopy();
-        }
-
-        @Specialization
-        protected Object doWeakPointers(final WeakPointersObject receiver) {
+        protected static final Object doWeakPointers(final WeakPointersObject receiver) {
             return receiver.shallowCopy();
         }
     }
@@ -477,7 +519,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected PointersObject allInstances(final ClassObject classObject) {
-            return code.image.newList(code.image.objects.allInstances(classObject).toArray());
+            return code.image.newList(ArrayUtils.toArray(code.image.objects.allInstances(classObject)));
         }
 
         @SuppressWarnings("unused")
@@ -647,12 +689,18 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 255)
     protected abstract static class PrimMetaFailNode extends AbstractPrimitiveNode {
+        private static final boolean DEBUG_META_PRIMITIVE_FAILURES = false;
+
         public PrimMetaFailNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
         @Specialization
-        protected static final Object doFail(@SuppressWarnings("unused") final PointersObject proxy, final long reasonCode) {
+        protected final Object doFail(@SuppressWarnings("unused") final PointersObject proxy, final long reasonCode) {
+            if (DEBUG_META_PRIMITIVE_FAILURES) {
+                final String target = Truffle.getRuntime().getCallerFrame().getCallTarget().toString();
+                code.image.getError().println("Simulation primitive failed: " + target + "; reasonCode: " + reasonCode);
+            }
             throw new SimulationPrimitiveFailed(reasonCode);
         }
     }
@@ -703,15 +751,24 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         @Child protected LookupNode lookupNode = LookupNode.create();
         @Child protected DispatchNode dispatchNode = DispatchNode.create();
         @Child protected SqueakLookupClassNode lookupClassNode;
-        @Child protected GetOrCreateContextNode getOrCreateContextNode;
+        @Child protected GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create();
         @Child private IsDoesNotUnderstandNode isDoesNotUnderstandNode;
+
+        public static SimulationPrimitiveNode create(final CompiledMethodObject method, final String moduleName, final String functionName) {
+            final NodeFactory<SimulationPrimitiveNode> nodeFactory = SimulationPrimitiveNodeFactory.getInstance();
+            final int primitiveArity = nodeFactory.getExecutionSignature().size();
+            final SqueakNode[] argumentNodes = new SqueakNode[primitiveArity];
+            for (int j = 0; j < primitiveArity; j++) {
+                argumentNodes[j] = ArgumentNode.create(method, j);
+            }
+            return nodeFactory.createNode(method, primitiveArity, moduleName, functionName, argumentNodes);
+        }
 
         protected SimulationPrimitiveNode(final CompiledMethodObject method, final int numArguments, final String moduleName, final String functionName) {
             super(method, numArguments);
             this.moduleName = moduleName;
             this.functionName = code.image.wrap(functionName);
             lookupClassNode = SqueakLookupClassNode.create(method.image);
-            getOrCreateContextNode = GetOrCreateContextNode.create(method);
             isDoesNotUnderstandNode = IsDoesNotUnderstandNode.create(method.image);
         }
 

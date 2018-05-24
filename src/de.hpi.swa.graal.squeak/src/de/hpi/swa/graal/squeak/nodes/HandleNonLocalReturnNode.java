@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -30,12 +29,11 @@ public abstract class HandleNonLocalReturnNode extends AbstractNodeWithCode {
 
     @Specialization(guards = "isVirtualized(frame)")
     protected Object handleVirtualized(final VirtualFrame frame, final NonLocalReturn nlr) {
-        CompilerDirectives.ensureVirtualizedHere(frame);
         if (aboutToReturnNode != null && code.isUnwindMarked()) { // handle ensure: or ifCurtailed:
             aboutToReturnNode.executeAboutToReturn(frame, nlr);
         }
         terminateNode.executeTerminate(frame);
-        if (nlr.getTargetContext().getFrameMarker() == getFrameMarker(frame)) {
+        if (nlr.getTargetContext().equals(getContextOrMarker(frame))) {
             nlr.setArrivedAtTargetContext();
         }
         throw nlr;
@@ -47,14 +45,14 @@ public abstract class HandleNonLocalReturnNode extends AbstractNodeWithCode {
             aboutToReturnNode.executeAboutToReturn(frame, nlr);
         }
         final ContextObject context = getContext(frame);
-        if (context.isDirty()) {
+        if (context.hasModifiedSender()) {
             final ContextObject newSender = context.getNotNilSender(); // sender has changed
             final ContextObject target = nlr.getTargetContext().getNotNilSender();
             terminateNode.executeTerminate(frame);
             throw new NonVirtualReturn(nlr.getReturnValue(), target, newSender);
         } else {
             terminateNode.executeTerminate(frame);
-            if (nlr.getTargetContext().getFrameMarker() == context.getFrameMarker()) {
+            if (context.equals(nlr.getTargetContext())) {
                 nlr.setArrivedAtTargetContext();
             }
             throw nlr;
