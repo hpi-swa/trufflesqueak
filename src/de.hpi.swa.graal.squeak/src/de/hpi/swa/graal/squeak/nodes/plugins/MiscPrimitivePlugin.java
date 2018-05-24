@@ -2,19 +2,20 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 
 import java.util.List;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
-import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
-import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeGetBytesNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
@@ -128,15 +129,14 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveDecompressFromByteArray")
     public abstract static class PrimDecompressFromByteArrayNode extends AbstractMiscPrimitiveNode {
-        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
-        @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
-        @Child private SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
+        @CompilationFinal private final ValueProfile bmStorageType = ValueProfile.createClassProfile();
+        @CompilationFinal private final ValueProfile baStorageType = ValueProfile.createClassProfile();
 
         public PrimDecompressFromByteArrayNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        @Specialization
+        @Specialization(guards = {"bm.isIntType()", "ba.isByteType()"})
         protected final Object doDecompress(final AbstractSqueakObject receiver, final NativeObject bm, final NativeObject ba, final long index) {
             /**
              * <pre>
@@ -157,69 +157,60 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
              * </pre>
              */
 
-            long i = index;
-            final int end = sizeNode.execute(ba);
-            long k = 1;
-            final int pastEnd = sizeNode.execute(bm) + 1;
-            while (i <= end) {
+            final byte[] baBytes = ba.getByteStorage(baStorageType);
+            final int[] bmBytes = bm.getIntStorage(bmStorageType);
+            int i = (int) index - 1;
+            final int end = baBytes.length;
+            int k = 0;
+            final int pastEnd = bmBytes.length + 1;
+            while (i < end) {
                 // Decode next run start N
-                long anInt = (long) at0Node.execute(ba, i - 1);
+                int anInt = baBytes[i] & 0xff;
                 i++;
-                if (!(anInt <= 223)) {
+                if (anInt > 223) {
                     if (anInt <= 254) {
-                        anInt = (anInt - 224) * 256 + (long) at0Node.execute(ba, i - 1);
+                        anInt = (anInt - 224) * 256 + baBytes[i] & 0xff;
                         i++;
                     } else {
-                        anInt = 0;
-                        for (int j = 1; j <= 4; j++) {
-                            anInt = (anInt << 8) + (long) at0Node.execute(ba, i - 1);
-                            i++;
-                        }
+                        anInt = (baBytes[i] & 0xff) << 24 | (baBytes[i + 1] & 0xff) << 16 | (baBytes[i + 2] & 0xff) << 8 | baBytes[i + 3] & 0xff;
                     }
                 }
                 final long n = anInt >> 2;
                 if (k + n > pastEnd) {
                     throw new PrimitiveFailed();
                 }
-                switch ((int) anInt & 3) {
+                switch (anInt & 3) {
                     case 0: // skip
                         break;
                     case 1: { // n consecutive words of 4 bytes = the following byte
-                        long data = (long) at0Node.execute(ba, i - 1);
+                        final int data = (baBytes[i] & 0xff) << 24 | (baBytes[i] & 0xff) << 16 | (baBytes[i] & 0xff) << 8 | baBytes[i] & 0xff;
                         i++;
-                        data |= data << 8;
-                        data |= data << 16;
-                        for (int j = 1; j <= n; j++) {
-                            atPut0Node.execute(bm, k - 1, data);
+                        for (int j = 0; j < n; j++) {
+                            bmBytes[k] = data;
                             k++;
                         }
                         break;
                     }
                     case 2: { // n consecutive words = 4 following bytes
-                        long data = 0;
-                        for (int j = 1; j <= 4; j++) {
-                            data = (data << 8) | (long) at0Node.execute(ba, i - 1);
-                            i++;
-                        }
-                        for (int j = 1; j <= n; j++) {
-                            atPut0Node.execute(bm, k - 1, data);
+                        final int data = (baBytes[i] & 0xff) << 24 | (baBytes[i + 1] & 0xff) << 16 | (baBytes[i + 2] & 0xff) << 8 | baBytes[i + 3] & 0xff;
+                        i += 4;
+                        for (int j = 0; j < n; j++) {
+                            bmBytes[k] = data;
                             k++;
                         }
                         break;
                     }
 
                     case 3: { // n consecutive words from the data
-                        for (int m = 1; m <= n; m++) {
-                            long data = 0;
-                            for (int j = 1; j <= 4; j++) {
-                                data = (data << 8) | (long) at0Node.execute(ba, i - 1);
-                                i++;
-                            }
-                            atPut0Node.execute(bm, k - 1, data);
+                        for (int m = 0; m < n; m++) {
+                            bmBytes[k] = (baBytes[i] & 0xff) << 24 | (baBytes[i + 1] & 0xff) << 16 | (baBytes[i + 2] & 0xff) << 8 | baBytes[i + 3] & 0xff;
+                            i += 4;
                             k++;
                         }
                         break;
                     }
+                    default:
+                        throw new SqueakException("primitiveDecompressFromByteArray: should not happen");
                 }
             }
             return receiver;
