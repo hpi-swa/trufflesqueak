@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.URL;
@@ -20,6 +21,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
@@ -46,7 +48,28 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         private static final long ThisEndClosed = 4;
     }
 
-    static Map<PointersObject, Socket> sockets = new HashMap<>();
+    private static final class SocketType {
+        private static final long TCPSocketType = 0;
+        private static final long UDPSocketType = 1;
+    }
+
+    static Map<Long, SocketImpl> sockets = new HashMap<>();
+
+    private static final class SocketImpl {
+        private Socket clientSocket;
+        private ServerSocket serverSocket;
+
+        public void listenOn(long port) {
+
+        }
+
+        public void connectTo(String host, long port) {
+        }
+
+        public void destroy() {
+
+        }
+    }
 
     // NetNameResolver
     @GenerateNodeFactory
@@ -86,7 +109,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // asynchronous. To get the results, wait for it to complete or time out and then use
         // primNameLookupResult.
         @Specialization
-        protected long doWork(@SuppressWarnings("unused") final Object receiver, final NativeObject hostName) {
+        protected Object doWork(final Object receiver, final NativeObject hostName) {
             InetAddress address = null;
             final String hostNameString = hostName.toString();
             try {
@@ -97,14 +120,14 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 address = InetAddress.getByName(new URL(hostNameString).getHost());
                 lastLookup = address.getHostAddress();
             } catch (UnknownHostException e) {
-                e.printStackTrace();
+                System.out.println(e);
                 lastLookup = null;
             } catch (MalformedURLException e) {
-                e.printStackTrace();
+                System.out.println(e);
                 lastLookup = null;
             }
 
-            return 1;
+            return receiver;
         }
     }
 
@@ -139,7 +162,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return code.image.wrap(InetAddress.getLocalHost().getHostAddress());
             } catch (UnknownHostException e) {
-                e.printStackTrace();
+                System.out.println(e);
                 throw new PrimitiveFailed();
             }
         }
@@ -164,7 +187,53 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // Primitive. Set up the socket to listen on the given port.
         // Will be used in conjunction with #accept only.
         @Specialization
-        protected long doWork(@SuppressWarnings("unused") final Object receiver, final PointersObject socketID, final Long port) {
+        protected long doWork(@SuppressWarnings("unused") final Object receiver, final long socketID, final long port, final NotProvided backlogSize) {
+            System.out.println("TODO: primitiveSocketListenWithOrWithoutBacklog");
+            throw new PrimitiveFailed();
+        }
+
+        @Specialization
+        protected long doWork(@SuppressWarnings("unused") final Object receiver, final long socketID, final long port, final Object backlogSize) {
+            System.out.println("TODO: primitiveSocketListenWithOrWithoutBacklog");
+            throw new PrimitiveFailed();
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(name = "primitiveSocketListenOnPortBacklogInterface")
+    protected abstract static class PrimSocketListenOnPortBacklogInterfaceNode extends AbstractPrimitiveNode {
+        protected PrimSocketListenOnPortBacklogInterfaceNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @Specialization
+        protected long doWork(@SuppressWarnings("unused") final Object receiver, final long socketID, final long port, final Object backlogSize, final Object interfaceAddress) {
+            new Thread() {
+                @Override
+                public void run() {
+                    try {
+                        ServerSocket ss = new ServerSocket((int) port);
+                        ss.accept();
+                    } catch (IOException e) {
+                        System.out.println(e);
+                    }
+                }
+            }.start();
+
+            throw new PrimitiveFailed();
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(name = "primitiveSocketSetOptions")
+    protected abstract static class PrimSocketSetOptionsNode extends AbstractPrimitiveNode {
+        protected PrimSocketSetOptionsNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @Specialization
+        protected long doWork(@SuppressWarnings("unused") final Object receiver, final long socketID, final Object option, final Object value) {
+            System.out.println("TODO: SocketSetOptions");
             throw new PrimitiveFailed();
         }
     }
@@ -178,18 +247,18 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected long doWork(@SuppressWarnings("unused") final Object receiver, final PointersObject socketID, final NativeObject hostAddress, final Long port) {
+        protected long doWork(@SuppressWarnings("unused") final Object receiver, final long socketID, final NativeObject hostAddress, final long port) {
             Socket socket = sockets.get(socketID);
             if (socket == null) {
-                socket = new Socket();
-                sockets.put(socketID, socket);
+                System.out.println("No socket for socket id");
+                throw new PrimitiveFailed();
             }
             final String hostAddressString = hostAddress.toString();
-            final SocketAddress endpoint = new InetSocketAddress(hostAddressString, port.intValue());
+            final SocketAddress endpoint = new InetSocketAddress(hostAddressString, (int) port);
             try {
                 socket.connect(endpoint);
             } catch (IOException e) {
-                // e.printStackTrace();
+                System.out.println(e);
                 throw new PrimitiveFailed();
             }
             return 0;
@@ -204,7 +273,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected long doWork(@SuppressWarnings("unused") final Object receiver, final PointersObject socketID) {
+        protected long doWork(@SuppressWarnings("unused") final PointersObject receiver, final long socketID) {
             if (!sockets.containsKey(socketID)) {
                 return SocketStatus.Unconnected;
             }
@@ -230,7 +299,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doWork(@SuppressWarnings("unused") final Object receiver, final PointersObject socketID) {
+        protected Object doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
             if (!sockets.containsKey(socketID)) {
                 return 0;
             }
@@ -238,7 +307,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             final SocketAddress socketAddress = socket.getRemoteSocketAddress();
             if (socketAddress instanceof InetSocketAddress) {
                 final InetSocketAddress inetAddress = (InetSocketAddress) socketAddress;
-                return inetAddress.getAddress().getHostAddress();
+                return code.image.wrap(inetAddress.getAddress().getHostAddress());
             } else {
                 return 0;
             }
@@ -258,7 +327,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // TCP_NODELAY, SO_KEEPALIVE are valid options for example
         // returns an array containing the error code and the option value
         @Specialization
-        protected long doWork(@SuppressWarnings("unused") final Object receiver, final PointersObject socketID, final Object getOption) {
+        protected long doWork(@SuppressWarnings("unused") final Object receiver, final long socketID, final Object getOption) {
             throw new PrimitiveFailed();
         }
     }
@@ -276,7 +345,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return socket.getInputStream().available() > 0;
             } catch (IOException e) {
-                e.printStackTrace();
+                System.out.println(e);
                 return false;
             }
         }
@@ -290,7 +359,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected long doWork(@SuppressWarnings("unused") final Object receiver, final PointersObject socketID) {
+        protected long doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
             return 0;
             // TODO
         }
@@ -304,11 +373,11 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doWork(@SuppressWarnings("unused") final Object receiver, final PointersObject socketID) {
+        protected Object doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
             try {
                 return code.image.wrap(InetAddress.getLocalHost().getHostAddress());
             } catch (UnknownHostException e) {
-                e.printStackTrace();
+                System.out.println(e);
                 throw new PrimitiveFailed();
             }
         }
@@ -342,8 +411,8 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
                 outputStream.write(data, (int) startIndex, (int) count);
                 return count;
-            } catch (IOException ioe) {
-                ioe.printStackTrace();
+            } catch (IOException e) {
+                System.out.println(e);
                 return 0;
             }
         }
@@ -357,15 +426,15 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected long doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
+        protected Object doWork(final Object receiver, final long socketID) {
             final Socket socket = sockets.get(socketID);
             try {
                 socket.close();
             } catch (IOException e) {
-                e.printStackTrace();
+                System.out.println(e);
                 throw new PrimitiveFailed();
             }
-            return 1;
+            return receiver;
         }
     }
 
@@ -410,14 +479,14 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected long doWork(@SuppressWarnings("unused") final Object receiver, final PointersObject socketID) {
+        protected long doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
             final Socket socket = sockets.get(socketID);
             try {
                 if (socket != null) {
                     socket.close();
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                System.out.println(e);
                 throw new PrimitiveFailed();
             }
             sockets.remove(socketID);
@@ -433,10 +502,35 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doWork(final PointersObject receiver, final long netType, final long socketType, final long rcvBufSize, final long semaIndex, final long aReadSema,
+        protected long doWork(final PointersObject receiver,
+                        final long netType,
+                        final long socketType,
+                        final long rcvBufSize,
+                        final long semaIndex,
+                        final long aReadSema,
                         final long aWriteSema) {
-            return receiver;
-            // TODO
+            Socket s = new Socket();
+            sockets.put((long) s.hashCode(), s);
+            return s.hashCode();
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(name = "primitiveSocketCreate")
+    protected abstract static class PrimSocketCreateNode extends AbstractPrimitiveNode {
+        protected PrimSocketCreateNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @Specialization
+        protected long doWork(final PointersObject receiver,
+                        final Object netType,
+                        final Object socketType,
+                        final Object rcvBufSize,
+                        final Object sendBufSize,
+                        final Object semaIndexa) {
+            System.out.println("TODO: primitiveSocketCreate");
+            throw new PrimitiveFailed();
         }
     }
 

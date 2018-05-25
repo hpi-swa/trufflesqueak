@@ -37,7 +37,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitives.Primitive
 public final class MiscellaneousBytecodes {
 
     public static class CallPrimitiveNode extends AbstractBytecodeNode {
-        @CompilationFinal private static final boolean DEBUG_UNSUPPORTED_SPECIALIZATION_EXCEPTIONS = false;
+        @CompilationFinal private static final boolean DEBUG_UNSUPPORTED_SPECIALIZATION_EXCEPTIONS = true;
         @Child private HandlePrimitiveFailedNode handlePrimFailed;
         @Child private AbstractPrimitiveNode primitiveNode;
         @CompilationFinal private final int primitiveIndex;
@@ -78,7 +78,7 @@ public final class MiscellaneousBytecodes {
             if (message.contains("[Long,PointersObject]") || message.contains("[FloatObject,PointersObject]")) {
                 return;
             }
-            code.image.trace("UnsupportedSpecializationException: " + e);
+            // code.image.getError().println("UnsupportedSpecializationException: " + e);
         }
 
         @Override
