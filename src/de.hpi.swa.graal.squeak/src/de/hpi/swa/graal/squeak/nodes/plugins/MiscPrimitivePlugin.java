@@ -160,10 +160,10 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             final byte[] baBytes = ba.getByteStorage(baStorageType);
             final int[] bmBytes = bm.getIntStorage(bmStorageType);
             int i = (int) index - 1;
-            final int end = baBytes.length;
+            final int end = baBytes.length - 1;
             int k = 0;
-            final int pastEnd = bmBytes.length + 1;
-            while (i < end) {
+            final int pastEnd = bmBytes.length;
+            while (i <= end) {
                 // Decode next run start N
                 int anInt = baBytes[i] & 0xff;
                 i++;
@@ -173,6 +173,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                         i++;
                     } else {
                         anInt = (baBytes[i] & 0xff) << 24 | (baBytes[i + 1] & 0xff) << 16 | (baBytes[i + 2] & 0xff) << 8 | baBytes[i + 3] & 0xff;
+                        i += 4;
                     }
                 }
                 final long n = anInt >> 2;
