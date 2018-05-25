@@ -9,15 +9,13 @@ import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
-import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 
 public abstract class BlockActivationNode extends Node {
     public abstract Object executeBlock(BlockClosureObject block, Object[] arguments);
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"block.getCompiledBlock() == cachedCompiledBlock"}, assumptions = {"callTargetStable"})
+    @Specialization(guards = {"block.getCallTarget() == cachedTarget"}, assumptions = {"callTargetStable"})
     protected static Object doDirect(final BlockClosureObject block, final Object[] arguments,
-                    @Cached("block.getCompiledBlock()") final CompiledBlockObject cachedCompiledBlock,
                     @Cached("block.getCallTarget()") final RootCallTarget cachedTarget,
                     @Cached("block.getCallTargetStable()") final Assumption callTargetStable,
                     @Cached("create(cachedTarget)") final DirectCallNode callNode) {
