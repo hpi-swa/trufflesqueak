@@ -337,8 +337,8 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         public abstract Object executeStringAt(VirtualFrame frame);
 
         @Specialization
-        protected final char doNativeObject(final NativeObject obj, final long idx) {
-            final int intValue = ((Long) at0Node.execute(obj, idx - 1)).intValue();
+        protected final char doNativeObject(final NativeObject obj, final long index) {
+            final int intValue = ((Long) at0Node.execute(obj, index - 1)).intValue();
             return (char) intValue;
         }
     }
