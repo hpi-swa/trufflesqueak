@@ -252,6 +252,10 @@ public final class SqueakImageContext {
         return NativeObject.newNativeBytes(this, stringClass, s.getBytes());
     }
 
+    public NativeObject wrap(final byte[] bytes) {
+        return NativeObject.newNativeBytes(this, (ClassObject) specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.ClassByteArray), bytes);
+    }
+
     public static char wrap(final char character) {
         return character;
     }

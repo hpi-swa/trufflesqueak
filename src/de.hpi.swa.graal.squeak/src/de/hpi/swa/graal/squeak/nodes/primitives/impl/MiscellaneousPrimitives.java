@@ -458,6 +458,10 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
                 case 1001:  // this platform's operating system 'Mac OS', 'Win32', 'unix', ...
                     return code.image.wrap(code.image.os.getSqOSName());
                 case 1002:  // operating system version
+                    if (code.image.os.isMacOS()) {
+                        /* The image expects things like 1095, so convert 10.10.5 into 1010.5 */
+                        return code.image.wrap(System.getProperty("os.version").replaceFirst("\\.", ""));
+                    }
                     return code.image.wrap(System.getProperty("os.version"));
                 case 1003:  // this platform's processor type
                     return code.image.wrap("intel");

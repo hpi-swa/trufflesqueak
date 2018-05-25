@@ -22,6 +22,8 @@ import de.hpi.swa.graal.squeak.nodes.plugins.LargeIntegers;
 import de.hpi.swa.graal.squeak.nodes.plugins.MiscPrimitivePlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.PolyglotPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.UUIDPlugin;
+import de.hpi.swa.graal.squeak.nodes.plugins.UnixOSProcessPlugin;
+import de.hpi.swa.graal.squeak.nodes.plugins.Win32OSProcessPlugin;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.ArithmeticPrimitives;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.ArrayStreamPrimitives;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.BlockClosurePrimitives;
@@ -50,7 +52,9 @@ public abstract class PrimitiveNodeFactory {
                     new LargeIntegers(),
                     new MiscPrimitivePlugin(),
                     new PolyglotPlugin(),
-                    new UUIDPlugin()};
+                    new UnixOSProcessPlugin(),
+                    new UUIDPlugin(),
+                    new Win32OSProcessPlugin()};
     @CompilationFinal(dimensions = 1) private static final String[] simulatedPlugins = new String[]{"B2DPlugin", "BalloonPlugin"};
     @CompilationFinal private static final Map<Integer, NodeFactory<? extends AbstractPrimitiveNode>> primitiveTable;
 
