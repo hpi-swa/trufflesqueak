@@ -46,7 +46,7 @@ public final class SqueakSUnitTestMap {
                     "CharacterSetTest", TEST_TYPE.PASSING,
                     "CharacterTest", TEST_TYPE.PASSING,
                     "CircleMorphBugs", TEST_TYPE.PASSING,
-                    "CircleMorphTest", TEST_TYPE.PASSING,
+                    "CircleMorphTest", TEST_TYPE.FLAKY,
                     "ClassAPIHelpBuilderTest", TEST_TYPE.PASSING,
                     "ClassBindingTest", TEST_TYPE.PASSING,
                     "ClassBuilderTest", TEST_TYPE.NOT_TERMINATING,
@@ -343,7 +343,7 @@ public final class SqueakSUnitTestMap {
                     "UrlTest", TEST_TYPE.PASSING,
                     "UserInterfaceThemeTest", TEST_TYPE.NOT_TERMINATING,
                     "UTF16TextConverterTest", TEST_TYPE.BROKEN_IN_SQUEAK,
-                    "UTF32TextConverterTest", TEST_TYPE.PASSING,
+                    "UTF32TextConverterTest", TEST_TYPE.FAILING, // becomeForward fails on natives
                     "UTF8TextConverterTest", TEST_TYPE.FAILING, // FIXME: NullPointerException
                     "UTF8EdgeCaseTest", TEST_TYPE.FAILING, // failing in Squeak
                     "UUIDPrimitivesTest", TEST_TYPE.PASSING,
