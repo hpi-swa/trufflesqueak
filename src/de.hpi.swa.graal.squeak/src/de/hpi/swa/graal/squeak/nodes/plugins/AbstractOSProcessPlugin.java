@@ -1,7 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes.plugins;
 
-import java.util.Random;
-
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -14,6 +12,7 @@ import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHolder {
 
@@ -68,7 +67,7 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
         private void initializeSessionByteArray() {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             final byte[] bytes = new byte[4];
-            new Random().nextBytes(bytes);
+            ArrayUtils.fillRandomly(bytes);
             sessionByteArray = code.image.wrap(bytes);
         }
     }
