@@ -10,11 +10,10 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -715,7 +714,13 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 573)
     protected abstract static class PrimListExternalModuleNode extends AbstractPrimitiveNode {
-        @CompilationFinal private List<String> externalModuleNames;
+        @CompilationFinal(dimensions = 1) private static final String[] externalModuleNames;
+
+        static {
+            final Set<String> pluginNames = PrimitiveNodeFactory.getPluginNames();
+            externalModuleNames = pluginNames.toArray(new String[pluginNames.size()]);
+            Arrays.sort(externalModuleNames);
+        }
 
         public PrimListExternalModuleNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -724,19 +729,10 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final Object doGet(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long index) {
             try {
-                return code.image.wrap(getList().get((int) index - 1));
-            } catch (IndexOutOfBoundsException e) {
+                return code.image.wrap(externalModuleNames[(int) index - 1]);
+            } catch (ArrayIndexOutOfBoundsException e) {
                 return code.image.nil;
             }
-        }
-
-        private List<String> getList() {
-            if (externalModuleNames == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                externalModuleNames = new ArrayList<>(PrimitiveNodeFactory.getPluginNames());
-                Collections.sort(externalModuleNames);
-            }
-            return externalModuleNames;
         }
     }
 
