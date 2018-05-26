@@ -14,7 +14,6 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.HashMap;
 
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -39,7 +38,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         private static final long Error = 3;
     }
 
-    private static String lastNameLookup;
+    private static byte[] lastNameLookup;
     private static String lastAddressLookup;
 
     private static final class SocketStatus {
@@ -238,11 +237,12 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             final String hostNameString = hostName.toString();
             try {
                 if (hostNameString.equals("localhost")) {
-                    lastNameLookup = InetAddress.getLocalHost().getHostAddress();
+                    lastNameLookup = InetAddress.getLocalHost().getAddress();
                     return receiver;
                 }
                 address = InetAddress.getByName(new URL(hostNameString).getHost());
-                lastNameLookup = address.getHostAddress();
+                lastNameLookup = address.getAddress();
+
             } catch (UnknownHostException e) {
                 System.err.println(e);
                 lastNameLookup = null;
@@ -295,16 +295,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             if (lastNameLookup == null) {
                 return code.image.nil;
             } else {
-                String result = "";
-                byte[] address = new byte[4];
-                int i = 0;
-                for (String byteString : lastNameLookup.split("\\.")) {
-                    byte b = Byte.parseByte(byteString);
-                    address[i] = b;
-                    i++;
-                    result += (char) b;
-                }
-                return code.image.wrap(result);
+                return code.image.wrap(lastNameLookup);
             }
         }
     }
