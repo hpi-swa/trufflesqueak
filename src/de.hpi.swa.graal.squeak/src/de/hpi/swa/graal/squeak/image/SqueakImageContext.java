@@ -2,10 +2,13 @@ package de.hpi.swa.graal.squeak.image;
 
 import java.awt.Dimension;
 import java.awt.Point;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -15,17 +18,15 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 
-import de.hpi.swa.graal.squeak.SqueakConfig;
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.io.SqueakDisplay;
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
-import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
+import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.model.FrameMarker;
+import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
-import de.hpi.swa.graal.squeak.model.ListObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
@@ -33,27 +34,27 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.POINT;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.model.SpecialSelectorObject;
 import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.graal.squeak.nodes.context.ObjectGraph;
 import de.hpi.swa.graal.squeak.nodes.process.GetActiveProcessNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerNode;
 import de.hpi.swa.graal.squeak.util.OSDetector;
+import de.hpi.swa.graal.squeak.util.SqueakConfig;
 
 public final class SqueakImageContext {
     // Special objects
     @CompilationFinal public final NilObject nil = new NilObject(this);
     @CompilationFinal public final boolean sqFalse = false;
     @CompilationFinal public final boolean sqTrue = true;
-    @CompilationFinal public final ListObject specialObjectsArray = new ListObject(this);
+    @CompilationFinal public final PointersObject specialObjectsArray = new PointersObject(this);
     @CompilationFinal public final PointersObject schedulerAssociation = new PointersObject(this);
     @CompilationFinal public final ClassObject characterClass = new ClassObject(this);
     @CompilationFinal public final ClassObject smallIntegerClass = new ClassObject(this);
     @CompilationFinal public final ClassObject arrayClass = new ClassObject(this);
     @CompilationFinal public final PointersObject smalltalk = new PointersObject(this);
     @CompilationFinal public final NativeObject doesNotUnderstand = NativeObject.newNativeBytes(this, null, 0);
-    @CompilationFinal public final ListObject specialSelectors = new ListObject(this);
+    @CompilationFinal public final PointersObject specialSelectors = new PointersObject(this);
     @CompilationFinal public final NativeObject mustBeBoolean = NativeObject.newNativeBytes(this, null, 0);
     @CompilationFinal public final ClassObject metaclass = new ClassObject(this);
     @CompilationFinal public final ClassObject methodContextClass = new ClassObject(this);
@@ -70,46 +71,50 @@ public final class SqueakImageContext {
     @CompilationFinal private final SqueakLanguage language;
     @CompilationFinal private final PrintWriter output;
     @CompilationFinal private final PrintWriter error;
-    @CompilationFinal private final SqueakLanguage.Env env;
+    @CompilationFinal public final SqueakLanguage.Env env;
 
     // Special selectors
-    @CompilationFinal public final SpecialSelectorObject plus = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject minus = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject lt = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject gt = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject le = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject ge = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject eq = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject ne = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject times = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject divide = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject modulo = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject pointAt = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject bitShift = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject floorDivide = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject bitAnd = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject bitOr = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject at = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject atput = new SpecialSelectorObject(this, 2);
-    @CompilationFinal public final SpecialSelectorObject sqSize = new SpecialSelectorObject(this, 0);
-    @CompilationFinal public final SpecialSelectorObject next = new SpecialSelectorObject(this, 0);
-    @CompilationFinal public final SpecialSelectorObject nextPut = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject atEnd = new SpecialSelectorObject(this, 0);
-    @CompilationFinal public final SpecialSelectorObject equivalent = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject klass = new SpecialSelectorObject(this, 0);
-    @CompilationFinal public final SpecialSelectorObject blockCopy = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject sqValue = new SpecialSelectorObject(this, 0);
-    @CompilationFinal public final SpecialSelectorObject valueWithArg = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject sqDo = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject sqNew = new SpecialSelectorObject(this, 0);
-    @CompilationFinal public final SpecialSelectorObject newWithArg = new SpecialSelectorObject(this);
-    @CompilationFinal public final SpecialSelectorObject x = new SpecialSelectorObject(this, 0);
-    @CompilationFinal public final SpecialSelectorObject y = new SpecialSelectorObject(this, 0);
+    @CompilationFinal public final NativeObject plus = new NativeObject(this);
+    @CompilationFinal public final NativeObject minus = new NativeObject(this);
+    @CompilationFinal public final NativeObject lt = new NativeObject(this);
+    @CompilationFinal public final NativeObject gt = new NativeObject(this);
+    @CompilationFinal public final NativeObject le = new NativeObject(this);
+    @CompilationFinal public final NativeObject ge = new NativeObject(this);
+    @CompilationFinal public final NativeObject eq = new NativeObject(this);
+    @CompilationFinal public final NativeObject ne = new NativeObject(this);
+    @CompilationFinal public final NativeObject times = new NativeObject(this);
+    @CompilationFinal public final NativeObject divide = new NativeObject(this);
+    @CompilationFinal public final NativeObject modulo = new NativeObject(this);
+    @CompilationFinal public final NativeObject pointAt = new NativeObject(this);
+    @CompilationFinal public final NativeObject bitShift = new NativeObject(this);
+    @CompilationFinal public final NativeObject floorDivide = new NativeObject(this);
+    @CompilationFinal public final NativeObject bitAnd = new NativeObject(this);
+    @CompilationFinal public final NativeObject bitOr = new NativeObject(this);
+    @CompilationFinal public final NativeObject at = new NativeObject(this);
+    @CompilationFinal public final NativeObject atput = new NativeObject(this);
+    @CompilationFinal public final NativeObject sqSize = new NativeObject(this);
+    @CompilationFinal public final NativeObject next = new NativeObject(this);
+    @CompilationFinal public final NativeObject nextPut = new NativeObject(this);
+    @CompilationFinal public final NativeObject atEnd = new NativeObject(this);
+    @CompilationFinal public final NativeObject equivalent = new NativeObject(this);
+    @CompilationFinal public final NativeObject klass = new NativeObject(this);
+    @CompilationFinal public final NativeObject blockCopy = new NativeObject(this);
+    @CompilationFinal public final NativeObject sqValue = new NativeObject(this);
+    @CompilationFinal public final NativeObject valueWithArg = new NativeObject(this);
+    @CompilationFinal public final NativeObject sqDo = new NativeObject(this);
+    @CompilationFinal public final NativeObject sqNew = new NativeObject(this);
+    @CompilationFinal public final NativeObject newWithArg = new NativeObject(this);
+    @CompilationFinal public final NativeObject x = new NativeObject(this);
+    @CompilationFinal public final NativeObject y = new NativeObject(this);
 
-    @CompilationFinal(dimensions = 1) public final SpecialSelectorObject[] specialSelectorsArray = new SpecialSelectorObject[]{
+    @CompilationFinal(dimensions = 1) public final NativeObject[] specialSelectorsArray = new NativeObject[]{
                     plus, minus, lt, gt, le, ge, eq, ne, times, divide, modulo, pointAt, bitShift,
                     floorDivide, bitAnd, bitOr, at, atput, sqSize, next, nextPut, atEnd, equivalent,
                     klass, blockCopy, sqValue, valueWithArg, sqDo, sqNew, newWithArg, x, y
+    };
+
+    @CompilationFinal(dimensions = 1) public final int[] specialSelectorsNumArgs = new int[]{
+                    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0
     };
 
     @CompilationFinal public final SqueakConfig config;
@@ -120,8 +125,8 @@ public final class SqueakImageContext {
     @CompilationFinal public final InterruptHandlerNode interrupt;
     @CompilationFinal public final long startUpMillis = System.currentTimeMillis();
 
-    @CompilationFinal public BaseSqueakObject asSymbol = nil; // for testing
-    @CompilationFinal public BaseSqueakObject simulatePrimitiveArgs = nil;
+    @CompilationFinal public AbstractSqueakObject asSymbol = nil; // for testing
+    @CompilationFinal public AbstractSqueakObject simulatePrimitiveArgs = nil;
 
     public SqueakImageContext(final SqueakLanguage squeakLanguage, final SqueakLanguage.Env environ,
                     final PrintWriter out, final PrintWriter err) {
@@ -159,20 +164,19 @@ public final class SqueakImageContext {
         final Object receiver = config.getReceiver();
         final String selector = config.getSelector();
         final ClassObject receiverClass = receiver instanceof Long ? smallIntegerClass : nilClass;
-        final CompiledCodeObject lookupResult = (CompiledCodeObject) receiverClass.lookup(selector);
+        final CompiledMethodObject lookupResult = (CompiledMethodObject) receiverClass.lookup(selector);
         if (lookupResult.getCompiledInSelector() == doesNotUnderstand) {
             throw new SqueakException(receiver + " >> " + selector + " could not be found!");
         }
         final ContextObject customContext = ContextObject.create(this, lookupResult.frameSize());
         customContext.atput0(CONTEXT.METHOD, lookupResult);
-        customContext.atput0(CONTEXT.INSTRUCTION_POINTER, (long) customContext.getCodeObject().getInitialPC());
+        customContext.atput0(CONTEXT.INSTRUCTION_POINTER, (long) lookupResult.getInitialPC());
         customContext.atput0(CONTEXT.RECEIVER, receiver);
         customContext.atput0(CONTEXT.STACKPOINTER, 1L);
         customContext.atput0(CONTEXT.CLOSURE_OR_NIL, nil);
         customContext.setSender(nil);
-        customContext.setFrameMarker(new FrameMarker());
         // if there were arguments, they would need to be pushed before the temps
-        final long numTemps = lookupResult.getNumTemps() - lookupResult.getNumArgsAndCopiedValues();
+        final long numTemps = lookupResult.getNumTemps() - lookupResult.getNumArgs();
         for (int i = 0; i < numTemps; i++) {
             customContext.push(nil);
         }
@@ -209,6 +213,8 @@ public final class SqueakImageContext {
             return wrap((long) Long.valueOf((Integer) obj));
         } else if (obj instanceof Long) {
             return wrap((long) obj);
+        } else if (obj instanceof Double) {
+            return wrap((double) obj);
         } else if (obj instanceof BigInteger) {
             return wrap((BigInteger) obj);
         } else if (obj instanceof String) {
@@ -234,12 +240,20 @@ public final class SqueakImageContext {
         return l;
     }
 
-    public BaseSqueakObject wrap(final BigInteger i) {
+    public AbstractSqueakObject wrap(final BigInteger i) {
         return new LargeIntegerObject(this, i);
+    }
+
+    public FloatObject wrap(final double value) {
+        return new FloatObject(this, value);
     }
 
     public NativeObject wrap(final String s) {
         return NativeObject.newNativeBytes(this, stringClass, s.getBytes());
+    }
+
+    public NativeObject wrap(final byte[] bytes) {
+        return NativeObject.newNativeBytes(this, (ClassObject) specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.ClassByteArray), bytes);
     }
 
     public static char wrap(final char character) {
@@ -247,7 +261,7 @@ public final class SqueakImageContext {
     }
 
     @TruffleBoundary
-    public ListObject wrap(final Object... elements) {
+    public PointersObject wrap(final Object... elements) {
         final Object[] wrappedElements = new Object[elements.length];
         for (int i = 0; i < elements.length; i++) {
             wrappedElements[i] = wrap(elements[i]);
@@ -263,11 +277,11 @@ public final class SqueakImageContext {
         return newPoint((long) dimension.getWidth(), (long) dimension.getHeight());
     }
 
-    public ListObject newList(final Object[] elements) {
-        return new ListObject(this, arrayClass, elements);
+    public PointersObject newList(final Object[] elements) {
+        return new PointersObject(this, arrayClass, elements);
     }
 
-    public ListObject newListWith(final Object... elements) {
+    public PointersObject newListWith(final Object... elements) {
         return newList(elements);
     }
 
@@ -283,20 +297,33 @@ public final class SqueakImageContext {
         return NativeObject.newNativeBytes(this, doesNotUnderstand.getSqClass(), value.getBytes());
     }
 
-    public void registerSemaphore(final BaseSqueakObject semaphore, final long index) {
+    public void registerSemaphore(final AbstractSqueakObject semaphore, final long index) {
         specialObjectsArray.atput0(index, semaphore.isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassSemaphore) ? semaphore : nil);
     }
 
-    public void trace(final String message) {
+    public String imageRelativeFilePathFor(final String fileName) {
+        return config.getImageDirectory() + File.separator + fileName;
+    }
+
+    public void trace(final Object... arguments) {
         if (config.isTracing()) {
-            getOutput().println(message);
+            printToStdout(arguments);
         }
     }
 
-    public void traceVerbose(final String message) {
+    public void traceVerbose(final Object... arguments) {
         if (config.isTracing() && config.isVerbose()) {
-            getOutput().println(message);
+            printToStdout(arguments);
         }
+    }
+
+    @TruffleBoundary
+    private void printToStdout(final Object[] arguments) {
+        final List<String> strings = new ArrayList<>();
+        for (int i = 0; i < arguments.length; i++) {
+            strings.add(arguments[i].toString());
+        }
+        getOutput().println(String.join(" ", strings));
     }
 
     /*

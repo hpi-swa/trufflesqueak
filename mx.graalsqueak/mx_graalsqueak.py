@@ -37,12 +37,17 @@ def _graal_vm_args(args):
         print 'Sending Graal dumps to igv...'
         graal_args += [
             '-Dgraal.Dump=Metaclass,Truffle,hpi',
+            '-Dgraal.DumpOnError=true',
         ]
 
     if args.low_level:
         graal_args += [
             '-XX:+UnlockDiagnosticVMOptions',
             '-XX:+LogCompilation',
+        ]
+
+    if args.deopts:
+        graal_args += [
             '-XX:+TraceDeoptimization',
         ]
 
@@ -96,16 +101,17 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
                         help='SmallInteger to be used as receiver',
                         dest='receiver')
     parser.add_argument(
-        '-tc', '--trace-compilation',
-        help='trace truffle compilation',
+        '-tc', '--trace-compilation', help='trace Truffle compilation',
         dest='trace_compilation', action='store_true', default=False)
+    parser.add_argument(
+        '-td', '--trace-deopts', help='trace deoptimizations',
+        dest='deopts', action='store_true', default=False)
     parser.add_argument(
         '-ti', '--trace-invalid',
         help='trace assumption invalidation and transfers to interpreter',
         dest='trace_invalidation', action='store_true', default=False)
     parser.add_argument(
-        '-ts', '--trace-squeak',
-        help='trace Squeak process switches, ...',
+        '-ts', '--trace-squeak', help='trace Squeak process switches, ...',
         dest='trace_squeak', action='store_true', default=False)
     parser.add_argument('-v', '--verbose',
                         help='enable verbose output',

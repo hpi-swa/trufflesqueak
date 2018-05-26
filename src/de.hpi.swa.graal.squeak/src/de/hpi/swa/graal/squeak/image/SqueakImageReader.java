@@ -14,7 +14,7 @@ import java.util.List;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives.SimulationPrimitiveNode;
@@ -290,15 +290,18 @@ public final class SqueakImageReader {
         output.println("Filling in objects...");
         for (AbstractImageChunk chunk : chunklist) {
             final Object chunkObject = chunk.asObject();
-            if (chunkObject instanceof BaseSqueakObject) {
-                ((BaseSqueakObject) chunkObject).fillin(chunk);
+            if (chunkObject instanceof AbstractSqueakObject) {
+                ((AbstractSqueakObject) chunkObject).fillin(chunk);
             }
-            if (chunkObject instanceof NativeObject && ((NativeObject) chunkObject).getSqClass() == image.doesNotUnderstand.getSqClass()) { // check
-                                                                                                                                            // ByteSymbols
-                if (chunkObject.toString().equals("asSymbol")) {
-                    image.asSymbol = (NativeObject) chunkObject;
-                } else if (chunkObject.toString().equals(SimulationPrimitiveNode.SIMULATE_PRIMITIVE_SELECTOR)) {
-                    image.simulatePrimitiveArgs = (NativeObject) chunkObject;
+            if (chunkObject instanceof NativeObject) {
+                final NativeObject nativeChunkObject = (NativeObject) chunkObject;
+                if (nativeChunkObject.isByteType()) {
+                    final String stringValue = nativeChunkObject.asString();
+                    if ("asSymbol".equals(stringValue)) {
+                        image.asSymbol = (NativeObject) chunkObject;
+                    } else if (SimulationPrimitiveNode.SIMULATE_PRIMITIVE_SELECTOR.equals(stringValue)) {
+                        image.simulatePrimitiveArgs = (NativeObject) chunkObject;
+                    }
                 }
             }
         }

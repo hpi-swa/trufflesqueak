@@ -1,14 +1,16 @@
 package de.hpi.swa.graal.squeak.nodes.process;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.LINK;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.LINKED_LIST;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
 
 public class LinkProcessToListNode extends AbstractNodeWithImage {
+    @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
     @Child private IsEmptyListNode isEmptyListNode;
 
     public static LinkProcessToListNode create(final SqueakImageContext image) {
@@ -20,7 +22,7 @@ public class LinkProcessToListNode extends AbstractNodeWithImage {
         isEmptyListNode = IsEmptyListNode.create(image);
     }
 
-    public void executeLink(final BaseSqueakObject process, final PointersObject list) {
+    public void executeLink(final AbstractSqueakObject process, final PointersObject list) {
         // Add the given process to the given linked list and set the backpointer
         // of process to its new list.
         if (isEmptyListNode.executeIsEmpty(list)) {
@@ -30,6 +32,6 @@ public class LinkProcessToListNode extends AbstractNodeWithImage {
             lastLink.atput0(LINK.NEXT_LINK, process);
         }
         list.atput0(LINKED_LIST.LAST_LINK, process);
-        process.atput0(PROCESS.LIST, list);
+        atPut0Node.execute(process, PROCESS.LIST, list);
     }
 }

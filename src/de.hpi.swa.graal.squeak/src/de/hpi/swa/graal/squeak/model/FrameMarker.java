@@ -3,7 +3,7 @@ package de.hpi.swa.graal.squeak.model;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
 
-import de.hpi.swa.graal.squeak.instrumentation.BaseSqueakObjectMessageResolutionForeign;
+import de.hpi.swa.graal.squeak.instrumentation.SqueakObjectMessageResolutionForeign;
 
 public final class FrameMarker implements TruffleObject {
 
@@ -13,6 +13,6 @@ public final class FrameMarker implements TruffleObject {
     }
 
     public ForeignAccess getForeignAccess() {
-        return BaseSqueakObjectMessageResolutionForeign.ACCESS;
+        return SqueakObjectMessageResolutionForeign.ACCESS;
     }
 }

@@ -6,7 +6,7 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -23,7 +23,7 @@ public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"id == 1"})
-        protected final Object doSize(final BaseSqueakObject receiver, @SuppressWarnings("unused") final long id) {
+        protected final Object doSize(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final long id) {
             code.image.display.close();
             return receiver;
         }
@@ -38,7 +38,7 @@ public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"id == 1"})
-        protected final Object doSize(final BaseSqueakObject receiver, final long id) {
+        protected final Object doSize(final AbstractSqueakObject receiver, final long id) {
             return code.image.newPoint(0L, 0L);
         }
     }
@@ -51,7 +51,7 @@ public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"id == 1"})
-        protected final Object doSize(final BaseSqueakObject receiver, @SuppressWarnings("unused") final long id, final long width, final long height) {
+        protected final Object doSize(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final long id, final long width, final long height) {
             code.image.display.resizeTo((int) width, (int) height);
             return receiver;
         }
@@ -65,7 +65,7 @@ public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"id == 1"})
-        protected final Object doTitle(final BaseSqueakObject receiver, @SuppressWarnings("unused") final long id, final NativeObject title) {
+        protected final Object doTitle(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final long id, final NativeObject title) {
             code.image.display.setWindowTitle(title.toString());
             return receiver;
         }

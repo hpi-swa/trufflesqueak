@@ -3,7 +3,7 @@ package de.hpi.swa.graal.squeak.model;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
-public final class EmptyObject extends BaseSqueakObject {
+public final class EmptyObject extends AbstractSqueakObject {
     public EmptyObject(final SqueakImageContext img) {
         super(img);
     }
@@ -13,35 +13,14 @@ public final class EmptyObject extends BaseSqueakObject {
     }
 
     @Override
-    public boolean become(final BaseSqueakObject other) {
+    public boolean become(final AbstractSqueakObject other) {
         if (!(other instanceof EmptyObject)) {
             throw new PrimitiveExceptions.PrimitiveFailed();
         }
         return super.become(other);
     }
 
-    @Override
-    public int size() {
-        return 0;
-    }
-
-    @Override
-    public int instsize() {
-        return 0;
-    }
-
-    @Override
-    public Object at0(final long idx) {
-        throw new IndexOutOfBoundsException();
-    }
-
-    @Override
-    public void atput0(final long idx, final Object obj) {
-        throw new IndexOutOfBoundsException();
-    }
-
-    @Override
-    public BaseSqueakObject shallowCopy() {
+    public AbstractSqueakObject shallowCopy() {
         return new EmptyObject(image, getSqClass());
     }
 }

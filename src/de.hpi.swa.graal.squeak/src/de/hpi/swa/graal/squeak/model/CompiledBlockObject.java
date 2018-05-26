@@ -9,14 +9,15 @@ public final class CompiledBlockObject extends CompiledCodeObject {
     @CompilationFinal private final int numCopiedValues;
     @CompilationFinal private final int offset;
 
-    public static CompiledBlockObject create(final CompiledCodeObject code, final int numArgs, final int numCopied, final int bytecodeOffset, final int blockSize) {
-        return new CompiledBlockObject(code, numArgs, numCopied, bytecodeOffset, blockSize);
+    public static CompiledBlockObject create(final CompiledCodeObject code, final CompiledMethodObject outerMethod, final int numArgs, final int numCopied, final int bytecodeOffset,
+                    final int blockSize) {
+        return new CompiledBlockObject(code, outerMethod, numArgs, numCopied, bytecodeOffset, blockSize);
     }
 
-    private CompiledBlockObject(final CompiledCodeObject code, final int numArgs, final int numCopied, final int bytecodeOffset, final int blockSize) {
+    private CompiledBlockObject(final CompiledCodeObject code, final CompiledMethodObject outerMethod, final int numArgs, final int numCopied, final int bytecodeOffset, final int blockSize) {
         super(code.image);
-        outerMethod = code.getMethod();
-        numCopiedValues = numCopied;
+        this.outerMethod = outerMethod;
+        this.numCopiedValues = numCopied;
         this.offset = bytecodeOffset;
         final Object[] outerLiterals = outerMethod.getLiterals();
         final Object[] blockLiterals = new Object[outerLiterals.length + 1];
@@ -42,7 +43,6 @@ public final class CompiledBlockObject extends CompiledCodeObject {
         offset = original.offset;
     }
 
-    @Override
     public Object at0(final long longIndex) {
         final int index = (int) longIndex;
         if (index < getBytecodeOffset() - getOffset()) {
@@ -54,42 +54,45 @@ public final class CompiledBlockObject extends CompiledCodeObject {
     }
 
     @Override
+    public String toString() {
+        String className = "UnknownClass";
+        String selector = "unknownSelector";
+        final ClassObject classObject = getCompiledInClass();
+        if (classObject != null) {
+            className = classObject.nameAsClass();
+        }
+        final NativeObject selectorObj = getCompiledInSelector();
+        if (selectorObj != null) {
+            selector = selectorObj.asString();
+        }
+        return className + ">>" + selector;
+    }
+
     public NativeObject getCompiledInSelector() {
         return outerMethod.getCompiledInSelector();
     }
 
-    @Override
     public ClassObject getCompiledInClass() {
         return outerMethod.getCompiledInClass();
     }
 
-    @Override
     public int getNumCopiedValues() {
         return numCopiedValues;
     }
 
-    @Override
-    public int getNumTemps() {
-        return super.getNumTemps() + numCopiedValues;
-    }
-
-    @Override
     public CompiledMethodObject getMethod() {
         return outerMethod;
     }
 
-    @Override
     public int getInitialPC() {
-        return outerMethod.getInitialPC();
+        return outerMethod.getInitialPC() + getOffset();
     }
 
-    @Override
     public int getOffset() {
         return offset;
     }
 
-    @Override
-    public BaseSqueakObject shallowCopy() {
+    public AbstractSqueakObject shallowCopy() {
         return new CompiledBlockObject(this);
     }
 }

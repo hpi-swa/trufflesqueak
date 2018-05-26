@@ -6,13 +6,14 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
-import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
 
 @NodeChild(value = "objectNode", type = SqueakNode.class)
 @NodeChild(value = "valueNode", type = SqueakNode.class)
 public abstract class ObjectAtPutNode extends AbstractObjectAtNode {
+    @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
     @CompilationFinal private final ValueProfile classProfile = ValueProfile.createClassProfile();
     @CompilationFinal private final long index;
 
@@ -26,14 +27,9 @@ public abstract class ObjectAtPutNode extends AbstractObjectAtNode {
 
     public abstract void executeWrite(VirtualFrame frame);
 
-    @Specialization
-    protected final void doNativeObject(final NativeObject object, final long value) {
-        classProfile.profile(object).setNativeAt0(index, value);
-    }
-
     @Specialization(guards = "!isNativeObject(object)")
-    protected final void doSqueakObject(final BaseSqueakObject object, final Object value) {
-        classProfile.profile(object).atput0(index, value);
+    protected final void doSqueakObject(final AbstractSqueakObject object, final Object value) {
+        atPut0Node.execute(classProfile.profile(object), index, value);
     }
 
 }

@@ -1,12 +1,12 @@
 package de.hpi.swa.graal.squeak.nodes.context.stack;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
+import de.hpi.swa.graal.squeak.model.ContextObject;
 
 public abstract class StackPopNReversedNode extends AbstractStackPopNode {
     @CompilationFinal private final int numPop;
@@ -22,13 +22,13 @@ public abstract class StackPopNReversedNode extends AbstractStackPopNode {
 
     @ExplodeLoop
     @Specialization(guards = {"isVirtualized(frame)"})
-    protected Object[] doPopNVirtualized(final VirtualFrame frame) {
-        CompilerDirectives.ensureVirtualizedHere(frame);
+    protected final Object[] doPopNVirtualized(final VirtualFrame frame) {
         final int sp = frameStackPointer(frame);
         assert sp - numPop >= -1;
         final Object[] result = new Object[numPop];
         for (int i = 0; i < numPop; i++) {
             result[numPop - 1 - i] = atStackAndClear(frame, sp - i);
+            assert result[numPop - 1 - i] != null;
         }
         setFrameStackPointer(frame, sp - numPop);
         return result;
@@ -36,7 +36,16 @@ public abstract class StackPopNReversedNode extends AbstractStackPopNode {
 
     @ExplodeLoop
     @Specialization(guards = {"!isVirtualized(frame)"})
-    protected Object[] doPopN(final VirtualFrame frame) {
-        return getContext(frame).popNReversed(numPop);
+    protected final Object[] doPopN(final VirtualFrame frame) {
+        final ContextObject context = getContext(frame);
+        final long sp = context.getStackPointer();
+        assert sp - numPop >= 0;
+        final Object[] result = new Object[numPop];
+        for (int i = 0; i < numPop; i++) {
+            result[numPop - 1 - i] = atStackAndClear(context, sp - i);
+            assert result[numPop - 1 - i] != null;
+        }
+        context.setStackPointer(sp - numPop);
+        return result;
     }
 }

@@ -6,12 +6,13 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
-import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 
 @NodeChild(value = "objectNode", type = SqueakNode.class)
 public abstract class ObjectAtNode extends AbstractObjectAtNode {
+    @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
     @CompilationFinal private final ValueProfile classProfile = ValueProfile.createClassProfile();
     @CompilationFinal private final long index;
 
@@ -25,13 +26,8 @@ public abstract class ObjectAtNode extends AbstractObjectAtNode {
 
     public abstract Object executeGeneric(VirtualFrame frame);
 
-    @Specialization
-    protected Object read(final NativeObject object) {
-        return classProfile.profile(object).getNativeAt0(index);
-    }
-
     @Specialization(guards = "!isNativeObject(object)")
-    protected Object read(final BaseSqueakObject object) {
-        return classProfile.profile(object).at0(index);
+    protected final Object read(final AbstractSqueakObject object) {
+        return at0Node.execute(classProfile.profile(object), index);
     }
 }

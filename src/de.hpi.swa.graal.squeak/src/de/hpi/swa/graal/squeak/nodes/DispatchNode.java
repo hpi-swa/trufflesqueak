@@ -12,18 +12,21 @@ import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
-import de.hpi.swa.graal.squeak.model.NotProvided;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
+import de.hpi.swa.graal.squeak.nodes.context.frame.CreateArgumentsNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.CreateEagerArgumentsNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
-import de.hpi.swa.graal.squeak.util.ArrayUtils;
-import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 @ReportPolymorphism
 @ImportStatic(PrimitiveNodeFactory.class)
 public abstract class DispatchNode extends Node {
+    @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
+    @Child private CreateArgumentsNode createArgumentsNode = CreateArgumentsNode.create();
+    @Child private CreateEagerArgumentsNode createEagerArgumentsNode = CreateEagerArgumentsNode.create();
 
     public static DispatchNode create() {
         return DispatchNodeGen.create();
@@ -37,8 +40,8 @@ public abstract class DispatchNode extends Node {
 
     @Specialization(guards = {"isQuickReturnReceiverVariable(method.primitiveIndex())"})
     protected Object doPrimitiveQuickReturnReceiver(final CompiledMethodObject method, final Object[] receiverAndArguments, @SuppressWarnings("unused") final Object contextOrMarker) {
-        assert receiverAndArguments[0] instanceof BaseSqueakObject;
-        return ((BaseSqueakObject) receiverAndArguments[0]).at0(method.primitiveIndex() - 264);
+        assert receiverAndArguments[0] instanceof AbstractSqueakObject;
+        return at0Node.execute(receiverAndArguments[0], method.primitiveIndex() - 264);
     }
 
     @SuppressWarnings("unused")
@@ -48,7 +51,7 @@ public abstract class DispatchNode extends Node {
                     @Cached("method") final CompiledMethodObject cachedMethod,
                     @Cached("method.getCallTargetStable()") final Assumption callTargetStable,
                     @Cached("forIndex(method, method.primitiveIndex())") final AbstractPrimitiveNode primitiveNode) {
-        return primitiveNode.executeWithArguments(frame, ArrayUtils.fillWith(receiverAndArguments, primitiveNode.numArguments, NotProvided.INSTANCE));
+        return primitiveNode.executeWithArguments(frame, createEagerArgumentsNode.executeCreate(primitiveNode.numArguments, receiverAndArguments));
     }
 
     @Specialization(guards = {"method == cachedMethod"}, assumptions = {"callTargetStable"}, replaces = "doPrimitiveEagerly")
@@ -56,13 +59,13 @@ public abstract class DispatchNode extends Node {
                     @Cached("method") final CompiledCodeObject cachedMethod,
                     @Cached("create()") final InvokeNode invokeNode,
                     @SuppressWarnings("unused") @Cached("method.getCallTargetStable()") final Assumption callTargetStable) {
-        return invokeNode.executeInvoke(cachedMethod, FrameAccess.newWith(method, contextOrMarker, null, receiverAndArguments));
+        return invokeNode.executeInvoke(cachedMethod, createArgumentsNode.executeCreate(method, contextOrMarker, receiverAndArguments));
     }
 
     @Specialization(replaces = "doDirect")
     protected Object doIndirect(final CompiledCodeObject method, final Object[] receiverAndArguments, final Object contextOrMarker,
                     @Cached("create()") final InvokeNode invokeNode) {
-        return invokeNode.executeInvoke(method, FrameAccess.newWith(method, contextOrMarker, null, receiverAndArguments));
+        return invokeNode.executeInvoke(method, createArgumentsNode.executeCreate(method, contextOrMarker, receiverAndArguments));
     }
 
     @SuppressWarnings("unused")

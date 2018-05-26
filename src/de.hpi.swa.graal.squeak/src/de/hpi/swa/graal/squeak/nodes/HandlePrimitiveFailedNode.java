@@ -7,13 +7,13 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
-import de.hpi.swa.graal.squeak.model.ListObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
+import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 
 public abstract class HandlePrimitiveFailedNode extends AbstractNodeWithCode {
-    @CompilationFinal private ListObject errorTable;
-    @Child private StackPushNode pushNode;
+    @CompilationFinal private PointersObject errorTable;
+    @Child private StackPushNode pushNode = StackPushNode.create();
 
     public static HandlePrimitiveFailedNode create(final CompiledCodeObject code) {
         return HandlePrimitiveFailedNodeGen.create(code);
@@ -21,7 +21,6 @@ public abstract class HandlePrimitiveFailedNode extends AbstractNodeWithCode {
 
     public HandlePrimitiveFailedNode(final CompiledCodeObject code) {
         super(code);
-        pushNode = StackPushNode.create(code);
     }
 
     public abstract void executeHandle(VirtualFrame frame, PrimitiveFailed e);
@@ -46,10 +45,10 @@ public abstract class HandlePrimitiveFailedNode extends AbstractNodeWithCode {
         return code.getBytes()[3] == (byte) 0x81;
     }
 
-    private ListObject getErrorTable() {
+    private PointersObject getErrorTable() {
         if (errorTable == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            errorTable = ((ListObject) code.image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.PrimErrTableIndex));
+            errorTable = ((PointersObject) code.image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.PrimErrTableIndex));
         }
         return errorTable;
     }

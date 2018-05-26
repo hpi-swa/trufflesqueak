@@ -49,11 +49,11 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        protected boolean isZero(final double value) {
+        protected static final boolean isZero(final double value) {
             return value == 0;
         }
 
-        protected boolean isIntegralWhenDividedBy(final long a, final long b) {
+        protected static final boolean isIntegralWhenDividedBy(final long a, final long b) {
             return a % b == 0;
         }
 
@@ -601,7 +601,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object doFloatObject(final FloatObject receiver, final long index) {
-            return receiver.at0(index - 1);
+            return receiver.getNativeAt0(index - 1);
         }
     }
 
@@ -619,7 +619,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final long doFloatObject(final FloatObject receiver, final long index, final long value) {
-            receiver.atput0(index - 1, value);
+            receiver.setNativeAt0(index - 1, value);
             return value;
         }
     }

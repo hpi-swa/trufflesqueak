@@ -9,7 +9,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
 
 public abstract class FrameArgumentNode extends Node {
@@ -30,7 +30,7 @@ public abstract class FrameArgumentNode extends Node {
     public abstract Object executeRead(VirtualFrame frame);
 
     @Specialization
-    protected Object doArgument(final VirtualFrame frame) {
+    protected final Object doArgument(final VirtualFrame frame) {
         final Object value;
         try {
             value = frame.getArguments()[argumentIndex];
@@ -38,7 +38,7 @@ public abstract class FrameArgumentNode extends Node {
             outOfBounds.enter();
             return NotProvided.INSTANCE;
         }
-        if (objectProfile.profile(value instanceof BaseSqueakObject)) {
+        if (objectProfile.profile(value instanceof AbstractSqueakObject)) {
             return classProfile.profile(value);
         } else {
             return primitiveProfile.profile(value);

@@ -151,7 +151,7 @@ public final class SqueakBytecodeDecoder {
             case 138:
                 return new PushNewArrayNode(code, index, 2, nextByte());
             case 139:
-                return new CallPrimitiveNode(code, index, 3, nextByte(), nextByte());
+                return CallPrimitiveNode.create(code, index, 3, nextByte(), nextByte());
             case 140:
                 return new PushRemoteTempNode(code, index, 3, nextByte(), nextByte());
             case 141:

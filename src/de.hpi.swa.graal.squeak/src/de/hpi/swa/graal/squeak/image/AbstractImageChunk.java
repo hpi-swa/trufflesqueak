@@ -8,6 +8,7 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -15,10 +16,8 @@ import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.EmptyObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
-import de.hpi.swa.graal.squeak.model.ListObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 
 public abstract class AbstractImageChunk {
@@ -70,7 +69,7 @@ public abstract class AbstractImageChunk {
         return data;
     }
 
-    public BaseSqueakObject asClassObject() {
+    public AbstractSqueakObject asClassObject() {
         if (object == null) {
             assert format == 1;
             object = new ClassObject(image);
@@ -90,14 +89,14 @@ public abstract class AbstractImageChunk {
                 assert this.getSqClass() != image.metaclass && (this.getSqClass() == null || this.getSqClass().getSqClass() != image.metaclass);
                 object = new PointersObject(image);
             } else if (format == 2) { // indexable fields
-                object = new ListObject(image);
+                object = new PointersObject(image);
             } else if (format == 3) { // fixed and indexable fields
                 if (this.getSqClass() == image.methodContextClass) {
                     object = ContextObject.create(image);
                 } else if (this.getSqClass() == image.blockClosureClass) {
                     object = new BlockClosureObject(image);
                 } else {
-                    object = new ListObject(image);
+                    object = new PointersObject(image);
                 }
             } else if (format == 4) { // indexable weak fields
                 object = new WeakPointersObject(image);
@@ -106,20 +105,20 @@ public abstract class AbstractImageChunk {
             } else if (format <= 8) {
                 assert false; // unused
             } else if (format == 9) { // 64-bit integers
-                object = NativeObject.newNativeLongs(image, null, null);
+                object = NativeObject.newNativeLongs(image, null, 0);
             } else if (format <= 11) { // 32-bit integers
                 if (this.getSqClass() == image.floatClass) {
                     object = FloatObject.bytesAsFloatObject(image, getBytes());
                 } else {
-                    object = NativeObject.newNativeWords(image, null, null);
+                    object = NativeObject.newNativeInts(image, null, 0);
                 }
             } else if (format <= 15) { // 16-bit integers
-                object = NativeObject.newNativeShorts(image, null, null);
+                object = NativeObject.newNativeShorts(image, null, 0);
             } else if (format <= 23) { // bytes
                 if (this.getSqClass() == image.largePositiveIntegerClass || this.getSqClass() == image.largeNegativeIntegerClass) {
                     object = new LargeIntegerObject(image);
                 } else {
-                    object = NativeObject.newNativeBytes(image, null, null);
+                    object = NativeObject.newNativeBytes(image, null, 0);
                 }
             } else if (format <= 31) { // compiled methods
                 object = new CompiledMethodObject(image);

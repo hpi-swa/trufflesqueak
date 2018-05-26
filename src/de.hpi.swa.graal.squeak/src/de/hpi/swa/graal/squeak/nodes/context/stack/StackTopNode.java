@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes.context.stack;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -17,13 +16,12 @@ public abstract class StackTopNode extends AbstractStackNode {
     }
 
     @Specialization(guards = {"isVirtualized(frame)"})
-    protected Object doTopVirtualized(final VirtualFrame frame) {
-        CompilerDirectives.ensureVirtualizedHere(frame);
+    protected final Object doTopVirtualized(final VirtualFrame frame) {
         return readNode.execute(frame, frameStackPointer(frame));
     }
 
     @Specialization(guards = {"!isVirtualized(frame)"})
-    protected Object doTop(final VirtualFrame frame) {
+    protected final Object doTop(final VirtualFrame frame) {
         return getContext(frame).top();
     }
 }

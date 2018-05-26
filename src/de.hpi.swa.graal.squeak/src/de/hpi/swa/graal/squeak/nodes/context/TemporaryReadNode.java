@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes.context;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -27,13 +26,12 @@ public abstract class TemporaryReadNode extends SqueakNodeWithCode {
     }
 
     @Specialization(guards = {"isVirtualized(frame)"})
-    public Object doReadVirtualized(final VirtualFrame frame) {
-        CompilerDirectives.ensureVirtualizedHere(frame);
+    public final Object doReadVirtualized(final VirtualFrame frame) {
         return readNode.executeRead(frame);
     }
 
     @Specialization(guards = {"!isVirtualized(frame)"})
-    public Object doRead(final VirtualFrame frame) {
+    public final Object doRead(final VirtualFrame frame) {
         return getContext(frame).atTemp(tempIndex);
     }
 }

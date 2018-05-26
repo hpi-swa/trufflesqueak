@@ -1,8 +1,21 @@
 package de.hpi.swa.graal.squeak.model;
 
+import java.util.Arrays;
+
+import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.NodeUtil;
+import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.profiles.ValueProfile;
+
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
 public final class CompiledMethodObject extends CompiledCodeObject {
+    @CompilationFinal protected final ValueProfile storageType = ValueProfile.createClassProfile();
+
     public CompiledMethodObject(final SqueakImageContext img) {
         super(img);
     }
@@ -23,25 +36,52 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         super(compiledMethodObject);
     }
 
+    public Object at0(final long longIndex) {
+        final int index = (int) longIndex;
+        if (index < getBytecodeOffset()) {
+            assert index % BYTES_PER_WORD == 0;
+            return literals[index / BYTES_PER_WORD];
+        } else {
+            final int realIndex = index - getBytecodeOffset();
+            assert realIndex >= 0;
+            return Byte.toUnsignedLong(bytes[realIndex]);
+        }
+    }
+
     @Override
+    public String toString() {
+        CompilerAsserts.neverPartOfCompilation();
+        String className = "UnknownClass";
+        String selector = "unknownSelector";
+        final ClassObject classObject = getCompiledInClass();
+        if (classObject != null) {
+            className = classObject.nameAsClass();
+        }
+        final NativeObject selectorObj = getCompiledInSelector();
+        if (selectorObj != null) {
+            selector = selectorObj.asString();
+        }
+        return className + ">>" + selector;
+    }
+
     public NativeObject getCompiledInSelector() {
+        CompilerAsserts.neverPartOfCompilation("Do not use getCompiledInSelector() in compiled code");
         if (literals.length > 1) {
-            Object lit = literals[literals.length - 2];
+            final Object lit = literals[literals.length - 2];
             if (lit == null) {
                 return null;
             } else if (lit instanceof NativeObject) {
                 return (NativeObject) lit;
-            } else if ((lit instanceof BaseSqueakObject) && ((BaseSqueakObject) lit).size() >= 2) {
-                lit = ((BaseSqueakObject) lit).at0(1);
-                if (lit instanceof NativeObject) {
-                    return (NativeObject) lit;
+            } else if ((lit instanceof PointersObject) && ((PointersObject) lit).size() >= 2) {
+                final Object secondValue = ((PointersObject) lit).at0(1);
+                if (secondValue instanceof NativeObject) {
+                    return (NativeObject) secondValue;
                 }
             }
         }
         return null;
     }
 
-    @Override
     public ClassObject getCompiledInClass() {
         if (literals.length == 0) {
             return null;
@@ -70,11 +110,6 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         }
     }
 
-    @Override
-    public CompiledMethodObject getMethod() {
-        return this;
-    }
-
     public void setHeader(final long header) {
         literals = new Object[]{header};
         decodeHeader();
@@ -85,14 +120,17 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         }
     }
 
-    @Override
-    public BaseSqueakObject shallowCopy() {
+    public AbstractSqueakObject shallowCopy() {
         return new CompiledMethodObject(this);
     }
 
-    @Override
-    public int getOffset() {
-        return 0; // methods always start at the beginning
+    /*
+     * Answer the program counter for the receiver's first bytecode.
+     *
+     */
+    public int getInitialPC() {
+        // pc is offset by header + numLiterals, +1 for one-based addressing
+        return getBytecodeOffset() + 1;
     }
 
     @Override
@@ -110,4 +148,27 @@ public final class CompiledMethodObject extends CompiledCodeObject {
             }
         }
     }
+
+    @Override
+    @ExplodeLoop
+    public RootCallTarget getSplitCallTarget() {
+        final RootCallTarget target = getCallTarget();
+        final NativeObject selector = getCompiledInSelector();
+        for (int i = 0; i < image.specialSelectorsArray.length; i++) {
+            if (Arrays.equals(image.specialSelectorsArray[i].getByteStorage(storageType), selector.getByteStorage(storageType))) {
+                return split(target);
+            }
+        }
+        return target;
+    }
+
+    /**
+     * Replicate the CallTarget to let each builtin call site executes its own AST.
+     */
+    private static RootCallTarget split(final RootCallTarget callTarget) {
+        CompilerAsserts.neverPartOfCompilation();
+        final RootNode rootNode = callTarget.getRootNode();
+        return Truffle.getRuntime().createCallTarget(NodeUtil.cloneNode(rootNode));
+    }
+
 }

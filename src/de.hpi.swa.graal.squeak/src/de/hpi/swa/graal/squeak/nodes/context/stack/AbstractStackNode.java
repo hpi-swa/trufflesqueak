@@ -9,21 +9,19 @@ import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotWriteNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadNode;
 
 public abstract class AbstractStackNode extends SqueakNodeWithCode {
-    @Child private FrameSlotReadNode stackPointerReadNode;
-    @Child private FrameSlotWriteNode stackPointerWriteNode;
+    @Child private FrameSlotReadNode stackPointerReadNode = FrameSlotReadNode.createForStackPointer();
+    @Child private FrameSlotWriteNode stackPointerWriteNode = FrameSlotWriteNode.createForStackPointer();
     @Child protected FrameStackReadNode readNode = FrameStackReadNode.create();
 
     public AbstractStackNode(final CompiledCodeObject code) {
         super(code);
-        stackPointerReadNode = FrameSlotReadNode.create(code.stackPointerSlot);
-        stackPointerWriteNode = FrameSlotWriteNode.create(code.stackPointerSlot);
     }
 
-    protected int frameStackPointer(final VirtualFrame frame) {
+    protected final int frameStackPointer(final VirtualFrame frame) {
         return (int) stackPointerReadNode.executeRead(frame);
     }
 
-    protected void setFrameStackPointer(final VirtualFrame frame, final int value) {
+    protected final void setFrameStackPointer(final VirtualFrame frame, final int value) {
         stackPointerWriteNode.executeWrite(frame, value);
     }
 }

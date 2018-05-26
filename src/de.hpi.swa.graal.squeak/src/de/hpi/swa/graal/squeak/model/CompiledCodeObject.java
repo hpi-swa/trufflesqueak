@@ -24,7 +24,7 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.EnterCodeNode;
 import de.hpi.swa.graal.squeak.util.BitSplitter;
 
-public abstract class CompiledCodeObject extends BaseSqueakObject {
+public abstract class CompiledCodeObject extends AbstractSqueakObject {
     public enum SLOT_IDENTIFIER {
         THIS_CONTEXT_OR_MARKER,
         INSTRUCTION_POINTER,
@@ -34,11 +34,12 @@ public abstract class CompiledCodeObject extends BaseSqueakObject {
     protected static final int BYTES_PER_WORD = 4;
 
     // frame info
+    @CompilationFinal private static FrameDescriptor frameDescriptorTemplate;
+    @CompilationFinal public static FrameSlot thisContextOrMarkerSlot;
+    @CompilationFinal public static FrameSlot instructionPointerSlot;
+    @CompilationFinal public static FrameSlot stackPointerSlot;
     @CompilationFinal private FrameDescriptor frameDescriptor;
-    @CompilationFinal public FrameSlot thisContextOrMarkerSlot;
     @CompilationFinal(dimensions = 1) public FrameSlot[] stackSlots;
-    @CompilationFinal public FrameSlot instructionPointerSlot;
-    @CompilationFinal public FrameSlot stackPointerSlot;
     // header info and data
     @CompilationFinal(dimensions = 1) protected Object[] literals;
     @CompilationFinal(dimensions = 1) protected byte[] bytes;
@@ -52,16 +53,19 @@ public abstract class CompiledCodeObject extends BaseSqueakObject {
     @CompilationFinal private boolean altInstructionSet;
     @CompilationFinal public static boolean alwaysNonVirtualized = false;
 
-    @CompilationFinal private final Assumption canBeVirtualized = Truffle.getRuntime().createAssumption("Does not need a materialized context");
+    @CompilationFinal private final Assumption canBeVirtualized = Truffle.getRuntime().createAssumption("CompiledCodeObject: does not need a materialized context");
 
     @CompilationFinal private Source source;
 
     @CompilationFinal private RootCallTarget callTarget;
-    @CompilationFinal private final CyclicAssumption callTargetStable = new CyclicAssumption("Compiled method assumption");
+    @CompilationFinal private final CyclicAssumption callTargetStable = new CyclicAssumption("CompiledCodeObject assumption");
 
-    public abstract NativeObject getCompiledInSelector();
-
-    public abstract ClassObject getCompiledInClass();
+    static {
+        frameDescriptorTemplate = new FrameDescriptor();
+        thisContextOrMarkerSlot = frameDescriptorTemplate.addFrameSlot(SLOT_IDENTIFIER.THIS_CONTEXT_OR_MARKER, FrameSlotKind.Object);
+        instructionPointerSlot = frameDescriptorTemplate.addFrameSlot(SLOT_IDENTIFIER.INSTRUCTION_POINTER, FrameSlotKind.Int);
+        stackPointerSlot = frameDescriptorTemplate.addFrameSlot(SLOT_IDENTIFIER.STACK_POINTER, FrameSlotKind.Int);
+    }
 
     protected CompiledCodeObject(final SqueakImageContext img, final ClassObject klass) {
         super(img, klass);
@@ -83,10 +87,10 @@ public abstract class CompiledCodeObject extends BaseSqueakObject {
         this.literals = literals;
         decodeHeader();
         this.bytes = bytes;
-        invalidateAndCreateNewCallTargets();
+        createNewCallTarget();
     }
 
-    public Source getSource() {
+    public final Source getSource() {
         if (source == null) {
             source = Source.newBuilder(CompiledCodeObjectPrinter.getString(this)).mimeType(SqueakLanguage.MIME_TYPE).name(toString()).build();
         }
@@ -98,90 +102,66 @@ public abstract class CompiledCodeObject extends BaseSqueakObject {
     }
 
     @TruffleBoundary
-    protected void prepareFrameDescriptor() {
-        frameDescriptor = new FrameDescriptor();
-        thisContextOrMarkerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.THIS_CONTEXT_OR_MARKER, FrameSlotKind.Object);
-        instructionPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.INSTRUCTION_POINTER, FrameSlotKind.Int);
-        stackPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.STACK_POINTER, FrameSlotKind.Int);
+    protected final void prepareFrameDescriptor() {
+        frameDescriptor = frameDescriptorTemplate.shallowCopy();
         if (canBeVirtualized()) {
-            final long numStackSlots = frameSize() + getSqClass().getBasicInstanceSize();
-            stackSlots = new FrameSlot[(int) numStackSlots];
-            for (int i = 0; i < stackSlots.length; i++) {
+            final int frameSize = frameSize();
+            stackSlots = new FrameSlot[frameSize];
+            for (int i = 0; i < frameSize; i++) {
                 stackSlots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Illegal);
             }
         }
     }
 
-    public RootCallTarget getCallTarget() {
+    public RootCallTarget getSplitCallTarget() {
+        return getCallTarget();
+    }
+
+    public final RootCallTarget getCallTarget() {
         if (callTarget == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            callTarget = invalidateAndCreateNewCallTargets();
+            createNewCallTarget();
         }
         return callTarget;
     }
 
-    @TruffleBoundary
-    private RootCallTarget invalidateAndCreateNewCallTargets() {
-        callTargetStable.invalidate();
-        return Truffle.getRuntime().createCallTarget(EnterCodeNode.create(image.getLanguage(), this));
+    private void createNewCallTarget() {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        callTarget = Truffle.getRuntime().createCallTarget(EnterCodeNode.create(image.getLanguage(), this));
     }
 
-    public Assumption getCallTargetStable() {
+    public final Assumption getCallTargetStable() {
         return callTargetStable.getAssumption();
     }
 
-    @Override
-    public String toString() {
-        String className = "UnknownClass";
-        String selector = "unknownSelector";
-        final ClassObject classObject = getCompiledInClass();
-        if (classObject != null) {
-            className = classObject.nameAsClass();
-        }
-        final NativeObject selectorObj = getCompiledInSelector();
-        if (selectorObj != null) {
-            selector = selectorObj.toString();
-        }
-        return className + ">>" + selector;
-    }
-
-    public FrameDescriptor getFrameDescriptor() {
+    public final FrameDescriptor getFrameDescriptor() {
         return frameDescriptor;
-    }
-
-    public int getNumTemps() {
-        return numTemps;
     }
 
     public final int getNumArgs() {
         return numArgs;
     }
 
-    public int getNumCopiedValues() {
-        return 0;
+    public final int getNumTemps() {
+        return numTemps;
     }
 
-    public int getNumArgsAndCopiedValues() {
-        return numArgs + getNumCopiedValues();
-    }
-
-    public int getNumLiterals() {
+    public final int getNumLiterals() {
         return numLiterals;
     }
 
-    public FrameSlot getStackSlot(final int i) {
+    public final FrameSlot getStackSlot(final int i) {
         if (i >= stackSlots.length) { // This is fine, ignore for decoder
             return null;
         }
         return stackSlots[i];
     }
 
-    public long getNumStackSlots() {
+    public final long getNumStackSlots() {
         return stackSlots.length;
     }
 
     @Override
-    public void fillin(final AbstractImageChunk chunk) {
+    public final void fillin(final AbstractImageChunk chunk) {
         super.fillin(chunk);
         final List<Integer> data = chunk.data();
         final int header = data.get(0) >> 1; // header is a tagged small integer
@@ -194,7 +174,7 @@ public abstract class CompiledCodeObject extends BaseSqueakObject {
         bytes = chunk.getBytes(ptrs.length);
     }
 
-    protected void decodeHeader() {
+    protected final void decodeHeader() {
         final int hdr = getHeader();
         final int[] splitHeader = BitSplitter.splitter(hdr, new int[]{15, 1, 1, 1, 6, 4, 2, 1});
         numLiterals = splitHeader[0];
@@ -208,14 +188,14 @@ public abstract class CompiledCodeObject extends BaseSqueakObject {
         prepareFrameDescriptor();
     }
 
-    public int getHeader() {
+    public final int getHeader() {
         final Object object = literals[0];
         assert object instanceof Long;
         return ((Long) object).intValue();
     }
 
     @Override
-    public boolean become(final BaseSqueakObject other) {
+    public final boolean become(final AbstractSqueakObject other) {
         if (!(other instanceof CompiledMethodObject)) {
             throw new PrimitiveExceptions.PrimitiveFailed();
         }
@@ -223,53 +203,25 @@ public abstract class CompiledCodeObject extends BaseSqueakObject {
             throw new SqueakException("Should not fail");
         }
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        final Object[] literals2 = ((CompiledCodeObject) other).literals;
-        final byte[] bytes2 = ((CompiledCodeObject) other).bytes;
-        ((CompiledCodeObject) other).setLiteralsAndBytes(literals, bytes);
+        final CompiledCodeObject otherCodeObject = (CompiledCodeObject) other;
+        final Object[] literals2 = otherCodeObject.literals;
+        final byte[] bytes2 = otherCodeObject.bytes;
+        otherCodeObject.setLiteralsAndBytes(literals, bytes);
         this.setLiteralsAndBytes(literals2, bytes2);
+        otherCodeObject.callTargetStable.invalidate();
+        callTargetStable.invalidate();
         return true;
     }
 
-    /*
-     * Answer the program counter for the receiver's first bytecode.
-     *
-     */
-    public int getInitialPC() {
-        // pc is offset by header + numLiterals, +1 for one-based addressing
-        return getBytecodeOffset() + 1;
-    }
-
-    public int getBytecodeOffset() {
+    public final int getBytecodeOffset() {
         return (1 + numLiterals) * BYTES_PER_WORD; // header plus numLiterals
     }
 
-    public abstract int getOffset(); // offset in the method's bytecode
-
-    @Override
     public final int size() {
         return getBytecodeOffset() + bytes.length;
     }
 
-    @Override
-    public final int instsize() {
-        return 0;
-    }
-
-    @Override
-    public Object at0(final long longIndex) {
-        final int index = (int) longIndex;
-        if (index < getBytecodeOffset() - getOffset()) {
-            assert index % BYTES_PER_WORD == 0;
-            return literals[index / BYTES_PER_WORD];
-        } else {
-            final int realIndex = index - getBytecodeOffset() - getOffset();
-            assert realIndex >= 0;
-            return Byte.toUnsignedLong(bytes[realIndex]);
-        }
-    }
-
-    @Override
-    public void atput0(final long longIndex, final Object obj) {
+    public final void atput0(final long longIndex, final Object obj) {
         final int index = (int) longIndex;
         assert index >= 0;
         if (index < getBytecodeOffset()) {
@@ -289,7 +241,7 @@ public abstract class CompiledCodeObject extends BaseSqueakObject {
         }
     }
 
-    public Object getLiteral(final long longIndex) {
+    public final Object getLiteral(final long longIndex) {
         final int index = (int) longIndex;
         final int literalIndex = 1 + index; // skip header
         if (literalIndex < literals.length) {
@@ -299,7 +251,7 @@ public abstract class CompiledCodeObject extends BaseSqueakObject {
         }
     }
 
-    public void setLiteral(final long longIndex, final Object obj) {
+    public final void setLiteral(final long longIndex, final Object obj) {
         final int index = (int) longIndex;
         if (index == 0) {
             assert obj instanceof Long;
@@ -312,11 +264,11 @@ public abstract class CompiledCodeObject extends BaseSqueakObject {
         }
     }
 
-    public boolean hasPrimitive() {
+    public final boolean hasPrimitive() {
         return hasPrimitive;
     }
 
-    public int primitiveIndex() {
+    public final int primitiveIndex() {
         if (hasPrimitive && bytes.length >= 3) {
             return Byte.toUnsignedInt(bytes[1]) + (Byte.toUnsignedInt(bytes[2]) << 8);
         } else {
@@ -324,41 +276,35 @@ public abstract class CompiledCodeObject extends BaseSqueakObject {
         }
     }
 
-    public Object[] getLiterals() {
+    public final Object[] getLiterals() {
         return literals;
     }
 
-    public byte[] getBytes() {
+    public final byte[] getBytes() {
         return bytes;
     }
 
-    public abstract CompiledMethodObject getMethod();
-
-    public boolean canBeVirtualized() {
+    public final boolean canBeVirtualized() {
         return canBeVirtualized.isValid();
     }
 
-    public Assumption getCanBeVirtualizedAssumption() {
+    public final Assumption getCanBeVirtualizedAssumption() {
         return canBeVirtualized;
     }
 
-    public void invalidateCanBeVirtualizedAssumption() {
+    public final void invalidateCanBeVirtualizedAssumption() {
         canBeVirtualized.invalidate();
     }
 
-    public boolean isUnwindMarked() {
+    public final boolean isUnwindMarked() {
         return hasPrimitive() && primitiveIndex() == 198;
     }
 
-    public boolean isExceptionHandlerMarked() {
+    public final boolean isExceptionHandlerMarked() {
         return hasPrimitive() && primitiveIndex() == 199;
     }
 
-    public boolean isDoesNotUnderstand() {
-        return getCompiledInSelector() == image.doesNotUnderstand;
-    }
-
-    public static long makeHeader(final int numArgs, final int numTemps, final int numLiterals, final boolean hasPrimitive, final boolean needsLargeFrame) {
+    public static final long makeHeader(final int numArgs, final int numTemps, final int numLiterals, final boolean hasPrimitive, final boolean needsLargeFrame) {
         long header = 0;
         header += (numArgs & 0x0F) << 24;
         header += (numTemps & 0x3F) << 18;

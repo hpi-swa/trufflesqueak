@@ -15,7 +15,6 @@ import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
-import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
 
 public class FrameAccess {
@@ -91,6 +90,7 @@ public class FrameAccess {
         return frame.getFrameDescriptor().getSlots().get(CONTEXT_OR_MARKER);
     }
 
+    @TruffleBoundary
     public static final Object[] newWith(final CompiledCodeObject code, final Object sender, final BlockClosureObject closure, final Object[] frameArgs) {
         final Object[] arguments = new Object[RECEIVER + frameArgs.length];
         arguments[METHOD] = code;
@@ -112,15 +112,11 @@ public class FrameAccess {
                     return null;
                 }
                 final Object contextOrMarker = getContextOrMarker(current);
-                if (isMatchingMarker(frameMarker, contextOrMarker)) {
+                if (frameMarker == contextOrMarker) {
                     return frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
                 }
                 return null;
             }
         });
-    }
-
-    public static final boolean isMatchingMarker(final FrameMarker frameMarker, final Object contextOrMarker) {
-        return frameMarker == contextOrMarker || (contextOrMarker instanceof ContextObject && frameMarker == ((ContextObject) contextOrMarker).getFrameMarker());
     }
 }

@@ -3,7 +3,7 @@ package de.hpi.swa.graal.squeak.nodes.context;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
@@ -55,7 +55,7 @@ public abstract class SqueakLookupClassNode extends AbstractNodeWithImage {
     }
 
     @Specialization
-    protected static final ClassObject squeakClass(final BaseSqueakObject value) {
+    protected static final ClassObject squeakClass(final AbstractSqueakObject value) {
         return value.getSqClass();
     }
 

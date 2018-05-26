@@ -1,10 +1,12 @@
 package de.hpi.swa.graal.squeak.nodes.plugins;
 
+import java.util.Arrays;
 import java.util.List;
 
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
@@ -44,28 +46,30 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveAt")
     public abstract static class PrimFloatArrayAtNode extends AbstractPrimitiveNode {
+        private final ValueProfile storageType = ValueProfile.createClassProfile();
 
         public PrimFloatArrayAtNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        @Specialization
+        @Specialization(guards = "receiver.isIntType()")
         protected double doAt(final NativeObject receiver, final long index) {
-            return Float.intBitsToFloat(receiver.getInt(((int) index) - 1));
+            return Float.intBitsToFloat(receiver.getIntStorage(storageType)[(int) index - 1]);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveAtPut")
     public abstract static class PrimFloatArrayAtPutNode extends AbstractPrimitiveNode {
+        private final ValueProfile storageType = ValueProfile.createClassProfile();
 
         public PrimFloatArrayAtPutNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        @Specialization
+        @Specialization(guards = "receiver.isIntType()")
         protected double doDouble(final NativeObject receiver, final long index, final double value) {
-            receiver.setInt(((int) index) - 1, Float.floatToRawIntBits((float) value));
+            receiver.getIntStorage(storageType)[(int) index - 1] = Float.floatToRawIntBits((float) value);
             return value;
         }
 
@@ -113,25 +117,15 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveEqual")
     public abstract static class PrimFloatArrayEqualNode extends AbstractPrimitiveNode {
+        private final ValueProfile storageType = ValueProfile.createClassProfile();
 
         public PrimFloatArrayEqualNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        @Specialization
+        @Specialization(guards = {"receiver.isIntType()", "other.isIntType()"})
         protected boolean doEqual(final NativeObject receiver, final NativeObject other) {
-            final int[] words = receiver.getWords();
-            final int wordsLength = words.length;
-            final int[] otherWords = other.getWords();
-            if (wordsLength != otherWords.length) {
-                return code.image.sqFalse;
-            }
-            for (int i = 0; i < wordsLength; i++) {
-                if (words[i] != otherWords[i]) {
-                    return code.image.sqFalse;
-                }
-            }
-            return code.image.sqTrue;
+            return Arrays.equals(receiver.getIntStorage(storageType), other.getIntStorage(storageType)) ? code.image.sqTrue : code.image.sqFalse;
         }
 
         /*
@@ -147,14 +141,15 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveHashArray")
     public abstract static class PrimHashArrayNode extends AbstractPrimitiveNode {
+        private final ValueProfile storageType = ValueProfile.createClassProfile();
 
         public PrimHashArrayNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        @Specialization
+        @Specialization(guards = "receiver.isIntType()")
         protected long doHash(final NativeObject receiver) {
-            final int[] words = receiver.getWords();
+            final int[] words = receiver.getIntStorage(storageType);
             long hash = 0;
             for (int word : words) {
                 hash += word;
@@ -226,14 +221,15 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveSum")
     public abstract static class PrimFloatArraySumNode extends AbstractPrimitiveNode {
+        private final ValueProfile storageType = ValueProfile.createClassProfile();
 
         public PrimFloatArraySumNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        @Specialization
+        @Specialization(guards = "receiver.isIntType()")
         protected double doSum(final NativeObject receiver) {
-            final int[] words = receiver.getWords();
+            final int[] words = receiver.getIntStorage(storageType);
             double sum = 0;
             for (int word : words) {
                 sum += Float.intBitsToFloat(word);

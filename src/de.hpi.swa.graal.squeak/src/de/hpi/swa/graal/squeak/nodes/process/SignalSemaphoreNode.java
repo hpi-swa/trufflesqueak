@@ -2,8 +2,8 @@ package de.hpi.swa.graal.squeak.nodes.process;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 
+import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SEMAPHORE;
-import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 
@@ -12,14 +12,14 @@ public class SignalSemaphoreNode extends AbstractNodeWithImage {
     @Child private ResumeProcessNode resumeProcessNode;
     @Child private RemoveFirstLinkOfListNode removeFirstLinkOfListNode;
 
-    public static SignalSemaphoreNode create(final SqueakImageContext image) {
-        return new SignalSemaphoreNode(image);
+    public static SignalSemaphoreNode create(final CompiledCodeObject code) {
+        return new SignalSemaphoreNode(code);
     }
 
-    protected SignalSemaphoreNode(final SqueakImageContext image) {
-        super(image);
+    protected SignalSemaphoreNode(final CompiledCodeObject code) {
+        super(code.image);
         isEmptyListNode = IsEmptyListNode.create(image);
-        resumeProcessNode = ResumeProcessNode.create(image);
+        resumeProcessNode = ResumeProcessNode.create(code);
         removeFirstLinkOfListNode = RemoveFirstLinkOfListNode.create(image);
     }
 

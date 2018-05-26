@@ -98,7 +98,7 @@ public final class StoreBytecodes {
         }
     }
 
-    public static class PopIntoAssociationNode extends AbstractStoreIntoAssociationNode {
+    public static final class PopIntoAssociationNode extends AbstractStoreIntoAssociationNode {
         @Child private StackPopNode popNode;
 
         public PopIntoAssociationNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long variableIndex) {
@@ -116,7 +116,7 @@ public final class StoreBytecodes {
         }
     }
 
-    public static class PopIntoReceiverVariableNode extends AbstractStoreIntoReceiverVariableNode {
+    public static final class PopIntoReceiverVariableNode extends AbstractStoreIntoReceiverVariableNode {
 
         public PopIntoReceiverVariableNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long receiverIndex) {
             super(code, index, numBytecodes, receiverIndex);
@@ -133,7 +133,7 @@ public final class StoreBytecodes {
         }
     }
 
-    public static class PopIntoRemoteTempNode extends AbstractStoreIntoRemoteTempNode {
+    public static final class PopIntoRemoteTempNode extends AbstractStoreIntoRemoteTempNode {
 
         public PopIntoRemoteTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long indexInArray, final long indexOfArray) {
             super(code, index, numBytecodes, indexInArray, indexOfArray);
@@ -150,7 +150,7 @@ public final class StoreBytecodes {
         }
     }
 
-    public static class PopIntoTemporaryLocationNode extends AbstractStoreIntoTempNode {
+    public static final class PopIntoTemporaryLocationNode extends AbstractStoreIntoTempNode {
         @Child private StackPopNode popNode;
 
         public PopIntoTemporaryLocationNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long tempIndex) {
@@ -169,7 +169,7 @@ public final class StoreBytecodes {
         }
     }
 
-    public static class StoreIntoAssociationNode extends AbstractStoreIntoAssociationNode {
+    public static final class StoreIntoAssociationNode extends AbstractStoreIntoAssociationNode {
         @Child private StackTopNode topNode;
 
         public StoreIntoAssociationNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long variableIndex) {
@@ -187,7 +187,7 @@ public final class StoreBytecodes {
         }
     }
 
-    public static class StoreIntoReceiverVariableNode extends AbstractStoreIntoReceiverVariableNode {
+    public static final class StoreIntoReceiverVariableNode extends AbstractStoreIntoReceiverVariableNode {
         @Child private StackTopNode topNode;
 
         public StoreIntoReceiverVariableNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long receiverIndex) {
@@ -205,7 +205,7 @@ public final class StoreBytecodes {
         }
     }
 
-    public static class StoreIntoRemoteTempNode extends AbstractStoreIntoRemoteTempNode {
+    public static final class StoreIntoRemoteTempNode extends AbstractStoreIntoRemoteTempNode {
 
         public StoreIntoRemoteTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long indexInArray, final long indexOfArray) {
             super(code, index, numBytecodes, indexInArray, indexOfArray);
@@ -222,7 +222,7 @@ public final class StoreBytecodes {
         }
     }
 
-    public static class StoreIntoTempNode extends AbstractStoreIntoTempNode {
+    public static final class StoreIntoTempNode extends AbstractStoreIntoTempNode {
         @Child private StackTopNode topNode;
 
         public StoreIntoTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long tempIndex) {

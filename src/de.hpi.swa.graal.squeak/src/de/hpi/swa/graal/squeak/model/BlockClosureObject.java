@@ -1,26 +1,21 @@
 package de.hpi.swa.graal.squeak.model;
 
 import com.oracle.truffle.api.Assumption;
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions;
-import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.BLOCK_CLOSURE;
 import de.hpi.swa.graal.squeak.nodes.EnterCodeNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
-public final class BlockClosureObject extends BaseSqueakObject {
+public final class BlockClosureObject extends AbstractSqueakObject {
     @CompilationFinal private Object receiver;
     @CompilationFinal(dimensions = 1) private Object[] copied;
     @CompilationFinal private ContextObject outerContext;
@@ -28,35 +23,33 @@ public final class BlockClosureObject extends BaseSqueakObject {
     @CompilationFinal private long pc = -1;
     @CompilationFinal private long numArgs = -1;
     @CompilationFinal private RootCallTarget callTarget;
-    @CompilationFinal private final CyclicAssumption callTargetStable = new CyclicAssumption("Compiled method assumption");
-    @CompilationFinal private FrameSlot contextOrMarkerSlot;
+    @CompilationFinal private final CyclicAssumption callTargetStable = new CyclicAssumption("BlockClosureObject assumption");
 
     public BlockClosureObject(final SqueakImageContext image) {
         super(image, image.blockClosureClass);
         this.copied = new Object[0]; // ensure copied is set
     }
 
-    public BlockClosureObject(final CompiledBlockObject compiledBlock, final Object receiver, final Object[] copied, final ContextObject outerContext, final FrameSlot contextOrMarkerSlot) {
+    public BlockClosureObject(final CompiledBlockObject compiledBlock, final RootCallTarget callTarget, final Object receiver, final Object[] copied, final ContextObject outerContext) {
         super(compiledBlock.image, compiledBlock.image.blockClosureClass);
-        assert outerContext.getFrameMarker() != null;
         this.block = compiledBlock;
+        this.callTarget = callTarget;
         this.outerContext = outerContext;
         this.receiver = receiver;
         this.copied = copied;
-        this.contextOrMarkerSlot = contextOrMarkerSlot;
+        this.pc = block.getInitialPC();
+        this.numArgs = block.getNumArgs();
     }
 
     private BlockClosureObject(final BlockClosureObject original) {
         super(original.image, original.image.blockClosureClass);
-        this.block = (CompiledBlockObject) original.getCompiledBlock().shallowCopy();
+        this.block = original.block;
+        this.callTarget = original.callTarget;
         this.outerContext = original.outerContext;
-        if (original.receiver instanceof BaseSqueakObject) {
-            this.receiver = ((BaseSqueakObject) original.receiver).shallowCopy();
-        } else {
-            this.receiver = original.receiver;
-        }
-        this.copied = original.copied.clone();
-        this.contextOrMarkerSlot = original.contextOrMarkerSlot;
+        this.receiver = original.receiver;
+        this.copied = original.copied;
+        this.pc = original.pc;
+        this.numArgs = original.numArgs;
     }
 
     @Override
@@ -76,7 +69,7 @@ public final class BlockClosureObject extends BaseSqueakObject {
     public long getPC() {
         if (pc == -1) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            pc = block.getInitialPC() + block.getOffset();
+            pc = block.getInitialPC();
         }
         return pc;
     }
@@ -89,15 +82,6 @@ public final class BlockClosureObject extends BaseSqueakObject {
         return numArgs;
     }
 
-    private FrameSlot getContextOrMarkerSlot(final Frame frame) {
-        if (contextOrMarkerSlot == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            contextOrMarkerSlot = FrameAccess.getContextOrMarkerSlot(frame);
-        }
-        return contextOrMarkerSlot;
-    }
-
-    @Override
     public Object at0(final long longIndex) {
         final int index = (int) longIndex;
         switch (index) {
@@ -112,7 +96,6 @@ public final class BlockClosureObject extends BaseSqueakObject {
         }
     }
 
-    @Override
     public void atput0(final long longIndex, final Object obj) {
         final int index = (int) longIndex;
         switch (index) {
@@ -135,7 +118,7 @@ public final class BlockClosureObject extends BaseSqueakObject {
     }
 
     @Override
-    public boolean become(final BaseSqueakObject other) {
+    public boolean become(final AbstractSqueakObject other) {
         if (!(other instanceof BlockClosureObject)) {
             throw new PrimitiveExceptions.PrimitiveFailed();
         }
@@ -144,18 +127,17 @@ public final class BlockClosureObject extends BaseSqueakObject {
         }
         CompilerDirectives.transferToInterpreterAndInvalidate();
         final Object[] otherCopied = copied;
-        copied = ((BlockClosureObject) other).copied;
-        ((BlockClosureObject) other).copied = otherCopied;
+        final BlockClosureObject otherClosure = (BlockClosureObject) other;
+        copied = otherClosure.copied;
+        otherClosure.copied = otherCopied;
         return true;
     }
 
-    @Override
     public int size() {
         return copied.length + instsize();
     }
 
-    @Override
-    public int instsize() {
+    public static int instsize() {
         return BLOCK_CLOSURE.FIRST_COPIED_VALUE;
     }
 
@@ -172,10 +154,6 @@ public final class BlockClosureObject extends BaseSqueakObject {
     }
 
     public RootCallTarget getCallTarget() {
-        if (callTarget == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            callTarget = Truffle.getRuntime().createCallTarget(EnterCodeNode.create(block.image.getLanguage(), block));
-        }
         return callTarget;
     }
 
@@ -187,34 +165,42 @@ public final class BlockClosureObject extends BaseSqueakObject {
         if (block == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             final CompiledCodeObject code = outerContext.getMethod();
-            final int offset = (int) pc - code.getInitialPC();
+            final CompiledMethodObject method;
+            if (code instanceof CompiledMethodObject) {
+                method = (CompiledMethodObject) code;
+            } else {
+                method = ((CompiledBlockObject) code).getMethod();
+            }
+            final int offset = (int) pc - method.getInitialPC();
             final int j = code.getBytes()[offset - 2];
             final int k = code.getBytes()[offset - 1];
             final int blockSize = (j << 8) | (k & 0xff);
-            block = CompiledBlockObject.create(code, ((Long) numArgs).intValue(), copied.length, offset, blockSize);
+            block = CompiledBlockObject.create(code, method, ((Long) numArgs).intValue(), copied.length, offset, blockSize);
+            callTarget = Truffle.getRuntime().createCallTarget(EnterCodeNode.create(block.image.getLanguage(), block));
         }
         return block;
     }
 
-    public Object[] getFrameArguments(final VirtualFrame frame, final Object... objects) {
-        CompilerAsserts.compilationConstant(objects.length);
+    public Object[] getFrameArguments(final Object senderOrMarker, final Object... objects) {
         final CompiledBlockObject blockObject = getCompiledBlock();
-        if (blockObject.getNumArgs() != objects.length) {
-            throw new PrimitiveFailed();
+        final int numObjects = objects.length;
+        final int numCopied = copied.length;
+        if (blockObject.getNumArgs() != numObjects) { // TODO: turn this into an assertion
+            image.getError().println("number of required and provided block arguments do not match");
         }
         final Object[] arguments = new Object[FrameAccess.ARGUMENTS_START +
-                        objects.length +
-                        copied.length];
+                        numObjects +
+                        numCopied];
         arguments[FrameAccess.METHOD] = blockObject;
         // Sender is thisContext (or marker)
-        arguments[FrameAccess.SENDER_OR_SENDER_MARKER] = FrameAccess.getContextOrMarker(frame, getContextOrMarkerSlot(frame));
+        arguments[FrameAccess.SENDER_OR_SENDER_MARKER] = senderOrMarker;
         arguments[FrameAccess.CLOSURE_OR_NULL] = this;
         arguments[FrameAccess.RECEIVER] = getReceiver();
-        for (int i = 0; i < objects.length; i++) {
+        for (int i = 0; i < numObjects; i++) {
             arguments[FrameAccess.ARGUMENTS_START + i] = objects[i];
         }
-        for (int i = 0; i < copied.length; i++) {
-            arguments[FrameAccess.ARGUMENTS_START + objects.length + i] = copied[i];
+        for (int i = 0; i < numCopied; i++) {
+            arguments[FrameAccess.ARGUMENTS_START + numObjects + i] = copied[i];
         }
         return arguments;
     }
@@ -229,8 +215,7 @@ public final class BlockClosureObject extends BaseSqueakObject {
         return outerContext;
     }
 
-    @Override
-    public BaseSqueakObject shallowCopy() {
+    public AbstractSqueakObject shallowCopy() {
         return new BlockClosureObject(this);
     }
 
@@ -251,8 +236,8 @@ public final class BlockClosureObject extends BaseSqueakObject {
                 if (newPointer == fromPointer) {
                     final Object toPointer = to[i];
                     newPointers[j] = toPointer;
-                    if (copyHash && fromPointer instanceof BaseSqueakObject && toPointer instanceof BaseSqueakObject) {
-                        ((BaseSqueakObject) toPointer).setSqueakHash(((BaseSqueakObject) fromPointer).squeakHash());
+                    if (copyHash && fromPointer instanceof AbstractSqueakObject && toPointer instanceof AbstractSqueakObject) {
+                        ((AbstractSqueakObject) toPointer).setSqueakHash(((AbstractSqueakObject) fromPointer).squeakHash());
                     }
                 }
             }

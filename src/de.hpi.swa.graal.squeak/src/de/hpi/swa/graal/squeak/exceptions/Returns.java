@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.exceptions;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.nodes.ControlFlowException;
 
@@ -12,29 +11,12 @@ public final class Returns {
         @CompilationFinal protected final Object returnValue;
 
         private AbstractReturn(final Object result) {
+            assert result != null;
             returnValue = result;
         }
 
         public final Object getReturnValue() {
             return returnValue;
-        }
-    }
-
-    public static final class FreshReturn extends ControlFlowException {
-        @CompilationFinal private static final long serialVersionUID = 1L;
-        @CompilationFinal private final AbstractReturn returnValue;
-
-        public FreshReturn(final AbstractReturn result) {
-            returnValue = result;
-        }
-
-        public AbstractReturn getReturnException() {
-            return returnValue;
-        }
-
-        @Override
-        public String toString() {
-            return "Fresh (value: " + returnValue + ")";
         }
     }
 
@@ -53,8 +35,8 @@ public final class Returns {
 
     public static final class NonLocalReturn extends AbstractReturn {
         @CompilationFinal private static final long serialVersionUID = 1L;
-        @CompilationFinal private ContextObject targetContext;
-        @CompilationFinal private boolean arrivedAtTargetContext = false;
+        @CompilationFinal private final ContextObject targetContext;
+        private boolean arrivedAtTargetContext = false;
 
         public NonLocalReturn(final Object returnValue, final ContextObject targetContext) {
             super(returnValue);
@@ -70,7 +52,6 @@ public final class Returns {
         }
 
         public void setArrivedAtTargetContext() {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
             arrivedAtTargetContext = true;
         }
 
@@ -91,6 +72,8 @@ public final class Returns {
 
         public NonVirtualReturn(final Object returnValue, final ContextObject targetContext, final ContextObject currentContext) {
             super(returnValue);
+            assert !targetContext.hasVirtualSender();
+            assert !currentContext.hasVirtualSender();
             this.targetContext = targetContext;
             this.currentContext = currentContext;
         }

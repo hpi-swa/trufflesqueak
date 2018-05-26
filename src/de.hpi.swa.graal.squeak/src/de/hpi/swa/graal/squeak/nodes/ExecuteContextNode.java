@@ -3,21 +3,22 @@ package de.hpi.swa.graal.squeak.nodes;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.LoopNode;
 
-import de.hpi.swa.graal.squeak.exceptions.Returns.FreshReturn;
+import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
 import de.hpi.swa.graal.squeak.exceptions.Returns.LocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
+import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.CalculcatePCOffsetNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
 import de.hpi.swa.graal.squeak.nodes.context.UpdateInstructionPointerNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.SqueakBytecodeDecoder;
@@ -27,9 +28,9 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
     @Child private HandleLocalReturnNode handleLocalReturnNode;
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
     @Child private HandleNonVirtualReturnNode handleNonVirtualReturnNode;
-    @Child private FrameSlotReadNode contextReadNode;
     @Child private UpdateInstructionPointerNode updateInstructionPointerNode;
-    @Child private StackPushNode pushStackNode;
+    @Child private StackPushNode pushStackNode = StackPushNode.create();
+    @Child private CalculcatePCOffsetNode calculcatePCOffsetNode = CalculcatePCOffsetNode.create();
 
     public static ExecuteContextNode create(final CompiledCodeObject code) {
         return new ExecuteContextNode(code);
@@ -42,13 +43,13 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
         handleLocalReturnNode = HandleLocalReturnNode.create(code);
         handleNonLocalReturnNode = HandleNonLocalReturnNode.create(code);
         handleNonVirtualReturnNode = HandleNonVirtualReturnNode.create(code);
-        contextReadNode = FrameSlotReadNode.create(code.thisContextOrMarkerSlot);
         updateInstructionPointerNode = UpdateInstructionPointerNode.create(code);
-        pushStackNode = StackPushNode.create(code);
     }
 
     public Object executeVirtualized(final VirtualFrame frame) {
-        code.image.interrupt.sendOrBackwardJumpTrigger(frame);
+        if (!code.hasPrimitive() && bytecodeNodes.length > 32) {
+            code.image.interrupt.sendOrBackwardJumpTrigger(frame);
+        }
         try {
             startBytecode(frame);
             throw new SqueakException("Method did not return");
@@ -64,10 +65,12 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
 
     public Object executeNonVirtualized(final VirtualFrame frame, final ContextObject newContext) {
         // maybe persist newContext, so there's no need to lookup the context to update its pc.
-        assert newContext.getCodeObject() == FrameAccess.getMethod(frame);
-        code.image.interrupt.sendOrBackwardJumpTrigger(frame);
+        assert newContext.getClosureOrMethod() == frame.getArguments()[FrameAccess.METHOD];
+        if (!code.hasPrimitive() && bytecodeNodes.length > 32) {
+            code.image.interrupt.sendOrBackwardJumpTrigger(frame);
+        }
         try {
-            final long initialPC = newContext.getInstructionPointer();
+            final long initialPC = getAndDecodeSqueakPC(newContext);
             if (initialPC == 0) {
                 startBytecode(frame);
             } else {
@@ -78,12 +81,24 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
             throw new SqueakException("Method did not return");
         } catch (LocalReturn lr) {
             return handleLocalReturnNode.executeHandle(frame, lr);
+        } catch (ProcessSwitch ps) {
+            assert hasMaterializedContext(frame);
+            throw ps;
         } catch (NonLocalReturn nlr) {
             return handleNonLocalReturnNode.executeHandle(frame, nlr);
             // TODO: use handleNonVirtualReturnNode again
             // } catch (NonVirtualReturn nvr) {
             // return handleNonVirtualReturnNode.executeHandle(frame, nvr);
         }
+    }
+
+    private static boolean hasMaterializedContext(final VirtualFrame frame) {
+        final Object ctx = FrameUtil.getObjectSafe(frame, CompiledCodeObject.thisContextOrMarkerSlot);
+        return ctx instanceof ContextObject && !((ContextObject) ctx).hasVirtualSender();
+    }
+
+    private long getAndDecodeSqueakPC(final ContextObject newContext) {
+        return newContext.getInstructionPointer() - calculcatePCOffsetNode.execute(newContext.getClosureOrMethod());
     }
 
     /*
@@ -135,10 +150,6 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
                 } else {
                     try {
                         pc = node.executeInt(frame);
-                    } catch (FreshReturn fr) {
-                        throw fr.getReturnException();
-                    } catch (LocalReturn lr) {
-                        pushStackNode.executeWrite(frame, lr.getReturnValue());
                     } catch (NonLocalReturn nlr) {
                         if (nlr.hasArrivedAtTargetContext()) {
                             pushStackNode.executeWrite(frame, nlr.getReturnValue());
@@ -167,10 +178,6 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
             updateInstructionPointerNode.executeUpdate(frame, node.getSuccessorIndex());
             try {
                 pc = node.executeInt(frame);
-            } catch (FreshReturn fr) {
-                throw fr.getReturnException();
-            } catch (LocalReturn lr) {
-                pushStackNode.executeWrite(frame, lr.getReturnValue());
             } catch (NonLocalReturn nlr) {
                 if (nlr.hasArrivedAtTargetContext()) {
                     pushStackNode.executeWrite(frame, nlr.getReturnValue());

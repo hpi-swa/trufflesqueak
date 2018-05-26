@@ -13,18 +13,18 @@ import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
-import de.hpi.swa.graal.squeak.model.BaseSqueakObject;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.model.FrameMarker;
-import de.hpi.swa.graal.squeak.model.ListObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
+import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.BlockActivationNode;
 import de.hpi.swa.graal.squeak.nodes.BlockActivationNodeGen;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
@@ -40,6 +40,8 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @GenerateNodeFactory
     @SqueakPrimitive(index = 195)
     protected abstract static class PrimFindNextUnwindContextUpToNode extends AbstractPrimitiveNode {
+        @Child private FrameSlotReadNode contextOrMarkerNode = FrameSlotReadNode.createForContextOrMarker();
+        @Child private GetOrCreateContextNode contextNode = GetOrCreateContextNode.create();
 
         public PrimFindNextUnwindContextUpToNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -47,30 +49,28 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
         @Specialization(guards = {"receiver.hasVirtualSender()"})
         @TruffleBoundary
-        protected Object doFindNextVirtualized(final ContextObject receiver, final ContextObject previousContext) {
+        protected final Object doFindNextVirtualized(final ContextObject receiver, final ContextObject previousContext) {
             final ContextObject handlerContext = Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<ContextObject>() {
                 boolean foundMyself = false;
-                final FrameMarker frameMarker = receiver.getFrameMarker();
 
                 @Override
                 public ContextObject visitFrame(final FrameInstance frameInstance) {
-                    final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
+                    final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
                     if (current.getArguments().length < FrameAccess.RECEIVER) {
                         return null;
                     }
-                    final Object contextOrMarker = FrameAccess.getContextOrMarker(current);
+                    final Object contextOrMarker = contextOrMarkerNode.executeRead(current);
                     if (!foundMyself) {
-                        if (FrameAccess.isMatchingMarker(frameMarker, contextOrMarker)) {
+                        if (receiver.equals(contextOrMarker)) {
                             foundMyself = true;
                         }
                     } else {
-                        if (previousContext != null && FrameAccess.isMatchingMarker(previousContext.getFrameMarker(), contextOrMarker)) {
+                        if (previousContext != null && previousContext.equals(contextOrMarker)) {
                             return null;
                         } else {
                             final CompiledCodeObject frameMethod = FrameAccess.getMethod(current);
                             if (frameMethod.isUnwindMarked()) {
-                                final Frame currentMaterializable = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
-                                return GetOrCreateContextNode.getOrCreate(currentMaterializable);
+                                return contextNode.executeGet(current, false);
                             }
                         }
                     }
@@ -85,15 +85,15 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         @Specialization(guards = {"receiver.hasVirtualSender()"})
-        protected Object doFindNextVirtualizedNil(final ContextObject receiver, @SuppressWarnings("unused") final NilObject nil) {
+        protected final Object doFindNextVirtualizedNil(final ContextObject receiver, @SuppressWarnings("unused") final NilObject nil) {
             return doFindNextVirtualized(receiver, null);
         }
 
         @Specialization(guards = {"!receiver.hasVirtualSender()"})
-        protected Object doFindNext(final ContextObject receiver, final BaseSqueakObject previousContextOrNil) {
+        protected final Object doFindNext(final ContextObject receiver, final AbstractSqueakObject previousContextOrNil) {
             ContextObject current = receiver;
             while (current != previousContextOrNil) {
-                final BaseSqueakObject sender = current.getSender();
+                final AbstractSqueakObject sender = current.getSender();
                 if (sender.isNil() || sender == previousContextOrNil) {
                     break;
                 } else {
@@ -129,7 +129,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
          * Terminate all the Contexts between me and previousContext, if previousContext is on my
          * Context stack. Make previousContext my sender.
          */
-        private static Object terminateTo(final ContextObject receiver, final BaseSqueakObject previousContext) {
+        private static Object terminateTo(final ContextObject receiver, final AbstractSqueakObject previousContext) {
             if (hasSender(receiver, previousContext)) {
                 ContextObject currentContext = receiver.getNotNilSender();
                 while (currentContext != previousContext) {
@@ -145,11 +145,11 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         /*
          * Answer whether the receiver is strictly above context on the stack (Context>>hasSender:).
          */
-        private static boolean hasSender(final ContextObject context, final BaseSqueakObject previousContext) {
+        private static boolean hasSender(final ContextObject context, final AbstractSqueakObject previousContext) {
             if (context == previousContext) {
                 return false;
             }
-            BaseSqueakObject sender = context.getSender();
+            AbstractSqueakObject sender = context.getSender();
             while (!sender.isNil()) {
                 if (sender == previousContext) {
                     return true;
@@ -163,6 +163,8 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @GenerateNodeFactory
     @SqueakPrimitive(index = 197)
     protected abstract static class PrimNextHandlerContextNode extends AbstractPrimitiveNode {
+        @Child private FrameSlotReadNode contextOrMarkerNode = FrameSlotReadNode.createForContextOrMarker();
+        @Child private GetOrCreateContextNode contextNode = GetOrCreateContextNode.create();
 
         protected PrimNextHandlerContextNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -173,24 +175,22 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         protected final Object findNextVirtualized(final ContextObject receiver) {
             final ContextObject handlerContext = Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<ContextObject>() {
                 boolean foundMyself = false;
-                final FrameMarker frameMarker = receiver.getFrameMarker();
 
                 @Override
                 public ContextObject visitFrame(final FrameInstance frameInstance) {
-                    final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
+                    final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
                     if (current.getArguments().length < FrameAccess.RECEIVER) {
                         return null;
                     }
                     if (!foundMyself) {
-                        final Object contextOrMarker = FrameAccess.getContextOrMarker(current);
-                        if (FrameAccess.isMatchingMarker(frameMarker, contextOrMarker)) {
+                        final Object contextOrMarker = contextOrMarkerNode.executeRead(current);
+                        if (receiver.equals(contextOrMarker)) {
                             foundMyself = true;
                         }
                     } else {
                         final CompiledCodeObject frameMethod = FrameAccess.getMethod(current);
                         if (frameMethod.isExceptionHandlerMarked()) {
-                            final Frame currentMaterializable = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
-                            return GetOrCreateContextNode.getOrCreate(currentMaterializable);
+                            return contextNode.executeGet(current, false);
                         }
                     }
                     return null;
@@ -210,7 +210,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                 if (context.getMethod().isExceptionHandlerMarked()) {
                     return context;
                 }
-                final BaseSqueakObject sender = context.getSender();
+                final AbstractSqueakObject sender = context.getSender();
                 if (sender instanceof ContextObject) {
                     context = (ContextObject) sender;
                 } else {
@@ -240,13 +240,13 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
         @SuppressWarnings("unused")
         @Specialization
-        protected Object doCopy(final VirtualFrame frame, final ContextObject outerContext, final long numArgs, final ListObject copiedValues) {
+        protected static final Object doCopy(final VirtualFrame frame, final ContextObject outerContext, final long numArgs, final PointersObject copiedValues) {
             throw new SqueakException("Not implemented and not used in Squeak anymore");
         }
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {201, 221})
+    @SqueakPrimitive(index = 201)
     public abstract static class PrimClosureValue0Node extends AbstractClosureValuePrimitiveNode {
 
         protected PrimClosureValue0Node(final CompiledMethodObject method, final int numArguments) {
@@ -254,18 +254,18 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         @Specialization
-        protected Object doClosure(final VirtualFrame frame, final BlockClosureObject block) {
-            return dispatch.executeBlock(block, block.getFrameArguments(frame));
+        protected final Object doClosure(final VirtualFrame frame, final BlockClosureObject block) {
+            return dispatch.executeBlock(block, block.getFrameArguments(getContextOrMarker(frame)));
         }
 
         // Additional specializations to speed up eager sends
         @Specialization
-        protected Object doBoolean(final boolean receiver) {
+        protected static final Object doBoolean(final boolean receiver) {
             return receiver;
         }
 
         @Specialization
-        protected Object doNilObject(final NilObject receiver) {
+        protected static final Object doNilObject(final NilObject receiver) {
             return receiver;
         }
     }
@@ -279,8 +279,8 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         @Specialization
-        protected Object value(final VirtualFrame frame, final BlockClosureObject block, final Object arg) {
-            return dispatch.executeBlock(block, block.getFrameArguments(frame, arg));
+        protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final Object arg) {
+            return dispatch.executeBlock(block, block.getFrameArguments(getContextOrMarker(frame), arg));
         }
     }
 
@@ -293,8 +293,8 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         @Specialization
-        protected Object value(final VirtualFrame frame, final BlockClosureObject block, final Object arg1, final Object arg2) {
-            return dispatch.executeBlock(block, block.getFrameArguments(frame, arg1, arg2));
+        protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final Object arg1, final Object arg2) {
+            return dispatch.executeBlock(block, block.getFrameArguments(getContextOrMarker(frame), arg1, arg2));
         }
     }
 
@@ -307,8 +307,8 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         @Specialization
-        protected Object value(final VirtualFrame frame, final BlockClosureObject block, final Object arg1, final Object arg2, final Object arg3) {
-            return dispatch.executeBlock(block, block.getFrameArguments(frame, arg1, arg2, arg3));
+        protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final Object arg1, final Object arg2, final Object arg3) {
+            return dispatch.executeBlock(block, block.getFrameArguments(getContextOrMarker(frame), arg1, arg2, arg3));
         }
     }
 
@@ -321,13 +321,13 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         @Specialization
-        protected Object value(final VirtualFrame frame, final BlockClosureObject block, final Object arg1, final Object arg2, final Object arg3, final Object arg4) {
-            return dispatch.executeBlock(block, block.getFrameArguments(frame, arg1, arg2, arg3, arg4));
+        protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final Object arg1, final Object arg2, final Object arg3, final Object arg4) {
+            return dispatch.executeBlock(block, block.getFrameArguments(getContextOrMarker(frame), arg1, arg2, arg3, arg4));
         }
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {206, 222})
+    @SqueakPrimitive(index = 206)
     protected abstract static class PrimClosureValueAryNode extends AbstractClosureValuePrimitiveNode {
 
         protected PrimClosureValueAryNode(final CompiledMethodObject method, final int numArguments) {
@@ -335,8 +335,8 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         @Specialization
-        protected Object value(final VirtualFrame frame, final BlockClosureObject block, final ListObject argArray) {
-            return dispatch.executeBlock(block, block.getFrameArguments(frame, argArray.getPointers()));
+        protected final Object value(final VirtualFrame frame, final BlockClosureObject block, final PointersObject argArray) {
+            return dispatch.executeBlock(block, block.getFrameArguments(getContextOrMarker(frame), argArray.getPointers()));
         }
     }
 
@@ -350,7 +350,45 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
         @Specialization
         protected static final long doSize(final ContextObject receiver) {
-            return receiver.varsize();
+            return receiver.size() - receiver.instsize();
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 221)
+    public abstract static class PrimClosureValueNoContextSwitchNode extends AbstractClosureValuePrimitiveNode {
+
+        protected PrimClosureValueNoContextSwitchNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @Specialization
+        protected final Object doClosure(final VirtualFrame frame, final BlockClosureObject block) {
+            code.image.interrupt.disable();
+            try {
+                return dispatch.executeBlock(block, block.getFrameArguments(getContextOrMarker(frame)));
+            } finally {
+                code.image.interrupt.enable();
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 222)
+    protected abstract static class PrimClosureValueAryNoContextSwitchNode extends AbstractClosureValuePrimitiveNode {
+
+        protected PrimClosureValueAryNoContextSwitchNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @Specialization
+        protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final PointersObject argArray) {
+            code.image.interrupt.disable();
+            try {
+                return dispatch.executeBlock(block, block.getFrameArguments(getContextOrMarker(frame), argArray.getPointers()));
+            } finally {
+                code.image.interrupt.enable();
+            }
         }
     }
 }

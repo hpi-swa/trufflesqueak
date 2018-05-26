@@ -15,15 +15,15 @@ import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 @TypeSystemReference(SqueakTypes.class)
 public abstract class SqueakNodeWithCode extends SqueakNode {
     @CompilationFinal protected final CompiledCodeObject code;
-    @Child private FrameSlotReadNode contextOrMarkerReadNode;
+    @Child private FrameSlotReadNode contextOrMarkerReadNode = FrameSlotReadNode.createForContextOrMarker();
 
     public SqueakNodeWithCode(final CompiledCodeObject code) {
         this.code = code;
-        contextOrMarkerReadNode = FrameSlotReadNode.create(code.thisContextOrMarkerSlot);
     }
 
     protected final boolean isVirtualized(final VirtualFrame frame) {
-        return contextOrMarkerReadNode.executeRead(frame) instanceof FrameMarker;
+        final Object contextOrMarker = contextOrMarkerReadNode.executeRead(frame);
+        return contextOrMarker instanceof FrameMarker || !((ContextObject) contextOrMarker).isDirty();
     }
 
     protected final Object getContextOrMarker(final VirtualFrame frame) {
