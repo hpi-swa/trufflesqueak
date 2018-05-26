@@ -24,7 +24,7 @@ public abstract class IsEmptyListNode extends AbstractNodeWithImage {
     public abstract boolean executeIsEmpty(Object list);
 
     @Specialization
-    public boolean executeIsEmpty(final AbstractSqueakObject list) {
+    protected final boolean executeIsEmpty(final AbstractSqueakObject list) {
         return at0Node.execute(list, LINKED_LIST.FIRST_LINK) == image.nil;
     }
 

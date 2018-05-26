@@ -27,7 +27,7 @@ public abstract class RemoveFirstLinkOfListNode extends AbstractNodeWithImage {
     public abstract Object executeRemove(Object list);
 
     @Specialization
-    public Object executeRemove(final AbstractSqueakObject list) {
+    protected final Object executeRemove(final AbstractSqueakObject list) {
         // Remove the first process from the given linked list.
         final Object first = at0Node.execute(list, LINKED_LIST.FIRST_LINK);
         final Object last = at0Node.execute(list, LINKED_LIST.LAST_LINK);

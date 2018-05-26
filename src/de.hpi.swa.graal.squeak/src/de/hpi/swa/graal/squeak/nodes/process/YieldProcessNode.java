@@ -8,7 +8,7 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 
-public class YieldProcessNode extends AbstractNodeWithImage {
+public final class YieldProcessNode extends AbstractNodeWithImage {
     @Child private GetActiveProcessNode getActiveProcessNode;
     @Child private IsEmptyListNode isEmptyListNode;
     @Child private LinkProcessToListNode linkProcessToListNode;

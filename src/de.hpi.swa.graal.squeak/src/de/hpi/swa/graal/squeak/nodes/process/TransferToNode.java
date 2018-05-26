@@ -40,7 +40,7 @@ public abstract class TransferToNode extends AbstractNodeWithImage {
     public abstract void executeTransferTo(VirtualFrame frame, Object activeProcess, Object newProcess);
 
     @Specialization
-    public void executeTransferTo(final VirtualFrame frame, final AbstractSqueakObject activeProcess, final AbstractSqueakObject newProcess) {
+    public final void executeTransferTo(final VirtualFrame frame, final AbstractSqueakObject activeProcess, final AbstractSqueakObject newProcess) {
         // Record a process to be awakened on the next interpreter cycle.
         final ContextObject activeContext = contextNode.executeGet(frame, false, true);
         final PointersObject scheduler = getSchedulerNode.executeGet();
