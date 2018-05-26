@@ -22,14 +22,14 @@ public abstract class TerminateContextNode extends AbstractNodeWithCode {
 
     protected abstract void executeTerminate(VirtualFrame frame);
 
-    @Specialization(guards = {"isFullyVirtualized(frame)"})
+    @Specialization(guards = {"isVirtualized(frame)"})
     protected void doTerminateVirtualized(final VirtualFrame frame) {
         // TODO: check the below is actually needed (see also GetOrCreateContextNode.materialize())
         instructionPointerWriteNode.executeWrite(frame, -1); // cannot set nil, -1 instead.
         // cannot remove sender
     }
 
-    @Specialization(guards = {"!isFullyVirtualized(frame)"})
+    @Specialization(guards = {"!isVirtualized(frame)"})
     protected void doTerminate(final VirtualFrame frame) {
         getContext(frame).terminate();
     }
