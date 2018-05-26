@@ -23,7 +23,7 @@ public final class BlockClosureObject extends AbstractSqueakObject {
     @CompilationFinal private long pc = -1;
     @CompilationFinal private long numArgs = -1;
     @CompilationFinal private RootCallTarget callTarget;
-    @CompilationFinal private final CyclicAssumption callTargetStable = new CyclicAssumption("BlockClosurObject assumption");
+    @CompilationFinal private final CyclicAssumption callTargetStable = new CyclicAssumption("BlockClosureObject assumption");
 
     public BlockClosureObject(final SqueakImageContext image) {
         super(image, image.blockClosureClass);
@@ -37,15 +37,19 @@ public final class BlockClosureObject extends AbstractSqueakObject {
         this.outerContext = outerContext;
         this.receiver = receiver;
         this.copied = copied;
+        this.pc = block.getInitialPC();
+        this.numArgs = block.getNumArgs();
     }
 
     private BlockClosureObject(final BlockClosureObject original) {
         super(original.image, original.image.blockClosureClass);
-        this.block = original.getCompiledBlock();
+        this.block = original.block;
         this.callTarget = original.callTarget;
         this.outerContext = original.outerContext;
         this.receiver = original.receiver;
         this.copied = original.copied;
+        this.pc = original.pc;
+        this.numArgs = original.numArgs;
     }
 
     @Override
@@ -123,8 +127,9 @@ public final class BlockClosureObject extends AbstractSqueakObject {
         }
         CompilerDirectives.transferToInterpreterAndInvalidate();
         final Object[] otherCopied = copied;
-        copied = ((BlockClosureObject) other).copied;
-        ((BlockClosureObject) other).copied = otherCopied;
+        final BlockClosureObject otherClosure = (BlockClosureObject) other;
+        copied = otherClosure.copied;
+        otherClosure.copied = otherCopied;
         return true;
     }
 
