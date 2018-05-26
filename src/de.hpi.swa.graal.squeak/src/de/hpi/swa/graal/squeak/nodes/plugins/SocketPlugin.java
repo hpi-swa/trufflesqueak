@@ -291,11 +291,12 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // lookup was unsuccessful.
         @Specialization
         protected Object doWork(@SuppressWarnings("unused") final Object receiver) {
-            code.image.getOutput().println(">> Name Lookup Result: " + lastNameLookup);
+            code.image.getOutput().println(">> Name Lookup Result: " + lastNameLookup[0] + " " + lastNameLookup[1] + " " + lastNameLookup[2] + " " + lastNameLookup[3]);
             if (lastNameLookup == null) {
                 return code.image.nil;
             } else {
                 return code.image.wrap(lastNameLookup);
+                // return code.image.wrap(new byte[]{127, 0, 0, 1});
             }
         }
     }
@@ -330,7 +331,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected Object doWork(@SuppressWarnings("unused") final Object receiver) {
             try {
-                return code.image.wrap(InetAddress.getLocalHost().getHostAddress());
+                return code.image.wrap(InetAddress.getLocalHost().getAddress());
             } catch (UnknownHostException e) {
                 code.image.getError().println(e);
                 throw new PrimitiveFailed();
