@@ -9,6 +9,7 @@ import java.net.MalformedURLException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.net.SocketException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.Map;
@@ -50,30 +51,6 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         private static final long ThisEndClosed = 4;
     }
 
-    private static final class SocketOption {
-        private static final long SO_DEBUG = 0x0001; /* turn on debugging info recording */
-        private static final long SO_ACCEPTCONN = 0x0002; /* socket has had listen() */
-        private static final long SO_REUSEADDR = 0x0004; /* allow local address reuse */
-        private static final long SO_KEEPALIVE = 0x0008; /* keep connections alive */
-        private static final long SO_DONTROUTE = 0x0010; /* just use interface addresses */
-        private static final long SO_BROADCAST = 0x0020; /* permit sending of broadcast msgs */
-        private static final long SO_USELOOPBACK = 0x0040; /* bypass hardware when possible */
-        private static final long SO_LINGER = 0x0080; /* linger on close if data present */
-        private static final long SO_OOBINLINE = 0x0100; /* leave received OOB data in line */
-
-        /*
-         * Additional options, not kept in so_options.
-         */
-        private static final long SO_SNDBUF = 0x1001; /* send buffer size */
-        private static final long SO_RCVBUF = 0x1002; /* receive buffer size */
-        private static final long SO_SNDLOWAT = 0x1003; /* send low-water mark */
-        private static final long SO_RCVLOWAT = 0x1004; /* receive low-water mark */
-        private static final long SO_SNDTIMEO = 0x1005; /* send timeout */
-        private static final long SO_RCVTIMEO = 0x1006; /* receive timeout */
-        private static final long SO_ERROR = 0x1007; /* get error status and clear */
-        private static final long SO_TYPE = 0x1008; /* get socket type */
-    }
-
     private static final class SocketType {
         private static final long TCPSocketType = 0;
         private static final long UDPSocketType = 1;
@@ -81,27 +58,69 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     static Map<Long, SocketImpl> sockets = new TreeMap<>();
 
-    private static final class SocketImpl {
+    private final static class SocketImpl {
+
         private Socket clientSocket;
         private ServerSocket serverSocket;
-
+        private Socket acceptedConnection;
         private Map<String, Object> options = new TreeMap<>();
+        boolean listening = false;
+        Thread listenerThread;
 
-        public void listenOn(int port) {
-            new Thread() {
+        public void listenOn(final int port) {
+            if (listening) {
+                return;
+            }
+            System.out.println(">> Listening on " + port);
+            listenerThread = new Thread() {
                 @Override
                 public void run() {
                     try {
+                        listening = true;
                         serverSocket = new ServerSocket(port);
-                        serverSocket.accept();
+                        acceptedConnection = serverSocket.accept();
+                        serverSocket.close();
+                        serverSocket = null;
+                        listening = false;
+                    } catch (SocketException se) {
+                        // The socket has been closed while listening
+                        // This is fine
+                        listening = false;
                     } catch (IOException e) {
-                        System.out.println(e);
+                        System.err.println(e);
+                        e.printStackTrace();
                     }
                 }
-            }.start();
+            };
+            listenerThread.start();
         }
 
-        public void connectTo(String host, long port) throws IOException {
+        public SocketImpl accept() {
+            System.out.println(">> Accepting");
+            try {
+                if (serverSocket == null) {
+                    System.err.println("Not a ServerSocket");
+                    throw new PrimitiveFailed();
+                }
+
+                listenerThread.join();
+                SocketImpl connectionImpl = new SocketImpl();
+                if (acceptedConnection == null) {
+                    System.err.println("No connection was accepted");
+                    throw new PrimitiveFailed();
+                }
+
+                connectionImpl.clientSocket = acceptedConnection;
+                return connectionImpl;
+            } catch (InterruptedException e) {
+                System.err.print(e);
+                throw new PrimitiveFailed();
+            }
+
+        }
+
+        public void connectTo(final String host, final long port) throws IOException {
+            System.out.println(">> Connecting to " + host + ": " + port);
             if (clientSocket != null) {
                 clientSocket.close();
             }
@@ -114,12 +133,13 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             return clientSocket.getInputStream().available() > 0;
         }
 
-        public void sendData(byte[] data, int startIndex, int count) throws IOException {
+        public void sendData(final byte[] data, final int startIndex, final int count) throws IOException {
             final OutputStream outputStream = clientSocket.getOutputStream();
             outputStream.write(data, startIndex, count);
         }
 
         public void close() throws IOException {
+            System.out.println(">> Closing");
             if (clientSocket != null) {
                 clientSocket.close();
                 clientSocket = null;
@@ -146,6 +166,10 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             }
         }
 
+        public long getError() {
+            return 0L;
+        }
+
         public Object getRemoteAddress() throws IOException {
             if (clientSocket == null) {
                 return 0L;
@@ -160,11 +184,11 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        public Object getOption(String option) {
+        public Object getOption(final String option) {
             return options.get(option);
         }
 
-        public void setOption(String option, Object value) {
+        public void setOption(final String option, final Object value) {
             options.put(option, value);
         }
     }
@@ -209,6 +233,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // primNameLookupResult.
         @Specialization
         protected Object doWork(final Object receiver, final NativeObject hostName) {
+            code.image.getOutput().println(">> Starting lookup for host name " + hostName);
             InetAddress address = null;
             final String hostNameString = hostName.toString();
             try {
@@ -243,11 +268,12 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // primAddressLookupResult.
         @Specialization
         protected Object doWork(final Object receiver, final Object address) {
+            code.image.getOutput().println("Starting lookup for address " + address);
             final String addressString = address.toString();
             try {
                 lastAddressLookup = InetAddress.getByName(addressString).getHostName();
             } catch (UnknownHostException e) {
-                System.err.println(e);
+                code.image.getError().println(e);
                 lastAddressLookup = null;
             }
             return receiver;
@@ -265,10 +291,20 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // lookup was unsuccessful.
         @Specialization
         protected Object doWork(@SuppressWarnings("unused") final Object receiver) {
+            code.image.getOutput().println(">> Name Lookup Result: " + lastNameLookup);
             if (lastNameLookup == null) {
                 return code.image.nil;
             } else {
-                return code.image.wrap(lastNameLookup);
+                String result = "";
+                byte[] address = new byte[4];
+                int i = 0;
+                for (String byteString : lastNameLookup.split("\\.")) {
+                    byte b = Byte.parseByte(byteString);
+                    address[i] = b;
+                    i++;
+                    result += (char) b;
+                }
+                return code.image.wrap(result);
             }
         }
     }
@@ -284,6 +320,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // Returns nil if the last lookup was unsuccessful.
         @Specialization
         protected Object doWork(@SuppressWarnings("unused") final Object receiver) {
+            code.image.getOutput().println(">> Address Lookup Result");
             if (lastAddressLookup == null) {
                 return code.image.nil;
             } else {
@@ -304,7 +341,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return code.image.wrap(InetAddress.getLocalHost().getHostAddress());
             } catch (UnknownHostException e) {
-                System.out.println(e);
+                code.image.getError().println(e);
                 throw new PrimitiveFailed();
             }
         }
@@ -329,15 +366,27 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // Primitive. Set up the socket to listen on the given port.
         // Will be used in conjunction with #accept only.
         @Specialization
-        protected long doWork(@SuppressWarnings("unused") final Object receiver, final long socketID, final long port, final NotProvided backlogSize) {
-            System.out.println("TODO: primitiveSocketListenWithOrWithoutBacklog");
-            throw new PrimitiveFailed();
+        protected Object doWork(final Object receiver, final long socketID, final long port, final NotProvided backlogSize) {
+            final SocketImpl socketImpl = sockets.get(socketID);
+            if (socketImpl == null) {
+                code.image.getError().println("No socket for socket id");
+                throw new PrimitiveFailed();
+            }
+
+            socketImpl.listenOn((int) port);
+            return receiver;
         }
 
         @Specialization
-        protected long doWork(@SuppressWarnings("unused") final Object receiver, final long socketID, final long port, final Object backlogSize) {
-            System.out.println("TODO: primitiveSocketListenWithOrWithoutBacklog");
-            throw new PrimitiveFailed();
+        protected Object doWork(final Object receiver, final long socketID, final long port, final Object backlogSize) {
+            final SocketImpl socketImpl = sockets.get(socketID);
+            if (socketImpl == null) {
+                code.image.getError().println("No socket for socket id");
+                throw new PrimitiveFailed();
+            }
+
+            socketImpl.listenOn((int) port);
+            return receiver;
         }
     }
 
@@ -358,7 +407,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                         final Object interfaceAddress) {
             final SocketImpl socketImpl = sockets.get(socketID);
             if (socketImpl == null) {
-                System.err.println("No socket for socket id");
+                code.image.getError().println("No socket for socket id");
                 throw new PrimitiveFailed();
             }
 
@@ -375,13 +424,13 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doWork(final Object receiver, final long socketID, final NativeObject option, final Object value) {
+        protected Object doWork(final Object receiver, final long socketID, final NativeObject option, final NativeObject value) {
             SocketImpl socketImpl = sockets.get(socketID);
             if (socketImpl == null) {
-                System.err.println("No socket for socket id");
+                code.image.getError().println("No socket for socket id");
                 throw new PrimitiveFailed();
             }
-            socketImpl.setOption(option.toString(), value);
+            socketImpl.setOption(option.toString(), value.toString());
             return receiver;
         }
     }
@@ -398,14 +447,14 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         protected long doWork(@SuppressWarnings("unused") final Object receiver, final long socketID, final NativeObject hostAddress, final long port) {
             SocketImpl socketImpl = sockets.get(socketID);
             if (socketImpl == null) {
-                System.err.println("No socket for socket id");
+                code.image.getError().println("No socket for socket id");
                 throw new PrimitiveFailed();
             }
             final String hostAddressString = hostAddress.toString();
             try {
                 socketImpl.connectTo(hostAddressString, (int) port);
             } catch (IOException e) {
-                System.err.println(e);
+                code.image.getError().println(e);
                 throw new PrimitiveFailed();
             }
             return 0;
@@ -447,7 +496,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return code.image.wrap(socket.getRemoteAddress());
             } catch (IOException e) {
-                System.err.println(e);
+                code.image.getError().println(e);
                 return 0;
             }
         }
@@ -480,11 +529,13 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         protected Object doWork(@SuppressWarnings("unused") final Object receiver, final long socketID, final Object option) {
             SocketImpl socketImpl = sockets.get(socketID);
             if (socketImpl == null) {
-                System.err.println("No socket for socket id");
+                code.image.getError().println("No socket for socket id");
                 throw new PrimitiveFailed();
             }
             Object value = socketImpl.getOption(option.toString());
-            return value;
+            Long errorCode = socketImpl.getError();
+            final Object[] result = new Object[]{errorCode, value};
+            return code.image.wrap(result);
         }
     }
 
@@ -501,7 +552,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return socketImpl.isDataAvailable();
             } catch (IOException e) {
-                System.err.println(e);
+                code.image.getError().println(e);
                 return false;
             }
         }
@@ -516,8 +567,13 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected long doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
-            return 0;
-            // TODO
+            final SocketImpl socketImpl = sockets.get(socketID);
+            if (socketImpl == null) {
+                code.image.getError().println("No socket for socket id");
+                throw new PrimitiveFailed();
+            }
+
+            return socketImpl.getError();
         }
     }
 
@@ -533,7 +589,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return code.image.wrap(InetAddress.getLocalHost().getHostAddress());
             } catch (UnknownHostException e) {
-                System.err.println(e);
+                code.image.getError().println(e);
                 throw new PrimitiveFailed();
             }
         }
@@ -563,7 +619,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                         final long count) {
             final SocketImpl socketImpl = sockets.get(socketID);
             if (socketImpl == null) {
-                System.err.println("No socket for socket id");
+                code.image.getError().println("No socket for socket id");
                 throw new PrimitiveFailed();
             }
             try {
@@ -573,13 +629,13 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 } else if (aStringOrByteArray instanceof byte[]) {
                     data = (byte[]) aStringOrByteArray;
                 } else {
-                    System.err.println("Unknown data type");
+                    code.image.getError().println("Unknown data type");
                     throw new PrimitiveFailed();
                 }
                 socketImpl.sendData(data, (int) startIndex, (int) count);
                 return count;
             } catch (IOException e) {
-                System.err.println(e);
+                code.image.getError().println(e);
                 return 0;
             }
         }
@@ -598,7 +654,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 socket.close();
             } catch (IOException e) {
-                System.err.println(e);
+                code.image.getError().println(e);
                 throw new PrimitiveFailed();
             }
             return receiver;
@@ -614,7 +670,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected boolean doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
-            System.err.println("TODO: primitiveSocketSendDone");
+            code.image.getError().println("TODO: primitiveSocketSendDone");
             throw new PrimitiveFailed();
         }
     }
@@ -630,7 +686,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // Return the number of bytes read or zero if no data is available.
         @Specialization
         protected long doWork(@SuppressWarnings("unused") final Object receiver, final Object socketID, final Object receiveBuffer, final Object startIndex, final Object count) {
-            System.err.println("TODO: primitiveSocketReceiveDataBufCount");
+            code.image.getError().println("TODO: primitiveSocketReceiveDataBufCount");
             throw new PrimitiveFailed();
         }
     }
@@ -651,7 +707,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                     sockets.remove(socketID);
                 }
             } catch (IOException e) {
-                System.err.println(e);
+                code.image.getError().println(e);
                 throw new PrimitiveFailed();
             }
 
@@ -681,6 +737,32 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(name = "primitiveSocketAccept3Semaphores")
+    protected abstract static class PrimSocketAccept3SemaphoresNode extends AbstractPrimitiveNode {
+        protected PrimSocketAccept3SemaphoresNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @Specialization
+        protected long doWork(final PointersObject receiver,
+                        long socketID,
+                        Object receiveBufferSize,
+                        Object sendBufSize,
+                        Object semaIndex,
+                        Object readSemaIndex,
+                        Object writeSemaIndex) {
+            final SocketImpl socketImpl = sockets.get(socketID);
+            if (socketImpl == null) {
+                code.image.getError().println("No socket for socket id");
+                throw new PrimitiveFailed();
+            }
+            final SocketImpl s = socketImpl.accept();
+            sockets.put((long) s.hashCode(), s);
+            return s.hashCode();
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveSocketCreate")
     protected abstract static class PrimSocketCreateNode extends AbstractPrimitiveNode {
         protected PrimSocketCreateNode(final CompiledMethodObject method, final int numArguments) {
@@ -694,7 +776,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                         final Object rcvBufSize,
                         final Object sendBufSize,
                         final Object semaIndexa) {
-            System.err.println("TODO: primitiveSocketCreate");
+            code.image.getError().println("TODO: primitiveSocketCreate");
             throw new PrimitiveFailed();
         }
 
