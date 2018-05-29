@@ -99,14 +99,14 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             return receiver;
         }
 
-        @Specialization(guards = {"!hasNilSourceForm(receiver)", "!hasNilHalftoneForm(receiver)"})
-        protected final Object doCopyBitsWithSourceFormAndHalftone(final PointersObject receiver) {
-            System.out.println("ABAC");
-            return receiver;
-        }
+        /*
+         * @Specialization(guards = {"!hasNilSourceForm(receiver)",
+         * "!hasNilHalftoneForm(receiver)"}) protected final Object
+         * doCopyBitsWithSourceFormAndHalftone(final PointersObject receiver) {
+         * System.out.println("ABAC"); return receiver; }
+         */
 
-        /* "hasSourceFormDepth(receiver, 32)", */
-        @Specialization(guards = {"!hasNilSourceForm(receiver)"})
+        @Specialization(guards = {"hasCombinationRule(receiver, 3)", "!hasNilSourceForm(receiver)", "hasSourceFormDepth(receiver, 32)", "hasNilColormap(receiver)"})
         protected final Object doCopyBitsWithSourceForm(final PointersObject receiver) {
             final PointersObject destinationForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
             final NativeObject destinationBits = (NativeObject) destinationForm.at0(FORM.BITS);
@@ -120,6 +120,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             final int sourceHeight = (int) ((long) sourceForm.at0(FORM.HEIGHT));
 
             final int destinationWidth = (int) ((long) destinationForm.at0(FORM.WIDTH));
+            final int destinationHeight = (int) ((long) destinationForm.at0(FORM.HEIGHT));
             final long destX = (long) receiver.at0(BIT_BLT.DEST_X);
             final long destY = (long) receiver.at0(BIT_BLT.DEST_Y);
             final long width = (long) receiver.at0(BIT_BLT.WIDTH);
@@ -131,6 +132,8 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             final long clipHeight = (long) receiver.at0(BIT_BLT.CLIP_HEIGHT);
             final long[] clippedValues = clipRange(sourceX, sourceY, sourceWidth, sourceHeight, width, height, destX, destY, clipX, clipY, clipWidth, clipHeight);
 
+            final long clippedSourceX = clippedValues[0];
+            final long clippedSourceY = clippedValues[1];
             final long clippedX = clippedValues[2];
             final long clippedY = clippedValues[3];
             final long clippedWidth = clippedValues[4];
@@ -138,24 +141,34 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
             final int[] dest = destinationBits.getIntStorage(destinationBitsStorageType);
 
+            // request to unhibernate
+            if (destinationWidth * destinationHeight > dest.length) {
+                throw new PrimitiveFailed();
+            }
+
             if (sourceBits.isByteType()) {
                 final byte[] source = sourceBits.getByteStorage(sourceBitsStorageType);
-                int sx = (int) sourceX;
-                int sy = (int) sourceY;
-                for (int y = (int) clippedY; y < clippedY + clippedHeight; y++, sy++) {
-                    sx = 0;
-                    for (int x = (int) clippedX; x < clippedX + clippedWidth; x++, sx++) {
-                        dest[y * destinationWidth + x] = source[sy * sourceWidth + sx];
+                // request to unhibernate
+                if (sourceWidth * sourceHeight > source.length) {
+                    System.err.println("hi");
+                    throw new PrimitiveFailed();
+                }
+
+                for (int dy = (int) clippedY, sy = (int) clippedSourceY; dy < clippedY + clippedHeight; dy++, sy++) {
+                    for (int dx = (int) clippedX, sx = (int) clippedSourceX; dx < clippedX + clippedWidth; dx++, sx++) {
+                        dest[dy * destinationWidth + dx] = source[sy * sourceWidth + sx];
                     }
                 }
             } else {
                 final int[] source = sourceBits.getIntStorage(sourceBitsStorageType);
-                int sx = (int) sourceX;
-                int sy = (int) sourceY;
-                for (int y = (int) clippedY; y < clippedY + clippedHeight; y++, sy++) {
-                    sx = 0;
-                    for (int x = (int) clippedX; x < clippedX + clippedWidth; x++, sx++) {
-                        dest[y * destinationWidth + x] = source[sy * sourceWidth + sx];
+                // request to unhibernate
+                if (sourceWidth * sourceHeight > source.length) {
+                    throw new PrimitiveFailed();
+                }
+
+                for (int dy = (int) clippedY, sy = (int) clippedSourceY; dy < clippedY + clippedHeight; dy++, sy++) {
+                    for (int dx = (int) clippedX, sx = (int) clippedSourceX; dx < clippedX + clippedWidth; dx++, sx++) {
+                        dest[dy * destinationWidth + dx] = source[sy * sourceWidth + sx];
                     }
                 }
             }
@@ -193,6 +206,9 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             return target.at0(BIT_BLT.HALFTONE_FORM) == code.image.nil;
         }
 
+        protected final boolean hasNilColormap(final PointersObject target) {
+            return target.at0(BIT_BLT.COLOR_MAP) == code.image.nil;
+        }
     }
 
     /*
