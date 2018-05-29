@@ -127,9 +127,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
                 failing.add(result);
             }
         }
-        if (failing.size() >= 3) { // tolerate up to three flaky tests
-            failIfNotEmpty(failing);
-        }
+        failIfNotEmpty(failing);
     }
 
     @Test

@@ -31,7 +31,7 @@ public abstract class ResumeProcessNode extends AbstractNodeWithImage {
     public abstract void executeResume(VirtualFrame frame, Object newProcess);
 
     @Specialization
-    public void executeResume(final VirtualFrame frame, final AbstractSqueakObject newProcess) {
+    protected final void executeResume(final VirtualFrame frame, final AbstractSqueakObject newProcess) {
         final AbstractSqueakObject activeProcess = getActiveProcessNode.executeGet();
         final long activePriority = (long) at0Node.execute(activeProcess, PROCESS.PRIORITY);
         final long newPriority = (long) at0Node.execute(newProcess, PROCESS.PRIORITY);

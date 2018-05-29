@@ -9,24 +9,22 @@ import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
-import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 
 public abstract class BlockActivationNode extends Node {
     public abstract Object executeBlock(BlockClosureObject block, Object[] arguments);
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"block.getCompiledBlock() == cachedCompiledBlock"}, assumptions = {"callTargetStable"})
-    protected static Object doDirect(final BlockClosureObject block, final Object[] arguments,
-                    @Cached("block.getCompiledBlock()") final CompiledBlockObject cachedCompiledBlock,
+    @Specialization(guards = {"block.getCallTarget() == cachedTarget"}, assumptions = {"callTargetStable"})
+    protected static final Object doDirect(final BlockClosureObject block, final Object[] arguments,
                     @Cached("block.getCallTarget()") final RootCallTarget cachedTarget,
                     @Cached("block.getCallTargetStable()") final Assumption callTargetStable,
-                    @Cached("create(cachedTarget)") final DirectCallNode callNode) {
-        return callNode.call(arguments);
+                    @Cached("create(cachedTarget)") final DirectCallNode directCallNode) {
+        return directCallNode.call(arguments);
     }
 
     @Specialization(replaces = "doDirect")
-    protected static Object doIndirect(final BlockClosureObject block, final Object[] arguments,
-                    @Cached("create()") final IndirectCallNode callNode) {
-        return callNode.call(block.getCallTarget(), arguments);
+    protected static final Object doIndirect(final BlockClosureObject block, final Object[] arguments,
+                    @Cached("create()") final IndirectCallNode indirectCallNode) {
+        return indirectCallNode.call(block.getCallTarget(), arguments);
     }
 }

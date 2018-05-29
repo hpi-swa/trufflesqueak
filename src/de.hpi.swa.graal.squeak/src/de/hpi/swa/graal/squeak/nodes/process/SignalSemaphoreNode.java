@@ -7,7 +7,7 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.SEMAPHORE;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 
-public class SignalSemaphoreNode extends AbstractNodeWithImage {
+public final class SignalSemaphoreNode extends AbstractNodeWithImage {
     @Child private IsEmptyListNode isEmptyListNode;
     @Child private ResumeProcessNode resumeProcessNode;
     @Child private RemoveFirstLinkOfListNode removeFirstLinkOfListNode;

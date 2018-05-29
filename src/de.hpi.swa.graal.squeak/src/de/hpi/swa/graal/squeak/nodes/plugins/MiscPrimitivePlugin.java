@@ -2,18 +2,20 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 
 import java.util.List;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeGetBytesNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeGetBytesNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
@@ -127,16 +129,92 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveDecompressFromByteArray")
     public abstract static class PrimDecompressFromByteArrayNode extends AbstractMiscPrimitiveNode {
+        @CompilationFinal private final ValueProfile bmStorageType = ValueProfile.createClassProfile();
+        @CompilationFinal private final ValueProfile baStorageType = ValueProfile.createClassProfile();
 
         public PrimDecompressFromByteArrayNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        @SuppressWarnings("unused")
-        @Specialization
-        protected static final Object decompress(final AbstractSqueakObject bitmap, final Object bm, final Object from, final long index) {
-            // TODO: implement primitive
-            throw new PrimitiveFailed();
+        @Specialization(guards = {"bm.isIntType()", "ba.isByteType()"})
+        protected final Object doDecompress(final AbstractSqueakObject receiver, final NativeObject bm, final NativeObject ba, final long index) {
+            /**
+             * <pre>
+                 Decompress the body of a byteArray encoded by compressToByteArray (qv)...
+                 The format is simply a sequence of run-coded pairs, {N D}*.
+                     N is a run-length * 4 + data code.
+                     D, the data, depends on the data code...
+                         0   skip N words, D is absent
+                             (could be used to skip from one raster line to the next)
+                         1   N words with all 4 bytes = D (1 byte)
+                         2   N words all = D (4 bytes)
+                         3   N words follow in D (4N bytes)
+                     S and N are encoded as follows (see decodeIntFrom:)...
+                         0-223   0-223
+                         224-254 (0-30)*256 + next byte (0-7935)
+                         255     next 4 bytes
+                 NOTE:  If fed with garbage, this routine could read past the end of ba, but it should fail before writing past the ned of bm.
+             * </pre>
+             */
+
+            final byte[] baBytes = ba.getByteStorage(baStorageType);
+            final int[] bmBytes = bm.getIntStorage(bmStorageType);
+            int i = (int) index - 1;
+            final int end = baBytes.length - 1;
+            int k = 0;
+            final int pastEnd = bmBytes.length;
+            while (i <= end) {
+                // Decode next run start N
+                int anInt = baBytes[i] & 0xff;
+                i++;
+                if (anInt > 223) {
+                    if (anInt <= 254) {
+                        anInt = (anInt - 224) * 256 + baBytes[i] & 0xff;
+                        i++;
+                    } else {
+                        anInt = (baBytes[i] & 0xff) << 24 | (baBytes[i + 1] & 0xff) << 16 | (baBytes[i + 2] & 0xff) << 8 | baBytes[i + 3] & 0xff;
+                        i += 4;
+                    }
+                }
+                final long n = anInt >> 2;
+                if (k + n > pastEnd) {
+                    throw new PrimitiveFailed();
+                }
+                switch (anInt & 3) {
+                    case 0: // skip
+                        break;
+                    case 1: { // n consecutive words of 4 bytes = the following byte
+                        final int data = (baBytes[i] & 0xff) << 24 | (baBytes[i] & 0xff) << 16 | (baBytes[i] & 0xff) << 8 | baBytes[i] & 0xff;
+                        i++;
+                        for (int j = 0; j < n; j++) {
+                            bmBytes[k] = data;
+                            k++;
+                        }
+                        break;
+                    }
+                    case 2: { // n consecutive words = 4 following bytes
+                        final int data = (baBytes[i] & 0xff) << 24 | (baBytes[i + 1] & 0xff) << 16 | (baBytes[i + 2] & 0xff) << 8 | baBytes[i + 3] & 0xff;
+                        i += 4;
+                        for (int j = 0; j < n; j++) {
+                            bmBytes[k] = data;
+                            k++;
+                        }
+                        break;
+                    }
+
+                    case 3: { // n consecutive words from the data
+                        for (int m = 0; m < n; m++) {
+                            bmBytes[k] = (baBytes[i] & 0xff) << 24 | (baBytes[i + 1] & 0xff) << 16 | (baBytes[i + 2] & 0xff) << 8 | baBytes[i + 3] & 0xff;
+                            i += 4;
+                            k++;
+                        }
+                        break;
+                    }
+                    default:
+                        throw new SqueakException("primitiveDecompressFromByteArray: should not happen");
+                }
+            }
+            return receiver;
         }
     }
 

@@ -5,7 +5,7 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 
-public class GetActiveProcessNode extends AbstractNodeWithImage {
+public final class GetActiveProcessNode extends AbstractNodeWithImage {
     @Child private GetSchedulerNode getSchedulerNode;
 
     public static GetActiveProcessNode create(final SqueakImageContext image) {

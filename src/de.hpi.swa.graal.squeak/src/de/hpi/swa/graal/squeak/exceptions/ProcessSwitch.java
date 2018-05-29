@@ -4,7 +4,7 @@ import com.oracle.truffle.api.nodes.ControlFlowException;
 
 import de.hpi.swa.graal.squeak.model.ContextObject;
 
-public class ProcessSwitch extends ControlFlowException {
+public final class ProcessSwitch extends ControlFlowException {
     private static final long serialVersionUID = 1L;
     private final ContextObject context;
 

@@ -61,8 +61,9 @@ public final class ContextObject extends AbstractSqueakObject {
     }
 
     public void terminate() {
-        atput0(CONTEXT.INSTRUCTION_POINTER, image.nil);
-        setSender(image.nil); // remove sender without flagging dirty
+        // remove pc and sender without flagging as dirty
+        pointers[CONTEXT.INSTRUCTION_POINTER] = image.nil;
+        pointers[CONTEXT.SENDER_OR_NIL] = image.nil;
     }
 
     @Override
@@ -90,14 +91,19 @@ public final class ContextObject extends AbstractSqueakObject {
             case CONTEXT.SENDER_OR_NIL:
                 return getSender();
             case CONTEXT.INSTRUCTION_POINTER:
-                final CompiledCodeObject blockOrMethod = getMethod();
-                final int initalPC;
-                if (blockOrMethod instanceof CompiledBlockObject) {
-                    initalPC = ((CompiledBlockObject) blockOrMethod).getInitialPC();
+                final int pc = getFramePC();
+                if (pc < 0) {
+                    return image.nil;
                 } else {
-                    initalPC = ((CompiledMethodObject) blockOrMethod).getInitialPC();
+                    final CompiledCodeObject blockOrMethod = getMethod();
+                    final int initalPC;
+                    if (blockOrMethod instanceof CompiledBlockObject) {
+                        initalPC = ((CompiledBlockObject) blockOrMethod).getInitialPC();
+                    } else {
+                        initalPC = ((CompiledMethodObject) blockOrMethod).getInitialPC();
+                    }
+                    return (long) (initalPC + pc);
                 }
-                return (long) FrameUtil.getIntSafe(truffleFrame, CompiledCodeObject.instructionPointerSlot) + initalPC;
             case CONTEXT.STACKPOINTER:
                 return (long) FrameUtil.getIntSafe(truffleFrame, CompiledCodeObject.stackPointerSlot) + 1;
             case CONTEXT.METHOD:
@@ -159,6 +165,14 @@ public final class ContextObject extends AbstractSqueakObject {
         return pointers[CONTEXT.SENDER_OR_NIL] instanceof FrameMarker;
     }
 
+    private int getFramePC() {
+        return FrameUtil.getIntSafe(truffleFrame, CompiledCodeObject.instructionPointerSlot);
+    }
+
+    private boolean truffleFrameMarkedAsTerminated() {
+        return truffleFrame != null && getFramePC() < 0;
+    }
+
     public AbstractSqueakObject getSender() {
         return getSender(true);
     }
@@ -166,12 +180,18 @@ public final class ContextObject extends AbstractSqueakObject {
     public AbstractSqueakObject getSender(final boolean force) {
         final Object sender = pointers[CONTEXT.SENDER_OR_NIL];
         if (sender instanceof ContextObject) {
+            if (truffleFrameMarkedAsTerminated()) {
+                if (force) {
+                    setSender(image.nil);
+                }
+                return image.nil;
+            }
             return (AbstractSqueakObject) sender;
         } else if (sender instanceof NilObject) {
             return (AbstractSqueakObject) sender;
         }
-        final Object senderOrMarker = truffleFrame.getArguments()[FrameAccess.SENDER_OR_SENDER_MARKER];
         final AbstractSqueakObject actualSender;
+        final Object senderOrMarker = truffleFrame.getArguments()[FrameAccess.SENDER_OR_SENDER_MARKER];
         if (senderOrMarker instanceof FrameMarker) {
             final Frame frame = FrameAccess.findFrameForMarker((FrameMarker) senderOrMarker);
             actualSender = GetOrCreateContextNode.getOrCreateFull(frame.materialize(), false, false);
