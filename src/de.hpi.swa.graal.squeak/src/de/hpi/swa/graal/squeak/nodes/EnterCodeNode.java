@@ -89,8 +89,10 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
 
     @Specialization(assumptions = {"code.getCanBeVirtualizedAssumption()"})
     protected final Object enterVirtualized(final VirtualFrame frame) {
-        CompilerDirectives.ensureVirtualized(frame);
+// CompilerDirectives.ensureVirtualized(frame);
         initializeSlots(code, frame);
+        final ContextObject newContext = ContextObject.create(frame);
+        assert newContext == FrameAccess.getContext(frame, code);
         initializeArgumentsAndTemps(frame);
         return executeContextNode.executeContext(frame, null);
     }

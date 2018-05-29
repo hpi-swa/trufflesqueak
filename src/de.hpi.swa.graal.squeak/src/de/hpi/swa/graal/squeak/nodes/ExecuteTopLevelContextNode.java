@@ -1,6 +1,12 @@
 package de.hpi.swa.graal.squeak.nodes;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
 
@@ -22,6 +28,8 @@ public final class ExecuteTopLevelContextNode extends RootNode {
 
     @Child private ExecuteContextNode executeContextNode;
     @Child private UnwindContextChainNode unwindContextChainNode;
+    @CompilationFinal private static final ExecutorService executor = Executors.newCachedThreadPool();
+    @CompilationFinal public static final Map<ContextObject, Thread> suspendedContextThreads = new ConcurrentHashMap<>();
 
     public static ExecuteTopLevelContextNode create(final SqueakLanguage language, final ContextObject context, final boolean needsShutdown) {
         return new ExecuteTopLevelContextNode(language, context, context.getBlockOrMethod(), needsShutdown);
@@ -33,12 +41,13 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         initialContext = context;
         this.needsShutdown = needsShutdown;
         unwindContextChainNode = UnwindContextChainNode.create(image);
+        SqueakImageContext.nextContext = context;
     }
 
     @Override
     public Object execute(final VirtualFrame frame) {
         try {
-            executeLoop();
+            executeThreads();
         } catch (TopLevelReturn e) {
             return e.getReturnValue();
         } finally {
@@ -53,37 +62,74 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         throw new SqueakException("Top level context did not return");
     }
 
-    private void executeLoop() {
-        ContextObject activeContext = initialContext;
-        activeContext.restartIfTerminated();
-        while (true) {
-            CompilerDirectives.transferToInterpreter();
-            assert activeContext.hasMaterializedSender() : "Context must have materialized sender: " + activeContext;
-            final AbstractSqueakObject sender = activeContext.getSender();
-            assert sender == image.nil || ((ContextObject) sender).hasTruffleFrame();
-            try {
-                MaterializeContextOnMethodExitNode.reset();
-                final CompiledCodeObject code = activeContext.getBlockOrMethod();
-                // FIXME: do not create node here?
-                if (executeContextNode == null) {
-                    executeContextNode = insert(ExecuteContextNode.create(code));
-                } else {
-                    executeContextNode.replace(ExecuteContextNode.create(code));
+    private final class SqueakProcess implements Runnable {
+        @CompilationFinal private final ContextObject context;
+        public Object result;
+
+        SqueakProcess(final ContextObject context) {
+            this.context = context;
+        }
+
+        public void run() {
+            ContextObject activeContext = context;
+            while (true) {
+                CompilerDirectives.transferToInterpreter();
+                final AbstractSqueakObject sender = activeContext.getSender();
+                try {
+                    MaterializeContextOnMethodExitNode.reset();
+                    final CompiledCodeObject code = activeContext.getBlockOrMethod();
+                    // FIXME: do not create node here?
+                    if (executeContextNode == null) {
+                        executeContextNode = insert(ExecuteContextNode.create(code));
+                    } else {
+                        executeContextNode.replace(ExecuteContextNode.create(code));
+                    }
+                    // doIt: activeContext.printSqStackTrace();
+                    final Object result = executeContextNode.executeContext(activeContext.getTruffleFrame(), activeContext);
+                    activeContext = unwindContextChainNode.executeUnwind(sender, sender, result);
+                    image.traceProcessSwitches("Local Return on top-level (sender:", sender, ", new context: ", activeContext, ")");
+                } catch (NonLocalReturn nlr) {
+                    final AbstractSqueakObject target = (AbstractSqueakObject) nlr.getTargetContextOrMarker();
+                    activeContext = unwindContextChainNode.executeUnwind(sender, target, nlr.getReturnValue());
+                    image.traceProcessSwitches("Non Local Return on top-level, new context is", activeContext);
+                } catch (NonVirtualReturn nvr) {
+                    activeContext = unwindContextChainNode.executeUnwind(nvr.getCurrentContext(), nvr.getTargetContext(), nvr.getReturnValue());
+                    image.traceProcessSwitches("Non Virtual Return on top-level, new context is", activeContext);
                 }
-                // doIt: activeContext.printSqStackTrace();
-                final Object result = executeContextNode.executeContext(activeContext.getTruffleFrame(), activeContext);
-                activeContext = unwindContextChainNode.executeUnwind(sender, sender, result);
-                image.traceProcessSwitches("Local Return on top-level (sender:", sender, ", new context: ", activeContext, ")");
-            } catch (ProcessSwitch ps) {
-                image.traceProcessSwitches("Switching from", activeContext, "to", ps.getNewContext());
-                activeContext = ps.getNewContext();
-            } catch (NonLocalReturn nlr) {
-                final AbstractSqueakObject target = (AbstractSqueakObject) nlr.getTargetContextOrMarker();
-                activeContext = unwindContextChainNode.executeUnwind(sender, target, nlr.getReturnValue());
-                image.traceProcessSwitches("Non Local Return on top-level, new context is", activeContext);
-            } catch (NonVirtualReturn nvr) {
-                activeContext = unwindContextChainNode.executeUnwind(nvr.getCurrentContext(), nvr.getTargetContext(), nvr.getReturnValue());
-                image.traceProcessSwitches("Non Virtual Return on top-level, new context is", activeContext);
+            }
+        }
+    }
+
+    private void executeThreads() {
+        Thread thread;
+        while (true) {
+            final ContextObject nextContext = SqueakImageContext.nextContext;
+            thread = suspendedContextThreads.remove(nextContext);
+            if (thread == null) {
+                thread = suspendedContextThreads.computeIfAbsent(SqueakImageContext.nextContext, t -> {
+                    return new Thread(new SqueakProcess(nextContext), nextContext.toString());
+                });
+                // image.getError().println("New thread");
+                thread.start();
+            } else {
+                synchronized (nextContext) {
+                    SqueakImageContext.workerThreadSuspended = false;
+                    // image.getError().println("Resuming existing thread");
+                    nextContext.notify();
+                }
+            }
+            synchronized (image.rootJavaThread) {
+                SqueakImageContext.mainThreadSuspended = true;
+                while (SqueakImageContext.mainThreadSuspended) {
+                    try {
+                        // image.getError().println("Waiting for thread to complete...");
+                        image.rootJavaThread.wait();
+                    } catch (InterruptedException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                }
+                // image.getError().println("Done waiting...");
             }
         }
     }

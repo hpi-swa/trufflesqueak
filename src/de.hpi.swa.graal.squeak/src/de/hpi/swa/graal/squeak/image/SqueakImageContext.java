@@ -164,11 +164,17 @@ public final class SqueakImageContext {
     private Source lastParseRequestSource;
     @CompilationFinal private SqueakImage squeakImage;
 
+    public static ContextObject nextContext = null;
+    public static boolean mainThreadSuspended = false;
+    public static boolean workerThreadSuspended = false;
+    @CompilationFinal public final Thread rootJavaThread;
+
     public SqueakImageContext(final SqueakLanguage squeakLanguage, final SqueakLanguage.Env environment) {
         language = squeakLanguage;
         patch(environment);
         interrupt = InterruptHandlerState.create(this);
         allocationReporter = env.lookup(AllocationReporter.class);
+        rootJavaThread = Thread.currentThread();
     }
 
     public void ensureLoaded() {
