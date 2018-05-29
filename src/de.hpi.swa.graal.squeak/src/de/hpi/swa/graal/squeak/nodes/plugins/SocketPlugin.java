@@ -78,8 +78,31 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                         listening = true;
                         serverSocket = new ServerSocket(port);
                         acceptedConnection = serverSocket.accept();
-                        serverSocket.close();
-                        serverSocket = null;
+                        listening = false;
+                    } catch (SocketException se) {
+                        // The socket has been closed while listening
+                        // This is fine
+                        listening = false;
+                    } catch (IOException e) {
+                        System.err.println(e);
+                        e.printStackTrace();
+                    }
+                }
+            };
+            listenerThread.start();
+        }
+
+        public void continueListening() {
+            if (listening) {
+                return;
+            }
+            System.out.println(">> Continue Listening");
+            listenerThread = new Thread() {
+                @Override
+                public void run() {
+                    try {
+                        listening = true;
+                        acceptedConnection = serverSocket.accept();
                         listening = false;
                     } catch (SocketException se) {
                         // The socket has been closed while listening
@@ -97,8 +120,8 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         public SocketImpl accept() {
             System.out.println(">> Accepting");
             try {
-                if (serverSocket == null) {
-                    System.err.println("Not a ServerSocket");
+                if (listenerThread == null) {
+                    System.err.println("Never even listened");
                     throw new PrimitiveFailed();
                 }
 
@@ -110,6 +133,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 }
 
                 connectionImpl.clientSocket = acceptedConnection;
+                continueListening();
                 return connectionImpl;
             } catch (InterruptedException e) {
                 System.err.print(e);
@@ -150,19 +174,36 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         public long getStatus() {
-            if (clientSocket == null) {
+            if (clientSocket != null && acceptedConnection != null) {
+                System.err.println(">> Both client socket and accepted socket!");
+                throw new PrimitiveFailed();
+            }
+            if (clientSocket == null && acceptedConnection == null) {
+                System.out.println(">> SocketStatus: Unconnected");
                 return SocketStatus.Unconnected;
+            }
+            Socket socket = null;
+            if (clientSocket != null) {
+                socket = clientSocket;
+            }
+            if (acceptedConnection != null) {
+                socket = acceptedConnection;
             }
 
-            if (clientSocket.isInputShutdown()) {
+            if (socket.isInputShutdown()) {
+                System.out.println(">> SocketStatus: ThisEndClosed");
                 return SocketStatus.ThisEndClosed;
-            } else if (clientSocket.isOutputShutdown()) {
+            } else if (socket.isOutputShutdown()) {
+                System.out.println(">> SocketStatus: OtherEndClosed");
                 return SocketStatus.OtherEndClosed;
-            } else if (!clientSocket.isConnected()) {
+            } else if (!socket.isConnected()) {
+                System.out.println(">> SocketStatus: Unconnected");
                 return SocketStatus.Unconnected;
             } else {
+                System.out.println(">> SocketStatus: Connected");
                 return SocketStatus.Connected;
             }
+
         }
 
         public long getError() {
@@ -190,6 +231,27 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         public void setOption(final String option, final Object value) {
             options.put(option, value);
         }
+
+        public int getLocalPort() {
+            if (clientSocket != null) {
+                return clientSocket.getLocalPort();
+            } else if (serverSocket != null) {
+                return serverSocket.getLocalPort();
+            } else if (acceptedConnection != null) {
+                return acceptedConnection.getLocalPort();
+            } else {
+                return 0;
+            }
+        }
+    }
+
+    public static String addressBytesToString(byte[] address) {
+        String hostAddressString = "";
+        for (int i = 0; i < address.length - 1; i++) {
+            hostAddressString += Byte.toString(address[i]) + ".";
+        }
+        hostAddressString += Byte.toString(address[address.length - 1]);
+        return hostAddressString;
     }
 
 // NetNameResolver
@@ -340,6 +402,25 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(name = "primitiveSocketLocalPort")
+    protected abstract static class PrimSocketLocalPortNode extends AbstractPrimitiveNode {
+        protected PrimSocketLocalPortNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        // Return the local port for this socket, or zero if no port has yet been assigned.
+        @Specialization
+        protected Long doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
+            final SocketImpl socketImpl = sockets.get(socketID);
+            if (socketImpl == null) {
+                code.image.getError().println("No socket for socket id");
+                throw new PrimitiveFailed();
+            }
+            return (long) socketImpl.getLocalPort();
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveSocketListenWithOrWithoutBacklog")
     protected abstract static class PrimSocketListenWithOrWithoutBacklogNode extends AbstractPrimitiveNode {
         protected PrimSocketListenWithOrWithoutBacklogNode(final CompiledMethodObject method, final int numArguments) {
@@ -442,7 +523,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 code.image.getError().println("No socket for socket id");
                 throw new PrimitiveFailed();
             }
-            final String hostAddressString = hostAddress.toString();
+            String hostAddressString = addressBytesToString(hostAddress.asString().getBytes());
             try {
                 socketImpl.connectTo(hostAddressString, (int) port);
             } catch (IOException e) {

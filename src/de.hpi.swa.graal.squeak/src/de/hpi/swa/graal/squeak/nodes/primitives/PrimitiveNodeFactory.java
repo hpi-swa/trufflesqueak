@@ -56,7 +56,7 @@ public abstract class PrimitiveNodeFactory {
                     new UnixOSProcessPlugin(),
                     new UUIDPlugin(),
                     new Win32OSProcessPlugin(),
-		    new SocketPlugin()};
+                    new SocketPlugin()};
     @CompilationFinal(dimensions = 1) private static final String[] simulatedPlugins = new String[]{"B2DPlugin", "BalloonPlugin"};
     @CompilationFinal private static final Map<Integer, NodeFactory<? extends AbstractPrimitiveNode>> primitiveTable;
 
