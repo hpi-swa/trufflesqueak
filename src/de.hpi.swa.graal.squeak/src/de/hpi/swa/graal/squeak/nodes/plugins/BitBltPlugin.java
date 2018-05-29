@@ -40,6 +40,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimCopyBitsNode extends AbstractPrimitiveNode {
         @CompilationFinal private final ValueProfile halftoneFormStorageType = ValueProfile.createClassProfile();
         @CompilationFinal private final ValueProfile destinationBitsStorageType = ValueProfile.createClassProfile();
+        @CompilationFinal private final ValueProfile sourceBitsStorageType = ValueProfile.createClassProfile();
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
         @Child private SimulationPrimitiveNode simulateNode;
 
@@ -84,6 +85,70 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             return receiver;
         }
 
+        @Specialization(guards = {"!hasNilSourceForm(receiver)", "!hasNilHalftoneForm(receiver)"})
+        protected final Object doCopyBitsWithSourceFormAndHalftone(final PointersObject receiver) {
+            System.out.println("ABAC");
+            return receiver;
+        }
+
+        /* "hasSourceFormDepth(receiver, 32)", */
+        @Specialization(guards = {"!hasNilSourceForm(receiver)"})
+        protected final Object doCopyBitsWithSourceForm(final PointersObject receiver) {
+            final PointersObject destinationForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
+            final NativeObject destinationBits = (NativeObject) destinationForm.at0(FORM.BITS);
+
+            final PointersObject sourceForm = (PointersObject) receiver.at0(BIT_BLT.SOURCE_FORM);
+            final NativeObject sourceBits = (NativeObject) sourceForm.at0(FORM.BITS);
+
+            final long sourceX = (long) receiver.at0(BIT_BLT.SOURCE_X);
+            final long sourceY = (long) receiver.at0(BIT_BLT.SOURCE_Y);
+            final int sourceWidth = (int) ((long) sourceForm.at0(FORM.WIDTH));
+            final int sourceHeight = (int) ((long) sourceForm.at0(FORM.HEIGHT));
+
+            final int destinationWidth = (int) ((long) destinationForm.at0(FORM.WIDTH));
+            final long destX = (long) receiver.at0(BIT_BLT.DEST_X);
+            final long destY = (long) receiver.at0(BIT_BLT.DEST_Y);
+            final long width = (long) receiver.at0(BIT_BLT.WIDTH);
+            final long height = (long) receiver.at0(BIT_BLT.HEIGHT);
+
+            final long clipX = (long) receiver.at0(BIT_BLT.CLIP_X);
+            final long clipY = (long) receiver.at0(BIT_BLT.CLIP_Y);
+            final long clipWidth = (long) receiver.at0(BIT_BLT.CLIP_WIDTH);
+            final long clipHeight = (long) receiver.at0(BIT_BLT.CLIP_HEIGHT);
+            final long[] clippedValues = clipRange(sourceX, sourceY, sourceWidth, sourceHeight, width, height, destX, destY, clipX, clipY, clipWidth, clipHeight);
+
+            final long clippedX = clippedValues[2];
+            final long clippedY = clippedValues[3];
+            final long clippedWidth = clippedValues[4];
+            final long clippedHeight = clippedValues[5];
+
+            final int[] dest = destinationBits.getIntStorage(destinationBitsStorageType);
+
+            if (sourceBits.isByteType()) {
+                final byte[] source = sourceBits.getByteStorage(sourceBitsStorageType);
+                int sx = (int) sourceX;
+                int sy = (int) sourceY;
+                for (int y = (int) clippedY; y < clippedY + clippedHeight; y++, sy++) {
+                    sx = 0;
+                    for (int x = (int) clippedX; x < clippedX + clippedWidth; x++, sx++) {
+                        dest[y * destinationWidth + x] = source[sy * sourceWidth + sx];
+                    }
+                }
+            } else {
+                final int[] source = sourceBits.getIntStorage(sourceBitsStorageType);
+                int sx = (int) sourceX;
+                int sy = (int) sourceY;
+                for (int y = (int) clippedY; y < clippedY + clippedHeight; y++, sy++) {
+                    sx = 0;
+                    for (int x = (int) clippedX; x < clippedX + clippedWidth; x++, sx++) {
+                        dest[y * destinationWidth + x] = source[sy * sourceWidth + sx];
+                    }
+                }
+            }
+
+            return receiver;
+        }
+
         @Fallback
         protected final Object doSimulation(final VirtualFrame frame, final Object receiver) {
             return simulateNode.executeWithArguments(frame, receiver, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE,
@@ -113,6 +178,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         protected final boolean hasNilHalftoneForm(final PointersObject target) {
             return target.at0(BIT_BLT.HALFTONE_FORM) == code.image.nil;
         }
+
     }
 
     /*

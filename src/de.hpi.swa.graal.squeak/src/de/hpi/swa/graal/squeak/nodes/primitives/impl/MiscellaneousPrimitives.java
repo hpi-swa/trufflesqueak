@@ -623,9 +623,9 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
                 case 4: return code.image.nil; // nil (was allocationCount (read-only))
                 case 5: return code.image.nil; // nil (was allocations between GCs (read-write)
                 case 6: // survivor count tenuring threshold (read-write)
-                case 7: return ManagementFactory.getGarbageCollectorMXBeans().get(1).getCollectionCount(); // full GCs since startup (read-only)
+                case 7: return 0L; //return ManagementFactory.getGarbageCollectorMXBeans().get(1).getCollectionCount(); // full GCs since startup (read-only)
                 case 8: return 1L; // total milliseconds in full GCs since startup (read-only)
-                case 9: return ManagementFactory.getGarbageCollectorMXBeans().get(0).getCollectionCount(); // incremental GCs (SqueakV3) or scavenges (Spur) since startup (read-only)
+                case 9: return 0L; //return ManagementFactory.getGarbageCollectorMXBeans().get(0).getCollectionCount(); // incremental GCs (SqueakV3) or scavenges (Spur) since startup (read-only)
                 case 10: // total milliseconds in incremental GCs (SqueakV3) or scavenges (Spur) since startup (read-only)
                 case 11: // tenures of surving objects since startup (read-only)
                 // case 12-20 were specific to ikp's JITTER VM, now 12-19 are open for use

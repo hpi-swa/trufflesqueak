@@ -128,9 +128,9 @@ public final class SendBytecodes {
             final Object lookupResult = lookupNode.executeLookup(rcvrClass, selector);
             final Object contextOrMarker = readContextNode.executeRead(frame);
 
-            long start = System.currentTimeMillis();
+            // long start = System.currentTimeMillis();
             Object ret = dispatchSendNode.executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs, contextOrMarker);
-            report((CompiledCodeObject) lookupResult, System.currentTimeMillis() - start);
+            // report((CompiledCodeObject) lookupResult, System.currentTimeMillis() - start);
             return ret;
         }
 
