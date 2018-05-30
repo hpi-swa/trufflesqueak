@@ -13,6 +13,7 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.model.ObjectLayouts.ERROR_TABLE;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeGetBytesNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
@@ -160,53 +161,44 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             final byte[] baBytes = ba.getByteStorage(baStorageType);
             final int[] bmBytes = bm.getIntStorage(bmStorageType);
             int i = (int) index - 1;
-            final int end = baBytes.length - 1;
+            final int end = baBytes.length;
             int k = 0;
-            final int pastEnd = bmBytes.length;
-            while (i <= end) {
+            final int pastEnd = bmBytes.length + 1;
+            while (i < end) {
                 // Decode next run start N
-                int anInt = baBytes[i] & 0xff;
-                i++;
+                int anInt = baBytes[i++] & 0xff;
                 if (anInt > 223) {
                     if (anInt <= 254) {
-                        anInt = (anInt - 224) * 256 + baBytes[i] & 0xff;
-                        i++;
+                        anInt = (anInt - 224) * 256 + (baBytes[i++] & 0xff);
                     } else {
-                        anInt = (baBytes[i] & 0xff) << 24 | (baBytes[i + 1] & 0xff) << 16 | (baBytes[i + 2] & 0xff) << 8 | baBytes[i + 3] & 0xff;
-                        i += 4;
+                        anInt = ((baBytes[i++] & 0xff) << 24) | ((baBytes[i++] & 0xff) << 16) | ((baBytes[i++] & 0xff) << 8) | (baBytes[i++] & 0xff);
                     }
                 }
                 final long n = anInt >> 2;
                 if (k + n > pastEnd) {
-                    throw new PrimitiveFailed();
+                    throw new PrimitiveFailed(ERROR_TABLE.BAD_INDEX);
                 }
                 switch (anInt & 3) {
                     case 0: // skip
                         break;
                     case 1: { // n consecutive words of 4 bytes = the following byte
-                        final int data = (baBytes[i] & 0xff) << 24 | (baBytes[i] & 0xff) << 16 | (baBytes[i] & 0xff) << 8 | baBytes[i] & 0xff;
-                        i++;
+                        final int data = ((baBytes[i] & 0xff) << 24) | ((baBytes[i] & 0xff) << 16) | ((baBytes[i] & 0xff) << 8) | (baBytes[i++] & 0xff);
                         for (int j = 0; j < n; j++) {
-                            bmBytes[k] = data;
-                            k++;
+                            bmBytes[k++] = data;
                         }
                         break;
                     }
                     case 2: { // n consecutive words = 4 following bytes
-                        final int data = (baBytes[i] & 0xff) << 24 | (baBytes[i + 1] & 0xff) << 16 | (baBytes[i + 2] & 0xff) << 8 | baBytes[i + 3] & 0xff;
-                        i += 4;
+                        final int data = ((baBytes[i++] & 0xff) << 24) | ((baBytes[i++] & 0xff) << 16) | ((baBytes[i++] & 0xff) << 8) | (baBytes[i++] & 0xff);
                         for (int j = 0; j < n; j++) {
-                            bmBytes[k] = data;
-                            k++;
+                            bmBytes[k++] = data;
                         }
                         break;
                     }
 
                     case 3: { // n consecutive words from the data
                         for (int m = 0; m < n; m++) {
-                            bmBytes[k] = (baBytes[i] & 0xff) << 24 | (baBytes[i + 1] & 0xff) << 16 | (baBytes[i + 2] & 0xff) << 8 | baBytes[i + 3] & 0xff;
-                            i += 4;
-                            k++;
+                            bmBytes[k++] = ((baBytes[i++] & 0xff) << 24) | ((baBytes[i++] & 0xff) << 16) | ((baBytes[i++] & 0xff) << 8) | (baBytes[i++] & 0xff);
                         }
                         break;
                     }
