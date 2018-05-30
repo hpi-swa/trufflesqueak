@@ -99,15 +99,11 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             return receiver;
         }
 
-        /*
-         * @Specialization(guards = {"!hasNilSourceForm(receiver)",
-         * "!hasNilHalftoneForm(receiver)"}) protected final Object
-         * doCopyBitsWithSourceFormAndHalftone(final PointersObject receiver) {
-         * System.out.println("ABAC"); return receiver; }
+        /**
+         * Draw call used by desktop background with form
          */
-
-        @Specialization(guards = {"hasCombinationRule(receiver, 3)", "!hasNilSourceForm(receiver)", "hasSourceFormDepth(receiver, 32)", "hasNilColormap(receiver)"})
-        protected final Object doCopyBitsWithSourceForm(final PointersObject receiver) {
+        @Specialization(guards = {"hasCombinationRule(receiver, 25)", "!hasNilSourceForm(receiver)", "hasSourceFormDepth(receiver, 32)", "hasNilColormap(receiver)"})
+        protected final Object doCopyBitsCombiRule25WithSourceForm(final PointersObject receiver) {
             final PointersObject destinationForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
             final NativeObject destinationBits = (NativeObject) destinationForm.at0(FORM.BITS);
 
@@ -150,7 +146,6 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
                 final byte[] source = sourceBits.getByteStorage(sourceBitsStorageType);
                 // request to unhibernate
                 if (sourceWidth * sourceHeight > source.length) {
-                    System.err.println("hi");
                     throw new PrimitiveFailed();
                 }
 
