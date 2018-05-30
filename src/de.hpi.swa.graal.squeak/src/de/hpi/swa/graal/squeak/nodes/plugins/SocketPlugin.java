@@ -178,16 +178,32 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         public Object getRemoteAddress() throws IOException {
-            if (clientSocket == null) {
-                return 0L;
+            if (clientSocket != null) {
+                final SocketAddress socketAddress = clientSocket.getRemoteSocketAddress();
+                if (socketAddress instanceof InetSocketAddress) {
+                    final InetSocketAddress inetAddress = (InetSocketAddress) socketAddress;
+                    return inetAddress.getAddress().getAddress();
+                } else {
+                    throw new IOException("Could not retrieve remote address");
+                }
+            } else if (serverSocket != null) {
+                return new byte[]{0, 0, 0, 0};
+            } else {
+                return 0;
             }
 
-            final SocketAddress socketAddress = clientSocket.getRemoteSocketAddress();
-            if (socketAddress instanceof InetSocketAddress) {
-                final InetSocketAddress inetAddress = (InetSocketAddress) socketAddress;
-                return inetAddress.getAddress().getAddress();
+        }
+
+        public long getRemotePort() {
+            if (clientSocket != null) {
+                InetSocketAddress address = (InetSocketAddress) clientSocket.getRemoteSocketAddress();
+                if (address != null) {
+                    return address.getPort();
+                } else {
+                    return 0L;
+                }
             } else {
-                throw new IOException("Could not retrieve remote address");
+                return 0L;
             }
         }
 
@@ -565,11 +581,35 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
             final SocketImpl socket = sockets.get(socketID);
             try {
-                return code.image.wrap(socket.getRemoteAddress());
+                Object result = socket.getRemoteAddress();
+                if (result instanceof byte[]) {
+                    return code.image.wrap((byte[]) result);
+                } else {
+                    return (long) result;
+                }
+
             } catch (IOException e) {
                 code.image.getError().println(e);
                 return 0;
             }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(name = "primitiveSocketRemotePort")
+    protected abstract static class PrimSocketRemotePortNode extends AbstractPrimitiveNode {
+        protected PrimSocketRemotePortNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @Specialization
+        protected Object doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
+            if (!sockets.containsKey(socketID)) {
+                return 0;
+            }
+
+            final SocketImpl socketImpl = sockets.get(socketID);
+            return socketImpl.getRemotePort();
         }
     }
 
