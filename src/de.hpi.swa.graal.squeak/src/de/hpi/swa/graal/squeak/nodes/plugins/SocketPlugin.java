@@ -123,7 +123,23 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             return clientSocket.getInputStream().available() > 0;
         }
 
+        public int receiveData(final byte[] data, final int startIndex, final int count) throws IOException {
+            System.out.println(">> Receive data");
+            if (clientSocket == null || !clientSocket.isConnected()) {
+                System.err.println(">> Socket not connected!");
+                throw new PrimitiveFailed();
+            }
+
+            if (isDataAvailable()) {
+                return clientSocket.getInputStream().read(data, startIndex, count);
+            } else {
+                System.out.println(">> No data available");
+                return 0;
+            }
+        }
+
         public void sendData(final byte[] data, final int startIndex, final int count) throws IOException {
+            System.out.println(">> Send Data");
             final OutputStream outputStream = clientSocket.getOutputStream();
             outputStream.write(data, startIndex, count);
         }
@@ -251,6 +267,11 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             }
         }
 
+        public boolean isSendDone() {
+            System.out.println(">> Send Done");
+            return true;
+        }
+
         public static int getFreePort() throws IOException {
             try (ServerSocket socket = new ServerSocket(0);) {
                 return socket.getLocalPort();
@@ -258,7 +279,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    public static String addressBytesToString(byte[] address) {
+    public static String addressBytesToString(final byte[] address) {
         String hostAddressString = "";
         for (int i = 0; i < address.length - 1; i++) {
             hostAddressString += Byte.toString(address[i]) + ".";
@@ -737,7 +758,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected long doWork(@SuppressWarnings("unused") final Object receiver,
                         final long socketID,
-                        final Object aStringOrByteArray,
+                        final NativeObject aStringOrByteArray,
                         final long startIndex,
                         final long count) {
             final SocketImpl socketImpl = sockets.get(socketID);
@@ -746,16 +767,8 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 throw new PrimitiveFailed();
             }
             try {
-                byte[] data = null;
-                if (aStringOrByteArray instanceof String) {
-                    data = ((String) aStringOrByteArray).getBytes();
-                } else if (aStringOrByteArray instanceof byte[]) {
-                    data = (byte[]) aStringOrByteArray;
-                } else {
-                    code.image.getError().println("Unknown data type");
-                    throw new PrimitiveFailed();
-                }
-                socketImpl.sendData(data, (int) startIndex, (int) count);
+                byte[] data = aStringOrByteArray.toString().getBytes();
+                socketImpl.sendData(data, (int) (startIndex - 1), (int) count);
                 return count;
             } catch (IOException e) {
                 code.image.getError().println(e);
@@ -773,9 +786,13 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object doWork(final Object receiver, final long socketID) {
-            final SocketImpl socket = sockets.get(socketID);
+            final SocketImpl socketImpl = sockets.get(socketID);
+            if (socketImpl == null) {
+                code.image.getError().println("No socket for socket id");
+                throw new PrimitiveFailed();
+            }
             try {
-                socket.close();
+                socketImpl.close();
             } catch (IOException e) {
                 code.image.getError().println(e);
                 throw new PrimitiveFailed();
@@ -792,9 +809,13 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected boolean doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
-            code.image.getError().println("TODO: primitiveSocketSendDone");
-            throw new PrimitiveFailed();
+        protected Object doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
+            final SocketImpl socketImpl = sockets.get(socketID);
+            if (socketImpl == null) {
+                code.image.getError().println("No socket for socket id");
+                throw new PrimitiveFailed();
+            }
+            return code.image.wrap(socketImpl.isSendDone());
         }
     }
 
@@ -808,9 +829,24 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // Receive data from the given socket into the given array starting at the given index.
         // Return the number of bytes read or zero if no data is available.
         @Specialization
-        protected long doWork(@SuppressWarnings("unused") final Object receiver, final Object socketID, final Object receiveBuffer, final Object startIndex, final Object count) {
-            code.image.getError().println("TODO: primitiveSocketReceiveDataBufCount");
-            throw new PrimitiveFailed();
+        protected long doWork(@SuppressWarnings("unused") final Object receiver, final long socketID, final NativeObject receiveBuffer, final long startIndex, final long count) {
+            final SocketImpl socketImpl = sockets.get(socketID);
+            if (socketImpl == null) {
+                code.image.getError().println("No socket for socket id");
+                throw new PrimitiveFailed();
+            }
+            byte[] buffer = new byte[(int) count];
+            long readBytes;
+            try {
+                readBytes = socketImpl.receiveData(buffer, (int) (startIndex - 1), (int) count);
+            } catch (IOException e) {
+                code.image.getError().println(e);
+                throw new PrimitiveFailed();
+            }
+            System.out.println(receiveBuffer);
+            // receiveBuffer.getByteStorage(new ))
+            // receiveBuffer.convertToBytesStorage(buffer);
+            return readBytes;
         }
     }
 
@@ -824,6 +860,10 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected long doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
             final SocketImpl socketImpl = sockets.get(socketID);
+            if (socketImpl == null) {
+                code.image.getError().println("No socket for socket id");
+                throw new PrimitiveFailed();
+            }
             try {
                 if (socketImpl != null) {
                     socketImpl.close();
