@@ -31,7 +31,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @SuppressWarnings("unused")
-    private static final class Resolver {
+    private static final class ResolverStatus {
         private static final long Uninitialized = 0;
         private static final long Ready = 1;
         private static final long Busy = 2;
@@ -57,6 +57,12 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     static Map<Long, SocketImpl> sockets = new TreeMap<>();
 
+    private final static class Resolver {
+        public static byte[] getLocalAddress() throws UnknownHostException {
+            return InetAddress.getLocalHost().getAddress();
+        }
+    }
+
     private final static class SocketImpl {
 
         private Socket clientSocket;
@@ -76,34 +82,10 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 public void run() {
                     try {
                         listening = true;
-                        serverSocket = new ServerSocket(port);
-                        acceptedConnection = serverSocket.accept();
-                        listening = false;
-                    } catch (SocketException se) {
-                        // The socket has been closed while listening
-                        // This is fine
-                        listening = false;
-                    } catch (IOException e) {
-                        System.err.println(e);
-                        e.printStackTrace();
-                    }
-                }
-            };
-            listenerThread.start();
-        }
-
-        public void continueListening() {
-            if (listening) {
-                return;
-            }
-            System.out.println(">> Continue Listening");
-            listenerThread = new Thread() {
-                @Override
-                public void run() {
-                    try {
-                        listening = true;
-                        acceptedConnection = serverSocket.accept();
-                        listening = false;
+                        serverSocket = new ServerSocket(port, 1, InetAddress.getLocalHost());
+                        while (true) {
+                            acceptedConnection = serverSocket.accept();
+                        }
                     } catch (SocketException se) {
                         // The socket has been closed while listening
                         // This is fine
@@ -119,27 +101,14 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
         public SocketImpl accept() {
             System.out.println(">> Accepting");
-            try {
-                if (listenerThread == null) {
-                    System.err.println("Never even listened");
-                    throw new PrimitiveFailed();
-                }
-
-                listenerThread.join();
-                SocketImpl connectionImpl = new SocketImpl();
-                if (acceptedConnection == null) {
-                    System.err.println("No connection was accepted");
-                    throw new PrimitiveFailed();
-                }
-
-                connectionImpl.clientSocket = acceptedConnection;
-                continueListening();
-                return connectionImpl;
-            } catch (InterruptedException e) {
-                System.err.print(e);
+            final SocketImpl connectionImpl = new SocketImpl();
+            if (acceptedConnection == null) {
+                System.err.println("No connection was accepted");
                 throw new PrimitiveFailed();
             }
 
+            connectionImpl.clientSocket = acceptedConnection;
+            return connectionImpl;
         }
 
         public void connectTo(final String host, final long port) throws IOException {
@@ -147,9 +116,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             if (clientSocket != null) {
                 clientSocket.close();
             }
-            clientSocket = new Socket();
-            final SocketAddress endpoint = new InetSocketAddress(host, (int) port);
-            clientSocket.connect(endpoint);
+            clientSocket = new Socket(host, (int) port, InetAddress.getLocalHost(), SocketImpl.getFreePort());
         }
 
         public boolean isDataAvailable() throws IOException {
@@ -218,10 +185,34 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             final SocketAddress socketAddress = clientSocket.getRemoteSocketAddress();
             if (socketAddress instanceof InetSocketAddress) {
                 final InetSocketAddress inetAddress = (InetSocketAddress) socketAddress;
-                return inetAddress.getAddress().getHostAddress();
+                return inetAddress.getAddress().getAddress();
             } else {
                 throw new IOException("Could not retrieve remote address");
             }
+        }
+
+        public Object getLocalAddress() throws UnknownHostException {
+            byte[] address;
+            if (clientSocket != null) {
+                address = clientSocket.getLocalAddress().getAddress();
+            } else if (serverSocket != null) {
+                final SocketAddress socketAddress = serverSocket.getLocalSocketAddress();
+                if (socketAddress instanceof InetSocketAddress) {
+                    address = ((InetSocketAddress) socketAddress).getAddress().getAddress();
+                } else {
+                    System.out.println(">> Socket local address: 0");
+                    return 0;
+                }
+            } else {
+                System.out.println(">> Socket local address: 0");
+                return 0;
+            }
+            if (address[0] == 0 && address[1] == 0 && address[2] == 0 && address[3] == 0) {
+                address = Resolver.getLocalAddress();
+            }
+            System.out.println(">> Socket local address: " + addressBytesToString(address));
+            return address;
+
         }
 
         public Object getOption(final String option) {
@@ -241,6 +232,12 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 return acceptedConnection.getLocalPort();
             } else {
                 return 0;
+            }
+        }
+
+        public static int getFreePort() throws IOException {
+            try (ServerSocket socket = new ServerSocket(0);) {
+                return socket.getLocalPort();
             }
         }
     }
@@ -264,7 +261,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected long doWork(@SuppressWarnings("unused") final Object receiver) {
-            return Resolver.Ready;
+            return ResolverStatus.Ready;
         }
     }
 
@@ -299,7 +296,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             final String hostNameString = hostName.toString();
             try {
                 if (hostNameString.equals("localhost")) {
-                    lastNameLookup = InetAddress.getLocalHost().getAddress();
+                    lastNameLookup = Resolver.getLocalAddress();
                     return receiver;
                 }
                 address = InetAddress.getByName(new URL(hostNameString).getHost());
@@ -353,12 +350,11 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // lookup was unsuccessful.
         @Specialization
         protected Object doWork(@SuppressWarnings("unused") final Object receiver) {
-            code.image.getOutput().println(">> Name Lookup Result: " + lastNameLookup[0] + " " + lastNameLookup[1] + " " + lastNameLookup[2] + " " + lastNameLookup[3]);
+            code.image.getOutput().println(">> Name Lookup Result: " + addressBytesToString(lastNameLookup));
             if (lastNameLookup == null) {
                 return code.image.nil;
             } else {
                 return code.image.wrap(lastNameLookup);
-                // return code.image.wrap(new byte[]{127, 0, 0, 1});
             }
         }
     }
@@ -393,7 +389,9 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected Object doWork(@SuppressWarnings("unused") final Object receiver) {
             try {
-                return code.image.wrap(InetAddress.getLocalHost().getAddress());
+                byte[] address = Resolver.getLocalAddress();
+                System.out.println(">> Local Address: " + addressBytesToString(address));
+                return code.image.wrap(address);
             } catch (UnknownHostException e) {
                 code.image.getError().println(e);
                 throw new PrimitiveFailed();
@@ -659,8 +657,20 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
+            final SocketImpl socketImpl = sockets.get(socketID);
+            if (socketImpl == null) {
+                code.image.getError().println("No socket for socket id");
+                throw new PrimitiveFailed();
+            }
+
             try {
-                return code.image.wrap(InetAddress.getLocalHost().getHostAddress());
+                Object result = socketImpl.getLocalAddress();
+                if (result instanceof byte[]) {
+                    return code.image.wrap((byte[]) result);
+                } else {
+                    return (long) result;
+                }
+
             } catch (UnknownHostException e) {
                 code.image.getError().println(e);
                 throw new PrimitiveFailed();
