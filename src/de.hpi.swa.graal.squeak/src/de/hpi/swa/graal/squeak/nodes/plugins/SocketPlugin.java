@@ -70,6 +70,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         private Socket acceptedConnection;
         private Map<String, Object> options = new TreeMap<>();
         boolean listening = false;
+        boolean sending = false;
         Thread listenerThread;
 
         public void listenOn(final int port) {
@@ -90,6 +91,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                         // The socket has been closed while listening
                         // This is fine
                         listening = false;
+                        System.out.println(">> Stopped listening");
                     } catch (IOException e) {
                         System.err.println(e);
                         e.printStackTrace();
@@ -120,7 +122,9 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         public boolean isDataAvailable() throws IOException {
-            return clientSocket.getInputStream().available() > 0;
+            boolean available = clientSocket.getInputStream().available() > 0;
+            System.out.println("Data available: " + available);
+            return available;
         }
 
         public int receiveData(final byte[] data, final int startIndex, final int count) throws IOException {
@@ -140,8 +144,21 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
         public void sendData(final byte[] data, final int startIndex, final int count) throws IOException {
             System.out.println(">> Send Data");
-            final OutputStream outputStream = clientSocket.getOutputStream();
-            outputStream.write(data, startIndex, count);
+            // Thread sendThread = new Thread() {
+            // @Override
+            // public void run() {
+            sending = true;
+            try {
+                OutputStream outputStream = clientSocket.getOutputStream();
+                outputStream.write(data, startIndex, count);
+                outputStream.flush();
+            } catch (IOException e) {
+                System.err.println(e);
+            }
+            sending = false;
+            // }
+            // };
+            // sendThread.start();
         }
 
         public void close() throws IOException {
@@ -268,8 +285,8 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         public boolean isSendDone() {
-            System.out.println(">> Send Done");
-            return true;
+            System.out.println(">> Send Done: " + !sending);
+            return !sending;
         }
 
         public static int getFreePort() throws IOException {
@@ -770,7 +787,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 byte[] data = aStringOrByteArray.toString().getBytes();
                 socketImpl.sendData(data, (int) (startIndex - 1), (int) count);
                 return count;
-            } catch (IOException e) {
+            } catch (Exception e) {
                 code.image.getError().println(e);
                 return 0;
             }
