@@ -28,10 +28,7 @@ addons:
 install:
   - |
       export MX_PATH=${TRAVIS_BUILD_DIR}/../mx
-      git clone https://github.com/graalvm/mx.git ${MX_PATH}
-      pushd ${MX_PATH} > /dev/null
-      git checkout tags/5.171.0
-      popd > /dev/null
+      git clone --depth 1 https://github.com/graalvm/mx.git ${MX_PATH}
       export PATH=${PATH}:${MX_PATH}
   - |
       if [[ ${GATE} == *style* ]]
@@ -74,7 +71,7 @@ install:
 
 script:
   - echo ${JAVA_HOME} && ${JAVA_HOME}/bin/java -version
-  - mx --java-home=${JAVA_HOME} gate ${MX_OPTS} --strict-mode --tags ${GATE}
+  - mx --java-home=${JAVA_HOME} --extra-java-homes=/usr/lib/jvm/java-8-oracle gate ${MX_OPTS} --strict-mode --tags ${GATE}
 
 after_success:
   - |
