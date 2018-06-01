@@ -3,13 +3,11 @@ package de.hpi.swa.graal.squeak.nodes.context;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.MaterializedFrame;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.CalculcatePCOffsetNode;
@@ -37,41 +35,14 @@ public abstract class MaterializeContextObjectNode extends AbstractNodeWithImage
 
     public abstract void execute(ContextObject context);
 
-    @Specialization(guards = {"context.hasTruffleFrame()", "context.isDirty()", "!context.hasMaterializedSender()"})
+    @Specialization(guards = {"context.hasTruffleFrame()", "!context.hasMaterializedSender()"})
     protected final void doSenderOnly(final ContextObject context) {
-        fillInSender(context);
-    }
-
-    private void fillInSender(final ContextObject context) {
         final Object senderOrMarker = senderNode.executeRead(context.getTruffleFrame());
-        if (senderOrMarker instanceof FrameMarker) {
-            final Frame senderFrame = FrameAccess.findFrameForMarker((FrameMarker) senderOrMarker);
-            if (senderFrame == null) {
-                throw new SqueakException("Unable to find senderFrame for FrameMaker");
-            }
-            context.setSender(contextNode.executeGet(senderFrame, false));
+        final Frame senderFrame = FrameAccess.findFrameForMarker((FrameMarker) senderOrMarker);
+        if (senderFrame == null) {
+            throw new SqueakException("Unable to find senderFrame for FrameMaker");
         }
-    }
-
-    @Specialization(guards = {"context.hasTruffleFrame()", "!context.isDirty()"})
-    protected final void doMaterialize(final ContextObject context) {
-        if (!context.hasMaterializedSender()) {
-            fillInSender(context);
-        }
-        final MaterializedFrame frame = context.getTruffleFrame();
-        final Object blockOrMethod = methodNode.executeRead(frame);
-        context.atput0(CONTEXT.METHOD, blockOrMethod);
-        final long framePC = (int) instructionPointerReadNode.executeRead(frame);
-        if (framePC >= 0) {
-            context.setInstructionPointer(framePC + pcOffsetNode.execute(blockOrMethod));
-        } else { // context has been terminated
-            context.atput0(CONTEXT.INSTRUCTION_POINTER, image.nil);
-        }
-        final int frameSP = (int) stackPointerReadNode.executeRead(frame);
-        context.setStackPointer(frameSP + 1); // frame sp is zero-based
-        final Object closure = closureNode.executeRead(frame);
-        context.atput0(CONTEXT.CLOSURE_OR_NIL, closure == null ? image.nil : closure);
-        context.atput0(CONTEXT.RECEIVER, receiverNode.executeRead(frame));
+        context.setSender(contextNode.executeGet(senderFrame, false));
     }
 
     @SuppressWarnings("unused")
