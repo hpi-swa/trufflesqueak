@@ -39,7 +39,6 @@ public abstract class EnterCodeNode extends RootNode {
     }
 
     private void initializeSlots(final VirtualFrame frame) {
-        contextWriteNode.executeWrite(frame, new FrameMarker());
         instructionPointerWriteNode.executeWrite(frame, 0);
         stackPointerWriteNode.executeWrite(frame, -1);
     }
@@ -49,6 +48,7 @@ public abstract class EnterCodeNode extends RootNode {
     protected Object enterVirtualized(final VirtualFrame frame) {
         CompilerDirectives.ensureVirtualized(frame);
         initializeSlots(frame);
+        contextWriteNode.executeWrite(frame, new FrameMarker());
         // Push arguments and copied values onto the newContext.
         final Object[] arguments = frame.getArguments();
         assert getNumAllArgumentsNode.execute(code) == (arguments.length - FrameAccess.ARGUMENTS_START);
@@ -68,7 +68,7 @@ public abstract class EnterCodeNode extends RootNode {
     @Specialization(guards = {"!code.getCanBeVirtualizedAssumption().isValid()"})
     protected Object enter(final VirtualFrame frame) {
         initializeSlots(frame);
-        final ContextObject newContext = createContextNode.executeGet(frame, true);
+        final ContextObject newContext = createContextNode.executeGet(frame, true, true);
         contextWriteNode.executeWrite(frame, newContext);
         // Push arguments and copied values onto the newContext.
         final Object[] arguments = frame.getArguments();

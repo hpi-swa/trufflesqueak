@@ -16,11 +16,12 @@ public abstract class AbstractNode extends Node {
 
     protected final boolean isVirtualized(final VirtualFrame frame) {
         final Object contextOrMarker = contextOrMarkerReadNode.executeRead(frame);
-        return contextOrMarker instanceof FrameMarker || !((ContextObject) contextOrMarker).isDirty();
+        return !(contextOrMarker instanceof ContextObject) || !((ContextObject) contextOrMarker).isDirty();
     }
 
     protected final boolean isFullyVirtualized(final VirtualFrame frame) {
-        return contextOrMarkerReadNode.executeRead(frame) instanceof FrameMarker;
+        // true if slot holds FrameMarker or null (when entering code object)
+        return !(contextOrMarkerReadNode.executeRead(frame) instanceof ContextObject);
     }
 
     protected final Object getContextOrMarker(final VirtualFrame frame) {
