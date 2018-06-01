@@ -70,7 +70,6 @@ install:
       fi
 
 script:
-  - echo ${JAVA_HOME} && ${JAVA_HOME}/bin/java -version
   - mx --java-home=${JAVA_HOME} --extra-java-homes=/usr/lib/jvm/java-8-oracle gate ${MX_OPTS} --strict-mode --tags ${GATE}
 
 after_success:

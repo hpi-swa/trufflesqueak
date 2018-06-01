@@ -17,8 +17,7 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
-import com.oracle.truffle.api.Truffle;
-
+import de.hpi.swa.graal.squeak.GraalSqueakMain;
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -167,7 +166,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
         final String imagePath = getPathToTestImage();
         image = new SqueakImageContext(imagePath);
         image.getOutput().println();
-        image.getOutput().println("== Running " + SqueakLanguage.NAME + " SUnit Tests on " + Truffle.getRuntime().getName() + " ==");
+        image.getOutput().println("== Running " + SqueakLanguage.NAME + " SUnit Tests on " + GraalSqueakMain.getRuntimeName() + " ==");
         image.getOutput().println("Loading test image at " + imagePath + "...");
         try {
             image.fillInFrom(new FileInputStream(imagePath));
