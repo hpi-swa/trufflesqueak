@@ -106,8 +106,9 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
 
     @Test
     public void test10CompressAndDecompressBitmaps() {
+        // Iterate over all ToolIcons, copy their bitmaps, and then compress and decompress them.
         assertEquals(image.sqTrue, evaluate("ToolIcons icons values allSatisfy: [:icon | | sourceBitmap sourceArray destBitmap |\n" +
-                        "  icon unhibernate.\n" + // ensure icon is decompressed and has a bitmap
+                        "  icon unhibernate.\n" + // Ensure icon is decompressed and has a bitmap.
                         "  sourceBitmap := icon bits copy.\n" +
                         "  sourceArray := sourceBitmap compressToByteArray.\n" +
                         "  destBitmap := Bitmap new: sourceBitmap size.\n" +
