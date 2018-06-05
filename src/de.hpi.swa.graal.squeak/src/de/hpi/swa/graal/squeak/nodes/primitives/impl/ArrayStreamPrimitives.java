@@ -509,7 +509,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"receiver.isIntType()"})
         protected final long doNativeInt(final NativeObject receiver, final long index) {
             try {
-                return Integer.toUnsignedLong(receiver.getIntStorage(storageType)[(int) index - 1]);
+                return receiver.getIntStorage(storageType)[(int) index - 1];
             } catch (ArrayIndexOutOfBoundsException e) {
                 throw new PrimitiveFailed();
             }
@@ -527,6 +527,9 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"receiver.isIntType()"})
         protected final long doNativeInt(final NativeObject receiver, final long index, final long value) {
+            if (value < Integer.MIN_VALUE || value > Integer.MAX_VALUE) { // check for overflow
+                throw new PrimitiveFailed();
+            }
             try {
                 receiver.getIntStorage(storageType)[(int) index - 1] = (int) value;
             } catch (ArrayIndexOutOfBoundsException e) {
