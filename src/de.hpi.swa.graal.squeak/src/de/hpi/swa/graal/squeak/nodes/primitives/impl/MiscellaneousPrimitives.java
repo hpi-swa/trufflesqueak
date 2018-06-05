@@ -159,6 +159,20 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(index = 122)
+    protected abstract static class PrimNoopNode extends AbstractPrimitiveNode {
+
+        protected PrimNoopNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @Specialization
+        protected AbstractSqueakObject get(final AbstractSqueakObject receiver) {
+            return receiver;
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(index = 124)
     protected abstract static class PrimLowSpaceSemaphoreNode extends AbstractPrimitiveNode {
 
