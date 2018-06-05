@@ -32,7 +32,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives.SimulationPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.StoragePrimitives;
 
-public abstract class PrimitiveNodeFactory {
+public final class PrimitiveNodeFactory {
     @CompilationFinal private static final int MAX_PRIMITIVE_INDEX = 575;
     @CompilationFinal(dimensions = 1) private static final AbstractPrimitiveFactoryHolder[] indexPrimitives = new AbstractPrimitiveFactoryHolder[]{
                     new ArithmeticPrimitives(),
@@ -55,11 +55,17 @@ public abstract class PrimitiveNodeFactory {
                     new UUIDPlugin(),
                     new Win32OSProcessPlugin()};
     @CompilationFinal(dimensions = 1) private static final String[] simulatedPlugins = new String[]{"B2DPlugin", "BalloonPlugin"};
-    @SuppressWarnings("unchecked") @CompilationFinal(dimensions = 1) private static final NodeFactory<? extends AbstractPrimitiveNode>[] primitiveTable = new NodeFactory[MAX_PRIMITIVE_INDEX];
+
+    // Using an array instead of a HashMap requires type-checking to be disabled here.
+    @SuppressWarnings({"all", "rawtypes",
+                    "unchecked"}) @CompilationFinal(dimensions = 1) private static final NodeFactory<? extends AbstractPrimitiveNode>[] primitiveTable = new NodeFactory[MAX_PRIMITIVE_INDEX];
 
     static {
         fillPrimitiveTable(indexPrimitives);
         fillPrimitiveTable(plugins);
+    }
+
+    private PrimitiveNodeFactory() {
     }
 
     @TruffleBoundary
