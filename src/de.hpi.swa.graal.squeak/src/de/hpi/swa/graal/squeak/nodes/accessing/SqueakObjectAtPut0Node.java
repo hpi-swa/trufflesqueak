@@ -50,7 +50,7 @@ public abstract class SqueakObjectAtPut0Node extends Node {
     @Specialization(guards = "obj.isByteType()")
     protected final void doNativeBytes(final NativeObject obj, final long index, final long value) {
         if (value < 0 || value > NativeObject.BYTE_MAX) { // check for overflow
-            throw new IllegalArgumentException("Illegal value for BytesObject: " + value);
+            throw new IllegalArgumentException("Illegal value for native byte array: " + value);
         }
         obj.getByteStorage(storageType)[(int) index] = (byte) value;
     }
@@ -58,7 +58,7 @@ public abstract class SqueakObjectAtPut0Node extends Node {
     @Specialization(guards = "obj.isShortType()")
     protected final void doNativeShorts(final NativeObject obj, final long index, final long value) {
         if (value < 0 || value > NativeObject.SHORT_MAX) { // check for overflow
-            throw new IllegalArgumentException("Illegal value for ShortsObject: " + value);
+            throw new IllegalArgumentException("Illegal value for native short array: " + value);
         }
         obj.getShortStorage(storageType)[(int) index] = (short) value;
     }
@@ -66,7 +66,7 @@ public abstract class SqueakObjectAtPut0Node extends Node {
     @Specialization(guards = "obj.isIntType()")
     protected final void doNativeInts(final NativeObject obj, final long index, final long value) {
         if (value < 0 || value > NativeObject.INTEGER_MAX) { // check for overflow
-            throw new IllegalArgumentException("Illegal value for WordsObject: " + value);
+            throw new IllegalArgumentException("Illegal value for native int array: " + value);
         }
         obj.getIntStorage(storageType)[(int) index] = (int) value;
     }
