@@ -65,7 +65,7 @@ public final class SqueakSUnitTestMap {
                     "ColorTest", TEST_TYPE.PASSING,
                     "CompiledMethodComparisonTest", TEST_TYPE.NOT_TERMINATING,
                     "CompiledMethodTest", TEST_TYPE.PASSING,
-                    "CompiledMethodTrailerTest", TEST_TYPE.FAILING,
+                    "CompiledMethodTrailerTest", TEST_TYPE.PASSING,
                     "CompilerExceptionsTest", TEST_TYPE.PASSING,
                     "CompilerNotifyingTest", TEST_TYPE.FAILING,
                     "CompilerSyntaxErrorNotifyingTest", TEST_TYPE.FAILING,

@@ -52,4 +52,6 @@ public abstract class SqueakDisplay {
     public abstract void resizeTo(int width, int height);
 
     public abstract void setWindowTitle(String title);
+
+    public abstract void setInputSemaphoreIndex(int interruptSemaphoreIndex);
 }

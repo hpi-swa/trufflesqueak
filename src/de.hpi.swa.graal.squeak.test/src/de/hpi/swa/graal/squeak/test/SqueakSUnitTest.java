@@ -17,8 +17,7 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
-import com.oracle.truffle.api.Truffle;
-
+import de.hpi.swa.graal.squeak.GraalSqueakMain;
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -40,12 +39,12 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
     private static Object compilerSymbol;
 
     @Test
-    public void test1AsSymbol() {
+    public void test01AsSymbol() {
         assertEquals(image.asSymbol, asSymbol("asSymbol"));
     }
 
     @Test
-    public void test2Numerical() {
+    public void test02Numerical() {
         // Evaluate a few simple expressions to ensure that methodDictionaries grow correctly.
         for (long i = 0; i < 10; i++) {
             assertEquals(i + 1, evaluate(i + " + 1"));
@@ -58,12 +57,12 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
     }
 
     @Test
-    public void test3ThisContext() {
+    public void test03ThisContext() {
         assertEquals(42L, evaluate("thisContext return: 42"));
     }
 
     @Test
-    public void test4Ensure() {
+    public void test04Ensure() {
         assertEquals(21L, evaluate("[21] ensure: [42]"));
         assertEquals(42L, evaluate("[21] ensure: [^42]"));
         assertEquals(21L, evaluate("[^21] ensure: [42]"));
@@ -71,7 +70,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
     }
 
     @Test
-    public void test5OnError() {
+    public void test05OnError() {
         final Object result = evaluate("[self error: 'foobar'] on: Error do: [:err| ^ err messageText]");
         assertEquals("foobar", result.toString());
         assertEquals("foobar", evaluate("[[self error: 'foobar'] value] on: Error do: [:err| ^ err messageText]").toString());
@@ -80,28 +79,40 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
     }
 
     @Test
-    public void test6Value() {
+    public void test06Value() {
         assertEquals(42L, evaluate("[42] value"));
         assertEquals(21L, evaluate("[[21] value] value"));
     }
 
     @Test
-    public void test7SUnitTest() {
+    public void test07SUnitTest() {
         assertEquals(image.sqTrue, evaluate("(TestCase new should: [1/0] raise: ZeroDivide) isKindOf: TestCase"));
     }
 
     @Test
-    public void test8MethodContextRestart() {
+    public void test08MethodContextRestart() {
         // MethodContextTest>>testRestart uses #should:notTakeMoreThan: (requires process switching)
         assertEquals(image.sqTrue, evaluate("[MethodContextTest new privRestartTest. true] value"));
     }
 
     @Test
-    public void test9TinyBenchmarks() {
+    public void test09TinyBenchmarks() {
         final String resultString = evaluate("1 tinyBenchmarks").toString();
         assertTrue(resultString.contains("bytecodes/sec"));
         assertTrue(resultString.contains("sends/sec"));
         image.getOutput().println("tinyBenchmarks: " + resultString);
+    }
+
+    @Test
+    public void test10CompressAndDecompressBitmaps() {
+        // Iterate over all ToolIcons, copy their bitmaps, and then compress and decompress them.
+        assertEquals(image.sqTrue, evaluate("ToolIcons icons values allSatisfy: [:icon | | sourceBitmap sourceArray destBitmap |\n" +
+                        "  icon unhibernate.\n" + // Ensure icon is decompressed and has a bitmap.
+                        "  sourceBitmap := icon bits copy.\n" +
+                        "  sourceArray := sourceBitmap compressToByteArray.\n" +
+                        "  destBitmap := Bitmap new: sourceBitmap size.\n" +
+                        "  destBitmap decompress: destBitmap fromByteArray: sourceArray at: 1.\n" +
+                        "  destBitmap = sourceBitmap]"));
     }
 
     @Test
@@ -155,7 +166,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
         final String imagePath = getPathToTestImage();
         image = new SqueakImageContext(imagePath);
         image.getOutput().println();
-        image.getOutput().println("== Running " + SqueakLanguage.NAME + " SUnit Tests on " + Truffle.getRuntime().getName() + " ==");
+        image.getOutput().println("== Running " + SqueakLanguage.NAME + " SUnit Tests on " + GraalSqueakMain.getRuntimeName() + " ==");
         image.getOutput().println("Loading test image at " + imagePath + "...");
         try {
             image.fillInFrom(new FileInputStream(imagePath));

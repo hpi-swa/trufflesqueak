@@ -705,6 +705,24 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(index = 52)
+    protected abstract static class PrimFloatFractionPartNode extends AbstractArithmeticPrimitiveNode {
+        protected PrimFloatFractionPartNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @Specialization
+        protected final FloatObject doDouble(final double receiver) {
+            return asFloatObject(receiver - Double.valueOf(receiver).longValue());
+        }
+
+        @Specialization
+        protected final FloatObject doFloatObject(final FloatObject receiver) {
+            return doDouble(receiver.getValue());
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(index = 53)
     protected abstract static class PrimFloatExponentNode extends AbstractArithmeticPrimitiveNode {
         protected PrimFloatExponentNode(final CompiledMethodObject method, final int numArguments) {

@@ -8,6 +8,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.instrumentation.SqueakObjectMessageResolutionForeign;
+import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 
 public abstract class AbstractSqueakObject implements TruffleObject {
     @CompilationFinal private static final int IDENTITY_HASH_MASK = 0x400000 - 1;
@@ -84,6 +85,10 @@ public abstract class AbstractSqueakObject implements TruffleObject {
 
     public final boolean isSpecialClassAt(final long index) {
         return this.equals(image.specialObjectsArray.at0(index));
+    }
+
+    public final boolean isSemaphore() {
+        return isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassSemaphore);
     }
 
     public boolean become(final AbstractSqueakObject other) {

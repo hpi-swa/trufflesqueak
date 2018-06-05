@@ -100,4 +100,9 @@ public final class SqueakDisplayNull extends SqueakDisplay {
     public void setWindowTitle(final String title) {
         // ignore
     }
+
+    @Override
+    public void setInputSemaphoreIndex(final int interruptSemaphoreIndex) {
+        // ignore
+    }
 }

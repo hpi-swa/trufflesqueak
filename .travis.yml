@@ -6,8 +6,9 @@ dist: trusty
 
 env:
   global:
-    - JVMCI_VERSION="jvmci-0.42"
-    - JVMCI_BASE_JDK8="openjdk1.8.0_141"
+    - JVMCI_VERSION="jvmci-0.43"
+    - JVMCI_BASE_JDK8="openjdk1.8.0_171"
+    - JVMCI_FILE_JDK8="openjdk-8u171"
   matrix:
     - JDK="jdk8" GATE="style,fullbuild"
     - JDK="jdk8" GATE="build,test"
@@ -63,14 +64,13 @@ install:
       if [[ "${JDK}" == "jdk8" ]]
       then
         JDK_TAR=${TRAVIS_BUILD_DIR}/../jdk.tar.gz
-        curl -sSL -o ${JDK_TAR} https://github.com/dougxc/openjdk8-jvmci-builder/releases/download/${JVMCI_VERSION}/${JVMCI_BASE_JDK8}-${JVMCI_VERSION}-linux-amd64.tar.gz
+        curl -sSL -o ${JDK_TAR} https://github.com/dougxc/openjdk8-jvmci-builder/releases/download/${JVMCI_VERSION}/${JVMCI_FILE_JDK8}-${JVMCI_VERSION}-linux-amd64.tar.gz
         tar -C ${TRAVIS_BUILD_DIR}/.. -xzf ${JDK_TAR}
         export JAVA_HOME=${TRAVIS_BUILD_DIR}/../${JVMCI_BASE_JDK8}-${JVMCI_VERSION}
       fi
 
 script:
-  - echo ${JAVA_HOME} && ${JAVA_HOME}/bin/java -version
-  - mx --java-home=${JAVA_HOME} gate ${MX_OPTS} --strict-mode --tags ${GATE}
+  - mx --java-home=${JAVA_HOME} --extra-java-homes=/usr/lib/jvm/java-8-oracle gate ${MX_OPTS} --strict-mode --tags ${GATE}
 
 after_success:
   - |

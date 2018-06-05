@@ -19,7 +19,9 @@ public abstract class StackPopNode extends AbstractStackPopNode {
     public final Object doPopVirtualized(final VirtualFrame frame) {
         final int sp = frameStackPointer(frame);
         assert sp >= 0;
-        setFrameStackPointer(frame, sp - 1);
+        if (sp > 0) {
+            setFrameStackPointer(frame, sp - 1);
+        }
         return atStackAndClear(frame, sp);
     }
 

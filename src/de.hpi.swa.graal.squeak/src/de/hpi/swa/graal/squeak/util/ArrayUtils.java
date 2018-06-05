@@ -16,6 +16,16 @@ public final class ArrayUtils {
         return Arrays.copyOfRange(values, 1, values.length);
     }
 
+    public static Object[] copyWithFirst(final Object[] objects, final Object first) {
+        final int numObjects = objects.length;
+        final Object[] newObjects = new Object[numObjects + 1];
+        newObjects[0] = first;
+        for (int i = 0; i < numObjects; i++) {
+            newObjects[1 + i] = objects[i];
+        }
+        return newObjects;
+    }
+
     @TruffleBoundary
     public static void fillRandomly(final byte[] bytes) {
         RANDOM.nextBytes(bytes);

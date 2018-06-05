@@ -212,7 +212,7 @@ public final class NativeObject extends AbstractSqueakObject {
         final int size = bytes.length / INTEGER_BYTE_SIZE;
         final int[] ints = new int[size];
         for (int i = 0; i < ints.length; i++) {
-            ints[i] = ((bytes[i]) << 24) | ((bytes[i + 1]) << 16) | ((bytes[i + 2]) << 8) | bytes[3];
+            ints[i] = ((bytes[i]) << 24) | ((bytes[i + 1]) << 16) | ((bytes[i + 2]) << 8) | bytes[i + 3];
         }
         return ints;
     }
