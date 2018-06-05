@@ -33,6 +33,7 @@ import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
+import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.EmptyObject;
@@ -199,6 +200,46 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final AbstractSqueakObject doSet(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final long numBytes) {
             // TODO: do something with numBytes
             return receiver;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 132)
+    protected abstract static class PrimObjectPointsToNode extends AbstractPrimitiveNode {
+
+        protected PrimObjectPointsToNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @Specialization
+        protected final boolean doClass(final ClassObject receiver, final Object thang) {
+            return ArrayUtils.contains(receiver.getPointers(), thang) ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @Specialization
+        protected final boolean doClass(final CompiledCodeObject receiver, final Object thang) {
+            return ArrayUtils.contains(receiver.getLiterals(), thang) ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @Specialization
+        protected final boolean doContext(final ContextObject receiver, final Object thang) {
+            return ArrayUtils.contains(receiver.getPointers(), thang) ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @Specialization
+        protected final boolean doPointers(final PointersObject receiver, final Object thang) {
+            return ArrayUtils.contains(receiver.getPointers(), thang) ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @Specialization
+        protected final boolean doWeakPointers(final WeakPointersObject receiver, final Object thang) {
+            return ArrayUtils.contains(receiver.getPointers(), thang) ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @SuppressWarnings("unused")
+        @Fallback
+        protected final boolean doFallback(final Object receiver, final Object thang) {
+            return code.image.sqFalse;
         }
     }
 

@@ -16,6 +16,15 @@ public final class ArrayUtils {
         return Arrays.copyOfRange(values, 1, values.length);
     }
 
+    public static boolean contains(final Object[] objects, final Object element) {
+        for (int i = 0; i < objects.length; i++) {
+            if (objects[i] == element) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static Object[] copyWithFirst(final Object[] objects, final Object first) {
         final int numObjects = objects.length;
         final Object[] newObjects = new Object[numObjects + 1];
