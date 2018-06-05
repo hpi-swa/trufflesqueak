@@ -57,8 +57,7 @@ public final class PrimitiveNodeFactory {
     @CompilationFinal(dimensions = 1) private static final String[] simulatedPlugins = new String[]{"B2DPlugin", "BalloonPlugin"};
 
     // Using an array instead of a HashMap requires type-checking to be disabled here.
-    @SuppressWarnings({"all", "rawtypes",
-                    "unchecked"}) @CompilationFinal(dimensions = 1) private static final NodeFactory<? extends AbstractPrimitiveNode>[] primitiveTable = new NodeFactory[MAX_PRIMITIVE_INDEX];
+    @SuppressWarnings("unchecked") @CompilationFinal(dimensions = 1) private static final NodeFactory<? extends AbstractPrimitiveNode>[] primitiveTable = (NodeFactory<? extends AbstractPrimitiveNode>[]) new NodeFactory<?>[MAX_PRIMITIVE_INDEX];
 
     static {
         fillPrimitiveTable(indexPrimitives);
