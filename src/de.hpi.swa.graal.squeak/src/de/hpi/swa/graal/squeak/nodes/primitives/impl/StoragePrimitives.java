@@ -513,7 +513,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final char doLargeInteger(final LargeIntegerObject receiver, @SuppressWarnings("unused") final NotProvided target) {
             try {
-                return (char) Math.toIntExact(receiver.reduceToLong());
+                return (char) Math.toIntExact(receiver.longValueExact());
             } catch (ArithmeticException e) {
                 throw new PrimitiveFailed();
             }
@@ -527,7 +527,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final char doLargeInteger(@SuppressWarnings("unused") final Object receiver, final LargeIntegerObject target) {
             try {
-                return (char) Math.toIntExact(target.reduceToLong());
+                return (char) Math.toIntExact(target.longValueExact());
             } catch (ArithmeticException e) {
                 throw new PrimitiveFailed();
             }

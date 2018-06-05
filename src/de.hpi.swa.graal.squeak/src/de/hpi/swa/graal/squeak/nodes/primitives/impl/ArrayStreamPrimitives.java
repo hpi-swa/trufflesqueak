@@ -152,7 +152,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected Object doNativeLargeInteger(final NativeObject receiver, final long index, final LargeIntegerObject value) {
             try {
-                atPut0Node.execute(receiver, index - 1, value.reduceToLong());
+                atPut0Node.execute(receiver, index - 1, value.longValueExact());
             } catch (IllegalArgumentException | ArithmeticException e) {
                 throw new PrimitiveFailed();
             }
@@ -182,7 +182,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected Object doLargeInteger(final LargeIntegerObject receiver, final long index, final LargeIntegerObject value) {
             try {
-                receiver.setNativeAt0(index - 1, value.reduceToLong());
+                receiver.setNativeAt0(index - 1, value.longValueExact());
             } catch (IllegalArgumentException | ArithmeticException e) {
                 throw new PrimitiveFailed();
             }
@@ -212,7 +212,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected Object doFloatLargeInteger(final FloatObject receiver, final long index, final LargeIntegerObject value) {
             try {
-                receiver.setNativeAt0(index - 1, value.reduceToLong());
+                receiver.setNativeAt0(index - 1, value.longValueExact());
             } catch (IllegalArgumentException | ArithmeticException e) {
                 throw new PrimitiveFailed();
             }

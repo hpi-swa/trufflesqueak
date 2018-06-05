@@ -171,7 +171,12 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     }
 
     @TruffleBoundary
-    public long reduceToLong() throws ArithmeticException {
+    public long longValue() {
+        return getBigInteger().longValue();
+    }
+
+    @TruffleBoundary
+    public long longValueExact() throws ArithmeticException {
         return getBigInteger().longValueExact();
     }
 

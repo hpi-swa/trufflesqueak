@@ -341,7 +341,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected long doLong(final long a, final LargeIntegerObject b) {
             try {
-                return doLong(a, b.reduceToLong());
+                return doLong(a, b.longValueExact());
             } catch (ArithmeticException e) {
                 return -1L; // If `b` does not fit into a long, it must be larger
             }
@@ -350,7 +350,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected long doLargeInteger(final LargeIntegerObject a, final long b) {
             try {
-                return doLong(a.reduceToLong(), b);
+                return doLong(a.longValueExact(), b);
             } catch (ArithmeticException e) {
                 return 1L; // If `a` does not fit into a long, it must be larger
             }
