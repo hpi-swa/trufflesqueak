@@ -62,7 +62,12 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     private final static class Resolver {
         public static byte[] getLocalAddress() throws UnknownHostException {
-            return InetAddress.getLocalHost().getAddress();
+            // return InetAddress.getLocalHost().getAddress();
+            return new byte[]{127, 0, 0, 1};
+        }
+
+        public static InetAddress getLocalHostInetAddress() throws IOException {
+            return InetAddress.getByAddress(Resolver.getLocalAddress());
         }
     }
 
@@ -97,11 +102,12 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 datagramSocket = new DatagramSocket(port);
                 // TODO
             } else {
-                listening = true;
-                serverSocket = new ServerSocket(port, 1, InetAddress.getLocalHost());
+                serverSocket = new ServerSocket(port, 1, Resolver.getLocalHostInetAddress());
+                System.out.println(">> Actually listening on " + Resolver.getLocalHostInetAddress() + ":" + serverSocket.getLocalPort());
                 Thread listenerThread = new Thread() {
                     @Override
                     public void run() {
+                        listening = true;
                         try {
                             while (true) {
                                 acceptedConnection = serverSocket.accept();
@@ -118,6 +124,10 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                     }
                 };
                 listenerThread.start();
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException e) {
+                }
             }
         }
 
@@ -140,7 +150,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 if (clientSocket != null) {
                     clientSocket.close();
                 }
-                clientSocket = new Socket(host, (int) port, InetAddress.getLocalHost(), SocketImpl.getFreePort());
+                clientSocket = new Socket(host, (int) port, Resolver.getLocalHostInetAddress(), SocketImpl.getFreePort());
             } else /* if (netType == SocketType.UDPSocketType) */ {
                 if (datagramSocket != null) {
                     datagramSocket.close();

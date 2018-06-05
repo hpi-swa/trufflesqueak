@@ -50,8 +50,13 @@ public class SqueakSocketPluginTest extends AbstractSqueakTestCase {
     }
 
     @Test
-    public void testClientConnect() {
+    public void testSocketStreamTest() {
         assumeNotOnMXGate();
+        runTestCase("SocketStreamTest");
+    }
+
+    @Test
+    public void testClientConnect() {
         executeSocketTest("testClientConnect");
     }
 

@@ -33,6 +33,12 @@ import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 
 public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
 
+    private final static class SSLImpl {
+
+    }
+
+    static Map<Long, SSLImpl> sslHandles = new TreeMap<>();
+
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveAccept")
     protected abstract static class PrimAcceptNode extends AbstractPrimitiveNode {
@@ -40,9 +46,16 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
+        // Primitive. Starts or continues a server handshake using the provided data.
+        // Will eventually produce output to be sent to the server.
+        // Returns:
+        // > 0 - Number of bytes to be sent to the server
+        // 0 - Success. The connection is established.
+        // -1 - More input is required.
+        // < -1 - Other errors
         @Specialization
         protected Object doWork(final Object receiver,
-                        final Object sslHandle,
+                        final long sslHandle,
                         final Object srcbuf,
                         final Object start,
                         final Object length,
@@ -58,9 +71,16 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
+        // Primitive. Starts or continues a client handshake using the provided data.
+        // Will eventually produce output to be sent to the server.
+        // Returns:
+        // > 0 - Number of bytes to be sent to the server
+        // 0 - Success. The connection is established.
+        // -1 - More input is required.
+        // < -1 - Other errors
         @Specialization
         protected Object doWork(final Object receiver,
-                        final Object sslHandle,
+                        final long sslHandle,
                         final Object srcbuf,
                         final Object start,
                         final Object length,
@@ -76,9 +96,11 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
+        // Takes incoming data for decryption and continues to decrypt data.
+        // Returns the number of bytes produced in the output
         @Specialization
         protected Object doWork(final Object receiver,
-                        final Object sslHandle,
+                        final long sslHandle,
                         final Object srcbuf,
                         final Object start,
                         final Object length,
@@ -94,9 +116,11 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
+        // Encrypts the incoming buffer into the result buffer.
+        // Returns the number of bytes produced as a result
         @Specialization
         protected Object doWork(final Object receiver,
-                        final Object sslHandle,
+                        final long sslHandle,
                         final Object srcbuf,
                         final Object start,
                         final Object length,
@@ -112,8 +136,9 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
+        // Returns a string property from an SSL session
         @Specialization
-        protected Object doWork(final Object receiver, final Object sslHandle, final Object propID) {
+        protected Object doWork(final Object receiver, final long sslHandle, final Object propID) {
             return receiver;
         }
     }
@@ -125,8 +150,9 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
+        // Returns a string property from an SSL session
         @Specialization
-        protected Object doWork(final Object receiver, final Object sslHandle, final Object propID) {
+        protected Object doWork(final Object receiver, final long sslHandle, final Object propID) {
             return receiver;
         }
     }
@@ -138,9 +164,10 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
+        // Sets a string property in an SSL session
         @Specialization
         protected Object doWork(final Object receiver,
-                        final Object sslHandle,
+                        final long sslHandle,
                         final Object propID,
                         final Object anInteger) {
             return receiver;
@@ -154,6 +181,7 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
+        // Sets a string property in an SSL session
         @Specialization
         protected Object doWork(final Object receiver,
                         final Object sslHandle,
@@ -170,9 +198,13 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
+        // Creates and returns a new SSL handle
         @Specialization
-        protected Object doWork(final Object receiver) {
-            return receiver;
+        protected Long doWork(final Object receiver) {
+            SSLImpl ssl = new SSLImpl();
+            long handle = ssl.hashCode();
+            sslHandles.put(handle, ssl);
+            return handle;
         }
     }
 
@@ -183,8 +215,9 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
+        // Destroys the SSL session handle
         @Specialization
-        protected Object doWork(final Object receiver, final Object sslHandle) {
+        protected Object doWork(final Object receiver, final long sslHandle) {
             return receiver;
         }
     }
