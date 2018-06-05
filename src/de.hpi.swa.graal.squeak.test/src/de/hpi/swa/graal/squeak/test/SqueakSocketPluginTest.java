@@ -95,10 +95,10 @@ public class SqueakSocketPluginTest extends AbstractSqueakTestCase {
         executeSocketTest("testRemotePort");
     }
 
-    @Test
-    public void testSendTimeout() {
-        executeSocketTest("testSendTimeout");
-    }
+    // @Test
+    // public void testSendTimeout() {
+    // executeSocketTest("testSendTimeout");
+    // }
 
     @Test
     public void testServerAccept() {

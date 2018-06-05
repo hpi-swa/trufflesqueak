@@ -2,7 +2,10 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 
 import java.util.List;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
@@ -65,100 +68,146 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     private final static class SocketImpl {
 
+        private long socketType;
         private Socket clientSocket;
         private ServerSocket serverSocket;
+        private DatagramSocket datagramSocket;
         private Socket acceptedConnection;
+
         private Map<String, Object> options = new TreeMap<>();
         boolean listening = false;
-        boolean sending = false;
-        Thread listenerThread;
 
-        public void listenOn(final int port) {
+        SocketImpl(long netType) {
+            this.socketType = netType;
+            if (this.socketType == SocketType.TCPSocketType) {
+                System.out.println(">> Creating TCP Socket");
+            } else {
+                System.out.println(">> Creating UDP Socket");
+            }
+        }
+
+        public void listenOn(final int port) throws IOException {
             if (listening) {
                 return;
             }
             System.out.println(">> Listening on " + port);
-            listenerThread = new Thread() {
-                @Override
-                public void run() {
-                    try {
-                        listening = true;
-                        serverSocket = new ServerSocket(port, 1, InetAddress.getLocalHost());
-                        while (true) {
-                            acceptedConnection = serverSocket.accept();
+
+            if (socketType == SocketType.UDPSocketType) {
+                listening = true;
+                datagramSocket = new DatagramSocket(port);
+                // TODO
+            } else {
+                listening = true;
+                serverSocket = new ServerSocket(port, 1, InetAddress.getLocalHost());
+                Thread listenerThread = new Thread() {
+                    @Override
+                    public void run() {
+                        try {
+                            while (true) {
+                                acceptedConnection = serverSocket.accept();
+                            }
+                        } catch (SocketException se) {
+                            // The socket has been closed while listening
+                            // This is fine
+                            listening = false;
+                            System.out.println(">> Stopped listening");
+                        } catch (IOException e) {
+                            System.err.println(e);
+                            e.printStackTrace();
                         }
-                    } catch (SocketException se) {
-                        // The socket has been closed while listening
-                        // This is fine
-                        listening = false;
-                        System.out.println(">> Stopped listening");
-                    } catch (IOException e) {
-                        System.err.println(e);
-                        e.printStackTrace();
                     }
-                }
-            };
-            listenerThread.start();
+                };
+                listenerThread.start();
+            }
         }
 
         public SocketImpl accept() {
             System.out.println(">> Accepting");
-            final SocketImpl connectionImpl = new SocketImpl();
+            final SocketImpl connectionImpl = new SocketImpl(SocketType.TCPSocketType);
             if (acceptedConnection == null) {
                 System.err.println("No connection was accepted");
                 throw new PrimitiveFailed();
             }
 
             connectionImpl.clientSocket = acceptedConnection;
+            acceptedConnection = null;
             return connectionImpl;
         }
 
         public void connectTo(final String host, final long port) throws IOException {
-            System.out.println(">> Connecting to " + host + ": " + port);
-            if (clientSocket != null) {
-                clientSocket.close();
+            System.out.println(">> Connecting to " + host + ":" + port);
+            if (socketType == SocketType.TCPSocketType) {
+                if (clientSocket != null) {
+                    clientSocket.close();
+                }
+                clientSocket = new Socket(host, (int) port, InetAddress.getLocalHost(), SocketImpl.getFreePort());
+            } else /* if (netType == SocketType.UDPSocketType) */ {
+                if (datagramSocket != null) {
+                    datagramSocket.close();
+                }
+                this.datagramSocket = new DatagramSocket();
+                this.datagramSocket.connect(InetAddress.getByName(host), (int) port);
             }
-            clientSocket = new Socket(host, (int) port, InetAddress.getLocalHost(), SocketImpl.getFreePort());
         }
 
         public boolean isDataAvailable() throws IOException {
-            boolean available = clientSocket.getInputStream().available() > 0;
-            System.out.println("Data available: " + available);
+            boolean available = false;
+            if (clientSocket != null) {
+                if (!clientSocket.isClosed() || clientSocket.isConnected()) {
+                    final InputStream inputStream = clientSocket.getInputStream();
+                    if (inputStream != null) {
+                        available = inputStream.available() > 0;
+                    }
+                }
+            } else if (datagramSocket != null) {
+                return true;
+                // TODO
+            }
+            System.out.println(">> Data available: " + available);
             return available;
         }
 
-        public int receiveData(final byte[] data, final int startIndex, final int count) throws IOException {
+        public int receiveData(byte[] data, final int startIndex, final int count) throws IOException {
             System.out.println(">> Receive data");
-            if (clientSocket == null || !clientSocket.isConnected()) {
+            if (clientSocket != null) {
+                if (isDataAvailable()) {
+                    return clientSocket.getInputStream().read(data, startIndex, count);
+                } else {
+                    System.out.println(">> No data available");
+                    return 0;
+                }
+            } else if (datagramSocket != null) {
+                DatagramPacket p = new DatagramPacket(data, startIndex, count);
+                datagramSocket.receive(p);
+                return p.getLength();
+            } else {
                 System.err.println(">> Socket not connected!");
                 throw new PrimitiveFailed();
-            }
-
-            if (isDataAvailable()) {
-                return clientSocket.getInputStream().read(data, startIndex, count);
-            } else {
-                System.out.println(">> No data available");
-                return 0;
             }
         }
 
         public void sendData(final byte[] data, final int startIndex, final int count) throws IOException {
             System.out.println(">> Send Data");
-            // Thread sendThread = new Thread() {
-            // @Override
-            // public void run() {
-            sending = true;
-            try {
+            if (clientSocket != null) {
+                if (!clientSocket.isConnected()) {
+                    System.err.println("Client socket is not connected!");
+                    throw new PrimitiveFailed();
+                }
                 OutputStream outputStream = clientSocket.getOutputStream();
                 outputStream.write(data, startIndex, count);
                 outputStream.flush();
-            } catch (IOException e) {
-                System.err.println(e);
+            } else if (datagramSocket != null) {
+                if (!datagramSocket.isConnected()) {
+                    System.err.println("Datagram socket is not connected!");
+                    throw new PrimitiveFailed();
+                }
+                System.out.println("Send to " + datagramSocket.getRemoteSocketAddress());
+                DatagramPacket p = new DatagramPacket(data, startIndex, count);
+                this.datagramSocket.send(p);
+            } else {
+                System.err.println("Not Connected!");
+                throw new PrimitiveFailed();
             }
-            sending = false;
-            // }
-            // };
-            // sendThread.start();
         }
 
         public void close() throws IOException {
@@ -171,39 +220,72 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 serverSocket.close();
                 serverSocket = null;
             }
+            if (datagramSocket != null) {
+                datagramSocket.close();
+                datagramSocket = null;
+            }
         }
 
         public long getStatus() {
-            if (clientSocket != null && acceptedConnection != null) {
-                System.err.println(">> Both client socket and accepted socket!");
-                throw new PrimitiveFailed();
+            long status = SocketStatus.Unconnected;
+
+            if (clientSocket == null && serverSocket == null && datagramSocket == null) {
+                status = SocketStatus.Unconnected;
             }
-            if (clientSocket == null && acceptedConnection == null) {
-                System.out.println(">> SocketStatus: Unconnected");
-                return SocketStatus.Unconnected;
+
+            if (serverSocket != null) {
+                if (listening && acceptedConnection == null) {
+                    status = SocketStatus.WaitingForConnection;
+                } else if (acceptedConnection != null) {
+                    status = SocketStatus.Connected;
+                } else if (!listening) {
+                    status = SocketStatus.Unconnected;
+                } else {
+                    System.err.println(">> Undefined Socket Status");
+                    throw new PrimitiveFailed();
+                }
             }
-            Socket socket = null;
+
             if (clientSocket != null) {
-                socket = clientSocket;
-            }
-            if (acceptedConnection != null) {
-                socket = acceptedConnection;
-            }
-
-            if (socket.isInputShutdown()) {
-                System.out.println(">> SocketStatus: ThisEndClosed");
-                return SocketStatus.ThisEndClosed;
-            } else if (socket.isOutputShutdown()) {
-                System.out.println(">> SocketStatus: OtherEndClosed");
-                return SocketStatus.OtherEndClosed;
-            } else if (!socket.isConnected()) {
-                System.out.println(">> SocketStatus: Unconnected");
-                return SocketStatus.Unconnected;
-            } else {
-                System.out.println(">> SocketStatus: Connected");
-                return SocketStatus.Connected;
+                if (clientSocket.isInputShutdown()) {
+                    status = SocketStatus.ThisEndClosed;
+                } else if (clientSocket.isOutputShutdown()) {
+                    status = SocketStatus.OtherEndClosed;
+                } else if (!clientSocket.isConnected()) {
+                    status = SocketStatus.Unconnected;
+                } else {
+                    status = SocketStatus.Connected;
+                }
             }
 
+            if (datagramSocket != null) {
+                if (listening) {
+                    status = SocketStatus.WaitingForConnection;
+                } else if (datagramSocket.isConnected()) {
+                    status = SocketStatus.Connected;
+                } else {
+                    status = SocketStatus.Unconnected;
+                }
+            }
+
+            String statusString = "Undefined";
+
+            if (status == SocketStatus.Connected) {
+                statusString = "Connected";
+            } else if (status == SocketStatus.InvalidSocket) {
+                statusString = "InvalidSocket";
+            } else if (status == SocketStatus.Unconnected) {
+                statusString = "Unconnected";
+            } else if (status == SocketStatus.WaitingForConnection) {
+                statusString = "WaitingForConnection";
+            } else if (status == SocketStatus.OtherEndClosed) {
+                statusString = "OtherEndClosed";
+            } else if (status == SocketStatus.ThisEndClosed) {
+                statusString = "ThisEndClosed";
+            }
+
+            System.out.println(">> SocketStatus: " + statusString);
+            return status;
         }
 
         public long getError() {
@@ -221,6 +303,14 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 }
             } else if (serverSocket != null) {
                 return new byte[]{0, 0, 0, 0};
+            } else if (datagramSocket != null) {
+                final SocketAddress socketAddress = datagramSocket.getRemoteSocketAddress();
+                if (socketAddress instanceof InetSocketAddress) {
+                    final InetSocketAddress inetAddress = (InetSocketAddress) socketAddress;
+                    return inetAddress.getAddress().getAddress();
+                } else {
+                    throw new IOException("Could not retrieve remote address");
+                }
             } else {
                 return 0;
             }
@@ -230,6 +320,13 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         public long getRemotePort() {
             if (clientSocket != null) {
                 InetSocketAddress address = (InetSocketAddress) clientSocket.getRemoteSocketAddress();
+                if (address != null) {
+                    return address.getPort();
+                } else {
+                    return 0L;
+                }
+            } else if (datagramSocket != null) {
+                InetSocketAddress address = (InetSocketAddress) datagramSocket.getRemoteSocketAddress();
                 if (address != null) {
                     return address.getPort();
                 } else {
@@ -252,6 +349,8 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                     System.out.println(">> Socket local address: 0");
                     return 0;
                 }
+            } else if (datagramSocket != null) {
+                address = datagramSocket.getLocalAddress().getAddress();
             } else {
                 System.out.println(">> Socket local address: 0");
                 return 0;
@@ -273,20 +372,24 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         public int getLocalPort() {
+            int localPort = 0;
             if (clientSocket != null) {
-                return clientSocket.getLocalPort();
+                localPort = clientSocket.getLocalPort();
             } else if (serverSocket != null) {
-                return serverSocket.getLocalPort();
-            } else if (acceptedConnection != null) {
-                return acceptedConnection.getLocalPort();
-            } else {
-                return 0;
+                localPort = serverSocket.getLocalPort();
+            } else if (datagramSocket != null) {
+                localPort = datagramSocket.getLocalPort();
             }
+
+            System.out.println(">> Local port: " + localPort);
+            return localPort;
         }
 
         public boolean isSendDone() {
-            System.out.println(">> Send Done: " + !sending);
-            return !sending;
+            // System.out.println(">> Send Done: " + !sending);
+            // return !sending;
+            System.out.println(">> Send Done: true");
+            return true;
         }
 
         public static int getFreePort() throws IOException {
@@ -294,6 +397,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 return socket.getLocalPort();
             }
         }
+
     }
 
     public static String addressBytesToString(final byte[] address) {
@@ -498,7 +602,12 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 throw new PrimitiveFailed();
             }
 
-            socketImpl.listenOn((int) port);
+            try {
+                socketImpl.listenOn((int) port);
+            } catch (IOException e) {
+                code.image.getError().println(e);
+                throw new PrimitiveFailed();
+            }
             return receiver;
         }
 
@@ -510,7 +619,12 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 throw new PrimitiveFailed();
             }
 
-            socketImpl.listenOn((int) port);
+            try {
+                socketImpl.listenOn((int) port);
+            } catch (IOException e) {
+                code.image.getError().println(e);
+                throw new PrimitiveFailed();
+            }
             return receiver;
         }
     }
@@ -536,7 +650,12 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 throw new PrimitiveFailed();
             }
 
-            socketImpl.listenOn((int) port);
+            try {
+                socketImpl.listenOn((int) port);
+            } catch (IOException e) {
+                code.image.getError().println(e);
+                throw new PrimitiveFailed();
+            }
             return receiver;
         }
     }
@@ -789,7 +908,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 return count;
             } catch (Exception e) {
                 code.image.getError().println(e);
-                return 0;
+                throw new PrimitiveFailed();
             }
         }
     }
@@ -856,13 +975,12 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             long readBytes;
             try {
                 readBytes = socketImpl.receiveData(buffer, (int) (startIndex - 1), (int) count);
+                receiveBuffer.setStorageForTesting(buffer);
             } catch (IOException e) {
                 code.image.getError().println(e);
                 throw new PrimitiveFailed();
             }
             System.out.println(receiveBuffer);
-            // receiveBuffer.getByteStorage(new ))
-            // receiveBuffer.convertToBytesStorage(buffer);
             return readBytes;
         }
     }
@@ -910,7 +1028,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                         final long semaIndex,
                         final long aReadSema,
                         final long aWriteSema) {
-            SocketImpl s = new SocketImpl();
+            SocketImpl s = new SocketImpl(socketType);
             sockets.put((long) s.hashCode(), s);
             return s.hashCode();
         }
