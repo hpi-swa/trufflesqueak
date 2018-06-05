@@ -1,5 +1,8 @@
 package de.hpi.swa.graal.squeak.nodes.plugins;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -45,12 +48,23 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
         @Child private SimulationPrimitiveNode simulateNode;
 
+        FileOutputStream measurements;
+        static final boolean measure = false;
+
         protected PrimCopyBitsNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
             simulateNode = SimulationPrimitiveNode.create(method, getClass().getSimpleName(), "primitiveCopyBits");
+
+            if (measure) {
+                try {
+                    measurements = new FileOutputStream(new File("measure.csv"), false);
+                    measurements.write("combinationRule,hasDest,hasSource,hasHalftone,hasColormap,sourceDepth,destDepth,width,height,time\n".getBytes());
+                } catch (Exception e) {
+                }
+            }
         }
 
-        @Specialization(guards = {"hasCombinationRule(receiver, 3)", "hasNilSourceForm(receiver)"})
+        @Specialization(guards = {"disabled()", "hasCombinationRule(receiver, 3)", "hasNilSourceForm(receiver)"})
         protected final Object doCopyBitsCombiRule3NilSourceForm(final VirtualFrame frame, final PointersObject receiver) {
             final PointersObject destinationForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
             final NativeObject destinationBits = (NativeObject) destinationForm.at0(FORM.BITS);
@@ -99,10 +113,60 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             return receiver;
         }
 
+        @Specialization(guards = {"disabled()", "hasCombinationRule(receiver, 24)", "hasNilSourceForm(receiver)"})
+        protected final Object doCopyBitsCombiRule24NilSourceForm(final VirtualFrame frame, final PointersObject receiver) {
+            final PointersObject destinationForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
+            final NativeObject destinationBits = (NativeObject) destinationForm.at0(FORM.BITS);
+            final NativeObject halftoneForm = (NativeObject) receiver.at0(BIT_BLT.HALFTONE_FORM);
+            final int[] fillArray = halftoneForm.getIntStorage(halftoneFormStorageType);
+            if (fillArray.length != 1) {
+                throw new SqueakException("Expected one fillValue only");
+            }
+            final int fillValue = fillArray[0];
+            final long destinationDepth = (long) destinationForm.at0(FORM.DEPTH);
+            if (destinationDepth != 32) { // fall back to simulation if not 32-bit
+                return doSimulation(frame, receiver);
+            }
+            final int destinationWidth = (int) ((long) destinationForm.at0(FORM.WIDTH));
+            final long destX = (long) receiver.at0(BIT_BLT.DEST_X);
+            final long destY = (long) receiver.at0(BIT_BLT.DEST_Y);
+            final long width = (long) receiver.at0(BIT_BLT.WIDTH);
+            final long height = (long) receiver.at0(BIT_BLT.HEIGHT);
+            final long clipX = (long) receiver.at0(BIT_BLT.CLIP_X);
+            final long clipY = (long) receiver.at0(BIT_BLT.CLIP_Y);
+            final long clipWidth = (long) receiver.at0(BIT_BLT.CLIP_WIDTH);
+            final long clipHeight = (long) receiver.at0(BIT_BLT.CLIP_HEIGHT);
+
+            final long[] clippedValues = clipRange(-1, 0, 0, 0, width, height, destX, destY, clipX, clipY, clipWidth, clipHeight);
+            final long dx = clippedValues[2];
+            final long dy = clippedValues[3];
+            final int bbW = (int) clippedValues[4];
+            final int bbH = (int) clippedValues[5];
+            if (bbW <= 0 || bbH <= 0) {
+                return receiver; // "zero width or height; noop"
+            }
+            final long endX = dx + bbW;
+            final long endY = dy + bbH;
+
+            final int[] ints = destinationBits.getIntStorage(destinationBitsStorageType);
+
+            if (ints.length - 1 < (endY - 1) * destinationWidth + (endX - 1)) {
+                throw new PrimitiveFailed(); // fail early in case of index out of bounce
+            }
+
+            for (int y = (int) dy; y < endY; y++) {
+                for (int x = (int) dx; x < endX; x++) {
+                    int index = y * destinationWidth + x;
+                    ints[index] = alphaBlend24(fillValue, ints[index]);
+                }
+            }
+            return receiver;
+        }
+
         /**
          * Draw call used by desktop background with form
          */
-        @Specialization(guards = {"hasCombinationRule(receiver, 25)", "!hasNilSourceForm(receiver)", "hasSourceFormDepth(receiver, 32)", "hasNilColormap(receiver)"})
+        @Specialization(guards = {"disabled()", "hasCombinationRule(receiver, 25)", "!hasNilSourceForm(receiver)", "hasSourceFormDepth(receiver, 32)", "hasNilColormap(receiver)"})
         protected final Object doCopyBitsCombiRule25WithSourceForm(final PointersObject receiver) {
             final PointersObject destinationForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
             final NativeObject destinationBits = (NativeObject) destinationForm.at0(FORM.BITS);
@@ -173,13 +237,72 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Fallback
         protected final Object doSimulation(final VirtualFrame frame, final Object receiver) {
-            return simulateNode.executeWithArguments(frame, receiver, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE,
-                            NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE);
+            PointersObject p = (PointersObject) receiver;
+
+            if (!measure) {
+                return simulateNode.executeWithArguments(frame, receiver, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE,
+                                NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE);
+            } else {
+                long now = System.currentTimeMillis();
+                Object res = simulateNode.executeWithArguments(frame, receiver, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE,
+                                NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE);
+
+                long delta = System.currentTimeMillis() - now;
+
+                Object dest = p.at0(BIT_BLT.DEST_FORM);
+                Object source = p.at0(BIT_BLT.SOURCE_FORM);
+                final long width = (long) p.at0(BIT_BLT.WIDTH);
+                final long height = (long) p.at0(BIT_BLT.HEIGHT);
+                final long sourceDepth = source != code.image.nil ? (long) at0Node.execute(source, FORM.DEPTH) : -1;
+                final long destDepth = dest != code.image.nil ? (long) at0Node.execute(dest, FORM.DEPTH) : -1;
+
+                String type = p.at0(BIT_BLT.COMBINATION_RULE).toString() + "," +
+                                Boolean.toString(dest != code.image.nil) + "," +
+                                Boolean.toString(source != code.image.nil) + "," +
+                                Boolean.toString(p.at0(BIT_BLT.HALFTONE_FORM) != code.image.nil) + "," +
+                                Boolean.toString(p.at0(BIT_BLT.COLOR_MAP) != code.image.nil) + "," +
+                                Long.toString(sourceDepth) + "," +
+                                Long.toString(destDepth) + "," +
+                                Long.toString(width) + "," +
+                                Long.toString(height) + "," +
+                                Long.toString(delta) + "\n";
+
+                try {
+                    measurements.write(type.getBytes());
+                } catch (IOException e) {
+                }
+                return res;
+            }
+        }
+
+        protected static final int alphaBlend24(int sourceWord, int destinationWord) {
+            int alpha = sourceWord >> 24;
+            if (alpha == 0)
+                return destinationWord;
+            if (alpha == 255)
+                return sourceWord;
+
+            int unAlpha = 255 - alpha;
+
+            // blend red and blue
+            int blendRB = ((sourceWord & 0xFF00FF) * alpha) +
+                            ((destinationWord & 0xFF00FF) * unAlpha) + 0xFF00FF;
+
+            // blend alpha and green
+            int blendAG = (((sourceWord >> 8 | 0xFF0000) & 0xFF00FF) * alpha) +
+                            ((destinationWord >> 8 & 0xFF00FF) * unAlpha) + 0xFF00FF;
+
+            blendRB = (blendRB + (blendRB - 0x10001 >> 8 & 0xFF00FF) >> 8) & 0xFF00FF;
+            blendAG = (blendAG + (blendAG - 0x10001 >> 8 & 0xFF00FF) >> 8) & 0xFF00FF;
+            return blendRB | (blendAG << 8);
         }
 
         /*
          * Guard Helpers
          */
+        protected static final boolean disabled() {
+            return !measure;
+        }
 
         protected static final boolean hasCombinationRule(final PointersObject target, final int ruleIndex) {
             return ruleIndex == (long) target.at0(BIT_BLT.COMBINATION_RULE);
