@@ -498,6 +498,45 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(index = 165)
+    protected abstract static class PrimIntegerAtNode extends AbstractPrimitiveNode {
+        private final ValueProfile storageType = ValueProfile.createClassProfile();
+
+        protected PrimIntegerAtNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @Specialization(guards = {"receiver.isIntType()"})
+        protected final long doNativeInt(final NativeObject receiver, final long index) {
+            try {
+                return Integer.toUnsignedLong(receiver.getIntStorage(storageType)[(int) index - 1]);
+            } catch (ArrayIndexOutOfBoundsException e) {
+                throw new PrimitiveFailed();
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 166)
+    protected abstract static class PrimIntegerAtPutNode extends AbstractPrimitiveNode {
+        private final ValueProfile storageType = ValueProfile.createClassProfile();
+
+        protected PrimIntegerAtPutNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @Specialization(guards = {"receiver.isIntType()"})
+        protected final long doNativeInt(final NativeObject receiver, final long index, final long value) {
+            try {
+                receiver.getIntStorage(storageType)[(int) index - 1] = (int) value;
+            } catch (ArrayIndexOutOfBoundsException e) {
+                throw new PrimitiveFailed();
+            }
+            return value;
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(indices = 210)
     protected abstract static class PrimContextAtNode extends AbstractPrimitiveNode {
         protected PrimContextAtNode(final CompiledMethodObject method, final int numArguments) {
