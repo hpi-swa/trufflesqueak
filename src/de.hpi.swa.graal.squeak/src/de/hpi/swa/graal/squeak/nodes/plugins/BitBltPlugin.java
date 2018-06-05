@@ -1,8 +1,7 @@
 package de.hpi.swa.graal.squeak.nodes.plugins;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -48,8 +47,8 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
         @Child private SimulationPrimitiveNode simulateNode;
 
-        FileOutputStream measurements;
-        static final boolean measure = false;
+        PrintWriter measurements;
+        static final boolean measure = true;
 
         protected PrimCopyBitsNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -57,14 +56,15 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
             if (measure) {
                 try {
-                    measurements = new FileOutputStream(new File("measure.csv"), false);
-                    measurements.write("combinationRule,hasDest,hasSource,hasHalftone,hasColormap,sourceDepth,destDepth,width,height,time\n".getBytes());
+                    measurements = new PrintWriter("measure-" + Long.toString(System.currentTimeMillis()) + ".csv", "UTF-8");
+                    measurements.println("combinationRule,hasDest,hasSource,hasHalftone,hasColormap,sourceDepth,destDepth,width,height,time");
                 } catch (Exception e) {
+                    e.printStackTrace(System.out);
                 }
             }
         }
 
-        @Specialization(guards = {"disabled()", "hasCombinationRule(receiver, 3)", "hasNilSourceForm(receiver)"})
+        @Specialization(guards = {"disableWhileMeasuring()", "hasCombinationRule(receiver, 3)", "hasNilSourceForm(receiver)"})
         protected final Object doCopyBitsCombiRule3NilSourceForm(final VirtualFrame frame, final PointersObject receiver) {
             final PointersObject destinationForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
             final NativeObject destinationBits = (NativeObject) destinationForm.at0(FORM.BITS);
@@ -113,7 +113,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             return receiver;
         }
 
-        @Specialization(guards = {"disabled()", "hasCombinationRule(receiver, 24)", "hasNilSourceForm(receiver)"})
+        @Specialization(guards = {"disableWhileMeasuring()", "hasCombinationRule(receiver, 24)", "hasNilSourceForm(receiver)"})
         protected final Object doCopyBitsCombiRule24NilSourceForm(final VirtualFrame frame, final PointersObject receiver) {
             final PointersObject destinationForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
             final NativeObject destinationBits = (NativeObject) destinationForm.at0(FORM.BITS);
@@ -166,7 +166,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         /**
          * Draw call used by desktop background with form
          */
-        @Specialization(guards = {"disabled()", "hasCombinationRule(receiver, 25)", "!hasNilSourceForm(receiver)", "hasSourceFormDepth(receiver, 32)", "hasNilColormap(receiver)"})
+        @Specialization(guards = {"disableWhileMeasuring()", "hasCombinationRule(receiver, 25)", "!hasNilSourceForm(receiver)", "hasSourceFormDepth(receiver, 32)", "hasNilColormap(receiver)"})
         protected final Object doCopyBitsCombiRule25WithSourceForm(final PointersObject receiver) {
             final PointersObject destinationForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
             final NativeObject destinationBits = (NativeObject) destinationForm.at0(FORM.BITS);
@@ -265,12 +265,10 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
                                 Long.toString(destDepth) + "," +
                                 Long.toString(width) + "," +
                                 Long.toString(height) + "," +
-                                Long.toString(delta) + "\n";
+                                Long.toString(delta);
 
-                try {
-                    measurements.write(type.getBytes());
-                } catch (IOException e) {
-                }
+                measurements.println(type);
+                measurements.flush();
                 return res;
             }
         }
@@ -300,7 +298,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         /*
          * Guard Helpers
          */
-        protected static final boolean disabled() {
+        protected static final boolean disableWhileMeasuring() {
             return !measure;
         }
 
