@@ -114,36 +114,39 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveCompressToByteArray")
     public abstract static class PrimCompressToByteArrayNode extends AbstractMiscPrimitiveNode {
+        @CompilationFinal private final ValueProfile bmStorageType = ValueProfile.createClassProfile();
+        @CompilationFinal private final ValueProfile baStorageType = ValueProfile.createClassProfile();
 
         public PrimCompressToByteArrayNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
         // expects i to be a 1-based (Squeak) index
-        private static long encodeBytesOf(final long anInt, final NativeObject ba, final long i) {
-            for (int j = 0; j <= 3; j++) {
-                ba.setNativeAt0(i + j - 1, anInt >> ((3 - j) * 8) & 0xFF);
-            }
+        private static int encodeBytesOf(final int anInt, final byte[] ba, final int i) {
+            ba[i - 1 + 0] = (byte) (anInt >> (24 & 0xff));
+            ba[i - 1 + 1] = (byte) (anInt >> (16 & 0xff));
+            ba[i - 1 + 2] = (byte) (anInt >> (8 & 0xff));
+            ba[i - 1 + 3] = (byte) (anInt >> (0 & 0xff));
             return i + 4;
         }
 
         // expects i to be a 1-based (Squeak) index
-        private static long encodeInt(final long anInt, final NativeObject ba, final long i) {
+        private static int encodeInt(final int anInt, final byte[] ba, final int i) {
             if (anInt <= 223) {
-                ba.setNativeAt0(i - 1, anInt);
+                ba[i - 1] = (byte) anInt;
                 return i + 1;
             }
             if (anInt <= 7935) {
-                ba.setNativeAt0(i - 1, anInt / 256 + 224);
-                ba.setNativeAt0(i + 1 - 1, anInt % 256);
+                ba[i - 1] = (byte) (anInt / 256 + 224);
+                ba[i - 1 + 1] = (byte) (anInt % 256);
                 return i + 2;
             }
-            ba.setNativeAt0(i - 1, 255);
+            ba[i - 1] = (byte) 255;
             return encodeBytesOf(anInt, ba, i + 1);
         }
 
-        @Specialization
-        protected static final Object compress(@SuppressWarnings("unused") final BaseSqueakObject receiver, final NativeObject bm, final NativeObject ba) {
+        @Specialization(guards = {"bm.isIntType()", "ba.isByteType()"})
+        protected final Object compress(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject bm, final NativeObject ba) {
             // "Store a run-coded compression of the receiver into the byteArray ba,
             // and return the last index stored into. ba is assumed to be large enough.
             // The encoding is as follows...
@@ -159,52 +162,54 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             // 0-223 0-223
             // 224-254 (0-30)*256 + next byte (0-7935)
             // 255 next 4 bytes"
-            final long size = bm.size();
-            long i = encodeInt(size, ba, 1);
-            long k = 1;
+            final byte[] baBytes = ba.getByteStorage(baStorageType);
+            final int[] bmBytes = bm.getIntStorage(bmStorageType);
+            final int size = bmBytes.length;
+            int i = encodeInt(size, baBytes, 1);
+            int k = 1;
             while (k <= size) {
-                final long word = bm.getNativeAt0(k - 1);
-                final long lowByte = word & 0xFF;
+                final int word = bmBytes[k - 1];
+                final int lowByte = word & 0xFF;
                 final boolean eqBytes = (word >> 8 & 0xFF) == lowByte &&
                                 ((word >> 16 & 0xFF) == lowByte && (word >> 24 & 0xFF) == lowByte);
-                long j = k;
+                int j = k;
                 // scan for equal words...
-                while (j < size && word == bm.getNativeAt0(j + 1 - 1)) {
+                while (j < size && word == bmBytes[j + 1 - 1]) {
                     j++;
                 }
                 if (j > k) {
                     // We have two or more equal words, ending at j
                     if (eqBytes) {
                         // Actually words of equal bytes
-                        i = encodeInt((j - k + 1) * 4 + 1, ba, i);
-                        ba.setNativeAt0(i - 1, lowByte);
+                        i = encodeInt((j - k + 1) * 4 + 1, baBytes, i);
+                        baBytes[i - 1] = (byte) lowByte;
                         i++;
                     } else {
-                        i = encodeInt((j - k + 1) * 4 + 2, ba, i);
-                        i = encodeBytesOf(word, ba, i);
+                        i = encodeInt((j - k + 1) * 4 + 2, baBytes, i);
+                        i = encodeBytesOf(word, baBytes, i);
                     }
                     k = j + 1;
                 } else {
                     // Check for word of 4 == bytes
                     if (eqBytes) {
                         // Note 1 word of 4 == bytes
-                        i = encodeInt(1 * 4 + 1, ba, i);
-                        ba.setNativeAt0(i - 1, lowByte);
+                        i = encodeInt(1 * 4 + 1, baBytes, i);
+                        baBytes[i - 1] = (byte) lowByte;
                         i++;
                         k++;
                     } else {
                         // Finally, check for junk
                         // scan for unequal words...
-                        while (j < size && bm.getNativeAt0(j - 1) != bm.getNativeAt0(j + 1 - 1)) {
+                        while (j < size && bmBytes[j - 1] != bmBytes[j + 1 - 1]) {
                             j++;
                         }
                         if (j == size) {
                             j++;
                         }
                         // We have one or more unmatching words, ending at j-1
-                        i = encodeInt((j - k) * 4 + 3, ba, i);
-                        for (long m = k; m <= j - 1; m++) {
-                            i = encodeBytesOf(bm.getNativeAt0(m - 1), ba, i);
+                        i = encodeInt((j - k) * 4 + 3, baBytes, i);
+                        for (int m = k; m <= j - 1; m++) {
+                            i = encodeBytesOf(bmBytes[m - 1], baBytes, i);
                         }
                         k = j;
                     }

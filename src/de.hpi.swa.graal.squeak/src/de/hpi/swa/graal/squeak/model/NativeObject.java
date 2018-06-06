@@ -208,14 +208,6 @@ public final class NativeObject extends AbstractSqueakObject {
         return shorts;
     }
 
-    public byte getByte(final int index) {
-        return storage.getByte(index);
-    }
-
-    public void setByte(final int index, final byte value) {
-        storage.setByte(index, value);
-    }
-
     private static int[] intsFromBytes(final byte[] bytes) {
         final int size = bytes.length / INTEGER_BYTE_SIZE;
         final int[] ints = new int[size];
