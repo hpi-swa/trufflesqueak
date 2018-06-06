@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
@@ -262,6 +263,7 @@ public final class SqueakImageContext {
 
     @TruffleBoundary
     public PointersObject wrap(final Object... elements) {
+        CompilerAsserts.neverPartOfCompilation("SqueakImageContext#wrap");
         final Object[] wrappedElements = new Object[elements.length];
         for (int i = 0; i < elements.length; i++) {
             wrappedElements[i] = wrap(elements[i]);

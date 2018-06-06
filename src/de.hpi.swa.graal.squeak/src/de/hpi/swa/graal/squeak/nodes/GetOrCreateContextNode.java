@@ -49,7 +49,6 @@ public abstract class GetOrCreateContextNode extends AbstractNode {
         return context;
     }
 
-    @TruffleBoundary
     public static ContextObject getOrCreateFull(final MaterializedFrame frame, final boolean invalidateCanBeVirtualizedAssumption, final boolean fullSenderChain) {
         final Object contextOrMarker = FrameAccess.getContextOrMarker(frame);
         final ContextObject context;
@@ -74,7 +73,6 @@ public abstract class GetOrCreateContextNode extends AbstractNode {
         return context;
     }
 
-    @TruffleBoundary
     private static void forceSenderChain(final CompiledCodeObject method, final ContextObject context) {
         ContextObject current = context;
         while (true) {

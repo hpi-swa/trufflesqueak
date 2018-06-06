@@ -930,8 +930,6 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             try {
                 Thread.sleep(millis);
             } catch (InterruptedException e) {
-                CompilerDirectives.transferToInterpreter();
-                e.printStackTrace();
             }
         }
 

@@ -90,7 +90,6 @@ public class FrameAccess {
         return frame.getFrameDescriptor().getSlots().get(CONTEXT_OR_MARKER);
     }
 
-    @TruffleBoundary
     public static final Object[] newWith(final CompiledCodeObject code, final Object sender, final BlockClosureObject closure, final Object[] frameArgs) {
         final Object[] arguments = new Object[RECEIVER + frameArgs.length];
         arguments[METHOD] = code;

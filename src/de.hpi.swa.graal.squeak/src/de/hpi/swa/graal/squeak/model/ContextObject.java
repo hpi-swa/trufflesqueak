@@ -402,7 +402,6 @@ public final class ContextObject extends AbstractSqueakObject {
         return pointers[CONTEXT.SENDER_OR_NIL] != null;
     }
 
-    @TruffleBoundary
     public void materialize() {
         if (truffleFrame == null) {
             return; // nothing to do
