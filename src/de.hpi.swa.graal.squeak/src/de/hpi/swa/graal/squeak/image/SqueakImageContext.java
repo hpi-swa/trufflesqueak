@@ -186,12 +186,19 @@ public final class SqueakImageContext {
     }
 
     public void fillInFrom(final FileInputStream inputStream) throws IOException {
-        long start = System.nanoTime();
+        output.println("Going to sleep...");
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            output.println(e.getMessage());
+        }
+        output.println("Waking and now Loading!");
+        final long start = System.nanoTime();
         SqueakImageReader.readImage(this, inputStream);
-        long stop = System.nanoTime();
-        long delta = stop - start;
-        double deltaf = (delta / 1000_000) / 1000.0;
-        System.out.println("LoadImage;\t" + deltaf + "s");
+        final long stop = System.nanoTime();
+        final long delta = stop - start;
+        final double deltaf = (delta / 1000_000) / 1000.0;
+        output.println("LoadImage:\t" + deltaf + "s");
         System.exit(0);
         if (!display.isHeadless() && simulatePrimitiveArgs.isNil()) {
             throw new SqueakException("Unable to find BitBlt simulation in image, cannot run with display.");

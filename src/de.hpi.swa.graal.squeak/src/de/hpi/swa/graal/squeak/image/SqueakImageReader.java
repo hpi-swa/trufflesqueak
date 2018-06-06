@@ -273,7 +273,13 @@ public final class SqueakImageReader {
             chunk.setSqClass(classOf(chunk, image));
         }
         instantiateClasses(image);
+        final long start = System.nanoTime();
         fillInObjects(image);
+        final long stop = System.nanoTime();
+        final long delta = stop - start;
+        final double deltaf = (delta / 1000_000) / 1000.0;
+        output.println("fillInObjects:\t" + deltaf + "s");
+        System.exit(0);
     }
 
     private void instantiateClasses(final SqueakImageContext image) {
