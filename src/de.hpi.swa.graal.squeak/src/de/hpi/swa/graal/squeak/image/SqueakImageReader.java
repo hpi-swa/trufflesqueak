@@ -29,9 +29,6 @@ public final class SqueakImageReader {
     @CompilationFinal private static final long OVERFLOW_SLOTS = 255;
     @CompilationFinal private static final int HIDDEN_ROOTS_CHUNK = 4;
     @CompilationFinal private final BufferedInputStream stream;
-    @CompilationFinal private final ByteBuffer shortBuf = ByteBuffer.allocate(2);
-    @CompilationFinal private final ByteBuffer intBuf = ByteBuffer.allocate(4);
-    @CompilationFinal private final ByteBuffer longBuf = ByteBuffer.allocate(8);
     @CompilationFinal private final List<AbstractImageChunk> chunklist = new ArrayList<>();
     @CompilationFinal private final HashMap<Integer, AbstractImageChunk> chunktable = new HashMap<>();
     private int headerSize;
@@ -48,9 +45,6 @@ public final class SqueakImageReader {
     }
 
     private SqueakImageReader(final FileInputStream inputStream, final PrintWriter printWriter) throws FileNotFoundException {
-        shortBuf.order(ByteOrder.nativeOrder());
-        intBuf.order(ByteOrder.nativeOrder());
-        longBuf.order(ByteOrder.nativeOrder());
         output = printWriter;
         stream = new BufferedInputStream(inputStream);
     }
@@ -61,27 +55,42 @@ public final class SqueakImageReader {
         initObjects(image);
     }
 
-    private void nextInto(final ByteBuffer buf) throws IOException {
-        assert buf.hasArray();
-        this.position += buf.capacity();
-        buf.rewind();
-        stream.read(buf.array());
-        buf.rewind();
-    }
-
     private short nextShort() throws IOException {
-        nextInto(shortBuf);
-        return shortBuf.getShort();
+        final byte[] bytes = new byte[2];
+        stream.read(bytes, 0, 2);
+        this.position += 2;
+        short value = 0;
+        value += (bytes[1] & 0x000000FF) << 8;
+        value += (bytes[0] & 0x000000FF);
+        return value;
     }
 
     private int nextInt() throws IOException {
-        nextInto(intBuf);
-        return intBuf.getInt();
+        final byte[] bytes = new byte[4];
+        stream.read(bytes, 0, 4);
+        this.position += 4;
+        int value = 0;
+        value += (bytes[3] & 0x000000FF) << 24;
+        value += (bytes[2] & 0x000000FF) << 16;
+        value += (bytes[1] & 0x000000FF) << 8;
+        value += (bytes[0] & 0x000000FF);
+        return value;
     }
 
     private long nextLong() throws IOException {
-        nextInto(longBuf);
-        return longBuf.getLong();
+        final byte[] bytes = new byte[8];
+        stream.read(bytes, 0, 8);
+        this.position += 8;
+        long value = 0;
+        value += (long) (bytes[7] & 0x000000FF) << 56;
+        value += (long) (bytes[6] & 0x000000FF) << 48;
+        value += (long) (bytes[5] & 0x000000FF) << 40;
+        value += (long) (bytes[4] & 0x000000FF) << 32;
+        value += (bytes[3] & 0x000000FF) << 24;
+        value += (bytes[2] & 0x000000FF) << 16;
+        value += (bytes[1] & 0x000000FF) << 8;
+        value += (bytes[0] & 0x000000FF);
+        return value;
     }
 
     private int readVersion() throws IOException {

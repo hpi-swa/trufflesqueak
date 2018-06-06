@@ -124,7 +124,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
     @Test
     public void testInspectSqueakTestSelector() {
         assumeNotOnMXGate();
-        image.getOutput().println(evaluate("(MiscPrimitivePluginTest run: #testDecompressAndCompress) asString"));
+        image.getOutput().println(evaluate("(MiscPrimitivePluginTest run: #testCompressToByteArray) asString"));
     }
 
     @Test
