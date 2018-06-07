@@ -39,7 +39,7 @@ public abstract class GetOrCreateContextNode extends AbstractNode {
         final ContextObject context = ContextObject.create(method.image, method.frameSize(), frame.materialize());
 
         if (invalidateCanBeVirtualizedAssumption) {
-            method.invalidateCanBeVirtualizedAssumption();
+            // method.invalidateCanBeVirtualizedAssumption();
         }
         contextWriteNode.executeWrite(frame, context);
         if (fullSenderChain) {
