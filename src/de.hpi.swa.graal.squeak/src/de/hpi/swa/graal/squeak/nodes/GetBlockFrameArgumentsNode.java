@@ -17,16 +17,16 @@ public abstract class GetBlockFrameArgumentsNode extends Node {
         return GetBlockFrameArgumentsNodeGen.create();
     }
 
-    public abstract Object[] execute(final BlockClosureObject block, final Object senderOrMarker, final Object[] objects);
+    public abstract Object[] execute(BlockClosureObject block, Object senderOrMarker, Object[] objects);
 
     @Specialization(guards = {"objects.length == numObjects", "block.getCallTarget() == cachedCallTarget"}, limit = "3", assumptions = "callTargetStable")
     @ExplodeLoop
-    Object[] doCached(final BlockClosureObject block, final Object senderOrMarker, final Object[] objects,
-                    @SuppressWarnings("unused") @Cached("block.getCallTarget()") RootCallTarget cachedCallTarget,
-                    @SuppressWarnings("unused") @Cached("block.getCallTargetStable()") Assumption callTargetStable,
-                    @Cached("block.getStack().length") int numCopied,
-                    @Cached("objects.length") int numObjects) {
-        Object[] copied = block.getStack();
+    protected static final Object[] doCached(final BlockClosureObject block, final Object senderOrMarker, final Object[] objects,
+                    @SuppressWarnings("unused") @Cached("block.getCallTarget()") final RootCallTarget cachedCallTarget,
+                    @SuppressWarnings("unused") @Cached("block.getCallTargetStable()") final Assumption callTargetStable,
+                    @Cached("block.getStack().length") final int numCopied,
+                    @Cached("objects.length") final int numObjects) {
+        final Object[] copied = block.getStack();
         final Object[] arguments = fillInSpecial(block, senderOrMarker, numObjects, numCopied);
         for (int i = 0; i < numObjects + numCopied; i++) {
             if (i < numObjects) {
@@ -39,9 +39,9 @@ public abstract class GetBlockFrameArgumentsNode extends Node {
     }
 
     @Specialization(replaces = "doCached")
-    Object[] doUncached(final BlockClosureObject block, final Object senderOrMarker, final Object[] objects) {
+    protected static final Object[] doUncached(final BlockClosureObject block, final Object senderOrMarker, final Object[] objects) {
         final int numObjects = objects.length;
-        Object[] copied = block.getStack();
+        final Object[] copied = block.getStack();
         final int numCopied = copied.length;
         final Object[] arguments = fillInSpecial(block, senderOrMarker, numObjects, numCopied);
         for (int i = 0; i < numObjects; i++) {

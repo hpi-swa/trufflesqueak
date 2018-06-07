@@ -51,7 +51,7 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
      */
     @Specialization(guards = {"isVirtualized(frame)"})
     protected void doAboutToReturnVirtualized(final VirtualFrame frame, @SuppressWarnings("unused") final NonLocalReturn nlr,
-                    @Cached("create()") GetBlockFrameArgumentsNode getFrameArguments) {
+                    @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments) {
         if (completeTempReadNode.executeRead(frame) == code.image.nil) {
             completeTempWriteNode.executeWrite(frame, code.image.sqTrue);
             final BlockClosureObject block = (BlockClosureObject) blockArgumentNode.executeRead(frame);
