@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -49,12 +50,13 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
      * (this may be a problem).
      */
     @Specialization(guards = {"isVirtualized(frame)"})
-    protected void doAboutToReturnVirtualized(final VirtualFrame frame, @SuppressWarnings("unused") final NonLocalReturn nlr) {
+    protected void doAboutToReturnVirtualized(final VirtualFrame frame, @SuppressWarnings("unused") final NonLocalReturn nlr,
+                    @Cached("create()") GetBlockFrameArgumentsNode getFrameArguments) {
         if (completeTempReadNode.executeRead(frame) == code.image.nil) {
             completeTempWriteNode.executeWrite(frame, code.image.sqTrue);
             final BlockClosureObject block = (BlockClosureObject) blockArgumentNode.executeRead(frame);
             try {
-                dispatch.executeBlock(block, block.getFrameArguments(getContextOrMarker(frame)));
+                dispatch.executeBlock(block, getFrameArguments.execute(block, getContextOrMarker(frame), new Object[0]));
             } catch (LocalReturn blockLR) { // ignore
             } catch (NonLocalReturn blockNLR) {
                 if (!blockNLR.hasArrivedAtTargetContext()) {
