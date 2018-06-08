@@ -27,7 +27,6 @@ public final class SendBytecodes {
         @Child private DispatchSendNode dispatchSendNode;
         @Child private StackPopNReversedNode popNReversedNode;
         @Child private StackPushNode pushNode = StackPushNode.create();
-        @Child private FrameSlotReadNode readContextNode = FrameSlotReadNode.createForContextOrMarker();
 
         private AbstractSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object sel, final int argcount) {
             super(code, index, numBytecodes);
@@ -53,7 +52,7 @@ public final class SendBytecodes {
             final Object[] rcvrAndArgs = (Object[]) popNReversedNode.executeRead(frame);
             final ClassObject rcvrClass = lookupClassNode.executeLookup(rcvrAndArgs[0]);
             final Object lookupResult = lookupNode.executeLookup(rcvrClass, selector);
-            final Object contextOrMarker = readContextNode.executeRead(frame);
+            final Object contextOrMarker = getContextOrMarker(frame);
             return dispatchSendNode.executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs, contextOrMarker);
         }
 

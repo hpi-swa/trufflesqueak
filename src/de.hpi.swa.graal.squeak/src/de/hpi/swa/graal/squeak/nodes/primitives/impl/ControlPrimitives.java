@@ -97,7 +97,6 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Child protected SqueakLookupClassNode lookupClassNode;
         @Child protected LookupNode lookupNode = LookupNodeGen.create();
         @Child private DispatchSendNode dispatchSendNode;
-        @Child private FrameSlotReadNode contextOrMarkerNode = FrameSlotReadNode.createForContextOrMarker();
 
         protected AbstractPerformPrimitiveNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -111,7 +110,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected final Object dispatch(final VirtualFrame frame, final NativeObject selector, final Object[] rcvrAndArgs, final ClassObject rcvrClass) {
             final Object lookupResult = lookupNode.executeLookup(rcvrClass, selector);
-            final Object contextOrMarker = contextOrMarkerNode.executeRead(frame);
+            final Object contextOrMarker = getContextOrMarker(frame);
             return dispatchSendNode.executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs, contextOrMarker);
         }
     }
@@ -890,7 +889,6 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 188)
     protected abstract static class PrimExecuteMethodArgsArrayNode extends AbstractPerformPrimitiveNode {
         @Child private DispatchNode dispatchNode = DispatchNode.create();
-        @Child private FrameSlotReadNode contextOrMarkerNode = FrameSlotReadNode.createForContextOrMarker();
 
         protected PrimExecuteMethodArgsArrayNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -904,7 +902,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             for (int i = 0; i < numArgs; i++) {
                 dispatchRcvrAndArgs[1 + i] = argArray.at0(i);
             }
-            final Object thisContext = contextOrMarkerNode.executeRead(frame);
+            final Object thisContext = getContextOrMarker(frame);
             return dispatchNode.executeDispatch(frame, codeObject, dispatchRcvrAndArgs, thisContext);
         }
     }

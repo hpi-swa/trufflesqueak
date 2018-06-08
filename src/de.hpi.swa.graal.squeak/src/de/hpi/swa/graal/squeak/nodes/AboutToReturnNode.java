@@ -50,7 +50,7 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
      * (this may be a problem).
      */
     @Specialization(guards = {"isVirtualized(frame)"})
-    protected void doAboutToReturnVirtualized(final VirtualFrame frame, @SuppressWarnings("unused") final NonLocalReturn nlr,
+    protected final void doAboutToReturnVirtualized(final VirtualFrame frame, @SuppressWarnings("unused") final NonLocalReturn nlr,
                     @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments) {
         if (completeTempReadNode.executeRead(frame) == code.image.nil) {
             completeTempWriteNode.executeWrite(frame, code.image.sqTrue);
@@ -67,7 +67,7 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
     }
 
     @Specialization(guards = {"!isVirtualized(frame)"})
-    protected void doAboutToReturn(final VirtualFrame frame, final NonLocalReturn nlr) {
+    protected final void doAboutToReturn(final VirtualFrame frame, final NonLocalReturn nlr) {
         final ContextObject context = getContext(frame);
         pushNode.executeWrite(frame, nlr.getTargetContext());
         pushNode.executeWrite(frame, nlr.getReturnValue());
