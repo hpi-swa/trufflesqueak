@@ -13,13 +13,15 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.nio.charset.Charset;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Map;
 import java.util.TreeMap;
 
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
@@ -84,6 +86,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
         private Map<String, Object> options = new TreeMap<>();
         boolean listening = false;
+        Instant noDataSince = null;
 
         SocketImpl(final CompiledCodeObject code, final long netType) {
             this.code = code;
@@ -113,7 +116,6 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             if (socketType == SocketType.UDPSocketType) {
                 listening = true;
                 datagramSocket = new DatagramSocket(port);
-                // TODO
             } else {
                 serverSocket = new ServerSocket(port, 1, Resolver.getLocalHostInetAddress());
                 print(">> Actually listening on " + Resolver.getLocalHostInetAddress() + ":" + serverSocket.getLocalPort());
@@ -163,7 +165,9 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 if (clientSocket != null) {
                     clientSocket.close();
                 }
-                clientSocket = new Socket(host, (int) port, Resolver.getLocalHostInetAddress(), SocketImpl.getFreePort());
+                // clientSocket = new Socket(host, (int) port,
+                // Resolver.getLocalHostInetAddress(), 0);
+                clientSocket = new Socket(host, (int) port);
             } else /* if (netType == SocketType.UDPSocketType) */ {
                 if (datagramSocket != null) {
                     datagramSocket.close();
@@ -191,16 +195,20 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         public int receiveData(final byte[] data, final int startIndex, final int count) throws IOException {
-            print(">> Receive data");
+            print(">> Receive data, buffer length: " + data.length + ", start: " + startIndex + ", count: " + count);
+            int actualCount = count;
+            if (count > data.length - startIndex) {
+                actualCount = data.length - startIndex;
+            }
             if (clientSocket != null) {
                 if (isDataAvailable()) {
-                    return clientSocket.getInputStream().read(data, startIndex, count);
+                    return clientSocket.getInputStream().read(data, startIndex, actualCount);
                 } else {
                     print(">> No data available");
                     return 0;
                 }
             } else if (datagramSocket != null) {
-                final DatagramPacket p = new DatagramPacket(data, startIndex, count);
+                final DatagramPacket p = new DatagramPacket(data, startIndex, actualCount);
                 datagramSocket.receive(p);
                 return p.getLength();
             } else {
@@ -280,15 +288,26 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                     status = SocketStatus.ThisEndClosed;
                 } else {
                     try {
-                        clientSocket.getInputStream().available();
-                        status = SocketStatus.Connected;
+                        if (clientSocket.getInputStream().available() > 0) {
+                            status = SocketStatus.Connected;
+                        } else {
+                            if (noDataSince == null) {
+                                noDataSince = Instant.now();
+                                status = SocketStatus.Connected;
+                            } else {
+                                final Duration elapsedTime = Duration.between(noDataSince, Instant.now());
+                                if (elapsedTime.getSeconds() > 5) {
+                                    status = SocketStatus.OtherEndClosed;
+                                } else {
+                                    status = SocketStatus.Connected;
+                                }
+                            }
+                        }
                     } catch (IOException e) {
                         error(e);
                         status = SocketStatus.Unconnected;
                     }
-
                 }
-                // use data availale
             }
 
             if (datagramSocket != null) {
@@ -425,17 +444,9 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             print(">> Send Done: true");
             return true;
         }
-
-        public static int getFreePort() throws IOException {
-            try (ServerSocket socket = new ServerSocket(0);) {
-                return socket.getLocalPort();
-            }
-        }
-
     }
 
     public static String addressBytesToString(final byte[] address) throws UnknownHostException {
-        System.out.println(address.length + " bytes");
         return InetAddress.getByAddress(address).getHostAddress();
     }
 
@@ -736,10 +747,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             }
 
             try {
-                System.out.println(hostAddress.asString().length());
-                System.out.println(hostAddress.asString().getBytes(Charset.forName("US-ASCII")).length);
-                // byte[] bytes = hostAddress.asString().getBytes(Charset.forName("US-ASCII"));
-                byte[] bytes = hostAddress.getByteStorage(NativeGetBytesNode);
+                final byte[] bytes = hostAddress.getByteStorage(ValueProfile.createClassProfile());
                 final String hostAddressString = addressBytesToString(bytes);
                 socketImpl.connectTo(hostAddressString, (int) port);
             } catch (IOException e) {
