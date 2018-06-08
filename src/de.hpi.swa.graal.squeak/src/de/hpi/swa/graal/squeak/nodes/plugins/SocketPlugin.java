@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes.plugins;
 
-import java.util.LinkedList;
 import java.util.List;
 import java.io.IOException;
 import java.io.InputStream;
@@ -9,13 +8,12 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
-import java.net.URL;
 import java.net.UnknownHostException;
+import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -86,8 +84,6 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
         private Map<String, Object> options = new TreeMap<>();
         boolean listening = false;
-
-        private LinkedList<String> readBuffer = new LinkedList<String>();
 
         SocketImpl(final CompiledCodeObject code, final long netType) {
             this.code = code;
@@ -292,6 +288,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                     }
 
                 }
+                // use data availale
             }
 
             if (datagramSocket != null) {
@@ -437,13 +434,9 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     }
 
-    public static String addressBytesToString(final byte[] address) {
-        String hostAddressString = "";
-        for (int i = 0; i < address.length - 1; i++) {
-            hostAddressString += Byte.toString(address[i]) + ".";
-        }
-        hostAddressString += Byte.toString(address[address.length - 1]);
-        return hostAddressString;
+    public static String addressBytesToString(final byte[] address) throws UnknownHostException {
+        System.out.println(address.length + " bytes");
+        return InetAddress.getByAddress(address).getHostAddress();
     }
 
 // NetNameResolver
@@ -494,13 +487,10 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                     lastNameLookup = Resolver.getLocalAddress();
                     return receiver;
                 }
-                address = InetAddress.getByName(new URL(hostNameString).getHost());
+                address = InetAddress.getByName(hostNameString);
                 lastNameLookup = address.getAddress();
 
             } catch (UnknownHostException e) {
-                code.image.getError().println(e);
-                lastNameLookup = null;
-            } catch (MalformedURLException e) {
                 code.image.getError().println(e);
                 lastNameLookup = null;
             }
@@ -545,11 +535,19 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // lookup was unsuccessful.
         @Specialization
         protected Object doWork(@SuppressWarnings("unused") final Object receiver) {
-            code.image.getOutput().println(">> Name Lookup Result: " + addressBytesToString(lastNameLookup));
+
             if (lastNameLookup == null) {
+                code.image.getOutput().println(">> Name Lookup Result: " + null);
                 return code.image.nil;
             } else {
-                return code.image.wrap(lastNameLookup);
+                try {
+                    code.image.getOutput().println(">> Name Lookup Result: " + addressBytesToString(lastNameLookup));
+                    return code.image.wrap(lastNameLookup);
+                } catch (UnknownHostException e) {
+                    code.image.getError().println(e);
+                }
+                code.image.getOutput().println(">> Name Lookup Result: " + null);
+                return null;
             }
         }
     }
@@ -736,8 +734,13 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 code.image.getError().println("No socket for socket id");
                 throw new PrimitiveFailed();
             }
-            final String hostAddressString = addressBytesToString(hostAddress.asString().getBytes());
+
             try {
+                System.out.println(hostAddress.asString().length());
+                System.out.println(hostAddress.asString().getBytes(Charset.forName("US-ASCII")).length);
+                // byte[] bytes = hostAddress.asString().getBytes(Charset.forName("US-ASCII"));
+                byte[] bytes = hostAddress.getByteStorage(NativeGetBytesNode);
+                final String hostAddressString = addressBytesToString(bytes);
                 socketImpl.connectTo(hostAddressString, (int) port);
             } catch (IOException e) {
                 code.image.getError().println(e);
