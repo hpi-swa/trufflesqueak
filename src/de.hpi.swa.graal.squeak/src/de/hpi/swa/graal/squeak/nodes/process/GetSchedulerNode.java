@@ -6,7 +6,7 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 
-public class GetSchedulerNode extends AbstractNodeWithImage {
+public final class GetSchedulerNode extends AbstractNodeWithImage {
 
     public static GetSchedulerNode create(final SqueakImageContext image) {
         return new GetSchedulerNode(image);

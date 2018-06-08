@@ -13,7 +13,6 @@ import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.BLOCK_CLOSURE;
 import de.hpi.swa.graal.squeak.nodes.EnterCodeNode;
-import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public final class BlockClosureObject extends AbstractSqueakObject {
     @CompilationFinal private Object receiver;
@@ -179,30 +178,6 @@ public final class BlockClosureObject extends AbstractSqueakObject {
             callTarget = Truffle.getRuntime().createCallTarget(EnterCodeNode.create(block.image.getLanguage(), block));
         }
         return block;
-    }
-
-    public Object[] getFrameArguments(final Object senderOrMarker, final Object... objects) {
-        final CompiledBlockObject blockObject = getCompiledBlock();
-        final int numObjects = objects.length;
-        final int numCopied = copied.length;
-        if (blockObject.getNumArgs() != numObjects) { // TODO: turn this into an assertion
-            image.getError().println("number of required and provided block arguments do not match");
-        }
-        final Object[] arguments = new Object[FrameAccess.ARGUMENTS_START +
-                        numObjects +
-                        numCopied];
-        arguments[FrameAccess.METHOD] = blockObject;
-        // Sender is thisContext (or marker)
-        arguments[FrameAccess.SENDER_OR_SENDER_MARKER] = senderOrMarker;
-        arguments[FrameAccess.CLOSURE_OR_NULL] = this;
-        arguments[FrameAccess.RECEIVER] = getReceiver();
-        for (int i = 0; i < numObjects; i++) {
-            arguments[FrameAccess.ARGUMENTS_START + i] = objects[i];
-        }
-        for (int i = 0; i < numCopied; i++) {
-            arguments[FrameAccess.ARGUMENTS_START + numObjects + i] = copied[i];
-        }
-        return arguments;
     }
 
     public ContextObject getHomeContext() {

@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
@@ -119,9 +120,9 @@ public final class SqueakImageContext {
 
     @CompilationFinal public final SqueakConfig config;
     @CompilationFinal public final SqueakDisplay display;
+    @CompilationFinal public final SqueakImageFlags flags = new SqueakImageFlags();
     @CompilationFinal public final ObjectGraph objects = new ObjectGraph(this);
     @CompilationFinal public final OSDetector os = new OSDetector();
-    @CompilationFinal public final SqueakImageFlags flags = new SqueakImageFlags();
     @CompilationFinal public final InterruptHandlerNode interrupt;
     @CompilationFinal public final long startUpMillis = System.currentTimeMillis();
 
@@ -262,6 +263,7 @@ public final class SqueakImageContext {
 
     @TruffleBoundary
     public PointersObject wrap(final Object... elements) {
+        CompilerAsserts.neverPartOfCompilation("SqueakImageContext#wrap");
         final Object[] wrappedElements = new Object[elements.length];
         for (int i = 0; i < elements.length; i++) {
             wrappedElements[i] = wrap(elements[i]);
@@ -298,7 +300,7 @@ public final class SqueakImageContext {
     }
 
     public void registerSemaphore(final AbstractSqueakObject semaphore, final long index) {
-        specialObjectsArray.atput0(index, semaphore.isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassSemaphore) ? semaphore : nil);
+        specialObjectsArray.atput0(index, semaphore.isSemaphore() ? semaphore : nil);
     }
 
     public String imageRelativeFilePathFor(final String fileName) {

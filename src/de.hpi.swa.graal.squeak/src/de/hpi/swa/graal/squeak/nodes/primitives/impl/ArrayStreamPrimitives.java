@@ -152,7 +152,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected Object doNativeLargeInteger(final NativeObject receiver, final long index, final LargeIntegerObject value) {
             try {
-                atPut0Node.execute(receiver, index - 1, value.reduceToLong());
+                atPut0Node.execute(receiver, index - 1, value.longValueExact());
             } catch (IllegalArgumentException | ArithmeticException e) {
                 throw new PrimitiveFailed();
             }
@@ -182,7 +182,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected Object doLargeInteger(final LargeIntegerObject receiver, final long index, final LargeIntegerObject value) {
             try {
-                receiver.setNativeAt0(index - 1, value.reduceToLong());
+                receiver.setNativeAt0(index - 1, value.longValueExact());
             } catch (IllegalArgumentException | ArithmeticException e) {
                 throw new PrimitiveFailed();
             }
@@ -212,7 +212,7 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected Object doFloatLargeInteger(final FloatObject receiver, final long index, final LargeIntegerObject value) {
             try {
-                receiver.setNativeAt0(index - 1, value.reduceToLong());
+                receiver.setNativeAt0(index - 1, value.longValueExact());
             } catch (IllegalArgumentException | ArithmeticException e) {
                 throw new PrimitiveFailed();
             }
@@ -494,6 +494,48 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected static final boolean inShortRange(final long value) {
             return -0x8000 <= value && value <= 0x8000;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 165)
+    protected abstract static class PrimIntegerAtNode extends AbstractPrimitiveNode {
+        private final ValueProfile storageType = ValueProfile.createClassProfile();
+
+        protected PrimIntegerAtNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @Specialization(guards = {"receiver.isIntType()"})
+        protected final long doNativeInt(final NativeObject receiver, final long index) {
+            try {
+                return receiver.getIntStorage(storageType)[(int) index - 1];
+            } catch (ArrayIndexOutOfBoundsException e) {
+                throw new PrimitiveFailed();
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 166)
+    protected abstract static class PrimIntegerAtPutNode extends AbstractPrimitiveNode {
+        private final ValueProfile storageType = ValueProfile.createClassProfile();
+
+        protected PrimIntegerAtPutNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @Specialization(guards = {"receiver.isIntType()"})
+        protected final long doNativeInt(final NativeObject receiver, final long index, final long value) {
+            if (value < Integer.MIN_VALUE || value > Integer.MAX_VALUE) { // check for overflow
+                throw new PrimitiveFailed();
+            }
+            try {
+                receiver.getIntStorage(storageType)[(int) index - 1] = (int) value;
+            } catch (ArrayIndexOutOfBoundsException e) {
+                throw new PrimitiveFailed();
+            }
+            return value;
         }
     }
 

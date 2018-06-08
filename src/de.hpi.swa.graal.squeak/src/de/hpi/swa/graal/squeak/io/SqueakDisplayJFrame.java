@@ -47,6 +47,7 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
     @CompilationFinal public final SqueakKeyboard keyboard;
     @CompilationFinal private final Deque<long[]> deferredEvents = new ArrayDeque<>();
     @CompilationFinal public boolean usesEventQueue = false;
+    @CompilationFinal private int inputSemaphoreIndex = -1;
 
     @CompilationFinal private static final Toolkit TOOLKIT = Toolkit.getDefaultToolkit();
     @CompilationFinal(dimensions = 1) private static final byte[] BLACK_AND_WHITE = new byte[]{(byte) 255, (byte) 0};
@@ -303,6 +304,9 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
 
     public void addEvent(final long eventType, final long value3, final long value4, final long value5, final long value6) {
         deferredEvents.add(new long[]{eventType, getEventTime(), value3, value4, value5, value6});
+        if (inputSemaphoreIndex > 0) {
+            image.interrupt.signalSemaphoreWithIndex(inputSemaphoreIndex);
+        }
     }
 
     public int recordModifiers(final InputEvent e) {
@@ -327,5 +331,11 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
     @TruffleBoundary
     public void setWindowTitle(final String title) {
         frame.setTitle(title);
+    }
+
+    @Override
+    public void setInputSemaphoreIndex(final int interruptSemaphoreIndex) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        this.inputSemaphoreIndex = interruptSemaphoreIndex;
     }
 }

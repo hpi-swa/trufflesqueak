@@ -4,12 +4,12 @@ import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.util.List;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
@@ -635,6 +635,39 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(index = 118)
+    protected abstract static class PrimDoPrimitiveWithArgsNode extends AbstractPrimitiveNode {
+
+        public PrimDoPrimitiveWithArgsNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @Specialization
+        protected final Object doPrimitive(final VirtualFrame frame, final Object receiver, final long primitiveIndex, final PointersObject argumentArray,
+                        @SuppressWarnings("unused") final NotProvided notProvided) {
+            final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.forIndex((CompiledMethodObject) code, (int) primitiveIndex);
+            final Object[] receiverAndArguments = ArrayUtils.copyWithFirst(argumentArray.getPointers(), receiver);
+            try {
+                return replace(primitiveNode).executeWithArguments(frame, receiverAndArguments);
+            } catch (PrimitiveFailed | UnsupportedSpecializationException e) {
+                throw new PrimitiveFailed();
+            }
+        }
+
+        @Specialization
+        protected final Object doPrimitive(final VirtualFrame frame, @SuppressWarnings("unused") final Object context, final Object receiver, final long primitiveIndex,
+                        final PointersObject argumentArray) {
+            final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.forIndex((CompiledMethodObject) code, (int) primitiveIndex);
+            final Object[] receiverAndArguments = ArrayUtils.copyWithFirst(argumentArray.getPointers(), receiver);
+            try {
+                return replace(primitiveNode).executeWithArguments(frame, receiverAndArguments);
+            } catch (PrimitiveFailed | UnsupportedSpecializationException e) {
+                throw new PrimitiveFailed();
+            }
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(index = 119)
     protected abstract static class PrimFlushCacheSelectiveNode extends AbstractPrimitiveNode {
 
@@ -896,8 +929,6 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             try {
                 Thread.sleep(millis);
             } catch (InterruptedException e) {
-                CompilerDirectives.transferToInterpreter();
-                e.printStackTrace();
             }
         }
 

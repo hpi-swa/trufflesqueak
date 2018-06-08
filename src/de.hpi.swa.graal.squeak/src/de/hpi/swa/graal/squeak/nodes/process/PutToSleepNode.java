@@ -8,7 +8,7 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 
-public class PutToSleepNode extends AbstractNodeWithImage {
+public final class PutToSleepNode extends AbstractNodeWithImage {
     @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
     @Child private LinkProcessToListNode linkProcessToList;
     @Child private GetSchedulerNode getSchedulerNode;
@@ -23,7 +23,7 @@ public class PutToSleepNode extends AbstractNodeWithImage {
         getSchedulerNode = GetSchedulerNode.create(image);
     }
 
-    protected void executePutToSleep(final AbstractSqueakObject process) {
+    public void executePutToSleep(final AbstractSqueakObject process) {
         // Save the given process on the scheduler process list for its priority.
         final long priority = (long) at0Node.execute(process, PROCESS.PRIORITY);
         final PointersObject scheduler = getSchedulerNode.executeGet();

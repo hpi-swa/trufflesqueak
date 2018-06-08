@@ -93,6 +93,21 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(index = 93)
+    protected abstract static class PrimInputSemaphoreNode extends AbstractPrimitiveNode {
+
+        protected PrimInputSemaphoreNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @Specialization
+        protected final Object doSet(final AbstractSqueakObject receiver, final long semaIndex) {
+            code.image.display.setInputSemaphoreIndex((int) semaIndex);
+            return receiver;
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(index = 94)
     protected abstract static class PrimGetNextEventNode extends AbstractPrimitiveNode {
 

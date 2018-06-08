@@ -1,5 +1,7 @@
 package de.hpi.swa.graal.squeak.util;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -25,6 +27,7 @@ public final class InterruptHandlerNode extends Node {
     @CompilationFinal private final boolean disabled;
     @CompilationFinal private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     @CompilationFinal private final ConditionProfile countingProfile = ConditionProfile.createCountingProfile();
+    @CompilationFinal private final Deque<Integer> semaphoresToSignal = new ArrayDeque<>();
     @Child private SignalSemaphoreNode signalSemaporeNode;
     private long nextWakeupTick = 0;
     private boolean interruptPending = false;
@@ -115,17 +118,31 @@ public final class InterruptHandlerNode extends Node {
             pendingFinalizationSignals = false;
             signalSemaporeIfNotNil(frame, SPECIAL_OBJECT_INDEX.TheFinalizationSemaphore);
         }
+        if (!semaphoresToSignal.isEmpty()) {
+            final Object[] semaphores = ((PointersObject) image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.ExternalObjectsArray)).getPointers();
+            while (!semaphoresToSignal.isEmpty()) {
+                final int semaIndex = semaphoresToSignal.removeFirst();
+                final Object semaphore = semaphores[semaIndex - 1];
+                if (semaphore instanceof PointersObject && ((PointersObject) semaphore).isSemaphore()) {
+                    signalSemaporeNode.executeSignal(frame, (PointersObject) semaphore);
+                }
+            }
+        }
     }
 
     private void signalSemaporeIfNotNil(final MaterializedFrame frame, final int semaphoreIndex) {
-        final Object semaphoreObject = image.specialObjectsArray.at0(semaphoreIndex);
-        if (semaphoreObject != image.nil) {
-            signalSemaporeNode.executeSignal(frame, (PointersObject) semaphoreObject);
+        final Object semaphore = image.specialObjectsArray.at0(semaphoreIndex);
+        if (semaphore instanceof PointersObject && ((PointersObject) semaphore).isSemaphore()) {
+            signalSemaporeNode.executeSignal(frame, (PointersObject) semaphore);
         }
     }
 
     public static int getInterruptChecksEveryNms() {
         return INTERRUPT_CHECKS_EVERY_N_MILLISECONDS;
+    }
+
+    public void signalSemaphoreWithIndex(final int index) {
+        semaphoresToSignal.addLast(index);
     }
 
     /*

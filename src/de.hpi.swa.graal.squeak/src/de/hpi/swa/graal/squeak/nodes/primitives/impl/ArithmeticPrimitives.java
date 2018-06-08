@@ -705,6 +705,24 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(index = 52)
+    protected abstract static class PrimFloatFractionPartNode extends AbstractArithmeticPrimitiveNode {
+        protected PrimFloatFractionPartNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @Specialization
+        protected final FloatObject doDouble(final double receiver) {
+            return asFloatObject(receiver - Double.valueOf(receiver).longValue());
+        }
+
+        @Specialization
+        protected final FloatObject doFloatObject(final FloatObject receiver) {
+            return doDouble(receiver.getValue());
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(index = 53)
     protected abstract static class PrimFloatExponentNode extends AbstractArithmeticPrimitiveNode {
         protected PrimFloatExponentNode(final CompiledMethodObject method, final int numArguments) {
@@ -885,13 +903,33 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final double doDouble(final double rcvr) {
-            return Math.exp(rcvr);
+        protected static final double doDouble(final double receiver) {
+            return Math.exp(receiver);
         }
 
         @Specialization
-        protected final FloatObject doFloat(final FloatObject a) {
-            return asFloatObject(Math.exp(a.getValue()));
+        protected final FloatObject doFloat(final FloatObject receiver) {
+            return asFloatObject(Math.exp(receiver.getValue()));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 159)
+    protected abstract static class PrimHashMultiplyNode extends AbstractPrimitiveNode {
+        @CompilationFinal private static final int HASH_MULTIPLY_CONSTANT = 1664525;
+
+        protected PrimHashMultiplyNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @Specialization
+        protected static final long doLargeInteger(final LargeIntegerObject receiver) {
+            return doLong(receiver.longValue());
+        }
+
+        @Specialization
+        protected static final long doLong(final long receiver) {
+            return (receiver * HASH_MULTIPLY_CONSTANT) & 0x0fffffff;
         }
     }
 }

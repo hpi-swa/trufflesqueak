@@ -43,7 +43,6 @@ public final class ContextObject extends AbstractSqueakObject {
     }
 
     public static ContextObject create(final SqueakImageContext image, final int size, final MaterializedFrame frame) {
-        assert frame.getValue(frame.getFrameDescriptor().findFrameSlot(CompiledCodeObject.SLOT_IDENTIFIER.THIS_CONTEXT_OR_MARKER)) instanceof FrameMarker;
         return new ContextObject(image, size, frame);
     }
 
@@ -403,7 +402,6 @@ public final class ContextObject extends AbstractSqueakObject {
         return pointers[CONTEXT.SENDER_OR_NIL] != null;
     }
 
-    @TruffleBoundary
     public void materialize() {
         if (truffleFrame == null) {
             return; // nothing to do

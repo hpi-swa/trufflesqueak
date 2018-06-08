@@ -68,6 +68,8 @@ def _graal_vm_args(args):
 
 
 def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
+    """run GraalSqueak"""
+
     env = env if env else os.environ
 
     vm_args, raw_args = mx.extract_VM_args(
@@ -210,6 +212,6 @@ def _get_jacoco_agent_args():
 
 
 mx.update_commands(_suite, {
-    'squeak': [_squeak, '[Squeak args|@VM options]'],
+    'squeak': [_squeak, '[options]'],
 })
 mx_gate.add_gate_runner(_suite, _graalsqueak_gate_runner)

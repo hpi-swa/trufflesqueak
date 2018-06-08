@@ -154,6 +154,9 @@ public final class CompiledMethodObject extends CompiledCodeObject {
     public RootCallTarget getSplitCallTarget() {
         final RootCallTarget target = getCallTarget();
         final NativeObject selector = getCompiledInSelector();
+        if (hasPrimitive()) {
+            return split(target);
+        }
         for (int i = 0; i < image.specialSelectorsArray.length; i++) {
             if (Arrays.equals(image.specialSelectorsArray[i].getByteStorage(storageType), selector.getByteStorage(storageType))) {
                 return split(target);

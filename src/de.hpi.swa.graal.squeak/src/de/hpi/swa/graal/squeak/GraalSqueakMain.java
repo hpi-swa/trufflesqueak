@@ -18,7 +18,7 @@ import com.oracle.truffle.api.Truffle;
 
 import de.hpi.swa.graal.squeak.util.SqueakConfig;
 
-public class GraalSqueakMain extends AbstractLanguageLauncher {
+public final class GraalSqueakMain extends AbstractLanguageLauncher {
     private SqueakConfig config;
 
     public static void main(final String[] args) throws RuntimeException {
@@ -35,9 +35,13 @@ public class GraalSqueakMain extends AbstractLanguageLauncher {
 
     private static void executeImage(final String... args) throws RuntimeException {
         // Checkstyle: stop
-        System.out.println("== Running " + SqueakLanguage.NAME + " on " + Truffle.getRuntime().getName() + " ==");
+        System.out.println("== Running " + SqueakLanguage.NAME + " on " + getRuntimeName() + " ==");
         // Checkstyle: resume
         new GraalSqueakMain().launch(args);
+    }
+
+    public static String getRuntimeName() {
+        return Truffle.getRuntime().getName() + " (Java " + System.getProperty("java.version") + ")";
     }
 
     @Override

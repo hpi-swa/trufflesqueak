@@ -50,7 +50,7 @@ public abstract class SqueakObjectAtPut0Node extends Node {
     @Specialization(guards = "obj.isByteType()")
     protected final void doNativeBytes(final NativeObject obj, final long index, final long value) {
         if (value < 0 || value > NativeObject.BYTE_MAX) { // check for overflow
-            throw new IllegalArgumentException("Illegal value for BytesObject: " + value);
+            throw new IllegalArgumentException("Illegal value for native byte array: " + value);
         }
         obj.getByteStorage(storageType)[(int) index] = (byte) value;
     }
@@ -58,7 +58,7 @@ public abstract class SqueakObjectAtPut0Node extends Node {
     @Specialization(guards = "obj.isShortType()")
     protected final void doNativeShorts(final NativeObject obj, final long index, final long value) {
         if (value < 0 || value > NativeObject.SHORT_MAX) { // check for overflow
-            throw new IllegalArgumentException("Illegal value for ShortsObject: " + value);
+            throw new IllegalArgumentException("Illegal value for native short array: " + value);
         }
         obj.getShortStorage(storageType)[(int) index] = (short) value;
     }
@@ -66,7 +66,7 @@ public abstract class SqueakObjectAtPut0Node extends Node {
     @Specialization(guards = "obj.isIntType()")
     protected final void doNativeInts(final NativeObject obj, final long index, final long value) {
         if (value < 0 || value > NativeObject.INTEGER_MAX) { // check for overflow
-            throw new IllegalArgumentException("Illegal value for WordsObject: " + value);
+            throw new IllegalArgumentException("Illegal value for native int array: " + value);
         }
         obj.getIntStorage(storageType)[(int) index] = (int) value;
     }
@@ -98,22 +98,22 @@ public abstract class SqueakObjectAtPut0Node extends Node {
 
     @Specialization(guards = "obj.isByteType()")
     protected final void doNativeBytesLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
-        doNativeBytes(obj, index, value.reduceToLong());
+        doNativeBytes(obj, index, value.longValueExact());
     }
 
     @Specialization(guards = "obj.isShortType()")
     protected final void doNativeShortsLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
-        doNativeShorts(obj, index, value.reduceToLong());
+        doNativeShorts(obj, index, value.longValueExact());
     }
 
     @Specialization(guards = "obj.isIntType()")
     protected final void doNativeIntsLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
-        doNativeInts(obj, index, value.reduceToLong());
+        doNativeInts(obj, index, value.longValueExact());
     }
 
     @Specialization(guards = "obj.isLongType()")
     protected final void doNativeLongsLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
-        doNativeLongs(obj, index, value.reduceToLong());
+        doNativeLongs(obj, index, value.longValueExact());
     }
 
     @Specialization
@@ -123,7 +123,7 @@ public abstract class SqueakObjectAtPut0Node extends Node {
 
     @Specialization
     protected static final void doLargeInteger(final LargeIntegerObject obj, final long index, final LargeIntegerObject value) {
-        obj.setNativeAt0(index, value.reduceToLong());
+        obj.setNativeAt0(index, value.longValueExact());
     }
 
     @Specialization
@@ -133,7 +133,7 @@ public abstract class SqueakObjectAtPut0Node extends Node {
 
     @Specialization
     protected static final void doFloat(final FloatObject obj, final long index, final LargeIntegerObject value) {
-        obj.setNativeAt0(index, value.reduceToLong());
+        obj.setNativeAt0(index, value.longValueExact());
     }
 
     @Specialization

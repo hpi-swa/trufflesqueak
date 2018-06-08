@@ -10,11 +10,10 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -34,6 +33,7 @@ import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
+import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.EmptyObject;
@@ -160,6 +160,20 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(index = 122)
+    protected abstract static class PrimNoopNode extends AbstractPrimitiveNode {
+
+        protected PrimNoopNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @Specialization
+        protected AbstractSqueakObject get(final AbstractSqueakObject receiver) {
+            return receiver;
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(index = 124)
     protected abstract static class PrimLowSpaceSemaphoreNode extends AbstractPrimitiveNode {
 
@@ -186,6 +200,46 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final AbstractSqueakObject doSet(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final long numBytes) {
             // TODO: do something with numBytes
             return receiver;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 132)
+    protected abstract static class PrimObjectPointsToNode extends AbstractPrimitiveNode {
+
+        protected PrimObjectPointsToNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @Specialization
+        protected final boolean doClass(final ClassObject receiver, final Object thang) {
+            return ArrayUtils.contains(receiver.getPointers(), thang) ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @Specialization
+        protected final boolean doClass(final CompiledCodeObject receiver, final Object thang) {
+            return ArrayUtils.contains(receiver.getLiterals(), thang) ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @Specialization
+        protected final boolean doContext(final ContextObject receiver, final Object thang) {
+            return ArrayUtils.contains(receiver.getPointers(), thang) ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @Specialization
+        protected final boolean doPointers(final PointersObject receiver, final Object thang) {
+            return ArrayUtils.contains(receiver.getPointers(), thang) ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @Specialization
+        protected final boolean doWeakPointers(final WeakPointersObject receiver, final Object thang) {
+            return ArrayUtils.contains(receiver.getPointers(), thang) ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @SuppressWarnings("unused")
+        @Fallback
+        protected final boolean doFallback(final Object receiver, final Object thang) {
+            return code.image.sqFalse;
         }
     }
 
@@ -715,7 +769,13 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 573)
     protected abstract static class PrimListExternalModuleNode extends AbstractPrimitiveNode {
-        @CompilationFinal private List<String> externalModuleNames;
+        @CompilationFinal(dimensions = 1) private static final String[] externalModuleNames;
+
+        static {
+            final Set<String> pluginNames = PrimitiveNodeFactory.getPluginNames();
+            externalModuleNames = pluginNames.toArray(new String[pluginNames.size()]);
+            Arrays.sort(externalModuleNames);
+        }
 
         public PrimListExternalModuleNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -724,19 +784,10 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final Object doGet(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long index) {
             try {
-                return code.image.wrap(getList().get((int) index - 1));
-            } catch (IndexOutOfBoundsException e) {
+                return code.image.wrap(externalModuleNames[(int) index - 1]);
+            } catch (ArrayIndexOutOfBoundsException e) {
                 return code.image.nil;
             }
-        }
-
-        private List<String> getList() {
-            if (externalModuleNames == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                externalModuleNames = new ArrayList<>(PrimitiveNodeFactory.getPluginNames());
-                Collections.sort(externalModuleNames);
-            }
-            return externalModuleNames;
         }
     }
 

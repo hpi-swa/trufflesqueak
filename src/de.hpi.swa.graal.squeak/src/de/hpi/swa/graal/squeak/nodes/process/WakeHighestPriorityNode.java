@@ -8,7 +8,7 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 
-public class WakeHighestPriorityNode extends AbstractNodeWithImage {
+public final class WakeHighestPriorityNode extends AbstractNodeWithImage {
     @Child private RemoveFirstLinkOfListNode removeFirstLinkOfListNode;
     @Child private GetActiveProcessNode getActiveProcessNode;
     @Child private GetSchedulerNode getSchedulerNode;

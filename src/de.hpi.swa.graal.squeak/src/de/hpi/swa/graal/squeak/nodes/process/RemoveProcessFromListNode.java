@@ -28,7 +28,7 @@ public abstract class RemoveProcessFromListNode extends AbstractNodeWithImage {
     public abstract void executeRemove(Object process, Object list);
 
     @Specialization
-    public void executeRemove(final AbstractSqueakObject process, final AbstractSqueakObject list) {
+    protected final void executeRemove(final AbstractSqueakObject process, final AbstractSqueakObject list) {
         final Object first = at0Node.execute(list, LINKED_LIST.FIRST_LINK);
         final Object last = at0Node.execute(list, LINKED_LIST.LAST_LINK);
         if (process.equals(first)) {
