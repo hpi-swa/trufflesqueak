@@ -3,6 +3,7 @@ package de.hpi.swa.graal.squeak.model;
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
@@ -180,11 +181,14 @@ public final class BlockClosureObject extends AbstractSqueakObject {
         return block;
     }
 
+    @TruffleBoundary
     public ContextObject getHomeContext() {
-        final BlockClosureObject closure = outerContext.getClosure();
+        if (outerContext.isTerminated()) {
+            throw new SqueakException("BlockCannotReturnError");
+        }
         // recursively unpack closures until home context is reached
+        final BlockClosureObject closure = outerContext.getClosure();
         if (closure != null) {
-            CompilerDirectives.transferToInterpreter();
             return closure.getHomeContext();
         }
         return outerContext;
