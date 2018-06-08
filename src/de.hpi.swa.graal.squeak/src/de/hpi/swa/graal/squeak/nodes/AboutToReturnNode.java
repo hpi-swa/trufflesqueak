@@ -30,14 +30,14 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
 
     protected AboutToReturnNode(final CompiledMethodObject method) {
         super(method);
-        sendAboutToReturnNode = new SendSelectorNode(method, -1, -1, aboutToReturnSelector(method), 2);
+        sendAboutToReturnNode = new SendSelectorNode(method, -1, -1, aboutToReturnSelector(), 2);
         blockArgumentNode = TemporaryReadNode.create(method, 0);
         completeTempReadNode = TemporaryReadNode.create(method, 1);
         completeTempWriteNode = TemporaryWriteNode.create(method, 1);
     }
 
-    private static NativeObject aboutToReturnSelector(final CompiledMethodObject method) {
-        return (NativeObject) method.image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SelectorAboutToReturn);
+    private NativeObject aboutToReturnSelector() {
+        return (NativeObject) code.image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SelectorAboutToReturn);
     }
 
     public abstract void executeAboutToReturn(VirtualFrame frame, NonLocalReturn nlr);
