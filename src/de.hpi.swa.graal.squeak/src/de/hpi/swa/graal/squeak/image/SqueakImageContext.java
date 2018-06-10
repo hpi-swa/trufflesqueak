@@ -17,6 +17,7 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
+import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
@@ -185,16 +186,16 @@ public final class SqueakImageContext {
         return Truffle.getRuntime().createCallTarget(ExecuteTopLevelContextNode.create(getLanguage(), customContext));
     }
 
-    public void fillInFrom(final FileInputStream inputStream) throws IOException {
-        output.println("Going to sleep...");
-        try {
-            Thread.sleep(10000);
-        } catch (InterruptedException e) {
-            output.println(e.getMessage());
-        }
-        output.println("Waking and now Loading!");
+    public void fillInFrom(final FileInputStream inputStream, final VirtualFrame frame) throws IOException {
+// output.println("Going to sleep...");
+// try {
+// Thread.sleep(10000);
+// } catch (InterruptedException e) {
+// output.println(e.getMessage());
+// }
+// output.println("Waking and now Loading!");
         final long start = System.nanoTime();
-        SqueakImageReader.readImage(this, inputStream);
+        SqueakImageReader.readImage(this, inputStream, frame);
         final long stop = System.nanoTime();
         final long delta = stop - start;
         final double deltaf = (delta / 1000_000) / 1000.0;

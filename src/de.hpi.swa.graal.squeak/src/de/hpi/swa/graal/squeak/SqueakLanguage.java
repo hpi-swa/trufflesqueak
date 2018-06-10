@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak;
 
-import java.io.FileInputStream;
 import java.io.PrintWriter;
 
 import com.oracle.truffle.api.CallTarget;

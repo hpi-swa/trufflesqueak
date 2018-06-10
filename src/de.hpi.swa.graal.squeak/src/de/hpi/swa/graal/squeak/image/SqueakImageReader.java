@@ -12,11 +12,13 @@ import java.util.HashMap;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.nodes.FillInNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives.SimulationPrimitiveNode;
 import de.hpi.swa.graal.squeak.util.BitSplitter;
 
@@ -38,15 +40,17 @@ public final class SqueakImageReader {
     private int firstSegmentSize;
     private int position = 0;
     private PrintWriter output;
+    private VirtualFrame frame;
 
-    public static void readImage(final SqueakImageContext squeakImageContext, final FileInputStream inputStream) throws IOException {
-        final SqueakImageReader instance = new SqueakImageReader(inputStream, squeakImageContext.getOutput());
+    public static void readImage(final SqueakImageContext squeakImageContext, final FileInputStream inputStream, final VirtualFrame frame) throws IOException {
+        final SqueakImageReader instance = new SqueakImageReader(inputStream, squeakImageContext.getOutput(), frame);
         instance.readImage(squeakImageContext);
     }
 
-    private SqueakImageReader(final FileInputStream inputStream, final PrintWriter printWriter) throws FileNotFoundException {
+    private SqueakImageReader(final FileInputStream inputStream, final PrintWriter printWriter, final VirtualFrame frame) throws FileNotFoundException {
         output = printWriter;
         stream = new BufferedInputStream(inputStream);
+        this.frame = frame;
     }
 
     private void readImage(final SqueakImageContext image) throws IOException {
@@ -279,7 +283,6 @@ public final class SqueakImageReader {
         final long delta = stop - start;
         final double deltaf = (delta / 1000_000) / 1000.0;
         output.println("fillInObjects:\t" + deltaf + "s");
-        System.exit(0);
     }
 
     private void instantiateClasses(final SqueakImageContext image) {
@@ -305,9 +308,8 @@ public final class SqueakImageReader {
         output.println("Filling in objects...");
         for (AbstractImageChunk chunk : chunklist) {
             final Object chunkObject = chunk.asObject();
-            if (chunkObject instanceof AbstractSqueakObject) {
-                ((AbstractSqueakObject) chunkObject).fillin(chunk);
-            }
+            final FillInNode fillInNode = FillInNode.create();
+            fillInNode.execute(frame, chunkObject, chunk);
             if (chunkObject instanceof NativeObject) {
                 final NativeObject nativeChunkObject = (NativeObject) chunkObject;
                 if (nativeChunkObject.isByteType()) {

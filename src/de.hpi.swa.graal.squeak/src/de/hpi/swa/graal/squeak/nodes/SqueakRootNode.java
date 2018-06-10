@@ -15,7 +15,7 @@ import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
 public final class SqueakRootNode extends RootNode {
     private final SqueakLanguage language;
-    private final ParsingRequest request;
+    private final String imagePath;
 
     public static SqueakRootNode create(final SqueakLanguage language, final ParsingRequest request) {
         return new SqueakRootNode(language, request);
@@ -24,16 +24,16 @@ public final class SqueakRootNode extends RootNode {
     private SqueakRootNode(final SqueakLanguage language, final ParsingRequest request) {
         super(language, new FrameDescriptor());
         this.language = language;
-        this.request = request;
+        this.imagePath = request.getSource().getPath();
     }
 
     @Override
-    public Object execute(VirtualFrame frame) {
+    public Object execute(final VirtualFrame frame) {
         try {
             final SqueakImageContext image = language.getContextReference().get();
-            image.fillInFrom(new FileInputStream(request.getSource().getPath()));
+            image.fillInFrom(new FileInputStream(imagePath), frame);
             image.interrupt.start();
-            DirectCallNode callNode;
+            final DirectCallNode callNode;
             if (image.config.isCustomContext()) {
                 callNode = DirectCallNode.create(image.getCustomContext());
             } else {

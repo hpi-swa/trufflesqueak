@@ -17,6 +17,8 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
+import com.oracle.truffle.api.frame.VirtualFrame;
+
 import de.hpi.swa.graal.squeak.GraalSqueakMain;
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
@@ -124,7 +126,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
     @Test
     public void testInspectSqueakTestSelector() {
         assumeNotOnMXGate();
-        image.getOutput().println(evaluate("(MiscPrimitivePluginTest run: #testCompressToByteArray) asString"));
+        image.getOutput().println(evaluate("(MiscPrimitivePluginTest run: #testDecompressAndCompress) asString"));
     }
 
     @Test
@@ -169,7 +171,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
         image.getOutput().println("== Running " + SqueakLanguage.NAME + " SUnit Tests on " + GraalSqueakMain.getRuntimeName() + " ==");
         image.getOutput().println("Loading test image at " + imagePath + "...");
         try {
-            image.fillInFrom(new FileInputStream(imagePath));
+            image.fillInFrom(new FileInputStream(imagePath), null);
         } catch (IOException e) {
             e.printStackTrace();
         }
