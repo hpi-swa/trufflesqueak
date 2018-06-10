@@ -42,6 +42,7 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerNode;
 import de.hpi.swa.graal.squeak.util.OSDetector;
 import de.hpi.swa.graal.squeak.util.SqueakConfig;
+import de.hpi.swa.graal.squeak.util.StopWatch;
 
 public final class SqueakImageContext {
     // Special objects
@@ -194,12 +195,9 @@ public final class SqueakImageContext {
 // output.println(e.getMessage());
 // }
 // output.println("Waking and now Loading!");
-        final long start = System.nanoTime();
+        final StopWatch imageWatch = StopWatch.start("readImage");
         SqueakImageReader.readImage(this, inputStream, frame);
-        final long stop = System.nanoTime();
-        final long delta = stop - start;
-        final double deltaf = (delta / 1000_000) / 1000.0;
-        output.println("LoadImage:\t" + deltaf + "s");
+        imageWatch.stopAndPrint();
         System.exit(0);
         if (!display.isHeadless() && simulatePrimitiveArgs.isNil()) {
             throw new SqueakException("Unable to find BitBlt simulation in image, cannot run with display.");

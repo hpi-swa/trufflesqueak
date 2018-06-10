@@ -21,6 +21,7 @@ import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.FillInNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives.SimulationPrimitiveNode;
 import de.hpi.swa.graal.squeak.util.BitSplitter;
+import de.hpi.swa.graal.squeak.util.StopWatch;
 
 @SuppressWarnings("unused")
 public final class SqueakImageReader {
@@ -54,8 +55,15 @@ public final class SqueakImageReader {
     }
 
     private void readImage(final SqueakImageContext image) throws IOException {
+        output.println("Reading image...");
+        output.println("Reading header...");
+        final StopWatch headerWatch = StopWatch.start("readHeader");
         readHeader(image);
+        headerWatch.stopAndPrint();
+        output.println("Reading body...");
+        final StopWatch bodyWatch = StopWatch.start("readBody");
         readBody(image);
+        bodyWatch.stopAndPrint();
         initObjects(image);
     }
 
@@ -273,16 +281,17 @@ public final class SqueakImageReader {
         initPrebuiltSelectors(image);
         // connect all instances to their classes
         output.println("Connecting classes...");
+        final StopWatch setClassesWatch = StopWatch.start("setClasses");
         for (AbstractImageChunk chunk : chunklist) {
             chunk.setSqClass(classOf(chunk, image));
         }
+        setClassesWatch.stopAndPrint();
+        final StopWatch instantiateWatch = StopWatch.start("instClasses");
         instantiateClasses(image);
-        final long start = System.nanoTime();
+        instantiateWatch.stopAndPrint();
+        final StopWatch fillInWatch = StopWatch.start("fillInObjects");
         fillInObjects(image);
-        final long stop = System.nanoTime();
-        final long delta = stop - start;
-        final double deltaf = (delta / 1000_000) / 1000.0;
-        output.println("fillInObjects:\t" + deltaf + "s");
+        fillInWatch.stopAndPrint();
     }
 
     private void instantiateClasses(final SqueakImageContext image) {
