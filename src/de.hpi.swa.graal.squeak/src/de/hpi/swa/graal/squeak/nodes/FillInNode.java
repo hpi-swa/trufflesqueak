@@ -5,6 +5,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
@@ -16,15 +17,19 @@ import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
+import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives.SimulationPrimitiveNode;
 
 public abstract class FillInNode extends Node {
 
-    public static FillInNode create() {
-        return FillInNodeGen.create();
+    private final SqueakImageContext image;
+
+    public static FillInNode create(final SqueakImageContext image) {
+        return FillInNodeGen.create(image);
     }
 
-    protected FillInNode() {
+    protected FillInNode(final SqueakImageContext image) {
         super();
+        this.image = image;
     }
 
     public abstract void execute(VirtualFrame frame, Object obj, AbstractImageChunk chunk);
@@ -67,6 +72,14 @@ public abstract class FillInNode extends Node {
     @Specialization
     protected void doNativeObj(final NativeObject obj, final AbstractImageChunk chunk) {
         obj.fillin(chunk);
+        if (obj.isByteType()) {
+            final String stringValue = obj.asString();
+            if ("asSymbol".equals(stringValue)) {
+                image.asSymbol = obj;
+            } else if (SimulationPrimitiveNode.SIMULATE_PRIMITIVE_SELECTOR.equals(stringValue)) {
+                image.simulatePrimitiveArgs = obj;
+            }
+        }
     }
 
     @Specialization

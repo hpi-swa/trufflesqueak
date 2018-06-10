@@ -7,11 +7,11 @@ public class StopWatch {
     long stopTime = 0;
     public final String name;
 
-    StopWatch() {
+    public StopWatch() {
         this.name = "stopwatch";
     }
 
-    StopWatch(final String name) {
+    public StopWatch(final String name) {
         this.name = name;
     }
 

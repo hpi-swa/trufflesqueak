@@ -315,22 +315,20 @@ public final class SqueakImageReader {
 
     private void fillInObjects(final SqueakImageContext image) {
         output.println("Filling in objects...");
+        final StopWatch watch = new StopWatch("fillInWatch");
+        long maxDuration = 0;
         for (AbstractImageChunk chunk : chunklist) {
+            watch.start();
             final Object chunkObject = chunk.asObject();
-            final FillInNode fillInNode = FillInNode.create();
+            final FillInNode fillInNode = FillInNode.create(image);
             fillInNode.execute(frame, chunkObject, chunk);
-            if (chunkObject instanceof NativeObject) {
-                final NativeObject nativeChunkObject = (NativeObject) chunkObject;
-                if (nativeChunkObject.isByteType()) {
-                    final String stringValue = nativeChunkObject.asString();
-                    if ("asSymbol".equals(stringValue)) {
-                        image.asSymbol = (NativeObject) chunkObject;
-                    } else if (SimulationPrimitiveNode.SIMULATE_PRIMITIVE_SELECTOR.equals(stringValue)) {
-                        image.simulatePrimitiveArgs = (NativeObject) chunkObject;
-                    }
-                }
+            final long duration = watch.stop();
+            if (duration >= maxDuration) {
+                maxDuration = duration;
             }
         }
+        final double deltaf = (maxDuration / 1000_000);
+        output.println("maxFillInDuration" + ":\t" + deltaf + "ms");
         if (image.asSymbol.isNil()) {
             throw new SqueakException("Unable to find asSymbol selector");
         }
