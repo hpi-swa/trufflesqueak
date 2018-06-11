@@ -574,4 +574,17 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 212)
+    protected abstract static class PrimContextSizeNode extends AbstractPrimitiveNode {
+
+        protected PrimContextSizeNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @Specialization
+        protected static final long doSize(final ContextObject receiver) {
+            return receiver.size() - receiver.instsize();
+        }
+    }
 }
