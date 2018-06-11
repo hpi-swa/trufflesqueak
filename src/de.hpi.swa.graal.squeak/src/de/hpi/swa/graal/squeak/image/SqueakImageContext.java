@@ -137,18 +137,7 @@ public final class SqueakImageContext {
         error = err;
         final String[] applicationArguments = env.getApplicationArguments();
         config = new SqueakConfig(applicationArguments);
-        display = SqueakDisplay.create(this, config.isCustomContext());
-        interrupt = InterruptHandlerNode.create(this, config);
-    }
-
-    // for testing
-    public SqueakImageContext(final String imagePath) {
-        language = null;
-        env = null;
-        output = new PrintWriter(System.out, true);
-        error = new PrintWriter(System.err, true);
-        config = new SqueakConfig(new String[]{imagePath, "--testing"});
-        display = SqueakDisplay.create(this, true);
+        display = SqueakDisplay.create(this, config.isCustomContext() || config.isTesting());
         interrupt = InterruptHandlerNode.create(this, config);
     }
 
