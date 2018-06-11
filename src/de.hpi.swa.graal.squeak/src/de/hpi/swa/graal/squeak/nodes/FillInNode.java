@@ -103,21 +103,9 @@ public abstract class FillInNode extends Node {
         obj.fillin(chunk);
     }
 
+    @SuppressWarnings("unused")
     @Specialization
-    protected void doGenericObj(final Object obj, final AbstractImageChunk chunk) {
-        if (obj instanceof AbstractSqueakObject) {
-            ((AbstractSqueakObject) obj).fillin(chunk);
-        }
-        if (obj instanceof NativeObject) {
-            final NativeObject nativeObj = (NativeObject) obj;
-            if (nativeObj.isByteType()) {
-                final String stringValue = nativeObj.asString();
-                if ("asSymbol".equals(stringValue)) {
-                    image.asSymbol = nativeObj;
-                } else if (SimulationPrimitiveNode.SIMULATE_PRIMITIVE_SELECTOR.equals(stringValue)) {
-                    image.simulatePrimitiveArgs = nativeObj;
-                }
-            }
-        }
+    protected void doBoolean(final boolean obj, final AbstractImageChunk chunk) {
+        // do nothing
     }
 }
