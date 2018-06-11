@@ -265,7 +265,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final Object doAt(final AbstractSqueakObject receiver, final long index, @SuppressWarnings("unused") final NotProvided value) {
+        protected final Object doAt(final AbstractSqueakObject receiver, final long index, @SuppressWarnings("unused") final NotProvided notProvided) {
             try {
                 return at0Node.execute(receiver, index - 1);
             } catch (IndexOutOfBoundsException e) {
@@ -273,7 +273,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        @Specialization
+        @Specialization // Context>>#object:instVarAt:
         protected final Object doAt(@SuppressWarnings("unused") final Object receiver, final AbstractSqueakObject target, final long index) {
             try {
                 return at0Node.execute(target, index - 1);
@@ -293,9 +293,19 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final Object doAtPut(final AbstractSqueakObject receiver, final long index, final Object value) {
+        protected final Object doAtPut(final AbstractSqueakObject receiver, final long index, final Object value, @SuppressWarnings("unused") final NotProvided notProvided) {
             try {
                 atPut0Node.execute(receiver, index - 1, value);
+            } catch (IndexOutOfBoundsException e) {
+                throw new PrimitiveFailed();
+            }
+            return value;
+        }
+
+        @Specialization // Context>>#object:instVarAt:put:
+        protected final Object doAtPut(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final AbstractSqueakObject target, final long index, final Object value) {
+            try {
+                atPut0Node.execute(target, index - 1, value);
             } catch (IndexOutOfBoundsException e) {
                 throw new PrimitiveFailed();
             }
