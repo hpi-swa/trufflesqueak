@@ -13,6 +13,7 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node.Child;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
@@ -43,6 +44,8 @@ public final class SqueakImageReader {
     private PrintWriter output;
     private VirtualFrame frame;
 
+    @Child FillInNode fillInNode;
+
     public static void readImage(final SqueakImageContext squeakImageContext, final FileInputStream inputStream, final VirtualFrame frame) throws IOException {
         final SqueakImageReader instance = new SqueakImageReader(inputStream, squeakImageContext.getOutput(), frame);
         instance.readImage(squeakImageContext);
@@ -52,9 +55,11 @@ public final class SqueakImageReader {
         output = printWriter;
         stream = new BufferedInputStream(inputStream);
         this.frame = frame;
+        fillInNode = null;
     }
 
     private void readImage(final SqueakImageContext image) throws IOException {
+        fillInNode = FillInNode.create(image);
         output.println("Reading image...");
         output.println("Reading header...");
         final StopWatch headerWatch = StopWatch.start("readHeader");
@@ -320,7 +325,6 @@ public final class SqueakImageReader {
         for (AbstractImageChunk chunk : chunklist) {
             watch.start();
             final Object chunkObject = chunk.asObject();
-            final FillInNode fillInNode = FillInNode.create(image);
             fillInNode.execute(frame, chunkObject, chunk);
             final long duration = watch.stop();
             if (duration >= maxDuration) {

@@ -131,6 +131,10 @@ public abstract class AbstractImageChunk {
         }
     }
 
+    public int getFormat() {
+        return format;
+    }
+
     public long getSize() {
         return size;
     }

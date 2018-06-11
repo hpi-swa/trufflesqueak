@@ -6,6 +6,7 @@ import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
@@ -34,7 +35,7 @@ public abstract class FillInNode extends Node {
 
     public abstract void execute(VirtualFrame frame, Object obj, AbstractImageChunk chunk);
 
-    @Specialization
+    @Specialization(guards = "chunk.getFormat() == 3")
     protected void doBlockClosure(final BlockClosureObject obj, final AbstractImageChunk chunk) {
         obj.fillin(chunk);
     }
@@ -44,32 +45,32 @@ public abstract class FillInNode extends Node {
         obj.fillin(chunk);
     }
 
-    @Specialization
+    @Specialization(guards = {"chunk.getFormat() > 23", "chunk.getFormat() <= 31"})
     protected void doCompiledCodeObj(final CompiledCodeObject obj, final AbstractImageChunk chunk) {
         obj.fillin(chunk);
     }
 
-    @Specialization
+    @Specialization(guards = "chunk.getFormat() == 3")
     protected void doContext(final ContextObject obj, final AbstractImageChunk chunk) {
         obj.fillin(chunk);
     }
 
-    @Specialization
+    @Specialization(guards = "chunk.getFormat() == 0")
     protected void doEmpty(final EmptyObject obj, final AbstractImageChunk chunk) {
         obj.fillin(chunk);
     }
 
-    @Specialization
+    @Specialization(guards = {"chunk.getFormat() > 9", "chunk.getFormat() <= 11"})
     protected void doFloat(final FloatObject obj, final AbstractImageChunk chunk) {
         obj.fillin(chunk);
     }
 
-    @Specialization
+    @Specialization(guards = {"chunk.getFormat() > 15", "chunk.getFormat() <= 23"})
     protected void doLargeInteger(final LargeIntegerObject obj, final AbstractImageChunk chunk) {
         obj.fillin(chunk);
     }
 
-    @Specialization
+    @Specialization(guards = {"chunk.getFormat() >= 9", "chunk.getFormat() <= 23"})
     protected void doNativeObj(final NativeObject obj, final AbstractImageChunk chunk) {
         obj.fillin(chunk);
         if (obj.isByteType()) {
@@ -87,19 +88,36 @@ public abstract class FillInNode extends Node {
         obj.fillin(chunk);
     }
 
-    @Specialization
+    @Specialization(guards = {"chunk.getFormat() >= 1", "chunk.getFormat() <= 5", "chunk.getFormat() != 4"})
     protected void doPointers(final PointersObject obj, final AbstractImageChunk chunk) {
         obj.fillin(chunk);
     }
 
-    @Specialization
+    @Specialization(guards = "chunk.getFormat() == 4")
     protected void doWeakPointers(final WeakPointersObject obj, final AbstractImageChunk chunk) {
         obj.fillin(chunk);
     }
 
-    @SuppressWarnings("unused")
     @Specialization
-    protected void doGeneric(final Object obj, final AbstractImageChunk chunk) {
-        // do nothing
+    protected void doAbstractSqueakObj(final AbstractSqueakObject obj, final AbstractImageChunk chunk) {
+        obj.fillin(chunk);
+    }
+
+    @Specialization
+    protected void doGenericObj(final Object obj, final AbstractImageChunk chunk) {
+        if (obj instanceof AbstractSqueakObject) {
+            ((AbstractSqueakObject) obj).fillin(chunk);
+        }
+        if (obj instanceof NativeObject) {
+            final NativeObject nativeObj = (NativeObject) obj;
+            if (nativeObj.isByteType()) {
+                final String stringValue = nativeObj.asString();
+                if ("asSymbol".equals(stringValue)) {
+                    image.asSymbol = nativeObj;
+                } else if (SimulationPrimitiveNode.SIMULATE_PRIMITIVE_SELECTOR.equals(stringValue)) {
+                    image.simulatePrimitiveArgs = nativeObj;
+                }
+            }
+        }
     }
 }

@@ -40,8 +40,20 @@ public class StopWatch {
         output.println(name + ":\t" + deltaf + "s");
     }
 
+    public void printTimeMS() {
+        final double deltaf = delta() / 1000_000;
+        final PrintWriter output = new PrintWriter(System.out, true);
+        output.println(name + ":\t" + deltaf + "ms");
+    }
+
     public void stopAndPrint() {
         stop();
         printTime();
+    }
+
+    public void stopAndPrintMS() {
+        final double deltaf = stop() / 1000_000;
+        final PrintWriter output = new PrintWriter(System.out, true);
+        output.println(name + ":\t" + deltaf + "ms");
     }
 }
