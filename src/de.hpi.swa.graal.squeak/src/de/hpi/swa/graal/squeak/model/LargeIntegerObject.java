@@ -3,7 +3,6 @@ package de.hpi.swa.graal.squeak.model;
 import java.math.BigInteger;
 import java.util.Arrays;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
@@ -19,8 +18,8 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     @CompilationFinal public static final long MASK_32BIT = 0xffffffffL;
     @CompilationFinal public static final long MASK_64BIT = 0xffffffffffffffffL;
 
-    @CompilationFinal(dimensions = 1) protected byte[] bytes;
-    @CompilationFinal private BigInteger integer;
+    private byte[] bytes;
+    private BigInteger integer;
     private boolean integerDirty = false;
 
     public LargeIntegerObject(final SqueakImageContext img) {
@@ -71,14 +70,12 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     }
 
     public void setBytes(final byte[] bytes) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
         this.bytes = bytes;
-        this.integer = derivedBigIntegerFromBytes(bytes, isNegative());
+        integerDirty = true;
     }
 
     private BigInteger getBigInteger() {
         if (integerDirty) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
             integer = derivedBigIntegerFromBytes(bytes, isNegative());
             integerDirty = false;
         }
