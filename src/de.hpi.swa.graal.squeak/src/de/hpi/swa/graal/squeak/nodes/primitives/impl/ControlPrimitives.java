@@ -695,7 +695,12 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             if (hasPendingFinalizations()) {
                 code.image.interrupt.setPendingFinalizations();
             }
-            return code.image.wrap(Runtime.getRuntime().freeMemory());
+            return code.image.wrap(op());
+        }
+
+        @TruffleBoundary
+        private static long op() {
+            return Runtime.getRuntime().freeMemory();
         }
 
         @TruffleBoundary
@@ -724,7 +729,12 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final Object doGC(final VirtualFrame frame, final AbstractSqueakObject receiver) {
             System.gc();
-            return code.image.wrap(Runtime.getRuntime().freeMemory());
+            return code.image.wrap(op());
+        }
+
+        @TruffleBoundary
+        private long op() {
+            return Runtime.getRuntime().freeMemory();
         }
     }
 

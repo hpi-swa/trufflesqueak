@@ -74,6 +74,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected final Object doEvaluate(final NativeObject receiver, final NativeObject memberToCall) {
             final String foreignCode = receiver.toString();
             final String cFile = code.image.imageRelativeFilePathFor(C_FILENAME);
