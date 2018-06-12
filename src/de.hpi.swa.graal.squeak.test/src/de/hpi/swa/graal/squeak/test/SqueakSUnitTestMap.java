@@ -20,7 +20,7 @@ public final class SqueakSUnitTestMap {
                     "BehaviorTest", TEST_TYPE.FAILING,
                     "BindingPolicyTest", TEST_TYPE.PASSING,
                     "BitBltClipBugs", TEST_TYPE.PASSING,
-                    "BitBltSimulationTest", TEST_TYPE.PASSING,
+                    "BitBltSimulationTest", TEST_TYPE.FLAKY,
                     "BitBltTest", TEST_TYPE.IGNORE, // passing, but very slow
                     "BitmapBugz", TEST_TYPE.PASSING,
                     "BitmapStreamTests", TEST_TYPE.IGNORE, // OOM error
@@ -77,7 +77,7 @@ public final class SqueakSUnitTestMap {
                     "DateAndTimeLeapTest", TEST_TYPE.BROKEN_IN_SQUEAK,
                     "DateAndTimeTest", TEST_TYPE.PASSING,
                     "DateTest", TEST_TYPE.PASSING,
-                    "DebuggerExtensionsTest", TEST_TYPE.FAILING,
+                    "DebuggerExtensionsTest", TEST_TYPE.PASSING,
                     "DebuggerUnwindBug", TEST_TYPE.FAILING,
                     "DecompilerTests", TEST_TYPE.IGNORE, // slow
                     "DelayTest", TEST_TYPE.PASSING,
@@ -153,7 +153,7 @@ public final class SqueakSUnitTestMap {
                     "LongTestCaseTest", TEST_TYPE.PASSING,
                     "LongTestCaseTestUnderTest", TEST_TYPE.PASSING,
                     "MacFileDirectoryTest", TEST_TYPE.PASSING,
-                    "MailAddressParserTest", TEST_TYPE.FAILING,
+                    "MailAddressParserTest", TEST_TYPE.PASSING,
                     "MailDateAndTimeTest", TEST_TYPE.PASSING,
                     "MailMessageTest", TEST_TYPE.PASSING,
                     "MatrixTest", TEST_TYPE.PASSING,
