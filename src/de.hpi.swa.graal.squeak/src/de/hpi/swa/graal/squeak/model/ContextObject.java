@@ -404,7 +404,7 @@ public final class ContextObject extends AbstractSqueakObject {
     }
 
     public boolean hasMaterializedSender() {
-        return pointers[CONTEXT.SENDER_OR_NIL] != null;
+        return pointers[CONTEXT.SENDER_OR_NIL] != null || truffleFrame.getArguments()[FrameAccess.SENDER_OR_SENDER_MARKER] instanceof ContextObject;
     }
 
     public void materialize() {
