@@ -252,7 +252,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
             super(method, numArguments);
         }
 
-        @Specialization
+        @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == 0"})
         protected final Object doClosure(final VirtualFrame frame, final BlockClosureObject block,
                         @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments) {
             return dispatch.executeBlock(block, getFrameArguments.execute(block, getContextOrMarker(frame), new Object[0]));
@@ -278,7 +278,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
             super(method, numArguments);
         }
 
-        @Specialization
+        @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == 1"})
         protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final Object arg,
                         @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments) {
             return dispatch.executeBlock(block, getFrameArguments.execute(block, getContextOrMarker(frame), new Object[]{arg}));
@@ -293,7 +293,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
             super(method, numArguments);
         }
 
-        @Specialization
+        @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == 2"})
         protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final Object arg1, final Object arg2,
                         @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments) {
             return dispatch.executeBlock(block, getFrameArguments.execute(block, getContextOrMarker(frame), new Object[]{arg1, arg2}));
@@ -308,7 +308,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
             super(method, numArguments);
         }
 
-        @Specialization
+        @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == 3"})
         protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final Object arg1, final Object arg2, final Object arg3,
                         @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments) {
             return dispatch.executeBlock(block, getFrameArguments.execute(block, getContextOrMarker(frame), new Object[]{arg1, arg2, arg3}));
@@ -323,7 +323,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
             super(method, numArguments);
         }
 
-        @Specialization
+        @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == 4"})
         protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final Object arg1, final Object arg2, final Object arg3, final Object arg4,
                         @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments) {
             return dispatch.executeBlock(block, getFrameArguments.execute(block, getContextOrMarker(frame), new Object[]{arg1, arg2, arg3, arg4}));
@@ -338,8 +338,8 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
             super(method, numArguments);
         }
 
-        @Specialization
-        protected final Object value(final VirtualFrame frame, final BlockClosureObject block, final PointersObject argArray,
+        @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == argArray.size()"})
+        protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final PointersObject argArray,
                         @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments) {
             return dispatch.executeBlock(block, getFrameArguments.execute(block, getContextOrMarker(frame), argArray.getPointers()));
         }
@@ -353,8 +353,8 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
             super(method, numArguments);
         }
 
-        @Specialization
-        protected final Object doClosure(final VirtualFrame frame, final BlockClosureObject block,
+        @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == 0"})
+        protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block,
                         @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments) {
             code.image.interrupt.disable();
             try {
@@ -373,7 +373,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
             super(method, numArguments);
         }
 
-        @Specialization
+        @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == argArray.size()"})
         protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final PointersObject argArray,
                         @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments) {
             code.image.interrupt.disable();
