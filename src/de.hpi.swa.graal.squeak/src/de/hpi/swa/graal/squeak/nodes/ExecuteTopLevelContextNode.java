@@ -44,7 +44,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
             return e.getReturnValue();
         } catch (SqueakQuit e) {
             image.getOutput().println(e.toString());
-            System.exit(e.getExitCode());
+            throw e;
         } finally {
             image.display.close();
         }
