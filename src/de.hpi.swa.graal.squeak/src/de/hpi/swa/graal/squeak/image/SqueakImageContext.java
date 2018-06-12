@@ -7,8 +7,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
@@ -38,6 +36,7 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.graal.squeak.nodes.context.ObjectGraph;
 import de.hpi.swa.graal.squeak.nodes.process.GetActiveProcessNode;
+import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerNode;
 import de.hpi.swa.graal.squeak.util.OSDetector;
@@ -298,23 +297,24 @@ public final class SqueakImageContext {
 
     public void trace(final Object... arguments) {
         if (config.isTracing()) {
-            printToStdout(arguments);
+            printToStdOut(arguments);
         }
     }
 
     public void traceVerbose(final Object... arguments) {
         if (config.isTracing() && config.isVerbose()) {
-            printToStdout(arguments);
+            printToStdOut(arguments);
         }
     }
 
     @TruffleBoundary
-    private void printToStdout(final Object[] arguments) {
-        final List<String> strings = new ArrayList<>();
-        for (int i = 0; i < arguments.length; i++) {
-            strings.add(arguments[i].toString());
-        }
-        getOutput().println(String.join(" ", strings));
+    public void printToStdOut(final Object... arguments) {
+        getOutput().println(ArrayUtils.toJoinedString(" ", arguments));
+    }
+
+    @TruffleBoundary
+    public void printToStdErr(final Object... arguments) {
+        getError().println(ArrayUtils.toJoinedString(" ", arguments));
     }
 
     /*

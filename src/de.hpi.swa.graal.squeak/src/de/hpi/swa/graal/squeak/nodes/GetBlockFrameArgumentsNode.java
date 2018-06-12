@@ -1,7 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes;
 
 import com.oracle.truffle.api.Assumption;
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -56,8 +55,7 @@ public abstract class GetBlockFrameArgumentsNode extends Node {
     private static Object[] fillInSpecial(final BlockClosureObject block, final Object senderOrMarker, final int numObjects, final int numCopied) {
         final CompiledBlockObject blockObject = block.getCompiledBlock();
         if (blockObject.getNumArgs() != numObjects) { // TODO: turn this into an assertion
-            CompilerDirectives.transferToInterpreter();
-            block.image.getError().println("number of required and provided block arguments do not match");
+            block.image.printToStdErr("number of required and provided block arguments do not match");
         }
         final Object[] arguments = new Object[FrameAccess.ARGUMENTS_START +
                         numObjects +

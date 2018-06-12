@@ -61,6 +61,7 @@ import de.hpi.swa.graal.squeak.nodes.process.SignalSemaphoreNode;
 import de.hpi.swa.graal.squeak.nodes.process.WakeHighestPriorityNode;
 import de.hpi.swa.graal.squeak.nodes.process.YieldProcessNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
+import de.hpi.swa.graal.squeak.util.MiscUtils;
 
 public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -83,9 +84,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object fail(@SuppressWarnings("unused") final VirtualFrame frame) {
-            if (code.image.config.isVerbose() && !code.image.config.isTracing()) {
-                code.image.getOutput().println("Primitive not yet written: " + code.toString());
-            }
+            code.image.traceVerbose("Primitive not yet written: ", code);
             throw new PrimitiveFailed();
         }
     }
@@ -426,14 +425,13 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization
-        protected Object doQuit(final Object receiver, final NotProvided errorCode) {
+        protected Object doQuit(final Object receiver, final NotProvided exitStatus) {
             throw new SqueakQuit(1);
         }
 
-        @SuppressWarnings("unused")
         @Specialization
-        protected Object doQuit(final Object receiver, final long errorCode) {
-            throw new SqueakQuit((int) errorCode);
+        protected Object doQuit(@SuppressWarnings("unused") final Object receiver, final long exitStatus) {
+            throw new SqueakQuit((int) exitStatus);
         }
     }
 
@@ -691,16 +689,11 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization
         protected final Object doGC(final VirtualFrame frame, final AbstractSqueakObject receiver) {
-            System.gc();
+            MiscUtils.systemGC();
             if (hasPendingFinalizations()) {
                 code.image.interrupt.setPendingFinalizations();
             }
-            return code.image.wrap(op());
-        }
-
-        @TruffleBoundary
-        private static long op() {
-            return Runtime.getRuntime().freeMemory();
+            return code.image.wrap(MiscUtils.runtimeFreeMemory());
         }
 
         @TruffleBoundary
@@ -728,13 +721,8 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization
         protected final Object doGC(final VirtualFrame frame, final AbstractSqueakObject receiver) {
-            System.gc();
-            return code.image.wrap(op());
-        }
-
-        @TruffleBoundary
-        private long op() {
-            return Runtime.getRuntime().freeMemory();
+            MiscUtils.systemGC();
+            return code.image.wrap(MiscUtils.runtimeFreeMemory());
         }
     }
 

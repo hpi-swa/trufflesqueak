@@ -430,11 +430,9 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             if (fileDescriptor == STDIO_HANDLES.IN) {
                 throw new PrimitiveFailed();
             } else if (fileDescriptor == STDIO_HANDLES.OUT) {
-                code.image.getOutput().append(asString(content), byteStart, byteEnd);
-                code.image.getOutput().flush();
+                printToStdOut(content, byteStart, byteEnd);
             } else if (fileDescriptor == STDIO_HANDLES.ERROR) {
-                code.image.getError().append(asString(content), byteStart, byteEnd);
-                code.image.getError().flush();
+                printToStdErr(content, byteStart, byteEnd);
             } else {
                 if (code.image.config.isVerbose()) { // also print to stderr
                     doWrite(receiver, STDIO_HANDLES.ERROR, content, startIndex, count);
@@ -446,6 +444,18 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
                 }
             }
             return byteEnd - byteStart;
+        }
+
+        @TruffleBoundary
+        private void printToStdOut(final NativeObject content, final int byteStart, final int byteEnd) {
+            code.image.getOutput().append(asString(content), byteStart, byteEnd);
+            code.image.getOutput().flush();
+        }
+
+        @TruffleBoundary
+        private void printToStdErr(final NativeObject content, final int byteStart, final int byteEnd) {
+            code.image.getError().append(asString(content), byteStart, byteEnd);
+            code.image.getError().flush();
         }
     }
 }

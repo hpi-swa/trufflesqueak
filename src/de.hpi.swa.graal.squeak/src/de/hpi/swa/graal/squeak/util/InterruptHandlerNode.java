@@ -44,7 +44,7 @@ public final class InterruptHandlerNode extends Node {
 
         disabled = config.disableInterruptHandler();
         if (disabled) {
-            image.getOutput().println("Interrupt handler disabled...");
+            image.printToStdOut("Interrupt handler disabled...");
         }
     }
 

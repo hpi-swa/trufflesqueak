@@ -43,7 +43,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         } catch (TopLevelReturn e) {
             return e.getReturnValue();
         } catch (SqueakQuit e) {
-            image.getOutput().println(e.toString());
+            image.printToStdOut(e);
             throw e;
         } finally {
             image.display.close();
@@ -104,7 +104,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
 
     @TruffleBoundary
     private void handleNilSender(final AbstractSqueakObject startContext, final AbstractSqueakObject targetContext) {
-        image.getError().println("Unable to unwind context chain (start: " + startContext + "; target: " + targetContext + ")");
+        image.printToStdErr("Unable to unwind context chain (start: " + startContext + "; target: " + targetContext + ")");
         ((ContextObject) startContext).printSqStackTrace();
     }
 }

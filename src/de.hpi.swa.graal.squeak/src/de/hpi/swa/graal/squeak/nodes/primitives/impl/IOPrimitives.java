@@ -518,7 +518,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             try {
                 Toolkit.getDefaultToolkit().beep();
             } catch (AWTError e) {
-                code.image.getError().println("BEEP (unable to find default AWT Toolkit).");
+                code.image.printToStdErr("BEEP (unable to find default AWT Toolkit).");
             }
             return receiver;
         }

@@ -756,10 +756,15 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final Object doFail(@SuppressWarnings("unused") final PointersObject proxy, final long reasonCode) {
             if (DEBUG_META_PRIMITIVE_FAILURES) {
-                final String target = Truffle.getRuntime().getCallerFrame().getCallTarget().toString();
-                code.image.getError().println("Simulation primitive failed: " + target + "; reasonCode: " + reasonCode);
+                debugMetaPrimitiveFailures(reasonCode);
             }
             throw new SimulationPrimitiveFailed(reasonCode);
+        }
+
+        @TruffleBoundary
+        private void debugMetaPrimitiveFailures(final long reasonCode) {
+            final String target = Truffle.getRuntime().getCallerFrame().getCallTarget().toString();
+            code.image.printToStdErr("Simulation primitive failed (target:", target, "/ reasonCode:", reasonCode, ")");
         }
     }
 
