@@ -75,8 +75,12 @@ public class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "!isSmallInteger(receiver)")
-        protected final Object doLong(final long receiver, final long index, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return asLargeInteger(receiver).getNativeAt0(index - 1);
+        protected final long doLong(final long receiver, final long index, @SuppressWarnings("unused") final NotProvided notProvided) {
+            try {
+                return asLargeInteger(receiver).getNativeAt0(index - 1);
+            } catch (IndexOutOfBoundsException e) {
+                return 0L; // inline fallback code
+            }
         }
 
         @Specialization
