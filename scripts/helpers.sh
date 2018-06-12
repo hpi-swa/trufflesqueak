@@ -1,6 +1,6 @@
 # This file is intended to be included in other scripts
 
-readonly IMAGE_NAME="GraalSqueakTrunkImage.zip"
+readonly IMAGE_NAME="graal-squeak-image-18067.zip"
 readonly IMAGE_URL="https://dl.bintray.com/hpi-swa-lab/GraalSqueak/images/${IMAGE_NAME}"
 readonly MX_GIT="https://github.com/graalvm/mx.git"
 
