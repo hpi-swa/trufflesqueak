@@ -807,6 +807,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         @CompilationFinal protected final String moduleName;
         @CompilationFinal protected final NativeObject functionName;
         @CompilationFinal protected final boolean bitBltSimulationNotFound = code.image.simulatePrimitiveArgs.isNil();
+        @CompilationFinal protected final PointersObject emptyList;
         @Child protected LookupNode lookupNode = LookupNode.create();
         @Child protected DispatchNode dispatchNode = DispatchNode.create();
         @Child protected SqueakLookupClassNode lookupClassNode;
@@ -829,13 +830,14 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
             this.functionName = code.image.wrap(functionName);
             lookupClassNode = SqueakLookupClassNode.create(method.image);
             isDoesNotUnderstandNode = IsDoesNotUnderstandNode.create(method.image);
+            emptyList = code.image.newList(new Object[]{});
         }
 
         @SuppressWarnings("unused")
         @Specialization
         protected final Object doSimulation(final VirtualFrame frame, final Object receiver, final NotProvided arg1, final NotProvided arg2, final NotProvided arg3,
                         final NotProvided arg4, final NotProvided arg5, final NotProvided arg6, final NotProvided arg7, final NotProvided arg8) {
-            return doSimulation(frame, receiver, code.image.newList(new Object[]{}));
+            return doSimulation(frame, receiver, emptyList);
         }
 
         @SuppressWarnings("unused")
