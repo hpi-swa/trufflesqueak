@@ -264,6 +264,17 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     }
 
     @TruffleBoundary
+    public boolean isZeroOrPositive() {
+        return getBigInteger().compareTo(BigInteger.ZERO) >= 0;
+    }
+
+    @TruffleBoundary
+    public boolean inRange(final long minValue, final long maxValue) {
+        final long longValueExact = getBigInteger().longValueExact();
+        return minValue <= longValueExact && longValueExact <= maxValue;
+    }
+
+    @TruffleBoundary
     public boolean isIntegralWhenDividedBy(final LargeIntegerObject other) {
         return getBigInteger().mod(other.getBigInteger()).compareTo(BigInteger.ZERO) == 0;
     }
