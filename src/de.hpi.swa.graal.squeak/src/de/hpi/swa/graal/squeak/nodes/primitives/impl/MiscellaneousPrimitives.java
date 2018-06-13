@@ -897,13 +897,16 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
         private Object doSimulation(final VirtualFrame frame, final Object receiver, final PointersObject arguments) {
             final Object[] newRcvrAndArgs = new Object[]{receiver, functionName, arguments};
+            final boolean wasDisabled = code.image.interrupt.disabled();
             code.image.interrupt.disable();
             try {
                 return dispatchNode.executeDispatch(frame, getSimulateMethod(receiver), newRcvrAndArgs, getContextOrMarker(frame));
             } catch (SimulationPrimitiveFailed e) {
                 throw new PrimitiveFailed(e.getReasonCode());
             } finally {
-                code.image.interrupt.enable();
+                if (wasDisabled) {
+                    code.image.interrupt.enable();
+                }
             }
         }
 

@@ -75,6 +75,10 @@ public final class InterruptHandlerNode extends Node {
         return nextWakeupTick;
     }
 
+    public boolean disabled() {
+        return disabledTemporarily;
+    }
+
     public void disable() {
         disabledTemporarily = true;
     }

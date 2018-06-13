@@ -20,7 +20,7 @@ public final class SqueakSUnitTestMap {
                     "BehaviorTest", TEST_TYPE.FAILING,
                     "BindingPolicyTest", TEST_TYPE.PASSING,
                     "BitBltClipBugs", TEST_TYPE.PASSING,
-                    "BitBltSimulationTest", TEST_TYPE.FLAKY,
+                    "BitBltSimulationTest", TEST_TYPE.PASSING,
                     "BitBltTest", TEST_TYPE.IGNORE, // passing, but very slow
                     "BitmapBugz", TEST_TYPE.PASSING,
                     "BitmapStreamTests", TEST_TYPE.IGNORE, // OOM error

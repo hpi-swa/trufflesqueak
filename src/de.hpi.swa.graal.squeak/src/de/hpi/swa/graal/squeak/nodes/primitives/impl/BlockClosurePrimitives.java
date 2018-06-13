@@ -356,11 +356,14 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == 0"})
         protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block,
                         @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments) {
+            final boolean wasDisabled = code.image.interrupt.disabled();
             code.image.interrupt.disable();
             try {
                 return dispatch.executeBlock(block, getFrameArguments.execute(block, getContextOrMarker(frame), new Object[0]));
             } finally {
-                code.image.interrupt.enable();
+                if (!wasDisabled) {
+                    code.image.interrupt.enable();
+                }
             }
         }
     }
@@ -376,11 +379,14 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == argArray.size()"})
         protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final PointersObject argArray,
                         @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments) {
+            final boolean wasDisabled = code.image.interrupt.disabled();
             code.image.interrupt.disable();
             try {
                 return dispatch.executeBlock(block, getFrameArguments.execute(block, getContextOrMarker(frame), argArray.getPointers()));
             } finally {
-                code.image.interrupt.enable();
+                if (!wasDisabled) {
+                    code.image.interrupt.enable();
+                }
             }
         }
     }
