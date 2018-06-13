@@ -263,7 +263,7 @@ public final class SqueakSUnitTestMap {
                     "SetTest", TEST_TYPE.PASSING,
                     "SetWithNilTest", TEST_TYPE.PASSING,
                     "SharedQueue2Test", TEST_TYPE.IGNORE, // passing, sometimes blocks on CI
-                    "SHParserST80Test", TEST_TYPE.BROKEN_IN_SQUEAK,
+                    "SHParserST80Test", TEST_TYPE.PASSING,
                     "SimpleSwitchMorphTest", TEST_TYPE.PASSING,
                     "SimpleTestResourceTestCase", TEST_TYPE.PASSING,
                     "SliderTest", TEST_TYPE.PASSING,
@@ -279,7 +279,7 @@ public final class SqueakSUnitTestMap {
                     "SqNumberParserTest", TEST_TYPE.PASSING,
                     "SqueakSSLTest", TEST_TYPE.FAILING,
                     "ST80MenusTest", TEST_TYPE.PASSING,
-                    "ST80PackageDependencyTest", TEST_TYPE.BROKEN_IN_SQUEAK,
+                    "ST80PackageDependencyTest", TEST_TYPE.PASSING,
                     "StackTest", TEST_TYPE.PASSING,
                     "StandardSourceFileArrayTest", TEST_TYPE.PASSING,
                     "StickynessBugz", TEST_TYPE.PASSING,
