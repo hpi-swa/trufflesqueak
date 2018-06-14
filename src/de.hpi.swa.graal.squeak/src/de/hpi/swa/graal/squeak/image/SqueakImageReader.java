@@ -4,6 +4,7 @@ import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -13,6 +14,7 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.Node.Child;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
@@ -25,7 +27,7 @@ import de.hpi.swa.graal.squeak.util.BitSplitter;
 import de.hpi.swa.graal.squeak.util.StopWatch;
 
 @SuppressWarnings("unused")
-public final class SqueakImageReader {
+public final class SqueakImageReader extends Node {
     @CompilationFinal static final Object NIL_OBJECT_PLACEHOLDER = new Object();
     @CompilationFinal private static final int SPECIAL_SELECTORS_INDEX = 23;
     @CompilationFinal private static final int FREE_OBJECT_CLASS_INDEX_PUN = 0;
@@ -41,35 +43,35 @@ public final class SqueakImageReader {
     private short maxExternalSemaphoreTableSize;
     private int firstSegmentSize;
     private int position = 0;
-    private PrintWriter output;
-    private VirtualFrame frame;
+    private final PrintWriter output;
+    @CompilationFinal private final SqueakImageContext image;
 
-    @Child FillInNode fillInNode;
+    @Child private FillInNode fillInNode;
+
+    public SqueakImageReader(final InputStream inputStream, final SqueakImageContext image) {
+        stream = new BufferedInputStream(inputStream);
+        output = image.getOutput();
+        this.image = image;
+        fillInNode = FillInNode.create(image);
+    }
 
     public static void readImage(final SqueakImageContext squeakImageContext, final FileInputStream inputStream, final VirtualFrame frame) throws IOException {
-        final SqueakImageReader instance = new SqueakImageReader(inputStream, squeakImageContext.getOutput(), frame);
-        instance.readImage(squeakImageContext);
+        // final SqueakImageReader instance = new SqueakImageReader(inputStream,
+        // squeakImageContext.getOutput(), frame);
+        // instance.readImage(squeakImageContext);
     }
 
-    private SqueakImageReader(final FileInputStream inputStream, final PrintWriter printWriter, final VirtualFrame frame) throws FileNotFoundException {
-        output = printWriter;
-        stream = new BufferedInputStream(inputStream);
-        this.frame = frame;
-        fillInNode = null;
-    }
-
-    private void readImage(final SqueakImageContext image) throws IOException {
-        fillInNode = FillInNode.create(image);
+    public void executeRead(final VirtualFrame frame) throws IOException {
         output.println("Reading image...");
         output.println("Reading header...");
         final StopWatch headerWatch = StopWatch.start("readHeader");
-        readHeader(image);
+        readHeader();
         headerWatch.stopAndPrint();
         output.println("Reading body...");
         final StopWatch bodyWatch = StopWatch.start("readBody");
-        readBody(image);
+        readBody();
         bodyWatch.stopAndPrint();
-        initObjects(image);
+        initObjects(frame);
     }
 
     private short nextShort() throws IOException {
@@ -139,7 +141,7 @@ public final class SqueakImageReader {
         nextInt(); // freeOldSpace
     }
 
-    private void readHeader(final SqueakImageContext image) throws IOException {
+    private void readHeader() throws IOException {
         readVersion();
         readBaseHeader(image);
         readSpurHeader();
@@ -151,7 +153,7 @@ public final class SqueakImageReader {
         this.position += this.stream.skip(skip);
     }
 
-    private void readBody(final SqueakImageContext image) throws IOException {
+    private void readBody() throws IOException {
         position = 0;
         int segmentEnd = firstSegmentSize;
         int currentAddressSwizzle = oldBaseAddress;
@@ -281,7 +283,7 @@ public final class SqueakImageReader {
         }
     }
 
-    private void initObjects(final SqueakImageContext image) {
+    private void initObjects(final VirtualFrame frame) {
         initPrebuiltConstant(image);
         initPrebuiltSelectors(image);
         // connect all instances to their classes
@@ -292,14 +294,14 @@ public final class SqueakImageReader {
         }
         setClassesWatch.stopAndPrint();
         final StopWatch instantiateWatch = StopWatch.start("instClasses");
-        instantiateClasses(image);
+        instantiateClasses();
         instantiateWatch.stopAndPrint();
         final StopWatch fillInWatch = StopWatch.start("fillInObjects");
-        fillInObjects(image);
+        fillInObjects(frame);
         fillInWatch.stopAndPrint();
     }
 
-    private void instantiateClasses(final SqueakImageContext image) {
+    private void instantiateClasses() {
         // find all metaclasses and instantiate their singleton instances as class objects
         output.println("Instantiating classes...");
         for (int classtablePtr : chunklist.get(HIDDEN_ROOTS_CHUNK).data()) {
@@ -318,21 +320,21 @@ public final class SqueakImageReader {
         }
     }
 
-    private void fillInObjects(final SqueakImageContext image) {
+    private void fillInObjects(final VirtualFrame frame) {
         output.println("Filling in objects...");
-        final StopWatch watch = new StopWatch("fillInWatch");
-        long maxDuration = 0;
+        // final StopWatch watch = new StopWatch("fillInWatch");
+        // long maxDuration = 0;
         for (AbstractImageChunk chunk : chunklist) {
-            watch.start();
+            // watch.start();
             final Object chunkObject = chunk.asObject();
             fillInNode.execute(frame, chunkObject, chunk);
-            final long duration = watch.stop();
-            if (duration >= maxDuration) {
-                maxDuration = duration;
-            }
+            // final long duration = watch.stop();
+            // if (duration >= maxDuration) {
+            // maxDuration = duration;
+            // }
         }
-        final double deltaf = (maxDuration / 1000_000);
-        output.println("maxFillInDuration" + ":\t" + deltaf + "ms");
+        // final double deltaf = (maxDuration / 1000_000);
+        // output.println("maxFillInDuration" + ":\t" + deltaf + "ms");
         if (image.asSymbol.isNil()) {
             throw new SqueakException("Unable to find asSymbol selector");
         }

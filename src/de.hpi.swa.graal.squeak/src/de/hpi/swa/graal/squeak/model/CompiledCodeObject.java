@@ -163,7 +163,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
 
     @Override
     public final void fillin(final AbstractImageChunk chunk) {
-        final StopWatch fillinWatch = StopWatch.start("compiledCodeFillin");
+        // final StopWatch fillinWatch = StopWatch.start("compiledCodeFillin");
         super.fillin(chunk);
         final List<Integer> data = chunk.data();
         final int header = data.get(0) >> 1; // header is a tagged small integer
@@ -174,9 +174,9 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         decodeHeader();
         assert bytes == null;
         bytes = chunk.getBytes(ptrs.length);
-        if (fillinWatch.stop() > 1 * 500_000) {
-            fillinWatch.printTimeMS();
-        }
+        // if (fillinWatch.stop() > 1 * 500_000) {
+        // fillinWatch.printTimeMS();
+        // }
     }
 
     protected final void decodeHeader() {
