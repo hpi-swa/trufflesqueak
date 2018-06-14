@@ -12,6 +12,7 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 
 public abstract class AbstractSqueakObject implements TruffleObject {
     @CompilationFinal private static final int IDENTITY_HASH_MASK = 0x400000 - 1;
+    @CompilationFinal private static final byte PINNED_BIT_SHIFT = 30;
     @CompilationFinal public final SqueakImageContext image;
     @CompilationFinal private long hash;
     @CompilationFinal private ClassObject sqClass;
@@ -115,5 +116,17 @@ public abstract class AbstractSqueakObject implements TruffleObject {
     @Override
     public final ForeignAccess getForeignAccess() {
         return SqueakObjectMessageResolutionForeign.ACCESS;
+    }
+
+    public final boolean isPinned() {
+        return ((hash >> PINNED_BIT_SHIFT) & 1) == 1;
+    }
+
+    public final void setPinned() {
+        setSqueakHash(hash | (1 << PINNED_BIT_SHIFT));
+    }
+
+    public final void unsetPinned() {
+        setSqueakHash(hash & ~(1 << PINNED_BIT_SHIFT));
     }
 }

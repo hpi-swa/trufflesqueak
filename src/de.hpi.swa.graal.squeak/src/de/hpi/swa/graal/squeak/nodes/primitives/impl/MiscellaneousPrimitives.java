@@ -587,6 +587,56 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(index = 183)
+    protected abstract static class PrimIsPinnedNode extends AbstractPrimitiveNode {
+
+        protected PrimIsPinnedNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @Specialization
+        protected final boolean isPinned(final AbstractSqueakObject receiver) {
+            PrimPinNode.printWarningIfNotTesting(code);
+            return receiver.isPinned() ? code.image.sqTrue : code.image.sqFalse;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 184)
+    protected abstract static class PrimPinNode extends AbstractPrimitiveNode {
+
+        protected PrimPinNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @Specialization(guards = "enable")
+        protected final boolean doPinEnable(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final boolean enable) {
+            printWarningIfNotTesting(code);
+            final boolean wasPinned = receiver.isPinned();
+            receiver.setPinned();
+            return wasPinned ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @Specialization(guards = "!enable")
+        protected final boolean doPinDisable(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final boolean enable) {
+            printWarningIfNotTesting(code);
+            final boolean wasPinned = receiver.isPinned();
+            receiver.unsetPinned();
+            return wasPinned ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        protected static final void printWarningIfNotTesting(final CompiledCodeObject code) {
+            if (!code.image.config.isTesting()) {
+                printWarning(code);
+            }
+        }
+
+        private static void printWarning(final CompiledCodeObject code) {
+            code.image.printToStdErr("Object pinning is not supported by this vm, but requested from Squeak/Smalltalk.");
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(index = 240)
     protected abstract static class PrimUTCClockNode extends AbstractClockPrimitiveNode {
 

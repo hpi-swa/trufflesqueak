@@ -213,7 +213,7 @@ public final class SqueakSUnitTestMap {
                     "NumberParsingTest", TEST_TYPE.PASSING,
                     "NumberTest", TEST_TYPE.PASSING,
                     "ObjectFinalizerTests", TEST_TYPE.PASSING,
-                    "ObjectTest", TEST_TYPE.FAILING,
+                    "ObjectTest", TEST_TYPE.PASSING,
                     "OrderedCollectionInspectorTest", TEST_TYPE.PASSING,
                     "OrderedCollectionTest", TEST_TYPE.PASSING,
                     "OrderedDictionaryTest", TEST_TYPE.PASSING,
