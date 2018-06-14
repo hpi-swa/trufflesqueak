@@ -52,6 +52,7 @@ public final class InterruptHandlerNode extends Node {
         signalSemaporeNode = SignalSemaphoreNode.create(method);
     }
 
+    @TruffleBoundary
     public void start() {
         if (disabled) {
             return;
@@ -61,6 +62,11 @@ public final class InterruptHandlerNode extends Node {
                 shouldTrigger = true;
             }
         }, INTERRUPT_CHECKS_EVERY_N_MILLISECONDS, INTERRUPT_CHECKS_EVERY_N_MILLISECONDS, TimeUnit.MILLISECONDS);
+    }
+
+    @TruffleBoundary
+    public void shutdown() {
+        executor.shutdown();
     }
 
     public void setInterruptPending() {
