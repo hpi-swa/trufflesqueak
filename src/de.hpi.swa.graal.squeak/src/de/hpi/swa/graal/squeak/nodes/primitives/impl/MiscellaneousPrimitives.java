@@ -303,7 +303,8 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 141)
     protected abstract static class PrimClipboardTextNode extends AbstractPrimitiveNode {
-        @CompilationFinal private final boolean isHeadless = GraphicsEnvironment.isHeadless();
+        @CompilationFinal protected final boolean isHeadless = GraphicsEnvironment.isHeadless();
+        @Child private NativeGetBytesNode getBytesNode = NativeGetBytesNode.create();
         private String headlessClipboardContents = "";
 
         protected PrimClipboardTextNode(final CompiledMethodObject method, final int numArguments) {
@@ -311,34 +312,47 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
-        @Specialization
-        protected Object doClipboard(final Object receiver, final NotProvided value) {
-            String text;
-            if (!isHeadless) {
-                try {
-                    text = (String) getClipboard().getData(DataFlavor.stringFlavor);
-                } catch (UnsupportedFlavorException | IOException | IllegalStateException e) {
-                    text = "";
-                }
-            } else {
-                text = headlessClipboardContents;
-            }
-            return code.image.wrap(text);
+        @Specialization(guards = "!isHeadless")
+        protected final Object getClipboardText(final Object receiver, final NotProvided value) {
+            return code.image.wrap(getClipboardString());
         }
 
         @SuppressWarnings("unused")
-        @Specialization
-        protected Object doClipboard(final Object receiver, final NativeObject value) {
-            final String text = value.toString();
-            if (!isHeadless) {
-                final StringSelection selection = new StringSelection(text);
-                getClipboard().setContents(selection, selection);
-            } else {
-                headlessClipboardContents = text;
-            }
+        @Specialization(guards = "isHeadless")
+        protected final Object getClipboardTextHeadless(final Object receiver, final NotProvided value) {
+            return code.image.wrap(headlessClipboardContents);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "!isHeadless")
+        protected final Object setClipboardText(final Object receiver, final NativeObject value) {
+            setClipboardString(getBytesNode.executeAsString(value));
             return value;
         }
 
+        @SuppressWarnings("unused")
+        @Specialization(guards = "isHeadless")
+        protected final Object setClipboardTextHeadless(final Object receiver, final NativeObject value) {
+            headlessClipboardContents = getBytesNode.executeAsString(value);
+            return value;
+        }
+
+        @TruffleBoundary
+        private static void setClipboardString(final String text) {
+            final StringSelection selection = new StringSelection(text);
+            getClipboard().setContents(selection, selection);
+        }
+
+        @TruffleBoundary
+        private static String getClipboardString() {
+            try {
+                return (String) getClipboard().getData(DataFlavor.stringFlavor);
+            } catch (UnsupportedFlavorException | IOException | IllegalStateException e) {
+                return "";
+            }
+        }
+
+        @TruffleBoundary
         private static Clipboard getClipboard() {
             return Toolkit.getDefaultToolkit().getSystemClipboard();
         }
