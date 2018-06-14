@@ -50,7 +50,8 @@ public final class SqueakRootNode extends RootNode {
 
     @TruffleBoundary
     private Object extracted() {
-        throw new RuntimeException();
+        System.exit(0);
+        return null;
 // final SqueakImageContext image = language.getContextReference().get();
 // image.interrupt.start();
 // final DirectCallNode callNode;

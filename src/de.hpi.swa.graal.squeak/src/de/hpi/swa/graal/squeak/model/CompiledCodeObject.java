@@ -161,10 +161,9 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         return stackSlots.length;
     }
 
-    @Override
     public final void fillin(final AbstractImageChunk chunk) {
         // final StopWatch fillinWatch = StopWatch.start("compiledCodeFillin");
-        super.fillin(chunk);
+        super.fillinHashAndClass(chunk);
         final List<Integer> data = chunk.data();
         final int header = data.get(0) >> 1; // header is a tagged small integer
         final int literalsize = header & 0x7fff;

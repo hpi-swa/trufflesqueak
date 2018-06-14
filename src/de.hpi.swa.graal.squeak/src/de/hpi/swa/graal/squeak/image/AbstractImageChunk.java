@@ -69,7 +69,7 @@ public abstract class AbstractImageChunk {
         return data;
     }
 
-    public AbstractSqueakObject asClassObject() {
+    public ClassObject asClassObject() {
         if (object == null) {
             assert format == 1;
             object = new ClassObject(image);

@@ -65,9 +65,8 @@ public final class ContextObject extends AbstractSqueakObject {
         pointers[CONTEXT.SENDER_OR_NIL] = image.nil;
     }
 
-    @Override
     public void fillin(final AbstractImageChunk chunk) {
-        super.fillin(chunk);
+        super.fillinHashAndClass(chunk);
         pointers = chunk.getPointers();
     }
 

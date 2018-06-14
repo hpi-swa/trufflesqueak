@@ -30,7 +30,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         return obj instanceof AbstractSqueakObject;
     }
 
-    public void fillin(final AbstractImageChunk chunk) {
+    public final void fillinHashAndClass(final AbstractImageChunk chunk) {
         hash = chunk.getHash();
         sqClass = chunk.getSqClass();
     }

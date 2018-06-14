@@ -93,9 +93,8 @@ public final class NativeObject extends AbstractSqueakObject {
         return new String((byte[]) storage);
     }
 
-    @Override
     public void fillin(final AbstractImageChunk chunk) {
-        super.fillin(chunk);
+        super.fillinHashAndClass(chunk);
         CompilerDirectives.transferToInterpreterAndInvalidate();
         if (isByteType()) {
             storage = chunk.getBytes();

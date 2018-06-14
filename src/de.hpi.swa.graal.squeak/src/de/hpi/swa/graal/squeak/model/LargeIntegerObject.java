@@ -51,9 +51,8 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         integer = original.integer;
     }
 
-    @Override
     public void fillin(final AbstractImageChunk chunk) {
-        super.fillin(chunk);
+        super.fillinHashAndClass(chunk);
         bytes = chunk.getBytes();
         integer = derivedBigIntegerFromBytes(bytes, isNegative());
     }

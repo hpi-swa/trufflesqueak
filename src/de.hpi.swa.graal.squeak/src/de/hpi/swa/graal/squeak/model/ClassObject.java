@@ -77,9 +77,8 @@ public final class ClassObject extends AbstractSqueakObject {
         return isMetaclass() || isAMetaclass();
     }
 
-    @Override
     public void fillin(final AbstractImageChunk chunk) {
-        super.fillin(chunk);
+        super.fillinHashAndClass(chunk);
         pointers = chunk.getPointers();
         // initialize the subclasses set
         setFormat((long) at0(CLASS.FORMAT));

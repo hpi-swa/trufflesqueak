@@ -35,7 +35,7 @@ public abstract class FillInNode extends Node {
 
     public abstract void execute(VirtualFrame frame, Object obj, AbstractImageChunk chunk);
 
-    @Specialization(guards = "chunk.getFormat() == 3")
+    @Specialization
     protected void doBlockClosure(final BlockClosureObject obj, final AbstractImageChunk chunk) {
         obj.fillin(chunk);
     }
@@ -45,32 +45,32 @@ public abstract class FillInNode extends Node {
         obj.fillin(chunk);
     }
 
-    @Specialization(guards = {"chunk.getFormat() > 23", "chunk.getFormat() <= 31"})
+    @Specialization
     protected void doCompiledCodeObj(final CompiledCodeObject obj, final AbstractImageChunk chunk) {
         obj.fillin(chunk);
     }
 
-    @Specialization(guards = "chunk.getFormat() == 3")
+    @Specialization
     protected void doContext(final ContextObject obj, final AbstractImageChunk chunk) {
         obj.fillin(chunk);
     }
 
-    @Specialization(guards = "chunk.getFormat() == 0")
+    @Specialization
     protected void doEmpty(final EmptyObject obj, final AbstractImageChunk chunk) {
         obj.fillin(chunk);
     }
 
-    @Specialization(guards = {"chunk.getFormat() > 9", "chunk.getFormat() <= 11"})
+    @Specialization
     protected void doFloat(final FloatObject obj, final AbstractImageChunk chunk) {
         obj.fillin(chunk);
     }
 
-    @Specialization(guards = {"chunk.getFormat() > 15", "chunk.getFormat() <= 23"})
+    @Specialization
     protected void doLargeInteger(final LargeIntegerObject obj, final AbstractImageChunk chunk) {
         obj.fillin(chunk);
     }
 
-    @Specialization(guards = {"chunk.getFormat() >= 9", "chunk.getFormat() <= 23"})
+    @Specialization
     protected void doNativeObj(final NativeObject obj, final AbstractImageChunk chunk) {
         obj.fillin(chunk);
         if (obj.isByteType()) {
@@ -88,18 +88,13 @@ public abstract class FillInNode extends Node {
         obj.fillin(chunk);
     }
 
-    @Specialization(guards = {"chunk.getFormat() >= 1", "chunk.getFormat() <= 5", "chunk.getFormat() != 4"})
+    @Specialization
     protected void doPointers(final PointersObject obj, final AbstractImageChunk chunk) {
         obj.fillin(chunk);
     }
 
-    @Specialization(guards = "chunk.getFormat() == 4")
-    protected void doWeakPointers(final WeakPointersObject obj, final AbstractImageChunk chunk) {
-        obj.fillin(chunk);
-    }
-
     @Specialization
-    protected void doAbstractSqueakObj(final AbstractSqueakObject obj, final AbstractImageChunk chunk) {
+    protected void doWeakPointers(final WeakPointersObject obj, final AbstractImageChunk chunk) {
         obj.fillin(chunk);
     }
 

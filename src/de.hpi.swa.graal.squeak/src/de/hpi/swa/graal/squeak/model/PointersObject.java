@@ -29,9 +29,8 @@ public final class PointersObject extends AbstractSqueakObject {
         this(img, classObject, ArrayUtils.withAll(size, img.nil));
     }
 
-    @Override
     public void fillin(final AbstractImageChunk chunk) {
-        super.fillin(chunk);
+        super.fillinHashAndClass(chunk);
         pointers = chunk.getPointers();
     }
 

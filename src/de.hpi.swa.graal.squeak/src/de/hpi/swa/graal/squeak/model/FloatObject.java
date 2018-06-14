@@ -37,9 +37,8 @@ public final class FloatObject extends AbstractSqueakObject {
         setWords(high, low);
     }
 
-    @Override
     public void fillin(final AbstractImageChunk chunk) {
-        super.fillin(chunk);
+        super.fillinHashAndClass(chunk);
         final int[] words = chunk.getWords();
         assert words.length == WORD_LENGTH;
         setWords(words[1], words[0]);

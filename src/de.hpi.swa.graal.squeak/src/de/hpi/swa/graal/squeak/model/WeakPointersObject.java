@@ -40,9 +40,8 @@ public final class WeakPointersObject extends AbstractSqueakObject {
         return "WeakPointersObject: " + getSqClass();
     }
 
-    @Override
     public void fillin(final AbstractImageChunk chunk) {
-        super.fillin(chunk);
+        super.fillinHashAndClass(chunk);
         pointers = chunk.getPointers();
         convertToWeakReferences();
     }

@@ -187,23 +187,6 @@ public final class SqueakImageContext {
         return Truffle.getRuntime().createCallTarget(ExecuteTopLevelContextNode.create(getLanguage(), customContext));
     }
 
-    public void fillInFrom(final FileInputStream inputStream, final VirtualFrame frame) throws IOException {
-// output.println("Going to sleep...");
-// try {
-// Thread.sleep(10000);
-// } catch (InterruptedException e) {
-// output.println(e.getMessage());
-// }
-// output.println("Waking and now Loading!");
-        final StopWatch imageWatch = StopWatch.start("readImage");
-        SqueakImageReader.readImage(this, inputStream, frame);
-        imageWatch.stopAndPrint();
-        System.exit(0);
-        if (!display.isHeadless() && simulatePrimitiveArgs.isNil()) {
-            throw new SqueakException("Unable to find BitBlt simulation in image, cannot run with display.");
-        }
-    }
-
     public PrintWriter getOutput() {
         return output;
     }

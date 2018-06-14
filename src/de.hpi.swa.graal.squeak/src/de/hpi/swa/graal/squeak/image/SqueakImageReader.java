@@ -55,14 +55,9 @@ public final class SqueakImageReader extends Node {
         fillInNode = FillInNode.create(image);
     }
 
-    public static void readImage(final SqueakImageContext squeakImageContext, final FileInputStream inputStream, final VirtualFrame frame) throws IOException {
-        // final SqueakImageReader instance = new SqueakImageReader(inputStream,
-        // squeakImageContext.getOutput(), frame);
-        // instance.readImage(squeakImageContext);
-    }
-
-    public void executeRead(final VirtualFrame frame) throws IOException {
+    public void executeRead(final VirtualFrame frame) throws IOException, SqueakException {
         output.println("Reading image...");
+        final StopWatch imageWatch = StopWatch.start("readImage");
         output.println("Reading header...");
         final StopWatch headerWatch = StopWatch.start("readHeader");
         readHeader();
@@ -72,6 +67,10 @@ public final class SqueakImageReader extends Node {
         readBody();
         bodyWatch.stopAndPrint();
         initObjects(frame);
+        imageWatch.stopAndPrint();
+        if (!image.display.isHeadless() && image.simulatePrimitiveArgs.isNil()) {
+            throw new SqueakException("Unable to find BitBlt simulation in image, cannot run with display.");
+        }
     }
 
     private short nextShort() throws IOException {
@@ -118,7 +117,7 @@ public final class SqueakImageReader extends Node {
         return version;
     }
 
-    private void readBaseHeader(final SqueakImageContext image) throws IOException {
+    private void readBaseHeader() throws IOException {
         headerSize = nextInt();
         nextInt(); // endOfMemory
         oldBaseAddress = nextInt();
@@ -143,7 +142,7 @@ public final class SqueakImageReader extends Node {
 
     private void readHeader() throws IOException {
         readVersion();
-        readBaseHeader(image);
+        readBaseHeader();
         readSpurHeader();
         skipToBody();
     }
@@ -159,7 +158,7 @@ public final class SqueakImageReader extends Node {
         int currentAddressSwizzle = oldBaseAddress;
         while (this.position < segmentEnd) {
             while (this.position < segmentEnd - 16) {
-                final AbstractImageChunk chunk = readObject(image);
+                final AbstractImageChunk chunk = readObject();
                 if (chunk.classid == FREE_OBJECT_CLASS_INDEX_PUN) {
                     continue;
                 }
@@ -184,7 +183,7 @@ public final class SqueakImageReader extends Node {
         this.stream.close();
     }
 
-    private AbstractImageChunk readObject(final SqueakImageContext image) throws IOException {
+    private AbstractImageChunk readObject() throws IOException {
         int pos = position;
         assert pos % 8 == 0;
         long headerWord = nextLong();
@@ -235,7 +234,7 @@ public final class SqueakImageReader extends Node {
         specialObjectChunk(idx).object = object;
     }
 
-    private void initPrebuiltConstant(final SqueakImageContext image) {
+    private void initPrebuiltConstant() {
         final AbstractImageChunk specialObjectsChunk = chunktable.get(specialObjectsPointer);
         specialObjectsChunk.object = image.specialObjectsArray;
 
@@ -243,15 +242,15 @@ public final class SqueakImageReader extends Node {
         // those classes that do not have any instances. Metaclass always
         // has instances, and all instances of Metaclass have their singleton
         // Behavior instance, so these are all correctly initialized already
-        final AbstractImageChunk sqArray = classChunkOf(specialObjectsChunk, image);
-        final AbstractImageChunk sqArrayClass = classChunkOf(sqArray, image);
-        final AbstractImageChunk sqMetaclass = classChunkOf(sqArrayClass, image);
+        final AbstractImageChunk sqArray = classChunkOf(specialObjectsChunk);
+        final AbstractImageChunk sqArrayClass = classChunkOf(sqArray);
+        final AbstractImageChunk sqMetaclass = classChunkOf(sqArrayClass);
         sqMetaclass.object = image.metaclass;
 
         // also cache nil, true, and false classes
-        classChunkOf(specialObjectChunk(0), image).object = image.nilClass;
-        classChunkOf(specialObjectChunk(1), image).object = image.falseClass;
-        classChunkOf(specialObjectChunk(2), image).object = image.trueClass;
+        classChunkOf(specialObjectChunk(0)).object = image.nilClass;
+        classChunkOf(specialObjectChunk(1)).object = image.falseClass;
+        classChunkOf(specialObjectChunk(2)).object = image.trueClass;
 
         setPrebuiltObject(0, NIL_OBJECT_PLACEHOLDER);
         setPrebuiltObject(1, image.sqFalse);
@@ -273,7 +272,7 @@ public final class SqueakImageReader extends Node {
         setPrebuiltObject(SPECIAL_SELECTORS_INDEX, image.specialSelectors);
     }
 
-    private void initPrebuiltSelectors(final SqueakImageContext image) {
+    private void initPrebuiltSelectors() {
         final AbstractImageChunk specialObjectsChunk = chunktable.get(specialObjectsPointer);
         final AbstractImageChunk specialSelectorChunk = chunktable.get(specialObjectsChunk.data().get(SPECIAL_SELECTORS_INDEX));
 
@@ -284,13 +283,13 @@ public final class SqueakImageReader extends Node {
     }
 
     private void initObjects(final VirtualFrame frame) {
-        initPrebuiltConstant(image);
-        initPrebuiltSelectors(image);
+        initPrebuiltConstant();
+        initPrebuiltSelectors();
         // connect all instances to their classes
         output.println("Connecting classes...");
         final StopWatch setClassesWatch = StopWatch.start("setClasses");
         for (AbstractImageChunk chunk : chunklist) {
-            chunk.setSqClass(classOf(chunk, image));
+            chunk.setSqClass(classChunkOf(chunk).asClassObject());
         }
         setClassesWatch.stopAndPrint();
         final StopWatch instantiateWatch = StopWatch.start("instClasses");
@@ -340,16 +339,12 @@ public final class SqueakImageReader extends Node {
         }
     }
 
-    private AbstractImageChunk classChunkOf(final AbstractImageChunk chunk, final SqueakImageContext image) {
+    private AbstractImageChunk classChunkOf(final AbstractImageChunk chunk) {
         final int majorIdx = majorClassIndexOf(chunk.classid);
         final int minorIdx = minorClassIndexOf(chunk.classid);
         final AbstractImageChunk hiddenRoots = chunklist.get(HIDDEN_ROOTS_CHUNK);
         final AbstractImageChunk classTablePage = chunktable.get(hiddenRoots.data().get(majorIdx));
         return chunktable.get(classTablePage.data().get(minorIdx));
-    }
-
-    private ClassObject classOf(final AbstractImageChunk chunk, final SqueakImageContext image) {
-        return (ClassObject) classChunkOf(chunk, image).asClassObject();
     }
 
     private static int majorClassIndexOf(final int classid) {
