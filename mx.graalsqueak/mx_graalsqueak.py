@@ -88,6 +88,8 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
                         help='disable interrupt handler',
                         dest='disable_interrupts',
                         action='store_true', default=False)
+    parser.add_argument('--gc', action='store_true',
+                        help='print garbage collection details')
     parser.add_argument('--igv', action='store_true', help='dump to igv')
     parser.add_argument('-l', '--low-level',
                         help='enable low-level optimization output',
@@ -131,17 +133,24 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
                         nargs=argparse.REMAINDER)
     parsed_args = parser.parse_args(raw_args)
 
-    vm_args = ['-cp', mx.classpath(PACKAGE_NAME)]
+    vm_args = [
+        '-Xms2G',  # Initial heap size
+        '-XX:MetaspaceSize=64M',  # Initial size of Metaspaces
+        '-cp', mx.classpath(PACKAGE_NAME),
+    ]
 
     if _compiler:
-        vm_args.extend(_graal_vm_args(parsed_args))
+        vm_args += _graal_vm_args(parsed_args)
 
     # default: assertion checking is enabled
     if parsed_args.assertions:
-        vm_args.extend(['-ea', '-esa'])
+        vm_args += ['-ea', '-esa']
+
+    if parsed_args.gc:
+        vm_args += ['-XX:+PrintGC', '-XX:+PrintGCDetails']
 
     if extra_vm_args:
-        vm_args.extend(extra_vm_args)
+        vm_args += extra_vm_args
 
     vm_args.append('%s.GraalSqueakMain' % PACKAGE_NAME)
 
