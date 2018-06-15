@@ -720,8 +720,8 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization
-        protected final Object doGC(final VirtualFrame frame, final AbstractSqueakObject receiver) {
-            MiscUtils.systemGC();
+        protected final Object doIncrementalGC(final VirtualFrame frame, final AbstractSqueakObject receiver) {
+            // It is not possible to suggest incremental GCs, so do not do anything here
             return code.image.wrap(MiscUtils.runtimeFreeMemory());
         }
     }
