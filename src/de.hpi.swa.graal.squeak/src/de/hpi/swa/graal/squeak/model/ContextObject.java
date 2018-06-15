@@ -14,7 +14,6 @@ import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
-import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public final class ContextObject extends AbstractSqueakObject {
@@ -39,7 +38,7 @@ public final class ContextObject extends AbstractSqueakObject {
     private ContextObject(final SqueakImageContext image, final int size) {
         this(image);
         isDirty = true;
-        pointers = ArrayUtils.withAll(CONTEXT.TEMP_FRAME_START + size, null);
+        pointers = new Object[CONTEXT.TEMP_FRAME_START + size];
     }
 
     public static ContextObject create(final SqueakImageContext image, final int size, final MaterializedFrame frame) {
