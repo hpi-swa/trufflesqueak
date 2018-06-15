@@ -1,17 +1,21 @@
 package de.hpi.swa.graal.squeak.nodes;
 
 import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.BranchProfile;
 
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public abstract class GetBlockFrameArgumentsNode extends Node {
+    @CompilationFinal private final BranchProfile errorProfile = BranchProfile.create();
+
     public static GetBlockFrameArgumentsNode create() {
         return GetBlockFrameArgumentsNodeGen.create();
     }
@@ -20,7 +24,7 @@ public abstract class GetBlockFrameArgumentsNode extends Node {
 
     @Specialization(guards = {"objects.length == numObjects", "block.getCallTarget() == cachedCallTarget"}, limit = "3", assumptions = "callTargetStable")
     @ExplodeLoop
-    protected static final Object[] doCached(final BlockClosureObject block, final Object senderOrMarker, final Object[] objects,
+    protected final Object[] doCached(final BlockClosureObject block, final Object senderOrMarker, final Object[] objects,
                     @SuppressWarnings("unused") @Cached("block.getCallTarget()") final RootCallTarget cachedCallTarget,
                     @SuppressWarnings("unused") @Cached("block.getCallTargetStable()") final Assumption callTargetStable,
                     @Cached("block.getStack().length") final int numCopied,
@@ -38,7 +42,7 @@ public abstract class GetBlockFrameArgumentsNode extends Node {
     }
 
     @Specialization(replaces = "doCached")
-    protected static final Object[] doUncached(final BlockClosureObject block, final Object senderOrMarker, final Object[] objects) {
+    protected final Object[] doUncached(final BlockClosureObject block, final Object senderOrMarker, final Object[] objects) {
         final int numObjects = objects.length;
         final Object[] copied = block.getStack();
         final int numCopied = copied.length;
@@ -52,9 +56,10 @@ public abstract class GetBlockFrameArgumentsNode extends Node {
         return arguments;
     }
 
-    private static Object[] fillInSpecial(final BlockClosureObject block, final Object senderOrMarker, final int numObjects, final int numCopied) {
+    private Object[] fillInSpecial(final BlockClosureObject block, final Object senderOrMarker, final int numObjects, final int numCopied) {
         final CompiledBlockObject blockObject = block.getCompiledBlock();
         if (blockObject.getNumArgs() != numObjects) { // TODO: turn this into an assertion
+            errorProfile.enter();
             block.image.printToStdErr("number of required and provided block arguments do not match");
         }
         final Object[] arguments = new Object[FrameAccess.ARGUMENTS_START +
