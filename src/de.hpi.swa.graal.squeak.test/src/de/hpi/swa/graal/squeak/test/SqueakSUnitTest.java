@@ -195,11 +195,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
     }
 
     private static boolean runsOnMXGate() {
-        try {
-            return System.getenv("MX_GATE").equals("true");
-        } catch (NullPointerException e) {
-            return false; // ${MX_GATE} environment variable not set
-        }
+        return "true".equals(System.getenv("MX_GATE"));
     }
 
     private static void assumeNotOnMXGate() {
