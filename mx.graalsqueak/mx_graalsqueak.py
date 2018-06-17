@@ -7,6 +7,10 @@ import mx_unittest
 
 
 PACKAGE_NAME = 'de.hpi.swa.graal.squeak'
+BASE_VM_ARGS = [
+    '-Xms2G',  # Initial heap size
+    '-XX:MetaspaceSize=64M',  # Initial size of Metaspaces
+]
 
 _suite = mx.suite('graalsqueak')
 _compiler = mx.suite('compiler', fatalIfMissing=False)
@@ -133,11 +137,8 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
                         nargs=argparse.REMAINDER)
     parsed_args = parser.parse_args(raw_args)
 
-    vm_args = [
-        '-Xms2G',  # Initial heap size
-        '-XX:MetaspaceSize=64M',  # Initial size of Metaspaces
-        '-cp', mx.classpath(PACKAGE_NAME),
-    ]
+    vm_args = BASE_VM_ARGS
+    vm_args += ['-cp', mx.classpath(PACKAGE_NAME)]
 
     if _compiler:
         vm_args += _graal_vm_args(parsed_args)
@@ -186,8 +187,9 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
 
 def _graalsqueak_gate_runner(args, tasks):
     os.environ['MX_GATE'] = 'true'
-    unittest_args = _get_jacoco_agent_args()
-    unittest_args.extend(['--suite', 'graalsqueak'])
+    unittest_args = BASE_VM_ARGS
+    unittest_args += _get_jacoco_agent_args()
+    unittest_args += ['--suite', 'graalsqueak']
     with mx_gate.Task('TestGraalSqueak', tasks, tags=['test']) as t:
         if t:
             mx_unittest.unittest(unittest_args)
