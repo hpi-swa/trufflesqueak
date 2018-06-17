@@ -217,10 +217,6 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         return (1 + numLiterals) * BYTES_PER_WORD; // header plus numLiterals
     }
 
-    public final int size() {
-        return getBytecodeOffset() + bytes.length;
-    }
-
     public final void atput0(final long longIndex, final Object obj) {
         final int index = (int) longIndex;
         assert index >= 0;

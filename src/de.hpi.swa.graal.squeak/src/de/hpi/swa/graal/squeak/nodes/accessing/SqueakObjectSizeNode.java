@@ -7,7 +7,8 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
-import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
+import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
+import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.EmptyObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
@@ -52,7 +53,12 @@ public abstract class SqueakObjectSizeNode extends Node {
     }
 
     @Specialization
-    protected static final int doCode(final CompiledCodeObject obj) {
+    protected static final int doMethod(final CompiledMethodObject obj) {
+        return obj.size();
+    }
+
+    @Specialization
+    protected static final int doBlock(final CompiledBlockObject obj) {
         return obj.size();
     }
 

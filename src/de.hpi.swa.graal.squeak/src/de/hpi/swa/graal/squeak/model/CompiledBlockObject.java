@@ -95,4 +95,8 @@ public final class CompiledBlockObject extends CompiledCodeObject {
     public AbstractSqueakObject shallowCopy() {
         return new CompiledBlockObject(this);
     }
+
+    public int size() {
+        return outerMethod.size();
+    }
 }
