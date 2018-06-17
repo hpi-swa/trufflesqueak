@@ -60,7 +60,7 @@ public final class SqueakSUnitTestMap {
                     "ClipboardTest", TEST_TYPE.PASSING,
                     "ClosureCompilerTest", TEST_TYPE.NOT_TERMINATING, // requires sources
                     "ClosureTests", TEST_TYPE.PASSING,
-                    "CogVMBaseImageTests", TEST_TYPE.FAILING,
+                    "CogVMBaseImageTests", TEST_TYPE.PASSING,
                     "CollectionTest", TEST_TYPE.PASSING,
                     "ColorTest", TEST_TYPE.PASSING,
                     "CompiledMethodComparisonTest", TEST_TYPE.NOT_TERMINATING,
@@ -78,7 +78,7 @@ public final class SqueakSUnitTestMap {
                     "DateAndTimeTest", TEST_TYPE.PASSING,
                     "DateTest", TEST_TYPE.PASSING,
                     "DebuggerExtensionsTest", TEST_TYPE.PASSING,
-                    "DebuggerUnwindBug", TEST_TYPE.FAILING,
+                    "DebuggerUnwindBug", TEST_TYPE.PASSING,
                     "DecompilerTests", TEST_TYPE.IGNORE, // slow
                     "DelayTest", TEST_TYPE.PASSING,
                     "DependencyBrowserTest", TEST_TYPE.IGNORE,
@@ -258,7 +258,7 @@ public final class SqueakSUnitTestMap {
                     "ScrollPaneRetractableBarsTest", TEST_TYPE.PASSING,
                     "ScrollPaneTest", TEST_TYPE.PASSING,
                     "SecureHashAlgorithmTest", TEST_TYPE.PASSING,
-                    "SemaphoreTest", TEST_TYPE.FAILING,
+                    "SemaphoreTest", TEST_TYPE.FAILING, // testSemaInCriticalWait failing in Squeak
                     "SequenceableCollectionTest", TEST_TYPE.PASSING,
                     "SetTest", TEST_TYPE.PASSING,
                     "SetWithNilTest", TEST_TYPE.PASSING,
