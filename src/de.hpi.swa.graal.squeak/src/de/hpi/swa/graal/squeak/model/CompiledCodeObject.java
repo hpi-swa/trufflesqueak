@@ -104,12 +104,10 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
     @TruffleBoundary
     protected final void prepareFrameDescriptor() {
         frameDescriptor = frameDescriptorTemplate.shallowCopy();
-        if (canBeVirtualized()) {
-            final int frameSize = frameSize();
-            stackSlots = new FrameSlot[frameSize];
-            for (int i = 0; i < frameSize; i++) {
-                stackSlots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Illegal);
-            }
+        final int frameSize = frameSize();
+        stackSlots = new FrameSlot[frameSize];
+        for (int i = 0; i < frameSize; i++) {
+            stackSlots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Illegal);
         }
     }
 
