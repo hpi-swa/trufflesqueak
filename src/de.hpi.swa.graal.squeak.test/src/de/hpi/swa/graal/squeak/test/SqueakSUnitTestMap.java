@@ -351,7 +351,7 @@ public final class SqueakSUnitTestMap {
                     "VersionNumberTest", TEST_TYPE.PASSING,
                     "WeakFinalizersTest", TEST_TYPE.PASSING,
                     "WeakIdentityKeyDictionaryTest", TEST_TYPE.FLAKY,
-                    "WeakMessageSendTest", TEST_TYPE.PASSING,
+                    "WeakMessageSendTest", TEST_TYPE.FAILING, // failing since incr. GC != full GC
                     "WeakRegistryTest", TEST_TYPE.NOT_TERMINATING, // flaky and slow (uses Delays)
                     "WeakSetInspectorTest", TEST_TYPE.IGNORE, // doesn't terminate sometimes on JDK8
                     "WeakSetTest", TEST_TYPE.FLAKY,
