@@ -853,6 +853,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected final Object doGet(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long index) {
             try {
                 return code.image.wrap(externalModuleNames[(int) index - 1]);
