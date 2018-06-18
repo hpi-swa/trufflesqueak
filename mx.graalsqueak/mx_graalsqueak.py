@@ -88,6 +88,10 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
                         help='disable background compilation',
                         dest='background_compilation',
                         action='store_false', default=True)
+    parser.add_argument('--cpusampler', help='enable CPU sampling',
+                        dest='cpusampler', action='store_true', default=False)
+    parser.add_argument('--cputracer', help='enable CPU tracing',
+                        dest='cputracer', action='store_true', default=False)
     parser.add_argument('-d', '--disable-interrupts',
                         help='disable interrupt handler',
                         dest='disable_interrupts',
@@ -172,6 +176,10 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
         squeak_arguments.append('--verbose')
     if parsed_args.image_arguments:
         squeak_arguments.extend(['--args'] + parsed_args.image_arguments)
+    if parsed_args.cpusampler:
+        squeak_arguments.append('--cpusampler')
+    if parsed_args.cputracer:
+        squeak_arguments.append('--cputracer')
 
     if parsed_args.image:
         squeak_arguments = [parsed_args.image] + squeak_arguments
