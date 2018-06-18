@@ -97,6 +97,7 @@ public final class ClassObject extends AbstractSqueakObject {
         instanceSize = (int) (format & 0xffff);
     }
 
+    @TruffleBoundary
     public void setSuperclass(final Object superclass) {
         final Object oldSuperclass = getSuperclass();
         pointers[CLASS.SUPERCLASS] = superclass;
@@ -123,10 +124,12 @@ public final class ClassObject extends AbstractSqueakObject {
         methodLookupStable.invalidate();
     }
 
+    @TruffleBoundary
     private void attachSubclass(final ClassObject classObject) {
         subclasses.add(classObject);
     }
 
+    @TruffleBoundary
     private void detachSubclass(final ClassObject classObject) {
         subclasses.remove(classObject);
     }
