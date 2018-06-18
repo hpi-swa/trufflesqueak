@@ -39,18 +39,18 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.StoreBytecodes.StoreIntoRemoteTem
 
 public final class SqueakBytecodeDecoder {
     @CompilationFinal private final CompiledCodeObject code;
-    @CompilationFinal(dimensions = 1) private final byte[] bc;
+    @CompilationFinal(dimensions = 1) private final byte[] bytecode;
     private int currentIndex = 0;
 
     public SqueakBytecodeDecoder(final CompiledCodeObject code) {
         this.code = code;
-        this.bc = code.getBytes();
+        this.bytecode = code.getBytes();
     }
 
     public AbstractBytecodeNode[] decode() {
-        final AbstractBytecodeNode[] nodes = new AbstractBytecodeNode[bc.length];
+        final AbstractBytecodeNode[] nodes = new AbstractBytecodeNode[bytecode.length];
         int i = 1;
-        while (currentIndex < bc.length) {
+        while (currentIndex < bytecode.length) {
             final int index = currentIndex;
             nodes[index] = decodeNextByte();
             nodes[index].setLineNumber(i);
@@ -60,10 +60,10 @@ public final class SqueakBytecodeDecoder {
     }
 
     private int nextByte() {
-        if (currentIndex >= bc.length) {
+        if (currentIndex >= bytecode.length) {
             return 0;
         }
-        int b = bc[currentIndex];
+        int b = bytecode[currentIndex];
         if (b < 0) {
             b = 256 + b;
         }
