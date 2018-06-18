@@ -34,7 +34,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
     protected static final int BYTES_PER_WORD = 4;
 
     // frame info
-    @CompilationFinal private static FrameDescriptor frameDescriptorTemplate;
+    @CompilationFinal public static FrameDescriptor frameDescriptorTemplate;
     @CompilationFinal public static FrameSlot thisContextOrMarkerSlot;
     @CompilationFinal public static FrameSlot instructionPointerSlot;
     @CompilationFinal public static FrameSlot stackPointerSlot;

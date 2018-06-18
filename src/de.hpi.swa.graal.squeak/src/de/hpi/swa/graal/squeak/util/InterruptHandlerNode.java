@@ -10,25 +10,33 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.DirectCallNode;
+import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotWriteNode;
 import de.hpi.swa.graal.squeak.nodes.process.SignalSemaphoreNode;
 
-public final class InterruptHandlerNode extends Node {
+public final class InterruptHandlerNode extends RootNode {
     @CompilationFinal private static final int INTERRUPT_CHECKS_EVERY_N_MILLISECONDS = 3;
     @CompilationFinal private final SqueakImageContext image;
     @CompilationFinal private final boolean disabled;
     @CompilationFinal private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     @CompilationFinal private final ConditionProfile countingProfile = ConditionProfile.createCountingProfile();
     @CompilationFinal private final Deque<Integer> semaphoresToSignal = new ArrayDeque<>();
+    @CompilationFinal private final DirectCallNode callNode;
+
+    @Child private GetOrCreateContextNode contextNode = GetOrCreateContextNode.create();
+    @Child private FrameSlotWriteNode contextWriteNode = FrameSlotWriteNode.createForContextOrMarker();
     @Child private SignalSemaphoreNode signalSemaporeNode;
+
     private long nextWakeupTick = 0;
     private boolean interruptPending = false;
     private boolean disabledTemporarily = false;
@@ -39,8 +47,15 @@ public final class InterruptHandlerNode extends Node {
         return new InterruptHandlerNode(image, config);
     }
 
+    @Override
+    public String getName() {
+        return "<interrupt check>";
+    }
+
     protected InterruptHandlerNode(final SqueakImageContext image, final SqueakConfig config) {
+        super(image.getLanguage(), CompiledCodeObject.frameDescriptorTemplate.shallowCopy());
         this.image = image;
+        this.callNode = DirectCallNode.create(Truffle.getRuntime().createCallTarget(this));
 
         disabled = config.disableInterruptHandler();
         if (disabled) {
@@ -110,11 +125,16 @@ public final class InterruptHandlerNode extends Node {
         if (countingProfile.profile(!shouldTrigger)) {
             return;
         }
-        executeCheck(frame.materialize());
+        doTrigger(frame);
     }
 
-    @TruffleBoundary
-    public void executeCheck(final MaterializedFrame frame) {
+    public void doTrigger(final VirtualFrame frame) {
+        callNode.call(new Object[]{contextNode.executeGet(frame, false, false)});
+    }
+
+    @Override
+    public Object execute(final VirtualFrame frame) {
+        contextWriteNode.executeWrite(frame, frame.getArguments()[0]);
         shouldTrigger = false;
         if (interruptPending) {
             interruptPending = false; // reset interrupt flag
@@ -128,23 +148,33 @@ public final class InterruptHandlerNode extends Node {
             pendingFinalizationSignals = false;
             signalSemaporeIfNotNil(frame, SPECIAL_OBJECT_INDEX.TheFinalizationSemaphore);
         }
-        if (!semaphoresToSignal.isEmpty()) {
+        if (!hasSemaphoresToSignal()) {
             final Object[] semaphores = ((PointersObject) image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.ExternalObjectsArray)).getPointers();
-            while (!semaphoresToSignal.isEmpty()) {
-                final int semaIndex = semaphoresToSignal.removeFirst();
+            while (!hasSemaphoresToSignal()) {
+                final int semaIndex = nextSemaphoreToSignal();
                 final Object semaphore = semaphores[semaIndex - 1];
-                if (semaphore instanceof PointersObject && ((PointersObject) semaphore).isSemaphore()) {
-                    signalSemaporeNode.executeSignal(frame, (PointersObject) semaphore);
-                }
+                signalSemaporeIfNotNil(frame, semaphore);
             }
         }
+        return null;
     }
 
-    private void signalSemaporeIfNotNil(final MaterializedFrame frame, final int semaphoreIndex) {
-        final Object semaphore = image.specialObjectsArray.at0(semaphoreIndex);
-        if (semaphore instanceof PointersObject && ((PointersObject) semaphore).isSemaphore()) {
-            signalSemaporeNode.executeSignal(frame, (PointersObject) semaphore);
-        }
+    @TruffleBoundary
+    private boolean hasSemaphoresToSignal() {
+        return semaphoresToSignal.isEmpty();
+    }
+
+    @TruffleBoundary
+    private Integer nextSemaphoreToSignal() {
+        return semaphoresToSignal.removeFirst();
+    }
+
+    private void signalSemaporeIfNotNil(final VirtualFrame frame, final int semaphoreIndex) {
+        signalSemaporeIfNotNil(frame, image.specialObjectsArray.at0(semaphoreIndex));
+    }
+
+    private void signalSemaporeIfNotNil(final VirtualFrame frame, final Object semaphore) {
+        signalSemaporeNode.executeSignal(frame, semaphore);
     }
 
     public static int getInterruptChecksEveryNms() {
