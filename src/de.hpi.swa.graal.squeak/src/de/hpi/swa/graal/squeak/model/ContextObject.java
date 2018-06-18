@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.model;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
@@ -18,9 +17,9 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public final class ContextObject extends AbstractSqueakObject {
     @CompilationFinal protected MaterializedFrame truffleFrame;
-    @CompilationFinal(dimensions = 1) protected Object[] pointers;
-    @CompilationFinal private boolean hasModifiedSender;
-    @CompilationFinal private boolean isDirty;
+    protected Object[] pointers;
+    private boolean hasModifiedSender;
+    private boolean isDirty;
 
     public static ContextObject create(final SqueakImageContext image) {
         return new ContextObject(image);
@@ -125,11 +124,9 @@ public final class ContextObject extends AbstractSqueakObject {
         assert index >= 0 && value != null;
         if (index == CONTEXT.SENDER_OR_NIL) {
             image.traceVerbose("Sender of", this, " set to", value);
-            CompilerDirectives.transferToInterpreterAndInvalidate();
             hasModifiedSender = true;
         }
         if (!isDirty) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
             isDirty = true;
         }
         assert value != null; // null indicates a problem
@@ -308,7 +305,6 @@ public final class ContextObject extends AbstractSqueakObject {
         if (!super.become(other)) {
             throw new SqueakException("Should not fail");
         }
-        CompilerDirectives.transferToInterpreterAndInvalidate();
         final Object[] pointers2 = ((ContextObject) other).pointers;
         ((ContextObject) other).pointers = this.pointers;
         pointers = pointers2;
@@ -317,7 +313,6 @@ public final class ContextObject extends AbstractSqueakObject {
 
     @Override
     public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
         for (int i = 0; i < from.length; i++) {
             final Object fromPointer = from[i];
             // skip sender (for performance), pc, and sp

@@ -17,13 +17,13 @@ import de.hpi.swa.graal.squeak.nodes.EnterCodeNode;
 
 public final class BlockClosureObject extends AbstractSqueakObject {
     @CompilationFinal private Object receiver;
-    @CompilationFinal(dimensions = 1) private Object[] copied;
     @CompilationFinal private ContextObject outerContext;
     @CompilationFinal private CompiledBlockObject block;
     @CompilationFinal private long pc = -1;
     @CompilationFinal private long numArgs = -1;
     @CompilationFinal private RootCallTarget callTarget;
     @CompilationFinal private final CyclicAssumption callTargetStable = new CyclicAssumption("BlockClosureObject assumption");
+    private Object[] copied;
 
     public BlockClosureObject(final SqueakImageContext image) {
         super(image, image.blockClosureClass);
@@ -163,8 +163,8 @@ public final class BlockClosureObject extends AbstractSqueakObject {
 
     public CompiledBlockObject getCompiledBlock() {
         if (block == null) {
-            assert pc >= 0;
             CompilerDirectives.transferToInterpreterAndInvalidate();
+            assert pc >= 0;
             final CompiledCodeObject code = outerContext.getMethod();
             final CompiledMethodObject method;
             if (code instanceof CompiledMethodObject) {
