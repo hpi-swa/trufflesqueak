@@ -205,7 +205,7 @@ public final class SqueakImageReader extends Node {
         assert size >= 0;
         assert 0 <= format && format <= 31;
         final AbstractImageChunk chunk = new SqueakImageChunk(this, image, size, format, classid, hash, pos);
-        for (long i = 0; i < wordsFor(size); i++) {
+        for (int i = 0; i < wordsFor(size); i++) {
             if (chunk.size() < size) {
                 chunk.append(nextInt());
             } else {
@@ -213,14 +213,14 @@ public final class SqueakImageReader extends Node {
             }
         }
         if (format < 10 && classid != FREE_OBJECT_CLASS_INDEX_PUN) {
-            for (long slot : chunk.data()) {
+            for (int slot : chunk.data()) {
                 assert slot % 16 != 0 || slot >= oldBaseAddress;
             }
         }
         return chunk;
     }
 
-    private static long wordsFor(final long size) {
+    private static int wordsFor(final int size) {
         // see Spur32BitMemoryManager>>smallObjectBytesForSlots:
         return size <= 1 ? 2 : size + (size & 1);
     }

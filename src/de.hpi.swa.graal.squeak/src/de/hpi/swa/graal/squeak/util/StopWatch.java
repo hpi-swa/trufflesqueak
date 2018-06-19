@@ -36,14 +36,16 @@ public class StopWatch {
 
     public void printTime() {
         final double deltaf = (delta() / 1000_000) / 1000.0;
-        final PrintWriter output = new PrintWriter(System.out, true);
-        output.println(name + ":\t" + deltaf + "s");
+        print(name + ":\t" + deltaf + "s");
     }
 
     public void printTimeMS() {
-        final double deltaf = delta() / 1000_000;
-        final PrintWriter output = new PrintWriter(System.out, true);
-        output.println(name + ":\t" + deltaf + "ms");
+        final double deltaf = delta() / 1000_000.0;
+        print(name + ":\t" + deltaf + "ms");
+    }
+
+    public void printTimeNS() {
+        print(name + ":\t" + delta() + "ns");
     }
 
     public void stopAndPrint() {
@@ -52,8 +54,17 @@ public class StopWatch {
     }
 
     public void stopAndPrintMS() {
-        final double deltaf = stop() / 1000_000;
+        stop();
+        printTimeMS();
+    }
+
+    public void stopAndPrintNS() {
+        stop();
+        printTimeNS();
+    }
+
+    private static void print(final String str) {
         final PrintWriter output = new PrintWriter(System.out, true);
-        output.println(name + ":\t" + deltaf + "ms");
+        output.println(str);
     }
 }

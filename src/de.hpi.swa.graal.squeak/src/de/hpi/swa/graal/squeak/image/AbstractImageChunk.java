@@ -30,7 +30,7 @@ public abstract class AbstractImageChunk {
     @CompilationFinal protected final int classid;
     @CompilationFinal protected final int pos;
 
-    @CompilationFinal private final long size;
+    @CompilationFinal private final int size;
     @CompilationFinal private final SqueakImageReader reader;
     @CompilationFinal protected final int format;
     @CompilationFinal private final int hash;
@@ -39,7 +39,7 @@ public abstract class AbstractImageChunk {
 
     public AbstractImageChunk(final SqueakImageReader reader,
                     final SqueakImageContext image,
-                    final long size,
+                    final int size,
                     final int format,
                     final int classid,
                     final int hash,
@@ -51,14 +51,14 @@ public abstract class AbstractImageChunk {
         this.classid = classid;
         this.hash = hash;
         this.pos = pos;
-        this.data = new ArrayList<>();
+        this.data = new ArrayList<>(size);
     }
 
     public void append(final int nextInt) {
         data.add(nextInt);
     }
 
-    public long size() {
+    public int size() {
         return data.size();
     }
 
@@ -136,7 +136,7 @@ public abstract class AbstractImageChunk {
         return format;
     }
 
-    public long getSize() {
+    public int getSize() {
         return size;
     }
 
