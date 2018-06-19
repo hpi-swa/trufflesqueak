@@ -34,10 +34,10 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
     protected static final int BYTES_PER_WORD = 4;
 
     // frame info
-    @CompilationFinal public static FrameDescriptor frameDescriptorTemplate;
-    @CompilationFinal public static FrameSlot thisContextOrMarkerSlot;
-    @CompilationFinal public static FrameSlot instructionPointerSlot;
-    @CompilationFinal public static FrameSlot stackPointerSlot;
+    @CompilationFinal public static final FrameDescriptor frameDescriptorTemplate;
+    @CompilationFinal public static final FrameSlot thisContextOrMarkerSlot;
+    @CompilationFinal public static final FrameSlot instructionPointerSlot;
+    @CompilationFinal public static final FrameSlot stackPointerSlot;
     @CompilationFinal private FrameDescriptor frameDescriptor;
     @CompilationFinal(dimensions = 1) public FrameSlot[] stackSlots;
     // header info and data
@@ -52,7 +52,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
     @CompilationFinal private long accessModifier;
     @CompilationFinal private boolean altInstructionSet;
 
-    @CompilationFinal public static boolean alwaysNonVirtualized = false;
+    @CompilationFinal public static final boolean ALWAYS_NON_VIRTUALIZED = false;
     @CompilationFinal private final Assumption canBeVirtualized = Truffle.getRuntime().createAssumption("CompiledCodeObject: does not need a materialized context");
 
     @CompilationFinal private Source source;
@@ -69,7 +69,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
 
     protected CompiledCodeObject(final SqueakImageContext img, final ClassObject klass) {
         super(img, klass);
-        if (alwaysNonVirtualized) {
+        if (ALWAYS_NON_VIRTUALIZED) {
             invalidateCanBeVirtualizedAssumption();
         }
     }
