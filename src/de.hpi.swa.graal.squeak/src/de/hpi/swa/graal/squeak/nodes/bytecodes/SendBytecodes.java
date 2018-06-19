@@ -1,9 +1,14 @@
 package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.debug.DebuggerTags;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.GenerateWrapper;
+import com.oracle.truffle.api.instrumentation.InstrumentableNode;
+import com.oracle.truffle.api.instrumentation.ProbeNode;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
+import com.oracle.truffle.api.source.SourceSection;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveWithoutResultException;
 import de.hpi.swa.graal.squeak.model.ClassObject;
@@ -13,13 +18,13 @@ import de.hpi.swa.graal.squeak.nodes.DispatchSendNode;
 import de.hpi.swa.graal.squeak.nodes.LookupNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.GetCompiledMethodNode;
 import de.hpi.swa.graal.squeak.nodes.context.SqueakLookupClassNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPopNReversedNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 
 public final class SendBytecodes {
 
-    public abstract static class AbstractSendNode extends AbstractBytecodeNode {
+    @GenerateWrapper
+    public abstract static class AbstractSendNode extends AbstractBytecodeNode implements InstrumentableNode {
         @CompilationFinal protected final NativeObject selector;
         @CompilationFinal private final int argumentCount;
         @Child protected SqueakLookupClassNode lookupClassNode;
@@ -27,7 +32,7 @@ public final class SendBytecodes {
         @Child private DispatchSendNode dispatchSendNode;
         @Child private StackPopNReversedNode popNReversedNode;
         @Child private StackPushNode pushNode = StackPushNode.create();
-        @Child private FrameSlotReadNode readContextNode = FrameSlotReadNode.createForContextOrMarker();
+        @CompilationFinal private SourceSection sourceSection;
 
         private AbstractSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object sel, final int argcount) {
             super(code, index, numBytecodes);
@@ -36,6 +41,10 @@ public final class SendBytecodes {
             lookupClassNode = SqueakLookupClassNode.create(code.image);
             popNReversedNode = StackPopNReversedNode.create(code, 1 + argumentCount);
             dispatchSendNode = DispatchSendNode.create(code.image);
+        }
+
+        protected AbstractSendNode(final AbstractSendNode original) {
+            this(original.code, original.index, original.numBytecodes, original.selector, original.argumentCount);
         }
 
         @Override
@@ -53,7 +62,7 @@ public final class SendBytecodes {
             final Object[] rcvrAndArgs = (Object[]) popNReversedNode.executeRead(frame);
             final ClassObject rcvrClass = lookupClassNode.executeLookup(rcvrAndArgs[0]);
             final Object lookupResult = lookupNode.executeLookup(rcvrClass, selector);
-            final Object contextOrMarker = readContextNode.executeRead(frame);
+            final Object contextOrMarker = getContextOrMarker(frame);
             return dispatchSendNode.executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs, contextOrMarker);
         }
 
@@ -62,13 +71,22 @@ public final class SendBytecodes {
         }
 
         @Override
-        public final boolean hasTag(final Class<? extends Tag> tag) {
-            return ((tag == StandardTags.StatementTag.class) || (tag == StandardTags.CallTag.class));
+        public String toString() {
+            return "send: " + selector.asString();
         }
 
         @Override
-        public String toString() {
-            return "send: " + selector.asString();
+        public final boolean hasTag(final Class<? extends Tag> tag) {
+            return (tag == StandardTags.CallTag.class) || (tag == DebuggerTags.AlwaysHalt.class);
+        }
+
+        @Override
+        public boolean isInstrumentable() {
+            return true;
+        }
+
+        public WrapperNode createWrapper(final ProbeNode probe) {
+            return new AbstractSendNodeWrapper(this, this, probe);
         }
     }
 

@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
@@ -169,7 +170,7 @@ public abstract class AbstractImageChunk {
         if ((ptr & 3) == 0) {
             final AbstractImageChunk chunk = reader.getChunk(ptr);
             if (chunk == null) {
-                image.getError().println("Bogus pointer: " + ptr + ". Treating as smallint.");
+                logBogusPointer(ptr);
                 return image.wrap(ptr >> 1);
             } else {
                 return chunk.asObject();
@@ -180,6 +181,11 @@ public abstract class AbstractImageChunk {
             assert ((ptr & 3) == 2);
             return (char) (ptr >> 2);
         }
+    }
+
+    @TruffleBoundary
+    private void logBogusPointer(final int ptr) {
+        image.getError().println("Bogus pointer: " + ptr + ". Treating as smallint.");
     }
 
     public byte[] getBytes() {

@@ -10,7 +10,7 @@ import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 
 public abstract class HandleNonLocalReturnNode extends AbstractNodeWithCode {
-    @Child private TerminateContextNode terminateNode;
+    @Child private TerminateContextNode terminateNode = TerminateContextNode.create();
     @Child private AboutToReturnNode aboutToReturnNode;
 
     public static HandleNonLocalReturnNode create(final CompiledCodeObject code) {
@@ -19,7 +19,6 @@ public abstract class HandleNonLocalReturnNode extends AbstractNodeWithCode {
 
     public HandleNonLocalReturnNode(final CompiledCodeObject code) {
         super(code);
-        terminateNode = TerminateContextNode.create(code);
         if (code instanceof CompiledMethodObject) {
             aboutToReturnNode = AboutToReturnNode.create((CompiledMethodObject) code);
         }
@@ -33,7 +32,7 @@ public abstract class HandleNonLocalReturnNode extends AbstractNodeWithCode {
             aboutToReturnNode.executeAboutToReturn(frame, nlr);
         }
         terminateNode.executeTerminate(frame);
-        if (nlr.getTargetContext().equals(getContextOrMarker(frame))) {
+        if (nlr.getTargetContext() == getContextOrMarker(frame)) {
             nlr.setArrivedAtTargetContext();
         }
         throw nlr;
@@ -52,7 +51,7 @@ public abstract class HandleNonLocalReturnNode extends AbstractNodeWithCode {
             throw new NonVirtualReturn(nlr.getReturnValue(), target, newSender);
         } else {
             terminateNode.executeTerminate(frame);
-            if (context.equals(nlr.getTargetContext())) {
+            if (context == nlr.getTargetContext()) {
                 nlr.setArrivedAtTargetContext();
             }
             throw nlr;

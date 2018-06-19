@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.MaterializedFrame;
@@ -39,7 +38,7 @@ public abstract class GetOrCreateContextNode extends AbstractNode {
         final ContextObject context = ContextObject.create(method.image, method.frameSize(), frame.materialize());
 
         if (invalidateCanBeVirtualizedAssumption) {
-            method.invalidateCanBeVirtualizedAssumption();
+            // method.invalidateCanBeVirtualizedAssumption();
         }
         contextWriteNode.executeWrite(frame, context);
         if (fullSenderChain) {
@@ -49,7 +48,6 @@ public abstract class GetOrCreateContextNode extends AbstractNode {
         return context;
     }
 
-    @TruffleBoundary
     public static ContextObject getOrCreateFull(final MaterializedFrame frame, final boolean invalidateCanBeVirtualizedAssumption, final boolean fullSenderChain) {
         final Object contextOrMarker = FrameAccess.getContextOrMarker(frame);
         final ContextObject context;
@@ -74,7 +72,6 @@ public abstract class GetOrCreateContextNode extends AbstractNode {
         return context;
     }
 
-    @TruffleBoundary
     private static void forceSenderChain(final CompiledCodeObject method, final ContextObject context) {
         ContextObject current = context;
         while (true) {

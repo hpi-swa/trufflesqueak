@@ -84,7 +84,7 @@ Please [report any issues here on GitHub][issues] and open
 [graal]: https://github.com/oracle/graal
 [graalsqueak]: bin/graalsqueak
 [graalsqueakmain]: src/de.hpi.swa.graal.squeak/src/de/hpi/swa/graal/squeak/GraalSqueakMain.java
-[graalsqueak_image]: https://dl.bintray.com/hpi-swa-lab/GraalSqueak/images/GraalSqueakTrunkImage.zip
+[graalsqueak_image]: https://dl.bintray.com/hpi-swa-lab/GraalSqueak/images/graal-squeak-image-18067.zip
 [graalvm]: http://www.graalvm.org/
 [graalvm_download]: http://www.graalvm.org/downloads/
 [issues]: ../../issues/new

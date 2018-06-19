@@ -35,10 +35,10 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
     protected static final int BYTES_PER_WORD = 4;
 
     // frame info
-    @CompilationFinal private static FrameDescriptor frameDescriptorTemplate;
-    @CompilationFinal public static FrameSlot thisContextOrMarkerSlot;
-    @CompilationFinal public static FrameSlot instructionPointerSlot;
-    @CompilationFinal public static FrameSlot stackPointerSlot;
+    @CompilationFinal public static final FrameDescriptor frameDescriptorTemplate;
+    @CompilationFinal public static final FrameSlot thisContextOrMarkerSlot;
+    @CompilationFinal public static final FrameSlot instructionPointerSlot;
+    @CompilationFinal public static final FrameSlot stackPointerSlot;
     @CompilationFinal private FrameDescriptor frameDescriptor;
     @CompilationFinal(dimensions = 1) public FrameSlot[] stackSlots;
     // header info and data
@@ -52,8 +52,8 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
     @CompilationFinal private int numTemps;
     @CompilationFinal private long accessModifier;
     @CompilationFinal private boolean altInstructionSet;
-    @CompilationFinal public static boolean alwaysNonVirtualized = false;
 
+    @CompilationFinal public static final boolean ALWAYS_NON_VIRTUALIZED = false;
     @CompilationFinal private final Assumption canBeVirtualized = Truffle.getRuntime().createAssumption("CompiledCodeObject: does not need a materialized context");
 
     @CompilationFinal private Source source;
@@ -70,7 +70,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
 
     protected CompiledCodeObject(final SqueakImageContext img, final ClassObject klass) {
         super(img, klass);
-        if (alwaysNonVirtualized) {
+        if (ALWAYS_NON_VIRTUALIZED) {
             invalidateCanBeVirtualizedAssumption();
         }
     }
@@ -85,6 +85,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
     }
 
     private void setLiteralsAndBytes(final Object[] literals, final byte[] bytes) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
         this.literals = literals;
         decodeHeader();
         this.bytes = bytes;
@@ -93,6 +94,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
 
     public final Source getSource() {
         if (source == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             source = Source.newBuilder(CompiledCodeObjectPrinter.getString(this)).mimeType(SqueakLanguage.MIME_TYPE).name(toString()).build();
         }
         return source;
@@ -105,12 +107,10 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
     @TruffleBoundary
     protected final void prepareFrameDescriptor() {
         frameDescriptor = frameDescriptorTemplate.shallowCopy();
-        if (canBeVirtualized()) {
-            final int frameSize = frameSize();
-            stackSlots = new FrameSlot[frameSize];
-            for (int i = 0; i < frameSize; i++) {
-                stackSlots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Illegal);
-            }
+        final int frameSize = frameSize();
+        stackSlots = new FrameSlot[frameSize];
+        for (int i = 0; i < frameSize; i++) {
+            stackSlots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Illegal);
         }
     }
 
@@ -162,7 +162,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
     }
 
     public final void fillin(final AbstractImageChunk chunk) {
-        // final StopWatch fillinWatch = StopWatch.start("compiledCodeFillin");
+        CompilerDirectives.transferToInterpreterAndInvalidate();
         super.fillinHashAndClass(chunk);
         final List<Integer> data = chunk.data();
         final int header = data.get(0) >> 1; // header is a tagged small integer
@@ -173,12 +173,10 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         decodeHeader();
         assert bytes == null;
         bytes = chunk.getBytes(ptrs.length);
-        // if (fillinWatch.stop() > 1 * 500_000) {
-        // fillinWatch.printTimeMS();
-        // }
     }
 
     protected final void decodeHeader() {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
         final int hdr = getHeader();
         final int[] splitHeader = BitSplitter.splitter(hdr, new int[]{15, 1, 1, 1, 6, 4, 2, 1});
         numLiterals = splitHeader[0];
@@ -193,9 +191,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
     }
 
     public final int getHeader() {
-        final Object object = literals[0];
-        assert object instanceof Long;
-        return ((Long) object).intValue();
+        return ((Long) literals[0]).intValue();
     }
 
     @Override
@@ -221,13 +217,10 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         return (1 + numLiterals) * BYTES_PER_WORD; // header plus numLiterals
     }
 
-    public final int size() {
-        return getBytecodeOffset() + bytes.length;
-    }
-
     public final void atput0(final long longIndex, final Object obj) {
         final int index = (int) longIndex;
         assert index >= 0;
+        CompilerDirectives.transferToInterpreterAndInvalidate();
         if (index < getBytecodeOffset()) {
             assert index % BYTES_PER_WORD == 0;
             setLiteral(index / BYTES_PER_WORD, obj);
@@ -257,6 +250,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
 
     public final void setLiteral(final long longIndex, final Object obj) {
         final int index = (int) longIndex;
+        CompilerDirectives.transferToInterpreterAndInvalidate();
         if (index == 0) {
             assert obj instanceof Long;
             final int oldNumLiterals = numLiterals;
@@ -273,8 +267,8 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
     }
 
     public final int primitiveIndex() {
-        if (hasPrimitive && bytes.length >= 3) {
-            return Byte.toUnsignedInt(bytes[1]) + (Byte.toUnsignedInt(bytes[2]) << 8);
+        if (hasPrimitive() && bytes.length >= 3) {
+            return (Byte.toUnsignedInt(bytes[2]) << 8) + Byte.toUnsignedInt(bytes[1]);
         } else {
             return 0;
         }
@@ -309,12 +303,6 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
     }
 
     public static final long makeHeader(final int numArgs, final int numTemps, final int numLiterals, final boolean hasPrimitive, final boolean needsLargeFrame) {
-        long header = 0;
-        header += (numArgs & 0x0F) << 24;
-        header += (numTemps & 0x3F) << 18;
-        header += numLiterals & 0x7FFF;
-        header += hasPrimitive ? 65536 : 0;
-        header += needsLargeFrame ? 0x20000 : 0;
-        return header;
+        return (numArgs & 0x0F) << 24 | (numTemps & 0x3F) << 18 | numLiterals & 0x7FFF | (needsLargeFrame ? 0x20000 : 0) | (hasPrimitive ? 0x10000 : 0);
     }
 }

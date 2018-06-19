@@ -27,7 +27,7 @@ public final class ObjectLayouts {
 
     public static final class BLOCK_CLOSURE {
         public static final int OUTER_CONTEXT = 0;
-        public static final int INITIAL_PC = 1;
+        public static final int START_PC = 1;
         public static final int ARGUMENT_COUNT = 2;
         public static final int FIRST_COPIED_VALUE = 3;
     }

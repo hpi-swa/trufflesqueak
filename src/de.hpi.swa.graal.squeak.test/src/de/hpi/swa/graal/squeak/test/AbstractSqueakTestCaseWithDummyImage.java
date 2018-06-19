@@ -3,7 +3,6 @@ package de.hpi.swa.graal.squeak.test;
 import org.junit.BeforeClass;
 
 import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
-import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
 public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSqueakTestCase {
 
@@ -37,7 +36,7 @@ public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSquea
 
     @BeforeClass
     public static void setUpSqueakImageContext() {
-        image = new SqueakImageContext("fake.image");
+        ensureImageContext("fake.image");
         image.plus.setStorageForTesting("plus".getBytes());
         image.minus.setStorageForTesting("minus".getBytes());
         image.lt.setStorageForTesting("lt".getBytes());

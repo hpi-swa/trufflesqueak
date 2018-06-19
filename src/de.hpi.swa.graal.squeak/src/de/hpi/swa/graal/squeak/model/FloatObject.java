@@ -82,16 +82,8 @@ public final class FloatObject extends AbstractSqueakObject {
 
     public byte[] getBytes() {
         final long bits = Double.doubleToRawLongBits(doubleValue);
-        final byte[] bytes = new byte[WORD_LENGTH * 4];
-        bytes[0] = (byte) (bits >> 56);
-        bytes[1] = (byte) (bits >> 48);
-        bytes[2] = (byte) (bits >> 40);
-        bytes[3] = (byte) (bits >> 32);
-        bytes[4] = (byte) (bits >> 24);
-        bytes[5] = (byte) (bits >> 16);
-        bytes[6] = (byte) (bits >> 8);
-        bytes[7] = (byte) bits;
-        return bytes;
+        return new byte[]{(byte) (bits >> 56), (byte) (bits >> 48), (byte) (bits >> 40), (byte) (bits >> 32),
+                        (byte) (bits >> 24), (byte) (bits >> 16), (byte) (bits >> 8), (byte) bits};
     }
 
     public static int size() {
@@ -113,10 +105,8 @@ public final class FloatObject extends AbstractSqueakObject {
 
     private static int[] bytesToInts(final byte[] bytes) {
         assert bytes.length == WORD_LENGTH * 4;
-        final int[] ints = new int[2];
-        ints[0] = ((bytes[3] & 0xff) << 24) | ((bytes[2] & 0xff) << 16) | ((bytes[1] & 0xff) << 8) | bytes[0] & 0xff;
-        ints[1] = ((bytes[7] & 0xff) << 24) | ((bytes[6] & 0xff) << 16) | ((bytes[5] & 0xff) << 8) | bytes[4] & 0xff;
-        return ints;
+        return new int[]{((bytes[3] & 0xff) << 24) | ((bytes[2] & 0xff) << 16) | ((bytes[1] & 0xff) << 8) | bytes[0] & 0xff,
+                        ((bytes[7] & 0xff) << 24) | ((bytes[6] & 0xff) << 16) | ((bytes[5] & 0xff) << 8) | bytes[4] & 0xff};
     }
 
     public static FloatObject bytesAsFloatObject(final SqueakImageContext image, final byte[] bytes) {

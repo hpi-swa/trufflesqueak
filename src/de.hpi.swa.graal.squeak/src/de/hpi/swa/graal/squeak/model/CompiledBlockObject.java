@@ -18,7 +18,8 @@ public final class CompiledBlockObject extends CompiledCodeObject {
         super(code.image);
         this.outerMethod = outerMethod;
         this.numCopiedValues = numCopied;
-        this.offset = bytecodeOffset;
+        final int additionalOffset = code instanceof CompiledBlockObject ? ((CompiledBlockObject) code).getOffset() : 0;
+        this.offset = additionalOffset + bytecodeOffset;
         final Object[] outerLiterals = outerMethod.getLiterals();
         final Object[] blockLiterals = new Object[outerLiterals.length + 1];
         /*
@@ -94,5 +95,9 @@ public final class CompiledBlockObject extends CompiledCodeObject {
 
     public AbstractSqueakObject shallowCopy() {
         return new CompiledBlockObject(this);
+    }
+
+    public int size() {
+        return outerMethod.size();
     }
 }

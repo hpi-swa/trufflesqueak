@@ -53,7 +53,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "receiver.isIntType()")
-        protected double doAt(final NativeObject receiver, final long index) {
+        protected final double doAt(final NativeObject receiver, final long index) {
             return Float.intBitsToFloat(receiver.getIntStorage(storageType)[(int) index - 1]);
         }
     }
@@ -68,18 +68,18 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "receiver.isIntType()")
-        protected double doDouble(final NativeObject receiver, final long index, final double value) {
+        protected final double doDouble(final NativeObject receiver, final long index, final double value) {
             receiver.getIntStorage(storageType)[(int) index - 1] = Float.floatToRawIntBits((float) value);
             return value;
         }
 
         @Specialization
-        protected double doFloat(final NativeObject receiver, final long index, final FloatObject value) {
+        protected final double doFloat(final NativeObject receiver, final long index, final FloatObject value) {
             return doDouble(receiver, index, value.getValue());
         }
 
         @Specialization
-        protected double doFloat(final NativeObject receiver, final long index, final long value) {
+        protected final double doFloat(final NativeObject receiver, final long index, final long value) {
             return doDouble(receiver, index, value);
         }
     }
@@ -124,7 +124,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"receiver.isIntType()", "other.isIntType()"})
-        protected boolean doEqual(final NativeObject receiver, final NativeObject other) {
+        protected final boolean doEqual(final NativeObject receiver, final NativeObject other) {
             return Arrays.equals(receiver.getIntStorage(storageType), other.getIntStorage(storageType)) ? code.image.sqTrue : code.image.sqFalse;
         }
 
@@ -133,7 +133,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
          */
         @SuppressWarnings("unused")
         @Specialization
-        protected boolean doNilCase(final NativeObject receiver, final NilObject other) {
+        protected final boolean doNilCase(final NativeObject receiver, final NilObject other) {
             return code.image.sqFalse;
         }
     }
@@ -148,7 +148,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "receiver.isIntType()")
-        protected long doHash(final NativeObject receiver) {
+        protected final long doHash(final NativeObject receiver) {
             final int[] words = receiver.getIntStorage(storageType);
             long hash = 0;
             for (int word : words) {
@@ -228,7 +228,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "receiver.isIntType()")
-        protected double doSum(final NativeObject receiver) {
+        protected final double doSum(final NativeObject receiver) {
             final int[] words = receiver.getIntStorage(storageType);
             double sum = 0;
             for (int word : words) {

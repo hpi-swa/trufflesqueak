@@ -19,13 +19,13 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.METHOD_DICT;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 public final class ClassObject extends AbstractSqueakObject {
-    @CompilationFinal(dimensions = 1) protected Object[] pointers;
     @CompilationFinal private final Set<ClassObject> subclasses = new HashSet<>();
     @CompilationFinal private int instSpec = -1;
     @CompilationFinal private int instanceSize = -1;
     @CompilationFinal private final CyclicAssumption methodLookupStable = new CyclicAssumption("Class lookup stability");
     @CompilationFinal private final CyclicAssumption classFormatStable = new CyclicAssumption("Class format stability");
     @CompilationFinal private CompiledMethodObject doesNotUnderstandMethod;
+    protected Object[] pointers;
 
     public ClassObject(final SqueakImageContext img) {
         super(img);
@@ -96,6 +96,7 @@ public final class ClassObject extends AbstractSqueakObject {
         instanceSize = (int) (format & 0xffff);
     }
 
+    @TruffleBoundary
     public void setSuperclass(final Object superclass) {
         final Object oldSuperclass = getSuperclass();
         pointers[CLASS.SUPERCLASS] = superclass;
@@ -122,10 +123,12 @@ public final class ClassObject extends AbstractSqueakObject {
         methodLookupStable.invalidate();
     }
 
+    @TruffleBoundary
     private void attachSubclass(final ClassObject classObject) {
         subclasses.add(classObject);
     }
 
+    @TruffleBoundary
     private void detachSubclass(final ClassObject classObject) {
         subclasses.remove(classObject);
     }
@@ -306,7 +309,6 @@ public final class ClassObject extends AbstractSqueakObject {
         if (!super.become(other)) {
             throw new SqueakException("Should not fail");
         }
-        CompilerDirectives.transferToInterpreterAndInvalidate();
         final Object[] pointers2 = ((ClassObject) other).pointers;
         ((ClassObject) other).pointers = this.pointers;
         pointers = pointers2;
@@ -315,7 +317,6 @@ public final class ClassObject extends AbstractSqueakObject {
 
     @Override
     public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
         // TODO: super.pointersBecomeOneWay(from, to); ?
         for (int i = 0; i < from.length; i++) {
             final Object fromPointer = from[i];

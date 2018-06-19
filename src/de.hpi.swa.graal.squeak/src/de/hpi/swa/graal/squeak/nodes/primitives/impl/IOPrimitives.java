@@ -253,18 +253,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "!isSmallInteger(repl)")
         protected final Object replace(final LargeIntegerObject rcvr, final long start, final long stop, final long repl, final long replStart) {
-            final LargeIntegerObject largeInteger = asLargeInteger(repl);
-            if (hasValidBounds(rcvr, start, stop, largeInteger, replStart)) {
-                throw new PrimitiveFailed(ERROR_TABLE.BAD_INDEX);
-            }
-            final byte[] rcvrBytes = rcvr.getBytes();
-            final byte[] replBytes = largeInteger.getBytes();
-            final int repOff = (int) (replStart - start);
-            for (int i = (int) (start - 1); i < stop; i++) {
-                rcvrBytes[i] = replBytes[repOff + i];
-            }
-            rcvr.setBytes(rcvrBytes);
-            return rcvr;
+            return doLargeInteger(rcvr, start, stop, asLargeInteger(repl), replStart);
         }
 
         @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
@@ -310,6 +299,11 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 atPut0Node.execute(rcvr, i, at0Node.execute(repl, repOff + i));
             }
             return rcvr;
+        }
+
+        @Specialization(guards = "!isSmallInteger(repl)")
+        protected final Object doNativeLargeInteger(final NativeObject rcvr, final long start, final long stop, final long repl, final long replStart) {
+            return doNativeLargeInteger(rcvr, start, stop, asLargeInteger(repl), replStart);
         }
 
         @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
@@ -524,7 +518,7 @@ public class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             try {
                 Toolkit.getDefaultToolkit().beep();
             } catch (AWTError e) {
-                code.image.getError().println("BEEP (unable to find default AWT Toolkit).");
+                code.image.printToStdErr("BEEP (unable to find default AWT Toolkit).");
             }
             return receiver;
         }

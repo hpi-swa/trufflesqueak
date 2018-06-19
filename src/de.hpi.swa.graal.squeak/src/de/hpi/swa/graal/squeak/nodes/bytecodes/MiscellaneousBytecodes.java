@@ -4,8 +4,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.instrumentation.StandardTags.StatementTag;
-import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
@@ -76,11 +74,6 @@ public final class MiscellaneousBytecodes {
         @Specialization(guards = {"!code.hasPrimitive() || primitiveNode == null"})
         protected final int doFallback(@SuppressWarnings("unused") final VirtualFrame frame) {
             return getSuccessorIndex(); // continue with fallback code immediately
-        }
-
-        @Override
-        public boolean hasTag(final Class<? extends Tag> tag) {
-            return tag == StatementTag.class;
         }
 
         @Override

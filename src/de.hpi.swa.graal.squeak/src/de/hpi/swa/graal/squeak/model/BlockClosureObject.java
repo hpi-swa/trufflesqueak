@@ -3,6 +3,7 @@ package de.hpi.swa.graal.squeak.model;
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
@@ -13,17 +14,16 @@ import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.BLOCK_CLOSURE;
 import de.hpi.swa.graal.squeak.nodes.EnterCodeNode;
-import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public final class BlockClosureObject extends AbstractSqueakObject {
     @CompilationFinal private Object receiver;
-    @CompilationFinal(dimensions = 1) private Object[] copied;
     @CompilationFinal private ContextObject outerContext;
     @CompilationFinal private CompiledBlockObject block;
     @CompilationFinal private long pc = -1;
     @CompilationFinal private long numArgs = -1;
     @CompilationFinal private RootCallTarget callTarget;
     @CompilationFinal private final CyclicAssumption callTargetStable = new CyclicAssumption("BlockClosureObject assumption");
+    private Object[] copied;
 
     public BlockClosureObject(final SqueakImageContext image) {
         super(image, image.blockClosureClass);
@@ -57,7 +57,7 @@ public final class BlockClosureObject extends AbstractSqueakObject {
         final Object[] pointers = chunk.getPointers();
         assert pointers.length >= BLOCK_CLOSURE.FIRST_COPIED_VALUE;
         outerContext = (ContextObject) pointers[BLOCK_CLOSURE.OUTER_CONTEXT];
-        pc = (long) pointers[BLOCK_CLOSURE.INITIAL_PC];
+        pc = (long) pointers[BLOCK_CLOSURE.START_PC];
         numArgs = (long) pointers[BLOCK_CLOSURE.ARGUMENT_COUNT];
         copied = new Object[pointers.length - BLOCK_CLOSURE.FIRST_COPIED_VALUE];
         for (int i = 0; i < copied.length; i++) {
@@ -65,7 +65,7 @@ public final class BlockClosureObject extends AbstractSqueakObject {
         }
     }
 
-    public long getPC() {
+    public long getStartPC() {
         if (pc == -1) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             pc = block.getInitialPC();
@@ -86,8 +86,8 @@ public final class BlockClosureObject extends AbstractSqueakObject {
         switch (index) {
             case BLOCK_CLOSURE.OUTER_CONTEXT:
                 return outerContext;
-            case BLOCK_CLOSURE.INITIAL_PC:
-                return getPC();
+            case BLOCK_CLOSURE.START_PC:
+                return getStartPC();
             case BLOCK_CLOSURE.ARGUMENT_COUNT:
                 return getNumArgs();
             default:
@@ -102,7 +102,7 @@ public final class BlockClosureObject extends AbstractSqueakObject {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 outerContext = (ContextObject) obj;
                 break;
-            case BLOCK_CLOSURE.INITIAL_PC:
+            case BLOCK_CLOSURE.START_PC:
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 pc = ((Long) obj).intValue();
                 break;
@@ -163,6 +163,7 @@ public final class BlockClosureObject extends AbstractSqueakObject {
     public CompiledBlockObject getCompiledBlock() {
         if (block == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
+            assert pc >= 0;
             final CompiledCodeObject code = outerContext.getMethod();
             final CompiledMethodObject method;
             if (code instanceof CompiledMethodObject) {
@@ -180,35 +181,14 @@ public final class BlockClosureObject extends AbstractSqueakObject {
         return block;
     }
 
-    public Object[] getFrameArguments(final Object senderOrMarker, final Object... objects) {
-        final CompiledBlockObject blockObject = getCompiledBlock();
-        final int numObjects = objects.length;
-        final int numCopied = copied.length;
-        if (blockObject.getNumArgs() != numObjects) { // TODO: turn this into an assertion
-            image.getError().println("number of required and provided block arguments do not match");
-        }
-        final Object[] arguments = new Object[FrameAccess.ARGUMENTS_START +
-                        numObjects +
-                        numCopied];
-        arguments[FrameAccess.METHOD] = blockObject;
-        // Sender is thisContext (or marker)
-        arguments[FrameAccess.SENDER_OR_SENDER_MARKER] = senderOrMarker;
-        arguments[FrameAccess.CLOSURE_OR_NULL] = this;
-        arguments[FrameAccess.RECEIVER] = getReceiver();
-        for (int i = 0; i < numObjects; i++) {
-            arguments[FrameAccess.ARGUMENTS_START + i] = objects[i];
-        }
-        for (int i = 0; i < numCopied; i++) {
-            arguments[FrameAccess.ARGUMENTS_START + numObjects + i] = copied[i];
-        }
-        return arguments;
-    }
-
+    @TruffleBoundary
     public ContextObject getHomeContext() {
-        final BlockClosureObject closure = outerContext.getClosure();
+        if (outerContext.isTerminated()) {
+            throw new SqueakException("BlockCannotReturnError");
+        }
         // recursively unpack closures until home context is reached
+        final BlockClosureObject closure = outerContext.getClosure();
         if (closure != null) {
-            CompilerDirectives.transferToInterpreter();
             return closure.getHomeContext();
         }
         return outerContext;
@@ -223,7 +203,7 @@ public final class BlockClosureObject extends AbstractSqueakObject {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         final Object[] newPointers = new Object[BLOCK_CLOSURE.FIRST_COPIED_VALUE + copied.length];
         newPointers[BLOCK_CLOSURE.OUTER_CONTEXT] = outerContext;
-        newPointers[BLOCK_CLOSURE.INITIAL_PC] = getPC();
+        newPointers[BLOCK_CLOSURE.START_PC] = getStartPC();
         newPointers[BLOCK_CLOSURE.ARGUMENT_COUNT] = getNumArgs();
         for (int i = 0; i < copied.length; i++) {
             newPointers[BLOCK_CLOSURE.FIRST_COPIED_VALUE + i] = copied[i];
@@ -242,7 +222,7 @@ public final class BlockClosureObject extends AbstractSqueakObject {
             }
         }
         outerContext = (ContextObject) newPointers[BLOCK_CLOSURE.OUTER_CONTEXT];
-        pc = (long) newPointers[BLOCK_CLOSURE.INITIAL_PC];
+        pc = (long) newPointers[BLOCK_CLOSURE.START_PC];
         numArgs = ((Long) newPointers[BLOCK_CLOSURE.ARGUMENT_COUNT]).intValue();
         for (int i = 0; i < copied.length; i++) {
             copied[i] = newPointers[BLOCK_CLOSURE.FIRST_COPIED_VALUE + i];

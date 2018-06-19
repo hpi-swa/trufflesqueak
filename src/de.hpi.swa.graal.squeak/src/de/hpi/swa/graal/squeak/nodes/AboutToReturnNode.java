@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -10,6 +11,7 @@ import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
+import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.SendSelectorNode;
 import de.hpi.swa.graal.squeak.nodes.context.TemporaryReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.TemporaryWriteNode;
@@ -17,7 +19,7 @@ import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 
 public abstract class AboutToReturnNode extends AbstractNodeWithCode {
     @Child protected BlockActivationNode dispatch = BlockActivationNodeGen.create();
-    @Child private SendSelectorNode sendAboutToReturnNode;
+    @Child private AbstractSendNode sendAboutToReturnNode;
     @Child private StackPushNode pushNode = StackPushNode.create();
     @Child private SqueakNode blockArgumentNode;
     @Child private SqueakNode completeTempReadNode;
@@ -29,14 +31,14 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
 
     protected AboutToReturnNode(final CompiledMethodObject method) {
         super(method);
-        sendAboutToReturnNode = new SendSelectorNode(method, -1, -1, aboutToReturnSelector(method), 2);
+        sendAboutToReturnNode = new SendSelectorNode(method, -1, -1, aboutToReturnSelector(), 2);
         blockArgumentNode = TemporaryReadNode.create(method, 0);
         completeTempReadNode = TemporaryReadNode.create(method, 1);
         completeTempWriteNode = TemporaryWriteNode.create(method, 1);
     }
 
-    private static NativeObject aboutToReturnSelector(final CompiledMethodObject method) {
-        return (NativeObject) method.image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SelectorAboutToReturn);
+    private NativeObject aboutToReturnSelector() {
+        return (NativeObject) code.image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SelectorAboutToReturn);
     }
 
     public abstract void executeAboutToReturn(VirtualFrame frame, NonLocalReturn nlr);
@@ -49,12 +51,13 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
      * (this may be a problem).
      */
     @Specialization(guards = {"isVirtualized(frame)"})
-    protected void doAboutToReturnVirtualized(final VirtualFrame frame, @SuppressWarnings("unused") final NonLocalReturn nlr) {
+    protected final void doAboutToReturnVirtualized(final VirtualFrame frame, @SuppressWarnings("unused") final NonLocalReturn nlr,
+                    @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments) {
         if (completeTempReadNode.executeRead(frame) == code.image.nil) {
             completeTempWriteNode.executeWrite(frame, code.image.sqTrue);
             final BlockClosureObject block = (BlockClosureObject) blockArgumentNode.executeRead(frame);
             try {
-                dispatch.executeBlock(block, block.getFrameArguments(getContextOrMarker(frame)));
+                dispatch.executeBlock(block, getFrameArguments.execute(block, getContextOrMarker(frame), new Object[0]));
             } catch (LocalReturn blockLR) { // ignore
             } catch (NonLocalReturn blockNLR) {
                 if (!blockNLR.hasArrivedAtTargetContext()) {
@@ -65,7 +68,7 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
     }
 
     @Specialization(guards = {"!isVirtualized(frame)"})
-    protected void doAboutToReturn(final VirtualFrame frame, final NonLocalReturn nlr) {
+    protected final void doAboutToReturn(final VirtualFrame frame, final NonLocalReturn nlr) {
         final ContextObject context = getContext(frame);
         pushNode.executeWrite(frame, nlr.getTargetContext());
         pushNode.executeWrite(frame, nlr.getReturnValue());

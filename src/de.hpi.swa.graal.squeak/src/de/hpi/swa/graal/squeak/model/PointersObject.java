@@ -1,8 +1,5 @@
 package de.hpi.swa.graal.squeak.model;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
@@ -10,7 +7,7 @@ import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 public final class PointersObject extends AbstractSqueakObject {
-    @CompilationFinal(dimensions = 1) protected Object[] pointers;
+    protected Object[] pointers;
 
     public PointersObject(final SqueakImageContext img) {
         super(img);
@@ -51,7 +48,6 @@ public final class PointersObject extends AbstractSqueakObject {
         if (!super.become(other)) {
             throw new SqueakException("Should not fail");
         }
-        CompilerDirectives.transferToInterpreterAndInvalidate();
         final Object[] pointers2 = ((PointersObject) other).pointers;
         ((PointersObject) other).pointers = this.pointers;
         pointers = pointers2;
@@ -60,7 +56,6 @@ public final class PointersObject extends AbstractSqueakObject {
 
     @Override
     public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
         // TODO: super.pointersBecomeOneWay(from, to); ?
         for (int i = 0; i < from.length; i++) {
             final Object fromPointer = from[i];

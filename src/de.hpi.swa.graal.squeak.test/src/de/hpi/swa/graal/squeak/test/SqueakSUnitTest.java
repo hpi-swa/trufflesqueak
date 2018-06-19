@@ -22,7 +22,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.graal.squeak.GraalSqueakMain;
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
-import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
@@ -166,7 +165,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
     @BeforeClass
     public static void loadTestImage() {
         final String imagePath = getPathToTestImage();
-        image = new SqueakImageContext(imagePath);
+        ensureImageContext(imagePath);
         image.getOutput().println();
         image.getOutput().println("== Running " + SqueakLanguage.NAME + " SUnit Tests on " + GraalSqueakMain.getRuntimeName() + " ==");
         image.getOutput().println("Loading test image at " + imagePath + "...");
@@ -199,11 +198,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
     }
 
     private static boolean runsOnMXGate() {
-        try {
-            return System.getenv("MX_GATE").equals("true");
-        } catch (NullPointerException e) {
-            return false; // ${MX_GATE} environment variable not set
-        }
+        return "true".equals(System.getenv("MX_GATE"));
     }
 
     private static void assumeNotOnMXGate() {

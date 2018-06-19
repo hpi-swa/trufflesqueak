@@ -3,8 +3,8 @@ package de.hpi.swa.graal.squeak.model;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
@@ -13,8 +13,8 @@ import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 // TODO: Validate that weak objects are working correctly
 public final class WeakPointersObject extends AbstractSqueakObject {
-    @CompilationFinal(dimensions = 1) protected Object[] pointers;
     @CompilationFinal public static final ReferenceQueue<Object> weakPointersQueue = new ReferenceQueue<>();
+    protected Object[] pointers;
 
     public WeakPointersObject(final SqueakImageContext img) {
         super(img);
@@ -64,10 +64,15 @@ public final class WeakPointersObject extends AbstractSqueakObject {
         assert obj != null; // null indicates a problem
         if (obj instanceof AbstractSqueakObject && index >= instsize()) {
             // store into variable part
-            pointers[(int) index] = new WeakReference<>(obj, weakPointersQueue);
+            weakReferenceAtPut((int) index, obj);
         } else {
             pointers[(int) index] = obj;
         }
+    }
+
+    @TruffleBoundary
+    private void weakReferenceAtPut(final int index, final Object pointer) {
+        pointers[index] = new WeakReference<>(pointer, weakPointersQueue);
     }
 
     public int size() {
@@ -94,7 +99,6 @@ public final class WeakPointersObject extends AbstractSqueakObject {
 
     @Override
     public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
         // TODO: super.pointersBecomeOneWay(from, to); ?
         for (int i = 0; i < from.length; i++) {
             final Object fromPointer = from[i];
@@ -115,11 +119,10 @@ public final class WeakPointersObject extends AbstractSqueakObject {
         for (int i = 0; i < pointers.length; i++) {
             final Object pointer = pointers[i];
             if (pointer instanceof AbstractSqueakObject) {
-                pointers[i] = new WeakReference<>(pointer, weakPointersQueue);
+                weakReferenceAtPut(i, pointer);
             } else {
                 pointers[i] = pointer;
             }
         }
     }
-
 }

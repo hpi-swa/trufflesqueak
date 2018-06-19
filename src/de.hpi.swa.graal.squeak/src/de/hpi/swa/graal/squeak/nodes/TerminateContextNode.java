@@ -4,20 +4,15 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotWriteNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 @ImportStatic(FrameAccess.class)
-public abstract class TerminateContextNode extends AbstractNodeWithCode {
+public abstract class TerminateContextNode extends AbstractNode {
     @Child private FrameSlotWriteNode instructionPointerWriteNode = FrameSlotWriteNode.createForInstructionPointer();
 
-    public static TerminateContextNode create(final CompiledCodeObject code) {
-        return TerminateContextNodeGen.create(code);
-    }
-
-    protected TerminateContextNode(final CompiledCodeObject code) {
-        super(code);
+    public static TerminateContextNode create() {
+        return TerminateContextNodeGen.create();
     }
 
     protected abstract void executeTerminate(VirtualFrame frame);

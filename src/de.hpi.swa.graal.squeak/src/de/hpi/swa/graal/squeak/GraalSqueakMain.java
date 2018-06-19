@@ -78,6 +78,7 @@ public final class GraalSqueakMain extends AbstractLanguageLauncher {
     protected void collectArguments(final Set<String> options) {
         options.add("-r");
         options.add("-m");
+        options.add("--testing");
         options.add("--trace");
         options.add("--verbose");
         options.add("--args");
