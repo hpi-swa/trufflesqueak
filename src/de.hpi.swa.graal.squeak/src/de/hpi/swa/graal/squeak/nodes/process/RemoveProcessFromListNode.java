@@ -40,16 +40,17 @@ public abstract class RemoveProcessFromListNode extends AbstractNodeWithImage {
 
         protected abstract void execute(AbstractSqueakObject process, AbstractSqueakObject list, Object first, Object last);
 
-        @Specialization(guards = "process.equals(first)")
-        protected final void doRemoveEqual(final AbstractSqueakObject process, final AbstractSqueakObject list, @SuppressWarnings("unused") final Object first, final Object last) {
+        @Specialization(guards = "process == first")
+        protected final void doRemoveEqual(final AbstractSqueakObject process, final AbstractSqueakObject list, @SuppressWarnings("unused") final AbstractSqueakObject first,
+                        final AbstractSqueakObject last) {
             final Object next = at0Node.execute(process, LINK.NEXT_LINK);
             atPut0Node.execute(list, LINKED_LIST.FIRST_LINK, next);
-            if (process.equals(last)) {
+            if (process == last) {
                 atPut0Node.execute(list, LINKED_LIST.LAST_LINK, image.nil);
             }
         }
 
-        @Specialization(guards = "!process.equals(first)")
+        @Fallback
         protected final void doRemoveNotEqual(final AbstractSqueakObject process, final AbstractSqueakObject list, final Object first, final Object last) {
             Object temp = first;
             Object next;
@@ -58,18 +59,17 @@ public abstract class RemoveProcessFromListNode extends AbstractNodeWithImage {
                     throw new PrimitiveFailed();
                 }
                 next = at0Node.execute(temp, LINK.NEXT_LINK);
-                if (next.equals(process)) {
+                if (next == process) {
                     break;
                 }
                 temp = next;
             }
             next = at0Node.execute(process, LINK.NEXT_LINK);
             atPut0Node.execute(temp, LINK.NEXT_LINK, next);
-            if (process.equals(last)) {
+            if (process == last) {
                 atPut0Node.execute(list, LINKED_LIST.LAST_LINK, temp);
             }
         }
-
     }
 
     @Specialization
