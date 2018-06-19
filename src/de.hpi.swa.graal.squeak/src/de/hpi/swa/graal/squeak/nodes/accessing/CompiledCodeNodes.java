@@ -67,13 +67,9 @@ public final class CompiledCodeNodes {
 
         public abstract boolean execute(Object obj);
 
-        @Specialization
+        @Specialization(guards = "obj.getNumLiterals() >= 2")
         protected final boolean doMethod(final CompiledMethodObject obj) {
             final Object[] literals = obj.getLiterals();
-            final int numLiterals = obj.getNumLiterals();
-            if (numLiterals < 2) {
-                return false;
-            }
             return literals[literals.length - 2] == image.doesNotUnderstand;
         }
 

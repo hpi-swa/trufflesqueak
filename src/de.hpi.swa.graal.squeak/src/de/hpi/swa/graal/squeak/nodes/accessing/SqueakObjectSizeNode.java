@@ -1,10 +1,11 @@
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
@@ -25,7 +26,7 @@ public abstract class SqueakObjectSizeNode extends Node {
         return SqueakObjectSizeNodeGen.create();
     }
 
-    public abstract int execute(AbstractSqueakObject obj);
+    public abstract int execute(Object obj);
 
     @Specialization
     protected static final int doPointers(final PointersObject obj) {
@@ -102,4 +103,8 @@ public abstract class SqueakObjectSizeNode extends Node {
         return 0;
     }
 
+    @Fallback
+    protected static final int doFallback(final Object obj) {
+        throw new SqueakException("Object does not support size: " + obj);
+    }
 }

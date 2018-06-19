@@ -181,6 +181,7 @@ public final class InterruptHandlerNode extends RootNode {
         return INTERRUPT_CHECKS_EVERY_N_MILLISECONDS;
     }
 
+    @TruffleBoundary
     public void signalSemaphoreWithIndex(final int index) {
         semaphoresToSignal.addLast(index);
     }

@@ -23,6 +23,7 @@ import de.hpi.swa.graal.squeak.interop.ValueToSqueakObjectNode;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeGetBytesNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
@@ -37,6 +38,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primParseAndCall")
     protected abstract static class PrimEvaluateAsNode extends AbstractPrimitiveNode {
+        @Child private NativeGetBytesNode getBytesNode = NativeGetBytesNode.create();
 
         protected PrimEvaluateAsNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -44,11 +46,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doParseAndCall(final NativeObject receiver, final NativeObject languageNameObj) {
-            final String languageName = languageNameObj.toString();
+            final String languageName = getBytesNode.executeAsString(languageNameObj);
             if (!code.image.env.getLanguages().containsKey(languageName)) {
                 throw new PrimitiveFailed();
             }
-            final String foreignCode = receiver.toString();
+            final String foreignCode = getBytesNode.executeAsString(receiver);
             try {
                 final Source source = Source.newBuilder(foreignCode).language(languageName).name("eval").build();
                 final CallTarget foreignCallTarget = code.image.env.parse(source);
@@ -66,6 +68,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimEvalCNode extends AbstractPrimitiveNode {
         @CompilationFinal private static final String C_FILENAME = "temp.c";
         @CompilationFinal private static final String LLVM_FILENAME = "temp.bc";
+        @Child private NativeGetBytesNode getBytesNode = NativeGetBytesNode.create();
         @Child private ValueToSqueakObjectNode toSqueakNode;
 
         protected PrimEvalCNode(final CompiledMethodObject method, final int numArguments) {
@@ -76,7 +79,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         @TruffleBoundary
         protected final Object doEvaluate(final NativeObject receiver, final NativeObject memberToCall) {
-            final String foreignCode = receiver.toString();
+            final String foreignCode = getBytesNode.executeAsString(receiver);
             final String cFile = code.image.imageRelativeFilePathFor(C_FILENAME);
             final String llvmFile = code.image.imageRelativeFilePathFor(LLVM_FILENAME);
             try {
@@ -85,7 +88,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 p.waitFor();
                 final Context polyglot = Context.newBuilder().allowAllAccess(true).build();
                 final org.graalvm.polyglot.Source source = org.graalvm.polyglot.Source.newBuilder("llvm", new File(llvmFile)).build();
-                final Value result = polyglot.eval(source).getMember(memberToCall.toString()).execute();
+                final Value result = polyglot.eval(source).getMember(getBytesNode.executeAsString(memberToCall)).execute();
                 return toSqueakNode.executeValue(result);
             } catch (IOException | RuntimeException | InterruptedException e) {
                 e.printStackTrace();

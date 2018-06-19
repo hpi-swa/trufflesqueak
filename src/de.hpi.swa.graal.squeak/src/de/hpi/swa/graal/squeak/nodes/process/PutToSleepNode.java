@@ -27,8 +27,8 @@ public final class PutToSleepNode extends AbstractNodeWithImage {
         // Save the given process on the scheduler process list for its priority.
         final long priority = (long) at0Node.execute(process, PROCESS.PRIORITY);
         final PointersObject scheduler = getSchedulerNode.executeGet();
-        final PointersObject processLists = (PointersObject) at0Node.execute(scheduler, PROCESS_SCHEDULER.PROCESS_LISTS);
-        final PointersObject processList = (PointersObject) at0Node.execute(processLists, priority - 1);
+        final Object processLists = at0Node.execute(scheduler, PROCESS_SCHEDULER.PROCESS_LISTS);
+        final Object processList = at0Node.execute(processLists, priority - 1);
         linkProcessToList.executeLink(process, processList);
     }
 }
