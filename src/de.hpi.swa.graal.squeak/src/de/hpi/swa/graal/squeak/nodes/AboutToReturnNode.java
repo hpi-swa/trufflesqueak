@@ -11,6 +11,7 @@ import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
+import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.SendSelectorNode;
 import de.hpi.swa.graal.squeak.nodes.context.TemporaryReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.TemporaryWriteNode;
@@ -18,7 +19,7 @@ import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 
 public abstract class AboutToReturnNode extends AbstractNodeWithCode {
     @Child protected BlockActivationNode dispatch = BlockActivationNodeGen.create();
-    @Child private SendSelectorNode sendAboutToReturnNode;
+    @Child private AbstractSendNode sendAboutToReturnNode;
     @Child private StackPushNode pushNode = StackPushNode.create();
     @Child private SqueakNode blockArgumentNode;
     @Child private SqueakNode completeTempReadNode;

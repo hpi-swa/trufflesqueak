@@ -10,6 +10,7 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
+import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.SendSelectorNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPopNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
@@ -24,7 +25,7 @@ public final class JumpBytecodes {
         @CompilationFinal(dimensions = 1) private final int[] successorExecutionCount = new int[2];
         @Child private StackPopNode popNode;
         @Child private StackPushNode pushNode = StackPushNode.create();
-        @Child private SendSelectorNode sendMustBeBooleanNode;
+        @Child private AbstractSendNode sendMustBeBooleanNode;
 
         public ConditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode) {
             super(code, index, numBytecodes, bytecode);

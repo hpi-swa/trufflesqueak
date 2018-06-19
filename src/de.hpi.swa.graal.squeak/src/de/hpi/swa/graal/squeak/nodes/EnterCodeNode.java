@@ -2,10 +2,18 @@ package de.hpi.swa.graal.squeak.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.instrumentation.GenerateWrapper;
+import com.oracle.truffle.api.instrumentation.InstrumentableNode;
+import com.oracle.truffle.api.instrumentation.ProbeNode;
+import com.oracle.truffle.api.instrumentation.StandardTags;
+import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.source.SourceSection;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
@@ -17,8 +25,10 @@ import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotWriteNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
-public abstract class EnterCodeNode extends RootNode {
+@GenerateWrapper
+public abstract class EnterCodeNode extends Node implements InstrumentableNode {
     @CompilationFinal protected final CompiledCodeObject code;
+    @CompilationFinal private SourceSection sourceSection;
     @Child private GetOrCreateContextNode createContextNode = GetOrCreateContextNode.create();
     @Child private ExecuteContextNode executeContextNode;
     @Child private FrameSlotWriteNode contextWriteNode = FrameSlotWriteNode.createForContextOrMarker();
@@ -28,15 +38,44 @@ public abstract class EnterCodeNode extends RootNode {
     @Child private StackPushNode pushStackNode = StackPushNode.create();
     @Child private GetNumAllArgumentsNode getNumAllArgumentsNode = GetNumAllArgumentsNode.create();
 
-    public static EnterCodeNode create(final SqueakLanguage language, final CompiledCodeObject code) {
-        return EnterCodeNodeGen.create(language, code);
+    public static SqueakRootNode create(final SqueakLanguage language, final CompiledCodeObject code) {
+        return new SqueakRootNode(language, code);
     }
 
-    protected EnterCodeNode(final SqueakLanguage language, final CompiledCodeObject code) {
-        super(language, code.getFrameDescriptor());
+    protected EnterCodeNode(final CompiledCodeObject code) {
         this.code = code;
         executeContextNode = ExecuteContextNode.create(code);
     }
+
+    protected EnterCodeNode(final EnterCodeNode codeNode) {
+        this(codeNode.code);
+    }
+
+    protected static class SqueakRootNode extends RootNode {
+        @Child private EnterCodeNode codeNode;
+
+        protected SqueakRootNode(final SqueakLanguage language, final CompiledCodeObject code) {
+            super(language, code.getFrameDescriptor());
+            codeNode = EnterCodeNodeGen.create(code);
+        }
+
+        @Override
+        public Object execute(final VirtualFrame frame) {
+            return codeNode.execute(frame);
+        }
+
+        @Override
+        public String getName() {
+            return codeNode.toString();
+        }
+
+        @Override
+        public String toString() {
+            return codeNode.toString();
+        }
+    }
+
+    public abstract Object execute(VirtualFrame frame);
 
     private void initializeSlots(final VirtualFrame frame) {
         instructionPointerWriteNode.executeWrite(frame, 0);
@@ -86,12 +125,28 @@ public abstract class EnterCodeNode extends RootNode {
     }
 
     @Override
-    public String getName() {
-        return toString();
+    public String toString() {
+        return code.toString();
+    }
+
+    public boolean hasTag(final Class<? extends Tag> tag) {
+        return tag == StandardTags.RootTag.class;
+    }
+
+    public boolean isInstrumentable() {
+        return true;
+    }
+
+    public WrapperNode createWrapper(final ProbeNode probe) {
+        return new EnterCodeNodeWrapper(this, this, probe);
     }
 
     @Override
-    public String toString() {
-        return code.toString();
+    @TruffleBoundary
+    public final SourceSection getSourceSection() {
+        if (sourceSection == null) {
+            sourceSection = code.getSource().createSection(1);
+        }
+        return sourceSection;
     }
 }
