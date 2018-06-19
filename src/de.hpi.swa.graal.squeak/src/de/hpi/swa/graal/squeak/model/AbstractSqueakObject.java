@@ -81,11 +81,11 @@ public abstract class AbstractSqueakObject implements TruffleObject {
     }
 
     public final boolean isSpecialKindAt(final long index) {
-        return getSqClass().equals(image.specialObjectsArray.at0(index));
+        return getSqClass() == image.specialObjectsArray.at0(index);
     }
 
     public final boolean isSpecialClassAt(final long index) {
-        return this.equals(image.specialObjectsArray.at0(index));
+        return this == image.specialObjectsArray.at0(index);
     }
 
     public final boolean isSemaphore() {

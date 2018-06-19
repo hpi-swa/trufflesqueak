@@ -117,7 +117,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         protected final boolean isSmallIntegerClass(final ClassObject classObject) {
-            return classObject.equals(code.image.smallIntegerClass);
+            return classObject == code.image.smallIntegerClass;
         }
 
         protected static final boolean isClassObject(final ClassObject classObject) {

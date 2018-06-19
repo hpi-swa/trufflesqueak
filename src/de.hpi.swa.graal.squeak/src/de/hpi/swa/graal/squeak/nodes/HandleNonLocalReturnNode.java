@@ -32,7 +32,7 @@ public abstract class HandleNonLocalReturnNode extends AbstractNodeWithCode {
             aboutToReturnNode.executeAboutToReturn(frame, nlr);
         }
         terminateNode.executeTerminate(frame);
-        if (nlr.getTargetContext().equals(getContextOrMarker(frame))) {
+        if (nlr.getTargetContext() == getContextOrMarker(frame)) {
             nlr.setArrivedAtTargetContext();
         }
         throw nlr;
@@ -51,7 +51,7 @@ public abstract class HandleNonLocalReturnNode extends AbstractNodeWithCode {
             throw new NonVirtualReturn(nlr.getReturnValue(), target, newSender);
         } else {
             terminateNode.executeTerminate(frame);
-            if (context.equals(nlr.getTargetContext())) {
+            if (context == nlr.getTargetContext()) {
                 nlr.setArrivedAtTargetContext();
             }
             throw nlr;

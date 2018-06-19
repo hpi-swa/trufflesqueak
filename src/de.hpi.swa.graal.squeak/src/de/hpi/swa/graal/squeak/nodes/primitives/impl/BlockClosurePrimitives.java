@@ -63,11 +63,11 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                     }
                     final Object contextOrMarker = contextOrMarkerNode.executeRead(current);
                     if (!foundMyself) {
-                        if (receiver.equals(contextOrMarker)) {
+                        if (receiver == contextOrMarker) {
                             foundMyself = true;
                         }
                     } else {
-                        if (previousContext != null && previousContext.equals(contextOrMarker)) {
+                        if (previousContext != null && previousContext == contextOrMarker) {
                             return null;
                         } else {
                             final CompiledCodeObject frameMethod = FrameAccess.getMethod(current);
@@ -186,7 +186,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                     }
                     if (!foundMyself) {
                         final Object contextOrMarker = contextOrMarkerNode.executeRead(current);
-                        if (receiver.equals(contextOrMarker)) {
+                        if (receiver == contextOrMarker) {
                             foundMyself = true;
                         }
                     } else {
