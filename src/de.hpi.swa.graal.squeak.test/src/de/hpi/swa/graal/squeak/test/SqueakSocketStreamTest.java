@@ -29,7 +29,7 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.process.GetActiveProcessNode;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class SqueakSocketPluginTest extends AbstractSqueakTestCase {
+public class SqueakSocketStreamTest extends AbstractSqueakTestCase {
     private static final int TIMEOUT_IN_SECONDS = 5 * 60;
     private static Object smalltalkDictionary;
     private static Object smalltalkAssociation;
@@ -49,75 +49,154 @@ public class SqueakSocketPluginTest extends AbstractSqueakTestCase {
         }
     }
 
-    // SOCKET TEST
     @Test
-    public void testClientConnect() {
-        executeTest("SocketTest", "testClientConnect");
+    public void testNextIntoClose() {
+        executeTest("SocketStreamTest", "testNextIntoClose");
     }
 
     @Test
-    public void testDataReceive() {
-        executeTest("SocketTest", "testDataReceive");
+    public void testNextIntoCloseNonSignaling() {
+        executeTest("SocketStreamTest", "testNextIntoCloseNonSignaling");
     }
 
     @Test
-    public void testDataSending() {
-        executeTest("SocketTest", "testDataSending");
+    public void testUpTo() {
+        executeTest("SocketStreamTest", "testUpTo");
     }
 
     @Test
-    public void testLocalAddress() {
-        executeTest("SocketTest", "testLocalAddress");
+    public void testUpToAfterCloseNonSignaling() {
+        executeTest("SocketStreamTest", "testUpToAfterCloseNonSignaling");
     }
 
     @Test
-    public void testLocalPort() {
-        executeTest("SocketTest", "testLocalPort");
+    public void testUpToAfterCloseSignaling() {
+        executeTest("SocketStreamTest", "testUpToAfterCloseSignaling");
     }
 
     @Test
-    public void testPeerName() {
-        executeTest("SocketTest", "testLocalPort");
+    public void testUpToAll() {
+        executeTest("SocketStreamTest", "testUpToAll");
     }
 
     @Test
-    public void testReceiveTimeout() {
-        executeTest("SocketTest", "testReceiveTimeout");
+    public void testUpToAllAfterCloseNonSignaling() {
+        executeTest("SocketStreamTest", "testUpToAllAfterCloseNonSignaling");
     }
 
     @Test
-    public void testRemoteAddress() {
-        executeTest("SocketTest", "testRemoteAddress");
+    public void testUpToAllAfterCloseSignaling() {
+        executeTest("SocketStreamTest", "testUpToAllAfterCloseSignaling");
     }
 
     @Test
-    public void testRemotePort() {
-        executeTest("SocketTest", "testRemotePort");
-    }
-
-    // @Test
-    // public void testSendTimeout() {
-    // executeTest("SocketTest", "testSendTimeout");
-    // }
-
-    @Test
-    public void testServerAccept() {
-        executeTest("SocketTest", "testServerAccept");
-    }
-
-    // @Test
-    // public void testSocketReuse() {
-    // executeTest("SocketTest", "testSocketReuse");
-    // }
-
-    @Test
-    public void testStringFromAddress() {
-        executeTest("SocketTest", "testStringFromAddress");
+    public void testUpToAllAsciiVsBinary() {
+        executeTest("SocketStreamTest", "testUpToAllAsciiVsBinary");
     }
 
     @Test
-    public void testUDP() {
-        executeTest("SocketTest", "testUDP");
+    public void testUpToAllCrlfAscii() {
+        executeTest("SocketStreamTest", "testUpToAllCrlfAscii");
+    }
+
+    @Test
+    public void testUpToAllCrlfBinary() {
+        executeTest("SocketStreamTest", "testUpToAllCrlfBinary");
+    }
+
+    @Test
+    public void testUpToAllCrlfCrlfAscii() {
+        executeTest("SocketStreamTest", "testUpToAllCrlfCrlfAscii");
+    }
+
+    @Test
+    public void testUpToAllCrlfCrlfBinary() {
+        executeTest("SocketStreamTest", "testUpToAllCrlfCrlfBinary");
+    }
+
+    @Test
+    public void testUpToAllEmptyPatternAscii() {
+        executeTest("SocketStreamTest", "testUpToAllEmptyPatternAscii");
+    }
+
+    @Test
+    public void testUpToAllEmptyPatternBinary() {
+        executeTest("SocketStreamTest", "testUpToAllEmptyPatternBinary");
+    }
+
+    @Test
+    public void testUpToAllLimit() {
+        executeTest("SocketStreamTest", "testUpToAllLimit");
+    }
+
+    @Test
+    public void testUpToAllLongPatternAscii() {
+        executeTest("SocketStreamTest", "testUpToAllLongPatternAscii");
+    }
+
+    @Test
+    public void testUpToAllLongPatternBinary() {
+        executeTest("SocketStreamTest", "testUpToAllLongPatternBinary");
+    }
+
+    @Test
+    public void testUpToAllMediumPatternAscii() {
+        executeTest("SocketStreamTest", "testUpToAllMediumPatternAscii");
+    }
+
+    @Test
+    public void testUpToAllMediumPatternBinary() {
+        executeTest("SocketStreamTest", "testUpToAllMediumPatternBinary");
+    }
+
+    @Test
+    public void testUpToAllShortPatternAscii() {
+        executeTest("SocketStreamTest", "testUpToAllShortPatternAscii");
+    }
+
+    @Test
+    public void testUpToAllShortPatternAscii2() {
+        executeTest("SocketStreamTest", "testUpToAllShortPatternAscii2");
+    }
+
+    @Test
+    public void testUpToAllShortPatternBinary() {
+        executeTest("SocketStreamTest", "testUpToAllShortPatternBinary");
+    }
+
+    @Test
+    public void testUpToAllShortPatternBinary2() {
+        executeTest("SocketStreamTest", "testUpToAllShortPatternBinary2");
+    }
+
+    @Test
+    public void testUpToAllTimeout() {
+        executeTest("SocketStreamTest", "testUpToAllTimeout");
+    }
+
+    @Test
+    public void testUpToAsciiVsBinary() {
+        executeTest("SocketStreamTest", "testUpToAsciiVsBinary");
+    }
+
+    @Test
+    public void testUpToEndClose() {
+        executeTest("SocketStreamTest", "testUpToEndClose");
+    }
+
+    @Test
+    public void testUpToEndCloseNonSignaling() {
+        executeTest("SocketStreamTest", "testUpToEndCloseNonSignaling");
+    }
+
+    @Test
+    public void testUpToMax() {
+        executeTest("SocketStreamTest", "testUpToMax");
+    }
+
+    @Test
+    public void testUpToTimeout() {
+        executeTest("SocketStreamTest", "testUpToTimeout");
     }
 
     @BeforeClass
