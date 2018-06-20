@@ -31,7 +31,7 @@ public abstract class RemoveFirstLinkOfListNode extends AbstractNodeWithImage {
         // Remove the first process from the given linked list.
         final Object first = at0Node.execute(list, LINKED_LIST.FIRST_LINK);
         final Object last = at0Node.execute(list, LINKED_LIST.LAST_LINK);
-        if (first.equals(last)) {
+        if (first == last) {
             atPut0Node.execute(list, LINKED_LIST.FIRST_LINK, image.nil);
             atPut0Node.execute(list, LINKED_LIST.LAST_LINK, image.nil);
         } else {

@@ -3,13 +3,13 @@ package de.hpi.swa.graal.squeak.util;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
@@ -73,21 +73,13 @@ public class FrameAccess {
         return Arrays.copyOfRange(frame.getArguments(), RECEIVER, frame.getArguments().length);
     }
 
-    public static final Object getContextOrMarker(final Frame frame, final FrameSlot contextOrMarkerSlot) {
+    public static final Object getContextOrMarker(final Frame frame) {
         try {
-            return frame.getObject(contextOrMarkerSlot);
+            return frame.getObject(CompiledCodeObject.thisContextOrMarkerSlot);
         } catch (FrameSlotTypeException e) {
+            CompilerDirectives.transferToInterpreter();
             throw new SqueakException("thisContextOrMarkerSlot should never be invalid");
         }
-    }
-
-    public static final Object getContextOrMarker(final Frame frame) {
-        // TODO: should not be used
-        return getContextOrMarker(frame, getContextOrMarkerSlot(frame));
-    }
-
-    public static final FrameSlot getContextOrMarkerSlot(final Frame frame) {
-        return frame.getFrameDescriptor().getSlots().get(CONTEXT_OR_MARKER);
     }
 
     public static final Object[] newWith(final CompiledCodeObject code, final Object sender, final BlockClosureObject closure, final Object[] frameArgs) {

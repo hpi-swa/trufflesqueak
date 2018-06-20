@@ -7,6 +7,10 @@ import mx_unittest
 
 
 PACKAGE_NAME = 'de.hpi.swa.graal.squeak'
+BASE_VM_ARGS = [
+    '-Xms2G',  # Initial heap size
+    '-XX:MetaspaceSize=64M',  # Initial size of Metaspaces
+]
 
 _suite = mx.suite('graalsqueak')
 _compiler = mx.suite('compiler', fatalIfMissing=False)
@@ -84,10 +88,16 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
                         help='disable background compilation',
                         dest='background_compilation',
                         action='store_false', default=True)
+    parser.add_argument('--cpusampler', help='enable CPU sampling',
+                        dest='cpusampler', action='store_true', default=False)
+    parser.add_argument('--cputracer', help='enable CPU tracing',
+                        dest='cputracer', action='store_true', default=False)
     parser.add_argument('-d', '--disable-interrupts',
                         help='disable interrupt handler',
                         dest='disable_interrupts',
                         action='store_true', default=False)
+    parser.add_argument('--gc', action='store_true',
+                        help='print garbage collection details')
     parser.add_argument('--igv', action='store_true', help='dump to igv')
     parser.add_argument('-l', '--low-level',
                         help='enable low-level optimization output',
@@ -131,17 +141,21 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
                         nargs=argparse.REMAINDER)
     parsed_args = parser.parse_args(raw_args)
 
-    vm_args = ['-cp', mx.classpath(PACKAGE_NAME)]
+    vm_args = BASE_VM_ARGS
+    vm_args += ['-cp', mx.classpath(PACKAGE_NAME)]
 
     if _compiler:
-        vm_args.extend(_graal_vm_args(parsed_args))
+        vm_args += _graal_vm_args(parsed_args)
 
     # default: assertion checking is enabled
     if parsed_args.assertions:
-        vm_args.extend(['-ea', '-esa'])
+        vm_args += ['-ea', '-esa']
+
+    if parsed_args.gc:
+        vm_args += ['-XX:+PrintGC', '-XX:+PrintGCDetails']
 
     if extra_vm_args:
-        vm_args.extend(extra_vm_args)
+        vm_args += extra_vm_args
 
     vm_args.append('%s.GraalSqueakMain' % PACKAGE_NAME)
 
@@ -162,6 +176,10 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
         squeak_arguments.append('--verbose')
     if parsed_args.image_arguments:
         squeak_arguments.extend(['--args'] + parsed_args.image_arguments)
+    if parsed_args.cpusampler:
+        squeak_arguments.append('--cpusampler')
+    if parsed_args.cputracer:
+        squeak_arguments.append('--cputracer')
 
     if parsed_args.image:
         squeak_arguments = [parsed_args.image] + squeak_arguments
@@ -177,8 +195,9 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
 
 def _graalsqueak_gate_runner(args, tasks):
     os.environ['MX_GATE'] = 'true'
-    unittest_args = _get_jacoco_agent_args()
-    unittest_args.extend(['--suite', 'graalsqueak'])
+    unittest_args = BASE_VM_ARGS
+    unittest_args += _get_jacoco_agent_args()
+    unittest_args += ['--suite', 'graalsqueak']
     with mx_gate.Task('TestGraalSqueak', tasks, tags=['test']) as t:
         if t:
             mx_unittest.unittest(unittest_args)

@@ -165,6 +165,10 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         return target;
     }
 
+    public int size() {
+        return getBytecodeOffset() + bytes.length;
+    }
+
     /**
      * Replicate the CallTarget to let each builtin call site executes its own AST.
      */

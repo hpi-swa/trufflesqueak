@@ -59,7 +59,7 @@ public final class ObjectGraph {
             if (!seen.contains(currentObject)) {
                 seen.add(currentObject);
                 final ClassObject sqClass = currentObject.getSqClass();
-                if (classObj == null || classObj.equals(sqClass)) {
+                if (classObj == null || classObj == sqClass) {
                     result.add(currentObject);
                     if (isSomeInstance) {
                         break;

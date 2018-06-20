@@ -44,7 +44,6 @@ import de.hpi.swa.graal.squeak.nodes.context.ReceiverAndArgumentsNode;
 import de.hpi.swa.graal.squeak.nodes.context.ReceiverNode;
 import de.hpi.swa.graal.squeak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.graal.squeak.nodes.context.SqueakLookupClassNodeGen;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
@@ -62,6 +61,7 @@ import de.hpi.swa.graal.squeak.nodes.process.SignalSemaphoreNode;
 import de.hpi.swa.graal.squeak.nodes.process.WakeHighestPriorityNode;
 import de.hpi.swa.graal.squeak.nodes.process.YieldProcessNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
+import de.hpi.swa.graal.squeak.util.MiscUtils;
 
 public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -84,9 +84,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object fail(@SuppressWarnings("unused") final VirtualFrame frame) {
-            if (code.image.config.isVerbose() && !code.image.config.isTracing()) {
-                code.image.getOutput().println("Primitive not yet written: " + code.toString());
-            }
+            code.image.traceVerbose("Primitive not yet written: ", code);
             throw new PrimitiveFailed();
         }
     }
@@ -97,7 +95,6 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Child protected SqueakLookupClassNode lookupClassNode;
         @Child protected LookupNode lookupNode = LookupNodeGen.create();
         @Child private DispatchSendNode dispatchSendNode;
-        @Child private FrameSlotReadNode contextOrMarkerNode = FrameSlotReadNode.createForContextOrMarker();
 
         protected AbstractPerformPrimitiveNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -111,7 +108,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected final Object dispatch(final VirtualFrame frame, final NativeObject selector, final Object[] rcvrAndArgs, final ClassObject rcvrClass) {
             final Object lookupResult = lookupNode.executeLookup(rcvrClass, selector);
-            final Object contextOrMarker = contextOrMarkerNode.executeRead(frame);
+            final Object contextOrMarker = getContextOrMarker(frame);
             return dispatchSendNode.executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs, contextOrMarker);
         }
     }
@@ -428,14 +425,13 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization
-        protected Object doQuit(final Object receiver, final NotProvided errorCode) {
+        protected Object doQuit(final Object receiver, final NotProvided exitStatus) {
             throw new SqueakQuit(1);
         }
 
-        @SuppressWarnings("unused")
         @Specialization
-        protected Object doQuit(final Object receiver, final long errorCode) {
-            throw new SqueakQuit((int) errorCode);
+        protected Object doQuit(@SuppressWarnings("unused") final Object receiver, final long exitStatus) {
+            throw new SqueakQuit((int) exitStatus);
         }
     }
 
@@ -693,11 +689,11 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization
         protected final Object doGC(final VirtualFrame frame, final AbstractSqueakObject receiver) {
-            System.gc();
+            MiscUtils.systemGC();
             if (hasPendingFinalizations()) {
                 code.image.interrupt.setPendingFinalizations();
             }
-            return code.image.wrap(Runtime.getRuntime().freeMemory());
+            return code.image.wrap(MiscUtils.runtimeFreeMemory());
         }
 
         @TruffleBoundary
@@ -724,9 +720,9 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization
-        protected final Object doGC(final VirtualFrame frame, final AbstractSqueakObject receiver) {
-            System.gc();
-            return code.image.wrap(Runtime.getRuntime().freeMemory());
+        protected final Object doIncrementalGC(final VirtualFrame frame, final AbstractSqueakObject receiver) {
+            // It is not possible to suggest incremental GCs, so do not do anything here
+            return code.image.wrap(MiscUtils.runtimeFreeMemory());
         }
     }
 
@@ -890,7 +886,6 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 188)
     protected abstract static class PrimExecuteMethodArgsArrayNode extends AbstractPerformPrimitiveNode {
         @Child private DispatchNode dispatchNode = DispatchNode.create();
-        @Child private FrameSlotReadNode contextOrMarkerNode = FrameSlotReadNode.createForContextOrMarker();
 
         protected PrimExecuteMethodArgsArrayNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -904,7 +899,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             for (int i = 0; i < numArgs; i++) {
                 dispatchRcvrAndArgs[1 + i] = argArray.at0(i);
             }
-            final Object thisContext = contextOrMarkerNode.executeRead(frame);
+            final Object thisContext = getContextOrMarker(frame);
             return dispatchNode.executeDispatch(frame, codeObject, dispatchRcvrAndArgs, thisContext);
         }
     }
@@ -919,7 +914,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"!code.image.config.disableInterruptHandler()"})
         protected final AbstractSqueakObject doRelinquish(final VirtualFrame frame, final AbstractSqueakObject receiver, final long timeMicroseconds) {
-            code.image.interrupt.executeCheck(frame.materialize());
+            code.image.interrupt.doTrigger(frame);
             sleepFor(timeMicroseconds / 1000);
             return receiver;
         }

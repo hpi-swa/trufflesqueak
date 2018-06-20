@@ -10,6 +10,7 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
+import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.SendSelectorNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPopNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
@@ -17,14 +18,14 @@ import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 public final class JumpBytecodes {
 
     public static final class ConditionalJumpNode extends UnconditionalJumpNode {
-        public static final int FALSE_SUCCESSOR = 0;
-        public static final int TRUE_SUCCESSOR = 1;
+        @CompilationFinal public static final int FALSE_SUCCESSOR = 0;
+        @CompilationFinal public static final int TRUE_SUCCESSOR = 1;
         @CompilationFinal private static NativeObject mustBeBooleanSelector;
         @CompilationFinal private final Boolean isIfTrue;
+        @CompilationFinal(dimensions = 1) private final int[] successorExecutionCount = new int[2];
         @Child private StackPopNode popNode;
         @Child private StackPushNode pushNode = StackPushNode.create();
-        @Child private SendSelectorNode sendMustBeBooleanNode;
-        @CompilationFinal(dimensions = 1) private final int[] successorExecutionCount = new int[2];
+        @Child private AbstractSendNode sendMustBeBooleanNode;
 
         public ConditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode) {
             super(code, index, numBytecodes, bytecode);

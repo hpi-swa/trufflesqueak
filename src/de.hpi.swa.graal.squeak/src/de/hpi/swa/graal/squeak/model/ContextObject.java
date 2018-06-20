@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.model;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
@@ -14,14 +13,13 @@ import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
-import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public final class ContextObject extends AbstractSqueakObject {
     @CompilationFinal protected MaterializedFrame truffleFrame;
-    @CompilationFinal(dimensions = 1) protected Object[] pointers;
-    @CompilationFinal private boolean hasModifiedSender;
-    @CompilationFinal private boolean isDirty;
+    protected Object[] pointers;
+    private boolean hasModifiedSender;
+    private boolean isDirty;
 
     public static ContextObject create(final SqueakImageContext image) {
         return new ContextObject(image);
@@ -39,7 +37,7 @@ public final class ContextObject extends AbstractSqueakObject {
     private ContextObject(final SqueakImageContext image, final int size) {
         this(image);
         isDirty = true;
-        pointers = ArrayUtils.withAll(CONTEXT.TEMP_FRAME_START + size, null);
+        pointers = new Object[CONTEXT.TEMP_FRAME_START + size];
     }
 
     public static ContextObject create(final SqueakImageContext image, final int size, final MaterializedFrame frame) {
@@ -63,6 +61,11 @@ public final class ContextObject extends AbstractSqueakObject {
         // remove pc and sender without flagging as dirty
         pointers[CONTEXT.INSTRUCTION_POINTER] = image.nil;
         pointers[CONTEXT.SENDER_OR_NIL] = image.nil;
+    }
+
+    public boolean isTerminated() {
+        return pointers[CONTEXT.INSTRUCTION_POINTER] == image.nil &&
+                        pointers[CONTEXT.SENDER_OR_NIL] == image.nil;
     }
 
     @Override
@@ -121,11 +124,9 @@ public final class ContextObject extends AbstractSqueakObject {
         assert index >= 0 && value != null;
         if (index == CONTEXT.SENDER_OR_NIL) {
             image.traceVerbose("Sender of", this, " set to", value);
-            CompilerDirectives.transferToInterpreterAndInvalidate();
             hasModifiedSender = true;
         }
         if (!isDirty) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
             isDirty = true;
         }
         assert value != null; // null indicates a problem
@@ -304,7 +305,6 @@ public final class ContextObject extends AbstractSqueakObject {
         if (!super.become(other)) {
             throw new SqueakException("Should not fail");
         }
-        CompilerDirectives.transferToInterpreterAndInvalidate();
         final Object[] pointers2 = ((ContextObject) other).pointers;
         ((ContextObject) other).pointers = this.pointers;
         pointers = pointers2;
@@ -313,7 +313,6 @@ public final class ContextObject extends AbstractSqueakObject {
 
     @Override
     public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
         for (int i = 0; i < from.length; i++) {
             final Object fromPointer = from[i];
             // skip sender (for performance), pc, and sp
@@ -399,7 +398,7 @@ public final class ContextObject extends AbstractSqueakObject {
     }
 
     public boolean hasMaterializedSender() {
-        return pointers[CONTEXT.SENDER_OR_NIL] != null;
+        return pointers[CONTEXT.SENDER_OR_NIL] != null || truffleFrame.getArguments()[FrameAccess.SENDER_OR_SENDER_MARKER] instanceof ContextObject;
     }
 
     public void materialize() {

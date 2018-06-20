@@ -2,9 +2,12 @@ package de.hpi.swa.graal.squeak.test;
 
 import static org.junit.Assert.fail;
 
+import org.graalvm.polyglot.Context;
+
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
+import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonVirtualReturn;
@@ -105,5 +108,12 @@ public abstract class AbstractSqueakTestCase {
     protected static VirtualFrame createTestFrame(final CompiledCodeObject code) {
         final Object[] arguments = FrameAccess.newWith(code, code.image.nil, null, new Object[0]);
         return Truffle.getRuntime().createVirtualFrame(arguments, code.getFrameDescriptor());
+    }
+
+    protected static void ensureImageContext(final String imagePath) {
+        final Context context = Context.newBuilder().allowIO(true).arguments(SqueakLanguage.ID, new String[]{imagePath, "--testing"}).build();
+        context.enter();
+        context.initialize(SqueakLanguage.ID);
+        image = SqueakLanguage.getContext();
     }
 }

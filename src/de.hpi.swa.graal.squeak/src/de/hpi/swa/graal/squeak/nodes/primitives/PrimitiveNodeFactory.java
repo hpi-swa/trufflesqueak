@@ -17,6 +17,8 @@ import de.hpi.swa.graal.squeak.nodes.plugins.FloatArrayPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.GraalSqueakPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.HostWindowPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.LargeIntegers;
+import de.hpi.swa.graal.squeak.nodes.plugins.LocalePlugin;
+import de.hpi.swa.graal.squeak.nodes.plugins.Matrix2x3Plugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.MiscPrimitivePlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.PolyglotPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.UUIDPlugin;
@@ -50,6 +52,8 @@ public final class PrimitiveNodeFactory {
                     new GraalSqueakPlugin(),
                     new HostWindowPlugin(),
                     new LargeIntegers(),
+                    new LocalePlugin(),
+                    new Matrix2x3Plugin(),
                     new MiscPrimitivePlugin(),
                     new PolyglotPlugin(),
                     new UnixOSProcessPlugin(),
@@ -160,7 +164,7 @@ public final class PrimitiveNodeFactory {
 
     private static void addEntryToPrimitiveTable(final int index, final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory) {
         assert index < MAX_PRIMITIVE_INDEX : "primitive table array not large enough";
-        assert primitiveTable[index - 1] == null : "primitives are not allowed to override others";
+        assert primitiveTable[index - 1] == null : "primitives are not allowed to override others (#" + index + ")";
         primitiveTable[index - 1] = nodeFactory;
     }
 }
