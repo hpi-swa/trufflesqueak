@@ -31,7 +31,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives.Sim
 
 public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
-    static PrintWriter measurements;
+    @CompilationFinal static PrintWriter measurements;
 
     static void createMeasurements() {
         try {

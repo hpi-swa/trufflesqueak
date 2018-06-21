@@ -306,12 +306,15 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @Specialization
+        @SuppressWarnings("unused")
+        @Specialization(guards = "a == b")
+        protected long doLongEqual(final long a, final long b) {
+            return 0;
+        }
+
+        @Specialization(guards = "a != b")
         @TruffleBoundary
         protected long doLong(final long a, final long b) {
-            if (a == b) {
-                return 0;
-            }
             final int compare = Long.toString(a).compareTo(Long.toString(b));
             if (compare > 0) {
                 return 1;
@@ -322,12 +325,15 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        @Specialization
+        @SuppressWarnings("unused")
+        @Specialization(guards = "a.equals(b)")
+        protected long doLargeIntegerEqual(final LargeIntegerObject a, final LargeIntegerObject b) {
+            return 0;
+        }
+
+        @Specialization(guards = "!a.equals(b)")
         @TruffleBoundary
         protected long doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            if (a.equals(b)) {
-                return 0;
-            }
             final int compare = a.toString().compareTo(b.toString());
             if (compare > 0) {
                 return 1;
@@ -340,20 +346,30 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected long doLong(final long a, final LargeIntegerObject b) {
+            final long longValueExact;
             try {
-                return doLong(a, b.reduceToLong());
+                longValueExact = b.longValueExact();
             } catch (ArithmeticException e) {
                 return -1L; // If `b` does not fit into a long, it must be larger
             }
+            if (a == longValueExact) {
+                return 0;
+            }
+            return doLong(a, longValueExact);
         }
 
         @Specialization
         protected long doLargeInteger(final LargeIntegerObject a, final long b) {
+            final long longValueExact;
             try {
-                return doLong(a.reduceToLong(), b);
+                longValueExact = a.longValueExact();
             } catch (ArithmeticException e) {
                 return 1L; // If `a` does not fit into a long, it must be larger
             }
+            if (longValueExact == b) {
+                return 0;
+            }
+            return doLong(longValueExact, b);
         }
     }
 

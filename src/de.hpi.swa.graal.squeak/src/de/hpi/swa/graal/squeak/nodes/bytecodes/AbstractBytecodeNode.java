@@ -70,8 +70,7 @@ public abstract class AbstractBytecodeNode extends SqueakNodeWithCode {
         this.lineNumber = lineNumber;
     }
 
-    @Override
-    public final void setSourceSection(final SourceSection section) {
+    private void setSourceSection(final SourceSection section) {
         sourceSection = section;
     }
 }

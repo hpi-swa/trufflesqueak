@@ -8,7 +8,6 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.File;
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -33,6 +32,7 @@ import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
+import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.EmptyObject;
@@ -49,6 +49,7 @@ import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
 import de.hpi.swa.graal.squeak.nodes.LookupNode;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.IsDoesNotUnderstandNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeGetBytesNode;
 import de.hpi.swa.graal.squeak.nodes.context.ArgumentNode;
 import de.hpi.swa.graal.squeak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -79,6 +80,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
             timeZoneOffsetMicroseconds = (((long) rightNow.get(Calendar.ZONE_OFFSET)) + rightNow.get(Calendar.DST_OFFSET)) * 1000;
         }
 
+        @TruffleBoundary
         protected static final long currentMicrosecondsUTC() {
             final Instant now = Instant.now();
             return now.getEpochSecond() * SEC_TO_USEC + now.getNano() / USEC_TO_NANO + EPOCH_DELTA_MICROSECONDS;
@@ -114,22 +116,22 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        protected boolean isSmallIntegerClass(final ClassObject classObject) {
-            return classObject.equals(code.image.smallIntegerClass);
+        protected final boolean isSmallIntegerClass(final ClassObject classObject) {
+            return classObject == code.image.smallIntegerClass;
         }
 
-        protected boolean isClassObject(final ClassObject classObject) {
+        protected static final boolean isClassObject(final ClassObject classObject) {
             return classObject.isClass();
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = "isSmallIntegerClass(classObject)")
-        protected PointersObject allInstances(final ClassObject classObject) {
+        protected static final PointersObject allInstances(final ClassObject classObject) {
             throw new PrimitiveFailed();
         }
 
         @Specialization(guards = "isClassObject(classObject)")
-        protected AbstractSqueakObject someInstance(final ClassObject classObject) {
+        protected final AbstractSqueakObject someInstance(final ClassObject classObject) {
             try {
                 return code.image.objects.someInstance(classObject).get(0);
             } catch (IndexOutOfBoundsException e) {
@@ -139,7 +141,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Fallback
-        protected PointersObject allInstances(final Object object) {
+        protected static final PointersObject allInstances(final Object object) {
             throw new PrimitiveFailed();
         }
     }
@@ -153,8 +155,22 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected AbstractSqueakObject get(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected final AbstractSqueakObject get(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             return code.image.wrap(code.image.config.getImagePath());
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 122)
+    protected abstract static class PrimNoopNode extends AbstractPrimitiveNode {
+
+        protected PrimNoopNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @Specialization
+        protected static final AbstractSqueakObject get(final AbstractSqueakObject receiver) {
+            return receiver;
         }
     }
 
@@ -167,7 +183,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected AbstractSqueakObject get(final AbstractSqueakObject receiver, final AbstractSqueakObject semaphore) {
+        protected final AbstractSqueakObject get(final AbstractSqueakObject receiver, final AbstractSqueakObject semaphore) {
             code.image.registerSemaphore(semaphore, SPECIAL_OBJECT_INDEX.TheLowSpaceSemaphore);
             return receiver;
         }
@@ -185,6 +201,46 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final AbstractSqueakObject doSet(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final long numBytes) {
             // TODO: do something with numBytes
             return receiver;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 132)
+    protected abstract static class PrimObjectPointsToNode extends AbstractPrimitiveNode {
+
+        protected PrimObjectPointsToNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @Specialization
+        protected final boolean doClass(final ClassObject receiver, final Object thang) {
+            return ArrayUtils.contains(receiver.getPointers(), thang) ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @Specialization
+        protected final boolean doClass(final CompiledCodeObject receiver, final Object thang) {
+            return ArrayUtils.contains(receiver.getLiterals(), thang) ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @Specialization
+        protected final boolean doContext(final ContextObject receiver, final Object thang) {
+            return ArrayUtils.contains(receiver.getPointers(), thang) ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @Specialization
+        protected final boolean doPointers(final PointersObject receiver, final Object thang) {
+            return ArrayUtils.contains(receiver.getPointers(), thang) ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @Specialization
+        protected final boolean doWeakPointers(final WeakPointersObject receiver, final Object thang) {
+            return ArrayUtils.contains(receiver.getPointers(), thang) ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @SuppressWarnings("unused")
+        @Fallback
+        protected final boolean doFallback(final Object receiver, final Object thang) {
+            return code.image.sqFalse;
         }
     }
 
@@ -241,7 +297,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected long doClock(@SuppressWarnings("unused") final ClassObject receiver) {
+        protected final long doClock(@SuppressWarnings("unused") final ClassObject receiver) {
             return code.image.wrap(currentMicrosecondsLocal() / 1000000);
         }
     }
@@ -249,7 +305,8 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 141)
     protected abstract static class PrimClipboardTextNode extends AbstractPrimitiveNode {
-        @CompilationFinal private final boolean isHeadless = GraphicsEnvironment.isHeadless();
+        @CompilationFinal protected final boolean isHeadless = GraphicsEnvironment.isHeadless();
+        @Child private NativeGetBytesNode getBytesNode = NativeGetBytesNode.create();
         private String headlessClipboardContents = "";
 
         protected PrimClipboardTextNode(final CompiledMethodObject method, final int numArguments) {
@@ -257,34 +314,47 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
-        @Specialization
-        protected Object doClipboard(final Object receiver, final NotProvided value) {
-            String text;
-            if (!isHeadless) {
-                try {
-                    text = (String) getClipboard().getData(DataFlavor.stringFlavor);
-                } catch (UnsupportedFlavorException | IOException | IllegalStateException e) {
-                    text = "";
-                }
-            } else {
-                text = headlessClipboardContents;
-            }
-            return code.image.wrap(text);
+        @Specialization(guards = "!isHeadless")
+        protected final Object getClipboardText(final Object receiver, final NotProvided value) {
+            return code.image.wrap(getClipboardString());
         }
 
         @SuppressWarnings("unused")
-        @Specialization
-        protected Object doClipboard(final Object receiver, final NativeObject value) {
-            final String text = value.toString();
-            if (!isHeadless) {
-                final StringSelection selection = new StringSelection(text);
-                getClipboard().setContents(selection, selection);
-            } else {
-                headlessClipboardContents = text;
-            }
+        @Specialization(guards = "isHeadless")
+        protected final Object getClipboardTextHeadless(final Object receiver, final NotProvided value) {
+            return code.image.wrap(headlessClipboardContents);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "!isHeadless")
+        protected final Object setClipboardText(final Object receiver, final NativeObject value) {
+            setClipboardString(getBytesNode.executeAsString(value));
             return value;
         }
 
+        @SuppressWarnings("unused")
+        @Specialization(guards = "isHeadless")
+        protected final Object setClipboardTextHeadless(final Object receiver, final NativeObject value) {
+            headlessClipboardContents = getBytesNode.executeAsString(value);
+            return value;
+        }
+
+        @TruffleBoundary
+        private static void setClipboardString(final String text) {
+            final StringSelection selection = new StringSelection(text);
+            getClipboard().setContents(selection, selection);
+        }
+
+        @TruffleBoundary
+        private static String getClipboardString() {
+            try {
+                return (String) getClipboard().getData(DataFlavor.stringFlavor);
+            } catch (UnsupportedFlavorException | IOException | IllegalStateException e) {
+                return "";
+            }
+        }
+
+        @TruffleBoundary
         private static Clipboard getClipboard() {
             return Toolkit.getDefaultToolkit().getSystemClipboard();
         }
@@ -299,7 +369,8 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected AbstractSqueakObject goVMPath(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        @TruffleBoundary
+        protected final AbstractSqueakObject goVMPath(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             return code.image.wrap(System.getProperty("java.home") + File.separatorChar);
         }
     }
@@ -437,7 +508,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         @TruffleBoundary
-        protected Object doGet(@SuppressWarnings("unused") final Object image, final long longIndex) {
+        protected final Object doGet(@SuppressWarnings("unused") final Object image, final long longIndex) {
             final int index = (int) longIndex;
             if (index == 0) {
                 final String separator = System.getProperty("file.separator");
@@ -497,7 +568,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object copy(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected final Object copy(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             return asFloatObject(Math.pow(2, 22) - 1);
         }
     }
@@ -510,25 +581,75 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        protected boolean hasNoInstances(final ClassObject classObject) {
+        protected final boolean hasNoInstances(final ClassObject classObject) {
             return code.image.objects.getClassesWithNoInstances().contains(classObject);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = "hasNoInstances(classObject)")
-        protected PointersObject noInstances(final ClassObject classObject) {
+        protected final PointersObject noInstances(final ClassObject classObject) {
             return code.image.newList(new Object[0]);
         }
 
         @Specialization
-        protected PointersObject allInstances(final ClassObject classObject) {
+        protected final PointersObject allInstances(final ClassObject classObject) {
             return code.image.newList(ArrayUtils.toArray(code.image.objects.allInstances(classObject)));
         }
 
         @SuppressWarnings("unused")
         @Fallback
-        protected PointersObject allInstances(final Object object) {
+        protected static final PointersObject allInstances(final Object object) {
             throw new PrimitiveFailed();
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 183)
+    protected abstract static class PrimIsPinnedNode extends AbstractPrimitiveNode {
+
+        protected PrimIsPinnedNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @Specialization
+        protected final boolean isPinned(final AbstractSqueakObject receiver) {
+            PrimPinNode.printWarningIfNotTesting(code);
+            return receiver.isPinned() ? code.image.sqTrue : code.image.sqFalse;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 184)
+    protected abstract static class PrimPinNode extends AbstractPrimitiveNode {
+
+        protected PrimPinNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @Specialization(guards = "enable")
+        protected final boolean doPinEnable(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final boolean enable) {
+            printWarningIfNotTesting(code);
+            final boolean wasPinned = receiver.isPinned();
+            receiver.setPinned();
+            return wasPinned ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @Specialization(guards = "!enable")
+        protected final boolean doPinDisable(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final boolean enable) {
+            printWarningIfNotTesting(code);
+            final boolean wasPinned = receiver.isPinned();
+            receiver.unsetPinned();
+            return wasPinned ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        protected static final void printWarningIfNotTesting(final CompiledCodeObject code) {
+            if (!code.image.config.isTesting()) {
+                printWarning(code);
+            }
+        }
+
+        private static void printWarning(final CompiledCodeObject code) {
+            code.image.printToStdErr("Object pinning is not supported by this vm, but requested from Squeak/Smalltalk.");
         }
     }
 
@@ -541,7 +662,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected long time(@SuppressWarnings("unused") final Object receiver) {
+        protected static final long time(@SuppressWarnings("unused") final Object receiver) {
             return currentMicrosecondsUTC();
         }
     }
@@ -555,7 +676,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected long time(@SuppressWarnings("unused") final Object receiver) {
+        protected final long time(@SuppressWarnings("unused") final Object receiver) {
             return currentMicrosecondsLocal();
         }
     }
@@ -569,7 +690,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected AbstractSqueakObject doSignal(final AbstractSqueakObject receiver, final AbstractSqueakObject semaphore, final long usecsUTC) {
+        protected final AbstractSqueakObject doSignal(final AbstractSqueakObject receiver, final AbstractSqueakObject semaphore, final long usecsUTC) {
             final long msTime = (usecsUTC - AbstractClockPrimitiveNode.EPOCH_DELTA_MICROSECONDS) / 1000;
             signalAtMilliseconds(semaphore, msTime);
             return receiver;
@@ -597,93 +718,93 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization
-        protected Object getVMParameters(final Object receiver, final NotProvided index, final NotProvided value) {
+        protected final Object getVMParameters(final Object receiver, final NotProvided index, final NotProvided value) {
             final Object[] vmParameters = new Object[PARAMS_ARRAY_SIZE];
             for (int i = 0; i < PARAMS_ARRAY_SIZE; i++) {
-                vmParameters[i] = vmParameterAt(i);
+                vmParameters[i] = vmParameterAt(i + 1);
             }
             return code.image.newList(vmParameters);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"index >= 1", "index < PARAMS_ARRAY_SIZE"})
-        protected Object getVMParameters(final Object receiver, final long index, final NotProvided value) {
+        protected final Object getVMParameters(final Object receiver, final long index, final NotProvided value) {
             return vmParameterAt((int) index);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = "!isNotProvided(value)")
-        protected Object getVMParameters(final Object receiver, final long index, final Object value) {
+        protected final Object getVMParameters(final Object receiver, final long index, final Object value) {
             return code.image.nil; // ignore writes
         }
 
         private Object vmParameterAt(final int index) {
             //@formatter:off
             switch (index) {
-                case 1: // end (v3)/size(Spur) of old-space (0-based, read-only)
+                case 1: return 1L; // end (v3)/size(Spur) of old-space (0-based, read-only)
                 case 2: return 1L; // end (v3)/size(Spur) of young/new-space (read-only)
-                case 3: // end (v3)/size(Spur) of heap (read-only)
+                case 3: return 1L; // end (v3)/size(Spur) of heap (read-only)
                 case 4: return code.image.nil; // nil (was allocationCount (read-only))
                 case 5: return code.image.nil; // nil (was allocations between GCs (read-write)
-                case 6: // survivor count tenuring threshold (read-write)
-                case 7: return 0L; //return ManagementFactory.getGarbageCollectorMXBeans().get(1).getCollectionCount(); // full GCs since startup (read-only)
+                case 6: return 0L; // survivor count tenuring threshold (read-write)
+                case 7: return 1L; // full GCs since startup (read-only) -> used in InterpreterProxy>>#statNumGCs
                 case 8: return 1L; // total milliseconds in full GCs since startup (read-only)
-                case 9: return 0L; //return ManagementFactory.getGarbageCollectorMXBeans().get(0).getCollectionCount(); // incremental GCs (SqueakV3) or scavenges (Spur) since startup (read-only)
-                case 10: // total milliseconds in incremental GCs (SqueakV3) or scavenges (Spur) since startup (read-only)
-                case 11: // tenures of surving objects since startup (read-only)
-                // case 12-20 were specific to ikp's JITTER VM, now 12-19 are open for use
-                case 20: // utc microseconds at VM start-up (actually at time initialization, which precedes image load).
-                case 21: // root table size (read-only)
+                case 9: return 1L; // incremental GCs (SqueakV3) or scavenges (Spur) since startup (read-only) -> used in InterpreterProxy>>#statNumGCs
+                case 10: return 1L; // total milliseconds in incremental GCs (SqueakV3) or scavenges (Spur) since startup (read-only)
+                case 11: return 1L; // tenures of surving objects since startup (read-only)
+                case 12: case 13: case 14: case 15: case 16: case 17: case 18: case 19: return 0L; // case 12-20 were specific to ikp's JITTER VM, now 12-19 are open for use
+                case 20: return 0L; // utc microseconds at VM start-up (actually at time initialization, which precedes image load).
+                case 21: return 0L; // root table size (read-only)
                 case 22: return 0L; // root table overflows since startup (read-only)
-                case 23: // bytes of extra memory to reserve for VM buffers, plugins, etc (stored in image file header).
-                case 24: // memory threshold above which shrinking object memory (rw)
-                case 25: // memory headroom when growing object memory (rw)
-                case 26: return InterruptHandlerNode.getInterruptChecksEveryNms(); // interruptChecksEveryNms - force an ioProcessEvents every N milliseconds (rw)
-                case 27: // number of times mark loop iterated for current IGC/FGC (read-only) includes ALL marking
-                case 28: // number of times sweep loop iterated for current IGC/FGC (read-only)
-                case 29: // number of times make forward loop iterated for current IGC/FGC (read-only)
-                case 30: // number of times compact move loop iterated for current IGC/FGC (read-only)
-                case 31: // number of grow memory requests (read-only)
-                case 32: // number of shrink memory requests (read-only)
-                case 33: // number of root table entries used for current IGC/FGC (read-only)
-                case 34: // number of allocations done before current IGC/FGC (read-only)
-                case 35: // number of survivor objects after current IGC/FGC (read-only)
-                case 36: // millisecond clock when current IGC/FGC completed (read-only)
-                case 37: // number of marked objects for Roots of the world, not including Root Table entries for current IGC/FGC (read-only)
-                case 38: // milliseconds taken by current IGC (read-only)
-                case 39: // Number of finalization signals for Weak Objects pending when current IGC/FGC completed (read-only)
+                case 23: return 0L; // bytes of extra memory to reserve for VM buffers, plugins, etc (stored in image file header).
+                case 24: return 1L; // memory threshold above which shrinking object memory (rw)
+                case 25: return 1L; // memory headroom when growing object memory (rw)
+                case 26: return (long) InterruptHandlerNode.getInterruptChecksEveryNms(); // interruptChecksEveryNms - force an ioProcessEvents every N milliseconds (rw)
+                case 27: return 0L; // number of times mark loop iterated for current IGC/FGC (read-only) includes ALL marking
+                case 28: return 0L; // number of times sweep loop iterated for current IGC/FGC (read-only)
+                case 29: return 0L; // number of times make forward loop iterated for current IGC/FGC (read-only)
+                case 30: return 0L; // number of times compact move loop iterated for current IGC/FGC (read-only)
+                case 31: return 0L; // number of grow memory requests (read-only)
+                case 32: return 0L; // number of shrink memory requests (read-only)
+                case 33: return 0L; // number of root table entries used for current IGC/FGC (read-only)
+                case 34: return 0L; // number of allocations done before current IGC/FGC (read-only)
+                case 35: return 0L; // number of survivor objects after current IGC/FGC (read-only)
+                case 36: return 0L; // millisecond clock when current IGC/FGC completed (read-only)
+                case 37: return 0L; // number of marked objects for Roots of the world, not including Root Table entries for current IGC/FGC (read-only)
+                case 38: return 0L; // milliseconds taken by current IGC (read-only)
+                case 39: return 0L; // Number of finalization signals for Weak Objects pending when current IGC/FGC completed (read-only)
                 case 40: return 4L; // BytesPerOop for this image
                 case 41: return 6521L; // imageFormatVersion for the VM
-                case 42: // number of stack pages in use
-                case 43: // desired number of stack pages (stored in image file header, max 65535)
+                case 42: return 1L; // number of stack pages in use
+                case 43: return 0L; // desired number of stack pages (stored in image file header, max 65535)
                 case 44: return 0L; // size of eden, in bytes
-                case 45: // desired size of eden, in bytes (stored in image file header)
-                case 46: // machine code zone size, in bytes (Cog only; otherwise nil)
-                case 47: // desired machine code zone size (stored in image file header; Cog only; otherwise nil)
+                case 45: return 0L; // desired size of eden, in bytes (stored in image file header)
+                case 46: return code.image.nil; // machine code zone size, in bytes (Cog only; otherwise nil)
+                case 47: return code.image.nil; // desired machine code zone size (stored in image file header; Cog only; otherwise nil)
                 case 48: return 0L; // various header flags.  See getCogVMFlags.
-                case 49: // max size the image promises to grow the external semaphore table to (0 sets to default, which is 256 as of writing)
+                case 49: return 256L; // max size the image promises to grow the external semaphore table to (0 sets to default, which is 256 as of writing)
                 case 50: case 51: return code.image.nil; // nil; reserved for VM parameters that persist in the image (such as eden above)
-                case 52: // root table capacity
-                case 53: // number of segments (Spur only; otherwise nil)
-                case 54: // total size of free old space (Spur only, otherwise nil)
-                case 55: // ratio of growth and image size at or above which a GC will be performed post scavenge
-                case 56: // number of process switches since startup (read-only)
-                case 57: // number of ioProcessEvents calls since startup (read-only)
-                case 58: // number of ForceInterruptCheck calls since startup (read-only)
-                case 59: // number of check event calls since startup (read-only)
-                case 60: // number of stack page overflows since startup (read-only)
-                case 61: // number of stack page divorces since startup (read-only)
-                case 62: // compiled code compactions since startup (read-only; Cog only; otherwise nil)
-                case 63: // total milliseconds in compiled code compactions since startup (read-only; Cog only; otherwise nil)
-                case 64: // the number of methods that currently have jitted machine-code
-                case 65: // whether the VM supports a certain feature, MULTIPLE_BYTECODE_SETS is bit 0, IMMTABILITY is bit 1
-                case 66: // the byte size of a stack page
-                case 67: // the max allowed size of old space (Spur only; nil otherwise; 0 implies no limit except that of the underlying platform)
-                case 68: // the average number of live stack pages when scanned by GC (at scavenge/gc/become et al)
-                case 69: // the maximum number of live stack pages when scanned by GC (at scavenge/gc/become et al)
+                case 52: return 65536L; // root table capacity
+                case 53: return 2L; // number of segments (Spur only; otherwise nil)
+                case 54: return 1L; // total size of free old space (Spur only, otherwise nil)
+                case 55: return 0L; // ratio of growth and image size at or above which a GC will be performed post scavenge
+                case 56: return code.image.nil; // number of process switches since startup (read-only)
+                case 57: return 0L; // number of ioProcessEvents calls since startup (read-only)
+                case 58: return 0L; // number of ForceInterruptCheck calls since startup (read-only)
+                case 59: return 0L; // number of check event calls since startup (read-only)
+                case 60: return 0L; // number of stack page overflows since startup (read-only)
+                case 61: return 0L; // number of stack page divorces since startup (read-only)
+                case 62: return code.image.nil; // compiled code compactions since startup (read-only; Cog only; otherwise nil)
+                case 63: return code.image.nil; // total milliseconds in compiled code compactions since startup (read-only; Cog only; otherwise nil)
+                case 64: return 0L; // the number of methods that currently have jitted machine-code
+                case 65: return 0L; // whether the VM supports a certain feature, MULTIPLE_BYTECODE_SETS is bit 0, IMMTABILITY is bit 1
+                case 66: return 4096L; // the byte size of a stack page
+                case 67: return 0L; // the max allowed size of old space (Spur only; nil otherwise; 0 implies no limit except that of the underlying platform)
+                case 68: return 12L; // the average number of live stack pages when scanned by GC (at scavenge/gc/become et al)
+                case 69: return 16L; // the maximum number of live stack pages when scanned by GC (at scavenge/gc/become et al)
                 case 70: return 1L; // the vmProxyMajorVersion (the interpreterProxy VM_MAJOR_VERSION)
                 case 71: return 13L; // the vmProxyMinorVersion (the interpreterProxy VM_MINOR_VERSION)
-                default: return 0L;
+                default: return code.image.nil;
             }
             //@formatter:on
         }
@@ -701,10 +822,15 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final Object doFail(@SuppressWarnings("unused") final PointersObject proxy, final long reasonCode) {
             if (DEBUG_META_PRIMITIVE_FAILURES) {
-                final String target = Truffle.getRuntime().getCallerFrame().getCallTarget().toString();
-                code.image.getError().println("Simulation primitive failed: " + target + "; reasonCode: " + reasonCode);
+                debugMetaPrimitiveFailures(reasonCode);
             }
             throw new SimulationPrimitiveFailed(reasonCode);
+        }
+
+        @TruffleBoundary
+        private void debugMetaPrimitiveFailures(final long reasonCode) {
+            final String target = Truffle.getRuntime().getCallerFrame().getCallTarget().toString();
+            code.image.printToStdErr("Simulation primitive failed (target:", target, "/ reasonCode:", reasonCode, ")");
         }
     }
 
@@ -727,6 +853,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected final Object doGet(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long index) {
             try {
                 return code.image.wrap(externalModuleNames[(int) index - 1]);
@@ -748,6 +875,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         @CompilationFinal protected final String moduleName;
         @CompilationFinal protected final NativeObject functionName;
         @CompilationFinal protected final boolean bitBltSimulationNotFound = code.image.simulatePrimitiveArgs.isNil();
+        @CompilationFinal protected final PointersObject emptyList;
         @Child protected LookupNode lookupNode = LookupNode.create();
         @Child protected DispatchNode dispatchNode = DispatchNode.create();
         @Child protected SqueakLookupClassNode lookupClassNode;
@@ -770,13 +898,14 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
             this.functionName = code.image.wrap(functionName);
             lookupClassNode = SqueakLookupClassNode.create(method.image);
             isDoesNotUnderstandNode = IsDoesNotUnderstandNode.create(method.image);
+            emptyList = code.image.newList(new Object[]{});
         }
 
         @SuppressWarnings("unused")
         @Specialization
         protected final Object doSimulation(final VirtualFrame frame, final Object receiver, final NotProvided arg1, final NotProvided arg2, final NotProvided arg3,
                         final NotProvided arg4, final NotProvided arg5, final NotProvided arg6, final NotProvided arg7, final NotProvided arg8) {
-            return doSimulation(frame, receiver, code.image.newList(new Object[]{}));
+            return doSimulation(frame, receiver, emptyList);
         }
 
         @SuppressWarnings("unused")
@@ -838,17 +967,20 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
         private Object doSimulation(final VirtualFrame frame, final Object receiver, final PointersObject arguments) {
             final Object[] newRcvrAndArgs = new Object[]{receiver, functionName, arguments};
+            final boolean wasDisabled = code.image.interrupt.disabled();
             code.image.interrupt.disable();
             try {
                 return dispatchNode.executeDispatch(frame, getSimulateMethod(receiver), newRcvrAndArgs, getContextOrMarker(frame));
             } catch (SimulationPrimitiveFailed e) {
                 throw new PrimitiveFailed(e.getReasonCode());
             } finally {
-                code.image.interrupt.enable();
+                if (wasDisabled) {
+                    code.image.interrupt.enable();
+                }
             }
         }
 
-        protected CompiledMethodObject getSimulateMethod(final Object receiver) {
+        private CompiledMethodObject getSimulateMethod(final Object receiver) {
             if (simulationMethod == null) {
                 if (bitBltSimulationNotFound) {
                     throw new PrimitiveFailed();

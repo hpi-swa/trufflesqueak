@@ -21,8 +21,8 @@ public final class NativeObject extends AbstractSqueakObject {
     @CompilationFinal public static final int SHORT_BYTE_SIZE = 2;
     @CompilationFinal public static final int INTEGER_BYTE_SIZE = 4;
     @CompilationFinal public static final int LONG_BYTE_SIZE = 8;
-    @CompilationFinal public static final long BYTE_MAX = (long) (Math.pow(2, Byte.SIZE) - 1);
-    @CompilationFinal public static final long SHORT_MAX = (long) (Math.pow(2, Short.SIZE) - 1);
+    @CompilationFinal public static final short BYTE_MAX = (short) (Math.pow(2, Byte.SIZE) - 1);
+    @CompilationFinal public static final int SHORT_MAX = (int) (Math.pow(2, Short.SIZE) - 1);
     @CompilationFinal public static final long INTEGER_MAX = (long) (Math.pow(2, Integer.SIZE) - 1);
 
     @CompilationFinal protected Object storage;

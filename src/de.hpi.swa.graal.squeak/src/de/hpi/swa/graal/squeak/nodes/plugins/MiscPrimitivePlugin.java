@@ -214,18 +214,21 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(name = "primitiveFindFirstInString")
     public abstract static class PrimFindFirstInStringNode extends AbstractMiscPrimitiveNode {
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
-        @Child private SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
+        @Child protected SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
         @Child private NativeGetBytesNode getBytesNode = NativeGetBytesNode.create();
 
         public PrimFindFirstInStringNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        @Specialization
+        @SuppressWarnings("unused")
+        @Specialization(guards = "sizeNode.execute(inclusionMap) != 256")
+        protected long doFindNot256(final AbstractSqueakObject receiver, final NativeObject string, final NativeObject inclusionMap, final long start) {
+            return 0;
+        }
+
+        @Specialization(guards = "sizeNode.execute(inclusionMap) == 256")
         protected long doFind(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject string, final NativeObject inclusionMap, final long start) {
-            if (sizeNode.execute(inclusionMap) != 256) {
-                return 0;
-            }
             final byte[] stringBytes = getBytesNode.execute(string);
             final int stringSize = stringBytes.length;
             int index = (int) start;
@@ -245,6 +248,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveFindSubstring")
     public abstract static class PrimFindSubstringNode extends AbstractMiscPrimitiveNode {
+        @Child private NativeGetBytesNode getBytesNode = NativeGetBytesNode.create();
 
         public PrimFindSubstringNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -253,7 +257,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "isASCIIOrder(matchTable)")
         protected long doFindAscii(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject key, final NativeObject body, final long start,
                         @SuppressWarnings("unused") final NativeObject matchTable) {
-            return body.toString().indexOf(key.toString(), (int) start - 1) + 1;
+            return getBytesNode.executeAsString(body).indexOf(getBytesNode.executeAsString(key), (int) start - 1) + 1;
         }
 
         @SuppressWarnings("unused")
@@ -272,11 +276,8 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @Specialization
+        @Specialization(guards = "start >= 0")
         protected long doNativeObject(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long value, final NativeObject string, final long start) {
-            if (start < 0) {
-                throw new PrimitiveFailed();
-            }
             final byte[] bytes = getBytesNode.execute(string);
             for (int i = (int) (start - 1); i < bytes.length; i++) {
                 if (bytes[i] == value) {

@@ -1,9 +1,7 @@
 package de.hpi.swa.graal.squeak.nodes.primitives;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -19,6 +17,8 @@ import de.hpi.swa.graal.squeak.nodes.plugins.FloatArrayPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.GraalSqueakPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.HostWindowPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.LargeIntegers;
+import de.hpi.swa.graal.squeak.nodes.plugins.LocalePlugin;
+import de.hpi.swa.graal.squeak.nodes.plugins.Matrix2x3Plugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.MiscPrimitivePlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.PolyglotPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.UUIDPlugin;
@@ -34,7 +34,8 @@ import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives.SimulationPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.StoragePrimitives;
 
-public abstract class PrimitiveNodeFactory {
+public final class PrimitiveNodeFactory {
+    @CompilationFinal private static final int MAX_PRIMITIVE_INDEX = 575;
     @CompilationFinal(dimensions = 1) private static final AbstractPrimitiveFactoryHolder[] indexPrimitives = new AbstractPrimitiveFactoryHolder[]{
                     new ArithmeticPrimitives(),
                     new ArrayStreamPrimitives(),
@@ -50,18 +51,24 @@ public abstract class PrimitiveNodeFactory {
                     new GraalSqueakPlugin(),
                     new HostWindowPlugin(),
                     new LargeIntegers(),
+                    new LocalePlugin(),
+                    new Matrix2x3Plugin(),
                     new MiscPrimitivePlugin(),
                     new PolyglotPlugin(),
                     new UnixOSProcessPlugin(),
                     new UUIDPlugin(),
                     new Win32OSProcessPlugin()};
     @CompilationFinal(dimensions = 1) private static final String[] simulatedPlugins = new String[]{"B2DPlugin", "BalloonPlugin"};
-    @CompilationFinal private static final Map<Integer, NodeFactory<? extends AbstractPrimitiveNode>> primitiveTable;
+
+    // Using an array instead of a HashMap requires type-checking to be disabled here.
+    @SuppressWarnings("unchecked") @CompilationFinal(dimensions = 1) private static final NodeFactory<? extends AbstractPrimitiveNode>[] primitiveTable = (NodeFactory<? extends AbstractPrimitiveNode>[]) new NodeFactory<?>[MAX_PRIMITIVE_INDEX];
 
     static {
-        primitiveTable = new HashMap<>();
         fillPrimitiveTable(indexPrimitives);
         fillPrimitiveTable(plugins);
+    }
+
+    private PrimitiveNodeFactory() {
     }
 
     @TruffleBoundary
@@ -69,7 +76,7 @@ public abstract class PrimitiveNodeFactory {
         if (264 <= primitiveIndex && primitiveIndex <= 520) {
             return ControlPrimitives.PrimQuickReturnReceiverVariableNode.create(method, primitiveIndex - 264);
         }
-        final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = primitiveTable.get(primitiveIndex);
+        final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory = getFromPrimitiveTable(primitiveIndex);
         if (nodeFactory != null) {
             return createInstance(method, nodeFactory);
         }
@@ -146,8 +153,16 @@ public abstract class PrimitiveNodeFactory {
         }
     }
 
+    private static NodeFactory<? extends AbstractPrimitiveNode> getFromPrimitiveTable(final int index) {
+        if (index <= MAX_PRIMITIVE_INDEX) {
+            return primitiveTable[index - 1];
+        }
+        return null;
+    }
+
     private static void addEntryToPrimitiveTable(final int index, final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory) {
-        assert !primitiveTable.containsKey(index); // primitives are not allowed to override others
-        primitiveTable.put(index, nodeFactory);
+        assert index < MAX_PRIMITIVE_INDEX : "primitive table array not large enough";
+        assert primitiveTable[index - 1] == null : "primitives are not allowed to override others (#" + index + ")";
+        primitiveTable[index - 1] = nodeFactory;
     }
 }

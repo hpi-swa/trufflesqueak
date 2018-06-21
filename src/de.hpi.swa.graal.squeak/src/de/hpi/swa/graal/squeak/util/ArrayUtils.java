@@ -12,8 +12,20 @@ import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 public final class ArrayUtils {
     @CompilationFinal private static final Random RANDOM = new Random();
 
+    private ArrayUtils() {
+    }
+
     public static Object[] allButFirst(final Object[] values) {
         return Arrays.copyOfRange(values, 1, values.length);
+    }
+
+    public static boolean contains(final Object[] objects, final Object element) {
+        for (int i = 0; i < objects.length; i++) {
+            if (objects[i] == element) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static Object[] copyWithFirst(final Object[] objects, final Object first) {
@@ -58,6 +70,20 @@ public final class ArrayUtils {
     @TruffleBoundary
     public static Object[] toArray(final List<AbstractSqueakObject> list) {
         return list.toArray(); // needs to be behind a TruffleBoundary
+    }
+
+    @TruffleBoundary
+    public static String[] toStrings(final Object[] objects) {
+        final String[] strings = new String[objects.length];
+        for (int i = 0; i < objects.length; i++) {
+            strings[i] = objects[i].toString();
+        }
+        return strings;
+    }
+
+    @TruffleBoundary
+    public static String toJoinedString(final CharSequence delimiter, final Object[] objects) {
+        return String.join(delimiter, toStrings(objects));
     }
 
     public static Object[] withAll(final int size, final Object element) {

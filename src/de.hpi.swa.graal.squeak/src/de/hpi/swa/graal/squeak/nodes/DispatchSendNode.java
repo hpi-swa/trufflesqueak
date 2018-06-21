@@ -29,7 +29,7 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
         return DispatchSendNodeGen.create(image);
     }
 
-    public DispatchSendNode(final SqueakImageContext image) {
+    protected DispatchSendNode(final SqueakImageContext image) {
         super(image);
         isDoesNotUnderstandNode = IsDoesNotUnderstandNode.create(image);
         lookupClassNode = SqueakLookupClassNode.create(image);
