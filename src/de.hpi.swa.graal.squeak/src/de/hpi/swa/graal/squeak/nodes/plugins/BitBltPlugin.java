@@ -71,13 +71,12 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
             // request to unhibernate
             if (sourceWidth * sourceHeight > source.length) {
-                System.out.println("fill bytes");
                 throw new PrimitiveFailed();
             }
 
-            for (int dy = clippedY; dy < clippedY + clippedHeight; dy++) {
-                int sourceStart = clippedSourceY * sourceWidth + clippedSourceX;
-                int destStart = clippedY * destinationWidth + clippedX;
+            for (int dy = clippedY, sy = clippedSourceY; dy < clippedY + clippedHeight; dy++, sy++) {
+                int sourceStart = sy * sourceWidth + clippedSourceX;
+                int destStart = dy * destinationWidth + clippedX;
                 System.arraycopy(source, sourceStart, dest, destStart, clippedWidth);
             }
         }
@@ -86,26 +85,21 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         protected void doFillInts(NativeObject sourceBits, final int[] dest, int sourceHeight, int sourceWidth, int clippedY, int clippedSourceY, int clippedHeight, int clippedWidth,
                         int clippedX, int clippedSourceX, int destinationWidth) {
             final int[] source = sourceBits.getIntStorage(sourceBitsIntStorageType);
-            // if (clippedWidth < 0)
-            // System.out.println("WTF");
+
             // request to unhibernate
             if (sourceWidth * sourceHeight > source.length) {
                 System.out.println("fill ints");
                 throw new PrimitiveFailed();
             }
 
-            if (clippedWidth < 0) {
-                clippedWidth = -clippedWidth;
-                clippedSourceX -= clippedWidth;
-            }
-
             for (int dy = clippedY, sy = clippedSourceY; dy < clippedY + clippedHeight; dy++, sy++) {
                 int sourceStart = sy * sourceWidth + clippedSourceX;
                 int destStart = dy * destinationWidth + clippedX;
-// System.out.println("source: " + Integer.toString(sourceStart) + " " +
-// Integer.toString(source.length) + " " + Integer.toString(clippedWidth));
-// System.out.println("dest: " + Integer.toString(destStart) + " " +
-// Integer.toString(dest.length) + " " + Integer.toString(clippedWidth));
+
+                System.out.println("source: " + Integer.toString(sourceStart) + " " +
+                                Integer.toString(source.length) + " " + Integer.toString(clippedWidth));
+                System.out.println("dest: " + Integer.toString(destStart) + " " +
+                                Integer.toString(dest.length) + " " + Integer.toString(clippedWidth));
                 System.arraycopy(source, sourceStart, dest, destStart, clippedWidth);
             }
         }
@@ -308,7 +302,12 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         /**
          * Draw call used by desktop background with form
          */
-        @Specialization(guards = {"disableWhileMeasuring()", "hasCombinationRule(receiver, 25)", "!hasNilSourceForm(receiver)", "hasSourceFormDepth(receiver, 32)", "hasNilColormap(receiver)"})
+        @Specialization(guards = {"disableWhileMeasuring()",
+                        "hasCombinationRule(receiver, 25)",
+                        "!hasNilSourceForm(receiver)",
+                        "hasDestinationFormDepth(receiver, 32)",
+                        "hasSourceFormDepth(receiver, 32)",
+                        "hasNilColormap(receiver)"})
         protected final Object doCopyBitsCombiRule25WithSourceForm(final PointersObject receiver) {
             final PointersObject destinationForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
             final NativeObject destinationBits = (NativeObject) destinationForm.at0(FORM.BITS);
@@ -332,9 +331,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             final int clipY = (int) (long) receiver.at0(BIT_BLT.CLIP_Y);
             final int clipWidth = (int) (long) receiver.at0(BIT_BLT.CLIP_WIDTH);
             final int clipHeight = (int) (long) receiver.at0(BIT_BLT.CLIP_HEIGHT);
-            if (sourceX < 0) {
-                throw new SqueakException("How could this happen??!");
-            }
+
             final int[] clippedValues = clipRange(sourceX, sourceY, sourceWidth, sourceHeight, width, height, destX, destY, clipX, clipY, clipWidth, clipHeight);
 
             final int clippedSourceX = clippedValues[0];
@@ -594,6 +591,15 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         if (sy + bbH > sourceHeight) {
             bbH = bbH - (sy + bbH - sourceHeight);
         }
+
+        // FIXME: this part is not contained in the original bitblt source, but appears to be
+        // necessary to prevent crashes from negative indices. A proper fix should likely go in and
+        // find out where the BitBlt deals with negative indices.
+        if (bbW < 0) {
+            bbW = -bbW;
+            sx -= bbW;
+        }
+
         return new int[]{sx, sy, dx, dy, bbW, bbH};
     }
 }
