@@ -95,11 +95,6 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             for (int dy = clippedY, sy = clippedSourceY; dy < clippedY + clippedHeight; dy++, sy++) {
                 int sourceStart = sy * sourceWidth + clippedSourceX;
                 int destStart = dy * destinationWidth + clippedX;
-
-                System.out.println("source: " + Integer.toString(sourceStart) + " " +
-                                Integer.toString(source.length) + " " + Integer.toString(clippedWidth));
-                System.out.println("dest: " + Integer.toString(destStart) + " " +
-                                Integer.toString(dest.length) + " " + Integer.toString(clippedWidth));
                 System.arraycopy(source, sourceStart, dest, destStart, clippedWidth);
             }
         }
@@ -340,6 +335,10 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             final int clippedY = clippedValues[3];
             final int clippedWidth = clippedValues[4];
             final int clippedHeight = clippedValues[5];
+
+            if (clippedWidth < 0 || clippedHeight < 0) {
+                return receiver;
+            }
 
             final int[] dest = destinationBits.getIntStorage(destinationBitsStorageType);
 
@@ -590,14 +589,6 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
         if (sy + bbH > sourceHeight) {
             bbH = bbH - (sy + bbH - sourceHeight);
-        }
-
-        // FIXME: this part is not contained in the original bitblt source, but appears to be
-        // necessary to prevent crashes from negative indices. A proper fix should likely go in and
-        // find out where the BitBlt deals with negative indices.
-        if (bbW < 0) {
-            bbW = -bbW;
-            sx -= bbW;
         }
 
         return new int[]{sx, sy, dx, dy, bbW, bbH};
