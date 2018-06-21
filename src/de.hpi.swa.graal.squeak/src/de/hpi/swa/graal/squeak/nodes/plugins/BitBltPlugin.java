@@ -86,15 +86,26 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         protected void doFillInts(NativeObject sourceBits, final int[] dest, int sourceHeight, int sourceWidth, int clippedY, int clippedSourceY, int clippedHeight, int clippedWidth,
                         int clippedX, int clippedSourceX, int destinationWidth) {
             final int[] source = sourceBits.getIntStorage(sourceBitsIntStorageType);
+            // if (clippedWidth < 0)
+            // System.out.println("WTF");
             // request to unhibernate
             if (sourceWidth * sourceHeight > source.length) {
                 System.out.println("fill ints");
                 throw new PrimitiveFailed();
             }
 
+            if (clippedWidth < 0) {
+                clippedWidth = -clippedWidth;
+                clippedSourceX -= clippedWidth;
+            }
+
             for (int dy = clippedY, sy = clippedSourceY; dy < clippedY + clippedHeight; dy++, sy++) {
-                int sourceStart = clippedSourceY * sourceWidth + clippedSourceX;
-                int destStart = clippedY * destinationWidth + clippedX;
+                int sourceStart = sy * sourceWidth + clippedSourceX;
+                int destStart = dy * destinationWidth + clippedX;
+// System.out.println("source: " + Integer.toString(sourceStart) + " " +
+// Integer.toString(source.length) + " " + Integer.toString(clippedWidth));
+// System.out.println("dest: " + Integer.toString(destStart) + " " +
+// Integer.toString(dest.length) + " " + Integer.toString(clippedWidth));
                 System.arraycopy(source, sourceStart, dest, destStart, clippedWidth);
             }
         }
@@ -113,7 +124,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         @Child private SimulationPrimitiveNode simulateNode;
         @Child private FillNode fillNode = FillNode.create();
 
-        static final boolean measure = true;
+        static final boolean measure = false;
 
         protected PrimCopyBitsNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -321,6 +332,9 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             final int clipY = (int) (long) receiver.at0(BIT_BLT.CLIP_Y);
             final int clipWidth = (int) (long) receiver.at0(BIT_BLT.CLIP_WIDTH);
             final int clipHeight = (int) (long) receiver.at0(BIT_BLT.CLIP_HEIGHT);
+            if (sourceX < 0) {
+                throw new SqueakException("How could this happen??!");
+            }
             final int[] clippedValues = clipRange(sourceX, sourceY, sourceWidth, sourceHeight, width, height, destX, destY, clipX, clipY, clipWidth, clipHeight);
 
             final int clippedSourceX = clippedValues[0];
@@ -444,7 +458,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         @Child private SimulationPrimitiveNode simulateNode;
         @Child private FillNode fillNode = FillNode.create();
 
-        static final boolean measure = true;
+        static final boolean measure = false;
 
         protected PrimDisplayStringNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
