@@ -50,12 +50,12 @@ public final class SendBytecodes {
             long totalTime;
             long num;
 
-            public Invocation(long time) {
+            public Invocation(final long time) {
                 totalTime = time;
                 num = 1;
             }
 
-            public void add(long time) {
+            public void add(final long time) {
                 num++;
                 totalTime += Math.max(time, 1);
             }
@@ -64,7 +64,7 @@ public final class SendBytecodes {
                 return totalTime / (double) num;
             }
 
-            public int compare(Invocation other) {
+            public int compare(final Invocation other) {
                 return relativeTime() < other.relativeTime() ? -1 : relativeTime() == other.relativeTime() ? 0 : 1;
             }
         }
@@ -72,15 +72,15 @@ public final class SendBytecodes {
         private static HashMap<String, Invocation> calls = new HashMap<>();
         private static long lastReport = 0;
 
-        private static void report(CompiledCodeObject lookupResult, long time) {
-            long now = System.currentTimeMillis();
+        private static void report(final CompiledCodeObject lookupResult, final long time) {
+            final long now = System.currentTimeMillis();
 
             if (now - lastReport > 8000) {
                 displayReport(true);
                 lastReport = now;
             }
 
-            String s = lookupResult.toString();
+            final String s = lookupResult.toString();
             if (calls.containsKey(s)) {
                 calls.get(s).add(time);
             } else {
@@ -88,7 +88,7 @@ public final class SendBytecodes {
             }
         }
 
-        private static void displayReport(boolean clearAfter) {
+        private static void displayReport(final boolean clearAfter) {
             System.err.println(">> " + calls.size() + " Entries.");
             List<Entry<String, Invocation>> list = new ArrayList<>(calls.entrySet());
             list = list.stream().filter((a) -> a.getValue().num > 100).sorted((a, b) -> b.getValue().compare(a.getValue())).collect(Collectors.toList());
@@ -138,7 +138,7 @@ public final class SendBytecodes {
             final Object contextOrMarker = getContextOrMarker(frame);
 
             // long start = System.currentTimeMillis();
-            Object ret = dispatchSendNode.executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs, contextOrMarker);
+            final Object ret = dispatchSendNode.executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs, contextOrMarker);
             // report((CompiledCodeObject) lookupResult, System.currentTimeMillis() - start);
             return ret;
         }

@@ -10,6 +10,7 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
@@ -31,13 +32,13 @@ import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives.Sim
 
 public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
-    static class BitBltData {
+    protected static final class BitBltData {
         final PointersObject destinationForm;
-        final public int destX;
-        final public int destY;
-        final public int areaWidth;
-        final public int areaHeight;
-        final public int destinationWidth;
+        public final int destX;
+        public final int destY;
+        public final int areaWidth;
+        public final int areaHeight;
+        public final int destinationWidth;
 
         public BitBltData(final PointersObject receiver) {
             destinationForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
@@ -55,8 +56,8 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
             // adapted inline copy of BilBltSimulation>>clipRange for the nil sourceForm case
             // it's inline so we can final inst vars
-            int dx;
-            int dy;
+            final int dx;
+            final int dy;
             int bbW;
             int bbH;
 
@@ -96,22 +97,22 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    static class BitBltDataWithSourceForm {
+    protected static final class BitBltDataWithSourceForm {
 
         final PointersObject sourceForm;
         final PointersObject destinationForm;
-        final public int sourceX;
-        final public int sourceY;
-        final public int sourceWidth;
-        final public int sourceHeight;
-        final public int destinationWidth;
-        final public int destinationHeight;
-        final public int destX;
-        final public int destY;
-        final public int areaWidth;
-        final public int areaHeight;
+        public final int sourceX;
+        public final int sourceY;
+        public final int sourceWidth;
+        public final int sourceHeight;
+        public final int destinationWidth;
+        public final int destinationHeight;
+        public final int destX;
+        public final int destY;
+        public final int areaWidth;
+        public final int areaHeight;
 
-        public BitBltDataWithSourceForm(final PointersObject receiver) {
+        BitBltDataWithSourceForm(final PointersObject receiver) {
             sourceForm = (PointersObject) receiver.at0(BIT_BLT.SOURCE_FORM);
             destinationForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
             sourceWidth = (int) ((long) sourceForm.at0(FORM.WIDTH));
@@ -214,9 +215,9 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    static void measureEntry(PointersObject p, long delta, SqueakObjectAt0Node at0Node) {
-        Object dest = p.at0(BIT_BLT.DEST_FORM);
-        Object source = p.at0(BIT_BLT.SOURCE_FORM);
+    static void measureEntry(final PointersObject p, final long delta, final SqueakObjectAt0Node at0Node) {
+        final Object dest = p.at0(BIT_BLT.DEST_FORM);
+        final Object source = p.at0(BIT_BLT.SOURCE_FORM);
         final long width = (long) p.at0(BIT_BLT.WIDTH);
         final long height = (long) p.at0(BIT_BLT.HEIGHT);
         final long sourceDepth = source != p.image.nil ? (long) at0Node.execute(source, FORM.DEPTH) : -1;
@@ -260,7 +261,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         public abstract void executeFill(NativeObject sourceBits, int[] dest, BitBltDataWithSourceForm data);
 
         @Specialization(guards = {"sourceBits.isByteType()"})
-        protected void doFillBytes(NativeObject sourceBits, int[] dest, BitBltDataWithSourceForm data) {
+        protected void doFillBytes(final NativeObject sourceBits, final int[] dest, final BitBltDataWithSourceForm data) {
             final byte[] source = sourceBits.getByteStorage(sourceBitsByteStorageType);
 
             // request to unhibernate
@@ -269,14 +270,14 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             }
 
             for (int dy = data.destY, sy = data.sourceY; dy < data.destY + data.areaHeight; dy++, sy++) {
-                int sourceStart = sy * data.sourceWidth + data.sourceX;
-                int destStart = dy * data.destinationWidth + data.destX;
+                final int sourceStart = sy * data.sourceWidth + data.sourceX;
+                final int destStart = dy * data.destinationWidth + data.destX;
                 System.arraycopy(source, sourceStart, dest, destStart, data.areaWidth);
             }
         }
 
         @Specialization(guards = {"sourceBits.isIntType()"})
-        protected void doFillInts(NativeObject sourceBits, final int[] dest, BitBltDataWithSourceForm data) {
+        protected void doFillInts(final NativeObject sourceBits, final int[] dest, final BitBltDataWithSourceForm data) {
             final int[] source = sourceBits.getIntStorage(sourceBitsIntStorageType);
 
             // request to unhibernate
@@ -286,8 +287,8 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             }
 
             for (int dy = data.destY, sy = data.sourceY; dy < data.destY + data.areaHeight; dy++, sy++) {
-                int sourceStart = sy * data.sourceWidth + data.sourceX;
-                int destStart = dy * data.destinationWidth + data.destX;
+                final int sourceStart = sy * data.sourceWidth + data.sourceX;
+                final int destStart = dy * data.destinationWidth + data.destX;
                 System.arraycopy(source, sourceStart, dest, destStart, data.areaWidth);
             }
         }
@@ -306,7 +307,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         public abstract void executeBlend(NativeObject sourceBits, int[] dest, BitBltDataWithSourceForm data);
 
         @Specialization(guards = {"sourceBits.isByteType()"})
-        protected void doBlendBytes(NativeObject sourceBits, int[] dest, BitBltDataWithSourceForm data) {
+        protected void doBlendBytes(final NativeObject sourceBits, final int[] dest, final BitBltDataWithSourceForm data) {
             final byte[] source = sourceBits.getByteStorage(sourceBitsByteStorageType);
 
             // request to unhibernate
@@ -315,17 +316,20 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             }
 
             for (int dy = data.destY, sy = data.sourceY; dy < data.destY + data.areaHeight; dy++, sy++) {
-                int sourceStart = sy * data.sourceWidth + data.sourceX;
-                int destStart = dy * data.destinationWidth + data.destX;
-                for (int dx = destStart, sx = sourceStart; dx < destStart + data.areaWidth; dx++, sx++) {
-                    dest[dx] = alphaBlend24(source[sx], dest[dx]);
-
+                final int sourceStart = sy * data.sourceWidth + data.sourceX;
+                final int destStart = dy * data.destinationWidth + data.destX;
+                try {
+                    for (int dx = destStart, sx = sourceStart; dx < destStart + data.areaWidth; dx++, sx++) {
+                        dest[dx] = alphaBlend24(source[sx], dest[dx]);
+                    }
+                } finally {
+                    LoopNode.reportLoopCount(this, data.areaWidth);
                 }
             }
         }
 
         @Specialization(guards = {"sourceBits.isIntType()"})
-        protected void doBlendInts(NativeObject sourceBits, final int[] dest, BitBltDataWithSourceForm data) {
+        protected void doBlendInts(final NativeObject sourceBits, final int[] dest, final BitBltDataWithSourceForm data) {
             final int[] source = sourceBits.getIntStorage(sourceBitsIntStorageType);
             // request to unhibernate
             if (data.sourceWidth * data.sourceHeight > source.length) {
@@ -334,10 +338,14 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             }
 
             for (int dy = data.destY, sy = data.sourceY; dy < data.destY + data.areaHeight; dy++, sy++) {
-                int sourceStart = sy * data.sourceWidth + data.sourceX;
-                int destStart = dy * data.destinationWidth + data.destX;
-                for (int dx = destStart, sx = sourceStart; dx < destStart + data.areaWidth; dx++, sx++) {
-                    dest[dx] = alphaBlend24(source[sx], dest[dx]);
+                final int sourceStart = sy * data.sourceWidth + data.sourceX;
+                final int destStart = dy * data.destinationWidth + data.destX;
+                try {
+                    for (int dx = destStart, sx = sourceStart; dx < destStart + data.areaWidth; dx++, sx++) {
+                        dest[dx] = alphaBlend24(source[sx], dest[dx]);
+                    }
+                } finally {
+                    LoopNode.reportLoopCount(this, data.areaWidth);
                 }
             }
         }
@@ -436,7 +444,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
             for (int y = data.destY; y < endY; y++) {
                 for (int x = data.destX; x < endX; x++) {
-                    int index = y * data.destinationWidth + x;
+                    final int index = y * data.destinationWidth + x;
                     ints[index] = alphaBlend24(fillValue, ints[index]);
                 }
             }
@@ -502,17 +510,17 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Fallback
         protected final Object doSimulation(final VirtualFrame frame, final Object receiver) {
-            PointersObject p = (PointersObject) receiver;
+            final PointersObject p = (PointersObject) receiver;
 
             if (!measure) {
                 return simulateNode.executeWithArguments(frame, receiver, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE,
                                 NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE);
             } else {
-                long now = System.currentTimeMillis();
-                Object res = simulateNode.executeWithArguments(frame, receiver, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE,
+                final long now = System.currentTimeMillis();
+                final Object res = simulateNode.executeWithArguments(frame, receiver, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE,
                                 NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE);
 
-                long delta = System.currentTimeMillis() - now;
+                final long delta = System.currentTimeMillis() - now;
 
                 measureEntry(p, delta, at0Node);
                 return res;
@@ -579,17 +587,17 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Fallback
         protected final Object doSimulation(final VirtualFrame frame, final Object receiver) {
-            PointersObject p = (PointersObject) receiver;
+            final PointersObject p = (PointersObject) receiver;
 
             if (!measure) {
                 return simulateNode.executeWithArguments(frame, receiver, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE,
                                 NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE);
             } else {
-                long now = System.currentTimeMillis();
-                Object res = simulateNode.executeWithArguments(frame, receiver, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE,
+                final long now = System.currentTimeMillis();
+                final Object res = simulateNode.executeWithArguments(frame, receiver, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE,
                                 NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE);
 
-                long delta = System.currentTimeMillis() - now;
+                final long delta = System.currentTimeMillis() - now;
 
                 measureEntry(p, delta, at0Node);
                 return res;
@@ -609,14 +617,14 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
      * Primitive Helper Functions
      */
 
-    protected static final int alphaBlend24(int sourceWord, int destinationWord) {
-        int alpha = sourceWord >> 24;
+    protected static int alphaBlend24(final int sourceWord, final int destinationWord) {
+        final int alpha = sourceWord >> 24;
         if (alpha == 0)
             return destinationWord;
         if (alpha == 255)
             return sourceWord;
 
-        int unAlpha = 255 - alpha;
+        final int unAlpha = 255 - alpha;
 
         // blend red and blue
         int blendRB = ((sourceWord & 0xFF00FF) * alpha) +
