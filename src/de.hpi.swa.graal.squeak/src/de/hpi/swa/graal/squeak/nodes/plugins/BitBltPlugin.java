@@ -32,7 +32,147 @@ import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives.Sim
 
 public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
-    @CompilationFinal static PrintWriter measurements;
+    private static class BitBltData {
+
+        public int sourceX;
+        public int sourceY;
+        public int destX;
+        public int destY;
+        public int sourceWidth;
+        public int sourceHeight;
+
+        public BitBltData() {
+        }
+
+        public BitBltData(final PointersObject receiver) {
+            final PointersObject sourceForm = (PointersObject) receiver.at0(BIT_BLT.SOURCE_FORM);
+
+            final int _sourceX = (int) (long) receiver.at0(BIT_BLT.SOURCE_X);
+            final int _sourceY = (int) (long) receiver.at0(BIT_BLT.SOURCE_Y);
+            final int _sourceWidth = (int) ((long) sourceForm.at0(FORM.WIDTH));
+            final int _sourceHeight = (int) ((long) sourceForm.at0(FORM.HEIGHT));
+
+            final int _destX = (int) (long) receiver.at0(BIT_BLT.DEST_X);
+            final int _destY = (int) (long) receiver.at0(BIT_BLT.DEST_Y);
+            final int width = (int) (long) receiver.at0(BIT_BLT.WIDTH);
+            final int height = (int) (long) receiver.at0(BIT_BLT.HEIGHT);
+
+            final int clipX = (int) (long) receiver.at0(BIT_BLT.CLIP_X);
+            final int clipY = (int) (long) receiver.at0(BIT_BLT.CLIP_Y);
+            final int clipWidth = (int) (long) receiver.at0(BIT_BLT.CLIP_WIDTH);
+            final int clipHeight = (int) (long) receiver.at0(BIT_BLT.CLIP_HEIGHT);
+            clipRange(_sourceX, _sourceY, _sourceWidth, _sourceHeight, width, height, _destX, _destY, clipX, clipY, clipWidth, clipHeight);
+        }
+
+        protected boolean hasValidArea() {
+            return !(sourceWidth <= 0 || sourceHeight <= 0);
+        }
+
+        // BitBltSimulation>>#clipRange
+        protected void clipRange(final int _sourceX,
+                        final int _sourceY,
+                        final int _sourceWidth,
+                        final int _sourceHeight,
+                        final int width,
+                        final int height,
+                        final int _destX,
+                        final int _destY,
+                        final int clipX, final int clipY,
+                        final int clipWidth, final int clipHeight) {
+            int sx;
+            int sy;
+            int dx;
+            int dy;
+            int bbW;
+            int bbH;
+
+            if (_destX >= clipX) {
+                sx = _sourceX;
+                dx = _destX;
+                bbW = width;
+            } else {
+                sx = _sourceX + (clipX - _destX);
+                bbW = width - (clipX - _destX);
+                dx = clipX;
+            }
+
+            if ((dx + bbW) > (clipX + clipWidth)) {
+                bbW = bbW - ((dx + bbW) - (clipX + clipWidth));
+            }
+
+            // then in y
+            if (_destY >= clipY) {
+                sy = _sourceY;
+                dy = _destY;
+                bbH = height;
+            } else {
+                sy = _sourceY + clipY - _destY;
+                bbH = height - (clipY - _destY);
+                dy = clipY;
+            }
+
+            if ((dy + bbH) > (clipY + clipHeight)) {
+                bbH = bbH - ((dy + bbH) - (clipY + clipHeight));
+            }
+
+            if (sourceX < 0) { // nosource signaled by negative `sourceX`
+                sourceX = sx;
+                sourceY = sy;
+                destX = dx;
+                destY = dy;
+                sourceWidth = bbW;
+                sourceHeight = bbH;
+            }
+
+            if (sx < 0) {
+                dx = dx - sx;
+                bbW = bbW + sx;
+                sx = 0;
+            }
+
+            if (sx + bbW > _sourceWidth) {
+                bbW = bbW - (sx + bbW - _sourceWidth);
+            }
+
+            if (sy < 0) {
+                dy = dy - sy;
+                bbH = bbH + sy;
+                sy = 0;
+            }
+
+            if (sy + bbH > _sourceHeight) {
+                bbH = bbH - (sy + bbH - _sourceHeight);
+            }
+
+            sourceX = sx;
+            sourceY = sy;
+            destX = dx;
+            destY = dy;
+            sourceWidth = bbW;
+            sourceHeight = bbH;
+        }
+    }
+
+    private static class BitBltDataWithNilSourceForm extends BitBltData {
+
+        public BitBltDataWithNilSourceForm(final PointersObject receiver) {
+            super();
+
+            final int _destX = (int) (long) receiver.at0(BIT_BLT.DEST_X);
+            final int _destY = (int) (long) receiver.at0(BIT_BLT.DEST_Y);
+            final int width = (int) (long) receiver.at0(BIT_BLT.WIDTH);
+            final int height = (int) (long) receiver.at0(BIT_BLT.HEIGHT);
+
+            final int clipX = (int) (long) receiver.at0(BIT_BLT.CLIP_X);
+            final int clipY = (int) (long) receiver.at0(BIT_BLT.CLIP_Y);
+            final int clipWidth = (int) (long) receiver.at0(BIT_BLT.CLIP_WIDTH);
+            final int clipHeight = (int) (long) receiver.at0(BIT_BLT.CLIP_HEIGHT);
+            clipRange(-1, 0, 0, 0, width, height, _destX, _destY, clipX, clipY, clipWidth, clipHeight);
+        }
+
+    }
+
+    static PrintWriter measurements;
 
     static void createMeasurements() {
         try {
@@ -105,6 +245,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
         @CompilationFinal protected final ValueProfile sourceBitsByteStorageType = ValueProfile.createClassProfile();
         @CompilationFinal protected final ValueProfile sourceBitsIntStorageType = ValueProfile.createClassProfile();
+        @CompilationFinal protected final ValueProfile destinationBitsStorageType = ValueProfile.createClassProfile();
 
         protected static BlendNode create() {
             return BlendNodeGen.create();
@@ -126,10 +267,9 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             for (int dy = clippedY, sy = clippedSourceY; dy < clippedY + clippedHeight; dy++, sy++) {
                 int sourceStart = sy * sourceWidth + clippedSourceX;
                 int destStart = dy * destinationWidth + clippedX;
-                System.out.println("source: " + Integer.toString(sourceStart) + " " + Integer.toString(sourceWidth) + " " + Integer.toString(clippedWidth));
-                System.out.println("dest: " + Integer.toString(destStart) + " " + Integer.toString(destinationWidth) + " " + Integer.toString(clippedWidth));
                 for (int dx = destStart, sx = sourceStart; dx < destStart + clippedWidth; dx++, sx++) {
                     dest[dx] = alphaBlend24(source[sx], dest[dx]);
+
                 }
             }
         }
@@ -138,7 +278,6 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         protected void doBlendInts(NativeObject sourceBits, final int[] dest, int sourceHeight, int sourceWidth, int clippedY, int clippedSourceY, int clippedHeight, int clippedWidth,
                         int clippedX, int clippedSourceX, int destinationWidth) {
             final int[] source = sourceBits.getIntStorage(sourceBitsIntStorageType);
-
             // request to unhibernate
             if (sourceWidth * sourceHeight > source.length) {
                 System.out.println("fill ints");
@@ -152,6 +291,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
                     dest[dx] = alphaBlend24(source[sx], dest[dx]);
                 }
             }
+
         }
     }
 
@@ -196,26 +336,15 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
                 return doSimulation(frame, receiver);
             }
             final int destinationWidth = (int) ((long) destinationForm.at0(FORM.WIDTH));
-            final int destX = (int) (long) receiver.at0(BIT_BLT.DEST_X);
-            final int destY = (int) (long) receiver.at0(BIT_BLT.DEST_Y);
-            final int width = (int) (long) receiver.at0(BIT_BLT.WIDTH);
-            final int height = (int) (long) receiver.at0(BIT_BLT.HEIGHT);
-            final int clipX = (int) (long) receiver.at0(BIT_BLT.CLIP_X);
-            final int clipY = (int) (long) receiver.at0(BIT_BLT.CLIP_Y);
-            final int clipWidth = (int) (long) receiver.at0(BIT_BLT.CLIP_WIDTH);
-            final int clipHeight = (int) (long) receiver.at0(BIT_BLT.CLIP_HEIGHT);
 
-            final int[] clippedValues = clipRange(-1, 0, 0, 0, width, height, destX, destY, clipX, clipY,
-                            clipWidth, clipHeight);
-            final int dx = clippedValues[2];
-            final int dy = clippedValues[3];
-            final int bbW = clippedValues[4];
-            final int bbH = clippedValues[5];
-            if (bbW <= 0 || bbH <= 0) {
-                return receiver; // "zero width or height; noop"
+            final BitBltData data = new BitBltDataWithNilSourceForm(receiver);
+
+            if (!data.hasValidArea()) {
+                return receiver;
             }
-            final int endX = dx + bbW;
-            final int endY = dy + bbH;
+
+            final int endX = data.destX + data.sourceWidth;
+            final int endY = data.destY + data.sourceHeight;
 
             final int[] ints = destinationBits.getIntStorage(destinationBitsStorageType);
 
@@ -223,8 +352,8 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
                 throw new PrimitiveFailed(); // fail early in case of index out of bounce
             }
 
-            for (int y = dy; y < endY; y++) {
-                Arrays.fill(ints, y * destinationWidth + dx, y * destinationWidth + endX, fillValue);
+            for (int y = data.destY; y < endY; y++) {
+                Arrays.fill(ints, y * destinationWidth + data.destX, y * destinationWidth + endX, fillValue);
             }
             return receiver;
         }
@@ -245,35 +374,23 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
                 return doSimulation(frame, receiver);
             }
             final int destinationWidth = (int) ((long) destinationForm.at0(FORM.WIDTH));
-            final int destX = (int) (long) receiver.at0(BIT_BLT.DEST_X);
-            final int destY = (int) (long) receiver.at0(BIT_BLT.DEST_Y);
-            final int width = (int) (long) receiver.at0(BIT_BLT.WIDTH);
-            final int height = (int) (long) receiver.at0(BIT_BLT.HEIGHT);
-            final int clipX = (int) (long) receiver.at0(BIT_BLT.CLIP_X);
-            final int clipY = (int) (long) receiver.at0(BIT_BLT.CLIP_Y);
-            final int clipWidth = (int) (long) receiver.at0(BIT_BLT.CLIP_WIDTH);
-            final int clipHeight = (int) (long) receiver.at0(BIT_BLT.CLIP_HEIGHT);
 
-            final int[] clippedValues = clipRange(-1, 0, 0, 0, width, height, destX, destY, clipX, clipY,
-                            clipWidth, clipHeight);
-            final int dx = clippedValues[2];
-            final int dy = clippedValues[3];
-            final int bbW = clippedValues[4];
-            final int bbH = clippedValues[5];
-            if (bbW <= 0 || bbH <= 0) {
-                return receiver; // "zero width or height; noop"
+            final BitBltData data = new BitBltDataWithNilSourceForm(receiver);
+
+            if (!data.hasValidArea()) {
+                return receiver;
             }
-            final int endX = dx + bbW;
-            final int endY = dy + bbH;
-
             final int[] ints = destinationBits.getIntStorage(destinationBitsStorageType);
+
+            final int endX = data.destX + data.sourceWidth;
+            final int endY = data.destY + data.sourceHeight;
 
             if (ints.length - 1 < (endY - 1) * destinationWidth + (endX - 1)) {
                 throw new PrimitiveFailed(); // fail early in case of index out of bounds
             }
 
-            for (int y = dy; y < endY; y++) {
-                for (int x = dx; x < endX; x++) {
+            for (int y = data.destY; y < endY; y++) {
+                for (int x = data.destX; x < endX; x++) {
                     int index = y * destinationWidth + x;
                     ints[index] = alphaBlend24(fillValue, ints[index]);
                 }
@@ -293,36 +410,18 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
                 return doSimulation(frame, receiver);
             }
 
-            final int sourceX = (int) (long) receiver.at0(BIT_BLT.SOURCE_X);
-            final int sourceY = (int) (long) receiver.at0(BIT_BLT.SOURCE_Y);
             final int sourceWidth = (int) ((long) sourceForm.at0(FORM.WIDTH));
             final int sourceHeight = (int) ((long) sourceForm.at0(FORM.HEIGHT));
 
             final int destinationWidth = (int) ((long) destinationForm.at0(FORM.WIDTH));
-            final int destX = (int) (long) receiver.at0(BIT_BLT.DEST_X);
-            final int destY = (int) (long) receiver.at0(BIT_BLT.DEST_Y);
-            final int width = (int) (long) receiver.at0(BIT_BLT.WIDTH);
-            final int height = (int) (long) receiver.at0(BIT_BLT.HEIGHT);
-            final int clipX = (int) (long) receiver.at0(BIT_BLT.CLIP_X);
-            final int clipY = (int) (long) receiver.at0(BIT_BLT.CLIP_Y);
-            final int clipWidth = (int) (long) receiver.at0(BIT_BLT.CLIP_WIDTH);
-            final int clipHeight = (int) (long) receiver.at0(BIT_BLT.CLIP_HEIGHT);
 
-            final int[] clippedValues = clipRange(sourceX, sourceY, sourceWidth, sourceHeight, width, height, destX, destY, clipX, clipY,
-                            clipWidth, clipHeight);
-
-            final int clippedSourceX = clippedValues[0];
-            final int clippedSourceY = clippedValues[1];
-            final int clippedX = clippedValues[2];
-            final int clippedY = clippedValues[3];
-            final int clippedWidth = clippedValues[4];
-            final int clippedHeight = clippedValues[5];
-            if (clippedWidth <= 0 || clippedHeight <= 0) {
-                return receiver; // "zero width or height; noop"
+            final BitBltData data = new BitBltData(receiver);
+            if (!data.hasValidArea()) {
+                return receiver;
             }
 
             final int[] dest = destinationBits.getIntStorage(destinationBitsStorageType);
-            blendNode.executeBlend(sourceBits, dest, sourceHeight, sourceWidth, clippedY, clippedSourceY, clippedHeight, clippedWidth, clippedX, clippedSourceX, destinationWidth);
+            blendNode.executeBlend(sourceBits, dest, sourceHeight, sourceWidth, data.destY, data.sourceY, data.sourceHeight, data.sourceWidth, data.destX, data.sourceX, destinationWidth);
 
             return receiver;
         }
@@ -343,33 +442,14 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             final PointersObject sourceForm = (PointersObject) receiver.at0(BIT_BLT.SOURCE_FORM);
             final NativeObject sourceBits = (NativeObject) sourceForm.at0(FORM.BITS);
 
-            final int sourceX = (int) (long) receiver.at0(BIT_BLT.SOURCE_X);
-            final int sourceY = (int) (long) receiver.at0(BIT_BLT.SOURCE_Y);
+            final int destinationWidth = (int) ((long) destinationForm.at0(FORM.WIDTH));
+            final int destinationHeight = (int) ((long) destinationForm.at0(FORM.HEIGHT));
             final int sourceWidth = (int) ((long) sourceForm.at0(FORM.WIDTH));
             final int sourceHeight = (int) ((long) sourceForm.at0(FORM.HEIGHT));
 
-            final int destinationWidth = (int) ((long) destinationForm.at0(FORM.WIDTH));
-            final int destinationHeight = (int) ((long) destinationForm.at0(FORM.HEIGHT));
-            final int destX = (int) (long) receiver.at0(BIT_BLT.DEST_X);
-            final int destY = (int) (long) receiver.at0(BIT_BLT.DEST_Y);
-            final int width = (int) (long) receiver.at0(BIT_BLT.WIDTH);
-            final int height = (int) (long) receiver.at0(BIT_BLT.HEIGHT);
+            final BitBltData data = new BitBltData(receiver);
 
-            final int clipX = (int) (long) receiver.at0(BIT_BLT.CLIP_X);
-            final int clipY = (int) (long) receiver.at0(BIT_BLT.CLIP_Y);
-            final int clipWidth = (int) (long) receiver.at0(BIT_BLT.CLIP_WIDTH);
-            final int clipHeight = (int) (long) receiver.at0(BIT_BLT.CLIP_HEIGHT);
-
-            final int[] clippedValues = clipRange(sourceX, sourceY, sourceWidth, sourceHeight, width, height, destX, destY, clipX, clipY, clipWidth, clipHeight);
-
-            final int clippedSourceX = clippedValues[0];
-            final int clippedSourceY = clippedValues[1];
-            final int clippedX = clippedValues[2];
-            final int clippedY = clippedValues[3];
-            final int clippedWidth = clippedValues[4];
-            final int clippedHeight = clippedValues[5];
-
-            if (clippedWidth < 0 || clippedHeight < 0) {
+            if (!data.hasValidArea()) {
                 return receiver;
             }
 
@@ -380,7 +460,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
                 throw new PrimitiveFailed();
             }
 
-            fillNode.executeFill(sourceBits, dest, sourceHeight, sourceWidth, clippedY, clippedSourceY, clippedHeight, clippedWidth, clippedX, clippedSourceX, destinationWidth);
+            fillNode.executeFill(sourceBits, dest, sourceHeight, sourceWidth, data.destY, data.sourceY, data.sourceHeight, data.sourceWidth, data.destX, data.sourceX, destinationWidth);
 
             return receiver;
         }
@@ -525,87 +605,14 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final boolean disableWhileMeasuring() {
             return !measure;
         }
+
     }
 
     /*
      * Primitive Helper Functions
      */
 
-    // BitBltSimulation>>#clipRange
-    private static int[] clipRange(final int sourceX,
-                    final int sourceY,
-                    final int sourceWidth,
-                    final int sourceHeight,
-                    final int width,
-                    final int height,
-                    final int destX,
-                    final int destY,
-                    final int clipX, final int clipY,
-                    final int clipWidth, final int clipHeight) {
-        int sx;
-        int sy;
-        int dx;
-        int dy;
-        int bbW;
-        int bbH;
-
-        if (destX >= clipX) {
-            sx = sourceX;
-            dx = destX;
-            bbW = width;
-        } else {
-            sx = sourceX + (clipX - destX);
-            bbW = width - (clipX - destX);
-            dx = clipX;
-        }
-
-        if ((dx + bbW) > (clipX + clipWidth)) {
-            bbW = bbW - ((dx + bbW) - (clipX + clipWidth));
-        }
-
-        // then in y
-        if (destY >= clipY) {
-            sy = sourceY;
-            dy = destY;
-            bbH = height;
-        } else {
-            sy = sourceY + clipY - destY;
-            bbH = height - (clipY - destY);
-            dy = clipY;
-        }
-
-        if ((dy + bbH) > (clipY + clipHeight)) {
-            bbH = bbH - ((dy + bbH) - (clipY + clipHeight));
-        }
-
-        if (sourceX < 0) { // nosource signaled by negative `sourceX`
-            return new int[]{sx, sy, dx, dy, bbW, bbH};
-        }
-
-        if (sx < 0) {
-            dx = dx - sx;
-            bbW = bbW + sx;
-            sx = 0;
-        }
-
-        if (sx + bbW > sourceWidth) {
-            bbW = bbW - (sx + bbW - sourceWidth);
-        }
-
-        if (sy < 0) {
-            dy = dy - sy;
-            bbH = bbH + sy;
-            sy = 0;
-        }
-
-        if (sy + bbH > sourceHeight) {
-            bbH = bbH - (sy + bbH - sourceHeight);
-        }
-
-        return new int[]{sx, sy, dx, dy, bbW, bbH};
-    }
-
-    private static final int alphaBlend24(int sourceWord, int destinationWord) {
+    protected static final int alphaBlend24(int sourceWord, int destinationWord) {
         int alpha = sourceWord >> 24;
         if (alpha == 0)
             return destinationWord;
