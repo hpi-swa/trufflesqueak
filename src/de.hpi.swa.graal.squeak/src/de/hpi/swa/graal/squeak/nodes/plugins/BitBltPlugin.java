@@ -110,11 +110,11 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             return BlendNodeGen.create();
         }
 
-        public abstract void executeFill(NativeObject sourceBits, int[] dest, int sourceHeight, int sourceWidth, int clippedY, int clippedSourceY, int clippedHeight, int clippedWidth,
+        public abstract void executeBlend(NativeObject sourceBits, int[] dest, int sourceHeight, int sourceWidth, int clippedY, int clippedSourceY, int clippedHeight, int clippedWidth,
                         int clippedX, int clippedSourceX, int destinationWidth);
 
         @Specialization(guards = {"sourceBits.isByteType()"})
-        protected void doFillBytes(NativeObject sourceBits, int[] dest, int sourceHeight, int sourceWidth, int clippedY, int clippedSourceY, int clippedHeight, int clippedWidth,
+        protected void doBlendBytes(NativeObject sourceBits, int[] dest, int sourceHeight, int sourceWidth, int clippedY, int clippedSourceY, int clippedHeight, int clippedWidth,
                         int clippedX, int clippedSourceX, int destinationWidth) {
             final byte[] source = sourceBits.getByteStorage(sourceBitsByteStorageType);
 
@@ -126,14 +126,16 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             for (int dy = clippedY, sy = clippedSourceY; dy < clippedY + clippedHeight; dy++, sy++) {
                 int sourceStart = sy * sourceWidth + clippedSourceX;
                 int destStart = dy * destinationWidth + clippedX;
-                for (int dx = destStart, sx = destStart; dx < destStart + clippedWidth; dx++, sx++) {
+                System.out.println("source: " + Integer.toString(sourceStart) + " " + Integer.toString(sourceWidth) + " " + Integer.toString(clippedWidth));
+                System.out.println("dest: " + Integer.toString(destStart) + " " + Integer.toString(destinationWidth) + " " + Integer.toString(clippedWidth));
+                for (int dx = destStart, sx = sourceStart; dx < destStart + clippedWidth; dx++, sx++) {
                     dest[dx] = alphaBlend24(source[sx], dest[dx]);
                 }
             }
         }
 
         @Specialization(guards = {"sourceBits.isIntType()"})
-        protected void doFillInts(NativeObject sourceBits, final int[] dest, int sourceHeight, int sourceWidth, int clippedY, int clippedSourceY, int clippedHeight, int clippedWidth,
+        protected void doBlendInts(NativeObject sourceBits, final int[] dest, int sourceHeight, int sourceWidth, int clippedY, int clippedSourceY, int clippedHeight, int clippedWidth,
                         int clippedX, int clippedSourceX, int destinationWidth) {
             final int[] source = sourceBits.getIntStorage(sourceBitsIntStorageType);
 
@@ -146,32 +148,10 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             for (int dy = clippedY, sy = clippedSourceY; dy < clippedY + clippedHeight; dy++, sy++) {
                 int sourceStart = sy * sourceWidth + clippedSourceX;
                 int destStart = dy * destinationWidth + clippedX;
-                for (int dx = destStart, sx = destStart; dx < destStart + clippedWidth; dx++, sx++) {
+                for (int dx = destStart, sx = sourceStart; dx < destStart + clippedWidth; dx++, sx++) {
                     dest[dx] = alphaBlend24(source[sx], dest[dx]);
                 }
             }
-        }
-
-        protected static final int alphaBlend24(int sourceWord, int destinationWord) {
-            int alpha = sourceWord >> 24;
-            if (alpha == 0)
-                return destinationWord;
-            if (alpha == 255)
-                return sourceWord;
-
-            int unAlpha = 255 - alpha;
-
-            // blend red and blue
-            int blendRB = ((sourceWord & 0xFF00FF) * alpha) +
-                            ((destinationWord & 0xFF00FF) * unAlpha) + 0xFF00FF;
-
-            // blend alpha and green
-            int blendAG = (((sourceWord >> 8 | 0xFF0000) & 0xFF00FF) * alpha) +
-                            ((destinationWord >> 8 & 0xFF00FF) * unAlpha) + 0xFF00FF;
-
-            blendRB = (blendRB + (blendRB - 0x10001 >> 8 & 0xFF00FF) >> 8) & 0xFF00FF;
-            blendAG = (blendAG + (blendAG - 0x10001 >> 8 & 0xFF00FF) >> 8) & 0xFF00FF;
-            return blendRB | (blendAG << 8);
         }
     }
 
@@ -187,6 +167,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
         @Child private SimulationPrimitiveNode simulateNode;
         @Child private CopyNode fillNode = CopyNode.create();
+        @Child private BlendNode blendNode = BlendNode.create();
 
         static final boolean measure = false;
 
@@ -327,44 +308,22 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             final int clipWidth = (int) (long) receiver.at0(BIT_BLT.CLIP_WIDTH);
             final int clipHeight = (int) (long) receiver.at0(BIT_BLT.CLIP_HEIGHT);
 
-            final int[] clippedValues = clipRange(-1, 0, 0, 0, width, height, destX, destY, clipX, clipY,
+            final int[] clippedValues = clipRange(sourceX, sourceY, sourceWidth, sourceHeight, width, height, destX, destY, clipX, clipY,
                             clipWidth, clipHeight);
 
             final int clippedSourceX = clippedValues[0];
             final int clippedSourceY = clippedValues[1];
-            final int dx = clippedValues[2];
-            final int dy = clippedValues[3];
-            final int bbW = clippedValues[4];
-            final int bbH = clippedValues[5];
-            if (bbW <= 0 || bbH <= 0) {
+            final int clippedX = clippedValues[2];
+            final int clippedY = clippedValues[3];
+            final int clippedWidth = clippedValues[4];
+            final int clippedHeight = clippedValues[5];
+            if (clippedWidth <= 0 || clippedHeight <= 0) {
                 return receiver; // "zero width or height; noop"
             }
-            final int endX = dx + bbW;
-            final int endY = dy + bbH;
 
-            final int[] destInts = destinationBits.getIntStorage(destinationBitsStorageType);
+            final int[] dest = destinationBits.getIntStorage(destinationBitsStorageType);
+            blendNode.executeBlend(sourceBits, dest, sourceHeight, sourceWidth, clippedY, clippedSourceY, clippedHeight, clippedWidth, clippedX, clippedSourceX, destinationWidth);
 
-            if (sourceBits.isByteType()) {
-                final byte[] sourceInts = sourceBits.getByteStorage(sourceBitsByteStorageType);
-
-                if (destInts.length - 1 < (endY - 1) * destinationWidth + (endX - 1)) {
-                    throw new PrimitiveFailed(); // fail early in case of index out of bounds
-                }
-
-                // request to unhibernate
-                if (sourceWidth * sourceHeight > sourceInts.length) {
-                    System.out.println("fill bytes");
-                    throw new PrimitiveFailed();
-                }
-
-                for (int y = dy, sy = clippedSourceY; y < endY; y++, sy++) {
-                    for (int x = dx, sx = clippedSourceX; x < endX; x++, sx++) {
-                        int index = y * destinationWidth + x;
-                        int sourceIndex = sy * sourceWidth + sx;
-                        destInts[index] = alphaBlend24(sourceInts[sourceIndex], destInts[index]);
-                    }
-                }
-            }
             return receiver;
         }
 
@@ -462,28 +421,6 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
                 measurements.flush();
                 return res;
             }
-        }
-
-        protected static final int alphaBlend24(int sourceWord, int destinationWord) {
-            int alpha = sourceWord >> 24;
-            if (alpha == 0)
-                return destinationWord;
-            if (alpha == 255)
-                return sourceWord;
-
-            int unAlpha = 255 - alpha;
-
-            // blend red and blue
-            int blendRB = ((sourceWord & 0xFF00FF) * alpha) +
-                            ((destinationWord & 0xFF00FF) * unAlpha) + 0xFF00FF;
-
-            // blend alpha and green
-            int blendAG = (((sourceWord >> 8 | 0xFF0000) & 0xFF00FF) * alpha) +
-                            ((destinationWord >> 8 & 0xFF00FF) * unAlpha) + 0xFF00FF;
-
-            blendRB = (blendRB + (blendRB - 0x10001 >> 8 & 0xFF00FF) >> 8) & 0xFF00FF;
-            blendAG = (blendAG + (blendAG - 0x10001 >> 8 & 0xFF00FF) >> 8) & 0xFF00FF;
-            return blendRB | (blendAG << 8);
         }
 
         /*
@@ -666,5 +603,27 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         return new int[]{sx, sy, dx, dy, bbW, bbH};
+    }
+
+    private static final int alphaBlend24(int sourceWord, int destinationWord) {
+        int alpha = sourceWord >> 24;
+        if (alpha == 0)
+            return destinationWord;
+        if (alpha == 255)
+            return sourceWord;
+
+        int unAlpha = 255 - alpha;
+
+        // blend red and blue
+        int blendRB = ((sourceWord & 0xFF00FF) * alpha) +
+                        ((destinationWord & 0xFF00FF) * unAlpha) + 0xFF00FF;
+
+        // blend alpha and green
+        int blendAG = (((sourceWord >> 8 | 0xFF0000) & 0xFF00FF) * alpha) +
+                        ((destinationWord >> 8 & 0xFF00FF) * unAlpha) + 0xFF00FF;
+
+        blendRB = (blendRB + (blendRB - 0x10001 >> 8 & 0xFF00FF) >> 8) & 0xFF00FF;
+        blendAG = (blendAG + (blendAG - 0x10001 >> 8 & 0xFF00FF) >> 8) & 0xFF00FF;
+        return blendRB | (blendAG << 8);
     }
 }
