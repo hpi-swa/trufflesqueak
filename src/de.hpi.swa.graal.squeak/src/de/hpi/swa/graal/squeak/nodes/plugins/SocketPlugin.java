@@ -991,6 +991,30 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(name = "primitiveSocketAbortConnection")
+    protected abstract static class PrimSocketAbortConnectionNode extends AbstractPrimitiveNode {
+        protected PrimSocketAbortConnectionNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @Specialization
+        protected Object doWork(final Object receiver, final long socketID) {
+            final SocketImpl socketImpl = sockets.get(socketID);
+            if (socketImpl == null) {
+                code.image.getError().println("No socket for socket id");
+                throw new PrimitiveFailed();
+            }
+            try {
+                socketImpl.close();
+            } catch (IOException e) {
+                code.image.getError().println(e);
+                throw new PrimitiveFailed();
+            }
+            return receiver;
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveSocketSendDone")
     protected abstract static class PrimSocketSendDoneNode extends AbstractPrimitiveNode {
         protected PrimSocketSendDoneNode(final CompiledMethodObject method, final int numArguments) {

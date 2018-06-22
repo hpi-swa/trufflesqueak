@@ -33,7 +33,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 
 public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
 
-    private final static class SSLImpl {
+    private static final class SSLImpl {
 
     }
 
@@ -201,8 +201,8 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
         // Creates and returns a new SSL handle
         @Specialization
         protected Long doWork(final Object receiver) {
-            SSLImpl ssl = new SSLImpl();
-            long handle = ssl.hashCode();
+            final SSLImpl ssl = new SSLImpl();
+            final long handle = ssl.hashCode();
             sslHandles.put(handle, ssl);
             return handle;
         }
