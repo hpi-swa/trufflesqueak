@@ -6,7 +6,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,8 +15,6 @@ import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
-
-import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.GraalSqueakMain;
 import de.hpi.swa.graal.squeak.SqueakLanguage;
@@ -170,7 +167,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
         image.getOutput().println("== Running " + SqueakLanguage.NAME + " SUnit Tests on " + GraalSqueakMain.getRuntimeName() + " ==");
         image.getOutput().println("Loading test image at " + imagePath + "...");
         try {
-            image.fillInFrom(new FileInputStream(imagePath), null);
+            // image.fillInFrom(new FileInputStream(imagePath), null);
         } catch (IOException e) {
             e.printStackTrace();
         }

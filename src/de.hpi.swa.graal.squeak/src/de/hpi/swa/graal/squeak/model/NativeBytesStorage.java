@@ -5,7 +5,7 @@ import java.util.Arrays;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
-import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
+import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 
 public class NativeBytesStorage extends AbstractNativeObjectStorage {
     @CompilationFinal(dimensions = 1) protected byte[] bytes;
@@ -29,7 +29,7 @@ public class NativeBytesStorage extends AbstractNativeObjectStorage {
     }
 
     @Override
-    public void fillin(final AbstractImageChunk chunk) {
+    public void fillin(final SqueakImageChunk chunk) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         bytes = chunk.getBytes();
     }

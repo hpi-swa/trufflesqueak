@@ -1,11 +1,11 @@
 package de.hpi.swa.graal.squeak.model;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
-import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
+import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 
 public abstract class AbstractNativeObjectStorage {
 
-    public abstract void fillin(AbstractImageChunk chunk);
+    public abstract void fillin(SqueakImageChunk chunk);
 
     public abstract long getNativeAt0(long longIndex);
 

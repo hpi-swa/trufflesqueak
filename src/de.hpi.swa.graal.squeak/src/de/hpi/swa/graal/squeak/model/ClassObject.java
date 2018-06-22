@@ -12,7 +12,7 @@ import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
-import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
+import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CLASS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.METHOD_DICT;
@@ -77,7 +77,7 @@ public final class ClassObject extends AbstractSqueakObject {
         return isMetaclass() || isAMetaclass();
     }
 
-    public void fillin(final AbstractImageChunk chunk) {
+    public void fillin(final SqueakImageChunk chunk) {
         super.fillinHashAndClass(chunk);
         pointers = chunk.getPointers();
         // initialize the subclasses set

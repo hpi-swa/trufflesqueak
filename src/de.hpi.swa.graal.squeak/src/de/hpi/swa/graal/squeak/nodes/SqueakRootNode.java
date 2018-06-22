@@ -2,16 +2,14 @@ package de.hpi.swa.graal.squeak.nodes;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLanguage.ParsingRequest;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.RootNode;
+
 import de.hpi.swa.graal.squeak.SqueakLanguage;
-import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.SqueakImageReader;
 
@@ -39,13 +37,8 @@ public final class SqueakRootNode extends RootNode {
 
     @Override
     public Object execute(final VirtualFrame frame) {
-        try {
-            readerNode.executeRead(frame);
-            return extracted();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        throw new SqueakException("SqueakRootNode should never return");
+        readerNode.executeRead(frame);
+        return extracted();
     }
 
     @TruffleBoundary

@@ -1,8 +1,271 @@
 package de.hpi.swa.graal.squeak.image;
 
-public final class SqueakImageChunk extends AbstractImageChunk {
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.ShortBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
-    public SqueakImageChunk(final SqueakImageReader reader, final SqueakImageContext image, final int size, final int format, final int classid, final int hash, final int pos) {
-        super(reader, image, size, format, classid, hash, pos);
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
+
+import de.hpi.swa.graal.squeak.model.BlockClosureObject;
+import de.hpi.swa.graal.squeak.model.ClassObject;
+import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
+import de.hpi.swa.graal.squeak.model.ContextObject;
+import de.hpi.swa.graal.squeak.model.EmptyObject;
+import de.hpi.swa.graal.squeak.model.FloatObject;
+import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
+import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.model.WeakPointersObject;
+
+public final class SqueakImageChunk {
+    protected Object object;
+
+    private ClassObject sqClass;
+    private Object[] pointers;
+
+    @CompilationFinal protected final int classid;
+    @CompilationFinal protected final int pos;
+
+    @CompilationFinal private final int size;
+    @CompilationFinal private final SqueakImageReader reader;
+    @CompilationFinal protected final int format;
+    @CompilationFinal private final int hash;
+    @CompilationFinal private final int[] data;
+    @CompilationFinal private final SqueakImageContext image;
+
+    private int dataIndex;
+
+    public SqueakImageChunk(final SqueakImageReader reader,
+                    final SqueakImageContext image,
+                    final int size,
+                    final int format,
+                    final int classid,
+                    final int hash,
+                    final int pos) {
+        this.reader = reader;
+        this.image = image;
+        this.size = size;
+        this.format = format;
+        this.classid = classid;
+        this.hash = hash;
+        this.pos = pos;
+        this.data = new int[size];
+        this.dataIndex = 0;
+    }
+
+    public void append(final int nextInt) {
+        data[dataIndex++] = nextInt;
+    }
+
+    public int size() {
+        return size;
+    }
+
+    public boolean isFull() {
+        return dataIndex == size;
+    }
+
+    public int[] data() {
+        return data;
+    }
+
+    public ClassObject asClassObject() {
+        if (object == null) {
+            assert format == 1;
+            object = new ClassObject(image);
+        } else if (object == SqueakImageReader.NIL_OBJECT_PLACEHOLDER) {
+            return null;
+        }
+        return (ClassObject) object;
+    }
+
+    public Object asObject() {
+        if (object == null) {
+            if (format == 0) { // no fields
+                object = new EmptyObject(image);
+            } else if (format == 1) { // fixed pointers
+                // classes should already be instantiated at this point, check a
+                // bit
+                assert this.getSqClass() != image.metaclass && (this.getSqClass() == null || this.getSqClass().getSqClass() != image.metaclass);
+                object = new PointersObject(image);
+            } else if (format == 2) { // indexable fields
+                object = new PointersObject(image);
+            } else if (format == 3) { // fixed and indexable fields
+                if (this.getSqClass() == image.methodContextClass) {
+                    object = ContextObject.create(image);
+                } else if (this.getSqClass() == image.blockClosureClass) {
+                    object = new BlockClosureObject(image);
+                } else {
+                    object = new PointersObject(image);
+                }
+            } else if (format == 4) { // indexable weak fields
+                object = new WeakPointersObject(image);
+            } else if (format == 5) { // fixed weak fields
+                object = new PointersObject(image);
+            } else if (format <= 8) {
+                assert false; // unused
+            } else if (format == 9) { // 64-bit integers
+                object = NativeObject.newNativeLongs(image, null, 0);
+            } else if (format <= 11) { // 32-bit integers
+                if (this.getSqClass() == image.floatClass) {
+                    object = FloatObject.bytesAsFloatObject(image, getBytes());
+                } else {
+                    object = NativeObject.newNativeInts(image, null, 0);
+                }
+            } else if (format <= 15) { // 16-bit integers
+                object = NativeObject.newNativeShorts(image, null, 0);
+            } else if (format <= 23) { // bytes
+                if (this.getSqClass() == image.largePositiveIntegerClass || this.getSqClass() == image.largeNegativeIntegerClass) {
+                    object = new LargeIntegerObject(image);
+                } else {
+                    object = NativeObject.newNativeBytes(image, null, 0);
+                }
+            } else if (format <= 31) { // compiled methods
+                object = new CompiledMethodObject(image);
+            }
+        }
+        if (object == SqueakImageReader.NIL_OBJECT_PLACEHOLDER) {
+            return image.nil;
+        } else {
+            return object;
+        }
+    }
+
+    public int getFormat() {
+        return format;
+    }
+
+    public int getSize() {
+        return size;
+    }
+
+    public int getHash() {
+        return hash;
+    }
+
+    public ClassObject getSqClass() {
+        return sqClass;
+    }
+
+    public void setSqClass(final ClassObject baseSqueakObject) {
+        this.sqClass = baseSqueakObject;
+    }
+
+    @ExplodeLoop
+    public Object[] getPointers() {
+        if (pointers == null) {
+            pointers = new Object[size];
+            for (int i = 0; i < size; i++) {
+                pointers[i] = decodePointer(data[i]);
+            }
+        }
+        return pointers;
+    }
+
+    public Object[] getPointers(final int end) {
+        if (pointers == null) {
+            pointers = new Object[end];
+            for (int i = 0; i < end; i++) {
+                pointers[i] = decodePointer(data[i]);
+            }
+        }
+        return pointers;
+    }
+
+    private Object decodePointer(final int ptr) {
+        if ((ptr & 3) == 0) {
+            final SqueakImageChunk chunk = reader.getChunk(ptr);
+            if (chunk == null) {
+                logBogusPointer(ptr);
+                return image.wrap(ptr >> 1);
+            } else {
+                return chunk.asObject();
+            }
+        } else if ((ptr & 1) == 1) {
+            return (long) ptr >> 1;
+        } else {
+            assert ((ptr & 3) == 2);
+            return (char) (ptr >> 2);
+        }
+    }
+
+    @TruffleBoundary
+    private void logBogusPointer(final int ptr) {
+        image.getError().println("Bogus pointer: " + ptr + ". Treating as smallint.");
+    }
+
+    public byte[] getBytes() {
+        return getBytes(0);
+    }
+
+    public byte[] getBytes(final int start) {
+        final byte[] bytes = new byte[((size - start) * 4) - getPadding()];
+        final int[] subList = Arrays.copyOfRange(data, start, size);
+        final ByteBuffer buf = ByteBuffer.allocate(subList.length * 4);
+        buf.order(ByteOrder.nativeOrder());
+        for (int i : subList) {
+            buf.putInt(i);
+        }
+        for (int i = 0; i < bytes.length; i++) {
+            bytes[i] = buf.get(i);
+        }
+        return bytes;
+    }
+
+    public short[] getShorts() {
+        final short[] shorts = new short[(size * 2) - getPadding()];
+        final ByteBuffer buf = ByteBuffer.allocate(size * 2);
+        buf.order(ByteOrder.nativeOrder());
+        for (int i : data) {
+            buf.putInt(i);
+        }
+        final ShortBuffer shortBuffer = buf.asShortBuffer();
+        for (int i = 0; i < shorts.length; i++) {
+            shorts[i] = shortBuffer.get(i);
+        }
+        return shorts;
+    }
+
+    public int[] getWords() {
+        final int[] ints = new int[size];
+        for (int i = 0; i < ints.length; i++) {
+            ints[i] = data[i];
+        }
+        return ints;
+    }
+
+    public long[] getLongs() {
+        final long[] longs = new long[size];
+        for (int i = 0; i < longs.length; i++) {
+            longs[i] = data[i];
+        }
+        return longs;
+    }
+
+    public int getPadding() {
+        if ((16 <= format) && (format <= 31)) {
+            return format & 3;
+        } else if (format == 11) {
+            // 32-bit words with 1 word padding
+            return 4;
+        } else if ((12 <= format) && (format <= 15)) {
+            // 16-bit words with 2, 4, or 6 bytes padding
+            return (format & 3) * 2;
+        } else {
+            return 0;
+        }
+    }
+
+    public byte getElementSize() {
+        if ((16 <= format) && (format <= 23)) {
+            return 1;
+        } else {
+            return 4;
+        }
     }
 }

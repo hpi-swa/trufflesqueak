@@ -1,42 +1,42 @@
 package de.hpi.swa.graal.squeak.image;
 
 import java.io.BufferedInputStream;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.Node.Child;
+import com.oracle.truffle.api.nodes.RepeatingNode;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
-import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.FillInNode;
-import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives.SimulationPrimitiveNode;
 import de.hpi.swa.graal.squeak.util.BitSplitter;
 import de.hpi.swa.graal.squeak.util.StopWatch;
 
 @SuppressWarnings("unused")
 public final class SqueakImageReader extends Node {
+    @CompilationFinal(dimensions = 1) private static final int[] CHUNK_HEADER_BIT_PATTERN = new int[]{22, 2, 5, 3, 22, 2, 8};
     @CompilationFinal static final Object NIL_OBJECT_PLACEHOLDER = new Object();
     @CompilationFinal private static final int SPECIAL_SELECTORS_INDEX = 23;
     @CompilationFinal private static final int FREE_OBJECT_CLASS_INDEX_PUN = 0;
     @CompilationFinal private static final long SLOTS_MASK = 0xFF << 56;
     @CompilationFinal private static final long OVERFLOW_SLOTS = 255;
-    @CompilationFinal private static final int HIDDEN_ROOTS_CHUNK = 4;
+    @CompilationFinal private SqueakImageChunk HIDDEN_ROOTS_CHUNK;
+    @CompilationFinal private static final int HIDDEN_ROOTS_CHUNK_INDEX = 4;
     @CompilationFinal private final BufferedInputStream stream;
-    @CompilationFinal private final List<AbstractImageChunk> chunklist = new ArrayList<>();
-    @CompilationFinal private final HashMap<Integer, AbstractImageChunk> chunktable = new HashMap<>();
+    @CompilationFinal private final LinkedHashMap<Integer, SqueakImageChunk> chunktable = new LinkedHashMap<>();
+    private int chunkCount = 0;
     private int headerSize;
     private int oldBaseAddress;
     private int specialObjectsPointer;
@@ -47,15 +47,19 @@ public final class SqueakImageReader extends Node {
     @CompilationFinal private final SqueakImageContext image;
 
     @Child private FillInNode fillInNode;
+    @Child private LoopNode repeatingNode;
+    private int segmentEnd;
+    private int currentAddressSwizzle;
 
     public SqueakImageReader(final InputStream inputStream, final SqueakImageContext image) {
         stream = new BufferedInputStream(inputStream);
         output = image.getOutput();
         this.image = image;
         fillInNode = FillInNode.create(image);
+        repeatingNode = Truffle.getRuntime().createLoopNode(new ConditionNode(this));
     }
 
-    public void executeRead(final VirtualFrame frame) throws IOException, SqueakException {
+    public void executeRead(final VirtualFrame frame) throws SqueakException {
         output.println("Reading image...");
         final StopWatch imageWatch = StopWatch.start("readImage");
         output.println("Reading header...");
@@ -64,7 +68,7 @@ public final class SqueakImageReader extends Node {
         headerWatch.stopAndPrint();
         output.println("Reading body...");
         final StopWatch bodyWatch = StopWatch.start("readBody");
-        readBody();
+        readBody(frame);
         bodyWatch.stopAndPrint();
         initObjects(frame);
         imageWatch.stopAndPrint();
@@ -73,9 +77,9 @@ public final class SqueakImageReader extends Node {
         }
     }
 
-    private short nextShort() throws IOException {
+    private short nextShort() {
         final byte[] bytes = new byte[2];
-        stream.read(bytes, 0, 2);
+        readBytes(bytes, 2);
         this.position += 2;
         short value = 0;
         value += (bytes[1] & 0x000000FF) << 8;
@@ -83,9 +87,9 @@ public final class SqueakImageReader extends Node {
         return value;
     }
 
-    private int nextInt() throws IOException {
+    private int nextInt() {
         final byte[] bytes = new byte[4];
-        stream.read(bytes, 0, 4);
+        readBytes(bytes, 4);
         this.position += 4;
         int value = 0;
         value += (bytes[3] & 0x000000FF) << 24;
@@ -95,9 +99,18 @@ public final class SqueakImageReader extends Node {
         return value;
     }
 
-    private long nextLong() throws IOException {
+    @TruffleBoundary
+    private void readBytes(final byte[] bytes, final int length) {
+        try {
+            stream.read(bytes, 0, length);
+        } catch (IOException e) {
+            throw new SqueakException("Unable to read next bytes");
+        }
+    }
+
+    private long nextLong() {
         final byte[] bytes = new byte[8];
-        stream.read(bytes, 0, 8);
+        readBytes(bytes, 8);
         this.position += 8;
         long value = 0;
         value += (long) (bytes[7] & 0x000000FF) << 56;
@@ -111,13 +124,13 @@ public final class SqueakImageReader extends Node {
         return value;
     }
 
-    private int readVersion() throws IOException {
+    private int readVersion() {
         final int version = nextInt();
         assert version == 0x00001979;
         return version;
     }
 
-    private void readBaseHeader() throws IOException {
+    private void readBaseHeader() {
         headerSize = nextInt();
         nextInt(); // endOfMemory
         oldBaseAddress = nextInt();
@@ -130,7 +143,7 @@ public final class SqueakImageReader extends Node {
         nextInt(); // extraVMMemory
     }
 
-    private void readSpurHeader() throws IOException {
+    private void readSpurHeader() {
         nextShort(); // numStackPages
         nextShort(); // cogCodeSize
         nextInt(); // edenBytes
@@ -140,31 +153,50 @@ public final class SqueakImageReader extends Node {
         nextInt(); // freeOldSpace
     }
 
-    private void readHeader() throws IOException {
+    private void readHeader() {
         readVersion();
         readBaseHeader();
         readSpurHeader();
         skipToBody();
     }
 
-    private void skipToBody() throws IOException {
+    private void skipToBody() {
         final int skip = headerSize - this.position;
-        this.position += this.stream.skip(skip);
+        try {
+            this.position += this.stream.skip(skip);
+        } catch (IOException e) {
+            throw new SqueakException("Unable to skip next bytes");
+        }
     }
 
-    private void readBody() throws IOException {
-        position = 0;
-        int segmentEnd = firstSegmentSize;
-        int currentAddressSwizzle = oldBaseAddress;
-        while (this.position < segmentEnd) {
-            while (this.position < segmentEnd - 16) {
-                final AbstractImageChunk chunk = readObject();
+    static class ConditionNode extends Node implements RepeatingNode {
+        private final SqueakImageReader reader;
+
+        ConditionNode(final SqueakImageReader reader) {
+            this.reader = reader;
+        }
+
+        public boolean executeRepeating(final VirtualFrame frame) {
+            if (reader.position < reader.segmentEnd - 16) {
+                final SqueakImageChunk chunk;
+                chunk = reader.readObject();
                 if (chunk.classid == FREE_OBJECT_CLASS_INDEX_PUN) {
-                    continue;
+                    return true;
+                } else {
+                    reader.extracted(chunk);
+                    return true;
                 }
-                chunklist.add(chunk);
-                chunktable.put(chunk.pos + currentAddressSwizzle, chunk);
             }
+            return false;
+        }
+    }
+
+    private void readBody(final VirtualFrame frame) {
+        position = 0;
+        segmentEnd = firstSegmentSize;
+        currentAddressSwizzle = oldBaseAddress;
+        while (this.position < segmentEnd) {
+            repeatingNode.executeLoop(frame);
             final long bridge = nextLong();
             int bridgeSpan = 0;
             if ((bridge & SLOTS_MASK) != 0) {
@@ -177,25 +209,43 @@ public final class SqueakImageReader extends Node {
             if (nextSegmentSize == 0) {
                 break;
             }
-            segmentEnd = segmentEnd + nextSegmentSize;
+            segmentEnd += nextSegmentSize;
             currentAddressSwizzle += bridgeSpan * 4;
         }
-        this.stream.close();
+        closeStream();
     }
 
-    private AbstractImageChunk readObject() throws IOException {
+    @TruffleBoundary
+    private void closeStream() {
+        try {
+            this.stream.close();
+        } catch (IOException e) {
+            throw new SqueakException("Unable to close stream");
+        }
+    }
+
+    @TruffleBoundary
+    private void extracted(final SqueakImageChunk chunk) {
+        chunktable.put(chunk.pos + this.currentAddressSwizzle, chunk);
+        if (chunkCount++ == HIDDEN_ROOTS_CHUNK_INDEX) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            HIDDEN_ROOTS_CHUNK = chunk;
+        }
+    }
+
+    private SqueakImageChunk readObject() {
         int pos = position;
         assert pos % 8 == 0;
         long headerWord = nextLong();
         // 22 2 5 3 22 2 8
         // classid _ format _ hash _ size
-        int[] splitHeader = BitSplitter.splitter(headerWord, new int[]{22, 2, 5, 3, 22, 2, 8});
+        int[] splitHeader = BitSplitter.splitter(headerWord, CHUNK_HEADER_BIT_PATTERN);
         int size = splitHeader[6];
         if (size == OVERFLOW_SLOTS) {
             size = (int) (headerWord & ~SLOTS_MASK);
             pos = position;
             headerWord = nextLong();
-            splitHeader = BitSplitter.splitter(headerWord, new int[]{22, 2, 5, 3, 22, 2, 8});
+            splitHeader = BitSplitter.splitter(headerWord, CHUNK_HEADER_BIT_PATTERN);
             final int overflowSize = splitHeader[6];
             assert overflowSize == OVERFLOW_SLOTS;
         }
@@ -204,9 +254,9 @@ public final class SqueakImageReader extends Node {
         final int hash = splitHeader[4];
         assert size >= 0;
         assert 0 <= format && format <= 31;
-        final AbstractImageChunk chunk = new SqueakImageChunk(this, image, size, format, classid, hash, pos);
+        final SqueakImageChunk chunk = new SqueakImageChunk(this, image, size, format, classid, hash, pos);
         for (int i = 0; i < wordsFor(size); i++) {
-            if (chunk.size() < size) {
+            if (!chunk.isFull()) {
                 chunk.append(nextInt());
             } else {
                 nextInt(); // don't add trailing alignment words
@@ -225,26 +275,28 @@ public final class SqueakImageReader extends Node {
         return size <= 1 ? 2 : size + (size & 1);
     }
 
-    private AbstractImageChunk specialObjectChunk(final int idx) {
-        final AbstractImageChunk specialObjectsChunk = chunktable.get(specialObjectsPointer);
-        return chunktable.get(specialObjectsChunk.data().get(idx));
+    @TruffleBoundary
+    private SqueakImageChunk specialObjectChunk(final int idx) {
+        final SqueakImageChunk specialObjectsChunk = getChunk(specialObjectsPointer);
+        return getChunk(specialObjectsChunk.data()[idx]);
     }
 
     private void setPrebuiltObject(final int idx, final Object object) {
         specialObjectChunk(idx).object = object;
     }
 
+    @TruffleBoundary
     private void initPrebuiltConstant() {
-        final AbstractImageChunk specialObjectsChunk = chunktable.get(specialObjectsPointer);
+        final SqueakImageChunk specialObjectsChunk = getChunk(specialObjectsPointer);
         specialObjectsChunk.object = image.specialObjectsArray;
 
         // first we find the Metaclass, we need it to correctly instantiate
         // those classes that do not have any instances. Metaclass always
         // has instances, and all instances of Metaclass have their singleton
         // Behavior instance, so these are all correctly initialized already
-        final AbstractImageChunk sqArray = classChunkOf(specialObjectsChunk);
-        final AbstractImageChunk sqArrayClass = classChunkOf(sqArray);
-        final AbstractImageChunk sqMetaclass = classChunkOf(sqArrayClass);
+        final SqueakImageChunk sqArray = classChunkOf(specialObjectsChunk);
+        final SqueakImageChunk sqArrayClass = classChunkOf(sqArray);
+        final SqueakImageChunk sqMetaclass = classChunkOf(sqArrayClass);
         sqMetaclass.object = image.metaclass;
 
         // also cache nil, true, and false classes
@@ -272,13 +324,14 @@ public final class SqueakImageReader extends Node {
         setPrebuiltObject(SPECIAL_SELECTORS_INDEX, image.specialSelectors);
     }
 
+    @TruffleBoundary
     private void initPrebuiltSelectors() {
-        final AbstractImageChunk specialObjectsChunk = chunktable.get(specialObjectsPointer);
-        final AbstractImageChunk specialSelectorChunk = chunktable.get(specialObjectsChunk.data().get(SPECIAL_SELECTORS_INDEX));
+        final SqueakImageChunk specialObjectsChunk = getChunk(specialObjectsPointer);
+        final SqueakImageChunk specialSelectorChunk = getChunk(specialObjectsChunk.data()[SPECIAL_SELECTORS_INDEX]);
 
         final NativeObject[] specialSelectors = image.specialSelectorsArray;
         for (int i = 0; i < specialSelectors.length; i++) {
-            chunktable.get(specialSelectorChunk.data().get(i * 2)).object = specialSelectors[i];
+            getChunk(specialSelectorChunk.data()[i * 2]).object = specialSelectors[i];
         }
     }
 
@@ -288,7 +341,7 @@ public final class SqueakImageReader extends Node {
         // connect all instances to their classes
         output.println("Connecting classes...");
         final StopWatch setClassesWatch = StopWatch.start("setClasses");
-        for (AbstractImageChunk chunk : chunklist) {
+        for (SqueakImageChunk chunk : chunktable.values()) {
             chunk.setSqClass(classChunkOf(chunk).asClassObject());
         }
         setClassesWatch.stopAndPrint();
@@ -300,17 +353,18 @@ public final class SqueakImageReader extends Node {
         fillInWatch.stopAndPrint();
     }
 
+    @TruffleBoundary
     private void instantiateClasses() {
         // find all metaclasses and instantiate their singleton instances as class objects
         output.println("Instantiating classes...");
-        for (int classtablePtr : chunklist.get(HIDDEN_ROOTS_CHUNK).data()) {
-            if (chunktable.get(classtablePtr) != null) {
-                for (int potentialClassPtr : chunktable.get(classtablePtr).data()) {
-                    final AbstractImageChunk metaClass = chunktable.get(potentialClassPtr);
+        for (int classtablePtr : HIDDEN_ROOTS_CHUNK.data()) {
+            if (getChunk(classtablePtr) != null) {
+                for (int potentialClassPtr : getChunk(classtablePtr).data()) {
+                    final SqueakImageChunk metaClass = getChunk(potentialClassPtr);
                     if (metaClass != null && metaClass.getSqClass() == image.metaclass) {
-                        final List<Integer> data = metaClass.data();
-                        final AbstractImageChunk classInstance = chunktable.get(data.get(data.size() - 1));
-                        assert data.size() == 6;
+                        final int[] data = metaClass.data();
+                        final SqueakImageChunk classInstance = getChunk(data[data.length - 1]);
+                        assert data.length == 6;
                         metaClass.asClassObject();
                         classInstance.asClassObject();
                     }
@@ -321,30 +375,22 @@ public final class SqueakImageReader extends Node {
 
     private void fillInObjects(final VirtualFrame frame) {
         output.println("Filling in objects...");
-        // final StopWatch watch = new StopWatch("fillInWatch");
-        // long maxDuration = 0;
-        for (AbstractImageChunk chunk : chunklist) {
-            // watch.start();
+        for (SqueakImageChunk chunk : chunktable.values()) {
             final Object chunkObject = chunk.asObject();
             fillInNode.execute(frame, chunkObject, chunk);
-            // final long duration = watch.stop();
-            // if (duration >= maxDuration) {
-            // maxDuration = duration;
-            // }
         }
-        // final double deltaf = (maxDuration / 1000_000);
-        // output.println("maxFillInDuration" + ":\t" + deltaf + "ms");
+
         if (image.asSymbol.isNil()) {
             throw new SqueakException("Unable to find asSymbol selector");
         }
     }
 
-    private AbstractImageChunk classChunkOf(final AbstractImageChunk chunk) {
+    @TruffleBoundary
+    private SqueakImageChunk classChunkOf(final SqueakImageChunk chunk) {
         final int majorIdx = majorClassIndexOf(chunk.classid);
         final int minorIdx = minorClassIndexOf(chunk.classid);
-        final AbstractImageChunk hiddenRoots = chunklist.get(HIDDEN_ROOTS_CHUNK);
-        final AbstractImageChunk classTablePage = chunktable.get(hiddenRoots.data().get(majorIdx));
-        return chunktable.get(classTablePage.data().get(minorIdx));
+        final SqueakImageChunk classTablePage = getChunk(HIDDEN_ROOTS_CHUNK.data()[majorIdx]);
+        return getChunk(classTablePage.data()[minorIdx]);
     }
 
     private static int majorClassIndexOf(final int classid) {
@@ -355,7 +401,8 @@ public final class SqueakImageReader extends Node {
         return classid & ((1 << 10) - 1);
     }
 
-    public AbstractImageChunk getChunk(final int ptr) {
+    @TruffleBoundary
+    public SqueakImageChunk getChunk(final int ptr) {
         return chunktable.get(ptr);
     }
 }

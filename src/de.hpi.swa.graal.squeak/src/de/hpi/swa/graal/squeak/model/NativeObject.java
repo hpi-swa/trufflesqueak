@@ -14,7 +14,7 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
-import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
+import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
 public final class NativeObject extends AbstractSqueakObject {
@@ -93,7 +93,7 @@ public final class NativeObject extends AbstractSqueakObject {
         return new String((byte[]) storage);
     }
 
-    public void fillin(final AbstractImageChunk chunk) {
+    public void fillin(final SqueakImageChunk chunk) {
         super.fillinHashAndClass(chunk);
         CompilerDirectives.transferToInterpreterAndInvalidate();
         if (isByteType()) {

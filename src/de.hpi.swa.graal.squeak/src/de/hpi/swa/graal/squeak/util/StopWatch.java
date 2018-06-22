@@ -2,6 +2,8 @@ package de.hpi.swa.graal.squeak.util;
 
 import java.io.PrintWriter;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+
 public class StopWatch {
     long startTime = 0;
     long stopTime = 0;
@@ -34,6 +36,7 @@ public class StopWatch {
         return stopTime - startTime;
     }
 
+    @TruffleBoundary
     public void printTime() {
         final double deltaf = (delta() / 1000_000) / 1000.0;
         print(name + ":\t" + deltaf + "s");

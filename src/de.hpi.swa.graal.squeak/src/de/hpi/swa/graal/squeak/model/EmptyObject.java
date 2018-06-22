@@ -1,7 +1,7 @@
 package de.hpi.swa.graal.squeak.model;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions;
-import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
+import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
 public final class EmptyObject extends AbstractSqueakObject {
@@ -25,7 +25,7 @@ public final class EmptyObject extends AbstractSqueakObject {
         return new EmptyObject(image, getSqClass());
     }
 
-    public void fillin(final AbstractImageChunk chunk) {
+    public void fillin(final SqueakImageChunk chunk) {
         super.fillinHashAndClass(chunk);
     }
 }

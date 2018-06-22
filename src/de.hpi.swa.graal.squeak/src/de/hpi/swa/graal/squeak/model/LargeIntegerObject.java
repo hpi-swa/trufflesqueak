@@ -6,7 +6,7 @@ import java.util.Arrays;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
-import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
+import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
@@ -50,7 +50,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         integer = original.integer;
     }
 
-    public void fillin(final AbstractImageChunk chunk) {
+    public void fillin(final SqueakImageChunk chunk) {
         super.fillinHashAndClass(chunk);
         bytes = chunk.getBytes();
         integer = derivedBigIntegerFromBytes(bytes, isNegative());

@@ -17,13 +17,12 @@ import com.oracle.truffle.api.utilities.CyclicAssumption;
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
-import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
+import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.instrumentation.CompiledCodeObjectPrinter;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.EnterCodeNode;
 import de.hpi.swa.graal.squeak.util.BitSplitter;
-import de.hpi.swa.graal.squeak.util.StopWatch;
 
 public abstract class CompiledCodeObject extends AbstractSqueakObject {
     public enum SLOT_IDENTIFIER {
@@ -161,11 +160,11 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         return stackSlots.length;
     }
 
-    public final void fillin(final AbstractImageChunk chunk) {
+    public final void fillin(final SqueakImageChunk chunk) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         super.fillinHashAndClass(chunk);
-        final List<Integer> data = chunk.data();
-        final int header = data.get(0) >> 1; // header is a tagged small integer
+        final int[] data = chunk.data();
+        final int header = data[0] >> 1; // header is a tagged small integer
         final int literalsize = header & 0x7fff;
         final Object[] ptrs = chunk.getPointers(literalsize + 1);
         assert literals == null;

@@ -3,7 +3,7 @@ package de.hpi.swa.graal.squeak.model;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
-import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
+import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
 public final class FloatObject extends AbstractSqueakObject {
@@ -37,7 +37,7 @@ public final class FloatObject extends AbstractSqueakObject {
         setWords(high, low);
     }
 
-    public void fillin(final AbstractImageChunk chunk) {
+    public void fillin(final SqueakImageChunk chunk) {
         super.fillinHashAndClass(chunk);
         final int[] words = chunk.getWords();
         assert words.length == WORD_LENGTH;

@@ -5,7 +5,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
 
-import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
+import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.instrumentation.SqueakObjectMessageResolutionForeign;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
@@ -31,7 +31,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         return obj instanceof AbstractSqueakObject;
     }
 
-    public final void fillinHashAndClass(final AbstractImageChunk chunk) {
+    public final void fillinHashAndClass(final SqueakImageChunk chunk) {
         hash = chunk.getHash();
         sqClass = chunk.getSqClass();
     }

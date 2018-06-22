@@ -2,7 +2,7 @@ package de.hpi.swa.graal.squeak.model;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
-import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
+import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
@@ -26,7 +26,7 @@ public final class PointersObject extends AbstractSqueakObject {
         this(img, classObject, ArrayUtils.withAll(size, img.nil));
     }
 
-    public void fillin(final AbstractImageChunk chunk) {
+    public void fillin(final SqueakImageChunk chunk) {
         super.fillinHashAndClass(chunk);
         pointers = chunk.getPointers();
     }

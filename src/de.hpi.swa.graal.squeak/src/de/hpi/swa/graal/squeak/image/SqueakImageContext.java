@@ -3,8 +3,6 @@ package de.hpi.swa.graal.squeak.image;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.math.BigInteger;
 
@@ -16,7 +14,6 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
-import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
@@ -42,7 +39,6 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerNode;
 import de.hpi.swa.graal.squeak.util.OSDetector;
 import de.hpi.swa.graal.squeak.util.SqueakConfig;
-import de.hpi.swa.graal.squeak.util.StopWatch;
 
 public final class SqueakImageContext {
     // Special objects
