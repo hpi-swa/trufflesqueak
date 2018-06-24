@@ -237,6 +237,7 @@ public final class SqueakImageContext {
         return new FloatObject(this, value);
     }
 
+    @TruffleBoundary
     public NativeObject wrap(final String s) {
         return NativeObject.newNativeBytes(this, stringClass, s.getBytes());
     }
