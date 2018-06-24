@@ -64,6 +64,9 @@ def _graal_vm_args(args):
     if not args.background_compilation:
         graal_args += ['-Dgraal.TruffleBackgroundCompilation=false']
 
+    if args.force_compilation:
+        graal_args += ['-Dgraal.TruffleCompileImmediately=true']
+
     graal_args += [
         '-Djvmci.Compiler=graal',
         '-XX:+UseJVMCICompiler',
@@ -96,6 +99,10 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
                         help='disable interrupt handler',
                         dest='disable_interrupts',
                         action='store_true', default=False)
+    parser.add_argument(
+        '-fc', '--force-compilation',
+        help='compile immediately to test Truffle compiler',
+        dest='force_compilation', action='store_true', default=False)
     parser.add_argument('--gc', action='store_true',
                         help='print garbage collection details')
     parser.add_argument('--igv', action='store_true', help='dump to igv')
