@@ -18,10 +18,11 @@ import de.hpi.swa.graal.squeak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 public abstract class DispatchSendNode extends AbstractNodeWithImage {
-    @Child private DispatchNode dispatchNode = DispatchNode.create();
     @Child protected IsDoesNotUnderstandNode isDoesNotUnderstandNode;
+    @Child private DispatchNode dispatchNode = DispatchNode.create();
     @Child private LookupNode lookupNode = LookupNode.create();
     @Child private SqueakLookupClassNode lookupClassNode;
+
     @CompilationFinal private ClassObject messageClass;
     @CompilationFinal private NativeObject runWithIn;
 

@@ -35,7 +35,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives.Sim
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.StoragePrimitives;
 
 public final class PrimitiveNodeFactory {
-    @CompilationFinal private static final int MAX_PRIMITIVE_INDEX = 575;
+    private static final int MAX_PRIMITIVE_INDEX = 575;
     @CompilationFinal(dimensions = 1) private static final AbstractPrimitiveFactoryHolder[] indexPrimitives = new AbstractPrimitiveFactoryHolder[]{
                     new ArithmeticPrimitives(),
                     new ArrayStreamPrimitives(),

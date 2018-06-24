@@ -2,7 +2,6 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 
 import java.util.List;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -130,8 +129,8 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveDecompressFromByteArray")
     public abstract static class PrimDecompressFromByteArrayNode extends AbstractMiscPrimitiveNode {
-        @CompilationFinal private final ValueProfile bmStorageType = ValueProfile.createClassProfile();
-        @CompilationFinal private final ValueProfile baStorageType = ValueProfile.createClassProfile();
+        private final ValueProfile bmStorageType = ValueProfile.createClassProfile();
+        private final ValueProfile baStorageType = ValueProfile.createClassProfile();
 
         public PrimDecompressFromByteArrayNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);

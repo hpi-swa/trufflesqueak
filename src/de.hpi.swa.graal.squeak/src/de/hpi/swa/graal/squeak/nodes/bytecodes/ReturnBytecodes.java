@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -61,7 +60,7 @@ public final class ReturnBytecodes {
     }
 
     public abstract static class ReturnConstantNode extends AbstractReturnNode {
-        @CompilationFinal private final Object constant;
+        private final Object constant;
 
         public static ReturnConstantNode create(final CompiledCodeObject code, final int index, final Object value) {
             return ReturnConstantNodeGen.create(code, index, value);

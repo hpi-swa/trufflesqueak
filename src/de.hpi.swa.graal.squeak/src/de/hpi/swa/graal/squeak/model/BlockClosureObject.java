@@ -21,9 +21,10 @@ public final class BlockClosureObject extends AbstractSqueakObject {
     @CompilationFinal private CompiledBlockObject block;
     @CompilationFinal private long pc = -1;
     @CompilationFinal private long numArgs = -1;
+    @CompilationFinal(dimensions = 1) private Object[] copied;
     @CompilationFinal private RootCallTarget callTarget;
-    @CompilationFinal private final CyclicAssumption callTargetStable = new CyclicAssumption("BlockClosureObject assumption");
-    private Object[] copied;
+
+    private final CyclicAssumption callTargetStable = new CyclicAssumption("BlockClosureObject assumption");
 
     public BlockClosureObject(final SqueakImageContext image) {
         super(image, image.blockClosureClass);
@@ -112,6 +113,7 @@ public final class BlockClosureObject extends AbstractSqueakObject {
                 numArgs = ((Long) obj).intValue();
                 break;
             default:
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 copied[index - BLOCK_CLOSURE.FIRST_COPIED_VALUE] = obj;
                 break;
         }
@@ -125,12 +127,16 @@ public final class BlockClosureObject extends AbstractSqueakObject {
         if (!super.become(other)) {
             throw new SqueakException("Should not fail");
         }
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        final Object[] otherCopied = copied;
         final BlockClosureObject otherClosure = (BlockClosureObject) other;
-        copied = otherClosure.copied;
-        otherClosure.copied = otherCopied;
+        final Object[] otherCopied = otherClosure.copied;
+        otherClosure.setCopied(this.copied);
+        this.setCopied(otherCopied);
         return true;
+    }
+
+    private void setCopied(final Object[] copied) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        this.copied = copied;
     }
 
     public int size() {

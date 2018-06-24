@@ -6,7 +6,6 @@ import java.nio.ShortBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
@@ -27,15 +26,15 @@ public abstract class AbstractImageChunk {
     private ClassObject sqClass;
     private Object[] pointers;
 
-    @CompilationFinal protected final int classid;
-    @CompilationFinal protected final int pos;
+    protected final int classid;
+    protected final int pos;
 
-    @CompilationFinal private final long size;
-    @CompilationFinal private final SqueakImageReader reader;
-    @CompilationFinal protected final int format;
-    @CompilationFinal private final int hash;
-    @CompilationFinal private final List<Integer> data;
-    @CompilationFinal private final SqueakImageContext image;
+    private final long size;
+    private final SqueakImageReader reader;
+    protected final int format;
+    private final int hash;
+    private final List<Integer> data;
+    private final SqueakImageContext image;
 
     public AbstractImageChunk(final SqueakImageReader reader,
                     final SqueakImageContext image,

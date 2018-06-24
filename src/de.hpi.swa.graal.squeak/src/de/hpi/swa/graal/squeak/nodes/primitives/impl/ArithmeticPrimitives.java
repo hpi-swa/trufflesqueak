@@ -2,7 +2,6 @@ package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 
 import java.util.List;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -748,7 +747,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 54)
     protected abstract static class PrimFloatTimesTwoPowerNode extends AbstractArithmeticPrimitiveNode {
-        @CompilationFinal private static final int UNDERFLOW_LIMIT = FloatObject.EMIN - FloatObject.PRECISION + 1;
+        private static final int UNDERFLOW_LIMIT = FloatObject.EMIN - FloatObject.PRECISION + 1;
 
         protected PrimFloatTimesTwoPowerNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -916,7 +915,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 159)
     protected abstract static class PrimHashMultiplyNode extends AbstractPrimitiveNode {
-        @CompilationFinal private static final int HASH_MULTIPLY_CONSTANT = 1664525;
+        private static final int HASH_MULTIPLY_CONSTANT = 1664525;
 
         protected PrimHashMultiplyNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);

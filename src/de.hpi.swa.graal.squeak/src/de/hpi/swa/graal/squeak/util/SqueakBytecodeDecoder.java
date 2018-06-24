@@ -38,7 +38,7 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.StoreBytecodes.PopIntoTemporaryLo
 import de.hpi.swa.graal.squeak.nodes.bytecodes.StoreBytecodes.StoreIntoRemoteTempNode;
 
 public final class SqueakBytecodeDecoder {
-    @CompilationFinal private final CompiledCodeObject code;
+    private final CompiledCodeObject code;
     @CompilationFinal(dimensions = 1) private final byte[] bytecode;
     private int currentIndex = 0;
 

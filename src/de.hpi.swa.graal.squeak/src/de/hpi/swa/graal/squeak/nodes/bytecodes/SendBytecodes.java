@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.debug.DebuggerTags;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.GenerateWrapper;
@@ -8,7 +7,6 @@ import com.oracle.truffle.api.instrumentation.InstrumentableNode;
 import com.oracle.truffle.api.instrumentation.ProbeNode;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
-import com.oracle.truffle.api.source.SourceSection;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveWithoutResultException;
 import de.hpi.swa.graal.squeak.model.ClassObject;
@@ -25,14 +23,14 @@ public final class SendBytecodes {
 
     @GenerateWrapper
     public abstract static class AbstractSendNode extends AbstractBytecodeNode implements InstrumentableNode {
-        @CompilationFinal protected final NativeObject selector;
-        @CompilationFinal private final int argumentCount;
+        protected final NativeObject selector;
+        private final int argumentCount;
+
         @Child protected SqueakLookupClassNode lookupClassNode;
         @Child private LookupNode lookupNode = LookupNode.create();
         @Child private DispatchSendNode dispatchSendNode;
         @Child private StackPopNReversedNode popNReversedNode;
         @Child private StackPushNode pushNode = StackPushNode.create();
-        @CompilationFinal private SourceSection sourceSection;
 
         private AbstractSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object sel, final int argcount) {
             super(code, index, numBytecodes);
@@ -135,7 +133,7 @@ public final class SendBytecodes {
 
         protected static class SqueakLookupClassSuperNode extends SqueakLookupClassNode {
             @Child private GetCompiledMethodNode getMethodNode = GetCompiledMethodNode.create();
-            @CompilationFinal private final CompiledCodeObject code;
+            private final CompiledCodeObject code;
 
             public SqueakLookupClassSuperNode(final CompiledCodeObject code) {
                 super(code.image);

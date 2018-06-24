@@ -18,11 +18,14 @@ import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 public final class JumpBytecodes {
 
     public static final class ConditionalJumpNode extends UnconditionalJumpNode {
-        @CompilationFinal public static final int FALSE_SUCCESSOR = 0;
-        @CompilationFinal public static final int TRUE_SUCCESSOR = 1;
-        @CompilationFinal private static NativeObject mustBeBooleanSelector;
-        @CompilationFinal private final Boolean isIfTrue;
+        public static final int FALSE_SUCCESSOR = 0;
+        public static final int TRUE_SUCCESSOR = 1;
+
+        private final Boolean isIfTrue;
         @CompilationFinal(dimensions = 1) private final int[] successorExecutionCount = new int[2];
+
+        @CompilationFinal private static NativeObject mustBeBooleanSelector;
+
         @Child private StackPopNode popNode;
         @Child private StackPushNode pushNode = StackPushNode.create();
         @Child private AbstractSendNode sendMustBeBooleanNode;
@@ -119,7 +122,7 @@ public final class JumpBytecodes {
     }
 
     public static class UnconditionalJumpNode extends AbstractBytecodeNode {
-        @CompilationFinal protected final int offset;
+        protected final int offset;
 
         public UnconditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode) {
             super(code, index, numBytecodes);

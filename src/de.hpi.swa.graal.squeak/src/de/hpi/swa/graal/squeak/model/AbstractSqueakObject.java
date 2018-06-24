@@ -11,9 +11,10 @@ import de.hpi.swa.graal.squeak.instrumentation.SqueakObjectMessageResolutionFore
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 
 public abstract class AbstractSqueakObject implements TruffleObject {
-    @CompilationFinal private static final int IDENTITY_HASH_MASK = 0x400000 - 1;
-    @CompilationFinal private static final byte PINNED_BIT_SHIFT = 30;
-    @CompilationFinal public final SqueakImageContext image;
+    private static final int IDENTITY_HASH_MASK = 0x400000 - 1;
+    private static final byte PINNED_BIT_SHIFT = 30;
+    public final SqueakImageContext image;
+
     @CompilationFinal private long hash;
     @CompilationFinal private ClassObject sqClass;
 
@@ -23,8 +24,8 @@ public abstract class AbstractSqueakObject implements TruffleObject {
 
     protected AbstractSqueakObject(final SqueakImageContext image, final ClassObject klass) {
         this.image = image;
-        this.hash = hashCode() & IDENTITY_HASH_MASK;
-        this.sqClass = klass;
+        setSqueakHash(hashCode() & IDENTITY_HASH_MASK);
+        setSqClass(klass);
     }
 
     public static final boolean isInstance(final TruffleObject obj) {
@@ -32,8 +33,8 @@ public abstract class AbstractSqueakObject implements TruffleObject {
     }
 
     public void fillin(final AbstractImageChunk chunk) {
-        hash = chunk.getHash();
-        sqClass = chunk.getSqClass();
+        setSqueakHash(chunk.getHash());
+        setSqClass(chunk.getSqClass());
     }
 
     @Override
@@ -93,10 +94,9 @@ public abstract class AbstractSqueakObject implements TruffleObject {
     }
 
     public boolean become(final AbstractSqueakObject other) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
         final ClassObject otherSqClass = other.sqClass;
-        other.sqClass = this.sqClass;
-        this.sqClass = otherSqClass;
+        other.setSqClass(this.sqClass);
+        this.setSqClass(otherSqClass);
         return true;
     }
 

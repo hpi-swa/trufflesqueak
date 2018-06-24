@@ -3,13 +3,11 @@ package de.hpi.swa.graal.squeak.io;
 import java.awt.Dimension;
 import java.awt.Point;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-
 import de.hpi.swa.graal.squeak.model.PointersObject;
 
 public final class SqueakDisplayNull extends SqueakDisplay {
-    @CompilationFinal private static final Dimension DEFAULT_DIMENSION = new Dimension(1024, 768);
-    @CompilationFinal private static final Point NULL_POINT = new Point(0, 0);
+    private static final Dimension DEFAULT_DIMENSION = new Dimension(1024, 768);
+    private static final Point NULL_POINT = new Point(0, 0);
 
     @Override
     public void forceRect(final int left, final int right, final int top, final int bottom) {

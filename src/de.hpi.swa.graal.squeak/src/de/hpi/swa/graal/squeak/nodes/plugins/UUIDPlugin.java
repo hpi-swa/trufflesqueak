@@ -2,7 +2,6 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 
 import java.util.List;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -26,7 +25,7 @@ public final class UUIDPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveMakeUUID")
     protected abstract static class PrimMakeUUIDNode extends AbstractPrimitiveNode {
-        @CompilationFinal private final ValueProfile storageType = ValueProfile.createClassProfile();
+        private final ValueProfile storageType = ValueProfile.createClassProfile();
 
         protected PrimMakeUUIDNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);

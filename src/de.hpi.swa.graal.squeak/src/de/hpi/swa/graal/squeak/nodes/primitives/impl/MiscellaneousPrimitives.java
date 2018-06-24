@@ -69,10 +69,10 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
     private abstract static class AbstractClockPrimitiveNode extends AbstractPrimitiveNode {
         // The delta between Squeak Epoch (January 1st 1901) and POSIX Epoch (January 1st 1970)
-        @CompilationFinal private static final long EPOCH_DELTA_MICROSECONDS = (long) (69 * 365 + 17) * 24 * 3600 * 1000 * 1000;
-        @CompilationFinal private static final long SEC_TO_USEC = 1000 * 1000;
-        @CompilationFinal private static final long USEC_TO_NANO = 1000;
-        @CompilationFinal private final long timeZoneOffsetMicroseconds;
+        private static final long EPOCH_DELTA_MICROSECONDS = (long) (69 * 365 + 17) * 24 * 3600 * 1000 * 1000;
+        private static final long SEC_TO_USEC = 1000 * 1000;
+        private static final long USEC_TO_NANO = 1000;
+        private final long timeZoneOffsetMicroseconds;
 
         private AbstractClockPrimitiveNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -305,7 +305,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 141)
     protected abstract static class PrimClipboardTextNode extends AbstractPrimitiveNode {
-        @CompilationFinal protected final boolean isHeadless = GraphicsEnvironment.isHeadless();
+        protected final boolean isHeadless = GraphicsEnvironment.isHeadless();
         @Child private NativeGetBytesNode getBytesNode = NativeGetBytesNode.create();
         private String headlessClipboardContents = "";
 
@@ -869,13 +869,16 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
      */
     @GenerateNodeFactory
     public abstract static class SimulationPrimitiveNode extends AbstractPrimitiveNode {
-        @CompilationFinal public static final String SIMULATE_PRIMITIVE_SELECTOR = "simulatePrimitive:args:";
-        @CompilationFinal protected CompiledMethodObject simulationMethod; // different method per
-                                                                           // simulation
-        @CompilationFinal protected final String moduleName;
-        @CompilationFinal protected final NativeObject functionName;
-        @CompilationFinal protected final boolean bitBltSimulationNotFound = code.image.simulatePrimitiveArgs.isNil();
-        @CompilationFinal protected final PointersObject emptyList;
+        public static final String SIMULATE_PRIMITIVE_SELECTOR = "simulatePrimitive:args:";
+
+        // different CompiledMethodObject per simulation
+        @CompilationFinal protected CompiledMethodObject simulationMethod;
+
+        protected final String moduleName;
+        protected final NativeObject functionName;
+        protected final boolean bitBltSimulationNotFound = code.image.getSimulatePrimitiveArgsSelector() == null;
+        protected final PointersObject emptyList;
+
         @Child protected LookupNode lookupNode = LookupNode.create();
         @Child protected DispatchNode dispatchNode = DispatchNode.create();
         @Child protected SqueakLookupClassNode lookupClassNode;
@@ -987,10 +990,10 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
                 }
                 final Object lookupResult;
                 if (receiver instanceof ClassObject) {
-                    lookupResult = lookupNode.executeLookup(receiver, code.image.simulatePrimitiveArgs);
+                    lookupResult = lookupNode.executeLookup(receiver, code.image.getSimulatePrimitiveArgsSelector());
                 } else {
                     final ClassObject rcvrClass = lookupClassNode.executeLookup(receiver);
-                    lookupResult = lookupNode.executeLookup(rcvrClass, code.image.simulatePrimitiveArgs);
+                    lookupResult = lookupNode.executeLookup(rcvrClass, code.image.getSimulatePrimitiveArgsSelector());
                 }
                 if (lookupResult instanceof CompiledMethodObject) {
                     final CompiledMethodObject result = (CompiledMethodObject) lookupResult;

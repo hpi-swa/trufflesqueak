@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -36,8 +35,8 @@ public final class MiscellaneousBytecodes {
     public abstract static class CallPrimitiveNode extends AbstractBytecodeNode {
         @Child private HandlePrimitiveFailedNode handlePrimFailed;
         @Child protected AbstractPrimitiveNode primitiveNode;
-        @CompilationFinal private final int primitiveIndex;
-        @CompilationFinal private final ValueProfile primitiveNodeProfile = ValueProfile.createClassProfile();
+        private final int primitiveIndex;
+        private final ValueProfile primitiveNodeProfile = ValueProfile.createClassProfile();
 
         public static CallPrimitiveNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int byte1, final int byte2) {
             return CallPrimitiveNodeGen.create(code, index, numBytecodes, byte1, byte2);

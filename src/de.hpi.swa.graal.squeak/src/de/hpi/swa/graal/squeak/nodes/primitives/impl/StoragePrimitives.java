@@ -4,7 +4,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.oracle.truffle.api.Assumption;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
@@ -170,7 +169,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 70)
     protected abstract static class PrimNewNode extends AbstractPrimitiveNode {
-        @CompilationFinal protected static final int NEW_CACHE_SIZE = 3;
+        protected static final int NEW_CACHE_SIZE = 3;
 
         protected PrimNewNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -198,7 +197,7 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 71)
     protected abstract static class PrimNewArgNode extends AbstractPrimitiveNode {
-        @CompilationFinal protected static final int NEW_CACHE_SIZE = 3;
+        protected static final int NEW_CACHE_SIZE = 3;
 
         protected PrimNewArgNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);

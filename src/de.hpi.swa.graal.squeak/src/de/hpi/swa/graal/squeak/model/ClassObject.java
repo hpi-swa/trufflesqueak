@@ -19,12 +19,14 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.METHOD_DICT;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 public final class ClassObject extends AbstractSqueakObject {
-    @CompilationFinal private final Set<ClassObject> subclasses = new HashSet<>();
+    private final Set<ClassObject> subclasses = new HashSet<>();
+    private final CyclicAssumption methodLookupStable = new CyclicAssumption("Class lookup stability");
+    private final CyclicAssumption classFormatStable = new CyclicAssumption("Class format stability");
+
     @CompilationFinal private int instSpec = -1;
     @CompilationFinal private int instanceSize = -1;
-    @CompilationFinal private final CyclicAssumption methodLookupStable = new CyclicAssumption("Class lookup stability");
-    @CompilationFinal private final CyclicAssumption classFormatStable = new CyclicAssumption("Class format stability");
     @CompilationFinal private CompiledMethodObject doesNotUnderstandMethod;
+
     protected Object[] pointers;
 
     public ClassObject(final SqueakImageContext img) {
