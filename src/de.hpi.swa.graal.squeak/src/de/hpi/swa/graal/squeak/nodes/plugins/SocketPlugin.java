@@ -196,13 +196,15 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
         public int receiveData(final byte[] data, final int startIndex, final int count) throws IOException {
             print(">> Receive data, buffer length: " + data.length + ", start: " + startIndex + ", count: " + count);
-            int actualCount = count;
-            if (count > data.length - startIndex) {
-                actualCount = data.length - startIndex;
-            }
+            final int actualCount = count;
+            // if (count > data.length - startIndex) {
+            // actualCount = data.length - startIndex;
+            // }
             if (clientSocket != null) {
                 if (isDataAvailable()) {
-                    return clientSocket.getInputStream().read(data, startIndex, actualCount);
+                    final int bytesRead = clientSocket.getInputStream().read(data, startIndex, actualCount);
+                    print(">> Bytes read: " + bytesRead);
+                    return bytesRead >= 0 ? bytesRead : 0;
                 } else {
                     print(">> No data available");
                     return 0;
@@ -296,7 +298,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                                 status = SocketStatus.Connected;
                             } else {
                                 final Duration elapsedTime = Duration.between(noDataSince, Instant.now());
-                                if (elapsedTime.getSeconds() > 5) {
+                                if (elapsedTime.getSeconds() > 30) {
                                     status = SocketStatus.OtherEndClosed;
                                 } else {
                                     status = SocketStatus.Connected;
@@ -1048,7 +1050,8 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 code.image.getError().println("No socket for socket id");
                 throw new PrimitiveFailed();
             }
-            final byte[] buffer = new byte[(int) count];
+
+            final byte[] buffer = receiveBuffer.getByteStorage(ValueProfile.createClassProfile());
             final long readBytes;
             try {
                 readBytes = socketImpl.receiveData(buffer, (int) (startIndex - 1), (int) count);
