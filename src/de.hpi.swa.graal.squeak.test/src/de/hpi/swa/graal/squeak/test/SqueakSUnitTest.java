@@ -117,13 +117,13 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
     @Test
     public void testInspectSqueakTest() {
         assumeNotOnMXGate();
-        runTestCase("SocketTest");
+        runTestCase("ArrayTest");
     }
 
     @Test
     public void testInspectSqueakTestSelector() {
         assumeNotOnMXGate();
-        image.getOutput().println(evaluate("(SocketTest run: #testClientConnect) asString"));
+        image.getOutput().println(evaluate("(WordArrayTest run: #testCannotPutNegativeValue) asString"));
     }
 
     @Test

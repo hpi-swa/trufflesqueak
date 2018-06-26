@@ -18,6 +18,8 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.graalvm.collections.EconomicMap;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -61,7 +63,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         private static final long UDPSocketType = 1;
     }
 
-    static Map<Long, SocketImpl> sockets = new TreeMap<>();
+    private static final EconomicMap<Long, SocketImpl> sockets = EconomicMap.create();
     private static boolean debugPrints = true;
 
     private static final class Resolver {
@@ -457,7 +459,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected long doWork(@SuppressWarnings("unused") final Object receiver) {
+        protected static final long doWork(@SuppressWarnings("unused") final Object receiver) {
             return ResolverStatus.Ready;
         }
     }
@@ -470,7 +472,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doWork(final Object receiver) {
+        protected static final Object doWork(final Object receiver) {
             return receiver;
         }
     }
@@ -496,7 +498,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // asynchronous. To get the results, wait for it to complete or time out and then use
         // primNameLookupResult.
         @Specialization
-        protected Object doWork(final Object receiver, final NativeObject hostName) {
+        protected final Object doWork(final Object receiver, final NativeObject hostName) {
             code.image.getOutput().println(">> Starting lookup for host name " + hostName);
             InetAddress address = null;
             final String hostNameString = hostName.toString();
@@ -529,7 +531,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // asynchronous. To get the results, wait for it to complete or time out and then use
         // primAddressLookupResult.
         @Specialization
-        protected Object doWork(final Object receiver, final Object address) {
+        protected final Object doWork(final Object receiver, final Object address) {
             code.image.getOutput().println("Starting lookup for address " + address);
             final String addressString = address.toString();
             try {
@@ -552,7 +554,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // Return the host address found by the last host name lookup. Returns nil if the last
         // lookup was unsuccessful.
         @Specialization
-        protected Object doWork(@SuppressWarnings("unused") final Object receiver) {
+        protected final Object doWork(@SuppressWarnings("unused") final Object receiver) {
             if (lastNameLookup == null) {
                 code.image.getOutput().println(">> Name Lookup Result: " + null);
                 return code.image.nil;
@@ -579,7 +581,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // Return the host name found by the last host address lookup.
         // Returns nil if the last lookup was unsuccessful.
         @Specialization
-        protected Object doWork(@SuppressWarnings("unused") final Object receiver) {
+        protected final Object doWork(@SuppressWarnings("unused") final Object receiver) {
             code.image.getOutput().println(">> Address Lookup Result");
             if (lastAddressLookup == null) {
                 return code.image.nil;
@@ -597,7 +599,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doWork(@SuppressWarnings("unused") final Object receiver) {
+        protected final Object doWork(@SuppressWarnings("unused") final Object receiver) {
             try {
                 final byte[] address = Resolver.getLocalAddress();
                 code.image.getOutput().println(">> Local Address: " + addressBytesToString(address));
@@ -618,9 +620,8 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
         // Return the local port for this socket, or zero if no port has yet been assigned.
         @Specialization
-        protected Long doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
-            final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
-            return (long) socketImpl.getLocalPort();
+        protected static final Long doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
+            return (long) getSocketImplOrPrimFail(socketID).getLocalPort();
         }
     }
 
@@ -643,12 +644,11 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // Primitive. Set up the socket to listen on the given port.
         // Will be used in conjunction with #accept only.
         @Specialization
-        protected Object doWork(final Object receiver, final long socketID,
+        protected final Object doWork(final Object receiver, final long socketID,
                         final long port,
                         @SuppressWarnings("unused") final NotProvided backlogSize) {
-            final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
             try {
-                socketImpl.listenOn((int) port);
+                getSocketImplOrPrimFail(socketID).listenOn((int) port);
             } catch (IOException e) {
                 code.image.getError().println(e);
                 throw new PrimitiveFailed();
@@ -657,12 +657,11 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doWork(final Object receiver, final long socketID,
+        protected final Object doWork(final Object receiver, final long socketID,
                         final long port,
                         @SuppressWarnings("unused") final Object backlogSize) {
-            final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
             try {
-                socketImpl.listenOn((int) port);
+                getSocketImplOrPrimFail(socketID).listenOn((int) port);
             } catch (IOException e) {
                 code.image.getError().println(e);
                 throw new PrimitiveFailed();
@@ -682,14 +681,13 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // Will be used in conjunction with #accept only.
         @SuppressWarnings("unused")
         @Specialization
-        protected Object doWork(final Object receiver,
+        protected final Object doWork(final Object receiver,
                         final long socketID,
                         final long port,
                         final Object backlogSize,
                         final Object interfaceAddress) {
-            final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
             try {
-                socketImpl.listenOn((int) port);
+                getSocketImplOrPrimFail(socketID).listenOn((int) port);
             } catch (IOException e) {
                 code.image.getError().println(e);
                 throw new PrimitiveFailed();
@@ -706,7 +704,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doWork(final Object receiver, final long socketID, final NativeObject option, final NativeObject value) {
+        protected static final Object doWork(final Object receiver, final long socketID, final NativeObject option, final NativeObject value) {
             final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
             socketImpl.setOption(option.toString(), value.toString());
             return receiver;
@@ -721,7 +719,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected long doWork(@SuppressWarnings("unused") final Object receiver, final long socketID, final NativeObject hostAddress, final long port) {
+        protected final long doWork(@SuppressWarnings("unused") final Object receiver, final long socketID, final NativeObject hostAddress, final long port) {
             final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
 
             try {
@@ -744,7 +742,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected long doWork(@SuppressWarnings("unused") final PointersObject receiver, final long socketID) {
+        protected static final long doWork(@SuppressWarnings("unused") final PointersObject receiver, final long socketID) {
             if (!sockets.containsKey(socketID)) {
                 return SocketStatus.Unconnected;
             }
@@ -762,15 +760,9 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
-            final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
+        protected final Object doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
             try {
-                final Object result = socketImpl.getRemoteAddress();
-                if (result instanceof byte[]) {
-                    return code.image.wrap((byte[]) result);
-                } else {
-                    return (long) result;
-                }
+                return code.image.wrap(getSocketImplOrPrimFail(socketID).getRemoteAddress());
             } catch (IOException e) {
                 code.image.getError().println(e);
                 return 0;
@@ -786,7 +778,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
+        protected static final Object doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
             final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
             return socketImpl.getRemotePort();
         }
@@ -816,7 +808,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // 'TCP_CONN_ABORT_THRESHOLD'. 'TCP_NOTIFY_THRESHOLD'.
         // 'TCP_URGENT_PTR_TYPE'}.
         @Specialization
-        protected Object doWork(@SuppressWarnings("unused") final Object receiver, final long socketID, final Object option) {
+        protected final Object doWork(@SuppressWarnings("unused") final Object receiver, final long socketID, final Object option) {
             final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
             final Object value = socketImpl.getOption(option.toString());
             final Long errorCode = socketImpl.getError();
@@ -833,7 +825,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected boolean doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
+        protected final boolean doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
             final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
             try {
                 return socketImpl.isDataAvailable();
@@ -852,7 +844,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected long doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
+        protected static final long doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
             final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
             return socketImpl.getError();
         }
@@ -866,7 +858,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
+        protected final Object doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
             final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
             try {
                 final Object result = socketImpl.getLocalAddress();
@@ -900,7 +892,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // since the data is sent in send-buffer-sized chunks. The size of the send buffer is
         // determined when the socket is created.
         @Specialization
-        protected long doWork(@SuppressWarnings("unused") final Object receiver,
+        protected final long doWork(@SuppressWarnings("unused") final Object receiver,
                         final long socketID,
                         final NativeObject aStringOrByteArray,
                         final long startIndex,
@@ -925,10 +917,9 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doWork(final Object receiver, final long socketID) {
-            final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
+        protected final Object doWork(final Object receiver, final long socketID) {
             try {
-                socketImpl.close();
+                getSocketImplOrPrimFail(socketID).close();
             } catch (IOException e) {
                 code.image.getError().println(e);
                 throw new PrimitiveFailed();
@@ -945,10 +936,9 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doWork(final Object receiver, final long socketID) {
-            final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
+        protected final Object doWork(final Object receiver, final long socketID) {
             try {
-                socketImpl.close();
+                getSocketImplOrPrimFail(socketID).close();
             } catch (IOException e) {
                 code.image.getError().println(e);
                 throw new PrimitiveFailed();
@@ -965,9 +955,8 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected Object doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
-            final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
-            return code.image.wrap(socketImpl.isSendDone());
+        protected final Object doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
+            return code.image.wrap(getSocketImplOrPrimFail(socketID).isSendDone());
         }
     }
 
@@ -981,7 +970,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // Receive data from the given socket into the given array starting at the given index.
         // Return the number of bytes read or zero if no data is available.
         @Specialization
-        protected long doWork(@SuppressWarnings("unused") final Object receiver, final long socketID, final NativeObject receiveBuffer, final long startIndex, final long count) {
+        protected final long doWork(@SuppressWarnings("unused") final Object receiver, final long socketID, final NativeObject receiveBuffer, final long startIndex, final long count) {
             final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
             final byte[] buffer = receiveBuffer.getByteStorage(ValueProfile.createClassProfile());
             final long readBytes;
@@ -1004,12 +993,12 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected long doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
+        protected final long doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
             final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
             try {
                 if (socketImpl != null) {
                     socketImpl.close();
-                    sockets.remove(socketID);
+                    sockets.removeKey(socketID);
                 }
             } catch (IOException e) {
                 code.image.getError().println(e);
@@ -1029,7 +1018,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization
-        protected long doWork(final PointersObject receiver,
+        protected final long doWork(final PointersObject receiver,
                         final long netType,
                         final long socketType,
                         final long rcvBufSize,
@@ -1051,7 +1040,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization
-        protected long doWork(final PointersObject receiver,
+        protected static final long doWork(final PointersObject receiver,
                         final long socketID,
                         final Object receiveBufferSize,
                         final Object sendBufSize,
@@ -1074,7 +1063,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization
-        protected long doWork(final PointersObject receiver,
+        protected final long doWork(final PointersObject receiver,
                         final Object netType,
                         final Object socketType,
                         final Object rcvBufSize,
