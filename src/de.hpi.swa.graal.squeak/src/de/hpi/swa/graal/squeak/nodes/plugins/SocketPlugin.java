@@ -768,8 +768,10 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 final Object result = socketImpl.getRemoteAddress();
                 if (result instanceof byte[]) {
                     return code.image.wrap((byte[]) result);
+                } else if (result instanceof Integer) {
+                    return ((Integer) result).longValue();
                 } else {
-                    return (long) result;
+                    throw new PrimitiveFailed();
                 }
             } catch (IOException e) {
                 code.image.getError().println(e);
