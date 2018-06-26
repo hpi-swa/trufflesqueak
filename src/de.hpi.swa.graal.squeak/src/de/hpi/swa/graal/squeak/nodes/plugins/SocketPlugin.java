@@ -439,8 +439,6 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         public boolean isSendDone() {
-            // print(">> Send Done: " + !sending);
-            // return !sending;
             print(">> Send Done: true");
             return true;
         }
@@ -450,7 +448,6 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         return InetAddress.getByAddress(address).getHostAddress();
     }
 
-// NetNameResolver
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveResolverStatus")
     protected abstract static class PrimResolverStatusNode extends AbstractPrimitiveNode {
@@ -730,7 +727,6 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-// Socket
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveSocketConnectToPort")
     protected abstract static class PrimSocketConnectToPortNode extends AbstractPrimitiveNode {
