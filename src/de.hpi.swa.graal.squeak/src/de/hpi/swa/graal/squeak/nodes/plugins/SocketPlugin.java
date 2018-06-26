@@ -62,6 +62,8 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     static Map<Long, SocketImpl> sockets = new TreeMap<>();
 
+    private static boolean debugPrints = false;
+
     private static final class Resolver {
         @SuppressWarnings("unused")
         public static byte[] getLocalAddress() throws UnknownHostException {
@@ -75,6 +77,8 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     private static final class SocketImpl {
+        private static final Duration timeout = Duration.ofSeconds(30);
+
         private CompiledCodeObject code;
         private int id;
 
@@ -100,7 +104,9 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         public void print(final Object message) {
-            code.image.getOutput().println(id + ": " + message.toString());
+            if (debugPrints) {
+                code.image.getOutput().println(id + ": " + message.toString());
+            }
         }
 
         public void error(final Object message) {
@@ -139,10 +145,6 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                     }
                 };
                 listenerThread.start();
-                try {
-                    Thread.sleep(50);
-                } catch (InterruptedException e) {
-                }
             }
         }
 
@@ -197,9 +199,6 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         public int receiveData(final byte[] data, final int startIndex, final int count) throws IOException {
             print(">> Receive data, buffer length: " + data.length + ", start: " + startIndex + ", count: " + count);
             final int actualCount = count;
-            // if (count > data.length - startIndex) {
-            // actualCount = data.length - startIndex;
-            // }
             if (clientSocket != null) {
                 if (isDataAvailable()) {
                     final int bytesRead = clientSocket.getInputStream().read(data, startIndex, actualCount);
@@ -298,7 +297,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                                 status = SocketStatus.Connected;
                             } else {
                                 final Duration elapsedTime = Duration.between(noDataSince, Instant.now());
-                                if (elapsedTime.getSeconds() > 30) {
+                                if (elapsedTime.compareTo(timeout) > 0) {
                                     status = SocketStatus.OtherEndClosed;
                                 } else {
                                     status = SocketStatus.Connected;
