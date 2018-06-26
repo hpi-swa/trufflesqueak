@@ -27,7 +27,7 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 @GenerateWrapper
 public abstract class EnterCodeNode extends Node implements InstrumentableNode {
-    @CompilationFinal protected final CompiledCodeObject code;
+    protected final CompiledCodeObject code;
     @CompilationFinal private SourceSection sourceSection;
     @Child private GetOrCreateContextNode createContextNode = GetOrCreateContextNode.create();
     @Child private ExecuteContextNode executeContextNode;
@@ -145,6 +145,7 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
     @TruffleBoundary
     public final SourceSection getSourceSection() {
         if (sourceSection == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             sourceSection = code.getSource().createSection(1);
         }
         return sourceSection;

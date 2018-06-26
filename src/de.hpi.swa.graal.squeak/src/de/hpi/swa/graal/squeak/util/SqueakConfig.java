@@ -8,16 +8,16 @@ import java.util.List;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
 public final class SqueakConfig {
-    @CompilationFinal private final String imagePath;
-    @CompilationFinal private final String imageDirectory;
-    @CompilationFinal private final boolean verbose;
-    @CompilationFinal private final boolean tracing;
-    @CompilationFinal private final boolean disableInterrupts;
-    @CompilationFinal private final boolean testing;
-    @CompilationFinal private final String receiver;
-    @CompilationFinal private final String selector;
+    private final String imagePath;
+    private final String imageDirectory;
+    private final boolean verbose;
+    private final boolean tracing;
+    private final boolean disableInterrupts;
+    private final boolean testing;
+    private final String receiver;
+    private final String selector;
     @CompilationFinal(dimensions = 1) private final String[] restArgs;
-    @CompilationFinal private final List<String> unrecognized = new ArrayList<>();
+    private final List<String> unrecognized = new ArrayList<>();
 
     @SuppressWarnings("hiding")
     public SqueakConfig(final String[] args) {

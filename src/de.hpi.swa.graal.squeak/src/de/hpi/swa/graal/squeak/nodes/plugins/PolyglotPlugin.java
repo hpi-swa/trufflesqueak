@@ -11,7 +11,6 @@ import org.graalvm.polyglot.Value;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -66,8 +65,8 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primEvalC")
     protected abstract static class PrimEvalCNode extends AbstractPrimitiveNode {
-        @CompilationFinal private static final String C_FILENAME = "temp.c";
-        @CompilationFinal private static final String LLVM_FILENAME = "temp.bc";
+        private static final String C_FILENAME = "temp.c";
+        private static final String LLVM_FILENAME = "temp.bc";
         @Child private NativeGetBytesNode getBytesNode = NativeGetBytesNode.create();
         @Child private ValueToSqueakObjectNode toSqueakNode;
 

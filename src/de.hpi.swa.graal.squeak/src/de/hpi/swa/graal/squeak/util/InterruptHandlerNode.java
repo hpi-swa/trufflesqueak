@@ -8,7 +8,6 @@ import java.util.concurrent.TimeUnit;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -25,13 +24,13 @@ import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotWriteNode;
 import de.hpi.swa.graal.squeak.nodes.process.SignalSemaphoreNode;
 
 public final class InterruptHandlerNode extends RootNode {
-    @CompilationFinal private static final int INTERRUPT_CHECKS_EVERY_N_MILLISECONDS = 3;
-    @CompilationFinal private final SqueakImageContext image;
-    @CompilationFinal private final boolean disabled;
-    @CompilationFinal private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-    @CompilationFinal private final ConditionProfile countingProfile = ConditionProfile.createCountingProfile();
-    @CompilationFinal private final Deque<Integer> semaphoresToSignal = new ArrayDeque<>();
-    @CompilationFinal private final DirectCallNode callNode;
+    private static final int INTERRUPT_CHECKS_EVERY_N_MILLISECONDS = 3;
+    private final SqueakImageContext image;
+    private final boolean disabled;
+    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+    private final ConditionProfile countingProfile = ConditionProfile.createCountingProfile();
+    private final Deque<Integer> semaphoresToSignal = new ArrayDeque<>();
+    private final DirectCallNode callNode;
 
     @Child private GetOrCreateContextNode contextNode = GetOrCreateContextNode.create();
     @Child private FrameSlotWriteNode contextWriteNode = FrameSlotWriteNode.createForContextOrMarker();

@@ -4,8 +4,8 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
 public final class SqueakIOConstants {
 
-    @CompilationFinal public static final int CURSOR_WIDTH = 16;
-    @CompilationFinal public static final int CURSOR_HEIGHT = 16;
+    public static final int CURSOR_WIDTH = 16;
+    public static final int CURSOR_HEIGHT = 16;
 
     @CompilationFinal(dimensions = 1) private static final int[] PIXEL_LOOKUP_1BIT = {0xffffffff, 0xff000000};
 
@@ -74,7 +74,7 @@ public final class SqueakIOConstants {
                     PIXEL_LOOKUP_8BIT
     };
 
-    @CompilationFinal public static final int EVENT_SIZE = 8;
+    public static final int EVENT_SIZE = 8;
     @CompilationFinal(dimensions = 1) public static final long[] NULL_EVENT = new long[]{EVENT_TYPE.NONE};
 
     public enum MOUSE_EVENT {

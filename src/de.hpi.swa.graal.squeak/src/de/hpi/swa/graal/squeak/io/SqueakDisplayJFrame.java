@@ -38,21 +38,21 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.FORM;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 
 public final class SqueakDisplayJFrame extends SqueakDisplay {
-    @CompilationFinal private static final String DEFAULT_WINDOW_TITLE = "GraalSqueak";
-    @CompilationFinal public final SqueakImageContext image;
-    @CompilationFinal private final JFrame frame = new JFrame(DEFAULT_WINDOW_TITLE);
-    @CompilationFinal private final Canvas canvas = new Canvas();
-
-    @CompilationFinal public final SqueakMouse mouse;
-    @CompilationFinal public final SqueakKeyboard keyboard;
-    @CompilationFinal private final Deque<long[]> deferredEvents = new ArrayDeque<>();
-    @CompilationFinal public boolean usesEventQueue = false;
-    @CompilationFinal private int inputSemaphoreIndex = -1;
-
-    @CompilationFinal private static final Toolkit TOOLKIT = Toolkit.getDefaultToolkit();
+    private static final String DEFAULT_WINDOW_TITLE = "GraalSqueak";
+    private static final Toolkit TOOLKIT = Toolkit.getDefaultToolkit();
     @CompilationFinal(dimensions = 1) private static final byte[] BLACK_AND_WHITE = new byte[]{(byte) 255, (byte) 0};
     @CompilationFinal(dimensions = 1) private static final byte[] ALPHA_COMPONENT = new byte[]{(byte) 0, (byte) 255};
-    @CompilationFinal private static final ColorModel CURSOR_MODEL = new IndexColorModel(1, 2, BLACK_AND_WHITE, BLACK_AND_WHITE, BLACK_AND_WHITE, ALPHA_COMPONENT);
+    private static final ColorModel CURSOR_MODEL = new IndexColorModel(1, 2, BLACK_AND_WHITE, BLACK_AND_WHITE, BLACK_AND_WHITE, ALPHA_COMPONENT);
+
+    public final SqueakImageContext image;
+    private final JFrame frame = new JFrame(DEFAULT_WINDOW_TITLE);
+    private final Canvas canvas = new Canvas();
+    public final SqueakMouse mouse;
+    public final SqueakKeyboard keyboard;
+    private final Deque<long[]> deferredEvents = new ArrayDeque<>();
+
+    @CompilationFinal public boolean usesEventQueue = false;
+    @CompilationFinal private int inputSemaphoreIndex = -1;
 
     public int buttons = 0;
     private Dimension windowSize = null;
@@ -82,7 +82,7 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
 
     private final class Canvas extends JComponent {
         private static final long serialVersionUID = 1L;
-        @CompilationFinal private final ValueProfile storageType = ValueProfile.createClassProfile();
+        private final ValueProfile storageType = ValueProfile.createClassProfile();
         @CompilationFinal private BufferedImage bufferedImage;
         @CompilationFinal private NativeObject bitmap;
         @CompilationFinal private int width;

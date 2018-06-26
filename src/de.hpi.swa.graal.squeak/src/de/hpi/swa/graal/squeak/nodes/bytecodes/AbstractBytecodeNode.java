@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -10,8 +11,8 @@ import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.nodes.SqueakNodeWithCode;
 
 public abstract class AbstractBytecodeNode extends SqueakNodeWithCode {
-    @CompilationFinal protected final int numBytecodes;
-    @CompilationFinal protected final int index;
+    protected final int numBytecodes;
+    protected final int index;
     @CompilationFinal private SourceSection sourceSection;
     @CompilationFinal private int lineNumber = 1;
 
@@ -61,16 +62,18 @@ public abstract class AbstractBytecodeNode extends SqueakNodeWithCode {
     @TruffleBoundary
     public final SourceSection getSourceSection() {
         if (sourceSection == null) {
-            sourceSection = code.getSource().createSection(lineNumber);
+            setSourceSection(code.getSource().createSection(lineNumber));
         }
         return sourceSection;
     }
 
     public final void setLineNumber(final int lineNumber) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
         this.lineNumber = lineNumber;
     }
 
     private void setSourceSection(final SourceSection section) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
         sourceSection = section;
     }
 }

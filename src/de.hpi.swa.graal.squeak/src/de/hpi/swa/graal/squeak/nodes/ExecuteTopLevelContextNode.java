@@ -1,7 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
@@ -20,8 +19,8 @@ import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.GetNumAllArgumentsNode;
 
 public final class ExecuteTopLevelContextNode extends RootNode {
-    @CompilationFinal private final SqueakImageContext image;
-    @CompilationFinal private final ContextObject initialContext;
+    private final SqueakImageContext image;
+    private final ContextObject initialContext;
     @Child private GetNumAllArgumentsNode numAllArgumentsNode = GetNumAllArgumentsNode.create();
     @Child private ExecuteContextNode executeContextNode;
 

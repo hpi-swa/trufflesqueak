@@ -7,10 +7,10 @@ import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
 public final class FloatObject extends AbstractSqueakObject {
-    @CompilationFinal public static final int PRECISION = 53;
-    @CompilationFinal public static final int EMIN = -1022;
-    @CompilationFinal public static final int EMAX = 1023;
-    @CompilationFinal private static final int WORD_LENGTH = 2;
+    public static final int PRECISION = 53;
+    public static final int EMIN = -1022;
+    public static final int EMAX = 1023;
+    private static final int WORD_LENGTH = 2;
 
     @CompilationFinal private double doubleValue;
 

@@ -2,7 +2,6 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 
 import java.util.List;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -24,10 +23,10 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
     }
 
     protected abstract static class AbstractMatrix2x3PrimitiveNode extends AbstractPrimitiveNode {
-        @CompilationFinal protected static final int MATRIX_SIZE = 6;
-        @CompilationFinal protected static final int FLOAT_ONE = Float.floatToIntBits(1.0F);
+        protected static final int MATRIX_SIZE = 6;
+        protected static final int FLOAT_ONE = Float.floatToIntBits(1.0F);
 
-        @CompilationFinal private final ValueProfile storageType = ValueProfile.createClassProfile();
+        private final ValueProfile storageType = ValueProfile.createClassProfile();
 
         public AbstractMatrix2x3PrimitiveNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);

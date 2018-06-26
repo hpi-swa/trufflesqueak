@@ -2,12 +2,10 @@ package de.hpi.swa.graal.squeak.model;
 
 import java.util.Arrays;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-
 public final class CompiledBlockObject extends CompiledCodeObject {
-    @CompilationFinal private final CompiledMethodObject outerMethod;
-    @CompilationFinal private final int numCopiedValues;
-    @CompilationFinal private final int offset;
+    private final CompiledMethodObject outerMethod;
+    private final int numCopiedValues;
+    private final int offset;
 
     public static CompiledBlockObject create(final CompiledCodeObject code, final CompiledMethodObject outerMethod, final int numArgs, final int numCopied, final int bytecodeOffset,
                     final int blockSize) {

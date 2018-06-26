@@ -5,16 +5,14 @@ import java.awt.event.KeyListener;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-
 import de.hpi.swa.graal.squeak.io.SqueakIOConstants.EVENT_TYPE;
 import de.hpi.swa.graal.squeak.io.SqueakIOConstants.KEYBOARD;
 import de.hpi.swa.graal.squeak.io.SqueakIOConstants.KEYBOARD_EVENT;
 
 public final class SqueakKeyboard implements KeyListener {
-    @CompilationFinal private static final int TYPEAHEAD_LIMIT = 8;
-    @CompilationFinal private final SqueakDisplayJFrame display;
-    @CompilationFinal private final Deque<Integer> keys = new ArrayDeque<>(TYPEAHEAD_LIMIT);
+    private static final int TYPEAHEAD_LIMIT = 8;
+    private final SqueakDisplayJFrame display;
+    private final Deque<Integer> keys = new ArrayDeque<>(TYPEAHEAD_LIMIT);
 
     public SqueakKeyboard(final SqueakDisplayJFrame display) {
         this.display = display;

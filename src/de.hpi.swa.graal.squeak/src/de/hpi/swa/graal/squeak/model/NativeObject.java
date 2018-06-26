@@ -18,12 +18,12 @@ import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
 public final class NativeObject extends AbstractSqueakObject {
-    @CompilationFinal public static final int SHORT_BYTE_SIZE = 2;
-    @CompilationFinal public static final int INTEGER_BYTE_SIZE = 4;
-    @CompilationFinal public static final int LONG_BYTE_SIZE = 8;
-    @CompilationFinal public static final short BYTE_MAX = (short) (Math.pow(2, Byte.SIZE) - 1);
-    @CompilationFinal public static final int SHORT_MAX = (int) (Math.pow(2, Short.SIZE) - 1);
-    @CompilationFinal public static final long INTEGER_MAX = (long) (Math.pow(2, Integer.SIZE) - 1);
+    public static final int SHORT_BYTE_SIZE = 2;
+    public static final int INTEGER_BYTE_SIZE = 4;
+    public static final int LONG_BYTE_SIZE = 8;
+    public static final short BYTE_MAX = (short) (Math.pow(2, Byte.SIZE) - 1);
+    public static final int SHORT_MAX = (int) (Math.pow(2, Short.SIZE) - 1);
+    public static final long INTEGER_MAX = (long) (Math.pow(2, Integer.SIZE) - 1);
 
     @CompilationFinal protected Object storage;
 
@@ -62,12 +62,12 @@ public final class NativeObject extends AbstractSqueakObject {
     protected NativeObject(final SqueakImageContext image, final ClassObject classObject, final Object storage) {
         super(image, classObject);
         assert storage != null;
-        this.storage = storage;
+        setStorage(storage);
     }
 
     public NativeObject(final SqueakImageContext image) { // constructor for special selectors
         super(image, null);
-        this.storage = new byte[0];
+        setStorage(new byte[0]);
     }
 
     @TruffleBoundary
@@ -96,15 +96,14 @@ public final class NativeObject extends AbstractSqueakObject {
     @Override
     public void fillin(final AbstractImageChunk chunk) {
         super.fillin(chunk);
-        CompilerDirectives.transferToInterpreterAndInvalidate();
         if (isByteType()) {
-            storage = chunk.getBytes();
+            setStorage(chunk.getBytes());
         } else if (isShortType()) {
-            storage = chunk.getShorts();
+            setStorage(chunk.getShorts());
         } else if (isIntType()) {
-            storage = chunk.getWords();
+            setStorage(chunk.getWords());
         } else if (isLongType()) {
-            storage = chunk.getLongs();
+            setStorage(chunk.getLongs());
         } else {
             throw new SqueakException("Unsupported storage type");
         }
@@ -121,8 +120,8 @@ public final class NativeObject extends AbstractSqueakObject {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         final NativeObject otherNativeObject = (NativeObject) other;
         final Object otherStorage = otherNativeObject.storage;
-        otherNativeObject.storage = this.storage;
-        this.storage = otherStorage;
+        otherNativeObject.setStorage(this.storage);
+        this.setStorage(otherStorage);
         return true;
     }
 
@@ -172,31 +171,27 @@ public final class NativeObject extends AbstractSqueakObject {
 
     public void convertToBytesStorage(final byte[] bytes) {
         assert storage.getClass() != bytes.getClass() : "Converting storage of same type unnecessary";
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        storage = bytes;
+        setStorage(bytes);
     }
 
     public void convertToShortsStorage(final byte[] bytes) {
         assert storage.getClass() != bytes.getClass() : "Converting storage of same type unnecessary";
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        storage = shortsFromBytes(bytes);
+        setStorage(shortsFromBytes(bytes));
     }
 
     public void convertToIntsStorage(final byte[] bytes) {
         assert storage.getClass() != bytes.getClass() : "Converting storage of same type unnecessary";
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        storage = intsFromBytes(bytes);
+        setStorage(intsFromBytes(bytes));
     }
 
     public void convertToLongsStorage(final byte[] bytes) {
         assert storage.getClass() != bytes.getClass() : "Converting storage of same type unnecessary";
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        storage = longsFromBytes(bytes);
+        setStorage(longsFromBytes(bytes));
     }
 
-    public void setStorageForTesting(final byte[] bytes) {
+    public void setStorage(final Object storage) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        storage = bytes;
+        this.storage = storage;
     }
 
     private static short[] shortsFromBytes(final byte[] bytes) {
@@ -229,6 +224,7 @@ public final class NativeObject extends AbstractSqueakObject {
         return longs;
     }
 
+    @TruffleBoundary
     public static byte[] bytesFromShorts(final short[] shorts) {
         final ByteBuffer byteBuffer = ByteBuffer.allocate(shorts.length * SHORT_BYTE_SIZE);
         byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
@@ -237,6 +233,7 @@ public final class NativeObject extends AbstractSqueakObject {
         return byteBuffer.array();
     }
 
+    @TruffleBoundary
     public static byte[] bytesFromInts(final int[] ints) {
         final ByteBuffer byteBuffer = ByteBuffer.allocate(ints.length * INTEGER_BYTE_SIZE);
         byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
@@ -245,6 +242,7 @@ public final class NativeObject extends AbstractSqueakObject {
         return byteBuffer.array();
     }
 
+    @TruffleBoundary
     public static byte[] bytesFromLongs(final long[] longs) {
         final ByteBuffer byteBuffer = ByteBuffer.allocate(longs.length * LONG_BYTE_SIZE);
         byteBuffer.order(ByteOrder.LITTLE_ENDIAN);

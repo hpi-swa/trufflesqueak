@@ -8,7 +8,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -22,8 +21,8 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 
 public final class ObjectGraph {
-    @CompilationFinal private final HashSet<AbstractSqueakObject> classesWithNoInstances;
-    @CompilationFinal private final PointersObject specialObjectsArray;
+    private final HashSet<AbstractSqueakObject> classesWithNoInstances;
+    private final PointersObject specialObjectsArray;
 
     public ObjectGraph(final SqueakImageContext image) {
         specialObjectsArray = image.specialObjectsArray;

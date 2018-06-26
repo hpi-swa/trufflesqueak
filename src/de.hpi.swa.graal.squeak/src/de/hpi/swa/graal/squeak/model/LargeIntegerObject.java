@@ -3,7 +3,6 @@ package de.hpi.swa.graal.squeak.model;
 import java.math.BigInteger;
 import java.util.Arrays;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
@@ -11,12 +10,12 @@ import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 public final class LargeIntegerObject extends AbstractSqueakObject {
-    @CompilationFinal public static final long SMALLINTEGER32_MIN = -0x40000000;
-    @CompilationFinal public static final long SMALLINTEGER32_MAX = 0x3fffffff;
-    @CompilationFinal public static final long SMALLINTEGER64_MIN = -0x1000000000000000L;
-    @CompilationFinal public static final long SMALLINTEGER64_MAX = 0xfffffffffffffffL;
-    @CompilationFinal public static final long MASK_32BIT = 0xffffffffL;
-    @CompilationFinal public static final long MASK_64BIT = 0xffffffffffffffffL;
+    public static final long SMALLINTEGER32_MIN = -0x40000000;
+    public static final long SMALLINTEGER32_MAX = 0x3fffffff;
+    public static final long SMALLINTEGER64_MIN = -0x1000000000000000L;
+    public static final long SMALLINTEGER64_MAX = 0xfffffffffffffffL;
+    public static final long MASK_32BIT = 0xffffffffL;
+    public static final long MASK_64BIT = 0xffffffffffffffffL;
 
     private byte[] bytes;
     private BigInteger integer;

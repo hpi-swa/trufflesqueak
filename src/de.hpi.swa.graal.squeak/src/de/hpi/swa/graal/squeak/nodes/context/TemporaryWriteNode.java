@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes.context;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -12,7 +11,7 @@ import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotWriteNode;
 
 public abstract class TemporaryWriteNode extends AbstractWriteNode {
     @Child private FrameSlotWriteNode frameSlotWriteNode;
-    @CompilationFinal private final long tempIndex;
+    private final long tempIndex;
 
     public static TemporaryWriteNode create(final CompiledCodeObject code, final long tempIndex) {
         return TemporaryWriteNodeGen.create(code, tempIndex);

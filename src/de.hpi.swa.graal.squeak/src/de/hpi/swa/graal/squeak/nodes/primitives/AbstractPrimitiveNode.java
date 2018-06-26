@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes.primitives;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.GenerateWrapper;
@@ -25,7 +24,7 @@ import de.hpi.swa.graal.squeak.nodes.SqueakNode;
 @GenerateWrapper
 @NodeChild(value = "arguments", type = SqueakNode[].class)
 public abstract class AbstractPrimitiveNode extends AbstractNodeWithCode implements InstrumentableNode {
-    @CompilationFinal public final int numArguments;
+    public final int numArguments;
 
     public AbstractPrimitiveNode(final CompiledMethodObject method, final int numArguments) {
         super(method);

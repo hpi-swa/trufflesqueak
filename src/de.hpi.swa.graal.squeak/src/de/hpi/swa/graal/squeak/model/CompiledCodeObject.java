@@ -34,10 +34,10 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
     protected static final int BYTES_PER_WORD = 4;
 
     // frame info
-    @CompilationFinal public static final FrameDescriptor frameDescriptorTemplate;
-    @CompilationFinal public static final FrameSlot thisContextOrMarkerSlot;
-    @CompilationFinal public static final FrameSlot instructionPointerSlot;
-    @CompilationFinal public static final FrameSlot stackPointerSlot;
+    public static final FrameDescriptor frameDescriptorTemplate;
+    public static final FrameSlot thisContextOrMarkerSlot;
+    public static final FrameSlot instructionPointerSlot;
+    public static final FrameSlot stackPointerSlot;
     @CompilationFinal private FrameDescriptor frameDescriptor;
     @CompilationFinal(dimensions = 1) public FrameSlot[] stackSlots;
     // header info and data
@@ -52,13 +52,13 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
     @CompilationFinal private long accessModifier;
     @CompilationFinal private boolean altInstructionSet;
 
-    @CompilationFinal public static final boolean ALWAYS_NON_VIRTUALIZED = false;
-    @CompilationFinal private final Assumption canBeVirtualized = Truffle.getRuntime().createAssumption("CompiledCodeObject: does not need a materialized context");
+    private static final boolean ALWAYS_NON_VIRTUALIZED = false;
+    private final Assumption canBeVirtualized = Truffle.getRuntime().createAssumption("CompiledCodeObject: does not need a materialized context");
 
     @CompilationFinal private Source source;
 
     @CompilationFinal private RootCallTarget callTarget;
-    @CompilationFinal private final CyclicAssumption callTargetStable = new CyclicAssumption("CompiledCodeObject assumption");
+    private final CyclicAssumption callTargetStable = new CyclicAssumption("CompiledCodeObject assumption");
 
     static {
         frameDescriptorTemplate = new FrameDescriptor();
@@ -105,6 +105,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
 
     @TruffleBoundary
     protected final void prepareFrameDescriptor() {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
         frameDescriptor = frameDescriptorTemplate.shallowCopy();
         final int frameSize = frameSize();
         stackSlots = new FrameSlot[frameSize];

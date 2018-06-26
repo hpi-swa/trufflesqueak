@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes.context.frame;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
@@ -13,11 +12,11 @@ import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
 
 public abstract class FrameArgumentNode extends Node {
-    @CompilationFinal private final int argumentIndex;
-    @CompilationFinal private final ConditionProfile objectProfile = ConditionProfile.createBinaryProfile();
-    @CompilationFinal private final ValueProfile primitiveProfile = PrimitiveValueProfile.createEqualityProfile();
-    @CompilationFinal private final ValueProfile classProfile = ValueProfile.createClassProfile();
-    @CompilationFinal private final BranchProfile outOfBounds = BranchProfile.create();
+    private final int argumentIndex;
+    private final ConditionProfile objectProfile = ConditionProfile.createBinaryProfile();
+    private final ValueProfile primitiveProfile = PrimitiveValueProfile.createEqualityProfile();
+    private final ValueProfile classProfile = ValueProfile.createClassProfile();
+    private final BranchProfile outOfBounds = BranchProfile.create();
 
     public static FrameArgumentNode create(final int argumentIndex) {
         return FrameArgumentNodeGen.create(argumentIndex);

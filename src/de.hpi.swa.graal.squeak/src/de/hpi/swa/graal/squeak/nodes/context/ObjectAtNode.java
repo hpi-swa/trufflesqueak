@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes.context;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -13,8 +12,8 @@ import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 @NodeChild(value = "objectNode", type = SqueakNode.class)
 public abstract class ObjectAtNode extends AbstractObjectAtNode {
     @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
-    @CompilationFinal private final ValueProfile classProfile = ValueProfile.createClassProfile();
-    @CompilationFinal private final long index;
+    private final ValueProfile classProfile = ValueProfile.createClassProfile();
+    private final long index;
 
     public static ObjectAtNode create(final long i, final SqueakNode object) {
         return ObjectAtNodeGen.create(i, object);

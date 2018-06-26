@@ -1,14 +1,13 @@
 package de.hpi.swa.graal.squeak.exceptions;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.nodes.ControlFlowException;
 
 import de.hpi.swa.graal.squeak.model.ContextObject;
 
 public final class Returns {
     private abstract static class AbstractReturn extends ControlFlowException {
-        @CompilationFinal private static final long serialVersionUID = 1L;
-        @CompilationFinal protected final Object returnValue;
+        private static final long serialVersionUID = 1L;
+        protected final Object returnValue;
 
         private AbstractReturn(final Object result) {
             assert result != null;
@@ -21,7 +20,7 @@ public final class Returns {
     }
 
     public static final class LocalReturn extends AbstractReturn {
-        @CompilationFinal private static final long serialVersionUID = 1L;
+        private static final long serialVersionUID = 1L;
 
         public LocalReturn(final Object result) {
             super(result);
@@ -34,8 +33,8 @@ public final class Returns {
     }
 
     public static final class NonLocalReturn extends AbstractReturn {
-        @CompilationFinal private static final long serialVersionUID = 1L;
-        @CompilationFinal private final ContextObject targetContext;
+        private static final long serialVersionUID = 1L;
+        private final ContextObject targetContext;
         private boolean arrivedAtTargetContext = false;
 
         public NonLocalReturn(final Object returnValue, final ContextObject targetContext) {
@@ -62,13 +61,13 @@ public final class Returns {
     }
 
     public static final class NonVirtualContextModification extends Exception {
-        @CompilationFinal private static final long serialVersionUID = 1L;
+        private static final long serialVersionUID = 1L;
     }
 
     public static final class NonVirtualReturn extends AbstractReturn {
-        @CompilationFinal private static final long serialVersionUID = 1L;
-        @CompilationFinal private final ContextObject targetContext;
-        @CompilationFinal private final ContextObject currentContext;
+        private static final long serialVersionUID = 1L;
+        private final ContextObject targetContext;
+        private final ContextObject currentContext;
 
         public NonVirtualReturn(final Object returnValue, final ContextObject targetContext, final ContextObject currentContext) {
             super(returnValue);
@@ -93,7 +92,7 @@ public final class Returns {
     }
 
     public static class TopLevelReturn extends AbstractReturn {
-        @CompilationFinal private static final long serialVersionUID = 1L;
+        private static final long serialVersionUID = 1L;
 
         public TopLevelReturn(final Object result) {
             super(result);

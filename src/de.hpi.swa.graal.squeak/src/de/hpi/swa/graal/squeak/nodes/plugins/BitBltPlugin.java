@@ -2,7 +2,6 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 
 import java.util.List;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -39,8 +38,8 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveCopyBits")
     protected abstract static class PrimCopyBitsNode extends AbstractPrimitiveNode {
-        @CompilationFinal private final ValueProfile halftoneFormStorageType = ValueProfile.createClassProfile();
-        @CompilationFinal private final ValueProfile destinationBitsStorageType = ValueProfile.createClassProfile();
+        private final ValueProfile halftoneFormStorageType = ValueProfile.createClassProfile();
+        private final ValueProfile destinationBitsStorageType = ValueProfile.createClassProfile();
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
         @Child private SimulationPrimitiveNode simulateNode;
 
