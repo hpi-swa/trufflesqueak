@@ -48,11 +48,6 @@ public class SqueakSocketPluginTest extends AbstractSqueakTestCase {
         executeTest("SocketTest", "testClientConnect");
     }
 
-    // @Test
-    // public void testWebClient() {
-    // evaluate("1 testWebClient");
-    // }
-
     @Test
     public void testDataReceive() {
         executeTest("SocketTest", "testDataReceive");
@@ -93,10 +88,10 @@ public class SqueakSocketPluginTest extends AbstractSqueakTestCase {
         executeTest("SocketTest", "testRemotePort");
     }
 
-    // @Test
-    // public void testSendTimeout() {
-    // executeTest("SocketTest", "testSendTimeout");
-    // }
+    @Test
+    public void testSendTimeout() {
+        executeTest("SocketTest", "testSendTimeout");
+    }
 
     @Test
     public void testServerAccept() {
