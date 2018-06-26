@@ -61,8 +61,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     static Map<Long, SocketImpl> sockets = new TreeMap<>();
-
-    private static boolean debugPrints = false;
+    private static boolean debugPrints = true;
 
     private static final class Resolver {
         @SuppressWarnings("unused")
@@ -1054,7 +1053,6 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             final long readBytes;
             try {
                 readBytes = socketImpl.receiveData(buffer, (int) (startIndex - 1), (int) count);
-                receiveBuffer.setStorageForTesting(buffer);
             } catch (IOException e) {
                 code.image.getError().println(e);
                 throw new PrimitiveFailed();

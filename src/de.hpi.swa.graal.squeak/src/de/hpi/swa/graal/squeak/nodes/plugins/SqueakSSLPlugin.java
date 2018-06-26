@@ -1,20 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.plugins;
 
 import java.util.List;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.SocketAddress;
-import java.net.SocketException;
-import java.net.URL;
-import java.net.UnknownHostException;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -22,14 +8,11 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
-import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.model.NotProvided;
-import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 
 public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
 
@@ -53,6 +36,7 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
         // 0 - Success. The connection is established.
         // -1 - More input is required.
         // < -1 - Other errors
+        @SuppressWarnings("unused")
         @Specialization
         protected Object doWork(final Object receiver,
                         final long sslHandle,
@@ -60,7 +44,7 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
                         final Object start,
                         final Object length,
                         final Object dstbuf) {
-            return receiver;
+            throw new PrimitiveFailed();
         }
     }
 
@@ -78,6 +62,7 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
         // 0 - Success. The connection is established.
         // -1 - More input is required.
         // < -1 - Other errors
+        @SuppressWarnings("unused")
         @Specialization
         protected Object doWork(final Object receiver,
                         final long sslHandle,
@@ -85,7 +70,7 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
                         final Object start,
                         final Object length,
                         final Object dstbuf) {
-            return receiver;
+            throw new PrimitiveFailed();
         }
     }
 
@@ -98,6 +83,7 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
 
         // Takes incoming data for decryption and continues to decrypt data.
         // Returns the number of bytes produced in the output
+        @SuppressWarnings("unused")
         @Specialization
         protected Object doWork(final Object receiver,
                         final long sslHandle,
@@ -105,7 +91,7 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
                         final Object start,
                         final Object length,
                         final Object dstbuf) {
-            return receiver;
+            throw new PrimitiveFailed();
         }
     }
 
@@ -118,6 +104,7 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
 
         // Encrypts the incoming buffer into the result buffer.
         // Returns the number of bytes produced as a result
+        @SuppressWarnings("unused")
         @Specialization
         protected Object doWork(final Object receiver,
                         final long sslHandle,
@@ -125,7 +112,7 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
                         final Object start,
                         final Object length,
                         final Object dstbuf) {
-            return receiver;
+            throw new PrimitiveFailed();
         }
     }
 
@@ -137,9 +124,10 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         // Returns a string property from an SSL session
+        @SuppressWarnings("unused")
         @Specialization
         protected Object doWork(final Object receiver, final long sslHandle, final Object propID) {
-            return receiver;
+            throw new PrimitiveFailed();
         }
     }
 
@@ -151,9 +139,10 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         // Returns a string property from an SSL session
+        @SuppressWarnings("unused")
         @Specialization
         protected Object doWork(final Object receiver, final long sslHandle, final Object propID) {
-            return receiver;
+            throw new PrimitiveFailed();
         }
     }
 
@@ -165,12 +154,13 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         // Sets a string property in an SSL session
+        @SuppressWarnings("unused")
         @Specialization
         protected Object doWork(final Object receiver,
                         final long sslHandle,
                         final Object propID,
                         final Object anInteger) {
-            return receiver;
+            throw new PrimitiveFailed();
         }
     }
 
@@ -182,12 +172,13 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         // Sets a string property in an SSL session
+        @SuppressWarnings("unused")
         @Specialization
         protected Object doWork(final Object receiver,
                         final Object sslHandle,
                         final Object propID,
                         final Object aString) {
-            return receiver;
+            throw new PrimitiveFailed();
         }
     }
 
@@ -199,6 +190,7 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         // Creates and returns a new SSL handle
+        @SuppressWarnings("unused")
         @Specialization
         protected Long doWork(final Object receiver) {
             final SSLImpl ssl = new SSLImpl();
@@ -216,9 +208,10 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         // Destroys the SSL session handle
+        @SuppressWarnings("unused")
         @Specialization
         protected Object doWork(final Object receiver, final long sslHandle) {
-            return receiver;
+            throw new PrimitiveFailed();
         }
     }
 
