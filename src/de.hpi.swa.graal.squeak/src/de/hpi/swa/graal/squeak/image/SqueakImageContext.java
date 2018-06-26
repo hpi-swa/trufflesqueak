@@ -229,6 +229,8 @@ public final class SqueakImageContext {
             return wrap((String) obj);
         } else if (obj instanceof Character) {
             return wrap((char) obj);
+        } else if (obj instanceof byte[]) {
+            return wrap((byte[]) obj);
         } else if (obj instanceof Object[]) {
             return wrap((Object[]) obj);
         } else if (obj instanceof Point) {

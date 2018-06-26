@@ -1,18 +1,18 @@
 package de.hpi.swa.graal.squeak.nodes.plugins;
 
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+
+import org.graalvm.collections.EconomicMap;
 
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
+import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
-import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 
 public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
 
@@ -20,7 +20,7 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
 
     }
 
-    static Map<Long, SSLImpl> sslHandles = new TreeMap<>();
+    private static final EconomicMap<Long, SSLImpl> sslHandles = EconomicMap.create();
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveAccept")
@@ -38,7 +38,7 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
         // < -1 - Other errors
         @SuppressWarnings("unused")
         @Specialization
-        protected Object doWork(final Object receiver,
+        protected static final Object doWork(final Object receiver,
                         final long sslHandle,
                         final Object srcbuf,
                         final Object start,
@@ -64,7 +64,7 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
         // < -1 - Other errors
         @SuppressWarnings("unused")
         @Specialization
-        protected Object doWork(final Object receiver,
+        protected static final Object doWork(final Object receiver,
                         final long sslHandle,
                         final Object srcbuf,
                         final Object start,
@@ -85,7 +85,7 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
         // Returns the number of bytes produced in the output
         @SuppressWarnings("unused")
         @Specialization
-        protected Object doWork(final Object receiver,
+        protected static final Object doWork(final Object receiver,
                         final long sslHandle,
                         final Object srcbuf,
                         final Object start,
@@ -106,7 +106,7 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
         // Returns the number of bytes produced as a result
         @SuppressWarnings("unused")
         @Specialization
-        protected Object doWork(final Object receiver,
+        protected static final Object doWork(final Object receiver,
                         final long sslHandle,
                         final Object srcbuf,
                         final Object start,
@@ -126,7 +126,7 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
         // Returns a string property from an SSL session
         @SuppressWarnings("unused")
         @Specialization
-        protected Object doWork(final Object receiver, final long sslHandle, final Object propID) {
+        protected static final Object doWork(final Object receiver, final long sslHandle, final Object propID) {
             throw new PrimitiveFailed();
         }
     }
@@ -141,7 +141,7 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
         // Returns a string property from an SSL session
         @SuppressWarnings("unused")
         @Specialization
-        protected Object doWork(final Object receiver, final long sslHandle, final Object propID) {
+        protected static final Object doWork(final Object receiver, final long sslHandle, final Object propID) {
             throw new PrimitiveFailed();
         }
     }
@@ -156,7 +156,7 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
         // Sets a string property in an SSL session
         @SuppressWarnings("unused")
         @Specialization
-        protected Object doWork(final Object receiver,
+        protected static final Object doWork(final Object receiver,
                         final long sslHandle,
                         final Object propID,
                         final Object anInteger) {
@@ -174,7 +174,7 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
         // Sets a string property in an SSL session
         @SuppressWarnings("unused")
         @Specialization
-        protected Object doWork(final Object receiver,
+        protected static final Object doWork(final Object receiver,
                         final Object sslHandle,
                         final Object propID,
                         final Object aString) {
@@ -210,7 +210,7 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
         // Destroys the SSL session handle
         @SuppressWarnings("unused")
         @Specialization
-        protected Object doWork(final Object receiver, final long sslHandle) {
+        protected static final Object doWork(final Object receiver, final long sslHandle) {
             throw new PrimitiveFailed();
         }
     }

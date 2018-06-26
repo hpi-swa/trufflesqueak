@@ -56,10 +56,10 @@ public final class PrimitiveNodeFactory {
                     new Matrix2x3Plugin(),
                     new MiscPrimitivePlugin(),
                     new PolyglotPlugin(),
+                    new SocketPlugin(),
                     new UnixOSProcessPlugin(),
                     new UUIDPlugin(),
-                    new Win32OSProcessPlugin(),
-                    new SocketPlugin()};
+                    new Win32OSProcessPlugin()};
     @CompilationFinal(dimensions = 1) private static final String[] simulatedPlugins = new String[]{"B2DPlugin", "BalloonPlugin"};
 
     // Using an array instead of a HashMap requires type-checking to be disabled here.

@@ -368,7 +368,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                     throw new IOException("Could not retrieve remote address");
                 }
             } else {
-                return 0L;
+                return 0;
             }
 
         }
@@ -762,7 +762,18 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final Object doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
             try {
+<<<<<<< HEAD
+                final Object result = socketImpl.getRemoteAddress();
+                if (result instanceof byte[]) {
+                    return code.image.wrap((byte[]) result);
+                } else if (result instanceof Integer) {
+                    return ((Integer) result).longValue();
+                } else {
+                    throw new PrimitiveFailed();
+                }
+=======
                 return code.image.wrap(getSocketImplOrPrimFail(socketID).getRemoteAddress());
+>>>>>>> ea8c5100471f50cc784cb193d20d5e177834049b
             } catch (IOException e) {
                 code.image.getError().println(e);
                 return 0;
