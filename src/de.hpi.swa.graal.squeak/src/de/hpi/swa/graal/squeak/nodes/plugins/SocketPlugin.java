@@ -18,6 +18,7 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.TreeMap;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -474,6 +475,15 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    @TruffleBoundary
+    private static SocketImpl getSocketImplOrPrimFail(final long socketHandle) {
+        final SocketImpl socketImpl = sockets.get(socketHandle);
+        if (socketImpl == null) {
+            throw new PrimitiveFailed();
+        }
+        return socketImpl;
+    }
+
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveResolverStartNameLookup")
     protected abstract static class PrimResolverStartNameLookupNode extends AbstractPrimitiveNode {
@@ -543,7 +553,6 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // lookup was unsuccessful.
         @Specialization
         protected Object doWork(@SuppressWarnings("unused") final Object receiver) {
-
             if (lastNameLookup == null) {
                 code.image.getOutput().println(">> Name Lookup Result: " + null);
                 return code.image.nil;
@@ -610,11 +619,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // Return the local port for this socket, or zero if no port has yet been assigned.
         @Specialization
         protected Long doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
-            final SocketImpl socketImpl = sockets.get(socketID);
-            if (socketImpl == null) {
-                code.image.getError().println("No socket for socket id");
-                throw new PrimitiveFailed();
-            }
+            final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
             return (long) socketImpl.getLocalPort();
         }
     }
@@ -641,12 +646,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         protected Object doWork(final Object receiver, final long socketID,
                         final long port,
                         @SuppressWarnings("unused") final NotProvided backlogSize) {
-            final SocketImpl socketImpl = sockets.get(socketID);
-            if (socketImpl == null) {
-                code.image.getError().println("No socket for socket id");
-                throw new PrimitiveFailed();
-            }
-
+            final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
             try {
                 socketImpl.listenOn((int) port);
             } catch (IOException e) {
@@ -660,12 +660,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         protected Object doWork(final Object receiver, final long socketID,
                         final long port,
                         @SuppressWarnings("unused") final Object backlogSize) {
-            final SocketImpl socketImpl = sockets.get(socketID);
-            if (socketImpl == null) {
-                code.image.getError().println("No socket for socket id");
-                throw new PrimitiveFailed();
-            }
-
+            final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
             try {
                 socketImpl.listenOn((int) port);
             } catch (IOException e) {
@@ -692,12 +687,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                         final long port,
                         final Object backlogSize,
                         final Object interfaceAddress) {
-            final SocketImpl socketImpl = sockets.get(socketID);
-            if (socketImpl == null) {
-                code.image.getError().println("No socket for socket id");
-                throw new PrimitiveFailed();
-            }
-
+            final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
             try {
                 socketImpl.listenOn((int) port);
             } catch (IOException e) {
@@ -717,11 +707,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object doWork(final Object receiver, final long socketID, final NativeObject option, final NativeObject value) {
-            final SocketImpl socketImpl = sockets.get(socketID);
-            if (socketImpl == null) {
-                code.image.getError().println("No socket for socket id");
-                throw new PrimitiveFailed();
-            }
+            final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
             socketImpl.setOption(option.toString(), value.toString());
             return receiver;
         }
@@ -736,11 +722,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected long doWork(@SuppressWarnings("unused") final Object receiver, final long socketID, final NativeObject hostAddress, final long port) {
-            final SocketImpl socketImpl = sockets.get(socketID);
-            if (socketImpl == null) {
-                code.image.getError().println("No socket for socket id");
-                throw new PrimitiveFailed();
-            }
+            final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
 
             try {
                 final byte[] bytes = hostAddress.getByteStorage(ValueProfile.createClassProfile());
@@ -781,19 +763,14 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
-            if (!sockets.containsKey(socketID)) {
-                return 0;
-            }
-
-            final SocketImpl socket = sockets.get(socketID);
+            final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
             try {
-                final Object result = socket.getRemoteAddress();
+                final Object result = socketImpl.getRemoteAddress();
                 if (result instanceof byte[]) {
                     return code.image.wrap((byte[]) result);
                 } else {
                     return (long) result;
                 }
-
             } catch (IOException e) {
                 code.image.getError().println(e);
                 return 0;
@@ -810,11 +787,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
-            if (!sockets.containsKey(socketID)) {
-                return 0;
-            }
-
-            final SocketImpl socketImpl = sockets.get(socketID);
+            final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
             return socketImpl.getRemotePort();
         }
     }
@@ -844,11 +817,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // 'TCP_URGENT_PTR_TYPE'}.
         @Specialization
         protected Object doWork(@SuppressWarnings("unused") final Object receiver, final long socketID, final Object option) {
-            final SocketImpl socketImpl = sockets.get(socketID);
-            if (socketImpl == null) {
-                code.image.getError().println("No socket for socket id");
-                throw new PrimitiveFailed();
-            }
+            final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
             final Object value = socketImpl.getOption(option.toString());
             final Long errorCode = socketImpl.getError();
             final Object[] result = new Object[]{errorCode, value};
@@ -865,7 +834,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected boolean doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
-            final SocketImpl socketImpl = sockets.get(socketID);
+            final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
             try {
                 return socketImpl.isDataAvailable();
             } catch (IOException e) {
@@ -884,12 +853,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected long doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
-            final SocketImpl socketImpl = sockets.get(socketID);
-            if (socketImpl == null) {
-                code.image.getError().println("No socket for socket id");
-                throw new PrimitiveFailed();
-            }
-
+            final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
             return socketImpl.getError();
         }
     }
@@ -903,12 +867,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
-            final SocketImpl socketImpl = sockets.get(socketID);
-            if (socketImpl == null) {
-                code.image.getError().println("No socket for socket id");
-                throw new PrimitiveFailed();
-            }
-
+            final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
             try {
                 final Object result = socketImpl.getLocalAddress();
                 if (result instanceof byte[]) {
@@ -946,11 +905,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                         final NativeObject aStringOrByteArray,
                         final long startIndex,
                         final long count) {
-            final SocketImpl socketImpl = sockets.get(socketID);
-            if (socketImpl == null) {
-                code.image.getError().println("No socket for socket id");
-                throw new PrimitiveFailed();
-            }
+            final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
             try {
                 final byte[] data = aStringOrByteArray.toString().getBytes();
                 socketImpl.sendData(data, (int) (startIndex - 1), (int) count);
@@ -971,11 +926,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object doWork(final Object receiver, final long socketID) {
-            final SocketImpl socketImpl = sockets.get(socketID);
-            if (socketImpl == null) {
-                code.image.getError().println("No socket for socket id");
-                throw new PrimitiveFailed();
-            }
+            final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
             try {
                 socketImpl.close();
             } catch (IOException e) {
@@ -995,11 +946,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object doWork(final Object receiver, final long socketID) {
-            final SocketImpl socketImpl = sockets.get(socketID);
-            if (socketImpl == null) {
-                code.image.getError().println("No socket for socket id");
-                throw new PrimitiveFailed();
-            }
+            final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
             try {
                 socketImpl.close();
             } catch (IOException e) {
@@ -1019,11 +966,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
-            final SocketImpl socketImpl = sockets.get(socketID);
-            if (socketImpl == null) {
-                code.image.getError().println("No socket for socket id");
-                throw new PrimitiveFailed();
-            }
+            final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
             return code.image.wrap(socketImpl.isSendDone());
         }
     }
@@ -1039,12 +982,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // Return the number of bytes read or zero if no data is available.
         @Specialization
         protected long doWork(@SuppressWarnings("unused") final Object receiver, final long socketID, final NativeObject receiveBuffer, final long startIndex, final long count) {
-            final SocketImpl socketImpl = sockets.get(socketID);
-            if (socketImpl == null) {
-                code.image.getError().println("No socket for socket id");
-                throw new PrimitiveFailed();
-            }
-
+            final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
             final byte[] buffer = receiveBuffer.getByteStorage(ValueProfile.createClassProfile());
             final long readBytes;
             try {
@@ -1067,11 +1005,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected long doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
-            final SocketImpl socketImpl = sockets.get(socketID);
-            if (socketImpl == null) {
-                code.image.getError().println("No socket for socket id");
-                throw new PrimitiveFailed();
-            }
+            final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
             try {
                 if (socketImpl != null) {
                     socketImpl.close();
@@ -1124,11 +1058,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                         final Object semaIndex,
                         final Object readSemaIndex,
                         final Object writeSemaIndex) {
-            final SocketImpl socketImpl = sockets.get(socketID);
-            if (socketImpl == null) {
-                code.image.getError().println("No socket for socket id");
-                throw new PrimitiveFailed();
-            }
+            final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
             final SocketImpl s = socketImpl.accept();
             sockets.put((long) s.hashCode(), s);
             return s.hashCode();
