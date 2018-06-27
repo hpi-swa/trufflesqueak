@@ -58,6 +58,12 @@ public final class SqueakImageChunk {
         this.dataIndex = 0;
     }
 
+    public static SqueakImageChunk createDummyChunk(final Object[] pointers) {
+        final SqueakImageChunk chunk = new SqueakImageChunk(null, null, 0, 0, 0, 0, 0);
+        chunk.pointers = pointers;
+        return chunk;
+    }
+
     public void append(final int nextInt) {
         data[dataIndex++] = nextInt;
     }

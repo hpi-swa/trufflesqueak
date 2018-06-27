@@ -168,6 +168,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
         image.getOutput().println("Loading test image at " + imagePath + "...");
         try {
             // image.fillInFrom(new FileInputStream(imagePath), null);
+            throw new IOException();
         } catch (IOException e) {
             e.printStackTrace();
         }

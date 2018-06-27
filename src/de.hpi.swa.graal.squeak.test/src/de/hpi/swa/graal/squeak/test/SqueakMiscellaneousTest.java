@@ -6,7 +6,6 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.instrumentation.CompiledCodeObjectPrinter;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
@@ -182,28 +181,28 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
 
     @Test
     public void testFloatDecoding() {
-        AbstractImageChunk chunk = newFloatChunk();
-        chunk.data().add(0);
-        chunk.data().add(1072693248);
+        SqueakImageChunk chunk = newFloatChunk();
+        chunk.append(0);
+        chunk.append(1072693248);
         assertEquals(1.0, getDouble(chunk), 0);
 
         chunk = newFloatChunk();
-        chunk.data().add((int) 2482401462L);
-        chunk.data().add(1065322751);
+        chunk.append((int) 2482401462L);
+        chunk.append(1065322751);
         assertEquals(0.007699011184197404, getDouble(chunk), 0);
 
         chunk = newFloatChunk();
-        chunk.data().add(876402988);
-        chunk.data().add(1075010976);
+        chunk.append(876402988);
+        chunk.append(1075010976);
         assertEquals(4.841431442464721, getDouble(chunk), 0);
     }
 
-    private static double getDouble(final AbstractImageChunk chunk) {
+    private static double getDouble(final SqueakImageChunk chunk) {
         return ((FloatObject) chunk.asObject()).getValue();
     }
 
-    private static AbstractImageChunk newFloatChunk() {
-        final AbstractImageChunk chunk = new SqueakImageChunk(
+    private static SqueakImageChunk newFloatChunk() {
+        final SqueakImageChunk chunk = new SqueakImageChunk(
                         null,
                         image,
                         2, // 2 words
