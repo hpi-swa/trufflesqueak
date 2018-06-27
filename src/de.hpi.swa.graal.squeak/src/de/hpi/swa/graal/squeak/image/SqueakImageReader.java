@@ -32,7 +32,7 @@ public final class SqueakImageReader extends Node {
     @CompilationFinal private static final int FREE_OBJECT_CLASS_INDEX_PUN = 0;
     @CompilationFinal private static final long SLOTS_MASK = 0xFF << 56;
     @CompilationFinal private static final long OVERFLOW_SLOTS = 255;
-    @CompilationFinal private SqueakImageChunk HIDDEN_ROOTS_CHUNK;
+    @CompilationFinal private SqueakImageChunk hiddenRootsChunk;
     @CompilationFinal private static final int HIDDEN_ROOTS_CHUNK_INDEX = 4;
     @CompilationFinal private final BufferedInputStream stream;
     @CompilationFinal private final LinkedHashMap<Integer, SqueakImageChunk> chunktable = new LinkedHashMap<>();
@@ -229,7 +229,7 @@ public final class SqueakImageReader extends Node {
         chunktable.put(chunk.pos + this.currentAddressSwizzle, chunk);
         if (chunkCount++ == HIDDEN_ROOTS_CHUNK_INDEX) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            HIDDEN_ROOTS_CHUNK = chunk;
+            hiddenRootsChunk = chunk;
         }
     }
 
@@ -357,7 +357,7 @@ public final class SqueakImageReader extends Node {
     private void instantiateClasses() {
         // find all metaclasses and instantiate their singleton instances as class objects
         output.println("Instantiating classes...");
-        for (int classtablePtr : HIDDEN_ROOTS_CHUNK.data()) {
+        for (int classtablePtr : hiddenRootsChunk.data()) {
             if (getChunk(classtablePtr) != null) {
                 for (int potentialClassPtr : getChunk(classtablePtr).data()) {
                     final SqueakImageChunk metaClass = getChunk(potentialClassPtr);
@@ -389,7 +389,7 @@ public final class SqueakImageReader extends Node {
     private SqueakImageChunk classChunkOf(final SqueakImageChunk chunk) {
         final int majorIdx = majorClassIndexOf(chunk.classid);
         final int minorIdx = minorClassIndexOf(chunk.classid);
-        final SqueakImageChunk classTablePage = getChunk(HIDDEN_ROOTS_CHUNK.data()[majorIdx]);
+        final SqueakImageChunk classTablePage = getChunk(hiddenRootsChunk.data()[majorIdx]);
         return getChunk(classTablePage.data()[minorIdx]);
     }
 
