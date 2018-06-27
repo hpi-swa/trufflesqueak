@@ -60,13 +60,13 @@ public final class SqueakImageReader extends Node {
     }
 
     public void executeRead(final VirtualFrame frame) throws SqueakException {
-        output.println("Reading image...");
+        print("Reading image...");
         final StopWatch imageWatch = StopWatch.start("readImage");
-        output.println("Reading header...");
+        print("Reading header...");
         final StopWatch headerWatch = StopWatch.start("readHeader");
         readHeader();
         headerWatch.stopAndPrint();
-        output.println("Reading body...");
+        print("Reading body...");
         final StopWatch bodyWatch = StopWatch.start("readBody");
         readBody(frame);
         bodyWatch.stopAndPrint();
@@ -77,26 +77,9 @@ public final class SqueakImageReader extends Node {
         }
     }
 
-    private short nextShort() {
-        final byte[] bytes = new byte[2];
-        readBytes(bytes, 2);
-        this.position += 2;
-        short value = 0;
-        value += (bytes[1] & 0x000000FF) << 8;
-        value += (bytes[0] & 0x000000FF);
-        return value;
-    }
-
-    private int nextInt() {
-        final byte[] bytes = new byte[4];
-        readBytes(bytes, 4);
-        this.position += 4;
-        int value = 0;
-        value += (bytes[3] & 0x000000FF) << 24;
-        value += (bytes[2] & 0x000000FF) << 16;
-        value += (bytes[1] & 0x000000FF) << 8;
-        value += (bytes[0] & 0x000000FF);
-        return value;
+    @TruffleBoundary
+    public void print(final String str) {
+        output.println(str);
     }
 
     @TruffleBoundary
@@ -108,20 +91,38 @@ public final class SqueakImageReader extends Node {
         }
     }
 
+    private short nextShort() {
+        final byte[] bytes = new byte[2];
+        readBytes(bytes, 2);
+        this.position += 2;
+        return (short) (
+          (bytes[1] & 0xFF) << 8 |
+          (bytes[0] & 0xFF)
+        );
+    }
+
+    private int nextInt() {
+        final byte[] bytes = new byte[4];
+        readBytes(bytes, 4);
+        this.position += 4;
+        return  (bytes[3] & 0xFF) << 24 |
+                (bytes[2] & 0xFF) << 16 |
+                (bytes[1] & 0xFF) << 8 |
+                (bytes[0] & 0xFF);
+    }
+
     private long nextLong() {
         final byte[] bytes = new byte[8];
         readBytes(bytes, 8);
         this.position += 8;
-        long value = 0;
-        value += (long) (bytes[7] & 0x000000FF) << 56;
-        value += (long) (bytes[6] & 0x000000FF) << 48;
-        value += (long) (bytes[5] & 0x000000FF) << 40;
-        value += (long) (bytes[4] & 0x000000FF) << 32;
-        value += (bytes[3] & 0x000000FF) << 24;
-        value += (bytes[2] & 0x000000FF) << 16;
-        value += (bytes[1] & 0x000000FF) << 8;
-        value += (bytes[0] & 0x000000FF);
-        return value;
+        return  (long) (bytes[7] & 0xFF) << 56 |
+                (long) (bytes[6] & 0xFF) << 48 |
+                (long) (bytes[5] & 0xFF) << 40 |
+                (long) (bytes[4] & 0xFF) << 32 |
+                (long) (bytes[3] & 0xFF) << 24 |
+                (long) (bytes[2] & 0xFF) << 16 |
+                (long) (bytes[1] & 0xFF) << 8 |
+                (long) (bytes[0] & 0xFF);
     }
 
     private int readVersion() {
@@ -339,7 +340,7 @@ public final class SqueakImageReader extends Node {
         initPrebuiltConstant();
         initPrebuiltSelectors();
         // connect all instances to their classes
-        output.println("Connecting classes...");
+        print("Connecting classes...");
         final StopWatch setClassesWatch = StopWatch.start("setClasses");
         for (SqueakImageChunk chunk : chunktable.values()) {
             chunk.setSqClass(classChunkOf(chunk).asClassObject());
@@ -356,7 +357,7 @@ public final class SqueakImageReader extends Node {
     @TruffleBoundary
     private void instantiateClasses() {
         // find all metaclasses and instantiate their singleton instances as class objects
-        output.println("Instantiating classes...");
+        print("Instantiating classes...");
         for (int classtablePtr : hiddenRootsChunk.data()) {
             if (getChunk(classtablePtr) != null) {
                 for (int potentialClassPtr : getChunk(classtablePtr).data()) {
@@ -374,7 +375,7 @@ public final class SqueakImageReader extends Node {
     }
 
     private void fillInObjects(final VirtualFrame frame) {
-        output.println("Filling in objects...");
+        print("Filling in objects...");
         for (SqueakImageChunk chunk : chunktable.values()) {
             final Object chunkObject = chunk.asObject();
             fillInNode.execute(frame, chunkObject, chunk);

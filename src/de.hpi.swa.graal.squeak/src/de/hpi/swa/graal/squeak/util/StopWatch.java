@@ -23,10 +23,12 @@ public class StopWatch {
         return watch;
     }
 
+    @TruffleBoundary
     public void start() {
         startTime = System.nanoTime();
     }
 
+    @TruffleBoundary
     public long stop() {
         stopTime = System.nanoTime();
         return stopTime - startTime;
@@ -38,10 +40,11 @@ public class StopWatch {
 
     @TruffleBoundary
     public void printTime() {
-        final double deltaf = (delta() / 1000_000) / 1000.0;
+        final double deltaf = (delta() / 1000_000.0) / 1000.0;
         print(name + ":\t" + deltaf + "s");
     }
 
+    @TruffleBoundary
     public void printTimeMS() {
         final double deltaf = delta() / 1000_000.0;
         print(name + ":\t" + deltaf + "ms");
@@ -66,6 +69,7 @@ public class StopWatch {
         printTimeNS();
     }
 
+    @TruffleBoundary
     private static void print(final String str) {
         final PrintWriter output = new PrintWriter(System.out, true);
         output.println(str);
