@@ -181,19 +181,13 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
 
     @Test
     public void testFloatDecoding() {
-        SqueakImageChunk chunk = newFloatChunk();
-        chunk.append(0);
-        chunk.append(1072693248);
+        SqueakImageChunk chunk = newFloatChunk(new int[]{0, 1072693248});
         assertEquals(1.0, getDouble(chunk), 0);
 
-        chunk = newFloatChunk();
-        chunk.append((int) 2482401462L);
-        chunk.append(1065322751);
+        chunk = newFloatChunk(new int[]{(int) 2482401462L, 1065322751});
         assertEquals(0.007699011184197404, getDouble(chunk), 0);
 
-        chunk = newFloatChunk();
-        chunk.append(876402988);
-        chunk.append(1075010976);
+        chunk = newFloatChunk(new int[]{876402988, 1075010976});
         assertEquals(4.841431442464721, getDouble(chunk), 0);
     }
 
@@ -201,11 +195,11 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
         return ((FloatObject) chunk.asObject()).getValue();
     }
 
-    private static SqueakImageChunk newFloatChunk() {
+    private static SqueakImageChunk newFloatChunk(final int[] words) {
         final SqueakImageChunk chunk = new SqueakImageChunk(
                         null,
                         image,
-                        2, // 2 words
+                        words, // 2 words
                         10, // float format, 32-bit words without padding word
                         34, // classid of BoxedFloat64
                         3833906, // identityHash for 1.0

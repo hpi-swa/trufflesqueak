@@ -95,34 +95,55 @@ public final class SqueakImageReader extends Node {
         final byte[] bytes = new byte[2];
         readBytes(bytes, 2);
         this.position += 2;
-        return (short) (
-          (bytes[1] & 0xFF) << 8 |
-          (bytes[0] & 0xFF)
-        );
+        return (short) ((bytes[1] & 0xFF) << 8 |
+                        (bytes[0] & 0xFF));
     }
 
     private int nextInt() {
         final byte[] bytes = new byte[4];
         readBytes(bytes, 4);
         this.position += 4;
-        return  (bytes[3] & 0xFF) << 24 |
-                (bytes[2] & 0xFF) << 16 |
-                (bytes[1] & 0xFF) << 8 |
-                (bytes[0] & 0xFF);
+        return (bytes[3] & 0xFF) << 24 |
+                        (bytes[2] & 0xFF) << 16 |
+                        (bytes[1] & 0xFF) << 8 |
+                        (bytes[0] & 0xFF);
+    }
+
+    private int[] nextInts(final int count) {
+        final byte[] bytes = new byte[4 * count];
+        readBytes(bytes, 4 * count);
+        this.position += 4 * count;
+        final int[] result = new int[count];
+        for (int i = 0; i < result.length; i++) {
+            result[i] = (bytes[i * 4 + 3] & 0xFF) << 24 |
+                            (bytes[i * 4 + 2] & 0xFF) << 16 |
+                            (bytes[i * 4 + 1] & 0xFF) << 8 |
+                            (bytes[i * 4 + 0] & 0xFF);
+        }
+        return result;
     }
 
     private long nextLong() {
         final byte[] bytes = new byte[8];
         readBytes(bytes, 8);
         this.position += 8;
-        return  (long) (bytes[7] & 0xFF) << 56 |
-                (long) (bytes[6] & 0xFF) << 48 |
-                (long) (bytes[5] & 0xFF) << 40 |
-                (long) (bytes[4] & 0xFF) << 32 |
-                (long) (bytes[3] & 0xFF) << 24 |
-                (long) (bytes[2] & 0xFF) << 16 |
-                (long) (bytes[1] & 0xFF) << 8 |
-                (long) (bytes[0] & 0xFF);
+        return (long) (bytes[7] & 0xFF) << 56 |
+                        (long) (bytes[6] & 0xFF) << 48 |
+                        (long) (bytes[5] & 0xFF) << 40 |
+                        (long) (bytes[4] & 0xFF) << 32 |
+                        (long) (bytes[3] & 0xFF) << 24 |
+                        (long) (bytes[2] & 0xFF) << 16 |
+                        (long) (bytes[1] & 0xFF) << 8 |
+                        (long) (bytes[0] & 0xFF);
+    }
+
+    @TruffleBoundary
+    private void skipBytes(final long count) {
+        try {
+            this.position += this.stream.skip(count);
+        } catch (IOException e) {
+            throw new SqueakException("Unable to skip next bytes");
+        }
     }
 
     private int readVersion() {
@@ -163,11 +184,7 @@ public final class SqueakImageReader extends Node {
 
     private void skipToBody() {
         final int skip = headerSize - this.position;
-        try {
-            this.position += this.stream.skip(skip);
-        } catch (IOException e) {
-            throw new SqueakException("Unable to skip next bytes");
-        }
+        skipBytes(skip);
     }
 
     static class ReadObjectNode extends Node implements RepeatingNode {
@@ -179,12 +196,11 @@ public final class SqueakImageReader extends Node {
 
         public boolean executeRepeating(final VirtualFrame frame) {
             if (reader.position < reader.segmentEnd - 16) {
-                final SqueakImageChunk chunk;
-                chunk = reader.readObject();
+                final SqueakImageChunk chunk = reader.readObject();
                 if (chunk.classid == FREE_OBJECT_CLASS_INDEX_PUN) {
                     return true;
                 } else {
-                    reader.extracted(chunk);
+                    reader.putChunk(chunk);
                     return true;
                 }
             }
@@ -226,7 +242,7 @@ public final class SqueakImageReader extends Node {
     }
 
     @TruffleBoundary
-    private void extracted(final SqueakImageChunk chunk) {
+    private void putChunk(final SqueakImageChunk chunk) {
         chunktable.put(chunk.pos + this.currentAddressSwizzle, chunk);
         if (chunkCount++ == HIDDEN_ROOTS_CHUNK_INDEX) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -255,20 +271,22 @@ public final class SqueakImageReader extends Node {
         final int hash = splitHeader[4];
         assert size >= 0;
         assert 0 <= format && format <= 31;
-        final SqueakImageChunk chunk = new SqueakImageChunk(this, image, size, format, classid, hash, pos);
-        for (int i = 0; i < wordsFor(size); i++) {
-            if (!chunk.isFull()) {
-                chunk.append(nextInt());
-            } else {
-                nextInt(); // don't add trailing alignment words
-            }
+        final SqueakImageChunk chunk = new SqueakImageChunk(this, image, nextInts(size), format, classid, hash, pos);
+        if (wordsFor(size) > size) {
+            skipBytes((wordsFor(size) - size) * 4); // don't add trailing alignment words
         }
+        assert checkAddressIntegrity(classid, format, chunk);
+        return chunk;
+    }
+
+    private boolean checkAddressIntegrity(final int classid, final int format, final SqueakImageChunk chunk) {
+        boolean result = true;
         if (format < 10 && classid != FREE_OBJECT_CLASS_INDEX_PUN) {
             for (int slot : chunk.data()) {
-                assert slot % 16 != 0 || slot >= oldBaseAddress;
+                result &= slot % 16 != 0 || slot >= oldBaseAddress;
             }
         }
-        return chunk;
+        return result;
     }
 
     private static int wordsFor(final int size) {
@@ -350,7 +368,7 @@ public final class SqueakImageReader extends Node {
         instantiateClasses();
         instantiateWatch.stopAndPrint();
         final StopWatch fillInWatch = StopWatch.start("fillInObjects");
-        fillInObjects(frame);
+        fillInObjects();
         fillInWatch.stopAndPrint();
     }
 
@@ -374,11 +392,11 @@ public final class SqueakImageReader extends Node {
         }
     }
 
-    private void fillInObjects(final VirtualFrame frame) {
+    private void fillInObjects() {
         print("Filling in objects...");
         for (SqueakImageChunk chunk : chunktable.values()) {
             final Object chunkObject = chunk.asObject();
-            fillInNode.execute(frame, chunkObject, chunk);
+            fillInNode.execute(chunkObject, chunk);
         }
 
         if (image.asSymbol.isNil()) {

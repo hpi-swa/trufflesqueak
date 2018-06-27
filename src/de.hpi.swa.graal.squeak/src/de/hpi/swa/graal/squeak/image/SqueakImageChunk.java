@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
@@ -23,57 +24,40 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 
 public final class SqueakImageChunk {
-    protected Object object;
+    @CompilationFinal protected Object object;
 
-    private ClassObject sqClass;
-    private Object[] pointers;
+    @CompilationFinal private ClassObject sqClass;
+    @CompilationFinal(dimensions = 1) private Object[] pointers;
 
     @CompilationFinal protected final int classid;
     @CompilationFinal protected final int pos;
 
-    @CompilationFinal private final int size;
     @CompilationFinal private final SqueakImageReader reader;
     @CompilationFinal protected final int format;
     @CompilationFinal private final int hash;
-    @CompilationFinal private final int[] data;
+    @CompilationFinal(dimensions = 1) private final int[] data;
     @CompilationFinal private final SqueakImageContext image;
-
-    private int dataIndex;
 
     public SqueakImageChunk(final SqueakImageReader reader,
                     final SqueakImageContext image,
-                    final int size,
+                    final int[] data,
                     final int format,
                     final int classid,
                     final int hash,
                     final int pos) {
         this.reader = reader;
         this.image = image;
-        this.size = size;
         this.format = format;
         this.classid = classid;
         this.hash = hash;
         this.pos = pos;
-        this.data = new int[size];
-        this.dataIndex = 0;
+        this.data = data;
     }
 
     public static SqueakImageChunk createDummyChunk(final Object[] pointers) {
-        final SqueakImageChunk chunk = new SqueakImageChunk(null, null, 0, 0, 0, 0, 0);
+        final SqueakImageChunk chunk = new SqueakImageChunk(null, null, new int[0], 0, 0, 0, 0);
         chunk.pointers = pointers;
         return chunk;
-    }
-
-    public void append(final int nextInt) {
-        data[dataIndex++] = nextInt;
-    }
-
-    public int size() {
-        return size;
-    }
-
-    public boolean isFull() {
-        return dataIndex == size;
     }
 
     public int[] data() {
@@ -83,6 +67,7 @@ public final class SqueakImageChunk {
     public ClassObject asClassObject() {
         if (object == null) {
             assert format == 1;
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             object = new ClassObject(image);
         } else if (object == SqueakImageReader.NIL_OBJECT_PLACEHOLDER) {
             return null;
@@ -92,6 +77,7 @@ public final class SqueakImageChunk {
 
     public Object asObject() {
         if (object == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             if (format == 0) { // no fields
                 object = new EmptyObject(image);
             } else if (format == 1) { // fixed pointers
@@ -146,10 +132,6 @@ public final class SqueakImageChunk {
         return format;
     }
 
-    public int getSize() {
-        return size;
-    }
-
     public int getHash() {
         return hash;
     }
@@ -159,14 +141,16 @@ public final class SqueakImageChunk {
     }
 
     public void setSqClass(final ClassObject baseSqueakObject) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
         this.sqClass = baseSqueakObject;
     }
 
     @ExplodeLoop
     public Object[] getPointers() {
         if (pointers == null) {
-            pointers = new Object[size];
-            for (int i = 0; i < size; i++) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            pointers = new Object[data.length];
+            for (int i = 0; i < data.length; i++) {
                 pointers[i] = decodePointer(data[i]);
             }
         }
@@ -175,6 +159,7 @@ public final class SqueakImageChunk {
 
     public Object[] getPointers(final int end) {
         if (pointers == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             pointers = new Object[end];
             for (int i = 0; i < end; i++) {
                 pointers[i] = decodePointer(data[i]);
@@ -210,8 +195,8 @@ public final class SqueakImageChunk {
     }
 
     public byte[] getBytes(final int start) {
-        final byte[] bytes = new byte[((size - start) * 4) - getPadding()];
-        final int[] subList = Arrays.copyOfRange(data, start, size);
+        final byte[] bytes = new byte[((data.length - start) * 4) - getPadding()];
+        final int[] subList = Arrays.copyOfRange(data, start, data.length);
         final ByteBuffer buf = ByteBuffer.allocate(subList.length * 4);
         buf.order(ByteOrder.nativeOrder());
         for (int i : subList) {
@@ -224,8 +209,8 @@ public final class SqueakImageChunk {
     }
 
     public short[] getShorts() {
-        final short[] shorts = new short[(size * 2) - getPadding()];
-        final ByteBuffer buf = ByteBuffer.allocate(size * 2);
+        final short[] shorts = new short[(data.length * 2) - getPadding()];
+        final ByteBuffer buf = ByteBuffer.allocate(data.length * 2);
         buf.order(ByteOrder.nativeOrder());
         for (int i : data) {
             buf.putInt(i);
@@ -238,7 +223,7 @@ public final class SqueakImageChunk {
     }
 
     public int[] getWords() {
-        final int[] ints = new int[size];
+        final int[] ints = new int[data.length];
         for (int i = 0; i < ints.length; i++) {
             ints[i] = data[i];
         }
@@ -246,7 +231,7 @@ public final class SqueakImageChunk {
     }
 
     public long[] getLongs() {
-        final long[] longs = new long[size];
+        final long[] longs = new long[data.length];
         for (int i = 0; i < longs.length; i++) {
             longs[i] = data[i];
         }

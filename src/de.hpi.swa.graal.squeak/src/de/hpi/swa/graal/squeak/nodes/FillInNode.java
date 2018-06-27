@@ -32,7 +32,7 @@ public abstract class FillInNode extends Node {
         this.image = image;
     }
 
-    public abstract void execute(VirtualFrame frame, Object obj, SqueakImageChunk chunk);
+    public abstract void execute(Object obj, SqueakImageChunk chunk);
 
     @Specialization
     protected void doBlockClosure(final BlockClosureObject obj, final SqueakImageChunk chunk) {
