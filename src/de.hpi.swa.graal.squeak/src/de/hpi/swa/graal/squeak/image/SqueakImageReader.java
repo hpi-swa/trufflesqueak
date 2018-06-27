@@ -56,7 +56,7 @@ public final class SqueakImageReader extends Node {
         output = image.getOutput();
         this.image = image;
         fillInNode = FillInNode.create(image);
-        repeatingNode = Truffle.getRuntime().createLoopNode(new ConditionNode(this));
+        repeatingNode = Truffle.getRuntime().createLoopNode(new ReadObjectNode(this));
     }
 
     public void executeRead(final VirtualFrame frame) throws SqueakException {
@@ -169,10 +169,10 @@ public final class SqueakImageReader extends Node {
         }
     }
 
-    static class ConditionNode extends Node implements RepeatingNode {
+    static class ReadObjectNode extends Node implements RepeatingNode {
         private final SqueakImageReader reader;
 
-        ConditionNode(final SqueakImageReader reader) {
+        ReadObjectNode(final SqueakImageReader reader) {
             this.reader = reader;
         }
 
