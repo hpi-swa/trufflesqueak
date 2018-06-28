@@ -34,6 +34,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives.SimulationPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.StoragePrimitives;
 import de.hpi.swa.graal.squeak.nodes.plugins.SocketPlugin;
+import de.hpi.swa.graal.squeak.nodes.plugins.SqueakSSLPlugin;
 
 public final class PrimitiveNodeFactory {
     private static final int MAX_PRIMITIVE_INDEX = 575;
@@ -57,6 +58,7 @@ public final class PrimitiveNodeFactory {
                     new MiscPrimitivePlugin(),
                     new PolyglotPlugin(),
                     new SocketPlugin(),
+                    new SqueakSSLPlugin(),
                     new UnixOSProcessPlugin(),
                     new UUIDPlugin(),
                     new Win32OSProcessPlugin()};

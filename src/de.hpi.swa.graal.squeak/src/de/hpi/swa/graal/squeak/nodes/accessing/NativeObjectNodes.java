@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -16,6 +17,7 @@ public final class NativeObjectNodes {
             return NativeGetBytesNodeGen.create();
         }
 
+        @TruffleBoundary
         public final String executeAsString(final NativeObject obj) {
             return new String(execute(obj));
         }
