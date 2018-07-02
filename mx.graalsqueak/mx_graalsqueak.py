@@ -51,9 +51,7 @@ def _graal_vm_args(args):
         ]
 
     if args.deopts:
-        graal_args += [
-            '-XX:+TraceDeoptimization',
-        ]
+        graal_args += ['-XX:+TraceDeoptimization']
 
     if args.print_machine_code:
         graal_args += [
@@ -66,6 +64,9 @@ def _graal_vm_args(args):
 
     if args.force_compilation:
         graal_args += ['-Dgraal.TruffleCompileImmediately=true']
+
+    if args.print_graal_options:
+        graal_args += ['-XX:+JVMCIPrintProperties']
 
     graal_args += [
         '-Djvmci.Compiler=graal',
@@ -105,7 +106,12 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
         dest='force_compilation', action='store_true', default=False)
     parser.add_argument('--gc', action='store_true',
                         help='print garbage collection details')
+    parser.add_argument('--graal-options', help='print Graal options',
+                        dest='print_graal_options', action='store_true',
+                        default=False)
     parser.add_argument('--igv', action='store_true', help='dump to igv')
+    parser.add_argument('--inspect', help='enable Chrome inspector',
+                        dest='inspect', action='store_true', default=False)
     parser.add_argument('-l', '--low-level',
                         help='enable low-level optimization output',
                         dest='low_level', action='store_true', default=False)
@@ -187,6 +193,8 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
         squeak_arguments.append('--cpusampler')
     if parsed_args.cputracer:
         squeak_arguments.append('--cputracer')
+    if parsed_args.inspect:
+        squeak_arguments.append('--inspect')
 
     if parsed_args.image:
         squeak_arguments = [parsed_args.image] + squeak_arguments
