@@ -406,22 +406,4 @@ public final class ContextObject extends AbstractSqueakObject {
     public FrameMarker getFrameMarker() {
         return frameMarker;
     }
-
-    public void materialize() {
-        if (truffleFrame == null) {
-            return; // nothing to do
-        }
-        final Object[] frameArguments = truffleFrame.getArguments();
-        if (pointers[CONTEXT.SENDER_OR_NIL] == null) {
-            // Materialize sender if sender is a FrameMarker
-            final Object senderOrMarker = frameArguments[FrameAccess.SENDER_OR_SENDER_MARKER];
-            if (senderOrMarker instanceof FrameMarker) {
-                final Frame senderFrame = FrameAccess.findFrameForMarker((FrameMarker) senderOrMarker);
-                if (senderFrame == null) {
-                    throw new SqueakException("Unable to find senderFrame for FrameMaker");
-                }
-                setSender(GetOrCreateContextNode.getOrCreateFull(senderFrame.materialize()));
-            }
-        }
-    }
 }
