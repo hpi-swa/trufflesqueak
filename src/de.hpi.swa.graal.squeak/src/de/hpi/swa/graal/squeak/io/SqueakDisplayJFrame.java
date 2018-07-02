@@ -39,6 +39,7 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 
 public final class SqueakDisplayJFrame extends SqueakDisplay {
     private static final String DEFAULT_WINDOW_TITLE = "GraalSqueak";
+    private static final Dimension MINIMUM_WINDOW_SIZE = new Dimension(200, 150);
     private static final Toolkit TOOLKIT = Toolkit.getDefaultToolkit();
     @CompilationFinal(dimensions = 1) private static final byte[] BLACK_AND_WHITE = new byte[]{(byte) 255, (byte) 0};
     @CompilationFinal(dimensions = 1) private static final byte[] ALPHA_COMPONENT = new byte[]{(byte) 0, (byte) 255};
@@ -70,6 +71,7 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
 
         frame.setTitle(SqueakDisplayJFrame.DEFAULT_WINDOW_TITLE + " (" + image.config.getImagePath() + ")");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setMinimumSize(MINIMUM_WINDOW_SIZE);
         frame.getContentPane().add(canvas);
         frame.setResizable(true);
         frame.addComponentListener(new ComponentAdapter() {
