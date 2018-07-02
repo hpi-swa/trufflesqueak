@@ -11,6 +11,7 @@ import com.oracle.truffle.api.nodes.LoopNode;
 import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
 import de.hpi.swa.graal.squeak.exceptions.Returns.LocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
+import de.hpi.swa.graal.squeak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
@@ -27,7 +28,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
     @Children private AbstractBytecodeNode[] bytecodeNodes;
     @Child private HandleLocalReturnNode handleLocalReturnNode;
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
-    @Child private HandleNonVirtualReturnNode handleNonVirtualReturnNode;
+    @Child private HandleNonVirtualReturnNode handleNonVirtualReturnNode = HandleNonVirtualReturnNode.create();
     @Child private UpdateInstructionPointerNode updateInstructionPointerNode;
     @Child private StackPushNode pushStackNode = StackPushNode.create();
     @Child private CalculcatePCOffsetNode calculcatePCOffsetNode = CalculcatePCOffsetNode.create();
@@ -42,7 +43,6 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
         CompilerAsserts.compilationConstant(bytecodeNodes.length);
         handleLocalReturnNode = HandleLocalReturnNode.create(code);
         handleNonLocalReturnNode = HandleNonLocalReturnNode.create(code);
-        handleNonVirtualReturnNode = HandleNonVirtualReturnNode.create(code);
         updateInstructionPointerNode = UpdateInstructionPointerNode.create(code);
     }
 
@@ -57,9 +57,8 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
             return handleLocalReturnNode.executeHandle(frame, lr);
         } catch (NonLocalReturn nlr) {
             return handleNonLocalReturnNode.executeHandle(frame, nlr);
-            // TODO: use handleNonVirtualReturnNode again
-            // } catch (NonVirtualReturn nvr) {
-            // return handleNonVirtualReturnNode.executeHandle(frame, nvr);
+        } catch (NonVirtualReturn nvr) {
+            return handleNonVirtualReturnNode.executeHandle(frame, nvr);
         }
     }
 
@@ -86,9 +85,8 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
             throw ps;
         } catch (NonLocalReturn nlr) {
             return handleNonLocalReturnNode.executeHandle(frame, nlr);
-            // TODO: use handleNonVirtualReturnNode again
-            // } catch (NonVirtualReturn nvr) {
-            // return handleNonVirtualReturnNode.executeHandle(frame, nvr);
+        } catch (NonVirtualReturn nvr) {
+            return handleNonVirtualReturnNode.executeHandle(frame, nvr);
         }
     }
 

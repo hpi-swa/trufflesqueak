@@ -16,8 +16,9 @@ import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public final class ContextObject extends AbstractSqueakObject {
-    @CompilationFinal protected MaterializedFrame truffleFrame;
-    protected Object[] pointers;
+    @CompilationFinal private MaterializedFrame truffleFrame;
+    @CompilationFinal private FrameMarker frameMarker;
+    private Object[] pointers;
     private boolean hasModifiedSender;
     private boolean isDirty;
 
@@ -40,14 +41,15 @@ public final class ContextObject extends AbstractSqueakObject {
         pointers = new Object[CONTEXT.TEMP_FRAME_START + size];
     }
 
-    public static ContextObject create(final SqueakImageContext image, final int size, final MaterializedFrame frame) {
-        return new ContextObject(image, size, frame);
+    public static ContextObject create(final SqueakImageContext image, final int size, final MaterializedFrame frame, final FrameMarker frameMarker) {
+        return new ContextObject(image, size, frame, frameMarker);
     }
 
-    private ContextObject(final SqueakImageContext image, final int size, final MaterializedFrame frame) {
+    private ContextObject(final SqueakImageContext image, final int size, final MaterializedFrame frame, final FrameMarker frameMarker) {
         this(image, size);
         isDirty = false;
         truffleFrame = frame;
+        this.frameMarker = frameMarker;
     }
 
     public ContextObject(final ContextObject original) {
@@ -399,6 +401,10 @@ public final class ContextObject extends AbstractSqueakObject {
 
     public boolean hasMaterializedSender() {
         return pointers[CONTEXT.SENDER_OR_NIL] != null || truffleFrame.getArguments()[FrameAccess.SENDER_OR_SENDER_MARKER] instanceof ContextObject;
+    }
+
+    public FrameMarker getFrameMarker() {
+        return frameMarker;
     }
 
     public void materialize() {
