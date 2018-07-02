@@ -128,7 +128,7 @@ public final class InterruptHandlerNode extends RootNode {
     }
 
     public void doTrigger(final VirtualFrame frame) {
-        callNode.call(new Object[]{contextNode.executeGet(frame, false, false)});
+        callNode.call(new Object[]{contextNode.executeGet(frame, false)});
     }
 
     @Override

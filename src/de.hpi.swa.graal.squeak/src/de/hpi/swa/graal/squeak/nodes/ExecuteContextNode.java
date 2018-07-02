@@ -32,6 +32,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
     @Child private UpdateInstructionPointerNode updateInstructionPointerNode;
     @Child private StackPushNode pushStackNode = StackPushNode.create();
     @Child private CalculcatePCOffsetNode calculcatePCOffsetNode = CalculcatePCOffsetNode.create();
+    @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create();
 
     public static ExecuteContextNode create(final CompiledCodeObject code) {
         return new ExecuteContextNode(code);
@@ -59,6 +60,14 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
             return handleNonLocalReturnNode.executeHandle(frame, nlr);
         } catch (NonVirtualReturn nvr) {
             return handleNonVirtualReturnNode.executeHandle(frame, nvr);
+        } catch (ProcessSwitch ps) {
+            final ContextObject context = getOrCreateContextNode.executeGet(frame, false);
+            if (context != ps.getLastSeenContext()) {
+                ps.getLastSeenContext().setSender(context);
+                ps.setLastSeenContext(context);
+            }
+            assert hasMaterializedContext(frame);
+            throw ps;
         }
     }
 
@@ -80,13 +89,18 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
             throw new SqueakException("Method did not return");
         } catch (LocalReturn lr) {
             return handleLocalReturnNode.executeHandle(frame, lr);
-        } catch (ProcessSwitch ps) {
-            assert hasMaterializedContext(frame);
-            throw ps;
         } catch (NonLocalReturn nlr) {
             return handleNonLocalReturnNode.executeHandle(frame, nlr);
         } catch (NonVirtualReturn nvr) {
             return handleNonVirtualReturnNode.executeHandle(frame, nvr);
+        } catch (ProcessSwitch ps) {
+            final ContextObject context = getOrCreateContextNode.executeGet(frame, false);
+            if (context != ps.getLastSeenContext()) {
+                ps.getLastSeenContext().setSender(context);
+                ps.setLastSeenContext(context);
+            }
+            assert hasMaterializedContext(frame);
+            throw ps;
         }
     }
 

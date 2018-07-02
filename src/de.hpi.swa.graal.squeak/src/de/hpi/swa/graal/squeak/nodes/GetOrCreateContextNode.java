@@ -21,26 +21,18 @@ public abstract class GetOrCreateContextNode extends AbstractNode {
         return GetOrCreateContextNodeGen.create();
     }
 
-    public final ContextObject executeGet(final Frame frame, final boolean invalidateCanBeVirtualizedAssumption) {
-        return executeGet(frame, invalidateCanBeVirtualizedAssumption, true);
-    }
-
-    public abstract ContextObject executeGet(Frame frame, boolean invalidateCanBeVirtualizedAssumption, boolean fullSenderChain);
+    public abstract ContextObject executeGet(Frame frame, boolean fullSenderChain);
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"!isFullyVirtualized(frame)"})
-    protected ContextObject doGet(final VirtualFrame frame, final boolean invalidateCanBeVirtualizedAssumption, final boolean fullSenderChain) {
+    protected final ContextObject doGet(final VirtualFrame frame, final boolean fullSenderChain) {
         return getContext(frame);
     }
 
     @Specialization(guards = {"isFullyVirtualized(frame)"})
-    protected ContextObject doCreateLight(final VirtualFrame frame, final boolean invalidateCanBeVirtualizedAssumption, final boolean fullSenderChain) {
+    protected final ContextObject doCreateLight(final VirtualFrame frame, final boolean fullSenderChain) {
         final CompiledCodeObject method = (CompiledCodeObject) methodNode.executeRead(frame);
         final ContextObject context = ContextObject.create(method.image, method.frameSize(), frame.materialize(), getFrameMarker(frame));
-
-        if (invalidateCanBeVirtualizedAssumption) {
-            // method.invalidateCanBeVirtualizedAssumption();
-        }
         contextWriteNode.executeWrite(frame, context);
         if (fullSenderChain) {
             forceSenderChain(method, context);
@@ -49,23 +41,17 @@ public abstract class GetOrCreateContextNode extends AbstractNode {
         return context;
     }
 
-    public static ContextObject getOrCreateFull(final MaterializedFrame frame, final boolean invalidateCanBeVirtualizedAssumption, final boolean fullSenderChain) {
+    public static final ContextObject getOrCreateFull(final MaterializedFrame frame, final boolean fullSenderChain) {
         final Object contextOrMarker = FrameAccess.getContextOrMarker(frame);
         final ContextObject context;
         final CompiledCodeObject method;
         if (contextOrMarker instanceof ContextObject) {
             context = (ContextObject) contextOrMarker;
             method = context.getMethod();
-            if (invalidateCanBeVirtualizedAssumption) {
-                method.invalidateCanBeVirtualizedAssumption();
-            }
         } else {
             method = (CompiledCodeObject) frame.getArguments()[FrameAccess.METHOD];
             context = ContextObject.create(method.image, method.frameSize(), frame, (FrameMarker) contextOrMarker);
             frame.setObject(CompiledCodeObject.thisContextOrMarkerSlot, context);
-            if (invalidateCanBeVirtualizedAssumption) {
-                method.invalidateCanBeVirtualizedAssumption();
-            }
         }
         if (fullSenderChain) {
             forceSenderChain(method, context);
