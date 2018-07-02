@@ -13,6 +13,7 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 public abstract class AbstractSqueakObject implements TruffleObject {
     private static final int IDENTITY_HASH_MASK = 0x400000 - 1;
     private static final byte PINNED_BIT_SHIFT = 30;
+
     public final SqueakImageContext image;
 
     @CompilationFinal private long hash;
@@ -24,8 +25,8 @@ public abstract class AbstractSqueakObject implements TruffleObject {
 
     protected AbstractSqueakObject(final SqueakImageContext image, final ClassObject klass) {
         this.image = image;
-        setSqueakHash(hashCode() & IDENTITY_HASH_MASK);
-        setSqClass(klass);
+        this.hash = hashCode() & IDENTITY_HASH_MASK;
+        this.sqClass = klass;
     }
 
     public static final boolean isInstance(final TruffleObject obj) {
