@@ -37,7 +37,7 @@ public abstract class TransferToNode extends AbstractNodeWithImage {
     @Specialization
     public final void executeTransferTo(final VirtualFrame frame, final AbstractSqueakObject activeProcess, final AbstractSqueakObject newProcess) {
         // Record a process to be awakened on the next interpreter cycle.
-        final ContextObject activeContext = contextNode.executeGet(frame, false);
+        final ContextObject activeContext = contextNode.executeGet(frame);
         final PointersObject scheduler = getSchedulerNode.executeGet();
         assert newProcess != scheduler.at0(PROCESS_SCHEDULER.ACTIVE_PROCESS) : "trying to switch to already active process";
         scheduler.atput0(PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);

@@ -69,12 +69,15 @@ public final class Returns {
         private final ContextObject targetContext;
         private final ContextObject currentContext;
 
-        public NonVirtualReturn(final Object returnValue, final ContextObject targetContext, final ContextObject currentContext) {
+        private ContextObject lastSeenContext;
+
+        public NonVirtualReturn(final Object returnValue, final ContextObject targetContext, final ContextObject currentContext, final ContextObject lastSeenContext) {
             super(returnValue);
             assert !targetContext.hasVirtualSender();
             assert !currentContext.hasVirtualSender();
             this.targetContext = targetContext;
             this.currentContext = currentContext;
+            this.lastSeenContext = lastSeenContext;
         }
 
         public ContextObject getTargetContext() {
@@ -83,6 +86,14 @@ public final class Returns {
 
         public ContextObject getCurrentContext() {
             return currentContext;
+        }
+
+        public ContextObject getLastSeenContext() {
+            return lastSeenContext;
+        }
+
+        public void setLastSeenContext(final ContextObject lastSeenContext) {
+            this.lastSeenContext = lastSeenContext;
         }
 
         @Override

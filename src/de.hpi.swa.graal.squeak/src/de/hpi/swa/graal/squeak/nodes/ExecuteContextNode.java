@@ -59,9 +59,14 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
         } catch (NonLocalReturn nlr) {
             return handleNonLocalReturnNode.executeHandle(frame, nlr);
         } catch (NonVirtualReturn nvr) {
+            final ContextObject context = getOrCreateContextNode.executeGet(frame);
+            if (context != nvr.getLastSeenContext()) {
+                nvr.getLastSeenContext().setSender(context);
+                nvr.setLastSeenContext(context);
+            }
             return handleNonVirtualReturnNode.executeHandle(frame, nvr);
         } catch (ProcessSwitch ps) {
-            final ContextObject context = getOrCreateContextNode.executeGet(frame, false);
+            final ContextObject context = getOrCreateContextNode.executeGet(frame);
             if (context != ps.getLastSeenContext()) {
                 ps.getLastSeenContext().setSender(context);
                 ps.setLastSeenContext(context);
@@ -92,9 +97,14 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
         } catch (NonLocalReturn nlr) {
             return handleNonLocalReturnNode.executeHandle(frame, nlr);
         } catch (NonVirtualReturn nvr) {
+            final ContextObject context = getOrCreateContextNode.executeGet(frame);
+            if (context != nvr.getLastSeenContext()) {
+                nvr.getLastSeenContext().setSender(context);
+                nvr.setLastSeenContext(context);
+            }
             return handleNonVirtualReturnNode.executeHandle(frame, nvr);
         } catch (ProcessSwitch ps) {
-            final ContextObject context = getOrCreateContextNode.executeGet(frame, false);
+            final ContextObject context = getOrCreateContextNode.executeGet(frame);
             if (context != ps.getLastSeenContext()) {
                 ps.getLastSeenContext().setSender(context);
                 ps.setLastSeenContext(context);

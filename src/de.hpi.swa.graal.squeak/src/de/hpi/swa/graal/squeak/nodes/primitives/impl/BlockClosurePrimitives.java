@@ -72,7 +72,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         } else {
                             final CompiledCodeObject frameMethod = FrameAccess.getMethod(current);
                             if (frameMethod.isUnwindMarked()) {
-                                return contextNode.executeGet(current, false);
+                                return contextNode.executeGet(current);
                             }
                         }
                     }
@@ -192,7 +192,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                     } else {
                         final CompiledCodeObject frameMethod = FrameAccess.getMethod(current);
                         if (frameMethod.isExceptionHandlerMarked()) {
-                            return contextNode.executeGet(current, false);
+                            return contextNode.executeGet(current);
                         }
                     }
                     return null;

@@ -5,7 +5,6 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
@@ -21,27 +20,22 @@ public abstract class GetOrCreateContextNode extends AbstractNode {
         return GetOrCreateContextNodeGen.create();
     }
 
-    public abstract ContextObject executeGet(Frame frame, boolean fullSenderChain);
+    public abstract ContextObject executeGet(Frame frame);
 
-    @SuppressWarnings("unused")
     @Specialization(guards = {"!isFullyVirtualized(frame)"})
-    protected final ContextObject doGet(final VirtualFrame frame, final boolean fullSenderChain) {
+    protected final ContextObject doGet(final VirtualFrame frame) {
         return getContext(frame);
     }
 
     @Specialization(guards = {"isFullyVirtualized(frame)"})
-    protected final ContextObject doCreateLight(final VirtualFrame frame, final boolean fullSenderChain) {
+    protected final ContextObject doCreateLight(final VirtualFrame frame) {
         final CompiledCodeObject method = (CompiledCodeObject) methodNode.executeRead(frame);
         final ContextObject context = ContextObject.create(method.image, method.frameSize(), frame.materialize(), getFrameMarker(frame));
         contextWriteNode.executeWrite(frame, context);
-        if (fullSenderChain) {
-            forceSenderChain(method, context);
-        }
-
         return context;
     }
 
-    public static final ContextObject getOrCreateFull(final MaterializedFrame frame, final boolean fullSenderChain) {
+    public static final ContextObject getOrCreateFull(final MaterializedFrame frame) {
         final Object contextOrMarker = FrameAccess.getContextOrMarker(frame);
         final ContextObject context;
         final CompiledCodeObject method;
@@ -53,21 +47,6 @@ public abstract class GetOrCreateContextNode extends AbstractNode {
             context = ContextObject.create(method.image, method.frameSize(), frame, (FrameMarker) contextOrMarker);
             frame.setObject(CompiledCodeObject.thisContextOrMarkerSlot, context);
         }
-        if (fullSenderChain) {
-            forceSenderChain(method, context);
-        }
         return context;
-    }
-
-    private static void forceSenderChain(final CompiledCodeObject method, final ContextObject context) {
-        ContextObject current = context;
-        while (true) {
-            current.materialize(); // full!
-            final AbstractSqueakObject next = current.getSender();
-            if (next == method.image.nil) {
-                break;
-            }
-            current = (ContextObject) next;
-        }
     }
 }

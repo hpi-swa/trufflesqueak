@@ -107,7 +107,7 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
     @Specialization(guards = {"!code.getCanBeVirtualizedAssumption().isValid()"})
     protected Object enter(final VirtualFrame frame) {
         initializeSlots(frame);
-        final ContextObject newContext = createContextNode.executeGet(frame, false);
+        final ContextObject newContext = createContextNode.executeGet(frame);
         contextWriteNode.executeWrite(frame, newContext);
         // Push arguments and copied values onto the newContext.
         final Object[] arguments = frame.getArguments();
