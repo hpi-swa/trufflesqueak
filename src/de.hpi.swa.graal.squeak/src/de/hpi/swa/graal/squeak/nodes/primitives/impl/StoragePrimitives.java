@@ -33,7 +33,6 @@ import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectPointersBecomeOneWayNode;
 import de.hpi.swa.graal.squeak.nodes.context.ObjectGraphNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -62,7 +61,6 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Child private SqueakObjectPointersBecomeOneWayNode pointersBecomeNode = SqueakObjectPointersBecomeOneWayNode.create();
         @Child private FrameStackReadNode stackReadNode = FrameStackReadNode.create();
         @Child private FrameStackWriteNode stackWriteNode = FrameStackWriteNode.create();
-        @Child private FrameSlotReadNode stackPointerReadNode = FrameSlotReadNode.createForStackPointer();
 
         protected AbstractArrayBecomeOneWayPrimitiveNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -106,11 +104,9 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                         return null;
                     }
                     final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_WRITE);
-                    final Object stackPointerObject = stackPointerReadNode.executeRead(current);
-                    if (!(stackPointerObject instanceof Integer) || current.getFrameDescriptor().getSize() <= FrameAccess.RECEIVER) {
+                    if (current.getFrameDescriptor().getSize() <= FrameAccess.RECEIVER) {
                         return null;
                     }
-                    final int stackPointer = ((Integer) stackPointerObject);
                     final Object[] arguments = current.getArguments();
                     for (int i = FrameAccess.RECEIVER; i < arguments.length; i++) {
                         final Object argument = arguments[i];
@@ -118,7 +114,6 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                             final Object fromPointer = fromPointers[j];
                             if (argument == fromPointer) {
                                 final Object toPointer = toPointers[j];
-                                assert fromPointer != toPointer : "should not be the same object";
                                 current.getArguments()[i] = toPointer;
                                 if (fromPointer instanceof AbstractSqueakObject && toPointer instanceof AbstractSqueakObject) {
                                     ((AbstractSqueakObject) toPointer).setSqueakHash(((AbstractSqueakObject) fromPointer).squeakHash());
@@ -128,16 +123,24 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                             }
                         }
                     }
-                    for (int i = 0; i < stackPointer; i++) {
+                    /*
+                     * use method.frameSize() here instead of stackPointer because in rare cases,
+                     * the stack is accessed behind the stackPointer.
+                     */
+                    final CompiledCodeObject method = FrameAccess.getMethod(current);
+                    for (int i = 0; i < method.frameSize(); i++) {
                         final Object stackObject = stackReadNode.execute(current, i);
                         if (stackObject == null) {
-                            return null; // this slot and all following have not been used
+                            /*
+                             * this slot and all following are `null` and have therefore not been
+                             * used; optimization to make up for not using the stackPointer.
+                             */
+                            return null;
                         }
                         for (int j = 0; j < fromPointers.length; j++) {
                             final Object fromPointer = fromPointers[j];
                             if (stackObject == fromPointer) {
                                 final Object toPointer = toPointers[j];
-                                assert fromPointer != toPointer : "should not be the same object";
                                 stackWriteNode.execute(current, i, toPointer);
                                 if (fromPointer instanceof AbstractSqueakObject && toPointer instanceof AbstractSqueakObject) {
                                     ((AbstractSqueakObject) toPointer).setSqueakHash(((AbstractSqueakObject) fromPointer).squeakHash());
@@ -260,7 +263,6 @@ public class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimArrayBecomeOneWayNode extends AbstractArrayBecomeOneWayPrimitiveNode {
 
         protected PrimArrayBecomeOneWayNode(final CompiledMethodObject method, final int numArguments) {
-            // FIXME: this primitive does not correctly perform a one way become yet
             super(method, numArguments);
         }
 
