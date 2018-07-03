@@ -34,6 +34,10 @@ import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public abstract class ObjectGraphNode extends AbstractNodeWithImage {
+    private static final int PENDING_INITIAL_SIZE = 256;
+
+    private static final int SEEN_INITIAL_CAPACITY = 1000000;
+
     @CompilationFinal private static HashSet<AbstractSqueakObject> classesWithNoInstances;
 
     @Child private GetTraceablePointersNode getPointersNode = GetTraceablePointersNode.create();
@@ -78,8 +82,8 @@ public abstract class ObjectGraphNode extends AbstractNodeWithImage {
     @TruffleBoundary
     protected final List<AbstractSqueakObject> doAllInstances(final ClassObject classObj, final boolean isSomeInstance) {
         final List<AbstractSqueakObject> result = new ArrayList<>();
-        final Set<AbstractSqueakObject> seen = new HashSet<>(1000000);
-        final Deque<AbstractSqueakObject> pending = new ArrayDeque<>(256);
+        final Set<AbstractSqueakObject> seen = new HashSet<>(SEEN_INITIAL_CAPACITY);
+        final Deque<AbstractSqueakObject> pending = new ArrayDeque<>(PENDING_INITIAL_SIZE);
         pending.add(image.specialObjectsArray);
         addObjectsFromTruffleFrames(pending);
         while (!pending.isEmpty()) {
@@ -97,8 +101,8 @@ public abstract class ObjectGraphNode extends AbstractNodeWithImage {
     @TruffleBoundary
     protected final List<AbstractSqueakObject> doAllInstancesOf(final ClassObject classObj, @SuppressWarnings("unused") final boolean isSomeInstance) {
         final List<AbstractSqueakObject> result = new ArrayList<>();
-        final Set<AbstractSqueakObject> seen = new HashSet<>(1000000);
-        final Deque<AbstractSqueakObject> pending = new ArrayDeque<>(256);
+        final Set<AbstractSqueakObject> seen = new HashSet<>(SEEN_INITIAL_CAPACITY);
+        final Deque<AbstractSqueakObject> pending = new ArrayDeque<>(PENDING_INITIAL_SIZE);
         pending.add(image.specialObjectsArray);
         addObjectsFromTruffleFrames(pending);
         while (!pending.isEmpty()) {
@@ -119,8 +123,8 @@ public abstract class ObjectGraphNode extends AbstractNodeWithImage {
     @TruffleBoundary
     protected final List<AbstractSqueakObject> doSomeInstance(final ClassObject classObj, @SuppressWarnings("unused") final boolean isSomeInstance) {
         final List<AbstractSqueakObject> result = new ArrayList<>();
-        final Set<AbstractSqueakObject> seen = new HashSet<>(1000000);
-        final Deque<AbstractSqueakObject> pending = new ArrayDeque<>(256);
+        final Set<AbstractSqueakObject> seen = new HashSet<>(SEEN_INITIAL_CAPACITY);
+        final Deque<AbstractSqueakObject> pending = new ArrayDeque<>(PENDING_INITIAL_SIZE);
         pending.add(image.specialObjectsArray);
         addObjectsFromTruffleFrames(pending);
         while (!pending.isEmpty()) {
