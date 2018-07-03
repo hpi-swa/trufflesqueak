@@ -176,16 +176,10 @@ public final class ContextObject extends AbstractSqueakObject {
     }
 
     public AbstractSqueakObject getSender() {
-        return getSender(true);
-    }
-
-    public AbstractSqueakObject getSender(final boolean force) {
         final Object sender = pointers[CONTEXT.SENDER_OR_NIL];
         if (sender instanceof ContextObject) {
             if (truffleFrameMarkedAsTerminated()) {
-                if (force) {
-                    setSender(image.nil);
-                }
+                setSender(image.nil);
                 return image.nil;
             }
             return (AbstractSqueakObject) sender;
@@ -201,9 +195,7 @@ public final class ContextObject extends AbstractSqueakObject {
         } else {
             actualSender = (AbstractSqueakObject) senderOrMarker;
         }
-        if (force) {
-            setSender(actualSender);
-        }
+        setSender(actualSender);
         return actualSender;
     }
 
