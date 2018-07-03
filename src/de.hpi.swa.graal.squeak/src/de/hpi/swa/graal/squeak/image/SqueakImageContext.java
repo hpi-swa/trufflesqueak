@@ -35,7 +35,6 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
-import de.hpi.swa.graal.squeak.nodes.context.ObjectGraph;
 import de.hpi.swa.graal.squeak.nodes.process.GetActiveProcessNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
@@ -121,7 +120,6 @@ public final class SqueakImageContext {
     public final SqueakConfig config;
     public final SqueakDisplay display;
     public final SqueakImageFlags flags = new SqueakImageFlags();
-    public final ObjectGraph objects = new ObjectGraph(this);
     public final OSDetector os = new OSDetector();
     public final InterruptHandlerNode interrupt;
     public final long startUpMillis = System.currentTimeMillis();

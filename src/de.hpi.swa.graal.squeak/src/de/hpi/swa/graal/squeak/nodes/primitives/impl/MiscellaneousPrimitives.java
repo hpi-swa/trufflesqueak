@@ -51,6 +51,7 @@ import de.hpi.swa.graal.squeak.nodes.SqueakNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.IsDoesNotUnderstandNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeGetBytesNode;
 import de.hpi.swa.graal.squeak.nodes.context.ArgumentNode;
+import de.hpi.swa.graal.squeak.nodes.context.ObjectGraphNode;
 import de.hpi.swa.graal.squeak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
@@ -111,9 +112,11 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 77)
     protected abstract static class PrimSomeInstanceNode extends AbstractPrimitiveNode {
+        @Child private ObjectGraphNode objectGraphNode;
 
         protected PrimSomeInstanceNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
+            objectGraphNode = ObjectGraphNode.create(method.image);
         }
 
         protected final boolean isSmallIntegerClass(final ClassObject classObject) {
@@ -133,7 +136,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "isClassObject(classObject)")
         protected final AbstractSqueakObject someInstance(final ClassObject classObject) {
             try {
-                return code.image.objects.someInstance(classObject).get(0);
+                return objectGraphNode.someInstance(classObject);
             } catch (IndexOutOfBoundsException e) {
                 throw new PrimitiveFailed();
             }
@@ -576,13 +579,15 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 177)
     protected abstract static class PrimAllInstancesNode extends AbstractPrimitiveNode {
+        @Child private ObjectGraphNode objectGraphNode;
 
         protected PrimAllInstancesNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
+            objectGraphNode = ObjectGraphNode.create(method.image);
         }
 
         protected final boolean hasNoInstances(final ClassObject classObject) {
-            return code.image.objects.getClassesWithNoInstances().contains(classObject);
+            return objectGraphNode.getClassesWithNoInstances().contains(classObject);
         }
 
         @SuppressWarnings("unused")
@@ -593,7 +598,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final PointersObject allInstances(final ClassObject classObject) {
-            return code.image.newList(ArrayUtils.toArray(code.image.objects.allInstances(classObject)));
+            return code.image.newList(ArrayUtils.toArray(objectGraphNode.allInstances(classObject)));
         }
 
         @SuppressWarnings("unused")
