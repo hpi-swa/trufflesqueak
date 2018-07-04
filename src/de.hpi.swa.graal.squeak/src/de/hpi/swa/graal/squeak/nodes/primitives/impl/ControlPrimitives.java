@@ -914,7 +914,7 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"!code.image.config.disableInterruptHandler()"})
         protected final AbstractSqueakObject doRelinquish(final VirtualFrame frame, final AbstractSqueakObject receiver, final long timeMicroseconds) {
-            code.image.interrupt.doTrigger(frame);
+            code.image.interrupt.trigger(frame);
             sleepFor(timeMicroseconds / 1000);
             return receiver;
         }
