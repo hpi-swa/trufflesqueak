@@ -124,14 +124,15 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
         @Specialization
         protected static final Object doTerminate(final ContextObject receiver, final NilObject nil) {
-            return terminateTo(receiver, nil);
+            receiver.atput0(CONTEXT.SENDER_OR_NIL, nil); // flagging context as dirty
+            return receiver;
         }
 
         /*
          * Terminate all the Contexts between me and previousContext, if previousContext is on my
          * Context stack. Make previousContext my sender.
          */
-        private static Object terminateTo(final ContextObject receiver, final AbstractSqueakObject previousContext) {
+        private static Object terminateTo(final ContextObject receiver, final ContextObject previousContext) {
             if (hasSender(receiver, previousContext)) {
                 ContextObject currentContext = receiver.getNotNilSender();
                 while (currentContext != previousContext) {
@@ -147,7 +148,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         /*
          * Answer whether the receiver is strictly above context on the stack (Context>>hasSender:).
          */
-        private static boolean hasSender(final ContextObject context, final AbstractSqueakObject previousContext) {
+        private static boolean hasSender(final ContextObject context, final ContextObject previousContext) {
             if (context == previousContext) {
                 return false;
             }
