@@ -7,7 +7,7 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.Returns.LocalReturn;
-import de.hpi.swa.graal.squeak.exceptions.SqueakException;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.nodes.HandlePrimitiveFailedNode;
@@ -216,7 +216,7 @@ public final class MiscellaneousBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            throw new SqueakException("Unknown/uninterpreted bytecode " + bytecode);
+            throw new SqueakException("Unknown/uninterpreted bytecode:", bytecode);
         }
 
         @Override

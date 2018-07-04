@@ -6,7 +6,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakException;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
@@ -212,6 +212,6 @@ public abstract class SqueakObjectAtPut0Node extends Node {
     @SuppressWarnings("unused")
     @Fallback
     protected static final void doFallback(final Object obj, final long index, final Object value) {
-        throw new SqueakException("Object does not support atput0: " + obj);
+        throw new SqueakException("Object does not support atput0:", obj);
     }
 }

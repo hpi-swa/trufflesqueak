@@ -2,7 +2,7 @@ package de.hpi.swa.graal.squeak.util;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakException;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
@@ -185,7 +185,7 @@ public final class SqueakBytecodeDecoder {
             case 248: case 249: case 250: case 251: case 252: case 253: case 254: case 255:
                 return SendLiteralSelectorNode.create(code, index, 1, b & 0xF, 2);
             default:
-                throw new SqueakException("Unknown bytecode: " + b);
+                throw new SqueakException("Unknown bytecode:", b);
         }
         //@formatter:on
     }

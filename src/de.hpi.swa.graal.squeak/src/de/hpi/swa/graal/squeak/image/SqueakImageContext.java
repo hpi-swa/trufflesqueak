@@ -19,7 +19,7 @@ import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
-import de.hpi.swa.graal.squeak.exceptions.SqueakException;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.io.SqueakDisplay;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
@@ -154,7 +154,7 @@ public final class SqueakImageContext {
         final ClassObject receiverClass = receiver instanceof Long ? smallIntegerClass : nilClass;
         final CompiledMethodObject lookupResult = (CompiledMethodObject) receiverClass.lookup(selector);
         if (lookupResult.getCompiledInSelector() == doesNotUnderstand) {
-            throw new SqueakException(receiver + " >> " + selector + " could not be found!");
+            throw new SqueakException(receiver, ">>", selector, "could not be found!");
         }
         final ContextObject customContext = ContextObject.create(this, lookupResult.frameSize());
         customContext.atput0(CONTEXT.METHOD, lookupResult);
@@ -234,7 +234,7 @@ public final class SqueakImageContext {
         } else if (obj instanceof Dimension) {
             return wrap((Dimension) obj);
         }
-        throw new SqueakException("Don't know how to wrap " + obj);
+        throw new SqueakException("Unsupported value to wrap:", obj);
     }
 
     public Object wrap(final boolean value) {
@@ -343,7 +343,7 @@ public final class SqueakImageContext {
         final boolean isTravisBuild = System.getenv().containsKey("TRAVIS");
         final int[] depth = new int[1];
         final Object[] lastSender = new Object[]{null};
-        getOutput().println("== Squeak stack trace ===========================================================");
+        getError().println("== Squeak stack trace ===========================================================");
         Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Object>() {
 
             @Override
@@ -364,11 +364,11 @@ public final class SqueakImageContext {
                     argumentStrings[i] = arguments[i].toString();
                 }
                 final String prefix = FrameAccess.getClosure(current) == null ? "" : "[] in ";
-                getOutput().println(String.format("%s%s #(%s) [this: %s, sender: %s]", prefix, method, String.join(", ", argumentStrings), contextOrMarker, lastSender[0]));
+                getError().println(String.format("%s%s #(%s) [this: %s, sender: %s]", prefix, method, String.join(", ", argumentStrings), contextOrMarker, lastSender[0]));
                 return null;
             }
         });
-        getOutput().println("== " + depth[0] + " Truffle frames ================================================================");
+        getError().println("== " + depth[0] + " Truffle frames ================================================================");
         if (lastSender[0] instanceof ContextObject) {
             ((ContextObject) lastSender[0]).printSqStackTrace();
         }

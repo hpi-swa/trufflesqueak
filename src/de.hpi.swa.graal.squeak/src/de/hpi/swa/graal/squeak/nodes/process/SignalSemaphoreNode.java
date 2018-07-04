@@ -4,7 +4,7 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakException;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SEMAPHORE;
@@ -45,6 +45,6 @@ public abstract class SignalSemaphoreNode extends AbstractNodeWithImage {
 
     @Fallback
     protected static final void doFallback(@SuppressWarnings("unused") final VirtualFrame frame, final Object semaphore) {
-        throw new SqueakException("Unexpected object in SignalSemaphoreNode: " + semaphore);
+        throw new SqueakException("Unexpected object in SignalSemaphoreNode:", semaphore);
     }
 }

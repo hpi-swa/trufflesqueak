@@ -13,7 +13,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions;
-import de.hpi.swa.graal.squeak.exceptions.SqueakException;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
@@ -73,7 +73,7 @@ public final class NativeObject extends AbstractSqueakObject {
     @TruffleBoundary
     @Override
     public String toString() {
-        CompilerAsserts.neverPartOfCompilation("");
+        CompilerAsserts.neverPartOfCompilation("toString should not be part of compilation");
         if (isByteType()) {
             return new String((byte[]) storage);
         } else if (isShortType()) {

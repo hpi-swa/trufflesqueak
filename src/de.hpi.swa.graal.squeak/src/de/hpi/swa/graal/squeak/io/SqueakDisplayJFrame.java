@@ -30,7 +30,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakException;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.io.SqueakIOConstants.KEYBOARD;
 import de.hpi.swa.graal.squeak.model.NativeObject;
@@ -112,7 +112,7 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
                     bufferedImage.setRGB(0, 0, drawWidth, drawHeight, words, 0, width);
                     break;
                 default:
-                    throw new SqueakException("Unsupported form depth: " + depth);
+                    throw new SqueakException("Unsupported form depth:",  depth);
             }
             //@formatter:on
             g.drawImage(bufferedImage, 0, 0, null);

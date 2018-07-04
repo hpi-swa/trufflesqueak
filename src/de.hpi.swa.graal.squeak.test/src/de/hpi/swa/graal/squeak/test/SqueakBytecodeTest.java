@@ -19,7 +19,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonVirtualReturn;
-import de.hpi.swa.graal.squeak.exceptions.SqueakException;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
@@ -153,7 +153,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
                 runMethod(rcvr, bytecode);
                 fail("Exception expected");
             } catch (SqueakException e) {
-                assertEquals("Unknown/uninterpreted bytecode " + bytecode, e.getMessage());
+                assertEquals("Unknown/uninterpreted bytecode: " + bytecode, e.getMessage());
             }
         }
     }

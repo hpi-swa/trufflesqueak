@@ -5,7 +5,7 @@ import java.awt.event.MouseEvent;
 
 import javax.swing.event.MouseInputAdapter;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakException;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.io.SqueakIOConstants.EVENT_TYPE;
 import de.hpi.swa.graal.squeak.io.SqueakIOConstants.MOUSE;
 import de.hpi.swa.graal.squeak.io.SqueakIOConstants.MOUSE_EVENT;
@@ -53,7 +53,7 @@ public final class SqueakMouse extends MouseInputAdapter {
                 buttons = 0;
                 break;
             default:
-                throw new SqueakException("Unknown mouse event: " + e);
+                throw new SqueakException("Unknown mouse event:", e);
         }
 
         display.buttons = buttons | display.recordModifiers(e);
@@ -73,7 +73,7 @@ public final class SqueakMouse extends MouseInputAdapter {
             case MouseEvent.NOBUTTON:
                 return 0;
             default:
-                throw new SqueakException("Unknown mouse button in event: " + e);
+                throw new SqueakException("Unknown mouse button in event:", e);
         }
     }
 }

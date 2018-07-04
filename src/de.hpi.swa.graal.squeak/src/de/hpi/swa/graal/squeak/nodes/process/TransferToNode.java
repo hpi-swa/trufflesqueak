@@ -5,7 +5,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
-import de.hpi.swa.graal.squeak.exceptions.SqueakException;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
@@ -49,6 +49,6 @@ public abstract class TransferToNode extends AbstractNodeWithImage {
 
     @Fallback
     protected static final void doFallback(final Object activeProcess, final Object newProcess) {
-        throw new SqueakException("Unexpected process objects: " + activeProcess + " and " + newProcess);
+        throw new SqueakException("Unexpected process objects:", activeProcess, "and", newProcess);
     }
 }
