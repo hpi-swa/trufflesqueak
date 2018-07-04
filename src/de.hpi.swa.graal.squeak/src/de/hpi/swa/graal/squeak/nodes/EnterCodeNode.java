@@ -16,6 +16,8 @@ import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.SourceSection;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
+import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
+import de.hpi.swa.graal.squeak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
@@ -53,6 +55,7 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
 
     protected static class SqueakRootNode extends RootNode {
         @Child private EnterCodeNode codeNode;
+        @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create();
 
         protected SqueakRootNode(final SqueakLanguage language, final CompiledCodeObject code) {
             super(language, code.getFrameDescriptor());
@@ -61,7 +64,32 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
 
         @Override
         public Object execute(final VirtualFrame frame) {
-            return codeNode.execute(frame);
+            try {
+                return codeNode.execute(frame);
+                /*
+                 * Materialize context objects on NonVirtualReturns and ProcessSwitches.
+                 */
+            } catch (NonVirtualReturn nvr) {
+                final ContextObject context = getOrCreateContextNode.executeGet(frame);
+                if (context != nvr.getLastSeenContext()) {
+                    final ContextObject lastSeenContext = nvr.getLastSeenContext();
+                    if (!lastSeenContext.hasMaterializedSender()) {
+                        lastSeenContext.setSender(context);
+                    }
+                    nvr.setLastSeenContext(context);
+                }
+                throw nvr;
+            } catch (ProcessSwitch ps) {
+                final ContextObject context = getOrCreateContextNode.executeGet(frame);
+                if (context != ps.getLastSeenContext()) {
+                    final ContextObject lastSeenContext = ps.getLastSeenContext();
+                    if (!lastSeenContext.hasMaterializedSender()) {
+                        lastSeenContext.setSender(context);
+                    }
+                    ps.setLastSeenContext(context);
+                }
+                throw ps;
+            }
         }
 
         @Override

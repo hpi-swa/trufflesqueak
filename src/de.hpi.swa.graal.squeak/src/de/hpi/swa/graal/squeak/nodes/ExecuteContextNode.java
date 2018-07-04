@@ -3,12 +3,10 @@ package de.hpi.swa.graal.squeak.nodes;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.LoopNode;
 
-import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
 import de.hpi.swa.graal.squeak.exceptions.Returns.LocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonVirtualReturn;
@@ -32,7 +30,6 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
     @Child private UpdateInstructionPointerNode updateInstructionPointerNode;
     @Child private StackPushNode pushStackNode = StackPushNode.create();
     @Child private CalculcatePCOffsetNode calculcatePCOffsetNode = CalculcatePCOffsetNode.create();
-    @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create();
 
     public static ExecuteContextNode create(final CompiledCodeObject code) {
         return new ExecuteContextNode(code);
@@ -59,20 +56,7 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
         } catch (NonLocalReturn nlr) {
             return handleNonLocalReturnNode.executeHandle(frame, nlr);
         } catch (NonVirtualReturn nvr) {
-            final ContextObject context = getOrCreateContextNode.executeGet(frame);
-            if (context != nvr.getLastSeenContext()) {
-                nvr.getLastSeenContext().setSender(context);
-                nvr.setLastSeenContext(context);
-            }
             return handleNonVirtualReturnNode.executeHandle(frame, nvr);
-        } catch (ProcessSwitch ps) {
-            final ContextObject context = getOrCreateContextNode.executeGet(frame);
-            if (context != ps.getLastSeenContext()) {
-                ps.getLastSeenContext().setSender(context);
-                ps.setLastSeenContext(context);
-            }
-            assert hasMaterializedContext(frame);
-            throw ps;
         }
     }
 
@@ -97,26 +81,8 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
         } catch (NonLocalReturn nlr) {
             return handleNonLocalReturnNode.executeHandle(frame, nlr);
         } catch (NonVirtualReturn nvr) {
-            final ContextObject context = getOrCreateContextNode.executeGet(frame);
-            if (context != nvr.getLastSeenContext()) {
-                nvr.getLastSeenContext().setSender(context);
-                nvr.setLastSeenContext(context);
-            }
             return handleNonVirtualReturnNode.executeHandle(frame, nvr);
-        } catch (ProcessSwitch ps) {
-            final ContextObject context = getOrCreateContextNode.executeGet(frame);
-            if (context != ps.getLastSeenContext()) {
-                ps.getLastSeenContext().setSender(context);
-                ps.setLastSeenContext(context);
-            }
-            assert hasMaterializedContext(frame);
-            throw ps;
         }
-    }
-
-    private static boolean hasMaterializedContext(final VirtualFrame frame) {
-        final Object ctx = FrameUtil.getObjectSafe(frame, CompiledCodeObject.thisContextOrMarkerSlot);
-        return ctx instanceof ContextObject && !((ContextObject) ctx).hasVirtualSender();
     }
 
     private long getAndDecodeSqueakPC(final ContextObject newContext) {
