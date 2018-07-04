@@ -122,6 +122,9 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
     parser.add_argument('-m', '--method',
                         help='method selector when receiver is provided',
                         dest='method')
+    parser.add_argument('--print-defaults', help='print VM defaults',
+                        dest='print_defaults', action='store_true',
+                        default=False)
     parser.add_argument('-r', '--receiver',
                         help='SmallInteger to be used as receiver',
                         dest='receiver')
@@ -166,6 +169,9 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
 
     if parsed_args.gc:
         vm_args += ['-XX:+PrintGC', '-XX:+PrintGCDetails']
+
+    if parsed_args.print_defaults:
+        vm_args += ['-XX:+PrintFlagsFinal']
 
     if extra_vm_args:
         vm_args += extra_vm_args
