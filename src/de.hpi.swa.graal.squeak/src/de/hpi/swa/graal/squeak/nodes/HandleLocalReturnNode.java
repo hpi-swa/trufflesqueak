@@ -36,7 +36,7 @@ public abstract class HandleLocalReturnNode extends AbstractNodeWithCode {
         if (context.hasModifiedSender()) {
             final ContextObject newSender = context.getNotNilSender(); // sender has changed
             terminateNode.executeTerminate(frame);
-            throw new NonVirtualReturn(lr.getReturnValue(), newSender, newSender, context);
+            throw new NonVirtualReturn(lr.getReturnValue(), newSender, newSender);
         } else {
             terminateNode.executeTerminate(frame);
             return lr.getReturnValue();

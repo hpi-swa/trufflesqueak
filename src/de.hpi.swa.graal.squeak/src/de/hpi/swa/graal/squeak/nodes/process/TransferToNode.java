@@ -44,7 +44,7 @@ public abstract class TransferToNode extends AbstractNodeWithImage {
         atPut0Node.execute(activeProcess, PROCESS.SUSPENDED_CONTEXT, activeContext);
         final ContextObject newActiveContext = (ContextObject) at0Node.execute(newProcess, PROCESS.SUSPENDED_CONTEXT);
         atPut0Node.execute(newProcess, PROCESS.SUSPENDED_CONTEXT, image.nil);
-        throw new ProcessSwitch(newActiveContext, activeContext);
+        throw new ProcessSwitch(newActiveContext);
     }
 
     @Fallback

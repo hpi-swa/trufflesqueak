@@ -57,6 +57,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
             CompilerDirectives.transferToInterpreter();
             final AbstractSqueakObject sender = activeContext.getSender();
             try {
+                ExecuteContextNode.reset();
                 final CompiledCodeObject code = activeContext.getClosureOrMethod();
                 // FIXME: do not create node here?
                 if (executeContextNode == null) {

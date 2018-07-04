@@ -189,7 +189,7 @@ public final class SqueakSUnitTestMap {
                     "MessageSendTest", TEST_TYPE.PASSING,
                     "MessageSetTest", TEST_TYPE.PASSING,
                     "MessageTraceTest", TEST_TYPE.PASSING,
-                    "MethodContextTest", TEST_TYPE.FAILING, // FIXME: NullPointerException
+                    "MethodContextTest", TEST_TYPE.PASSING,
                     "MethodHighlightingTests", TEST_TYPE.FLAKY,
                     "MethodPragmaTest", TEST_TYPE.PASSING,
                     "MethodPropertiesTest", TEST_TYPE.PASSING,

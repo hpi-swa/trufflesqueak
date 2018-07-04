@@ -7,6 +7,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.LoopNode;
 
+import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
 import de.hpi.swa.graal.squeak.exceptions.Returns.LocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonVirtualReturn;
@@ -22,7 +23,7 @@ import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.SqueakBytecodeDecoder;
 
-public class ExecuteContextNode extends AbstractNodeWithCode {
+public final class ExecuteContextNode extends AbstractNodeWithCode {
     @Children private AbstractBytecodeNode[] bytecodeNodes;
     @Child private HandleLocalReturnNode handleLocalReturnNode;
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
@@ -30,6 +31,9 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
     @Child private UpdateInstructionPointerNode updateInstructionPointerNode;
     @Child private StackPushNode pushStackNode = StackPushNode.create();
     @Child private CalculcatePCOffsetNode calculcatePCOffsetNode = CalculcatePCOffsetNode.create();
+    @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create();
+
+    private static ContextObject lastSeenContext;
 
     public static ExecuteContextNode create(final CompiledCodeObject code) {
         return new ExecuteContextNode(code);
@@ -45,10 +49,10 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
     }
 
     public Object executeVirtualized(final VirtualFrame frame) {
-        if (!code.hasPrimitive() && bytecodeNodes.length > 32) {
-            code.image.interrupt.sendOrBackwardJumpTrigger(frame);
-        }
         try {
+            if (!code.hasPrimitive() && bytecodeNodes.length > 32) {
+                code.image.interrupt.sendOrBackwardJumpTrigger(frame);
+            }
             startBytecode(frame);
             throw new SqueakException("Method did not return");
         } catch (LocalReturn lr) {
@@ -56,17 +60,36 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
         } catch (NonLocalReturn nlr) {
             return handleNonLocalReturnNode.executeHandle(frame, nlr);
         } catch (NonVirtualReturn nvr) {
+            getOrCreateContextNode.executeGet(frame).markEscaped();
             return handleNonVirtualReturnNode.executeHandle(frame, nvr);
+        } catch (ProcessSwitch ps) {
+            getOrCreateContextNode.executeGet(frame).markEscaped();
+            throw ps;
+        } finally {
+            if (lastSeenContext != null || !isFullyVirtualized(frame)) {
+                final ContextObject context = getOrCreateContextNode.executeGet(frame);
+                if (context != lastSeenContext) {
+                    if (lastSeenContext != null && !lastSeenContext.hasMaterializedSender()) {
+                        lastSeenContext.setSender(context);
+                    }
+                    if (context.hasEscaped()) {
+                        lastSeenContext = context;
+                    } else {
+                        lastSeenContext = null; // done
+                    }
+                }
+            }
         }
     }
 
     public Object executeNonVirtualized(final VirtualFrame frame, final ContextObject newContext) {
         // maybe persist newContext, so there's no need to lookup the context to update its pc.
         assert newContext.getClosureOrMethod() == frame.getArguments()[FrameAccess.METHOD];
-        if (!code.hasPrimitive() && bytecodeNodes.length > 32) {
-            code.image.interrupt.sendOrBackwardJumpTrigger(frame);
-        }
+
         try {
+            if (!code.hasPrimitive() && bytecodeNodes.length > 32) {
+                code.image.interrupt.sendOrBackwardJumpTrigger(frame);
+            }
             final long initialPC = getAndDecodeSqueakPC(newContext);
             if (initialPC == 0) {
                 startBytecode(frame);
@@ -82,6 +105,10 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
             return handleNonLocalReturnNode.executeHandle(frame, nlr);
         } catch (NonVirtualReturn nvr) {
             return handleNonVirtualReturnNode.executeHandle(frame, nvr);
+        } finally {
+            if (lastSeenContext != null) {
+                lastSeenContext = null; // done here
+            }
         }
     }
 
@@ -176,6 +203,10 @@ public class ExecuteContextNode extends AbstractNodeWithCode {
             }
             node = bytecodeNodes[pc];
         }
+    }
+
+    public static void reset() {
+        lastSeenContext = null;
     }
 
     @Override

@@ -19,8 +19,9 @@ public final class ContextObject extends AbstractSqueakObject {
     @CompilationFinal private MaterializedFrame truffleFrame;
     @CompilationFinal private FrameMarker frameMarker;
     private Object[] pointers;
-    private boolean hasModifiedSender;
-    private boolean isDirty;
+    private boolean hasModifiedSender = false;
+    private boolean isDirty = false;
+    private boolean escaped = false;
 
     public static ContextObject create(final SqueakImageContext image) {
         return new ContextObject(image);
@@ -159,6 +160,14 @@ public final class ContextObject extends AbstractSqueakObject {
         return isDirty;
     }
 
+    public boolean hasEscaped() {
+        return escaped;
+    }
+
+    public void markEscaped() {
+        this.escaped = true;
+    }
+
     public boolean hasModifiedSender() {
         return hasModifiedSender;
     }
@@ -191,7 +200,7 @@ public final class ContextObject extends AbstractSqueakObject {
         if (senderOrMarker instanceof FrameMarker) {
             final Frame frame = FrameAccess.findFrameForMarker((FrameMarker) senderOrMarker);
             if (frame == null) {
-                throw new SqueakException("unable to find frame for marker:", senderOrMarker);
+                throw new SqueakException("Unable to find frame for marker:", senderOrMarker);
             }
             actualSender = GetOrCreateContextNode.getOrCreateFull(frame.materialize());
             assert actualSender != null;
