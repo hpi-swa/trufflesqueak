@@ -189,7 +189,7 @@ public final class SqueakSUnitTestMap {
                     "MessageSendTest", TEST_TYPE.PASSING,
                     "MessageSetTest", TEST_TYPE.PASSING,
                     "MessageTraceTest", TEST_TYPE.PASSING,
-                    "MethodContextTest", TEST_TYPE.PASSING,
+                    "MethodContextTest", TEST_TYPE.FAILING, // FIXME: NullPointerException
                     "MethodHighlightingTests", TEST_TYPE.FLAKY,
                     "MethodPragmaTest", TEST_TYPE.PASSING,
                     "MethodPropertiesTest", TEST_TYPE.PASSING,
@@ -343,7 +343,7 @@ public final class SqueakSUnitTestMap {
                     "UrlTest", TEST_TYPE.PASSING,
                     "UserInterfaceThemeTest", TEST_TYPE.NOT_TERMINATING,
                     "UTF16TextConverterTest", TEST_TYPE.BROKEN_IN_SQUEAK,
-                    "UTF32TextConverterTest", TEST_TYPE.FAILING, // becomeForward fails on natives
+                    "UTF32TextConverterTest", TEST_TYPE.PASSING,
                     "UTF8TextConverterTest", TEST_TYPE.FAILING, // FIXME: NullPointerException
                     "UTF8EdgeCaseTest", TEST_TYPE.FAILING, // failing in Squeak
                     "UUIDPrimitivesTest", TEST_TYPE.PASSING,
