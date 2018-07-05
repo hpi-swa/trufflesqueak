@@ -1,5 +1,5 @@
 language: java
-jdk: oraclejdk9
+jdk: oraclejdk11
 
 sudo: required
 dist: trusty
@@ -12,8 +12,8 @@ env:
   matrix:
     - JDK="jdk8" GATE="style,fullbuild"
     - JDK="jdk8" GATE="build,test"
-    - JDK="jdk9" GATE="style,fullbuild"
-    - JDK="jdk9" GATE="build,test"
+    - JDK="jdk11" GATE="style,fullbuild"
+    - JDK="jdk11" GATE="build,test"
 
 python:
   - "2.7"
@@ -46,8 +46,8 @@ install:
   - |
       if [[ ${GATE} == *fullbuild* ]]
       then
-        # JDT is not supported on JDK9
-        if [ "${JDK}" != "jdk9" ]
+        # Only test JDT on JDK8
+        if [[ "${JDK}" == "jdk8" ]]
         then
           export JDT=${MX_PATH}/ecj.jar
           curl -sSL -o ${JDT} https://dl.bintray.com/hpi-swa-lab/GraalSqueak/dependencies/ecj-4.5.2.jar
@@ -57,8 +57,11 @@ install:
       if [[ ${GATE} == *test* ]]
       then
         scripts/download-test-image.sh
-        curl -sSL -o ~/codacy-coverage-reporter.jar $(curl https://api.github.com/repos/codacy/codacy-coverage-reporter/releases/latest | jq -r .assets[0].browser_download_url)
-        MX_OPTS="--jacocout coverage"
+        if [[ "${JDK}" == "jdk8" ]]
+        then
+          curl -sSL -o ~/codacy-coverage-reporter.jar $(curl https://api.github.com/repos/codacy/codacy-coverage-reporter/releases/latest | jq -r .assets[0].browser_download_url)
+          MX_OPTS="--jacocout coverage"
+        fi
       fi
   - |
       if [[ "${JDK}" == "jdk8" ]]
@@ -74,7 +77,7 @@ script:
 
 after_success:
   - |
-      if [[ ${GATE} == *test* ]]
+      if [[ ${GATE} == *test* ]] && [[ "${JDK}" == "jdk8" ]]
       then
         bash <(curl -s https://codecov.io/bash)
         jdk_switcher use oraclejdk8 # required for codacy-coverage-reporter

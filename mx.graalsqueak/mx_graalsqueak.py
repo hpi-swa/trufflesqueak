@@ -217,14 +217,19 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
 def _graalsqueak_gate_runner(args, tasks):
     os.environ['MX_GATE'] = 'true'
     unittest_args = BASE_VM_ARGS
-    unittest_args += _get_jacoco_agent_args()
+
+    supports_coverage = os.environ.get('JDK') == 'jdk8'  # see `.travis.yml`
+    if supports_coverage:
+        unittest_args += _get_jacoco_agent_args()
     unittest_args += ['--suite', 'graalsqueak']
     with mx_gate.Task('TestGraalSqueak', tasks, tags=['test']) as t:
         if t:
             mx_unittest.unittest(unittest_args)
-    with mx_gate.Task('CodeCoverageReport', tasks, tags=['test']) as t:
-        if t:
-            mx.command_function('jacocoreport')(['--format', 'xml', '.'])
+
+    if supports_coverage:
+        with mx_gate.Task('CodeCoverageReport', tasks, tags=['test']) as t:
+            if t:
+                mx.command_function('jacocoreport')(['--format', 'xml', '.'])
 
 
 def _get_jacoco_agent_args():
