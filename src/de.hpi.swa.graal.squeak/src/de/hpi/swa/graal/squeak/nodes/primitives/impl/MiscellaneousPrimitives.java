@@ -884,7 +884,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
         protected final boolean bitBltSimulationNotFound = code.image.getSimulatePrimitiveArgsSelector() == null;
         protected final PointersObject emptyList;
 
-        @Child protected LookupNode lookupNode = LookupNode.create();
+        @Child protected LookupNode lookupNode;
         @Child protected DispatchNode dispatchNode = DispatchNode.create();
         @Child protected SqueakLookupClassNode lookupClassNode;
         @Child protected GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create();
@@ -904,6 +904,7 @@ public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
             this.moduleName = moduleName;
             this.functionName = code.image.wrap(functionName);
+            lookupNode = LookupNode.create(method.image);
             lookupClassNode = SqueakLookupClassNode.create(method.image);
             isDoesNotUnderstandNode = IsDoesNotUnderstandNode.create(method.image);
             emptyList = code.image.newList(new Object[]{});

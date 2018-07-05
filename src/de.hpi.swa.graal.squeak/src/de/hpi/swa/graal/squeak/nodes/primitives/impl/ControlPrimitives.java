@@ -34,7 +34,6 @@ import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.DispatchNode;
 import de.hpi.swa.graal.squeak.nodes.DispatchSendNode;
 import de.hpi.swa.graal.squeak.nodes.LookupNode;
-import de.hpi.swa.graal.squeak.nodes.LookupNodeGen;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeGetBytesNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
@@ -92,12 +91,13 @@ public class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     // primitiveBlockCopy / primitiveBlockValue: (#80, #81, #82) no longer needed.
 
     private abstract static class AbstractPerformPrimitiveNode extends AbstractPrimitiveNode {
+        @Child protected LookupNode lookupNode;
         @Child protected SqueakLookupClassNode lookupClassNode;
-        @Child protected LookupNode lookupNode = LookupNodeGen.create();
         @Child private DispatchSendNode dispatchSendNode;
 
         protected AbstractPerformPrimitiveNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
+            lookupNode = LookupNode.create(code.image);
             lookupClassNode = SqueakLookupClassNodeGen.create(code.image);
             dispatchSendNode = DispatchSendNode.create(code.image);
         }

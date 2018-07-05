@@ -27,7 +27,7 @@ public final class SendBytecodes {
         private final int argumentCount;
 
         @Child protected SqueakLookupClassNode lookupClassNode;
-        @Child private LookupNode lookupNode = LookupNode.create();
+        @Child private LookupNode lookupNode;
         @Child private DispatchSendNode dispatchSendNode;
         @Child private StackPopNReversedNode popNReversedNode;
         @Child private StackPushNode pushNode = StackPushNode.create();
@@ -36,6 +36,7 @@ public final class SendBytecodes {
             super(code, index, numBytecodes);
             selector = sel instanceof NativeObject ? (NativeObject) sel : code.image.doesNotUnderstand;
             argumentCount = argcount;
+            lookupNode = LookupNode.create(code.image);
             lookupClassNode = SqueakLookupClassNode.create(code.image);
             popNReversedNode = StackPopNReversedNode.create(code, 1 + argumentCount);
             dispatchSendNode = DispatchSendNode.create(code.image);

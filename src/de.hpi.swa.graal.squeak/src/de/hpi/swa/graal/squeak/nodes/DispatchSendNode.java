@@ -20,7 +20,7 @@ import de.hpi.swa.graal.squeak.util.ArrayUtils;
 public abstract class DispatchSendNode extends AbstractNodeWithImage {
     @Child protected IsDoesNotUnderstandNode isDoesNotUnderstandNode;
     @Child private DispatchNode dispatchNode = DispatchNode.create();
-    @Child private LookupNode lookupNode = LookupNode.create();
+    @Child private LookupNode lookupNode;
     @Child private SqueakLookupClassNode lookupClassNode;
 
     @CompilationFinal private ClassObject messageClass;
@@ -33,6 +33,7 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
     protected DispatchSendNode(final SqueakImageContext image) {
         super(image);
         isDoesNotUnderstandNode = IsDoesNotUnderstandNode.create(image);
+        lookupNode = LookupNode.create(image);
         lookupClassNode = SqueakLookupClassNode.create(image);
     }
 

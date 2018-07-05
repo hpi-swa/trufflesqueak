@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -25,7 +26,6 @@ public final class ClassObject extends AbstractSqueakObject {
 
     @CompilationFinal private int instSpec = -1;
     @CompilationFinal private int instanceSize = -1;
-    @CompilationFinal private CompiledMethodObject doesNotUnderstandMethod;
 
     protected Object[] pointers;
 
@@ -170,9 +170,15 @@ public final class ClassObject extends AbstractSqueakObject {
         return classFormatStable.getAssumption();
     }
 
+    @TruffleBoundary
+    public Object lookup(final String selector) {
+        return lookup(methodSelector -> methodSelector != null && methodSelector.toString().equals(selector));
+    }
+
     // TODO: cache the methoddict in a better structure than what Squeak provides
     // ... or use the Squeak hash to decide where to put stuff
     private Object lookup(final Predicate<Object> predicate) {
+        CompilerAsserts.neverPartOfCompilation("This is only for finding the active context on startup, use LookupNode instead.");
         Object lookupClass = this;
         while (lookupClass instanceof ClassObject) {
             final Object methodDict = ((ClassObject) lookupClass).getMethodDict();
@@ -189,24 +195,7 @@ public final class ClassObject extends AbstractSqueakObject {
             }
             lookupClass = ((ClassObject) lookupClass).getSuperclass();
         }
-        return getDoesNotUnderstandMethod();
-    }
-
-    private CompiledMethodObject getDoesNotUnderstandMethod() {
-        if (doesNotUnderstandMethod == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            doesNotUnderstandMethod = (CompiledMethodObject) lookup(image.doesNotUnderstand);
-        }
-        return doesNotUnderstandMethod;
-    }
-
-    public Object lookup(final NativeObject selector) {
-        return lookup(methodSelector -> methodSelector == selector);
-    }
-
-    @TruffleBoundary
-    public Object lookup(final String selector) {
-        return lookup(methodSelector -> methodSelector != null && methodSelector.toString().equals(selector));
+        return lookup(methodSelector -> methodSelector == image.doesNotUnderstand);
     }
 
     public boolean isVariable() {
