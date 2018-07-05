@@ -32,8 +32,7 @@ public final class ExecuteContextNode extends AbstractNodeWithCode {
     @Child private StackPushNode pushStackNode = StackPushNode.create();
     @Child private CalculcatePCOffsetNode calculcatePCOffsetNode = CalculcatePCOffsetNode.create();
     @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create();
-
-    private static ContextObject lastSeenContext;
+    @Child private MaterializeContextOnMethodExitNode materializeContextOnMethodExitNode = MaterializeContextOnMethodExitNode.create();
 
     public static ExecuteContextNode create(final CompiledCodeObject code) {
         return new ExecuteContextNode(code);
@@ -66,19 +65,7 @@ public final class ExecuteContextNode extends AbstractNodeWithCode {
             getOrCreateContextNode.executeGet(frame).markEscaped();
             throw ps;
         } finally {
-            if (lastSeenContext != null || !isFullyVirtualized(frame)) {
-                final ContextObject context = getOrCreateContextNode.executeGet(frame);
-                if (context != lastSeenContext) {
-                    if (lastSeenContext != null && !lastSeenContext.hasMaterializedSender()) {
-                        lastSeenContext.setSender(context);
-                    }
-                    if (context.hasEscaped()) {
-                        lastSeenContext = context;
-                    } else {
-                        lastSeenContext = null; // done
-                    }
-                }
-            }
+            materializeContextOnMethodExitNode.execute(frame);
         }
     }
 
@@ -106,9 +93,7 @@ public final class ExecuteContextNode extends AbstractNodeWithCode {
         } catch (NonVirtualReturn nvr) {
             return handleNonVirtualReturnNode.executeHandle(frame, nvr);
         } finally {
-            if (lastSeenContext != null) {
-                lastSeenContext = null; // done here
-            }
+            MaterializeContextOnMethodExitNode.stopMaterializationHere();
         }
     }
 
@@ -203,10 +188,6 @@ public final class ExecuteContextNode extends AbstractNodeWithCode {
             }
             node = bytecodeNodes[pc];
         }
-    }
-
-    public static void reset() {
-        lastSeenContext = null;
     }
 
     @Override
