@@ -103,6 +103,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         return needsLargeFrame ? CONTEXT.LARGE_FRAMESIZE : CONTEXT.SMALL_FRAMESIZE;
     }
 
+    @SuppressWarnings("deprecation")
     @TruffleBoundary
     protected final void prepareFrameDescriptor() {
         CompilerDirectives.transferToInterpreterAndInvalidate();
