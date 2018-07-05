@@ -20,6 +20,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -378,6 +379,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
     }
 
+    @ImportStatic(NativeObject.class)
     @GenerateNodeFactory
     @SqueakPrimitive(index = 145)
     protected abstract static class PrimConstantFillNode extends AbstractPrimitiveNode {
@@ -405,9 +407,25 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             return receiver;
         }
 
+        @Specialization(guards = {"receiver.isIntType()", "value.lessThanOrEqualTo(INTEGER_MAX)"})
+        protected final NativeObject doNativeInts(final NativeObject receiver, final LargeIntegerObject value) {
+            Arrays.fill(receiver.getIntStorage(storageType), (int) value.longValueExact());
+            return receiver;
+        }
+
         @Specialization(guards = "receiver.isLongType()")
         protected final NativeObject doNativeLongs(final NativeObject receiver, final long value) {
             Arrays.fill(receiver.getLongStorage(storageType), value);
+            return receiver;
+        }
+
+        @Specialization(guards = "receiver.isLongType()")
+        protected final NativeObject doNativeLongs(final NativeObject receiver, final LargeIntegerObject value) {
+            try {
+                Arrays.fill(receiver.getLongStorage(storageType), value.longValueExact());
+            } catch (ArithmeticException e) {
+                throw new PrimitiveFailed();
+            }
             return receiver;
         }
     }
