@@ -4,6 +4,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
+import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
@@ -151,7 +152,8 @@ public final class SqueakBytecodeDecoder {
             case 138:
                 return new PushNewArrayNode(code, index, 2, nextByte());
             case 139:
-                return CallPrimitiveNode.create(code, index, 3, nextByte(), nextByte());
+                assert code instanceof CompiledMethodObject;
+                return CallPrimitiveNode.create((CompiledMethodObject) code, index, 3, nextByte(), nextByte());
             case 140:
                 return new PushRemoteTempNode(code, index, 3, nextByte(), nextByte());
             case 141:

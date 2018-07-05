@@ -38,15 +38,14 @@ public final class MiscellaneousBytecodes {
         private final int primitiveIndex;
         private final ValueProfile primitiveNodeProfile = ValueProfile.createClassProfile();
 
-        public static CallPrimitiveNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int byte1, final int byte2) {
+        public static CallPrimitiveNode create(final CompiledMethodObject code, final int index, final int numBytecodes, final int byte1, final int byte2) {
             return CallPrimitiveNodeGen.create(code, index, numBytecodes, byte1, byte2);
         }
 
-        public CallPrimitiveNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int byte1, final int byte2) {
+        public CallPrimitiveNode(final CompiledMethodObject code, final int index, final int numBytecodes, final int byte1, final int byte2) {
             super(code, index, numBytecodes);
-            assert code instanceof CompiledMethodObject;
             primitiveIndex = byte1 + (byte2 << 8);
-            primitiveNode = PrimitiveNodeFactory.forIndex((CompiledMethodObject) code, primitiveIndex);
+            primitiveNode = PrimitiveNodeFactory.forIndex(code, primitiveIndex);
             handlePrimFailed = HandlePrimitiveFailedNode.create(code);
         }
 
