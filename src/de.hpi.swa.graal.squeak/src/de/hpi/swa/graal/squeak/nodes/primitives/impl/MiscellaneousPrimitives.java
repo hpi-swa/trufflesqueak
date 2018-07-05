@@ -61,7 +61,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitivesFact
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerNode;
 
-public class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
+public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @Override
     public List<NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {

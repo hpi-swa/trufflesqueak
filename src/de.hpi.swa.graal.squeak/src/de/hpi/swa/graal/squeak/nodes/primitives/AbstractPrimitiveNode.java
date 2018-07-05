@@ -89,15 +89,15 @@ public abstract class AbstractPrimitiveNode extends AbstractNodeWithCode impleme
     }
 
     @Override
-    public boolean hasTag(final Class<? extends Tag> tag) {
+    public final boolean hasTag(final Class<? extends Tag> tag) {
         return tag == StandardTags.StatementTag.class;
     }
 
-    public boolean isInstrumentable() {
+    public final boolean isInstrumentable() {
         return true;
     }
 
-    public WrapperNode createWrapper(final ProbeNode probe) {
+    public final WrapperNode createWrapper(final ProbeNode probe) {
         return new AbstractPrimitiveNodeWrapper(this, this, probe);
     }
 }
