@@ -93,7 +93,7 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
 
         @Override
         public void paintComponent(final Graphics g) {
-            if (deferUpdates || bitmap == null) {
+            if (bitmap == null) {
                 return;
             }
             //@formatter:off
@@ -190,7 +190,9 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
     @Override
     @TruffleBoundary
     public void forceUpdate() {
-        canvas.repaint();
+        if (deferUpdates) {
+            canvas.repaint();
+        }
     }
 
     @Override
