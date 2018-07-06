@@ -135,7 +135,7 @@ public final class JumpBytecodes {
             throw new SqueakException("Jumps cannot be executed like other bytecode nodes");
         }
 
-        public int getJumpSuccessor() {
+        public final int getJumpSuccessor() {
             return getSuccessorIndex() + offset;
         }
 

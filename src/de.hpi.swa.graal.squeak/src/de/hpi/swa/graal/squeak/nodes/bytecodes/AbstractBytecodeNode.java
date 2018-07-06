@@ -45,7 +45,7 @@ public abstract class AbstractBytecodeNode extends SqueakNodeWithCode {
 
     public abstract void executeVoid(VirtualFrame frame);
 
-    public int getSuccessorIndex() {
+    public final int getSuccessorIndex() {
         return index + numBytecodes;
     }
 

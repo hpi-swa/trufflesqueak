@@ -66,7 +66,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                     executeContextNode.replace(ExecuteContextNode.create(code));
                 }
                 // doIt: activeContext.printSqStackTrace();
-                final Object result = executeContextNode.executeNonVirtualized(activeContext.getTruffleFrame(numAllArgumentsNode.execute(code)), activeContext);
+                final Object result = executeContextNode.executeContext(activeContext.getTruffleFrame(numAllArgumentsNode.execute(code)), activeContext);
                 image.traceVerbose("Local Return on top-level: sender: ", sender);
                 activeContext = unwindContextChain(sender, sender, result);
                 image.traceVerbose("Local Return on top-level, new context is ", activeContext);
