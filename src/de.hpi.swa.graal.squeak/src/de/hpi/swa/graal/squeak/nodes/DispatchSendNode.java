@@ -24,11 +24,13 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
     @Child private SqueakLookupClassNode lookupClassNode;
 
     @CompilationFinal private ClassObject messageClass;
-    @CompilationFinal private NativeObject runWithIn;
+    @CompilationFinal private Object runWithIn;
 
     public static DispatchSendNode create(final SqueakImageContext image) {
         return DispatchSendNodeGen.create(image);
     }
+
+    public abstract Object executeSend(VirtualFrame frame, NativeObject selector, Object lookupResult, ClassObject rcvrClass, Object[] receiverAndArguments, Object contextOrMarker);
 
     protected DispatchSendNode(final SqueakImageContext image) {
         super(image);
@@ -36,8 +38,6 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
         lookupNode = LookupNode.create(image);
         lookupClassNode = SqueakLookupClassNode.create(image);
     }
-
-    public abstract Object executeSend(VirtualFrame frame, NativeObject selector, Object lookupResult, ClassObject rcvrClass, Object[] receiverAndArguments, Object contextOrMarker);
 
     @Specialization(guards = {"!isDoesNotUnderstandNode.execute(lookupResult)"})
     protected final Object doDispatch(final VirtualFrame frame, @SuppressWarnings("unused") final NativeObject selector, final CompiledMethodObject lookupResult,
@@ -85,10 +85,10 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
         }
     }
 
-    private NativeObject getRunWithIn() {
+    private Object getRunWithIn() {
         if (runWithIn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            runWithIn = (NativeObject) image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SelectorRunWithIn);
+            runWithIn = image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SelectorRunWithIn);
         }
         return runWithIn;
     }

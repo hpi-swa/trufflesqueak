@@ -80,11 +80,11 @@ public final class SendBytecodes {
         }
 
         @Override
-        public boolean isInstrumentable() {
+        public final boolean isInstrumentable() {
             return true;
         }
 
-        public WrapperNode createWrapper(final ProbeNode probe) {
+        public final WrapperNode createWrapper(final ProbeNode probe) {
             return new AbstractSendNodeWrapper(this, this, probe);
         }
     }

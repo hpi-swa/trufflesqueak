@@ -95,7 +95,7 @@ public final class MiscellaneousBytecodes {
         }
 
         @Override
-        public String toString() {
+        public final String toString() {
             return "callPrimitive: " + primitiveIndex;
         }
     }
@@ -127,12 +127,12 @@ public final class MiscellaneousBytecodes {
         }
     }
 
-    public static final class DupNode extends UnknownBytecodeNode {
+    public static final class DupNode extends AbstractBytecodeNode {
         @Child private StackPushNode pushNode = StackPushNode.create();
         @Child private StackTopNode topNode;
 
         public DupNode(final CompiledCodeObject code, final int index, final int numBytecodes) {
-            super(code, index, numBytecodes, -1);
+            super(code, index, numBytecodes);
             topNode = StackTopNode.create(code);
         }
 
@@ -206,11 +206,11 @@ public final class MiscellaneousBytecodes {
         }
     }
 
-    public static final class PopNode extends UnknownBytecodeNode {
+    public static final class PopNode extends AbstractBytecodeNode {
         @Child private StackPopNode popNode;
 
         public PopNode(final CompiledCodeObject code, final int index, final int numBytecodes) {
-            super(code, index, numBytecodes, -1);
+            super(code, index, numBytecodes);
             popNode = StackPopNode.create(code);
         }
 
@@ -225,7 +225,7 @@ public final class MiscellaneousBytecodes {
         }
     }
 
-    public static class UnknownBytecodeNode extends AbstractBytecodeNode {
+    public static final class UnknownBytecodeNode extends AbstractBytecodeNode {
         private final long bytecode;
 
         public UnknownBytecodeNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bc) {

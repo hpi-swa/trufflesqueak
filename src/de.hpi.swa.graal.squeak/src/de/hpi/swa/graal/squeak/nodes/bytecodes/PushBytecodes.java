@@ -98,13 +98,13 @@ public final class PushBytecodes {
         }
 
         @Specialization(guards = "isVirtualized(frame)")
-        protected int doPushVirtualized(final VirtualFrame frame) {
+        protected final int doPushVirtualized(final VirtualFrame frame) {
             pushNode.executeWrite(frame, createClosure(frame));
             return getSuccessorIndex();
         }
 
         @Specialization(guards = "!isVirtualized(frame)")
-        protected int doPush(final VirtualFrame frame) {
+        protected final int doPush(final VirtualFrame frame) {
             pushNode.executeWrite(frame, createClosure(frame));
             return getSuccessorIndex();
         }
@@ -117,7 +117,7 @@ public final class PushBytecodes {
         }
 
         @Override
-        public String toString() {
+        public final String toString() {
             final int start = index + numBytecodes;
             final int end = start + blockSize;
             return "closureNumCopied: " + numCopied + " numArgs: " + numArgs + " bytes " + start + " to " + end;

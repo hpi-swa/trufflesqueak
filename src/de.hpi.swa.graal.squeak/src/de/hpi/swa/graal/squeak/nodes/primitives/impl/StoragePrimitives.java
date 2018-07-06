@@ -76,7 +76,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             }
             final Object[] fromPointers = fromArray.getPointers();
             final Object[] toPointers = toArray.getPointers();
-            migrateInstances(fromPointers, toPointers, copyHash, getAllInstancesNode.execute(frame));
+            migrateInstances(fromPointers, toPointers, copyHash, getAllInstancesNode.executeGet(frame));
             patchTruffleFrames(fromPointers, toPointers, copyHash);
             return fromArray;
         }
@@ -510,7 +510,12 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final AbstractSqueakObject doSome(final VirtualFrame frame, @SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return getAllInstancesNode.execute(frame).get(0);
+            return getFirst(getAllInstancesNode.executeGet(frame));
+        }
+
+        @TruffleBoundary
+        private static AbstractSqueakObject getFirst(final List<AbstractSqueakObject> list) {
+            return list.get(0);
         }
     }
 
@@ -524,7 +529,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final AbstractSqueakObject doNext(final VirtualFrame frame, final AbstractSqueakObject receiver) {
-            return getNext(receiver, getAllInstancesNode.execute(frame));
+            return getNext(receiver, getAllInstancesNode.executeGet(frame));
         }
 
         @TruffleBoundary
@@ -624,7 +629,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final AbstractSqueakObject doAll(final VirtualFrame frame, @SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return code.image.newList(ArrayUtils.toArray(getAllInstancesNode.execute(frame)));
+            return code.image.newList(ArrayUtils.toArray(getAllInstancesNode.executeGet(frame)));
         }
     }
 

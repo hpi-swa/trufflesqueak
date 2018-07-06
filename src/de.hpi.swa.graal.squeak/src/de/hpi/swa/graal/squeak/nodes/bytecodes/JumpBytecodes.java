@@ -131,7 +131,7 @@ public final class JumpBytecodes {
         }
 
         @Override
-        public void executeVoid(final VirtualFrame frame) {
+        public final void executeVoid(final VirtualFrame frame) {
             throw new SqueakException("Jumps cannot be executed like other bytecode nodes");
         }
 
@@ -143,7 +143,7 @@ public final class JumpBytecodes {
             return (((bytecode & 7) - 4) << 8) + parameter;
         }
 
-        protected int shortJumpOffset(final int bytecode) {
+        protected static final int shortJumpOffset(final int bytecode) {
             return (bytecode & 7) + 1;
         }
 

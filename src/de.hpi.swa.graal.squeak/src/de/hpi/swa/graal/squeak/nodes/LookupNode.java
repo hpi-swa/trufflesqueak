@@ -25,11 +25,11 @@ public abstract class LookupNode extends Node {
         return LookupNodeGen.create(image);
     }
 
+    public abstract Object executeLookup(Object sqClass, Object selector);
+
     protected LookupNode(final SqueakImageContext image) {
         executeLookupNode = ExecuteLookupNode.create(image);
     }
-
-    public abstract Object executeLookup(Object sqClass, Object selector);
 
     protected abstract static class ExecuteLookupNode extends AbstractNodeWithImage {
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
@@ -88,7 +88,7 @@ public abstract class LookupNode extends Node {
 
     @SuppressWarnings("unused")
     @Fallback
-    protected static final Object fail(final Object sqClass, final Object selector) {
+    protected static final Object doFail(final Object sqClass, final Object selector) {
         throw new SqueakException("failed to lookup generic selector object on generic class");
     }
 }

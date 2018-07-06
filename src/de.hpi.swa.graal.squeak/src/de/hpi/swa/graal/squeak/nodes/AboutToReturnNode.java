@@ -7,9 +7,9 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.graal.squeak.exceptions.Returns.LocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
+import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.SendSelectorNode;
@@ -25,23 +25,23 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
     @Child private SqueakNode completeTempReadNode;
     @Child private TemporaryWriteNode completeTempWriteNode;
 
-    public static AboutToReturnNode create(final CompiledMethodObject code) {
+    public static AboutToReturnNode create(final CompiledCodeObject code) {
         return AboutToReturnNodeGen.create(code);
     }
 
-    protected AboutToReturnNode(final CompiledMethodObject method) {
-        super(method);
-        sendAboutToReturnNode = new SendSelectorNode(method, -1, -1, aboutToReturnSelector(), 2);
-        blockArgumentNode = TemporaryReadNode.create(method, 0);
-        completeTempReadNode = TemporaryReadNode.create(method, 1);
-        completeTempWriteNode = TemporaryWriteNode.create(method, 1);
-    }
-
-    private NativeObject aboutToReturnSelector() {
-        return (NativeObject) code.image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SelectorAboutToReturn);
-    }
-
     public abstract void executeAboutToReturn(VirtualFrame frame, NonLocalReturn nlr);
+
+    protected AboutToReturnNode(final CompiledCodeObject code) {
+        super(code);
+        sendAboutToReturnNode = new SendSelectorNode(code, -1, -1, aboutToReturnSelector(), 2);
+        blockArgumentNode = TemporaryReadNode.create(code, 0);
+        completeTempReadNode = TemporaryReadNode.create(code, 1);
+        completeTempWriteNode = TemporaryWriteNode.create(code, 1);
+    }
+
+    private Object aboutToReturnSelector() {
+        return code.image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SelectorAboutToReturn);
+    }
 
     /*
      * Virtualized version of Context>>aboutToReturn:through:, more specifically
@@ -50,7 +50,7 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
      * that this however does not check if the current context isDead nor does it terminate contexts
      * (this may be a problem).
      */
-    @Specialization(guards = {"isVirtualized(frame)"})
+    @Specialization(guards = {"aboutToReturnNeedsToBeSent()", "isVirtualized(frame)"})
     protected final void doAboutToReturnVirtualized(final VirtualFrame frame, @SuppressWarnings("unused") final NonLocalReturn nlr,
                     @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments) {
         if (completeTempReadNode.executeRead(frame) == code.image.nil) {
@@ -67,12 +67,22 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
         }
     }
 
-    @Specialization(guards = {"!isVirtualized(frame)"})
+    @Specialization(guards = {"aboutToReturnNeedsToBeSent()", "!isVirtualized(frame)"})
     protected final void doAboutToReturn(final VirtualFrame frame, final NonLocalReturn nlr) {
         final ContextObject context = getContext(frame);
         pushNode.executeWrite(frame, nlr.getTargetContext());
         pushNode.executeWrite(frame, nlr.getReturnValue());
         pushNode.executeWrite(frame, context);
         sendAboutToReturnNode.executeSend(frame);
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = {"!aboutToReturnNeedsToBeSent()"})
+    protected final void doNothing(final VirtualFrame frame, final NonLocalReturn nlr) {
+        // nothing to do
+    }
+
+    protected boolean aboutToReturnNeedsToBeSent() {
+        return code instanceof CompiledMethodObject && code.isUnwindMarked();
     }
 }

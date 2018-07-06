@@ -2,7 +2,6 @@ package de.hpi.swa.graal.squeak.nodes;
 
 import java.util.List;
 
-import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
@@ -12,13 +11,13 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.context.ObjectGraphNode;
 import de.hpi.swa.graal.squeak.nodes.process.GetActiveProcessNode;
 
-public abstract class GetAllInstancesNode extends AbstractNodeWithCode {
+public final class GetAllInstancesNode extends AbstractNodeWithCode {
     @Child private GetActiveProcessNode getActiveProcessNode;
     @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create();
     @Child private ObjectGraphNode objectGraphNode;
 
     public static GetAllInstancesNode create(final CompiledCodeObject code) {
-        return GetAllInstancesNodeGen.create(code);
+        return new GetAllInstancesNode(code);
     }
 
     protected GetAllInstancesNode(final CompiledCodeObject code) {
@@ -27,10 +26,7 @@ public abstract class GetAllInstancesNode extends AbstractNodeWithCode {
         objectGraphNode = ObjectGraphNode.create(code.image);
     }
 
-    public abstract List<AbstractSqueakObject> execute(VirtualFrame frame);
-
-    @Specialization
-    protected List<AbstractSqueakObject> getInstancesArray(final VirtualFrame frame) {
+    public List<AbstractSqueakObject> executeGet(final VirtualFrame frame) {
         final PointersObject activeProcess = getActiveProcessNode.executeGet();
         activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, getOrCreateContextNode.executeGet(frame));
         try {

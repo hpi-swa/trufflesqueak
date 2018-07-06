@@ -42,6 +42,8 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
         return new SqueakRootNode(language, code);
     }
 
+    public abstract Object execute(VirtualFrame frame);
+
     protected EnterCodeNode(final CompiledCodeObject code) {
         this.code = code;
         executeContextNode = ExecuteContextNode.create(code);
@@ -51,7 +53,7 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
         this(codeNode.code);
     }
 
-    protected static class SqueakRootNode extends RootNode {
+    protected static final class SqueakRootNode extends RootNode {
         @Child private EnterCodeNode codeNode;
         @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create();
 
@@ -76,8 +78,6 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
         }
     }
 
-    public abstract Object execute(VirtualFrame frame);
-
     private void initializeSlots(final VirtualFrame frame) {
         instructionPointerWriteNode.executeWrite(frame, 0);
         stackPointerWriteNode.executeWrite(frame, -1);
@@ -85,7 +85,7 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
 
     @ExplodeLoop
     @Specialization(assumptions = {"code.getCanBeVirtualizedAssumption()"})
-    protected Object enterVirtualized(final VirtualFrame frame) {
+    protected final Object enterVirtualized(final VirtualFrame frame) {
         CompilerDirectives.ensureVirtualized(frame);
         initializeSlots(frame);
         contextWriteNode.executeWrite(frame, new FrameMarker());
@@ -101,12 +101,12 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
             pushStackNode.executeWrite(frame, code.image.nil);
         }
         assert ((int) stackPointerReadNode.executeRead(frame)) + 1 >= remainingTemps;
-        return executeContextNode.executeVirtualized(frame);
+        return executeContextNode.executeContext(frame, null);
     }
 
     @ExplodeLoop
     @Specialization(guards = {"!code.getCanBeVirtualizedAssumption().isValid()"})
-    protected Object enter(final VirtualFrame frame) {
+    protected final Object enter(final VirtualFrame frame) {
         initializeSlots(frame);
         final ContextObject newContext = createContextNode.executeGet(frame);
         contextWriteNode.executeWrite(frame, newContext);
@@ -122,23 +122,23 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
             newContext.push(code.image.nil);
         }
         assert newContext.getStackPointer() >= remainingTemps;
-        return executeContextNode.executeNonVirtualized(frame, newContext);
+        return executeContextNode.executeContext(frame, newContext);
     }
 
     @Override
-    public String toString() {
+    public final String toString() {
         return code.toString();
     }
 
-    public boolean hasTag(final Class<? extends Tag> tag) {
+    public final boolean hasTag(final Class<? extends Tag> tag) {
         return tag == StandardTags.RootTag.class;
     }
 
-    public boolean isInstrumentable() {
+    public final boolean isInstrumentable() {
         return true;
     }
 
-    public WrapperNode createWrapper(final ProbeNode probe) {
+    public final WrapperNode createWrapper(final ProbeNode probe) {
         return new EnterCodeNodeWrapper(this, this, probe);
     }
 

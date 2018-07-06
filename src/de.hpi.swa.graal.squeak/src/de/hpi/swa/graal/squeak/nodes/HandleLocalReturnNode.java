@@ -18,20 +18,20 @@ public abstract class HandleLocalReturnNode extends AbstractNodeWithCode {
         return HandleLocalReturnNodeGen.create(code);
     }
 
-    public HandleLocalReturnNode(final CompiledCodeObject code) {
+    public abstract Object executeHandle(VirtualFrame frame, LocalReturn lr);
+
+    protected HandleLocalReturnNode(final CompiledCodeObject code) {
         super(code);
     }
 
-    public abstract Object executeHandle(VirtualFrame frame, LocalReturn lr);
-
     @Specialization(guards = "isVirtualized(frame)")
-    protected Object handleVirtualized(final VirtualFrame frame, final LocalReturn lr) {
+    protected final Object handleVirtualized(final VirtualFrame frame, final LocalReturn lr) {
         terminateNode.executeTerminate(frame);
         return lr.getReturnValue();
     }
 
     @Specialization(guards = "!isVirtualized(frame)")
-    protected Object handle(final VirtualFrame frame, final LocalReturn lr) {
+    protected final Object handle(final VirtualFrame frame, final LocalReturn lr) {
         final ContextObject context = getContext(frame);
         if (context.hasModifiedSender()) {
             final ContextObject newSender = context.getNotNilSender(); // sender has changed
