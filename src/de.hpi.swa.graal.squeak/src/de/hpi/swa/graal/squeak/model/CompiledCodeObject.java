@@ -55,7 +55,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
     private static final boolean ALWAYS_NON_VIRTUALIZED = false;
     private final Assumption canBeVirtualized = Truffle.getRuntime().createAssumption("CompiledCodeObject: does not need a materialized context");
 
-    @CompilationFinal private Source source;
+    private Source source;
 
     @CompilationFinal private RootCallTarget callTarget;
     private final CyclicAssumption callTargetStable = new CyclicAssumption("CompiledCodeObject assumption");
@@ -93,7 +93,11 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
 
     public final Source getSource() {
         if (source == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
+            /*
+             * sourceSection requested when logging transferToInterpreters. Therefore, do not
+             * trigger another TTI here which otherwise would cause endless recursion in Truffle
+             * debug code.
+             */
             source = Source.newBuilder(CompiledCodeObjectPrinter.getString(this)).mimeType(SqueakLanguage.MIME_TYPE).name(toString()).build();
         }
         return source;
