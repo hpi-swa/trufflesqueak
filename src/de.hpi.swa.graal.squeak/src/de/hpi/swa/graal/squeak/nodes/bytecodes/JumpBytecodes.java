@@ -1,12 +1,11 @@
 package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
@@ -25,8 +24,8 @@ public final class JumpBytecodes {
         public static final int FALSE_SUCCESSOR = 0;
         public static final int TRUE_SUCCESSOR = 1;
 
-        private final Boolean isIfTrue;
-        @CompilationFinal(dimensions = 1) private final int[] successorExecutionCount = new int[2];
+        private final boolean isIfTrue;
+        private final ConditionProfile conditionProfile = ConditionProfile.createCountingProfile();
 
         @Child private StackPopNode popNode;
         @Child private HandleConditionResultNode handleConditionResultNode;
@@ -47,7 +46,7 @@ public final class JumpBytecodes {
 
         public boolean executeCondition(final VirtualFrame frame) {
             final Object result = popNode.executeRead(frame);
-            return handleConditionResultNode.execute(frame, isIfTrue, result);
+            return conditionProfile.profile(handleConditionResultNode.execute(frame, isIfTrue, result));
         }
 
         @Override
@@ -57,36 +56,6 @@ public final class JumpBytecodes {
             } else {
                 return getSuccessorIndex();
             }
-        }
-
-        /*
-         * Inspired by Sulong's LLVMBasicBlockNode (https://goo.gl/AVMg4K).
-         */
-        @ExplodeLoop
-        public double getBranchProbability(final long successorIndex) {
-            final double successorBranchProbability;
-            long succCount = 0;
-            long totalExecutionCount = 0;
-            for (int i = 0; i < successorExecutionCount.length; i++) {
-                final long v = successorExecutionCount[i];
-                if (successorIndex == i) {
-                    succCount = v;
-                }
-                totalExecutionCount += v;
-            }
-            if (succCount == 0) {
-                successorBranchProbability = 0;
-            } else {
-                assert totalExecutionCount > 0;
-                successorBranchProbability = (double) succCount / totalExecutionCount;
-            }
-            assert !Double.isNaN(successorBranchProbability) && successorBranchProbability >= 0 && successorBranchProbability <= 1;
-            return successorBranchProbability;
-        }
-
-        public void increaseBranchProbability(final int successorIndex) {
-            CompilerAsserts.neverPartOfCompilation();
-            successorExecutionCount[successorIndex]++;
         }
 
         @Override

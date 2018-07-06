@@ -115,11 +115,9 @@ public final class ExecuteContextNode extends AbstractNodeWithCode {
                 updateInstructionPointerNode.executeUpdate(frame, node.getSuccessorIndex());
                 if (node instanceof ConditionalJumpNode) {
                     final ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
-                    final boolean condition = jumpNode.executeCondition(frame);
-                    if (CompilerDirectives.injectBranchProbability(jumpNode.getBranchProbability(ConditionalJumpNode.TRUE_SUCCESSOR), condition)) {
+                    if (jumpNode.executeCondition(frame)) {
                         final int successor = jumpNode.getJumpSuccessor();
                         if (CompilerDirectives.inInterpreter()) {
-                            jumpNode.increaseBranchProbability(ConditionalJumpNode.TRUE_SUCCESSOR);
                             if (successor <= pc) {
                                 backJumpCounter++;
                             }
@@ -130,7 +128,6 @@ public final class ExecuteContextNode extends AbstractNodeWithCode {
                     } else {
                         final int successor = jumpNode.getSuccessorIndex();
                         if (CompilerDirectives.inInterpreter()) {
-                            jumpNode.increaseBranchProbability(ConditionalJumpNode.FALSE_SUCCESSOR);
                             if (successor <= pc) {
                                 backJumpCounter++;
                             }
