@@ -97,7 +97,7 @@ public final class SqueakImageReader {
         specialObjectsPointer = nextInt();
         nextInt(); // 1 word last used hash
         final int lastWindowSize = nextInt();
-        image.display.resizeTo((lastWindowSize >> 16) & 0xffff, lastWindowSize & 0xffff);
+        image.getDisplay().resizeTo((lastWindowSize >> 16) & 0xffff, lastWindowSize & 0xffff);
         final int headerFlags = nextInt();
         image.flags.initialize(headerFlags);
         nextInt(); // extraVMMemory

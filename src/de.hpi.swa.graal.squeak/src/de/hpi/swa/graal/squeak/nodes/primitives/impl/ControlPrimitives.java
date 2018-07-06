@@ -942,7 +942,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final AbstractSqueakObject doForceUpdate(final AbstractSqueakObject receiver) {
-            code.image.display.forceUpdate();
+            code.image.getDisplay().forceUpdate();
             return receiver;
         }
     }
@@ -956,7 +956,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final AbstractSqueakObject doFullScreen(final AbstractSqueakObject receiver, final boolean enable) {
-            code.image.display.setFullscreen(enable);
+            code.image.getDisplay().setFullscreen(enable);
             return receiver;
         }
     }

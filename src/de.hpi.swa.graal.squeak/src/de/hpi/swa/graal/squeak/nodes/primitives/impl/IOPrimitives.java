@@ -52,7 +52,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doMousePoint() {
-            return code.image.wrap(code.image.display.getLastMousePosition());
+            return code.image.wrap(code.image.getDisplay().getLastMousePosition());
         }
     }
 
@@ -87,7 +87,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doSet(final AbstractSqueakObject receiver, final long depth, final long width, final long height, final boolean fullscreen) {
-            code.image.display.adjustDisplay(depth, width, height, fullscreen);
+            code.image.getDisplay().adjustDisplay(depth, width, height, fullscreen);
             return receiver;
         }
     }
@@ -102,7 +102,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doSet(final AbstractSqueakObject receiver, final long semaIndex) {
-            code.image.display.setInputSemaphoreIndex((int) semaIndex);
+            code.image.getDisplay().setInputSemaphoreIndex((int) semaIndex);
             return receiver;
         }
     }
@@ -117,7 +117,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doGetNext(final PointersObject eventSensor, final PointersObject targetArray) {
-            final long[] nextEvent = code.image.display.getNextEvent();
+            final long[] nextEvent = code.image.getDisplay().getNextEvent();
             for (int i = 0; i < nextEvent.length; i++) {
                 targetArray.atput0(i, nextEvent[i]);
             }
@@ -146,7 +146,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doCursor(final PointersObject receiver, @SuppressWarnings("unused") final NotProvided mask) {
-            code.image.display.setCursor(validateAndExtractWords(receiver), extractDepth(receiver));
+            code.image.getDisplay().setCursor(validateAndExtractWords(receiver), extractDepth(receiver));
             return receiver;
         }
 
@@ -156,9 +156,9 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             final int depth = extractDepth(receiver);
             if (depth == 1) {
                 final int[] mask = ((NativeObject) maskObject.at0(FORM.BITS)).getIntStorage(storageType);
-                code.image.display.setCursor(mergeCursorWithMask(words, mask), 2);
+                code.image.getDisplay().setCursor(mergeCursorWithMask(words, mask), 2);
             } else {
-                code.image.display.setCursor(words, depth);
+                code.image.getDisplay().setCursor(words, depth);
             }
             return receiver;
         }
@@ -211,8 +211,8 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             if (receiver.size() < 4) {
                 throw new PrimitiveFailed();
             }
-            code.image.display.setSqDisplay(receiver);
-            code.image.display.open();
+            code.image.getDisplay().setSqDisplay(receiver);
+            code.image.getDisplay().open();
             code.image.specialObjectsArray.atput0(SPECIAL_OBJECT_INDEX.TheDisplay, receiver);
             return code.image.sqTrue;
         }
@@ -400,7 +400,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final AbstractSqueakObject doSize(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return code.image.wrap(code.image.display.getSize());
+            return code.image.wrap(code.image.getDisplay().getSize());
         }
     }
 
@@ -414,7 +414,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doMouseButtons(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return code.image.wrap(code.image.display.getLastMouseButton());
+            return code.image.wrap(code.image.getDisplay().getLastMouseButton());
         }
     }
 
@@ -428,7 +428,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doNext(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            final int keyboardNext = code.image.display.keyboardNext();
+            final int keyboardNext = code.image.getDisplay().keyboardNext();
             if (keyboardNext == 0) {
                 return code.image.nil;
             } else {
@@ -447,7 +447,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doPeek(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            final int keyboardPeek = code.image.display.keyboardPeek();
+            final int keyboardPeek = code.image.getDisplay().keyboardPeek();
             if (keyboardPeek == 0) {
                 return code.image.nil;
             } else {
@@ -485,7 +485,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "inBounds(left, right, top, bottom)")
         protected final AbstractSqueakObject doDraw(final PointersObject receiver, final long left, final long right, final long top, final long bottom) {
-            code.image.display.forceRect((int) left, (int) right, (int) top, (int) bottom);
+            code.image.getDisplay().forceRect((int) left, (int) right, (int) top, (int) bottom);
             return receiver;
         }
     }

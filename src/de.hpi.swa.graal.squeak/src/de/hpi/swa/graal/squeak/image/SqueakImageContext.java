@@ -17,6 +17,7 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
+import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
@@ -118,11 +119,13 @@ public final class SqueakImageContext {
     };
 
     public final SqueakConfig config;
-    public final SqueakDisplay display;
     public final SqueakImageFlags flags = new SqueakImageFlags();
     public final OSDetector os = new OSDetector();
     public final InterruptHandlerNode interrupt;
     public final long startUpMillis = System.currentTimeMillis();
+
+    private final SqueakDisplay display;
+    private final ValueProfile displayProfile = ValueProfile.createClassProfile();
 
     @CompilationFinal private NativeObject asSymbolSelector = null; // for testing
     @CompilationFinal private NativeObject simulatePrimitiveArgsSelector = null;
@@ -190,6 +193,10 @@ public final class SqueakImageContext {
 
     public SqueakLanguage getLanguage() {
         return language;
+    }
+
+    public SqueakDisplay getDisplay() {
+        return displayProfile.profile(display);
     }
 
     public NativeObject getAsSymbolSelector() {
