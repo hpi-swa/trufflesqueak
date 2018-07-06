@@ -412,6 +412,52 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             return receiver;
         }
 
+        @Specialization(guards = {"disableWhileMeasuring()", "hasCombinationRule(receiver, 4)",
+                        "hasNilSourceForm(receiver)"})
+        protected final Object doCopyBitsCombiRule4NilSourceForm(final VirtualFrame frame, final PointersObject receiver) {
+            final PointersObject destinationForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
+            final NativeObject destinationBits = (NativeObject) destinationForm.at0(FORM.BITS);
+            final NativeObject halftoneForm = (NativeObject) receiver.at0(BIT_BLT.HALFTONE_FORM);
+            final int[] fillArray = halftoneForm.getIntStorage(halftoneFormStorageType);
+            if (fillArray.length != 1) {
+                throw new SqueakException("Expected one fillValue only");
+            }
+            final int fillValue = fillArray[0];
+            final long destinationDepth = (long) destinationForm.at0(FORM.DEPTH);
+            if (destinationDepth != 32) { // fall back to simulation if not 32-bit
+                return doSimulation(frame, receiver);
+            }
+
+            final BitBltData data = new BitBltData(receiver);
+            if (!data.hasValidArea()) {
+                return receiver;
+            }
+
+            final int endX = data.destX + data.areaWidth;
+            final int endY = data.destY + data.areaHeight;
+
+            final int[] ints = destinationBits.getIntStorage(destinationBitsStorageType);
+
+            if (ints.length - 1 < (endY - 1) * data.destinationWidth + (endX - 1)) {
+                throw new PrimitiveFailed(); // fail early in case of index out of bounds
+            }
+
+            final int invertedFillValue = ~fillValue;
+
+            for (int dy = data.destY; dy < data.destY + data.areaHeight; dy++) {
+                final int destStart = dy * data.destinationWidth + data.destX;
+                try {
+                    for (int dx = destStart; dx < destStart + data.areaWidth; dx++) {
+                        ints[dx] = invertedFillValue & ints[dx];
+                    }
+                } finally {
+                    LoopNode.reportLoopCount(this, data.areaWidth);
+                }
+            }
+
+            return receiver;
+        }
+
         @Specialization(guards = {"disableWhileMeasuring()", "hasCombinationRule(receiver, 24)",
                         "hasNilSourceForm(receiver)"})
         protected final Object doCopyBitsCombiRule24NilSourceForm(final VirtualFrame frame, final PointersObject receiver) {
