@@ -103,4 +103,7 @@ public final class Returns {
             return "TLR (value: " + returnValue + ")";
         }
     }
+
+    private Returns() {
+    }
 }
