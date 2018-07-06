@@ -62,12 +62,12 @@ public final class NativeObject extends AbstractSqueakObject {
     protected NativeObject(final SqueakImageContext image, final ClassObject classObject, final Object storage) {
         super(image, classObject);
         assert storage != null;
-        setStorage(storage);
+        this.storage = storage;
     }
 
     public NativeObject(final SqueakImageContext image) { // constructor for special selectors
         super(image, null);
-        setStorage(new byte[0]);
+        storage = new byte[0];
     }
 
     @TruffleBoundary
