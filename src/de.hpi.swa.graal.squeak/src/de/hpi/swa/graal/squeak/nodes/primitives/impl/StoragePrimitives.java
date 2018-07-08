@@ -155,6 +155,33 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    public abstract static class AbstractNewPrimitiveNode extends AbstractPrimitiveNode {
+
+        public AbstractNewPrimitiveNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @Override
+        public final Object executeWithArguments(final VirtualFrame frame, final Object... arguments) {
+            try {
+                return executeWithArgumentsSpecialized(frame, arguments);
+            } catch (OutOfMemoryError e) {
+                throw new PrimitiveFailed(ERROR_TABLE.INSUFFICIENT_OBJECT_MEMORY);
+            }
+        }
+
+        @Override
+        public final Object executePrimitive(final VirtualFrame frame) {
+            try {
+                return executeNewPrimitive(frame);
+            } catch (OutOfMemoryError e) {
+                throw new PrimitiveFailed(ERROR_TABLE.INSUFFICIENT_OBJECT_MEMORY);
+            }
+        }
+
+        protected abstract Object executeNewPrimitive(VirtualFrame frame);
+    }
+
     @GenerateNodeFactory
     @SqueakPrimitive(index = 18)
     protected abstract static class PrimMakePointNode extends AbstractPrimitiveNode {
@@ -198,7 +225,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 70)
-    protected abstract static class PrimNewNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimNewNode extends AbstractNewPrimitiveNode {
         protected static final int NEW_CACHE_SIZE = 3;
 
         protected PrimNewNode(final CompiledMethodObject method, final int numArguments) {
@@ -226,10 +253,10 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 71)
-    protected abstract static class PrimNewArgNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimNewWithArgNode extends AbstractNewPrimitiveNode {
         protected static final int NEW_CACHE_SIZE = 3;
 
-        protected PrimNewArgNode(final CompiledMethodObject method, final int numArguments) {
+        protected PrimNewWithArgNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
