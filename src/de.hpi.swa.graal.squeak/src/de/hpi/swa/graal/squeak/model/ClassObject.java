@@ -11,7 +11,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
-import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -293,36 +292,10 @@ public final class ClassObject extends AbstractSqueakObject {
         return numWords * 4;
     }
 
-    @Override
-    public boolean become(final AbstractSqueakObject other) {
-        if (!(other instanceof ClassObject)) {
-            throw new PrimitiveExceptions.PrimitiveFailed();
-        }
-        if (!super.become(other)) {
-            throw new SqueakException("Should not fail");
-        }
-        final Object[] pointers2 = ((ClassObject) other).pointers;
-        ((ClassObject) other).pointers = this.pointers;
-        pointers = pointers2;
-        return true;
+    public void become(final ClassObject other) {
+        becomeOtherClass(other);
+        final Object[] otherPointers = other.pointers;
+        other.pointers = this.pointers;
+        pointers = otherPointers;
     }
-
-    @Override
-    public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
-        // TODO: super.pointersBecomeOneWay(from, to); ?
-        for (int i = 0; i < from.length; i++) {
-            final Object fromPointer = from[i];
-            for (int j = 0; j < size(); j++) {
-                final Object newPointer = at0(j);
-                if (newPointer == fromPointer) {
-                    final Object toPointer = to[i];
-                    atput0(j, toPointer);
-                    if (copyHash && fromPointer instanceof AbstractSqueakObject && toPointer instanceof AbstractSqueakObject) {
-                        ((AbstractSqueakObject) toPointer).setSqueakHash(((AbstractSqueakObject) fromPointer).squeakHash());
-                    }
-                }
-            }
-        }
-    }
-
 }

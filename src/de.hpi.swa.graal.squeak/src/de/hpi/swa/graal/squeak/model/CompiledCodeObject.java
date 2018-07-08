@@ -15,8 +15,6 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
-import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions;
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.instrumentation.CompiledCodeObjectPrinter;
@@ -200,23 +198,15 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         return ((Long) literals[0]).intValue();
     }
 
-    @Override
-    public final boolean become(final AbstractSqueakObject other) {
-        if (!(other instanceof CompiledMethodObject)) {
-            throw new PrimitiveExceptions.PrimitiveFailed();
-        }
-        if (!super.become(other)) {
-            throw new SqueakException("Should not fail");
-        }
+    public final void become(final CompiledCodeObject other) {
+        becomeOtherClass(other);
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        final CompiledCodeObject otherCodeObject = (CompiledCodeObject) other;
-        final Object[] literals2 = otherCodeObject.literals;
-        final byte[] bytes2 = otherCodeObject.bytes;
-        otherCodeObject.setLiteralsAndBytes(literals, bytes);
+        final Object[] literals2 = other.literals;
+        final byte[] bytes2 = other.bytes;
+        other.setLiteralsAndBytes(literals, bytes);
         this.setLiteralsAndBytes(literals2, bytes2);
-        otherCodeObject.callTargetStable.invalidate();
+        other.callTargetStable.invalidate();
         callTargetStable.invalidate();
-        return true;
     }
 
     public final int getBytecodeOffset() {

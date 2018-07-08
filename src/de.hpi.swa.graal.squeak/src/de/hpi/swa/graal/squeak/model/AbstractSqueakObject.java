@@ -29,10 +29,6 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         this.sqClass = klass;
     }
 
-    public static final boolean isInstance(final TruffleObject obj) {
-        return obj instanceof AbstractSqueakObject;
-    }
-
     public void fillin(final AbstractImageChunk chunk) {
         setSqueakHash(chunk.getHash());
         setSqClass(chunk.getSqClass());
@@ -94,29 +90,10 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         return isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassSemaphore);
     }
 
-    public boolean become(final AbstractSqueakObject other) {
+    public final void becomeOtherClass(final AbstractSqueakObject other) {
         final ClassObject otherSqClass = other.sqClass;
         other.setSqClass(this.sqClass);
         this.setSqClass(otherSqClass);
-        return true;
-    }
-
-    public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
-        final ClassObject oldClass = getSqClass();
-        for (int i = 0; i < from.length; i++) {
-            if (from[i] == oldClass) {
-                final ClassObject newClass = (ClassObject) to[i]; // must be a ClassObject
-                setSqClass(newClass);
-                if (copyHash) {
-                    newClass.setSqueakHash(oldClass.squeakHash());
-                }
-            }
-        }
-    }
-
-    @Override
-    public final ForeignAccess getForeignAccess() {
-        return SqueakObjectMessageResolutionForeign.ACCESS;
     }
 
     public final boolean isPinned() {
@@ -129,5 +106,18 @@ public abstract class AbstractSqueakObject implements TruffleObject {
 
     public final void unsetPinned() {
         setSqueakHash(hash & ~(1 << PINNED_BIT_SHIFT));
+    }
+
+    /*
+     * Methods for Truffle.
+     */
+
+    @Override
+    public final ForeignAccess getForeignAccess() {
+        return SqueakObjectMessageResolutionForeign.ACCESS;
+    }
+
+    public static final boolean isInstance(final TruffleObject obj) {
+        return obj instanceof AbstractSqueakObject;
     }
 }

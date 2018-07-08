@@ -12,7 +12,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
-import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -109,20 +108,12 @@ public final class NativeObject extends AbstractSqueakObject {
         }
     }
 
-    @Override
-    public boolean become(final AbstractSqueakObject other) {
-        if (!(other instanceof NativeObject)) {
-            throw new PrimitiveExceptions.PrimitiveFailed();
-        }
-        if (!super.become(other)) {
-            throw new SqueakException("Should not fail");
-        }
+    public void become(final NativeObject other) {
+        super.becomeOtherClass(other);
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        final NativeObject otherNativeObject = (NativeObject) other;
-        final Object otherStorage = otherNativeObject.storage;
-        otherNativeObject.setStorage(this.storage);
+        final Object otherStorage = other.storage;
+        other.setStorage(this.storage);
         this.setStorage(otherStorage);
-        return true;
     }
 
     public LargeIntegerObject normalize(final ValueProfile storageType) {

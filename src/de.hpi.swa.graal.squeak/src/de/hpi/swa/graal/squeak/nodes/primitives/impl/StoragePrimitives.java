@@ -15,6 +15,7 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.BranchProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
@@ -31,6 +32,7 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.GetAllInstancesNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectBecomeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectPointersBecomeOneWayNode;
 import de.hpi.swa.graal.squeak.nodes.context.ObjectGraphNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadNode;
@@ -71,9 +73,6 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         protected final AbstractSqueakObject performPointersBecomeOneWay(final VirtualFrame frame, final PointersObject fromArray, final PointersObject toArray, final boolean copyHash) {
-            if (fromArray.size() != toArray.size()) {
-                throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
-            }
             final Object[] fromPointers = fromArray.getPointers();
             final Object[] toPointers = toArray.getPointers();
             migrateInstances(fromPointers, toPointers, copyHash, getAllInstancesNode.executeGet(frame));
@@ -266,20 +265,26 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @Specialization
+        @Specialization(guards = "fromArray.size() == toArray.size()")
         protected final AbstractSqueakObject doForward(final VirtualFrame frame, final PointersObject fromArray, final PointersObject toArray) {
             return performPointersBecomeOneWay(frame, fromArray, toArray, true);
         }
 
         @SuppressWarnings("unused")
+        @Specialization(guards = "fromArray.size() != toArray.size()")
+        protected static final AbstractSqueakObject doFail(final VirtualFrame frame, final PointersObject fromArray, final PointersObject toArray) {
+            throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
+        }
+
+        @SuppressWarnings("unused")
         @Specialization(guards = {"!isPointers(receiver)"})
-        protected static final AbstractSqueakObject arrayBecome(final VirtualFrame frame, final Object receiver, final PointersObject argument) {
+        protected static final AbstractSqueakObject doFail(final VirtualFrame frame, final Object receiver, final PointersObject argument) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_RECEIVER);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"!isPointers(argument)"})
-        protected static final AbstractSqueakObject arrayBecome(final VirtualFrame frame, final PointersObject receiver, final Object argument) {
+        protected static final AbstractSqueakObject doFail(final VirtualFrame frame, final PointersObject receiver, final Object argument) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
         }
     }
@@ -454,30 +459,30 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 128)
     protected abstract static class PrimBecomeNode extends AbstractPrimitiveNode {
+        @Child private SqueakObjectBecomeNode becomeNode = SqueakObjectBecomeNode.create();
+        private final BranchProfile failProfile = BranchProfile.create();
 
         protected PrimBecomeNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        @Specialization
-        protected static final AbstractSqueakObject doBecome(final PointersObject receiver, final PointersObject other) {
+        @Specialization(guards = {"receiver.size() == other.size()"})
+        protected final AbstractSqueakObject doBecome(final PointersObject receiver, final PointersObject other) {
             final int receiverSize = receiver.size();
-            if (receiverSize != other.size()) {
-                throw new PrimitiveFailed();
-            }
             int numBecomes = 0;
-            final AbstractSqueakObject[] lefts = new AbstractSqueakObject[receiverSize];
-            final AbstractSqueakObject[] rights = new AbstractSqueakObject[receiverSize];
+            final Object[] lefts = new Object[receiverSize];
+            final Object[] rights = new Object[receiverSize];
             for (int i = 0; i < receiverSize; i++) {
-                final AbstractSqueakObject left = (AbstractSqueakObject) receiver.at0(i);
-                final AbstractSqueakObject right = (AbstractSqueakObject) other.at0(i);
-                if (left.become(right)) {
+                final Object left = receiver.at0(i);
+                final Object right = other.at0(i);
+                if (becomeNode.execute(left, right)) {
                     lefts[numBecomes] = left;
                     rights[numBecomes] = right;
                     numBecomes++;
                 } else {
+                    failProfile.enter();
                     for (int j = 0; j < numBecomes; j++) {
-                        lefts[j].become(rights[j]);
+                        becomeNode.execute(lefts[j], rights[j]);
                     }
                     throw new PrimitiveFailed();
                 }
@@ -662,20 +667,26 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @Specialization
+        @Specialization(guards = "fromArray.size() == toArray.size()")
         protected final AbstractSqueakObject doForward(final VirtualFrame frame, final PointersObject fromArray, final PointersObject toArray, final boolean copyHash) {
             return performPointersBecomeOneWay(frame, fromArray, toArray, copyHash);
         }
 
         @SuppressWarnings("unused")
+        @Specialization(guards = "fromArray.size() != toArray.size()")
+        protected static final AbstractSqueakObject doFail(final VirtualFrame frame, final PointersObject fromArray, final PointersObject toArray, final boolean copyHash) {
+            throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
+        }
+
+        @SuppressWarnings("unused")
         @Specialization(guards = {"!isPointers(receiver)"})
-        protected static final AbstractSqueakObject arrayBecome(final VirtualFrame frame, final Object receiver, final PointersObject argument, final boolean copyHash) {
+        protected static final AbstractSqueakObject doFail(final VirtualFrame frame, final Object receiver, final PointersObject argument, final boolean copyHash) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_RECEIVER);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"!isPointers(argument)"})
-        protected static final AbstractSqueakObject arrayBecome(final VirtualFrame frame, final PointersObject receiver, final Object argument, final boolean copyHash) {
+        protected static final AbstractSqueakObject doFail(final VirtualFrame frame, final PointersObject receiver, final Object argument, final boolean copyHash) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
         }
     }

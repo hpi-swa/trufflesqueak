@@ -7,7 +7,6 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 
-import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -303,36 +302,11 @@ public final class ContextObject extends AbstractSqueakObject {
         atput0(CONTEXT.TEMP_FRAME_START - 1 + argumentIndex, value);
     }
 
-    @Override
-    public boolean become(final AbstractSqueakObject other) {
-        if (!(other instanceof ContextObject)) {
-            throw new PrimitiveExceptions.PrimitiveFailed();
-        }
-        if (!super.become(other)) {
-            throw new SqueakException("Should not fail");
-        }
-        final Object[] pointers2 = ((ContextObject) other).pointers;
-        ((ContextObject) other).pointers = this.pointers;
-        pointers = pointers2;
-        return true;
-    }
-
-    @Override
-    public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
-        for (int i = 0; i < from.length; i++) {
-            final Object fromPointer = from[i];
-            // skip sender (for performance), pc, and sp
-            for (int j = CONTEXT.METHOD; j < size(); j++) {
-                final Object newPointer = at0(j);
-                if (newPointer == fromPointer) {
-                    final Object toPointer = to[i];
-                    atput0(j, toPointer);
-                    if (copyHash && fromPointer instanceof AbstractSqueakObject && toPointer instanceof AbstractSqueakObject) {
-                        ((AbstractSqueakObject) toPointer).setSqueakHash(((AbstractSqueakObject) fromPointer).squeakHash());
-                    }
-                }
-            }
-        }
+    public void become(final ContextObject other) {
+        becomeOtherClass(other);
+        final Object[] otherPointers = other.pointers;
+        other.pointers = this.pointers;
+        pointers = otherPointers;
     }
 
     public BlockClosureObject getClosure() {

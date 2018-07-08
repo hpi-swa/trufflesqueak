@@ -133,22 +133,6 @@ public final class CompiledMethodObject extends CompiledCodeObject {
     }
 
     @Override
-    public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
-        super.pointersBecomeOneWay(from, to, copyHash);
-        final ClassObject oldClass = getCompiledInClass();
-        for (int i = 0; i < from.length; i++) {
-            if (from[i] == oldClass) {
-                final ClassObject newClass = (ClassObject) to[i];  // must be a ClassObject
-                setCompiledInClass(newClass);
-                if (copyHash) {
-                    newClass.setSqueakHash(oldClass.squeakHash());
-                }
-                // TODO: flush method caches
-            }
-        }
-    }
-
-    @Override
     @ExplodeLoop
     public RootCallTarget getSplitCallTarget() {
         final RootCallTarget target = getCallTarget();
