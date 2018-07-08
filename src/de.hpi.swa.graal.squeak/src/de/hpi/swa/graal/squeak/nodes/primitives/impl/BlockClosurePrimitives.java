@@ -57,7 +57,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
                 @Override
                 public ContextObject visitFrame(final FrameInstance frameInstance) {
-                    final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
+                    final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
                     if (current.getArguments().length < FrameAccess.RECEIVER) {
                         return null;
                     }
@@ -72,7 +72,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         } else {
                             final CompiledCodeObject frameMethod = FrameAccess.getMethod(current);
                             if (frameMethod.isUnwindMarked()) {
-                                return contextNode.executeGet(current);
+                                return contextNode.executeGet(frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE));
                             }
                         }
                     }
@@ -181,7 +181,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
                 @Override
                 public ContextObject visitFrame(final FrameInstance frameInstance) {
-                    final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
+                    final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
                     if (current.getArguments().length < FrameAccess.RECEIVER) {
                         return null;
                     }
@@ -193,7 +193,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                     } else {
                         final CompiledCodeObject frameMethod = FrameAccess.getMethod(current);
                         if (frameMethod.isExceptionHandlerMarked()) {
-                            return contextNode.executeGet(current);
+                            return contextNode.executeGet(frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE));
                         }
                     }
                     return null;
