@@ -6,7 +6,6 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -14,10 +13,9 @@ import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
-import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectPointersBecomeOneWayNodeGen.UpdateSqueakHashNodeGen;
 
 public abstract class SqueakObjectPointersBecomeOneWayNode extends Node {
-    @Child private UpdateSqueakHashNode updateHashNode = UpdateSqueakHashNode.create();
+    @Child private UpdateSqueakObjectHashNode updateHashNode = UpdateSqueakObjectHashNode.create();
 
     public static SqueakObjectPointersBecomeOneWayNode create() {
         return SqueakObjectPointersBecomeOneWayNodeGen.create();
@@ -152,28 +150,5 @@ public abstract class SqueakObjectPointersBecomeOneWayNode extends Node {
     @Fallback
     protected static final void doFallback(final Object obj, final Object[] from, final Object[] to, final boolean copyHash) {
         // nothing to do
-    }
-
-    protected abstract static class UpdateSqueakHashNode extends Node {
-        protected static UpdateSqueakHashNode create() {
-            return UpdateSqueakHashNodeGen.create();
-        }
-
-        protected abstract void executeUpdate(Object fromPointer, Object toPointer, boolean copyHash);
-
-        @Specialization(guards = "copyHash")
-        protected static final void doCopy(final AbstractSqueakObject fromPointer, final AbstractSqueakObject toPointer, @SuppressWarnings("unused") final boolean copyHash) {
-            toPointer.setSqueakHash(fromPointer.squeakHash());
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = "!copyHash || (!isAbstractSqueakObject(fromPointer) || !isAbstractSqueakObject(toPointer))")
-        protected final void doFallback(final Object fromPointer, final Object toPointer, final boolean copyHash) {
-            // nothing to do
-        }
-
-        protected static final boolean isAbstractSqueakObject(final Object object) {
-            return object instanceof AbstractSqueakObject;
-        }
     }
 }

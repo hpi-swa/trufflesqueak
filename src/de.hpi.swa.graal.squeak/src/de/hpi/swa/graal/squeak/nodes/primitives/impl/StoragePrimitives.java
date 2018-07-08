@@ -34,6 +34,7 @@ import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectBecomeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectPointersBecomeOneWayNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.UpdateSqueakObjectHashNode;
 import de.hpi.swa.graal.squeak.nodes.context.ObjectGraphNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
@@ -61,6 +62,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     protected abstract static class AbstractArrayBecomeOneWayPrimitiveNode extends AbstractInstancesPrimitiveNode {
         @Child private SqueakObjectPointersBecomeOneWayNode pointersBecomeNode = SqueakObjectPointersBecomeOneWayNode.create();
+        @Child private UpdateSqueakObjectHashNode updateHashNode = UpdateSqueakObjectHashNode.create();
         @Child private FrameStackReadNode stackReadNode = FrameStackReadNode.create();
         @Child private FrameStackWriteNode stackWriteNode = FrameStackWriteNode.create();
 
@@ -114,9 +116,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                             if (argument == fromPointer) {
                                 final Object toPointer = toPointers[j];
                                 current.getArguments()[i] = toPointer;
-                                if (fromPointer instanceof AbstractSqueakObject && toPointer instanceof AbstractSqueakObject) {
-                                    ((AbstractSqueakObject) toPointer).setSqueakHash(((AbstractSqueakObject) fromPointer).squeakHash());
-                                }
+                                updateHashNode.executeUpdate(fromPointer, toPointer, true);
                             } else {
                                 pointersBecomeNode.execute(argument, fromPointers, toPointers, copyHash);
                             }
@@ -141,9 +141,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                             if (stackObject == fromPointer) {
                                 final Object toPointer = toPointers[j];
                                 stackWriteNode.execute(current, i, toPointer);
-                                if (fromPointer instanceof AbstractSqueakObject && toPointer instanceof AbstractSqueakObject) {
-                                    ((AbstractSqueakObject) toPointer).setSqueakHash(((AbstractSqueakObject) fromPointer).squeakHash());
-                                }
+                                updateHashNode.executeUpdate(fromPointer, toPointer, true);
                             } else {
                                 pointersBecomeNode.execute(stackObject, fromPointers, toPointers, copyHash);
                             }
