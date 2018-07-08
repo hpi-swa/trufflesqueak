@@ -10,7 +10,7 @@ import de.hpi.swa.graal.squeak.model.NativeObject;
 @ReportPolymorphism
 public abstract class AbstractObjectAtNode extends Node {
 
-    protected static boolean isNativeObject(final AbstractSqueakObject object) {
+    protected static final boolean isNativeObject(final AbstractSqueakObject object) {
         return object instanceof NativeObject;
     }
 
