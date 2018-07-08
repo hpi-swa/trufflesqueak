@@ -347,6 +347,7 @@ public final class SqueakImageContext {
      */
     @TruffleBoundary
     public void printSqStackTrace() {
+        CompilerDirectives.transferToInterpreter();
         final boolean isTravisBuild = System.getenv().containsKey("TRAVIS");
         final int[] depth = new int[1];
         final Object[] lastSender = new Object[]{null};

@@ -3,6 +3,7 @@ package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
@@ -72,6 +73,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         } else {
                             final CompiledCodeObject frameMethod = FrameAccess.getMethod(current);
                             if (frameMethod.isUnwindMarked()) {
+                                CompilerDirectives.bailout("Finding materializable frames should never be part of compiled code as it triggers deopts");
                                 return contextNode.executeGet(frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE));
                             }
                         }
@@ -193,6 +195,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                     } else {
                         final CompiledCodeObject frameMethod = FrameAccess.getMethod(current);
                         if (frameMethod.isExceptionHandlerMarked()) {
+                            CompilerDirectives.bailout("Finding materializable frames should never be part of compiled code as it triggers deopts");
                             return contextNode.executeGet(frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE));
                         }
                     }

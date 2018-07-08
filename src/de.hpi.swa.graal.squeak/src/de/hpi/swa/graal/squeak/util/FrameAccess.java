@@ -93,7 +93,7 @@ public class FrameAccess {
 
     @TruffleBoundary
     public static final Frame findFrameForMarker(final FrameMarker frameMarker) {
-        CompilerDirectives.bailout("Finding materlizable frames should never be part of compiled code as it triggers deopts");
+        CompilerDirectives.bailout("Finding materializable frames should never be part of compiled code as it triggers deopts");
         return Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Frame>() {
             @Override
             public Frame visitFrame(final FrameInstance frameInstance) {
