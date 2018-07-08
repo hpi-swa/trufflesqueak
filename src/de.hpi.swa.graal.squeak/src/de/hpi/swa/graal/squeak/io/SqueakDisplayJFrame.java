@@ -212,7 +212,7 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
 
     @Override
     public Dimension getSize() {
-        return frame.getSize();
+        return canvas.getSize();
     }
 
     @Override
@@ -220,13 +220,13 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
         canvas.depth = ((Long) depth).intValue();
         canvas.width = ((Long) width).intValue();
         canvas.height = ((Long) height).intValue();
-        frame.setSize(canvas.width, canvas.height);
         setFullscreen(fullscreen);
     }
 
     @Override
     public void resizeTo(final int width, final int height) {
-        frame.setSize(width, height);
+        frame.getContentPane().setPreferredSize(new Dimension(width, height));
+        frame.pack();
     }
 
     @Override
