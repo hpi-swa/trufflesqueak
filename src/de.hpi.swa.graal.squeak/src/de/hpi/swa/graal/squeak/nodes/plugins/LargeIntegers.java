@@ -2,14 +2,12 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 
 import java.util.List;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
@@ -309,39 +307,24 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = "a == b")
         protected long doLongEqual(final long a, final long b) {
-            return 0;
-        }
-
-        @Specialization(guards = "a != b")
-        @TruffleBoundary
-        protected long doLong(final long a, final long b) {
-            final int compare = Long.toString(a).compareTo(Long.toString(b));
-            if (compare > 0) {
-                return 1;
-            } else if (compare < 0) {
-                return -1;
-            } else {
-                throw new SqueakException("Case should not happen");
-            }
+            return 0L;
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "a.equals(b)")
-        protected long doLargeIntegerEqual(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return 0;
+        @Specialization(guards = "a > b")
+        protected long doLongLarger(final long a, final long b) {
+            return 1L;
         }
 
-        @Specialization(guards = "!a.equals(b)")
-        @TruffleBoundary
+        @SuppressWarnings("unused")
+        @Specialization(guards = "a < b")
+        protected long doLongSmaller(final long a, final long b) {
+            return -1L;
+        }
+
+        @Specialization
         protected long doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            final int compare = a.toString().compareTo(b.toString());
-            if (compare > 0) {
-                return 1;
-            } else if (compare < 0) {
-                return -1;
-            } else {
-                throw new SqueakException("Case should not happen");
-            }
+            return a.compareTo(b);
         }
 
         @Specialization
@@ -353,9 +336,12 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
                 return -1L; // If `b` does not fit into a long, it must be larger
             }
             if (a == longValueExact) {
-                return 0;
+                return 0L;
+            } else if (a > longValueExact) {
+                return 1L;
+            } else {
+                return -1L;
             }
-            return doLong(a, longValueExact);
         }
 
         @Specialization
@@ -368,8 +354,11 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             }
             if (longValueExact == b) {
                 return 0;
+            } else if (longValueExact > b) {
+                return 1L;
+            } else {
+                return -1L;
             }
-            return doLong(longValueExact, b);
         }
     }
 
