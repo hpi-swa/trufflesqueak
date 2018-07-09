@@ -52,6 +52,9 @@ import de.hpi.swa.graal.squeak.nodes.LookupNode;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.IsDoesNotUnderstandNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeGetBytesNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.context.ArgumentNode;
 import de.hpi.swa.graal.squeak.nodes.context.ObjectGraphNode;
 import de.hpi.swa.graal.squeak.nodes.context.SqueakLookupClassNode;
@@ -579,6 +582,26 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                     return code.image.nil;
             }
             return code.image.nil;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 168)
+    protected abstract static class PrimCopyObjectNode extends AbstractPrimitiveNode {
+        @Child protected SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
+        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
+        @Child private SqueakObjectAtPut0Node atput0Node = SqueakObjectAtPut0Node.create();
+
+        protected PrimCopyObjectNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @Specialization(guards = {"!isNativeObject(receiver)", "receiver.getSqClass() == anotherObject.getSqClass()", "sizeNode.execute(receiver) != sizeNode.execute(anotherObject)"})
+        protected final Object doCopy(final AbstractSqueakObject receiver, final AbstractSqueakObject anotherObject) {
+            for (int i = 0; i < sizeNode.execute(receiver); i++) {
+                atput0Node.execute(receiver, i, at0Node.execute(anotherObject, i));
+            }
+            return receiver;
         }
     }
 
