@@ -12,6 +12,7 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.io.SqueakIOConstants;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
@@ -25,6 +26,7 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.FORM;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
+import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeGetBytesNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
@@ -33,6 +35,7 @@ import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.impl.IOPrimitivesFactory.PrimScanCharactersNodeFactory.ScanCharactersHelperNodeGen;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives.SimulationPrimitiveNode;
 
 public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
@@ -212,6 +215,93 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             code.image.getDisplay().open();
             code.image.specialObjectsArray.atput0(SPECIAL_OBJECT_INDEX.TheDisplay, receiver);
             return code.image.sqTrue;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 103)
+    protected abstract static class PrimScanCharactersNode extends AbstractPrimitiveNode {
+        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
+        private final ValueProfile byteType = ValueProfile.createClassProfile();
+        @Child private ScanCharactersHelperNode scanNode;
+
+        protected PrimScanCharactersNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+            scanNode = ScanCharactersHelperNode.create(method.image);
+        }
+
+        @Specialization(guards = {"startIndex > 0", "stopIndex > 0", "sourceString.isByteType()", "receiver.size() >= 4", "stops.size() >= 258"})
+        protected final Object doScan(final PointersObject receiver, final long startIndex, final long stopIndex, final NativeObject sourceString, final long rightX,
+                        final PointersObject stops, final long kernData) {
+            final Object scanDestX = at0Node.execute(receiver, 0);
+            final Object scanXTable = at0Node.execute(receiver, 2);
+            final Object scanMap = at0Node.execute(receiver, 3);
+            return scanNode.executeScan(receiver, startIndex, stopIndex, sourceString.getByteStorage(byteType), rightX, stops, kernData, scanDestX, scanXTable, scanMap);
+        }
+
+        protected abstract static class ScanCharactersHelperNode extends AbstractNodeWithImage {
+            private static final long END_OF_RUN = 257 - 1;
+            private static final long CROSSED_X = 258 - 1;
+
+            @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
+
+            protected static ScanCharactersHelperNode create(final SqueakImageContext image) {
+                return ScanCharactersHelperNodeGen.create(image);
+            }
+
+            protected abstract Object executeScan(PointersObject receiver, long startIndex, long stopIndex, byte[] sourceBytes, long rightX, PointersObject stops, long kernData,
+                            Object scanDestX, Object scanXTable, Object scanMap);
+
+            protected ScanCharactersHelperNode(final SqueakImageContext image) {
+                super(image);
+            }
+
+            @Specialization(guards = {"scanMap.size() == 256", "stopIndex <= sourceBytes.length"})
+            protected final Object doScan(final PointersObject receiver, final long startIndex, final long stopIndex, final byte[] sourceBytes, final long rightX, final PointersObject stops,
+                            final long kernData, final long startScanDestX, final PointersObject scanXTable, final PointersObject scanMap) {
+                final int maxGlyph = scanXTable.size() - 2;
+                long scanDestX = startScanDestX;
+                long scanLastIndex = startIndex;
+                while (scanLastIndex <= stopIndex) {
+                    final long ascii = (sourceBytes[(int) (scanLastIndex - 1)] & 0xFF);
+                    final Object stopReason = stops.at0(ascii);
+                    if (stopReason != image.nil) {
+                        storeStateInReceiver(receiver, scanDestX, scanLastIndex);
+                        return stopReason;
+                    }
+                    final long glyphIndex;
+                    try {
+                        glyphIndex = (long) scanMap.at0(ascii);
+                    } catch (ArrayIndexOutOfBoundsException e) {
+                        throw new PrimitiveFailed();
+                    }
+                    if (glyphIndex < 0 || glyphIndex > maxGlyph) {
+                        throw new PrimitiveFailed();
+                    }
+                    final long sourceX1;
+                    final long sourceX2;
+                    try {
+                        sourceX1 = (long) scanXTable.at0(glyphIndex);
+                        sourceX2 = (long) scanXTable.at0(glyphIndex + 1);
+                    } catch (ClassCastException e) {
+                        throw new PrimitiveFailed();
+                    }
+                    final long nextDestX = scanDestX + sourceX2 - sourceX1;
+                    if (nextDestX > rightX) {
+                        storeStateInReceiver(receiver, scanDestX, scanLastIndex);
+                        return stops.at0(CROSSED_X);
+                    }
+                    scanDestX = nextDestX + kernData;
+                    scanLastIndex++;
+                }
+                storeStateInReceiver(receiver, scanDestX, stopIndex);
+                return stops.at0(END_OF_RUN);
+            }
+
+            private void storeStateInReceiver(final PointersObject receiver, final long scanDestX, final long scanLastIndex) {
+                atPut0Node.execute(receiver, 0, scanDestX);
+                atPut0Node.execute(receiver, 1, scanLastIndex);
+            }
         }
     }
 
