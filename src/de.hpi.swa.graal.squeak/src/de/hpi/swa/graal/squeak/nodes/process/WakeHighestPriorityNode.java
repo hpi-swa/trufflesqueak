@@ -17,7 +17,6 @@ public final class WakeHighestPriorityNode extends AbstractNodeWithImage {
     @Child private SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
     @Child private RemoveFirstLinkOfListNode removeFirstLinkOfListNode;
     @Child private GetActiveProcessNode getActiveProcessNode;
-    @Child private GetSchedulerNode getSchedulerNode;
     @Child private IsEmptyListNode isEmptyListNode;
     @Child private TransferToNode transferToNode;
 
@@ -29,7 +28,6 @@ public final class WakeHighestPriorityNode extends AbstractNodeWithImage {
         super(code.image);
         removeFirstLinkOfListNode = RemoveFirstLinkOfListNode.create(image);
         getActiveProcessNode = GetActiveProcessNode.create(image);
-        getSchedulerNode = GetSchedulerNode.create(image);
         isEmptyListNode = IsEmptyListNode.create(image);
         transferToNode = TransferToNode.create(code);
     }
@@ -37,8 +35,7 @@ public final class WakeHighestPriorityNode extends AbstractNodeWithImage {
     public void executeWake(final VirtualFrame frame) {
         // Return the highest priority process that is ready to run.
         // Note: It is a fatal VM error if there is no runnable process.
-        final PointersObject scheduler = getSchedulerNode.executeGet();
-        final Object schedLists = scheduler.at0(PROCESS_SCHEDULER.PROCESS_LISTS);
+        final Object schedLists = image.getScheduler().at0(PROCESS_SCHEDULER.PROCESS_LISTS);
         long p = sizeNode.execute(schedLists) - 1;  // index of last indexable field
         Object processList;
         do {

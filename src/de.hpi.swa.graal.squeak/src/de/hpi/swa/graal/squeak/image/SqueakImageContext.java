@@ -30,6 +30,7 @@ import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
+import de.hpi.swa.graal.squeak.model.ObjectLayouts.ASSOCIATION;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.POINT;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
@@ -129,6 +130,7 @@ public final class SqueakImageContext {
 
     @CompilationFinal private NativeObject asSymbolSelector = null; // for testing
     @CompilationFinal private NativeObject simulatePrimitiveArgsSelector = null;
+    @CompilationFinal private PointersObject scheduler = null;
 
     public SqueakImageContext(final SqueakLanguage squeakLanguage, final SqueakLanguage.Env environ,
                     final PrintWriter out, final PrintWriter err) {
@@ -215,6 +217,15 @@ public final class SqueakImageContext {
     public void setSimulatePrimitiveArgsSelector(final NativeObject simulatePrimitiveArgsSelector) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         this.simulatePrimitiveArgsSelector = simulatePrimitiveArgsSelector;
+    }
+
+    public PointersObject getScheduler() {
+        if (scheduler == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            final PointersObject association = (PointersObject) specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SchedulerAssociation);
+            scheduler = (PointersObject) association.at0(ASSOCIATION.VALUE);
+        }
+        return scheduler;
     }
 
     public Object wrap(final Object obj) {

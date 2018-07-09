@@ -21,7 +21,6 @@ public abstract class TransferToNode extends AbstractNodeWithImage {
     @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
     @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
     @Child private GetOrCreateContextNode contextNode = GetOrCreateContextNode.create();
-    @Child private GetSchedulerNode getSchedulerNode;
 
     public static TransferToNode create(final CompiledCodeObject code) {
         return TransferToNodeGen.create(code);
@@ -29,7 +28,6 @@ public abstract class TransferToNode extends AbstractNodeWithImage {
 
     protected TransferToNode(final CompiledCodeObject code) {
         super(code.image);
-        getSchedulerNode = GetSchedulerNode.create(image);
     }
 
     public abstract void executeTransferTo(VirtualFrame frame, Object activeProcess, Object newProcess);
@@ -38,7 +36,7 @@ public abstract class TransferToNode extends AbstractNodeWithImage {
     public final void executeTransferTo(final VirtualFrame frame, final AbstractSqueakObject activeProcess, final AbstractSqueakObject newProcess) {
         // Record a process to be awakened on the next interpreter cycle.
         final ContextObject activeContext = contextNode.executeGet(frame);
-        final PointersObject scheduler = getSchedulerNode.executeGet();
+        final PointersObject scheduler = image.getScheduler();
         assert newProcess != scheduler.at0(PROCESS_SCHEDULER.ACTIVE_PROCESS) : "trying to switch to already active process";
         scheduler.atput0(PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
         atPut0Node.execute(activeProcess, PROCESS.SUSPENDED_CONTEXT, activeContext);
