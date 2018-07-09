@@ -73,7 +73,8 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         integerDirty = true;
     }
 
-    private BigInteger getBigInteger() {
+    @TruffleBoundary
+    public BigInteger getBigInteger() {
         if (integerDirty) {
             integer = derivedBigIntegerFromBytes(bytes, isNegative());
             integerDirty = false;
@@ -163,7 +164,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
 
     @TruffleBoundary
     public Object reduceIfPossible() {
-        return reduceIfPossible(integer);
+        return reduceIfPossible(getBigInteger());
     }
 
     @TruffleBoundary
@@ -174,6 +175,11 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     @TruffleBoundary
     public long longValueExact() throws ArithmeticException {
         return getBigInteger().longValueExact();
+    }
+
+    @TruffleBoundary
+    public int bitLength() {
+        return getBigInteger().bitLength();
     }
 
     private LargeIntegerObject newFromBigInteger(final BigInteger value) {

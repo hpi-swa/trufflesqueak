@@ -28,13 +28,90 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primAnyBitFromTo") // TODO: implement primitive
-    public abstract static class PrimAnyBitFromToNode extends AbstractArithmeticBinaryPrimitiveNode {
+    @SqueakPrimitive(name = "primAnyBitFromTo")
+    public abstract static class PrimAnyBitFromToNode extends AbstractPrimitiveNode {
 
         public PrimAnyBitFromToNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
+        @Specialization(guards = {"start >= 1", "stopArg >= 1"})
+        protected final boolean doLong(final long receiver, final long start, final long stopArg) {
+            final long stop = Math.min(stopArg, Long.highestOneBit(receiver));
+            if (start > stop) {
+                return code.image.sqFalse;
+            }
+            final long firstDigitIndex = Math.floorDiv(start - 1, 32);
+            final long lastDigitIndex = Math.floorDiv(stop - 1, 32);
+            final long firstMask = 0xFFFFFFFFL << ((start - 1) & 31);
+            final long lastMask = 0xFFFFFFFFL >> (31 - ((stop - 1) & 31));
+            if (firstDigitIndex == lastDigitIndex) {
+                final long digit = digitOf(receiver, firstDigitIndex);
+                if ((digit & (firstMask & lastMask)) != 0) {
+                    return code.image.sqTrue;
+                } else {
+                    return code.image.sqFalse;
+                }
+            }
+            if (((digitOf(receiver, firstDigitIndex)) & firstMask) != 0) {
+                return code.image.sqTrue;
+            }
+            for (long i = firstDigitIndex + 1; i < lastDigitIndex - 1; i++) {
+                if (digitOf(receiver, i) != 0) {
+                    return code.image.sqTrue;
+                }
+            }
+            if ((digitOf(receiver, lastDigitIndex) & lastMask) != 0) {
+                return code.image.sqTrue;
+            }
+            return code.image.sqFalse;
+        }
+
+        @Specialization(guards = {"start >= 1", "stopArg >= 1"}, rewriteOn = {ArithmeticException.class})
+        protected final boolean doLargeIntegerAsLong(final LargeIntegerObject receiver, final long start, final long stopArg) {
+            return doLong(receiver.longValueExact(), start, stopArg);
+        }
+
+        @Specialization(guards = {"start >= 1", "stopArg >= 1"})
+        protected final boolean doLargeInteger(final LargeIntegerObject receiver, final long start, final long stopArg) {
+            final long stop = Math.min(stopArg, receiver.bitLength());
+            if (start > stop) {
+                return code.image.sqFalse;
+            }
+            final long firstDigitIndex = Math.floorDiv(start - 1, 32);
+            final long lastDigitIndex = Math.floorDiv(stop - 1, 32);
+            final long firstMask = 0xFFFFFFFFL << ((start - 1) & 31);
+            final long lastMask = 0xFFFFFFFFL >> (31 - ((stop - 1) & 31));
+            if (firstDigitIndex == lastDigitIndex) {
+                final long digit = receiver.getNativeAt0(firstDigitIndex);
+                if ((digit & (firstMask & lastMask)) != 0) {
+                    return code.image.sqTrue;
+                } else {
+                    return code.image.sqFalse;
+                }
+            }
+            if ((receiver.getNativeAt0(firstDigitIndex) & firstMask) != 0) {
+                return code.image.sqTrue;
+            }
+            for (long i = firstDigitIndex + 1; i < lastDigitIndex - 1; i++) {
+                if (receiver.getNativeAt0(i) != 0) {
+                    return code.image.sqTrue;
+                }
+            }
+            if ((receiver.getNativeAt0(lastDigitIndex) & lastMask) != 0) {
+                return code.image.sqTrue;
+            }
+            return code.image.sqFalse;
+        }
+
+        private static long digitOf(final long value, final long index) {
+            final int numDigits = digitSize(value);
+            return (value / (int) Math.pow(10, numDigits - index - 1)) % 10;
+        }
+
+        private static int digitSize(final long value) {
+            return (int) Math.log10(Math.abs(value)) + 1;
+        }
     }
 
     @GenerateNodeFactory
