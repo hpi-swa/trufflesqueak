@@ -416,7 +416,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization
         protected static final long doDigitLength(final Object receiver) {
-            return 8L; // TODO: update when primMontgomeryTimesModulo is implemented
+            return 32L;
         }
     }
 
