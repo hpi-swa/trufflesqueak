@@ -333,22 +333,21 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveTranslateStringWithTable")
     public abstract static class PrimTranslateStringWithTableNode extends AbstractMiscPrimitiveNode {
-        private final ValueProfile storageType = ValueProfile.createClassProfile();
-        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
+        private final ValueProfile byteType = ValueProfile.createClassProfile();
 
         public PrimTranslateStringWithTableNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        @Specialization(guards = "string.isByteType()")
-        protected final NativeObject doNativeObject(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject string, final long start, final long stop,
+        @Specialization(guards = {"string.isByteType()", "table.isByteType()"})
+        protected final AbstractSqueakObject doNativeObject(final AbstractSqueakObject receiver, final NativeObject string, final long start, final long stop,
                         final NativeObject table) {
-            final byte[] bytes = string.getByteStorage(storageType);
+            final byte[] stringBytes = string.getByteStorage(byteType);
+            final byte[] tableBytes = table.getByteStorage(byteType);
             for (int i = (int) start - 1; i < stop; i++) {
-                final Long tableValue = (Long) at0Node.execute(table, (long) at0Node.execute(string, i));
-                bytes[i] = tableValue.byteValue();
+                stringBytes[i] = tableBytes[stringBytes[i]];
             }
-            return string;
+            return receiver;
         }
     }
 }
