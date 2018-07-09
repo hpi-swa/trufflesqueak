@@ -590,7 +590,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization
-        protected final Object copy(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected final Object doMaxHash(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             return asFloatObject(Math.pow(2, 22) - 1);
         }
     }

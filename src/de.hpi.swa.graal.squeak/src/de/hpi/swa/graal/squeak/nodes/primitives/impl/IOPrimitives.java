@@ -206,11 +206,8 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @Specialization
+        @Specialization(guards = "receiver.size() >= 4")
         protected final boolean doDisplay(final PointersObject receiver) {
-            if (receiver.size() < 4) {
-                throw new PrimitiveFailed();
-            }
             code.image.getDisplay().setSqDisplay(receiver);
             code.image.getDisplay().open();
             code.image.specialObjectsArray.atput0(SPECIAL_OBJECT_INDEX.TheDisplay, receiver);
