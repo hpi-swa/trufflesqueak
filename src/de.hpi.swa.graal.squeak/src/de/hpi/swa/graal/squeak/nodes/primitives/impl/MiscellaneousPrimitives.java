@@ -27,6 +27,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.SimulationPrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
@@ -1027,7 +1028,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                         return result;
                     }
                 }
-                throw new PrimitiveFailed(); // otherwise fail (e.g. Form>>primPixelValueAtX:y:)
+                throw new SqueakException("Unable to find simulationMethod.");
             }
             return simulationMethod;
         }
