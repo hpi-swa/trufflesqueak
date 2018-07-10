@@ -1,11 +1,5 @@
 package de.hpi.swa.graal.squeak.model;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.IntBuffer;
-import java.nio.LongBuffer;
-import java.nio.ShortBuffer;
-
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -215,30 +209,47 @@ public final class NativeObject extends AbstractSqueakObject {
         return longs;
     }
 
-    @TruffleBoundary
     public static byte[] bytesFromShorts(final short[] shorts) {
-        final ByteBuffer byteBuffer = ByteBuffer.allocate(shorts.length * SHORT_BYTE_SIZE);
-        byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-        final ShortBuffer shortBuffer = byteBuffer.asShortBuffer();
-        shortBuffer.put(shorts);
-        return byteBuffer.array();
+        final int shortLength = shorts.length;
+        final byte[] bytes = new byte[shortLength * SHORT_BYTE_SIZE];
+        for (int i = 0; i < shortLength; i++) {
+            final int offset = i * SHORT_BYTE_SIZE;
+            final short shortValue = shorts[i];
+            bytes[offset] = (byte) (shortValue >> 8);
+            bytes[offset + 1] = (byte) shortValue;
+        }
+        return bytes;
     }
 
-    @TruffleBoundary
     public static byte[] bytesFromInts(final int[] ints) {
-        final ByteBuffer byteBuffer = ByteBuffer.allocate(ints.length * INTEGER_BYTE_SIZE);
-        byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-        final IntBuffer intBuffer = byteBuffer.asIntBuffer();
-        intBuffer.put(ints);
-        return byteBuffer.array();
+        final int intsLength = ints.length;
+        final byte[] bytes = new byte[intsLength * INTEGER_BYTE_SIZE];
+        for (int i = 0; i < intsLength; i++) {
+            final int offset = i * INTEGER_BYTE_SIZE;
+            final int intValue = ints[i];
+            bytes[offset] = (byte) (intValue >> 24);
+            bytes[offset + 1] = (byte) (intValue >> 16);
+            bytes[offset + 2] = (byte) (intValue >> 8);
+            bytes[offset + 3] = (byte) intValue;
+        }
+        return bytes;
     }
 
-    @TruffleBoundary
     public static byte[] bytesFromLongs(final long[] longs) {
-        final ByteBuffer byteBuffer = ByteBuffer.allocate(longs.length * LONG_BYTE_SIZE);
-        byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-        final LongBuffer longBuffer = byteBuffer.asLongBuffer();
-        longBuffer.put(longs);
-        return byteBuffer.array();
+        final int longsLength = longs.length;
+        final byte[] bytes = new byte[longsLength * LONG_BYTE_SIZE];
+        for (int i = 0; i < longsLength; i++) {
+            final int offset = i * LONG_BYTE_SIZE;
+            final long longValue = longs[i];
+            bytes[offset] = (byte) (longValue >> 56);
+            bytes[offset + 1] = (byte) (longValue >> 48);
+            bytes[offset + 2] = (byte) (longValue >> 40);
+            bytes[offset + 3] = (byte) (longValue >> 32);
+            bytes[offset + 4] = (byte) (longValue >> 24);
+            bytes[offset + 5] = (byte) (longValue >> 16);
+            bytes[offset + 6] = (byte) (longValue >> 8);
+            bytes[offset + 7] = (byte) longValue;
+        }
+        return bytes;
     }
 }
