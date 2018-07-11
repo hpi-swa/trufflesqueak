@@ -23,7 +23,7 @@ import com.oracle.truffle.api.frame.FrameDescriptor;
 import de.hpi.swa.graal.squeak.GraalSqueakMain;
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.SqueakException;
-import de.hpi.swa.graal.squeak.image.SqueakImageReader;
+import de.hpi.swa.graal.squeak.image.SqueakImageReaderNode;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
@@ -172,7 +172,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
         image.getOutput().println("== Running " + SqueakLanguage.NAME + " SUnit Tests on " + GraalSqueakMain.getRuntimeName() + " ==");
         image.getOutput().println("Loading test image at " + imagePath + "...");
         try {
-            final SqueakImageReader reader = new SqueakImageReader(new FileInputStream(imagePath), image);
+            final SqueakImageReaderNode reader = new SqueakImageReaderNode(new FileInputStream(imagePath), image);
             reader.executeRead(Truffle.getRuntime().createVirtualFrame(new Object[0], new FrameDescriptor()));
         } catch (IOException e) {
             e.printStackTrace();

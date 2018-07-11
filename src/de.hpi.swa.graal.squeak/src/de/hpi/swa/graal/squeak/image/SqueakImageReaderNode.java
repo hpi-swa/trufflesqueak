@@ -25,7 +25,7 @@ import de.hpi.swa.graal.squeak.util.BitSplitter;
 import de.hpi.swa.graal.squeak.util.StopWatch;
 
 @SuppressWarnings("unused")
-public final class SqueakImageReader extends Node {
+public final class SqueakImageReaderNode extends Node {
     @CompilationFinal(dimensions = 1) private static final int[] CHUNK_HEADER_BIT_PATTERN = new int[]{22, 2, 5, 3, 22, 2, 8};
     @CompilationFinal static final Object NIL_OBJECT_PLACEHOLDER = new Object();
     @CompilationFinal private static final int SPECIAL_SELECTORS_INDEX = 23;
@@ -51,7 +51,7 @@ public final class SqueakImageReader extends Node {
     private int segmentEnd;
     private int currentAddressSwizzle;
 
-    public SqueakImageReader(final InputStream inputStream, final SqueakImageContext image) {
+    public SqueakImageReaderNode(final InputStream inputStream, final SqueakImageContext image) {
         stream = new BufferedInputStream(inputStream);
         output = image.getOutput();
         this.image = image;
@@ -188,9 +188,9 @@ public final class SqueakImageReader extends Node {
     }
 
     static class ReadObjectNode extends Node implements RepeatingNode {
-        private final SqueakImageReader reader;
+        private final SqueakImageReaderNode reader;
 
-        ReadObjectNode(final SqueakImageReader reader) {
+        ReadObjectNode(final SqueakImageReaderNode reader) {
             this.reader = reader;
         }
 

@@ -11,13 +11,13 @@ import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.image.SqueakImageReader;
+import de.hpi.swa.graal.squeak.image.SqueakImageReaderNode;
 
 public final class SqueakRootNode extends RootNode {
     private final SqueakLanguage language;
     private final String imagePath;
 
-    @Child SqueakImageReader readerNode;
+    @Child SqueakImageReaderNode readerNode;
 
     public static SqueakRootNode create(final SqueakLanguage language, final ParsingRequest request) {
         return new SqueakRootNode(language, request);
@@ -29,7 +29,7 @@ public final class SqueakRootNode extends RootNode {
         this.imagePath = request.getSource().getPath();
         try {
             final SqueakImageContext image = language.getContextReference().get();
-            this.readerNode = new SqueakImageReader(new FileInputStream(imagePath), image);
+            this.readerNode = new SqueakImageReaderNode(new FileInputStream(imagePath), image);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }

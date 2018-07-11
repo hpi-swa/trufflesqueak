@@ -32,13 +32,13 @@ public final class SqueakImageChunk {
     @CompilationFinal protected final int classid;
     @CompilationFinal protected final int pos;
 
-    @CompilationFinal private final SqueakImageReader reader;
+    @CompilationFinal private final SqueakImageReaderNode reader;
     @CompilationFinal protected final int format;
     @CompilationFinal private final int hash;
     @CompilationFinal(dimensions = 1) private final int[] data;
     @CompilationFinal private final SqueakImageContext image;
 
-    public SqueakImageChunk(final SqueakImageReader reader,
+    public SqueakImageChunk(final SqueakImageReaderNode reader,
                     final SqueakImageContext image,
                     final int[] data,
                     final int format,
@@ -69,7 +69,7 @@ public final class SqueakImageChunk {
             assert format == 1;
             CompilerDirectives.transferToInterpreterAndInvalidate();
             object = new ClassObject(image);
-        } else if (object == SqueakImageReader.NIL_OBJECT_PLACEHOLDER) {
+        } else if (object == SqueakImageReaderNode.NIL_OBJECT_PLACEHOLDER) {
             return null;
         }
         return (ClassObject) object;
@@ -121,7 +121,7 @@ public final class SqueakImageChunk {
                 object = new CompiledMethodObject(image);
             }
         }
-        if (object == SqueakImageReader.NIL_OBJECT_PLACEHOLDER) {
+        if (object == SqueakImageReaderNode.NIL_OBJECT_PLACEHOLDER) {
             return image.nil;
         } else {
             return object;
