@@ -13,6 +13,7 @@ import java.util.Map;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -31,10 +32,10 @@ import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     private static final Map<Long, SeekableByteChannel> files = new HashMap<>();
 
-    private static final class STDIO_HANDLES {
-        private static final long IN = 0;
-        private static final long OUT = 1;
-        private static final long ERROR = 2;
+    public static final class STDIO_HANDLES {
+        public static final long IN = 0;
+        public static final long OUT = 1;
+        public static final long ERROR = 2;
     }
 
     @Override
@@ -159,12 +160,10 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @Specialization(guards = "nativePathName.isByteType()")
+        @Specialization(guards = {"nativePathName.isByteType()", "longIndex >= 0"})
+        @TruffleBoundary
         protected final Object doLookup(@SuppressWarnings("unused") final PointersObject receiver, final NativeObject nativePathName, final long longIndex) {
             final int index = (int) longIndex;
-            if (index < 0) {
-                throw new PrimitiveFailed();
-            }
             String pathName = asString(nativePathName);
             if (pathName.length() == 0) {
                 pathName = "/";
@@ -174,7 +173,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
                 throw new PrimitiveFailed();
             }
             final File[] paths = directory.listFiles();
-            if (index < paths.length) {
+            if (paths != null && index < paths.length) {
                 final File path = paths[index];
                 final Object[] result = new Object[]{path.getName(), path.lastModified(), path.lastModified(), path.isDirectory(), path.length()};
                 return code.image.wrap(result);
@@ -192,6 +191,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected final Object doAtEnd(@SuppressWarnings("unused") final PointersObject receiver, final long fileDescriptor) {
             try {
                 final SeekableByteChannel file = getFileOrPrimFail(fileDescriptor);
@@ -232,10 +232,10 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "nativeFileName.isByteType()")
         protected final Object doDelete(final PointersObject receiver, final NativeObject nativeFileName) {
             final File file = new File(asString(nativeFileName));
-            if (file.delete()) {
-                return receiver;
+            if (!file.delete()) {
+                throw new PrimitiveFailed();
             }
-            throw new PrimitiveFailed();
+            return receiver;
         }
     }
 
@@ -413,6 +413,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    @ImportStatic(STDIO_HANDLES.class)
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveFileWrite")
     protected abstract static class PrimFileWriteNode extends AbstractFilePluginPrimitiveNode {
@@ -421,14 +422,12 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @Specialization(guards = "content.isByteType()")
+        @Specialization(guards = {"content.isByteType()", "fileDescriptor != IN"})
         protected final long doWrite(final PointersObject receiver, final long fileDescriptor, final NativeObject content, final long startIndex, final long count) {
             final byte[] bytes = asBytes(content);
             final int byteStart = (int) (startIndex - 1);
             final int byteEnd = Math.min(byteStart + (int) count, bytes.length);
-            if (fileDescriptor == STDIO_HANDLES.IN) {
-                throw new PrimitiveFailed();
-            } else if (fileDescriptor == STDIO_HANDLES.OUT) {
+            if (fileDescriptor == STDIO_HANDLES.OUT) {
                 printToStdOut(content, byteStart, byteEnd);
             } else if (fileDescriptor == STDIO_HANDLES.ERROR) {
                 printToStdErr(content, byteStart, byteEnd);
