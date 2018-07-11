@@ -109,11 +109,11 @@ public final class BlockClosureObject extends AbstractSqueakObject {
                 break;
             case BLOCK_CLOSURE.START_PC:
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                pc = ((Long) obj).intValue();
+                pc = (int) (long) obj;
                 break;
             case BLOCK_CLOSURE.ARGUMENT_COUNT:
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                numArgs = ((Long) obj).intValue();
+                numArgs = (int) (long) obj;
                 break;
             default:
                 CompilerDirectives.transferToInterpreterAndInvalidate();

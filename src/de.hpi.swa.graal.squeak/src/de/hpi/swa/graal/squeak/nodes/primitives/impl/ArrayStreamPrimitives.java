@@ -669,12 +669,10 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
         @Specialization(guards = {"inShortRange(value)", "receiver.isByteType()"})
         protected final long doNativeBytes(final NativeObject receiver, final long index, final long value) {
-            final Long byte0 = value & 0xff;
-            final Long byte1 = value & 0xff00;
             final int offset = (int) ((index - 1) * 2);
             final byte[] bytes = receiver.getByteStorage(storageType);
-            bytes[offset] = byte0.byteValue();
-            bytes[offset + 1] = byte1.byteValue();
+            bytes[offset] = (byte) value;
+            bytes[offset + 1] = (byte) (value >> 8);
             return value;
         }
 
@@ -689,7 +687,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             final int wordIndex = (int) ((index - 1) / 2);
             final int[] ints = receiver.getIntStorage(storageType);
             final int word = (int) Integer.toUnsignedLong(ints[wordIndex]);
-            ints[wordIndex] = (int) ((word & 0xffff0000) | (value & 0xffff));
+            ints[wordIndex] = (word & 0xffff0000) | ((int) value & 0xffff);
             return value;
         }
 
@@ -698,7 +696,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             final int wordIndex = (int) ((index - 1) / 2);
             final int[] ints = receiver.getIntStorage(storageType);
             final int word = (int) Integer.toUnsignedLong(ints[wordIndex]);
-            ints[wordIndex] = (int) ((value << 16) | (word & 0xffff));
+            ints[wordIndex] = ((int) value << 16) | (word & 0xffff);
             return value;
         }
 

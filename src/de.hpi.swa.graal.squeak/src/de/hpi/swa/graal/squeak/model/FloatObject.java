@@ -46,11 +46,11 @@ public final class FloatObject extends AbstractSqueakObject {
     }
 
     public long getNativeAt0(final long index) {
-        final Long bits = Double.doubleToRawLongBits(doubleValue);
+        final long bits = Double.doubleToRawLongBits(doubleValue);
         if (index == 0) {
             return Integer.toUnsignedLong((int) (bits >> 32));
         } else if (index == 1) {
-            return Integer.toUnsignedLong(bits.intValue());
+            return Integer.toUnsignedLong((int) bits);
         } else {
             throw new ArrayIndexOutOfBoundsException();
         }

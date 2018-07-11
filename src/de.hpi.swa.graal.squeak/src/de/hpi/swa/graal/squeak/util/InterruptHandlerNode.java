@@ -148,7 +148,7 @@ public final class InterruptHandlerNode extends Node {
     }
 
     @TruffleBoundary
-    private Integer nextSemaphoreToSignal() {
+    private int nextSemaphoreToSignal() {
         return semaphoresToSignal.removeFirst();
     }
 

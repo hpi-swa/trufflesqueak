@@ -177,7 +177,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         private static int extractDepth(final PointersObject receiver) {
-            return ((Long) receiver.at0(FORM.DEPTH)).intValue();
+            return (int) (long) receiver.at0(FORM.DEPTH);
         }
 
         private static int[] mergeCursorWithMask(final int[] cursorWords, final int[] maskWords) {

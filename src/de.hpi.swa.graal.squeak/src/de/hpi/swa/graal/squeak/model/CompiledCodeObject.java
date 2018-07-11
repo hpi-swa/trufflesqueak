@@ -195,7 +195,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
     }
 
     public final int getHeader() {
-        return ((Long) literals[0]).intValue();
+        return (int) (long) literals[0];
     }
 
     public final void become(final CompiledCodeObject other) {
@@ -224,10 +224,9 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
             final int realIndex = index - getBytecodeOffset();
             assert realIndex < bytes.length;
             if (obj instanceof Integer) {
-                final Integer value = (Integer) obj;
-                bytes[realIndex] = value.byteValue();
+                bytes[realIndex] = (byte) (int) obj;
             } else if (obj instanceof Long) {
-                bytes[realIndex] = ((Long) obj).byteValue();
+                bytes[realIndex] = (byte) (long) obj;
             } else {
                 bytes[realIndex] = (byte) obj;
             }

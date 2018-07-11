@@ -175,9 +175,9 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
             if (!bitmap.isIntType()) {
                 throw new SqueakException("Display bitmap expected to be a words object");
             }
-            this.width = ((Long) sqDisplay.at0(FORM.WIDTH)).intValue();
-            this.height = ((Long) sqDisplay.at0(FORM.HEIGHT)).intValue();
-            this.depth = ((Long) sqDisplay.at0(FORM.DEPTH)).intValue();
+            this.width = (int) (long) sqDisplay.at0(FORM.WIDTH);
+            this.height = (int) (long) sqDisplay.at0(FORM.HEIGHT);
+            this.depth = (int) (long) sqDisplay.at0(FORM.DEPTH);
         }
     }
 
@@ -217,9 +217,9 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
 
     @Override
     public void adjustDisplay(final long depth, final long width, final long height, final boolean fullscreen) {
-        canvas.depth = ((Long) depth).intValue();
-        canvas.width = ((Long) width).intValue();
-        canvas.height = ((Long) height).intValue();
+        canvas.depth = (int) depth;
+        canvas.width = (int) width;
+        canvas.height = (int) height;
         setFullscreen(fullscreen);
     }
 
