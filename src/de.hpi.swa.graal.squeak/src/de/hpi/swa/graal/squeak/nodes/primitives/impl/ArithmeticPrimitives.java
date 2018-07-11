@@ -364,7 +364,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @Specialization(guards = {"isSmallInteger(a)", "isSmallInteger(a)"})
+        @Specialization(guards = {"isSmallInteger(a)", "isSmallInteger(b)"})
         protected long doLong(final long a, final long b) {
             return Math.floorMod(a, b);
         }
