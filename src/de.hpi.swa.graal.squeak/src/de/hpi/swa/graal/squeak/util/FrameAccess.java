@@ -4,7 +4,6 @@ import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
@@ -12,7 +11,7 @@ import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakException;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
@@ -30,11 +29,11 @@ public class FrameAccess {
      * CopiedValues*
      * </pre>
      */
-    @CompilationFinal public static final int METHOD = 0;
-    @CompilationFinal public static final int SENDER_OR_SENDER_MARKER = 1;
-    @CompilationFinal public static final int CLOSURE_OR_NULL = 2;
-    @CompilationFinal public static final int RECEIVER = 3;
-    @CompilationFinal public static final int ARGUMENTS_START = 4;
+    public static final int METHOD = 0;
+    public static final int SENDER_OR_SENDER_MARKER = 1;
+    public static final int CLOSURE_OR_NULL = 2;
+    public static final int RECEIVER = 3;
+    public static final int ARGUMENTS_START = 4;
 
     /**
      * GraalSqueak frame slots.
@@ -46,7 +45,7 @@ public class FrameAccess {
      * stack*
      * </pre>
      */
-    @CompilationFinal public static final int CONTEXT_OR_MARKER = 0;
+    public static final int CONTEXT_OR_MARKER = 0;
 
     public static final CompiledCodeObject getMethod(final Frame frame) {
         CompilerAsserts.neverPartOfCompilation();
@@ -77,7 +76,6 @@ public class FrameAccess {
         try {
             return frame.getObject(CompiledCodeObject.thisContextOrMarkerSlot);
         } catch (FrameSlotTypeException e) {
-            CompilerDirectives.transferToInterpreter();
             throw new SqueakException("thisContextOrMarkerSlot should never be invalid");
         }
     }
@@ -95,6 +93,7 @@ public class FrameAccess {
 
     @TruffleBoundary
     public static final Frame findFrameForMarker(final FrameMarker frameMarker) {
+        CompilerDirectives.bailout("Finding materializable frames should never be part of compiled code as it triggers deopts");
         return Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Frame>() {
             @Override
             public Frame visitFrame(final FrameInstance frameInstance) {

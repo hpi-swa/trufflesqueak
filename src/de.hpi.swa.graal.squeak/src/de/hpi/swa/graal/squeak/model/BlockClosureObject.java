@@ -8,8 +8,7 @@ import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
-import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions;
-import de.hpi.swa.graal.squeak.exceptions.SqueakException;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.BLOCK_CLOSURE;
@@ -21,9 +20,10 @@ public final class BlockClosureObject extends AbstractSqueakObject {
     @CompilationFinal private CompiledBlockObject block;
     @CompilationFinal private long pc = -1;
     @CompilationFinal private long numArgs = -1;
+    @CompilationFinal(dimensions = 1) private Object[] copied;
     @CompilationFinal private RootCallTarget callTarget;
-    @CompilationFinal private final CyclicAssumption callTargetStable = new CyclicAssumption("BlockClosureObject assumption");
-    private Object[] copied;
+
+    private final CyclicAssumption callTargetStable = new CyclicAssumption("BlockClosureObject assumption");
 
     public BlockClosureObject(final SqueakImageContext image) {
         super(image, image.blockClosureClass);
@@ -73,12 +73,16 @@ public final class BlockClosureObject extends AbstractSqueakObject {
         return pc;
     }
 
-    private long getNumArgs() {
+    public long getNumArgs() {
         if (numArgs == -1) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             numArgs = block.getNumArgs();
         }
         return numArgs;
+    }
+
+    public Object[] getCopied() {
+        return copied;
     }
 
     public Object at0(final long longIndex) {
@@ -104,32 +108,29 @@ public final class BlockClosureObject extends AbstractSqueakObject {
                 break;
             case BLOCK_CLOSURE.START_PC:
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                pc = ((Long) obj).intValue();
+                pc = (int) (long) obj;
                 break;
             case BLOCK_CLOSURE.ARGUMENT_COUNT:
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                numArgs = ((Long) obj).intValue();
+                numArgs = (int) (long) obj;
                 break;
             default:
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 copied[index - BLOCK_CLOSURE.FIRST_COPIED_VALUE] = obj;
                 break;
         }
     }
 
-    @Override
-    public boolean become(final AbstractSqueakObject other) {
-        if (!(other instanceof BlockClosureObject)) {
-            throw new PrimitiveExceptions.PrimitiveFailed();
-        }
-        if (!super.become(other)) {
-            throw new SqueakException("Should not fail");
-        }
+    public void become(final BlockClosureObject other) {
+        becomeOtherClass(other);
+        final Object[] otherCopied = other.copied;
+        other.setCopied(this.copied);
+        this.setCopied(otherCopied);
+    }
+
+    public void setCopied(final Object[] copied) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        final Object[] otherCopied = copied;
-        final BlockClosureObject otherClosure = (BlockClosureObject) other;
-        copied = otherClosure.copied;
-        otherClosure.copied = otherCopied;
-        return true;
+        this.copied = copied;
     }
 
     public int size() {
@@ -150,6 +151,11 @@ public final class BlockClosureObject extends AbstractSqueakObject {
             receiver = outerContext.getReceiver();
         }
         return receiver;
+    }
+
+    public void setReceiver(final Object receiver) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        this.receiver = receiver;
     }
 
     public RootCallTarget getCallTarget() {
@@ -194,39 +200,17 @@ public final class BlockClosureObject extends AbstractSqueakObject {
         return outerContext;
     }
 
-    public AbstractSqueakObject shallowCopy() {
-        return new BlockClosureObject(this);
+    public ContextObject getOuterContext() {
+        return outerContext;
     }
 
-    @Override
-    public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
+    public void setOuterContext(final ContextObject outerContext) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        final Object[] newPointers = new Object[BLOCK_CLOSURE.FIRST_COPIED_VALUE + copied.length];
-        newPointers[BLOCK_CLOSURE.OUTER_CONTEXT] = outerContext;
-        newPointers[BLOCK_CLOSURE.START_PC] = getStartPC();
-        newPointers[BLOCK_CLOSURE.ARGUMENT_COUNT] = getNumArgs();
-        for (int i = 0; i < copied.length; i++) {
-            newPointers[BLOCK_CLOSURE.FIRST_COPIED_VALUE + i] = copied[i];
-        }
-        for (int i = 0; i < from.length; i++) {
-            final Object fromPointer = from[i];
-            for (int j = 0; j < newPointers.length; j++) {
-                final Object newPointer = newPointers[j];
-                if (newPointer == fromPointer) {
-                    final Object toPointer = to[i];
-                    newPointers[j] = toPointer;
-                    if (copyHash && fromPointer instanceof AbstractSqueakObject && toPointer instanceof AbstractSqueakObject) {
-                        ((AbstractSqueakObject) toPointer).setSqueakHash(((AbstractSqueakObject) fromPointer).squeakHash());
-                    }
-                }
-            }
-        }
-        outerContext = (ContextObject) newPointers[BLOCK_CLOSURE.OUTER_CONTEXT];
-        pc = (long) newPointers[BLOCK_CLOSURE.START_PC];
-        numArgs = ((Long) newPointers[BLOCK_CLOSURE.ARGUMENT_COUNT]).intValue();
-        for (int i = 0; i < copied.length; i++) {
-            copied[i] = newPointers[BLOCK_CLOSURE.FIRST_COPIED_VALUE + i];
-        }
+        this.outerContext = outerContext;
+    }
+
+    public AbstractSqueakObject shallowCopy() {
+        return new BlockClosureObject(this);
     }
 
     public Object[] getTraceableObjects() {

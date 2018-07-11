@@ -1,22 +1,23 @@
 package de.hpi.swa.graal.squeak.nodes.context;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
-import de.hpi.swa.graal.squeak.nodes.AbstractWriteNode;
+import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotWriteNode;
 
-public abstract class TemporaryWriteNode extends AbstractWriteNode {
+public abstract class TemporaryWriteNode extends AbstractNode {
     @Child private FrameSlotWriteNode frameSlotWriteNode;
-    @CompilationFinal private final long tempIndex;
+    private final long tempIndex;
 
     public static TemporaryWriteNode create(final CompiledCodeObject code, final long tempIndex) {
         return TemporaryWriteNodeGen.create(code, tempIndex);
     }
+
+    public abstract void executeWrite(VirtualFrame frame, Object value);
 
     protected TemporaryWriteNode(final CompiledCodeObject code, final long tempIndex) {
         this.tempIndex = tempIndex;

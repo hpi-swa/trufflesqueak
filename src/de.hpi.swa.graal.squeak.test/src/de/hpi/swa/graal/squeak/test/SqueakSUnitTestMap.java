@@ -101,7 +101,7 @@ public final class SqueakSUnitTestMap {
                     "FalseTest", TEST_TYPE.PASSING,
                     "FileContentsBrowserTest", TEST_TYPE.NOT_TERMINATING,
                     "FileDirectoryTest", TEST_TYPE.PASSING,
-                    "FileList2ModalDialogsTest", TEST_TYPE.FAILING,
+                    "FileList2ModalDialogsTest", TEST_TYPE.PASSING,
                     "FileListTest", TEST_TYPE.IGNORE,
                     "FileStreamTest", TEST_TYPE.PASSING,
                     "FileUrlTest", TEST_TYPE.PASSING,
@@ -343,7 +343,7 @@ public final class SqueakSUnitTestMap {
                     "UrlTest", TEST_TYPE.PASSING,
                     "UserInterfaceThemeTest", TEST_TYPE.NOT_TERMINATING,
                     "UTF16TextConverterTest", TEST_TYPE.BROKEN_IN_SQUEAK,
-                    "UTF32TextConverterTest", TEST_TYPE.FAILING, // becomeForward fails on natives
+                    "UTF32TextConverterTest", TEST_TYPE.PASSING,
                     "UTF8TextConverterTest", TEST_TYPE.FAILING, // FIXME: NullPointerException
                     "UTF8EdgeCaseTest", TEST_TYPE.FAILING, // failing in Squeak
                     "UUIDPrimitivesTest", TEST_TYPE.PASSING,

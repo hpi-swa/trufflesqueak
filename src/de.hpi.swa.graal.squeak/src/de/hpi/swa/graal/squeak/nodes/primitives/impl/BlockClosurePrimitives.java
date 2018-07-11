@@ -3,6 +3,7 @@ package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
@@ -13,7 +14,7 @@ import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakException;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
@@ -57,7 +58,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
                 @Override
                 public ContextObject visitFrame(final FrameInstance frameInstance) {
-                    final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
+                    final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
                     if (current.getArguments().length < FrameAccess.RECEIVER) {
                         return null;
                     }
@@ -72,7 +73,8 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         } else {
                             final CompiledCodeObject frameMethod = FrameAccess.getMethod(current);
                             if (frameMethod.isUnwindMarked()) {
-                                return contextNode.executeGet(current, false);
+                                CompilerDirectives.bailout("Finding materializable frames should never be part of compiled code as it triggers deopts");
+                                return contextNode.executeGet(frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE));
                             }
                         }
                     }
@@ -124,14 +126,15 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
         @Specialization
         protected static final Object doTerminate(final ContextObject receiver, final NilObject nil) {
-            return terminateTo(receiver, nil);
+            receiver.atput0(CONTEXT.SENDER_OR_NIL, nil); // flagging context as dirty
+            return receiver;
         }
 
         /*
          * Terminate all the Contexts between me and previousContext, if previousContext is on my
          * Context stack. Make previousContext my sender.
          */
-        private static Object terminateTo(final ContextObject receiver, final AbstractSqueakObject previousContext) {
+        private static Object terminateTo(final ContextObject receiver, final ContextObject previousContext) {
             if (hasSender(receiver, previousContext)) {
                 ContextObject currentContext = receiver.getNotNilSender();
                 while (currentContext != previousContext) {
@@ -147,7 +150,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         /*
          * Answer whether the receiver is strictly above context on the stack (Context>>hasSender:).
          */
-        private static boolean hasSender(final ContextObject context, final AbstractSqueakObject previousContext) {
+        private static boolean hasSender(final ContextObject context, final ContextObject previousContext) {
             if (context == previousContext) {
                 return false;
             }
@@ -180,7 +183,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
                 @Override
                 public ContextObject visitFrame(final FrameInstance frameInstance) {
-                    final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE);
+                    final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
                     if (current.getArguments().length < FrameAccess.RECEIVER) {
                         return null;
                     }
@@ -192,7 +195,8 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                     } else {
                         final CompiledCodeObject frameMethod = FrameAccess.getMethod(current);
                         if (frameMethod.isExceptionHandlerMarked()) {
-                            return contextNode.executeGet(current, false);
+                            CompilerDirectives.bailout("Finding materializable frames should never be part of compiled code as it triggers deopts");
+                            return contextNode.executeGet(frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE));
                         }
                     }
                     return null;

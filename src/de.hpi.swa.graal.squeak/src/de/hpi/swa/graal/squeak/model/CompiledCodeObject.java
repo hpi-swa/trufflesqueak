@@ -15,8 +15,6 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
-import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions;
-import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.instrumentation.CompiledCodeObjectPrinter;
@@ -34,10 +32,10 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
     protected static final int BYTES_PER_WORD = 4;
 
     // frame info
-    @CompilationFinal public static final FrameDescriptor frameDescriptorTemplate;
-    @CompilationFinal public static final FrameSlot thisContextOrMarkerSlot;
-    @CompilationFinal public static final FrameSlot instructionPointerSlot;
-    @CompilationFinal public static final FrameSlot stackPointerSlot;
+    public static final FrameDescriptor frameDescriptorTemplate;
+    public static final FrameSlot thisContextOrMarkerSlot;
+    public static final FrameSlot instructionPointerSlot;
+    public static final FrameSlot stackPointerSlot;
     @CompilationFinal private FrameDescriptor frameDescriptor;
     @CompilationFinal(dimensions = 1) public FrameSlot[] stackSlots;
     // header info and data
@@ -52,13 +50,13 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
     @CompilationFinal private long accessModifier;
     @CompilationFinal private boolean altInstructionSet;
 
-    @CompilationFinal public static final boolean ALWAYS_NON_VIRTUALIZED = false;
-    @CompilationFinal private final Assumption canBeVirtualized = Truffle.getRuntime().createAssumption("CompiledCodeObject: does not need a materialized context");
+    private static final boolean ALWAYS_NON_VIRTUALIZED = false;
+    private final Assumption canBeVirtualized = Truffle.getRuntime().createAssumption("CompiledCodeObject: does not need a materialized context");
 
-    @CompilationFinal private Source source;
+    private Source source;
 
     @CompilationFinal private RootCallTarget callTarget;
-    @CompilationFinal private final CyclicAssumption callTargetStable = new CyclicAssumption("CompiledCodeObject assumption");
+    private final CyclicAssumption callTargetStable = new CyclicAssumption("CompiledCodeObject assumption");
 
     static {
         frameDescriptorTemplate = new FrameDescriptor();
@@ -93,7 +91,11 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
 
     public final Source getSource() {
         if (source == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
+            /*
+             * sourceSection requested when logging transferToInterpreters. Therefore, do not
+             * trigger another TTI here which otherwise would cause endless recursion in Truffle
+             * debug code.
+             */
             source = Source.newBuilder(CompiledCodeObjectPrinter.getString(this)).mimeType(SqueakLanguage.MIME_TYPE).name(toString()).build();
         }
         return source;
@@ -103,8 +105,10 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         return needsLargeFrame ? CONTEXT.LARGE_FRAMESIZE : CONTEXT.SMALL_FRAMESIZE;
     }
 
+    @SuppressWarnings("deprecation")
     @TruffleBoundary
     protected final void prepareFrameDescriptor() {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
         frameDescriptor = frameDescriptorTemplate.shallowCopy();
         final int frameSize = frameSize();
         stackSlots = new FrameSlot[frameSize];
@@ -190,26 +194,18 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
     }
 
     public final int getHeader() {
-        return ((Long) literals[0]).intValue();
+        return (int) (long) literals[0];
     }
 
-    @Override
-    public final boolean become(final AbstractSqueakObject other) {
-        if (!(other instanceof CompiledMethodObject)) {
-            throw new PrimitiveExceptions.PrimitiveFailed();
-        }
-        if (!super.become(other)) {
-            throw new SqueakException("Should not fail");
-        }
+    public final void become(final CompiledCodeObject other) {
+        becomeOtherClass(other);
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        final CompiledCodeObject otherCodeObject = (CompiledCodeObject) other;
-        final Object[] literals2 = otherCodeObject.literals;
-        final byte[] bytes2 = otherCodeObject.bytes;
-        otherCodeObject.setLiteralsAndBytes(literals, bytes);
+        final Object[] literals2 = other.literals;
+        final byte[] bytes2 = other.bytes;
+        other.setLiteralsAndBytes(literals, bytes);
         this.setLiteralsAndBytes(literals2, bytes2);
-        otherCodeObject.callTargetStable.invalidate();
+        other.callTargetStable.invalidate();
         callTargetStable.invalidate();
-        return true;
     }
 
     public final int getBytecodeOffset() {
@@ -227,10 +223,9 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
             final int realIndex = index - getBytecodeOffset();
             assert realIndex < bytes.length;
             if (obj instanceof Integer) {
-                final Integer value = (Integer) obj;
-                bytes[realIndex] = value.byteValue();
+                bytes[realIndex] = (byte) (int) obj;
             } else if (obj instanceof Long) {
-                bytes[realIndex] = ((Long) obj).byteValue();
+                bytes[realIndex] = (byte) (long) obj;
             } else {
                 bytes[realIndex] = (byte) obj;
             }

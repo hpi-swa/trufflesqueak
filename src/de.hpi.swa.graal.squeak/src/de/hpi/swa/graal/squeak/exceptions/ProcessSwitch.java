@@ -6,18 +6,18 @@ import de.hpi.swa.graal.squeak.model.ContextObject;
 
 public final class ProcessSwitch extends ControlFlowException {
     private static final long serialVersionUID = 1L;
-    private final ContextObject context;
+    private final ContextObject newContext;
 
-    public ProcessSwitch(final ContextObject context) {
-        this.context = context;
+    public ProcessSwitch(final ContextObject newContext) {
+        this.newContext = newContext;
     }
 
     public ContextObject getNewContext() {
-        return context;
+        return newContext;
     }
 
     @Override
     public String toString() {
-        return "Process switch to " + context;
+        return "Process switch to " + newContext;
     }
 }

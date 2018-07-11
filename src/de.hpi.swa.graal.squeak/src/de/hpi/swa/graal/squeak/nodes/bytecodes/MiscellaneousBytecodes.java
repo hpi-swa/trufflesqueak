@@ -1,6 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -8,7 +8,7 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.Returns.LocalReturn;
-import de.hpi.swa.graal.squeak.exceptions.SqueakException;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.nodes.HandlePrimitiveFailedNode;
@@ -30,24 +30,27 @@ import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackTopNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
+import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitives.PrimitiveFailedNode;
 
 public final class MiscellaneousBytecodes {
 
     public abstract static class CallPrimitiveNode extends AbstractBytecodeNode {
+        private static final boolean DEBUG_PRIMITIVE_FAILURES = false;
+        private static final boolean DEBUG_UNSUPPORTED_SPECIALIZATION_EXCEPTIONS = false;
+
         @Child private HandlePrimitiveFailedNode handlePrimFailed;
         @Child protected AbstractPrimitiveNode primitiveNode;
-        @CompilationFinal private final int primitiveIndex;
-        @CompilationFinal private final ValueProfile primitiveNodeProfile = ValueProfile.createClassProfile();
+        private final int primitiveIndex;
+        private final ValueProfile primitiveNodeProfile = ValueProfile.createClassProfile();
 
-        public static CallPrimitiveNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int byte1, final int byte2) {
+        public static CallPrimitiveNode create(final CompiledMethodObject code, final int index, final int numBytecodes, final int byte1, final int byte2) {
             return CallPrimitiveNodeGen.create(code, index, numBytecodes, byte1, byte2);
         }
 
-        public CallPrimitiveNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int byte1, final int byte2) {
+        public CallPrimitiveNode(final CompiledMethodObject code, final int index, final int numBytecodes, final int byte1, final int byte2) {
             super(code, index, numBytecodes);
-            assert code instanceof CompiledMethodObject;
             primitiveIndex = byte1 + (byte2 << 8);
-            primitiveNode = PrimitiveNodeFactory.forIndex((CompiledMethodObject) code, primitiveIndex);
+            primitiveNode = PrimitiveNodeFactory.forIndex(code, primitiveIndex);
             handlePrimFailed = HandlePrimitiveFailedNode.create(code);
         }
 
@@ -57,18 +60,33 @@ public final class MiscellaneousBytecodes {
                 throw new LocalReturn(primitiveNodeProfile.profile(primitiveNode).executePrimitive(frame));
             } catch (PrimitiveFailed e) {
                 handlePrimFailed.executeHandle(frame, e);
-                // if (!(primitiveNode instanceof PrimitiveFailedNode)) {
-                // code.image.trace("PrimFail: " + primitiveNode);
-                // }
+                if (DEBUG_PRIMITIVE_FAILURES) {
+                    debugPrimitiveFailures();
+                }
             } catch (UnsupportedSpecializationException e) {
-                // final String message = e.getMessage();
-                // if (message.contains("[Long,PointersObject]") ||
-                // message.contains("[FloatObject,PointersObject]")) {
-                // return;
-                // }
-                // code.image.trace("UnsupportedSpecializationException: " + e);
+                assert e.getNode() instanceof AbstractPrimitiveNode : "Only `AbstractPrimitiveNode`s should be treated as primitive failures, got: " + e;
+                if (DEBUG_UNSUPPORTED_SPECIALIZATION_EXCEPTIONS) {
+                    debugUnsupportedSpecializationExceptions(e);
+                }
             }
             return getSuccessorIndex(); // continue with fallback code
+        }
+
+        @TruffleBoundary
+        private void debugPrimitiveFailures() {
+            if (!(primitiveNode instanceof PrimitiveFailedNode)) {
+                code.image.printToStdErr("[PrimFail]", primitiveNode);
+            }
+        }
+
+        @TruffleBoundary
+        private void debugUnsupportedSpecializationExceptions(final UnsupportedSpecializationException e) {
+            final String message = e.getMessage();
+            if (message.contains("[Long,PointersObject]") ||
+                            message.contains("[FloatObject,PointersObject]")) {
+                return; // filter out frequent results which are fine
+            }
+            code.image.printToStdErr("[UnsupportedSpecializationException]", e);
         }
 
         @Specialization(guards = {"!code.hasPrimitive() || primitiveNode == null"})
@@ -77,7 +95,7 @@ public final class MiscellaneousBytecodes {
         }
 
         @Override
-        public String toString() {
+        public final String toString() {
             return "callPrimitive: " + primitiveIndex;
         }
     }
@@ -109,12 +127,12 @@ public final class MiscellaneousBytecodes {
         }
     }
 
-    public static final class DupNode extends UnknownBytecodeNode {
+    public static final class DupNode extends AbstractBytecodeNode {
         @Child private StackPushNode pushNode = StackPushNode.create();
         @Child private StackTopNode topNode;
 
         public DupNode(final CompiledCodeObject code, final int index, final int numBytecodes) {
-            super(code, index, numBytecodes, -1);
+            super(code, index, numBytecodes);
             topNode = StackTopNode.create(code);
         }
 
@@ -188,11 +206,11 @@ public final class MiscellaneousBytecodes {
         }
     }
 
-    public static final class PopNode extends UnknownBytecodeNode {
+    public static final class PopNode extends AbstractBytecodeNode {
         @Child private StackPopNode popNode;
 
         public PopNode(final CompiledCodeObject code, final int index, final int numBytecodes) {
-            super(code, index, numBytecodes, -1);
+            super(code, index, numBytecodes);
             popNode = StackPopNode.create(code);
         }
 
@@ -207,7 +225,7 @@ public final class MiscellaneousBytecodes {
         }
     }
 
-    public static class UnknownBytecodeNode extends AbstractBytecodeNode {
+    public static final class UnknownBytecodeNode extends AbstractBytecodeNode {
         private final long bytecode;
 
         public UnknownBytecodeNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bc) {
@@ -217,7 +235,7 @@ public final class MiscellaneousBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            throw new SqueakException("Unknown/uninterpreted bytecode " + bytecode);
+            throw new SqueakException("Unknown/uninterpreted bytecode:", bytecode);
         }
 
         @Override

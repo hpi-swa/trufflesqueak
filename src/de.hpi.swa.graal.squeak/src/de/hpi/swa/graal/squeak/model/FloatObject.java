@@ -7,10 +7,10 @@ import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
 public final class FloatObject extends AbstractSqueakObject {
-    @CompilationFinal public static final int PRECISION = 53;
-    @CompilationFinal public static final int EMIN = -1022;
-    @CompilationFinal public static final int EMAX = 1023;
-    @CompilationFinal private static final int WORD_LENGTH = 2;
+    public static final int PRECISION = 53;
+    public static final int EMIN = -1022;
+    public static final int EMAX = 1023;
+    private static final int WORD_LENGTH = 2;
 
     @CompilationFinal private double doubleValue;
 
@@ -45,11 +45,11 @@ public final class FloatObject extends AbstractSqueakObject {
     }
 
     public long getNativeAt0(final long index) {
-        final Long bits = Double.doubleToRawLongBits(doubleValue);
+        final long bits = Double.doubleToRawLongBits(doubleValue);
         if (index == 0) {
             return Integer.toUnsignedLong((int) (bits >> 32));
         } else if (index == 1) {
-            return Integer.toUnsignedLong(bits.intValue());
+            return Integer.toUnsignedLong((int) bits);
         } else {
             throw new ArrayIndexOutOfBoundsException();
         }

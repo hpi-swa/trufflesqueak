@@ -25,6 +25,7 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
         }
 
         @Specialization
+        @TruffleBoundary
         protected static final long doGet(@SuppressWarnings("unused") final Object receiver) {
             try {
                 final String runtimeName = java.lang.management.ManagementFactory.getRuntimeMXBean().getName();

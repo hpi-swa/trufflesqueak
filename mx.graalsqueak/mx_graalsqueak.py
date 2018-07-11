@@ -51,9 +51,7 @@ def _graal_vm_args(args):
         ]
 
     if args.deopts:
-        graal_args += [
-            '-XX:+TraceDeoptimization',
-        ]
+        graal_args += ['-XX:+TraceDeoptimization']
 
     if args.print_machine_code:
         graal_args += [
@@ -63,6 +61,12 @@ def _graal_vm_args(args):
 
     if not args.background_compilation:
         graal_args += ['-Dgraal.TruffleBackgroundCompilation=false']
+
+    if args.force_compilation:
+        graal_args += ['-Dgraal.TruffleCompileImmediately=true']
+
+    if args.print_graal_options:
+        graal_args += ['-XX:+JVMCIPrintProperties']
 
     graal_args += [
         '-Djvmci.Compiler=graal',
@@ -96,9 +100,18 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
                         help='disable interrupt handler',
                         dest='disable_interrupts',
                         action='store_true', default=False)
+    parser.add_argument(
+        '-fc', '--force-compilation',
+        help='compile immediately to test Truffle compiler',
+        dest='force_compilation', action='store_true', default=False)
     parser.add_argument('--gc', action='store_true',
                         help='print garbage collection details')
+    parser.add_argument('--graal-options', help='print Graal options',
+                        dest='print_graal_options', action='store_true',
+                        default=False)
     parser.add_argument('--igv', action='store_true', help='dump to igv')
+    parser.add_argument('--inspect', help='enable Chrome inspector',
+                        dest='inspect', action='store_true', default=False)
     parser.add_argument('-l', '--low-level',
                         help='enable low-level optimization output',
                         dest='low_level', action='store_true', default=False)
@@ -109,6 +122,9 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
     parser.add_argument('-m', '--method',
                         help='method selector when receiver is provided',
                         dest='method')
+    parser.add_argument('--print-defaults', help='print VM defaults',
+                        dest='print_defaults', action='store_true',
+                        default=False)
     parser.add_argument('-r', '--receiver',
                         help='SmallInteger to be used as receiver',
                         dest='receiver')
@@ -154,6 +170,9 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
     if parsed_args.gc:
         vm_args += ['-XX:+PrintGC', '-XX:+PrintGCDetails']
 
+    if parsed_args.print_defaults:
+        vm_args += ['-XX:+PrintFlagsFinal']
+
     if extra_vm_args:
         vm_args += extra_vm_args
 
@@ -180,6 +199,8 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
         squeak_arguments.append('--cpusampler')
     if parsed_args.cputracer:
         squeak_arguments.append('--cputracer')
+    if parsed_args.inspect:
+        squeak_arguments.append('--inspect')
 
     if parsed_args.image:
         squeak_arguments = [parsed_args.image] + squeak_arguments
@@ -196,14 +217,19 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
 def _graalsqueak_gate_runner(args, tasks):
     os.environ['MX_GATE'] = 'true'
     unittest_args = BASE_VM_ARGS
-    unittest_args += _get_jacoco_agent_args()
+
+    supports_coverage = os.environ.get('JDK') == 'jdk8'  # see `.travis.yml`
+    if supports_coverage:
+        unittest_args += _get_jacoco_agent_args()
     unittest_args += ['--suite', 'graalsqueak']
     with mx_gate.Task('TestGraalSqueak', tasks, tags=['test']) as t:
         if t:
             mx_unittest.unittest(unittest_args)
-    with mx_gate.Task('CodeCoverageReport', tasks, tags=['test']) as t:
-        if t:
-            mx.command_function('jacocoreport')(['--format', 'xml', '.'])
+
+    if supports_coverage:
+        with mx_gate.Task('CodeCoverageReport', tasks, tags=['test']) as t:
+            if t:
+                mx.command_function('jacocoreport')(['--format', 'xml', '.'])
 
 
 def _get_jacoco_agent_args():

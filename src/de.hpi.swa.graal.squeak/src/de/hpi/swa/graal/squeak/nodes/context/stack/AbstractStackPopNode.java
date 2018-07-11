@@ -26,7 +26,7 @@ public abstract class AbstractStackPopNode extends AbstractStackNode {
         return value;
     }
 
-    public final Object atStackAndClear(final ContextObject context, final long argumentIndex) {
+    protected final Object atStackAndClear(final ContextObject context, final long argumentIndex) {
         final Object value = context.atStack(argumentIndex);
         final CompiledMethodObject method = compiledMethodNode.execute(code);
         if (argumentIndex >= 1 + method.getNumArgs() + method.getNumTemps()) {

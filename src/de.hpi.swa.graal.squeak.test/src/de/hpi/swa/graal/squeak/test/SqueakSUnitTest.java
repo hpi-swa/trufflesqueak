@@ -22,8 +22,8 @@ import com.oracle.truffle.api.frame.FrameDescriptor;
 
 import de.hpi.swa.graal.squeak.GraalSqueakMain;
 import de.hpi.swa.graal.squeak.SqueakLanguage;
-import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageReaderNode;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
@@ -43,7 +43,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
 
     @Test
     public void test01AsSymbol() {
-        assertEquals(image.asSymbol, asSymbol("asSymbol"));
+        assertEquals(image.getAsSymbolSelector(), asSymbol("asSymbol"));
     }
 
     @Test
@@ -250,7 +250,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
     private static Object asSymbol(final String value) {
         final String fakeMethodName = "fakeAsSymbol" + value.hashCode();
         final CompiledMethodObject method = makeMethod(
-                        new Object[]{4L, image.asSymbol, image.wrap(value), image.newSymbol(fakeMethodName), getSmalltalkAssociation()},
+                        new Object[]{4L, image.getAsSymbolSelector(), image.wrap(value), image.newSymbol(fakeMethodName), getSmalltalkAssociation()},
                         new int[]{0x21, 0xD0, 0x7C});
         return runMethod(method, getSmalltalkDictionary());
     }

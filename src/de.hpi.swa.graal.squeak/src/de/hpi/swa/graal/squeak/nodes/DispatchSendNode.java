@@ -18,24 +18,26 @@ import de.hpi.swa.graal.squeak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 public abstract class DispatchSendNode extends AbstractNodeWithImage {
-    @Child private DispatchNode dispatchNode = DispatchNode.create();
     @Child protected IsDoesNotUnderstandNode isDoesNotUnderstandNode;
-    @Child private LookupNode lookupNode = LookupNode.create();
+    @Child private DispatchNode dispatchNode = DispatchNode.create();
+    @Child private LookupNode lookupNode;
     @Child private SqueakLookupClassNode lookupClassNode;
+
     @CompilationFinal private ClassObject messageClass;
-    @CompilationFinal private NativeObject runWithIn;
+    @CompilationFinal private Object runWithIn;
 
     public static DispatchSendNode create(final SqueakImageContext image) {
         return DispatchSendNodeGen.create(image);
     }
 
+    public abstract Object executeSend(VirtualFrame frame, NativeObject selector, Object lookupResult, ClassObject rcvrClass, Object[] receiverAndArguments, Object contextOrMarker);
+
     protected DispatchSendNode(final SqueakImageContext image) {
         super(image);
         isDoesNotUnderstandNode = IsDoesNotUnderstandNode.create(image);
+        lookupNode = LookupNode.create(image);
         lookupClassNode = SqueakLookupClassNode.create(image);
     }
-
-    public abstract Object executeSend(VirtualFrame frame, NativeObject selector, Object lookupResult, ClassObject rcvrClass, Object[] receiverAndArguments, Object contextOrMarker);
 
     @Specialization(guards = {"!isDoesNotUnderstandNode.execute(lookupResult)"})
     protected final Object doDispatch(final VirtualFrame frame, @SuppressWarnings("unused") final NativeObject selector, final CompiledMethodObject lookupResult,
@@ -83,10 +85,10 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
         }
     }
 
-    private NativeObject getRunWithIn() {
+    private Object getRunWithIn() {
         if (runWithIn == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            runWithIn = (NativeObject) image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SelectorRunWithIn);
+            runWithIn = image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SelectorRunWithIn);
         }
         return runWithIn;
     }

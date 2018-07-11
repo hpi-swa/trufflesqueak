@@ -6,7 +6,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
-import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 
 public abstract class HandleNonLocalReturnNode extends AbstractNodeWithCode {
@@ -17,20 +16,16 @@ public abstract class HandleNonLocalReturnNode extends AbstractNodeWithCode {
         return HandleNonLocalReturnNodeGen.create(code);
     }
 
-    public HandleNonLocalReturnNode(final CompiledCodeObject code) {
-        super(code);
-        if (code instanceof CompiledMethodObject) {
-            aboutToReturnNode = AboutToReturnNode.create((CompiledMethodObject) code);
-        }
-    }
-
     public abstract Object executeHandle(VirtualFrame frame, NonLocalReturn nlr);
 
+    protected HandleNonLocalReturnNode(final CompiledCodeObject code) {
+        super(code);
+        aboutToReturnNode = AboutToReturnNode.create(code);
+    }
+
     @Specialization(guards = "isVirtualized(frame)")
-    protected Object handleVirtualized(final VirtualFrame frame, final NonLocalReturn nlr) {
-        if (aboutToReturnNode != null && code.isUnwindMarked()) { // handle ensure: or ifCurtailed:
-            aboutToReturnNode.executeAboutToReturn(frame, nlr);
-        }
+    protected final Object handleVirtualized(final VirtualFrame frame, final NonLocalReturn nlr) {
+        aboutToReturnNode.executeAboutToReturn(frame, nlr); // handle ensure: or ifCurtailed:
         terminateNode.executeTerminate(frame);
         if (nlr.getTargetContext() == getContextOrMarker(frame)) {
             nlr.setArrivedAtTargetContext();
@@ -39,10 +34,8 @@ public abstract class HandleNonLocalReturnNode extends AbstractNodeWithCode {
     }
 
     @Specialization(guards = "!isVirtualized(frame)")
-    protected Object handle(final VirtualFrame frame, final NonLocalReturn nlr) {
-        if (aboutToReturnNode != null && code.isUnwindMarked()) { // handle ensure: or ifCurtailed:
-            aboutToReturnNode.executeAboutToReturn(frame, nlr);
-        }
+    protected final Object handle(final VirtualFrame frame, final NonLocalReturn nlr) {
+        aboutToReturnNode.executeAboutToReturn(frame, nlr); // handle ensure: or ifCurtailed:
         final ContextObject context = getContext(frame);
         if (context.hasModifiedSender()) {
             final ContextObject newSender = context.getNotNilSender(); // sender has changed

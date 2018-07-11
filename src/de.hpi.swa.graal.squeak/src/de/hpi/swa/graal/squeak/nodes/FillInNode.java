@@ -75,9 +75,9 @@ public abstract class FillInNode extends Node {
         if (obj.isByteType()) {
             final String stringValue = obj.asString();
             if ("asSymbol".equals(stringValue)) {
-                image.asSymbol = obj;
+                image.setAsSymbolSelector(obj);
             } else if (SimulationPrimitiveNode.SIMULATE_PRIMITIVE_SELECTOR.equals(stringValue)) {
-                image.simulatePrimitiveArgs = obj;
+                image.setSimulatePrimitiveArgsSelector(obj);
             }
         }
     }

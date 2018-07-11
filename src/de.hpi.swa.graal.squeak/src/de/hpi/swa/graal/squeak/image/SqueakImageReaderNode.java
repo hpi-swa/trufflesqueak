@@ -18,7 +18,7 @@ import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RepeatingNode;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakException;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.FillInNode;
 import de.hpi.swa.graal.squeak.util.BitSplitter;
@@ -62,7 +62,7 @@ public final class SqueakImageReaderNode extends Node {
         readHeader();
         readBody(frame);
         initObjects(frame);
-        if (!image.display.isHeadless() && image.simulatePrimitiveArgs.isNil()) {
+        if (!image.getDisplay().isHeadless() && image.getSimulatePrimitiveArgsSelector().isNil()) {
             throw new SqueakException("Unable to find BitBlt simulation in image, cannot run with display.");
         }
     }
@@ -149,7 +149,7 @@ public final class SqueakImageReaderNode extends Node {
         specialObjectsPointer = nextInt();
         nextInt(); // 1 word last used hash
         final int lastWindowSize = nextInt();
-        image.display.resizeTo((lastWindowSize >> 16) & 0xffff, lastWindowSize & 0xffff);
+        image.getDisplay().resizeTo((lastWindowSize >> 16) & 0xffff, lastWindowSize & 0xffff);
         final int headerFlags = nextInt();
         image.flags.initialize(headerFlags);
         nextInt(); // extraVMMemory
@@ -380,7 +380,7 @@ public final class SqueakImageReaderNode extends Node {
             fillInNode.execute(chunkObject, chunk);
         }
 
-        if (image.asSymbol.isNil()) {
+        if (image.getAsSymbolSelector().isNil()) {
             throw new SqueakException("Unable to find asSymbol selector");
         }
     }

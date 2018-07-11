@@ -4,13 +4,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 
 public final class ArrayUtils {
-    @CompilationFinal private static final Random RANDOM = new Random();
+    private static final Random RANDOM = new Random();
 
     private ArrayUtils() {
     }

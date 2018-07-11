@@ -4,7 +4,7 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakException;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SEMAPHORE;
@@ -12,7 +12,7 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 
 public abstract class SignalSemaphoreNode extends AbstractNodeWithImage {
-    @Child private IsEmptyListNode isEmptyListNode;
+    @Child protected IsEmptyListNode isEmptyListNode;
     @Child private ResumeProcessNode resumeProcessNode;
     @Child private RemoveFirstLinkOfListNode removeFirstLinkOfListNode;
 
@@ -29,13 +29,14 @@ public abstract class SignalSemaphoreNode extends AbstractNodeWithImage {
 
     public abstract void executeSignal(VirtualFrame frame, Object semaphore);
 
-    @Specialization(guards = "semaphore.isSemaphore()")
+    @Specialization(guards = {"semaphore.isSemaphore()", "isEmptyListNode.executeIsEmpty(semaphore)"})
+    public static final void doSignalEmpty(@SuppressWarnings("unused") final VirtualFrame frame, final PointersObject semaphore) {
+        semaphore.atput0(SEMAPHORE.EXCESS_SIGNALS, (long) semaphore.at0(SEMAPHORE.EXCESS_SIGNALS) + 1);
+    }
+
+    @Specialization(guards = {"semaphore.isSemaphore()", "!isEmptyListNode.executeIsEmpty(semaphore)"})
     public final void doSignal(final VirtualFrame frame, final PointersObject semaphore) {
-        if (isEmptyListNode.executeIsEmpty(semaphore)) { // no process is waiting on this semaphore
-            semaphore.atput0(SEMAPHORE.EXCESS_SIGNALS, (long) semaphore.at0(SEMAPHORE.EXCESS_SIGNALS) + 1);
-        } else {
-            resumeProcessNode.executeResume(frame, removeFirstLinkOfListNode.executeRemove(semaphore));
-        }
+        resumeProcessNode.executeResume(frame, removeFirstLinkOfListNode.executeRemove(semaphore));
     }
 
     @SuppressWarnings("unused")
@@ -45,6 +46,6 @@ public abstract class SignalSemaphoreNode extends AbstractNodeWithImage {
 
     @Fallback
     protected static final void doFallback(@SuppressWarnings("unused") final VirtualFrame frame, final Object semaphore) {
-        throw new SqueakException("Unexpected object in SignalSemaphoreNode: " + semaphore);
+        throw new SqueakException("Unexpected object in SignalSemaphoreNode:", semaphore);
     }
 }

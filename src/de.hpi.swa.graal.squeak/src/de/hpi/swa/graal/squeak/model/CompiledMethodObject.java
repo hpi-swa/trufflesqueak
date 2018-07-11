@@ -14,7 +14,7 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
 public final class CompiledMethodObject extends CompiledCodeObject {
-    @CompilationFinal protected final ValueProfile storageType = ValueProfile.createClassProfile();
+    protected final ValueProfile storageType = ValueProfile.createClassProfile();
 
     public CompiledMethodObject(final SqueakImageContext img) {
         super(img);
@@ -131,22 +131,6 @@ public final class CompiledMethodObject extends CompiledCodeObject {
     public int getInitialPC() {
         // pc is offset by header + numLiterals, +1 for one-based addressing
         return getBytecodeOffset() + 1;
-    }
-
-    @Override
-    public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
-        super.pointersBecomeOneWay(from, to, copyHash);
-        final ClassObject oldClass = getCompiledInClass();
-        for (int i = 0; i < from.length; i++) {
-            if (from[i] == oldClass) {
-                final ClassObject newClass = (ClassObject) to[i];  // must be a ClassObject
-                setCompiledInClass(newClass);
-                if (copyHash) {
-                    newClass.setSqueakHash(oldClass.squeakHash());
-                }
-                // TODO: flush method caches
-            }
-        }
     }
 
     @Override

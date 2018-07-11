@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes.context;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -10,7 +9,7 @@ import de.hpi.swa.graal.squeak.nodes.SqueakNodeWithCode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 
 public abstract class TemporaryReadNode extends SqueakNodeWithCode {
-    @CompilationFinal private final long tempIndex;
+    private final long tempIndex;
     @Child private FrameSlotReadNode readNode;
 
     public static SqueakNode create(final CompiledCodeObject code, final long tempIndex) {

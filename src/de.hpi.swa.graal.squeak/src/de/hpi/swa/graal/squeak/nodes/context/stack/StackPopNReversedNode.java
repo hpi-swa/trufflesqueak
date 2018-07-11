@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes.context.stack;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
@@ -9,7 +8,7 @@ import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 
 public abstract class StackPopNReversedNode extends AbstractStackPopNode {
-    @CompilationFinal private final int numPop;
+    private final int numPop;
 
     public static StackPopNReversedNode create(final CompiledCodeObject code, final int numPop) {
         return StackPopNReversedNodeGen.create(code, numPop);

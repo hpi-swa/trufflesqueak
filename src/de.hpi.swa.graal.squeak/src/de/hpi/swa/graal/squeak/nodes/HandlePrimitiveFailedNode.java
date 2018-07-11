@@ -37,7 +37,7 @@ public abstract class HandlePrimitiveFailedNode extends AbstractNodeWithCode {
     @SuppressWarnings("unused")
     @Specialization(guards = "!followedByExtendedStore()")
     protected static final void doNothing(final VirtualFrame frame, final PrimitiveFailed e) {
-        // do nothing
+        // nothing to do
     }
 
     protected final boolean followedByExtendedStore() {

@@ -1,6 +1,6 @@
 package de.hpi.swa.graal.squeak.model;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakException;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 
 public abstract class AbstractNativeObjectStorage {
