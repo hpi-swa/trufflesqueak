@@ -22,7 +22,6 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.FillInNode;
 import de.hpi.swa.graal.squeak.util.BitSplitter;
-import de.hpi.swa.graal.squeak.util.StopWatch;
 
 @SuppressWarnings("unused")
 public final class SqueakImageReaderNode extends Node {
@@ -60,18 +59,9 @@ public final class SqueakImageReaderNode extends Node {
     }
 
     public void executeRead(final VirtualFrame frame) throws SqueakException {
-        print("Reading image...");
-        final StopWatch imageWatch = StopWatch.start("readImage");
-        print("Reading header...");
-        final StopWatch headerWatch = StopWatch.start("readHeader");
         readHeader();
-        headerWatch.stopAndPrint();
-        print("Reading body...");
-        final StopWatch bodyWatch = StopWatch.start("readBody");
         readBody(frame);
-        bodyWatch.stopAndPrint();
         initObjects(frame);
-        imageWatch.stopAndPrint();
         if (!image.display.isHeadless() && image.simulatePrimitiveArgs.isNil()) {
             throw new SqueakException("Unable to find BitBlt simulation in image, cannot run with display.");
         }
@@ -358,24 +348,16 @@ public final class SqueakImageReaderNode extends Node {
         initPrebuiltConstant();
         initPrebuiltSelectors();
         // connect all instances to their classes
-        print("Connecting classes...");
-        final StopWatch setClassesWatch = StopWatch.start("setClasses");
         for (SqueakImageChunk chunk : chunktable.values()) {
             chunk.setSqClass(classChunkOf(chunk).asClassObject());
         }
-        setClassesWatch.stopAndPrint();
-        final StopWatch instantiateWatch = StopWatch.start("instClasses");
         instantiateClasses();
-        instantiateWatch.stopAndPrint();
-        final StopWatch fillInWatch = StopWatch.start("fillInObjects");
         fillInObjects();
-        fillInWatch.stopAndPrint();
     }
 
     @TruffleBoundary
     private void instantiateClasses() {
         // find all metaclasses and instantiate their singleton instances as class objects
-        print("Instantiating classes...");
         for (int classtablePtr : hiddenRootsChunk.data()) {
             if (getChunk(classtablePtr) != null) {
                 for (int potentialClassPtr : getChunk(classtablePtr).data()) {
@@ -393,7 +375,6 @@ public final class SqueakImageReaderNode extends Node {
     }
 
     private void fillInObjects() {
-        print("Filling in objects...");
         for (SqueakImageChunk chunk : chunktable.values()) {
             final Object chunkObject = chunk.asObject();
             fillInNode.execute(chunkObject, chunk);

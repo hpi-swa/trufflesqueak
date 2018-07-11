@@ -7,6 +7,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLanguage.ParsingRequest;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
@@ -38,22 +39,20 @@ public final class SqueakRootNode extends RootNode {
     @Override
     public Object execute(final VirtualFrame frame) {
         readerNode.executeRead(frame);
-        return extracted();
+        return callImageContext();
     }
 
     @TruffleBoundary
-    private Object extracted() {
-        System.exit(0);
-        return null;
-// final SqueakImageContext image = language.getContextReference().get();
-// image.interrupt.start();
-// final DirectCallNode callNode;
-// if (image.config.isCustomContext()) {
-// callNode = DirectCallNode.create(image.getCustomContext());
-// } else {
-// callNode = DirectCallNode.create(image.getActiveContext());
-// }
-// return callNode.call(new Object[]{});
+    private Object callImageContext() {
+        final SqueakImageContext image = language.getContextReference().get();
+        image.interrupt.start();
+        final DirectCallNode callNode;
+        if (image.config.isCustomContext()) {
+            callNode = DirectCallNode.create(image.getCustomContext());
+        } else {
+            callNode = DirectCallNode.create(image.getActiveContext());
+        }
+        return callNode.call(new Object[]{});
     }
 
 }
