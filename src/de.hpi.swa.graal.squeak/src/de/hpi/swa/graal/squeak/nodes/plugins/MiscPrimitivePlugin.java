@@ -147,7 +147,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"bm.isIntType()", "ba.isByteType()"})
-        protected final Object compress(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject bm, final NativeObject ba) {
+        protected final long compress(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject bm, final NativeObject ba) {
             // "Store a run-coded compression of the receiver into the byteArray ba,
             // and return the last index stored into. ba is assumed to be large enough.
             // The encoding is as follows...

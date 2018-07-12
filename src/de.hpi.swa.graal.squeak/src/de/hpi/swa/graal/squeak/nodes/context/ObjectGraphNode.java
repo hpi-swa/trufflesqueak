@@ -148,8 +148,11 @@ public abstract class ObjectGraphNode extends AbstractNodeWithImage {
             @Override
             public Frame visitFrame(final FrameInstance frameInstance) {
                 final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_WRITE);
+                if (current.getFrameDescriptor().getSize() <= FrameAccess.RECEIVER) {
+                    return null;
+                }
                 final Object stackPointerObject = stackPointerReadNode.executeRead(current);
-                if (!(stackPointerObject instanceof Integer) || current.getFrameDescriptor().getSize() <= FrameAccess.RECEIVER) {
+                if (!(stackPointerObject instanceof Integer)) {
                     return null;
                 }
                 final int stackPointer = ((Integer) stackPointerObject);
