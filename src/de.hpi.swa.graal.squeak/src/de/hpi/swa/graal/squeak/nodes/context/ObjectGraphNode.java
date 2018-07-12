@@ -148,11 +148,10 @@ public abstract class ObjectGraphNode extends AbstractNodeWithImage {
             @Override
             public Frame visitFrame(final FrameInstance frameInstance) {
                 final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_WRITE);
-                final Object stackPointerObject = stackPointerReadNode.executeRead(current);
-                if (!(stackPointerObject instanceof Integer) || current.getFrameDescriptor().getSize() <= FrameAccess.RECEIVER) {
-                    return null;
+                if (current.getArguments().length <= FrameAccess.RECEIVER) {
+                    return null; // skip, this is not a normal GraalSqueak frame
                 }
-                final int stackPointer = ((Integer) stackPointerObject);
+                final int stackPointer = (int) stackPointerReadNode.executeRead(current);
                 final Object[] arguments = current.getArguments();
 
                 for (int i = FrameAccess.RECEIVER; i < arguments.length; i++) {
