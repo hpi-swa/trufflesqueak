@@ -2,6 +2,7 @@ package de.hpi.swa.graal.squeak.nodes.context.frame;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 
@@ -19,7 +20,7 @@ public abstract class CreateEagerArgumentsNode extends Node {
         return receiverAndArguments;
     }
 
-    @Specialization(guards = {"receiverAndArguments.length < size"})
+    @Fallback
     protected static final Object[] uncached(final int size, final Object[] receiverAndArguments) {
         final Object[] array = Arrays.copyOf(receiverAndArguments, size);
         Arrays.fill(array, receiverAndArguments.length, size, NotProvided.INSTANCE);

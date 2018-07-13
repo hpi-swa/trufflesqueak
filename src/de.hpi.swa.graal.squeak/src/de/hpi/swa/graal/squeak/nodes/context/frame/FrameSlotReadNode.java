@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.context.frame;
 
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -59,9 +60,9 @@ public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
         return FrameUtil.getObjectSafe(frame, slot);
     }
 
-    @Specialization(guards = "isIllegal()")
-    protected static final Object readIllegal(@SuppressWarnings("unused") final VirtualFrame frame) {
-        throw new SqueakException("Trying to read from illegal slot");
+    @Fallback
+    protected final Object doFail() {
+        throw new SqueakException("Trying to read from illegal slot:", this);
     }
 
     protected final boolean isIllegal() {

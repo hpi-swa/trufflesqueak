@@ -654,7 +654,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             final Object[] receiverAndArguments = ArrayUtils.copyWithFirst(argumentArray.getPointers(), receiver);
             try {
                 return replace(primitiveNode).executeWithArguments(frame, receiverAndArguments);
-            } catch (PrimitiveFailed | UnsupportedSpecializationException e) {
+            } catch (UnsupportedSpecializationException e) {
                 throw new PrimitiveFailed();
             }
         }
@@ -666,7 +666,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             final Object[] receiverAndArguments = ArrayUtils.copyWithFirst(argumentArray.getPointers(), receiver);
             try {
                 return replace(primitiveNode).executeWithArguments(frame, receiverAndArguments);
-            } catch (PrimitiveFailed | UnsupportedSpecializationException e) {
+            } catch (UnsupportedSpecializationException e) {
                 throw new PrimitiveFailed();
             }
         }

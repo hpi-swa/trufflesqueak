@@ -23,16 +23,21 @@ public final class CompiledCodeNodes {
             return GetCompiledMethodNodeGen.create();
         }
 
-        public abstract CompiledMethodObject execute(CompiledCodeObject obj);
+        public abstract CompiledMethodObject execute(CompiledCodeObject object);
 
         @Specialization
-        protected static final CompiledMethodObject doBlock(final CompiledBlockObject obj) {
-            return obj.getMethod();
+        protected static final CompiledMethodObject doBlock(final CompiledBlockObject object) {
+            return object.getMethod();
         }
 
         @Specialization
-        protected static final CompiledMethodObject doMethod(final CompiledMethodObject obj) {
-            return obj;
+        protected static final CompiledMethodObject doMethod(final CompiledMethodObject object) {
+            return object;
+        }
+
+        @Fallback
+        protected static final CompiledMethodObject doFail(final CompiledCodeObject object) {
+            throw new SqueakException("Unexpected value: ", object);
         }
 
     }
@@ -43,16 +48,21 @@ public final class CompiledCodeNodes {
             return GetNumAllArgumentsNodeGen.create();
         }
 
-        public abstract int execute(CompiledCodeObject obj);
+        public abstract int execute(CompiledCodeObject object);
 
         @Specialization
-        protected static final int doBlock(final CompiledBlockObject obj) {
-            return obj.getNumArgs() + obj.getNumCopiedValues();
+        protected static final int doBlock(final CompiledBlockObject object) {
+            return object.getNumArgs() + object.getNumCopiedValues();
         }
 
         @Specialization
-        protected static final int doMethod(final CompiledMethodObject obj) {
-            return obj.getNumArgs();
+        protected static final int doMethod(final CompiledMethodObject object) {
+            return object.getNumArgs();
+        }
+
+        @Fallback
+        protected static final int doFail(final CompiledCodeObject object) {
+            throw new SqueakException("Unexpected value:", object);
         }
     }
 
@@ -65,16 +75,16 @@ public final class CompiledCodeNodes {
             super(image);
         }
 
-        public abstract boolean execute(Object obj);
+        public abstract boolean execute(Object object);
 
-        @Specialization(guards = "obj.getNumLiterals() >= 2")
-        protected final boolean doMethod(final CompiledMethodObject obj) {
-            final Object[] literals = obj.getLiterals();
+        @Specialization(guards = "object.getNumLiterals() >= 2")
+        protected final boolean doMethod(final CompiledMethodObject object) {
+            final Object[] literals = object.getLiterals();
             return literals[literals.length - 2] == image.doesNotUnderstand;
         }
 
         @Fallback
-        protected static final boolean doFallback(@SuppressWarnings("unused") final Object obj) {
+        protected static final boolean doFallback(@SuppressWarnings("unused") final Object object) {
             return false;
         }
     }
@@ -85,21 +95,21 @@ public final class CompiledCodeNodes {
             return CalculcatePCOffsetNodeGen.create();
         }
 
-        public abstract int execute(Object obj);
+        public abstract int execute(Object object);
 
         @Specialization
-        protected static final int doBlock(final CompiledBlockObject obj) {
-            return obj.getInitialPC();
+        protected static final int doBlock(final CompiledBlockObject object) {
+            return object.getInitialPC();
         }
 
         @Specialization
-        protected static final int doMethod(final CompiledMethodObject obj) {
-            return obj.getInitialPC();
+        protected static final int doMethod(final CompiledMethodObject object) {
+            return object.getInitialPC();
         }
 
         @Fallback
-        protected static final int doFallback(final Object obj) {
-            throw new SqueakException("Unexpected object", obj);
+        protected static final int doFail(final Object object) {
+            throw new SqueakException("Unexpected value:", object);
         }
     }
 }

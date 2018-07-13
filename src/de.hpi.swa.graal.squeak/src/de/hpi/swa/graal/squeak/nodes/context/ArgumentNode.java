@@ -19,8 +19,7 @@ public abstract class ArgumentNode extends SqueakNodeWithCode {
 
     protected ArgumentNode(final CompiledCodeObject code, final int argumentIndex) {
         super(code);
-        this.argumentIndex = argumentIndex;
-        // argumentIndex == 0 returns receiver
+        this.argumentIndex = argumentIndex; // argumentIndex == 0 returns receiver
         frameArgumentNode = FrameArgumentNode.create(FrameAccess.RECEIVER + argumentIndex);
     }
 

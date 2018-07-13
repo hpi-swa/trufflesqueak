@@ -3,6 +3,7 @@ package de.hpi.swa.graal.squeak.nodes;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.GenerateWrapper;
@@ -105,7 +106,7 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
     }
 
     @ExplodeLoop
-    @Specialization(guards = {"!code.getCanBeVirtualizedAssumption().isValid()"})
+    @Fallback
     protected final Object enter(final VirtualFrame frame) {
         initializeSlots(frame);
         final ContextObject newContext = createContextNode.executeGet(frame);

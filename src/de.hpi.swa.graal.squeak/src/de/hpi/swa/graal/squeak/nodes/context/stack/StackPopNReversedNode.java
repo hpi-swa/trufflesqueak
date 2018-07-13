@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.context.stack;
 
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
@@ -34,7 +35,7 @@ public abstract class StackPopNReversedNode extends AbstractStackPopNode {
     }
 
     @ExplodeLoop
-    @Specialization(guards = {"!isVirtualized(frame)"})
+    @Fallback
     protected final Object[] doPopN(final VirtualFrame frame) {
         final ContextObject context = getContext(frame);
         final long sp = context.getStackPointer();
