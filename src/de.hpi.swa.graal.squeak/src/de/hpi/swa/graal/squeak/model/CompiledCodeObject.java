@@ -45,10 +45,12 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
     @CompilationFinal protected int numLiterals;
     @CompilationFinal private boolean isOptimized;
     @CompilationFinal private boolean hasPrimitive;
-    @CompilationFinal protected boolean needsLargeFrame = true; // defaults to true
+    @CompilationFinal protected boolean needsLargeFrame = false;
     @CompilationFinal private int numTemps;
     @CompilationFinal private long accessModifier;
     @CompilationFinal private boolean altInstructionSet;
+
+    private final int numCopiedValues; // for block closures
 
     private static final boolean ALWAYS_NON_VIRTUALIZED = false;
     private final Assumption canBeVirtualized = Truffle.getRuntime().createAssumption("CompiledCodeObject: does not need a materialized context");
@@ -65,19 +67,20 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         stackPointerSlot = frameDescriptorTemplate.addFrameSlot(SLOT_IDENTIFIER.STACK_POINTER, FrameSlotKind.Int);
     }
 
-    protected CompiledCodeObject(final SqueakImageContext img, final ClassObject klass) {
+    protected CompiledCodeObject(final SqueakImageContext img, final ClassObject klass, final int numCopiedValues) {
         super(img, klass);
         if (ALWAYS_NON_VIRTUALIZED) {
             invalidateCanBeVirtualizedAssumption();
         }
+        this.numCopiedValues = numCopiedValues;
     }
 
-    protected CompiledCodeObject(final SqueakImageContext img) {
-        this(img, img.compiledMethodClass);
+    protected CompiledCodeObject(final SqueakImageContext img, final int numCopiedValues) {
+        this(img, img.compiledMethodClass, numCopiedValues);
     }
 
     protected CompiledCodeObject(final CompiledCodeObject original) {
-        this(original.image, original.getSqClass());
+        this(original.image, original.getSqClass(), original.numCopiedValues);
         setLiteralsAndBytes(original.literals.clone(), original.bytes.clone());
     }
 
@@ -101,7 +104,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         return source;
     }
 
-    public final int frameSize() {
+    public final int sqContextSize() {
         return needsLargeFrame ? CONTEXT.LARGE_FRAMESIZE : CONTEXT.SMALL_FRAMESIZE;
     }
 
@@ -110,9 +113,13 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
     protected final void prepareFrameDescriptor() {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         frameDescriptor = frameDescriptorTemplate.shallowCopy();
-        final int frameSize = frameSize();
-        stackSlots = new FrameSlot[frameSize];
-        for (int i = 0; i < frameSize; i++) {
+        /**
+         * Arguments and copied values are also pushed onto the stack in {@link EnterCodeNode},
+         * therefore there must be enough slots for all these values as well as the Squeak stack.
+         */
+        final int numFrameSlots = getNumArgsAndCopied() + sqContextSize();
+        stackSlots = new FrameSlot[numFrameSlots];
+        for (int i = 0; i < numFrameSlots; i++) {
             stackSlots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Illegal);
         }
     }
@@ -143,6 +150,10 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
 
     public final int getNumArgs() {
         return numArgs;
+    }
+
+    public final int getNumArgsAndCopied() {
+        return numArgs + numCopiedValues;
     }
 
     public final int getNumTemps() {

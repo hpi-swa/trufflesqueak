@@ -8,12 +8,10 @@ import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
-import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.GetNumAllArgumentsNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public abstract class ReceiverAndArgumentsNode extends Node {
-    @Child private GetNumAllArgumentsNode numAllArgumentsNode = GetNumAllArgumentsNode.create();
     @Child private FrameSlotReadNode contextOrMarkerReadNode = FrameSlotReadNode.createForContextOrMarker();
 
     public static ReceiverAndArgumentsNode create() {
@@ -42,7 +40,7 @@ public abstract class ReceiverAndArgumentsNode extends Node {
     @ExplodeLoop
     protected final Object[] doRcvrAndArgs(final VirtualFrame frame) {
         final ContextObject context = (ContextObject) contextOrMarkerReadNode.executeRead(frame);
-        final int numArgs = numAllArgumentsNode.execute(context.getClosureOrMethod());
-        return context.getReceiverAndNArguments(numArgs);
+        final int numArgsAndCopied = context.getClosureOrMethod().getNumArgsAndCopied();
+        return context.getReceiverAndNArguments(numArgsAndCopied);
     }
 }

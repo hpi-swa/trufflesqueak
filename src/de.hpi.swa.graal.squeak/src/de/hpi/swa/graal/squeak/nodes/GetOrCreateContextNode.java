@@ -26,7 +26,7 @@ public abstract class GetOrCreateContextNode extends AbstractNode {
     @Specialization(guards = {"isFullyVirtualized(frame)"})
     protected final ContextObject doCreateLight(final VirtualFrame frame) {
         final CompiledCodeObject method = (CompiledCodeObject) methodNode.executeRead(frame);
-        final ContextObject context = ContextObject.create(method.image, method.frameSize(), frame.materialize(), getFrameMarker(frame));
+        final ContextObject context = ContextObject.create(method.image, method.sqContextSize(), frame.materialize(), getFrameMarker(frame));
         contextWriteNode.executeWrite(frame, context);
         return context;
     }
@@ -45,7 +45,7 @@ public abstract class GetOrCreateContextNode extends AbstractNode {
             method = context.getMethod();
         } else {
             method = (CompiledCodeObject) frame.getArguments()[FrameAccess.METHOD];
-            context = ContextObject.create(method.image, method.frameSize(), frame, (FrameMarker) contextOrMarker);
+            context = ContextObject.create(method.image, method.sqContextSize(), frame, (FrameMarker) contextOrMarker);
             frame.setObject(CompiledCodeObject.thisContextOrMarkerSlot, context);
         }
         return context;

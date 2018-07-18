@@ -16,12 +16,10 @@ import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.GetNumAllArgumentsNode;
 
 public final class ExecuteTopLevelContextNode extends RootNode {
     private final SqueakImageContext image;
     private final ContextObject initialContext;
-    @Child private GetNumAllArgumentsNode numAllArgumentsNode = GetNumAllArgumentsNode.create();
     @Child private ExecuteContextNode executeContextNode;
 
     public static ExecuteTopLevelContextNode create(final SqueakLanguage language, final ContextObject context) {
@@ -66,7 +64,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                     executeContextNode.replace(ExecuteContextNode.create(code));
                 }
                 // doIt: activeContext.printSqStackTrace();
-                final Object result = executeContextNode.executeContext(activeContext.getTruffleFrame(numAllArgumentsNode.execute(code)), activeContext);
+                final Object result = executeContextNode.executeContext(activeContext.getTruffleFrame(code.getNumArgsAndCopied()), activeContext);
                 image.traceVerbose("Local Return on top-level: sender: ", sender);
                 activeContext = unwindContextChain(sender, sender, result);
                 image.traceVerbose("Local Return on top-level, new context is ", activeContext);

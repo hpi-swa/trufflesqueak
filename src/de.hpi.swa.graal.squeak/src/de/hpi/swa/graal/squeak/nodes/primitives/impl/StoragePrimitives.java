@@ -127,7 +127,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                      * the stack is accessed behind the stackPointer.
                      */
                     final CompiledCodeObject method = FrameAccess.getMethod(current);
-                    for (int i = 0; i < method.frameSize(); i++) {
+                    for (int i = 0; i < method.sqContextSize(); i++) {
                         final Object stackObject = stackReadNode.execute(current, i);
                         if (stackObject == null) {
                             /*

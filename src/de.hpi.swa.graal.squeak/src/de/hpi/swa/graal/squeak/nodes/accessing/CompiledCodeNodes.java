@@ -12,7 +12,6 @@ import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodesFactory.CalculcatePCOffsetNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodesFactory.GetCompiledMethodNodeGen;
-import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodesFactory.GetNumAllArgumentsNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodesFactory.IsDoesNotUnderstandNodeGen;
 
 public final class CompiledCodeNodes {
@@ -40,30 +39,6 @@ public final class CompiledCodeNodes {
             throw new SqueakException("Unexpected value: ", object);
         }
 
-    }
-
-    public abstract static class GetNumAllArgumentsNode extends Node {
-
-        public static GetNumAllArgumentsNode create() {
-            return GetNumAllArgumentsNodeGen.create();
-        }
-
-        public abstract int execute(CompiledCodeObject object);
-
-        @Specialization
-        protected static final int doBlock(final CompiledBlockObject object) {
-            return object.getNumArgs() + object.getNumCopiedValues();
-        }
-
-        @Specialization
-        protected static final int doMethod(final CompiledMethodObject object) {
-            return object.getNumArgs();
-        }
-
-        @Fallback
-        protected static final int doFail(final CompiledCodeObject object) {
-            throw new SqueakException("Unexpected value:", object);
-        }
     }
 
     public abstract static class IsDoesNotUnderstandNode extends AbstractNodeWithImage {
