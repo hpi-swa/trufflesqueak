@@ -1,8 +1,10 @@
 package de.hpi.swa.graal.squeak.nodes;
 
+import java.util.Arrays;
+
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -20,7 +22,7 @@ import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives.SimulationPrimitiveNode;
 
 public abstract class FillInNode extends Node {
-
+    private final ValueProfile byteType = ValueProfile.createClassProfile();
     private final SqueakImageContext image;
 
     public static FillInNode create(final SqueakImageContext image) {
@@ -28,78 +30,89 @@ public abstract class FillInNode extends Node {
     }
 
     protected FillInNode(final SqueakImageContext image) {
-        super();
         this.image = image;
     }
 
     public abstract void execute(Object obj, SqueakImageChunk chunk);
 
     @Specialization
-    protected void doBlockClosure(final BlockClosureObject obj, final SqueakImageChunk chunk) {
+    protected static final void doBlockClosure(final BlockClosureObject obj, final SqueakImageChunk chunk) {
         obj.fillin(chunk);
     }
 
     @Specialization
-    protected void doClassObj(final ClassObject obj, final SqueakImageChunk chunk) {
+    protected static final void doClassObj(final ClassObject obj, final SqueakImageChunk chunk) {
         obj.fillin(chunk);
     }
 
     @Specialization
-    protected void doCompiledCodeObj(final CompiledCodeObject obj, final SqueakImageChunk chunk) {
+    protected static final void doCompiledCodeObj(final CompiledCodeObject obj, final SqueakImageChunk chunk) {
         obj.fillin(chunk);
     }
 
     @Specialization
-    protected void doContext(final ContextObject obj, final SqueakImageChunk chunk) {
+    protected static final void doContext(final ContextObject obj, final SqueakImageChunk chunk) {
         obj.fillin(chunk);
     }
 
     @Specialization
-    protected void doEmpty(final EmptyObject obj, final SqueakImageChunk chunk) {
-        obj.fillin(chunk);
+    protected static final void doEmpty(final EmptyObject obj, final SqueakImageChunk chunk) {
+        obj.fillinHashAndClass(chunk);
     }
 
     @Specialization
-    protected void doFloat(final FloatObject obj, final SqueakImageChunk chunk) {
-        obj.fillin(chunk);
+    protected static final void doFloat(final FloatObject obj, final SqueakImageChunk chunk) {
+        obj.fillinHashAndClass(chunk);
     }
 
     @Specialization
-    protected void doLargeInteger(final LargeIntegerObject obj, final SqueakImageChunk chunk) {
+    protected static final void doLargeInteger(final LargeIntegerObject obj, final SqueakImageChunk chunk) {
+        obj.fillinHashAndClass(chunk);
+    }
+
+    @Specialization(guards = "!obj.isByteType() || chunk.image.getSimulatePrimitiveArgsSelector() != null")
+    protected static final void doNativeObj(final NativeObject obj, final SqueakImageChunk chunk) {
         obj.fillin(chunk);
     }
 
-    @Specialization
-    protected void doNativeObj(final NativeObject obj, final SqueakImageChunk chunk) {
+    @Specialization(guards = {"!chunk.image.config.isTesting()", "chunk.image.getSimulatePrimitiveArgsSelector() == null", "obj.isByteType()"})
+    protected final void doNativeByte(final NativeObject obj, final SqueakImageChunk chunk) {
         obj.fillin(chunk);
-        if (obj.isByteType()) {
-            final String stringValue = obj.asString();
-            if ("asSymbol".equals(stringValue)) {
-                image.setAsSymbolSelector(obj);
-            } else if (SimulationPrimitiveNode.SIMULATE_PRIMITIVE_SELECTOR.equals(stringValue)) {
-                image.setSimulatePrimitiveArgsSelector(obj);
-            }
+        final byte[] stringBytes = obj.getByteStorage(byteType);
+        if (Arrays.equals(SimulationPrimitiveNode.SIMULATE_PRIMITIVE_SELECTOR, stringBytes)) {
+            image.setSimulatePrimitiveArgsSelector(obj);
+        }
+    }
+
+    @Specialization(guards = {"chunk.image.config.isTesting()", "chunk.image.getSimulatePrimitiveArgsSelector() == null", "obj.isByteType()"})
+    protected final void doNativeByteTesting(final NativeObject obj, final SqueakImageChunk chunk) {
+        obj.fillin(chunk);
+        final byte[] stringBytes = obj.getByteStorage(byteType);
+        if (Arrays.equals(SqueakImageContext.AS_SYMBOL_SELECTOR_NAME, stringBytes)) {
+            image.setAsSymbolSelector(obj);
+        } else if (Arrays.equals(SimulationPrimitiveNode.SIMULATE_PRIMITIVE_SELECTOR, stringBytes)) {
+            image.setSimulatePrimitiveArgsSelector(obj);
         }
     }
 
     @Specialization
-    protected void doNil(final NilObject obj, final SqueakImageChunk chunk) {
+    protected static final void doNil(final NilObject obj, final SqueakImageChunk chunk) {
+        obj.fillinHashAndClass(chunk);
+    }
+
+    @Specialization
+    protected static final void doPointers(final PointersObject obj, final SqueakImageChunk chunk) {
         obj.fillin(chunk);
     }
 
     @Specialization
-    protected void doPointers(final PointersObject obj, final SqueakImageChunk chunk) {
-        obj.fillin(chunk);
-    }
-
-    @Specialization
-    protected void doWeakPointers(final WeakPointersObject obj, final SqueakImageChunk chunk) {
+    protected static final void doWeakPointers(final WeakPointersObject obj, final SqueakImageChunk chunk) {
         obj.fillin(chunk);
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    protected void doBoolean(final boolean obj, final SqueakImageChunk chunk) {
+    protected static final void doBoolean(final boolean obj, final SqueakImageChunk chunk) {
         // do nothing
     }
 }

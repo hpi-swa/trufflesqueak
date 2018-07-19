@@ -122,27 +122,26 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        // expects i to be a 1-based (Squeak) index
         private static int encodeBytesOf(final int anInt, final byte[] ba, final int i) {
-            ba[i - 1 + 0] = (byte) (anInt >> (24 & 0xff));
-            ba[i - 1 + 1] = (byte) (anInt >> (16 & 0xff));
-            ba[i - 1 + 2] = (byte) (anInt >> (8 & 0xff));
-            ba[i - 1 + 3] = (byte) (anInt >> (0 & 0xff));
-            return i + 4;
+            ba[i] = (byte) (anInt >> (24 & 0xff));
+            ba[i + 1] = (byte) (anInt >> (16 & 0xff));
+            ba[i + 2] = (byte) (anInt >> (8 & 0xff));
+            ba[i + 3] = (byte) (anInt >> (0 & 0xff));
+            return i + 5;
         }
 
         // expects i to be a 1-based (Squeak) index
         private static int encodeInt(final int anInt, final byte[] ba, final int i) {
             if (anInt <= 223) {
-                ba[i - 1] = (byte) anInt;
-                return i + 1;
-            }
-            if (anInt <= 7935) {
-                ba[i - 1] = (byte) (anInt / 256 + 224);
-                ba[i - 1 + 1] = (byte) (anInt % 256);
+                ba[i] = (byte) anInt;
                 return i + 2;
             }
-            ba[i - 1] = (byte) 255;
+            if (anInt <= 7935) {
+                ba[i] = (byte) (anInt / 256 + 224);
+                ba[i + 1] = (byte) (anInt % 256);
+                return i + 3;
+            }
+            ba[i] = (byte) 255;
             return encodeBytesOf(anInt, ba, i + 1);
         }
 
@@ -166,7 +165,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             final byte[] baBytes = ba.getByteStorage(baStorageType);
             final int[] bmBytes = bm.getIntStorage(bmStorageType);
             final int size = bmBytes.length;
-            int i = encodeInt(size, baBytes, 1);
+            int i = encodeInt(size, baBytes, 0);
             int k = 1;
             while (k <= size) {
                 final int word = bmBytes[k - 1];
@@ -187,7 +186,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                         i++;
                     } else {
                         i = encodeInt((j - k + 1) * 4 + 2, baBytes, i);
-                        i = encodeBytesOf(word, baBytes, i);
+                        i = encodeBytesOf(word, baBytes, i - 1);
                     }
                     k = j + 1;
                 } else {
@@ -210,7 +209,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
                         // We have one or more unmatching words, ending at j-1
                         i = encodeInt((j - k) * 4 + 3, baBytes, i);
                         for (int m = k; m <= j - 1; m++) {
-                            i = encodeBytesOf(bmBytes[m - 1], baBytes, i);
+                            i = encodeBytesOf(bmBytes[m - 1], baBytes, i - 1);
                         }
                         k = j;
                     }

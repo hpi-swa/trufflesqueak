@@ -126,6 +126,7 @@ public final class SqueakImageContext {
     private final SqueakDisplay display;
     private final ValueProfile displayProfile = ValueProfile.createClassProfile();
 
+    public static final byte[] AS_SYMBOL_SELECTOR_NAME = "asSymbol".getBytes(); // for testing
     @CompilationFinal private NativeObject asSymbolSelector = null; // for testing
     @CompilationFinal private NativeObject simulatePrimitiveArgsSelector = null;
     @CompilationFinal private PointersObject scheduler = null;

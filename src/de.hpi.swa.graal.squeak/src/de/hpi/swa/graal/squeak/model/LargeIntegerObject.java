@@ -5,7 +5,6 @@ import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
-import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
@@ -21,20 +20,16 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     private BigInteger integer;
     private boolean integerDirty = false;
 
-    public LargeIntegerObject(final SqueakImageContext img) {
-        super(img);
-    }
-
     public LargeIntegerObject(final SqueakImageContext img, final BigInteger integer) {
         super(img, integer.compareTo(BigInteger.ZERO) >= 0 ? img.largePositiveIntegerClass : img.largeNegativeIntegerClass);
-        this.integer = integer;
         this.bytes = derivedBytesFromBigInteger(integer);
+        this.integer = integer;
     }
 
     public LargeIntegerObject(final SqueakImageContext img, final ClassObject klass, final byte[] bytes) {
         super(img, klass);
         this.bytes = bytes;
-        this.integer = derivedBigIntegerFromBytes(bytes, isNegative());
+        this.integerDirty = true;
     }
 
     public LargeIntegerObject(final SqueakImageContext image, final ClassObject klass, final int size) {
@@ -47,12 +42,6 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         super(original.image, original.getSqClass());
         bytes = original.bytes.clone();
         integer = original.integer;
-    }
-
-    public void fillin(final SqueakImageChunk chunk) {
-        super.fillinHashAndClass(chunk);
-        bytes = chunk.getBytes();
-        integer = derivedBigIntegerFromBytes(bytes, isNegative());
     }
 
     public long getNativeAt0(final long index) {

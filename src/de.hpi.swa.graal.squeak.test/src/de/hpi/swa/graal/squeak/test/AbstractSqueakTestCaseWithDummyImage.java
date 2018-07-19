@@ -42,8 +42,8 @@ public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSquea
         image.x.setStorage("x".getBytes());
         image.y.setStorage("y".getBytes());
         image.specialObjectsArray.fillin(SqueakImageChunk.createDummyChunk(new Object[100]));
-        final Object[] pointers = new Object[6];
-        pointers[2] = 100; // sets instanceSize to 100
+        final Object[] pointers = new Object[]{
+                        null, null, 100L, null, null, null}; // sets instanceSize to 100
         image.compiledMethodClass.fillin(SqueakImageChunk.createDummyChunk(pointers));
     }
 }

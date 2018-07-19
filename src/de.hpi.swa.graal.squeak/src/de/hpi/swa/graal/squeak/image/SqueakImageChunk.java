@@ -3,9 +3,7 @@ package de.hpi.swa.graal.squeak.image;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.ShortBuffer;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -29,14 +27,14 @@ public final class SqueakImageChunk {
     @CompilationFinal private ClassObject sqClass;
     @CompilationFinal(dimensions = 1) private Object[] pointers;
 
-    @CompilationFinal protected final int classid;
-    @CompilationFinal protected final int pos;
+    protected final int classid;
+    protected final int pos;
 
-    @CompilationFinal private final SqueakImageReaderNode reader;
-    @CompilationFinal protected final int format;
-    @CompilationFinal private final int hash;
+    public final SqueakImageContext image;
+    private final SqueakImageReaderNode reader;
+    protected final int format;
+    private final int hash;
     @CompilationFinal(dimensions = 1) private final int[] data;
-    @CompilationFinal private final SqueakImageContext image;
 
     public SqueakImageChunk(final SqueakImageReaderNode reader,
                     final SqueakImageContext image,
@@ -105,7 +103,7 @@ public final class SqueakImageChunk {
                 object = NativeObject.newNativeLongs(image, null, 0);
             } else if (format <= 11) { // 32-bit integers
                 if (this.getSqClass() == image.floatClass) {
-                    object = FloatObject.bytesAsFloatObject(image, getBytes());
+                    object = FloatObject.newFromChunkWords(image, getWords());
                 } else {
                     object = NativeObject.newNativeInts(image, null, 0);
                 }
@@ -113,7 +111,7 @@ public final class SqueakImageChunk {
                 object = NativeObject.newNativeShorts(image, null, 0);
             } else if (format <= 23) { // bytes
                 if (this.getSqClass() == image.largePositiveIntegerClass || this.getSqClass() == image.largeNegativeIntegerClass) {
-                    object = new LargeIntegerObject(image);
+                    object = new LargeIntegerObject(image, null, getBytes());
                 } else {
                     object = NativeObject.newNativeBytes(image, null, 0);
                 }
@@ -223,11 +221,7 @@ public final class SqueakImageChunk {
     }
 
     public int[] getWords() {
-        final int[] ints = new int[data.length];
-        for (int i = 0; i < ints.length; i++) {
-            ints[i] = data[i];
-        }
-        return ints;
+        return data.clone();
     }
 
     public long[] getLongs() {

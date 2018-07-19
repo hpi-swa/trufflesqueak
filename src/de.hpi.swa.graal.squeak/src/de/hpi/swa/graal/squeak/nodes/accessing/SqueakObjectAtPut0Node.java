@@ -177,12 +177,12 @@ public abstract class SqueakObjectAtPut0Node extends Node {
         obj.setNativeAt0(index, value.longValueExact());
     }
 
-    @Specialization
+    @Specialization(guards = {"index == 0 || index == 1", "value >= 0", "value <= INTEGER_MAX"})
     protected static final void doFloat(final FloatObject obj, final long index, final long value) {
         obj.setNativeAt0(index, value);
     }
 
-    @Specialization
+    @Specialization(guards = {"index == 0 || index == 1", "!value.inRange(0, INTEGER_MAX)"})
     protected static final void doFloat(final FloatObject obj, final long index, final LargeIntegerObject value) {
         obj.setNativeAt0(index, value.longValueExact());
     }

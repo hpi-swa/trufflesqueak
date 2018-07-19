@@ -916,7 +916,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
      */
     @GenerateNodeFactory
     public abstract static class SimulationPrimitiveNode extends AbstractPrimitiveNode {
-        public static final String SIMULATE_PRIMITIVE_SELECTOR = "simulatePrimitive:args:";
+        public static final byte[] SIMULATE_PRIMITIVE_SELECTOR = "simulatePrimitive:args:".getBytes();
 
         // different CompiledMethodObject per simulation
         @CompilationFinal protected CompiledMethodObject simulationMethod;

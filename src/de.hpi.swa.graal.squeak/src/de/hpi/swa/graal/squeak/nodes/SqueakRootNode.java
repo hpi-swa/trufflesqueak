@@ -16,9 +16,8 @@ import de.hpi.swa.graal.squeak.image.SqueakImageReaderNode;
 
 public final class SqueakRootNode extends RootNode {
     private final SqueakLanguage language;
-    private final String imagePath;
 
-    @Child SqueakImageReaderNode readerNode;
+    @Child private SqueakImageReaderNode readerNode;
 
     public static SqueakRootNode create(final SqueakLanguage language, final ParsingRequest request) {
         return new SqueakRootNode(language, request);
@@ -27,10 +26,9 @@ public final class SqueakRootNode extends RootNode {
     private SqueakRootNode(final SqueakLanguage language, final ParsingRequest request) {
         super(language, new FrameDescriptor());
         this.language = language;
-        this.imagePath = request.getSource().getPath();
         try {
             final SqueakImageContext image = language.getContextReference().get();
-            this.readerNode = new SqueakImageReaderNode(new FileInputStream(imagePath), image);
+            this.readerNode = new SqueakImageReaderNode(new FileInputStream(request.getSource().getPath()), image);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }

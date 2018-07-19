@@ -4,10 +4,7 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -26,15 +23,15 @@ import de.hpi.swa.graal.squeak.util.BitSplitter;
 @SuppressWarnings("unused")
 public final class SqueakImageReaderNode extends Node {
     @CompilationFinal(dimensions = 1) private static final int[] CHUNK_HEADER_BIT_PATTERN = new int[]{22, 2, 5, 3, 22, 2, 8};
-    @CompilationFinal static final Object NIL_OBJECT_PLACEHOLDER = new Object();
-    @CompilationFinal private static final int SPECIAL_SELECTORS_INDEX = 23;
-    @CompilationFinal private static final int FREE_OBJECT_CLASS_INDEX_PUN = 0;
-    @CompilationFinal private static final long SLOTS_MASK = 0xFF << 56;
-    @CompilationFinal private static final long OVERFLOW_SLOTS = 255;
+    public static final Object NIL_OBJECT_PLACEHOLDER = new Object();
+    private static final int SPECIAL_SELECTORS_INDEX = 23;
+    private static final int FREE_OBJECT_CLASS_INDEX_PUN = 0;
+    private static final long SLOTS_MASK = 0xFF << 56;
+    private static final long OVERFLOW_SLOTS = 255;
+    private static final int HIDDEN_ROOTS_CHUNK_INDEX = 4;
     @CompilationFinal private SqueakImageChunk hiddenRootsChunk;
-    @CompilationFinal private static final int HIDDEN_ROOTS_CHUNK_INDEX = 4;
-    @CompilationFinal private final BufferedInputStream stream;
-    @CompilationFinal private final LinkedHashMap<Integer, SqueakImageChunk> chunktable = new LinkedHashMap<>();
+    private final BufferedInputStream stream;
+    private final LinkedHashMap<Integer, SqueakImageChunk> chunktable = new LinkedHashMap<>();
     private int chunkCount = 0;
     private int headerSize;
     private int oldBaseAddress;
@@ -43,12 +40,13 @@ public final class SqueakImageReaderNode extends Node {
     private int firstSegmentSize;
     private int position = 0;
     private final PrintWriter output;
-    @CompilationFinal private final SqueakImageContext image;
+    private final SqueakImageContext image;
+
+    private int segmentEnd;
+    private int currentAddressSwizzle;
 
     @Child private FillInNode fillInNode;
     @Child private LoopNode repeatingNode;
-    private int segmentEnd;
-    private int currentAddressSwizzle;
 
     public SqueakImageReaderNode(final InputStream inputStream, final SqueakImageContext image) {
         stream = new BufferedInputStream(inputStream);
@@ -124,7 +122,7 @@ public final class SqueakImageReaderNode extends Node {
                         (long) (bytes[3] & 0xFF) << 24 |
                         (long) (bytes[2] & 0xFF) << 16 |
                         (long) (bytes[1] & 0xFF) << 8 |
-                        (long) (bytes[0] & 0xFF);
+                        bytes[0] & 0xFF;
     }
 
     @TruffleBoundary
@@ -380,7 +378,7 @@ public final class SqueakImageReaderNode extends Node {
             fillInNode.execute(chunkObject, chunk);
         }
 
-        if (image.getAsSymbolSelector().isNil()) {
+        if (image.config.isTesting() && image.getAsSymbolSelector() == null) {
             throw new SqueakException("Unable to find asSymbol selector");
         }
     }
