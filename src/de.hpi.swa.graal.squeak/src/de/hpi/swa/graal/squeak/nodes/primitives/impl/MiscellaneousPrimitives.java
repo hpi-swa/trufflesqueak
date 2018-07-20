@@ -141,7 +141,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         @Specialization(guards = "isClassObject(classObject)")
         protected final AbstractSqueakObject someInstance(final ClassObject classObject) {
             try {
-                return objectGraphNode.someInstance(classObject);
+                return objectGraphNode.someInstanceOf(classObject);
             } catch (IndexOutOfBoundsException e) {
                 throw new PrimitiveFailed();
             }
@@ -640,7 +640,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         protected final PointersObject allInstances(final ClassObject classObject) {
-            return code.image.newList(ArrayUtils.toArray(objectGraphNode.allInstances(classObject)));
+            return code.image.newList(ArrayUtils.toArray(objectGraphNode.allInstancesOf(classObject)));
         }
 
         @SuppressWarnings("unused")

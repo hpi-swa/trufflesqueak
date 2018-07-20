@@ -34,9 +34,8 @@ import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public abstract class ObjectGraphNode extends AbstractNodeWithImage {
+    private static final int SEEN_INITIAL_CAPACITY = 500000;
     private static final int PENDING_INITIAL_SIZE = 256;
-
-    private static final int SEEN_INITIAL_CAPACITY = 1000000;
 
     @CompilationFinal private static HashSet<AbstractSqueakObject> classesWithNoInstances;
 
@@ -66,12 +65,12 @@ public abstract class ObjectGraphNode extends AbstractNodeWithImage {
         return executeTrace(null, false);
     }
 
-    public List<AbstractSqueakObject> allInstances(final ClassObject classObj) {
+    public List<AbstractSqueakObject> allInstancesOf(final ClassObject classObj) {
         return executeTrace(classObj, false);
     }
 
     @TruffleBoundary
-    public AbstractSqueakObject someInstance(final ClassObject classObj) {
+    public AbstractSqueakObject someInstanceOf(final ClassObject classObj) {
         return executeTrace(classObj, true).get(0);
     }
 
@@ -88,8 +87,7 @@ public abstract class ObjectGraphNode extends AbstractNodeWithImage {
         addObjectsFromTruffleFrames(pending);
         while (!pending.isEmpty()) {
             final AbstractSqueakObject currentObject = pending.pop();
-            if (!seen.contains(currentObject)) {
-                seen.add(currentObject);
+            if (seen.add(currentObject)) {
                 result.add(currentObject);
                 pending.addAll(tracePointers(currentObject));
             }
@@ -107,8 +105,7 @@ public abstract class ObjectGraphNode extends AbstractNodeWithImage {
         addObjectsFromTruffleFrames(pending);
         while (!pending.isEmpty()) {
             final AbstractSqueakObject currentObject = pending.pop();
-            if (!seen.contains(currentObject)) {
-                seen.add(currentObject);
+            if (seen.add(currentObject)) {
                 final ClassObject sqClass = currentObject.getSqClass();
                 if (classObj == sqClass) {
                     result.add(currentObject);
@@ -129,8 +126,7 @@ public abstract class ObjectGraphNode extends AbstractNodeWithImage {
         addObjectsFromTruffleFrames(pending);
         while (!pending.isEmpty()) {
             final AbstractSqueakObject currentObject = pending.pop();
-            if (!seen.contains(currentObject)) {
-                seen.add(currentObject);
+            if (seen.add(currentObject)) {
                 final ClassObject sqClass = currentObject.getSqClass();
                 if (classObj == sqClass) {
                     result.add(currentObject);
@@ -147,7 +143,7 @@ public abstract class ObjectGraphNode extends AbstractNodeWithImage {
         Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Frame>() {
             @Override
             public Frame visitFrame(final FrameInstance frameInstance) {
-                final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_WRITE);
+                final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
                 if (current.getArguments().length <= FrameAccess.RECEIVER) {
                     return null; // skip, this is not a normal GraalSqueak frame
                 }

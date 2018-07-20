@@ -446,7 +446,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "!hasNoInstances(sqObject)")
         protected final AbstractSqueakObject someInstance(final AbstractSqueakObject sqObject) {
-            final List<AbstractSqueakObject> instances = objectGraphNode.allInstances(sqObject.getSqClass());
+            final List<AbstractSqueakObject> instances = objectGraphNode.allInstancesOf(sqObject.getSqClass());
             int index;
             try {
                 index = instances.indexOf(sqObject);
