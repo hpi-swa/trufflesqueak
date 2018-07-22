@@ -8,7 +8,6 @@ import de.hpi.swa.graal.squeak.exceptions.Returns.LocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
-import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
@@ -50,7 +49,7 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
      * that this however does not check if the current context isDead nor does it terminate contexts
      * (this may be a problem).
      */
-    @Specialization(guards = {"aboutToReturnNeedsToBeSent()", "isVirtualized(frame)"})
+    @Specialization(guards = {"code.isUnwindMarked()", "isVirtualized(frame)"})
     protected final void doAboutToReturnVirtualized(final VirtualFrame frame, @SuppressWarnings("unused") final NonLocalReturn nlr,
                     @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments) {
         if (completeTempReadNode.executeRead(frame) == code.image.nil) {
@@ -67,7 +66,7 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
         }
     }
 
-    @Specialization(guards = {"aboutToReturnNeedsToBeSent()", "!isVirtualized(frame)"})
+    @Specialization(guards = {"code.isUnwindMarked()", "!isVirtualized(frame)"})
     protected final void doAboutToReturn(final VirtualFrame frame, final NonLocalReturn nlr) {
         final ContextObject context = getContext(frame);
         pushNode.executeWrite(frame, nlr.getTargetContext());
@@ -77,12 +76,8 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!aboutToReturnNeedsToBeSent()"})
+    @Specialization(guards = {"!code.isUnwindMarked()"})
     protected final void doNothing(final VirtualFrame frame, final NonLocalReturn nlr) {
         // nothing to do
-    }
-
-    protected boolean aboutToReturnNeedsToBeSent() {
-        return code instanceof CompiledMethodObject && code.isUnwindMarked();
     }
 }

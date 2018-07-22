@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes;
 
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.MaterializedFrame;
@@ -22,17 +23,17 @@ public abstract class GetOrCreateContextNode extends AbstractNode {
 
     public abstract ContextObject executeGet(Frame frame);
 
-    @Specialization(guards = {"!isFullyVirtualized(frame)"})
-    protected final ContextObject doGet(final VirtualFrame frame) {
-        return getContext(frame);
-    }
-
     @Specialization(guards = {"isFullyVirtualized(frame)"})
     protected final ContextObject doCreateLight(final VirtualFrame frame) {
         final CompiledCodeObject method = (CompiledCodeObject) methodNode.executeRead(frame);
-        final ContextObject context = ContextObject.create(method.image, method.frameSize(), frame.materialize(), getFrameMarker(frame));
+        final ContextObject context = ContextObject.create(method.image, method.sqContextSize(), frame.materialize(), getFrameMarker(frame));
         contextWriteNode.executeWrite(frame, context);
         return context;
+    }
+
+    @Fallback
+    protected final ContextObject doGet(final VirtualFrame frame) {
+        return getContext(frame);
     }
 
     public static final ContextObject getOrCreateFull(final MaterializedFrame frame) {
@@ -44,7 +45,7 @@ public abstract class GetOrCreateContextNode extends AbstractNode {
             method = context.getMethod();
         } else {
             method = (CompiledCodeObject) frame.getArguments()[FrameAccess.METHOD];
-            context = ContextObject.create(method.image, method.frameSize(), frame, (FrameMarker) contextOrMarker);
+            context = ContextObject.create(method.image, method.sqContextSize(), frame, (FrameMarker) contextOrMarker);
             frame.setObject(CompiledCodeObject.thisContextOrMarkerSlot, context);
         }
         return context;

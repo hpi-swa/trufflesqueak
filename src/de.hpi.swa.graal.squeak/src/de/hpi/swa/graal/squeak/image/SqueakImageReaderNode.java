@@ -60,7 +60,7 @@ public final class SqueakImageReaderNode extends Node {
         readHeader();
         readBody(frame);
         initObjects(frame);
-        if (!image.getDisplay().isHeadless() && image.getSimulatePrimitiveArgsSelector().isNil()) {
+        if (!image.getDisplay().isHeadless() && image.getSimulatePrimitiveArgsSelector() == null) {
             throw new SqueakException("Unable to find BitBlt simulation in image, cannot run with display.");
         }
     }

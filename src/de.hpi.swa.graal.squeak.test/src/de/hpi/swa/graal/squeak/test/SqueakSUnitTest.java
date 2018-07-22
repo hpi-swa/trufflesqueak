@@ -350,14 +350,14 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
         final PointersObject failureArray = (PointersObject) ((PointersObject) testResult.at0(TEST_RESULT.FAILURES)).at0(1);
         for (int i = 0; i < failureArray.size(); i++) {
             final AbstractSqueakObject value = (AbstractSqueakObject) failureArray.at0(i);
-            if (!value.isNil()) {
+            if (value != image.nil) {
                 output.add(((PointersObject) value).at0(0) + " (E)");
             }
         }
         final PointersObject errorArray = (PointersObject) ((PointersObject) testResult.at0(TEST_RESULT.ERRORS)).at0(0);
         for (int i = 0; i < errorArray.size(); i++) {
             final AbstractSqueakObject value = (AbstractSqueakObject) errorArray.at0(i);
-            if (!value.isNil()) {
+            if (value != image.nil) {
                 output.add(((PointersObject) value).at0(0) + " (F)");
             }
         }

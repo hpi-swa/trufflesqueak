@@ -37,6 +37,11 @@ def _graal_vm_args(args):
             '-Dgraal.TraceTruffleAssumptions=true',
         ]
 
+    if args.trace_inlining:
+        graal_args += [
+            '-Dgraal.TraceTruffleInlining=true',
+        ]
+
     if args.igv:
         print 'Sending Graal dumps to igv...'
         graal_args += [
@@ -138,6 +143,10 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
         '-ti', '--trace-invalid',
         help='trace assumption invalidation and transfers to interpreter',
         dest='trace_invalidation', action='store_true', default=False)
+    parser.add_argument(
+        '-tin', '--trace-inlining',
+        help='print information for inlining for each compilation.',
+        dest='trace_inlining', action='store_true', default=False)
     parser.add_argument(
         '-ts', '--trace-squeak', help='trace Squeak process switches, ...',
         dest='trace_squeak', action='store_true', default=False)

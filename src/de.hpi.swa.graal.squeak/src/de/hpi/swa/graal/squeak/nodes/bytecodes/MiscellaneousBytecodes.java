@@ -72,6 +72,12 @@ public final class MiscellaneousBytecodes {
             return getSuccessorIndex(); // continue with fallback code
         }
 
+        // Cannot use `@Fallback` here, so manually negate previous guards
+        @Specialization(guards = {"!code.hasPrimitive() || primitiveNode == null"})
+        protected final int doFallbackCode() {
+            return getSuccessorIndex(); // continue with fallback code immediately
+        }
+
         @TruffleBoundary
         private void debugPrimitiveFailures() {
             if (!(primitiveNode instanceof PrimitiveFailedNode)) {
@@ -87,11 +93,6 @@ public final class MiscellaneousBytecodes {
                 return; // filter out frequent results which are fine
             }
             code.image.printToStdErr("[UnsupportedSpecializationException]", e);
-        }
-
-        @Specialization(guards = {"!code.hasPrimitive() || primitiveNode == null"})
-        protected final int doFallback(@SuppressWarnings("unused") final VirtualFrame frame) {
-            return getSuccessorIndex(); // continue with fallback code immediately
         }
 
         @Override

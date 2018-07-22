@@ -75,8 +75,8 @@ public final class SqueakKeyboard implements KeyListener {
             case 38: return 30;  // Up
             case 39: return 29;  // Right
             case 40: return 31;  // Down
-            case 45: return 5;   // Insert
-            case 46: return 127; // Delete
+            // case ?: return 5;   // Insert
+            // case ?: return 127; // Delete
             default: return -1;
         }
         //@formatter:on

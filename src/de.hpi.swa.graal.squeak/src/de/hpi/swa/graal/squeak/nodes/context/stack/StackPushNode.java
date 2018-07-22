@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.context.stack;
 
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -35,7 +36,7 @@ public abstract class StackPushNode extends AbstractNode {
         setFrameStackPointer(frame, newSP);
     }
 
-    @Specialization(guards = {"!isVirtualized(frame)"})
+    @Fallback
     protected final void doWrite(final VirtualFrame frame, final Object value) {
         assert value != null;
         getContext(frame).push(value);

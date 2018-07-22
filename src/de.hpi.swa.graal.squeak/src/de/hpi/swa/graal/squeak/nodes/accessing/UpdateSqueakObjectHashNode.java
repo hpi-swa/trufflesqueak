@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 
@@ -18,12 +19,8 @@ public abstract class UpdateSqueakObjectHashNode extends Node {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "!copyHash || (!isAbstractSqueakObject(fromPointer) || !isAbstractSqueakObject(toPointer))")
+    @Fallback
     protected final void doFallback(final Object fromPointer, final Object toPointer, final boolean copyHash) {
         // nothing to do
-    }
-
-    protected static final boolean isAbstractSqueakObject(final Object object) {
-        return object instanceof AbstractSqueakObject;
     }
 }

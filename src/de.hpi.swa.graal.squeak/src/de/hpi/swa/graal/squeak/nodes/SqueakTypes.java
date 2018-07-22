@@ -18,7 +18,6 @@ import de.hpi.swa.graal.squeak.model.WeakPointersObject;
                 char.class,
                 long.class,
                 double.class,
-                String.class,
                 BlockClosureObject.class,
                 ClassObject.class,
                 CompiledBlockObject.class,
@@ -30,6 +29,5 @@ import de.hpi.swa.graal.squeak.model.WeakPointersObject;
                 PointersObject.class,
                 WeakPointersObject.class,
                 AbstractSqueakObject.class})
-
 public abstract class SqueakTypes {
 }

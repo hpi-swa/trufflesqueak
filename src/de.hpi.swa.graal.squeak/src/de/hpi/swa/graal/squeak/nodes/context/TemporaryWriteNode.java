@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.context;
 
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -38,7 +39,7 @@ public abstract class TemporaryWriteNode extends AbstractNode {
         frameSlotWriteNode.executeWrite(frame, value);
     }
 
-    @Specialization(guards = {"!isVirtualized(frame)"})
+    @Fallback
     protected final void doWrite(final VirtualFrame frame, final Object value) {
         assert value != null;
         getContext(frame).atTempPut(tempIndex, value);

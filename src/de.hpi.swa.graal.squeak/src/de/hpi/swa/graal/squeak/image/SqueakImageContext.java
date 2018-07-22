@@ -160,7 +160,7 @@ public final class SqueakImageContext {
         if (lookupResult.getCompiledInSelector() == doesNotUnderstand) {
             throw new SqueakException(receiver, ">>", selector, "could not be found!");
         }
-        final ContextObject customContext = ContextObject.create(this, lookupResult.frameSize());
+        final ContextObject customContext = ContextObject.create(this, lookupResult.sqContextSize());
         customContext.atput0(CONTEXT.METHOD, lookupResult);
         customContext.atput0(CONTEXT.INSTRUCTION_POINTER, (long) lookupResult.getInitialPC());
         customContext.atput0(CONTEXT.RECEIVER, receiver);

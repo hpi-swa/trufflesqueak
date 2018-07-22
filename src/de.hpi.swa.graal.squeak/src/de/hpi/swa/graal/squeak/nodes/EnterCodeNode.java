@@ -3,6 +3,7 @@ package de.hpi.swa.graal.squeak.nodes;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.GenerateWrapper;
@@ -19,7 +20,6 @@ import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
-import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.GetNumAllArgumentsNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotWriteNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
@@ -36,7 +36,6 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
     @Child private FrameSlotWriteNode stackPointerWriteNode = FrameSlotWriteNode.createForStackPointer();
     @Child private FrameSlotReadNode stackPointerReadNode = FrameSlotReadNode.createForStackPointer();
     @Child private StackPushNode pushStackNode = StackPushNode.create();
-    @Child private GetNumAllArgumentsNode getNumAllArgumentsNode = GetNumAllArgumentsNode.create();
 
     public static SqueakRootNode create(final SqueakLanguage language, final CompiledCodeObject code) {
         return new SqueakRootNode(language, code);
@@ -91,8 +90,8 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
         contextWriteNode.executeWrite(frame, new FrameMarker());
         // Push arguments and copied values onto the newContext.
         final Object[] arguments = frame.getArguments();
-        assert getNumAllArgumentsNode.execute(code) == (arguments.length - FrameAccess.ARGUMENTS_START);
-        for (int i = 0; i < getNumAllArgumentsNode.execute(code); i++) {
+        assert code.getNumArgsAndCopied() == (arguments.length - FrameAccess.ARGUMENTS_START);
+        for (int i = 0; i < code.getNumArgsAndCopied(); i++) {
             pushStackNode.executeWrite(frame, arguments[FrameAccess.ARGUMENTS_START + i]);
         }
         // Initialize remaining temporary variables with nil in newContext.
@@ -105,15 +104,15 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
     }
 
     @ExplodeLoop
-    @Specialization(guards = {"!code.getCanBeVirtualizedAssumption().isValid()"})
+    @Fallback
     protected final Object enter(final VirtualFrame frame) {
         initializeSlots(frame);
         final ContextObject newContext = createContextNode.executeGet(frame);
         contextWriteNode.executeWrite(frame, newContext);
         // Push arguments and copied values onto the newContext.
         final Object[] arguments = frame.getArguments();
-        assert getNumAllArgumentsNode.execute(code) == (arguments.length - FrameAccess.ARGUMENTS_START);
-        for (int i = 0; i < getNumAllArgumentsNode.execute(code); i++) {
+        assert code.getNumArgsAndCopied() == (arguments.length - FrameAccess.ARGUMENTS_START);
+        for (int i = 0; i < code.getNumArgsAndCopied(); i++) {
             newContext.push(arguments[FrameAccess.ARGUMENTS_START + i]);
         }
         // Initialize remaining temporary variables with nil in newContext.

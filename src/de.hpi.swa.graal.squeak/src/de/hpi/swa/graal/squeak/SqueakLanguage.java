@@ -6,7 +6,6 @@ import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.debug.DebuggerTags;
-import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.instrumentation.ProvidedTags;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 
@@ -47,11 +46,7 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
         if (value instanceof FrameMarker) {
             return image.nilClass;
         }
-        try {
-            return SqueakLookupClassNode.create(image).executeLookup(value);
-        } catch (UnsupportedSpecializationException e) {
-            return null;
-        }
+        return SqueakLookupClassNode.create(image).executeLookup(value);
     }
 
     public static SqueakImageContext getContext() {
