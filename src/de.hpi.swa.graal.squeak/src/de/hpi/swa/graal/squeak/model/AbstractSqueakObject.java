@@ -76,10 +76,6 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         return this instanceof ClassObject;
     }
 
-    public final boolean isNil() {
-        return this instanceof NilObject;
-    }
-
     public final boolean isSpecialKindAt(final long index) {
         return getSqClass() == image.specialObjectsArray.at0(index);
     }

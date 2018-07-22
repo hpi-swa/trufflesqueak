@@ -98,7 +98,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
             ContextObject current = receiver;
             while (current != previousContextOrNil) {
                 final AbstractSqueakObject sender = current.getSender();
-                if (sender.isNil() || sender == previousContextOrNil) {
+                if (sender == code.image.nil || sender == previousContextOrNil) {
                     break;
                 } else {
                     current = (ContextObject) sender;
@@ -120,7 +120,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         @Specialization
-        protected static final Object doTerminate(final ContextObject receiver, final ContextObject previousContext) {
+        protected final Object doTerminate(final ContextObject receiver, final ContextObject previousContext) {
             return terminateTo(receiver, previousContext);
         }
 
@@ -134,7 +134,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
          * Terminate all the Contexts between me and previousContext, if previousContext is on my
          * Context stack. Make previousContext my sender.
          */
-        private static Object terminateTo(final ContextObject receiver, final ContextObject previousContext) {
+        private Object terminateTo(final ContextObject receiver, final ContextObject previousContext) {
             if (hasSender(receiver, previousContext)) {
                 ContextObject currentContext = receiver.getNotNilSender();
                 while (currentContext != previousContext) {
@@ -150,12 +150,12 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         /*
          * Answer whether the receiver is strictly above context on the stack (Context>>hasSender:).
          */
-        private static boolean hasSender(final ContextObject context, final ContextObject previousContext) {
+        private boolean hasSender(final ContextObject context, final ContextObject previousContext) {
             if (context == previousContext) {
                 return false;
             }
             AbstractSqueakObject sender = context.getSender();
-            while (!sender.isNil()) {
+            while (sender != code.image.nil) {
                 if (sender == previousContext) {
                     return true;
                 }

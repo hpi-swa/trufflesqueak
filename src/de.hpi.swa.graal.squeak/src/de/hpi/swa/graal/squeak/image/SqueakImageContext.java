@@ -180,7 +180,7 @@ public final class SqueakImageContext {
 
     public void fillInFrom(final FileInputStream inputStream) throws IOException {
         SqueakImageReader.readImage(this, inputStream);
-        if (!display.isHeadless() && simulatePrimitiveArgsSelector.isNil()) {
+        if (!display.isHeadless() && simulatePrimitiveArgsSelector == null) {
             throw new SqueakException("Unable to find BitBlt simulation in image, cannot run with display.");
         }
     }
