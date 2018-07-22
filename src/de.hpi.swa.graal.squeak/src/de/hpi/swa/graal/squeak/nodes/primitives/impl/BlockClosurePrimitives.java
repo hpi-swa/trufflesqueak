@@ -6,6 +6,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -275,6 +276,11 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         protected static final Object doNilObject(final NilObject receiver) {
             return receiver;
         }
+
+        @Fallback
+        protected static final Object doFail(final Object receiver) {
+            throw new SqueakException("Unexpected failure in primitiveValue0 (receiver:", receiver, ")");
+        }
     }
 
     @GenerateNodeFactory
@@ -289,6 +295,11 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final Object arg,
                         @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments) {
             return dispatch.executeBlock(block, getFrameArguments.execute(block, getContextOrMarker(frame), new Object[]{arg}));
+        }
+
+        @Fallback
+        protected static final Object doFail(final Object receiver, final Object arg) {
+            throw new SqueakException("Unexpected failure in primitiveValue1 (receiver:", receiver, ", arg:", arg, ")");
         }
     }
 
@@ -305,6 +316,11 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments) {
             return dispatch.executeBlock(block, getFrameArguments.execute(block, getContextOrMarker(frame), new Object[]{arg1, arg2}));
         }
+
+        @Fallback
+        protected static final Object doFail(final Object receiver, final Object arg1, final Object arg2) {
+            throw new SqueakException("Unexpected failure in primitiveValue2 (receiver:", receiver, ", arg1:", arg1, ", arg2:", arg2, ")");
+        }
     }
 
     @GenerateNodeFactory
@@ -319,6 +335,11 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final Object arg1, final Object arg2, final Object arg3,
                         @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments) {
             return dispatch.executeBlock(block, getFrameArguments.execute(block, getContextOrMarker(frame), new Object[]{arg1, arg2, arg3}));
+        }
+
+        @Fallback
+        protected static final Object doFail(final Object receiver, final Object arg1, final Object arg2, final Object arg3) {
+            throw new SqueakException("Unexpected failure in primitiveValue3 (receiver:", receiver, ", arg1:", arg1, ", arg2:", arg2, ", arg3:", arg3, ")");
         }
     }
 
@@ -335,6 +356,11 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments) {
             return dispatch.executeBlock(block, getFrameArguments.execute(block, getContextOrMarker(frame), new Object[]{arg1, arg2, arg3, arg4}));
         }
+
+        @Fallback
+        protected static final Object doFail(final Object receiver, final Object arg1, final Object arg2, final Object arg3, final Object arg4) {
+            throw new SqueakException("Unexpected failure in primitiveValue4 (receiver:", receiver, ", arg1:", arg1, ", arg2:", arg2, ", arg3:", arg3, ", arg4:", arg4, ")");
+        }
     }
 
     @GenerateNodeFactory
@@ -349,6 +375,11 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final PointersObject argArray,
                         @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments) {
             return dispatch.executeBlock(block, getFrameArguments.execute(block, getContextOrMarker(frame), argArray.getPointers()));
+        }
+
+        @Fallback
+        protected static final Object doFail(final Object receiver, final Object argArray) {
+            throw new SqueakException("Unexpected failure in primitiveValueAry (receiver:", receiver, ", array:", argArray, ")");
         }
     }
 
@@ -373,6 +404,11 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                 }
             }
         }
+
+        @Fallback
+        protected static final Object doFail(final Object receiver) {
+            throw new SqueakException("Unexpected failure in primitiveValueNoContextSwitch (receiver:", receiver, ")");
+        }
     }
 
     @GenerateNodeFactory
@@ -395,6 +431,11 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                     code.image.interrupt.enable();
                 }
             }
+        }
+
+        @Fallback
+        protected static final Object doFail(final Object receiver, final Object argArray) {
+            throw new SqueakException("Unexpected failure in primitiveValueAryNoContextSwitch (receiver:", receiver, ", array:", argArray, ")");
         }
     }
 }
