@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.model;
 
-import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
@@ -8,25 +7,20 @@ public final class PointersObject extends AbstractSqueakObject {
     protected Object[] pointers;
 
     public PointersObject(final SqueakImageContext img) {
-        super(img);
+        super(img, -1, null); // for special PointersObjects only
     }
 
-    public PointersObject(final SqueakImageContext img, final ClassObject klass) {
-        super(img, klass);
+    public PointersObject(final SqueakImageContext img, final long hash, final ClassObject klass) {
+        super(img, hash, klass);
     }
 
     public PointersObject(final SqueakImageContext img, final ClassObject sqClass, final Object[] ptrs) {
-        this(img, sqClass);
+        super(img, sqClass);
         pointers = ptrs;
     }
 
     public PointersObject(final SqueakImageContext img, final ClassObject classObject, final int size) {
         this(img, classObject, ArrayUtils.withAll(size, img.nil));
-    }
-
-    public void fillin(final SqueakImageChunk chunk) {
-        super.fillinHashAndClass(chunk);
-        pointers = chunk.getPointers();
     }
 
     public Object at0(final long i) {
@@ -55,6 +49,10 @@ public final class PointersObject extends AbstractSqueakObject {
 
     public Object[] getPointers() {
         return pointers;
+    }
+
+    public void setPointers(final Object[] pointers) {
+        this.pointers = pointers;
     }
 
     public AbstractSqueakObject shallowCopy() {

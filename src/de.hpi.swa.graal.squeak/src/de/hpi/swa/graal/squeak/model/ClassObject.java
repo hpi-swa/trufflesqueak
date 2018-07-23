@@ -29,7 +29,11 @@ public final class ClassObject extends AbstractSqueakObject {
     protected Object[] pointers;
 
     public ClassObject(final SqueakImageContext img) {
-        super(img);
+        super(img, -1L, null);
+    }
+
+    public ClassObject(final SqueakImageContext img, final long hash) {
+        super(img, hash, null);
     }
 
     private ClassObject(final ClassObject original) {
@@ -79,7 +83,6 @@ public final class ClassObject extends AbstractSqueakObject {
     }
 
     public void fillin(final SqueakImageChunk chunk) {
-        super.fillinHashAndClass(chunk);
         pointers = chunk.getPointers();
         // initialize the subclasses set
         setFormat((long) at0(CLASS.FORMAT));

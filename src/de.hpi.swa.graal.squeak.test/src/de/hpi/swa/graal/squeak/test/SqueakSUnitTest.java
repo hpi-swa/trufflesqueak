@@ -6,8 +6,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,12 +15,12 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
+import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.nodes.IndirectCallNode;
 
 import de.hpi.swa.graal.squeak.GraalSqueakMain;
 import de.hpi.swa.graal.squeak.SqueakLanguage;
-import de.hpi.swa.graal.squeak.image.SqueakImageReaderNode;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -31,6 +29,7 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.TEST_RESULT;
 import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.nodes.SqueakRootNode.SqueakLoadImageNode;
 import de.hpi.swa.graal.squeak.nodes.process.GetActiveProcessNode;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -171,12 +170,8 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
         image.getOutput().println();
         image.getOutput().println("== Running " + SqueakLanguage.NAME + " SUnit Tests on " + GraalSqueakMain.getRuntimeName() + " ==");
         image.getOutput().println("Loading test image at " + imagePath + "...");
-        try {
-            final SqueakImageReaderNode reader = new SqueakImageReaderNode(new FileInputStream(imagePath), image);
-            reader.executeRead(Truffle.getRuntime().createVirtualFrame(new Object[0], new FrameDescriptor()));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        final RootCallTarget target = Truffle.getRuntime().createCallTarget(new SqueakLoadImageNode(null, image, imagePath));
+        IndirectCallNode.create().call(target, new Object[0]);
         patchImageForTesting();
     }
 

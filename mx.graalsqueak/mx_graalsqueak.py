@@ -10,6 +10,8 @@ PACKAGE_NAME = 'de.hpi.swa.graal.squeak'
 BASE_VM_ARGS = [
     '-Xms2G',  # Initial heap size
     '-XX:MetaspaceSize=64M',  # Initial size of Metaspaces
+    # '-Dgraal.TraceTruffleCompilationDetails=true'
+    # '-Dgraal.TruffleOSRCompilationThreshold=10000'
 ]
 
 _suite = mx.suite('graalsqueak')

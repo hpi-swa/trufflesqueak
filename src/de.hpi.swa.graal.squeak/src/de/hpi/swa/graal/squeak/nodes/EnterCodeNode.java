@@ -63,7 +63,12 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
 
         @Override
         public Object execute(final VirtualFrame frame) {
-            return codeNode.execute(frame);
+            try {
+                return codeNode.execute(frame);
+            } catch (StackOverflowError e) {
+                codeNode.code.image.printSqStackTrace();
+                throw e;
+            }
         }
 
         @Override
