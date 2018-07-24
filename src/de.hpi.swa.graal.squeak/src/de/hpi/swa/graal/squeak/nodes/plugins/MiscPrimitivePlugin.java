@@ -128,7 +128,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveDecompressFromByteArrayxxx")
+    @SqueakPrimitive(name = "primitiveDecompressFromByteArray")
     public abstract static class PrimDecompressFromByteArrayNode extends AbstractMiscPrimitiveNode {
         private final ValueProfile bmStorageType = ValueProfile.createClassProfile();
         private final ValueProfile baStorageType = ValueProfile.createClassProfile();

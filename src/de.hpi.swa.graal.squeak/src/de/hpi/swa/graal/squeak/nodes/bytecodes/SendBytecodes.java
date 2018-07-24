@@ -1,18 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
-
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.debug.DebuggerTags;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.GenerateWrapper;
@@ -45,67 +32,6 @@ public final class SendBytecodes {
         @Child private StackPopNReversedNode popNReversedNode;
         @Child private StackPushNode pushNode = StackPushNode.create();
 
-        private static class Invocation {
-            long totalTime;
-            long num;
-
-            public Invocation(final long time) {
-                totalTime = time;
-                num = 1;
-            }
-
-            public void add(final long time) {
-                num++;
-                totalTime += Math.max(time, 1);
-            }
-
-            public double relativeTime() {
-                return totalTime / (double) num;
-            }
-
-            public int compare(final Invocation other) {
-                return relativeTime() < other.relativeTime() ? -1 : relativeTime() == other.relativeTime() ? 0 : 1;
-            }
-        }
-
-        private static HashMap<String, Invocation> calls = new HashMap<>();
-        private static long lastReport = 0;
-
-        private static void report(final CompiledCodeObject lookupResult, final long time) {
-            final long now = System.currentTimeMillis();
-
-            if (now - lastReport > 8000) {
-                displayReport(true);
-                lastReport = now;
-            }
-
-            final String s = lookupResult.toString();
-            if (calls.containsKey(s)) {
-                calls.get(s).add(time);
-            } else {
-                calls.put(s, new Invocation(time));
-            }
-        }
-
-        private static void displayReport(final boolean clearAfter) {
-            System.err.println(">> " + calls.size() + " Entries.");
-            List<Entry<String, Invocation>> list = new ArrayList<>(calls.entrySet());
-            list = list.stream().filter((a) -> a.getValue().num > 100).sorted((a, b) -> b.getValue().compare(a.getValue())).collect(Collectors.toList());
-
-            // Collections.sort(list, (a, b) -> b.getValue().compare(a.getValue()));
-            int num = 0;
-            for (Entry<String, Invocation> entry : list) {
-                if (num > 30)
-                    break;
-                System.err.println(" --- " + entry.getKey() + " : " + entry.getValue().totalTime + " / " + entry.getValue().num + " (" + entry.getValue().relativeTime() + ")");
-                num++;
-            }
-            System.err.println("");
-
-            if (clearAfter)
-                calls.clear();
-        }
-
         private AbstractSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object sel, final int argcount) {
             super(code, index, numBytecodes);
             selector = sel instanceof NativeObject ? (NativeObject) sel : code.image.doesNotUnderstand;
@@ -137,11 +63,7 @@ public final class SendBytecodes {
             final ClassObject rcvrClass = lookupClassNode.executeLookup(rcvrAndArgs[0]);
             final Object lookupResult = lookupNode.executeLookup(rcvrClass, selector);
             final Object contextOrMarker = getContextOrMarker(frame);
-
-            // long start = System.currentTimeMillis();
-            final Object ret = dispatchSendNode.executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs, contextOrMarker);
-            // report((CompiledCodeObject) lookupResult, System.currentTimeMillis() - start);
-            return ret;
+            return dispatchSendNode.executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs, contextOrMarker);
         }
 
         public final Object getSelector() {

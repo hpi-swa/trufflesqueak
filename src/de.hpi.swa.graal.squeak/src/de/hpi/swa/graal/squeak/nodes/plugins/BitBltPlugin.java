@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes.plugins;
 
-import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.List;
 
@@ -12,7 +11,6 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.LoopNode;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -26,11 +24,12 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.BIT_BLT;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.FORM;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
-import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.CopyNodeGen;
-import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.BlendNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
-import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.HandleReceiverAndBitmapHelperNodeGen;
-import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.PixelValueAtHelperNodeGen;
+import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.PixelValueAtExtractHelperNodeGen;
+import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.CopyBitsClipHelperNodeGen;
+import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.CopyBitsExecuteHelperNodeGen;
+import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.CopyBitsExtractHelperNodeGen;
+import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.PixelValueAtExecuteHelperNodeGen;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
@@ -38,40 +37,232 @@ import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives.Sim
 
 public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
-    protected static final class BitBltData {
-        final PointersObject destinationForm;
-        public final int destX;
-        public final int destY;
-        public final int areaWidth;
-        public final int areaHeight;
-        public final int destinationWidth;
+    @Override
+    public List<? extends NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
+        return BitBltPluginFactory.getFactories();
+    }
 
-        public BitBltData(final PointersObject receiver) {
-            destinationForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
-            destinationWidth = (int) ((long) destinationForm.at0(FORM.WIDTH));
+    @Override
+    public boolean useSimulationAsFallback() {
+        return true;
+    }
 
-            final int _destX = (int) (long) receiver.at0(BIT_BLT.DEST_X);
-            final int _destY = (int) (long) receiver.at0(BIT_BLT.DEST_Y);
-            final int _areaWidth = (int) (long) receiver.at0(BIT_BLT.WIDTH);
-            final int _areaHeight = (int) (long) receiver.at0(BIT_BLT.HEIGHT);
+    @GenerateNodeFactory
+    @SqueakPrimitive(name = "primitiveCopyBits")
+    protected abstract static class PrimCopyBitsNode extends AbstractPrimitiveNode {
 
-            final int clipX = (int) (long) receiver.at0(BIT_BLT.CLIP_X);
-            final int clipY = (int) (long) receiver.at0(BIT_BLT.CLIP_Y);
-            final int clipWidth = (int) (long) receiver.at0(BIT_BLT.CLIP_WIDTH);
-            final int clipHeight = (int) (long) receiver.at0(BIT_BLT.CLIP_HEIGHT);
+        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
+        @Child private SimulationPrimitiveNode simulateNode;
+        @Child private CopyBitsExtractHelperNode extractNode;
 
-            // adapted inline copy of BilBltSimulation>>clipRange for the nil sourceForm case
-            // it's inline so we can final inst vars
-            final int dx;
-            final int dy;
-            int bbW;
-            int bbH;
+        protected PrimCopyBitsNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+            simulateNode = SimulationPrimitiveNode.create(method, getClass().getSimpleName(), "primitiveCopyBits");
+            extractNode = CopyBitsExtractHelperNode.create();
+        }
 
-            if (_destX >= clipX) {
-                dx = _destX;
-                bbW = _areaWidth;
+        protected boolean supportedCombinationRule(final PointersObject receiver) {
+            final long combinationRule = (long) at0Node.execute(receiver, BIT_BLT.COMBINATION_RULE);
+            return combinationRule == 4 || combinationRule == 24 || combinationRule == 25 || combinationRule == 3;
+        }
+
+        protected boolean supportedDepth(final PointersObject receiver) {
+            return hasSourceFormDepth(receiver, 32) && hasDestFormDepth(receiver, 32);
+        }
+
+        @Specialization(guards = {"supportedCombinationRule(receiver)", "supportedDepth(receiver)"})
+        protected final Object doOptimized(@SuppressWarnings("unused") final VirtualFrame frame, final PointersObject receiver) {
+            return extractNode.execute(receiver);
+        }
+
+        @Fallback
+        protected final Object doSimulation(final VirtualFrame frame, final Object receiver) {
+            return simulateNode.executeWithArguments(frame, receiver, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE,
+                            NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE);
+        }
+
+        /*
+         * Guard Helpers
+         */
+
+        protected final boolean hasDestFormDepth(final PointersObject target, final int depth) {
+            return depth == (long) at0Node.execute(target.at0(BIT_BLT.DEST_FORM), FORM.DEPTH);
+        }
+
+        protected final boolean hasSourceFormDepth(final PointersObject target, final int depth) {
+            Object sourceForm = target.at0(BIT_BLT.SOURCE_FORM);
+            return sourceForm == target.image.nil || depth == (long) at0Node.execute(sourceForm, FORM.DEPTH);
+        }
+
+        protected final boolean hasNilSourceForm(final PointersObject target) {
+            return target.at0(BIT_BLT.SOURCE_FORM) == code.image.nil;
+        }
+
+        protected final boolean hasNilHalftoneForm(final PointersObject target) {
+            return target.at0(BIT_BLT.HALFTONE_FORM) == code.image.nil;
+        }
+
+        protected final boolean hasNilColormap(final PointersObject target) {
+            return target.at0(BIT_BLT.COLOR_MAP) == code.image.nil;
+        }
+    }
+
+    @ImportStatic(FORM.class)
+    @GenerateNodeFactory
+    @SqueakPrimitive(name = "primitivePixelValueAt")
+    protected abstract static class PrimPixelValueAtNode extends AbstractPrimitiveNode {
+        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
+        @Child protected SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
+        @Child private PixelValueAtExtractHelperNode handleNode = PixelValueAtExtractHelperNode.create();
+
+        public PrimPixelValueAtNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"xValue < 0 || yValue < 0"})
+        protected static final long doQuickReturn(final PointersObject receiver, final long xValue, final long yValue) {
+            return 0L;
+        }
+
+        @Specialization(guards = {"xValue >= 0", "yValue > 0", "sizeNode.execute(receiver) > OFFSET"})
+        protected final long doValueAt(final PointersObject receiver, final long xValue, final long yValue) {
+            return handleNode.executeValueAt(receiver, xValue, yValue, at0Node.execute(receiver, FORM.BITS));
+        }
+    }
+
+    /*
+     * Helper Nodes
+     */
+    protected abstract static class CopyBitsExtractHelperNode extends Node {
+        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
+        @Child private CopyBitsClipHelperNode clipNode = CopyBitsClipHelperNode.create();
+
+        protected static CopyBitsExtractHelperNode create() {
+            return CopyBitsExtractHelperNodeGen.create();
+        }
+
+        protected abstract PointersObject execute(PointersObject receiver);
+
+        @Specialization(guards = {"hasSourceForm(receiver)"})
+        protected final PointersObject executeWithSourceForm(final PointersObject receiver) {
+            final PointersObject sourceForm = (PointersObject) receiver.at0(BIT_BLT.SOURCE_FORM);
+            final Object sourceWidth = sourceForm.at0(FORM.WIDTH);
+            final Object sourceHeight = sourceForm.at0(FORM.HEIGHT);
+
+            final PointersObject destForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
+            final long destWidth = (long) destForm.at0(FORM.WIDTH);
+            final long destHeight = (long) destForm.at0(FORM.HEIGHT);
+
+            final long combinationRule = (long) receiver.at0(BIT_BLT.COMBINATION_RULE);
+
+            if (destWidth * destHeight > destForm.getPointers().length) {
+                throw new PrimitiveFailed();
+            }
+
+            final Object destX = receiver.at0(BIT_BLT.DEST_X);
+            final Object destY = receiver.at0(BIT_BLT.DEST_Y);
+            final Object sourceX = receiver.at0(BIT_BLT.SOURCE_X);
+            final Object sourceY = receiver.at0(BIT_BLT.SOURCE_Y);
+            final Object areaWidth = receiver.at0(BIT_BLT.WIDTH);
+            final Object areaHeight = receiver.at0(BIT_BLT.HEIGHT);
+
+            final Object clipX = receiver.at0(BIT_BLT.CLIP_X);
+            final Object clipY = receiver.at0(BIT_BLT.CLIP_Y);
+            final Object clipWidth = receiver.at0(BIT_BLT.CLIP_WIDTH);
+            final Object clipHeight = receiver.at0(BIT_BLT.CLIP_HEIGHT);
+
+            return clipNode.executeClip(receiver, combinationRule, areaWidth, areaHeight, sourceForm, sourceX, sourceY, sourceWidth, sourceHeight, destForm, destX, destY, destWidth, clipX, clipY,
+                            clipWidth,
+                            clipHeight);
+        }
+
+        @Specialization()
+        protected final PointersObject executeWithoutSourceForm(final PointersObject receiver) {
+            final PointersObject destForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
+            final long destWidth = (long) destForm.at0(FORM.WIDTH);
+            final long destHeight = (long) destForm.at0(FORM.HEIGHT);
+
+            final long combinationRule = (long) receiver.at0(BIT_BLT.COMBINATION_RULE);
+
+            if (destWidth * destHeight > destForm.getPointers().length) {
+                throw new PrimitiveFailed();
+            }
+
+            final Object destX = receiver.at0(BIT_BLT.DEST_X);
+            final Object destY = receiver.at0(BIT_BLT.DEST_Y);
+            final Object areaWidth = receiver.at0(BIT_BLT.WIDTH);
+            final Object areaHeight = receiver.at0(BIT_BLT.HEIGHT);
+
+            final Object clipX = receiver.at0(BIT_BLT.CLIP_X);
+            final Object clipY = receiver.at0(BIT_BLT.CLIP_Y);
+            final Object clipWidth = receiver.at0(BIT_BLT.CLIP_WIDTH);
+            final Object clipHeight = receiver.at0(BIT_BLT.CLIP_HEIGHT);
+
+            return clipNode.executeClip(receiver, combinationRule, areaWidth, areaHeight, null, 0, 0, 0, 0, destForm, destX, destY, destWidth, clipX, clipY,
+                            clipWidth,
+                            clipHeight);
+        }
+
+        protected static final boolean hasSourceForm(final PointersObject target) {
+            return target.at0(BIT_BLT.SOURCE_FORM) != target.image.nil;
+        }
+    }
+
+    protected abstract static class CopyBitsClipHelperNode extends Node {
+        @Child private CopyBitsExecuteHelperNode executeNode = CopyBitsExecuteHelperNode.create();
+
+        protected static CopyBitsClipHelperNode create() {
+            return CopyBitsClipHelperNodeGen.create();
+        }
+
+        protected abstract PointersObject executeClip(final PointersObject receiver,
+                        final long combinationRule,
+                        final Object areaWidth,
+                        final Object areaHeight,
+                        final PointersObject sourceForm,
+                        final Object sourceX,
+                        final Object sourceY,
+                        final Object sourceWidth,
+                        final Object sourceHeight,
+                        final PointersObject destinationForm,
+                        final Object destX,
+                        final Object destY,
+                        final Object destWidth,
+                        final Object clipX,
+                        final Object clipY,
+                        final Object clipWidth,
+                        final Object clipHeight);
+
+        @Specialization(guards = {"sourceForm == null", "areaWidth > 0", "areaHeight > 0"})
+        protected final PointersObject executeClipWithoutSourceForm(final PointersObject receiver,
+                        final long combinationRule,
+                        final long areaWidth,
+                        final long areaHeight,
+                        final PointersObject sourceForm,
+                        final long sourceX,
+                        final long sourceY,
+                        final long sourceWidth,
+                        @SuppressWarnings("unused") final long sourceHeight,
+                        final PointersObject destForm,
+                        final long destX,
+                        final long destY,
+                        final long destWidth,
+                        final long clipX,
+                        final long clipY,
+                        final long clipWidth,
+                        final long clipHeight) {
+            // adapted copy of BilBltSimulation>>clipRange for the nil sourceForm case
+            final long dx;
+            final long dy;
+            long bbW;
+            long bbH;
+
+            if (destX >= clipX) {
+                dx = destX;
+                bbW = areaWidth;
             } else {
-                bbW = _areaWidth - (clipX - _destX);
+                bbW = areaWidth - (clipX - destX);
                 dx = clipX;
             }
 
@@ -80,11 +271,11 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             }
 
             // then in y
-            if (_destY >= clipY) {
-                dy = _destY;
-                bbH = _areaHeight;
+            if (destY >= clipY) {
+                dy = destY;
+                bbH = areaHeight;
             } else {
-                bbH = _areaHeight - (clipY - _destY);
+                bbH = areaHeight - (clipY - destY);
                 dy = clipY;
             }
 
@@ -92,73 +283,41 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
                 bbH = bbH - ((dy + bbH) - (clipY + clipHeight));
             }
 
-            areaWidth = bbW;
-            areaHeight = bbH;
-            destX = dx;
-            destY = dy;
+            return executeNode.executeCopyBits(receiver, combinationRule, sourceForm, sourceX, sourceY, sourceWidth, destForm, dx, dy, destWidth, bbW, bbH);
         }
 
-        public boolean hasValidArea() {
-            return areaWidth > 0 && areaHeight > 0;
-        }
-    }
+        @Specialization(guards = {"areaWidth > 0", "areaHeight > 0"})
+        protected final PointersObject executeClipWithSourceForm(final PointersObject receiver,
+                        final long combinationRule,
+                        final long areaWidth,
+                        final long areaHeight,
+                        final PointersObject sourceForm,
+                        final long sourceX,
+                        final long sourceY,
+                        final long sourceWidth,
+                        final long sourceHeight,
+                        final PointersObject destForm,
+                        final long destX,
+                        final long destY,
+                        final long destWidth,
+                        final long clipX,
+                        final long clipY,
+                        final long clipWidth,
+                        final long clipHeight) {
+            long sx;
+            long sy;
+            long dx;
+            long dy;
+            long bbW;
+            long bbH;
 
-    protected static final class BitBltDataWithSourceForm {
-
-        final PointersObject sourceForm;
-        final PointersObject destinationForm;
-        public final int sourceX;
-        public final int sourceY;
-        public final int sourceWidth;
-        public final int sourceHeight;
-        public final int destinationWidth;
-        public final int destinationHeight;
-        public final int destX;
-        public final int destY;
-        public final int areaWidth;
-        public final int areaHeight;
-
-        BitBltDataWithSourceForm(final PointersObject receiver) {
-            this(receiver,
-                            (int) ((long) receiver.at0(BIT_BLT.SOURCE_X)),
-                            (int) ((long) receiver.at0(BIT_BLT.WIDTH)));
-        }
-
-        BitBltDataWithSourceForm(final PointersObject receiver, final int _sourceX, final int _areaWidth) {
-            sourceForm = (PointersObject) receiver.at0(BIT_BLT.SOURCE_FORM);
-            destinationForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
-            sourceWidth = (int) ((long) sourceForm.at0(FORM.WIDTH));
-            sourceHeight = (int) ((long) sourceForm.at0(FORM.HEIGHT));
-            destinationWidth = (int) ((long) destinationForm.at0(FORM.WIDTH));
-            destinationHeight = (int) ((long) destinationForm.at0(FORM.HEIGHT));
-
-            // these are the unclipped values as passed in
-            final int _sourceY = (int) (long) receiver.at0(BIT_BLT.SOURCE_Y);
-
-            final int _destX = (int) (long) receiver.at0(BIT_BLT.DEST_X);
-            final int _destY = (int) (long) receiver.at0(BIT_BLT.DEST_Y);
-            final int _areaHeight = (int) (long) receiver.at0(BIT_BLT.HEIGHT);
-
-            final int clipX = (int) (long) receiver.at0(BIT_BLT.CLIP_X);
-            final int clipY = (int) (long) receiver.at0(BIT_BLT.CLIP_Y);
-            final int clipWidth = (int) (long) receiver.at0(BIT_BLT.CLIP_WIDTH);
-            final int clipHeight = (int) (long) receiver.at0(BIT_BLT.CLIP_HEIGHT);
-
-            // inline version of BitBltSimulation>>clipRange to we can have final inst vars
-            int sx;
-            int sy;
-            int dx;
-            int dy;
-            int bbW;
-            int bbH;
-
-            if (_destX >= clipX) {
-                sx = _sourceX;
-                dx = _destX;
-                bbW = _areaWidth;
+            if (destX >= clipX) {
+                sx = sourceX;
+                dx = destX;
+                bbW = areaWidth;
             } else {
-                sx = _sourceX + (clipX - _destX);
-                bbW = _areaWidth - (clipX - _destX);
+                sx = sourceX + (clipX - destX);
+                bbW = areaWidth - (clipX - destX);
                 dx = clipX;
             }
 
@@ -167,13 +326,13 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             }
 
             // then in y
-            if (_destY >= clipY) {
-                sy = _sourceY;
-                dy = _destY;
-                bbH = _areaHeight;
+            if (destY >= clipY) {
+                sy = sourceY;
+                dy = destY;
+                bbH = areaHeight;
             } else {
-                sy = _sourceY + clipY - _destY;
-                bbH = _areaHeight - (clipY - _destY);
+                sy = sourceY + clipY - destY;
+                bbH = areaHeight - (clipY - destY);
                 dy = clipY;
             }
 
@@ -201,194 +360,48 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
                 bbH = bbH - (sy + bbH - sourceHeight);
             }
 
-            sourceX = sx;
-            sourceY = sy;
-            destX = dx;
-            destY = dy;
-            areaWidth = bbW;
-            areaHeight = bbH;
-        }
-
-        boolean hasValidArea() {
-            return areaWidth > 0 && areaHeight > 0;
+            return executeNode.executeCopyBits(receiver, combinationRule, sourceForm, sx, sy, sourceWidth, destForm, dx, dy, destWidth, bbW, bbH);
         }
     }
 
-    static PrintWriter measurements;
-
-    static void createMeasurements() {
-        try {
-            measurements = new PrintWriter("measure-" + Long.toString(System.currentTimeMillis()) + ".csv", "UTF-8");
-            measurements.println("combinationRule,hasDest,hasSource,hasHalftone,hasColormap,sourceDepth,destDepth,width,height,time");
-        } catch (Exception e) {
-            e.printStackTrace(System.out);
-        }
-    }
-
-    static void measureEntry(final PointersObject p, final long delta, final SqueakObjectAt0Node at0Node) {
-        final Object dest = p.at0(BIT_BLT.DEST_FORM);
-        final Object source = p.at0(BIT_BLT.SOURCE_FORM);
-        final long width = (long) p.at0(BIT_BLT.WIDTH);
-        final long height = (long) p.at0(BIT_BLT.HEIGHT);
-        final long sourceDepth = source != p.image.nil ? (long) at0Node.execute(source, FORM.DEPTH) : -1;
-        final long destDepth = dest != p.image.nil ? (long) at0Node.execute(dest, FORM.DEPTH) : -1;
-
-        // @formatter:off
-        measurements
-            .append(p.at0(BIT_BLT.COMBINATION_RULE).toString()).append(',')
-            .append(Boolean.toString(dest != p.image.nil)).append(',')
-            .append(Boolean.toString(source != p.image.nil)).append(',')
-            .append(Boolean.toString(p.at0(BIT_BLT.HALFTONE_FORM) != p.image.nil)).append(',')
-            .append(Boolean.toString(p.at0(BIT_BLT.COLOR_MAP) != p.image.nil)).append(',')
-            .append(Long.toString(sourceDepth)).append(',')
-            .append(Long.toString(destDepth)).append(',')
-            .append(Long.toString(width)).append(',')
-            .append(Long.toString(height)).append(',')
-            .append(Long.toString(delta))
-            .flush();
-        // @formatter:on
-    }
-
-    @Override
-    public List<? extends NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
-        return BitBltPluginFactory.getFactories();
-    }
-
-    @Override
-    public boolean useSimulationAsFallback() {
-        return true;
-    }
-
-    public abstract static class CopyNode extends Node {
-
-        @CompilationFinal protected final ValueProfile sourceBitsByteStorageType = ValueProfile.createClassProfile();
-        @CompilationFinal protected final ValueProfile sourceBitsIntStorageType = ValueProfile.createClassProfile();
-
-        protected static CopyNode create() {
-            return CopyNodeGen.create();
-        }
-
-        public abstract void executeFill(NativeObject sourceBits, int[] dest, BitBltDataWithSourceForm data);
-
-        @Specialization(guards = {"sourceBits.isByteType()"})
-        protected void doFillBytes(final NativeObject sourceBits, final int[] dest, final BitBltDataWithSourceForm data) {
-            final byte[] source = sourceBits.getByteStorage(sourceBitsByteStorageType);
-
-            // request to unhibernate
-            if (data.sourceWidth * data.sourceHeight > source.length) {
-                throw new PrimitiveFailed();
-            }
-
-            for (int dy = data.destY, sy = data.sourceY; dy < data.destY + data.areaHeight; dy++, sy++) {
-                final int sourceStart = sy * data.sourceWidth + data.sourceX;
-                final int destStart = dy * data.destinationWidth + data.destX;
-                System.arraycopy(source, sourceStart, dest, destStart, data.areaWidth);
-            }
-        }
-
-        @Specialization(guards = {"sourceBits.isIntType()"})
-        protected void doFillInts(final NativeObject sourceBits, final int[] dest, final BitBltDataWithSourceForm data) {
-            final int[] source = sourceBits.getIntStorage(sourceBitsIntStorageType);
-
-            // request to unhibernate
-            if (data.sourceWidth * data.sourceHeight > source.length) {
-                System.out.println("fill ints");
-                throw new PrimitiveFailed();
-            }
-
-            for (int dy = data.destY, sy = data.sourceY; dy < data.destY + data.areaHeight; dy++, sy++) {
-                final int sourceStart = sy * data.sourceWidth + data.sourceX;
-                final int destStart = dy * data.destinationWidth + data.destX;
-                System.arraycopy(source, sourceStart, dest, destStart, data.areaWidth);
-            }
-        }
-    }
-
-    public abstract static class BlendNode extends Node {
-
-        @CompilationFinal protected final ValueProfile sourceBitsByteStorageType = ValueProfile.createClassProfile();
-        @CompilationFinal protected final ValueProfile sourceBitsIntStorageType = ValueProfile.createClassProfile();
-        @CompilationFinal protected final ValueProfile destinationBitsStorageType = ValueProfile.createClassProfile();
-
-        protected static BlendNode create() {
-            return BlendNodeGen.create();
-        }
-
-        public abstract void executeBlend(NativeObject sourceBits, int[] dest, BitBltDataWithSourceForm data);
-
-        @Specialization(guards = {"sourceBits.isByteType()"})
-        protected void doBlendBytes(final NativeObject sourceBits, final int[] dest, final BitBltDataWithSourceForm data) {
-            final byte[] source = sourceBits.getByteStorage(sourceBitsByteStorageType);
-
-            // request to unhibernate
-            if (data.sourceWidth * data.sourceHeight > source.length) {
-                throw new PrimitiveFailed();
-            }
-
-            for (int dy = data.destY, sy = data.sourceY; dy < data.destY + data.areaHeight; dy++, sy++) {
-                final int sourceStart = sy * data.sourceWidth + data.sourceX;
-                final int destStart = dy * data.destinationWidth + data.destX;
-                try {
-                    for (int dx = destStart, sx = sourceStart; dx < destStart + data.areaWidth; dx++, sx++) {
-                        dest[dx] = alphaBlend24(source[sx], dest[dx]);
-                    }
-                } finally {
-                    LoopNode.reportLoopCount(this, data.areaWidth);
-                }
-            }
-        }
-
-        @Specialization(guards = {"sourceBits.isIntType()"})
-        protected void doBlendInts(final NativeObject sourceBits, final int[] dest, final BitBltDataWithSourceForm data) {
-            final int[] source = sourceBits.getIntStorage(sourceBitsIntStorageType);
-            // request to unhibernate
-            if (data.sourceWidth * data.sourceHeight > source.length) {
-                System.out.println("fill ints");
-                throw new PrimitiveFailed();
-            }
-
-            for (int dy = data.destY, sy = data.sourceY; dy < data.destY + data.areaHeight; dy++, sy++) {
-                final int sourceStart = sy * data.sourceWidth + data.sourceX;
-                final int destStart = dy * data.destinationWidth + data.destX;
-                try {
-                    for (int dx = destStart, sx = sourceStart; dx < destStart + data.areaWidth; dx++, sx++) {
-                        dest[dx] = alphaBlend24(source[sx], dest[dx]);
-                    }
-                } finally {
-                    LoopNode.reportLoopCount(this, data.areaWidth);
-                }
-            }
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveCopyBits")
-    protected abstract static class PrimCopyBitsNode extends AbstractPrimitiveNode {
+    protected abstract static class CopyBitsExecuteHelperNode extends Node {
         @CompilationFinal private final ValueProfile halftoneFormStorageType = ValueProfile.createClassProfile();
         @CompilationFinal private final ValueProfile destinationBitsStorageType = ValueProfile.createClassProfile();
         @CompilationFinal private final ValueProfile sourceBitsStorageType = ValueProfile.createClassProfile();
 
         @CompilationFinal protected final ValueProfile sourceBitsByteStorageType = ValueProfile.createClassProfile();
 
-        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
-        @Child private SimulationPrimitiveNode simulateNode;
-        @Child private CopyNode fillNode = CopyNode.create();
-        @Child private BlendNode blendNode = BlendNode.create();
-
-        static final boolean measure = false;
-
-        protected PrimCopyBitsNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
-            simulateNode = SimulationPrimitiveNode.create(method, getClass().getSimpleName(), "primitiveCopyBits");
-
-            if (measure && measurements == null) {
-                createMeasurements();
-            }
+        protected static CopyBitsExecuteHelperNode create() {
+            return CopyBitsExecuteHelperNodeGen.create();
         }
 
-        @Specialization(guards = {"disableWhileMeasuring()", "hasCombinationRule(receiver, 3)",
-                        "hasNilSourceForm(receiver)"})
-        protected final Object doCopyBitsCombiRule3NilSourceForm(final VirtualFrame frame, final PointersObject receiver) {
+        protected abstract PointersObject executeCopyBits(final PointersObject receiver,
+                        long combinationRule,
+                        PointersObject sourceForm,
+                        long sourceX,
+                        long sourceY,
+                        long sourceWidth,
+                        PointersObject destForm,
+                        long destX,
+                        long destY,
+                        long destWidth,
+                        long areaWidth,
+                        long areaHeight);
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"combinationRule == 3", "sourceForm == null"})
+        protected final PointersObject doCopyBitsCombiRule3NilSourceForm(final PointersObject receiver,
+                        long combinationRule,
+                        PointersObject sourceForm,
+                        long sourceX,
+                        long sourceY,
+                        long sourceWidth,
+                        PointersObject destForm,
+                        long destX,
+                        long destY,
+                        long destWidth,
+                        long areaWidth,
+                        long areaHeight) {
             final PointersObject destinationForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
             final NativeObject destinationBits = (NativeObject) destinationForm.at0(FORM.BITS);
             final NativeObject halftoneForm = (NativeObject) receiver.at0(BIT_BLT.HALFTONE_FORM);
@@ -398,17 +411,9 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             }
             final int fillValue = fillArray[0];
             final long destinationDepth = (long) destinationForm.at0(FORM.DEPTH);
-            if (destinationDepth != 32) { // fall back to simulation if not 32-bit
-                return doSimulation(frame, receiver);
-            }
 
-            final BitBltData data = new BitBltData(receiver);
-            if (!data.hasValidArea()) {
-                return receiver;
-            }
-
-            final int endX = data.destX + data.areaWidth;
-            final int endY = data.destY + data.areaHeight;
+            final long endX = destX + areaWidth;
+            final long endY = destY + areaHeight;
 
             // TODO move to guard
             if (destinationBits.isByteType()) {
@@ -416,19 +421,30 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             }
             final int[] ints = destinationBits.getIntStorage(destinationBitsStorageType);
 
-            if (ints.length - 1 < (endY - 1) * data.destinationWidth + (endX - 1)) {
+            if (ints.length - 1 < (endY - 1) * destWidth + (endX - 1)) {
                 throw new PrimitiveFailed(); // fail early in case of index out of bounds
             }
 
-            for (int y = data.destY; y < endY; y++) {
-                Arrays.fill(ints, y * data.destinationWidth + data.destX, y * data.destinationWidth + endX, fillValue);
+            for (long y = destY; y < endY; y++) {
+                Arrays.fill(ints, (int) (y * destWidth + destX), (int) (y * destWidth + endX), fillValue);
             }
             return receiver;
         }
 
-        @Specialization(guards = {"disableWhileMeasuring()", "hasCombinationRule(receiver, 4)",
-                        "hasNilSourceForm(receiver)"})
-        protected final Object doCopyBitsCombiRule4NilSourceForm(final VirtualFrame frame, final PointersObject receiver) {
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"combinationRule == 4", "sourceForm == null"})
+        protected final PointersObject doCopyBitsCombiRule4NilSourceForm(final PointersObject receiver,
+                        long combinationRule,
+                        PointersObject sourceForm,
+                        long sourceX,
+                        long sourceY,
+                        long sourceWidth,
+                        PointersObject destForm,
+                        long destX,
+                        long destY,
+                        long destWidth,
+                        long areaWidth,
+                        long areaHeight) {
             final PointersObject destinationForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
             final NativeObject destinationBits = (NativeObject) destinationForm.at0(FORM.BITS);
             final NativeObject halftoneForm = (NativeObject) receiver.at0(BIT_BLT.HALFTONE_FORM);
@@ -437,44 +453,46 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
                 throw new SqueakException("Expected one fillValue only");
             }
             final int fillValue = fillArray[0];
-            final long destinationDepth = (long) destinationForm.at0(FORM.DEPTH);
-            if (destinationDepth != 32) { // fall back to simulation if not 32-bit
-                return doSimulation(frame, receiver);
-            }
 
-            final BitBltData data = new BitBltData(receiver);
-            if (!data.hasValidArea()) {
-                return receiver;
-            }
-
-            final int endX = data.destX + data.areaWidth;
-            final int endY = data.destY + data.areaHeight;
+            final long endX = destX + areaWidth;
+            final long endY = destY + areaHeight;
 
             final int[] ints = destinationBits.getIntStorage(destinationBitsStorageType);
 
-            if (ints.length - 1 < (endY - 1) * data.destinationWidth + (endX - 1)) {
+            if (ints.length - 1 < (endY - 1) * destWidth + (endX - 1)) {
                 throw new PrimitiveFailed(); // fail early in case of index out of bounds
             }
 
             final int invertedFillValue = ~fillValue;
 
-            for (int dy = data.destY; dy < data.destY + data.areaHeight; dy++) {
-                final int destStart = dy * data.destinationWidth + data.destX;
+            for (long dy = destY; dy < destY + areaHeight; dy++) {
+                final long destStart = dy * destWidth + destX;
                 try {
-                    for (int dx = destStart; dx < destStart + data.areaWidth; dx++) {
-                        ints[dx] = invertedFillValue & ints[dx];
+                    for (long dx = destStart; dx < destStart + areaWidth; dx++) {
+                        ints[(int) dx] = invertedFillValue & ints[(int) dx];
                     }
                 } finally {
-                    LoopNode.reportLoopCount(this, data.areaWidth);
+                    LoopNode.reportLoopCount(this, (int) areaWidth);
                 }
             }
 
             return receiver;
         }
 
-        @Specialization(guards = {"disableWhileMeasuring()", "hasCombinationRule(receiver, 24)",
-                        "hasNilSourceForm(receiver)"})
-        protected final Object doCopyBitsCombiRule24NilSourceForm(final VirtualFrame frame, final PointersObject receiver) {
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"combinationRule == 24", "sourceForm == null"})
+        protected final PointersObject doCopyBitsCombiRule24NilSourceForm(final PointersObject receiver,
+                        long combinationRule,
+                        PointersObject sourceForm,
+                        long sourceX,
+                        long sourceY,
+                        long sourceWidth,
+                        PointersObject destForm,
+                        long destX,
+                        long destY,
+                        long destWidth,
+                        long areaWidth,
+                        long areaHeight) {
             final PointersObject destinationForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
             final NativeObject destinationBits = (NativeObject) destinationForm.at0(FORM.BITS);
             final NativeObject halftoneForm = (NativeObject) receiver.at0(BIT_BLT.HALFTONE_FORM);
@@ -483,177 +501,32 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
                 throw new SqueakException("Expected one fillValue only");
             }
             final int fillValue = fillArray[0];
-            final int destinationDepth = (int) (long) destinationForm.at0(FORM.DEPTH);
-            if (destinationDepth != 32) { // fall back to simulation if not 32-bit
-                return doSimulation(frame, receiver);
-            }
-
-            final BitBltData data = new BitBltData(receiver);
-            if (!data.hasValidArea()) {
-                return receiver;
-            }
 
             final int[] ints = destinationBits.getIntStorage(destinationBitsStorageType);
 
-            final int endX = data.destX + data.areaWidth;
-            final int endY = data.destY + data.areaHeight;
+            final long endX = destX + areaWidth;
+            final long endY = destY + areaHeight;
 
-            if (ints.length - 1 < (endY - 1) * data.destinationWidth + (endX - 1)) {
+            if (ints.length - 1 < (endY - 1) * destWidth + (endX - 1)) {
                 throw new PrimitiveFailed(); // fail early in case of index out of bounds
             }
 
-            for (int y = data.destY; y < endY; y++) {
-                for (int x = data.destX; x < endX; x++) {
-                    final int index = y * data.destinationWidth + x;
+            for (long y = destY; y < endY; y++) {
+                for (long x = destX; x < endX; x++) {
+                    final int index = (int) (y * destWidth + x);
                     ints[index] = alphaBlend24(fillValue, ints[index]);
                 }
             }
             return receiver;
         }
-
-        @Specialization(guards = {"disableWhileMeasuring()", "hasCombinationRule(receiver, 24)",
-                        "!hasNilSourceForm(receiver)"})
-        protected final Object doCopyBitsCombiRule24WithSourceForm(final VirtualFrame frame, final PointersObject receiver) {
-            final PointersObject destinationForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
-            final PointersObject sourceForm = (PointersObject) receiver.at0(BIT_BLT.SOURCE_FORM);
-            final NativeObject destinationBits = (NativeObject) destinationForm.at0(FORM.BITS);
-            final NativeObject sourceBits = (NativeObject) sourceForm.at0(FORM.BITS);
-            final int destinationDepth = (int) (long) destinationForm.at0(FORM.DEPTH);
-            if (destinationDepth != 32) { // fall back to simulation if not 32-bit
-                return doSimulation(frame, receiver);
-            }
-
-            final BitBltDataWithSourceForm data = new BitBltDataWithSourceForm(receiver);
-            if (!data.hasValidArea()) {
-                return receiver;
-            }
-
-            final int[] dest = destinationBits.getIntStorage(destinationBitsStorageType);
-            blendNode.executeBlend(sourceBits, dest, data);
-
-            return receiver;
-        }
-
-        /**
-         * Draw call used by desktop background with form
-         */
-        @Specialization(guards = {"disableWhileMeasuring()",
-                        "hasCombinationRule(receiver, 25)",
-                        "!hasNilSourceForm(receiver)",
-                        "hasDestinationFormDepth(receiver, 32)",
-                        "hasSourceFormDepth(receiver, 32)",
-                        "hasNilColormap(receiver)"})
-        protected final Object doCopyBitsCombiRule25WithSourceForm(final PointersObject receiver) {
-            final PointersObject destinationForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
-            final NativeObject destinationBits = (NativeObject) destinationForm.at0(FORM.BITS);
-
-            final PointersObject sourceForm = (PointersObject) receiver.at0(BIT_BLT.SOURCE_FORM);
-            final NativeObject sourceBits = (NativeObject) sourceForm.at0(FORM.BITS);
-
-            final BitBltDataWithSourceForm data = new BitBltDataWithSourceForm(receiver);
-
-            if (!data.hasValidArea()) {
-                return receiver;
-            }
-
-            final int[] dest = destinationBits.getIntStorage(destinationBitsStorageType);
-
-            // request to unhibernate
-            if (data.destinationWidth * data.destinationHeight > dest.length) {
-                throw new PrimitiveFailed();
-            }
-
-            // TODO: instead of copy, this needs to always (destWord |= sourceWord)
-            fillNode.executeFill(sourceBits, dest, data);
-
-            return receiver;
-        }
-
-        @Fallback
-        protected final Object doSimulation(final VirtualFrame frame, final Object receiver) {
-            final PointersObject p = (PointersObject) receiver;
-
-            if (!measure) {
-                return simulateNode.executeWithArguments(frame, receiver, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE,
-                                NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE);
-            } else {
-                final long now = System.currentTimeMillis();
-                final Object res = simulateNode.executeWithArguments(frame, receiver, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE,
-                                NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE);
-
-                final long delta = System.currentTimeMillis() - now;
-
-                measureEntry(p, delta, at0Node);
-                return res;
-            }
-        }
-
-        /*
-         * Guard Helpers
-         */
-        protected static final boolean disableWhileMeasuring() {
-            return !measure;
-        }
-
-        protected static final boolean hasCombinationRule(final PointersObject target, final int ruleIndex) {
-            return ruleIndex == (long) target.at0(BIT_BLT.COMBINATION_RULE);
-        }
-
-        protected final boolean hasDestinationFormDepth(final PointersObject target, final int ruleIndex) {
-            return ruleIndex == (long) at0Node.execute(target.at0(BIT_BLT.DEST_FORM), FORM.DEPTH);
-        }
-
-        protected final boolean hasSourceFormDepth(final PointersObject target, final int ruleIndex) {
-            return ruleIndex == (long) at0Node.execute(target.at0(BIT_BLT.SOURCE_FORM), FORM.DEPTH);
-        }
-
-        protected final boolean hasNilSourceForm(final PointersObject target) {
-            return target.at0(BIT_BLT.SOURCE_FORM) == code.image.nil;
-        }
-
-        protected final boolean hasNilHalftoneForm(final PointersObject target) {
-            return target.at0(BIT_BLT.HALFTONE_FORM) == code.image.nil;
-        }
-
-        protected final boolean hasNilColormap(final PointersObject target) {
-            return target.at0(BIT_BLT.COLOR_MAP) == code.image.nil;
-        }
     }
 
-    @ImportStatic(FORM.class)
-    @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitivePixelValueAt")
-    protected abstract static class PrimPixelValueAtNode extends AbstractPrimitiveNode {
+    protected abstract static class PixelValueAtExtractHelperNode extends Node {
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
-        @Child protected SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
-        @Child private HandleReceiverAndBitmapHelperNode handleNode = HandleReceiverAndBitmapHelperNode.create();
+        @Child private PixelValueAtExecuteHelperNode executeNode = PixelValueAtExecuteHelperNode.create();
 
-        public PrimPixelValueAtNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"xValue < 0 || yValue < 0"})
-        protected static final long doQuickReturn(final PointersObject receiver, final long xValue, final long yValue) {
-            return 0L;
-        }
-
-        @Specialization(guards = {"xValue >= 0", "yValue > 0", "sizeNode.execute(receiver) > OFFSET"})
-        protected final long doValueAt(final PointersObject receiver, final long xValue, final long yValue) {
-            return handleNode.executeValueAt(receiver, xValue, yValue, at0Node.execute(receiver, FORM.BITS));
-        }
-    }
-
-    /*
-     * Helper Nodes
-     */
-
-    protected abstract static class HandleReceiverAndBitmapHelperNode extends Node {
-        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
-        @Child private PixelValueAtHelperNode pixelValueNode = PixelValueAtHelperNode.create();
-
-        protected static HandleReceiverAndBitmapHelperNode create() {
-            return HandleReceiverAndBitmapHelperNodeGen.create();
+        protected static PixelValueAtExtractHelperNode create() {
+            return PixelValueAtExtractHelperNodeGen.create();
         }
 
         protected abstract long executeValueAt(PointersObject receiver, long xValue, long yValue, Object bitmap);
@@ -663,16 +536,16 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             final Object width = at0Node.execute(receiver, FORM.WIDTH);
             final Object height = at0Node.execute(receiver, FORM.HEIGHT);
             final Object depth = at0Node.execute(receiver, FORM.DEPTH);
-            return pixelValueNode.executeValueAt(receiver, xValue, yValue, bitmap, width, height, depth);
+            return executeNode.executeValueAt(receiver, xValue, yValue, bitmap, width, height, depth);
         }
     }
 
-    protected abstract static class PixelValueAtHelperNode extends Node {
+    protected abstract static class PixelValueAtExecuteHelperNode extends Node {
         private final ValueProfile intProfile = ValueProfile.createClassProfile();
         private final BranchProfile errorProfile = BranchProfile.create();
 
-        protected static PixelValueAtHelperNode create() {
-            return PixelValueAtHelperNodeGen.create();
+        protected static PixelValueAtExecuteHelperNode create() {
+            return PixelValueAtExecuteHelperNodeGen.create();
         }
 
         protected abstract long executeValueAt(PointersObject receiver, long xValue, long yValue, NativeObject bitmap, Object width, Object height, Object depth);
@@ -698,108 +571,6 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             final int mask = 0xFFFFFFFF >> (32 - depth);
             final long shift = 32 - (((xValue & (ppW - 1)) + 1) * depth);
             return ((word >> shift) & mask) & 0xffffffffL;
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveDisplayString")
-    protected abstract static class PrimDisplayStringNode extends AbstractPrimitiveNode {
-        @CompilationFinal private final ValueProfile halftoneFormStorageType = ValueProfile.createClassProfile();
-        @CompilationFinal private final ValueProfile destinationBitsStorageType = ValueProfile.createClassProfile();
-        @CompilationFinal private final ValueProfile sourceBitsStorageType = ValueProfile.createClassProfile();
-        @CompilationFinal protected final ValueProfile sourceStringStorageType = ValueProfile.createClassProfile();
-        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
-        @Child private SimulationPrimitiveNode simulateNode;
-        @Child private CopyNode fillNode = CopyNode.create();
-        @Child private BlendNode blendNode = BlendNode.create();
-
-        static final boolean measure = false;
-
-        protected PrimDisplayStringNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
-            simulateNode = SimulationPrimitiveNode.create(method, getClass().getSimpleName(), "primitiveDisplayString");
-
-            if (measure && measurements == null) {
-                createMeasurements();
-            }
-        }
-
-        boolean disable() {
-            return false;
-        }
-
-        // prototype, currently disabled
-        @Specialization(guards = {"disable()",
-                        "hasDestinationFormDepth(receiver, 4)",
-                        "hasSourceFormDepth(receiver, 4)"})
-        protected final Object doDisplayStringDummy(final VirtualFrame frame, final PointersObject receiver, final NativeObject sourceString, final long startIndex, final long stopIndex,
-                        final PointersObject glyphMap, final PointersObject xTable, final long kernDelta) {
-            final PointersObject destinationForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
-            final PointersObject sourceForm = (PointersObject) receiver.at0(BIT_BLT.SOURCE_FORM);
-            final NativeObject destinationBits = (NativeObject) destinationForm.at0(FORM.BITS);
-            final NativeObject sourceBits = (NativeObject) sourceForm.at0(FORM.BITS);
-            final int destinationDepth = (int) (long) destinationForm.at0(FORM.DEPTH);
-            if (destinationDepth != 32) { // fall back to simulation if not 32-bit
-                return doSimulation(frame, receiver, sourceString, startIndex, stopIndex, glyphMap, xTable, kernDelta);
-            }
-
-            final int[] dest = destinationBits.getIntStorage(destinationBitsStorageType);
-
-            int offsetX = (int) kernDelta;
-            final byte[] string = sourceString.getByteStorage(sourceStringStorageType);
-            for (int i = (int) startIndex; i < stopIndex; i++) {
-                final int glyphIndex = (int) ((long) glyphMap.at0(string[i]));
-                final int sourceX = offsetX + (int) ((long) xTable.at0(glyphIndex));
-                final int sourceWidth = ((int) (long) xTable.at0(glyphIndex + 1)) - sourceX;
-
-                final BitBltDataWithSourceForm data = new BitBltDataWithSourceForm(receiver, sourceX, sourceWidth);
-                if (!data.hasValidArea()) {
-                    continue;
-                }
-                offsetX += sourceWidth;
-                blendNode.executeBlend(sourceBits, dest, data);
-            }
-
-            return receiver;// doSimulation(frame, receiver);
-        }
-
-        // @Fallback
-        // protected final Object doSimulation(final VirtualFrame frame, final PointersObject
-        // receiver, final NativeObject sourceString, final long startIndex, final long stopIndex,
-        // final PointersObject glyphMap, final PointersObject xTable, final long kernDelta) {
-        @Fallback
-        protected final Object doSimulation(final VirtualFrame frame, final Object receiver, final Object sourceString, final Object startIndex, final Object stopIndex,
-                        final Object glyphMap, final Object xTable, final Object kernDelta) {
-            final PointersObject p = (PointersObject) receiver;
-
-            if (!measure) {
-                return simulateNode.executeWithArguments(frame, receiver, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE,
-                                NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE);
-            } else {
-                final long now = System.currentTimeMillis();
-                final Object res = simulateNode.executeWithArguments(frame, receiver, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE,
-                                NotProvided.INSTANCE, NotProvided.INSTANCE, NotProvided.INSTANCE);
-
-                final long delta = System.currentTimeMillis() - now;
-
-                measureEntry(p, delta, at0Node);
-                return res;
-            }
-        }
-
-        /*
-         * Guard Helpers
-         */
-        protected static final boolean disableWhileMeasuring() {
-            return !measure;
-        }
-
-        protected final boolean hasDestinationFormDepth(final PointersObject target, final int ruleIndex) {
-            return ruleIndex == (long) at0Node.execute(target.at0(BIT_BLT.DEST_FORM), FORM.DEPTH);
-        }
-
-        protected final boolean hasSourceFormDepth(final PointersObject target, final int ruleIndex) {
-            return ruleIndex == (long) at0Node.execute(target.at0(BIT_BLT.SOURCE_FORM), FORM.DEPTH);
         }
     }
 
