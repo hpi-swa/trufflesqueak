@@ -7,7 +7,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
+import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
 public final class NativeObject extends AbstractSqueakObject {
@@ -19,6 +19,11 @@ public final class NativeObject extends AbstractSqueakObject {
     public static final long INTEGER_MAX = (long) (Math.pow(2, Integer.SIZE) - 1);
 
     @CompilationFinal protected Object storage;
+    protected Object chunk;
+
+    public static NativeObject newNativeBytes(final SqueakImageChunk chunk) {
+        return new NativeObject(chunk.image, chunk.getHash(), chunk.getSqClass(), chunk.getBytes());
+    }
 
     public static NativeObject newNativeBytes(final SqueakImageContext img, final ClassObject klass, final int size) {
         return newNativeBytes(img, klass, new byte[size]);
@@ -26,6 +31,10 @@ public final class NativeObject extends AbstractSqueakObject {
 
     public static NativeObject newNativeBytes(final SqueakImageContext img, final ClassObject klass, final byte[] bytes) {
         return new NativeObject(img, klass, bytes);
+    }
+
+    public static NativeObject newNativeShorts(final SqueakImageChunk chunk) {
+        return new NativeObject(chunk.image, chunk.getHash(), chunk.getSqClass(), chunk.getShorts());
     }
 
     public static NativeObject newNativeShorts(final SqueakImageContext img, final ClassObject klass, final int size) {
@@ -36,12 +45,20 @@ public final class NativeObject extends AbstractSqueakObject {
         return new NativeObject(img, klass, shorts);
     }
 
+    public static NativeObject newNativeInts(final SqueakImageChunk chunk) {
+        return new NativeObject(chunk.image, chunk.getHash(), chunk.getSqClass(), chunk.getWords());
+    }
+
     public static NativeObject newNativeInts(final SqueakImageContext img, final ClassObject klass, final int size) {
         return newNativeInts(img, klass, new int[size]);
     }
 
     public static NativeObject newNativeInts(final SqueakImageContext img, final ClassObject klass, final int[] words) {
         return new NativeObject(img, klass, words);
+    }
+
+    public static NativeObject newNativeLongs(final SqueakImageChunk chunk) {
+        return new NativeObject(chunk.image, chunk.getHash(), chunk.getSqClass(), chunk.getLongs());
     }
 
     public static NativeObject newNativeLongs(final SqueakImageContext img, final ClassObject klass, final int size) {
@@ -58,8 +75,14 @@ public final class NativeObject extends AbstractSqueakObject {
         this.storage = storage;
     }
 
+    protected NativeObject(final SqueakImageContext image, final long hash, final ClassObject classObject, final Object storage) {
+        super(image, hash, classObject);
+        assert storage != null;
+        this.storage = storage;
+    }
+
     public NativeObject(final SqueakImageContext image) { // constructor for special selectors
-        super(image, null);
+        super(image, -1, null);
         storage = new byte[0];
     }
 
@@ -84,22 +107,6 @@ public final class NativeObject extends AbstractSqueakObject {
     public String asString() {
         assert isByteType();
         return new String((byte[]) storage);
-    }
-
-    @Override
-    public void fillin(final AbstractImageChunk chunk) {
-        super.fillin(chunk);
-        if (isByteType()) {
-            setStorage(chunk.getBytes());
-        } else if (isShortType()) {
-            setStorage(chunk.getShorts());
-        } else if (isIntType()) {
-            setStorage(chunk.getWords());
-        } else if (isLongType()) {
-            setStorage(chunk.getLongs());
-        } else {
-            throw new SqueakException("Unsupported storage type");
-        }
     }
 
     public void become(final NativeObject other) {

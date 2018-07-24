@@ -3,7 +3,6 @@ package de.hpi.swa.graal.squeak.model;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
-import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
 public final class FloatObject extends AbstractSqueakObject {
@@ -13,6 +12,10 @@ public final class FloatObject extends AbstractSqueakObject {
     private static final int WORD_LENGTH = 2;
 
     @CompilationFinal private double doubleValue;
+
+    public static FloatObject newFromChunkWords(final SqueakImageContext image, final long hash, final int[] ints) {
+        return new FloatObject(image, hash, ints[1], ints[0]);
+    }
 
     public static FloatObject valueOf(final SqueakImageContext image, final double value) {
         return new FloatObject(image, value);
@@ -32,20 +35,17 @@ public final class FloatObject extends AbstractSqueakObject {
         this.doubleValue = doubleValue;
     }
 
+    public FloatObject(final SqueakImageContext image, final long hash, final long high, final long low) {
+        super(image, hash, image.floatClass);
+        setWords(high, low);
+    }
+
     public FloatObject(final SqueakImageContext image, final long high, final long low) {
         this(image);
         setWords(high, low);
     }
 
-    @Override
-    public void fillin(final AbstractImageChunk chunk) {
-        super.fillin(chunk);
-        final int[] words = chunk.getWords();
-        assert words.length == WORD_LENGTH;
-        setWords(words[1], words[0]);
-    }
-
-    public long getNativeAt0(final long index) {
+    public long getNativeAt0(final long index) { // TODO: use guards in senders
         final long bits = Double.doubleToRawLongBits(doubleValue);
         if (index == 0) {
             return Integer.toUnsignedLong((int) (bits >> 32));
@@ -56,7 +56,7 @@ public final class FloatObject extends AbstractSqueakObject {
         }
     }
 
-    public void setNativeAt0(final long index, final long value) {
+    public void setNativeAt0(final long index, final long value) { // TODO: use guards in senders
         if (value < 0 || value > NativeObject.INTEGER_MAX) { // check for overflow
             throw new IllegalArgumentException("Illegal value for FloatObject: " + value);
         }
@@ -77,8 +77,10 @@ public final class FloatObject extends AbstractSqueakObject {
     }
 
     public void setBytes(final byte[] bytes) {
-        final int[] ints = bytesToInts(bytes);
-        setWords(ints[0], ints[1]);
+        assert bytes.length == WORD_LENGTH * 4;
+        final int high = ((bytes[3] & 0xff) << 24) | ((bytes[2] & 0xff) << 16) | ((bytes[1] & 0xff) << 8) | bytes[0] & 0xff;
+        final int low = ((bytes[7] & 0xff) << 24) | ((bytes[6] & 0xff) << 16) | ((bytes[5] & 0xff) << 8) | bytes[4] & 0xff;
+        setWords(high, low);
     }
 
     public byte[] getBytes() {
@@ -102,16 +104,5 @@ public final class FloatObject extends AbstractSqueakObject {
 
     public AbstractSqueakObject shallowCopy() {
         return new FloatObject(this);
-    }
-
-    private static int[] bytesToInts(final byte[] bytes) {
-        assert bytes.length == WORD_LENGTH * 4;
-        return new int[]{((bytes[3] & 0xff) << 24) | ((bytes[2] & 0xff) << 16) | ((bytes[1] & 0xff) << 8) | bytes[0] & 0xff,
-                        ((bytes[7] & 0xff) << 24) | ((bytes[6] & 0xff) << 16) | ((bytes[5] & 0xff) << 8) | bytes[4] & 0xff};
-    }
-
-    public static FloatObject bytesAsFloatObject(final SqueakImageContext image, final byte[] bytes) {
-        final int[] ints = bytesToInts(bytes);
-        return new FloatObject(image, ints[1], ints[0]);
     }
 }

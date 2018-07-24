@@ -224,6 +224,7 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
     }
 
     @Override
+    @TruffleBoundary
     public void resizeTo(final int width, final int height) {
         frame.getContentPane().setPreferredSize(new Dimension(width, height));
         frame.pack();

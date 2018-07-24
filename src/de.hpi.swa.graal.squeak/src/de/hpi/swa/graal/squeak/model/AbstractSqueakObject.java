@@ -6,7 +6,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
 
-import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.instrumentation.SqueakObjectMessageResolutionForeign;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
@@ -30,9 +29,10 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         this.sqClass = klass;
     }
 
-    public void fillin(final AbstractImageChunk chunk) {
-        setSqueakHash(chunk.getHash());
-        setSqClass(chunk.getSqClass());
+    protected AbstractSqueakObject(final SqueakImageContext image, final long hash, final ClassObject klass) {
+        this.image = image;
+        this.hash = hash;
+        this.sqClass = klass;
     }
 
     @Override

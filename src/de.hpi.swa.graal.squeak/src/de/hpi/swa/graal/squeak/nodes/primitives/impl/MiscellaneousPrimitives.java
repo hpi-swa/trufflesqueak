@@ -27,9 +27,9 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.SimulationPrimitiveFailed;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
@@ -908,7 +908,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
      */
     @GenerateNodeFactory
     public abstract static class SimulationPrimitiveNode extends AbstractPrimitiveNode {
-        public static final String SIMULATE_PRIMITIVE_SELECTOR = "simulatePrimitive:args:";
+        public static final byte[] SIMULATE_PRIMITIVE_SELECTOR = "simulatePrimitive:args:".getBytes();
 
         // different CompiledMethodObject per simulation
         @CompilationFinal protected CompiledMethodObject simulationMethod;

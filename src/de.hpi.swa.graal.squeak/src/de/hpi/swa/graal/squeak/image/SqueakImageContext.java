@@ -3,12 +3,9 @@ package de.hpi.swa.graal.squeak.image;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.math.BigInteger;
 
-import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -55,9 +52,9 @@ public final class SqueakImageContext {
     public final ClassObject smallIntegerClass = new ClassObject(this);
     public final ClassObject arrayClass = new ClassObject(this);
     public final PointersObject smalltalk = new PointersObject(this);
-    public final NativeObject doesNotUnderstand = NativeObject.newNativeBytes(this, null, 0);
+    public final NativeObject doesNotUnderstand = new NativeObject(this);
     public final PointersObject specialSelectors = new PointersObject(this);
-    public final NativeObject mustBeBoolean = NativeObject.newNativeBytes(this, null, 0);
+    public final NativeObject mustBeBoolean = new NativeObject(this);
     public final ClassObject metaclass = new ClassObject(this);
     public final ClassObject methodContextClass = new ClassObject(this);
     public final ClassObject nilClass = new ClassObject(this);
@@ -128,6 +125,7 @@ public final class SqueakImageContext {
     private final SqueakDisplay display;
     private final ValueProfile displayProfile = ValueProfile.createClassProfile();
 
+    public static final byte[] AS_SYMBOL_SELECTOR_NAME = "asSymbol".getBytes(); // for testing
     @CompilationFinal private NativeObject asSymbolSelector = null; // for testing
     @CompilationFinal private NativeObject simulatePrimitiveArgsSelector = null;
     @CompilationFinal private PointersObject scheduler = null;
@@ -144,16 +142,16 @@ public final class SqueakImageContext {
         interrupt = InterruptHandlerNode.create(this, config);
     }
 
-    public CallTarget getActiveContext() {
+    public ExecuteTopLevelContextNode getActiveContext() {
         // TODO: maybe there is a better way to do the below
         final PointersObject activeProcess = GetActiveProcessNode.create(this).executeGet();
         final ContextObject activeContext = (ContextObject) activeProcess.at0(PROCESS.SUSPENDED_CONTEXT);
         activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, nil);
         output.println("Resuming active context for " + activeContext.getMethod() + "...");
-        return Truffle.getRuntime().createCallTarget(ExecuteTopLevelContextNode.create(language, activeContext));
+        return ExecuteTopLevelContextNode.create(language, activeContext);
     }
 
-    public CallTarget getCustomContext() {
+    public ExecuteTopLevelContextNode getCustomContext() {
         final Object receiver = config.getReceiver();
         final String selector = config.getSelector();
         final ClassObject receiverClass = receiver instanceof Long ? smallIntegerClass : nilClass;
@@ -175,14 +173,7 @@ public final class SqueakImageContext {
         }
 
         output.println("Starting to evaluate " + receiver + " >> " + selector + "...");
-        return Truffle.getRuntime().createCallTarget(ExecuteTopLevelContextNode.create(getLanguage(), customContext));
-    }
-
-    public void fillInFrom(final FileInputStream inputStream) throws IOException {
-        SqueakImageReader.readImage(this, inputStream);
-        if (!display.isHeadless() && simulatePrimitiveArgsSelector == null) {
-            throw new SqueakException("Unable to find BitBlt simulation in image, cannot run with display.");
-        }
+        return ExecuteTopLevelContextNode.create(getLanguage(), customContext);
     }
 
     public PrintWriter getOutput() {

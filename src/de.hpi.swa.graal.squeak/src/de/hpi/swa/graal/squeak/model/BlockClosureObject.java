@@ -9,7 +9,7 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
+import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.BLOCK_CLOSURE;
 import de.hpi.swa.graal.squeak.nodes.EnterCodeNode;
@@ -24,6 +24,11 @@ public final class BlockClosureObject extends AbstractSqueakObject {
     @CompilationFinal private RootCallTarget callTarget;
 
     private final CyclicAssumption callTargetStable = new CyclicAssumption("BlockClosureObject assumption");
+
+    public BlockClosureObject(final SqueakImageContext image, final long hash) {
+        super(image, hash, image.blockClosureClass);
+        this.copied = new Object[0]; // ensure copied is set
+    }
 
     public BlockClosureObject(final SqueakImageContext image) {
         super(image, image.blockClosureClass);
@@ -52,8 +57,7 @@ public final class BlockClosureObject extends AbstractSqueakObject {
         this.numArgs = original.numArgs;
     }
 
-    @Override
-    public void fillin(final AbstractImageChunk chunk) {
+    public void fillin(final SqueakImageChunk chunk) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         final Object[] pointers = chunk.getPointers();
         assert pointers.length >= BLOCK_CLOSURE.FIRST_COPIED_VALUE;

@@ -1,7 +1,5 @@
 package de.hpi.swa.graal.squeak.model;
 
-import java.util.List;
-
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -15,7 +13,7 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
-import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
+import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.instrumentation.CompiledCodeObjectPrinter;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
@@ -175,12 +173,10 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         return stackSlots.length;
     }
 
-    @Override
-    public final void fillin(final AbstractImageChunk chunk) {
+    public final void fillin(final SqueakImageChunk chunk) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        super.fillin(chunk);
-        final List<Integer> data = chunk.data();
-        final int header = data.get(0) >> 1; // header is a tagged small integer
+        final int[] data = chunk.data();
+        final int header = data[0] >> 1; // header is a tagged small integer
         final int literalsize = header & 0x7fff;
         final Object[] ptrs = chunk.getPointers(literalsize + 1);
         assert literals == null;

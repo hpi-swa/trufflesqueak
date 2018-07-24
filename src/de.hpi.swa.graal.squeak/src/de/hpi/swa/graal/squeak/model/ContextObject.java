@@ -8,7 +8,6 @@ import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
@@ -22,12 +21,12 @@ public final class ContextObject extends AbstractSqueakObject {
     private boolean isDirty = false;
     private boolean escaped = false;
 
-    public static ContextObject create(final SqueakImageContext image) {
-        return new ContextObject(image);
+    public static ContextObject createWithHash(final long hash, final SqueakImageContext image) {
+        return new ContextObject(hash, image);
     }
 
-    private ContextObject(final SqueakImageContext image) {
-        super(image, image.methodContextClass);
+    private ContextObject(final long hash, final SqueakImageContext image) {
+        super(image, hash, image.methodContextClass);
         isDirty = true;
     }
 
@@ -36,7 +35,7 @@ public final class ContextObject extends AbstractSqueakObject {
     }
 
     private ContextObject(final SqueakImageContext image, final int size) {
-        this(image);
+        super(image, image.methodContextClass);
         isDirty = true;
         pointers = new Object[CONTEXT.TEMP_FRAME_START + size];
     }
@@ -68,12 +67,6 @@ public final class ContextObject extends AbstractSqueakObject {
     public boolean isTerminated() {
         return pointers[CONTEXT.INSTRUCTION_POINTER] == image.nil &&
                         pointers[CONTEXT.SENDER_OR_NIL] == image.nil;
-    }
-
-    @Override
-    public void fillin(final AbstractImageChunk chunk) {
-        super.fillin(chunk);
-        pointers = chunk.getPointers();
     }
 
     public Object at0(final long longIndex) {
@@ -272,6 +265,10 @@ public final class ContextObject extends AbstractSqueakObject {
 
     public Object[] getPointers() {
         return pointers;
+    }
+
+    public void setPointers(final Object[] pointers) {
+        this.pointers = pointers;
     }
 
     public Object top() {

@@ -5,7 +5,7 @@ import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 public final class NilObject extends AbstractSqueakObject {
 
     public NilObject(final SqueakImageContext img) {
-        super(img);
+        super(img, 1L, img.nilClass);
     }
 
     @Override
