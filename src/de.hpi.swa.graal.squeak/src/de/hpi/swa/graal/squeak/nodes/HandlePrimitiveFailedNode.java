@@ -2,6 +2,7 @@ package de.hpi.swa.graal.squeak.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -13,7 +14,6 @@ import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 
 public abstract class HandlePrimitiveFailedNode extends AbstractNodeWithCode {
     @CompilationFinal private PointersObject errorTable;
-    @Child private StackPushNode pushNode = StackPushNode.create();
 
     public static HandlePrimitiveFailedNode create(final CompiledCodeObject code) {
         return HandlePrimitiveFailedNodeGen.create(code);
@@ -30,7 +30,8 @@ public abstract class HandlePrimitiveFailedNode extends AbstractNodeWithCode {
      * symbol into the corresponding temporary variable.
      */
     @Specialization(guards = "followedByExtendedStore(code)")
-    protected final void doHandle(final VirtualFrame frame, final PrimitiveFailed e) {
+    protected final void doHandle(final VirtualFrame frame, final PrimitiveFailed e,
+                    @Cached("create()") final StackPushNode pushNode) {
         pushNode.executeWrite(frame, getErrorTable().at0(e.getReasonCode()));
     }
 

@@ -17,8 +17,6 @@ import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotWriteNode;
 import de.hpi.swa.graal.squeak.nodes.process.SignalSemaphoreNode;
 
 public final class InterruptHandlerNode extends Node {
@@ -29,8 +27,6 @@ public final class InterruptHandlerNode extends Node {
     private final ConditionProfile countingProfile = ConditionProfile.createCountingProfile();
     private final Deque<Integer> semaphoresToSignal = new ArrayDeque<>();
 
-    @Child private GetOrCreateContextNode contextNode = GetOrCreateContextNode.create();
-    @Child private FrameSlotWriteNode contextWriteNode = FrameSlotWriteNode.createForContextOrMarker();
     @Child private SignalSemaphoreNode signalSemaporeNode;
 
     private long nextWakeupTick = 0;
@@ -53,7 +49,8 @@ public final class InterruptHandlerNode extends Node {
     }
 
     public void initializeSignalSemaphoreNode(final CompiledCodeObject method) {
-        signalSemaporeNode = SignalSemaphoreNode.create(method);
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        signalSemaporeNode = insert(SignalSemaphoreNode.create(method));
     }
 
     @TruffleBoundary

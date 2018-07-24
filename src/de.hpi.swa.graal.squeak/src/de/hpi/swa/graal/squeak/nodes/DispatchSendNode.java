@@ -20,8 +20,8 @@ import de.hpi.swa.graal.squeak.util.ArrayUtils;
 public abstract class DispatchSendNode extends AbstractNodeWithImage {
     @Child protected IsDoesNotUnderstandNode isDoesNotUnderstandNode;
     @Child private DispatchNode dispatchNode = DispatchNode.create();
-    @Child private LookupNode lookupNode;
     @Child private SqueakLookupClassNode lookupClassNode;
+    @Child private LookupNode lookupNode;
 
     @CompilationFinal private ClassObject messageClass;
     @CompilationFinal private Object runWithIn;
@@ -35,8 +35,6 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
     protected DispatchSendNode(final SqueakImageContext image) {
         super(image);
         isDoesNotUnderstandNode = IsDoesNotUnderstandNode.create(image);
-        lookupNode = LookupNode.create(image);
-        lookupClassNode = SqueakLookupClassNode.create(image);
     }
 
     @Specialization(guards = {"!isDoesNotUnderstandNode.execute(lookupResult)"})
@@ -51,6 +49,35 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
                     final Object contextOrMarker) {
         final PointersObject message = createMessage(selector, rcvrClass, ArrayUtils.allButFirst(rcvrAndArgs));
         return dispatchNode.executeDispatch(frame, lookupResult, new Object[]{rcvrAndArgs[0], message}, contextOrMarker);
+    }
+
+    @Fallback
+    protected final Object doObjectAsMethod(final VirtualFrame frame, final NativeObject selector, final Object targetObject, @SuppressWarnings("unused") final ClassObject rcvrClass,
+                    final Object[] rcvrAndArgs, final Object contextOrMarker) {
+        final Object[] arguments = ArrayUtils.allButFirst(rcvrAndArgs);
+        final ClassObject targetClass = getLookupClassNode().executeLookup(targetObject);
+        final Object newLookupResult = getLookupNode().executeLookup(targetClass, getRunWithIn());
+        if (isDoesNotUnderstandNode.execute(newLookupResult)) {
+            return dispatchNode.executeDispatch(frame, newLookupResult, new Object[]{targetObject, createMessage(selector, targetClass, arguments)}, contextOrMarker);
+        } else {
+            return dispatchNode.executeDispatch(frame, newLookupResult, new Object[]{targetObject, selector, image.newList(arguments), rcvrAndArgs[0]}, contextOrMarker);
+        }
+    }
+
+    private SqueakLookupClassNode getLookupClassNode() {
+        if (lookupClassNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            lookupClassNode = insert(SqueakLookupClassNode.create(image));
+        }
+        return lookupClassNode;
+    }
+
+    private LookupNode getLookupNode() {
+        if (lookupNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            lookupNode = insert(LookupNode.create(image));
+        }
+        return lookupNode;
     }
 
     private PointersObject createMessage(final NativeObject selector, final ClassObject rcvrClass, final Object[] arguments) {
@@ -70,19 +97,6 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
             messageClass = (ClassObject) image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.ClassMessage);
         }
         return messageClass;
-    }
-
-    @Fallback
-    protected final Object doObjectAsMethod(final VirtualFrame frame, final NativeObject selector, final Object targetObject, @SuppressWarnings("unused") final ClassObject rcvrClass,
-                    final Object[] rcvrAndArgs, final Object contextOrMarker) {
-        final Object[] arguments = ArrayUtils.allButFirst(rcvrAndArgs);
-        final ClassObject targetClass = lookupClassNode.executeLookup(targetObject);
-        final Object newLookupResult = lookupNode.executeLookup(targetClass, getRunWithIn());
-        if (isDoesNotUnderstandNode.execute(newLookupResult)) {
-            return dispatchNode.executeDispatch(frame, newLookupResult, new Object[]{targetObject, createMessage(selector, targetClass, arguments)}, contextOrMarker);
-        } else {
-            return dispatchNode.executeDispatch(frame, newLookupResult, new Object[]{targetObject, selector, image.newList(arguments), rcvrAndArgs[0]}, contextOrMarker);
-        }
     }
 
     private Object getRunWithIn() {

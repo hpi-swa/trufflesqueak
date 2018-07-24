@@ -63,10 +63,10 @@ public final class StoreBytecodes {
     }
 
     private abstract static class AbstractStoreIntoRemoteTempNode extends AbstractStoreIntoNode {
-        private final long indexInArray;
-        private final long indexOfArray;
+        private final int indexInArray;
+        private final int indexOfArray;
 
-        private AbstractStoreIntoRemoteTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long indexInArray, final long indexOfArray) {
+        private AbstractStoreIntoRemoteTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int indexInArray, final int indexOfArray) {
             super(code, index, numBytecodes);
             this.indexInArray = indexInArray;
             this.indexOfArray = indexOfArray;
@@ -134,7 +134,7 @@ public final class StoreBytecodes {
 
     public static final class PopIntoRemoteTempNode extends AbstractStoreIntoRemoteTempNode {
 
-        public PopIntoRemoteTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long indexInArray, final long indexOfArray) {
+        public PopIntoRemoteTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int indexInArray, final int indexOfArray) {
             super(code, index, numBytecodes, indexInArray, indexOfArray);
         }
 
@@ -206,7 +206,7 @@ public final class StoreBytecodes {
 
     public static final class StoreIntoRemoteTempNode extends AbstractStoreIntoRemoteTempNode {
 
-        public StoreIntoRemoteTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long indexInArray, final long indexOfArray) {
+        public StoreIntoRemoteTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int indexInArray, final int indexOfArray) {
             super(code, index, numBytecodes, indexInArray, indexOfArray);
         }
 

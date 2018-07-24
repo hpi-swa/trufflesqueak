@@ -3,6 +3,7 @@ package de.hpi.swa.graal.squeak.nodes;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -35,13 +36,13 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
     @Child private HandleLocalReturnNode handleLocalReturnNode;
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
     @Child private HandleNonVirtualReturnNode handleNonVirtualReturnNode = HandleNonVirtualReturnNode.create();
-    @Child private UpdateInstructionPointerNode updateInstructionPointerNode;
-    @Child private GetSuccessorNode getSuccessorNode = GetSuccessorNode.create();
     @Child private TriggerInterruptHandlerNode triggerInterruptHandlerNode;
-    @Child private StackPushNode pushStackNode = StackPushNode.create();
-    @Child private CalculcatePCOffsetNode calculcatePCOffsetNode = CalculcatePCOffsetNode.create();
-    @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create();
     @Child private MaterializeContextOnMethodExitNode materializeContextOnMethodExitNode = MaterializeContextOnMethodExitNode.create();
+
+    @Child private UpdateInstructionPointerNode updateInstructionPointerNode;
+    @Child private GetSuccessorNode getSuccessorNode;
+    @Child private StackPushNode pushStackNode;
+    @Child private CalculcatePCOffsetNode calculcatePCOffsetNode;
 
     public static ExecuteContextNode create(final CompiledCodeObject code) {
         return ExecuteContextNodeGen.create(code);
@@ -61,12 +62,12 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
         CompilerAsserts.compilationConstant(bytecodeNodes.length);
         handleLocalReturnNode = HandleLocalReturnNode.create(code);
         handleNonLocalReturnNode = HandleNonLocalReturnNode.create(code);
-        updateInstructionPointerNode = UpdateInstructionPointerNode.create(code);
         triggerInterruptHandlerNode = TriggerInterruptHandlerNode.create(code.image);
     }
 
     @Specialization(guards = "context == null")
-    protected final Object doVirtualized(final VirtualFrame frame, @SuppressWarnings("unused") final ContextObject context) {
+    protected final Object doVirtualized(final VirtualFrame frame, @SuppressWarnings("unused") final ContextObject context,
+                    @Cached("create()") final GetOrCreateContextNode getOrCreateContextNode) {
         try {
             triggerInterruptHandlerNode.executeGeneric(frame, code.hasPrimitive(), bytecodeNodes.length);
             startBytecode(frame);
@@ -114,7 +115,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
     }
 
     private long getAndDecodeSqueakPC(final ContextObject newContext) {
-        return newContext.getInstructionPointer() - calculcatePCOffsetNode.execute(newContext.getClosureOrMethod());
+        return newContext.getInstructionPointer() - getCalculcatePCOffsetNode().execute(newContext.getClosureOrMethod());
     }
 
     /*
@@ -160,13 +161,13 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
                     node = bytecodeNodes[pc];
                     continue;
                 } else {
-                    final int successor = getSuccessorNode.executeGeneric(node);
-                    updateInstructionPointerNode.executeUpdate(frame, successor);
+                    final int successor = getGetSuccessorNode().executeGeneric(node);
+                    getUpdateInstructionPointerNode().executeUpdate(frame, successor);
                     try {
                         pc = node.executeInt(frame);
                     } catch (NonLocalReturn nlr) {
                         if (nlr.hasArrivedAtTargetContext()) {
-                            pushStackNode.executeWrite(frame, nlr.getReturnValue());
+                            getStackPushNode().executeWrite(frame, nlr.getReturnValue());
                             pc = successor;
                         } else {
                             throw nlr;
@@ -189,13 +190,13 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
         int pc = (int) initialPC;
         AbstractBytecodeNode node = bytecodeNodes[pc];
         while (pc >= 0) {
-            final int successor = getSuccessorNode.executeGeneric(node);
-            updateInstructionPointerNode.executeUpdate(frame, successor);
+            final int successor = getGetSuccessorNode().executeGeneric(node);
+            getUpdateInstructionPointerNode().executeUpdate(frame, successor);
             try {
                 pc = node.executeInt(frame);
             } catch (NonLocalReturn nlr) {
                 if (nlr.hasArrivedAtTargetContext()) {
-                    pushStackNode.executeWrite(frame, nlr.getReturnValue());
+                    getStackPushNode().executeWrite(frame, nlr.getReturnValue());
                     pc = successor;
                 } else {
                     throw nlr;
@@ -232,8 +233,6 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
     }
 
     protected abstract static class GetSuccessorNode extends Node {
-        protected static final int BYTECODE_LENGTH_THRESHOLD = 32;
-
         protected static GetSuccessorNode create() {
             return GetSuccessorNodeGen.create();
         }
@@ -249,5 +248,37 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
         protected static final int doNormal(final AbstractBytecodeNode node) {
             return node.getSuccessorIndex();
         }
+    }
+
+    private StackPushNode getStackPushNode() {
+        if (pushStackNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            pushStackNode = insert(StackPushNode.create());
+        }
+        return pushStackNode;
+    }
+
+    private CalculcatePCOffsetNode getCalculcatePCOffsetNode() {
+        if (calculcatePCOffsetNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            calculcatePCOffsetNode = insert(CalculcatePCOffsetNode.create());
+        }
+        return calculcatePCOffsetNode;
+    }
+
+    private UpdateInstructionPointerNode getUpdateInstructionPointerNode() {
+        if (updateInstructionPointerNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            updateInstructionPointerNode = insert(UpdateInstructionPointerNode.create(code));
+        }
+        return updateInstructionPointerNode;
+    }
+
+    private GetSuccessorNode getGetSuccessorNode() {
+        if (getSuccessorNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            getSuccessorNode = insert(GetSuccessorNode.create());
+        }
+        return getSuccessorNode;
     }
 }

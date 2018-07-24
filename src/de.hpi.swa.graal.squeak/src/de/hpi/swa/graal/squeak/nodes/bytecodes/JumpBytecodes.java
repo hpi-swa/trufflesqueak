@@ -73,7 +73,7 @@ public final class JumpBytecodes {
         }
 
         protected abstract static class HandleConditionResultNode extends AbstractNodeWithCode {
-            @Child private StackPushNode pushNode = StackPushNode.create();
+            @Child private StackPushNode pushNode;
             @Child private AbstractSendNode sendMustBeBooleanNode;
 
             @CompilationFinal private static NativeObject mustBeBooleanSelector;
@@ -84,7 +84,6 @@ public final class JumpBytecodes {
 
             protected HandleConditionResultNode(final CompiledCodeObject code) {
                 super(code);
-                sendMustBeBooleanNode = new SendSelectorNode(code, -1, 1, getMustBeBooleanSelector(), 0);
             }
 
             protected abstract boolean execute(VirtualFrame frame, boolean expected, Object result);
@@ -96,10 +95,26 @@ public final class JumpBytecodes {
 
             @Fallback
             protected final boolean doMustBeBooleanSend(final VirtualFrame frame, @SuppressWarnings("unused") final boolean expected, final Object result) {
-                pushNode.executeWrite(frame, result);
-                sendMustBeBooleanNode.executeSend(frame);
+                getPushNode().executeWrite(frame, result);
+                getSendMustBeBooleanNode().executeSend(frame);
                 CompilerDirectives.transferToInterpreter();
                 throw new SqueakException("Should not be reached");
+            }
+
+            private StackPushNode getPushNode() {
+                if (pushNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    pushNode = insert(StackPushNode.create());
+                }
+                return pushNode;
+            }
+
+            private AbstractSendNode getSendMustBeBooleanNode() {
+                if (sendMustBeBooleanNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    sendMustBeBooleanNode = insert(new SendSelectorNode(code, -1, 1, getMustBeBooleanSelector(), 0));
+                }
+                return sendMustBeBooleanNode;
             }
 
             private NativeObject getMustBeBooleanSelector() {

@@ -16,14 +16,6 @@ public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
         return FrameSlotReadNodeGen.create(frameSlot);
     }
 
-    public static FrameSlotReadNode createForContextOrMarker() {
-        return FrameSlotReadNodeGen.create(CompiledCodeObject.thisContextOrMarkerSlot);
-    }
-
-    public static FrameSlotReadNode createForInstructionPointer() {
-        return FrameSlotReadNodeGen.create(CompiledCodeObject.instructionPointerSlot);
-    }
-
     public static FrameSlotReadNode createForStackPointer() {
         return FrameSlotReadNodeGen.create(CompiledCodeObject.stackPointerSlot);
     }

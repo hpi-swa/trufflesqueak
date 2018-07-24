@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -8,9 +9,6 @@ import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.nodes.MaterializeContextOnMethodExitNodeGen.SetSenderNodeGen;
 
 public abstract class MaterializeContextOnMethodExitNode extends AbstractNode {
-    @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create();
-    @Child private SetSenderNode setSenderNode = SetSenderNode.create();
-
     protected static ContextObject lastSeenContext;
 
     public static MaterializeContextOnMethodExitNode create() {
@@ -30,7 +28,9 @@ public abstract class MaterializeContextOnMethodExitNode extends AbstractNode {
     }
 
     @Specialization(guards = {"lastSeenContext != null || !isFullyVirtualized(frame)"})
-    protected final void doMaterialize(final VirtualFrame frame) {
+    protected static final void doMaterialize(final VirtualFrame frame,
+                    @Cached("create()") final GetOrCreateContextNode getOrCreateContextNode,
+                    @Cached("create()") final SetSenderNode setSenderNode) {
         final ContextObject context = getOrCreateContextNode.executeGet(frame);
         if (context != lastSeenContext) {
             setSenderNode.execute(lastSeenContext, context);
@@ -54,7 +54,7 @@ public abstract class MaterializeContextOnMethodExitNode extends AbstractNode {
 
     protected abstract static class SetSenderNode extends AbstractNode {
 
-        protected static SetSenderNode create() {
+        public static SetSenderNode create() {
             return SetSenderNodeGen.create();
         }
 

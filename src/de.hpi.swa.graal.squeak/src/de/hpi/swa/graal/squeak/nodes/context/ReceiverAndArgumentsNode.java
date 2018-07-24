@@ -6,22 +6,20 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public abstract class ReceiverAndArgumentsNode extends Node {
-    @Child private FrameSlotReadNode contextOrMarkerReadNode = FrameSlotReadNode.createForContextOrMarker();
-
     public static ReceiverAndArgumentsNode create() {
         return ReceiverAndArgumentsNodeGen.create();
     }
 
     public abstract Object executeGet(VirtualFrame frame);
 
-    protected final boolean isVirtualized(final VirtualFrame frame) {
-        final Object contextOrMarker = contextOrMarkerReadNode.executeRead(frame);
+    protected static final boolean isVirtualized(final VirtualFrame frame) {
+        final Object contextOrMarker = frame.getValue(CompiledCodeObject.thisContextOrMarkerSlot);
         return contextOrMarker instanceof FrameMarker || !((ContextObject) contextOrMarker).isDirty();
     }
 
@@ -38,8 +36,8 @@ public abstract class ReceiverAndArgumentsNode extends Node {
 
     @Fallback
     @ExplodeLoop
-    protected final Object[] doRcvrAndArgs(final VirtualFrame frame) {
-        final ContextObject context = (ContextObject) contextOrMarkerReadNode.executeRead(frame);
+    protected static final Object[] doRcvrAndArgs(final VirtualFrame frame) {
+        final ContextObject context = (ContextObject) frame.getValue(CompiledCodeObject.thisContextOrMarkerSlot);
         final int numArgsAndCopied = context.getClosureOrMethod().getNumArgsAndCopied();
         return context.getReceiverAndNArguments(numArgsAndCopied);
     }

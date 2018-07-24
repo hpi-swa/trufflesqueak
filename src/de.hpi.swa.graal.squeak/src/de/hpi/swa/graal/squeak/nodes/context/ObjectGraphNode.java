@@ -16,12 +16,14 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
+import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
+import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
@@ -29,7 +31,6 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 import de.hpi.swa.graal.squeak.nodes.context.ObjectGraphNodeGen.GetTraceablePointersNodeGen;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
@@ -40,9 +41,7 @@ public abstract class ObjectGraphNode extends AbstractNodeWithImage {
     @CompilationFinal private static HashSet<AbstractSqueakObject> classesWithNoInstances;
 
     @Child private GetTraceablePointersNode getPointersNode = GetTraceablePointersNode.create();
-
     @Child private FrameStackReadNode stackReadNode = FrameStackReadNode.create();
-    @Child private FrameSlotReadNode stackPointerReadNode = FrameSlotReadNode.createForStackPointer();
 
     public static ObjectGraphNode create(final SqueakImageContext image) {
         return ObjectGraphNodeGen.create(image);
@@ -154,7 +153,7 @@ public abstract class ObjectGraphNode extends AbstractNodeWithImage {
                         pending.add((AbstractSqueakObject) argument);
                     }
                 }
-                final int stackPointer = (int) stackPointerReadNode.executeRead(current);
+                final int stackPointer = FrameUtil.getIntSafe(current, CompiledCodeObject.stackPointerSlot);
                 for (int i = 0; i < stackPointer; i++) {
                     final Object stackObject = stackReadNode.execute(current, i);
                     if (stackObject == null) {

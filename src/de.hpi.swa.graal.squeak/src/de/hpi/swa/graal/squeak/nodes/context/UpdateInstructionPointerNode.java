@@ -8,10 +8,8 @@ import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
 import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.CalculcatePCOffsetNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotWriteNode;
 
 public abstract class UpdateInstructionPointerNode extends AbstractNodeWithCode {
-    @Child private FrameSlotWriteNode instructionPointerWriteNode = FrameSlotWriteNode.createForInstructionPointer();
     @Child private CalculcatePCOffsetNode calculcatePCOffsetNode = CalculcatePCOffsetNode.create();
 
     public static UpdateInstructionPointerNode create(final CompiledCodeObject code) {
@@ -25,8 +23,8 @@ public abstract class UpdateInstructionPointerNode extends AbstractNodeWithCode 
     public abstract void executeUpdate(VirtualFrame frame, int value);
 
     @Specialization(guards = {"isVirtualized(frame)"})
-    protected final void doUpdateVirtualized(final VirtualFrame frame, final int value) {
-        instructionPointerWriteNode.executeWrite(frame, value);
+    protected static final void doUpdateVirtualized(final VirtualFrame frame, final int value) {
+        frame.setInt(CompiledCodeObject.instructionPointerSlot, value);
     }
 
     @Fallback

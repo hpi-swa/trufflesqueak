@@ -10,20 +10,12 @@ import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.SendSelectorNode;
 import de.hpi.swa.graal.squeak.nodes.context.TemporaryReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.TemporaryWriteNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 
 public abstract class AboutToReturnNode extends AbstractNodeWithCode {
-    @Child protected BlockActivationNode dispatch = BlockActivationNodeGen.create();
-    @Child private AbstractSendNode sendAboutToReturnNode;
-    @Child private StackPushNode pushNode = StackPushNode.create();
-    @Child private SqueakNode blockArgumentNode;
-    @Child private SqueakNode completeTempReadNode;
-    @Child private TemporaryWriteNode completeTempWriteNode;
-
     public static AboutToReturnNode create(final CompiledCodeObject code) {
         return AboutToReturnNodeGen.create(code);
     }
@@ -32,10 +24,6 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
 
     protected AboutToReturnNode(final CompiledCodeObject code) {
         super(code);
-        sendAboutToReturnNode = new SendSelectorNode(code, -1, -1, aboutToReturnSelector(), 2);
-        blockArgumentNode = TemporaryReadNode.create(code, 0);
-        completeTempReadNode = TemporaryReadNode.create(code, 1);
-        completeTempWriteNode = TemporaryWriteNode.create(code, 1);
     }
 
     private Object aboutToReturnSelector() {
@@ -51,12 +39,16 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
      */
     @Specialization(guards = {"code.isUnwindMarked()", "isVirtualized(frame)"})
     protected final void doAboutToReturnVirtualized(final VirtualFrame frame, @SuppressWarnings("unused") final NonLocalReturn nlr,
-                    @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments) {
+                    @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments,
+                    @Cached("createTemporaryWriteNode(0)") final SqueakNode blockArgumentNode,
+                    @Cached("createTemporaryWriteNode(1)") final SqueakNode completeTempReadNode,
+                    @Cached("create(code, 1)") final TemporaryWriteNode completeTempWriteNode,
+                    @Cached("create()") final BlockActivationNode dispatchNode) {
         if (completeTempReadNode.executeRead(frame) == code.image.nil) {
             completeTempWriteNode.executeWrite(frame, code.image.sqTrue);
             final BlockClosureObject block = (BlockClosureObject) blockArgumentNode.executeRead(frame);
             try {
-                dispatch.executeBlock(block, getFrameArguments.execute(block, getContextOrMarker(frame), new Object[0]));
+                dispatchNode.executeBlock(block, getFrameArguments.execute(block, getContextOrMarker(frame), new Object[0]));
             } catch (LocalReturn blockLR) { // ignore
             } catch (NonLocalReturn blockNLR) {
                 if (!blockNLR.hasArrivedAtTargetContext()) {
@@ -67,7 +59,9 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
     }
 
     @Specialization(guards = {"code.isUnwindMarked()", "!isVirtualized(frame)"})
-    protected final void doAboutToReturn(final VirtualFrame frame, final NonLocalReturn nlr) {
+    protected static final void doAboutToReturn(final VirtualFrame frame, final NonLocalReturn nlr,
+                    @Cached("create()") final StackPushNode pushNode,
+                    @Cached("createAboutToReturnSend()") final SendSelectorNode sendAboutToReturnNode) {
         final ContextObject context = getContext(frame);
         pushNode.executeWrite(frame, nlr.getTargetContext());
         pushNode.executeWrite(frame, nlr.getReturnValue());
@@ -79,5 +73,13 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
     @Specialization(guards = {"!code.isUnwindMarked()"})
     protected final void doNothing(final VirtualFrame frame, final NonLocalReturn nlr) {
         // nothing to do
+    }
+
+    protected final SqueakNode createTemporaryWriteNode(final int tempIndex) {
+        return TemporaryReadNode.create(code, tempIndex);
+    }
+
+    protected final SendSelectorNode createAboutToReturnSend() {
+        return new SendSelectorNode(code, -1, -1, aboutToReturnSelector(), 2);
     }
 }

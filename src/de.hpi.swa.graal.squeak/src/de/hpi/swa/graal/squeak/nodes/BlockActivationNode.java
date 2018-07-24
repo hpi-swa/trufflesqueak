@@ -11,6 +11,11 @@ import com.oracle.truffle.api.nodes.Node;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 
 public abstract class BlockActivationNode extends Node {
+
+    public static BlockActivationNode create() {
+        return BlockActivationNodeGen.create();
+    }
+
     public abstract Object executeBlock(BlockClosureObject block, Object[] arguments);
 
     @SuppressWarnings("unused")
