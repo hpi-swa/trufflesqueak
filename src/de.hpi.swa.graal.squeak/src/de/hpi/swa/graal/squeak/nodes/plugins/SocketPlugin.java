@@ -12,14 +12,14 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
 import org.graalvm.collections.EconomicMap;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -79,7 +79,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     private static final class SocketImpl {
-        private static final Duration timeout = Duration.ofSeconds(30);
+        @CompilationFinal private static int timeoutMillis = -1;
 
         private final CompiledCodeObject code;
         private final int id;
@@ -92,7 +92,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
         private Map<String, Object> options = new TreeMap<>();
         boolean listening = false;
-        Instant noDataSince = null;
+        long noDataSince = -1;
 
         SocketImpl(final CompiledCodeObject code, final long netType) {
             this.code = code;
@@ -103,6 +103,15 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             } else {
                 print(">> Creating UDP Socket");
             }
+        }
+
+        private int getTimeout() {
+            if (timeoutMillis < 0) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                // Use shorter timeout to speed up testing.
+                timeoutMillis = code.image.config.isTesting() ? 2000 : 30000;
+            }
+            return timeoutMillis;
         }
 
         public void print(final Object message) {
@@ -289,12 +298,11 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                         if (clientSocket.getInputStream().available() > 0) {
                             status = SocketStatus.Connected;
                         } else {
-                            if (noDataSince == null) {
-                                noDataSince = Instant.now();
+                            if (noDataSince < 0) {
+                                noDataSince = System.currentTimeMillis();
                                 status = SocketStatus.Connected;
                             } else {
-                                final Duration elapsedTime = Duration.between(noDataSince, Instant.now());
-                                if (elapsedTime.compareTo(timeout) > 0) {
+                                if (System.currentTimeMillis() - noDataSince > getTimeout()) {
                                     status = SocketStatus.OtherEndClosed;
                                 } else {
                                     status = SocketStatus.Connected;
