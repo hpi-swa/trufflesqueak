@@ -3,7 +3,8 @@ package de.hpi.swa.graal.squeak.nodes;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 
-import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage.ParsingRequest;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -16,8 +17,8 @@ import de.hpi.swa.graal.squeak.image.SqueakImageReaderNode;
 
 public final class SqueakRootNode extends RootNode {
     private final SqueakImageContext image;
+    private final String imagePath;
 
-    @Child private SqueakImageReaderNode readerNode;
     @Child private IndirectCallNode indirectCallNode = IndirectCallNode.create();
 
     public static SqueakRootNode create(final SqueakLanguage language, final ParsingRequest request) {
@@ -27,18 +28,19 @@ public final class SqueakRootNode extends RootNode {
     private SqueakRootNode(final SqueakLanguage language, final ParsingRequest request) {
         super(language, new FrameDescriptor());
         image = language.getContextReference().get();
-        try {
-            this.readerNode = new SqueakImageReaderNode(new FileInputStream(request.getSource().getPath()), image);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
+        imagePath = request.getSource().getPath();
     }
 
     @Override
     public Object execute(final VirtualFrame frame) {
-        readerNode.executeRead(frame);
+        CompilerDirectives.transferToInterpreter();
+        try {
+            indirectCallNode.call(Truffle.getRuntime().createCallTarget(new SqueakImageReaderNode(new FileInputStream(imagePath), image)), new Object[0]);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
         image.interrupt.start();
-        final CallTarget callTarget = image.config.isCustomContext() ? image.getCustomContext() : image.getActiveContext();
-        return indirectCallNode.call(callTarget, new Object[]{});
+        final ExecuteTopLevelContextNode executeNode = insert(image.config.isCustomContext() ? image.getCustomContext() : image.getActiveContext());
+        return indirectCallNode.call(Truffle.getRuntime().createCallTarget(executeNode), new Object[0]);
     }
 }

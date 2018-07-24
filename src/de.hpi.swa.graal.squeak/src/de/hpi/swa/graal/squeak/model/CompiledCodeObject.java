@@ -175,7 +175,6 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
 
     public final void fillin(final SqueakImageChunk chunk) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        super.fillinHashAndClass(chunk);
         final int[] data = chunk.data();
         final int header = data[0] >> 1; // header is a tagged small integer
         final int literalsize = header & 0x7fff;

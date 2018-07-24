@@ -22,10 +22,9 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 
 public final class SqueakImageChunk {
-    @CompilationFinal protected Object object;
-
+    protected Object object;
     @CompilationFinal private ClassObject sqClass;
-    @CompilationFinal(dimensions = 1) private Object[] pointers;
+    private Object[] pointers;
 
     protected final int classid;
     protected final int pos;
@@ -65,8 +64,7 @@ public final class SqueakImageChunk {
     public ClassObject asClassObject() {
         if (object == null) {
             assert format == 1;
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            object = new ClassObject(image);
+            object = new ClassObject(image, hash);
         } else if (object == SqueakImageReaderNode.NIL_OBJECT_PLACEHOLDER) {
             return null;
         }
@@ -75,45 +73,44 @@ public final class SqueakImageChunk {
 
     public Object asObject() {
         if (object == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
             if (format == 0) { // no fields
-                object = new EmptyObject(image);
+                object = new EmptyObject(image, hash, getSqClass());
             } else if (format == 1) { // fixed pointers
                 // classes should already be instantiated at this point, check a
                 // bit
-                assert this.getSqClass() != image.metaclass && (this.getSqClass() == null || this.getSqClass().getSqClass() != image.metaclass);
-                object = new PointersObject(image);
+                assert getSqClass() != image.metaclass && (getSqClass() == null || getSqClass().getSqClass() != image.metaclass);
+                object = new PointersObject(image, hash, getSqClass());
             } else if (format == 2) { // indexable fields
-                object = new PointersObject(image);
+                object = new PointersObject(image, hash, getSqClass());
             } else if (format == 3) { // fixed and indexable fields
-                if (this.getSqClass() == image.methodContextClass) {
-                    object = ContextObject.create(image);
-                } else if (this.getSqClass() == image.blockClosureClass) {
-                    object = new BlockClosureObject(image);
+                if (getSqClass() == image.methodContextClass) {
+                    object = ContextObject.createWithHash(hash, image);
+                } else if (getSqClass() == image.blockClosureClass) {
+                    object = new BlockClosureObject(image, hash);
                 } else {
-                    object = new PointersObject(image);
+                    object = new PointersObject(image, hash, getSqClass());
                 }
             } else if (format == 4) { // indexable weak fields
-                object = new WeakPointersObject(image);
+                object = new WeakPointersObject(image, hash, getSqClass());
             } else if (format == 5) { // fixed weak fields
-                object = new PointersObject(image);
+                object = new PointersObject(image, hash, getSqClass());
             } else if (format <= 8) {
                 assert false; // unused
             } else if (format == 9) { // 64-bit integers
-                object = NativeObject.newNativeLongs(image, null, 0);
+                object = NativeObject.newNativeLongs(this);
             } else if (format <= 11) { // 32-bit integers
                 if (this.getSqClass() == image.floatClass) {
-                    object = FloatObject.newFromChunkWords(image, getWords());
+                    object = FloatObject.newFromChunkWords(image, hash, getWords());
                 } else {
-                    object = NativeObject.newNativeInts(image, null, 0);
+                    object = NativeObject.newNativeInts(this);
                 }
             } else if (format <= 15) { // 16-bit integers
-                object = NativeObject.newNativeShorts(image, null, 0);
+                object = NativeObject.newNativeShorts(this);
             } else if (format <= 23) { // bytes
-                if (this.getSqClass() == image.largePositiveIntegerClass || this.getSqClass() == image.largeNegativeIntegerClass) {
-                    object = new LargeIntegerObject(image, null, getBytes());
+                if (getSqClass() == image.largePositiveIntegerClass || getSqClass() == image.largeNegativeIntegerClass) {
+                    object = new LargeIntegerObject(image, hash, getSqClass(), getBytes());
                 } else {
-                    object = NativeObject.newNativeBytes(image, null, 0);
+                    object = NativeObject.newNativeBytes(this);
                 }
             } else if (format <= 31) { // compiled methods
                 object = new CompiledMethodObject(image);
@@ -135,18 +132,35 @@ public final class SqueakImageChunk {
     }
 
     public ClassObject getSqClass() {
+        if (sqClass == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            sqClass = getClassChunk().asClassObject();
+        }
         return sqClass;
     }
 
+    public SqueakImageChunk getClassChunk() {
+        final int majorIdx = majorClassIndexOf(classid);
+        final int minorIdx = minorClassIndexOf(classid);
+        final SqueakImageChunk classTablePage = reader.getChunk(reader.hiddenRootsChunk.data()[majorIdx]);
+        return reader.getChunk(classTablePage.data()[minorIdx]);
+    }
+
+    private static int majorClassIndexOf(final int classid) {
+        return classid >> 10;
+    }
+
+    private static int minorClassIndexOf(final int classid) {
+        return classid & ((1 << 10) - 1);
+    }
+
     public void setSqClass(final ClassObject baseSqueakObject) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
         this.sqClass = baseSqueakObject;
     }
 
     @ExplodeLoop
     public Object[] getPointers() {
         if (pointers == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
             pointers = new Object[data.length];
             for (int i = 0; i < data.length; i++) {
                 pointers[i] = decodePointer(data[i]);
@@ -157,7 +171,6 @@ public final class SqueakImageChunk {
 
     public Object[] getPointers(final int end) {
         if (pointers == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
             pointers = new Object[end];
             for (int i = 0; i < end; i++) {
                 pointers[i] = decodePointer(data[i]);

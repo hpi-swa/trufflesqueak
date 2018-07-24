@@ -13,8 +13,8 @@ public final class FloatObject extends AbstractSqueakObject {
 
     @CompilationFinal private double doubleValue;
 
-    public static FloatObject newFromChunkWords(final SqueakImageContext image, final int[] ints) {
-        return new FloatObject(image, ints[1], ints[0]);
+    public static FloatObject newFromChunkWords(final SqueakImageContext image, final long hash, final int[] ints) {
+        return new FloatObject(image, hash, ints[1], ints[0]);
     }
 
     public static FloatObject valueOf(final SqueakImageContext image, final double value) {
@@ -33,6 +33,11 @@ public final class FloatObject extends AbstractSqueakObject {
     public FloatObject(final SqueakImageContext image, final double doubleValue) {
         this(image);
         this.doubleValue = doubleValue;
+    }
+
+    public FloatObject(final SqueakImageContext image, final long hash, final long high, final long low) {
+        super(image, hash, image.floatClass);
+        setWords(high, low);
     }
 
     public FloatObject(final SqueakImageContext image, final long high, final long low) {
