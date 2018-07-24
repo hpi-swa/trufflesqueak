@@ -124,24 +124,16 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             objectGraphNode = ObjectGraphNode.create(method.image);
         }
 
-        protected final boolean isSmallIntegerClass(final ClassObject classObject) {
-            return classObject == code.image.smallIntegerClass;
-        }
-
-        protected static final boolean isClassObject(final ClassObject classObject) {
-            return classObject.isClass();
-        }
-
         @SuppressWarnings("unused")
-        @Specialization(guards = "isSmallIntegerClass(classObject)")
-        protected static final PointersObject allInstances(final ClassObject classObject) {
+        @Specialization(guards = "classObject == code.image.smallIntegerClass")
+        protected static final PointersObject doSmallIntegerClass(final ClassObject classObject) {
             throw new PrimitiveFailed();
         }
 
-        @Specialization(guards = "isClassObject(classObject)")
-        protected final AbstractSqueakObject someInstance(final ClassObject classObject) {
+        @Specialization(guards = "classObject != code.image.smallIntegerClass")
+        protected final AbstractSqueakObject doSomeInstance(final ClassObject classObject) {
             try {
-                return objectGraphNode.someInstance(classObject);
+                return objectGraphNode.someInstanceOf(classObject);
             } catch (IndexOutOfBoundsException e) {
                 throw new PrimitiveFailed();
             }
@@ -640,7 +632,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         protected final PointersObject allInstances(final ClassObject classObject) {
-            return code.image.newList(ArrayUtils.toArray(objectGraphNode.allInstances(classObject)));
+            return code.image.newList(ArrayUtils.toArray(objectGraphNode.allInstancesOf(classObject)));
         }
 
         @SuppressWarnings("unused")

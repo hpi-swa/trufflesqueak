@@ -345,22 +345,16 @@ public final class ContextObject extends AbstractSqueakObject {
     @TruffleBoundary
     public void printSqStackTrace() {
         ContextObject current = this;
-        int numArgsAndCopiedValues;
         while (true) {
             final CompiledCodeObject code = current.getClosureOrMethod();
-            if (code instanceof CompiledBlockObject) {
-                numArgsAndCopiedValues = ((CompiledBlockObject) code).getNumArgs() + ((CompiledBlockObject) code).getNumCopiedValues();
-            } else {
-                numArgsAndCopiedValues = ((CompiledMethodObject) code).getNumArgs();
-            }
-            final Object[] rcvrAndArgs = current.getReceiverAndNArguments(numArgsAndCopiedValues);
+            final Object[] rcvrAndArgs = current.getReceiverAndNArguments(code.getNumArgsAndCopied());
             final String[] argumentStrings = new String[rcvrAndArgs.length];
             for (int i = 0; i < rcvrAndArgs.length; i++) {
                 argumentStrings[i] = rcvrAndArgs[i].toString();
             }
             image.getOutput().println(String.format("%s #(%s)", current, String.join(", ", argumentStrings)));
             final AbstractSqueakObject sender = current.getSender();
-            if (sender.isNil()) {
+            if (sender == image.nil) {
                 break;
             } else {
                 current = (ContextObject) sender;

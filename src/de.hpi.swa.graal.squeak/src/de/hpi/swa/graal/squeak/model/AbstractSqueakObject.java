@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.model;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.interop.ForeignAccess;
@@ -71,11 +72,8 @@ public abstract class AbstractSqueakObject implements TruffleObject {
 
     public final boolean isClass() {
         assert !(this instanceof ClassObject) || (image.metaclass == getSqClass() || image.metaclass == getSqClass().getSqClass());
+        CompilerAsserts.neverPartOfCompilation();
         return this instanceof ClassObject;
-    }
-
-    public final boolean isNil() {
-        return this instanceof NilObject;
     }
 
     public final boolean isSpecialKindAt(final long index) {

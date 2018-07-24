@@ -1,11 +1,11 @@
 package de.hpi.swa.graal.squeak.nodes.context.frame;
 
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameUtil;
-import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
@@ -35,33 +35,33 @@ public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
     public abstract Object executeRead(Frame frame);
 
     @Specialization(guards = "frame.isInt(slot)")
-    protected final int readInt(final VirtualFrame frame) {
+    protected final int readInt(final Frame frame) {
         return FrameUtil.getIntSafe(frame, slot);
     }
 
     @Specialization(guards = "frame.isLong(slot)")
-    protected final long readLong(final VirtualFrame frame) {
+    protected final long readLong(final Frame frame) {
         return FrameUtil.getLongSafe(frame, slot);
     }
 
     @Specialization(guards = "frame.isDouble(slot)")
-    protected final double readDouble(final VirtualFrame frame) {
+    protected final double readDouble(final Frame frame) {
         return FrameUtil.getDoubleSafe(frame, slot);
     }
 
     @Specialization(guards = "frame.isBoolean(slot)")
-    protected final boolean readBool(final VirtualFrame frame) {
+    protected final boolean readBool(final Frame frame) {
         return FrameUtil.getBooleanSafe(frame, slot);
     }
 
     @Specialization(guards = "frame.isObject(slot)")
-    protected final Object readObject(final VirtualFrame frame) {
+    protected final Object readObject(final Frame frame) {
         return FrameUtil.getObjectSafe(frame, slot);
     }
 
-    @Specialization(guards = "isIllegal()")
-    protected static final Object readIllegal(@SuppressWarnings("unused") final VirtualFrame frame) {
-        throw new SqueakException("Trying to read from illegal slot");
+    @Fallback
+    protected final Object doFail() {
+        throw new SqueakException("Trying to read from illegal slot:", this);
     }
 
     protected final boolean isIllegal() {

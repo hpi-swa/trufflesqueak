@@ -1,9 +1,12 @@
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodesFactory.NativeGetBytesNodeGen;
 
@@ -16,6 +19,7 @@ public final class NativeObjectNodes {
             return NativeGetBytesNodeGen.create();
         }
 
+        @TruffleBoundary
         public final String executeAsString(final NativeObject obj) {
             return new String(execute(obj));
         }
@@ -41,6 +45,10 @@ public final class NativeObjectNodes {
         protected final byte[] doNativeLongs(final NativeObject obj) {
             return NativeObject.bytesFromLongs(obj.getLongStorage(storageType));
         }
-    }
 
+        @Fallback
+        protected static final byte[] doFail(final NativeObject object) {
+            throw new SqueakException("Unexpected value:", object);
+        }
+    }
 }

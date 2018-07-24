@@ -1,7 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
 
@@ -16,13 +15,12 @@ import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.GetNumAllArgumentsNode;
 
 public final class ExecuteTopLevelContextNode extends RootNode {
     private final SqueakImageContext image;
     private final ContextObject initialContext;
-    @Child private GetNumAllArgumentsNode numAllArgumentsNode = GetNumAllArgumentsNode.create();
     @Child private ExecuteContextNode executeContextNode;
+    @Child private UnwindContextChainNode unwindContextChainNode;
 
     public static ExecuteTopLevelContextNode create(final SqueakLanguage language, final ContextObject context) {
         return new ExecuteTopLevelContextNode(language, context, context.getClosureOrMethod());
@@ -33,6 +31,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         image = code.image;
         initialContext = context;
         image.interrupt.initializeSignalSemaphoreNode(initialContext.getMethod());
+        unwindContextChainNode = UnwindContextChainNode.create(image);
     }
 
     @Override
@@ -66,46 +65,21 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                     executeContextNode.replace(ExecuteContextNode.create(code));
                 }
                 // doIt: activeContext.printSqStackTrace();
-                final Object result = executeContextNode.executeContext(activeContext.getTruffleFrame(numAllArgumentsNode.execute(code)), activeContext);
+                final Object result = executeContextNode.executeContext(activeContext.getTruffleFrame(code.getNumArgsAndCopied()), activeContext);
                 image.traceVerbose("Local Return on top-level: sender: ", sender);
-                activeContext = unwindContextChain(sender, sender, result);
+                activeContext = unwindContextChainNode.executeUnwind(sender, sender, result);
                 image.traceVerbose("Local Return on top-level, new context is ", activeContext);
             } catch (ProcessSwitch ps) {
                 image.trace("Switching from", activeContext, "to", ps.getNewContext());
                 activeContext = ps.getNewContext();
             } catch (NonLocalReturn nlr) {
                 final AbstractSqueakObject target = nlr.hasArrivedAtTargetContext() ? sender : nlr.getTargetContext().getSender();
-                activeContext = unwindContextChain(sender, target, nlr.getReturnValue());
+                activeContext = unwindContextChainNode.executeUnwind(sender, target, nlr.getReturnValue());
                 image.traceVerbose("Non Local Return on top-level, new context is ", activeContext);
             } catch (NonVirtualReturn nvr) {
-                activeContext = unwindContextChain(nvr.getCurrentContext(), nvr.getTargetContext(), nvr.getReturnValue());
+                activeContext = unwindContextChainNode.executeUnwind(nvr.getCurrentContext(), nvr.getTargetContext(), nvr.getReturnValue());
                 image.traceVerbose("Non Virtual Return on top-level, new context is ", activeContext);
             }
         }
-    }
-
-    private ContextObject unwindContextChain(final AbstractSqueakObject startContext, final AbstractSqueakObject targetContext, final Object returnValue) {
-        if (startContext.isNil()) {
-            throw new TopLevelReturn(returnValue);
-        }
-        ContextObject context = (ContextObject) startContext;
-        while (context != targetContext) {
-            final AbstractSqueakObject sender = context.getSender();
-            if (sender.isNil()) {
-                handleNilSender(startContext, targetContext); // FIXME
-                context = (ContextObject) targetContext;
-                break;
-            }
-            context.terminate();
-            context = (ContextObject) sender;
-        }
-        context.push(returnValue);
-        return context;
-    }
-
-    @TruffleBoundary
-    private void handleNilSender(final AbstractSqueakObject startContext, final AbstractSqueakObject targetContext) {
-        image.printToStdErr("Unable to unwind context chain (start: " + startContext + "; target: " + targetContext + ")");
-        ((ContextObject) startContext).printSqStackTrace();
     }
 }

@@ -127,7 +127,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                      * the stack is accessed behind the stackPointer.
                      */
                     final CompiledCodeObject method = FrameAccess.getMethod(current);
-                    for (int i = 0; i < method.frameSize(); i++) {
+                    for (int i = 0; i < method.sqContextSize(); i++) {
                         final Object stackObject = stackReadNode.execute(current, i);
                         if (stackObject == null) {
                             /*
@@ -446,7 +446,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "!hasNoInstances(sqObject)")
         protected final AbstractSqueakObject someInstance(final AbstractSqueakObject sqObject) {
-            final List<AbstractSqueakObject> instances = objectGraphNode.allInstances(sqObject.getSqClass());
+            final List<AbstractSqueakObject> instances = objectGraphNode.allInstancesOf(sqObject.getSqClass());
             int index;
             try {
                 index = instances.indexOf(sqObject);

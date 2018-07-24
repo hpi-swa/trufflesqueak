@@ -16,7 +16,7 @@ public final class CompiledMethodObject extends CompiledCodeObject {
     protected final ValueProfile storageType = ValueProfile.createClassProfile();
 
     public CompiledMethodObject(final SqueakImageContext img) {
-        super(img);
+        super(img, 0);
     }
 
     public CompiledMethodObject(final SqueakImageContext img, final byte[] bc, final Object[] lits) {
@@ -27,7 +27,7 @@ public final class CompiledMethodObject extends CompiledCodeObject {
     }
 
     public CompiledMethodObject(final SqueakImageContext img, final ClassObject klass, final int size) {
-        super(img, klass);
+        super(img, klass, 0);
         bytes = new byte[size];
     }
 

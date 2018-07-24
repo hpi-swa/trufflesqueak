@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes;
 
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
@@ -26,7 +27,7 @@ public abstract class HandleNonVirtualReturnNode extends Node {
         throw nvr;
     }
 
-    @Specialization(guards = "!hasVirtualSender(frame)")
+    @Fallback
     protected final Object handle(final VirtualFrame frame, final NonVirtualReturn nvr) {
         if (senderNode.executeRead(frame) == nvr.getTargetContext()) {
             return nvr.getReturnValue();

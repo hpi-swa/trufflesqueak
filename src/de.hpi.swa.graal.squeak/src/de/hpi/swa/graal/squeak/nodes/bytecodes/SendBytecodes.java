@@ -51,6 +51,7 @@ public final class SendBytecodes {
             final Object result;
             try {
                 result = executeSend(frame);
+                assert result != null : "Result of a message send should not be null";
             } catch (PrimitiveWithoutResultException e) {
                 return; // ignoring result
             }
