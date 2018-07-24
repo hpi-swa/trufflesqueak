@@ -4,7 +4,6 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
-import java.util.Iterator;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -15,6 +14,7 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RepeatingNode;
+import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.NativeObject;
@@ -22,7 +22,7 @@ import de.hpi.swa.graal.squeak.nodes.FillInClassNode;
 import de.hpi.swa.graal.squeak.nodes.FillInNode;
 import de.hpi.swa.graal.squeak.util.BitSplitter;
 
-public final class SqueakImageReaderNode extends Node {
+public final class SqueakImageReaderNode extends RootNode {
     @CompilationFinal(dimensions = 1) private static final int[] CHUNK_HEADER_BIT_PATTERN = new int[]{22, 2, 5, 3, 22, 2, 8};
     public static final Object NIL_OBJECT_PLACEHOLDER = new Object();
     private static final int SPECIAL_SELECTORS_INDEX = 23;
@@ -48,23 +48,32 @@ public final class SqueakImageReaderNode extends Node {
     private int currentAddressSwizzle;
 
     @Child private LoopNode readObjectLoopNode;
-    @Child private LoopNode fillInLoopNode;
+    @Child private FillInClassNode fillInClassNode = FillInClassNode.create();
+    @Child private FillInNode fillInNode;
 
     public SqueakImageReaderNode(final InputStream inputStream, final SqueakImageContext image) {
+        super(image.getLanguage());
         stream = new BufferedInputStream(inputStream);
         this.image = image;
         readObjectLoopNode = Truffle.getRuntime().createLoopNode(new ReadObjectLoopNode(this));
-        fillInLoopNode = Truffle.getRuntime().createLoopNode(new FillInLoopNode(this));
+        fillInNode = FillInNode.create(image);
     }
 
-    public void executeRead(final VirtualFrame frame) throws SqueakException {
-        final long start = System.currentTimeMillis();
+    @Override
+    public Object execute(final VirtualFrame frame) {
+        final long start = currentTimeMillis();
         readHeader();
         readBody(frame);
-        initObjects(frame);
+        initObjects();
         validateStateOrFail();
         chunktable.clear();
-        image.printToStdOut("Image loaded in", (System.currentTimeMillis() - start) + "ms.");
+        image.printToStdOut("Image loaded in", (currentTimeMillis() - start) + "ms.");
+        return null;
+    }
+
+    @TruffleBoundary
+    private static long currentTimeMillis() {
+        return System.currentTimeMillis();
     }
 
     private void validateStateOrFail() {
@@ -199,38 +208,6 @@ public final class SqueakImageReaderNode extends Node {
                 }
             }
             return false;
-        }
-    }
-
-    private static final class FillInLoopNode extends Node implements RepeatingNode {
-        private final SqueakImageReaderNode reader;
-        @CompilationFinal private Iterator<SqueakImageChunk> iterator;
-
-        @Child private FillInClassNode fillInClassNode = FillInClassNode.create();
-        @Child private FillInNode fillInNode;
-
-        private FillInLoopNode(final SqueakImageReaderNode reader) {
-            this.reader = reader;
-            fillInNode = FillInNode.create(reader.image);
-        }
-
-        private Iterator<SqueakImageChunk> getIterator() {
-            if (iterator == null) {
-                iterator = reader.chunktable.values().iterator();
-            }
-            return iterator;
-        }
-
-        public boolean executeRepeating(final VirtualFrame frame) {
-            final Iterator<SqueakImageChunk> iteratorInstance = getIterator();
-            if (!iteratorInstance.hasNext()) {
-                return false;
-            }
-            final SqueakImageChunk chunk = iteratorInstance.next();
-            final Object chunkObject = chunk.asObject();
-            fillInClassNode.execute(chunkObject, chunk);
-            fillInNode.execute(chunkObject, chunk);
-            return true;
         }
     }
 
@@ -379,14 +356,22 @@ public final class SqueakImageReaderNode extends Node {
         }
     }
 
-    private void initObjects(final VirtualFrame frame) {
+    private void initObjects() {
         initPrebuiltConstant();
         initPrebuiltSelectors();
         // connect all instances to their classes
         image.printToStdOut("Instantiating classes...");
         instantiateClasses();
         image.printToStdOut("Filling in objects...");
-        fillInLoopNode.executeLoop(frame);
+        /*
+         * TODO: use LoopNode for filling in objects. The following is another candidate for an
+         * OSR-able loop. The first attempt resulted in a memory leak though.
+         */
+        for (final SqueakImageChunk chunk : chunktable.values()) {
+            final Object chunkObject = chunk.asObject();
+            fillInClassNode.execute(chunkObject, chunk);
+            fillInNode.execute(chunkObject, chunk);
+        }
     }
 
     private void instantiateClasses() {
