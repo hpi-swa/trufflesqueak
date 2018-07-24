@@ -9,6 +9,7 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
@@ -24,7 +25,6 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.BIT_BLT;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.FORM;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
-import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.CopyBitsClipHelperNodeGen;
 import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.CopyBitsExecuteHelperNodeGen;
 import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.CopyBitsExtractHelperNodeGen;
@@ -62,7 +62,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         protected boolean supportedCombinationRule(final PointersObject receiver) {
-            final long combinationRule = (long) at0Node.execute(receiver, BIT_BLT.COMBINATION_RULE);
+            final long combinationRule = (long) receiver.at0(BIT_BLT.COMBINATION_RULE);
             return combinationRule == 4 || combinationRule == 24 || combinationRule == 25 || combinationRule == 3;
         }
 
@@ -71,8 +71,12 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"supportedCombinationRule(receiver)", "supportedDepth(receiver)"})
-        protected final Object doOptimized(@SuppressWarnings("unused") final VirtualFrame frame, final PointersObject receiver) {
-            return extractNode.execute(receiver);
+        protected final Object doOptimized(final VirtualFrame frame, final PointersObject receiver) {
+            try {
+                return extractNode.execute(receiver);
+            } catch (UnsupportedSpecializationException | PrimitiveFailed e) {
+                return doSimulation(frame, receiver);
+            }
         }
 
         @Fallback
@@ -111,8 +115,6 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitivePixelValueAt")
     protected abstract static class PrimPixelValueAtNode extends AbstractPrimitiveNode {
-        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
-        @Child protected SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
         @Child private PixelValueAtExtractHelperNode handleNode = PixelValueAtExtractHelperNode.create();
 
         public PrimPixelValueAtNode(final CompiledMethodObject method, final int numArguments) {
@@ -125,9 +127,9 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             return 0L;
         }
 
-        @Specialization(guards = {"xValue >= 0", "yValue > 0", "sizeNode.execute(receiver) > OFFSET"})
+        @Specialization(guards = {"xValue >= 0", "yValue > 0", "receiver.size() > OFFSET"})
         protected final long doValueAt(final PointersObject receiver, final long xValue, final long yValue) {
-            return handleNode.executeValueAt(receiver, xValue, yValue, at0Node.execute(receiver, FORM.BITS));
+            return handleNode.executeValueAt(receiver, xValue, yValue, receiver.at0(FORM.BITS));
         }
     }
 
@@ -135,7 +137,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
      * Helper Nodes
      */
     protected abstract static class CopyBitsExtractHelperNode extends Node {
-        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
+        private final ValueProfile intProfile = ValueProfile.createClassProfile();
         @Child private CopyBitsClipHelperNode clipNode = CopyBitsClipHelperNode.create();
 
         protected static CopyBitsExtractHelperNode create() {
@@ -156,7 +158,8 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
             final long combinationRule = (long) receiver.at0(BIT_BLT.COMBINATION_RULE);
 
-            if (destWidth * destHeight > destForm.getPointers().length) {
+            final NativeObject destBits = (NativeObject) destForm.at0(FORM.BITS);
+            if (!destBits.isIntType() || destWidth * destHeight > destBits.getIntStorage(intProfile).length) {
                 throw new PrimitiveFailed();
             }
 
@@ -177,7 +180,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
                             clipHeight);
         }
 
-        @Specialization()
+        @Fallback
         protected final PointersObject executeWithoutSourceForm(final PointersObject receiver) {
             final PointersObject destForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
             final long destWidth = (long) destForm.at0(FORM.WIDTH);
@@ -185,7 +188,8 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
             final long combinationRule = (long) receiver.at0(BIT_BLT.COMBINATION_RULE);
 
-            if (destWidth * destHeight > destForm.getPointers().length) {
+            final NativeObject destBits = (NativeObject) destForm.at0(FORM.BITS);
+            if (!destBits.isIntType() || destWidth * destHeight > destBits.getIntStorage(intProfile).length) {
                 throw new PrimitiveFailed();
             }
 
@@ -199,7 +203,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             final Object clipWidth = receiver.at0(BIT_BLT.CLIP_WIDTH);
             final Object clipHeight = receiver.at0(BIT_BLT.CLIP_HEIGHT);
 
-            return clipNode.executeClip(receiver, combinationRule, areaWidth, areaHeight, null, 0, 0, 0, 0, destForm, destX, destY, destWidth, clipX, clipY,
+            return clipNode.executeClip(receiver, combinationRule, areaWidth, areaHeight, null, 0L, 0L, 0L, 0L, destForm, destX, destY, destWidth, clipX, clipY,
                             clipWidth,
                             clipHeight);
         }
@@ -522,7 +526,6 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     protected abstract static class PixelValueAtExtractHelperNode extends Node {
-        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
         @Child private PixelValueAtExecuteHelperNode executeNode = PixelValueAtExecuteHelperNode.create();
 
         protected static PixelValueAtExtractHelperNode create() {
@@ -533,9 +536,9 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "bitmap.isIntType()")
         protected final long doInts(final PointersObject receiver, final long xValue, final long yValue, final NativeObject bitmap) {
-            final Object width = at0Node.execute(receiver, FORM.WIDTH);
-            final Object height = at0Node.execute(receiver, FORM.HEIGHT);
-            final Object depth = at0Node.execute(receiver, FORM.DEPTH);
+            final Object width = receiver.at0(FORM.WIDTH);
+            final Object height = receiver.at0(FORM.HEIGHT);
+            final Object depth = receiver.at0(FORM.DEPTH);
             return executeNode.executeValueAt(receiver, xValue, yValue, bitmap, width, height, depth);
         }
     }
