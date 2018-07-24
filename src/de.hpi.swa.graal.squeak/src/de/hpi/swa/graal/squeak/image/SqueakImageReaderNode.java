@@ -346,11 +346,17 @@ public final class SqueakImageReaderNode extends Node {
         initPrebuiltConstant();
         initPrebuiltSelectors();
         // connect all instances to their classes
+        image.printToStdOut("Connecting classes...");
         for (SqueakImageChunk chunk : chunktable.values()) {
             chunk.setSqClass(classChunkOf(chunk).asClassObject());
         }
+        image.printToStdOut("Instantiating classes...");
         instantiateClasses();
+        image.printToStdOut("Filling in objects...");
         fillInObjects();
+        if (image.config.isTesting() && image.getAsSymbolSelector() == null) {
+            throw new SqueakException("Unable to find asSymbol selector");
+        }
     }
 
     @TruffleBoundary
@@ -376,10 +382,6 @@ public final class SqueakImageReaderNode extends Node {
         for (SqueakImageChunk chunk : chunktable.values()) {
             final Object chunkObject = chunk.asObject();
             fillInNode.execute(chunkObject, chunk);
-        }
-
-        if (image.config.isTesting() && image.getAsSymbolSelector() == null) {
-            throw new SqueakException("Unable to find asSymbol selector");
         }
     }
 

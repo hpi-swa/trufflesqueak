@@ -37,8 +37,8 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
     @Child private FrameSlotReadNode stackPointerReadNode = FrameSlotReadNode.createForStackPointer();
     @Child private StackPushNode pushStackNode = StackPushNode.create();
 
-    public static SqueakRootNode create(final SqueakLanguage language, final CompiledCodeObject code) {
-        return new SqueakRootNode(language, code);
+    public static SqueakCodeRootNode create(final SqueakLanguage language, final CompiledCodeObject code) {
+        return new SqueakCodeRootNode(language, code);
     }
 
     public abstract Object execute(VirtualFrame frame);
@@ -52,11 +52,11 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
         this(codeNode.code);
     }
 
-    protected static final class SqueakRootNode extends RootNode {
+    protected static final class SqueakCodeRootNode extends RootNode {
         @Child private EnterCodeNode codeNode;
         @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create();
 
-        protected SqueakRootNode(final SqueakLanguage language, final CompiledCodeObject code) {
+        protected SqueakCodeRootNode(final SqueakLanguage language, final CompiledCodeObject code) {
             super(language, code.getFrameDescriptor());
             codeNode = EnterCodeNodeGen.create(code);
         }
