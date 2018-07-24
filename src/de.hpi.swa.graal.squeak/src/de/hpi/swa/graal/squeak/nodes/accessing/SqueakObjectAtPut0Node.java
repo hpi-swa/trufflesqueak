@@ -29,8 +29,8 @@ public abstract class SqueakObjectAtPut0Node extends Node {
 
     public abstract void execute(Object obj, long index, Object value);
 
-    @Specialization(guards = {"!obj.isClass()"})
-    protected static final void doAbstractPointers(final PointersObject obj, final long index, final Object value) {
+    @Specialization
+    protected static final void doPointers(final PointersObject obj, final long index, final Object value) {
         obj.atput0(index, value);
     }
 
