@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes;
 
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -18,14 +19,14 @@ public abstract class TerminateContextNode extends AbstractNode {
     protected abstract void executeTerminate(VirtualFrame frame);
 
     @Specialization(guards = {"isVirtualized(frame)"})
-    protected void doTerminateVirtualized(final VirtualFrame frame) {
+    protected final void doTerminateVirtualized(final VirtualFrame frame) {
         // TODO: check the below is actually needed (see also GetOrCreateContextNode.materialize())
         instructionPointerWriteNode.executeWrite(frame, -1); // cannot set nil, -1 instead.
         // cannot remove sender
     }
 
-    @Specialization(guards = {"!isVirtualized(frame)"})
-    protected void doTerminate(final VirtualFrame frame) {
+    @Fallback
+    protected final void doTerminate(final VirtualFrame frame) {
         getContext(frame).terminate();
     }
 }

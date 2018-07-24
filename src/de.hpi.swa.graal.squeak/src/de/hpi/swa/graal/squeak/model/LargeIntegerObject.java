@@ -3,7 +3,6 @@ package de.hpi.swa.graal.squeak.model;
 import java.math.BigInteger;
 import java.util.Arrays;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
@@ -11,12 +10,12 @@ import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 public final class LargeIntegerObject extends AbstractSqueakObject {
-    @CompilationFinal public static final long SMALLINTEGER32_MIN = -0x40000000;
-    @CompilationFinal public static final long SMALLINTEGER32_MAX = 0x3fffffff;
-    @CompilationFinal public static final long SMALLINTEGER64_MIN = -0x1000000000000000L;
-    @CompilationFinal public static final long SMALLINTEGER64_MAX = 0xfffffffffffffffL;
-    @CompilationFinal public static final long MASK_32BIT = 0xffffffffL;
-    @CompilationFinal public static final long MASK_64BIT = 0xffffffffffffffffL;
+    public static final long SMALLINTEGER32_MIN = -0x40000000;
+    public static final long SMALLINTEGER32_MAX = 0x3fffffff;
+    public static final long SMALLINTEGER64_MIN = -0x1000000000000000L;
+    public static final long SMALLINTEGER64_MAX = 0xfffffffffffffffL;
+    public static final long MASK_32BIT = 0xffffffffL;
+    public static final long MASK_64BIT = 0xffffffffffffffffL;
 
     private byte[] bytes;
     private BigInteger integer;
@@ -74,7 +73,8 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         integerDirty = true;
     }
 
-    private BigInteger getBigInteger() {
+    @TruffleBoundary
+    public BigInteger getBigInteger() {
         if (integerDirty) {
             integer = derivedBigIntegerFromBytes(bytes, isNegative());
             integerDirty = false;
@@ -164,7 +164,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
 
     @TruffleBoundary
     public Object reduceIfPossible() {
-        return reduceIfPossible(integer);
+        return reduceIfPossible(getBigInteger());
     }
 
     @TruffleBoundary
@@ -175,6 +175,11 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     @TruffleBoundary
     public long longValueExact() throws ArithmeticException {
         return getBigInteger().longValueExact();
+    }
+
+    @TruffleBoundary
+    public int bitLength() {
+        return getBigInteger().bitLength();
     }
 
     private LargeIntegerObject newFromBigInteger(final BigInteger value) {
@@ -266,6 +271,15 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     @TruffleBoundary
     public boolean isZeroOrPositive() {
         return getBigInteger().compareTo(BigInteger.ZERO) >= 0;
+    }
+
+    @TruffleBoundary
+    public boolean lessThanOrEqualTo(final long value) {
+        try {
+            return getBigInteger().longValueExact() <= value;
+        } catch (ArithmeticException e) {
+            return false;
+        }
     }
 
     @TruffleBoundary

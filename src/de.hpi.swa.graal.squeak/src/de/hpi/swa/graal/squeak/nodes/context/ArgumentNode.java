@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes.context;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -11,7 +10,7 @@ import de.hpi.swa.graal.squeak.nodes.context.frame.FrameArgumentNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public abstract class ArgumentNode extends SqueakNodeWithCode {
-    @CompilationFinal protected final long argumentIndex;
+    protected final long argumentIndex;
     @Child private FrameArgumentNode frameArgumentNode;
 
     public static ArgumentNode create(final CompiledCodeObject code, final int argumentIndex) {
@@ -20,8 +19,7 @@ public abstract class ArgumentNode extends SqueakNodeWithCode {
 
     protected ArgumentNode(final CompiledCodeObject code, final int argumentIndex) {
         super(code);
-        this.argumentIndex = argumentIndex;
-        // argumentIndex == 0 returns receiver
+        this.argumentIndex = argumentIndex; // argumentIndex == 0 returns receiver
         frameArgumentNode = FrameArgumentNode.create(FrameAccess.RECEIVER + argumentIndex);
     }
 

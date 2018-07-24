@@ -1,9 +1,9 @@
 package de.hpi.swa.graal.squeak.nodes.context.frame;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
-import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 
@@ -29,30 +29,30 @@ public abstract class FrameSlotWriteNode extends AbstractFrameSlotNode {
         super(slot);
     }
 
-    public abstract void executeWrite(VirtualFrame frame, Object value);
+    public abstract void executeWrite(Frame frame, Object value);
 
     @Specialization(guards = "isIntSlot(value)")
-    protected final void writeInt(final VirtualFrame frame, final int value) {
+    protected final void writeInt(final Frame frame, final int value) {
         frame.setInt(slot, value);
     }
 
     @Specialization(guards = "isLongSlot(value)")
-    protected final void writeLong(final VirtualFrame frame, final long value) {
+    protected final void writeLong(final Frame frame, final long value) {
         frame.setLong(slot, value);
     }
 
     @Specialization(guards = "isDoubleSlot(value)")
-    protected final void writeDouble(final VirtualFrame frame, final double value) {
+    protected final void writeDouble(final Frame frame, final double value) {
         frame.setDouble(slot, value);
     }
 
     @Specialization(guards = "isBooleanSlot(value)")
-    protected final void writeBool(final VirtualFrame frame, final boolean value) {
+    protected final void writeBool(final Frame frame, final boolean value) {
         frame.setBoolean(slot, value);
     }
 
     @Specialization(replaces = {"writeInt", "writeLong", "writeDouble", "writeBool"})
-    protected final void writeObject(final VirtualFrame frame, final Object value) {
+    protected final void writeObject(final Frame frame, final Object value) {
         assert value != null;
         frame.setObject(slot, value);
     }

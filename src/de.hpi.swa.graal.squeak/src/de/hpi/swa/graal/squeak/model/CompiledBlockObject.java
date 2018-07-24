@@ -2,12 +2,9 @@ package de.hpi.swa.graal.squeak.model;
 
 import java.util.Arrays;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-
 public final class CompiledBlockObject extends CompiledCodeObject {
-    @CompilationFinal private final CompiledMethodObject outerMethod;
-    @CompilationFinal private final int numCopiedValues;
-    @CompilationFinal private final int offset;
+    private final CompiledMethodObject outerMethod;
+    private final int offset;
 
     public static CompiledBlockObject create(final CompiledCodeObject code, final CompiledMethodObject outerMethod, final int numArgs, final int numCopied, final int bytecodeOffset,
                     final int blockSize) {
@@ -15,18 +12,13 @@ public final class CompiledBlockObject extends CompiledCodeObject {
     }
 
     private CompiledBlockObject(final CompiledCodeObject code, final CompiledMethodObject outerMethod, final int numArgs, final int numCopied, final int bytecodeOffset, final int blockSize) {
-        super(code.image);
+        super(code.image, numCopied);
         this.outerMethod = outerMethod;
-        this.numCopiedValues = numCopied;
         final int additionalOffset = code instanceof CompiledBlockObject ? ((CompiledBlockObject) code).getOffset() : 0;
         this.offset = additionalOffset + bytecodeOffset;
         final Object[] outerLiterals = outerMethod.getLiterals();
         final Object[] blockLiterals = new Object[outerLiterals.length + 1];
-        /*
-         * FIXME: always using large frame for blocks (incorrect: code.needsLargeFrame ? 0x20000 :
-         * 0;)
-         */
-        blockLiterals[0] = makeHeader(numArgs, numCopied, code.numLiterals, false, true);
+        blockLiterals[0] = makeHeader(numArgs, numCopied, code.numLiterals, false, outerMethod.needsLargeFrame);
         for (int i = 1; i < outerLiterals.length; i++) {
             blockLiterals[i] = outerLiterals[i];
         }
@@ -40,7 +32,6 @@ public final class CompiledBlockObject extends CompiledCodeObject {
     private CompiledBlockObject(final CompiledBlockObject original) {
         super(original);
         outerMethod = original.outerMethod;
-        numCopiedValues = original.numCopiedValues;
         offset = original.offset;
     }
 
@@ -75,10 +66,6 @@ public final class CompiledBlockObject extends CompiledCodeObject {
 
     public ClassObject getCompiledInClass() {
         return outerMethod.getCompiledInClass();
-    }
-
-    public int getNumCopiedValues() {
-        return numCopiedValues;
     }
 
     public CompiledMethodObject getMethod() {

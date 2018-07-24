@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
@@ -17,7 +16,7 @@ import de.hpi.swa.graal.squeak.nodes.context.stack.StackTopNode;
 public final class StoreBytecodes {
 
     private abstract static class AbstractStoreIntoAssociationNode extends AbstractStoreIntoNode {
-        @CompilationFinal protected final long variableIndex;
+        protected final long variableIndex;
 
         private AbstractStoreIntoAssociationNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long variableIndex) {
             super(code, index, numBytecodes);
@@ -26,7 +25,7 @@ public final class StoreBytecodes {
         }
 
         @Override
-        public String toString() {
+        public final String toString() {
             return getTypeName() + "IntoLit: " + variableIndex;
         }
     }
@@ -39,7 +38,7 @@ public final class StoreBytecodes {
         }
 
         @Override
-        public void executeVoid(final VirtualFrame frame) {
+        public final void executeVoid(final VirtualFrame frame) {
             storeNode.executeWrite(frame);
         }
 
@@ -49,7 +48,7 @@ public final class StoreBytecodes {
     }
 
     private abstract static class AbstractStoreIntoReceiverVariableNode extends AbstractStoreIntoNode {
-        @CompilationFinal protected final long receiverIndex;
+        protected final long receiverIndex;
 
         private AbstractStoreIntoReceiverVariableNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long receiverIndex) {
             super(code, index, numBytecodes);
@@ -58,14 +57,14 @@ public final class StoreBytecodes {
         }
 
         @Override
-        public String toString() {
+        public final String toString() {
             return getTypeName() + "IntoRcvr: " + receiverIndex;
         }
     }
 
     private abstract static class AbstractStoreIntoRemoteTempNode extends AbstractStoreIntoNode {
-        @CompilationFinal private final long indexInArray;
-        @CompilationFinal private final long indexOfArray;
+        private final long indexInArray;
+        private final long indexOfArray;
 
         private AbstractStoreIntoRemoteTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long indexInArray, final long indexOfArray) {
             super(code, index, numBytecodes);
@@ -75,14 +74,14 @@ public final class StoreBytecodes {
         }
 
         @Override
-        public String toString() {
+        public final String toString() {
             return getTypeName() + "IntoTemp: " + indexInArray + " inVectorAt: " + indexOfArray;
         }
     }
 
     private abstract static class AbstractStoreIntoTempNode extends AbstractBytecodeNode {
-        @CompilationFinal protected final long tempIndex;
         @Child protected TemporaryWriteNode storeNode;
+        protected final long tempIndex;
 
         private AbstractStoreIntoTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long tempIndex) {
             super(code, index, numBytecodes);
@@ -93,7 +92,7 @@ public final class StoreBytecodes {
         protected abstract String getTypeName();
 
         @Override
-        public String toString() {
+        public final String toString() {
             return getTypeName() + "IntoTemp: " + tempIndex;
         }
     }

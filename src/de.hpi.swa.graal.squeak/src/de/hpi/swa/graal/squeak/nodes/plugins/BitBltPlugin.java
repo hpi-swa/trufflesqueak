@@ -7,15 +7,18 @@ import java.util.List;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
-import de.hpi.swa.graal.squeak.exceptions.SqueakException;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
@@ -25,6 +28,9 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.CopyNodeGen;
 import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.BlendNodeGen;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
+import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.HandleReceiverAndBitmapHelperNodeGen;
+import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.PixelValueAtHelperNodeGen;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
@@ -614,6 +620,87 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    @ImportStatic(FORM.class)
+    @GenerateNodeFactory
+    @SqueakPrimitive(name = "primitivePixelValueAt")
+    protected abstract static class PrimPixelValueAtNode extends AbstractPrimitiveNode {
+        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
+        @Child protected SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
+        @Child private HandleReceiverAndBitmapHelperNode handleNode = HandleReceiverAndBitmapHelperNode.create();
+
+        public PrimPixelValueAtNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"xValue < 0 || yValue < 0"})
+        protected static final long doQuickReturn(final PointersObject receiver, final long xValue, final long yValue) {
+            return 0L;
+        }
+
+        @Specialization(guards = {"xValue >= 0", "yValue > 0", "sizeNode.execute(receiver) > OFFSET"})
+        protected final long doValueAt(final PointersObject receiver, final long xValue, final long yValue) {
+            return handleNode.executeValueAt(receiver, xValue, yValue, at0Node.execute(receiver, FORM.BITS));
+        }
+    }
+
+    /*
+     * Helper Nodes
+     */
+
+    protected abstract static class HandleReceiverAndBitmapHelperNode extends Node {
+        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
+        @Child private PixelValueAtHelperNode pixelValueNode = PixelValueAtHelperNode.create();
+
+        protected static HandleReceiverAndBitmapHelperNode create() {
+            return HandleReceiverAndBitmapHelperNodeGen.create();
+        }
+
+        protected abstract long executeValueAt(PointersObject receiver, long xValue, long yValue, Object bitmap);
+
+        @Specialization(guards = "bitmap.isIntType()")
+        protected final long doInts(final PointersObject receiver, final long xValue, final long yValue, final NativeObject bitmap) {
+            final Object width = at0Node.execute(receiver, FORM.WIDTH);
+            final Object height = at0Node.execute(receiver, FORM.HEIGHT);
+            final Object depth = at0Node.execute(receiver, FORM.DEPTH);
+            return pixelValueNode.executeValueAt(receiver, xValue, yValue, bitmap, width, height, depth);
+        }
+    }
+
+    protected abstract static class PixelValueAtHelperNode extends Node {
+        private final ValueProfile intProfile = ValueProfile.createClassProfile();
+        private final BranchProfile errorProfile = BranchProfile.create();
+
+        protected static PixelValueAtHelperNode create() {
+            return PixelValueAtHelperNodeGen.create();
+        }
+
+        protected abstract long executeValueAt(PointersObject receiver, long xValue, long yValue, NativeObject bitmap, Object width, Object height, Object depth);
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "xValue >= width || yValue >= height")
+        protected static final long doQuickReturn(final PointersObject receiver, final long xValue, final long yValue, final NativeObject bitmap, final long width, final long height,
+                        final long depth) {
+            return 0L;
+        }
+
+        @Specialization(guards = "bitmap.isIntType()")
+        protected final long doInts(@SuppressWarnings("unused") final PointersObject receiver, final long xValue, final long yValue, final NativeObject bitmap, final long width,
+                        final long height, final long depth) {
+            final long ppW = 32 / depth;
+            final long stride = (width + ppW - 1) / ppW;
+            final int[] ints = bitmap.getIntStorage(intProfile);
+            if (ints.length > stride * height) {
+                errorProfile.enter();
+                throw new PrimitiveFailed();
+            }
+            final int word = ints[(int) ((yValue * stride) + Math.floorDiv(xValue, ppW))];
+            final int mask = 0xFFFFFFFF >> (32 - depth);
+            final long shift = 32 - (((xValue & (ppW - 1)) + 1) * depth);
+            return ((word >> shift) & mask) & 0xffffffffL;
+        }
+    }
+
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveDisplayString")
     protected abstract static class PrimDisplayStringNode extends AbstractPrimitiveNode {
@@ -637,8 +724,12 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             }
         }
 
+        boolean disable() {
+            return false;
+        }
+
         // prototype, currently disabled
-        @Specialization(guards = {"false",
+        @Specialization(guards = {"disable()",
                         "hasDestinationFormDepth(receiver, 4)",
                         "hasSourceFormDepth(receiver, 4)"})
         protected final Object doDisplayStringDummy(final VirtualFrame frame, final PointersObject receiver, final NativeObject sourceString, final long startIndex, final long stopIndex,

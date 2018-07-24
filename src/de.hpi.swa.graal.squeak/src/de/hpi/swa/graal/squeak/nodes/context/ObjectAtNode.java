@@ -1,11 +1,12 @@
 package de.hpi.swa.graal.squeak.nodes.context;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
@@ -13,8 +14,8 @@ import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 @NodeChild(value = "objectNode", type = SqueakNode.class)
 public abstract class ObjectAtNode extends AbstractObjectAtNode {
     @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
-    @CompilationFinal private final ValueProfile classProfile = ValueProfile.createClassProfile();
-    @CompilationFinal private final long index;
+    private final ValueProfile classProfile = ValueProfile.createClassProfile();
+    private final long index;
 
     public static ObjectAtNode create(final long i, final SqueakNode object) {
         return ObjectAtNodeGen.create(i, object);
@@ -29,5 +30,10 @@ public abstract class ObjectAtNode extends AbstractObjectAtNode {
     @Specialization(guards = "!isNativeObject(object)")
     protected final Object read(final AbstractSqueakObject object) {
         return at0Node.execute(classProfile.profile(object), index);
+    }
+
+    @Fallback
+    protected final Object doFail(final Object object) {
+        throw new SqueakException(object, "at:", index, "failed");
     }
 }

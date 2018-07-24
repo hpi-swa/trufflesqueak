@@ -10,15 +10,17 @@ import java.math.BigInteger;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
+import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
-import de.hpi.swa.graal.squeak.exceptions.SqueakException;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.io.SqueakDisplay;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
@@ -28,13 +30,13 @@ import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
+import de.hpi.swa.graal.squeak.model.ObjectLayouts.ASSOCIATION;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.POINT;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
-import de.hpi.swa.graal.squeak.nodes.context.ObjectGraph;
 import de.hpi.swa.graal.squeak.nodes.process.GetActiveProcessNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
@@ -44,68 +46,68 @@ import de.hpi.swa.graal.squeak.util.SqueakConfig;
 
 public final class SqueakImageContext {
     // Special objects
-    @CompilationFinal public final NilObject nil = new NilObject(this);
-    @CompilationFinal public final boolean sqFalse = false;
-    @CompilationFinal public final boolean sqTrue = true;
-    @CompilationFinal public final PointersObject specialObjectsArray = new PointersObject(this);
-    @CompilationFinal public final PointersObject schedulerAssociation = new PointersObject(this);
-    @CompilationFinal public final ClassObject characterClass = new ClassObject(this);
-    @CompilationFinal public final ClassObject smallIntegerClass = new ClassObject(this);
-    @CompilationFinal public final ClassObject arrayClass = new ClassObject(this);
-    @CompilationFinal public final PointersObject smalltalk = new PointersObject(this);
-    @CompilationFinal public final NativeObject doesNotUnderstand = NativeObject.newNativeBytes(this, null, 0);
-    @CompilationFinal public final PointersObject specialSelectors = new PointersObject(this);
-    @CompilationFinal public final NativeObject mustBeBoolean = NativeObject.newNativeBytes(this, null, 0);
-    @CompilationFinal public final ClassObject metaclass = new ClassObject(this);
-    @CompilationFinal public final ClassObject methodContextClass = new ClassObject(this);
-    @CompilationFinal public final ClassObject nilClass = new ClassObject(this);
-    @CompilationFinal public final ClassObject trueClass = new ClassObject(this);
-    @CompilationFinal public final ClassObject falseClass = new ClassObject(this);
-    @CompilationFinal public final ClassObject stringClass = new ClassObject(this);
-    @CompilationFinal public final ClassObject compiledMethodClass = new ClassObject(this);
-    @CompilationFinal public final ClassObject blockClosureClass = new ClassObject(this);
-    @CompilationFinal public final ClassObject largePositiveIntegerClass = new ClassObject(this);
-    @CompilationFinal public final ClassObject largeNegativeIntegerClass = new ClassObject(this);
-    @CompilationFinal public final ClassObject floatClass = new ClassObject(this);
+    public final NilObject nil = new NilObject(this);
+    public final boolean sqFalse = false;
+    public final boolean sqTrue = true;
+    public final PointersObject specialObjectsArray = new PointersObject(this);
+    public final PointersObject schedulerAssociation = new PointersObject(this);
+    public final ClassObject characterClass = new ClassObject(this);
+    public final ClassObject smallIntegerClass = new ClassObject(this);
+    public final ClassObject arrayClass = new ClassObject(this);
+    public final PointersObject smalltalk = new PointersObject(this);
+    public final NativeObject doesNotUnderstand = NativeObject.newNativeBytes(this, null, 0);
+    public final PointersObject specialSelectors = new PointersObject(this);
+    public final NativeObject mustBeBoolean = NativeObject.newNativeBytes(this, null, 0);
+    public final ClassObject metaclass = new ClassObject(this);
+    public final ClassObject methodContextClass = new ClassObject(this);
+    public final ClassObject nilClass = new ClassObject(this);
+    public final ClassObject trueClass = new ClassObject(this);
+    public final ClassObject falseClass = new ClassObject(this);
+    public final ClassObject stringClass = new ClassObject(this);
+    public final ClassObject compiledMethodClass = new ClassObject(this);
+    public final ClassObject blockClosureClass = new ClassObject(this);
+    public final ClassObject largePositiveIntegerClass = new ClassObject(this);
+    public final ClassObject largeNegativeIntegerClass = new ClassObject(this);
+    public final ClassObject floatClass = new ClassObject(this);
 
-    @CompilationFinal private final SqueakLanguage language;
-    @CompilationFinal private final PrintWriter output;
-    @CompilationFinal private final PrintWriter error;
-    @CompilationFinal public final SqueakLanguage.Env env;
+    private final SqueakLanguage language;
+    private final PrintWriter output;
+    private final PrintWriter error;
+    public final SqueakLanguage.Env env;
 
     // Special selectors
-    @CompilationFinal public final NativeObject plus = new NativeObject(this);
-    @CompilationFinal public final NativeObject minus = new NativeObject(this);
-    @CompilationFinal public final NativeObject lt = new NativeObject(this);
-    @CompilationFinal public final NativeObject gt = new NativeObject(this);
-    @CompilationFinal public final NativeObject le = new NativeObject(this);
-    @CompilationFinal public final NativeObject ge = new NativeObject(this);
-    @CompilationFinal public final NativeObject eq = new NativeObject(this);
-    @CompilationFinal public final NativeObject ne = new NativeObject(this);
-    @CompilationFinal public final NativeObject times = new NativeObject(this);
-    @CompilationFinal public final NativeObject divide = new NativeObject(this);
-    @CompilationFinal public final NativeObject modulo = new NativeObject(this);
-    @CompilationFinal public final NativeObject pointAt = new NativeObject(this);
-    @CompilationFinal public final NativeObject bitShift = new NativeObject(this);
-    @CompilationFinal public final NativeObject floorDivide = new NativeObject(this);
-    @CompilationFinal public final NativeObject bitAnd = new NativeObject(this);
-    @CompilationFinal public final NativeObject bitOr = new NativeObject(this);
-    @CompilationFinal public final NativeObject at = new NativeObject(this);
-    @CompilationFinal public final NativeObject atput = new NativeObject(this);
-    @CompilationFinal public final NativeObject sqSize = new NativeObject(this);
-    @CompilationFinal public final NativeObject next = new NativeObject(this);
-    @CompilationFinal public final NativeObject nextPut = new NativeObject(this);
-    @CompilationFinal public final NativeObject atEnd = new NativeObject(this);
-    @CompilationFinal public final NativeObject equivalent = new NativeObject(this);
-    @CompilationFinal public final NativeObject klass = new NativeObject(this);
-    @CompilationFinal public final NativeObject blockCopy = new NativeObject(this);
-    @CompilationFinal public final NativeObject sqValue = new NativeObject(this);
-    @CompilationFinal public final NativeObject valueWithArg = new NativeObject(this);
-    @CompilationFinal public final NativeObject sqDo = new NativeObject(this);
-    @CompilationFinal public final NativeObject sqNew = new NativeObject(this);
-    @CompilationFinal public final NativeObject newWithArg = new NativeObject(this);
-    @CompilationFinal public final NativeObject x = new NativeObject(this);
-    @CompilationFinal public final NativeObject y = new NativeObject(this);
+    public final NativeObject plus = new NativeObject(this);
+    public final NativeObject minus = new NativeObject(this);
+    public final NativeObject lt = new NativeObject(this);
+    public final NativeObject gt = new NativeObject(this);
+    public final NativeObject le = new NativeObject(this);
+    public final NativeObject ge = new NativeObject(this);
+    public final NativeObject eq = new NativeObject(this);
+    public final NativeObject ne = new NativeObject(this);
+    public final NativeObject times = new NativeObject(this);
+    public final NativeObject divide = new NativeObject(this);
+    public final NativeObject modulo = new NativeObject(this);
+    public final NativeObject pointAt = new NativeObject(this);
+    public final NativeObject bitShift = new NativeObject(this);
+    public final NativeObject floorDivide = new NativeObject(this);
+    public final NativeObject bitAnd = new NativeObject(this);
+    public final NativeObject bitOr = new NativeObject(this);
+    public final NativeObject at = new NativeObject(this);
+    public final NativeObject atput = new NativeObject(this);
+    public final NativeObject sqSize = new NativeObject(this);
+    public final NativeObject next = new NativeObject(this);
+    public final NativeObject nextPut = new NativeObject(this);
+    public final NativeObject atEnd = new NativeObject(this);
+    public final NativeObject equivalent = new NativeObject(this);
+    public final NativeObject klass = new NativeObject(this);
+    public final NativeObject blockCopy = new NativeObject(this);
+    public final NativeObject sqValue = new NativeObject(this);
+    public final NativeObject valueWithArg = new NativeObject(this);
+    public final NativeObject sqDo = new NativeObject(this);
+    public final NativeObject sqNew = new NativeObject(this);
+    public final NativeObject newWithArg = new NativeObject(this);
+    public final NativeObject x = new NativeObject(this);
+    public final NativeObject y = new NativeObject(this);
 
     @CompilationFinal(dimensions = 1) public final NativeObject[] specialSelectorsArray = new NativeObject[]{
                     plus, minus, lt, gt, le, ge, eq, ne, times, divide, modulo, pointAt, bitShift,
@@ -117,16 +119,18 @@ public final class SqueakImageContext {
                     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0
     };
 
-    @CompilationFinal public final SqueakConfig config;
-    @CompilationFinal public final SqueakDisplay display;
-    @CompilationFinal public final SqueakImageFlags flags = new SqueakImageFlags();
-    @CompilationFinal public final ObjectGraph objects = new ObjectGraph(this);
-    @CompilationFinal public final OSDetector os = new OSDetector();
-    @CompilationFinal public final InterruptHandlerNode interrupt;
-    @CompilationFinal public final long startUpMillis = System.currentTimeMillis();
+    public final SqueakConfig config;
+    public final SqueakImageFlags flags = new SqueakImageFlags();
+    public final OSDetector os = new OSDetector();
+    public final InterruptHandlerNode interrupt;
+    public final long startUpMillis = System.currentTimeMillis();
 
-    @CompilationFinal public AbstractSqueakObject asSymbol = nil; // for testing
-    @CompilationFinal public AbstractSqueakObject simulatePrimitiveArgs = nil;
+    private final SqueakDisplay display;
+    private final ValueProfile displayProfile = ValueProfile.createClassProfile();
+
+    @CompilationFinal private NativeObject asSymbolSelector = null; // for testing
+    @CompilationFinal private NativeObject simulatePrimitiveArgsSelector = null;
+    @CompilationFinal private PointersObject scheduler = null;
 
     public SqueakImageContext(final SqueakLanguage squeakLanguage, final SqueakLanguage.Env environ,
                     final PrintWriter out, final PrintWriter err) {
@@ -155,9 +159,9 @@ public final class SqueakImageContext {
         final ClassObject receiverClass = receiver instanceof Long ? smallIntegerClass : nilClass;
         final CompiledMethodObject lookupResult = (CompiledMethodObject) receiverClass.lookup(selector);
         if (lookupResult.getCompiledInSelector() == doesNotUnderstand) {
-            throw new SqueakException(receiver + " >> " + selector + " could not be found!");
+            throw new SqueakException(receiver, ">>", selector, "could not be found!");
         }
-        final ContextObject customContext = ContextObject.create(this, lookupResult.frameSize());
+        final ContextObject customContext = ContextObject.create(this, lookupResult.sqContextSize());
         customContext.atput0(CONTEXT.METHOD, lookupResult);
         customContext.atput0(CONTEXT.INSTRUCTION_POINTER, (long) lookupResult.getInitialPC());
         customContext.atput0(CONTEXT.RECEIVER, receiver);
@@ -176,7 +180,7 @@ public final class SqueakImageContext {
 
     public void fillInFrom(final FileInputStream inputStream) throws IOException {
         SqueakImageReader.readImage(this, inputStream);
-        if (!display.isHeadless() && simulatePrimitiveArgs.isNil()) {
+        if (!display.isHeadless() && simulatePrimitiveArgsSelector == null) {
             throw new SqueakException("Unable to find BitBlt simulation in image, cannot run with display.");
         }
     }
@@ -191,6 +195,37 @@ public final class SqueakImageContext {
 
     public SqueakLanguage getLanguage() {
         return language;
+    }
+
+    public SqueakDisplay getDisplay() {
+        return displayProfile.profile(display);
+    }
+
+    public NativeObject getAsSymbolSelector() {
+        return asSymbolSelector;
+    }
+
+    public void setAsSymbolSelector(final NativeObject asSymbolSelector) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        this.asSymbolSelector = asSymbolSelector;
+    }
+
+    public NativeObject getSimulatePrimitiveArgsSelector() {
+        return simulatePrimitiveArgsSelector;
+    }
+
+    public void setSimulatePrimitiveArgsSelector(final NativeObject simulatePrimitiveArgsSelector) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        this.simulatePrimitiveArgsSelector = simulatePrimitiveArgsSelector;
+    }
+
+    public PointersObject getScheduler() {
+        if (scheduler == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            final PointersObject association = (PointersObject) specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SchedulerAssociation);
+            scheduler = (PointersObject) association.at0(ASSOCIATION.VALUE);
+        }
+        return scheduler;
     }
 
     public Object wrap(final Object obj) {
@@ -217,7 +252,7 @@ public final class SqueakImageContext {
         } else if (obj instanceof Dimension) {
             return wrap((Dimension) obj);
         }
-        throw new SqueakException("Don't know how to wrap " + obj);
+        throw new SqueakException("Unsupported value to wrap:", obj);
     }
 
     public Object wrap(final boolean value) {
@@ -237,6 +272,7 @@ public final class SqueakImageContext {
         return new FloatObject(this, value);
     }
 
+    @TruffleBoundary
     public NativeObject wrap(final String s) {
         return NativeObject.newNativeBytes(this, stringClass, s.getBytes());
     }
@@ -322,10 +358,11 @@ public final class SqueakImageContext {
      */
     @TruffleBoundary
     public void printSqStackTrace() {
+        CompilerDirectives.transferToInterpreter();
         final boolean isTravisBuild = System.getenv().containsKey("TRAVIS");
         final int[] depth = new int[1];
         final Object[] lastSender = new Object[]{null};
-        getOutput().println("== Squeak stack trace ===========================================================");
+        getError().println("== Squeak stack trace ===========================================================");
         Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Object>() {
 
             @Override
@@ -346,11 +383,11 @@ public final class SqueakImageContext {
                     argumentStrings[i] = arguments[i].toString();
                 }
                 final String prefix = FrameAccess.getClosure(current) == null ? "" : "[] in ";
-                getOutput().println(String.format("%s%s #(%s) [this: %s, sender: %s]", prefix, method, String.join(", ", argumentStrings), contextOrMarker, lastSender[0]));
+                getError().println(String.format("%s%s #(%s) [this: %s, sender: %s]", prefix, method, String.join(", ", argumentStrings), contextOrMarker, lastSender[0]));
                 return null;
             }
         });
-        getOutput().println("== " + depth[0] + " Truffle frames ================================================================");
+        getError().println("== " + depth[0] + " Truffle frames ================================================================");
         if (lastSender[0] instanceof ContextObject) {
             ((ContextObject) lastSender[0]).printSqStackTrace();
         }

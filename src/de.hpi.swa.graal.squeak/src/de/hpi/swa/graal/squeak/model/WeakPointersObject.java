@@ -3,17 +3,15 @@ package de.hpi.swa.graal.squeak.model;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 // TODO: Validate that weak objects are working correctly
 public final class WeakPointersObject extends AbstractSqueakObject {
-    @CompilationFinal public static final ReferenceQueue<Object> weakPointersQueue = new ReferenceQueue<>();
+    public static final ReferenceQueue<Object> weakPointersQueue = new ReferenceQueue<>();
     protected Object[] pointers;
 
     public WeakPointersObject(final SqueakImageContext img) {
@@ -90,30 +88,6 @@ public final class WeakPointersObject extends AbstractSqueakObject {
 
     public AbstractSqueakObject shallowCopy() {
         return new WeakPointersObject(this);
-    }
-
-    @Override
-    public boolean become(final AbstractSqueakObject other) {
-        // TODO: implement or remove?
-        throw new SqueakException("become not implemented for WeakPointerObjects");
-    }
-
-    @Override
-    public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
-        // TODO: super.pointersBecomeOneWay(from, to); ?
-        for (int i = 0; i < from.length; i++) {
-            final Object fromPointer = from[i];
-            for (int j = 0; j < size(); j++) {
-                final Object newPointer = at0(j);
-                if (newPointer == fromPointer) {
-                    final Object toPointer = to[i];
-                    atput0(j, toPointer);
-                    if (copyHash && fromPointer instanceof AbstractSqueakObject && toPointer instanceof AbstractSqueakObject) {
-                        ((AbstractSqueakObject) toPointer).setSqueakHash(((AbstractSqueakObject) fromPointer).squeakHash());
-                    }
-                }
-            }
-        }
     }
 
     private void convertToWeakReferences() {

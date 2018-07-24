@@ -1,7 +1,5 @@
 package de.hpi.swa.graal.squeak.model;
 
-import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions;
-import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
@@ -41,36 +39,11 @@ public final class PointersObject extends AbstractSqueakObject {
         pointers[(int) i] = obj;
     }
 
-    @Override
-    public boolean become(final AbstractSqueakObject other) {
-        if (!(other instanceof PointersObject)) {
-            throw new PrimitiveExceptions.PrimitiveFailed();
-        }
-        if (!super.become(other)) {
-            throw new SqueakException("Should not fail");
-        }
-        final Object[] pointers2 = ((PointersObject) other).pointers;
-        ((PointersObject) other).pointers = this.pointers;
-        pointers = pointers2;
-        return true;
-    }
-
-    @Override
-    public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
-        // TODO: super.pointersBecomeOneWay(from, to); ?
-        for (int i = 0; i < from.length; i++) {
-            final Object fromPointer = from[i];
-            for (int j = 0; j < size(); j++) {
-                final Object newPointer = at0(j);
-                if (newPointer == fromPointer) {
-                    final Object toPointer = to[i];
-                    atput0(j, toPointer);
-                    if (copyHash && fromPointer instanceof AbstractSqueakObject && toPointer instanceof AbstractSqueakObject) {
-                        ((AbstractSqueakObject) toPointer).setSqueakHash(((AbstractSqueakObject) fromPointer).squeakHash());
-                    }
-                }
-            }
-        }
+    public void become(final PointersObject other) {
+        becomeOtherClass(other);
+        final Object[] otherPointers = other.pointers;
+        other.pointers = this.pointers;
+        pointers = otherPointers;
     }
 
     public int size() {

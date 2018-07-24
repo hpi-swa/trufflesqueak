@@ -2,7 +2,6 @@ package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 
 import java.util.List;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
@@ -49,6 +48,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             }
         }
 
+        protected abstract Object executeArithmeticPrimitive(VirtualFrame frame);
+
         protected static final boolean isZero(final double value) {
             return value == 0;
         }
@@ -60,9 +61,6 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final boolean isMinValueDividedByMinusOne(final long a, final long b) {
             return a == Long.MIN_VALUE && b == -1;
         }
-
-        public abstract Object executeArithmeticPrimitive(VirtualFrame frame);
-
     }
 
     public abstract static class AbstractArithmeticBinaryPrimitiveNode extends AbstractPrimitiveNode {
@@ -366,7 +364,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @Specialization(guards = {"isSmallInteger(a)", "isSmallInteger(a)"})
+        @Specialization(guards = {"isSmallInteger(a)", "isSmallInteger(b)"})
         protected long doLong(final long a, final long b) {
             return Math.floorMod(a, b);
         }
@@ -748,7 +746,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 54)
     protected abstract static class PrimFloatTimesTwoPowerNode extends AbstractArithmeticPrimitiveNode {
-        @CompilationFinal private static final int UNDERFLOW_LIMIT = FloatObject.EMIN - FloatObject.PRECISION + 1;
+        private static final int UNDERFLOW_LIMIT = FloatObject.EMIN - FloatObject.PRECISION + 1;
 
         protected PrimFloatTimesTwoPowerNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -916,7 +914,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 159)
     protected abstract static class PrimHashMultiplyNode extends AbstractPrimitiveNode {
-        @CompilationFinal private static final int HASH_MULTIPLY_CONSTANT = 1664525;
+        private static final int HASH_MULTIPLY_CONSTANT = 1664525;
 
         protected PrimHashMultiplyNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);

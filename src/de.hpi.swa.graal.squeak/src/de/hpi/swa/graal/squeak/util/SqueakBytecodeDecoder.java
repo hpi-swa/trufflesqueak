@@ -2,8 +2,9 @@ package de.hpi.swa.graal.squeak.util;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakException;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
+import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
@@ -38,7 +39,7 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.StoreBytecodes.PopIntoTemporaryLo
 import de.hpi.swa.graal.squeak.nodes.bytecodes.StoreBytecodes.StoreIntoRemoteTempNode;
 
 public final class SqueakBytecodeDecoder {
-    @CompilationFinal private final CompiledCodeObject code;
+    private final CompiledCodeObject code;
     @CompilationFinal(dimensions = 1) private final byte[] bytecode;
     private int currentIndex = 0;
 
@@ -151,7 +152,8 @@ public final class SqueakBytecodeDecoder {
             case 138:
                 return new PushNewArrayNode(code, index, 2, nextByte());
             case 139:
-                return CallPrimitiveNode.create(code, index, 3, nextByte(), nextByte());
+                assert code instanceof CompiledMethodObject;
+                return CallPrimitiveNode.create((CompiledMethodObject) code, index, 3, nextByte(), nextByte());
             case 140:
                 return new PushRemoteTempNode(code, index, 3, nextByte(), nextByte());
             case 141:
@@ -185,7 +187,7 @@ public final class SqueakBytecodeDecoder {
             case 248: case 249: case 250: case 251: case 252: case 253: case 254: case 255:
                 return SendLiteralSelectorNode.create(code, index, 1, b & 0xF, 2);
             default:
-                throw new SqueakException("Unknown bytecode: " + b);
+                throw new SqueakException("Unknown bytecode:", b);
         }
         //@formatter:on
     }

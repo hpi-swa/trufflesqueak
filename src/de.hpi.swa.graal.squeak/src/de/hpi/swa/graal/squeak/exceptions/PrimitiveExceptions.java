@@ -1,16 +1,15 @@
 package de.hpi.swa.graal.squeak.exceptions;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.nodes.ControlFlowException;
 
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.ERROR_TABLE;
 
 public final class PrimitiveExceptions {
-    public static class AbstractPrimitiveFailed extends ControlFlowException {
+    protected static class AbstractPrimitiveFailed extends ControlFlowException {
         private static final long serialVersionUID = 1L;
-        @CompilationFinal private final long reasonCode;
+        private final long reasonCode;
 
-        public AbstractPrimitiveFailed(final long reasonCode) {
+        protected AbstractPrimitiveFailed(final long reasonCode) {
             this.reasonCode = reasonCode;
         }
 
@@ -19,7 +18,7 @@ public final class PrimitiveExceptions {
         }
     }
 
-    public static class PrimitiveFailed extends AbstractPrimitiveFailed {
+    public static final class PrimitiveFailed extends AbstractPrimitiveFailed {
         private static final long serialVersionUID = 1L;
 
         public PrimitiveFailed() {
@@ -31,7 +30,7 @@ public final class PrimitiveExceptions {
         }
     }
 
-    public static class SimulationPrimitiveFailed extends AbstractPrimitiveFailed {
+    public static final class SimulationPrimitiveFailed extends AbstractPrimitiveFailed {
         private static final long serialVersionUID = 1L;
 
         public SimulationPrimitiveFailed(final long reasonCode) {
@@ -41,5 +40,8 @@ public final class PrimitiveExceptions {
 
     public static class PrimitiveWithoutResultException extends ControlFlowException {
         private static final long serialVersionUID = 1L;
+    }
+
+    private PrimitiveExceptions() {
     }
 }

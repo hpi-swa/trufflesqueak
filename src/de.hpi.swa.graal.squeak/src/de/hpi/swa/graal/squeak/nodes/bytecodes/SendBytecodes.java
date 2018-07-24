@@ -20,7 +20,6 @@ import com.oracle.truffle.api.instrumentation.InstrumentableNode;
 import com.oracle.truffle.api.instrumentation.ProbeNode;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
-import com.oracle.truffle.api.source.SourceSection;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveWithoutResultException;
 import de.hpi.swa.graal.squeak.model.ClassObject;
@@ -37,14 +36,14 @@ public final class SendBytecodes {
 
     @GenerateWrapper
     public abstract static class AbstractSendNode extends AbstractBytecodeNode implements InstrumentableNode {
-        @CompilationFinal protected final NativeObject selector;
-        @CompilationFinal private final int argumentCount;
+        protected final NativeObject selector;
+        private final int argumentCount;
+
         @Child protected SqueakLookupClassNode lookupClassNode;
-        @Child private LookupNode lookupNode = LookupNode.create();
+        @Child private LookupNode lookupNode;
         @Child private DispatchSendNode dispatchSendNode;
         @Child private StackPopNReversedNode popNReversedNode;
         @Child private StackPushNode pushNode = StackPushNode.create();
-        @CompilationFinal private SourceSection sourceSection;
 
         private static class Invocation {
             long totalTime;
@@ -111,6 +110,7 @@ public final class SendBytecodes {
             super(code, index, numBytecodes);
             selector = sel instanceof NativeObject ? (NativeObject) sel : code.image.doesNotUnderstand;
             argumentCount = argcount;
+            lookupNode = LookupNode.create(code.image);
             lookupClassNode = SqueakLookupClassNode.create(code.image);
             popNReversedNode = StackPopNReversedNode.create(code, 1 + argumentCount);
             dispatchSendNode = DispatchSendNode.create(code.image);
@@ -125,6 +125,7 @@ public final class SendBytecodes {
             final Object result;
             try {
                 result = executeSend(frame);
+                assert result != null : "Result of a message send should not be null";
             } catch (PrimitiveWithoutResultException e) {
                 return; // ignoring result
             }
@@ -158,11 +159,11 @@ public final class SendBytecodes {
         }
 
         @Override
-        public boolean isInstrumentable() {
+        public final boolean isInstrumentable() {
             return true;
         }
 
-        public WrapperNode createWrapper(final ProbeNode probe) {
+        public final WrapperNode createWrapper(final ProbeNode probe) {
             return new AbstractSendNodeWrapper(this, this, probe);
         }
     }
@@ -212,7 +213,7 @@ public final class SendBytecodes {
 
         protected static class SqueakLookupClassSuperNode extends SqueakLookupClassNode {
             @Child private GetCompiledMethodNode getMethodNode = GetCompiledMethodNode.create();
-            @CompilationFinal private final CompiledCodeObject code;
+            private final CompiledCodeObject code;
 
             public SqueakLookupClassSuperNode(final CompiledCodeObject code) {
                 super(code.image);

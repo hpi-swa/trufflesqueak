@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.context;
 
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -28,7 +29,7 @@ public abstract class UpdateInstructionPointerNode extends AbstractNodeWithCode 
         instructionPointerWriteNode.executeWrite(frame, value);
     }
 
-    @Specialization(guards = {"!isVirtualized(frame)"})
+    @Fallback
     protected final void doUpdate(final VirtualFrame frame, final int value) {
         final ContextObject context = getContext(frame);
         context.setInstructionPointer(value + calculcatePCOffsetNode.execute(context.getClosureOrMethod()));

@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -14,7 +13,7 @@ import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
  */
 @TypeSystemReference(SqueakTypes.class)
 public abstract class SqueakNodeWithCode extends SqueakNode {
-    @CompilationFinal protected final CompiledCodeObject code;
+    protected final CompiledCodeObject code;
     @Child private FrameSlotReadNode contextOrMarkerReadNode = FrameSlotReadNode.createForContextOrMarker();
 
     public SqueakNodeWithCode(final CompiledCodeObject code) {
