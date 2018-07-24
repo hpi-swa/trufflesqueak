@@ -113,6 +113,12 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         public final int areaHeight;
 
         BitBltDataWithSourceForm(final PointersObject receiver) {
+            this(receiver,
+                            (int) ((long) receiver.at0(BIT_BLT.SOURCE_X)),
+                            (int) ((long) receiver.at0(BIT_BLT.WIDTH)));
+        }
+
+        BitBltDataWithSourceForm(final PointersObject receiver, final int _sourceX, final int _areaWidth) {
             sourceForm = (PointersObject) receiver.at0(BIT_BLT.SOURCE_FORM);
             destinationForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
             sourceWidth = (int) ((long) sourceForm.at0(FORM.WIDTH));
@@ -121,12 +127,10 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             destinationHeight = (int) ((long) destinationForm.at0(FORM.HEIGHT));
 
             // these are the unclipped values as passed in
-            final int _sourceX = (int) (long) receiver.at0(BIT_BLT.SOURCE_X);
             final int _sourceY = (int) (long) receiver.at0(BIT_BLT.SOURCE_Y);
 
             final int _destX = (int) (long) receiver.at0(BIT_BLT.DEST_X);
             final int _destY = (int) (long) receiver.at0(BIT_BLT.DEST_Y);
-            final int _areaWidth = (int) (long) receiver.at0(BIT_BLT.WIDTH);
             final int _areaHeight = (int) (long) receiver.at0(BIT_BLT.HEIGHT);
 
             final int clipX = (int) (long) receiver.at0(BIT_BLT.CLIP_X);
@@ -400,6 +404,10 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             final int endX = data.destX + data.areaWidth;
             final int endY = data.destY + data.areaHeight;
 
+            // TODO move to guard
+            if (destinationBits.isByteType()) {
+                throw new PrimitiveFailed();
+            }
             final int[] ints = destinationBits.getIntStorage(destinationBitsStorageType);
 
             if (ints.length - 1 < (endY - 1) * data.destinationWidth + (endX - 1)) {
@@ -503,6 +511,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
                 throw new PrimitiveFailed();
             }
 
+            // TODO: instead of copy, this needs to always (destWord |= sourceWord)
             fillNode.executeFill(sourceBits, dest, data);
 
             return receiver;
@@ -565,9 +574,11 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         @CompilationFinal private final ValueProfile halftoneFormStorageType = ValueProfile.createClassProfile();
         @CompilationFinal private final ValueProfile destinationBitsStorageType = ValueProfile.createClassProfile();
         @CompilationFinal private final ValueProfile sourceBitsStorageType = ValueProfile.createClassProfile();
+        @CompilationFinal protected final ValueProfile sourceStringStorageType = ValueProfile.createClassProfile();
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
         @Child private SimulationPrimitiveNode simulateNode;
         @Child private CopyNode fillNode = CopyNode.create();
+        @Child private BlendNode blendNode = BlendNode.create();
 
         static final boolean measure = false;
 
@@ -580,13 +591,48 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        @Specialization(guards = {"disableWhileMeasuring()"})
-        protected final Object doDisplayStringDummy(final VirtualFrame frame, final PointersObject receiver) {
-            return doSimulation(frame, receiver);
+        // prototype, currently disabled
+        @Specialization(guards = {"false",
+                        "hasDestinationFormDepth(receiver, 4)",
+                        "hasSourceFormDepth(receiver, 4)"})
+        protected final Object doDisplayStringDummy(final VirtualFrame frame, final PointersObject receiver, final NativeObject sourceString, final long startIndex, final long stopIndex,
+                        final PointersObject glyphMap, final PointersObject xTable, final long kernDelta) {
+            final PointersObject destinationForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
+            final PointersObject sourceForm = (PointersObject) receiver.at0(BIT_BLT.SOURCE_FORM);
+            final NativeObject destinationBits = (NativeObject) destinationForm.at0(FORM.BITS);
+            final NativeObject sourceBits = (NativeObject) sourceForm.at0(FORM.BITS);
+            final int destinationDepth = (int) (long) destinationForm.at0(FORM.DEPTH);
+            if (destinationDepth != 32) { // fall back to simulation if not 32-bit
+                return doSimulation(frame, receiver, sourceString, startIndex, stopIndex, glyphMap, xTable, kernDelta);
+            }
+
+            final int[] dest = destinationBits.getIntStorage(destinationBitsStorageType);
+
+            int offsetX = (int) kernDelta;
+            final byte[] string = sourceString.getByteStorage(sourceStringStorageType);
+            for (int i = (int) startIndex; i < stopIndex; i++) {
+                final int glyphIndex = (int) ((long) glyphMap.at0(string[i]));
+                final int sourceX = offsetX + (int) ((long) xTable.at0(glyphIndex));
+                final int sourceWidth = ((int) (long) xTable.at0(glyphIndex + 1)) - sourceX;
+
+                final BitBltDataWithSourceForm data = new BitBltDataWithSourceForm(receiver, sourceX, sourceWidth);
+                if (!data.hasValidArea()) {
+                    continue;
+                }
+                offsetX += sourceWidth;
+                blendNode.executeBlend(sourceBits, dest, data);
+            }
+
+            return receiver;// doSimulation(frame, receiver);
         }
 
+        // @Fallback
+        // protected final Object doSimulation(final VirtualFrame frame, final PointersObject
+        // receiver, final NativeObject sourceString, final long startIndex, final long stopIndex,
+        // final PointersObject glyphMap, final PointersObject xTable, final long kernDelta) {
         @Fallback
-        protected final Object doSimulation(final VirtualFrame frame, final Object receiver) {
+        protected final Object doSimulation(final VirtualFrame frame, final Object receiver, final Object sourceString, final Object startIndex, final Object stopIndex,
+                        final Object glyphMap, final Object xTable, final Object kernDelta) {
             final PointersObject p = (PointersObject) receiver;
 
             if (!measure) {
@@ -611,6 +657,13 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             return !measure;
         }
 
+        protected final boolean hasDestinationFormDepth(final PointersObject target, final int ruleIndex) {
+            return ruleIndex == (long) at0Node.execute(target.at0(BIT_BLT.DEST_FORM), FORM.DEPTH);
+        }
+
+        protected final boolean hasSourceFormDepth(final PointersObject target, final int ruleIndex) {
+            return ruleIndex == (long) at0Node.execute(target.at0(BIT_BLT.SOURCE_FORM), FORM.DEPTH);
+        }
     }
 
     /*
