@@ -129,11 +129,12 @@ public final class MiscellaneousBytecodes {
     }
 
     public static final class DupNode extends AbstractBytecodeNode {
-        @Child private StackPushNode pushNode = StackPushNode.create();
+        @Child private StackPushNode pushNode;
         @Child private StackTopNode topNode;
 
         public DupNode(final CompiledCodeObject code, final int index, final int numBytecodes) {
             super(code, index, numBytecodes);
+            pushNode = StackPushNode.create(code);
             topNode = StackTopNode.create(code);
         }
 

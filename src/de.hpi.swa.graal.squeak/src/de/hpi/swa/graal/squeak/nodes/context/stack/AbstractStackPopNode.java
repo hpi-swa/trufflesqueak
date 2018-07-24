@@ -40,7 +40,7 @@ public abstract class AbstractStackPopNode extends AbstractStackNode {
     private FrameStackWriteNode getWriteNode() {
         if (writeNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            writeNode = insert(FrameStackWriteNode.create());
+            writeNode = insert(FrameStackWriteNode.create(code));
         }
         return writeNode;
     }

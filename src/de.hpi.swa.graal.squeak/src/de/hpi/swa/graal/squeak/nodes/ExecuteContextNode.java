@@ -253,7 +253,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
     private StackPushNode getStackPushNode() {
         if (pushStackNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            pushStackNode = insert(StackPushNode.create());
+            pushStackNode = insert(StackPushNode.create(code));
         }
         return pushStackNode;
     }

@@ -63,11 +63,14 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class AbstractArrayBecomeOneWayPrimitiveNode extends AbstractInstancesPrimitiveNode {
         @Child private SqueakObjectPointersBecomeOneWayNode pointersBecomeNode = SqueakObjectPointersBecomeOneWayNode.create();
         @Child private UpdateSqueakObjectHashNode updateHashNode = UpdateSqueakObjectHashNode.create();
-        @Child private FrameStackReadNode stackReadNode = FrameStackReadNode.create();
-        @Child private FrameStackWriteNode stackWriteNode = FrameStackWriteNode.create();
+        @Child private FrameStackReadNode stackReadNode;
+        @Child private FrameStackWriteNode stackWriteNode;
 
         protected AbstractArrayBecomeOneWayPrimitiveNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
+            stackReadNode = FrameStackReadNode.create(method);
+            stackWriteNode = FrameStackWriteNode.create(method);
+
         }
 
         protected static final boolean isPointers(final Object obj) {
@@ -685,11 +688,13 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 249)
     protected abstract static class PrimArrayBecomeOneWayCopyHashNode extends AbstractArrayBecomeOneWayPrimitiveNode {
-        @Child private FrameStackReadNode stackReadNode = FrameStackReadNode.create();
-        @Child private FrameStackWriteNode stackWriteNode = FrameStackWriteNode.create();
+        @Child private FrameStackReadNode stackReadNode;
+        @Child private FrameStackWriteNode stackWriteNode;
 
         protected PrimArrayBecomeOneWayCopyHashNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
+            stackReadNode = FrameStackReadNode.create(method);
+            stackWriteNode = FrameStackWriteNode.create(method);
         }
 
         @Specialization(guards = "fromArray.size() == toArray.size()")

@@ -88,7 +88,7 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
     @ExplodeLoop
     @Specialization(assumptions = {"code.getCanBeVirtualizedAssumption()"})
     protected final Object enterVirtualized(final VirtualFrame frame,
-                    @Cached("create()") final StackPushNode pushStackNode) {
+                    @Cached("create(code)") final StackPushNode pushStackNode) {
         CompilerDirectives.ensureVirtualized(frame);
         initializeSlots(frame);
         frame.setObject(CompiledCodeObject.thisContextOrMarkerSlot, new FrameMarker());

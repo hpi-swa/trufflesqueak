@@ -104,7 +104,7 @@ public final class JumpBytecodes {
             private StackPushNode getPushNode() {
                 if (pushNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    pushNode = insert(StackPushNode.create());
+                    pushNode = insert(StackPushNode.create(code));
                 }
                 return pushNode;
             }

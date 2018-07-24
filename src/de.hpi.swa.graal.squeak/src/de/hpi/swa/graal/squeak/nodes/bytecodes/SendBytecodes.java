@@ -30,7 +30,7 @@ public final class SendBytecodes {
         @Child private LookupNode lookupNode;
         @Child private DispatchSendNode dispatchSendNode;
         @Child private StackPopNReversedNode popNReversedNode;
-        @Child private StackPushNode pushNode = StackPushNode.create();
+        @Child private StackPushNode pushNode;
 
         private AbstractSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object sel, final int argcount) {
             super(code, index, numBytecodes);
@@ -38,8 +38,9 @@ public final class SendBytecodes {
             argumentCount = argcount;
             lookupNode = LookupNode.create(code.image);
             lookupClassNode = SqueakLookupClassNode.create(code.image);
-            popNReversedNode = StackPopNReversedNode.create(code, 1 + argumentCount);
             dispatchSendNode = DispatchSendNode.create(code.image);
+            popNReversedNode = StackPopNReversedNode.create(code, 1 + argumentCount);
+            pushNode = StackPushNode.create(code);
         }
 
         protected AbstractSendNode(final AbstractSendNode original) {

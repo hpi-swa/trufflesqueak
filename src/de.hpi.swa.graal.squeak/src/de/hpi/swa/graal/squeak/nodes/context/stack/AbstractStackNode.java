@@ -26,7 +26,7 @@ public abstract class AbstractStackNode extends SqueakNodeWithCode {
     protected final FrameStackReadNode getReadNode() {
         if (readNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            readNode = insert(FrameStackReadNode.create());
+            readNode = insert(FrameStackReadNode.create(code));
         }
         return readNode;
     }

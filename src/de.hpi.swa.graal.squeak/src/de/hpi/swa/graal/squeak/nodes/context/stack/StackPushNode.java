@@ -7,19 +7,24 @@ import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
-import de.hpi.swa.graal.squeak.nodes.AbstractNode;
+import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
 
-public abstract class StackPushNode extends AbstractNode {
-    public static StackPushNode create() {
-        return StackPushNodeGen.create();
+public abstract class StackPushNode extends AbstractNodeWithCode {
+
+    public static StackPushNode create(final CompiledCodeObject code) {
+        return StackPushNodeGen.create(code);
+    }
+
+    protected StackPushNode(final CompiledCodeObject code) {
+        super(code);
     }
 
     public abstract void executeWrite(VirtualFrame frame, Object value);
 
     @Specialization(guards = {"isVirtualized(frame)"})
     protected static final void doWriteVirtualized(final VirtualFrame frame, final Object value,
-                    @Cached("create()") final FrameStackWriteNode writeNode) {
+                    @Cached("create(code)") final FrameStackWriteNode writeNode) {
         assert value != null;
         final int newSP = FrameUtil.getIntSafe(frame, CompiledCodeObject.stackPointerSlot) + 1;
         writeNode.execute(frame, newSP, value);

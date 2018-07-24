@@ -16,6 +16,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
+import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.nodes.Node;
 
@@ -31,7 +32,6 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 import de.hpi.swa.graal.squeak.nodes.context.ObjectGraphNodeGen.GetTraceablePointersNodeGen;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public abstract class ObjectGraphNode extends AbstractNodeWithImage {
@@ -41,7 +41,6 @@ public abstract class ObjectGraphNode extends AbstractNodeWithImage {
     @CompilationFinal private static HashSet<AbstractSqueakObject> classesWithNoInstances;
 
     @Child private GetTraceablePointersNode getPointersNode = GetTraceablePointersNode.create();
-    @Child private FrameStackReadNode stackReadNode = FrameStackReadNode.create();
 
     public static ObjectGraphNode create(final SqueakImageContext image) {
         return ObjectGraphNodeGen.create(image);
@@ -138,7 +137,7 @@ public abstract class ObjectGraphNode extends AbstractNodeWithImage {
     }
 
     @TruffleBoundary
-    private void addObjectsFromTruffleFrames(final Deque<AbstractSqueakObject> pending) {
+    private static void addObjectsFromTruffleFrames(final Deque<AbstractSqueakObject> pending) {
         Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Frame>() {
             @Override
             public Frame visitFrame(final FrameInstance frameInstance) {
@@ -154,14 +153,16 @@ public abstract class ObjectGraphNode extends AbstractNodeWithImage {
                     }
                 }
                 final int stackPointer = FrameUtil.getIntSafe(current, CompiledCodeObject.stackPointerSlot);
-                for (int i = 0; i < stackPointer; i++) {
-                    final Object stackObject = stackReadNode.execute(current, i);
-                    if (stackObject == null) {
+                int i = 0;
+                for (final FrameSlot slot : current.getFrameDescriptor().getSlots()) {
+                    final Object stackObject = current.getValue(slot);
+                    if (stackObject == null || i < stackPointer) {
                         return null; // this slot and all following have not been used
                     }
                     if (stackObject instanceof AbstractSqueakObject) {
                         pending.add((AbstractSqueakObject) stackObject);
                     }
+                    i++;
                 }
                 return null;
             }
