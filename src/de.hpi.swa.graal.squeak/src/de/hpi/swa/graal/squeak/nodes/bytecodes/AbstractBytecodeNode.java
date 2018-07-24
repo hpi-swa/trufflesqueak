@@ -1,26 +1,26 @@
 package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.source.SourceSection;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakException;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.nodes.SqueakNodeWithCode;
 
 public abstract class AbstractBytecodeNode extends SqueakNodeWithCode {
     protected final int numBytecodes;
     protected final int index;
-    @CompilationFinal private SourceSection sourceSection;
-    @CompilationFinal private int lineNumber = 1;
+
+    private SourceSection sourceSection;
+    private int lineNumber = 1;
 
     protected AbstractBytecodeNode(final AbstractBytecodeNode original) {
         super(original.code);
         index = original.index;
         numBytecodes = original.numBytecodes;
-        setSourceSection(original.getSourceSection());
+        sourceSection = original.getSourceSection();
     }
 
     public AbstractBytecodeNode(final CompiledCodeObject code, final int index) {
@@ -46,7 +46,12 @@ public abstract class AbstractBytecodeNode extends SqueakNodeWithCode {
 
     public abstract void executeVoid(VirtualFrame frame);
 
-    public int getSuccessorIndex() {
+    @Fallback
+    protected final void doFail() {
+        throw new SqueakException("Bytecode failed unexpectedly: ", this);
+    }
+
+    public final int getSuccessorIndex() {
         return index + numBytecodes;
     }
 
@@ -62,18 +67,17 @@ public abstract class AbstractBytecodeNode extends SqueakNodeWithCode {
     @TruffleBoundary
     public final SourceSection getSourceSection() {
         if (sourceSection == null) {
-            setSourceSection(code.getSource().createSection(lineNumber));
+            /*
+             * sourceSection requested when logging transferToInterpreters. Therefore, do not
+             * trigger another TTI here which otherwise would cause endless recursion in Truffle
+             * debug code.
+             */
+            sourceSection = code.getSource().createSection(lineNumber);
         }
         return sourceSection;
     }
 
     public final void setLineNumber(final int lineNumber) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
         this.lineNumber = lineNumber;
-    }
-
-    private void setSourceSection(final SourceSection section) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        sourceSection = section;
     }
 }

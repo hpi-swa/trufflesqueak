@@ -18,15 +18,14 @@ public abstract class InvokeNode extends Node {
     public abstract Object executeInvoke(CompiledCodeObject method, Object[] arguments);
 
     @Specialization(guards = "code.getCallTarget() == callTarget", limit = "1")
-    protected Object doInvoke(@SuppressWarnings("unused") final CompiledCodeObject code, final Object[] arguments,
+    protected static final Object doInvoke(@SuppressWarnings("unused") final CompiledCodeObject code, final Object[] arguments,
                     @SuppressWarnings("unused") @Cached("code.getCallTarget()") final RootCallTarget callTarget,
-                    @SuppressWarnings("unused") @Cached("code.getSplitCallTarget()") final RootCallTarget splitCallTarget,
-                    @Cached("create(splitCallTarget)") final DirectCallNode callNode) {
+                    @Cached("create(callTarget)") final DirectCallNode callNode) {
         return callNode.call(arguments);
     }
 
     @Specialization(replaces = "doInvoke")
-    protected Object doIndirect(final CompiledCodeObject code, final Object[] arguments,
+    protected static final Object doIndirect(final CompiledCodeObject code, final Object[] arguments,
                     @Cached("create()") final IndirectCallNode callNode) {
         return callNode.call(code.getCallTarget(), arguments);
     }

@@ -48,6 +48,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             }
         }
 
+        protected abstract Object executeArithmeticPrimitive(VirtualFrame frame);
+
         protected static final boolean isZero(final double value) {
             return value == 0;
         }
@@ -59,9 +61,6 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final boolean isMinValueDividedByMinusOne(final long a, final long b) {
             return a == Long.MIN_VALUE && b == -1;
         }
-
-        public abstract Object executeArithmeticPrimitive(VirtualFrame frame);
-
     }
 
     public abstract static class AbstractArithmeticBinaryPrimitiveNode extends AbstractPrimitiveNode {
@@ -365,7 +364,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @Specialization(guards = {"isSmallInteger(a)", "isSmallInteger(a)"})
+        @Specialization(guards = {"isSmallInteger(a)", "isSmallInteger(b)"})
         protected long doLong(final long a, final long b) {
             return Math.floorMod(a, b);
         }

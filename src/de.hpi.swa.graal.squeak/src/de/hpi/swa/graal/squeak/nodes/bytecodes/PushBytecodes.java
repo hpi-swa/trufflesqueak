@@ -48,7 +48,7 @@ public final class PushBytecodes {
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.executeWrite(frame, getContextNode.executeGet(frame, true));
+            pushNode.executeWrite(frame, getContextNode.executeGet(frame));
         }
 
         @Override
@@ -92,32 +92,35 @@ public final class PushBytecodes {
             return block;
         }
 
-        @Override
-        public int getSuccessorIndex() {
+        public final int getBockSize() {
+            return blockSize;
+        }
+
+        private int getSuccessorIndexWithBlockSize() {
             return index + numBytecodes + blockSize;
         }
 
         @Specialization(guards = "isVirtualized(frame)")
-        protected int doPushVirtualized(final VirtualFrame frame) {
+        protected final int doPushVirtualized(final VirtualFrame frame) {
             pushNode.executeWrite(frame, createClosure(frame));
-            return getSuccessorIndex();
+            return getSuccessorIndexWithBlockSize();
         }
 
         @Specialization(guards = "!isVirtualized(frame)")
-        protected int doPush(final VirtualFrame frame) {
+        protected final int doPush(final VirtualFrame frame) {
             pushNode.executeWrite(frame, createClosure(frame));
-            return getSuccessorIndex();
+            return getSuccessorIndexWithBlockSize();
         }
 
         private BlockClosureObject createClosure(final VirtualFrame frame) {
             final Object receiver = receiverNode.executeRead(frame);
             final Object[] copiedValues = (Object[]) popNReversedNode.executeRead(frame);
-            final ContextObject thisContext = getOrCreateContextNode.executeGet(frame, false, false);
+            final ContextObject thisContext = getOrCreateContextNode.executeGet(frame);
             return new BlockClosureObject(getBlock(), blockCallTarget, receiver, copiedValues, thisContext);
         }
 
         @Override
-        public String toString() {
+        public final String toString() {
             final int start = index + numBytecodes;
             final int end = start + blockSize;
             return "closureNumCopied: " + numCopied + " numArgs: " + numArgs + " bytes " + start + " to " + end;

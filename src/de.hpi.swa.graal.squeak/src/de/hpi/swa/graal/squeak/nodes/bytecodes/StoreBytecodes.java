@@ -25,7 +25,7 @@ public final class StoreBytecodes {
         }
 
         @Override
-        public String toString() {
+        public final String toString() {
             return getTypeName() + "IntoLit: " + variableIndex;
         }
     }
@@ -38,7 +38,7 @@ public final class StoreBytecodes {
         }
 
         @Override
-        public void executeVoid(final VirtualFrame frame) {
+        public final void executeVoid(final VirtualFrame frame) {
             storeNode.executeWrite(frame);
         }
 
@@ -57,7 +57,7 @@ public final class StoreBytecodes {
         }
 
         @Override
-        public String toString() {
+        public final String toString() {
             return getTypeName() + "IntoRcvr: " + receiverIndex;
         }
     }
@@ -74,14 +74,14 @@ public final class StoreBytecodes {
         }
 
         @Override
-        public String toString() {
+        public final String toString() {
             return getTypeName() + "IntoTemp: " + indexInArray + " inVectorAt: " + indexOfArray;
         }
     }
 
     private abstract static class AbstractStoreIntoTempNode extends AbstractBytecodeNode {
-        protected final long tempIndex;
         @Child protected TemporaryWriteNode storeNode;
+        protected final long tempIndex;
 
         private AbstractStoreIntoTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long tempIndex) {
             super(code, index, numBytecodes);
@@ -92,7 +92,7 @@ public final class StoreBytecodes {
         protected abstract String getTypeName();
 
         @Override
-        public String toString() {
+        public final String toString() {
             return getTypeName() + "IntoTemp: " + tempIndex;
         }
     }

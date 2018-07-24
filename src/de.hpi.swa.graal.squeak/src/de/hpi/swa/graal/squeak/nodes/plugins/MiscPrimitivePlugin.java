@@ -2,13 +2,15 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 
 import java.util.List;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
-import de.hpi.swa.graal.squeak.exceptions.SqueakException;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
@@ -113,16 +115,107 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveCompressToByteArray")
     public abstract static class PrimCompressToByteArrayNode extends AbstractMiscPrimitiveNode {
+        @CompilationFinal private final ValueProfile bmStorageType = ValueProfile.createClassProfile();
+        @CompilationFinal private final ValueProfile baStorageType = ValueProfile.createClassProfile();
 
         public PrimCompressToByteArrayNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        @SuppressWarnings("unused")
-        @Specialization
-        protected static final Object compress(final AbstractSqueakObject bitmap, final Object bm, final Object from) {
-            // TODO: implement primitive
-            throw new PrimitiveFailed();
+        private static int encodeBytesOf(final int anInt, final byte[] ba, final int i) {
+            ba[i] = (byte) (anInt >> (24 & 0xff));
+            ba[i + 1] = (byte) (anInt >> (16 & 0xff));
+            ba[i + 2] = (byte) (anInt >> (8 & 0xff));
+            ba[i + 3] = (byte) (anInt >> (0 & 0xff));
+            return i + 5;
+        }
+
+        // expects i to be a 1-based (Squeak) index
+        private static int encodeInt(final int anInt, final byte[] ba, final int i) {
+            if (anInt <= 223) {
+                ba[i] = (byte) anInt;
+                return i + 2;
+            }
+            if (anInt <= 7935) {
+                ba[i] = (byte) (anInt / 256 + 224);
+                ba[i + 1] = (byte) (anInt % 256);
+                return i + 3;
+            }
+            ba[i] = (byte) 255;
+            return encodeBytesOf(anInt, ba, i + 1);
+        }
+
+        @Specialization(guards = {"bm.isIntType()", "ba.isByteType()"})
+        protected final long compress(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject bm, final NativeObject ba) {
+            // "Store a run-coded compression of the receiver into the byteArray ba,
+            // and return the last index stored into. ba is assumed to be large enough.
+            // The encoding is as follows...
+            // S {N D}*.
+            // S is the size of the original bitmap, followed by run-coded pairs.
+            // N is a run-length * 4 + data code.
+            // D, the data, depends on the data code...
+            // 0 skip N words, D is absent
+            // 1 N words with all 4 bytes = D (1 byte)
+            // 2 N words all = D (4 bytes)
+            // 3 N words follow in D (4N bytes)
+            // S and N are encoded as follows...
+            // 0-223 0-223
+            // 224-254 (0-30)*256 + next byte (0-7935)
+            // 255 next 4 bytes"
+            final byte[] baBytes = ba.getByteStorage(baStorageType);
+            final int[] bmBytes = bm.getIntStorage(bmStorageType);
+            final int size = bmBytes.length;
+            int i = encodeInt(size, baBytes, 0);
+            int k = 1;
+            while (k <= size) {
+                final int word = bmBytes[k - 1];
+                final int lowByte = word & 0xFF;
+                final boolean eqBytes = (word >> 8 & 0xFF) == lowByte &&
+                                ((word >> 16 & 0xFF) == lowByte && (word >> 24 & 0xFF) == lowByte);
+                int j = k;
+                // scan for equal words...
+                while (j < size && word == bmBytes[j + 1 - 1]) {
+                    j++;
+                }
+                if (j > k) {
+                    // We have two or more equal words, ending at j
+                    if (eqBytes) {
+                        // Actually words of equal bytes
+                        i = encodeInt((j - k + 1) * 4 + 1, baBytes, i);
+                        baBytes[i - 1] = (byte) lowByte;
+                        i++;
+                    } else {
+                        i = encodeInt((j - k + 1) * 4 + 2, baBytes, i);
+                        i = encodeBytesOf(word, baBytes, i - 1);
+                    }
+                    k = j + 1;
+                } else {
+                    // Check for word of 4 == bytes
+                    if (eqBytes) {
+                        // Note 1 word of 4 == bytes
+                        i = encodeInt(1 * 4 + 1, baBytes, i);
+                        baBytes[i - 1] = (byte) lowByte;
+                        i++;
+                        k++;
+                    } else {
+                        // Finally, check for junk
+                        // scan for unequal words...
+                        while (j < size && bmBytes[j - 1] != bmBytes[j + 1 - 1]) {
+                            j++;
+                        }
+                        if (j == size) {
+                            j++;
+                        }
+                        // We have one or more unmatching words, ending at j-1
+                        i = encodeInt((j - k) * 4 + 3, baBytes, i);
+                        for (int m = k; m <= j - 1; m++) {
+                            i = encodeBytesOf(bmBytes[m - 1], baBytes, i - 1);
+                        }
+                        k = j;
+                    }
+                }
+            }
+            return i - 1;
         }
     }
 
@@ -214,7 +307,6 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     public abstract static class PrimFindFirstInStringNode extends AbstractMiscPrimitiveNode {
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
         @Child protected SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
-        @Child private NativeGetBytesNode getBytesNode = NativeGetBytesNode.create();
 
         public PrimFindFirstInStringNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -222,12 +314,12 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "sizeNode.execute(inclusionMap) != 256")
-        protected long doFindNot256(final AbstractSqueakObject receiver, final NativeObject string, final NativeObject inclusionMap, final long start) {
-            return 0;
+        protected static final long doFindNot256(final AbstractSqueakObject receiver, final NativeObject string, final NativeObject inclusionMap, final long start) {
+            return 0L;
         }
 
         @Specialization(guards = "sizeNode.execute(inclusionMap) == 256")
-        protected long doFind(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject string, final NativeObject inclusionMap, final long start) {
+        protected final long doFind(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject string, final NativeObject inclusionMap, final long start) {
             final byte[] stringBytes = getBytesNode.execute(string);
             final int stringSize = stringBytes.length;
             int index = (int) start;
@@ -246,37 +338,97 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveFindSubstring")
-    public abstract static class PrimFindSubstringNode extends AbstractMiscPrimitiveNode {
-        @Child private NativeGetBytesNode getBytesNode = NativeGetBytesNode.create();
+    public abstract static class PrimFindSubstringNode extends AbstractPrimitiveNode {
+        private final ValueProfile byteType = ValueProfile.createClassProfile();
+        private final ValueProfile intType = ValueProfile.createClassProfile();
 
         public PrimFindSubstringNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        @Specialization(guards = "isASCIIOrder(matchTable)")
-        protected long doFindAscii(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject key, final NativeObject body, final long start,
-                        @SuppressWarnings("unused") final NativeObject matchTable) {
-            return getBytesNode.executeAsString(body).indexOf(getBytesNode.executeAsString(key), (int) start - 1) + 1;
+        @Override
+        public final Object executeWithArguments(final VirtualFrame frame, final Object... arguments) {
+            try {
+                return executeWithArgumentsSpecialized(frame, arguments);
+            } catch (ArrayIndexOutOfBoundsException e) {
+                throw new PrimitiveFailed();
+            }
+        }
+
+        @Override
+        public final Object executePrimitive(final VirtualFrame frame) {
+            try {
+                return executeFindSubstring(frame);
+            } catch (ArrayIndexOutOfBoundsException e) {
+                throw new PrimitiveFailed();
+            }
+        }
+
+        public abstract Object executeFindSubstring(VirtualFrame frame);
+
+        @Specialization(guards = {"key.isByteType()", "body.isByteType()", "matchTable.isByteType()"})
+        protected final long doFind(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject key, final NativeObject body, final long start,
+                        final NativeObject matchTable) {
+            final byte[] keyBytes = key.getByteStorage(byteType);
+            final int keyBytesLength = keyBytes.length;
+            if (keyBytesLength == 0) {
+                return 0L;
+            }
+            final byte[] bodyBytes = body.getByteStorage(byteType);
+            final byte[] matchTableBytes = matchTable.getByteStorage(byteType);
+            for (int startIndex = Math.max((int) start - 1, 0); startIndex <= bodyBytes.length - keyBytes.length; startIndex++) {
+                int index = 0;
+                while (matchTableBytes[bodyBytes[startIndex + index]] == matchTableBytes[keyBytes[index]]) {
+                    if (index == keyBytesLength - 1) {
+                        return startIndex + 1;
+                    } else {
+                        index++;
+                    }
+                }
+            }
+            return 0L;
+        }
+
+        @Specialization(guards = {"key.isByteType()", "body.isIntType()", "matchTable.isByteType()"})
+        protected final long doFindWideBody(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject key, final NativeObject body, final long start,
+                        final NativeObject matchTable) {
+            final byte[] keyBytes = key.getByteStorage(byteType);
+            final int keyBytesLength = keyBytes.length;
+            if (keyBytesLength == 0) {
+                return 0L;
+            }
+            final int[] bodyBytes = body.getIntStorage(intType);
+            final byte[] matchTableBytes = matchTable.getByteStorage(byteType);
+            for (int startIndex = Math.max((int) start - 1, 0); startIndex <= bodyBytes.length - keyBytes.length; startIndex++) {
+                int index = 0;
+                while (matchTableBytes[bodyBytes[startIndex + index]] == matchTableBytes[keyBytes[index]]) {
+                    if (index == keyBytesLength - 1) {
+                        return startIndex + 1;
+                    } else {
+                        index++;
+                    }
+                }
+            }
+            return 0L;
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "!isASCIIOrder(matchTable)")
-        protected long doFindWithMatchTable(final AbstractSqueakObject receiver, final NativeObject key, final NativeObject body, final long start, final NativeObject matchTable) {
-            throw new PrimitiveFailed(); // TODO: implement primitive
+        @Specialization(guards = "!key.isByteType() || !matchTable.isByteType()")
+        protected static final long doInvalidKey(final AbstractSqueakObject receiver, final NativeObject key, final NativeObject body, final long start, final NativeObject matchTable) {
+            throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveIndexOfAsciiInString")
     public abstract static class PrimIndexOfAsciiInStringNode extends AbstractMiscPrimitiveNode {
-        @Child private NativeGetBytesNode getBytesNode = NativeGetBytesNode.create();
 
         public PrimIndexOfAsciiInStringNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
         @Specialization(guards = "start >= 0")
-        protected long doNativeObject(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long value, final NativeObject string, final long start) {
+        protected final long doNativeObject(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long value, final NativeObject string, final long start) {
             final byte[] bytes = getBytesNode.execute(string);
             for (int i = (int) (start - 1); i < bytes.length; i++) {
                 if (bytes[i] == value) {
@@ -290,18 +442,18 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveStringHash")
     public abstract static class PrimStringHashNode extends AbstractMiscPrimitiveNode {
-        @Child private NativeGetBytesNode getBytesNode = NativeGetBytesNode.create();
 
         public PrimStringHashNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
         @Specialization
-        protected long doNativeObject(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject string, final long initialHash) {
+        protected final long doNativeObject(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject string, final long initialHash) {
             long hash = initialHash & 0xfffffff;
             long low;
-            for (byte value : getBytesNode.execute(string)) {
-                hash += value & 0xff;
+            final byte[] bytes = getBytesNode.execute(string);
+            for (int i = 0; i < bytes.length; i++) {
+                hash += bytes[i] & 0xff;
                 low = hash & 16383;
                 hash = (0x260D * low + (((0x260d * (hash >> 14) + (0x0065 * low)) & 16383) * 16384)) & 0x0fffffff;
             }
@@ -312,21 +464,21 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveTranslateStringWithTable")
     public abstract static class PrimTranslateStringWithTableNode extends AbstractMiscPrimitiveNode {
-        private final ValueProfile storageType = ValueProfile.createClassProfile();
-        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
+        private final ValueProfile byteType = ValueProfile.createClassProfile();
 
         public PrimTranslateStringWithTableNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        @Specialization(guards = "string.isByteType()")
-        protected NativeObject doNativeObject(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject string, final long start, final long stop, final NativeObject table) {
-            final byte[] bytes = string.getByteStorage(storageType);
+        @Specialization(guards = {"string.isByteType()", "table.isByteType()"})
+        protected final AbstractSqueakObject doNativeObject(final AbstractSqueakObject receiver, final NativeObject string, final long start, final long stop,
+                        final NativeObject table) {
+            final byte[] stringBytes = string.getByteStorage(byteType);
+            final byte[] tableBytes = table.getByteStorage(byteType);
             for (int i = (int) start - 1; i < stop; i++) {
-                final Long tableValue = (Long) at0Node.execute(table, (long) at0Node.execute(string, i));
-                bytes[i] = tableValue.byteValue();
+                stringBytes[i] = tableBytes[stringBytes[i]];
             }
-            return string;
+            return receiver;
         }
     }
 }

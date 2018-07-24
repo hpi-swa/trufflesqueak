@@ -1,7 +1,9 @@
 package de.hpi.swa.graal.squeak.nodes.context;
 
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
@@ -57,6 +59,11 @@ public abstract class SqueakLookupClassNode extends AbstractNodeWithImage {
     @Specialization
     protected static final ClassObject squeakClass(final AbstractSqueakObject value) {
         return value.getSqClass();
+    }
+
+    @Fallback
+    protected static final ClassObject doFail(final Object value) {
+        throw new SqueakException("Unexpected value: " + value);
     }
 
     protected static final boolean isLargeNegative(final long value) {

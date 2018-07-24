@@ -3,7 +3,7 @@ package de.hpi.swa.graal.squeak.nodes.process;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakException;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.LINK;
@@ -43,6 +43,6 @@ public abstract class RemoveFirstLinkOfListNode extends AbstractNodeWithImage {
 
     @Fallback
     protected static final Object doFallback(final Object list) {
-        throw new SqueakException("Unexpected list object: " + list);
+        throw new SqueakException("Unexpected list object:", list);
     }
 }

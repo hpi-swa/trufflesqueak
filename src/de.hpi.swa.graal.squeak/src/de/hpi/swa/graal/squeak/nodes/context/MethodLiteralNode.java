@@ -9,7 +9,6 @@ public final class MethodLiteralNode extends SqueakNode {
     private final Object literal;
 
     public MethodLiteralNode(final CompiledCodeObject code, final long literalIndex) {
-        super();
         literal = code.getLiteral(literalIndex);
     }
 

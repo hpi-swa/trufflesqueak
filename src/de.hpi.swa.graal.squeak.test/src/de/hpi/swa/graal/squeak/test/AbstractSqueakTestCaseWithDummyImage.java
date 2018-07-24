@@ -2,37 +2,9 @@ package de.hpi.swa.graal.squeak.test;
 
 import org.junit.BeforeClass;
 
-import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
+import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 
 public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSqueakTestCase {
-
-    private static final class DummyFormatChunk extends AbstractImageChunk {
-
-        private DummyFormatChunk(final int format) {
-            super(null, null, 0, format, 0, 0, 0);
-        }
-
-        @Override
-        public Object[] getPointers() {
-            final Object[] pointers = new Object[6];
-            pointers[2] = (long) format; // FORMAT_INDEX
-            return pointers;
-        }
-    }
-
-    private static final class DummyPointersChunk extends AbstractImageChunk {
-        private Object[] dummyPointers;
-
-        private DummyPointersChunk(final Object[] pointers) {
-            super(null, null, 0, 0, 0, 0, 0);
-            this.dummyPointers = pointers;
-        }
-
-        @Override
-        public Object[] getPointers() {
-            return dummyPointers;
-        }
-    }
 
     @BeforeClass
     public static void setUpSqueakImageContext() {
@@ -69,7 +41,10 @@ public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSquea
         image.newWithArg.setStorage("newWithArg".getBytes());
         image.x.setStorage("x".getBytes());
         image.y.setStorage("y".getBytes());
-        image.specialObjectsArray.fillin(new DummyPointersChunk(new Object[100]));
-        image.compiledMethodClass.fillin(new DummyFormatChunk(100)); // sets instanceSize to 100
+        image.specialObjectsArray.setPointers(new Object[100]);
+        final Object[] pointers = new Object[]{
+                        null, null, 100L, null, null, null}; // sets instanceSize to 100
+        final SqueakImageChunk fakeChunk = SqueakImageChunk.createDummyChunk(pointers);
+        image.compiledMethodClass.fillin(fakeChunk);
     }
 }

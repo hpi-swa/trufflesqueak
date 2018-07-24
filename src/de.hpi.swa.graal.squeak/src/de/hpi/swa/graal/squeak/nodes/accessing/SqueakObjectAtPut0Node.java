@@ -6,7 +6,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakException;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
@@ -29,8 +29,8 @@ public abstract class SqueakObjectAtPut0Node extends Node {
 
     public abstract void execute(Object obj, long index, Object value);
 
-    @Specialization(guards = {"!obj.isClass()"})
-    protected static final void doAbstractPointers(final PointersObject obj, final long index, final Object value) {
+    @Specialization
+    protected static final void doPointers(final PointersObject obj, final long index, final Object value) {
         obj.atput0(index, value);
     }
 
@@ -177,12 +177,12 @@ public abstract class SqueakObjectAtPut0Node extends Node {
         obj.setNativeAt0(index, value.longValueExact());
     }
 
-    @Specialization
+    @Specialization(guards = {"index == 0 || index == 1", "value >= 0", "value <= INTEGER_MAX"})
     protected static final void doFloat(final FloatObject obj, final long index, final long value) {
         obj.setNativeAt0(index, value);
     }
 
-    @Specialization
+    @Specialization(guards = {"index == 0 || index == 1", "!value.inRange(0, INTEGER_MAX)"})
     protected static final void doFloat(final FloatObject obj, final long index, final LargeIntegerObject value) {
         obj.setNativeAt0(index, value.longValueExact());
     }
@@ -212,6 +212,6 @@ public abstract class SqueakObjectAtPut0Node extends Node {
     @SuppressWarnings("unused")
     @Fallback
     protected static final void doFallback(final Object obj, final long index, final Object value) {
-        throw new SqueakException("Object does not support atput0: " + obj);
+        throw new SqueakException("Object does not support atput0:", obj);
     }
 }

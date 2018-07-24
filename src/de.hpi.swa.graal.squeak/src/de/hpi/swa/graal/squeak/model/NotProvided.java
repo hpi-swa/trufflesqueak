@@ -16,7 +16,7 @@ public final class NotProvided implements TruffleObject {
     }
 
     public static boolean isInstance(final Object obj) {
-        return obj instanceof NotProvided;
+        return obj == INSTANCE;
     }
 
     public ForeignAccess getForeignAccess() {

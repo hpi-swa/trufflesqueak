@@ -29,20 +29,20 @@ public abstract class HandlePrimitiveFailedNode extends AbstractNodeWithCode {
      * Look up error symbol in error table and push it to stack. The fallback code pops the error
      * symbol into the corresponding temporary variable.
      */
-    @Specialization(guards = "followedByExtendedStore()")
+    @Specialization(guards = "followedByExtendedStore(code)")
     protected final void doHandle(final VirtualFrame frame, final PrimitiveFailed e) {
         pushNode.executeWrite(frame, getErrorTable().at0(e.getReasonCode()));
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "!followedByExtendedStore()")
-    protected static final void doNothing(final VirtualFrame frame, final PrimitiveFailed e) {
-        // do nothing
+    @Specialization(guards = "!followedByExtendedStore(code)")
+    protected static final void doNothing(final PrimitiveFailed e) {
+        // nothing to do
     }
 
-    protected final boolean followedByExtendedStore() {
+    protected static final boolean followedByExtendedStore(final CompiledCodeObject codeObject) {
         // fourth bytecode indicates extended store after callPrimitive
-        return code.getBytes()[3] == (byte) 0x81;
+        return codeObject.getBytes()[3] == (byte) 0x81;
     }
 
     private PointersObject getErrorTable() {

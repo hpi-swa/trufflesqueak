@@ -30,7 +30,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakException;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.io.SqueakIOConstants.KEYBOARD;
 import de.hpi.swa.graal.squeak.model.NativeObject;
@@ -39,6 +39,7 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 
 public final class SqueakDisplayJFrame extends SqueakDisplay {
     private static final String DEFAULT_WINDOW_TITLE = "GraalSqueak";
+    private static final Dimension MINIMUM_WINDOW_SIZE = new Dimension(200, 150);
     private static final Toolkit TOOLKIT = Toolkit.getDefaultToolkit();
     @CompilationFinal(dimensions = 1) private static final byte[] BLACK_AND_WHITE = new byte[]{(byte) 255, (byte) 0};
     @CompilationFinal(dimensions = 1) private static final byte[] ALPHA_COMPONENT = new byte[]{(byte) 0, (byte) 255};
@@ -70,6 +71,7 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
 
         frame.setTitle(SqueakDisplayJFrame.DEFAULT_WINDOW_TITLE + " (" + image.config.getImagePath() + ")");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setMinimumSize(MINIMUM_WINDOW_SIZE);
         frame.getContentPane().add(canvas);
         frame.setResizable(true);
         frame.addComponentListener(new ComponentAdapter() {
@@ -91,7 +93,7 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
 
         @Override
         public void paintComponent(final Graphics g) {
-            if (deferUpdates || bitmap == null) {
+            if (bitmap == null) {
                 return;
             }
             //@formatter:off
@@ -110,7 +112,7 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
                     bufferedImage.setRGB(0, 0, drawWidth, drawHeight, words, 0, width);
                     break;
                 default:
-                    throw new SqueakException("Unsupported form depth: " + depth);
+                    throw new SqueakException("Unsupported form depth:",  depth);
             }
             //@formatter:on
             g.drawImage(bufferedImage, 0, 0, null);
@@ -173,9 +175,9 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
             if (!bitmap.isIntType()) {
                 throw new SqueakException("Display bitmap expected to be a words object");
             }
-            this.width = ((Long) sqDisplay.at0(FORM.WIDTH)).intValue();
-            this.height = ((Long) sqDisplay.at0(FORM.HEIGHT)).intValue();
-            this.depth = ((Long) sqDisplay.at0(FORM.DEPTH)).intValue();
+            this.width = (int) (long) sqDisplay.at0(FORM.WIDTH);
+            this.height = (int) (long) sqDisplay.at0(FORM.HEIGHT);
+            this.depth = (int) (long) sqDisplay.at0(FORM.DEPTH);
         }
     }
 
@@ -188,7 +190,9 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
     @Override
     @TruffleBoundary
     public void forceUpdate() {
-        canvas.repaint();
+        if (deferUpdates) {
+            canvas.repaint();
+        }
     }
 
     @Override
@@ -208,21 +212,22 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
 
     @Override
     public Dimension getSize() {
-        return frame.getSize();
+        return canvas.getSize();
     }
 
     @Override
     public void adjustDisplay(final long depth, final long width, final long height, final boolean fullscreen) {
-        canvas.depth = ((Long) depth).intValue();
-        canvas.width = ((Long) width).intValue();
-        canvas.height = ((Long) height).intValue();
-        frame.setSize(canvas.width, canvas.height);
+        canvas.depth = (int) depth;
+        canvas.width = (int) width;
+        canvas.height = (int) height;
         setFullscreen(fullscreen);
     }
 
     @Override
+    @TruffleBoundary
     public void resizeTo(final int width, final int height) {
-        frame.setSize(width, height);
+        frame.getContentPane().setPreferredSize(new Dimension(width, height));
+        frame.pack();
     }
 
     @Override

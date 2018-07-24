@@ -7,6 +7,7 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 
 @ImportStatic(CONTEXT.class)
@@ -25,10 +26,16 @@ public abstract class FrameStackReadNode extends Node {
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"index == cachedIndex"}, limit = "MAX_STACK_SIZE")
-    protected static final Object readInt(final Frame frame, final int index,
+    protected static final Object doRead(final Frame frame, final int index,
                     @Cached("index") final int cachedIndex,
                     @Cached("getFrameSlotForIndex(frame, index)") final FrameSlot slot,
                     @Cached("create(slot)") final FrameSlotReadNode readNode) {
         return readNode.executeRead(frame);
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(replaces = "doRead")
+    protected static final Object doFail(final Frame frame, final int stackIndex) {
+        throw new SqueakException("Unexpected failure in FrameStackReadNode");
     }
 }

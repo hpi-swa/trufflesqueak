@@ -1,13 +1,6 @@
 package de.hpi.swa.graal.squeak.model;
 
-import java.util.Arrays;
-
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.RootCallTarget;
-import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.nodes.ExplodeLoop;
-import com.oracle.truffle.api.nodes.NodeUtil;
-import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -16,7 +9,7 @@ public final class CompiledMethodObject extends CompiledCodeObject {
     protected final ValueProfile storageType = ValueProfile.createClassProfile();
 
     public CompiledMethodObject(final SqueakImageContext img) {
-        super(img);
+        super(img, 0);
     }
 
     public CompiledMethodObject(final SqueakImageContext img, final byte[] bc, final Object[] lits) {
@@ -27,7 +20,7 @@ public final class CompiledMethodObject extends CompiledCodeObject {
     }
 
     public CompiledMethodObject(final SqueakImageContext img, final ClassObject klass, final int size) {
-        super(img, klass);
+        super(img, klass, 0);
         bytes = new byte[size];
     }
 
@@ -132,49 +125,7 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         return getBytecodeOffset() + 1;
     }
 
-    @Override
-    public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
-        super.pointersBecomeOneWay(from, to, copyHash);
-        final ClassObject oldClass = getCompiledInClass();
-        for (int i = 0; i < from.length; i++) {
-            if (from[i] == oldClass) {
-                final ClassObject newClass = (ClassObject) to[i];  // must be a ClassObject
-                setCompiledInClass(newClass);
-                if (copyHash) {
-                    newClass.setSqueakHash(oldClass.squeakHash());
-                }
-                // TODO: flush method caches
-            }
-        }
-    }
-
-    @Override
-    @ExplodeLoop
-    public RootCallTarget getSplitCallTarget() {
-        final RootCallTarget target = getCallTarget();
-        final NativeObject selector = getCompiledInSelector();
-        if (hasPrimitive()) {
-            return split(target);
-        }
-        for (int i = 0; i < image.specialSelectorsArray.length; i++) {
-            if (Arrays.equals(image.specialSelectorsArray[i].getByteStorage(storageType), selector.getByteStorage(storageType))) {
-                return split(target);
-            }
-        }
-        return target;
-    }
-
     public int size() {
         return getBytecodeOffset() + bytes.length;
     }
-
-    /**
-     * Replicate the CallTarget to let each builtin call site executes its own AST.
-     */
-    private static RootCallTarget split(final RootCallTarget callTarget) {
-        CompilerAsserts.neverPartOfCompilation();
-        final RootNode rootNode = callTarget.getRootNode();
-        return Truffle.getRuntime().createCallTarget(NodeUtil.cloneNode(rootNode));
-    }
-
 }

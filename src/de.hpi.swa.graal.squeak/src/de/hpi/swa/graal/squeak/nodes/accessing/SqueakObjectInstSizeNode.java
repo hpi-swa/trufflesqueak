@@ -1,8 +1,10 @@
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
@@ -79,4 +81,8 @@ public abstract class SqueakObjectInstSizeNode extends Node {
         return 0;
     }
 
+    @Fallback
+    protected static final int doFail(final AbstractSqueakObject object) {
+        throw new SqueakException("Unexpected value:", object);
+    }
 }

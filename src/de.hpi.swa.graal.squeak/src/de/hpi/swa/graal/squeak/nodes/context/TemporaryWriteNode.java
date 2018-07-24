@@ -1,21 +1,24 @@
 package de.hpi.swa.graal.squeak.nodes.context;
 
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
-import de.hpi.swa.graal.squeak.nodes.AbstractWriteNode;
+import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotWriteNode;
 
-public abstract class TemporaryWriteNode extends AbstractWriteNode {
+public abstract class TemporaryWriteNode extends AbstractNode {
     @Child private FrameSlotWriteNode frameSlotWriteNode;
     private final long tempIndex;
 
     public static TemporaryWriteNode create(final CompiledCodeObject code, final long tempIndex) {
         return TemporaryWriteNodeGen.create(code, tempIndex);
     }
+
+    public abstract void executeWrite(VirtualFrame frame, Object value);
 
     protected TemporaryWriteNode(final CompiledCodeObject code, final long tempIndex) {
         this.tempIndex = tempIndex;
@@ -36,7 +39,7 @@ public abstract class TemporaryWriteNode extends AbstractWriteNode {
         frameSlotWriteNode.executeWrite(frame, value);
     }
 
-    @Specialization(guards = {"!isVirtualized(frame)"})
+    @Fallback
     protected final void doWrite(final VirtualFrame frame, final Object value) {
         assert value != null;
         getContext(frame).atTempPut(tempIndex, value);

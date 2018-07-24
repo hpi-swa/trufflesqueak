@@ -11,7 +11,7 @@ import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakException;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
@@ -76,7 +76,6 @@ public class FrameAccess {
         try {
             return frame.getObject(CompiledCodeObject.thisContextOrMarkerSlot);
         } catch (FrameSlotTypeException e) {
-            CompilerDirectives.transferToInterpreter();
             throw new SqueakException("thisContextOrMarkerSlot should never be invalid");
         }
     }
@@ -94,6 +93,7 @@ public class FrameAccess {
 
     @TruffleBoundary
     public static final Frame findFrameForMarker(final FrameMarker frameMarker) {
+        CompilerDirectives.bailout("Finding materializable frames should never be part of compiled code as it triggers deopts");
         return Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Frame>() {
             @Override
             public Frame visitFrame(final FrameInstance frameInstance) {

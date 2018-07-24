@@ -25,7 +25,7 @@ public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"id == 1"})
         protected final Object doSize(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final long id) {
-            code.image.display.close();
+            code.image.getDisplay().close();
             return receiver;
         }
     }
@@ -53,7 +53,7 @@ public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"id == 1"})
         protected final Object doSize(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final long id, final long width, final long height) {
-            code.image.display.resizeTo((int) width, (int) height);
+            code.image.getDisplay().resizeTo((int) width, (int) height);
             return receiver;
         }
     }
@@ -69,7 +69,7 @@ public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"id == 1"})
         protected final Object doTitle(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final long id, final NativeObject title) {
-            code.image.display.setWindowTitle(getBytesNode.executeAsString(title));
+            code.image.getDisplay().setWindowTitle(getBytesNode.executeAsString(title));
             return receiver;
         }
     }

@@ -9,10 +9,8 @@ import java.util.concurrent.TimeUnit;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.DirectCallNode;
-import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -23,14 +21,13 @@ import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotWriteNode;
 import de.hpi.swa.graal.squeak.nodes.process.SignalSemaphoreNode;
 
-public final class InterruptHandlerNode extends RootNode {
+public final class InterruptHandlerNode extends Node {
     private static final int INTERRUPT_CHECKS_EVERY_N_MILLISECONDS = 3;
     private final SqueakImageContext image;
     private final boolean disabled;
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     private final ConditionProfile countingProfile = ConditionProfile.createCountingProfile();
     private final Deque<Integer> semaphoresToSignal = new ArrayDeque<>();
-    private final DirectCallNode callNode;
 
     @Child private GetOrCreateContextNode contextNode = GetOrCreateContextNode.create();
     @Child private FrameSlotWriteNode contextWriteNode = FrameSlotWriteNode.createForContextOrMarker();
@@ -46,15 +43,8 @@ public final class InterruptHandlerNode extends RootNode {
         return new InterruptHandlerNode(image, config);
     }
 
-    @Override
-    public String getName() {
-        return "<interrupt check>";
-    }
-
     protected InterruptHandlerNode(final SqueakImageContext image, final SqueakConfig config) {
-        super(image.getLanguage(), CompiledCodeObject.frameDescriptorTemplate.shallowCopy());
         this.image = image;
-        this.callNode = DirectCallNode.create(Truffle.getRuntime().createCallTarget(this));
 
         disabled = config.disableInterruptHandler();
         if (disabled) {
@@ -124,16 +114,10 @@ public final class InterruptHandlerNode extends RootNode {
         if (countingProfile.profile(!shouldTrigger)) {
             return;
         }
-        doTrigger(frame);
+        trigger(frame);
     }
 
-    public void doTrigger(final VirtualFrame frame) {
-        callNode.call(new Object[]{contextNode.executeGet(frame, false, false)});
-    }
-
-    @Override
-    public Object execute(final VirtualFrame frame) {
-        contextWriteNode.executeWrite(frame, frame.getArguments()[0]);
+    public Object trigger(final VirtualFrame frame) {
         shouldTrigger = false;
         if (interruptPending) {
             interruptPending = false; // reset interrupt flag
@@ -164,7 +148,7 @@ public final class InterruptHandlerNode extends RootNode {
     }
 
     @TruffleBoundary
-    private Integer nextSemaphoreToSignal() {
+    private int nextSemaphoreToSignal() {
         return semaphoresToSignal.removeFirst();
     }
 

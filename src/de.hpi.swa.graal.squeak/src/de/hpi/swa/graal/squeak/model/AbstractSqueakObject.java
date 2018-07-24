@@ -1,11 +1,11 @@
 package de.hpi.swa.graal.squeak.model;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
 
-import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.instrumentation.SqueakObjectMessageResolutionForeign;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
@@ -13,6 +13,7 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 public abstract class AbstractSqueakObject implements TruffleObject {
     private static final int IDENTITY_HASH_MASK = 0x400000 - 1;
     private static final byte PINNED_BIT_SHIFT = 30;
+
     public final SqueakImageContext image;
 
     @CompilationFinal private long hash;
@@ -24,17 +25,14 @@ public abstract class AbstractSqueakObject implements TruffleObject {
 
     protected AbstractSqueakObject(final SqueakImageContext image, final ClassObject klass) {
         this.image = image;
-        setSqueakHash(hashCode() & IDENTITY_HASH_MASK);
-        setSqClass(klass);
+        this.hash = hashCode() & IDENTITY_HASH_MASK;
+        this.sqClass = klass;
     }
 
-    public static final boolean isInstance(final TruffleObject obj) {
-        return obj instanceof AbstractSqueakObject;
-    }
-
-    public void fillin(final AbstractImageChunk chunk) {
-        setSqueakHash(chunk.getHash());
-        setSqClass(chunk.getSqClass());
+    protected AbstractSqueakObject(final SqueakImageContext image, final long hash, final ClassObject klass) {
+        this.image = image;
+        this.hash = hash;
+        this.sqClass = klass;
     }
 
     @Override
@@ -74,11 +72,8 @@ public abstract class AbstractSqueakObject implements TruffleObject {
 
     public final boolean isClass() {
         assert !(this instanceof ClassObject) || (image.metaclass == getSqClass() || image.metaclass == getSqClass().getSqClass());
+        CompilerAsserts.neverPartOfCompilation();
         return this instanceof ClassObject;
-    }
-
-    public final boolean isNil() {
-        return this instanceof NilObject;
     }
 
     public final boolean isSpecialKindAt(final long index) {
@@ -93,29 +88,10 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         return isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassSemaphore);
     }
 
-    public boolean become(final AbstractSqueakObject other) {
+    public final void becomeOtherClass(final AbstractSqueakObject other) {
         final ClassObject otherSqClass = other.sqClass;
         other.setSqClass(this.sqClass);
         this.setSqClass(otherSqClass);
-        return true;
-    }
-
-    public void pointersBecomeOneWay(final Object[] from, final Object[] to, final boolean copyHash) {
-        final ClassObject oldClass = getSqClass();
-        for (int i = 0; i < from.length; i++) {
-            if (from[i] == oldClass) {
-                final ClassObject newClass = (ClassObject) to[i]; // must be a ClassObject
-                setSqClass(newClass);
-                if (copyHash) {
-                    newClass.setSqueakHash(oldClass.squeakHash());
-                }
-            }
-        }
-    }
-
-    @Override
-    public final ForeignAccess getForeignAccess() {
-        return SqueakObjectMessageResolutionForeign.ACCESS;
     }
 
     public final boolean isPinned() {
@@ -128,5 +104,18 @@ public abstract class AbstractSqueakObject implements TruffleObject {
 
     public final void unsetPinned() {
         setSqueakHash(hash & ~(1 << PINNED_BIT_SHIFT));
+    }
+
+    /*
+     * Methods for Truffle.
+     */
+
+    @Override
+    public final ForeignAccess getForeignAccess() {
+        return SqueakObjectMessageResolutionForeign.ACCESS;
+    }
+
+    public static final boolean isInstance(final TruffleObject obj) {
+        return obj instanceof AbstractSqueakObject;
     }
 }

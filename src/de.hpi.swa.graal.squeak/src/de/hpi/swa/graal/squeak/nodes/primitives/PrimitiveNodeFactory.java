@@ -11,6 +11,7 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
 import de.hpi.swa.graal.squeak.nodes.context.ArgumentNode;
+import de.hpi.swa.graal.squeak.nodes.plugins.BMPReadWriterPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.FilePlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.FloatArrayPlugin;
@@ -48,6 +49,7 @@ public final class PrimitiveNodeFactory {
                     new StoragePrimitives()};
     @CompilationFinal(dimensions = 1) private static final AbstractPrimitiveFactoryHolder[] plugins = new AbstractPrimitiveFactoryHolder[]{
                     new BitBltPlugin(),
+                    new BMPReadWriterPlugin(),
                     new FilePlugin(),
                     new FloatArrayPlugin(),
                     new GraalSqueakPlugin(),

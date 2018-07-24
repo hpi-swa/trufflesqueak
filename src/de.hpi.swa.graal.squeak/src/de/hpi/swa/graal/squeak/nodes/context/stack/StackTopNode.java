@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.context.stack;
 
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -20,7 +21,7 @@ public abstract class StackTopNode extends AbstractStackNode {
         return readNode.execute(frame, frameStackPointer(frame));
     }
 
-    @Specialization(guards = {"!isVirtualized(frame)"})
+    @Fallback
     protected final Object doTop(final VirtualFrame frame) {
         return getContext(frame).top();
     }

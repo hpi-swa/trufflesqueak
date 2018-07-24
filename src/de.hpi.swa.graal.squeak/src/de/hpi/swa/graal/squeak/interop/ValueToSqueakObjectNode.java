@@ -2,8 +2,10 @@ package de.hpi.swa.graal.squeak.interop;
 
 import org.graalvm.polyglot.Value;
 
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
 
@@ -20,27 +22,32 @@ public abstract class ValueToSqueakObjectNode extends AbstractNodeWithCode {
     public abstract Object executeValue(Value value);
 
     @Specialization(guards = {"value.isNull()"})
-    protected Object doNil(@SuppressWarnings("unused") final Value value) {
+    protected final Object doNil(@SuppressWarnings("unused") final Value value) {
         return code.image.nil;
     }
 
     @Specialization(guards = {"value.isBoolean()"})
-    protected Object doBoolean(final Value value) {
+    protected final Object doBoolean(final Value value) {
         return code.image.wrap(value.asBoolean());
     }
 
     @Specialization(guards = {"value.fitsInLong()"})
-    protected Object doLong(final Value value) {
+    protected final Object doLong(final Value value) {
         return code.image.wrap(value.asLong());
     }
 
     @Specialization(guards = {"value.fitsInDouble()"})
-    protected Object doDouble(final Value value) {
+    protected final Object doDouble(final Value value) {
         return code.image.wrap(value.asDouble());
     }
 
     @Specialization(guards = {"value.isString()"})
-    protected Object doString(final Value value) {
+    protected final Object doString(final Value value) {
         return code.image.wrap(value.asString());
+    }
+
+    @Fallback
+    protected static final Object doFail(final Value value) {
+        throw new SqueakException("Unexpected Value: ", value);
     }
 }

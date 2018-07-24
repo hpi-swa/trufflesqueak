@@ -1,14 +1,15 @@
 package de.hpi.swa.graal.squeak.nodes.context.stack;
 
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.graal.squeak.nodes.AbstractWriteNode;
+import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotWriteNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
 
-public abstract class StackPushNode extends AbstractWriteNode {
+public abstract class StackPushNode extends AbstractNode {
     @Child private FrameStackWriteNode writeNode = FrameStackWriteNode.create();
     @Child private FrameSlotReadNode stackPointerReadNode = FrameSlotReadNode.createForStackPointer();
     @Child private FrameSlotWriteNode stackPointerWriteNode = FrameSlotWriteNode.createForStackPointer();
@@ -16,6 +17,8 @@ public abstract class StackPushNode extends AbstractWriteNode {
     public static StackPushNode create() {
         return StackPushNodeGen.create();
     }
+
+    public abstract void executeWrite(VirtualFrame frame, Object value);
 
     protected final int getFrameStackPointer(final VirtualFrame frame) {
         return (int) stackPointerReadNode.executeRead(frame);
@@ -33,7 +36,7 @@ public abstract class StackPushNode extends AbstractWriteNode {
         setFrameStackPointer(frame, newSP);
     }
 
-    @Specialization(guards = {"!isVirtualized(frame)"})
+    @Fallback
     protected final void doWrite(final VirtualFrame frame, final Object value) {
         assert value != null;
         getContext(frame).push(value);
