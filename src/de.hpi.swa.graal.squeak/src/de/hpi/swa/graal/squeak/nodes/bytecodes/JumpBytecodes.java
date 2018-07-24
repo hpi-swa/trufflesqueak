@@ -1,7 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -9,8 +8,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
-import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodesFactory.ConditionalJumpNodeFactory.HandleConditionResultNodeGen;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
@@ -76,8 +73,6 @@ public final class JumpBytecodes {
             @Child private StackPushNode pushNode;
             @Child private AbstractSendNode sendMustBeBooleanNode;
 
-            @CompilationFinal private static NativeObject mustBeBooleanSelector;
-
             protected static HandleConditionResultNode create(final CompiledCodeObject code) {
                 return HandleConditionResultNodeGen.create(code);
             }
@@ -112,17 +107,9 @@ public final class JumpBytecodes {
             private AbstractSendNode getSendMustBeBooleanNode() {
                 if (sendMustBeBooleanNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    sendMustBeBooleanNode = insert(new SendSelectorNode(code, -1, 1, getMustBeBooleanSelector(), 0));
+                    sendMustBeBooleanNode = insert(new SendSelectorNode(code, -1, 1, code.image.mustBeBooleanSelector, 0));
                 }
                 return sendMustBeBooleanNode;
-            }
-
-            private NativeObject getMustBeBooleanSelector() {
-                if (mustBeBooleanSelector == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    mustBeBooleanSelector = (NativeObject) code.image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SelectorMustBeBoolean);
-                }
-                return mustBeBooleanSelector;
             }
         }
     }

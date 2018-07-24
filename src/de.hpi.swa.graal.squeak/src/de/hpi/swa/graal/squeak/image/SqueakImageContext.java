@@ -29,9 +29,7 @@ import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.ASSOCIATION;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.POINT;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.graal.squeak.nodes.process.GetActiveProcessNode;
@@ -42,30 +40,42 @@ import de.hpi.swa.graal.squeak.util.OSDetector;
 import de.hpi.swa.graal.squeak.util.SqueakConfig;
 
 public final class SqueakImageContext {
-    // Special objects
-    public final NilObject nil = new NilObject(this);
+
     public final boolean sqFalse = false;
     public final boolean sqTrue = true;
-    public final PointersObject specialObjectsArray = new PointersObject(this);
-    public final PointersObject schedulerAssociation = new PointersObject(this);
-    public final ClassObject characterClass = new ClassObject(this);
-    public final ClassObject smallIntegerClass = new ClassObject(this);
-    public final ClassObject arrayClass = new ClassObject(this);
-    public final PointersObject smalltalk = new PointersObject(this);
-    public final NativeObject doesNotUnderstand = new NativeObject(this);
-    public final PointersObject specialSelectors = new PointersObject(this);
-    public final NativeObject mustBeBoolean = new NativeObject(this);
-    public final ClassObject metaclass = new ClassObject(this);
-    public final ClassObject methodContextClass = new ClassObject(this);
-    public final ClassObject nilClass = new ClassObject(this);
+    // Special objects
+    public final NilObject nil = new NilObject(this);
     public final ClassObject trueClass = new ClassObject(this);
     public final ClassObject falseClass = new ClassObject(this);
+    public final PointersObject schedulerAssociation = new PointersObject(this);
+    public final ClassObject bitmapClass = new ClassObject(this);
+    public final ClassObject smallIntegerClass = new ClassObject(this);
     public final ClassObject stringClass = new ClassObject(this);
-    public final ClassObject compiledMethodClass = new ClassObject(this);
-    public final ClassObject blockClosureClass = new ClassObject(this);
-    public final ClassObject largePositiveIntegerClass = new ClassObject(this);
-    public final ClassObject largeNegativeIntegerClass = new ClassObject(this);
+    public final ClassObject arrayClass = new ClassObject(this);
+    public final PointersObject smalltalk = new PointersObject(this);
     public final ClassObject floatClass = new ClassObject(this);
+    public final ClassObject methodContextClass = new ClassObject(this);
+    public final ClassObject pointClass = new ClassObject(this);
+    public final ClassObject largePositiveIntegerClass = new ClassObject(this);
+    public final ClassObject messageClass = new ClassObject(this);
+    public final ClassObject compiledMethodClass = new ClassObject(this);
+    public final ClassObject semaphoreClass = new ClassObject(this);
+    public final ClassObject characterClass = new ClassObject(this);
+    public final NativeObject doesNotUnderstand = new NativeObject(this);
+    public final NativeObject mustBeBooleanSelector = new NativeObject(this);
+    public final ClassObject byteArrayClass = new ClassObject(this);
+    public final ClassObject processClass = new ClassObject(this);
+    public final ClassObject blockClosureClass = new ClassObject(this);
+    public final PointersObject externalObjectsArray = new PointersObject(this);
+    public final ClassObject largeNegativeIntegerClass = new ClassObject(this);
+    public final NativeObject aboutToReturnSelector = new NativeObject(this);
+    public final NativeObject runWithInSelector = new NativeObject(this);
+    public final PointersObject primitiveErrorTable = new PointersObject(this);
+    public final PointersObject specialSelectors = new PointersObject(this);
+
+    public final PointersObject specialObjectsArray = new PointersObject(this);
+    public final ClassObject metaclass = new ClassObject(this);
+    public final ClassObject nilClass = new ClassObject(this);
 
     private final SqueakLanguage language;
     private final PrintWriter output;
@@ -213,8 +223,7 @@ public final class SqueakImageContext {
     public PointersObject getScheduler() {
         if (scheduler == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            final PointersObject association = (PointersObject) specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SchedulerAssociation);
-            scheduler = (PointersObject) association.at0(ASSOCIATION.VALUE);
+            scheduler = (PointersObject) schedulerAssociation.at0(ASSOCIATION.VALUE);
         }
         return scheduler;
     }
@@ -269,7 +278,7 @@ public final class SqueakImageContext {
     }
 
     public NativeObject wrap(final byte[] bytes) {
-        return NativeObject.newNativeBytes(this, (ClassObject) specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.ClassByteArray), bytes);
+        return NativeObject.newNativeBytes(this, byteArrayClass, bytes);
     }
 
     public static char wrap(final char character) {
@@ -303,11 +312,7 @@ public final class SqueakImageContext {
     }
 
     public PointersObject newPoint(final Object xPos, final Object yPos) {
-        final ClassObject pointClass = (ClassObject) specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.ClassPoint);
-        final PointersObject newPoint = (PointersObject) pointClass.newInstance();
-        newPoint.atput0(POINT.X, xPos);
-        newPoint.atput0(POINT.Y, yPos);
-        return newPoint;
+        return new PointersObject(this, pointClass, new Object[]{xPos, yPos});
     }
 
     public NativeObject newSymbol(final String value) {

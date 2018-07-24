@@ -16,8 +16,6 @@ import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
-import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
 
@@ -74,10 +72,6 @@ public abstract class AbstractPrimitiveNode extends AbstractNodeWithCode impleme
 
     protected static final boolean isEmptyObject(final AbstractSqueakObject object) {
         return object instanceof EmptyObject;
-    }
-
-    protected static final boolean isSemaphore(final PointersObject receiver) {
-        return receiver.isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassSemaphore);
     }
 
     protected final LargeIntegerObject asLargeInteger(final long value) {

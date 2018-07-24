@@ -142,7 +142,7 @@ public final class ObjectLayouts {
         public static final int TrueObject = 2;
         public static final int SchedulerAssociation = 3;
         public static final int ClassBitmap = 4;
-        public static final int ClassInteger = 5;
+        public static final int ClassSmallInteger = 5;
         public static final int ClassString = 6;
         public static final int ClassArray = 7;
         public static final int SmalltalkDictionary = 8;

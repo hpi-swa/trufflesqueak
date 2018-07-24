@@ -9,7 +9,6 @@ import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.SendSelectorNode;
 import de.hpi.swa.graal.squeak.nodes.context.TemporaryReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.TemporaryWriteNode;
@@ -24,10 +23,6 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
 
     protected AboutToReturnNode(final CompiledCodeObject code) {
         super(code);
-    }
-
-    private Object aboutToReturnSelector() {
-        return code.image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SelectorAboutToReturn);
     }
 
     /*
@@ -80,6 +75,6 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
     }
 
     protected final SendSelectorNode createAboutToReturnSend() {
-        return new SendSelectorNode(code, -1, -1, aboutToReturnSelector(), 2);
+        return new SendSelectorNode(code, -1, -1, code.image.aboutToReturnSelector, 2);
     }
 }

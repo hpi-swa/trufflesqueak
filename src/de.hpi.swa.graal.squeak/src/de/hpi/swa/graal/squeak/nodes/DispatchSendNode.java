@@ -1,7 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -11,7 +10,6 @@ import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.MESSAGE;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.IsDoesNotUnderstandNode;
 import de.hpi.swa.graal.squeak.nodes.context.SqueakLookupClassNode;
@@ -22,9 +20,6 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
     @Child private DispatchNode dispatchNode = DispatchNode.create();
     @Child private SqueakLookupClassNode lookupClassNode;
     @Child private LookupNode lookupNode;
-
-    @CompilationFinal private ClassObject messageClass;
-    @CompilationFinal private Object runWithIn;
 
     public static DispatchSendNode create(final SqueakImageContext image) {
         return DispatchSendNodeGen.create(image);
@@ -56,7 +51,7 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
                     final Object[] rcvrAndArgs, final Object contextOrMarker) {
         final Object[] arguments = ArrayUtils.allButFirst(rcvrAndArgs);
         final ClassObject targetClass = getLookupClassNode().executeLookup(targetObject);
-        final Object newLookupResult = getLookupNode().executeLookup(targetClass, getRunWithIn());
+        final Object newLookupResult = getLookupNode().executeLookup(targetClass, image.runWithInSelector);
         if (isDoesNotUnderstandNode.execute(newLookupResult)) {
             return dispatchNode.executeDispatch(frame, newLookupResult, new Object[]{targetObject, createMessage(selector, targetClass, arguments)}, contextOrMarker);
         } else {
@@ -81,7 +76,7 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
     }
 
     private PointersObject createMessage(final NativeObject selector, final ClassObject rcvrClass, final Object[] arguments) {
-        final PointersObject message = (PointersObject) getMessageClass().newInstance();
+        final PointersObject message = (PointersObject) image.messageClass.newInstance();
         message.atput0(MESSAGE.SELECTOR, selector);
         message.atput0(MESSAGE.ARGUMENTS, image.newList(arguments));
         if (message.instsize() > MESSAGE.LOOKUP_CLASS) {
@@ -89,21 +84,5 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
             message.atput0(MESSAGE.LOOKUP_CLASS, rcvrClass);
         }
         return message;
-    }
-
-    private ClassObject getMessageClass() {
-        if (messageClass == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            messageClass = (ClassObject) image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.ClassMessage);
-        }
-        return messageClass;
-    }
-
-    private Object getRunWithIn() {
-        if (runWithIn == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            runWithIn = image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SelectorRunWithIn);
-        }
-        return runWithIn;
     }
 }

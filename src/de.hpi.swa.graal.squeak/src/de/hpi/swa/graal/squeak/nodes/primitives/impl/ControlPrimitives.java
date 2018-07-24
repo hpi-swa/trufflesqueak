@@ -206,7 +206,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             signalSemaphoreNode = SignalSemaphoreNode.create(method);
         }
 
-        @Specialization(guards = "isSemaphore(receiver)")
+        @Specialization(guards = "receiver.isSemaphore()")
         protected final AbstractSqueakObject doSignal(final VirtualFrame frame, final PointersObject receiver) {
             pushNode.executeWrite(frame, receiver); // keep receiver on stack
             signalSemaphoreNode.executeSignal(frame, receiver);
@@ -228,7 +228,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             getActiveProcessNode = GetActiveProcessNode.create(method.image);
         }
 
-        @Specialization(guards = {"isSemaphore(receiver)", "hasExcessSignals(receiver)"})
+        @Specialization(guards = {"receiver.isSemaphore()", "hasExcessSignals(receiver)"})
         protected final AbstractSqueakObject doWaitExcessSignals(final VirtualFrame frame, final PointersObject receiver) {
             pushNode.executeWrite(frame, receiver); // keep receiver on stack
             final long excessSignals = (long) receiver.at0(SEMAPHORE.EXCESS_SIGNALS);
@@ -236,7 +236,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             throw new PrimitiveWithoutResultException();
         }
 
-        @Specialization(guards = {"isSemaphore(receiver)", "!hasExcessSignals(receiver)"})
+        @Specialization(guards = {"receiver.isSemaphore()", "!hasExcessSignals(receiver)"})
         protected final AbstractSqueakObject doWait(final VirtualFrame frame, final PointersObject receiver) {
             pushNode.executeWrite(frame, receiver); // keep receiver on stack
             linkProcessToListNode.executeLink(getActiveProcessNode.executeGet(), receiver);
