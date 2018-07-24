@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes.plugins;
 
-import java.util.List;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -15,16 +14,19 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
 import org.graalvm.collections.EconomicMap;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.graal.squeak.exceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
@@ -341,14 +343,14 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             return 0L;
         }
 
-        public Object getRemoteAddress() throws IOException {
+        public byte[] getRemoteAddress() {
             if (clientSocket != null) {
                 final SocketAddress socketAddress = clientSocket.getRemoteSocketAddress();
                 if (socketAddress instanceof InetSocketAddress) {
                     final InetSocketAddress inetAddress = (InetSocketAddress) socketAddress;
                     return inetAddress.getAddress().getAddress();
                 } else {
-                    throw new IOException("Could not retrieve remote address");
+                    throw new SqueakException("Could not retrieve remote address");
                 }
             } else if (serverSocket != null) {
                 return new byte[]{0, 0, 0, 0};
@@ -358,12 +360,11 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                     final InetSocketAddress inetAddress = (InetSocketAddress) socketAddress;
                     return inetAddress.getAddress().getAddress();
                 } else {
-                    throw new IOException("Could not retrieve remote address");
+                    throw new SqueakException("Could not retrieve remote address");
                 }
             } else {
-                return 0L;
+                return new byte[]{0, 0, 0, 0};
             }
-
         }
 
         public long getRemotePort() {
@@ -542,6 +543,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveResolverStartAddressLookup")
     protected abstract static class PrimResolverStartAddressLookupNode extends AbstractSocketPluginPrimitiveNode {
+
         protected PrimResolverStartAddressLookupNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
@@ -553,9 +555,8 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final Object doWork(final Object receiver, final NativeObject address) {
             print("Starting lookup for address " + address);
-            final String addressString = toString(address);
             try {
-                lastAddressLookup = InetAddress.getByName(addressString).getHostName();
+                lastAddressLookup = InetAddress.getByAddress(toByteArray(address)).getHostName();
             } catch (UnknownHostException e) {
                 error(e);
                 lastAddressLookup = null;
@@ -786,12 +787,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
-            try {
-                return code.image.wrap(getSocketImplOrPrimFail(socketID).getRemoteAddress());
-            } catch (IOException e) {
-                error(e);
-                return 0;
-            }
+            return code.image.wrap(getSocketImplOrPrimFail(socketID).getRemoteAddress());
         }
     }
 
