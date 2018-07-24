@@ -50,7 +50,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         throw new SqueakException("Top level context did not return");
     }
 
-    public void executeLoop() {
+    private void executeLoop() {
         ContextObject activeContext = initialContext;
         while (true) {
             CompilerDirectives.transferToInterpreter();

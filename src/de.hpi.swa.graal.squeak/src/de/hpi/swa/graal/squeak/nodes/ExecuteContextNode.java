@@ -209,7 +209,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
     protected abstract static class TriggerInterruptHandlerNode extends AbstractNodeWithImage {
         protected static final int BYTECODE_LENGTH_THRESHOLD = 32;
 
-        protected static TriggerInterruptHandlerNode create(final SqueakImageContext image) {
+        private static TriggerInterruptHandlerNode create(final SqueakImageContext image) {
             return TriggerInterruptHandlerNodeGen.create(image);
         }
 
@@ -233,7 +233,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
     }
 
     protected abstract static class GetSuccessorNode extends Node {
-        protected static GetSuccessorNode create() {
+        private static GetSuccessorNode create() {
             return GetSuccessorNodeGen.create();
         }
 

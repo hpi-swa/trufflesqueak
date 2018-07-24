@@ -4,7 +4,7 @@ import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 public final class PointersObject extends AbstractSqueakObject {
-    protected Object[] pointers;
+    private Object[] pointers;
 
     public PointersObject(final SqueakImageContext img) {
         super(img, -1, null); // for special PointersObjects only

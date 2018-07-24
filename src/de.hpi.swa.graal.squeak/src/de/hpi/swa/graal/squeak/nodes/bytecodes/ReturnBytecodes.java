@@ -114,7 +114,7 @@ public final class ReturnBytecodes {
     }
 
     public abstract static class ReturnTopFromBlockNode extends AbstractReturnNode {
-        @Child protected StackPopNode popNode;
+        @Child private StackPopNode popNode;
 
         public static ReturnTopFromBlockNode create(final CompiledCodeObject code, final int index) {
             return ReturnTopFromBlockNodeGen.create(code, index);
@@ -155,7 +155,7 @@ public final class ReturnBytecodes {
     }
 
     public abstract static class ReturnTopFromMethodNode extends AbstractReturnNodeWithSpecializations {
-        @Child protected StackPopNode popNode;
+        @Child private StackPopNode popNode;
 
         public static ReturnTopFromMethodNode create(final CompiledCodeObject code, final int index) {
             return ReturnTopFromMethodNodeGen.create(code, index);

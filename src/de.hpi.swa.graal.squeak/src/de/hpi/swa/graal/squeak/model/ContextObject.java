@@ -136,7 +136,7 @@ public final class ContextObject extends AbstractSqueakObject {
         return getMethod();
     }
 
-    public boolean hasMethod() {
+    private boolean hasMethod() {
         return at0(CONTEXT.METHOD) instanceof CompiledCodeObject;
     }
 

@@ -186,7 +186,7 @@ public abstract class ObjectGraphNode extends AbstractNodeWithImage {
     protected abstract static class GetTraceablePointersNode extends Node {
         private static final Object[] emptyResult = new Object[0];
 
-        protected static GetTraceablePointersNode create() {
+        private static GetTraceablePointersNode create() {
             return GetTraceablePointersNodeGen.create();
         }
 

@@ -63,12 +63,12 @@ public final class PushBytecodes {
         protected final int numArgs;
         protected final int numCopied;
 
-        @Child protected GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create();
-        @Child protected StackPopNReversedNode popNReversedNode;
-        @Child protected ReceiverNode receiverNode;
+        @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create();
+        @Child private StackPopNReversedNode popNReversedNode;
+        @Child private ReceiverNode receiverNode;
         @Child private GetCompiledMethodNode getMethodNode = GetCompiledMethodNode.create();
 
-        @CompilationFinal protected CompiledBlockObject block;
+        @CompilationFinal private CompiledBlockObject block;
         @CompilationFinal private RootCallTarget blockCallTarget;
 
         public static PushClosureNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int i, final int j, final int k) {

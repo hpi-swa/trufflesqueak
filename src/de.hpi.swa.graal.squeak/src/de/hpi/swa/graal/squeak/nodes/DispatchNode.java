@@ -75,7 +75,7 @@ public abstract class DispatchNode extends Node {
         throw new SqueakException("failed to lookup generic selector object on generic class");
     }
 
-    protected final CreateArgumentsNode getCreateArgumentsNode() {
+    private CreateArgumentsNode getCreateArgumentsNode() {
         if (createArgumentsNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             createArgumentsNode = insert(CreateArgumentsNode.create());

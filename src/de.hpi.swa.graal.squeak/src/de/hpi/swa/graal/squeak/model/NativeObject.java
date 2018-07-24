@@ -18,8 +18,7 @@ public final class NativeObject extends AbstractSqueakObject {
     public static final int SHORT_MAX = (int) (Math.pow(2, Short.SIZE) - 1);
     public static final long INTEGER_MAX = (long) (Math.pow(2, Integer.SIZE) - 1);
 
-    @CompilationFinal protected Object storage;
-    protected Object chunk;
+    @CompilationFinal private Object storage;
 
     public static NativeObject newNativeBytes(final SqueakImageChunk chunk) {
         return new NativeObject(chunk.image, chunk.getHash(), chunk.getSqClass(), chunk.getBytes());

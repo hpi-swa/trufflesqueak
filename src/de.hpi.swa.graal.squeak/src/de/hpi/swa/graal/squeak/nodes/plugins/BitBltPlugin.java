@@ -166,7 +166,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
         @Child private PixelValueAtHelperNode pixelValueNode = PixelValueAtHelperNode.create();
 
-        protected static HandleReceiverAndBitmapHelperNode create() {
+        private static HandleReceiverAndBitmapHelperNode create() {
             return HandleReceiverAndBitmapHelperNodeGen.create();
         }
 
@@ -185,7 +185,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         private final ValueProfile intProfile = ValueProfile.createClassProfile();
         private final BranchProfile errorProfile = BranchProfile.create();
 
-        protected static PixelValueAtHelperNode create() {
+        private static PixelValueAtHelperNode create() {
             return PixelValueAtHelperNodeGen.create();
         }
 

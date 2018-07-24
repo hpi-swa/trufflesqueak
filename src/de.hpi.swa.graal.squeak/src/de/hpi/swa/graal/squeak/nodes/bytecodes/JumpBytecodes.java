@@ -145,7 +145,7 @@ public final class JumpBytecodes {
             return (((bytecode & 7) - 4) << 8) + parameter;
         }
 
-        protected static final int shortJumpOffset(final int bytecode) {
+        private static int shortJumpOffset(final int bytecode) {
             return (bytecode & 7) + 1;
         }
 

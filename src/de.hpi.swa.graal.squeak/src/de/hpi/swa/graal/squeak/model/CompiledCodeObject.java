@@ -35,7 +35,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
     public static final FrameSlot instructionPointerSlot;
     public static final FrameSlot stackPointerSlot;
     @CompilationFinal private FrameDescriptor frameDescriptor;
-    @CompilationFinal(dimensions = 1) public FrameSlot[] stackSlots;
+    @CompilationFinal(dimensions = 1) private FrameSlot[] stackSlots;
     // header info and data
     @CompilationFinal(dimensions = 1) protected Object[] literals;
     @CompilationFinal(dimensions = 1) protected byte[] bytes;
@@ -108,7 +108,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
 
     @SuppressWarnings("deprecation")
     @TruffleBoundary
-    protected final void prepareFrameDescriptor() {
+    private void prepareFrameDescriptor() {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         frameDescriptor = frameDescriptorTemplate.shallowCopy();
         /**

@@ -35,7 +35,7 @@ public final class FloatObject extends AbstractSqueakObject {
         this.doubleValue = doubleValue;
     }
 
-    public FloatObject(final SqueakImageContext image, final long hash, final long high, final long low) {
+    private FloatObject(final SqueakImageContext image, final long hash, final long high, final long low) {
         super(image, hash, image.floatClass);
         setWords(high, low);
     }

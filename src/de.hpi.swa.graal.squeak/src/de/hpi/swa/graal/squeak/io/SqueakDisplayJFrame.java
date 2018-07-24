@@ -48,8 +48,8 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
     public final SqueakImageContext image;
     private final JFrame frame = new JFrame(DEFAULT_WINDOW_TITLE);
     private final Canvas canvas = new Canvas();
-    public final SqueakMouse mouse;
-    public final SqueakKeyboard keyboard;
+    private final SqueakMouse mouse;
+    private final SqueakKeyboard keyboard;
     private final Deque<long[]> deferredEvents = new ArrayDeque<>();
 
     @CompilationFinal public boolean usesEventQueue = false;

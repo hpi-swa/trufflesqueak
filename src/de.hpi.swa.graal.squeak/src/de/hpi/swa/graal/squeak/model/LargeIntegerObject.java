@@ -148,7 +148,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     }
 
     @TruffleBoundary
-    protected Object reduceIfPossible(final BigInteger value) {
+    private Object reduceIfPossible(final BigInteger value) {
         if (value.bitLength() > Long.SIZE - 1) {
             return newFromBigInteger(value);
         } else {

@@ -26,7 +26,7 @@ public final class ClassObject extends AbstractSqueakObject {
     @CompilationFinal private int instSpec = -1;
     @CompilationFinal private int instanceSize = -1;
 
-    protected Object[] pointers;
+    private Object[] pointers;
 
     public ClassObject(final SqueakImageContext img) {
         super(img, -1L, null);
