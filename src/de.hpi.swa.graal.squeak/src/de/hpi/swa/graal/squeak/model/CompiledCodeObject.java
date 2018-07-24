@@ -166,10 +166,6 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         if (i >= stackSlots.length) { // This is fine, ignore for decoder
             return null;
         }
-        if (i < 0) {
-            image.printToStdErr("Accessing bad slot!"); // FIXME
-            return stackSlots[0];
-        }
         return stackSlots[i];
     }
 

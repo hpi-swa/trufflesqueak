@@ -63,14 +63,9 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class AbstractArrayBecomeOneWayPrimitiveNode extends AbstractInstancesPrimitiveNode {
         @Child private SqueakObjectPointersBecomeOneWayNode pointersBecomeNode = SqueakObjectPointersBecomeOneWayNode.create();
         @Child private UpdateSqueakObjectHashNode updateHashNode = UpdateSqueakObjectHashNode.create();
-        @Child private FrameStackReadNode stackReadNode;
-        @Child private FrameStackWriteNode stackWriteNode;
 
         protected AbstractArrayBecomeOneWayPrimitiveNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
-            stackReadNode = FrameStackReadNode.create(method);
-            stackWriteNode = FrameStackWriteNode.create(method);
-
         }
 
         protected static final boolean isPointers(final Object obj) {
@@ -131,7 +126,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                      */
                     final CompiledCodeObject method = FrameAccess.getMethod(current);
                     for (int i = 0; i < method.sqContextSize(); i++) {
-                        final Object stackObject = stackReadNode.execute(current, i);
+                        final Object stackObject = current.getValue(method.getStackSlot(i));
                         if (stackObject == null) {
                             /*
                              * this slot and all following are `null` and have therefore not been
@@ -143,7 +138,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                             final Object fromPointer = fromPointers[j];
                             if (stackObject == fromPointer) {
                                 final Object toPointer = toPointers[j];
-                                stackWriteNode.execute(current, i, toPointer);
+                                current.setObject(method.getStackSlot(i), toPointer);
                                 updateHashNode.executeUpdate(fromPointer, toPointer, true);
                             } else {
                                 pointersBecomeNode.execute(stackObject, fromPointers, toPointers, copyHash);
