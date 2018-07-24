@@ -25,11 +25,11 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.FORM;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
-import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.PixelValueAtExtractHelperNodeGen;
 import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.CopyBitsClipHelperNodeGen;
 import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.CopyBitsExecuteHelperNodeGen;
 import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.CopyBitsExtractHelperNodeGen;
 import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.PixelValueAtExecuteHelperNodeGen;
+import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.PixelValueAtExtractHelperNodeGen;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
@@ -90,7 +90,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         protected final boolean hasSourceFormDepth(final PointersObject target, final int depth) {
-            Object sourceForm = target.at0(BIT_BLT.SOURCE_FORM);
+            final Object sourceForm = target.at0(BIT_BLT.SOURCE_FORM);
             return sourceForm == target.image.nil || depth == (long) at0Node.execute(sourceForm, FORM.DEPTH);
         }
 
@@ -216,23 +216,23 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             return CopyBitsClipHelperNodeGen.create();
         }
 
-        protected abstract PointersObject executeClip(final PointersObject receiver,
-                        final long combinationRule,
-                        final Object areaWidth,
-                        final Object areaHeight,
-                        final PointersObject sourceForm,
-                        final Object sourceX,
-                        final Object sourceY,
-                        final Object sourceWidth,
-                        final Object sourceHeight,
-                        final PointersObject destinationForm,
-                        final Object destX,
-                        final Object destY,
-                        final Object destWidth,
-                        final Object clipX,
-                        final Object clipY,
-                        final Object clipWidth,
-                        final Object clipHeight);
+        protected abstract PointersObject executeClip(PointersObject receiver,
+                        long combinationRule,
+                        Object areaWidth,
+                        Object areaHeight,
+                        PointersObject sourceForm,
+                        Object sourceX,
+                        Object sourceY,
+                        Object sourceWidth,
+                        Object sourceHeight,
+                        PointersObject destinationForm,
+                        Object destX,
+                        Object destY,
+                        Object destWidth,
+                        Object clipX,
+                        Object clipY,
+                        Object clipWidth,
+                        Object clipHeight);
 
         @Specialization(guards = {"sourceForm == null", "areaWidth > 0", "areaHeight > 0"})
         protected final PointersObject executeClipWithoutSourceForm(final PointersObject receiver,
@@ -375,7 +375,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             return CopyBitsExecuteHelperNodeGen.create();
         }
 
-        protected abstract PointersObject executeCopyBits(final PointersObject receiver,
+        protected abstract PointersObject executeCopyBits(PointersObject receiver,
                         long combinationRule,
                         PointersObject sourceForm,
                         long sourceX,
@@ -391,17 +391,17 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"combinationRule == 3", "sourceForm == null"})
         protected final PointersObject doCopyBitsCombiRule3NilSourceForm(final PointersObject receiver,
-                        long combinationRule,
-                        PointersObject sourceForm,
-                        long sourceX,
-                        long sourceY,
-                        long sourceWidth,
-                        PointersObject destForm,
-                        long destX,
-                        long destY,
-                        long destWidth,
-                        long areaWidth,
-                        long areaHeight) {
+                        final long combinationRule,
+                        final PointersObject sourceForm,
+                        final long sourceX,
+                        final long sourceY,
+                        final long sourceWidth,
+                        final PointersObject destForm,
+                        final long destX,
+                        final long destY,
+                        final long destWidth,
+                        final long areaWidth,
+                        final long areaHeight) {
             final PointersObject destinationForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
             final NativeObject destinationBits = (NativeObject) destinationForm.at0(FORM.BITS);
             final NativeObject halftoneForm = (NativeObject) receiver.at0(BIT_BLT.HALFTONE_FORM);
@@ -434,17 +434,17 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"combinationRule == 4", "sourceForm == null"})
         protected final PointersObject doCopyBitsCombiRule4NilSourceForm(final PointersObject receiver,
-                        long combinationRule,
-                        PointersObject sourceForm,
-                        long sourceX,
-                        long sourceY,
-                        long sourceWidth,
-                        PointersObject destForm,
-                        long destX,
-                        long destY,
-                        long destWidth,
-                        long areaWidth,
-                        long areaHeight) {
+                        final long combinationRule,
+                        final PointersObject sourceForm,
+                        final long sourceX,
+                        final long sourceY,
+                        final long sourceWidth,
+                        final PointersObject destForm,
+                        final long destX,
+                        final long destY,
+                        final long destWidth,
+                        final long areaWidth,
+                        final long areaHeight) {
             final PointersObject destinationForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
             final NativeObject destinationBits = (NativeObject) destinationForm.at0(FORM.BITS);
             final NativeObject halftoneForm = (NativeObject) receiver.at0(BIT_BLT.HALFTONE_FORM);
@@ -482,17 +482,17 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"combinationRule == 24", "sourceForm == null"})
         protected final PointersObject doCopyBitsCombiRule24NilSourceForm(final PointersObject receiver,
-                        long combinationRule,
-                        PointersObject sourceForm,
-                        long sourceX,
-                        long sourceY,
-                        long sourceWidth,
-                        PointersObject destForm,
-                        long destX,
-                        long destY,
-                        long destWidth,
-                        long areaWidth,
-                        long areaHeight) {
+                        final long combinationRule,
+                        final PointersObject sourceForm,
+                        final long sourceX,
+                        final long sourceY,
+                        final long sourceWidth,
+                        final PointersObject destForm,
+                        final long destX,
+                        final long destY,
+                        final long destWidth,
+                        final long areaWidth,
+                        final long areaHeight) {
             final PointersObject destinationForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
             final NativeObject destinationBits = (NativeObject) destinationForm.at0(FORM.BITS);
             final NativeObject halftoneForm = (NativeObject) receiver.at0(BIT_BLT.HALFTONE_FORM);
@@ -580,10 +580,12 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
     protected static int alphaBlend24(final int sourceWord, final int destinationWord) {
         final int alpha = sourceWord >> 24;
-        if (alpha == 0)
+        if (alpha == 0) {
             return destinationWord;
-        if (alpha == 255)
+        }
+        if (alpha == 255) {
             return sourceWord;
+        }
 
         final int unAlpha = 255 - alpha;
 
