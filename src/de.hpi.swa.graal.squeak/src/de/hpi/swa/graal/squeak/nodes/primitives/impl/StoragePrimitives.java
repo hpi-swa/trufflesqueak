@@ -35,8 +35,6 @@ import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectBecomeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectPointersBecomeOneWayNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.UpdateSqueakObjectHashNode;
 import de.hpi.swa.graal.squeak.nodes.context.ObjectGraphNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
@@ -124,7 +122,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                      * the stack is accessed behind the stackPointer.
                      */
                     final CompiledCodeObject method = FrameAccess.getMethod(current);
-                    for (int i = 0; i < method.sqContextSize(); i++) {
+                    for (int i = 0; i < method.getNumStackSlots(); i++) {
                         final Object stackObject = current.getValue(method.getStackSlot(i));
                         if (stackObject == null) {
                             /*
@@ -678,13 +676,9 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 249)
     protected abstract static class PrimArrayBecomeOneWayCopyHashNode extends AbstractArrayBecomeOneWayPrimitiveNode {
-        @Child private FrameStackReadNode stackReadNode;
-        @Child private FrameStackWriteNode stackWriteNode;
 
         protected PrimArrayBecomeOneWayCopyHashNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
-            stackReadNode = FrameStackReadNode.create(method);
-            stackWriteNode = FrameStackWriteNode.create(method);
         }
 
         @Specialization(guards = "fromArray.size() == toArray.size()")
