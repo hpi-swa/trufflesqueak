@@ -63,7 +63,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
         protected boolean supportedCombinationRule(final PointersObject receiver) {
             final long combinationRule = (long) receiver.at0(BIT_BLT.COMBINATION_RULE);
-            return combinationRule == 4 || combinationRule == 24 || combinationRule == 25 || combinationRule == 3;
+            return combinationRule == 4 || combinationRule == 24 || combinationRule == 3;
         }
 
         protected boolean supportedDepth(final PointersObject receiver) {
@@ -149,8 +149,8 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"hasSourceForm(receiver)"})
         protected final PointersObject executeWithSourceForm(final PointersObject receiver) {
             final PointersObject sourceForm = (PointersObject) receiver.at0(BIT_BLT.SOURCE_FORM);
-            final Object sourceWidth = sourceForm.at0(FORM.WIDTH);
-            final Object sourceHeight = sourceForm.at0(FORM.HEIGHT);
+            final long sourceWidth = (long) sourceForm.at0(FORM.WIDTH);
+            final long sourceHeight = (long) sourceForm.at0(FORM.HEIGHT);
 
             final PointersObject destForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
             final long destWidth = (long) destForm.at0(FORM.WIDTH);
@@ -160,6 +160,11 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
             final NativeObject destBits = (NativeObject) destForm.at0(FORM.BITS);
             if (!destBits.isIntType() || destWidth * destHeight > destBits.getIntStorage(intProfile).length) {
+                throw new PrimitiveFailed();
+            }
+
+            final NativeObject sourceBits = (NativeObject) sourceForm.at0(FORM.BITS);
+            if (!sourceBits.isIntType() || sourceWidth * sourceHeight > sourceBits.getIntStorage(intProfile).length) {
                 throw new PrimitiveFailed();
             }
 
@@ -238,7 +243,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
                         Object clipWidth,
                         Object clipHeight);
 
-        @Specialization(guards = {"sourceForm == null", "areaWidth > 0", "areaHeight > 0"})
+        @Specialization(guards = {"sourceForm == null"})
         protected final PointersObject executeClipWithoutSourceForm(final PointersObject receiver,
                         final long combinationRule,
                         final long areaWidth,
@@ -290,7 +295,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             return executeNode.executeCopyBits(receiver, combinationRule, sourceForm, sourceX, sourceY, sourceWidth, destForm, dx, dy, destWidth, bbW, bbH);
         }
 
-        @Specialization(guards = {"areaWidth > 0", "areaHeight > 0"})
+        @Specialization()
         protected final PointersObject executeClipWithSourceForm(final PointersObject receiver,
                         final long combinationRule,
                         final long areaWidth,
@@ -392,8 +397,28 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
                         long areaWidth,
                         long areaHeight);
 
+        protected static boolean invalidArea(final long areaWidth, final long areaHeight) {
+            return areaWidth <= 0 || areaHeight <= 0;
+        }
+
+        @Specialization(guards = {"invalidArea(areaWidth, areaHeight)"})
+        protected final PointersObject executeInvalidArea(PointersObject receiver,
+                        long combinationRule,
+                        PointersObject sourceForm,
+                        long sourceX,
+                        long sourceY,
+                        long sourceWidth,
+                        PointersObject destForm,
+                        long destX,
+                        long destY,
+                        long destWidth,
+                        long areaWidth,
+                        long areaHeight) {
+            return receiver;
+        }
+
         @SuppressWarnings("unused")
-        @Specialization(guards = {"combinationRule == 3", "sourceForm == null"})
+        @Specialization(guards = {"combinationRule == 3", "sourceForm == null", "!invalidArea(areaWidth, areaHeight)"})
         protected final PointersObject doCopyBitsCombiRule3NilSourceForm(final PointersObject receiver,
                         final long combinationRule,
                         final PointersObject sourceForm,
@@ -436,7 +461,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"combinationRule == 4", "sourceForm == null"})
+        @Specialization(guards = {"combinationRule == 4", "sourceForm == null", "!invalidArea(areaWidth, areaHeight)"})
         protected final PointersObject doCopyBitsCombiRule4NilSourceForm(final PointersObject receiver,
                         final long combinationRule,
                         final PointersObject sourceForm,
@@ -484,7 +509,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"combinationRule == 24", "sourceForm == null"})
+        @Specialization(guards = {"combinationRule == 24", "sourceForm == null", "!invalidArea(areaWidth, areaHeight)"})
         protected final PointersObject doCopyBitsCombiRule24NilSourceForm(final PointersObject receiver,
                         final long combinationRule,
                         final PointersObject sourceForm,
