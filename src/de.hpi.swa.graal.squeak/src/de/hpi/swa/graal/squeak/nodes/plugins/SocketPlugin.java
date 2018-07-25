@@ -65,7 +65,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     private static final EconomicMap<Long, SocketImpl> sockets = EconomicMap.create();
-    private static final boolean debugPrints = true;
+    private static final boolean debugPrints = false;
 
     private static final class Resolver {
         @SuppressWarnings("unused")
