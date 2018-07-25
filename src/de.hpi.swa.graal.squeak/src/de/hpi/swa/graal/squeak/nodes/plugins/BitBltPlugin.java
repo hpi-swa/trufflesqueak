@@ -66,8 +66,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             final long combinationRule = (long) receiver.at0(BIT_BLT.COMBINATION_RULE);
             final boolean hasSourceForm = receiver.at0(BIT_BLT.SOURCE_FORM) != receiver.image.nil;
 
-            return (combinationRule == 3 && !hasSourceForm) || (combinationRule == 4 && !hasSourceForm) ||
-                            (combinationRule == 24) || (combinationRule == 25 && hasSourceForm);
+            return (combinationRule == 3 && !hasSourceForm) || (combinationRule == 4 && !hasSourceForm) || (combinationRule == 24);
         }
 
         protected boolean supportedDepth(final PointersObject receiver) {
@@ -573,40 +572,6 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
                 try {
                     for (long dx = destStart, sx = sourceStart; dx < destStart + areaWidth; dx++, sx++) {
                         atPut0Node.execute(destBits, dx, alphaBlend24((long) at0Node.execute(sourceBits, sx), (long) at0Node.execute(destBits, dx)));
-                    }
-                } finally {
-                    LoopNode.reportLoopCount(this, (int) areaWidth);
-                }
-            }
-            return receiver;
-        }
-
-        @Specialization(guards = {"combinationRule == 25", "sourceForm != null", "!invalidArea(areaWidth, areaHeight)"})
-        protected final PointersObject doCopyBitsCombiRule25WithSourceForm(final PointersObject receiver,
-                        @SuppressWarnings("unused") final long combinationRule,
-                        final PointersObject sourceForm,
-                        final long sourceX,
-                        final long sourceY,
-                        final long sourceWidth,
-                        final PointersObject destForm,
-                        final long destX,
-                        final long destY,
-                        final long destWidth,
-                        final long areaWidth,
-                        final long areaHeight) {
-            final NativeObject sourceBits = (NativeObject) sourceForm.at0(FORM.BITS);
-            final NativeObject destBits = (NativeObject) destForm.at0(FORM.BITS);
-
-            for (long dy = destY, sy = sourceY; dy < destY + areaHeight; dy++, sy++) {
-                final long sourceStart = sy * sourceWidth + sourceX;
-                final long destStart = dy * destWidth + destX;
-                try {
-                    for (long dx = destStart, sx = sourceStart; dx < destStart + areaWidth; dx++, sx++) {
-                        // atPut0Node.execute(destBits, dx, at0Node.execute(sourceBits, sx));
-                        final long sourceWord = (long) at0Node.execute(sourceBits, sx);
-                        final long sourceWordNegated = ~sourceWord & 0xffffffffL;
-                        final long destWord = (long) at0Node.execute(destBits, dx);
-                        atPut0Node.execute(destBits, dx, sourceWord | (sourceWordNegated == 0xffffffffL ? destWord : 0));
                     }
                 } finally {
                     LoopNode.reportLoopCount(this, (int) areaWidth);
