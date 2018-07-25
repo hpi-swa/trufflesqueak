@@ -27,9 +27,9 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.SimulationPrimitiveFailed;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
@@ -104,7 +104,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         protected final void signalAtMilliseconds(final AbstractSqueakObject semaphore, final long msTime) {
-            if (semaphore.isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassSemaphore)) {
+            if (semaphore.isSemaphore()) {
                 code.image.registerSemaphore(semaphore, SPECIAL_OBJECT_INDEX.TheTimerSemaphore);
                 code.image.interrupt.setNextWakeupTick(msTime);
             } else {
@@ -908,20 +908,19 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
      */
     @GenerateNodeFactory
     public abstract static class SimulationPrimitiveNode extends AbstractPrimitiveNode {
-        public static final String SIMULATE_PRIMITIVE_SELECTOR = "simulatePrimitive:args:";
+        public static final byte[] SIMULATE_PRIMITIVE_SELECTOR = "simulatePrimitive:args:".getBytes();
 
         // different CompiledMethodObject per simulation
         @CompilationFinal protected CompiledMethodObject simulationMethod;
 
-        protected final String moduleName;
-        protected final NativeObject functionName;
-        protected final boolean bitBltSimulationNotFound = code.image.getSimulatePrimitiveArgsSelector() == null;
-        protected final PointersObject emptyList;
+        private final NativeObject functionName;
+        private final boolean bitBltSimulationNotFound = code.image.getSimulatePrimitiveArgsSelector() == null;
+        private final PointersObject emptyList;
 
-        @Child protected LookupNode lookupNode;
-        @Child protected DispatchNode dispatchNode = DispatchNode.create();
-        @Child protected SqueakLookupClassNode lookupClassNode;
-        @Child protected GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create();
+        @Child private LookupNode lookupNode;
+        @Child private DispatchNode dispatchNode = DispatchNode.create();
+        @Child private SqueakLookupClassNode lookupClassNode;
+        @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create();
         @Child private IsDoesNotUnderstandNode isDoesNotUnderstandNode;
 
         public static SimulationPrimitiveNode create(final CompiledMethodObject method, final String moduleName, final String functionName) {
@@ -934,9 +933,8 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             return nodeFactory.createNode(method, primitiveArity, moduleName, functionName, argumentNodes);
         }
 
-        protected SimulationPrimitiveNode(final CompiledMethodObject method, final int numArguments, final String moduleName, final String functionName) {
+        protected SimulationPrimitiveNode(final CompiledMethodObject method, final int numArguments, @SuppressWarnings("unused") final String moduleName, final String functionName) {
             super(method, numArguments);
-            this.moduleName = moduleName;
             this.functionName = code.image.wrap(functionName);
             lookupNode = LookupNode.create(method.image);
             lookupClassNode = SqueakLookupClassNode.create(method.image);
@@ -1028,7 +1026,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 if (bitBltSimulationNotFound) {
                     throw new PrimitiveFailed();
                 }
-                final Object lookupResult;
+                final Object lookupResult; // TODO: Nodes!
                 if (receiver instanceof ClassObject) {
                     lookupResult = lookupNode.executeLookup(receiver, code.image.getSimulatePrimitiveArgsSelector());
                 } else {

@@ -6,10 +6,8 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
 
-import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.instrumentation.SqueakObjectMessageResolutionForeign;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 
 public abstract class AbstractSqueakObject implements TruffleObject {
     private static final int IDENTITY_HASH_MASK = 0x400000 - 1;
@@ -30,9 +28,10 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         this.sqClass = klass;
     }
 
-    public void fillin(final AbstractImageChunk chunk) {
-        setSqueakHash(chunk.getHash());
-        setSqClass(chunk.getSqClass());
+    protected AbstractSqueakObject(final SqueakImageContext image, final long hash, final ClassObject klass) {
+        this.image = image;
+        this.hash = hash;
+        this.sqClass = klass;
     }
 
     @Override
@@ -76,16 +75,12 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         return this instanceof ClassObject;
     }
 
-    public final boolean isSpecialKindAt(final long index) {
-        return getSqClass() == image.specialObjectsArray.at0(index);
-    }
-
-    public final boolean isSpecialClassAt(final long index) {
-        return this == image.specialObjectsArray.at0(index);
+    public final boolean isCompiledMethodClass() {
+        return this == image.compiledMethodClass;
     }
 
     public final boolean isSemaphore() {
-        return isSpecialKindAt(SPECIAL_OBJECT_INDEX.ClassSemaphore);
+        return getSqClass() == image.semaphoreClass;
     }
 
     public final void becomeOtherClass(final AbstractSqueakObject other) {

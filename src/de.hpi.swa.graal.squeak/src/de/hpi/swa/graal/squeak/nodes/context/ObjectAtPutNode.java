@@ -11,7 +11,6 @@ import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 
 /**
  * This node should only be used for stores into associations, receivers, and remote temps as it
@@ -21,7 +20,6 @@ import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 @NodeChild(value = "valueNode", type = SqueakNode.class)
 public abstract class ObjectAtPutNode extends AbstractObjectAtNode {
     @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
-    @Child private FrameSlotReadNode contextOrMarkerReadNode = FrameSlotReadNode.createForContextOrMarker();
 
     private final ValueProfile classProfile = ValueProfile.createClassProfile();
     private final long index;

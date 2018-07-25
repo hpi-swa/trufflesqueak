@@ -80,6 +80,5 @@ after_success:
       if [[ ${GATE} == *test* ]] && [[ "${JDK}" == "jdk8" ]]
       then
         bash <(curl -s https://codecov.io/bash)
-        jdk_switcher use oraclejdk8 # required for codacy-coverage-reporter
-        ${JAVA_HOME}/bin/java -jar ~/codacy-coverage-reporter.jar report -l Java -r jacoco.xml
+        java -jar ~/codacy-coverage-reporter.jar report -l Java -r jacoco.xml
       fi

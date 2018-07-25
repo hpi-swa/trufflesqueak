@@ -1,7 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -9,8 +8,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
-import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodesFactory.ConditionalJumpNodeFactory.HandleConditionResultNodeGen;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.AbstractSendNode;
@@ -73,10 +70,8 @@ public final class JumpBytecodes {
         }
 
         protected abstract static class HandleConditionResultNode extends AbstractNodeWithCode {
-            @Child private StackPushNode pushNode = StackPushNode.create();
+            @Child private StackPushNode pushNode;
             @Child private AbstractSendNode sendMustBeBooleanNode;
-
-            @CompilationFinal private static NativeObject mustBeBooleanSelector;
 
             protected static HandleConditionResultNode create(final CompiledCodeObject code) {
                 return HandleConditionResultNodeGen.create(code);
@@ -84,7 +79,6 @@ public final class JumpBytecodes {
 
             protected HandleConditionResultNode(final CompiledCodeObject code) {
                 super(code);
-                sendMustBeBooleanNode = new SendSelectorNode(code, -1, 1, getMustBeBooleanSelector(), 0);
             }
 
             protected abstract boolean execute(VirtualFrame frame, boolean expected, Object result);
@@ -96,18 +90,26 @@ public final class JumpBytecodes {
 
             @Fallback
             protected final boolean doMustBeBooleanSend(final VirtualFrame frame, @SuppressWarnings("unused") final boolean expected, final Object result) {
-                pushNode.executeWrite(frame, result);
-                sendMustBeBooleanNode.executeSend(frame);
+                getPushNode().executeWrite(frame, result);
+                getSendMustBeBooleanNode().executeSend(frame);
                 CompilerDirectives.transferToInterpreter();
                 throw new SqueakException("Should not be reached");
             }
 
-            private NativeObject getMustBeBooleanSelector() {
-                if (mustBeBooleanSelector == null) {
+            private StackPushNode getPushNode() {
+                if (pushNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    mustBeBooleanSelector = (NativeObject) code.image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SelectorMustBeBoolean);
+                    pushNode = insert(StackPushNode.create(code));
                 }
-                return mustBeBooleanSelector;
+                return pushNode;
+            }
+
+            private AbstractSendNode getSendMustBeBooleanNode() {
+                if (sendMustBeBooleanNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    sendMustBeBooleanNode = insert(new SendSelectorNode(code, -1, 1, code.image.mustBeBooleanSelector, 0));
+                }
+                return sendMustBeBooleanNode;
             }
         }
     }
@@ -143,7 +145,7 @@ public final class JumpBytecodes {
             return (((bytecode & 7) - 4) << 8) + parameter;
         }
 
-        protected static final int shortJumpOffset(final int bytecode) {
+        private static int shortJumpOffset(final int bytecode) {
             return (bytecode & 7) + 1;
         }
 

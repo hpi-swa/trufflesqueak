@@ -28,7 +28,7 @@ import de.hpi.swa.graal.squeak.util.ArrayUtils;
 public final class PushBytecodes {
 
     private abstract static class AbstractPushNode extends AbstractBytecodeNode {
-        @Child protected StackPushNode pushNode = StackPushNode.create();
+        @Child protected StackPushNode pushNode;
 
         protected AbstractPushNode(final CompiledCodeObject code, final int index) {
             this(code, index, 1);
@@ -36,6 +36,7 @@ public final class PushBytecodes {
 
         protected AbstractPushNode(final CompiledCodeObject code, final int index, final int numBytecodes) {
             super(code, index, numBytecodes);
+            pushNode = StackPushNode.create(code);
         }
     }
 
@@ -62,12 +63,12 @@ public final class PushBytecodes {
         protected final int numArgs;
         protected final int numCopied;
 
-        @Child protected GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create();
-        @Child protected StackPopNReversedNode popNReversedNode;
-        @Child protected ReceiverNode receiverNode;
+        @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create();
+        @Child private StackPopNReversedNode popNReversedNode;
+        @Child private ReceiverNode receiverNode;
         @Child private GetCompiledMethodNode getMethodNode = GetCompiledMethodNode.create();
 
-        @CompilationFinal protected CompiledBlockObject block;
+        @CompilationFinal private CompiledBlockObject block;
         @CompilationFinal private RootCallTarget blockCallTarget;
 
         public static PushClosureNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int i, final int j, final int k) {
@@ -278,13 +279,14 @@ public final class PushBytecodes {
     }
 
     public static final class PushTemporaryLocationNode extends AbstractBytecodeNode {
-        @Child private StackPushNode pushNode = StackPushNode.create();
+        @Child private StackPushNode pushNode;
         @Child private SqueakNode tempNode;
         private final int tempIndex;
 
         public PushTemporaryLocationNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int tempIndex) {
             super(code, index, numBytecodes);
             this.tempIndex = tempIndex;
+            pushNode = StackPushNode.create(code);
             tempNode = TemporaryReadNode.create(code, tempIndex);
         }
 

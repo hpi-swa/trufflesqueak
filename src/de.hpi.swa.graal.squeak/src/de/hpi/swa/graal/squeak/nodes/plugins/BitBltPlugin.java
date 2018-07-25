@@ -584,7 +584,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PixelValueAtExtractHelperNode extends Node {
         @Child private PixelValueAtExecuteHelperNode executeNode = PixelValueAtExecuteHelperNode.create();
 
-        protected static PixelValueAtExtractHelperNode create() {
+        private static PixelValueAtExtractHelperNode create() {
             return PixelValueAtExtractHelperNodeGen.create();
         }
 
@@ -603,7 +603,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         private final ValueProfile intProfile = ValueProfile.createClassProfile();
         private final BranchProfile errorProfile = BranchProfile.create();
 
-        protected static PixelValueAtExecuteHelperNode create() {
+        private static PixelValueAtExecuteHelperNode create() {
             return PixelValueAtExecuteHelperNodeGen.create();
         }
 

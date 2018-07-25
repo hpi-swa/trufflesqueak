@@ -27,7 +27,6 @@ import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.ERROR_TABLE;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.GetAllInstancesNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
@@ -36,8 +35,6 @@ import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectBecomeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectPointersBecomeOneWayNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.UpdateSqueakObjectHashNode;
 import de.hpi.swa.graal.squeak.nodes.context.ObjectGraphNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
@@ -63,8 +60,6 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class AbstractArrayBecomeOneWayPrimitiveNode extends AbstractInstancesPrimitiveNode {
         @Child private SqueakObjectPointersBecomeOneWayNode pointersBecomeNode = SqueakObjectPointersBecomeOneWayNode.create();
         @Child private UpdateSqueakObjectHashNode updateHashNode = UpdateSqueakObjectHashNode.create();
-        @Child private FrameStackReadNode stackReadNode = FrameStackReadNode.create();
-        @Child private FrameStackWriteNode stackWriteNode = FrameStackWriteNode.create();
 
         protected AbstractArrayBecomeOneWayPrimitiveNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -127,8 +122,8 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                      * the stack is accessed behind the stackPointer.
                      */
                     final CompiledCodeObject method = FrameAccess.getMethod(current);
-                    for (int i = 0; i < method.sqContextSize(); i++) {
-                        final Object stackObject = stackReadNode.execute(current, i);
+                    for (int i = 0; i < method.getNumStackSlots(); i++) {
+                        final Object stackObject = current.getValue(method.getStackSlot(i));
                         if (stackObject == null) {
                             /*
                              * this slot and all following are `null` and have therefore not been
@@ -140,7 +135,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                             final Object fromPointer = fromPointers[j];
                             if (stackObject == fromPointer) {
                                 final Object toPointer = toPointers[j];
-                                stackWriteNode.execute(current, i, toPointer);
+                                current.setObject(method.getStackSlot(i), toPointer);
                                 updateHashNode.executeUpdate(fromPointer, toPointer, true);
                             } else {
                                 pointersBecomeNode.execute(stackObject, fromPointers, toPointers, copyHash);
@@ -469,11 +464,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        protected boolean isCompiledMethodClass(final ClassObject receiver) {
-            return receiver.isSpecialClassAt(SPECIAL_OBJECT_INDEX.ClassCompiledMethod);
-        }
-
-        @Specialization(guards = "isCompiledMethodClass(receiver)")
+        @Specialization(guards = "receiver.isCompiledMethodClass()")
         protected static final AbstractSqueakObject newMethod(final ClassObject receiver, final long bytecodeCount, final long header) {
             final CompiledMethodObject newMethod = (CompiledMethodObject) receiver.newInstance(bytecodeCount);
             newMethod.setHeader(header);
@@ -685,8 +676,6 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 249)
     protected abstract static class PrimArrayBecomeOneWayCopyHashNode extends AbstractArrayBecomeOneWayPrimitiveNode {
-        @Child private FrameStackReadNode stackReadNode = FrameStackReadNode.create();
-        @Child private FrameStackWriteNode stackWriteNode = FrameStackWriteNode.create();
 
         protected PrimArrayBecomeOneWayCopyHashNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);

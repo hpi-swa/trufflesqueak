@@ -2,8 +2,8 @@ package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 
 import java.util.List;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
@@ -25,10 +25,8 @@ import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.BlockActivationNode;
-import de.hpi.swa.graal.squeak.nodes.BlockActivationNodeGen;
 import de.hpi.swa.graal.squeak.nodes.GetBlockFrameArgumentsNode;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
@@ -44,7 +42,6 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @GenerateNodeFactory
     @SqueakPrimitive(index = 195)
     protected abstract static class PrimFindNextUnwindContextUpToNode extends AbstractPrimitiveNode {
-        @Child private FrameSlotReadNode contextOrMarkerNode = FrameSlotReadNode.createForContextOrMarker();
         @Child private GetOrCreateContextNode contextNode = GetOrCreateContextNode.create();
 
         public PrimFindNextUnwindContextUpToNode(final CompiledMethodObject method, final int numArguments) {
@@ -63,7 +60,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                     if (current.getArguments().length < FrameAccess.RECEIVER) {
                         return null;
                     }
-                    final Object contextOrMarker = contextOrMarkerNode.executeRead(current);
+                    final Object contextOrMarker = current.getValue(CompiledCodeObject.thisContextOrMarkerSlot);
                     if (!foundMyself) {
                         if (receiver == contextOrMarker) {
                             foundMyself = true;
@@ -169,7 +166,6 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @GenerateNodeFactory
     @SqueakPrimitive(index = 197)
     protected abstract static class PrimNextHandlerContextNode extends AbstractPrimitiveNode {
-        @Child private FrameSlotReadNode contextOrMarkerNode = FrameSlotReadNode.createForContextOrMarker();
         @Child private GetOrCreateContextNode contextNode = GetOrCreateContextNode.create();
 
         protected PrimNextHandlerContextNode(final CompiledMethodObject method, final int numArguments) {
@@ -189,7 +185,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                         return null;
                     }
                     if (!foundMyself) {
-                        final Object contextOrMarker = contextOrMarkerNode.executeRead(current);
+                        final Object contextOrMarker = current.getValue(CompiledCodeObject.thisContextOrMarkerSlot);
                         if (receiver == contextOrMarker) {
                             foundMyself = true;
                         }
@@ -230,7 +226,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     }
 
     private abstract static class AbstractClosureValuePrimitiveNode extends AbstractPrimitiveNode {
-        @Child protected BlockActivationNode dispatch = BlockActivationNodeGen.create();
+        @Child protected BlockActivationNode dispatch = BlockActivationNode.create();
 
         protected AbstractClosureValuePrimitiveNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);

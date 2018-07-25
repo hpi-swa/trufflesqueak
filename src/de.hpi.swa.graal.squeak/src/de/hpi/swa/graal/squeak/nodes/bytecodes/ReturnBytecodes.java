@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -22,7 +23,6 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
 public final class ReturnBytecodes {
 
     protected abstract static class AbstractReturnNode extends AbstractBytecodeNode {
-        @Child protected GetOrCreateContextNode getContextNode = GetOrCreateContextNode.create();
         @Child protected FrameArgumentNode readClosureNode = FrameArgumentNode.create(FrameAccess.CLOSURE_OR_NULL);
 
         protected AbstractReturnNode(final CompiledCodeObject code, final int index) {
@@ -33,7 +33,7 @@ public final class ReturnBytecodes {
             return readClosureNode.executeRead(frame) instanceof BlockClosureObject;
         }
 
-        protected final boolean hasModifiedSender(final VirtualFrame frame) {
+        protected static final boolean hasModifiedSender(final VirtualFrame frame) {
             return getContext(frame).hasModifiedSender();
         }
 
@@ -54,7 +54,8 @@ public final class ReturnBytecodes {
         }
 
         @Specialization(guards = {"hasClosure(frame) || !isVirtualized(frame)", "hasClosure(frame) || hasModifiedSender(frame)"})
-        protected final Object executeNonLocalReturn(final VirtualFrame frame) {
+        protected final Object executeNonLocalReturn(final VirtualFrame frame,
+                        @Cached("create()") final GetOrCreateContextNode getContextNode) {
             final ContextObject outerContext;
             final BlockClosureObject block = (BlockClosureObject) readClosureNode.executeRead(frame);
             if (block != null) {
@@ -113,7 +114,7 @@ public final class ReturnBytecodes {
     }
 
     public abstract static class ReturnTopFromBlockNode extends AbstractReturnNode {
-        @Child protected StackPopNode popNode;
+        @Child private StackPopNode popNode;
 
         public static ReturnTopFromBlockNode create(final CompiledCodeObject code, final int index) {
             return ReturnTopFromBlockNodeGen.create(code, index);
@@ -130,7 +131,8 @@ public final class ReturnBytecodes {
         }
 
         @Specialization(guards = {"!isVirtualized(frame)", "hasModifiedSender(frame)"})
-        protected final Object executeNonLocalReturn(final VirtualFrame frame) {
+        protected final Object executeNonLocalReturn(final VirtualFrame frame,
+                        @Cached("create()") final GetOrCreateContextNode getContextNode) {
             final ContextObject outerContext;
             final BlockClosureObject block = (BlockClosureObject) readClosureNode.executeRead(frame);
             if (block != null) {
@@ -153,7 +155,7 @@ public final class ReturnBytecodes {
     }
 
     public abstract static class ReturnTopFromMethodNode extends AbstractReturnNodeWithSpecializations {
-        @Child protected StackPopNode popNode;
+        @Child private StackPopNode popNode;
 
         public static ReturnTopFromMethodNode create(final CompiledCodeObject code, final int index) {
             return ReturnTopFromMethodNodeGen.create(code, index);

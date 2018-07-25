@@ -3,8 +3,10 @@ package de.hpi.swa.graal.squeak.nodes;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.GenerateWrapper;
 import com.oracle.truffle.api.instrumentation.InstrumentableNode;
@@ -13,6 +15,8 @@ import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.NodeCost;
+import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.SourceSection;
 
@@ -20,8 +24,6 @@ import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotWriteNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
@@ -29,16 +31,12 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
 public abstract class EnterCodeNode extends Node implements InstrumentableNode {
     protected final CompiledCodeObject code;
     @CompilationFinal private SourceSection sourceSection;
-    @Child private GetOrCreateContextNode createContextNode = GetOrCreateContextNode.create();
-    @Child private ExecuteContextNode executeContextNode;
-    @Child private FrameSlotWriteNode contextWriteNode = FrameSlotWriteNode.createForContextOrMarker();
-    @Child private FrameSlotWriteNode instructionPointerWriteNode = FrameSlotWriteNode.createForInstructionPointer();
-    @Child private FrameSlotWriteNode stackPointerWriteNode = FrameSlotWriteNode.createForStackPointer();
-    @Child private FrameSlotReadNode stackPointerReadNode = FrameSlotReadNode.createForStackPointer();
-    @Child private StackPushNode pushStackNode = StackPushNode.create();
 
-    public static SqueakRootNode create(final SqueakLanguage language, final CompiledCodeObject code) {
-        return new SqueakRootNode(language, code);
+    @Child private ExecuteContextNode executeContextNode;
+    @Child private GetOrCreateContextNode createContextNode;
+
+    public static SqueakCodeRootNode create(final SqueakLanguage language, final CompiledCodeObject code) {
+        return new SqueakCodeRootNode(language, code);
     }
 
     public abstract Object execute(VirtualFrame frame);
@@ -52,18 +50,23 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
         this(codeNode.code);
     }
 
-    protected static final class SqueakRootNode extends RootNode {
+    @NodeInfo(cost = NodeCost.NONE)
+    protected static final class SqueakCodeRootNode extends RootNode {
         @Child private EnterCodeNode codeNode;
-        @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create();
 
-        protected SqueakRootNode(final SqueakLanguage language, final CompiledCodeObject code) {
+        protected SqueakCodeRootNode(final SqueakLanguage language, final CompiledCodeObject code) {
             super(language, code.getFrameDescriptor());
             codeNode = EnterCodeNodeGen.create(code);
         }
 
         @Override
         public Object execute(final VirtualFrame frame) {
-            return codeNode.execute(frame);
+            try {
+                return codeNode.execute(frame);
+            } catch (StackOverflowError e) {
+                codeNode.code.image.printSqStackTrace();
+                throw e;
+            }
         }
 
         @Override
@@ -77,17 +80,18 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
         }
     }
 
-    private void initializeSlots(final VirtualFrame frame) {
-        instructionPointerWriteNode.executeWrite(frame, 0);
-        stackPointerWriteNode.executeWrite(frame, -1);
+    private static void initializeSlots(final VirtualFrame frame) {
+        frame.setInt(CompiledCodeObject.instructionPointerSlot, 0);
+        frame.setInt(CompiledCodeObject.stackPointerSlot, -1);
     }
 
     @ExplodeLoop
     @Specialization(assumptions = {"code.getCanBeVirtualizedAssumption()"})
-    protected final Object enterVirtualized(final VirtualFrame frame) {
+    protected final Object enterVirtualized(final VirtualFrame frame,
+                    @Cached("create(code)") final StackPushNode pushStackNode) {
         CompilerDirectives.ensureVirtualized(frame);
         initializeSlots(frame);
-        contextWriteNode.executeWrite(frame, new FrameMarker());
+        frame.setObject(CompiledCodeObject.thisContextOrMarkerSlot, new FrameMarker());
         // Push arguments and copied values onto the newContext.
         final Object[] arguments = frame.getArguments();
         assert code.getNumArgsAndCopied() == (arguments.length - FrameAccess.ARGUMENTS_START);
@@ -99,7 +103,7 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
         for (int i = 0; i < remainingTemps; i++) {
             pushStackNode.executeWrite(frame, code.image.nil);
         }
-        assert ((int) stackPointerReadNode.executeRead(frame)) + 1 >= remainingTemps;
+        assert (FrameUtil.getIntSafe(frame, CompiledCodeObject.stackPointerSlot)) + 1 >= remainingTemps;
         return executeContextNode.executeContext(frame, null);
     }
 
@@ -107,8 +111,8 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
     @Fallback
     protected final Object enter(final VirtualFrame frame) {
         initializeSlots(frame);
-        final ContextObject newContext = createContextNode.executeGet(frame);
-        contextWriteNode.executeWrite(frame, newContext);
+        final ContextObject newContext = getCreateContextNode().executeGet(frame);
+        frame.setObject(CompiledCodeObject.thisContextOrMarkerSlot, newContext);
         // Push arguments and copied values onto the newContext.
         final Object[] arguments = frame.getArguments();
         assert code.getNumArgsAndCopied() == (arguments.length - FrameAccess.ARGUMENTS_START);
@@ -122,6 +126,14 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
         }
         assert newContext.getStackPointer() >= remainingTemps;
         return executeContextNode.executeContext(frame, newContext);
+    }
+
+    private GetOrCreateContextNode getCreateContextNode() {
+        if (createContextNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            createContextNode = insert(GetOrCreateContextNode.create());
+        }
+        return createContextNode;
     }
 
     @Override

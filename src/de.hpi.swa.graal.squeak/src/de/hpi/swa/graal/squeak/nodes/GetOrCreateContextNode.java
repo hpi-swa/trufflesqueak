@@ -1,6 +1,8 @@
 package de.hpi.swa.graal.squeak.nodes;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.MaterializedFrame;
@@ -10,13 +12,10 @@ import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameArgumentNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotWriteNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
+@ImportStatic(FrameAccess.class)
 public abstract class GetOrCreateContextNode extends AbstractNode {
-    @Child private FrameArgumentNode methodNode = FrameArgumentNode.create(FrameAccess.METHOD);
-    @Child private FrameSlotWriteNode contextWriteNode = FrameSlotWriteNode.createForContextOrMarker();
-
     public static GetOrCreateContextNode create() {
         return GetOrCreateContextNodeGen.create();
     }
@@ -24,15 +23,16 @@ public abstract class GetOrCreateContextNode extends AbstractNode {
     public abstract ContextObject executeGet(Frame frame);
 
     @Specialization(guards = {"isFullyVirtualized(frame)"})
-    protected final ContextObject doCreateLight(final VirtualFrame frame) {
+    protected static final ContextObject doCreateLight(final VirtualFrame frame,
+                    @Cached("create(METHOD)") final FrameArgumentNode methodNode) {
         final CompiledCodeObject method = (CompiledCodeObject) methodNode.executeRead(frame);
         final ContextObject context = ContextObject.create(method.image, method.sqContextSize(), frame.materialize(), getFrameMarker(frame));
-        contextWriteNode.executeWrite(frame, context);
+        frame.setObject(CompiledCodeObject.thisContextOrMarkerSlot, context);
         return context;
     }
 
     @Fallback
-    protected final ContextObject doGet(final VirtualFrame frame) {
+    protected static final ContextObject doGet(final VirtualFrame frame) {
         return getContext(frame);
     }
 

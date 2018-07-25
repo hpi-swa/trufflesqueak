@@ -5,30 +5,24 @@ import java.lang.ref.WeakReference;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
-import de.hpi.swa.graal.squeak.image.AbstractImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 // TODO: Validate that weak objects are working correctly
 public final class WeakPointersObject extends AbstractSqueakObject {
     public static final ReferenceQueue<Object> weakPointersQueue = new ReferenceQueue<>();
-    protected Object[] pointers;
+    private Object[] pointers;
 
-    public WeakPointersObject(final SqueakImageContext img) {
-        super(img);
-    }
-
-    public WeakPointersObject(final SqueakImageContext img, final ClassObject sqClass, final Object[] ptrs) {
-        super(img, sqClass);
-        pointers = ptrs;
-        convertToWeakReferences();
+    public WeakPointersObject(final SqueakImageContext img, final long hash, final ClassObject sqClass) {
+        super(img, hash, sqClass);
     }
 
     public WeakPointersObject(final SqueakImageContext img, final ClassObject classObject, final int size) {
-        this(img, classObject, ArrayUtils.withAll(size, img.nil));
+        super(img, classObject);
+        setPointers(ArrayUtils.withAll(size, img.nil));
     }
 
-    public WeakPointersObject(final WeakPointersObject original) {
+    private WeakPointersObject(final WeakPointersObject original) {
         super(original.image, original.getSqClass());
         this.pointers = original.pointers.clone();
     }
@@ -36,13 +30,6 @@ public final class WeakPointersObject extends AbstractSqueakObject {
     @Override
     public String toString() {
         return "WeakPointersObject: " + getSqClass();
-    }
-
-    @Override
-    public void fillin(final AbstractImageChunk chunk) {
-        super.fillin(chunk);
-        pointers = chunk.getPointers();
-        convertToWeakReferences();
     }
 
     public Object at0(final long index) {
@@ -84,6 +71,11 @@ public final class WeakPointersObject extends AbstractSqueakObject {
 
     public Object[] getPointers() {
         return pointers;
+    }
+
+    public void setPointers(final Object[] ptrs) {
+        pointers = ptrs;
+        convertToWeakReferences();
     }
 
     public AbstractSqueakObject shallowCopy() {
