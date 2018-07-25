@@ -156,7 +156,7 @@ public abstract class ObjectGraphNode extends AbstractNodeWithImage {
                 int i = 0;
                 for (final FrameSlot slot : current.getFrameDescriptor().getSlots()) {
                     final Object stackObject = current.getValue(slot);
-                    if (stackObject == null || i < stackPointer) {
+                    if (stackObject == null || i >= stackPointer) {
                         return null; // this slot and all following have not been used
                     }
                     if (stackObject instanceof AbstractSqueakObject) {
