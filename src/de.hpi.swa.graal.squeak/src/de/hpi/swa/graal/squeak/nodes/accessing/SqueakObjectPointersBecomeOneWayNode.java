@@ -65,17 +65,7 @@ public abstract class SqueakObjectPointersBecomeOneWayNode extends Node {
 
     @Specialization
     protected final void doClass(final ClassObject obj, final Object[] from, final Object[] to, final boolean copyHash) {
-        for (int i = 0; i < from.length; i++) {
-            final Object fromPointer = from[i];
-            for (int j = 0; j < obj.size(); j++) {
-                final Object newPointer = obj.at0(j);
-                if (newPointer == fromPointer) {
-                    final Object toPointer = to[i];
-                    obj.atput0(j, toPointer);
-                    updateHashNode.executeUpdate(fromPointer, toPointer, copyHash);
-                }
-            }
-        }
+        pointersBecomeOneWay(obj.getPointers(), from, to, copyHash);
     }
 
     @Specialization
@@ -118,28 +108,22 @@ public abstract class SqueakObjectPointersBecomeOneWayNode extends Node {
 
     @Specialization
     protected final void doPointers(final PointersObject obj, final Object[] from, final Object[] to, final boolean copyHash) {
-        for (int i = 0; i < from.length; i++) {
-            final Object fromPointer = from[i];
-            for (int j = 0; j < obj.size(); j++) {
-                final Object newPointer = obj.at0(j);
-                if (newPointer == fromPointer) {
-                    final Object toPointer = to[i];
-                    obj.atput0(j, toPointer);
-                    updateHashNode.executeUpdate(fromPointer, toPointer, copyHash);
-                }
-            }
-        }
+        pointersBecomeOneWay(obj.getPointers(), from, to, copyHash);
     }
 
     @Specialization
     protected final void doWeakPointers(final WeakPointersObject obj, final Object[] from, final Object[] to, final boolean copyHash) {
+        pointersBecomeOneWay(obj.getPointers(), from, to, copyHash);
+    }
+
+    private void pointersBecomeOneWay(final Object[] original, final Object[] from, final Object[] to, final boolean copyHash) {
         for (int i = 0; i < from.length; i++) {
             final Object fromPointer = from[i];
-            for (int j = 0; j < obj.size(); j++) {
-                final Object newPointer = obj.at0(j);
+            for (int j = 0; j < original.length; j++) {
+                final Object newPointer = original[j];
                 if (newPointer == fromPointer) {
                     final Object toPointer = to[i];
-                    obj.atput0(j, toPointer);
+                    original[j] = toPointer;
                     updateHashNode.executeUpdate(fromPointer, toPointer, copyHash);
                 }
             }

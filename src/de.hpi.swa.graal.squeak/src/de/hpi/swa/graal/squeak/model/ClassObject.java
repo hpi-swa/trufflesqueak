@@ -18,15 +18,13 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.CLASS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.METHOD_DICT;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
-public final class ClassObject extends AbstractSqueakObject {
+public final class ClassObject extends AbstractPointersObject {
     private final Set<ClassObject> subclasses = new HashSet<>();
     private final CyclicAssumption methodLookupStable = new CyclicAssumption("Class lookup stability");
     private final CyclicAssumption classFormatStable = new CyclicAssumption("Class format stability");
 
     @CompilationFinal private int instSpec = -1;
     @CompilationFinal private int instanceSize = -1;
-
-    private Object[] pointers;
 
     public ClassObject(final SqueakImageContext img) {
         super(img, -1L, null);
@@ -113,10 +111,6 @@ public final class ClassObject extends AbstractSqueakObject {
         for (ClassObject subclass : subclasses) {
             subclass.invalidateMethodLookup();
         }
-    }
-
-    public int size() {
-        return pointers.length;
     }
 
     public int instsize() {
@@ -263,10 +257,6 @@ public final class ClassObject extends AbstractSqueakObject {
 
     public int getBasicInstanceSize() {
         return instanceSize;
-    }
-
-    public Object[] getPointers() {
-        return pointers;
     }
 
     public AbstractSqueakObject shallowCopy() {

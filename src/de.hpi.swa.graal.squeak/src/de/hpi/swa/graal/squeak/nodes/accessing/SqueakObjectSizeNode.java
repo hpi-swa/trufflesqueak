@@ -6,18 +6,15 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.graal.squeak.model.AbstractPointersObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
-import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
-import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.EmptyObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
-import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 
 public abstract class SqueakObjectSizeNode extends Node {
     private final ValueProfile storageType = ValueProfile.createClassProfile();
@@ -29,22 +26,7 @@ public abstract class SqueakObjectSizeNode extends Node {
     public abstract int execute(Object obj);
 
     @Specialization
-    protected static final int doPointers(final PointersObject obj) {
-        return obj.size();
-    }
-
-    @Specialization
-    protected static final int doClass(final ClassObject obj) {
-        return obj.size();
-    }
-
-    @Specialization
-    protected static final int doContext(final ContextObject obj) {
-        return obj.size();
-    }
-
-    @Specialization
-    protected static final int doWeakPointers(final WeakPointersObject obj) {
+    protected static final int doAbstractPointers(final AbstractPointersObject obj) {
         return obj.size();
     }
 
