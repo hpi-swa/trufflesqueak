@@ -103,6 +103,7 @@ public final class SqueakConfig {
             sb.add("--testing");
         }
         if (restArgs != null) {
+            sb.add("--args");
             for (String s : restArgs) {
                 sb.add(s);
             }
