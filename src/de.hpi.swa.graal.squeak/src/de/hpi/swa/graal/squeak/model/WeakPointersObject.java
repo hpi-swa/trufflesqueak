@@ -8,10 +8,8 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
-// TODO: Validate that weak objects are working correctly
-public final class WeakPointersObject extends AbstractSqueakObject {
+public final class WeakPointersObject extends AbstractPointersObject {
     public static final ReferenceQueue<Object> weakPointersQueue = new ReferenceQueue<>();
-    private Object[] pointers;
 
     public WeakPointersObject(final SqueakImageContext img, final long hash, final ClassObject sqClass) {
         super(img, hash, sqClass);
@@ -19,7 +17,7 @@ public final class WeakPointersObject extends AbstractSqueakObject {
 
     public WeakPointersObject(final SqueakImageContext img, final ClassObject classObject, final int size) {
         super(img, classObject);
-        setPointers(ArrayUtils.withAll(size, img.nil));
+        pointers = ArrayUtils.withAll(size, img.nil);
     }
 
     private WeakPointersObject(final WeakPointersObject original) {
@@ -50,46 +48,39 @@ public final class WeakPointersObject extends AbstractSqueakObject {
         assert obj != null; // null indicates a problem
         if (obj instanceof AbstractSqueakObject && index >= instsize()) {
             // store into variable part
-            weakReferenceAtPut((int) index, obj);
+            pointers[(int) index] = newWeakReferenceFor(obj);
         } else {
             pointers[(int) index] = obj;
         }
     }
 
     @TruffleBoundary
-    private void weakReferenceAtPut(final int index, final Object pointer) {
-        pointers[index] = new WeakReference<>(pointer, weakPointersQueue);
-    }
-
-    public int size() {
-        return pointers.length;
+    private static WeakReference<Object> newWeakReferenceFor(final Object pointer) {
+        return new WeakReference<>(pointer, weakPointersQueue);
     }
 
     public int instsize() {
         return getSqClass().getBasicInstanceSize();
     }
 
-    public Object[] getPointers() {
-        return pointers;
-    }
-
-    public void setPointers(final Object[] ptrs) {
-        pointers = ptrs;
-        convertToWeakReferences();
+    public void setWeakPointers(final Object[] pointers) {
+        this.pointers = convertToWeakReferences(pointers);
     }
 
     public AbstractSqueakObject shallowCopy() {
         return new WeakPointersObject(this);
     }
 
-    private void convertToWeakReferences() {
+    private static Object[] convertToWeakReferences(final Object[] pointers) {
+        final Object[] weakPointers = new Object[pointers.length];
         for (int i = 0; i < pointers.length; i++) {
             final Object pointer = pointers[i];
             if (pointer instanceof AbstractSqueakObject) {
-                weakReferenceAtPut(i, pointer);
+                weakPointers[i] = newWeakReferenceFor(pointer);
             } else {
-                pointers[i] = pointer;
+                weakPointers[i] = pointer;
             }
         }
+        return weakPointers;
     }
 }

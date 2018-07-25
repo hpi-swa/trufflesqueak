@@ -13,10 +13,9 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
-public final class ContextObject extends AbstractSqueakObject {
+public final class ContextObject extends AbstractPointersObject {
     @CompilationFinal private MaterializedFrame truffleFrame;
     @CompilationFinal private FrameMarker frameMarker;
-    private Object[] pointers;
     private boolean hasModifiedSender = false;
     private boolean isDirty = false;
     private boolean escaped = false;
@@ -255,20 +254,8 @@ public final class ContextObject extends AbstractSqueakObject {
         }
     }
 
-    public int size() {
-        return pointers.length;
-    }
-
     public int instsize() {
         return getSqClass().getBasicInstanceSize();
-    }
-
-    public Object[] getPointers() {
-        return pointers;
-    }
-
-    public void setPointers(final Object[] pointers) {
-        this.pointers = pointers;
     }
 
     public Object top() {

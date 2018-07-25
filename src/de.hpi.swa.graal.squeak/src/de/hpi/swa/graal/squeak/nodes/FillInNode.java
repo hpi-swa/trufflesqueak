@@ -98,7 +98,7 @@ public abstract class FillInNode extends Node {
 
     @Specialization
     protected static final void doWeakPointers(final WeakPointersObject obj, final SqueakImageChunk chunk) {
-        obj.setPointers(chunk.getPointers());
+        obj.setWeakPointers(chunk.getPointers());
     }
 
     @SuppressWarnings("unused")

@@ -3,8 +3,7 @@ package de.hpi.swa.graal.squeak.model;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
-public final class PointersObject extends AbstractSqueakObject {
-    private Object[] pointers;
+public final class PointersObject extends AbstractPointersObject {
 
     public PointersObject(final SqueakImageContext img) {
         super(img, -1, null); // for special PointersObjects only
@@ -39,20 +38,8 @@ public final class PointersObject extends AbstractSqueakObject {
         pointers = otherPointers;
     }
 
-    public int size() {
-        return pointers.length;
-    }
-
     public int instsize() {
         return getSqClass().getBasicInstanceSize();
-    }
-
-    public Object[] getPointers() {
-        return pointers;
-    }
-
-    public void setPointers(final Object[] pointers) {
-        this.pointers = pointers;
     }
 
     public AbstractSqueakObject shallowCopy() {
