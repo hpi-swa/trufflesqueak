@@ -226,8 +226,8 @@ public final class ClassObject extends AbstractPointersObject {
                 }
             case 4:
                 return new WeakPointersObject(image, this, size);
-            case 5: // TODO: weak pointers
-                return new PointersObject(image, this, size);
+            case 5: // TODO: ephemerons
+                return new WeakPointersObject(image, this, size);
             case 7: case 8:
                 throw new SqueakException("Tried to instantiate an immediate");
             case 9:
