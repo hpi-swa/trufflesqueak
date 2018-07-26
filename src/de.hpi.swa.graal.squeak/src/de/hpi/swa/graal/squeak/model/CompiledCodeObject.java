@@ -166,6 +166,10 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         if (i >= stackSlots.length) { // This is fine, ignore for decoder
             return null;
         }
+        if (i < 0) {
+            image.printToStdErr("Bad stack access, falling back to bottom-most stack slot...");
+            return stackSlots[0];
+        }
         return stackSlots[i];
     }
 
