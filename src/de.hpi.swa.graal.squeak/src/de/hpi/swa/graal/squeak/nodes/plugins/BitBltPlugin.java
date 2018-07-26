@@ -1,13 +1,17 @@
 package de.hpi.swa.graal.squeak.nodes.plugins;
 
+import java.util.Arrays;
 import java.util.List;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -21,9 +25,12 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.BIT_BLT;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.FORM;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
-import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
-import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.HandleReceiverAndBitmapHelperNodeGen;
-import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.PixelValueAtHelperNodeGen;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
+import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.CopyBitsClipHelperNodeGen;
+import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.CopyBitsExecuteHelperNodeGen;
+import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.CopyBitsExtractHelperNodeGen;
+import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.PixelValueAtExecuteHelperNodeGen;
+import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.PixelValueAtExtractHelperNodeGen;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
@@ -44,63 +51,40 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveCopyBits")
     protected abstract static class PrimCopyBitsNode extends AbstractPrimitiveNode {
-        private final ValueProfile halftoneFormStorageType = ValueProfile.createClassProfile();
-        private final ValueProfile destinationBitsStorageType = ValueProfile.createClassProfile();
+
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
         @Child private SimulationPrimitiveNode simulateNode;
+        @Child private CopyBitsExtractHelperNode extractNode;
 
         protected PrimCopyBitsNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
             simulateNode = SimulationPrimitiveNode.create(method, getClass().getSimpleName(), "primitiveCopyBits");
+            extractNode = CopyBitsExtractHelperNode.create();
         }
 
-        @Specialization(guards = {"hasCombinationRule(receiver, 3)", "hasNilSourceForm(receiver)"})
-        protected final Object doCopyBitsCombiRule3NilSourceForm(final VirtualFrame frame, final PointersObject receiver) {
-            final PointersObject destinationForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
-            final NativeObject destinationBits = (NativeObject) destinationForm.at0(FORM.BITS);
-            final NativeObject halftoneForm = (NativeObject) receiver.at0(BIT_BLT.HALFTONE_FORM);
-            final int[] fillArray = halftoneForm.getIntStorage(halftoneFormStorageType);
-            if (fillArray.length != 1) {
-                throw new SqueakException("Expected one fillValue only");
-            }
-            final int fillValue = fillArray[0];
-            final long destinationDepth = (long) destinationForm.at0(FORM.DEPTH);
-            if (destinationDepth != 32) { // fall back to simulation if not 32-bit
+        protected boolean supportedCombinationRule(final PointersObject receiver) {
+            final long combinationRule = (long) receiver.at0(BIT_BLT.COMBINATION_RULE);
+            final Object sourceForm = receiver.at0(BIT_BLT.SOURCE_FORM);
+            final boolean hasSourceForm = sourceForm != receiver.image.nil;
+            final boolean noOverlap = !hasSourceForm || !(receiver.at0(BIT_BLT.DEST_FORM).equals(sourceForm));
+
+            return noOverlap &&
+                            (combinationRule == 3 && !hasSourceForm) ||
+                            (combinationRule == 4 && !hasSourceForm) ||
+                            (combinationRule == 24 && !hasSourceForm);
+        }
+
+        protected boolean supportedDepth(final PointersObject receiver) {
+            return hasSourceFormDepth(receiver, 32) && hasDestFormDepth(receiver, 32);
+        }
+
+        @Specialization(guards = {"supportedCombinationRule(receiver)", "supportedDepth(receiver)"})
+        protected final Object doOptimized(final VirtualFrame frame, final PointersObject receiver) {
+            try {
+                return extractNode.execute(receiver);
+            } catch (UnsupportedSpecializationException | PrimitiveFailed e) {
                 return doSimulation(frame, receiver);
             }
-            final int destinationWidth = (int) ((long) destinationForm.at0(FORM.WIDTH));
-            final long destX = (long) receiver.at0(BIT_BLT.DEST_X);
-            final long destY = (long) receiver.at0(BIT_BLT.DEST_Y);
-            final long width = (long) receiver.at0(BIT_BLT.WIDTH);
-            final long height = (long) receiver.at0(BIT_BLT.HEIGHT);
-            final long clipX = (long) receiver.at0(BIT_BLT.CLIP_X);
-            final long clipY = (long) receiver.at0(BIT_BLT.CLIP_Y);
-            final long clipWidth = (long) receiver.at0(BIT_BLT.CLIP_WIDTH);
-            final long clipHeight = (long) receiver.at0(BIT_BLT.CLIP_HEIGHT);
-
-            final long[] clippedValues = clipRange(-1, 0, 0, 0, width, height, destX, destY, clipX, clipY, clipWidth, clipHeight);
-            final long dx = clippedValues[2];
-            final long dy = clippedValues[3];
-            final int bbW = (int) clippedValues[4];
-            final int bbH = (int) clippedValues[5];
-            if (bbW <= 0 || bbH <= 0) {
-                return receiver; // "zero width or height; noop"
-            }
-            final long endX = dx + bbW;
-            final long endY = dy + bbH;
-
-            final int[] ints = destinationBits.getIntStorage(destinationBitsStorageType);
-
-            if (ints.length - 1 < (endY - 1) * destinationWidth + (endX - 1)) {
-                throw new PrimitiveFailed(); // fail early in case of index out of bounce
-            }
-
-            for (int y = (int) dy; y < endY; y++) {
-                for (int x = (int) dx; x < endX; x++) {
-                    ints[y * destinationWidth + x] = fillValue;
-                }
-            }
-            return receiver;
         }
 
         @Fallback
@@ -113,16 +97,13 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
          * Guard Helpers
          */
 
-        protected static final boolean hasCombinationRule(final PointersObject target, final int ruleIndex) {
-            return ruleIndex == (long) target.at0(BIT_BLT.COMBINATION_RULE);
+        protected final boolean hasDestFormDepth(final PointersObject target, final int depth) {
+            return depth == (long) at0Node.execute(target.at0(BIT_BLT.DEST_FORM), FORM.DEPTH);
         }
 
-        protected final boolean hasDestinationFormDepth(final PointersObject target, final int ruleIndex) {
-            return ruleIndex == (long) at0Node.execute(target.at0(BIT_BLT.DEST_FORM), FORM.DEPTH);
-        }
-
-        protected final boolean hasSourceFormDepth(final PointersObject target, final int ruleIndex) {
-            return ruleIndex == (long) at0Node.execute(target.at0(BIT_BLT.SOURCE_FORM), FORM.DEPTH);
+        protected final boolean hasSourceFormDepth(final PointersObject target, final int depth) {
+            final Object sourceForm = target.at0(BIT_BLT.SOURCE_FORM);
+            return sourceForm == target.image.nil || depth == (long) at0Node.execute(sourceForm, FORM.DEPTH);
         }
 
         protected final boolean hasNilSourceForm(final PointersObject target) {
@@ -132,15 +113,17 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         protected final boolean hasNilHalftoneForm(final PointersObject target) {
             return target.at0(BIT_BLT.HALFTONE_FORM) == code.image.nil;
         }
+
+        protected final boolean hasNilColormap(final PointersObject target) {
+            return target.at0(BIT_BLT.COLOR_MAP) == code.image.nil;
+        }
     }
 
     @ImportStatic(FORM.class)
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitivePixelValueAt")
     protected abstract static class PrimPixelValueAtNode extends AbstractPrimitiveNode {
-        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
-        @Child protected SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
-        @Child private HandleReceiverAndBitmapHelperNode handleNode = HandleReceiverAndBitmapHelperNode.create();
+        @Child private PixelValueAtExtractHelperNode handleNode = PixelValueAtExtractHelperNode.create();
 
         public PrimPixelValueAtNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -152,41 +135,468 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             return 0L;
         }
 
-        @Specialization(guards = {"xValue >= 0", "yValue > 0", "sizeNode.execute(receiver) > OFFSET"})
+        @Specialization(guards = {"xValue >= 0", "yValue > 0", "receiver.size() > OFFSET"})
         protected final long doValueAt(final PointersObject receiver, final long xValue, final long yValue) {
-            return handleNode.executeValueAt(receiver, xValue, yValue, at0Node.execute(receiver, FORM.BITS));
+            return handleNode.executeValueAt(receiver, xValue, yValue, receiver.at0(FORM.BITS));
         }
     }
 
     /*
      * Helper Nodes
      */
+    protected abstract static class CopyBitsExtractHelperNode extends Node {
+        private final ValueProfile intProfile = ValueProfile.createClassProfile();
+        @Child private CopyBitsClipHelperNode clipNode = CopyBitsClipHelperNode.create();
 
-    protected abstract static class HandleReceiverAndBitmapHelperNode extends Node {
-        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
-        @Child private PixelValueAtHelperNode pixelValueNode = PixelValueAtHelperNode.create();
+        protected static CopyBitsExtractHelperNode create() {
+            return CopyBitsExtractHelperNodeGen.create();
+        }
 
-        private static HandleReceiverAndBitmapHelperNode create() {
-            return HandleReceiverAndBitmapHelperNodeGen.create();
+        protected abstract PointersObject execute(PointersObject receiver);
+
+        @Specialization(guards = {"hasSourceForm(receiver)"})
+        protected final PointersObject executeWithSourceForm(final PointersObject receiver) {
+            final PointersObject sourceForm = (PointersObject) receiver.at0(BIT_BLT.SOURCE_FORM);
+            final long sourceWidth = (long) sourceForm.at0(FORM.WIDTH);
+            final long sourceHeight = (long) sourceForm.at0(FORM.HEIGHT);
+
+            final PointersObject destForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
+            final long destWidth = (long) destForm.at0(FORM.WIDTH);
+            final long destHeight = (long) destForm.at0(FORM.HEIGHT);
+
+            final long combinationRule = (long) receiver.at0(BIT_BLT.COMBINATION_RULE);
+
+            final NativeObject destBits = (NativeObject) destForm.at0(FORM.BITS);
+            if (!destBits.isIntType() || destWidth * destHeight > destBits.getIntStorage(intProfile).length) {
+                throw new PrimitiveFailed();
+            }
+
+            final NativeObject sourceBits = (NativeObject) sourceForm.at0(FORM.BITS);
+            if (!sourceBits.isIntType() || sourceWidth * sourceHeight > sourceBits.getIntStorage(intProfile).length) {
+                throw new PrimitiveFailed();
+            }
+
+            final Object destX = receiver.at0(BIT_BLT.DEST_X);
+            final Object destY = receiver.at0(BIT_BLT.DEST_Y);
+            final Object sourceX = receiver.at0(BIT_BLT.SOURCE_X);
+            final Object sourceY = receiver.at0(BIT_BLT.SOURCE_Y);
+            final Object areaWidth = receiver.at0(BIT_BLT.WIDTH);
+            final Object areaHeight = receiver.at0(BIT_BLT.HEIGHT);
+
+            final Object clipX = receiver.at0(BIT_BLT.CLIP_X);
+            final Object clipY = receiver.at0(BIT_BLT.CLIP_Y);
+            final Object clipWidth = receiver.at0(BIT_BLT.CLIP_WIDTH);
+            final Object clipHeight = receiver.at0(BIT_BLT.CLIP_HEIGHT);
+
+            return clipNode.executeClip(receiver, combinationRule, areaWidth, areaHeight, sourceForm, sourceX, sourceY, sourceWidth, sourceHeight, destForm, destX, destY, destWidth, clipX, clipY,
+                            clipWidth,
+                            clipHeight);
+        }
+
+        @Fallback
+        protected final PointersObject executeWithoutSourceForm(final PointersObject receiver) {
+            final PointersObject destForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
+            final long destWidth = (long) destForm.at0(FORM.WIDTH);
+            final long destHeight = (long) destForm.at0(FORM.HEIGHT);
+
+            final long combinationRule = (long) receiver.at0(BIT_BLT.COMBINATION_RULE);
+
+            final NativeObject destBits = (NativeObject) destForm.at0(FORM.BITS);
+            if (!destBits.isIntType() || destWidth * destHeight > destBits.getIntStorage(intProfile).length) {
+                throw new PrimitiveFailed();
+            }
+
+            final Object destX = receiver.at0(BIT_BLT.DEST_X);
+            final Object destY = receiver.at0(BIT_BLT.DEST_Y);
+            final Object areaWidth = receiver.at0(BIT_BLT.WIDTH);
+            final Object areaHeight = receiver.at0(BIT_BLT.HEIGHT);
+
+            final Object clipX = receiver.at0(BIT_BLT.CLIP_X);
+            final Object clipY = receiver.at0(BIT_BLT.CLIP_Y);
+            final Object clipWidth = receiver.at0(BIT_BLT.CLIP_WIDTH);
+            final Object clipHeight = receiver.at0(BIT_BLT.CLIP_HEIGHT);
+
+            return clipNode.executeClip(receiver, combinationRule, areaWidth, areaHeight, null, 0L, 0L, 0L, 0L, destForm, destX, destY, destWidth, clipX, clipY,
+                            clipWidth,
+                            clipHeight);
+        }
+
+        protected static final boolean hasSourceForm(final PointersObject target) {
+            return target.at0(BIT_BLT.SOURCE_FORM) != target.image.nil;
+        }
+    }
+
+    protected abstract static class CopyBitsClipHelperNode extends Node {
+        @Child private CopyBitsExecuteHelperNode executeNode = CopyBitsExecuteHelperNode.create();
+
+        protected static CopyBitsClipHelperNode create() {
+            return CopyBitsClipHelperNodeGen.create();
+        }
+
+        protected abstract PointersObject executeClip(PointersObject receiver,
+                        long combinationRule,
+                        Object areaWidth,
+                        Object areaHeight,
+                        PointersObject sourceForm,
+                        Object sourceX,
+                        Object sourceY,
+                        Object sourceWidth,
+                        Object sourceHeight,
+                        PointersObject destinationForm,
+                        Object destX,
+                        Object destY,
+                        Object destWidth,
+                        Object clipX,
+                        Object clipY,
+                        Object clipWidth,
+                        Object clipHeight);
+
+        @Specialization(guards = {"sourceForm == null"})
+        protected final PointersObject executeClipWithoutSourceForm(final PointersObject receiver,
+                        final long combinationRule,
+                        final long areaWidth,
+                        final long areaHeight,
+                        final PointersObject sourceForm,
+                        final long sourceX,
+                        final long sourceY,
+                        final long sourceWidth,
+                        @SuppressWarnings("unused") final long sourceHeight,
+                        final PointersObject destForm,
+                        final long destX,
+                        final long destY,
+                        final long destWidth,
+                        final long clipX,
+                        final long clipY,
+                        final long clipWidth,
+                        final long clipHeight) {
+            // adapted copy of BilBltSimulation>>clipRange for the nil sourceForm case
+            final long dx;
+            final long dy;
+            long bbW;
+            long bbH;
+
+            if (destX >= clipX) {
+                dx = destX;
+                bbW = areaWidth;
+            } else {
+                bbW = areaWidth - (clipX - destX);
+                dx = clipX;
+            }
+
+            if ((dx + bbW) > (clipX + clipWidth)) {
+                bbW = bbW - ((dx + bbW) - (clipX + clipWidth));
+            }
+
+            // then in y
+            if (destY >= clipY) {
+                dy = destY;
+                bbH = areaHeight;
+            } else {
+                bbH = areaHeight - (clipY - destY);
+                dy = clipY;
+            }
+
+            if ((dy + bbH) > (clipY + clipHeight)) {
+                bbH = bbH - ((dy + bbH) - (clipY + clipHeight));
+            }
+
+            return executeNode.executeCopyBits(receiver, combinationRule, sourceForm, sourceX, sourceY, sourceWidth, destForm, dx, dy, destWidth, bbW, bbH);
+        }
+
+        @Specialization()
+        protected final PointersObject executeClipWithSourceForm(final PointersObject receiver,
+                        final long combinationRule,
+                        final long areaWidth,
+                        final long areaHeight,
+                        final PointersObject sourceForm,
+                        final long sourceX,
+                        final long sourceY,
+                        final long sourceWidth,
+                        final long sourceHeight,
+                        final PointersObject destForm,
+                        final long destX,
+                        final long destY,
+                        final long destWidth,
+                        final long clipX,
+                        final long clipY,
+                        final long clipWidth,
+                        final long clipHeight) {
+            long sx;
+            long sy;
+            long dx;
+            long dy;
+            long bbW;
+            long bbH;
+
+            if (destX >= clipX) {
+                sx = sourceX;
+                dx = destX;
+                bbW = areaWidth;
+            } else {
+                sx = sourceX + (clipX - destX);
+                bbW = areaWidth - (clipX - destX);
+                dx = clipX;
+            }
+
+            if ((dx + bbW) > (clipX + clipWidth)) {
+                bbW = bbW - ((dx + bbW) - (clipX + clipWidth));
+            }
+
+            // then in y
+            if (destY >= clipY) {
+                sy = sourceY;
+                dy = destY;
+                bbH = areaHeight;
+            } else {
+                sy = sourceY + clipY - destY;
+                bbH = areaHeight - (clipY - destY);
+                dy = clipY;
+            }
+
+            if ((dy + bbH) > (clipY + clipHeight)) {
+                bbH = bbH - ((dy + bbH) - (clipY + clipHeight));
+            }
+
+            if (sx < 0) {
+                dx = dx - sx;
+                bbW = bbW + sx;
+                sx = 0;
+            }
+
+            if (sx + bbW > sourceWidth) {
+                bbW = bbW - (sx + bbW - sourceWidth);
+            }
+
+            if (sy < 0) {
+                dy = dy - sy;
+                bbH = bbH + sy;
+                sy = 0;
+            }
+
+            if (sy + bbH > sourceHeight) {
+                bbH = bbH - (sy + bbH - sourceHeight);
+            }
+
+            return executeNode.executeCopyBits(receiver, combinationRule, sourceForm, sx, sy, sourceWidth, destForm, dx, dy, destWidth, bbW, bbH);
+        }
+    }
+
+    protected abstract static class CopyBitsExecuteHelperNode extends Node {
+        @CompilationFinal private final ValueProfile halftoneFormStorageType = ValueProfile.createClassProfile();
+        @CompilationFinal private final ValueProfile destinationBitsStorageType = ValueProfile.createClassProfile();
+        @CompilationFinal private final ValueProfile sourceBitsStorageType = ValueProfile.createClassProfile();
+
+        @CompilationFinal protected final ValueProfile sourceBitsByteStorageType = ValueProfile.createClassProfile();
+
+        @CompilationFinal protected final SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
+        @CompilationFinal protected final SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
+
+        protected static CopyBitsExecuteHelperNode create() {
+            return CopyBitsExecuteHelperNodeGen.create();
+        }
+
+        protected abstract PointersObject executeCopyBits(PointersObject receiver,
+                        long combinationRule,
+                        PointersObject sourceForm,
+                        long sourceX,
+                        long sourceY,
+                        long sourceWidth,
+                        PointersObject destForm,
+                        long destX,
+                        long destY,
+                        long destWidth,
+                        long areaWidth,
+                        long areaHeight);
+
+        protected static boolean invalidArea(final long areaWidth, final long areaHeight) {
+            return areaWidth <= 0 || areaHeight <= 0;
+        }
+
+        @SuppressWarnings({"unused", "static-method"})
+        @Specialization(guards = {"invalidArea(areaWidth, areaHeight)"})
+        protected final PointersObject executeInvalidArea(final PointersObject receiver,
+                        final long combinationRule,
+                        final PointersObject sourceForm,
+                        final long sourceX,
+                        final long sourceY,
+                        final long sourceWidth,
+                        final PointersObject destForm,
+                        final long destX,
+                        final long destY,
+                        final long destWidth,
+                        final long areaWidth,
+                        final long areaHeight) {
+            return receiver;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"combinationRule == 3", "sourceForm == null", "!invalidArea(areaWidth, areaHeight)"})
+        protected final PointersObject doCopyBitsCombiRule3NilSourceForm(final PointersObject receiver,
+                        final long combinationRule,
+                        final PointersObject sourceForm,
+                        final long sourceX,
+                        final long sourceY,
+                        final long sourceWidth,
+                        final PointersObject destForm,
+                        final long destX,
+                        final long destY,
+                        final long destWidth,
+                        final long areaWidth,
+                        final long areaHeight) {
+            final PointersObject destinationForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
+            final NativeObject destinationBits = (NativeObject) destinationForm.at0(FORM.BITS);
+            final NativeObject halftoneForm = (NativeObject) receiver.at0(BIT_BLT.HALFTONE_FORM);
+            final long fillValue = (long) at0Node.execute(halftoneForm, 0L);
+
+            for (long y = destY; y < destY + areaHeight; y++) {
+                final long destStart = y * destWidth + destX;
+                for (long dx = destStart; dx < destStart + areaWidth; dx++) {
+                    atPut0Node.execute(destinationBits, dx, fillValue);
+                }
+            }
+            return receiver;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"combinationRule == 4", "sourceForm == null", "!invalidArea(areaWidth, areaHeight)"})
+        protected final PointersObject doCopyBitsCombiRule4NilSourceForm(final PointersObject receiver,
+                        final long combinationRule,
+                        final PointersObject sourceForm,
+                        final long sourceX,
+                        final long sourceY,
+                        final long sourceWidth,
+                        final PointersObject destForm,
+                        final long destX,
+                        final long destY,
+                        final long destWidth,
+                        final long areaWidth,
+                        final long areaHeight) {
+            final PointersObject destinationForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
+            final NativeObject destinationBits = (NativeObject) destinationForm.at0(FORM.BITS);
+            final NativeObject halftoneForm = (NativeObject) receiver.at0(BIT_BLT.HALFTONE_FORM);
+            final int[] fillArray = halftoneForm.getIntStorage(halftoneFormStorageType);
+            if (fillArray.length != 1) {
+                throw new SqueakException("Expected one fillValue only");
+            }
+            final int fillValue = fillArray[0];
+
+            final long endX = destX + areaWidth;
+            final long endY = destY + areaHeight;
+
+            final int[] ints = destinationBits.getIntStorage(destinationBitsStorageType);
+
+            if (ints.length - 1 < (endY - 1) * destWidth + (endX - 1)) {
+                throw new PrimitiveFailed(); // fail early in case of index out of bounds
+            }
+
+            final int invertedFillValue = ~fillValue;
+
+            for (long dy = destY; dy < destY + areaHeight; dy++) {
+                final long destStart = dy * destWidth + destX;
+                try {
+                    for (long dx = destStart; dx < destStart + areaWidth; dx++) {
+                        ints[(int) dx] = invertedFillValue & ints[(int) dx];
+                    }
+                } finally {
+                    LoopNode.reportLoopCount(this, (int) areaWidth);
+                }
+            }
+
+            return receiver;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"combinationRule == 24", "sourceForm == null", "!invalidArea(areaWidth, areaHeight)"})
+        protected final PointersObject doCopyBitsCombiRule24NilSourceForm(final PointersObject receiver,
+                        final long combinationRule,
+                        final PointersObject sourceForm,
+                        final long sourceX,
+                        final long sourceY,
+                        final long sourceWidth,
+                        final PointersObject destForm,
+                        final long destX,
+                        final long destY,
+                        final long destWidth,
+                        final long areaWidth,
+                        final long areaHeight) {
+            final int[] fillArray = ((NativeObject) receiver.at0(BIT_BLT.HALFTONE_FORM)).getIntStorage(halftoneFormStorageType);
+            if (fillArray.length != 1) {
+                throw new SqueakException("Expected one fillValue only");
+            }
+            final int fillValue = fillArray[0];
+
+            final NativeObject destBits = (NativeObject) destForm.at0(FORM.BITS);
+            final int[] dest = ((NativeObject) destForm.at0(FORM.BITS)).getIntStorage(destinationBitsStorageType);
+
+            final long endX = destX + areaWidth;
+            final long endY = destY + areaHeight;
+
+            for (long y = destY; y < endY; y++) {
+                for (long x = destX; x < endX; x++) {
+                    final int index = (int) (y * destWidth + x);
+                    atPut0Node.execute(destBits, index, alphaBlend24(fillValue, (long) at0Node.execute(destBits, index)));
+                }
+            }
+            return receiver;
+        }
+
+        // FIXME: this method is currently not used, as it caused major artifacts. Digging down on
+        // the symptoms revealed that the problems only occurred if our implementation of rule 3 was
+        // active at the same time. Further, we noticed a significant increase in how often we get
+        // passed invalid areas.
+        // To re-enable this rule, simply go all the way up to "supportedCombinationRules" and add
+        // (combinationRule == 24 && hasSourceForm)
+        @Specialization(guards = {"combinationRule == 24", "sourceForm != null", "!invalidArea(areaWidth, areaHeight)"})
+        protected final PointersObject doCopyBitsCombiRule24WithSourceForm(final PointersObject receiver,
+                        @SuppressWarnings("unused") final long combinationRule,
+                        final PointersObject sourceForm,
+                        final long sourceX,
+                        final long sourceY,
+                        final long sourceWidth,
+                        final PointersObject destForm,
+                        final long destX,
+                        final long destY,
+                        final long destWidth,
+                        final long areaWidth,
+                        final long areaHeight) {
+            final NativeObject sourceBits = (NativeObject) sourceForm.at0(FORM.BITS);
+            final NativeObject destBits = (NativeObject) destForm.at0(FORM.BITS);
+
+            for (long dy = destY, sy = sourceY; dy < destY + areaHeight; dy++, sy++) {
+                final long sourceStart = sy * sourceWidth + sourceX;
+                final long destStart = dy * destWidth + destX;
+                for (long dx = destStart, sx = sourceStart; dx < destStart + areaWidth; dx++, sx++) {
+                    atPut0Node.execute(destBits, dx, alphaBlend24((long) at0Node.execute(sourceBits, sx), (long) at0Node.execute(destBits, dx)));
+                }
+            }
+            return receiver;
+        }
+    }
+
+    protected abstract static class PixelValueAtExtractHelperNode extends Node {
+        @Child private PixelValueAtExecuteHelperNode executeNode = PixelValueAtExecuteHelperNode.create();
+
+        private static PixelValueAtExtractHelperNode create() {
+            return PixelValueAtExtractHelperNodeGen.create();
         }
 
         protected abstract long executeValueAt(PointersObject receiver, long xValue, long yValue, Object bitmap);
 
         @Specialization(guards = "bitmap.isIntType()")
         protected final long doInts(final PointersObject receiver, final long xValue, final long yValue, final NativeObject bitmap) {
-            final Object width = at0Node.execute(receiver, FORM.WIDTH);
-            final Object height = at0Node.execute(receiver, FORM.HEIGHT);
-            final Object depth = at0Node.execute(receiver, FORM.DEPTH);
-            return pixelValueNode.executeValueAt(receiver, xValue, yValue, bitmap, width, height, depth);
+            final Object width = receiver.at0(FORM.WIDTH);
+            final Object height = receiver.at0(FORM.HEIGHT);
+            final Object depth = receiver.at0(FORM.DEPTH);
+            return executeNode.executeValueAt(receiver, xValue, yValue, bitmap, width, height, depth);
         }
     }
 
-    protected abstract static class PixelValueAtHelperNode extends Node {
+    protected abstract static class PixelValueAtExecuteHelperNode extends Node {
         private final ValueProfile intProfile = ValueProfile.createClassProfile();
         private final BranchProfile errorProfile = BranchProfile.create();
 
-        private static PixelValueAtHelperNode create() {
-            return PixelValueAtHelperNodeGen.create();
+        private static PixelValueAtExecuteHelperNode create() {
+            return PixelValueAtExecuteHelperNodeGen.create();
         }
 
         protected abstract long executeValueAt(PointersObject receiver, long xValue, long yValue, NativeObject bitmap, Object width, Object height, Object depth);
@@ -219,76 +629,27 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
      * Primitive Helper Functions
      */
 
-    // BitBltSimulation>>#clipRange
-    private static long[] clipRange(final long sourceX,
-                    final long sourceY,
-                    final long sourceWidth,
-                    final long sourceHeight,
-                    final long width,
-                    final long height,
-                    final long destX,
-                    final long destY,
-                    final long clipX, final long clipY,
-                    final long clipWidth, final long clipHeight) {
-        long sx;
-        long sy;
-        long dx;
-        long dy;
-        long bbW;
-        long bbH;
-
-        if (destX >= clipX) {
-            sx = sourceX;
-            dx = destX;
-            bbW = width;
-        } else {
-            sx = sourceX + (clipX - destX);
-            bbW = width - (clipX - destX);
-            dx = clipX;
+    protected static long alphaBlend24(final long sourceWord, final long destinationWord) {
+        final long alpha = sourceWord >> 24;
+        if (alpha == 0) {
+            return destinationWord;
+        }
+        if (alpha == 255) {
+            return sourceWord;
         }
 
-        if ((dx + bbW) > (clipX + clipWidth)) {
-            bbW = bbW - ((dx + bbW) - (clipX + clipWidth));
-        }
+        final long unAlpha = 255 - alpha;
 
-        // then in y
-        if (destY >= clipY) {
-            sy = sourceY;
-            dy = destY;
-            bbH = height;
-        } else {
-            sy = sourceY + clipY - destY;
-            bbH = height - (clipY - destY);
-            dy = clipY;
-        }
+        // blend red and blue
+        long blendRB = ((sourceWord & 0xFF00FF) * alpha) +
+                        ((destinationWord & 0xFF00FF) * unAlpha) + 0xFF00FF;
 
-        if ((dy + bbH) > (clipY + clipHeight)) {
-            bbH = bbH - ((dy + bbH) - (clipY + clipHeight));
-        }
+        // blend alpha and green
+        long blendAG = ((((sourceWord >> 8) | 0xFF0000) & 0xFF00FF) * alpha) +
+                        (((destinationWord >> 8) & 0xFF00FF) * unAlpha) + 0xFF00FF;
 
-        if (sourceX < 0) { // nosource signaled by negative `sourceX`
-            return new long[]{sx, sy, dx, dy, bbW, bbH};
-        }
-
-        if (sx < 0) {
-            dx = dx - sx;
-            bbW = bbW + sx;
-            sx = 0;
-        }
-
-        if (sx + bbW > sourceWidth) {
-            bbW = bbW - (sx + bbW - sourceWidth);
-        }
-
-        if (sy < 0) {
-            dy = dy - sy;
-            bbH = bbH + sy;
-            sy = 0;
-        }
-
-        if (sy + bbH > sourceHeight) {
-            bbH = bbH - (sy + bbH - sourceHeight);
-        }
-        return new long[]{sx, sy, dx, dy, bbW, bbH};
+        blendRB = (blendRB + (((blendRB - 0x10001) >> 8) & 0xFF00FF) >> 8) & 0xFF00FF;
+        blendAG = (blendAG + (((blendAG - 0x10001) >> 8) & 0xFF00FF) >> 8) & 0xFF00FF;
+        return blendRB | (blendAG << 8);
     }
 }
