@@ -133,7 +133,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             return 0L;
         }
 
-        @Specialization(guards = {"xValue >= 0", "yValue > 0", "receiver.size() > OFFSET"})
+        @Specialization(guards = {"xValue >= 0", "yValue >= 0", "receiver.size() > OFFSET"})
         protected final long doValueAt(final PointersObject receiver, final long xValue, final long yValue) {
             return handleNode.executeValueAt(receiver, xValue, yValue, receiver.at0(FORM.BITS));
         }
@@ -601,15 +601,16 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "bitmap.isIntType()")
         protected final long doInts(@SuppressWarnings("unused") final PointersObject receiver, final long xValue, final long yValue, final NativeObject bitmap, final long width,
                         final long height, final long depth) {
-            final long ppW = 32 / depth;
-            final long stride = (width + ppW - 1) / ppW;
+            final long ppW = Math.floorDiv(32, depth);
+            final long stride = Math.floorDiv(width + ppW - 1, ppW);
             final int[] ints = bitmap.getIntStorage();
             if (ints.length > stride * height) {
                 errorProfile.enter();
                 throw new PrimitiveFailed();
             }
-            final int word = ints[(int) ((yValue * stride) + Math.floorDiv(xValue, ppW))];
-            final int mask = 0xFFFFFFFF >> (32 - depth);
+            final int index = (int) ((yValue * stride) + Math.floorDiv(xValue, ppW));
+            final int word = ints[index];
+            final long mask = 0xFFFFFFFFL >> (32 - depth);
             final long shift = 32 - (((xValue & (ppW - 1)) + 1) * depth);
             return ((word >> shift) & mask) & 0xffffffffL;
         }
