@@ -311,7 +311,7 @@ public final class SqueakSUnitTestMap {
                     "TextAlignmentTest", TEST_TYPE.PASSING,
                     "TextAnchorTest", TEST_TYPE.PASSING,
                     "TextAndTextStreamTest", TEST_TYPE.PASSING,
-                    "TextAttributesScanningTest", TEST_TYPE.IGNORE, // FIXME: NonBooleanReceiver
+                    "TextAttributesScanningTest", TEST_TYPE.FAILING,
                     "TextDiffBuilderTest", TEST_TYPE.PASSING,
                     "TextEditorTest", TEST_TYPE.PASSING,
                     "TextEmphasisTest", TEST_TYPE.PASSING,
@@ -345,7 +345,7 @@ public final class SqueakSUnitTestMap {
                     "UserInterfaceThemeTest", TEST_TYPE.NOT_TERMINATING,
                     "UTF16TextConverterTest", TEST_TYPE.BROKEN_IN_SQUEAK,
                     "UTF32TextConverterTest", TEST_TYPE.PASSING,
-                    "UTF8TextConverterTest", TEST_TYPE.FAILING, // FIXME: NullPointerException
+                    "UTF8TextConverterTest", TEST_TYPE.FAILING,
                     "UTF8EdgeCaseTest", TEST_TYPE.FAILING, // failing in Squeak
                     "UUIDPrimitivesTest", TEST_TYPE.PASSING,
                     "UUIDTest", TEST_TYPE.PASSING,
