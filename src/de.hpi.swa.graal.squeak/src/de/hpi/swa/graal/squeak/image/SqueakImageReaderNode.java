@@ -66,7 +66,7 @@ public final class SqueakImageReaderNode extends RootNode {
         readBody(frame);
         initObjects();
         validateStateOrFail();
-        chunktable.clear();
+        clearChunktable();
         image.printToStdOut("Image loaded in", (currentTimeMillis() - start) + "ms.");
         return null;
     }
@@ -74,6 +74,11 @@ public final class SqueakImageReaderNode extends RootNode {
     @TruffleBoundary
     private static long currentTimeMillis() {
         return System.currentTimeMillis();
+    }
+
+    @TruffleBoundary
+    private void clearChunktable() {
+        chunktable.clear();
     }
 
     private void validateStateOrFail() {

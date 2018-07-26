@@ -40,7 +40,7 @@ public final class SqueakRootNode extends RootNode {
             e.printStackTrace();
         }
         image.interrupt.start();
-        final ExecuteTopLevelContextNode executeNode = insert(image.config.isCustomContext() ? image.getCustomContext() : image.getActiveContext());
+        final ExecuteTopLevelContextNode executeNode = image.config.isCustomContext() ? image.getCustomContext() : image.getActiveContext();
         return indirectCallNode.call(Truffle.getRuntime().createCallTarget(executeNode), new Object[0]);
     }
 }
