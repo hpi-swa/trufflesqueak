@@ -64,9 +64,14 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
         protected boolean supportedCombinationRule(final PointersObject receiver) {
             final long combinationRule = (long) receiver.at0(BIT_BLT.COMBINATION_RULE);
-            final boolean hasSourceForm = receiver.at0(BIT_BLT.SOURCE_FORM) != receiver.image.nil;
+            final Object sourceForm = receiver.at0(BIT_BLT.SOURCE_FORM);
+            final boolean hasSourceForm = sourceForm != receiver.image.nil;
+            final boolean noOverlap = !hasSourceForm || !(receiver.at0(BIT_BLT.DEST_FORM).equals(sourceForm));
 
-            return (combinationRule == 3 && !hasSourceForm) || (combinationRule == 4 && !hasSourceForm) || (combinationRule == 24);
+            return noOverlap &&
+                            (combinationRule == 3 && !hasSourceForm) ||
+                            (combinationRule == 4 && !hasSourceForm) ||
+                            (combinationRule == 24 && !hasSourceForm);
         }
 
         protected boolean supportedDepth(final PointersObject receiver) {
@@ -441,24 +446,13 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             final PointersObject destinationForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
             final NativeObject destinationBits = (NativeObject) destinationForm.at0(FORM.BITS);
             final NativeObject halftoneForm = (NativeObject) receiver.at0(BIT_BLT.HALFTONE_FORM);
-            final int[] fillArray = halftoneForm.getIntStorage(halftoneFormStorageType);
-            if (fillArray.length != 1) {
-                throw new SqueakException("Expected one fillValue only");
-            }
-            final int fillValue = fillArray[0];
-            final long destinationDepth = (long) destinationForm.at0(FORM.DEPTH);
+            final long fillValue = (long) at0Node.execute(halftoneForm, 0L);
 
-            final long endX = destX + areaWidth;
-            final long endY = destY + areaHeight;
-
-            final int[] ints = destinationBits.getIntStorage(destinationBitsStorageType);
-
-            if (ints.length - 1 < (endY - 1) * destWidth + (endX - 1)) {
-                throw new PrimitiveFailed(); // fail early in case of index out of bounds
-            }
-
-            for (long y = destY; y < endY; y++) {
-                Arrays.fill(ints, (int) (y * destWidth + destX), (int) (y * destWidth + endX), fillValue);
+            for (long y = destY; y < destY + areaHeight; y++) {
+                final long destStart = y * destWidth + destX;
+                for (long dx = destStart; dx < destStart + areaWidth; dx++) {
+                    atPut0Node.execute(destinationBits, dx, fillValue);
+                }
             }
             return receiver;
         }
@@ -546,6 +540,12 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             return receiver;
         }
 
+        // FIXME: this method is currently not used, as it caused major artifacts. Digging down on
+        // the symptoms revealed that the problems only occurred if our implementation of rule 3 was
+        // active at the same time. Further, we noticed a significant increase in how often we get
+        // passed invalid areas.
+        // To re-enable this rule, simply go all the way up to "supportedCombinationRules" and add
+        // (combinationRule == 24 && hasSourceForm)
         @Specialization(guards = {"combinationRule == 24", "sourceForm != null", "!invalidArea(areaWidth, areaHeight)"})
         protected final PointersObject doCopyBitsCombiRule24WithSourceForm(final PointersObject receiver,
                         @SuppressWarnings("unused") final long combinationRule,
@@ -561,20 +561,12 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
                         final long areaHeight) {
             final NativeObject sourceBits = (NativeObject) sourceForm.at0(FORM.BITS);
             final NativeObject destBits = (NativeObject) destForm.at0(FORM.BITS);
-            // final int[] source = ((NativeObject)
-            // sourceForm.at0(FORM.BITS)).getIntStorage(sourceBitsStorageType);
-            // final int[] dest = ((NativeObject)
-            // destForm.at0(FORM.BITS)).getIntStorage(destinationBitsStorageType);
 
             for (long dy = destY, sy = sourceY; dy < destY + areaHeight; dy++, sy++) {
                 final long sourceStart = sy * sourceWidth + sourceX;
                 final long destStart = dy * destWidth + destX;
-                try {
-                    for (long dx = destStart, sx = sourceStart; dx < destStart + areaWidth; dx++, sx++) {
-                        atPut0Node.execute(destBits, dx, alphaBlend24((long) at0Node.execute(sourceBits, sx), (long) at0Node.execute(destBits, dx)));
-                    }
-                } finally {
-                    LoopNode.reportLoopCount(this, (int) areaWidth);
+                for (long dx = destStart, sx = sourceStart; dx < destStart + areaWidth; dx++, sx++) {
+                    atPut0Node.execute(destBits, dx, alphaBlend24((long) at0Node.execute(sourceBits, sx), (long) at0Node.execute(destBits, dx)));
                 }
             }
             return receiver;
