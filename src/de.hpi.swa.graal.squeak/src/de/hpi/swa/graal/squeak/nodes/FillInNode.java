@@ -13,6 +13,7 @@ import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives.SimulationPrimitiveNode;
@@ -48,6 +49,7 @@ public abstract class FillInNode extends Node {
     @Specialization
     protected static final void doContext(final ContextObject obj, final SqueakImageChunk chunk) {
         obj.setPointers(chunk.getPointers());
+        assert obj.getMethod().sqContextSize() + CONTEXT.TEMP_FRAME_START == obj.getPointers().length : "ContextObject has wrong size";
     }
 
     @Specialization(guards = "obj.isShortType()")
