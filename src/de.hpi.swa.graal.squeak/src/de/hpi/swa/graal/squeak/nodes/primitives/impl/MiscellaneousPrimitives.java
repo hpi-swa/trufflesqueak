@@ -47,7 +47,6 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.DispatchNode;
-import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
 import de.hpi.swa.graal.squeak.nodes.LookupNode;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.IsDoesNotUnderstandNode;
@@ -920,7 +919,6 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         @Child private LookupNode lookupNode;
         @Child private DispatchNode dispatchNode = DispatchNode.create();
         @Child private SqueakLookupClassNode lookupClassNode;
-        @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create();
         @Child private IsDoesNotUnderstandNode isDoesNotUnderstandNode;
 
         public static SimulationPrimitiveNode create(final CompiledMethodObject method, final String moduleName, final String functionName) {

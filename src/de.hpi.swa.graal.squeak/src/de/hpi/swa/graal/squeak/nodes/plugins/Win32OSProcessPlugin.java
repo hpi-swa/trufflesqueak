@@ -41,23 +41,4 @@ public final class Win32OSProcessPlugin extends AbstractOSProcessPlugin {
             return code.image.wrap(String.join("\n", strings));
         }
     }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveGetEnvironmentStrings2")
-    protected abstract static class PrimGetEnvironmentString2Node extends AbstractPrimitiveNode {
-        protected PrimGetEnvironmentString2Node(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
-        }
-
-        @Specialization
-        @TruffleBoundary
-        protected final Object doGet(@SuppressWarnings("unused") final Object receiver) {
-            final Map<String, String> envMap = System.getenv();
-            final List<String> strings = new ArrayList<>();
-            for (Map.Entry<String, String> entry : envMap.entrySet()) {
-                strings.add(entry.getKey() + "=" + entry.getValue());
-            }
-            return code.image.wrap(String.join("\n", strings));
-        }
-    }
 }

@@ -93,9 +93,9 @@ public abstract class ObjectGraphNode extends AbstractNodeWithImage {
         return result;
     }
 
-    @Specialization(guards = {"classObj != null", "!isSomeInstance"})
+    @Specialization(guards = {"classObj != null"})
     @TruffleBoundary
-    protected final List<AbstractSqueakObject> doAllInstancesOf(final ClassObject classObj, @SuppressWarnings("unused") final boolean isSomeInstance) {
+    protected final List<AbstractSqueakObject> doAllInstancesOf(final ClassObject classObj, final boolean isSomeInstance) {
         final List<AbstractSqueakObject> result = new ArrayList<>();
         final Set<AbstractSqueakObject> seen = new HashSet<>(SEEN_INITIAL_CAPACITY);
         final Deque<AbstractSqueakObject> pending = new ArrayDeque<>(PENDING_INITIAL_SIZE);
@@ -104,31 +104,11 @@ public abstract class ObjectGraphNode extends AbstractNodeWithImage {
         while (!pending.isEmpty()) {
             final AbstractSqueakObject currentObject = pending.pop();
             if (seen.add(currentObject)) {
-                final ClassObject sqClass = currentObject.getSqClass();
-                if (classObj == sqClass) {
+                if (classObj == currentObject.getSqClass()) {
                     result.add(currentObject);
-                }
-                pending.addAll(tracePointers(currentObject));
-            }
-        }
-        return result;
-    }
-
-    @Specialization(guards = {"classObj != null", "isSomeInstance"})
-    @TruffleBoundary
-    protected final List<AbstractSqueakObject> doSomeInstance(final ClassObject classObj, @SuppressWarnings("unused") final boolean isSomeInstance) {
-        final List<AbstractSqueakObject> result = new ArrayList<>();
-        final Set<AbstractSqueakObject> seen = new HashSet<>(SEEN_INITIAL_CAPACITY);
-        final Deque<AbstractSqueakObject> pending = new ArrayDeque<>(PENDING_INITIAL_SIZE);
-        pending.add(image.specialObjectsArray);
-        addObjectsFromTruffleFrames(pending);
-        while (!pending.isEmpty()) {
-            final AbstractSqueakObject currentObject = pending.pop();
-            if (seen.add(currentObject)) {
-                final ClassObject sqClass = currentObject.getSqClass();
-                if (classObj == sqClass) {
-                    result.add(currentObject);
-                    break;
+                    if (isSomeInstance) {
+                        break;
+                    }
                 }
                 pending.addAll(tracePointers(currentObject));
             }
