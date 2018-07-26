@@ -4,7 +4,6 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
@@ -116,28 +115,28 @@ public final class NativeObject extends AbstractSqueakObject {
         this.setStorage(otherStorage);
     }
 
-    public LargeIntegerObject normalize(final ValueProfile storageType) {
-        return new LargeIntegerObject(image, getSqClass(), getByteStorage(storageType));
+    public LargeIntegerObject normalize() {
+        return new LargeIntegerObject(image, getSqClass(), getByteStorage());
     }
 
-    public byte[] getByteStorage(final ValueProfile storageType) {
+    public byte[] getByteStorage() {
         assert isByteType();
-        return (byte[]) storageType.profile(storage);
+        return (byte[]) storage;
     }
 
-    public short[] getShortStorage(final ValueProfile storageType) {
+    public short[] getShortStorage() {
         assert isShortType();
-        return (short[]) storageType.profile(storage);
+        return (short[]) storage;
     }
 
-    public int[] getIntStorage(final ValueProfile storageType) {
+    public int[] getIntStorage() {
         assert isIntType();
-        return (int[]) storageType.profile(storage);
+        return (int[]) storage;
     }
 
-    public long[] getLongStorage(final ValueProfile storageType) {
+    public long[] getLongStorage() {
         assert isLongType();
-        return (long[]) storageType.profile(storage);
+        return (long[]) storage;
     }
 
     public boolean isByteType() {

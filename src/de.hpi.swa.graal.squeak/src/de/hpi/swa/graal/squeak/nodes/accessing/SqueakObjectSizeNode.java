@@ -3,7 +3,6 @@ package de.hpi.swa.graal.squeak.nodes.accessing;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractPointersObject;
@@ -17,7 +16,6 @@ import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 
 public abstract class SqueakObjectSizeNode extends Node {
-    private final ValueProfile storageType = ValueProfile.createClassProfile();
 
     public static SqueakObjectSizeNode create() {
         return SqueakObjectSizeNodeGen.create();
@@ -51,23 +49,23 @@ public abstract class SqueakObjectSizeNode extends Node {
     }
 
     @Specialization(guards = "obj.isByteType()")
-    protected final int doNativeBytes(final NativeObject obj) {
-        return obj.getByteStorage(storageType).length;
+    protected static final int doNativeBytes(final NativeObject obj) {
+        return obj.getByteStorage().length;
     }
 
     @Specialization(guards = "obj.isShortType()")
-    protected final int doNativeShorts(final NativeObject obj) {
-        return obj.getShortStorage(storageType).length;
+    protected static final int doNativeShorts(final NativeObject obj) {
+        return obj.getShortStorage().length;
     }
 
     @Specialization(guards = "obj.isIntType()")
-    protected final int doNativeInts(final NativeObject obj) {
-        return obj.getIntStorage(storageType).length;
+    protected static final int doNativeInts(final NativeObject obj) {
+        return obj.getIntStorage().length;
     }
 
     @Specialization(guards = "obj.isLongType()")
-    protected final int doNativeLongs(final NativeObject obj) {
-        return obj.getLongStorage(storageType).length;
+    protected static final int doNativeLongs(final NativeObject obj) {
+        return obj.getLongStorage().length;
     }
 
     @Specialization

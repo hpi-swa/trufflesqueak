@@ -5,7 +5,6 @@ import java.util.List;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -20,17 +19,15 @@ public final class BMPReadWriterPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveRead24BmpLine")
     protected abstract static class PrimRead24BmpLineNode extends AbstractPrimitiveNode {
-        private final ValueProfile byteProfile = ValueProfile.createClassProfile();
-        private final ValueProfile intProfile = ValueProfile.createClassProfile();
 
         protected PrimRead24BmpLineNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
         @Specialization(guards = {"pixelLine.isByteType()", "formBits.isIntType()"})
-        protected final Object doRead(final PointersObject receiver, final NativeObject pixelLine, final NativeObject formBits, final long formBitsIndex, final long width) {
-            final byte[] bytes = pixelLine.getByteStorage(byteProfile);
-            final int[] ints = formBits.getIntStorage(intProfile);
+        protected static final Object doRead(final PointersObject receiver, final NativeObject pixelLine, final NativeObject formBits, final long formBitsIndex, final long width) {
+            final byte[] bytes = pixelLine.getByteStorage();
+            final int[] ints = formBits.getIntStorage();
             int pixelIndex = 0;
             int bitsIndex = (int) formBitsIndex - 1;
             int rgb = 0;
@@ -49,17 +46,15 @@ public final class BMPReadWriterPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveWrite24BmpLine")
     protected abstract static class PrimWrite24BmpLineNode extends AbstractPrimitiveNode {
-        private final ValueProfile byteProfile = ValueProfile.createClassProfile();
-        private final ValueProfile intProfile = ValueProfile.createClassProfile();
 
         protected PrimWrite24BmpLineNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
         @Specialization(guards = {"pixelLine.isByteType()", "formBits.isIntType()"})
-        protected final Object doWrite(final AbstractSqueakObject receiver, final NativeObject pixelLine, final NativeObject formBits, final long formBitsIndex, final long width) {
-            final byte[] bytes = pixelLine.getByteStorage(byteProfile);
-            final int[] ints = formBits.getIntStorage(intProfile);
+        protected static final Object doWrite(final AbstractSqueakObject receiver, final NativeObject pixelLine, final NativeObject formBits, final long formBitsIndex, final long width) {
+            final byte[] bytes = pixelLine.getByteStorage();
+            final int[] ints = formBits.getIntStorage();
             int pixelIndex = 0;
             int bitsIndex = (int) formBitsIndex - 1;
             int rgb = 0;

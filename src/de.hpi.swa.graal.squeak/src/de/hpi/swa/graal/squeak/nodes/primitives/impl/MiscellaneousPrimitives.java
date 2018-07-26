@@ -24,7 +24,6 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
@@ -378,46 +377,45 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(index = 145)
     protected abstract static class PrimConstantFillNode extends AbstractPrimitiveNode {
-        private final ValueProfile storageType = ValueProfile.createClassProfile();
 
         protected PrimConstantFillNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
         @Specialization(guards = "receiver.isByteType()")
-        protected final NativeObject doNativeBytes(final NativeObject receiver, final long value) {
-            Arrays.fill(receiver.getByteStorage(storageType), (byte) value);
+        protected static final NativeObject doNativeBytes(final NativeObject receiver, final long value) {
+            Arrays.fill(receiver.getByteStorage(), (byte) value);
             return receiver;
         }
 
         @Specialization(guards = "receiver.isShortType()")
-        protected final NativeObject doNativeShorts(final NativeObject receiver, final long value) {
-            Arrays.fill(receiver.getShortStorage(storageType), (short) value);
+        protected static final NativeObject doNativeShorts(final NativeObject receiver, final long value) {
+            Arrays.fill(receiver.getShortStorage(), (short) value);
             return receiver;
         }
 
         @Specialization(guards = "receiver.isIntType()")
-        protected final NativeObject doNativeInts(final NativeObject receiver, final long value) {
-            Arrays.fill(receiver.getIntStorage(storageType), (int) value);
+        protected static final NativeObject doNativeInts(final NativeObject receiver, final long value) {
+            Arrays.fill(receiver.getIntStorage(), (int) value);
             return receiver;
         }
 
         @Specialization(guards = {"receiver.isIntType()", "value.lessThanOrEqualTo(INTEGER_MAX)"})
-        protected final NativeObject doNativeInts(final NativeObject receiver, final LargeIntegerObject value) {
-            Arrays.fill(receiver.getIntStorage(storageType), (int) value.longValueExact());
+        protected static final NativeObject doNativeInts(final NativeObject receiver, final LargeIntegerObject value) {
+            Arrays.fill(receiver.getIntStorage(), (int) value.longValueExact());
             return receiver;
         }
 
         @Specialization(guards = "receiver.isLongType()")
-        protected final NativeObject doNativeLongs(final NativeObject receiver, final long value) {
-            Arrays.fill(receiver.getLongStorage(storageType), value);
+        protected static final NativeObject doNativeLongs(final NativeObject receiver, final long value) {
+            Arrays.fill(receiver.getLongStorage(), value);
             return receiver;
         }
 
         @Specialization(guards = "receiver.isLongType()")
-        protected final NativeObject doNativeLongs(final NativeObject receiver, final LargeIntegerObject value) {
+        protected static final NativeObject doNativeLongs(final NativeObject receiver, final LargeIntegerObject value) {
             try {
-                Arrays.fill(receiver.getLongStorage(storageType), value.longValueExact());
+                Arrays.fill(receiver.getLongStorage(), value.longValueExact());
             } catch (ArithmeticException e) {
                 throw new PrimitiveFailed();
             }
@@ -428,7 +426,6 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(index = 148)
     protected abstract static class PrimShallowCopyNode extends AbstractPrimitiveNode {
-        private final ValueProfile storageType = ValueProfile.createClassProfile();
 
         protected PrimShallowCopyNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -471,22 +468,22 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization(guards = "receiver.isByteType()")
         protected final Object doNativeBytes(final NativeObject receiver) {
-            return NativeObject.newNativeBytes(code.image, receiver.getSqClass(), receiver.getByteStorage(storageType).clone());
+            return NativeObject.newNativeBytes(code.image, receiver.getSqClass(), receiver.getByteStorage().clone());
         }
 
         @Specialization(guards = "receiver.isShortType()")
         protected final Object doNativeShorts(final NativeObject receiver) {
-            return NativeObject.newNativeShorts(code.image, receiver.getSqClass(), receiver.getShortStorage(storageType).clone());
+            return NativeObject.newNativeShorts(code.image, receiver.getSqClass(), receiver.getShortStorage().clone());
         }
 
         @Specialization(guards = "receiver.isIntType()")
         protected final Object doNativeInts(final NativeObject receiver) {
-            return NativeObject.newNativeInts(code.image, receiver.getSqClass(), receiver.getIntStorage(storageType).clone());
+            return NativeObject.newNativeInts(code.image, receiver.getSqClass(), receiver.getIntStorage().clone());
         }
 
         @Specialization(guards = "receiver.isLongType()")
         protected final Object doNativeLongs(final NativeObject receiver) {
-            return NativeObject.newNativeLongs(code.image, receiver.getSqClass(), receiver.getLongStorage(storageType).clone());
+            return NativeObject.newNativeLongs(code.image, receiver.getSqClass(), receiver.getLongStorage().clone());
         }
 
         @Specialization

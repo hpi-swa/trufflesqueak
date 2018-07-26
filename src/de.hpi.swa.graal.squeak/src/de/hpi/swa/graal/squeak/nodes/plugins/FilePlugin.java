@@ -16,7 +16,6 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
@@ -53,20 +52,13 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     protected abstract static class AbstractFilePluginPrimitiveNode extends AbstractPrimitiveNode {
-        private final ValueProfile storageType = ValueProfile.createClassProfile();
-
         protected AbstractFilePluginPrimitiveNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
         @TruffleBoundary
-        protected final byte[] asBytes(final NativeObject obj) {
-            return obj.getByteStorage(storageType);
-        }
-
-        @TruffleBoundary
-        protected final String asString(final NativeObject obj) {
-            return new String(asBytes(obj));
+        protected static final String asString(final NativeObject obj) {
+            return new String(obj.getByteStorage());
         }
 
         protected final TruffleFile asTruffleFile(final NativeObject obj) {
@@ -230,7 +222,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "nativeFileName.isByteType()")
-        protected final Object doDelete(final PointersObject receiver, final NativeObject nativeFileName) {
+        protected static final Object doDelete(final PointersObject receiver, final NativeObject nativeFileName) {
             final File file = new File(asString(nativeFileName));
             if (!file.delete()) {
                 throw new PrimitiveFailed();
@@ -424,7 +416,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"content.isByteType()", "fileDescriptor != IN"})
         protected final long doWrite(final PointersObject receiver, final long fileDescriptor, final NativeObject content, final long startIndex, final long count) {
-            final byte[] bytes = asBytes(content);
+            final byte[] bytes = content.getByteStorage();
             final int byteStart = (int) (startIndex - 1);
             final int byteEnd = Math.min(byteStart + (int) count, bytes.length);
             if (fileDescriptor == STDIO_HANDLES.OUT) {

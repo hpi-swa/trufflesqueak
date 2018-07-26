@@ -4,7 +4,6 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
@@ -21,7 +20,6 @@ import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 
 @ImportStatic(NativeObject.class)
 public abstract class SqueakObjectAtPut0Node extends Node {
-    private final ValueProfile storageType = ValueProfile.createClassProfile();
 
     public static SqueakObjectAtPut0Node create() {
         return SqueakObjectAtPut0NodeGen.create();
@@ -50,8 +48,8 @@ public abstract class SqueakObjectAtPut0Node extends Node {
     }
 
     @Specialization(guards = {"obj.isByteType()", "value >= 0", "value <= BYTE_MAX"})
-    protected final void doNativeBytes(final NativeObject obj, final long index, final long value) {
-        obj.getByteStorage(storageType)[(int) index] = (byte) value;
+    protected static final void doNativeBytes(final NativeObject obj, final long index, final long value) {
+        obj.getByteStorage()[(int) index] = (byte) value;
     }
 
     @SuppressWarnings("unused")
@@ -61,8 +59,8 @@ public abstract class SqueakObjectAtPut0Node extends Node {
     }
 
     @Specialization(guards = {"obj.isShortType()", "value >= 0", "value <= SHORT_MAX"})
-    protected final void doNativeShorts(final NativeObject obj, final long index, final long value) {
-        obj.getShortStorage(storageType)[(int) index] = (short) value;
+    protected static final void doNativeShorts(final NativeObject obj, final long index, final long value) {
+        obj.getShortStorage()[(int) index] = (short) value;
     }
 
     @SuppressWarnings("unused")
@@ -72,8 +70,8 @@ public abstract class SqueakObjectAtPut0Node extends Node {
     }
 
     @Specialization(guards = {"obj.isIntType()", "value >= 0", "value <= INTEGER_MAX"})
-    protected final void doNativeInts(final NativeObject obj, final long index, final long value) {
-        obj.getIntStorage(storageType)[(int) index] = (int) value;
+    protected static final void doNativeInts(final NativeObject obj, final long index, final long value) {
+        obj.getIntStorage()[(int) index] = (int) value;
     }
 
     @SuppressWarnings("unused")
@@ -83,8 +81,8 @@ public abstract class SqueakObjectAtPut0Node extends Node {
     }
 
     @Specialization(guards = {"obj.isLongType()", "value >= 0"})
-    protected final void doNativeLongs(final NativeObject obj, final long index, final long value) {
-        obj.getLongStorage(storageType)[(int) index] = value;
+    protected static final void doNativeLongs(final NativeObject obj, final long index, final long value) {
+        obj.getLongStorage()[(int) index] = value;
     }
 
     @SuppressWarnings("unused")
@@ -98,7 +96,7 @@ public abstract class SqueakObjectAtPut0Node extends Node {
     }
 
     @Specialization(guards = {"obj.isByteType()", "inByteRange(value)"})
-    protected final void doNativeBytesChar(final NativeObject obj, final long index, final char value) {
+    protected static final void doNativeBytesChar(final NativeObject obj, final long index, final char value) {
         doNativeBytes(obj, index, value);
     }
 
@@ -109,22 +107,22 @@ public abstract class SqueakObjectAtPut0Node extends Node {
     }
 
     @Specialization(guards = "obj.isShortType()") // char values fit into short
-    protected final void doNativeShortsChar(final NativeObject obj, final long index, final char value) {
+    protected static final void doNativeShortsChar(final NativeObject obj, final long index, final char value) {
         doNativeShorts(obj, index, value);
     }
 
     @Specialization(guards = "obj.isIntType()")
-    protected final void doNativeIntsChar(final NativeObject obj, final long index, final char value) {
+    protected static final void doNativeIntsChar(final NativeObject obj, final long index, final char value) {
         doNativeInts(obj, index, value);
     }
 
     @Specialization(guards = "obj.isLongType()")
-    protected final void doNativeLongsChar(final NativeObject obj, final long index, final char value) {
+    protected static final void doNativeLongsChar(final NativeObject obj, final long index, final char value) {
         doNativeLongs(obj, index, value);
     }
 
     @Specialization(guards = {"obj.isByteType()", "value.inRange(0, BYTE_MAX)"})
-    protected final void doNativeBytesLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
+    protected static final void doNativeBytesLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
         doNativeBytes(obj, index, value.longValueExact());
     }
 
@@ -135,7 +133,7 @@ public abstract class SqueakObjectAtPut0Node extends Node {
     }
 
     @Specialization(guards = {"obj.isShortType()", "value.inRange(0, SHORT_MAX)"})
-    protected final void doNativeShortsLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
+    protected static final void doNativeShortsLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
         doNativeShorts(obj, index, value.longValueExact());
     }
 
@@ -146,7 +144,7 @@ public abstract class SqueakObjectAtPut0Node extends Node {
     }
 
     @Specialization(guards = {"obj.isIntType()", "value.inRange(0, INTEGER_MAX)"})
-    protected final void doNativeIntsLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
+    protected static final void doNativeIntsLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
         doNativeInts(obj, index, value.longValueExact());
     }
 
@@ -157,7 +155,7 @@ public abstract class SqueakObjectAtPut0Node extends Node {
     }
 
     @Specialization(guards = {"obj.isLongType()", "value.isZeroOrPositive()"})
-    protected final void doNativeLongsLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
+    protected static final void doNativeLongsLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
         doNativeLongs(obj, index, value.longValueExact());
     }
 

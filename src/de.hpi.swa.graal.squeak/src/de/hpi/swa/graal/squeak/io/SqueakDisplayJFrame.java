@@ -28,7 +28,6 @@ import javax.swing.JFrame;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -84,7 +83,6 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
 
     private final class Canvas extends JComponent {
         private static final long serialVersionUID = 1L;
-        private final ValueProfile storageType = ValueProfile.createClassProfile();
         @CompilationFinal private BufferedImage bufferedImage;
         @CompilationFinal private NativeObject bitmap;
         @CompilationFinal private int width;
@@ -105,7 +103,7 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
                     bufferedImage.setData(get16bitRaster());
                     break;
                 case 32: // use words directly
-                    final int[] words = bitmap.getIntStorage(storageType);
+                    final int[] words = bitmap.getIntStorage();
                     assert words.length / width / height == 1;
                     final int drawWidth = Math.min(width, frame.getWidth());
                     final int drawHeight = Math.min(height, frame.getHeight());
@@ -122,7 +120,7 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
             final int shift = 4 - depth;
             int pixelmask = ((1 << depth) - 1) << shift;
             final int[] table = SqueakIOConstants.PIXEL_LOOKUP_TABLE[depth - 1];
-            final int[] words = bitmap.getIntStorage(storageType);
+            final int[] words = bitmap.getIntStorage();
             final int[] rgb = new int[words.length];
             for (int i = 0; i < words.length; i++) {
                 final int pixel = (words[i] & pixelmask) >> (shift - i * depth);
@@ -133,7 +131,7 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
         }
 
         private Raster get16bitRaster() {
-            final int[] words = bitmap.getIntStorage(storageType);
+            final int[] words = bitmap.getIntStorage();
             assert words.length * 2 / width / height == 1;
             final DirectColorModel colorModel = new DirectColorModel(16,
                             0x001f, // red

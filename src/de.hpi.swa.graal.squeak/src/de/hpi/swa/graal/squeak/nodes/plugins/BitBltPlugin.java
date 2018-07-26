@@ -13,7 +13,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
@@ -144,7 +143,6 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
      * Helper Nodes
      */
     protected abstract static class CopyBitsExtractHelperNode extends Node {
-        private final ValueProfile intProfile = ValueProfile.createClassProfile();
         @Child private CopyBitsClipHelperNode clipNode = CopyBitsClipHelperNode.create();
 
         protected static CopyBitsExtractHelperNode create() {
@@ -166,12 +164,12 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             final long combinationRule = (long) receiver.at0(BIT_BLT.COMBINATION_RULE);
 
             final NativeObject destBits = (NativeObject) destForm.at0(FORM.BITS);
-            if (!destBits.isIntType() || destWidth * destHeight > destBits.getIntStorage(intProfile).length) {
+            if (!destBits.isIntType() || destWidth * destHeight > destBits.getIntStorage().length) {
                 throw new PrimitiveFailed();
             }
 
             final NativeObject sourceBits = (NativeObject) sourceForm.at0(FORM.BITS);
-            if (!sourceBits.isIntType() || sourceWidth * sourceHeight > sourceBits.getIntStorage(intProfile).length) {
+            if (!sourceBits.isIntType() || sourceWidth * sourceHeight > sourceBits.getIntStorage().length) {
                 throw new PrimitiveFailed();
             }
 
@@ -201,7 +199,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             final long combinationRule = (long) receiver.at0(BIT_BLT.COMBINATION_RULE);
 
             final NativeObject destBits = (NativeObject) destForm.at0(FORM.BITS);
-            if (!destBits.isIntType() || destWidth * destHeight > destBits.getIntStorage(intProfile).length) {
+            if (!destBits.isIntType() || destWidth * destHeight > destBits.getIntStorage().length) {
                 throw new PrimitiveFailed();
             }
 
@@ -381,12 +379,6 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     protected abstract static class CopyBitsExecuteHelperNode extends Node {
-        @CompilationFinal private final ValueProfile halftoneFormStorageType = ValueProfile.createClassProfile();
-        @CompilationFinal private final ValueProfile destinationBitsStorageType = ValueProfile.createClassProfile();
-        @CompilationFinal private final ValueProfile sourceBitsStorageType = ValueProfile.createClassProfile();
-
-        @CompilationFinal protected final ValueProfile sourceBitsByteStorageType = ValueProfile.createClassProfile();
-
         @CompilationFinal protected final SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
         @CompilationFinal protected final SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
 
@@ -473,7 +465,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             final PointersObject destinationForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
             final NativeObject destinationBits = (NativeObject) destinationForm.at0(FORM.BITS);
             final NativeObject halftoneForm = (NativeObject) receiver.at0(BIT_BLT.HALFTONE_FORM);
-            final int[] fillArray = halftoneForm.getIntStorage(halftoneFormStorageType);
+            final int[] fillArray = halftoneForm.getIntStorage();
             if (fillArray.length != 1) {
                 throw new SqueakException("Expected one fillValue only");
             }
@@ -482,7 +474,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             final long endX = destX + areaWidth;
             final long endY = destY + areaHeight;
 
-            final int[] ints = destinationBits.getIntStorage(destinationBitsStorageType);
+            final int[] ints = destinationBits.getIntStorage();
 
             if (ints.length - 1 < (endY - 1) * destWidth + (endX - 1)) {
                 throw new PrimitiveFailed(); // fail early in case of index out of bounds
@@ -518,14 +510,14 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
                         final long destWidth,
                         final long areaWidth,
                         final long areaHeight) {
-            final int[] fillArray = ((NativeObject) receiver.at0(BIT_BLT.HALFTONE_FORM)).getIntStorage(halftoneFormStorageType);
+            final int[] fillArray = ((NativeObject) receiver.at0(BIT_BLT.HALFTONE_FORM)).getIntStorage();
             if (fillArray.length != 1) {
                 throw new SqueakException("Expected one fillValue only");
             }
             final int fillValue = fillArray[0];
 
             final NativeObject destBits = (NativeObject) destForm.at0(FORM.BITS);
-            final int[] dest = ((NativeObject) destForm.at0(FORM.BITS)).getIntStorage(destinationBitsStorageType);
+            final int[] dest = ((NativeObject) destForm.at0(FORM.BITS)).getIntStorage();
 
             final long endX = destX + areaWidth;
             final long endY = destY + areaHeight;
@@ -591,7 +583,6 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     protected abstract static class PixelValueAtExecuteHelperNode extends Node {
-        private final ValueProfile intProfile = ValueProfile.createClassProfile();
         private final BranchProfile errorProfile = BranchProfile.create();
 
         private static PixelValueAtExecuteHelperNode create() {
@@ -612,7 +603,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
                         final long height, final long depth) {
             final long ppW = 32 / depth;
             final long stride = (width + ppW - 1) / ppW;
-            final int[] ints = bitmap.getIntStorage(intProfile);
+            final int[] ints = bitmap.getIntStorage();
             if (ints.length > stride * height) {
                 errorProfile.enter();
                 throw new PrimitiveFailed();

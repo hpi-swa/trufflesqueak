@@ -9,7 +9,6 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
@@ -601,16 +600,15 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 143)
     protected abstract static class PrimShortAtNode extends AbstractPrimitiveNode {
-        private final ValueProfile storageType = ValueProfile.createClassProfile();
 
         protected PrimShortAtNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
         @Specialization(guards = "receiver.isByteType()")
-        protected final long doNativeBytes(final NativeObject receiver, final long index) {
+        protected static final long doNativeBytes(final NativeObject receiver, final long index) {
             final int offset = (int) ((index - 1) * 2);
-            final byte[] bytes = receiver.getByteStorage(storageType);
+            final byte[] bytes = receiver.getByteStorage();
             try {
                 final int byte0 = (byte) Byte.toUnsignedLong(bytes[offset]);
                 int byte1 = (int) Byte.toUnsignedLong(bytes[offset + 1]) << 8;
@@ -624,18 +622,18 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         }
 
         @Specialization(guards = "receiver.isShortType()")
-        protected final long doNativeShorts(final NativeObject receiver, final long index) {
+        protected static final long doNativeShorts(final NativeObject receiver, final long index) {
             try {
-                return Short.toUnsignedLong(receiver.getShortStorage(storageType)[(int) index]);
+                return Short.toUnsignedLong(receiver.getShortStorage()[(int) index]);
             } catch (IndexOutOfBoundsException e) {
                 throw new PrimitiveFailed();
             }
         }
 
         @Specialization(guards = "receiver.isIntType()")
-        protected final long doNativeInts(final NativeObject receiver, final long index) {
+        protected static final long doNativeInts(final NativeObject receiver, final long index) {
             try {
-                final int word = receiver.getIntStorage(storageType)[((int) index - 1) / 2];
+                final int word = receiver.getIntStorage()[((int) index - 1) / 2];
                 int shortValue;
                 if ((index - 1) % 2 == 0) {
                     shortValue = word & 0xffff;
@@ -661,40 +659,39 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 144)
     protected abstract static class PrimShortAtPutNode extends AbstractPrimitiveNode {
-        private final ValueProfile storageType = ValueProfile.createClassProfile();
 
         protected PrimShortAtPutNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
         @Specialization(guards = {"inShortRange(value)", "receiver.isByteType()"})
-        protected final long doNativeBytes(final NativeObject receiver, final long index, final long value) {
+        protected static final long doNativeBytes(final NativeObject receiver, final long index, final long value) {
             final int offset = (int) ((index - 1) * 2);
-            final byte[] bytes = receiver.getByteStorage(storageType);
+            final byte[] bytes = receiver.getByteStorage();
             bytes[offset] = (byte) value;
             bytes[offset + 1] = (byte) (value >> 8);
             return value;
         }
 
         @Specialization(guards = {"inShortRange(value)", "receiver.isShortType()"})
-        protected final long doNativeShorts(final NativeObject receiver, final long index, final long value) {
-            receiver.getShortStorage(storageType)[(int) index] = (short) value;
+        protected static final long doNativeShorts(final NativeObject receiver, final long index, final long value) {
+            receiver.getShortStorage()[(int) index] = (short) value;
             return value;
         }
 
         @Specialization(guards = {"inShortRange(value)", "receiver.isIntType()", "isEven(index)"})
-        protected final long doNativeIntsEven(final NativeObject receiver, final long index, final long value) {
+        protected static final long doNativeIntsEven(final NativeObject receiver, final long index, final long value) {
             final int wordIndex = (int) ((index - 1) / 2);
-            final int[] ints = receiver.getIntStorage(storageType);
+            final int[] ints = receiver.getIntStorage();
             final int word = (int) Integer.toUnsignedLong(ints[wordIndex]);
             ints[wordIndex] = (word & 0xffff0000) | ((int) value & 0xffff);
             return value;
         }
 
         @Specialization(guards = {"inShortRange(value)", "receiver.isIntType()", "!isEven(index)"})
-        protected final long doNativeIntsOdd(final NativeObject receiver, final long index, final long value) {
+        protected static final long doNativeIntsOdd(final NativeObject receiver, final long index, final long value) {
             final int wordIndex = (int) ((index - 1) / 2);
-            final int[] ints = receiver.getIntStorage(storageType);
+            final int[] ints = receiver.getIntStorage();
             final int word = (int) Integer.toUnsignedLong(ints[wordIndex]);
             ints[wordIndex] = ((int) value << 16) | (word & 0xffff);
             return value;
@@ -718,7 +715,6 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 165)
     protected abstract static class PrimIntegerAtNode extends AbstractPrimitiveNode {
-        private final ValueProfile storageType = ValueProfile.createClassProfile();
         private final BranchProfile errorProfile = BranchProfile.create();
 
         protected PrimIntegerAtNode(final CompiledMethodObject method, final int numArguments) {
@@ -728,7 +724,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         @Specialization(guards = {"receiver.isIntType()"})
         protected final long doNativeInt(final NativeObject receiver, final long index) {
             try {
-                return receiver.getIntStorage(storageType)[(int) index - 1];
+                return receiver.getIntStorage()[(int) index - 1];
             } catch (ArrayIndexOutOfBoundsException e) {
                 errorProfile.enter();
                 throw new PrimitiveFailed();
@@ -740,16 +736,15 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 166)
     protected abstract static class PrimIntegerAtPutNode extends AbstractPrimitiveNode {
-        private final ValueProfile storageType = ValueProfile.createClassProfile();
 
         protected PrimIntegerAtPutNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
         @Specialization(guards = {"receiver.isIntType()", "value >= MIN_VALUE", "value <= MAX_VALUE"})
-        protected final long doNativeInt(final NativeObject receiver, final long index, final long value) {
+        protected static final long doNativeInt(final NativeObject receiver, final long index, final long value) {
             try {
-                receiver.getIntStorage(storageType)[(int) index - 1] = (int) value;
+                receiver.getIntStorage()[(int) index - 1] = (int) value;
             } catch (ArrayIndexOutOfBoundsException e) {
                 throw new PrimitiveFailed();
             }

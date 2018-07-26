@@ -2,12 +2,10 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 
 import java.util.List;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
@@ -115,8 +113,6 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveCompressToByteArray")
     public abstract static class PrimCompressToByteArrayNode extends AbstractMiscPrimitiveNode {
-        @CompilationFinal private final ValueProfile bmStorageType = ValueProfile.createClassProfile();
-        @CompilationFinal private final ValueProfile baStorageType = ValueProfile.createClassProfile();
 
         public PrimCompressToByteArrayNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -146,7 +142,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"bm.isIntType()", "ba.isByteType()"})
-        protected final long compress(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject bm, final NativeObject ba) {
+        protected static final long compress(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject bm, final NativeObject ba) {
             // "Store a run-coded compression of the receiver into the byteArray ba,
             // and return the last index stored into. ba is assumed to be large enough.
             // The encoding is as follows...
@@ -162,8 +158,8 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             // 0-223 0-223
             // 224-254 (0-30)*256 + next byte (0-7935)
             // 255 next 4 bytes"
-            final byte[] baBytes = ba.getByteStorage(baStorageType);
-            final int[] bmBytes = bm.getIntStorage(bmStorageType);
+            final byte[] baBytes = ba.getByteStorage();
+            final int[] bmBytes = bm.getIntStorage();
             final int size = bmBytes.length;
             int i = encodeInt(size, baBytes, 0);
             int k = 1;
@@ -222,15 +218,13 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveDecompressFromByteArray")
     public abstract static class PrimDecompressFromByteArrayNode extends AbstractMiscPrimitiveNode {
-        private final ValueProfile bmStorageType = ValueProfile.createClassProfile();
-        private final ValueProfile baStorageType = ValueProfile.createClassProfile();
 
         public PrimDecompressFromByteArrayNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
         @Specialization(guards = {"bm.isIntType()", "ba.isByteType()"})
-        protected final Object doDecompress(final AbstractSqueakObject receiver, final NativeObject bm, final NativeObject ba, final long index) {
+        protected static final Object doDecompress(final AbstractSqueakObject receiver, final NativeObject bm, final NativeObject ba, final long index) {
             /**
              * <pre>
                  Decompress the body of a byteArray encoded by compressToByteArray (qv)...
@@ -250,8 +244,8 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
              * </pre>
              */
 
-            final byte[] baBytes = ba.getByteStorage(baStorageType);
-            final int[] bmBytes = bm.getIntStorage(bmStorageType);
+            final byte[] baBytes = ba.getByteStorage();
+            final int[] bmBytes = bm.getIntStorage();
             int i = (int) index - 1;
             final int end = baBytes.length;
             int k = 0;
@@ -339,8 +333,6 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveFindSubstring")
     public abstract static class PrimFindSubstringNode extends AbstractPrimitiveNode {
-        private final ValueProfile byteType = ValueProfile.createClassProfile();
-        private final ValueProfile intType = ValueProfile.createClassProfile();
 
         public PrimFindSubstringNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -367,15 +359,15 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         public abstract Object executeFindSubstring(VirtualFrame frame);
 
         @Specialization(guards = {"key.isByteType()", "body.isByteType()", "matchTable.isByteType()"})
-        protected final long doFind(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject key, final NativeObject body, final long start,
+        protected static final long doFind(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject key, final NativeObject body, final long start,
                         final NativeObject matchTable) {
-            final byte[] keyBytes = key.getByteStorage(byteType);
+            final byte[] keyBytes = key.getByteStorage();
             final int keyBytesLength = keyBytes.length;
             if (keyBytesLength == 0) {
                 return 0L;
             }
-            final byte[] bodyBytes = body.getByteStorage(byteType);
-            final byte[] matchTableBytes = matchTable.getByteStorage(byteType);
+            final byte[] bodyBytes = body.getByteStorage();
+            final byte[] matchTableBytes = matchTable.getByteStorage();
             for (int startIndex = Math.max((int) start - 1, 0); startIndex <= bodyBytes.length - keyBytes.length; startIndex++) {
                 int index = 0;
                 while (matchTableBytes[bodyBytes[startIndex + index]] == matchTableBytes[keyBytes[index]]) {
@@ -390,15 +382,15 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"key.isByteType()", "body.isIntType()", "matchTable.isByteType()"})
-        protected final long doFindWideBody(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject key, final NativeObject body, final long start,
+        protected static final long doFindWideBody(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject key, final NativeObject body, final long start,
                         final NativeObject matchTable) {
-            final byte[] keyBytes = key.getByteStorage(byteType);
+            final byte[] keyBytes = key.getByteStorage();
             final int keyBytesLength = keyBytes.length;
             if (keyBytesLength == 0) {
                 return 0L;
             }
-            final int[] bodyBytes = body.getIntStorage(intType);
-            final byte[] matchTableBytes = matchTable.getByteStorage(byteType);
+            final int[] bodyBytes = body.getIntStorage();
+            final byte[] matchTableBytes = matchTable.getByteStorage();
             for (int startIndex = Math.max((int) start - 1, 0); startIndex <= bodyBytes.length - keyBytes.length; startIndex++) {
                 int index = 0;
                 while (matchTableBytes[bodyBytes[startIndex + index]] == matchTableBytes[keyBytes[index]]) {
@@ -464,17 +456,16 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveTranslateStringWithTable")
     public abstract static class PrimTranslateStringWithTableNode extends AbstractMiscPrimitiveNode {
-        private final ValueProfile byteType = ValueProfile.createClassProfile();
 
         public PrimTranslateStringWithTableNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
         @Specialization(guards = {"string.isByteType()", "table.isByteType()"})
-        protected final AbstractSqueakObject doNativeObject(final AbstractSqueakObject receiver, final NativeObject string, final long start, final long stop,
+        protected static final AbstractSqueakObject doNativeObject(final AbstractSqueakObject receiver, final NativeObject string, final long start, final long stop,
                         final NativeObject table) {
-            final byte[] stringBytes = string.getByteStorage(byteType);
-            final byte[] tableBytes = table.getByteStorage(byteType);
+            final byte[] stringBytes = string.getByteStorage();
+            final byte[] tableBytes = table.getByteStorage();
             for (int i = (int) start - 1; i < stop; i++) {
                 stringBytes[i] = tableBytes[stringBytes[i]];
             }

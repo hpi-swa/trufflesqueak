@@ -8,7 +8,6 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
@@ -141,7 +140,6 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 101)
     protected abstract static class PrimBeCursorNode extends AbstractPrimitiveNode {
-        private final ValueProfile storageType = ValueProfile.createClassProfile();
 
         protected PrimBeCursorNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -158,7 +156,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             final int[] words = validateAndExtractWords(receiver);
             final int depth = extractDepth(receiver);
             if (depth == 1) {
-                final int[] mask = ((NativeObject) maskObject.at0(FORM.BITS)).getIntStorage(storageType);
+                final int[] mask = ((NativeObject) maskObject.at0(FORM.BITS)).getIntStorage();
                 code.image.getDisplay().setCursor(mergeCursorWithMask(words, mask), 2);
             } else {
                 code.image.getDisplay().setCursor(words, depth);
@@ -166,8 +164,8 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return receiver;
         }
 
-        private int[] validateAndExtractWords(final PointersObject receiver) {
-            final int[] words = ((NativeObject) receiver.at0(FORM.BITS)).getIntStorage(storageType);
+        private static int[] validateAndExtractWords(final PointersObject receiver) {
+            final int[] words = ((NativeObject) receiver.at0(FORM.BITS)).getIntStorage();
             final long width = (long) receiver.at0(FORM.WIDTH);
             final long height = (long) receiver.at0(FORM.HEIGHT);
             if (width != SqueakIOConstants.CURSOR_WIDTH || height != SqueakIOConstants.CURSOR_HEIGHT) {
@@ -222,7 +220,6 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 103)
     protected abstract static class PrimScanCharactersNode extends AbstractPrimitiveNode {
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
-        private final ValueProfile byteType = ValueProfile.createClassProfile();
         @Child private ScanCharactersHelperNode scanNode;
 
         protected PrimScanCharactersNode(final CompiledMethodObject method, final int numArguments) {
@@ -236,7 +233,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             final Object scanDestX = at0Node.execute(receiver, 0);
             final Object scanXTable = at0Node.execute(receiver, 2);
             final Object scanMap = at0Node.execute(receiver, 3);
-            return scanNode.executeScan(receiver, startIndex, stopIndex, sourceString.getByteStorage(byteType), rightX, stops, kernData, scanDestX, scanXTable, scanMap);
+            return scanNode.executeScan(receiver, startIndex, stopIndex, sourceString.getByteStorage(), rightX, stops, kernData, scanDestX, scanXTable, scanMap);
         }
 
         protected abstract static class ScanCharactersHelperNode extends AbstractNodeWithImage {

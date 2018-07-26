@@ -6,7 +6,6 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
-import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -26,14 +25,12 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
         protected static final int MATRIX_SIZE = 6;
         protected static final int FLOAT_ONE = Float.floatToIntBits(1.0F);
 
-        private final ValueProfile storageType = ValueProfile.createClassProfile();
-
         public AbstractMatrix2x3PrimitiveNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        protected final int[] loadMatrix(final NativeObject object) {
-            final int[] ints = object.getIntStorage(storageType);
+        protected static final int[] loadMatrix(final NativeObject object) {
+            final int[] ints = object.getIntStorage();
             if (ints.length != MATRIX_SIZE) {
                 throw new PrimitiveFailed();
             }
@@ -41,7 +38,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @ExplodeLoop
-        protected final float[] loadMatrixAsFloat(final NativeObject object) {
+        protected static final float[] loadMatrixAsFloat(final NativeObject object) {
             final int[] ints = loadMatrix(object);
             final float[] floats = new float[MATRIX_SIZE];
             for (int i = 0; i < MATRIX_SIZE; i++) {
@@ -59,7 +56,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"receiver.isIntType()", "aTransformation.isIntType()", "result.isIntType()"})
-        protected final Object doCompose(final NativeObject receiver, final NativeObject aTransformation, final NativeObject result) {
+        protected static final Object doCompose(final NativeObject receiver, final NativeObject aTransformation, final NativeObject result) {
             final float[] m1 = loadMatrixAsFloat(receiver);
             final float[] m2 = loadMatrixAsFloat(aTransformation);
             final int[] m3 = loadMatrix(result);

@@ -5,7 +5,6 @@ import java.util.List;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -25,15 +24,14 @@ public final class UUIDPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveMakeUUID")
     protected abstract static class PrimMakeUUIDNode extends AbstractPrimitiveNode {
-        private final ValueProfile storageType = ValueProfile.createClassProfile();
 
         protected PrimMakeUUIDNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
         @Specialization(guards = "receiver.isByteType()")
-        protected final Object doUUID(final NativeObject receiver) {
-            final byte[] bytes = receiver.getByteStorage(storageType);
+        protected static final Object doUUID(final NativeObject receiver) {
+            final byte[] bytes = receiver.getByteStorage();
             if (bytes.length != 16) {
                 throw new PrimitiveFailed();
             }
