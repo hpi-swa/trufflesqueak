@@ -272,8 +272,9 @@ public final class SqueakSUnitTestMap {
                     "SmartRefStreamTest", TEST_TYPE.IGNORE, // flaky and slow
                     "SMDependencyTest", TEST_TYPE.PASSING,
                     "SMTPClientTest", TEST_TYPE.IGNORE,
-                    "SocketStreamTest", TEST_TYPE.FAILING,
-                    "SocketTest", TEST_TYPE.FAILING,
+                    // TODO: "SocketStreamTest", TEST_TYPE.PASSING,
+                    // TODO: "SocketTest", TEST_TYPE.FAILING, // testSocketReuse and testSendTimeout
+                    // fail
                     "SortedCollectionTest", TEST_TYPE.PASSING,
                     "SortFunctionTest", TEST_TYPE.PASSING,
                     "SqNumberParserTest", TEST_TYPE.PASSING,
