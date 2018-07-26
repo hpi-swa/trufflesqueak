@@ -2,7 +2,6 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 
 import java.util.List;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -23,7 +22,6 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.BIT_BLT;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.FORM;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
-import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.CopyBitsClipHelperNodeGen;
 import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.CopyBitsExecuteHelperNodeGen;
 import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.CopyBitsExtractHelperNodeGen;
@@ -62,14 +60,19 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
         protected boolean supportedCombinationRule(final PointersObject receiver) {
             final long combinationRule = (long) receiver.at0(BIT_BLT.COMBINATION_RULE);
+            if (combinationRule == 24) {
+                return true;
+            }
             final Object sourceForm = receiver.at0(BIT_BLT.SOURCE_FORM);
             final boolean hasSourceForm = sourceForm != receiver.image.nil;
-            final boolean noOverlap = !hasSourceForm || !(receiver.at0(BIT_BLT.DEST_FORM).equals(sourceForm));
-
-            return noOverlap &&
-                            (combinationRule == 3 && !hasSourceForm) ||
-                            (combinationRule == 4 && !hasSourceForm) ||
-                            (combinationRule == 24 && !hasSourceForm);
+            if (combinationRule == 4 && !hasSourceForm) {
+                return true;
+            }
+            // (See TODO below)
+            // final boolean noOverlap = !hasSourceForm || !(receiver.at0(BIT_BLT.DEST_FORM) ==
+            // sourceForm);
+            // return noOverlap && combinationRule == 3 && !hasSourceForm;
+            return false;
         }
 
         protected boolean supportedDepth(final PointersObject receiver) {
@@ -79,10 +82,12 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"supportedCombinationRule(receiver)", "supportedDepth(receiver)"})
         protected final Object doOptimized(final VirtualFrame frame, final PointersObject receiver) {
             try {
-                return extractNode.execute(receiver);
-            } catch (UnsupportedSpecializationException | PrimitiveFailed e) {
+                extractNode.executeExtract(receiver);
+            } catch (UnsupportedSpecializationException e) {
+                code.image.printToStdErr(e);
                 return doSimulation(frame, receiver);
             }
+            return receiver;
         }
 
         @Fallback
@@ -149,10 +154,10 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             return CopyBitsExtractHelperNodeGen.create();
         }
 
-        protected abstract PointersObject execute(PointersObject receiver);
+        protected abstract void executeExtract(PointersObject receiver);
 
         @Specialization(guards = {"hasSourceForm(receiver)"})
-        protected final PointersObject executeWithSourceForm(final PointersObject receiver) {
+        protected final void executeWithSourceForm(final PointersObject receiver) {
             final PointersObject sourceForm = (PointersObject) receiver.at0(BIT_BLT.SOURCE_FORM);
             final long sourceWidth = (long) sourceForm.at0(FORM.WIDTH);
             final long sourceHeight = (long) sourceForm.at0(FORM.HEIGHT);
@@ -164,7 +169,8 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             final long combinationRule = (long) receiver.at0(BIT_BLT.COMBINATION_RULE);
 
             final NativeObject destBits = (NativeObject) destForm.at0(FORM.BITS);
-            if (!destBits.isIntType() || destWidth * destHeight > destBits.getIntStorage().length) {
+            final int[] destWords = destBits.getIntStorage();
+            if (!destBits.isIntType() || destWidth * destHeight > destWords.length) {
                 throw new PrimitiveFailed();
             }
 
@@ -185,13 +191,13 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             final Object clipWidth = receiver.at0(BIT_BLT.CLIP_WIDTH);
             final Object clipHeight = receiver.at0(BIT_BLT.CLIP_HEIGHT);
 
-            return clipNode.executeClip(receiver, combinationRule, areaWidth, areaHeight, sourceForm, sourceX, sourceY, sourceWidth, sourceHeight, destForm, destX, destY, destWidth, clipX, clipY,
+            clipNode.executeClip(receiver, combinationRule, areaWidth, areaHeight, sourceForm, sourceX, sourceY, sourceWidth, sourceHeight, destWords, destX, destY, destWidth, clipX, clipY,
                             clipWidth,
                             clipHeight);
         }
 
         @Fallback
-        protected final PointersObject executeWithoutSourceForm(final PointersObject receiver) {
+        protected final void executeWithoutSourceForm(final PointersObject receiver) {
             final PointersObject destForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
             final long destWidth = (long) destForm.at0(FORM.WIDTH);
             final long destHeight = (long) destForm.at0(FORM.HEIGHT);
@@ -199,7 +205,8 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             final long combinationRule = (long) receiver.at0(BIT_BLT.COMBINATION_RULE);
 
             final NativeObject destBits = (NativeObject) destForm.at0(FORM.BITS);
-            if (!destBits.isIntType() || destWidth * destHeight > destBits.getIntStorage().length) {
+            final int[] destWords = destBits.getIntStorage();
+            if (!destBits.isIntType() || destWidth * destHeight > destWords.length) {
                 throw new PrimitiveFailed();
             }
 
@@ -213,7 +220,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             final Object clipWidth = receiver.at0(BIT_BLT.CLIP_WIDTH);
             final Object clipHeight = receiver.at0(BIT_BLT.CLIP_HEIGHT);
 
-            return clipNode.executeClip(receiver, combinationRule, areaWidth, areaHeight, null, 0L, 0L, 0L, 0L, destForm, destX, destY, destWidth, clipX, clipY,
+            clipNode.executeClip(receiver, combinationRule, areaWidth, areaHeight, null, 0L, 0L, 0L, 0L, destWords, destX, destY, destWidth, clipX, clipY,
                             clipWidth,
                             clipHeight);
         }
@@ -230,7 +237,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             return CopyBitsClipHelperNodeGen.create();
         }
 
-        protected abstract PointersObject executeClip(PointersObject receiver,
+        protected abstract void executeClip(PointersObject receiver,
                         long combinationRule,
                         Object areaWidth,
                         Object areaHeight,
@@ -239,7 +246,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
                         Object sourceY,
                         Object sourceWidth,
                         Object sourceHeight,
-                        PointersObject destinationForm,
+                        int[] destWords,
                         Object destX,
                         Object destY,
                         Object destWidth,
@@ -249,7 +256,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
                         Object clipHeight);
 
         @Specialization(guards = {"sourceForm == null"})
-        protected final PointersObject executeClipWithoutSourceForm(final PointersObject receiver,
+        protected final void executeClipWithoutSourceForm(final PointersObject receiver,
                         final long combinationRule,
                         final long areaWidth,
                         final long areaHeight,
@@ -258,7 +265,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
                         final long sourceY,
                         final long sourceWidth,
                         @SuppressWarnings("unused") final long sourceHeight,
-                        final PointersObject destForm,
+                        final int[] destWords,
                         final long destX,
                         final long destY,
                         final long destWidth,
@@ -297,11 +304,11 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
                 bbH = bbH - ((dy + bbH) - (clipY + clipHeight));
             }
 
-            return executeNode.executeCopyBits(receiver, combinationRule, sourceForm, sourceX, sourceY, sourceWidth, destForm, dx, dy, destWidth, bbW, bbH);
+            executeNode.executeCopyBits(receiver, combinationRule, sourceForm, sourceX, sourceY, sourceWidth, destWords, dx, dy, destWidth, bbW, bbH);
         }
 
         @Specialization()
-        protected final PointersObject executeClipWithSourceForm(final PointersObject receiver,
+        protected final void executeClipWithSourceForm(final PointersObject receiver,
                         final long combinationRule,
                         final long areaWidth,
                         final long areaHeight,
@@ -310,7 +317,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
                         final long sourceY,
                         final long sourceWidth,
                         final long sourceHeight,
-                        final PointersObject destForm,
+                        final int[] destWords,
                         final long destX,
                         final long destY,
                         final long destWidth,
@@ -374,25 +381,22 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
                 bbH = bbH - (sy + bbH - sourceHeight);
             }
 
-            return executeNode.executeCopyBits(receiver, combinationRule, sourceForm, sx, sy, sourceWidth, destForm, dx, dy, destWidth, bbW, bbH);
+            executeNode.executeCopyBits(receiver, combinationRule, sourceForm, sx, sy, sourceWidth, destWords, dx, dy, destWidth, bbW, bbH);
         }
     }
 
     protected abstract static class CopyBitsExecuteHelperNode extends Node {
-        @CompilationFinal protected final SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
-        @CompilationFinal protected final SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
-
         protected static CopyBitsExecuteHelperNode create() {
             return CopyBitsExecuteHelperNodeGen.create();
         }
 
-        protected abstract PointersObject executeCopyBits(PointersObject receiver,
+        protected abstract void executeCopyBits(PointersObject receiver,
                         long combinationRule,
                         PointersObject sourceForm,
                         long sourceX,
                         long sourceY,
                         long sourceWidth,
-                        PointersObject destForm,
+                        int[] destWords,
                         long destX,
                         long destY,
                         long destWidth,
@@ -403,164 +407,148 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             return areaWidth <= 0 || areaHeight <= 0;
         }
 
-        @SuppressWarnings({"unused", "static-method"})
+        @SuppressWarnings("unused")
         @Specialization(guards = {"invalidArea(areaWidth, areaHeight)"})
-        protected final PointersObject executeInvalidArea(final PointersObject receiver,
+        protected static final void executeInvalidArea(final PointersObject receiver,
                         final long combinationRule,
                         final PointersObject sourceForm,
                         final long sourceX,
                         final long sourceY,
                         final long sourceWidth,
-                        final PointersObject destForm,
+                        final int[] destWords,
                         final long destX,
                         final long destY,
                         final long destWidth,
                         final long areaWidth,
                         final long areaHeight) {
-            return receiver;
+            // do nothing, just return receiver
         }
 
+        // FIXME: this method is currently not used, as it caused major artifacts.
+        // To re-enable this rule, simply go all the way up to "supportedCombinationRules" and
+        // uncomment the code marked with a TODO.
         @SuppressWarnings("unused")
         @Specialization(guards = {"combinationRule == 3", "sourceForm == null", "!invalidArea(areaWidth, areaHeight)"})
-        protected final PointersObject doCopyBitsCombiRule3NilSourceForm(final PointersObject receiver,
+        protected final void doCopyBitsCombiRule3NilSourceForm(final PointersObject receiver,
                         final long combinationRule,
                         final PointersObject sourceForm,
                         final long sourceX,
                         final long sourceY,
                         final long sourceWidth,
-                        final PointersObject destForm,
+                        final int[] destWords,
                         final long destX,
                         final long destY,
                         final long destWidth,
                         final long areaWidth,
                         final long areaHeight) {
-            final PointersObject destinationForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
-            final NativeObject destinationBits = (NativeObject) destinationForm.at0(FORM.BITS);
-            final NativeObject halftoneForm = (NativeObject) receiver.at0(BIT_BLT.HALFTONE_FORM);
-            final long fillValue = (long) at0Node.execute(halftoneForm, 0L);
-
+            final int fillValue = extractFillValueFromHalftoneForm(receiver);
+            final int innerIterations = (int) areaWidth;
             for (long y = destY; y < destY + areaHeight; y++) {
                 final long destStart = y * destWidth + destX;
-                for (long dx = destStart; dx < destStart + areaWidth; dx++) {
-                    atPut0Node.execute(destinationBits, dx, fillValue);
+                try {
+                    for (int dx = (int) destStart; dx < destStart + areaWidth; dx++) {
+                        destWords[dx] = fillValue;
+                    }
+                } finally {
+                    LoopNode.reportLoopCount(this, innerIterations);
                 }
             }
-            return receiver;
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"combinationRule == 4", "sourceForm == null", "!invalidArea(areaWidth, areaHeight)"})
-        protected final PointersObject doCopyBitsCombiRule4NilSourceForm(final PointersObject receiver,
+        protected final void doCopyBitsCombiRule4NilSourceForm(final PointersObject receiver,
                         final long combinationRule,
                         final PointersObject sourceForm,
                         final long sourceX,
                         final long sourceY,
                         final long sourceWidth,
-                        final PointersObject destForm,
+                        final int[] destWords,
                         final long destX,
                         final long destY,
                         final long destWidth,
                         final long areaWidth,
                         final long areaHeight) {
-            final PointersObject destinationForm = (PointersObject) receiver.at0(BIT_BLT.DEST_FORM);
-            final NativeObject destinationBits = (NativeObject) destinationForm.at0(FORM.BITS);
-            final NativeObject halftoneForm = (NativeObject) receiver.at0(BIT_BLT.HALFTONE_FORM);
-            final int[] fillArray = halftoneForm.getIntStorage();
-            if (fillArray.length != 1) {
-                throw new SqueakException("Expected one fillValue only");
-            }
-            final int fillValue = fillArray[0];
+            final int fillValue = extractFillValueFromHalftoneForm(receiver);
 
             final long endX = destX + areaWidth;
             final long endY = destY + areaHeight;
 
-            final int[] ints = destinationBits.getIntStorage();
-
-            if (ints.length - 1 < (endY - 1) * destWidth + (endX - 1)) {
+            if (destWords.length - 1 < (endY - 1) * destWidth + (endX - 1)) {
                 throw new PrimitiveFailed(); // fail early in case of index out of bounds
             }
 
             final int invertedFillValue = ~fillValue;
 
+            final int innerIterations = (int) areaWidth;
             for (long dy = destY; dy < destY + areaHeight; dy++) {
                 final long destStart = dy * destWidth + destX;
                 try {
                     for (long dx = destStart; dx < destStart + areaWidth; dx++) {
-                        ints[(int) dx] = invertedFillValue & ints[(int) dx];
+                        destWords[(int) dx] = invertedFillValue & destWords[(int) dx];
                     }
                 } finally {
-                    LoopNode.reportLoopCount(this, (int) areaWidth);
+                    LoopNode.reportLoopCount(this, innerIterations);
                 }
             }
-
-            return receiver;
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"combinationRule == 24", "sourceForm == null", "!invalidArea(areaWidth, areaHeight)"})
-        protected final PointersObject doCopyBitsCombiRule24NilSourceForm(final PointersObject receiver,
+        protected final void doCopyBitsCombiRule24NilSourceForm(final PointersObject receiver,
                         final long combinationRule,
                         final PointersObject sourceForm,
                         final long sourceX,
                         final long sourceY,
                         final long sourceWidth,
-                        final PointersObject destForm,
+                        final int[] destWords,
                         final long destX,
                         final long destY,
                         final long destWidth,
                         final long areaWidth,
                         final long areaHeight) {
-            final int[] fillArray = ((NativeObject) receiver.at0(BIT_BLT.HALFTONE_FORM)).getIntStorage();
-            if (fillArray.length != 1) {
-                throw new SqueakException("Expected one fillValue only");
-            }
-            final int fillValue = fillArray[0];
-
-            final NativeObject destBits = (NativeObject) destForm.at0(FORM.BITS);
-            final int[] dest = ((NativeObject) destForm.at0(FORM.BITS)).getIntStorage();
-
+            final long fillValue = Integer.toUnsignedLong(extractFillValueFromHalftoneForm(receiver));
             final long endX = destX + areaWidth;
             final long endY = destY + areaHeight;
-
+            final int innerIterations = (int) (endX - destX);
             for (long y = destY; y < endY; y++) {
-                for (long x = destX; x < endX; x++) {
-                    final int index = (int) (y * destWidth + x);
-                    atPut0Node.execute(destBits, index, alphaBlend24(fillValue, (long) at0Node.execute(destBits, index)));
+                try {
+                    for (long x = destX; x < endX; x++) {
+                        final int index = (int) (y * destWidth + x);
+                        destWords[index] = (int) alphaBlend24(fillValue, Integer.toUnsignedLong(destWords[index]));
+                    }
+                } finally {
+                    LoopNode.reportLoopCount(this, innerIterations);
                 }
             }
-            return receiver;
         }
 
-        // FIXME: this method is currently not used, as it caused major artifacts. Digging down on
-        // the symptoms revealed that the problems only occurred if our implementation of rule 3 was
-        // active at the same time. Further, we noticed a significant increase in how often we get
-        // passed invalid areas.
-        // To re-enable this rule, simply go all the way up to "supportedCombinationRules" and add
-        // (combinationRule == 24 && hasSourceForm)
         @Specialization(guards = {"combinationRule == 24", "sourceForm != null", "!invalidArea(areaWidth, areaHeight)"})
-        protected final PointersObject doCopyBitsCombiRule24WithSourceForm(final PointersObject receiver,
+        protected final void doCopyBitsCombiRule24WithSourceForm(@SuppressWarnings("unused") final PointersObject receiver,
                         @SuppressWarnings("unused") final long combinationRule,
                         final PointersObject sourceForm,
                         final long sourceX,
                         final long sourceY,
                         final long sourceWidth,
-                        final PointersObject destForm,
+                        final int[] destWords,
                         final long destX,
                         final long destY,
                         final long destWidth,
                         final long areaWidth,
                         final long areaHeight) {
-            final NativeObject sourceBits = (NativeObject) sourceForm.at0(FORM.BITS);
-            final NativeObject destBits = (NativeObject) destForm.at0(FORM.BITS);
-
+            final int[] sourceInts = ((NativeObject) sourceForm.at0(FORM.BITS)).getIntStorage();
+            final int innerIterations = (int) areaWidth;
             for (long dy = destY, sy = sourceY; dy < destY + areaHeight; dy++, sy++) {
                 final long sourceStart = sy * sourceWidth + sourceX;
                 final long destStart = dy * destWidth + destX;
-                for (long dx = destStart, sx = sourceStart; dx < destStart + areaWidth; dx++, sx++) {
-                    atPut0Node.execute(destBits, dx, alphaBlend24((long) at0Node.execute(sourceBits, sx), (long) at0Node.execute(destBits, dx)));
+                try {
+                    for (int dx = (int) destStart, sx = (int) sourceStart; dx < destStart + areaWidth; dx++, sx++) {
+                        destWords[dx] = (int) alphaBlend24(Integer.toUnsignedLong(sourceInts[sx]), Integer.toUnsignedLong(destWords[dx]));
+                    }
+                } finally {
+                    LoopNode.reportLoopCount(this, innerIterations);
                 }
             }
-            return receiver;
         }
     }
 
@@ -642,5 +630,14 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         blendRB = (blendRB + (((blendRB - 0x10001) >> 8) & 0xFF00FF) >> 8) & 0xFF00FF;
         blendAG = (blendAG + (((blendAG - 0x10001) >> 8) & 0xFF00FF) >> 8) & 0xFF00FF;
         return blendRB | (blendAG << 8);
+    }
+
+    protected static int extractFillValueFromHalftoneForm(final PointersObject receiver) {
+        final NativeObject halftoneForm = (NativeObject) receiver.at0(BIT_BLT.HALFTONE_FORM);
+        final int[] fillArray = halftoneForm.getIntStorage();
+        if (fillArray.length != 1) {
+            throw new SqueakException("Expected exactly one fillValue.");
+        }
+        return fillArray[0];
     }
 }
