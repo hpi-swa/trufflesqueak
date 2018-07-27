@@ -26,11 +26,11 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.CopyBitsClipHelperNodeGen;
-import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.CopyBitsEnsureDepthHelperNodeGen;
+import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.CopyBitsEnsureDepthAndExecuteHelperNodeGen;
 import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.CopyBitsExecuteHelperNodeGen;
 import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.CopyBitsExtractHelperNodeGen;
-import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.PrimPixelValueAtNodeFactory.PixelValueAtExecuteHelperNodeGen;
-import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.PrimPixelValueAtNodeFactory.PixelValueAtExtractHelperNodeGen;
+import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.PixelValueAtExecuteHelperNodeGen;
+import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginFactory.PixelValueAtExtractHelperNodeGen;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
@@ -48,117 +48,36 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         return true;
     }
 
+    /*
+     * Nodes and helper functions for primitiveCopyBits.
+     */
+
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveCopyBits")
     protected abstract static class PrimCopyBitsNode extends AbstractPrimitiveNode {
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
-        @Child private CopyBitsEnsureDepthHelperNode extractNode;
+        @Child private CopyBitsEnsureDepthAndExecuteHelperNode executeNode;
 
         protected PrimCopyBitsNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
-            extractNode = CopyBitsEnsureDepthHelperNode.create(method);
+            executeNode = CopyBitsEnsureDepthAndExecuteHelperNode.create(method);
         }
 
         @Specialization
         protected final Object doOptimized(final VirtualFrame frame, final PointersObject receiver) {
-            return extractNode.executeExtract(frame, receiver, receiver.at0(BIT_BLT.SOURCE_FORM), receiver.at0(BIT_BLT.DEST_FORM));
+            return executeNode.executeExtract(frame, receiver, receiver.at0(BIT_BLT.SOURCE_FORM), receiver.at0(BIT_BLT.DEST_FORM));
         }
     }
 
-    @ImportStatic(FORM.class)
-    @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitivePixelValueAt")
-    protected abstract static class PrimPixelValueAtNode extends AbstractPrimitiveNode {
-        @Child private PixelValueAtExtractHelperNode handleNode = PixelValueAtExtractHelperNode.create();
-
-        public PrimPixelValueAtNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"xValue < 0 || yValue < 0"})
-        protected static final long doQuickReturn(final PointersObject receiver, final long xValue, final long yValue) {
-            return 0L;
-        }
-
-        @Specialization(guards = {"xValue >= 0", "yValue >= 0", "receiver.size() > OFFSET"})
-        protected final long doValueAt(final PointersObject receiver, final long xValue, final long yValue) {
-            return handleNode.executeValueAt(receiver, xValue, yValue, receiver.at0(FORM.BITS));
-        }
-
-        protected abstract static class PixelValueAtExtractHelperNode extends Node {
-            @Child private PixelValueAtExecuteHelperNode executeNode = PixelValueAtExecuteHelperNode.create();
-
-            private static PixelValueAtExtractHelperNode create() {
-                return PixelValueAtExtractHelperNodeGen.create();
-            }
-
-            protected abstract long executeValueAt(PointersObject receiver, long xValue, long yValue, Object bitmap);
-
-            @Specialization(guards = "bitmap.isIntType()")
-            protected final long doInts(final PointersObject receiver, final long xValue, final long yValue, final NativeObject bitmap) {
-                return executeNode.executeValueAt(receiver, xValue, yValue, bitmap.getIntStorage(), receiver.at0(FORM.WIDTH), receiver.at0(FORM.HEIGHT), receiver.at0(FORM.DEPTH));
-            }
-
-            @SuppressWarnings("unused")
-            @Fallback
-            protected static final long doPrimitiveFail(final PointersObject receiver, final long xValue, final long yValue, final Object bitmap) {
-                throw new PrimitiveFailed();
-            }
-        }
-
-        protected abstract static class PixelValueAtExecuteHelperNode extends Node {
-            private final BranchProfile errorProfile = BranchProfile.create();
-
-            private static PixelValueAtExecuteHelperNode create() {
-                return PixelValueAtExecuteHelperNodeGen.create();
-            }
-
-            protected abstract long executeValueAt(PointersObject receiver, long xValue, long yValue, int[] words, Object width, Object height, Object depth);
-
-            @SuppressWarnings("unused")
-            @Specialization(guards = "xValue >= width || yValue >= height")
-            protected static final long doQuickReturn(final PointersObject receiver, final long xValue, final long yValue, final int[] words, final long width, final long height,
-                            final long depth) {
-                return 0L;
-            }
-
-            @Specialization(guards = {"xValue < width", "yValue < height"})
-            protected final long doInts(@SuppressWarnings("unused") final PointersObject receiver, final long xValue, final long yValue, final int[] words, final long width,
-                            final long height, final long depth) {
-                final long ppW = Math.floorDiv(32, depth);
-                final long stride = Math.floorDiv(width + ppW - 1, ppW);
-                if (words.length > stride * height) {
-                    errorProfile.enter();
-                    throw new PrimitiveFailed();
-                }
-                final int index = (int) ((yValue * stride) + Math.floorDiv(xValue, ppW));
-                final int word = words[index];
-                final long mask = 0xFFFFFFFFL >> (32 - depth);
-                final long shift = 32 - (((xValue & (ppW - 1)) + 1) * depth);
-                return ((word >> shift) & mask) & 0xffffffffL;
-            }
-
-            @Fallback
-            protected static final long doFail(final PointersObject receiver, final long xValue, final long yValue,
-                            final int[] words, final Object width, final Object height, final Object depth) {
-                throw new SqueakException("Unsupported operation reached:", receiver, xValue, yValue, words, width, height, depth);
-            }
-        }
-    }
-
-    /*
-     * Helper Nodes
-     */
-    protected abstract static class CopyBitsEnsureDepthHelperNode extends AbstractNodeWithCode {
+    protected abstract static class CopyBitsEnsureDepthAndExecuteHelperNode extends AbstractNodeWithCode {
         @Child private SimulationPrimitiveNode simulateNode;
         @Child private CopyBitsExtractHelperNode extractNode = CopyBitsExtractHelperNode.create();
 
-        protected static CopyBitsEnsureDepthHelperNode create(final CompiledCodeObject code) {
-            return CopyBitsEnsureDepthHelperNodeGen.create(code);
+        protected static CopyBitsEnsureDepthAndExecuteHelperNode create(final CompiledCodeObject code) {
+            return CopyBitsEnsureDepthAndExecuteHelperNodeGen.create(code);
         }
 
-        protected CopyBitsEnsureDepthHelperNode(final CompiledCodeObject code) {
+        protected CopyBitsEnsureDepthAndExecuteHelperNode(final CompiledCodeObject code) {
             super(code);
         }
 
@@ -546,9 +465,6 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    /*
-     * Primitive Helper Functions
-     */
     protected static long alphaBlend24(final long sourceWord, final long destinationWord) {
         final long alpha = sourceWord >> 24;
         if (alpha == 0) {
@@ -580,5 +496,91 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             throw new SqueakException("Expected exactly one fillValue.");
         }
         return fillArray[0];
+    }
+
+    /*
+     * Nodes for primitivePixelValueAt.
+     */
+
+    @ImportStatic(FORM.class)
+    @GenerateNodeFactory
+    @SqueakPrimitive(name = "primitivePixelValueAt")
+    protected abstract static class PrimPixelValueAtNode extends AbstractPrimitiveNode {
+        @Child private PixelValueAtExtractHelperNode handleNode = PixelValueAtExtractHelperNode.create();
+
+        public PrimPixelValueAtNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"xValue < 0 || yValue < 0"})
+        protected static final long doQuickReturn(final PointersObject receiver, final long xValue, final long yValue) {
+            return 0L;
+        }
+
+        @Specialization(guards = {"xValue >= 0", "yValue >= 0", "receiver.size() > OFFSET"})
+        protected final long doValueAt(final PointersObject receiver, final long xValue, final long yValue) {
+            return handleNode.executeValueAt(receiver, xValue, yValue, receiver.at0(FORM.BITS));
+        }
+    }
+
+    protected abstract static class PixelValueAtExtractHelperNode extends Node {
+        @Child private PixelValueAtExecuteHelperNode executeNode = PixelValueAtExecuteHelperNode.create();
+
+        private static PixelValueAtExtractHelperNode create() {
+            return PixelValueAtExtractHelperNodeGen.create();
+        }
+
+        protected abstract long executeValueAt(PointersObject receiver, long xValue, long yValue, Object bitmap);
+
+        @Specialization(guards = "bitmap.isIntType()")
+        protected final long doInts(final PointersObject receiver, final long xValue, final long yValue, final NativeObject bitmap) {
+            return executeNode.executeValueAt(receiver, xValue, yValue, bitmap.getIntStorage(), receiver.at0(FORM.WIDTH), receiver.at0(FORM.HEIGHT), receiver.at0(FORM.DEPTH));
+        }
+
+        @SuppressWarnings("unused")
+        @Fallback
+        protected static final long doPrimitiveFail(final PointersObject receiver, final long xValue, final long yValue, final Object bitmap) {
+            throw new PrimitiveFailed();
+        }
+    }
+
+    protected abstract static class PixelValueAtExecuteHelperNode extends Node {
+        private final BranchProfile errorProfile = BranchProfile.create();
+
+        private static PixelValueAtExecuteHelperNode create() {
+            return PixelValueAtExecuteHelperNodeGen.create();
+        }
+
+        protected abstract long executeValueAt(PointersObject receiver, long xValue, long yValue, int[] words, Object width, Object height, Object depth);
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "xValue >= width || yValue >= height")
+        protected static final long doQuickReturn(final PointersObject receiver, final long xValue, final long yValue, final int[] words, final long width, final long height,
+                        final long depth) {
+            return 0L;
+        }
+
+        @Specialization(guards = {"xValue < width", "yValue < height"})
+        protected final long doInts(@SuppressWarnings("unused") final PointersObject receiver, final long xValue, final long yValue, final int[] words, final long width,
+                        final long height, final long depth) {
+            final long ppW = Math.floorDiv(32, depth);
+            final long stride = Math.floorDiv(width + ppW - 1, ppW);
+            if (words.length > stride * height) {
+                errorProfile.enter();
+                throw new PrimitiveFailed();
+            }
+            final int index = (int) ((yValue * stride) + Math.floorDiv(xValue, ppW));
+            final int word = words[index];
+            final long mask = 0xFFFFFFFFL >> (32 - depth);
+            final long shift = 32 - (((xValue & (ppW - 1)) + 1) * depth);
+            return ((word >> shift) & mask) & 0xffffffffL;
+        }
+
+        @Fallback
+        protected static final long doFail(final PointersObject receiver, final long xValue, final long yValue,
+                        final int[] words, final Object width, final Object height, final Object depth) {
+            throw new SqueakException("Unsupported operation reached:", receiver, xValue, yValue, words, width, height, depth);
+        }
     }
 }
