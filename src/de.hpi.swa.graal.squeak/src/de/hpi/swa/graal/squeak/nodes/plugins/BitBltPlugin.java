@@ -115,20 +115,19 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         protected boolean supportedCombinationRule(final PointersObject receiver) {
             final long combinationRule = (long) receiver.at0(BIT_BLT.COMBINATION_RULE);
             final Object sourceForm = receiver.at0(BIT_BLT.SOURCE_FORM);
-            final boolean noOverlap = receiver.at0(BIT_BLT.DEST_FORM) != sourceForm;
-            if (!noOverlap) {
-                return false;
+            if (receiver.at0(BIT_BLT.DEST_FORM) == sourceForm) {
+                return false; // Overlaps are not supported.
             }
             if (combinationRule == 24) {
-                return true; // all combiRules implemented w/ and w/o sourceForms.
+                return true; // All combiRules implemented with and without sourceForms.
             }
             if (sourceForm != receiver.image.nil) {
-                return combinationRule == 25; // only other specialization that supports source
+                // All combiRules implemented with sourceForms:
+                return combinationRule == 25;
+            } else {
+                // All combiRules implemented without sourceForms:
+                return combinationRule == 3 || combinationRule == 4;
             }
-            if (combinationRule == 4) {
-                return true;
-            }
-            return combinationRule == 3;
         }
 
         protected static final boolean is32BitForm(final PointersObject target) {
