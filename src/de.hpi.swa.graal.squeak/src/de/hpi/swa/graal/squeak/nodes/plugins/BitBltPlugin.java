@@ -123,7 +123,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
                 return true; // all combiRules implemented w/ and w/o sourceForms.
             }
             if (sourceForm != receiver.image.nil) {
-                return false; // look no further, other specializations do not support sourceForms.
+                return combinationRule == 25; // only other specialization that supports source
             }
             if (combinationRule == 4) {
                 return true;
@@ -451,6 +451,27 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
                 try {
                     for (int dx = (int) destStart, sx = (int) sourceStart; dx < destStart + areaWidth; dx++, sx++) {
                         destWords[dx] = (int) alphaBlend24(Integer.toUnsignedLong(sourceWords[sx]), Integer.toUnsignedLong(destWords[dx]));
+                    }
+                } finally {
+                    LoopNode.reportLoopCount(this, innerIterations);
+                }
+            }
+        }
+
+        @Specialization(guards = {"combinationRule == 25", "sourceWords != null", "!invalidArea(areaWidth, areaHeight)"})
+        protected final void doCopyBitsCombiRule25WithSourceForm(@SuppressWarnings("unused") final PointersObject receiver, @SuppressWarnings("unused") final long combinationRule,
+                        final int[] sourceWords, final long sourceX, final long sourceY, final long sourceWidth,
+                        final int[] destWords, final long destX, final long destY, final long destWidth,
+                        final long areaWidth, final long areaHeight) {
+            final int innerIterations = (int) areaWidth;
+            for (long dy = destY, sy = sourceY; dy < destY + areaHeight; dy++, sy++) {
+                final long sourceStart = sy * sourceWidth + sourceX;
+                final long destStart = dy * destWidth + destX;
+                try {
+                    for (int dx = (int) destStart, sx = (int) sourceStart; dx < destStart + areaWidth; dx++, sx++) {
+                        final long sourceWord = Integer.toUnsignedLong(sourceWords[sx]);
+                        final long destWord = Integer.toUnsignedLong(destWords[dx]);
+                        destWords[dx] = (int) (sourceWord | ((~sourceWord & 0xffffffff) & destWord));
                     }
                 } finally {
                     LoopNode.reportLoopCount(this, innerIterations);
