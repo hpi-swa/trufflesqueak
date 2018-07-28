@@ -114,18 +114,21 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
         protected boolean supportedCombinationRule(final PointersObject receiver) {
             final long combinationRule = (long) receiver.at0(BIT_BLT.COMBINATION_RULE);
+            final Object sourceForm = receiver.at0(BIT_BLT.SOURCE_FORM);
+            final boolean noOverlap = receiver.at0(BIT_BLT.DEST_FORM) != sourceForm;
+            if (!noOverlap) {
+                return false;
+            }
             if (combinationRule == 24) {
                 return true; // all combiRules implemented w/ and w/o sourceForms.
             }
-            final Object sourceForm = receiver.at0(BIT_BLT.SOURCE_FORM);
             if (sourceForm != receiver.image.nil) {
                 return false; // look no further, other specializations do not support sourceForms.
             }
             if (combinationRule == 4) {
                 return true;
             }
-            final boolean noOverlap = receiver.at0(BIT_BLT.DEST_FORM) != sourceForm;
-            return noOverlap && combinationRule == 3;
+            return combinationRule == 3;
         }
 
         protected static final boolean is32BitForm(final PointersObject target) {
@@ -196,7 +199,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"!sourceBits.isIntType() || !destBits.isIntType()"})
         protected static final void doPrimitiveFail(final PointersObject receiver,
-                        final NativeObject sourceBits, final long sourceWidth, final long sourceHeight,
+                        final NativeObject sourceBits, final Object sourceWidth, final Object sourceHeight,
                         final NativeObject destBits, final long destWidth, final long destHeight) {
             /*
              * At least one form needs to be unhibernated by Smalltalk fallback code --> primitive
@@ -208,8 +211,8 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         @SuppressWarnings("unused")
         @Specialization(guards = {"!destBits.isIntType()"})
         protected static final void doPrimitiveFail(final PointersObject receiver,
-                        final NilObject sourceBits, final long sourceWidth, final long sourceHeight,
-                        final NativeObject destBits, final long destWidth, final long destHeight) {
+                        final NilObject sourceBits, final Object sourceWidth, final Object sourceHeight,
+                        final NativeObject destBits, final Object destWidth, final Object destHeight) {
             /*
              * destForm needs to be unhibernated by Smalltalk fallback code --> primitive fail
              * required here.
