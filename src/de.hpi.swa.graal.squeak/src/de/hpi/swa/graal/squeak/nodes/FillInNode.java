@@ -16,7 +16,7 @@ import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
-import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives.SimulationPrimitiveNode;
+import de.hpi.swa.graal.squeak.nodes.primitives.impl.SimulationPrimitiveNode;
 
 public abstract class FillInNode extends Node {
     private final SqueakImageContext image;

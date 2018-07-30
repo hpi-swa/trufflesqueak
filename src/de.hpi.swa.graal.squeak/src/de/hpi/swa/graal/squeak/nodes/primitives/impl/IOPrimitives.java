@@ -36,7 +36,6 @@ import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.IOPrimitivesFactory.PrimScanCharactersNodeFactory.ScanCharactersHelperNodeGen;
-import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives.SimulationPrimitiveNode;
 
 public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 

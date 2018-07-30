@@ -22,6 +22,8 @@ import de.hpi.swa.graal.squeak.nodes.plugins.LocalePlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.Matrix2x3Plugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.MiscPrimitivePlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.PolyglotPlugin;
+import de.hpi.swa.graal.squeak.nodes.plugins.SocketPlugin;
+import de.hpi.swa.graal.squeak.nodes.plugins.SqueakSSLPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.UUIDPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.UnixOSProcessPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.Win32OSProcessPlugin;
@@ -32,10 +34,8 @@ import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitives;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitives.PrimitiveFailedNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.IOPrimitives;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives;
-import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives.SimulationPrimitiveNode;
+import de.hpi.swa.graal.squeak.nodes.primitives.impl.SimulationPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.StoragePrimitives;
-import de.hpi.swa.graal.squeak.nodes.plugins.SocketPlugin;
-import de.hpi.swa.graal.squeak.nodes.plugins.SqueakSSLPlugin;
 
 public final class PrimitiveNodeFactory {
     private static final int MAX_PRIMITIVE_INDEX = 575;
