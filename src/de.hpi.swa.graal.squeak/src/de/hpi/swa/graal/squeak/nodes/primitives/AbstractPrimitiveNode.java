@@ -14,7 +14,6 @@ import de.hpi.swa.graal.squeak.model.EmptyObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
@@ -44,14 +43,6 @@ public abstract class AbstractPrimitiveNode extends AbstractNodeWithCode impleme
 
     protected static final boolean isSmallInteger(final long value) {
         return LargeIntegerObject.SMALLINTEGER32_MIN <= value && value <= LargeIntegerObject.SMALLINTEGER32_MAX;
-    }
-
-    protected static final boolean hasVariableClass(final AbstractSqueakObject obj) {
-        return obj.getSqClass().isVariable();
-    }
-
-    protected static final boolean isNil(final Object obj) {
-        return obj instanceof NilObject;
     }
 
     protected static final boolean isNotProvided(final Object obj) {

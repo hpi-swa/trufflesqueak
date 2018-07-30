@@ -452,7 +452,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             return 2; // Float in words
         }
 
-        @Specialization(guards = {"!isNil(obj)", "hasVariableClass(obj)"})
+        @Specialization(guards = {"!obj.isNil()", "obj.getSqClass().isVariable()"})
         protected final long size(final AbstractSqueakObject obj, @SuppressWarnings("unused") final NotProvided notProvided) {
             return sizeNode.execute(obj) - instSizeNode.execute(obj);
         }
@@ -503,7 +503,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             return 2; // Float in words
         }
 
-        @Specialization(guards = {"!isNil(obj)", "hasVariableClass(obj)"})
+        @Specialization(guards = {"!obj.isNil()", "obj.getSqClass().isVariable()"})
         protected final long doSqueakObject(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final AbstractSqueakObject obj) {
             return sizeNode.execute(obj) - instSizeNode.execute(obj);
         }

@@ -40,7 +40,6 @@ import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeGetBytesN
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.context.ObjectAtNode;
-import de.hpi.swa.graal.squeak.nodes.context.ReceiverAndArgumentsNode;
 import de.hpi.swa.graal.squeak.nodes.context.ReceiverNode;
 import de.hpi.swa.graal.squeak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.graal.squeak.nodes.context.SqueakLookupClassNodeGen;
@@ -126,11 +125,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 83)
     protected abstract static class PrimPerformNode extends AbstractPerformPrimitiveNode {
-        @Child private ReceiverAndArgumentsNode rcvrAndArgsNode;
 
         protected PrimPerformNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
-            rcvrAndArgsNode = ReceiverAndArgumentsNode.create();
         }
 
         @SuppressWarnings("unused")

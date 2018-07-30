@@ -69,6 +69,10 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         }
     }
 
+    public final boolean isNil() {
+        return this == image.nil;
+    }
+
     public final boolean isClass() {
         assert !(this instanceof ClassObject) || (image.metaclass == getSqClass() || image.metaclass == getSqClass().getSqClass());
         CompilerAsserts.neverPartOfCompilation();
