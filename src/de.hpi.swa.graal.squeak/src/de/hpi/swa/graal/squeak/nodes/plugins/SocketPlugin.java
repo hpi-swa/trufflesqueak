@@ -32,7 +32,6 @@ import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeGetBytesNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
@@ -454,7 +453,6 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     protected abstract static class AbstractSocketPluginPrimitiveNode extends AbstractPrimitiveNode {
-        @Child protected NativeGetBytesNode getBytesNode = NativeGetBytesNode.create();
 
         protected AbstractSocketPluginPrimitiveNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -468,14 +466,6 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             if (debugPrints) {
                 code.image.getOutput().println(o);
             }
-        }
-
-        protected final String toString(final NativeObject object) {
-            return getBytesNode.executeAsString(object);
-        }
-
-        protected final byte[] toByteArray(final NativeObject object) {
-            return getBytesNode.execute(object);
         }
     }
 
@@ -525,11 +515,11 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // is
         // asynchronous. To get the results, wait for it to complete or time out and then use
         // primNameLookupResult.
-        @Specialization
+        @Specialization(guards = "hostName.isByteType()")
         protected final Object doWork(final Object receiver, final NativeObject hostName) {
             print(">> Starting lookup for host name " + hostName);
             InetAddress address = null;
-            final String hostNameString = toString(hostName);
+            final String hostNameString = hostName.asString();
 
             try {
                 if (hostNameString.equals("localhost")) {
@@ -560,11 +550,11 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // is
         // asynchronous. To get the results, wait for it to complete or time out and then use
         // primAddressLookupResult.
-        @Specialization
+        @Specialization(guards = "address.isByteType()")
         protected final Object doWork(final Object receiver, final NativeObject address) {
             print("Starting lookup for address " + address);
             try {
-                lastAddressLookup = InetAddress.getByAddress(toByteArray(address)).getHostName();
+                lastAddressLookup = InetAddress.getByAddress(address.getByteStorage()).getHostName();
             } catch (UnknownHostException e) {
                 error(e);
                 lastAddressLookup = null;
@@ -732,10 +722,10 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @Specialization
-        protected final Object doWork(final Object receiver, final long socketID, final NativeObject option, final NativeObject value) {
+        @Specialization(guards = "option.isByteType()")
+        protected static final Object doWork(final Object receiver, final long socketID, final NativeObject option, final NativeObject value) {
             final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
-            socketImpl.setOption(toString(option), value);
+            socketImpl.setOption(option.asString(), value);
             return receiver;
         }
     }
@@ -752,7 +742,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
 
             try {
-                final byte[] bytes = toByteArray(hostAddress);
+                final byte[] bytes = hostAddress.getByteStorage();
                 final String hostAddressString = addressBytesToString(bytes);
                 socketImpl.connectTo(hostAddressString, (int) port);
             } catch (IOException e) {
@@ -836,10 +826,10 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // 'TCP_NODELAY'. 'TCP_ABORT_THRESHOLD'. 'TCP_CONN_NOTIFY_THRESHOLD'.
         // 'TCP_CONN_ABORT_THRESHOLD'. 'TCP_NOTIFY_THRESHOLD'.
         // 'TCP_URGENT_PTR_TYPE'}.
-        @Specialization
+        @Specialization(guards = "option.isByteType()")
         protected final Object doWork(@SuppressWarnings("unused") final Object receiver, final long socketID, final NativeObject option) {
             final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
-            final Object value = socketImpl.getOption(toString(option));
+            final Object value = socketImpl.getOption(option.asString());
             final Long errorCode = socketImpl.getError();
             final Object[] result = new Object[]{errorCode, value};
             return code.image.wrap(result);
@@ -920,7 +910,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // Note: In general, it many take several sendData calls to transmit a large data array
         // since the data is sent in send-buffer-sized chunks. The size of the send buffer is
         // determined when the socket is created.
-        @Specialization
+        @Specialization(guards = "aStringOrByteArray.isByteType()")
         protected final long doWork(@SuppressWarnings("unused") final Object receiver,
                         final long socketID,
                         final NativeObject aStringOrByteArray,
@@ -928,7 +918,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                         final long count) {
             final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
             try {
-                final byte[] data = toByteArray(aStringOrByteArray);
+                final byte[] data = aStringOrByteArray.getByteStorage();
                 socketImpl.sendData(data, (int) (startIndex - 1), (int) count);
                 return count;
             } catch (Exception e) {
@@ -998,10 +988,10 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
         // Receive data from the given socket into the given array starting at the given index.
         // Return the number of bytes read or zero if no data is available.
-        @Specialization
+        @Specialization(guards = "receiveBuffer.isByteType()")
         protected final long doWork(@SuppressWarnings("unused") final Object receiver, final long socketID, final NativeObject receiveBuffer, final long startIndex, final long count) {
             final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
-            final byte[] buffer = toByteArray(receiveBuffer);
+            final byte[] buffer = receiveBuffer.getByteStorage();
             final long readBytes;
             try {
                 readBytes = socketImpl.receiveData(buffer, (int) (startIndex - 1), (int) count);

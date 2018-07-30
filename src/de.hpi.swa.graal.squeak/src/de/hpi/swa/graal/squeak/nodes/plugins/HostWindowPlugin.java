@@ -2,6 +2,7 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 
 import java.util.List;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -9,7 +10,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeGetBytesNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
@@ -61,15 +61,15 @@ public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveHostWindowTitle")
     protected abstract static class PrimHostWindowTitleNode extends AbstractPrimitiveNode {
-        @Child private NativeGetBytesNode getBytesNode = NativeGetBytesNode.create();
 
         protected PrimHostWindowTitleNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        @Specialization(guards = {"id == 1"})
+        @Specialization(guards = {"id == 1", "title.isByteType()"})
+        @TruffleBoundary
         protected final Object doTitle(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final long id, final NativeObject title) {
-            code.image.getDisplay().setWindowTitle(getBytesNode.executeAsString(title));
+            code.image.getDisplay().setWindowTitle(title.asString());
             return receiver;
         }
     }

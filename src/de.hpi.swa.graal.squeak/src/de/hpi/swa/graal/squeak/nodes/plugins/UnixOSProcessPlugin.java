@@ -11,7 +11,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeGetBytesNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 
@@ -49,16 +48,15 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveEnvironmentAtSymbol")
     protected abstract static class PrimEnvironmentAtSymbolNode extends AbstractPrimitiveNode {
-        @Child private NativeGetBytesNode getBytesNode = NativeGetBytesNode.create();
 
         protected PrimEnvironmentAtSymbolNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        @Specialization
+        @Specialization(guards = "aSymbol.isByteType()")
         @TruffleBoundary
         protected final Object doAt(@SuppressWarnings("unused") final Object receiver, final NativeObject aSymbol) {
-            final String key = getBytesNode.executeAsString(aSymbol);
+            final String key = aSymbol.asString();
             try {
                 final String value = System.getenv(key);
                 if (value == null) {

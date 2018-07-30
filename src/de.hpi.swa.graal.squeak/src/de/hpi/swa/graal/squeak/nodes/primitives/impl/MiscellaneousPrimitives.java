@@ -49,7 +49,6 @@ import de.hpi.swa.graal.squeak.nodes.DispatchNode;
 import de.hpi.swa.graal.squeak.nodes.LookupNode;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.IsDoesNotUnderstandNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeGetBytesNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
@@ -304,7 +303,6 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @SqueakPrimitive(index = 141)
     protected abstract static class PrimClipboardTextNode extends AbstractPrimitiveNode {
         protected final boolean isHeadless = GraphicsEnvironment.isHeadless();
-        @Child private NativeGetBytesNode getBytesNode = NativeGetBytesNode.create();
         private String headlessClipboardContents = "";
 
         protected PrimClipboardTextNode(final CompiledMethodObject method, final int numArguments) {
@@ -324,16 +322,16 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "!isHeadless")
-        protected final Object setClipboardText(final Object receiver, final NativeObject value) {
-            setClipboardString(getBytesNode.executeAsString(value));
+        @Specialization(guards = {"!isHeadless", "value.isByteType()"})
+        protected static final Object setClipboardText(final Object receiver, final NativeObject value) {
+            setClipboardString(value.asString());
             return value;
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "isHeadless")
+        @Specialization(guards = {"isHeadless", "value.isByteType()"})
         protected final Object setClipboardTextHeadless(final Object receiver, final NativeObject value) {
-            headlessClipboardContents = getBytesNode.executeAsString(value);
+            headlessClipboardContents = value.asString();
             return value;
         }
 
