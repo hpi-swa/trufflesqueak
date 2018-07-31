@@ -16,6 +16,7 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodes.DupNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodes.PopNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushConstantNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodes.ReturnReceiverNode;
+import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
 import de.hpi.swa.graal.squeak.util.SqueakBytecodeDecoder;
 
 public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImage {
@@ -181,13 +182,13 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
 
     @Test
     public void testFloatDecoding() {
-        SqueakImageChunk chunk = newFloatChunk(new int[]{0, 1072693248});
+        SqueakImageChunk chunk = newFloatChunk(ArrayConversionUtils.bytesFromLongsReversed(new long[]{0, 1072693248}));
         assertEquals(1.0, getDouble(chunk), 0);
 
-        chunk = newFloatChunk(new int[]{(int) 2482401462L, 1065322751});
+        chunk = newFloatChunk(ArrayConversionUtils.bytesFromLongsReversed(new long[]{(int) 2482401462L, 1065322751}));
         assertEquals(0.007699011184197404, getDouble(chunk), 0);
 
-        chunk = newFloatChunk(new int[]{876402988, 1075010976});
+        chunk = newFloatChunk(ArrayConversionUtils.bytesFromLongsReversed(new long[]{876402988, 1075010976}));
         assertEquals(4.841431442464721, getDouble(chunk), 0);
     }
 
@@ -195,11 +196,11 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
         return ((FloatObject) chunk.asObject()).getValue();
     }
 
-    private static SqueakImageChunk newFloatChunk(final int[] words) {
+    private static SqueakImageChunk newFloatChunk(final byte[] data) {
         final SqueakImageChunk chunk = new SqueakImageChunk(
                         null,
                         image,
-                        words, // 2 words
+                        data, // 2 words
                         10, // float format, 32-bit words without padding word
                         34, // classid of BoxedFloat64
                         3833906, // identityHash for 1.0

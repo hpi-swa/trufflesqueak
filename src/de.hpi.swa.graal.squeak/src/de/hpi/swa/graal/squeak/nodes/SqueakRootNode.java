@@ -43,4 +43,9 @@ public final class SqueakRootNode extends RootNode {
         final ExecuteTopLevelContextNode executeNode = image.config.isCustomContext() ? image.getCustomContext() : image.getActiveContext();
         return indirectCallNode.call(Truffle.getRuntime().createCallTarget(executeNode), new Object[0]);
     }
+
+    @Override
+    public String getName() {
+        return getClass().getSimpleName();
+    }
 }

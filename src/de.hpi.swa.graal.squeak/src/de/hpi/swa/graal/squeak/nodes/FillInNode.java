@@ -59,7 +59,7 @@ public abstract class FillInNode extends Node {
 
     @Specialization(guards = "obj.isIntType()")
     protected static final void doNativeInt(final NativeObject obj, final SqueakImageChunk chunk) {
-        obj.setStorage(chunk.getWords());
+        obj.setStorage(chunk.getInts());
     }
 
     @Specialization(guards = "obj.isLongType()")

@@ -8,11 +8,9 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
 
 public final class NativeObject extends AbstractSqueakObject {
-    public static final int SHORT_BYTE_SIZE = 2;
-    public static final int INTEGER_BYTE_SIZE = 4;
-    public static final int LONG_BYTE_SIZE = 8;
     public static final short BYTE_MAX = (short) (Math.pow(2, Byte.SIZE) - 1);
     public static final int SHORT_MAX = (int) (Math.pow(2, Short.SIZE) - 1);
     public static final long INTEGER_MAX = (long) (Math.pow(2, Integer.SIZE) - 1);
@@ -44,7 +42,7 @@ public final class NativeObject extends AbstractSqueakObject {
     }
 
     public static NativeObject newNativeInts(final SqueakImageChunk chunk) {
-        return new NativeObject(chunk.image, chunk.getHash(), chunk.getSqClass(), chunk.getWords());
+        return new NativeObject(chunk.image, chunk.getHash(), chunk.getSqClass(), chunk.getInts());
     }
 
     public static NativeObject newNativeInts(final SqueakImageContext img, final ClassObject klass, final int size) {
@@ -166,95 +164,21 @@ public final class NativeObject extends AbstractSqueakObject {
 
     public void convertToShortsStorage(final byte[] bytes) {
         assert storage.getClass() != bytes.getClass() : "Converting storage of same type unnecessary";
-        setStorage(shortsFromBytes(bytes));
+        setStorage(ArrayConversionUtils.shortsFromBytes(bytes));
     }
 
     public void convertToIntsStorage(final byte[] bytes) {
         assert storage.getClass() != bytes.getClass() : "Converting storage of same type unnecessary";
-        setStorage(intsFromBytes(bytes));
+        setStorage(ArrayConversionUtils.intsFromBytes(bytes));
     }
 
     public void convertToLongsStorage(final byte[] bytes) {
         assert storage.getClass() != bytes.getClass() : "Converting storage of same type unnecessary";
-        setStorage(longsFromBytes(bytes));
+        setStorage(ArrayConversionUtils.longsFromBytes(bytes));
     }
 
     public void setStorage(final Object storage) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         this.storage = storage;
-    }
-
-    private static short[] shortsFromBytes(final byte[] bytes) {
-        final int size = bytes.length / SHORT_BYTE_SIZE;
-        final short[] shorts = new short[size];
-        for (int i = 0; i < shorts.length; i++) {
-            shorts[i] = (short) (((bytes[i] & 0xFF) << 8) | (bytes[i + 1] & 0xFF));
-        }
-        return shorts;
-    }
-
-    private static int[] intsFromBytes(final byte[] bytes) {
-        final int size = bytes.length / INTEGER_BYTE_SIZE;
-        final int[] ints = new int[size];
-        for (int i = 0; i < ints.length; i++) {
-            ints[i] = ((bytes[i]) << 24) | ((bytes[i + 1]) << 16) | ((bytes[i + 2]) << 8) | bytes[i + 3];
-        }
-        return ints;
-    }
-
-    private static long[] longsFromBytes(final byte[] bytes) {
-        final int size = bytes.length / LONG_BYTE_SIZE;
-        final long[] longs = new long[size];
-        for (int i = 0; i < size; i++) {
-            //@formatter:off
-            longs[i] = (((long) bytes[i    ]) << 56) | (((long) bytes[i + 1]) << 48) | (((long) bytes[i + 2]) << 40) | (((long) bytes[i + 3]) << 32)
-                     | (((long) bytes[i + 4]) << 24) | (((long) bytes[i + 5]) << 16) | (((long) bytes[i + 6]) << 8)  | bytes[i + 7];
-            //@formatter:on
-        }
-        return longs;
-    }
-
-    public static byte[] bytesFromShorts(final short[] shorts) {
-        final int shortLength = shorts.length;
-        final byte[] bytes = new byte[shortLength * SHORT_BYTE_SIZE];
-        for (int i = 0; i < shortLength; i++) {
-            final int offset = i * SHORT_BYTE_SIZE;
-            final short shortValue = shorts[i];
-            bytes[offset] = (byte) (shortValue >> 8);
-            bytes[offset + 1] = (byte) shortValue;
-        }
-        return bytes;
-    }
-
-    public static byte[] bytesFromInts(final int[] ints) {
-        final int intsLength = ints.length;
-        final byte[] bytes = new byte[intsLength * INTEGER_BYTE_SIZE];
-        for (int i = 0; i < intsLength; i++) {
-            final int offset = i * INTEGER_BYTE_SIZE;
-            final int intValue = ints[i];
-            bytes[offset] = (byte) (intValue >> 24);
-            bytes[offset + 1] = (byte) (intValue >> 16);
-            bytes[offset + 2] = (byte) (intValue >> 8);
-            bytes[offset + 3] = (byte) intValue;
-        }
-        return bytes;
-    }
-
-    public static byte[] bytesFromLongs(final long[] longs) {
-        final int longsLength = longs.length;
-        final byte[] bytes = new byte[longsLength * LONG_BYTE_SIZE];
-        for (int i = 0; i < longsLength; i++) {
-            final int offset = i * LONG_BYTE_SIZE;
-            final long longValue = longs[i];
-            bytes[offset] = (byte) (longValue >> 56);
-            bytes[offset + 1] = (byte) (longValue >> 48);
-            bytes[offset + 2] = (byte) (longValue >> 40);
-            bytes[offset + 3] = (byte) (longValue >> 32);
-            bytes[offset + 4] = (byte) (longValue >> 24);
-            bytes[offset + 5] = (byte) (longValue >> 16);
-            bytes[offset + 6] = (byte) (longValue >> 8);
-            bytes[offset + 7] = (byte) longValue;
-        }
-        return bytes;
     }
 }

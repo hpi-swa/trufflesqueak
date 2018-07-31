@@ -27,8 +27,6 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         STACK_POINTER,
     }
 
-    protected static final int BYTES_PER_WORD = 4;
-
     // frame info
     public static final FrameDescriptor frameDescriptorTemplate;
     public static final FrameSlot thisContextOrMarkerSlot;
@@ -179,15 +177,16 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
 
     public final void fillin(final SqueakImageChunk chunk) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        final int[] data = chunk.data();
-        final int header = data[0] >> 1; // header is a tagged small integer
-        final int literalsize = header & 0x7fff;
-        final Object[] ptrs = chunk.getPointers(literalsize + 1);
+        final long[] words = chunk.getWords();
+        // header is a tagged small integer
+        final long header = (words[0] >> (image.flags.is64bit() ? 3 : 1));
+        final int numberOfLiterals = (int) (header & 0x7fff);
+        final Object[] ptrs = chunk.getPointers(numberOfLiterals + 1);
         assert literals == null;
         literals = ptrs;
         decodeHeader();
         assert bytes == null;
-        bytes = chunk.getBytes(ptrs.length);
+        bytes = chunk.getBytes(ptrs.length * image.flags.wordSize());
     }
 
     protected final void decodeHeader() {
@@ -221,7 +220,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
     }
 
     public final int getBytecodeOffset() {
-        return (1 + numLiterals) * BYTES_PER_WORD; // header plus numLiterals
+        return (1 + numLiterals) * image.flags.wordSize(); // header plus numLiterals
     }
 
     public final void atput0(final long longIndex, final Object obj) {
@@ -229,8 +228,8 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         assert index >= 0;
         CompilerDirectives.transferToInterpreterAndInvalidate();
         if (index < getBytecodeOffset()) {
-            assert index % BYTES_PER_WORD == 0;
-            setLiteral(index / BYTES_PER_WORD, obj);
+            assert index % image.flags.wordSize() == 0;
+            setLiteral(index / image.flags.wordSize(), obj);
         } else {
             final int realIndex = index - getBytecodeOffset();
             assert realIndex < bytes.length;

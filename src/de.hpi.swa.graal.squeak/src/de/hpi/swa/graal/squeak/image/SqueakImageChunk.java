@@ -1,8 +1,5 @@
 package de.hpi.swa.graal.squeak.image;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.ShortBuffer;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -10,6 +7,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -20,8 +18,11 @@ import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
+import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
 
 public final class SqueakImageChunk {
+    private static final long SMALLFLOAT_MASK = 896L << (52 + 1);
+
     protected Object object;
     @CompilationFinal private ClassObject sqClass;
     private Object[] pointers;
@@ -33,11 +34,12 @@ public final class SqueakImageChunk {
     private final SqueakImageReaderNode reader;
     protected final int format;
     private final int hash;
-    @CompilationFinal(dimensions = 1) private final int[] data;
+    @CompilationFinal(dimensions = 1) private final byte[] data;
+    private long[] words;
 
     public SqueakImageChunk(final SqueakImageReaderNode reader,
                     final SqueakImageContext image,
-                    final int[] data,
+                    final byte[] data,
                     final int format,
                     final int classid,
                     final int hash,
@@ -48,17 +50,13 @@ public final class SqueakImageChunk {
         this.classid = classid;
         this.hash = hash;
         this.pos = pos;
-        this.data = data;
+        this.data = Arrays.copyOf(data, data.length - getPadding());
     }
 
-    public static SqueakImageChunk createDummyChunk(final Object[] pointers) {
-        final SqueakImageChunk chunk = new SqueakImageChunk(null, null, new int[0], 0, 0, 0, 0);
+    public static SqueakImageChunk createDummyChunk(final SqueakImageContext image, final Object[] pointers) {
+        final SqueakImageChunk chunk = new SqueakImageChunk(null, image, new byte[0], 0, 0, 0, 0);
         chunk.pointers = pointers;
         return chunk;
-    }
-
-    public int[] data() {
-        return data;
     }
 
     public ClassObject asClassObject() {
@@ -100,7 +98,7 @@ public final class SqueakImageChunk {
                 object = NativeObject.newNativeLongs(this);
             } else if (format <= 11) { // 32-bit integers
                 if (this.getSqClass() == image.floatClass) {
-                    object = FloatObject.newFromChunkWords(image, hash, getWords());
+                    object = FloatObject.newFromChunkWords(image, hash, getInts());
                 } else {
                     object = NativeObject.newNativeInts(this);
                 }
@@ -142,8 +140,10 @@ public final class SqueakImageChunk {
     public SqueakImageChunk getClassChunk() {
         final int majorIdx = majorClassIndexOf(classid);
         final int minorIdx = minorClassIndexOf(classid);
-        final SqueakImageChunk classTablePage = reader.getChunk(reader.hiddenRootsChunk.data()[majorIdx]);
-        return reader.getChunk(classTablePage.data()[minorIdx]);
+        final SqueakImageChunk classTablePage = reader.getChunk(reader.hiddenRootsChunk.getWords()[majorIdx]);
+        final SqueakImageChunk classChunk = reader.getChunk(classTablePage.getWords()[minorIdx]);
+        assert classChunk != null : "Unable to find class chunk.";
+        return classChunk;
     }
 
     private static int majorClassIndexOf(final int classid) {
@@ -161,9 +161,10 @@ public final class SqueakImageChunk {
     @ExplodeLoop
     public Object[] getPointers() {
         if (pointers == null) {
-            pointers = new Object[data.length];
-            for (int i = 0; i < data.length; i++) {
-                pointers[i] = decodePointer(data[i]);
+            final long[] theWords = getWords();
+            pointers = new Object[theWords.length];
+            for (int i = 0; i < theWords.length; i++) {
+                pointers[i] = decodePointer(theWords[i]);
             }
         }
         return pointers;
@@ -171,33 +172,59 @@ public final class SqueakImageChunk {
 
     public Object[] getPointers(final int end) {
         if (pointers == null) {
+            final long[] theWords = getWords();
             pointers = new Object[end];
             for (int i = 0; i < end; i++) {
-                pointers[i] = decodePointer(data[i]);
+                pointers[i] = decodePointer(theWords[i]);
             }
         }
         return pointers;
     }
 
-    private Object decodePointer(final int ptr) {
-        if ((ptr & 3) == 0) {
-            final SqueakImageChunk chunk = reader.getChunk(ptr);
-            if (chunk == null) {
-                logBogusPointer(ptr);
-                return image.wrap(ptr >> 1);
-            } else {
-                return chunk.asObject();
+    private Object decodePointer(final long ptr) {
+        if (reader.is64bit) {
+            switch ((int) (ptr & 7)) {
+                case 0:
+                    final SqueakImageChunk chunk = reader.getChunk(ptr);
+                    if (chunk == null) {
+                        logBogusPointer(ptr);
+                        return image.wrap(ptr >>> 3);
+                    } else {
+                        return chunk.asObject();
+                    }
+                case 1: // SmallInteger
+                    return ptr >>> 3;
+                case 2: // Character
+                    return (char) (ptr >>> 3);
+                case 4: // SmallFloat (see Spur64BitMemoryManager>>#smallFloatBitsOf:)
+                    long valueWithoutTag = (ptr >>> 3);
+                    if (valueWithoutTag > 1) {
+                        valueWithoutTag += SMALLFLOAT_MASK;
+                    }
+                    return Double.longBitsToDouble(Long.rotateRight(valueWithoutTag, 1));
+                default:
+                    throw new SqueakException("Unexpected pointer");
             }
-        } else if ((ptr & 1) == 1) {
-            return (long) ptr >> 1;
         } else {
-            assert ((ptr & 3) == 2);
-            return (char) (ptr >> 2);
+            if ((ptr & 3) == 0) {
+                final SqueakImageChunk chunk = reader.getChunk(ptr);
+                if (chunk == null) {
+                    logBogusPointer(ptr);
+                    return image.wrap(ptr >> (reader.is64bit ? 3 : 1));
+                } else {
+                    return chunk.asObject();
+                }
+            } else if ((ptr & 1) == 1) {
+                return ptr >> 1;
+            } else {
+                assert ((ptr & 3) == 2);
+                return (char) (ptr >> 2);
+            }
         }
     }
 
     @TruffleBoundary
-    private void logBogusPointer(final int ptr) {
+    private void logBogusPointer(final long ptr) {
         image.getError().println("Bogus pointer: " + ptr + ". Treating as smallint.");
     }
 
@@ -206,56 +233,66 @@ public final class SqueakImageChunk {
     }
 
     public byte[] getBytes(final int start) {
-        final byte[] bytes = new byte[((data.length - start) * 4) - getPadding()];
-        final int[] subList = Arrays.copyOfRange(data, start, data.length);
-        final ByteBuffer buf = ByteBuffer.allocate(subList.length * 4);
-        buf.order(ByteOrder.nativeOrder());
-        for (int i : subList) {
-            buf.putInt(i);
-        }
-        for (int i = 0; i < bytes.length; i++) {
-            bytes[i] = buf.get(i);
-        }
-        return bytes;
+        return Arrays.copyOfRange(data, start, data.length);
     }
 
     public short[] getShorts() {
-        final short[] shorts = new short[(data.length * 2) - getPadding()];
-        final ByteBuffer buf = ByteBuffer.allocate(data.length * 2);
-        buf.order(ByteOrder.nativeOrder());
-        for (int i : data) {
-            buf.putInt(i);
-        }
-        final ShortBuffer shortBuffer = buf.asShortBuffer();
-        for (int i = 0; i < shorts.length; i++) {
-            shorts[i] = shortBuffer.get(i);
-        }
-        return shorts;
+        return ArrayConversionUtils.shortsFromBytesReversed(data);
     }
 
-    public int[] getWords() {
-        return data.clone();
+    public int[] getInts() {
+        return ArrayConversionUtils.intsFromBytesReversed(data);
+    }
+
+    public long[] getWords() {
+        if (words == null) {
+            if (reader.is64bit) {
+                words = ArrayConversionUtils.longsFromBytesReversed(data);
+            } else {
+                final int size = data.length / ArrayConversionUtils.INTEGER_BYTE_SIZE;
+                words = new long[size];
+                for (int i = 0; i < size; i++) {
+                    words[i] = (data[i * 4 + 3] & 0xFF) << 24 |
+                                    (data[i * 4 + 2] & 0xFF) << 16 |
+                                    (data[i * 4 + 1] & 0xFF) << 8 |
+                                    (data[i * 4 + 0] & 0xFF);
+                }
+            }
+        }
+        return words;
     }
 
     public long[] getLongs() {
-        final long[] longs = new long[data.length];
-        for (int i = 0; i < longs.length; i++) {
-            longs[i] = data[i];
-        }
-        return longs;
+        return ArrayConversionUtils.longsFromBytesReversed(data);
     }
 
     public int getPadding() {
-        if ((16 <= format) && (format <= 31)) {
-            return format & 3;
-        } else if (format == 11) {
-            // 32-bit words with 1 word padding
-            return 4;
-        } else if ((12 <= format) && (format <= 15)) {
-            // 16-bit words with 2, 4, or 6 bytes padding
-            return (format & 3) * 2;
+        if (image.flags.is64bit()) {
+            if ((16 <= format) && (format <= 31)) {
+                return format & 7;
+            } else if (format == 11) {
+                // 32-bit words with 1 word padding
+                return 4;
+            } else if ((12 <= format) && (format <= 15)) {
+                // 16-bit words with 2, 4, or 6 bytes padding
+                return format & 3;
+            } else if (10 <= format) {
+                return format & 1;
+            } else {
+                return 0;
+            }
         } else {
-            return 0;
+            if ((16 <= format) && (format <= 31)) {
+                return format & 3;
+            } else if (format == 11) {
+                // 32-bit words with 1 word padding
+                return 4;
+            } else if ((12 <= format) && (format <= 15)) {
+                // 16-bit words with 2, 4, or 6 bytes padding
+                return (format & 3) * 2;
+            } else {
+                return 0;
+            }
         }
     }
 

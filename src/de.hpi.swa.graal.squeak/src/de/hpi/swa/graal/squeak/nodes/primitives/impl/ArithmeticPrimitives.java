@@ -204,25 +204,25 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Override
         @Specialization
         protected final Object doLong(final long a, final long b) {
-            return a <= b;
+            return a <= b ? code.image.sqTrue : code.image.sqFalse;
         }
 
         @Override
         @Specialization
         protected final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.compareTo(b) <= 0;
+            return a.compareTo(b) <= 0 ? code.image.sqTrue : code.image.sqFalse;
         }
 
         @Override
         @Specialization
         protected final Object doDouble(final double a, final double b) {
-            return a <= b;
+            return a <= b ? code.image.sqTrue : code.image.sqFalse;
         }
 
         @Override
         @Specialization
         protected final Object doFloat(final FloatObject a, final FloatObject b) {
-            return a.getValue() <= b.getValue();
+            return a.getValue() <= b.getValue() ? code.image.sqTrue : code.image.sqFalse;
         }
     }
 
@@ -687,7 +687,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final long doDouble(final double receiver) {
+        protected final long doDouble(final double receiver) {
             final long truncatedValue = Double.valueOf(receiver).longValue();
             if (isSmallInteger(truncatedValue)) {
                 return truncatedValue;
@@ -697,7 +697,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final long doFloatObject(final FloatObject receiver) {
+        protected final long doFloatObject(final FloatObject receiver) {
             return doDouble(receiver.getValue());
         }
     }

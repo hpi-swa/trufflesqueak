@@ -66,11 +66,19 @@ public abstract class SqueakLookupClassNode extends AbstractNodeWithImage {
         throw new SqueakException("Unexpected value: " + value);
     }
 
-    protected static final boolean isLargeNegative(final long value) {
-        return value < LargeIntegerObject.SMALLINTEGER32_MIN;
+    protected final boolean isLargeNegative(final long value) {
+        if (image.flags.is64bit()) {
+            return value < LargeIntegerObject.SMALLINTEGER64_MIN;
+        } else {
+            return value < LargeIntegerObject.SMALLINTEGER32_MIN;
+        }
     }
 
-    protected static final boolean isLargePositive(final long value) {
-        return value > LargeIntegerObject.SMALLINTEGER32_MAX;
+    protected final boolean isLargePositive(final long value) {
+        if (image.flags.is64bit()) {
+            return value > LargeIntegerObject.SMALLINTEGER64_MAX;
+        } else {
+            return value > LargeIntegerObject.SMALLINTEGER32_MAX;
+        }
     }
 }

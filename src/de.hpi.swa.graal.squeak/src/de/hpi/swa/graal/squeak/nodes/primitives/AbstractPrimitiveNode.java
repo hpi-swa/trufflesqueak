@@ -41,8 +41,12 @@ public abstract class AbstractPrimitiveNode extends AbstractNodeWithCode impleme
 
     protected abstract Object executeWithArgumentsSpecialized(VirtualFrame frame, Object... arguments);
 
-    protected static final boolean isSmallInteger(final long value) {
-        return LargeIntegerObject.SMALLINTEGER32_MIN <= value && value <= LargeIntegerObject.SMALLINTEGER32_MAX;
+    protected final boolean isSmallInteger(final long value) {
+        if (code.image.flags.is64bit()) {
+            return LargeIntegerObject.SMALLINTEGER64_MIN <= value && value <= LargeIntegerObject.SMALLINTEGER64_MAX;
+        } else {
+            return LargeIntegerObject.SMALLINTEGER32_MIN <= value && value <= LargeIntegerObject.SMALLINTEGER32_MAX;
+        }
     }
 
     protected static final boolean isNotProvided(final Object obj) {

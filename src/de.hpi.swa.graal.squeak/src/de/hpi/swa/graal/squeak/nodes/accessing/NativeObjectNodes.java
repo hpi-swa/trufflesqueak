@@ -8,6 +8,7 @@ import com.oracle.truffle.api.nodes.Node;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodesFactory.NativeGetBytesNodeGen;
+import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
 
 public final class NativeObjectNodes {
     public abstract static class NativeGetBytesNode extends Node {
@@ -30,17 +31,17 @@ public final class NativeObjectNodes {
 
         @Specialization(guards = "obj.isShortType()")
         protected static final byte[] doNativeShorts(final NativeObject obj) {
-            return NativeObject.bytesFromShorts(obj.getShortStorage());
+            return ArrayConversionUtils.bytesFromShorts(obj.getShortStorage());
         }
 
         @Specialization(guards = "obj.isIntType()")
         protected static final byte[] doNativeInts(final NativeObject obj) {
-            return NativeObject.bytesFromInts(obj.getIntStorage());
+            return ArrayConversionUtils.bytesFromInts(obj.getIntStorage());
         }
 
         @Specialization(guards = "obj.isLongType()")
         protected static final byte[] doNativeLongs(final NativeObject obj) {
-            return NativeObject.bytesFromLongs(obj.getLongStorage());
+            return ArrayConversionUtils.bytesFromLongs(obj.getLongStorage());
         }
 
         @Fallback

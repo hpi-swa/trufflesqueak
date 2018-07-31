@@ -26,26 +26,30 @@ import de.hpi.swa.graal.squeak.util.BitSplitter;
 public final class SqueakImageReaderNode extends RootNode {
     @CompilationFinal(dimensions = 1) private static final int[] CHUNK_HEADER_BIT_PATTERN = new int[]{22, 2, 5, 3, 22, 2, 8};
     public static final Object NIL_OBJECT_PLACEHOLDER = new Object();
+    private static final int IMAGE_32BIT_VERSION = 6521;
+    private static final int IMAGE_64BIT_VERSION = 68021;
     private static final int FREE_OBJECT_CLASS_INDEX_PUN = 0;
     private static final long SLOTS_MASK = 0xFF << 56;
     private static final long OVERFLOW_SLOTS = 255;
     private static final int HIDDEN_ROOTS_CHUNK_INDEX = 4;
 
+    @CompilationFinal protected boolean is64bit = false;
+    @CompilationFinal protected int wordSize = 4;
     @CompilationFinal protected SqueakImageChunk hiddenRootsChunk;
 
     private final BufferedInputStream stream;
-    private final HashMap<Integer, SqueakImageChunk> chunktable = new HashMap<>(750000);
+    private final HashMap<Long, SqueakImageChunk> chunktable = new HashMap<>(750000);
     private final SqueakImageContext image;
 
     private int chunkCount = 0;
-    private int headerSize;
-    private int oldBaseAddress;
-    private int specialObjectsPointer;
+    private long headerSize;
+    private long oldBaseAddress;
+    private long specialObjectsPointer;
     @SuppressWarnings("unused") private short maxExternalSemaphoreTableSize; // TODO: use value
-    private int firstSegmentSize;
+    private long firstSegmentSize;
     private int position = 0;
-    private int segmentEnd;
-    private int currentAddressSwizzle;
+    private long segmentEnd;
+    private long currentAddressSwizzle;
 
     @Child private LoopNode readObjectLoopNode;
     @Child private FillInClassNode fillInClassNode = FillInClassNode.create();
@@ -99,6 +103,21 @@ public final class SqueakImageReaderNode extends RootNode {
         }
     }
 
+    private long nextWord() {
+        if (is64bit) {
+            return nextLong();
+        } else {
+            return nextInt();
+        }
+    }
+
+    private byte[] nextBytes(final int count) {
+        final byte[] bytes = new byte[count];
+        readBytes(bytes, count);
+        this.position += count;
+        return bytes;
+    }
+
     private short nextShort() {
         final byte[] bytes = new byte[2];
         readBytes(bytes, 2);
@@ -115,20 +134,6 @@ public final class SqueakImageReaderNode extends RootNode {
                         (bytes[2] & 0xFF) << 16 |
                         (bytes[1] & 0xFF) << 8 |
                         (bytes[0] & 0xFF);
-    }
-
-    private int[] nextInts(final int count) {
-        final byte[] bytes = new byte[4 * count];
-        readBytes(bytes, 4 * count);
-        this.position += 4 * count;
-        final int[] result = new int[count];
-        for (int i = 0; i < count; i++) {
-            result[i] = (bytes[i * 4 + 3] & 0xFF) << 24 |
-                            (bytes[i * 4 + 2] & 0xFF) << 16 |
-                            (bytes[i * 4 + 1] & 0xFF) << 8 |
-                            (bytes[i * 4 + 0] & 0xFF);
-        }
-        return result;
     }
 
     private long nextLong() {
@@ -154,33 +159,42 @@ public final class SqueakImageReaderNode extends RootNode {
         }
     }
 
-    private int readVersion() {
-        final int version = nextInt();
-        assert version == 0x00001979;
-        return version;
+    private void readVersion() {
+        final long version = nextWord();
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        assert version == IMAGE_32BIT_VERSION || version == IMAGE_64BIT_VERSION : "Image not supported: " + version;
+        if (version == IMAGE_64BIT_VERSION) {
+            // nextWord(); // magic2
+            wordSize = 8;
+            is64bit = true;
+        } else {
+            wordSize = 4;
+        }
     }
 
     private void readBaseHeader() {
         headerSize = nextInt();
-        nextInt(); // endOfMemory
-        oldBaseAddress = nextInt();
-        specialObjectsPointer = nextInt();
-        nextInt(); // 1 word last used hash
-        final int lastWindowSize = nextInt();
+        nextWord(); // "length of heap in file"
+        oldBaseAddress = nextWord();
+        specialObjectsPointer = nextWord();
+        nextWord(); // 1 word last used hash
+        final int lastWindowSize = (int) nextWord();
         image.getDisplay().resizeTo((lastWindowSize >> 16) & 0xffff, lastWindowSize & 0xffff);
-        final int headerFlags = nextInt();
-        image.flags.initialize(headerFlags);
+        final int headerFlags = (int) nextWord();
+        image.flags.initialize(headerFlags, is64bit);
         nextInt(); // extraVMMemory
     }
 
     private void readSpurHeader() {
         nextShort(); // numStackPages
         nextShort(); // cogCodeSize
+        assert position == (is64bit ? 64 : 40) : "Wrong position";
         nextInt(); // edenBytes
         maxExternalSemaphoreTableSize = nextShort();
-        nextShort(); // re-align
-        firstSegmentSize = nextInt();
-        nextInt(); // freeOldSpace
+        nextShort(); // unused, realign to word boundary
+        assert position == (is64bit ? 72 : 48) : "Wrong position";
+        firstSegmentSize = nextWord();
+        nextWord(); // freeOldSpace
     }
 
     private void readHeader() {
@@ -191,8 +205,7 @@ public final class SqueakImageReaderNode extends RootNode {
     }
 
     private void skipToBody() {
-        final int skip = headerSize - this.position;
-        skipBytes(skip);
+        skipBytes(headerSize - position);
     }
 
     private static final class ReadObjectLoopNode extends Node implements RepeatingNode {
@@ -223,11 +236,11 @@ public final class SqueakImageReaderNode extends RootNode {
         while (this.position < segmentEnd) {
             readObjectLoopNode.executeLoop(frame);
             final long bridge = nextLong();
-            int bridgeSpan = 0;
+            long bridgeSpan = 0;
             if ((bridge & SLOTS_MASK) != 0) {
-                bridgeSpan = (int) (bridge & ~SLOTS_MASK);
+                bridgeSpan = bridge & ~SLOTS_MASK;
             }
-            final int nextSegmentSize = (int) nextLong();
+            final long nextSegmentSize = nextLong();
             assert bridgeSpan >= 0;
             assert nextSegmentSize >= 0;
             assert position == segmentEnd;
@@ -235,7 +248,7 @@ public final class SqueakImageReaderNode extends RootNode {
                 break;
             }
             segmentEnd += nextSegmentSize;
-            currentAddressSwizzle += bridgeSpan * 4;
+            currentAddressSwizzle += bridgeSpan * wordSize;
         }
         closeStream();
     }
@@ -260,7 +273,7 @@ public final class SqueakImageReaderNode extends RootNode {
 
     private SqueakImageChunk readObject() {
         int pos = position;
-        assert pos % 8 == 0;
+        assert pos % 8 == 0 : "every object must be 64-bit aligned: " + pos % 8;
         long headerWord = nextLong();
         // 22 2 5 3 22 2 8
         // classid _ format _ hash _ size
@@ -271,40 +284,49 @@ public final class SqueakImageReaderNode extends RootNode {
             pos = position;
             headerWord = nextLong();
             splitHeader = BitSplitter.splitter(headerWord, CHUNK_HEADER_BIT_PATTERN);
-            final int overflowSize = splitHeader[6];
-            assert overflowSize == OVERFLOW_SLOTS;
+            assert splitHeader[6] == OVERFLOW_SLOTS : "Objects with long header must have 255 in slot count";
         }
         final int classid = splitHeader[0];
         final int format = splitHeader[2];
         final int hash = splitHeader[4];
-        assert size >= 0;
-        assert 0 <= format && format <= 31;
-        final SqueakImageChunk chunk = new SqueakImageChunk(this, image, nextInts(size), format, classid, hash, pos);
-        if (wordsFor(size) > size) {
-            skipBytes((wordsFor(size) - size) * 4); // don't add trailing alignment words
+        assert size >= 0 : "Negative object size";
+        assert 0 <= format && format <= 31 : "Unexpected format";
+        final SqueakImageChunk chunk = new SqueakImageChunk(this, image, nextBytes(size * wordSize), format, classid, hash, pos);
+        final int wordsFor = wordsFor(size);
+        if (wordsFor > size * wordSize) {
+            skipBytes(wordsFor - (size * wordSize)); // skip trailing alignment words
         }
+        assert format != 0 || classid == 0 || size == 0 : "Empty objects must not have slots";
         assert checkAddressIntegrity(classid, format, chunk);
         return chunk;
     }
 
     private boolean checkAddressIntegrity(final int classid, final int format, final SqueakImageChunk chunk) {
+        if (is64bit) {
+            return true; // FIXME: temporarily disabled for 64bit.
+        }
         boolean result = true;
         if (format < 10 && classid != FREE_OBJECT_CLASS_INDEX_PUN) {
-            for (int slot : chunk.data()) {
+            for (long slot : chunk.getWords()) {
                 result &= slot % 16 != 0 || slot >= oldBaseAddress;
             }
         }
         return result;
     }
 
-    private static int wordsFor(final int size) {
-        // see Spur32BitMemoryManager>>smallObjectBytesForSlots:
-        return size <= 1 ? 2 : size + (size & 1);
+    private int wordsFor(final int size) {
+        if (is64bit) {
+            // see Spur64BitMemoryManager>>smallObjectBytesForSlots:
+            return size < 1 ? 8 : size * wordSize;
+        } else {
+            // see Spur32BitMemoryManager>>smallObjectBytesForSlots:
+            return size <= 1 ? 8 : (size + (size & 1)) * wordSize;
+        }
     }
 
     private SqueakImageChunk specialObjectChunk(final int idx) {
         final SqueakImageChunk specialObjectsChunk = getChunk(specialObjectsPointer);
-        return getChunk(specialObjectsChunk.data()[idx]);
+        return getChunk(specialObjectsChunk.getWords()[idx]);
     }
 
     private void setPrebuiltObject(final int idx, final Object object) {
@@ -363,11 +385,11 @@ public final class SqueakImageReaderNode extends RootNode {
     @ExplodeLoop
     private void initPrebuiltSelectors() {
         final SqueakImageChunk specialObjectsChunk = getChunk(specialObjectsPointer);
-        final SqueakImageChunk specialSelectorChunk = getChunk(specialObjectsChunk.data()[SPECIAL_OBJECT_INDEX.SpecialSelectors]);
+        final SqueakImageChunk specialSelectorChunk = getChunk(specialObjectsChunk.getWords()[SPECIAL_OBJECT_INDEX.SpecialSelectors]);
 
         final NativeObject[] specialSelectors = image.specialSelectorsArray;
         for (int i = 0; i < specialSelectors.length; i++) {
-            getChunk(specialSelectorChunk.data()[i * 2]).object = specialSelectors[i];
+            getChunk(specialSelectorChunk.getWords()[i * 2]).object = specialSelectors[i];
         }
     }
 
@@ -391,15 +413,15 @@ public final class SqueakImageReaderNode extends RootNode {
 
     private void instantiateClasses() {
         // find all metaclasses and instantiate their singleton instances as class objects
-        for (int classtablePtr : hiddenRootsChunk.data()) {
+        for (long classtablePtr : hiddenRootsChunk.getWords()) {
             if (getChunk(classtablePtr) != null) {
-                for (int potentialClassPtr : getChunk(classtablePtr).data()) {
+                for (long potentialClassPtr : getChunk(classtablePtr).getWords()) {
                     if (potentialClassPtr == 0) {
                         continue;
                     }
                     final SqueakImageChunk metaClass = getChunk(potentialClassPtr);
                     if (metaClass != null && metaClass.getSqClass() == image.metaclass) {
-                        final int[] data = metaClass.data();
+                        final long[] data = metaClass.getWords();
                         final SqueakImageChunk classInstance = getChunk(data[data.length - 1]);
                         assert data.length == 6;
                         metaClass.asClassObject();
@@ -411,7 +433,12 @@ public final class SqueakImageReaderNode extends RootNode {
     }
 
     @TruffleBoundary
-    public SqueakImageChunk getChunk(final int ptr) {
+    public SqueakImageChunk getChunk(final long ptr) {
         return chunktable.get(ptr);
+    }
+
+    @Override
+    public String getName() {
+        return getClass().getSimpleName();
     }
 }

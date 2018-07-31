@@ -1,12 +1,10 @@
 package de.hpi.swa.graal.squeak.model;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
 public final class CompiledMethodObject extends CompiledCodeObject {
-    protected final ValueProfile storageType = ValueProfile.createClassProfile();
 
     public CompiledMethodObject(final SqueakImageContext img) {
         super(img, 0);
@@ -31,8 +29,8 @@ public final class CompiledMethodObject extends CompiledCodeObject {
     public Object at0(final long longIndex) {
         final int index = (int) longIndex;
         if (index < getBytecodeOffset()) {
-            assert index % BYTES_PER_WORD == 0;
-            return literals[index / BYTES_PER_WORD];
+            assert index % image.flags.wordSize() == 0;
+            return literals[index / image.flags.wordSize()];
         } else {
             final int realIndex = index - getBytecodeOffset();
             assert realIndex >= 0;
