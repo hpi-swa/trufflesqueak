@@ -33,19 +33,19 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
         isDoesNotUnderstandNode = IsDoesNotUnderstandNode.create(image);
     }
 
-    @Specialization(guards = {"!image.config.isHeadless()", "!isDoesNotUnderstandNode.execute(lookupResult)"})
+    @Specialization(guards = {"!image.config.isTesting()", "!isDoesNotUnderstandNode.execute(lookupResult)"})
     protected final Object doDispatch(final VirtualFrame frame, @SuppressWarnings("unused") final NativeObject selector, final CompiledMethodObject lookupResult,
                     @SuppressWarnings("unused") final ClassObject rcvrClass, final Object[] rcvrAndArgs,
                     final Object contextOrMarker) {
         return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndArgs, contextOrMarker);
     }
 
-    @Specialization(guards = {"image.config.isHeadless()", "!isDoesNotUnderstandNode.execute(lookupResult)"})
+    @Specialization(guards = {"image.config.isTesting()", "!isDoesNotUnderstandNode.execute(lookupResult)"})
     protected final Object doDispatchTesting(final VirtualFrame frame, @SuppressWarnings("unused") final NativeObject selector, final CompiledMethodObject lookupResult,
                     @SuppressWarnings("unused") final ClassObject rcvrClass, final Object[] rcvrAndArgs,
                     final Object contextOrMarker) {
         if ("UnhandledError>>defaultAction".equals(lookupResult.toString())) {
-            throw new SqueakException("Debugger detected in headless session. Failing...");
+            throw new SqueakException("Debugger detected when testing. Failing...");
         }
         return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndArgs, contextOrMarker);
     }
