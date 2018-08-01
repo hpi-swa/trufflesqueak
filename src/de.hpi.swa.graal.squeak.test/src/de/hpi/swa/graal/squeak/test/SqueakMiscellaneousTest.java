@@ -182,13 +182,13 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
 
     @Test
     public void testFloatDecoding() {
-        SqueakImageChunk chunk = newFloatChunk(ArrayConversionUtils.bytesFromLongsReversed(new long[]{0, 1072693248}));
+        SqueakImageChunk chunk = newFloatChunk(ArrayConversionUtils.bytesFromIntsReversed(new int[]{0, 1072693248}));
         assertEquals(1.0, getDouble(chunk), 0);
 
-        chunk = newFloatChunk(ArrayConversionUtils.bytesFromLongsReversed(new long[]{(int) 2482401462L, 1065322751}));
+        chunk = newFloatChunk(ArrayConversionUtils.bytesFromIntsReversed(new int[]{(int) 2482401462L, 1065322751}));
         assertEquals(0.007699011184197404, getDouble(chunk), 0);
 
-        chunk = newFloatChunk(ArrayConversionUtils.bytesFromLongsReversed(new long[]{876402988, 1075010976}));
+        chunk = newFloatChunk(ArrayConversionUtils.bytesFromIntsReversed(new int[]{876402988, 1075010976}));
         assertEquals(4.841431442464721, getDouble(chunk), 0);
     }
 

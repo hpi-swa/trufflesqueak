@@ -19,6 +19,20 @@ public final class ArrayConversionUtils {
         return bytes;
     }
 
+    public static byte[] bytesFromIntsReversed(final int[] ints) {
+        final int intsLength = ints.length;
+        final byte[] bytes = new byte[intsLength * INTEGER_BYTE_SIZE];
+        for (int i = 0; i < intsLength; i++) {
+            final int offset = i * INTEGER_BYTE_SIZE;
+            final int intValue = ints[i];
+            bytes[offset + 3] = (byte) (intValue >> 24);
+            bytes[offset + 2] = (byte) (intValue >> 16);
+            bytes[offset + 1] = (byte) (intValue >> 8);
+            bytes[offset] = (byte) intValue;
+        }
+        return bytes;
+    }
+
     public static byte[] bytesFromLongs(final long[] longs) {
         final int longsLength = longs.length;
         final byte[] bytes = new byte[longsLength * LONG_BYTE_SIZE];
