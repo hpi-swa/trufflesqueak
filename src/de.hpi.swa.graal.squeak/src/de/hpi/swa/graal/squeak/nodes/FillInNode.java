@@ -67,14 +67,14 @@ public abstract class FillInNode extends Node {
         obj.setStorage(chunk.getLongs());
     }
 
-    @Specialization(guards = {"obj.isByteType()", "chunk.image.getSimulatePrimitiveArgsSelector() != null"})
+    @Specialization(guards = {"obj.isByteType()", "!chunk.image.config.isTesting()", "chunk.image.getSimulatePrimitiveArgsSelector() != null"})
     protected static final void doNativeByte(final NativeObject obj, final SqueakImageChunk chunk) {
         final byte[] stringBytes = chunk.getBytes();
         obj.setStorage(stringBytes);
     }
 
     @Specialization(guards = {"obj.isByteType()", "!chunk.image.config.isTesting()", "chunk.image.getSimulatePrimitiveArgsSelector() == null"})
-    protected final void doNativeByteAndSimulateSelector(final NativeObject obj, final SqueakImageChunk chunk) {
+    protected final void doNativeByteAndFindSimulateSelector(final NativeObject obj, final SqueakImageChunk chunk) {
         final byte[] stringBytes = chunk.getBytes();
         obj.setStorage(stringBytes);
         if (Arrays.equals(SimulationPrimitiveNode.SIMULATE_PRIMITIVE_SELECTOR, stringBytes)) {
@@ -82,13 +82,13 @@ public abstract class FillInNode extends Node {
         }
     }
 
-    @Specialization(guards = {"obj.isByteType()", "chunk.image.config.isTesting()", "chunk.image.getSimulatePrimitiveArgsSelector() == null"})
+    @Specialization(guards = {"obj.isByteType()", "chunk.image.config.isTesting()"})
     protected final void doNativeByteTesting(final NativeObject obj, final SqueakImageChunk chunk) {
         final byte[] stringBytes = chunk.getBytes();
         obj.setStorage(stringBytes);
-        if (Arrays.equals(SqueakImageContext.AS_SYMBOL_SELECTOR_NAME, stringBytes)) {
+        if (image.getAsSymbolSelector() == null && Arrays.equals(SqueakImageContext.AS_SYMBOL_SELECTOR_NAME, stringBytes)) {
             image.setAsSymbolSelector(obj);
-        } else if (Arrays.equals(SimulationPrimitiveNode.SIMULATE_PRIMITIVE_SELECTOR, stringBytes)) {
+        } else if (image.getSimulatePrimitiveArgsSelector() == null && Arrays.equals(SimulationPrimitiveNode.SIMULATE_PRIMITIVE_SELECTOR, stringBytes)) {
             image.setSimulatePrimitiveArgsSelector(obj);
         }
     }
