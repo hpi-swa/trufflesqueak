@@ -82,4 +82,9 @@ public final class ExecuteTopLevelContextNode extends RootNode {
             }
         }
     }
+
+    @Override
+    public String getName() {
+        return getClass().getSimpleName();
+    }
 }
