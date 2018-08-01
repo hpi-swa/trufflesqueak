@@ -54,8 +54,13 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
             assertEquals(i + 1, evaluate(i + " + 1"));
         }
         assertEquals(4L, evaluate("-1 \\\\ 5"));
-        assertEquals(LargeIntegerObject.SMALLINTEGER32_MIN, evaluate("SmallInteger minVal"));
-        assertEquals(LargeIntegerObject.SMALLINTEGER32_MAX, evaluate("SmallInteger maxVal"));
+        if (image.flags.is64bit()) {
+            assertEquals(LargeIntegerObject.SMALLINTEGER64_MIN, evaluate("SmallInteger minVal"));
+            assertEquals(LargeIntegerObject.SMALLINTEGER64_MAX, evaluate("SmallInteger maxVal"));
+        } else {
+            assertEquals(LargeIntegerObject.SMALLINTEGER32_MIN, evaluate("SmallInteger minVal"));
+            assertEquals(LargeIntegerObject.SMALLINTEGER32_MAX, evaluate("SmallInteger maxVal"));
+        }
         // Long.MIN_VALUE / -1
         assertEquals("9223372036854775808", evaluate("-9223372036854775808 / -1").toString());
     }
