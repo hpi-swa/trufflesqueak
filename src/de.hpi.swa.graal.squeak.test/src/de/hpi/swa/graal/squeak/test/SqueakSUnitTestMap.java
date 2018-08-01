@@ -144,7 +144,7 @@ public final class SqueakSUnitTestMap {
                     "IslandVMTweaksTestCase", TEST_TYPE.FAILING,
                     "JPEGReadWriter2Test", TEST_TYPE.FAILING,
                     "KeyedSetTest", TEST_TYPE.PASSING,
-                    "LangEnvBugs", TEST_TYPE.FAILING,
+                    "LangEnvBugs", TEST_TYPE.PASSING,
                     "LargeNegativeIntegerTest", TEST_TYPE.PASSING,
                     "LargePositiveIntegerTest", TEST_TYPE.PASSING,
                     "LayoutFrameTest", TEST_TYPE.PASSING,
