@@ -456,6 +456,11 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             return calculateHash(initialHash, largeInteger.getBytes());
         }
 
+        @Specialization(guards = {"!isSmallInteger(value)"})
+        protected final long doLong(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long value, final long initialHash) {
+            return calculateHash(initialHash, asLargeInteger(value).getBytes());
+        }
+
         private static long calculateHash(final long initialHash, final byte[] bytes) {
             long hash = initialHash & 0xfffffff;
             long low;
