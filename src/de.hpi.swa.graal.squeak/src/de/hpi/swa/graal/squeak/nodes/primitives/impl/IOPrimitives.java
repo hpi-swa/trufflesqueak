@@ -390,6 +390,15 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
+        protected final Object doNativePointers(final NativeObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart) {
+            final int repOff = (int) (replStart - start);
+            for (int i = (int) (start - 1); i < stop; i++) {
+                getAtPut0Node().execute(rcvr, i, repl.at0(repOff + i));
+            }
+            return rcvr;
+        }
+
+        @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
         protected final Object doNativeLargeInteger(final NativeObject rcvr, final long start, final long stop, final LargeIntegerObject repl, final long replStart) {
             final int repOff = (int) (replStart - start);
             for (int i = (int) (start - 1); i < stop; i++) {
