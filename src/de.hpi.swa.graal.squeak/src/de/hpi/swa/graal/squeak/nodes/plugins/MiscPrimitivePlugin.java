@@ -16,8 +16,6 @@ import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.ERROR_TABLE;
-import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
-import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
@@ -299,8 +297,6 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveFindFirstInString")
     public abstract static class PrimFindFirstInStringNode extends AbstractPrimitiveNode {
-        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
-        @Child protected SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
 
         public PrimFindFirstInStringNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -312,7 +308,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             final byte[] inclusionMapBytes = inclusionMap.getByteStorage();
             final int stringSize = stringBytes.length;
             int index = (int) start - 1;
-            while (index < stringSize && inclusionMapBytes[stringBytes[index]] == 0) {
+            while (index < stringSize && inclusionMapBytes[stringBytes[index] & 0xFF] == 0) {
                 index++;
             }
             if (index >= stringSize) {
