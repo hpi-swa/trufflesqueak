@@ -5,6 +5,7 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -32,10 +33,20 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
         isDoesNotUnderstandNode = IsDoesNotUnderstandNode.create(image);
     }
 
-    @Specialization(guards = {"!isDoesNotUnderstandNode.execute(lookupResult)"})
+    @Specialization(guards = {"!image.config.isHeadless()", "!isDoesNotUnderstandNode.execute(lookupResult)"})
     protected final Object doDispatch(final VirtualFrame frame, @SuppressWarnings("unused") final NativeObject selector, final CompiledMethodObject lookupResult,
                     @SuppressWarnings("unused") final ClassObject rcvrClass, final Object[] rcvrAndArgs,
                     final Object contextOrMarker) {
+        return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndArgs, contextOrMarker);
+    }
+
+    @Specialization(guards = {"image.config.isHeadless()", "!isDoesNotUnderstandNode.execute(lookupResult)"})
+    protected final Object doDispatchTesting(final VirtualFrame frame, @SuppressWarnings("unused") final NativeObject selector, final CompiledMethodObject lookupResult,
+                    @SuppressWarnings("unused") final ClassObject rcvrClass, final Object[] rcvrAndArgs,
+                    final Object contextOrMarker) {
+        if ("UnhandledError>>defaultAction".equals(lookupResult.toString())) {
+            throw new SqueakException("Debugger detected in headless session. Failing...");
+        }
         return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndArgs, contextOrMarker);
     }
 

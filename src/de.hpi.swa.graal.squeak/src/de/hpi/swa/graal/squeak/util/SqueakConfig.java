@@ -14,6 +14,7 @@ public final class SqueakConfig {
     private final boolean tracing;
     private final boolean disableInterrupts;
     private final boolean testing;
+    private final boolean headless;
     private final String receiver;
     private final String selector;
     @CompilationFinal(dimensions = 1) private final String[] restArgs;
@@ -77,6 +78,7 @@ public final class SqueakConfig {
         this.receiver = receiver;
         this.selector = selector;
         this.restArgs = restArgs;
+        this.headless = isTesting() || isCustomContext(); // TODO: turn this into a dedicated flag
     }
 
     public String[] toStringArgs() {
@@ -124,7 +126,7 @@ public final class SqueakConfig {
     }
 
     public boolean isCustomContext() {
-        return selector != null; // make better?
+        return selector != null; // TODO: make better?
     }
 
     public String getImagePath() {
@@ -157,5 +159,9 @@ public final class SqueakConfig {
 
     public boolean isTesting() {
         return testing;
+    }
+
+    public boolean isHeadless() {
+        return headless;
     }
 }
