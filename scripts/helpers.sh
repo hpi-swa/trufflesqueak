@@ -1,7 +1,10 @@
 # This file is intended to be included in other scripts
 
-readonly IMAGE_NAME="graal-squeak-image-18067.zip"
-readonly IMAGE_URL="https://dl.bintray.com/hpi-swa-lab/GraalSqueak/images/${IMAGE_NAME}"
+readonly IMAGE32_NAME="GraalSqueak-18163-32bit.zip"
+readonly IMAGE32_ASSET_ID="8089597"
+readonly IMAGE64_NAME="GraalSqueak-18163-64bit.zip"
+readonly IMAGE64_ASSET_ID="8089598"
+readonly GITHUB_SLUG="hpi-swa-lab/graalsqueak"
 readonly MX_GIT="https://github.com/graalvm/mx.git"
 
 
@@ -36,18 +39,41 @@ get_mx_parameters() {
   echo "${mx_parameters}"
 }
 
-ensure_test_image() {
+ensure_test_image_32bit() {
   local target_dir="${BASE_DIRECTORY}/images"
 
-  if [[ -f "${target_dir}/test.image" ]]; then
+  if [[ -f "${target_dir}/test-32bit.image" ]]; then
     return
   fi
 
-  mkdir "${target_dir}"
+  mkdir "${target_dir}" || true
   pushd "${target_dir}" > /dev/null
-  curl -LO "${IMAGE_URL}"
-  unzip "${IMAGE_NAME}"
-  mv *.image test.image
-  mv *.changes test.changes
+
+  curl -L -H 'Accept:application/octet-stream' -o "${IMAGE32_NAME}" \
+    "https://${GITHUB_TOKEN}:@api.github.com/repos/${GITHUB_SLUG}/releases/assets/${IMAGE32_ASSET_ID}"
+  unzip "${IMAGE32_NAME}"
+  mv *.image test-32bit.image
+  mv *.changes test-32bit.changes
+
+  popd > /dev/null
+}
+
+
+ensure_test_image_64bit() {
+  local target_dir="${BASE_DIRECTORY}/images"
+
+  if [[ -f "${target_dir}/test-64bit.image" ]]; then
+    return
+  fi
+
+  mkdir "${target_dir}" || true
+  pushd "${target_dir}" > /dev/null
+
+  curl -L -H 'Accept:application/octet-stream' -o "${IMAGE64_NAME}" \
+    "https://${GITHUB_TOKEN}:@api.github.com/repos/${GITHUB_SLUG}/releases/assets/${IMAGE64_ASSET_ID}"
+  unzip "${IMAGE64_NAME}"
+  mv *.image test-64bit.image
+  mv *.changes test-64bit.changes
+
   popd > /dev/null
 }

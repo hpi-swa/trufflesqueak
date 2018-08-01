@@ -11,9 +11,16 @@ env:
     - JVMCI_FILE_JDK8="openjdk-8u171"
   matrix:
     - JDK="jdk8" GATE="style,fullbuild"
-    - JDK="jdk8" GATE="build,test"
+    - JDK="jdk8" GATE="build,test" ARCH="32bit"
+    - JDK="jdk8" GATE="build,test" ARCH="64bit"
     - JDK="jdk11" GATE="style,fullbuild"
-    - JDK="jdk11" GATE="build,test"
+    - JDK="jdk11" GATE="build,test" ARCH="32bit"
+    - JDK="jdk11" GATE="build,test" ARCH="64bit"
+
+matrix:
+  allow_failures:
+    - env: ARCH="64bit"
+  fast_finish: true
 
 python:
   - "2.7"

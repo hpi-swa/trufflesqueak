@@ -211,15 +211,27 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
     }
 
     private static String getPathToTestImage() {
+        final String imagePath64bit = getPathToTestImage("test-64bit.image");
+        if (imagePath64bit != null) {
+            return imagePath64bit;
+        }
+        final String imagePath32bit = getPathToTestImage("test-32bit.image");
+        if (imagePath32bit != null) {
+            return imagePath32bit;
+        }
+        throw new SqueakException("Unable to locate test image.");
+    }
+
+    private static String getPathToTestImage(final String imageName) {
         File currentDirectory = new File(System.getProperty("user.dir"));
         while (currentDirectory != null) {
-            final String pathToImage = currentDirectory.getAbsolutePath() + File.separator + "images" + File.separator + "test.image";
+            final String pathToImage = currentDirectory.getAbsolutePath() + File.separator + "images" + File.separator + imageName;
             if (new File(pathToImage).exists()) {
                 return pathToImage;
             }
             currentDirectory = currentDirectory.getParentFile();
         }
-        throw new SqueakException("Unable to locate test image.");
+        return null;
     }
 
     private static Object getSmalltalkDictionary() {
