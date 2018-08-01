@@ -1,9 +1,8 @@
 # This file is intended to be included in other scripts
 
+readonly GIT_TAG="0.3.0"
 readonly IMAGE32_NAME="GraalSqueak-18163-32bit.zip"
-readonly IMAGE32_ASSET_ID="8089597"
 readonly IMAGE64_NAME="GraalSqueak-18163-64bit.zip"
-readonly IMAGE64_ASSET_ID="8089598"
 readonly GITHUB_SLUG="hpi-swa-lab/graalsqueak"
 readonly MX_GIT="https://github.com/graalvm/mx.git"
 
@@ -39,6 +38,21 @@ get_mx_parameters() {
   echo "${mx_parameters}"
 }
 
+get_assert_id() {
+  local filename=$1
+  parser=". | map(select(.tag_name == \"${GIT_TAG}\"))[0].assets | map(select(.name == \"${filename}\"))[0].id"
+  curl "https://${GITHUB_TOKEN}:@api.github.com/repos/${GITHUB_SLUG}/releases" \
+    | jq "$parser"
+}
+
+download_and_unzip_assert() {
+  local filename=$1
+  local assert_id=$(get_assert_id "${filename}")
+  curl -L -H 'Accept:application/octet-stream' -o "${filename}" \
+    "https://${GITHUB_TOKEN}:@api.github.com/repos/${GITHUB_SLUG}/releases/assets/${assert_id}"
+  unzip "${filename}"
+}
+
 ensure_test_image_32bit() {
   local target_dir="${BASE_DIRECTORY}/images"
 
@@ -49,9 +63,7 @@ ensure_test_image_32bit() {
   mkdir "${target_dir}" || true
   pushd "${target_dir}" > /dev/null
 
-  curl -L -H 'Accept:application/octet-stream' -o "${IMAGE32_NAME}" \
-    "https://${GITHUB_TOKEN}:@api.github.com/repos/${GITHUB_SLUG}/releases/assets/${IMAGE32_ASSET_ID}"
-  unzip "${IMAGE32_NAME}"
+  download_and_unzip_assert "${IMAGE32_NAME}"
   mv *.image test-32bit.image
   mv *.changes test-32bit.changes
 
@@ -69,9 +81,7 @@ ensure_test_image_64bit() {
   mkdir "${target_dir}" || true
   pushd "${target_dir}" > /dev/null
 
-  curl -L -H 'Accept:application/octet-stream' -o "${IMAGE64_NAME}" \
-    "https://${GITHUB_TOKEN}:@api.github.com/repos/${GITHUB_SLUG}/releases/assets/${IMAGE64_ASSET_ID}"
-  unzip "${IMAGE64_NAME}"
+  download_and_unzip_assert "${IMAGE64_NAME}"
   mv *.image test-64bit.image
   mv *.changes test-64bit.changes
 
