@@ -73,8 +73,8 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             final int length2 = bytes2.length;
             final int minLength = Math.min(length1, length2);
             for (int i = 0; i < minLength; i++) {
-                final byte c1 = orderBytes[bytes1[i]];
-                final byte c2 = orderBytes[bytes2[i]];
+                final byte c1 = orderBytes[bytes1[i] & 0xFF];
+                final byte c2 = orderBytes[bytes2[i] & 0xFF];
                 if (c1 != c2) {
                     if (c1 < c2) {
                         return 1;
