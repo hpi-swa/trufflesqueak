@@ -193,9 +193,9 @@ public final class SqueakImageChunk {
                         return chunk.asObject();
                     }
                 case 1: // SmallInteger
-                    return ptr >>> 3;
+                    return ptr >> 3;
                 case 2: // Character
-                    return (char) (ptr >>> 3);
+                    return (char) (ptr >> 3);
                 case 4: // SmallFloat (see Spur64BitMemoryManager>>#smallFloatBitsOf:)
                     long valueWithoutTag = (ptr >>> 3);
                     if (valueWithoutTag > 1) {
