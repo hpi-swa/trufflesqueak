@@ -649,6 +649,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected final Object doPrimitive(final VirtualFrame frame, final Object receiver, final long primitiveIndex, final PointersObject argumentArray,
                         @SuppressWarnings("unused") final NotProvided notProvided) {
             final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.forIndex((CompiledMethodObject) code, (int) primitiveIndex);
+            if (primitiveNode == null) { // TODO: make better
+                throw new PrimitiveFailed();
+            }
             final Object[] receiverAndArguments = ArrayUtils.copyWithFirst(argumentArray.getPointers(), receiver);
             try {
                 return replace(primitiveNode).executeWithArguments(frame, receiverAndArguments);
@@ -661,6 +664,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected final Object doPrimitive(final VirtualFrame frame, @SuppressWarnings("unused") final Object context, final Object receiver, final long primitiveIndex,
                         final PointersObject argumentArray) {
             final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.forIndex((CompiledMethodObject) code, (int) primitiveIndex);
+            if (primitiveNode == null) { // TODO: make better
+                throw new PrimitiveFailed();
+            }
             final Object[] receiverAndArguments = ArrayUtils.copyWithFirst(argumentArray.getPointers(), receiver);
             try {
                 return replace(primitiveNode).executeWithArguments(frame, receiverAndArguments);
