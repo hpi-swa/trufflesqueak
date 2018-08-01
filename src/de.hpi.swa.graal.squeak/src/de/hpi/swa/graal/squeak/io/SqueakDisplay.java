@@ -9,8 +9,8 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 
 public abstract class SqueakDisplay {
 
-    public static SqueakDisplay create(final SqueakImageContext image, final boolean noDisplay) {
-        if (!GraphicsEnvironment.isHeadless() && !noDisplay) {
+    public static SqueakDisplay create(final SqueakImageContext image, final boolean isHeadless) {
+        if (!GraphicsEnvironment.isHeadless() && !isHeadless) {
             return new SqueakDisplayJFrame(image);
         } else {
             return new SqueakDisplayNull();

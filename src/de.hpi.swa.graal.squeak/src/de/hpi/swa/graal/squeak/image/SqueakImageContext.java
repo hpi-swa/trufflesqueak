@@ -148,7 +148,7 @@ public final class SqueakImageContext {
         error = err;
         final String[] applicationArguments = env.getApplicationArguments();
         config = new SqueakConfig(applicationArguments);
-        display = SqueakDisplay.create(this, config.isCustomContext() || config.isTesting());
+        display = SqueakDisplay.create(this, config.isHeadless());
         interrupt = InterruptHandlerNode.create(this, config);
     }
 
