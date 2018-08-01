@@ -13,6 +13,7 @@ import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
+import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.ERROR_TABLE;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
@@ -305,28 +306,38 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"string.isByteType()", "string.getByteStorage().length != 256"})
-        protected static final long doFindNot256(final AbstractSqueakObject receiver, final NativeObject string, final NativeObject inclusionMap, final long start) {
-            return 0L;
-        }
-
-        @Specialization(guards = {"string.isByteType()", "inclusionMap.isByteType()", "string.getByteStorage().length == 256"})
+        @Specialization(guards = {"start >= 1", "string.isByteType()", "inclusionMap.isByteType()", "inclusionMap.getByteStorage().length == 256"})
         protected static final long doFind(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject string, final NativeObject inclusionMap, final long start) {
             final byte[] stringBytes = string.getByteStorage();
             final byte[] inclusionMapBytes = inclusionMap.getByteStorage();
             final int stringSize = stringBytes.length;
             int index = (int) start - 1;
-            while (index <= stringSize) {
-                if (inclusionMapBytes[stringBytes[index++]] != 0) {
-                    break;
-                }
+            while (index < stringSize && inclusionMapBytes[stringBytes[index]] == 0) {
+                index++;
             }
             if (index >= stringSize) {
                 return 0;
             } else {
                 return index + 1;
             }
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"start >= 1", "string.isByteType()", "inclusionMap.isByteType()", "inclusionMap.getByteStorage().length != 256"})
+        protected static final long doFindNot256(final AbstractSqueakObject receiver, final NativeObject string, final NativeObject inclusionMap, final long start) {
+            return 0L;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"start >= 1", "!string.isByteType() || !inclusionMap.isByteType()"})
+        protected static final long doFailBadArgument(final AbstractSqueakObject receiver, final NativeObject string, final NativeObject inclusionMap, final long start) {
+            throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"start < 1"})
+        protected static final long doFailBadIndex(final AbstractSqueakObject receiver, final NativeObject string, final NativeObject inclusionMap, final long start) {
+            throw new PrimitiveFailed(ERROR_TABLE.BAD_INDEX);
         }
     }
 
@@ -441,9 +452,17 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"string.isByteType()"})
         protected static final long doNativeObject(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject string, final long initialHash) {
+            return calculateHash(initialHash, string.getByteStorage());
+        }
+
+        @Specialization
+        protected static final long doLargeInteger(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final LargeIntegerObject largeInteger, final long initialHash) {
+            return calculateHash(initialHash, largeInteger.getBytes());
+        }
+
+        private static long calculateHash(final long initialHash, final byte[] bytes) {
             long hash = initialHash & 0xfffffff;
             long low;
-            final byte[] bytes = string.getByteStorage();
             for (int i = 0; i < bytes.length; i++) {
                 hash += bytes[i] & 0xff;
                 low = hash & 16383;
@@ -461,15 +480,30 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @Specialization(guards = {"string.isByteType()", "table.isByteType()"})
-        protected static final AbstractSqueakObject doNativeObject(final AbstractSqueakObject receiver, final NativeObject string, final long start, final long stop,
-                        final NativeObject table) {
+        @Specialization(guards = {"start >= 1", "string.isByteType()", "stop < string.getByteStorage().length", "table.isByteType()", "table.getByteStorage().length >= 256"})
+        protected static final AbstractSqueakObject doNativeObject(final AbstractSqueakObject receiver, final NativeObject string, final long start, final long stop, final NativeObject table) {
             final byte[] stringBytes = string.getByteStorage();
             final byte[] tableBytes = table.getByteStorage();
             for (int i = (int) start - 1; i < stop; i++) {
                 stringBytes[i] = tableBytes[stringBytes[i]];
             }
             return receiver;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"start >= 1", "!string.isByteType() || !table.isByteType()"})
+        protected static final AbstractSqueakObject doFailBadArguments(final AbstractSqueakObject receiver, final NativeObject string, final long start, final long stop, final NativeObject table) {
+            throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"hasBadIndex(string, start, stop, table)"})
+        protected static final AbstractSqueakObject doFailBadIndex(final AbstractSqueakObject receiver, final NativeObject string, final long start, final long stop, final NativeObject table) {
+            throw new PrimitiveFailed(ERROR_TABLE.BAD_INDEX);
+        }
+
+        protected static final boolean hasBadIndex(final NativeObject string, final long start, final long stop, final NativeObject table) {
+            return start < 1 || (string.isByteType() && stop >= string.getByteStorage().length) || (table.isByteType() && table.getByteStorage().length >= 256);
         }
     }
 }
