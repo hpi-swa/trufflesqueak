@@ -6,7 +6,6 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
@@ -518,11 +517,174 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @SuppressWarnings("unused")
-        @Specialization
-        protected static final Object doFail(final Object receiver, final Object a, final Object m, final Object mInv) {
-            throw new PrimitiveFailed(); // TODO: implement primitive
+        /*
+         * Optimized version of montgomeryTimesModulo for integer-sized arguments.
+         */
+        @Specialization(guards = {"fitsInInteger(receiver)", "fitsInInteger(a)", "fitsInInteger(m)"})
+        protected static final long doLongQuick(final long receiver, final long a, final long m, final long mInv) {
+            final long accum3 = receiver * a;
+            final long u = (accum3 * mInv) & 0xFFFFFFFFL;
+            final long accum2 = u * m;
+            long accum = (accum2 & 0xFFFFFFFFL) + (accum3 & 0xFFFFFFFFL);
+            accum = (accum >> 32) + (accum2 >> 32) + (accum3 >> 32);
+            long result = accum & 0xFFFFFFFFL;
+            if (!((accum >> 32) == 0 && result < m)) {
+                result = (accum + result - m) & 0xFFFFFFFFL;
+            }
+            return result;
         }
+
+        protected static final boolean fitsInInteger(final long value) {
+            return Integer.MIN_VALUE <= value && value <= Integer.MAX_VALUE;
+        }
+
+        // TODO: ensure the below works for LargeIntegerObject and measure performance
+        // @Specialization
+        // protected final Object doLong(final long receiver, final LargeIntegerObject a, final long
+        // m,
+        // final long mInv) {
+        // return doLargeInteger(asLargeInteger(receiver), a, asLargeInteger(m), mInv);
+        // }
+        //
+        // @Specialization
+        // protected final Object doLong(final long receiver, final long a, final LargeIntegerObject
+        // m,
+        // final long mInv) {
+        // return doLargeInteger(asLargeInteger(receiver), asLargeInteger(a), m, mInv);
+        // }
+        //
+        // @Specialization
+        // protected final Object doLong(final long receiver, final LargeIntegerObject a, final
+        // LargeIntegerObject m, final long mInv) {
+        // return doLargeInteger(asLargeInteger(receiver), a, m, mInv);
+        // }
+        //
+        // @Specialization
+        // protected final Object doLargeInteger(final LargeIntegerObject receiver, final long a,
+        // final long
+        // m, final long mInv) {
+        // return doLargeInteger(receiver, asLargeInteger(a), asLargeInteger(m), mInv);
+        // }
+        //
+        // @Specialization
+        // protected final Object doLargeInteger(final LargeIntegerObject receiver, final
+        // LargeIntegerObject
+        // a, final long m, final long mInv) {
+        // return doLargeInteger(receiver, a, asLargeInteger(m), mInv);
+        // }
+        //
+        // @Specialization
+        // protected final Object doLargeInteger(final LargeIntegerObject receiver, final long a,
+        // final
+        // LargeIntegerObject m, final long mInv) {
+        // return doLargeInteger(receiver, asLargeInteger(a), m, mInv);
+        // }
+        //
+        // @Specialization
+        // protected final Object doLargeInteger(final LargeIntegerObject receiver, final
+        // LargeIntegerObject
+        // a, final LargeIntegerObject m, final long mInv) {
+        // return montgomeryTimesModulo(receiver, a, m, mInv);
+        // }
+        //
+        // protected final Object montgomeryTimesModulo(final LargeIntegerObject receiver, final
+        // LargeIntegerObject a, final LargeIntegerObject m, final long mInv) {
+        // final int[] firstInts =
+        // ArrayConversionUtils.intsFromBytesReversedExact(receiver.getBytes());
+        // final int[] secondInts = ArrayConversionUtils.intsFromBytesReversedExact(a.getBytes());
+        // final int[] thirdInts = ArrayConversionUtils.intsFromBytesReversedExact(m.getBytes());
+        // return montgomeryTimesModulo(firstInts, secondInts, thirdInts, mInv);
+        // }
+        //
+        // private Object montgomeryTimesModulo(final int[] firstInts, final int[] secondInts, final
+        // int[]
+        // thirdInts, final long mInv) {
+        // final int firstLen = firstInts.length;
+        // final int secondLen = secondInts.length;
+        // final int thirdLen = thirdInts.length;
+        // if (firstLen > thirdLen || secondLen > thirdLen) {
+        // throw new PrimitiveFailed();
+        // }
+        // final int limit1 = firstLen - 1;
+        // final int limit2 = secondLen - 1;
+        // final int limit3 = thirdLen - 1;
+        // final int[] result = new int[thirdLen];
+        //
+        // long accum = 0;
+        // long accum2 = 0;
+        // long accum3 = 0;
+        // int lastDigit = 0;
+        // for (int i = 0; i <= limit1; i++) {
+        // accum3 = firstInts[i];
+        // accum3 = (accum3 * (secondInts[0])) + (result[0]);
+        // final long u = (accum3 * mInv) & 0xFFFFFFFFL;
+        // accum2 = u * (thirdInts[0]);
+        // accum = (accum2 & 0xFFFFFFFFL) + (accum3 & 0xFFFFFFFFL);
+        // accum = (accum >> 32) + (accum2 >> 32) + (accum3 >> 32);
+        // for (int k = 1; k <= limit2; k++) {
+        // accum3 = firstInts[i] & 0xFF;
+        // accum3 = (accum3 * (secondInts[k])) + (result[k]);
+        // accum2 = u * (thirdInts[k]);
+        // accum = accum + (accum2 & 0xFFFFFFFFL) + (accum3 & 0xFFFFFFFFL);
+        // result[k - 1] = (int) (accum & 0xFFFFFFFFL);
+        // accum = (accum >> 32) + (accum2 >> 32) + (accum3 >> 32);
+        // }
+        // for (int k = secondLen; k <= limit3; k++) {
+        // accum2 = u * (thirdInts[k]);
+        // accum = accum + (result[k]) + (accum2 & 0xFFFFFFFFL);
+        // result[k - 1] = (int) (accum & 0xFFFFFFFFL);
+        // accum = (accum >> 32) + (accum2 >> 32);
+        // }
+        // accum += lastDigit;
+        // result[limit3] = (int) (accum & 0xFFFFFFFFL);
+        // lastDigit = (int) (accum >> 32);
+        // }
+        // for (int i = firstLen; i <= limit3; i++) {
+        // accum = result[0] & 0xFF;
+        // final long u = (accum * mInv) & 0xFFFFFFFFL;
+        // accum += u * (thirdInts[0]);
+        // accum = accum >> 32;
+        // for (int k = 1; i <= limit3; k++) {
+        // accum2 = u * (thirdInts[k]);
+        // accum = accum + (result[k]) + (accum2 & 0xFFFFFFFFL);
+        // result[k - 1] = (int) (accum & 0xFFFFFFFFL);
+        // accum = (accum >> 32) + (accum2 >> 32);
+        // }
+        // accum += lastDigit;
+        // result[limit3] = (int) (accum & 0xFFFFFFFFL);
+        // lastDigit = (int) (accum >> 32);
+        // }
+        // if (!((lastDigit == 0) && (cDigitComparewithlen(thirdInts, result, thirdLen) == 1))) {
+        // accum = 0;
+        // for (int i = 0; i <= limit3; i++) {
+        // accum = accum + result[i] - (thirdInts[i]);
+        // result[i] = (int) (accum & 0xFFFFFFFFL);
+        // accum = 0 - (accum >> 63);
+        // }
+        // }
+        // // TODO: check endianness
+        // final byte[] resultBytes = ArrayConversionUtils.bytesFromIntsReversed(result);
+        // return new LargeIntegerObject(code.image, code.image.largePositiveIntegerClass,
+        // resultBytes).reduceIfPossible(); // normalize
+        // }
+        //
+        // private static int cDigitComparewithlen(final int[] first, final int[] second, final int
+        // len) {
+        // int firstDigit;
+        // int secondDigit;
+        // int index = len - 1;
+        // while (index >= 0) {
+        // if (((secondDigit = second[index])) != ((firstDigit = first[index]))) {
+        // if (secondDigit < firstDigit) {
+        // return 1;
+        // } else {
+        // return -1;
+        // }
+        // }
+        // --index;
+        // }
+        // return 0;
+        // }
     }
 
     @GenerateNodeFactory
