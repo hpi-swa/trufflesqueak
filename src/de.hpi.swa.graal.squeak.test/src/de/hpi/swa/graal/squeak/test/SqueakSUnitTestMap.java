@@ -181,7 +181,7 @@ public final class SqueakSUnitTestMap {
                     "MCSnapshotTest", TEST_TYPE.SLOW_FALING,
                     "MCSortingTest", TEST_TYPE.PASSING,
                     "MCStReaderTest", TEST_TYPE.PASSING,
-                    "MCStWriterTest", TEST_TYPE.FAILING,
+                    "MCStWriterTest", TEST_TYPE.PASSING,
                     "MCVersionNameTest", TEST_TYPE.PASSING,
                     "MCVersionTest", TEST_TYPE.PASSING,
                     "MCWorkingCopyRenameTest", TEST_TYPE.SLOW_PASSING,
