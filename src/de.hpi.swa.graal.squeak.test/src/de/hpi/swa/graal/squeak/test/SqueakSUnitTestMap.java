@@ -6,6 +6,7 @@ public final class SqueakSUnitTestMap {
                     "AliasTest", TEST_TYPE.PASSING,
                     "AllNamePolicyTest", TEST_TYPE.PASSING,
                     "AllocationTest", TEST_TYPE.IGNORE,
+                    "AppRegistryTest", TEST_TYPE.PASSING,
                     "ArbitraryObjectSocketTestCase", TEST_TYPE.FAILING,
                     "ArrayLiteralTest", TEST_TYPE.PASSING,
                     "ArrayTest", TEST_TYPE.PASSING,
@@ -21,7 +22,7 @@ public final class SqueakSUnitTestMap {
                     "BindingPolicyTest", TEST_TYPE.PASSING,
                     "BitBltClipBugs", TEST_TYPE.PASSING,
                     "BitBltSimulationTest", TEST_TYPE.PASSING,
-                    "BitBltTest", TEST_TYPE.IGNORE, // passing, but very slow
+                    "BitBltTest", TEST_TYPE.SLOW_PASSING,
                     "BitmapBugz", TEST_TYPE.PASSING,
                     "BitmapStreamTests", TEST_TYPE.IGNORE, // OOM error
                     "BitSetTest", TEST_TYPE.PASSING,
@@ -51,12 +52,12 @@ public final class SqueakSUnitTestMap {
                     "ClassBindingTest", TEST_TYPE.PASSING,
                     "ClassBuilderTest", TEST_TYPE.NOT_TERMINATING,
                     "ClassDescriptionTest", TEST_TYPE.PASSING,
-                    "ClassFactoryForTestCaseTest", TEST_TYPE.IGNORE,
+                    "ClassFactoryForTestCaseTest", TEST_TYPE.PASSING,
                     "ClassRemovalTest", TEST_TYPE.FLAKY,
                     "ClassRenameFixTest", TEST_TYPE.FLAKY,
-                    "ClassTest", TEST_TYPE.IGNORE, // fails, and is very slow
+                    "ClassTest", TEST_TYPE.SLOW_FALING,
                     "ClassTraitTest", TEST_TYPE.PASSING,
-                    "ClassVarScopeTest", TEST_TYPE.IGNORE, // passes, but is very slow
+                    "ClassVarScopeTest", TEST_TYPE.PASSING,
                     "ClipboardTest", TEST_TYPE.PASSING,
                     "ClosureCompilerTest", TEST_TYPE.NOT_TERMINATING, // requires sources
                     "ClosureTests", TEST_TYPE.PASSING,
@@ -79,9 +80,9 @@ public final class SqueakSUnitTestMap {
                     "DateTest", TEST_TYPE.PASSING,
                     "DebuggerExtensionsTest", TEST_TYPE.PASSING,
                     "DebuggerUnwindBug", TEST_TYPE.PASSING,
-                    "DecompilerTests", TEST_TYPE.IGNORE, // slow
+                    "DecompilerTests", TEST_TYPE.IGNORE, // very slow
                     "DelayTest", TEST_TYPE.PASSING,
-                    "DependencyBrowserTest", TEST_TYPE.IGNORE,
+                    "DependencyBrowserTest", TEST_TYPE.PASSING,
                     "DependentsArrayTest", TEST_TYPE.PASSING,
                     "DictionaryTest", TEST_TYPE.PASSING,
                     "DosFileDirectoryTests", TEST_TYPE.PASSING,
@@ -102,7 +103,7 @@ public final class SqueakSUnitTestMap {
                     "FileContentsBrowserTest", TEST_TYPE.NOT_TERMINATING,
                     "FileDirectoryTest", TEST_TYPE.PASSING,
                     "FileList2ModalDialogsTest", TEST_TYPE.PASSING,
-                    "FileListTest", TEST_TYPE.IGNORE,
+                    "FileListTest", TEST_TYPE.PASSING,
                     "FileStreamTest", TEST_TYPE.PASSING,
                     "FileUrlTest", TEST_TYPE.PASSING,
                     "FlapTabTests", TEST_TYPE.PASSING,
@@ -122,7 +123,7 @@ public final class SqueakSUnitTestMap {
                     "HashedCollectionTest", TEST_TYPE.PASSING,
                     "HashTesterTest", TEST_TYPE.PASSING,
                     "HeapTest", TEST_TYPE.PASSING,
-                    "HelpBrowserTest", TEST_TYPE.IGNORE, // very slow
+                    "HelpBrowserTest", TEST_TYPE.PASSING,
                     "HelpIconsTest", TEST_TYPE.PASSING,
                     "HelpTopicListItemWrapperTest", TEST_TYPE.PASSING,
                     "HelpTopicTest", TEST_TYPE.PASSING,
@@ -168,22 +169,22 @@ public final class SqueakSUnitTestMap {
                     "MCInitializationTest", TEST_TYPE.NOT_TERMINATING,
                     "MCMcmUpdaterTest", TEST_TYPE.PASSING,
                     "MCMczInstallerTest", TEST_TYPE.NOT_TERMINATING,
-                    "MCMergingTest", TEST_TYPE.IGNORE,
-                    "MCMethodDefinitionTest", TEST_TYPE.IGNORE,
-                    "MCOrganizationTest", TEST_TYPE.IGNORE,
-                    "MCPackageTest", TEST_TYPE.IGNORE,
-                    "MCPatchTest", TEST_TYPE.IGNORE,
+                    "MCMergingTest", TEST_TYPE.PASSING,
+                    "MCMethodDefinitionTest", TEST_TYPE.SLOW_PASSING,
+                    "MCOrganizationTest", TEST_TYPE.PASSING,
+                    "MCPackageTest", TEST_TYPE.SLOW_FALING,
+                    "MCPatchTest", TEST_TYPE.SLOW_FALING,
                     "MCPTest", TEST_TYPE.PASSING,
-                    "MCScannerTest", TEST_TYPE.IGNORE,
-                    "MCSerializationTest", TEST_TYPE.IGNORE,
-                    "MCSnapshotBrowserTest", TEST_TYPE.IGNORE,
-                    "MCSnapshotTest", TEST_TYPE.IGNORE,
+                    "MCScannerTest", TEST_TYPE.PASSING,
+                    "MCSerializationTest", TEST_TYPE.SLOW_FALING,
+                    "MCSnapshotBrowserTest", TEST_TYPE.SLOW_FALING,
+                    "MCSnapshotTest", TEST_TYPE.SLOW_FALING,
                     "MCSortingTest", TEST_TYPE.PASSING,
-                    "MCStReaderTest", TEST_TYPE.IGNORE,
-                    "MCStWriterTest", TEST_TYPE.IGNORE,
-                    "MCVersionNameTest", TEST_TYPE.IGNORE,
-                    "MCVersionTest", TEST_TYPE.IGNORE,
-                    "MCWorkingCopyRenameTest", TEST_TYPE.IGNORE,
+                    "MCStReaderTest", TEST_TYPE.PASSING,
+                    "MCStWriterTest", TEST_TYPE.FAILING,
+                    "MCVersionNameTest", TEST_TYPE.PASSING,
+                    "MCVersionTest", TEST_TYPE.PASSING,
+                    "MCWorkingCopyRenameTest", TEST_TYPE.SLOW_PASSING,
                     "MCWorkingCopyTest", TEST_TYPE.IGNORE,
                     "MessageNamesTest", TEST_TYPE.PASSING,
                     "MessageSendTest", TEST_TYPE.PASSING,
@@ -202,12 +203,13 @@ public final class SqueakSUnitTestMap {
                     "MorphBugs", TEST_TYPE.PASSING,
                     "MorphicEventDispatcherTests", TEST_TYPE.PASSING,
                     "MorphicEventFilterTests", TEST_TYPE.PASSING,
-                    "MorphicEventTests", TEST_TYPE.NOT_TERMINATING,
+                    "MorphicEventTests", TEST_TYPE.PASSING,
                     "MorphicExtrasSymbolExtensionsTest", TEST_TYPE.PASSING,
                     "MorphicToolBuilderTests", TEST_TYPE.PASSING,
                     "MorphicUIManagerTest", TEST_TYPE.FAILING,
                     "MorphTest", TEST_TYPE.PASSING,
                     "MultiByteFileStreamTest", TEST_TYPE.IGNORE,
+                    "MutexTest", TEST_TYPE.PASSING,
                     "MVCToolBuilderTests", TEST_TYPE.NOT_TERMINATING,
                     "NamePolicyTest", TEST_TYPE.PASSING,
                     "NumberParsingTest", TEST_TYPE.PASSING,
@@ -221,8 +223,8 @@ public final class SqueakSUnitTestMap {
                     "PackagePaneBrowserTest", TEST_TYPE.PASSING,
                     "ParserEditingTest", TEST_TYPE.PASSING,
                     "PasteUpMorphTest", TEST_TYPE.PASSING,
-                    "PCCByCompilationTest", TEST_TYPE.IGNORE,
-                    "PCCByLiteralsTest", TEST_TYPE.IGNORE,
+                    "PCCByCompilationTest", TEST_TYPE.PASSING,
+                    "PCCByLiteralsTest", TEST_TYPE.SLOW_FALING,
                     "PluggableMenuItemSpecTests", TEST_TYPE.PASSING,
                     "PluggableTextMorphTest", TEST_TYPE.PASSING,
                     "PNGReadWriterTest", TEST_TYPE.NOT_TERMINATING,
@@ -235,7 +237,7 @@ public final class SqueakSUnitTestMap {
                     "PromiseTest", TEST_TYPE.PASSING,
                     "ProtoObjectTest", TEST_TYPE.PASSING,
                     "PureBehaviorTest", TEST_TYPE.NOT_TERMINATING,
-                    "RandomTest", TEST_TYPE.IGNORE, // passing, but very slow
+                    "RandomTest", TEST_TYPE.SLOW_PASSING,
                     "ReadStreamTest", TEST_TYPE.PASSING,
                     "ReadWriteStreamTest", TEST_TYPE.PASSING,
                     "RecentMessagesTest", TEST_TYPE.PASSING,
@@ -269,9 +271,9 @@ public final class SqueakSUnitTestMap {
                     "SliderTest", TEST_TYPE.PASSING,
                     "SmallIntegerTest", TEST_TYPE.PASSING,
                     "SmalltalkImageTest", TEST_TYPE.PASSING,
-                    "SmartRefStreamTest", TEST_TYPE.IGNORE, // flaky and slow
+                    "SmartRefStreamTest", TEST_TYPE.PASSING,
                     "SMDependencyTest", TEST_TYPE.PASSING,
-                    "SMTPClientTest", TEST_TYPE.IGNORE,
+                    "SMTPClientTest", TEST_TYPE.PASSING,
                     // TODO: "SocketStreamTest", TEST_TYPE.PASSING,
                     // TODO: "SocketTest", TEST_TYPE.FAILING, // testSocketReuse and testSendTimeout
                     // fail
@@ -290,9 +292,9 @@ public final class SqueakSUnitTestMap {
                     "SumBugs", TEST_TYPE.PASSING,
                     "SUnitExtensionsTest", TEST_TYPE.PASSING,
                     "SUnitTest", TEST_TYPE.NOT_TERMINATING,
-                    "SUnitToolBuilderTests", TEST_TYPE.IGNORE, // passing, but very slow
+                    "SUnitToolBuilderTests", TEST_TYPE.SLOW_PASSING,
                     "SymbolTest", TEST_TYPE.PASSING,
-                    "SystemChangeErrorHandling", TEST_TYPE.IGNORE, // used to pass
+                    "SystemChangeErrorHandlingTest", TEST_TYPE.PASSING,
                     "SystemChangeFileTest", TEST_TYPE.IGNORE,
                     "SystemChangeNotifierTest", TEST_TYPE.PASSING,
                     "SystemChangeTestRoot", TEST_TYPE.PASSING,
@@ -334,8 +336,8 @@ public final class SqueakSUnitTestMap {
                     "TraitFileOutTest", TEST_TYPE.NOT_TERMINATING,
                     "TraitMethodDescriptionTest", TEST_TYPE.NOT_TERMINATING,
                     "TraitsTestCase", TEST_TYPE.PASSING,
-                    "TraitSystemTest", TEST_TYPE.IGNORE, // passing, very slow
-                    "TraitTest", TEST_TYPE.IGNORE, // passing, but very slow
+                    "TraitSystemTest", TEST_TYPE.SLOW_PASSING,
+                    "TraitTest", TEST_TYPE.SLOW_PASSING,
                     "TrueTest", TEST_TYPE.PASSING,
                     "UndefinedObjectTest", TEST_TYPE.PASSING,
                     "UnderscoreSelectorsTest", TEST_TYPE.PASSING,
@@ -375,6 +377,8 @@ public final class SqueakSUnitTestMap {
         public static final String BROKEN_IN_SQUEAK = "Broken in Squeak"; // not working in Squeak
         public static final String FLAKY = "Flaky"; // flaky tests
         public static final String IGNORE = "Ignored"; // unable to run (e.g. OOM, ...)
+        public static final String SLOW_PASSING = "Passing, but slow"; // ignored
+        public static final String SLOW_FALING = "Failing and slow"; // ignored
     }
 
 }
