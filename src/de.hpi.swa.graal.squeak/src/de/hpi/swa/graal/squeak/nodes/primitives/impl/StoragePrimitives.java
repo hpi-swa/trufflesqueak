@@ -240,7 +240,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object doPointers(final PointersObject receiver) {
-            return receiver.shallowCopy(); // FIXME: BehaviorTest>>#testChange
+            return receiver.getSqClass().newInstance(); // FIXME: BehaviorTest>>#testChange
         }
     }
 
