@@ -20,6 +20,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.impl.ArithmeticPrimitives.Abstra
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.ArithmeticPrimitives.AbstractArithmeticPrimitiveNode;
 
 public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
+    private static final String MODULE_NAME = "LargeIntegers v2.0 (GraalSqueak)";
 
     @Override
     public List<? extends NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
@@ -477,6 +478,20 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final PointersObject doLargeInteger(final LargeIntegerObject rcvr, final long arg, final boolean negative) {
             return doLargeInteger(rcvr, asLargeInteger(arg), negative);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(name = "primGetModuleName")
+    public abstract static class PrimGetModuleNameNode extends AbstractArithmeticPrimitiveNode {
+
+        public PrimGetModuleNameNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @Specialization
+        protected final Object doGet(@SuppressWarnings("unused") final Object rcvr) {
+            return code.image.wrap(MODULE_NAME);
         }
     }
 
