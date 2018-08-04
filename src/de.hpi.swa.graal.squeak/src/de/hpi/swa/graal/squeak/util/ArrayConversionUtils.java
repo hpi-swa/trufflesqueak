@@ -91,6 +91,28 @@ public final class ArrayConversionUtils {
         return ints;
     }
 
+    public static int[] intsFromBytesExact(final byte[] bytes) {
+        final int byteSize = bytes.length;
+        final int size = Math.floorDiv(byteSize + 3, INTEGER_BYTE_SIZE);
+        final int[] ints = new int[size];
+        for (int i = 0; i < size; i++) {
+            final int offset = i * 4;
+            if (offset < byteSize) {
+                ints[i] |= (bytes[offset] & 0xFF) << 24;
+            }
+            if (offset + 1 < byteSize) {
+                ints[i] |= (bytes[offset + 1] & 0xFF) << 16;
+            }
+            if (offset + 2 < byteSize) {
+                ints[i] |= (bytes[offset + 2] & 0xFF) << 8;
+            }
+            if (offset + 3 < byteSize) {
+                ints[i] |= (bytes[offset + 3] & 0xFF);
+            }
+        }
+        return ints;
+    }
+
     public static int[] intsFromBytesReversed(final byte[] bytes) {
         final int size = bytes.length / INTEGER_BYTE_SIZE;
         final int[] ints = new int[size];
