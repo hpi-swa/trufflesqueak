@@ -6,9 +6,9 @@ dist: trusty
 
 env:
   global:
-    - JVMCI_VERSION="jvmci-0.43"
-    - JVMCI_BASE_JDK8="openjdk1.8.0_171"
-    - JVMCI_FILE_JDK8="openjdk-8u171"
+    - JVMCI_VERSION="jvmci-0.46"
+    - JVMCI_BASE_JDK8="openjdk1.8.0_172"
+    - JVMCI_FILE_JDK8="openjdk-8u172"
   matrix:
     - JDK="jdk8" GATE="style,fullbuild"
     - JDK="jdk8" GATE="build,test" ARCH="32bit"
@@ -74,7 +74,7 @@ install:
       if [[ "${JDK}" == "jdk8" ]]
       then
         JDK_TAR=${TRAVIS_BUILD_DIR}/../jdk.tar.gz
-        curl -sSL -o ${JDK_TAR} https://github.com/dougxc/openjdk8-jvmci-builder/releases/download/${JVMCI_VERSION}/${JVMCI_FILE_JDK8}-${JVMCI_VERSION}-linux-amd64.tar.gz
+        curl -sSL -o ${JDK_TAR} https://github.com/graalvm/openjdk8-jvmci-builder/releases/download/${JVMCI_VERSION}/${JVMCI_FILE_JDK8}-${JVMCI_VERSION}-linux-amd64.tar.gz
         tar -C ${TRAVIS_BUILD_DIR}/.. -xzf ${JDK_TAR}
         export JAVA_HOME=${TRAVIS_BUILD_DIR}/../${JVMCI_BASE_JDK8}-${JVMCI_VERSION}
       fi
