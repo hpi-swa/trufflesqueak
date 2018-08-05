@@ -576,6 +576,11 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        protected final Object doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject a, final LargeIntegerObject m, final LargeIntegerObject mInv) {
+            return doLargeInteger(receiver, a, m, mInv.longValueExact());
+        }
+
+        @Specialization
         protected final Object doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject a, final LargeIntegerObject m, final long mInv) {
             final int[] firstInts = ArrayConversionUtils.intsFromBytesReversedExact(receiver.getBytes());
             final int[] secondInts = ArrayConversionUtils.intsFromBytesReversedExact(a.getBytes());
@@ -629,7 +634,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
                 final long u = (accum * mInv) & 0xFFFFFFFFL;
                 accum += u * (thirdInts[0] & 0xFFFFFFFFL);
                 accum = accum >> 32;
-                for (int k = 1; i <= limit3; k++) {
+                for (int k = 1; k <= limit3; k++) {
                     accum2 = u * (thirdInts[k] & 0xFFFFFFFFL);
                     accum = accum + (result[k] & 0xFFFFFFFFL) + (accum2 & 0xFFFFFFFFL);
                     result[k - 1] = (int) (accum & 0xFFFFFFFFL);
