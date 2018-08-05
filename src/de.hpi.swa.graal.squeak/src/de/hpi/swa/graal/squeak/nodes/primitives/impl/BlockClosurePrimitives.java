@@ -41,10 +41,11 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @GenerateNodeFactory
     @SqueakPrimitive(index = 195)
     protected abstract static class PrimFindNextUnwindContextUpToNode extends AbstractPrimitiveNode {
-        @Child private GetOrCreateContextNode contextNode = GetOrCreateContextNode.create();
+        @Child private GetOrCreateContextNode contextNode;
 
         public PrimFindNextUnwindContextUpToNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
+            contextNode = GetOrCreateContextNode.create(method);
         }
 
         @Specialization(guards = {"receiver.hasVirtualSender()"})
@@ -56,10 +57,12 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                 @Override
                 public ContextObject visitFrame(final FrameInstance frameInstance) {
                     final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
-                    if (current.getArguments().length < FrameAccess.RECEIVER) {
+                    final Object[] arguments = current.getArguments();
+                    if (arguments.length < FrameAccess.RECEIVER) {
                         return null;
                     }
-                    final Object contextOrMarker = current.getValue(CompiledCodeObject.thisContextOrMarkerSlot);
+                    final CompiledCodeObject codeObject = (CompiledCodeObject) arguments[FrameAccess.METHOD];
+                    final Object contextOrMarker = current.getValue(codeObject.thisContextOrMarkerSlot);
                     if (!foundMyself) {
                         if (receiver == contextOrMarker) {
                             foundMyself = true;
@@ -165,10 +168,11 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @GenerateNodeFactory
     @SqueakPrimitive(index = 197)
     protected abstract static class PrimNextHandlerContextNode extends AbstractPrimitiveNode {
-        @Child private GetOrCreateContextNode contextNode = GetOrCreateContextNode.create();
+        @Child private GetOrCreateContextNode contextNode;
 
         protected PrimNextHandlerContextNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
+            contextNode = GetOrCreateContextNode.create(code);
         }
 
         @Specialization(guards = {"receiver.hasVirtualSender()"})
@@ -180,11 +184,13 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                 @Override
                 public ContextObject visitFrame(final FrameInstance frameInstance) {
                     final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
-                    if (current.getArguments().length < FrameAccess.RECEIVER) {
+                    final Object[] arguments = current.getArguments();
+                    if (arguments.length < FrameAccess.RECEIVER) {
                         return null;
                     }
                     if (!foundMyself) {
-                        final Object contextOrMarker = current.getValue(CompiledCodeObject.thisContextOrMarkerSlot);
+                        final CompiledCodeObject codeObject = (CompiledCodeObject) arguments[FrameAccess.METHOD];
+                        final Object contextOrMarker = current.getValue(codeObject.thisContextOrMarkerSlot);
                         if (receiver == contextOrMarker) {
                             foundMyself = true;
                         }

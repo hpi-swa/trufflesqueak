@@ -43,7 +43,7 @@ public abstract class TemporaryWriteNode extends AbstractNodeWithCode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             assert 0 <= tempIndex && tempIndex <= CONTEXT.MAX_STACK_SIZE;
             final FrameSlot stackSlot = code.getStackSlot((int) tempIndex);
-            frameSlotWriteNode = insert(FrameSlotWriteNode.create(stackSlot));
+            frameSlotWriteNode = insert(FrameSlotWriteNode.create(code, stackSlot));
         }
         return frameSlotWriteNode;
     }

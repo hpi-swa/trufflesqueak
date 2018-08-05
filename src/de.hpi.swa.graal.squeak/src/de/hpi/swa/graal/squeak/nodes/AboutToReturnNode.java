@@ -54,7 +54,7 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
     }
 
     @Specialization(guards = {"code.isUnwindMarked()", "!isVirtualized(frame)"})
-    protected static final void doAboutToReturn(final VirtualFrame frame, final NonLocalReturn nlr,
+    protected final void doAboutToReturn(final VirtualFrame frame, final NonLocalReturn nlr,
                     @Cached("create(code)") final StackPushNode pushNode,
                     @Cached("createAboutToReturnSend()") final SendSelectorNode sendAboutToReturnNode) {
         final ContextObject context = getContext(frame);

@@ -10,7 +10,7 @@ import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 
 public abstract class HandleNonLocalReturnNode extends AbstractNodeWithCode {
-    @Child private TerminateContextNode terminateNode = TerminateContextNode.create();
+    @Child private TerminateContextNode terminateNode;
     @Child private AboutToReturnNode aboutToReturnNode;
 
     public static HandleNonLocalReturnNode create(final CompiledCodeObject code) {
@@ -21,6 +21,7 @@ public abstract class HandleNonLocalReturnNode extends AbstractNodeWithCode {
 
     protected HandleNonLocalReturnNode(final CompiledCodeObject code) {
         super(code);
+        terminateNode = TerminateContextNode.create(code);
         aboutToReturnNode = AboutToReturnNode.create(code);
     }
 

@@ -132,7 +132,8 @@ public abstract class ObjectGraphNode extends AbstractNodeWithImage {
                         pending.add((AbstractSqueakObject) argument);
                     }
                 }
-                final int stackPointer = FrameUtil.getIntSafe(current, CompiledCodeObject.stackPointerSlot);
+                final CompiledCodeObject code = (CompiledCodeObject) arguments[FrameAccess.METHOD];
+                final int stackPointer = FrameUtil.getIntSafe(current, code.stackPointerSlot);
                 int i = 0;
                 for (final FrameSlot slot : current.getFrameDescriptor().getSlots()) {
                     final Object stackObject = current.getValue(slot);

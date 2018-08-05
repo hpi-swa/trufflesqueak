@@ -22,7 +22,7 @@ public abstract class StackTopNode extends AbstractStackNode {
     }
 
     @Fallback
-    protected static final Object doTop(final VirtualFrame frame) {
+    protected final Object doTop(final VirtualFrame frame) {
         return getContext(frame).top();
     }
 }

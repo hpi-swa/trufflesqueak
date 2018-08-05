@@ -101,7 +101,7 @@ public final class ContextObject extends AbstractPointersObject {
                     return (long) (initalPC + pc);
                 }
             case CONTEXT.STACKPOINTER:
-                return (long) FrameUtil.getIntSafe(truffleFrame, CompiledCodeObject.stackPointerSlot) + 1;
+                return (long) FrameUtil.getIntSafe(truffleFrame, getMethod().stackPointerSlot) + 1;
             case CONTEXT.METHOD:
                 return truffleFrame.getArguments()[FrameAccess.METHOD];
             case CONTEXT.CLOSURE_OR_NIL:
@@ -168,7 +168,7 @@ public final class ContextObject extends AbstractPointersObject {
     }
 
     private int getFramePC() {
-        return FrameUtil.getIntSafe(truffleFrame, CompiledCodeObject.instructionPointerSlot);
+        return FrameUtil.getIntSafe(truffleFrame, getMethod().instructionPointerSlot);
     }
 
     private boolean truffleFrameMarkedAsTerminated() {
@@ -320,7 +320,7 @@ public final class ContextObject extends AbstractPointersObject {
         final BlockClosureObject closure = getClosure();
         final Object[] frameArgs = getReceiverAndNArguments(numArgs);
         final MaterializedFrame frame = Truffle.getRuntime().createMaterializedFrame(FrameAccess.newWith(closureOrMethod, sender, closure, frameArgs), getMethod().getFrameDescriptor());
-        frame.setObject(CompiledCodeObject.thisContextOrMarkerSlot, this);
+        frame.setObject(closureOrMethod.thisContextOrMarkerSlot, this);
         return frame;
     }
 

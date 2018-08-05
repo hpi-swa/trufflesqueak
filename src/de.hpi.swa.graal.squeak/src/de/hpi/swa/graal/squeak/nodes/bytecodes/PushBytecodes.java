@@ -41,10 +41,11 @@ public final class PushBytecodes {
     }
 
     public static final class PushActiveContextNode extends AbstractPushNode {
-        @Child private GetOrCreateContextNode getContextNode = GetOrCreateContextNode.create();
+        @Child private GetOrCreateContextNode getContextNode;
 
         public PushActiveContextNode(final CompiledCodeObject code, final int index) {
             super(code, index);
+            getContextNode = GetOrCreateContextNode.create(code);
         }
 
         @Override
@@ -63,7 +64,7 @@ public final class PushBytecodes {
         protected final int numArgs;
         protected final int numCopied;
 
-        @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create();
+        @Child private GetOrCreateContextNode getOrCreateContextNode;
         @Child private StackPopNReversedNode popNReversedNode;
         @Child private ReceiverNode receiverNode;
         @Child private GetCompiledMethodNode getMethodNode = GetCompiledMethodNode.create();
@@ -80,6 +81,7 @@ public final class PushBytecodes {
             numArgs = i & 0xF;
             numCopied = (i >> 4) & 0xF;
             blockSize = (j << 8) | k;
+            getOrCreateContextNode = GetOrCreateContextNode.create(code);
             popNReversedNode = StackPopNReversedNode.create(code, numCopied);
             receiverNode = ReceiverNode.create(code);
         }

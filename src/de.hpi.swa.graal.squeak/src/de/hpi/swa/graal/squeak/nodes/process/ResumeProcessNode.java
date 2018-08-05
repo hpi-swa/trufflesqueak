@@ -24,7 +24,7 @@ public abstract class ResumeProcessNode extends AbstractNodeWithImage {
     protected ResumeProcessNode(final CompiledCodeObject code) {
         super(code.image);
         getActiveProcessNode = GetActiveProcessNode.create(image);
-        putToSleepNode = PutToSleepNode.create(image);
+        putToSleepNode = PutToSleepNode.create(code);
         transferToNode = TransferToNode.create(code);
     }
 

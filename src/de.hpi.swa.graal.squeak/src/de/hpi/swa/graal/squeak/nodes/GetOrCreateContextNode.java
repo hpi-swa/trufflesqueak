@@ -15,24 +15,29 @@ import de.hpi.swa.graal.squeak.nodes.context.frame.FrameArgumentNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 @ImportStatic(FrameAccess.class)
-public abstract class GetOrCreateContextNode extends AbstractNode {
-    public static GetOrCreateContextNode create() {
-        return GetOrCreateContextNodeGen.create();
+public abstract class GetOrCreateContextNode extends AbstractNodeWithCode {
+
+    public static GetOrCreateContextNode create(final CompiledCodeObject code) {
+        return GetOrCreateContextNodeGen.create(code);
+    }
+
+    protected GetOrCreateContextNode(final CompiledCodeObject code) {
+        super(code);
     }
 
     public abstract ContextObject executeGet(Frame frame);
 
     @Specialization(guards = {"isFullyVirtualized(frame)"})
-    protected static final ContextObject doCreateLight(final VirtualFrame frame,
+    protected final ContextObject doCreateLight(final VirtualFrame frame,
                     @Cached("create(METHOD)") final FrameArgumentNode methodNode) {
         final CompiledCodeObject method = (CompiledCodeObject) methodNode.executeRead(frame);
         final ContextObject context = ContextObject.create(method.image, method.sqContextSize(), frame.materialize(), getFrameMarker(frame));
-        frame.setObject(CompiledCodeObject.thisContextOrMarkerSlot, context);
+        frame.setObject(code.thisContextOrMarkerSlot, context);
         return context;
     }
 
     @Fallback
-    protected static final ContextObject doGet(final VirtualFrame frame) {
+    protected final ContextObject doGet(final VirtualFrame frame) {
         return getContext(frame);
     }
 
@@ -46,7 +51,7 @@ public abstract class GetOrCreateContextNode extends AbstractNode {
         } else {
             method = (CompiledCodeObject) frame.getArguments()[FrameAccess.METHOD];
             context = ContextObject.create(method.image, method.sqContextSize(), frame, (FrameMarker) contextOrMarker);
-            frame.setObject(CompiledCodeObject.thisContextOrMarkerSlot, context);
+            frame.setObject(method.thisContextOrMarkerSlot, context);
         }
         return context;
     }

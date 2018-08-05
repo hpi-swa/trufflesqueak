@@ -28,11 +28,10 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
     }
 
     // frame info
-    public static final FrameDescriptor frameDescriptorTemplate;
-    public static final FrameSlot thisContextOrMarkerSlot;
-    public static final FrameSlot instructionPointerSlot;
-    public static final FrameSlot stackPointerSlot;
     @CompilationFinal private FrameDescriptor frameDescriptor;
+    @CompilationFinal public FrameSlot thisContextOrMarkerSlot;
+    @CompilationFinal public FrameSlot instructionPointerSlot;
+    @CompilationFinal public FrameSlot stackPointerSlot;
     @CompilationFinal(dimensions = 1) private FrameSlot[] stackSlots;
     // header info and data
     @CompilationFinal(dimensions = 1) protected Object[] literals;
@@ -55,13 +54,6 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
 
     @CompilationFinal private RootCallTarget callTarget;
     private final CyclicAssumption callTargetStable = new CyclicAssumption("CompiledCodeObject assumption");
-
-    static {
-        frameDescriptorTemplate = new FrameDescriptor();
-        thisContextOrMarkerSlot = frameDescriptorTemplate.addFrameSlot(SLOT_IDENTIFIER.THIS_CONTEXT_OR_MARKER, FrameSlotKind.Object);
-        instructionPointerSlot = frameDescriptorTemplate.addFrameSlot(SLOT_IDENTIFIER.INSTRUCTION_POINTER, FrameSlotKind.Int);
-        stackPointerSlot = frameDescriptorTemplate.addFrameSlot(SLOT_IDENTIFIER.STACK_POINTER, FrameSlotKind.Int);
-    }
 
     protected CompiledCodeObject(final SqueakImageContext img, final ClassObject klass, final int numCopiedValues) {
         super(img, klass);
@@ -104,11 +96,13 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         return needsLargeFrame ? CONTEXT.LARGE_FRAMESIZE : CONTEXT.SMALL_FRAMESIZE;
     }
 
-    @SuppressWarnings("deprecation")
     @TruffleBoundary
     private void prepareFrameDescriptor() {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        frameDescriptor = frameDescriptorTemplate.shallowCopy();
+        frameDescriptor = new FrameDescriptor();
+        thisContextOrMarkerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.THIS_CONTEXT_OR_MARKER, FrameSlotKind.Object);
+        instructionPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.INSTRUCTION_POINTER, FrameSlotKind.Int);
+        stackPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.STACK_POINTER, FrameSlotKind.Int);
         /**
          * Arguments and copied values are also pushed onto the stack in {@link EnterCodeNode},
          * therefore there must be enough slots for all these values as well as the Squeak stack.

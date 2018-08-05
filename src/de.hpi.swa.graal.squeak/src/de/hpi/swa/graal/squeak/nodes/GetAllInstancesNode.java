@@ -13,7 +13,7 @@ import de.hpi.swa.graal.squeak.nodes.process.GetActiveProcessNode;
 
 public final class GetAllInstancesNode extends AbstractNodeWithCode {
     @Child private GetActiveProcessNode getActiveProcessNode;
-    @Child private GetOrCreateContextNode getOrCreateContextNode = GetOrCreateContextNode.create();
+    @Child private GetOrCreateContextNode getOrCreateContextNode;
     @Child private ObjectGraphNode objectGraphNode;
 
     public static GetAllInstancesNode create(final CompiledCodeObject code) {
@@ -23,6 +23,7 @@ public final class GetAllInstancesNode extends AbstractNodeWithCode {
     protected GetAllInstancesNode(final CompiledCodeObject code) {
         super(code);
         getActiveProcessNode = GetActiveProcessNode.create(code.image);
+        getOrCreateContextNode = GetOrCreateContextNode.create(code);
         objectGraphNode = ObjectGraphNode.create(code.image);
     }
 

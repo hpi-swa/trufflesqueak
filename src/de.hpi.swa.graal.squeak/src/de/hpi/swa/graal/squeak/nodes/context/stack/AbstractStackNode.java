@@ -15,12 +15,12 @@ public abstract class AbstractStackNode extends SqueakNodeWithCode {
         super(code);
     }
 
-    protected static final int frameStackPointer(final VirtualFrame frame) {
-        return FrameUtil.getIntSafe(frame, CompiledCodeObject.stackPointerSlot);
+    protected final int frameStackPointer(final VirtualFrame frame) {
+        return FrameUtil.getIntSafe(frame, code.stackPointerSlot);
     }
 
-    protected static final void setFrameStackPointer(final VirtualFrame frame, final int value) {
-        frame.setInt(CompiledCodeObject.stackPointerSlot, value);
+    protected final void setFrameStackPointer(final VirtualFrame frame, final int value) {
+        frame.setInt(code.stackPointerSlot, value);
     }
 
     protected final FrameStackReadNode getReadNode() {

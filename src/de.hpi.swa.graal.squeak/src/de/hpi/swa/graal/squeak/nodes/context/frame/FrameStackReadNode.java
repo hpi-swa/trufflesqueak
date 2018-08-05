@@ -29,7 +29,7 @@ public abstract class FrameStackReadNode extends AbstractNodeWithCode {
     protected static final Object doRead(final Frame frame, final int index,
                     @Cached("index") final int cachedIndex,
                     @Cached("code.getStackSlot(index)") final FrameSlot slot,
-                    @Cached("create(slot)") final FrameSlotReadNode readNode) {
+                    @Cached("create(code, slot)") final FrameSlotReadNode readNode) {
         return readNode.executeRead(frame);
     }
 

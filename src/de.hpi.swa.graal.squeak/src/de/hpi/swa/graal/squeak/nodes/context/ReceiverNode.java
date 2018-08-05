@@ -23,7 +23,7 @@ public abstract class ReceiverNode extends SqueakNodeWithCode {
     }
 
     @Fallback
-    protected static final Object doReceiver(final VirtualFrame frame) {
+    protected final Object doReceiver(final VirtualFrame frame) {
         return getContext(frame).getReceiver();
     }
 }

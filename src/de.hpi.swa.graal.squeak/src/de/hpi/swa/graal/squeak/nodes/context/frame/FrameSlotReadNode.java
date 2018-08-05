@@ -12,16 +12,16 @@ import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 
 public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
 
-    public static FrameSlotReadNode create(final FrameSlot frameSlot) {
-        return FrameSlotReadNodeGen.create(frameSlot);
+    public static FrameSlotReadNode create(final CompiledCodeObject code, final FrameSlot frameSlot) {
+        return FrameSlotReadNodeGen.create(code, frameSlot);
     }
 
-    public static FrameSlotReadNode createForStackPointer() {
-        return FrameSlotReadNodeGen.create(CompiledCodeObject.stackPointerSlot);
+    public static FrameSlotReadNode createForStackPointer(final CompiledCodeObject code) {
+        return FrameSlotReadNodeGen.create(code, code.stackPointerSlot);
     }
 
-    protected FrameSlotReadNode(final FrameSlot frameSlot) {
-        super(frameSlot);
+    protected FrameSlotReadNode(final CompiledCodeObject code, final FrameSlot frameSlot) {
+        super(code, frameSlot);
     }
 
     public abstract Object executeRead(Frame frame);
@@ -57,6 +57,6 @@ public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
     }
 
     protected final boolean isIllegal() {
-        return slot.getKind() == FrameSlotKind.Illegal;
+        return frameDescriptor.getFrameSlotKind(slot) == FrameSlotKind.Illegal;
     }
 }

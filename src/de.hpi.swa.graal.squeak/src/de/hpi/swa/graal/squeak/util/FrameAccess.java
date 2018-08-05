@@ -74,7 +74,7 @@ public class FrameAccess {
 
     public static final Object getContextOrMarker(final Frame frame) {
         try {
-            return frame.getObject(CompiledCodeObject.thisContextOrMarkerSlot);
+            return frame.getObject(getMethod(frame).thisContextOrMarkerSlot);
         } catch (FrameSlotTypeException e) {
             throw new SqueakException("thisContextOrMarkerSlot should never be invalid");
         }

@@ -33,7 +33,7 @@ public final class ReturnBytecodes {
             return readClosureNode.executeRead(frame) instanceof BlockClosureObject;
         }
 
-        protected static final boolean hasModifiedSender(final VirtualFrame frame) {
+        protected final boolean hasModifiedSender(final VirtualFrame frame) {
             return getContext(frame).hasModifiedSender();
         }
 
@@ -55,7 +55,7 @@ public final class ReturnBytecodes {
 
         @Specialization(guards = {"hasClosure(frame) || !isVirtualized(frame)", "hasClosure(frame) || hasModifiedSender(frame)"})
         protected final Object executeNonLocalReturn(final VirtualFrame frame,
-                        @Cached("create()") final GetOrCreateContextNode getContextNode) {
+                        @Cached("create(code)") final GetOrCreateContextNode getContextNode) {
             final ContextObject outerContext;
             final BlockClosureObject block = (BlockClosureObject) readClosureNode.executeRead(frame);
             if (block != null) {
@@ -132,7 +132,7 @@ public final class ReturnBytecodes {
 
         @Specialization(guards = {"!isVirtualized(frame)", "hasModifiedSender(frame)"})
         protected final Object executeNonLocalReturn(final VirtualFrame frame,
-                        @Cached("create()") final GetOrCreateContextNode getContextNode) {
+                        @Cached("create(code)") final GetOrCreateContextNode getContextNode) {
             final ContextObject outerContext;
             final BlockClosureObject block = (BlockClosureObject) readClosureNode.executeRead(frame);
             if (block != null) {

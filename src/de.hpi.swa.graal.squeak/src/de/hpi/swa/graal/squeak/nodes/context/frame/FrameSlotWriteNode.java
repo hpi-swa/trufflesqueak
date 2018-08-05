@@ -5,14 +5,16 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 
+import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
+
 public abstract class FrameSlotWriteNode extends AbstractFrameSlotNode {
 
-    public static FrameSlotWriteNode create(final FrameSlot slot) {
-        return FrameSlotWriteNodeGen.create(slot);
+    public static FrameSlotWriteNode create(final CompiledCodeObject code, final FrameSlot slot) {
+        return FrameSlotWriteNodeGen.create(code, slot);
     }
 
-    protected FrameSlotWriteNode(final FrameSlot slot) {
-        super(slot);
+    protected FrameSlotWriteNode(final CompiledCodeObject code, final FrameSlot slot) {
+        super(code, slot);
     }
 
     public abstract void executeWrite(Frame frame, Object value);
@@ -45,55 +47,55 @@ public abstract class FrameSlotWriteNode extends AbstractFrameSlotNode {
 
     // uses `value` to make sure guard is not converted to assertion
     protected final boolean isIntSlot(@SuppressWarnings("unused") final long value) {
-        if (slot.getKind() == FrameSlotKind.Int) {
+        if (frameDescriptor.getFrameSlotKind(slot) == FrameSlotKind.Int) {
             return true;
         }
-        if (slot.getKind() == FrameSlotKind.Illegal) {
-            slot.setKind(FrameSlotKind.Int);
+        if (frameDescriptor.getFrameSlotKind(slot) == FrameSlotKind.Illegal) {
+            frameDescriptor.setFrameSlotKind(slot, FrameSlotKind.Int);
             return true;
         }
         return false;
     }
 
     protected final boolean isLongSlot(@SuppressWarnings("unused") final long value) {
-        if (slot.getKind() == FrameSlotKind.Long) {
+        if (frameDescriptor.getFrameSlotKind(slot) == FrameSlotKind.Long) {
             return true;
         }
-        if (slot.getKind() == FrameSlotKind.Illegal) {
-            slot.setKind(FrameSlotKind.Long);
+        if (frameDescriptor.getFrameSlotKind(slot) == FrameSlotKind.Illegal) {
+            frameDescriptor.setFrameSlotKind(slot, FrameSlotKind.Long);
             return true;
         }
         return false;
     }
 
     protected final boolean isDoubleSlot(@SuppressWarnings("unused") final double value) {
-        if (slot.getKind() == FrameSlotKind.Double) {
+        if (frameDescriptor.getFrameSlotKind(slot) == FrameSlotKind.Double) {
             return true;
         }
-        if (slot.getKind() == FrameSlotKind.Illegal) {
-            slot.setKind(FrameSlotKind.Double);
+        if (frameDescriptor.getFrameSlotKind(slot) == FrameSlotKind.Illegal) {
+            frameDescriptor.setFrameSlotKind(slot, FrameSlotKind.Double);
             return true;
         }
         return false;
     }
 
     protected final boolean isBooleanSlot(@SuppressWarnings("unused") final boolean value) {
-        if (slot.getKind() == FrameSlotKind.Boolean) {
+        if (frameDescriptor.getFrameSlotKind(slot) == FrameSlotKind.Boolean) {
             return true;
         }
-        if (slot.getKind() == FrameSlotKind.Illegal) {
-            slot.setKind(FrameSlotKind.Boolean);
+        if (frameDescriptor.getFrameSlotKind(slot) == FrameSlotKind.Illegal) {
+            frameDescriptor.setFrameSlotKind(slot, FrameSlotKind.Boolean);
             return true;
         }
         return false;
     }
 
     protected final boolean isObjectSlot(@SuppressWarnings("unused") final Object value) {
-        if (slot.getKind() == FrameSlotKind.Object) {
+        if (frameDescriptor.getFrameSlotKind(slot) == FrameSlotKind.Object) {
             return true;
         }
-        if (slot.getKind() == FrameSlotKind.Illegal) {
-            slot.setKind(FrameSlotKind.Object);
+        if (frameDescriptor.getFrameSlotKind(slot) == FrameSlotKind.Illegal) {
+            frameDescriptor.setFrameSlotKind(slot, FrameSlotKind.Object);
             return true;
         }
         return false;

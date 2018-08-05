@@ -4,15 +4,21 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.nodes.MaterializeContextOnMethodExitNodeGen.SetSenderNodeGen;
 
-public abstract class MaterializeContextOnMethodExitNode extends AbstractNode {
+public abstract class MaterializeContextOnMethodExitNode extends AbstractNodeWithCode {
     protected static ContextObject lastSeenContext;
 
-    public static MaterializeContextOnMethodExitNode create() {
-        return MaterializeContextOnMethodExitNodeGen.create();
+    public static MaterializeContextOnMethodExitNode create(final CompiledCodeObject code) {
+        return MaterializeContextOnMethodExitNodeGen.create(code);
+    }
+
+    protected MaterializeContextOnMethodExitNode(final CompiledCodeObject code) {
+        super(code);
     }
 
     public abstract void execute(VirtualFrame frame);
@@ -29,7 +35,7 @@ public abstract class MaterializeContextOnMethodExitNode extends AbstractNode {
 
     @Specialization(guards = {"lastSeenContext != null || !isFullyVirtualized(frame)"})
     protected static final void doMaterialize(final VirtualFrame frame,
-                    @Cached("create()") final GetOrCreateContextNode getOrCreateContextNode,
+                    @Cached("create(code)") final GetOrCreateContextNode getOrCreateContextNode,
                     @Cached("create()") final SetSenderNode setSenderNode) {
         final ContextObject context = getOrCreateContextNode.executeGet(frame);
         if (context != lastSeenContext) {
@@ -52,7 +58,7 @@ public abstract class MaterializeContextOnMethodExitNode extends AbstractNode {
          */
     }
 
-    protected abstract static class SetSenderNode extends AbstractNode {
+    protected abstract static class SetSenderNode extends Node {
 
         public static SetSenderNode create() {
             return SetSenderNodeGen.create();

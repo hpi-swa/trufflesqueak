@@ -80,9 +80,9 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
         }
     }
 
-    private static void initializeSlots(final VirtualFrame frame) {
-        frame.setInt(CompiledCodeObject.instructionPointerSlot, 0);
-        frame.setInt(CompiledCodeObject.stackPointerSlot, -1);
+    private static void initializeSlots(final CompiledCodeObject code, final VirtualFrame frame) {
+        frame.setInt(code.instructionPointerSlot, 0);
+        frame.setInt(code.stackPointerSlot, -1);
     }
 
     @ExplodeLoop
@@ -90,8 +90,8 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
     protected final Object enterVirtualized(final VirtualFrame frame,
                     @Cached("create(code)") final StackPushNode pushStackNode) {
         CompilerDirectives.ensureVirtualized(frame);
-        initializeSlots(frame);
-        frame.setObject(CompiledCodeObject.thisContextOrMarkerSlot, new FrameMarker());
+        initializeSlots(code, frame);
+        frame.setObject(code.thisContextOrMarkerSlot, new FrameMarker());
         // Push arguments and copied values onto the newContext.
         final Object[] arguments = frame.getArguments();
         assert code.getNumArgsAndCopied() == (arguments.length - FrameAccess.ARGUMENTS_START);
@@ -103,16 +103,16 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
         for (int i = 0; i < remainingTemps; i++) {
             pushStackNode.executeWrite(frame, code.image.nil);
         }
-        assert (FrameUtil.getIntSafe(frame, CompiledCodeObject.stackPointerSlot)) + 1 >= remainingTemps;
+        assert (FrameUtil.getIntSafe(frame, code.stackPointerSlot)) + 1 >= remainingTemps;
         return executeContextNode.executeContext(frame, null);
     }
 
     @ExplodeLoop
     @Fallback
     protected final Object enter(final VirtualFrame frame) {
-        initializeSlots(frame);
+        initializeSlots(code, frame);
         final ContextObject newContext = getCreateContextNode().executeGet(frame);
-        frame.setObject(CompiledCodeObject.thisContextOrMarkerSlot, newContext);
+        frame.setObject(code.thisContextOrMarkerSlot, newContext);
         // Push arguments and copied values onto the newContext.
         final Object[] arguments = frame.getArguments();
         assert code.getNumArgsAndCopied() == (arguments.length - FrameAccess.ARGUMENTS_START);
@@ -131,7 +131,7 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
     private GetOrCreateContextNode getCreateContextNode() {
         if (createContextNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            createContextNode = insert(GetOrCreateContextNode.create());
+            createContextNode = insert(GetOrCreateContextNode.create(code));
         }
         return createContextNode;
     }

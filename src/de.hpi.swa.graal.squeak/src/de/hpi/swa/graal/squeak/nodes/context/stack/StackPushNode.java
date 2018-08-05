@@ -23,16 +23,16 @@ public abstract class StackPushNode extends AbstractNodeWithCode {
     public abstract void executeWrite(VirtualFrame frame, Object value);
 
     @Specialization(guards = {"isVirtualized(frame)"})
-    protected static final void doWriteVirtualized(final VirtualFrame frame, final Object value,
+    protected final void doWriteVirtualized(final VirtualFrame frame, final Object value,
                     @Cached("create(code)") final FrameStackWriteNode writeNode) {
         assert value != null;
-        final int newSP = FrameUtil.getIntSafe(frame, CompiledCodeObject.stackPointerSlot) + 1;
+        final int newSP = FrameUtil.getIntSafe(frame, code.stackPointerSlot) + 1;
         writeNode.execute(frame, newSP, value);
-        frame.setInt(CompiledCodeObject.stackPointerSlot, newSP);
+        frame.setInt(code.stackPointerSlot, newSP);
     }
 
     @Fallback
-    protected static final void doWrite(final VirtualFrame frame, final Object value) {
+    protected final void doWrite(final VirtualFrame frame, final Object value) {
         assert value != null;
         getContext(frame).push(value);
     }

@@ -37,7 +37,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
     @Child private HandleNonVirtualReturnNode handleNonVirtualReturnNode = HandleNonVirtualReturnNode.create();
     @Child private TriggerInterruptHandlerNode triggerInterruptHandlerNode;
-    @Child private MaterializeContextOnMethodExitNode materializeContextOnMethodExitNode = MaterializeContextOnMethodExitNode.create();
+    @Child private MaterializeContextOnMethodExitNode materializeContextOnMethodExitNode;
 
     @Child private UpdateInstructionPointerNode updateInstructionPointerNode;
     @Child private GetSuccessorNode getSuccessorNode;
@@ -63,11 +63,12 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
         handleLocalReturnNode = HandleLocalReturnNode.create(code);
         handleNonLocalReturnNode = HandleNonLocalReturnNode.create(code);
         triggerInterruptHandlerNode = TriggerInterruptHandlerNode.create(code.image);
+        materializeContextOnMethodExitNode = MaterializeContextOnMethodExitNode.create(code);
     }
 
     @Specialization(guards = "context == null")
     protected final Object doVirtualized(final VirtualFrame frame, @SuppressWarnings("unused") final ContextObject context,
-                    @Cached("create()") final GetOrCreateContextNode getOrCreateContextNode) {
+                    @Cached("create(code)") final GetOrCreateContextNode getOrCreateContextNode) {
         try {
             triggerInterruptHandlerNode.executeGeneric(frame, code.hasPrimitive(), bytecodeNodes.length);
             startBytecode(frame);

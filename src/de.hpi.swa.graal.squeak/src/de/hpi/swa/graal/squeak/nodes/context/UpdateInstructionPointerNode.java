@@ -23,8 +23,8 @@ public abstract class UpdateInstructionPointerNode extends AbstractNodeWithCode 
     public abstract void executeUpdate(VirtualFrame frame, int value);
 
     @Specialization(guards = {"isVirtualized(frame)"})
-    protected static final void doUpdateVirtualized(final VirtualFrame frame, final int value) {
-        frame.setInt(CompiledCodeObject.instructionPointerSlot, value);
+    protected final void doUpdateVirtualized(final VirtualFrame frame, final int value) {
+        frame.setInt(code.instructionPointerSlot, value);
     }
 
     @Fallback

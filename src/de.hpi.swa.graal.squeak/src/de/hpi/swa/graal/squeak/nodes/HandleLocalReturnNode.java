@@ -13,7 +13,7 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 @ImportStatic(FrameAccess.class)
 public abstract class HandleLocalReturnNode extends AbstractNodeWithCode {
-    @Child private TerminateContextNode terminateNode = TerminateContextNode.create();
+    @Child private TerminateContextNode terminateNode;
 
     public static HandleLocalReturnNode create(final CompiledCodeObject code) {
         return HandleLocalReturnNodeGen.create(code);
@@ -23,6 +23,7 @@ public abstract class HandleLocalReturnNode extends AbstractNodeWithCode {
 
     protected HandleLocalReturnNode(final CompiledCodeObject code) {
         super(code);
+        terminateNode = TerminateContextNode.create(code);
     }
 
     @Specialization(guards = "isVirtualized(frame)")

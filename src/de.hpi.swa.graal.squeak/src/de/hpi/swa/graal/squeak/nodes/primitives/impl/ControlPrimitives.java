@@ -220,7 +220,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected PrimWaitNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
-            linkProcessToListNode = LinkProcessToListNode.create(method.image);
+            linkProcessToListNode = LinkProcessToListNode.create(method);
             wakeHighestPriorityNode = WakeHighestPriorityNode.create(method);
             getActiveProcessNode = GetActiveProcessNode.create(method.image);
         }
@@ -838,7 +838,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         public PrimEnterCriticalSectionNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
             getActiveProcessNode = GetActiveProcessNode.create(method.image);
-            linkProcessToListNode = LinkProcessToListNode.create(method.image);
+            linkProcessToListNode = LinkProcessToListNode.create(method);
             wakeHighestPriorityNode = WakeHighestPriorityNode.create(method);
         }
 

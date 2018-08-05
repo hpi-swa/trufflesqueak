@@ -18,20 +18,20 @@ public abstract class SqueakNodeWithCode extends SqueakNode {
         this.code = code;
     }
 
-    protected static final boolean isVirtualized(final VirtualFrame frame) {
-        final Object contextOrMarker = frame.getValue(CompiledCodeObject.thisContextOrMarkerSlot);
+    protected final boolean isVirtualized(final VirtualFrame frame) {
+        final Object contextOrMarker = frame.getValue(code.thisContextOrMarkerSlot);
         return contextOrMarker instanceof FrameMarker || !((ContextObject) contextOrMarker).isDirty();
     }
 
-    protected static final Object getContextOrMarker(final VirtualFrame frame) {
-        return frame.getValue(CompiledCodeObject.thisContextOrMarkerSlot);
+    protected final Object getContextOrMarker(final VirtualFrame frame) {
+        return frame.getValue(code.thisContextOrMarkerSlot);
     }
 
-    protected static final ContextObject getContext(final VirtualFrame frame) {
+    protected final ContextObject getContext(final VirtualFrame frame) {
         return (ContextObject) getContextOrMarker(frame);
     }
 
-    protected static final FrameMarker getFrameMarker(final VirtualFrame frame) {
+    protected final FrameMarker getFrameMarker(final VirtualFrame frame) {
         return (FrameMarker) getContextOrMarker(frame);
     }
 }

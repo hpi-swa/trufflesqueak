@@ -12,14 +12,20 @@ import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public abstract class ReceiverAndArgumentsNode extends Node {
-    public static ReceiverAndArgumentsNode create() {
-        return ReceiverAndArgumentsNodeGen.create();
+    private final CompiledCodeObject code;
+
+    public static ReceiverAndArgumentsNode create(final CompiledCodeObject code) {
+        return ReceiverAndArgumentsNodeGen.create(code);
+    }
+
+    protected ReceiverAndArgumentsNode(final CompiledCodeObject code) {
+        this.code = code;
     }
 
     public abstract Object executeGet(VirtualFrame frame);
 
-    protected static final boolean isVirtualized(final VirtualFrame frame) {
-        final Object contextOrMarker = frame.getValue(CompiledCodeObject.thisContextOrMarkerSlot);
+    protected final boolean isVirtualized(final VirtualFrame frame) {
+        final Object contextOrMarker = frame.getValue(code.thisContextOrMarkerSlot);
         return contextOrMarker instanceof FrameMarker || !((ContextObject) contextOrMarker).isDirty();
     }
 
@@ -36,8 +42,8 @@ public abstract class ReceiverAndArgumentsNode extends Node {
 
     @Fallback
     @ExplodeLoop
-    protected static final Object[] doRcvrAndArgs(final VirtualFrame frame) {
-        final ContextObject context = (ContextObject) frame.getValue(CompiledCodeObject.thisContextOrMarkerSlot);
+    protected final Object[] doRcvrAndArgs(final VirtualFrame frame) {
+        final ContextObject context = (ContextObject) frame.getValue(code.thisContextOrMarkerSlot);
         final int numArgsAndCopied = context.getClosureOrMethod().getNumArgsAndCopied();
         return context.getReceiverAndNArguments(numArgsAndCopied);
     }
