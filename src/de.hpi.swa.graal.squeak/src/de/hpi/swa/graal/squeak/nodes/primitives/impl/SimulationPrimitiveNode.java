@@ -10,7 +10,6 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.SimulationPrimitiveFailed;
-import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -36,7 +35,6 @@ public abstract class SimulationPrimitiveNode extends AbstractPrimitiveNode {
     private final boolean bitBltSimulationNotFound = code.image.getSimulatePrimitiveArgsSelector() == null;
     private final PointersObject emptyList;
     private final BranchProfile simulationFailedProfile = BranchProfile.create();
-    private final BranchProfile errorProfile = BranchProfile.create();
 
     @Child private LookupNode lookupNode;
     @Child private DispatchNode dispatchNode = DispatchNode.create();
@@ -119,9 +117,6 @@ public abstract class SimulationPrimitiveNode extends AbstractPrimitiveNode {
         } catch (SimulationPrimitiveFailed e) {
             simulationFailedProfile.enter();
             throw new PrimitiveFailed(e.getReasonCode());
-        } catch (ProcessSwitch ps) {
-            errorProfile.enter();
-            throw new SqueakException("Process switch requested during simulation code:", ps);
         } finally {
             if (wasDisabled) {
                 code.image.interrupt.enable();

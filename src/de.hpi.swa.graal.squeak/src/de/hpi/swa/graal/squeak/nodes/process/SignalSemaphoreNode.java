@@ -42,6 +42,7 @@ public abstract class SignalSemaphoreNode extends AbstractNodeWithImage {
     @SuppressWarnings("unused")
     @Specialization
     protected static final void doNothing(final VirtualFrame frame, final NilObject nil) {
+        // nothing to do
     }
 
     @Fallback
