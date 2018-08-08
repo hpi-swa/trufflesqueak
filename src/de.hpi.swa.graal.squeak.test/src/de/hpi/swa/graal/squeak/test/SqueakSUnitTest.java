@@ -198,13 +198,14 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
         image.getOutput().println("Setting author information...");
         evaluate("Utilities authorName: 'GraalSqueak'");
         evaluate("Utilities setAuthorInitials: 'GraalSqueak'");
+        image.getOutput().println("Initialize DummyUIManager...");
+        evaluate("Project current instVarNamed: #uiManager put: DummyUIManager new");
 
         patchMethod("TestCase", "timeout:after:", "timeout: aBlock after: seconds ^ aBlock value");
         patchMethod("BlockClosure", "valueWithin:onTimeout:", "valueWithin: aDuration onTimeout: timeoutBlock ^ self value");
         if (!runsOnMXGate()) {
             patchMethod("TestCase", "runCase", "runCase [self setUp. [self performTest] ensure: [self tearDown]] on: Error do: [:e | e printVerboseOn: FileStream stderr. e signal]");
         }
-        patchMethod("Project class", "uiManager", "uiManager ^ MorphicUIManager new");
     }
 
     private static boolean runsOnMXGate() {
