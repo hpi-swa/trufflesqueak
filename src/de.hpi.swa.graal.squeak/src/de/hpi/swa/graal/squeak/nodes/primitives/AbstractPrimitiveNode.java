@@ -8,14 +8,11 @@ import com.oracle.truffle.api.instrumentation.ProbeNode;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
 
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
-import de.hpi.swa.graal.squeak.model.EmptyObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
-import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
+import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
 
 @GenerateWrapper
@@ -43,30 +40,10 @@ public abstract class AbstractPrimitiveNode extends AbstractNodeWithCode impleme
 
     protected final boolean isSmallInteger(final long value) {
         if (code.image.flags.is64bit()) {
-            return LargeIntegerObject.SMALLINTEGER64_MIN <= value && value <= LargeIntegerObject.SMALLINTEGER64_MAX;
+            return SqueakGuards.isSmallInteger64bit(value);
         } else {
-            return LargeIntegerObject.SMALLINTEGER32_MIN <= value && value <= LargeIntegerObject.SMALLINTEGER32_MAX;
+            return SqueakGuards.isSmallInteger32bit(value);
         }
-    }
-
-    protected static final boolean isNotProvided(final Object obj) {
-        return NotProvided.isInstance(obj);
-    }
-
-    protected static final boolean isNativeObject(final AbstractSqueakObject object) {
-        return object instanceof NativeObject;
-    }
-
-    protected static final boolean isLargeInteger(final AbstractSqueakObject object) {
-        return object instanceof LargeIntegerObject;
-    }
-
-    protected static final boolean isFloat(final AbstractSqueakObject object) {
-        return object instanceof FloatObject;
-    }
-
-    protected static final boolean isEmptyObject(final AbstractSqueakObject object) {
-        return object instanceof EmptyObject;
     }
 
     protected final LargeIntegerObject asLargeInteger(final long value) {

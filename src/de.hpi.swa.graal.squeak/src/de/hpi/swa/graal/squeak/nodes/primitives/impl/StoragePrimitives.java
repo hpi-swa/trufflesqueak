@@ -65,10 +65,6 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        protected static final boolean isPointers(final Object obj) {
-            return obj instanceof PointersObject;
-        }
-
         protected final AbstractSqueakObject performPointersBecomeOneWay(final VirtualFrame frame, final PointersObject fromArray, final PointersObject toArray, final boolean copyHash) {
             final Object[] fromPointers = fromArray.getPointers();
             final Object[] toPointers = toArray.getPointers();
@@ -297,13 +293,13 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"!isPointers(receiver)"})
+        @Specialization(guards = {"!isPointersObject(receiver)"})
         protected static final AbstractSqueakObject doFail(final VirtualFrame frame, final Object receiver, final PointersObject argument) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_RECEIVER);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"!isPointers(argument)"})
+        @Specialization(guards = {"!isPointersObject(argument)"})
         protected static final AbstractSqueakObject doFail(final VirtualFrame frame, final PointersObject receiver, final Object argument) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
         }
@@ -693,13 +689,13 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"!isPointers(receiver)"})
+        @Specialization(guards = {"!isPointersObject(receiver)"})
         protected static final AbstractSqueakObject doFail(final VirtualFrame frame, final Object receiver, final PointersObject argument, final boolean copyHash) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_RECEIVER);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"!isPointers(argument)"})
+        @Specialization(guards = {"!isPointersObject(argument)"})
         protected static final AbstractSqueakObject doFail(final VirtualFrame frame, final PointersObject receiver, final Object argument, final boolean copyHash) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
         }

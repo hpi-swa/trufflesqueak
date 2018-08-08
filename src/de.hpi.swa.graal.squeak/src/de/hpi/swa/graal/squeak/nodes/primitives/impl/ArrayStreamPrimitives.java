@@ -99,7 +99,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             return receiver.getNativeAt0(index - 1);
         }
 
-        @Specialization(guards = {"!isNativeObject(receiver)", "!isLargeInteger(receiver)", "!isFloat(receiver)"})
+        @Specialization(guards = {"!isNativeObject(receiver)", "!isLargeIntegerObject(receiver)", "!isFloatObject(receiver)"})
         protected final Object doSqueakObject(final AbstractSqueakObject receiver, final long index, @SuppressWarnings("unused") final NotProvided notProvided) {
             return at0Node.execute(receiver, index - 1 + instSizeNode.execute(receiver));
         }
@@ -137,7 +137,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             return target.getNativeAt0(index - 1);
         }
 
-        @Specialization(guards = {"!isNativeObject(receiver)", "!isLargeInteger(receiver)", "!isFloat(receiver)"})
+        @Specialization(guards = {"!isNativeObject(receiver)", "!isLargeIntegerObject(receiver)", "!isFloatObject(receiver)"})
         protected final Object doSqueakObject(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final AbstractSqueakObject target, final long index) {
             return at0Node.execute(target, index - 1 + instSizeNode.execute(target));
         }

@@ -572,7 +572,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             throw new PrimitiveWithoutResultException();
         }
 
-        @Specialization(guards = {"!isNativeObject(receiver)", "!isLargeInteger(receiver)", "!isFloat(receiver)"})
+        @Specialization(guards = {"!isNativeObject(receiver)", "!isLargeIntegerObject(receiver)", "!isFloatObject(receiver)"})
         protected static final Object doSqueakObject(final AbstractSqueakObject receiver, final AbstractSqueakObject argument) {
             receiver.setSqClass(argument.getSqClass());
             throw new PrimitiveWithoutResultException();
