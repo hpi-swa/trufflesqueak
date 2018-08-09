@@ -9,6 +9,8 @@ import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
+import de.hpi.swa.graal.squeak.model.ObjectLayouts.ADDITIONAL_METHOD_STATE;
+import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodesFactory.CalculcatePCOffsetNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodesFactory.GetCompiledMethodNodeGen;
@@ -52,10 +54,19 @@ public final class CompiledCodeNodes {
 
         public abstract boolean execute(Object object);
 
-        @Specialization(guards = "object.getNumLiterals() >= 2")
-        protected final boolean doMethod(final CompiledMethodObject object) {
-            final Object[] literals = object.getLiterals();
-            return literals[literals.length - 2] == image.doesNotUnderstand;
+        @Specialization(guards = "isNativeObject(object.penultimateLiteral())")
+        protected final boolean doMethodSymbol(final CompiledMethodObject object) {
+            return object.penultimateLiteral() == image.doesNotUnderstand;
+        }
+
+        @Specialization(guards = "isPointersObject(object.penultimateLiteral())")
+        protected final boolean doMethodWithAdditionalMethodState(final CompiledMethodObject object) {
+            return ((PointersObject) object.penultimateLiteral()).at0(ADDITIONAL_METHOD_STATE.SELECTOR) == image.doesNotUnderstand;
+        }
+
+        @Specialization(guards = "object.penultimateLiteral().isNil()")
+        protected static final boolean doMethodWithoutPenultimateLiteral(@SuppressWarnings("unused") final CompiledMethodObject object) {
+            return false;
         }
 
         @Fallback

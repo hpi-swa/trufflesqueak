@@ -2,6 +2,11 @@ package de.hpi.swa.graal.squeak.model;
 
 public final class ObjectLayouts {
 
+    public static final class ADDITIONAL_METHOD_STATE {
+        public static final int METHOD = 0;
+        public static final int SELECTOR = 1;
+    }
+
     public static final class ASSOCIATION {
         public static final int KEY = 0;
         public static final int VALUE = 1;
