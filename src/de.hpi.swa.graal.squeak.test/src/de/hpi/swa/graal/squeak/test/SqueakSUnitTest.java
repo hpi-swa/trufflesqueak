@@ -198,8 +198,8 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
         image.getOutput().println("Setting author information...");
         evaluate("Utilities authorName: 'GraalSqueak'");
         evaluate("Utilities setAuthorInitials: 'GraalSqueak'");
-        image.getOutput().println("Initialize DummyUIManager...");
-        evaluate("Project current instVarNamed: #uiManager put: DummyUIManager new");
+        image.getOutput().println("Initializing fresh MorphicUIManager...");
+        evaluate("Project current instVarNamed: #uiManager put: MorphicUIManager new");
 
         patchMethod("TestCase", "timeout:after:", "timeout: aBlock after: seconds ^ aBlock value");
         patchMethod("BlockClosure", "valueWithin:onTimeout:", "valueWithin: aDuration onTimeout: timeoutBlock ^ self value");
