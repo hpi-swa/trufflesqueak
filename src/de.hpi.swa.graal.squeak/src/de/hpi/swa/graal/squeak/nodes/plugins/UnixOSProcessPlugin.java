@@ -9,12 +9,18 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 
 public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
+
+    @Override
+    public boolean isEnabled(final SqueakImageContext image) {
+        return image.os.isLinux() || image.os.isMacOS();
+    }
 
     @Override
     public List<? extends NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {

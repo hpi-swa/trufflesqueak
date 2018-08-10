@@ -97,6 +97,9 @@ public final class PrimitiveNodeFactory {
             }
         }
         for (AbstractPrimitiveFactoryHolder plugin : plugins) {
+            if (!plugin.isEnabled(method.image)) {
+                continue;
+            }
             final String pluginName = plugin.getClass().getSimpleName();
             if (!pluginName.equals(moduleName)) {
                 continue;
