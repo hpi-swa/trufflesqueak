@@ -10,7 +10,6 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
-import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public final class ContextObject extends AbstractPointersObject {
@@ -193,13 +192,25 @@ public final class ContextObject extends AbstractPointersObject {
             if (frame == null) {
                 throw new SqueakException("Unable to find frame for marker:", senderOrMarker);
             }
-            actualSender = GetOrCreateContextNode.getOrCreateFull(frame.materialize());
+            actualSender = getOrCreateContextFor(frame.materialize());
             assert actualSender != null;
         } else {
             actualSender = (AbstractSqueakObject) senderOrMarker;
         }
         setSender(actualSender);
         return actualSender;
+    }
+
+    private static ContextObject getOrCreateContextFor(final MaterializedFrame frame) {
+        final Object contextOrMarker = FrameAccess.getContextOrMarker(frame);
+        if (contextOrMarker instanceof FrameMarker) {
+            final CompiledCodeObject method = (CompiledCodeObject) frame.getArguments()[FrameAccess.METHOD];
+            final ContextObject context = ContextObject.create(method.image, method.sqContextSize(), frame, (FrameMarker) contextOrMarker);
+            frame.setObject(method.thisContextOrMarkerSlot, context);
+            return context;
+        } else {
+            return (ContextObject) contextOrMarker;
+        }
     }
 
     // should only be used when sender is not nil
