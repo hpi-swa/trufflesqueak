@@ -30,7 +30,6 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         super(language, code.getFrameDescriptor());
         image = code.image;
         initialContext = context;
-        image.interrupt.initializeSignalSemaphoreNode(initialContext.getMethod());
         unwindContextChainNode = UnwindContextChainNode.create(image);
     }
 

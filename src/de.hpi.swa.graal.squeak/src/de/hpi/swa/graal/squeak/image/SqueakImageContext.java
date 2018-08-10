@@ -35,7 +35,7 @@ import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.graal.squeak.nodes.process.GetActiveProcessNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
-import de.hpi.swa.graal.squeak.util.InterruptHandlerNode;
+import de.hpi.swa.graal.squeak.util.InterruptHandlerState;
 import de.hpi.swa.graal.squeak.util.OSDetector;
 import de.hpi.swa.graal.squeak.util.SqueakConfig;
 
@@ -129,7 +129,7 @@ public final class SqueakImageContext {
     public final SqueakConfig config;
     public final SqueakImageFlags flags = new SqueakImageFlags();
     public final OSDetector os = new OSDetector();
-    public final InterruptHandlerNode interrupt;
+    public final InterruptHandlerState interrupt;
     public final long startUpMillis = System.currentTimeMillis();
 
     private final SqueakDisplay display;
@@ -149,7 +149,7 @@ public final class SqueakImageContext {
         final String[] applicationArguments = env.getApplicationArguments();
         config = new SqueakConfig(applicationArguments);
         display = SqueakDisplay.create(this, config.isHeadless());
-        interrupt = InterruptHandlerNode.create(this, config);
+        interrupt = InterruptHandlerState.create(this);
     }
 
     public ExecuteTopLevelContextNode getActiveContext() {
@@ -321,8 +321,9 @@ public final class SqueakImageContext {
         return NativeObject.newNativeBytes(this, doesNotUnderstand.getSqClass(), value.getBytes());
     }
 
-    public void registerSemaphore(final AbstractSqueakObject semaphore, final long index) {
-        specialObjectsArray.atput0(index, semaphore.isSemaphore() ? semaphore : nil);
+    public void setSemaphore(final long index, final AbstractSqueakObject semaphore) {
+        assert semaphore.isSemaphore() || semaphore == nil;
+        specialObjectsArray.atput0(index, semaphore);
     }
 
     public String imageRelativeFilePathFor(final String fileName) {

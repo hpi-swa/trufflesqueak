@@ -1,17 +1,9 @@
 package de.hpi.swa.graal.squeak.util;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
-import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
@@ -19,134 +11,75 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.process.SignalSemaphoreNode;
 
-public final class InterruptHandlerNode extends Node {
-    private static final int INTERRUPT_CHECKS_EVERY_N_MILLISECONDS = 3;
-    private final SqueakImageContext image;
-    private final boolean disabled;
-    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-    private final ConditionProfile countingProfile = ConditionProfile.createCountingProfile();
-    private final Deque<Integer> semaphoresToSignal = new ArrayDeque<>();
+public abstract class InterruptHandlerNode extends Node {
+    protected final SqueakImageContext image;
+    protected final InterruptHandlerState istate;
 
     @Child private SignalSemaphoreNode signalSemaporeNode;
 
-    private long nextWakeupTick = 0;
-    private boolean interruptPending = false;
-    private boolean disabledTemporarily = false;
-    private boolean pendingFinalizationSignals = false;
-    private volatile boolean shouldTrigger = false;
-
-    public static InterruptHandlerNode create(final SqueakImageContext image, final SqueakConfig config) {
-        return new InterruptHandlerNode(image, config);
+    public static InterruptHandlerNode create(final CompiledCodeObject code) {
+        return InterruptHandlerNodeGen.create(code);
     }
 
-    protected InterruptHandlerNode(final SqueakImageContext image, final SqueakConfig config) {
-        this.image = image;
-
-        disabled = config.disableInterruptHandler();
-        if (disabled) {
-            image.printToStdOut("Interrupt handler disabled...");
-        }
+    protected InterruptHandlerNode(final CompiledCodeObject code) {
+        image = code.image;
+        istate = image.interrupt;
+        signalSemaporeNode = SignalSemaphoreNode.create(code);
     }
 
-    public void initializeSignalSemaphoreNode(final CompiledCodeObject method) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        signalSemaporeNode = insert(SignalSemaphoreNode.create(method));
-    }
+    public abstract void executeTrigger(VirtualFrame frame);
 
-    @TruffleBoundary
-    public void start() {
-        if (disabled) {
-            return;
-        }
-        executor.scheduleWithFixedDelay(new Runnable() {
-            public void run() {
-                shouldTrigger = true;
+    @Specialization
+    protected final void doFullCheck(final VirtualFrame frame) {
+        istate.shouldTrigger = false;
+        if (interruptPending()) {
+            istate.interruptPending = false; // reset interrupt flag
+            final PointersObject interruptSemaphore = istate.getInterruptSemaphore();
+            if (interruptSemaphore != null) {
+                signalSemaporeNode.executeSignal(frame, interruptSemaphore);
             }
-        }, INTERRUPT_CHECKS_EVERY_N_MILLISECONDS, INTERRUPT_CHECKS_EVERY_N_MILLISECONDS, TimeUnit.MILLISECONDS);
-    }
-
-    @TruffleBoundary
-    public void shutdown() {
-        executor.shutdown();
-    }
-
-    public void setInterruptPending() {
-        interruptPending = true;
-    }
-
-    public void setNextWakeupTick(final long msTime) {
-        nextWakeupTick = msTime;
-    }
-
-    public long getNextWakeupTick() {
-        return nextWakeupTick;
-    }
-
-    public boolean disabled() {
-        return disabledTemporarily;
-    }
-
-    public void disable() {
-        disabledTemporarily = true;
-    }
-
-    public void enable() {
-        disabledTemporarily = false;
-    }
-
-    public void setPendingFinalizations() {
-        pendingFinalizationSignals = true;
-    }
-
-    public void sendOrBackwardJumpTrigger(final VirtualFrame frame) {
-        if (disabled) {
-            return; //
         }
-        if (CompilerDirectives.inCompiledCode() && !CompilerDirectives.inCompilationRoot()) {
-            return; // do not trigger in inlined code
+        if (nextWakeUpTickTrigger()) {
+            istate.nextWakeupTick = 0; // reset timer interrupt
+            final PointersObject timerSemaphore = istate.getTimerSemaphore();
+            if (timerSemaphore != null) {
+                signalSemaporeNode.executeSignal(frame, timerSemaphore);
+            }
         }
-        if (disabledTemporarily) {
-            return;
-        }
-        if (countingProfile.profile(!shouldTrigger)) {
-            return;
-        }
-        trigger(frame);
-    }
-
-    public Object trigger(final VirtualFrame frame) {
-        shouldTrigger = false;
-        if (interruptPending) {
-            interruptPending = false; // reset interrupt flag
-            signalSemaporeIfNotNil(frame, SPECIAL_OBJECT_INDEX.TheInterruptSemaphore);
-        }
-        if ((nextWakeupTick != 0) && (System.currentTimeMillis() >= nextWakeupTick)) {
-            nextWakeupTick = 0; // reset timer interrupt
-            signalSemaporeIfNotNil(frame, SPECIAL_OBJECT_INDEX.TheTimerSemaphore);
-        }
-        if (pendingFinalizationSignals) { // signal any pending finalizations
-            pendingFinalizationSignals = false;
+        if (pendingFinalizationSignals()) { // signal any pending finalizations
+            istate.pendingFinalizationSignals = false;
             signalSemaporeIfNotNil(frame, SPECIAL_OBJECT_INDEX.TheFinalizationSemaphore);
         }
-        if (!hasSemaphoresToSignal()) {
-            final Object[] semaphores = ((PointersObject) image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.ExternalObjectsArray)).getPointers();
-            while (!hasSemaphoresToSignal()) {
+        if (hasSemaphoresToSignal()) {
+            final Object[] semaphores = image.externalObjectsArray.getPointers();
+            while (hasSemaphoresToSignal()) {
                 final int semaIndex = nextSemaphoreToSignal();
                 final Object semaphore = semaphores[semaIndex - 1];
                 signalSemaporeIfNotNil(frame, semaphore);
             }
         }
-        return null;
+    }
+
+    protected final boolean interruptPending() {
+        return istate.interruptPending;
+    }
+
+    protected final boolean nextWakeUpTickTrigger() {
+        return (istate.nextWakeupTick != 0) && (System.currentTimeMillis() >= istate.nextWakeupTick);
+    }
+
+    protected final boolean pendingFinalizationSignals() {
+        return istate.pendingFinalizationSignals;
     }
 
     @TruffleBoundary
-    private boolean hasSemaphoresToSignal() {
-        return semaphoresToSignal.isEmpty();
+    protected final boolean hasSemaphoresToSignal() {
+        return !istate.semaphoresToSignal.isEmpty();
     }
 
     @TruffleBoundary
     private int nextSemaphoreToSignal() {
-        return semaphoresToSignal.removeFirst();
+        return istate.semaphoresToSignal.removeFirst();
     }
 
     private void signalSemaporeIfNotNil(final VirtualFrame frame, final int semaphoreIndex) {
@@ -155,26 +88,5 @@ public final class InterruptHandlerNode extends Node {
 
     private void signalSemaporeIfNotNil(final VirtualFrame frame, final Object semaphore) {
         signalSemaporeNode.executeSignal(frame, semaphore);
-    }
-
-    public static int getInterruptChecksEveryNms() {
-        return INTERRUPT_CHECKS_EVERY_N_MILLISECONDS;
-    }
-
-    @TruffleBoundary
-    public void signalSemaphoreWithIndex(final int index) {
-        semaphoresToSignal.addLast(index);
-    }
-
-    /*
-     * TESTING
-     */
-
-    public void reset() {
-        CompilerAsserts.neverPartOfCompilation("Resetting interrupt handler only supported for testing purposes");
-        nextWakeupTick = 0;
-        interruptPending = false;
-        disabledTemporarily = false;
-        pendingFinalizationSignals = false;
     }
 }

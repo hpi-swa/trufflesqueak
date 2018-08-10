@@ -10,13 +10,15 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.NodeCost;
+import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
 import de.hpi.swa.graal.squeak.exceptions.Returns.LocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.nodes.ExecuteContextNodeGen.GetSuccessorNodeGen;
@@ -29,6 +31,7 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushClosureNode;
 import de.hpi.swa.graal.squeak.nodes.context.UpdateInstructionPointerNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
+import de.hpi.swa.graal.squeak.util.InterruptHandlerNode;
 import de.hpi.swa.graal.squeak.util.SqueakBytecodeDecoder;
 
 public abstract class ExecuteContextNode extends AbstractNodeWithCode {
@@ -62,7 +65,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
         CompilerAsserts.compilationConstant(bytecodeNodes.length);
         handleLocalReturnNode = HandleLocalReturnNode.create(code);
         handleNonLocalReturnNode = HandleNonLocalReturnNode.create(code);
-        triggerInterruptHandlerNode = TriggerInterruptHandlerNode.create(code.image);
+        triggerInterruptHandlerNode = TriggerInterruptHandlerNode.create(code);
         materializeContextOnMethodExitNode = MaterializeContextOnMethodExitNode.create(code);
     }
 
@@ -207,29 +210,41 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
         }
     }
 
-    protected abstract static class TriggerInterruptHandlerNode extends AbstractNodeWithImage {
+    @NodeInfo(cost = NodeCost.NONE)
+    protected abstract static class TriggerInterruptHandlerNode extends AbstractNodeWithCode {
         protected static final int BYTECODE_LENGTH_THRESHOLD = 32;
 
-        private static TriggerInterruptHandlerNode create(final SqueakImageContext image) {
-            return TriggerInterruptHandlerNodeGen.create(image);
+        private final ConditionProfile countingProfile = ConditionProfile.createCountingProfile();
+
+        private static TriggerInterruptHandlerNode create(final CompiledCodeObject code) {
+            return TriggerInterruptHandlerNodeGen.create(code);
         }
 
-        protected TriggerInterruptHandlerNode(final SqueakImageContext image) {
-            super(image);
+        protected TriggerInterruptHandlerNode(final CompiledCodeObject code) {
+            super(code);
         }
 
         protected abstract void executeGeneric(VirtualFrame frame, boolean hasPrimitive, int bytecodeLength);
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"!hasPrimitive", "bytecodeLength > BYTECODE_LENGTH_THRESHOLD"})
-        protected final void doTrigger(final VirtualFrame frame, final boolean hasPrimitive, final int bytecodeLength) {
-            image.interrupt.sendOrBackwardJumpTrigger(frame);
+        @Specialization(guards = {"!code.image.interrupt.disabled", "!hasPrimitive", "bytecodeLength > BYTECODE_LENGTH_THRESHOLD"})
+        protected final void doTrigger(final VirtualFrame frame, final boolean hasPrimitive, final int bytecodeLength,
+                        @Cached("create(code)") final InterruptHandlerNode interruptNode) {
+            if (countingProfile.profile(code.image.interrupt.shouldTrigger())) {
+                interruptNode.executeTrigger(frame);
+            }
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"(code.image.interrupt.disabled || hasPrimitive) || bytecodeLength <= BYTECODE_LENGTH_THRESHOLD"})
+        protected final void doNothing(final VirtualFrame frame, final boolean hasPrimitive, final int bytecodeLength) {
+            // do not trigger
         }
 
         @SuppressWarnings("unused")
         @Fallback
-        protected final void doNothing(final VirtualFrame frame, final boolean hasPrimitive, final int bytecodeLength) {
-            // do not trigger
+        protected static final void doFail(final VirtualFrame frame, final boolean hasPrimitive, final int bytecodeLength) {
+            throw new SqueakException("Should not happen");
         }
     }
 

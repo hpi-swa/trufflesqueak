@@ -51,7 +51,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
-import de.hpi.swa.graal.squeak.util.InterruptHandlerNode;
+import de.hpi.swa.graal.squeak.util.InterruptHandlerState;
 
 public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -90,14 +90,16 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             super(method, numArguments);
         }
 
-        protected final void signalAtMilliseconds(final AbstractSqueakObject semaphore, final long msTime) {
-            if (semaphore.isSemaphore()) {
-                code.image.registerSemaphore(semaphore, SPECIAL_OBJECT_INDEX.TheTimerSemaphore);
-                code.image.interrupt.setNextWakeupTick(msTime);
-            } else {
-                code.image.registerSemaphore(code.image.nil, SPECIAL_OBJECT_INDEX.TheTimerSemaphore);
-                code.image.interrupt.setNextWakeupTick(0);
-            }
+        protected final void signalAtMilliseconds(final PointersObject semaphore, final long msTime) {
+            code.image.setSemaphore(SPECIAL_OBJECT_INDEX.TheTimerSemaphore, semaphore);
+            code.image.interrupt.setTimerSemaphore(semaphore);
+            code.image.interrupt.setNextWakeupTick(msTime);
+        }
+
+        protected final void signalAtMilliseconds(final NilObject semaphore, @SuppressWarnings("unused") final long msTime) {
+            code.image.setSemaphore(SPECIAL_OBJECT_INDEX.TheTimerSemaphore, semaphore);
+            code.image.interrupt.setTimerSemaphore(null);
+            code.image.interrupt.setNextWakeupTick(0);
         }
     }
 
@@ -171,7 +173,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         protected final AbstractSqueakObject get(final AbstractSqueakObject receiver, final AbstractSqueakObject semaphore) {
-            code.image.registerSemaphore(semaphore, SPECIAL_OBJECT_INDEX.TheLowSpaceSemaphore);
+            code.image.setSemaphore(SPECIAL_OBJECT_INDEX.TheLowSpaceSemaphore, semaphore);
             return receiver;
         }
     }
@@ -240,8 +242,16 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         @Specialization
-        protected final AbstractSqueakObject get(final AbstractSqueakObject receiver, final AbstractSqueakObject semaphore) {
-            code.image.registerSemaphore(semaphore, SPECIAL_OBJECT_INDEX.TheInterruptSemaphore);
+        protected final AbstractSqueakObject get(final AbstractSqueakObject receiver, final PointersObject semaphore) {
+            code.image.setSemaphore(SPECIAL_OBJECT_INDEX.TheInterruptSemaphore, semaphore);
+            code.image.interrupt.setInterruptSemaphore(semaphore);
+            return receiver;
+        }
+
+        @Specialization
+        protected final AbstractSqueakObject get(final AbstractSqueakObject receiver, final NilObject semaphore) {
+            code.image.setSemaphore(SPECIAL_OBJECT_INDEX.TheInterruptSemaphore, semaphore);
+            code.image.interrupt.setInterruptSemaphore(null);
             return receiver;
         }
     }
@@ -268,8 +278,14 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             super(method, numArguments);
         }
 
+        @Specialization(guards = "semaphore.isSemaphore()")
+        protected final AbstractSqueakObject doSignal(final AbstractSqueakObject receiver, final PointersObject semaphore, final long msTime) {
+            signalAtMilliseconds(semaphore, msTime);
+            return receiver;
+        }
+
         @Specialization
-        protected final AbstractSqueakObject doSignal(final AbstractSqueakObject receiver, final AbstractSqueakObject semaphore, final long msTime) {
+        protected final AbstractSqueakObject doSignal(final AbstractSqueakObject receiver, final NilObject semaphore, final long msTime) {
             signalAtMilliseconds(semaphore, msTime);
             return receiver;
         }
@@ -712,10 +728,16 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             super(method, numArguments);
         }
 
-        @Specialization
-        protected final AbstractSqueakObject doSignal(final AbstractSqueakObject receiver, final AbstractSqueakObject semaphore, final long usecsUTC) {
+        @Specialization(guards = "semaphore.isSemaphore()")
+        protected final AbstractSqueakObject doSignal(final AbstractSqueakObject receiver, final PointersObject semaphore, final long usecsUTC) {
             final long msTime = (usecsUTC - AbstractClockPrimitiveNode.EPOCH_DELTA_MICROSECONDS) / 1000;
             signalAtMilliseconds(semaphore, msTime);
+            return receiver;
+        }
+
+        @Specialization
+        protected final AbstractSqueakObject doSignal(final AbstractSqueakObject receiver, final NilObject semaphore, @SuppressWarnings("unused") final long usecsUTC) {
+            signalAtMilliseconds(semaphore, -1);
             return receiver;
         }
     }
@@ -782,7 +804,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 23: return 0L; // bytes of extra memory to reserve for VM buffers, plugins, etc (stored in image file header).
                 case 24: return 1L; // memory threshold above which shrinking object memory (rw)
                 case 25: return 1L; // memory headroom when growing object memory (rw)
-                case 26: return (long) InterruptHandlerNode.getInterruptChecksEveryNms(); // interruptChecksEveryNms - force an ioProcessEvents every N milliseconds (rw)
+                case 26: return (long) InterruptHandlerState.getInterruptChecksEveryNms(); // interruptChecksEveryNms - force an ioProcessEvents every N milliseconds (rw)
                 case 27: return 0L; // number of times mark loop iterated for current IGC/FGC (read-only) includes ALL marking
                 case 28: return 0L; // number of times sweep loop iterated for current IGC/FGC (read-only)
                 case 29: return 0L; // number of times make forward loop iterated for current IGC/FGC (read-only)

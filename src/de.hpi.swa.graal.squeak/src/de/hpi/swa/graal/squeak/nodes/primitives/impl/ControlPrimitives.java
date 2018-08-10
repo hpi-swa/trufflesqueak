@@ -5,6 +5,7 @@ import java.lang.ref.ReferenceQueue;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -60,6 +61,7 @@ import de.hpi.swa.graal.squeak.nodes.process.SignalSemaphoreNode;
 import de.hpi.swa.graal.squeak.nodes.process.WakeHighestPriorityNode;
 import de.hpi.swa.graal.squeak.nodes.process.YieldProcessNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
+import de.hpi.swa.graal.squeak.util.InterruptHandlerNode;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 
 public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
@@ -938,12 +940,13 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"!code.image.config.disableInterruptHandler()"})
-        protected final AbstractSqueakObject doRelinquish(final VirtualFrame frame, final AbstractSqueakObject receiver, final long timeMicroseconds) {
+        protected static final AbstractSqueakObject doRelinquish(final VirtualFrame frame, final AbstractSqueakObject receiver, final long timeMicroseconds,
+                        @Cached("create(code)") final InterruptHandlerNode interruptNode) {
             /*
              * Perform forced interrupt check, otherwise control flow cannot continue when
              * idleProcess is running.
              */
-            code.image.interrupt.trigger(frame);
+            interruptNode.executeTrigger(frame);
             sleepFor(timeMicroseconds / 1000);
             return receiver;
         }
