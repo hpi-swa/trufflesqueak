@@ -5,6 +5,8 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.NodeCost;
+import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -16,6 +18,7 @@ import de.hpi.swa.graal.squeak.nodes.LookupNodeGen.ExecuteLookupNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 
+@NodeInfo(cost = NodeCost.NONE)
 public abstract class LookupNode extends Node {
     protected static final int LOOKUP_CACHE_SIZE = 3;
 

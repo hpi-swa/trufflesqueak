@@ -10,6 +10,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.NodeCost;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
@@ -81,5 +82,10 @@ public abstract class DispatchNode extends Node {
             createArgumentsNode = insert(CreateArgumentsNode.create());
         }
         return createArgumentsNode;
+    }
+
+    @Override
+    public NodeCost getCost() {
+        return createArgumentsNode == null ? NodeCost.UNINITIALIZED : NodeCost.MONOMORPHIC;
     }
 }
