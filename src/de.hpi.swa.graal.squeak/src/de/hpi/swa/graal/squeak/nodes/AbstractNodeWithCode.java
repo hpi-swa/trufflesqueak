@@ -3,6 +3,7 @@ package de.hpi.swa.graal.squeak.nodes;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 
@@ -25,7 +26,7 @@ public abstract class AbstractNodeWithCode extends Node {
     }
 
     protected final boolean isVirtualized(final VirtualFrame frame) {
-        final Object contextOrMarker = frame.getValue(code.thisContextOrMarkerSlot);
+        final Object contextOrMarker = FrameUtil.getObjectSafe(frame, code.thisContextOrMarkerSlot);
         return !(contextOrMarker instanceof ContextObject) || !((ContextObject) contextOrMarker).isDirty();
     }
 
@@ -35,7 +36,7 @@ public abstract class AbstractNodeWithCode extends Node {
     }
 
     protected final Object getContextOrMarker(final VirtualFrame frame) {
-        return frame.getValue(code.thisContextOrMarkerSlot);
+        return FrameUtil.getObjectSafe(frame, code.thisContextOrMarkerSlot);
     }
 
     protected final ContextObject getContext(final VirtualFrame frame) {
