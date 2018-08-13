@@ -15,6 +15,7 @@ import com.oracle.truffle.api.TruffleOptions;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
+import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.SqueakOptions;
@@ -74,6 +75,7 @@ public final class SqueakImageContext {
     public final NativeObject runWithInSelector = new NativeObject(this);
     public final PointersObject primitiveErrorTable = new PointersObject(this);
     public final PointersObject specialSelectors = new PointersObject(this);
+    @CompilationFinal public ClassObject truffleObjectClass = null;
 
     public final PointersObject specialObjectsArray = new PointersObject(this);
     public final ClassObject metaclass = new ClassObject(this);
@@ -141,6 +143,7 @@ public final class SqueakImageContext {
     @CompilationFinal private NativeObject debugErrorSelector = null; // for testing
     @CompilationFinal private NativeObject simulatePrimitiveArgsSelector = null;
     @CompilationFinal private PointersObject scheduler = null;
+    @CompilationFinal private boolean supportsTruffleObject = false;
 
     public SqueakImageContext(final SqueakLanguage squeakLanguage, final SqueakLanguage.Env environment) {
         language = squeakLanguage;
@@ -244,6 +247,16 @@ public final class SqueakImageContext {
         this.simulatePrimitiveArgsSelector = simulatePrimitiveArgsSelector;
     }
 
+    public ClassObject initializeTruffleObject() {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        truffleObjectClass = new ClassObject(this);
+        return truffleObjectClass;
+    }
+
+    public boolean supportsTruffleObject() {
+        return truffleObjectClass != null;
+    }
+
     public PointersObject getScheduler() {
         if (scheduler == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -275,6 +288,8 @@ public final class SqueakImageContext {
             return wrap((Object[]) obj);
         } else if (obj instanceof DisplayPoint) {
             return wrap((DisplayPoint) obj);
+        } else if (obj instanceof TruffleObject) {
+            return obj; // never wrap TruffleObjects
         }
         throw new SqueakException("Unsupported value to wrap:", obj);
     }

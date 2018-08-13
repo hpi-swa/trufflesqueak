@@ -373,6 +373,9 @@ public final class SqueakImageReaderNode extends RootNode {
         setPrebuiltObject(SPECIAL_OBJECT_INDEX.ClassArray, image.arrayClass);
         setPrebuiltObject(SPECIAL_OBJECT_INDEX.SmalltalkDictionary, image.smalltalk);
         setPrebuiltObject(SPECIAL_OBJECT_INDEX.ClassFloat, image.floatClass);
+        if (specialObjectChunk(SPECIAL_OBJECT_INDEX.ClassTruffleObject).object != NIL_OBJECT_PLACEHOLDER) {
+            setPrebuiltObject(SPECIAL_OBJECT_INDEX.ClassTruffleObject, image.initializeTruffleObject());
+        }
         setPrebuiltObject(SPECIAL_OBJECT_INDEX.ClassMethodContext, image.methodContextClass);
         setPrebuiltObject(SPECIAL_OBJECT_INDEX.ClassPoint, image.pointClass);
         setPrebuiltObject(SPECIAL_OBJECT_INDEX.ClassLargePositiveInteger, image.largePositiveIntegerClass);

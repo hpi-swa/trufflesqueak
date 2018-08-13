@@ -174,6 +174,7 @@ public final class ObjectLayouts {
         public static final int TheTimerSemaphore = 29;
         public static final int TheInterruptSemaphore = 30;
         public static final int FloatProto = 31;
+        public static final int ClassTruffleObject = 32; // reusing unused slot for TruffleObject
         public static final int SelectorCannotInterpret = 34;
         public static final int MethodContextProto = 35;
         public static final int ClassBlockClosure = 36;
