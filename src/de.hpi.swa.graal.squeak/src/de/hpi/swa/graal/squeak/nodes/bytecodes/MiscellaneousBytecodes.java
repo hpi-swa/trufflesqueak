@@ -152,7 +152,7 @@ public final class MiscellaneousBytecodes {
     public static final class ExtendedBytecodes {
 
         public static AbstractBytecodeNode createPopInto(final CompiledCodeObject code, final int index, final int numBytecodes, final int nextByte) {
-            final long variableIndex = variableIndex(nextByte);
+            final int variableIndex = variableIndex(nextByte);
             switch (variableType(nextByte)) {
                 case 0:
                     return new PopIntoReceiverVariableNode(code, index, numBytecodes, variableIndex);
@@ -184,7 +184,7 @@ public final class MiscellaneousBytecodes {
         }
 
         public static AbstractBytecodeNode createStoreInto(final CompiledCodeObject code, final int index, final int numBytecodes, final int nextByte) {
-            final long variableIndex = variableIndex(nextByte);
+            final int variableIndex = variableIndex(nextByte);
             switch (variableType(nextByte)) {
                 case 0:
                     return new StoreIntoReceiverVariableNode(code, index, numBytecodes, variableIndex);

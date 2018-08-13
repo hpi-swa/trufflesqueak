@@ -81,9 +81,9 @@ public final class StoreBytecodes {
 
     private abstract static class AbstractStoreIntoTempNode extends AbstractBytecodeNode {
         @Child protected TemporaryWriteNode storeNode;
-        protected final long tempIndex;
+        protected final int tempIndex;
 
-        private AbstractStoreIntoTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long tempIndex) {
+        private AbstractStoreIntoTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int tempIndex) {
             super(code, index, numBytecodes);
             this.tempIndex = tempIndex;
             this.storeNode = TemporaryWriteNode.create(code, tempIndex);
@@ -152,7 +152,7 @@ public final class StoreBytecodes {
     public static final class PopIntoTemporaryLocationNode extends AbstractStoreIntoTempNode {
         @Child private StackPopNode popNode;
 
-        public PopIntoTemporaryLocationNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long tempIndex) {
+        public PopIntoTemporaryLocationNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int tempIndex) {
             super(code, index, numBytecodes, tempIndex);
             popNode = StackPopNode.create(code);
         }
@@ -224,7 +224,7 @@ public final class StoreBytecodes {
     public static final class StoreIntoTempNode extends AbstractStoreIntoTempNode {
         @Child private StackTopNode topNode;
 
-        public StoreIntoTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long tempIndex) {
+        public StoreIntoTempNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int tempIndex) {
             super(code, index, numBytecodes, tempIndex);
             topNode = StackTopNode.create(code);
         }
