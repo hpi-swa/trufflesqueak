@@ -3,21 +3,14 @@ package de.hpi.swa.graal.squeak.io;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.Image;
 import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.InputEvent;
 import java.awt.image.BufferedImage;
-import java.awt.image.ColorModel;
-import java.awt.image.DataBuffer;
-import java.awt.image.DataBufferInt;
 import java.awt.image.DirectColorModel;
-import java.awt.image.IndexColorModel;
-import java.awt.image.MultiPixelPackedSampleModel;
 import java.awt.image.Raster;
-import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -40,9 +33,7 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
     private static final String DEFAULT_WINDOW_TITLE = "GraalSqueak";
     private static final Dimension MINIMUM_WINDOW_SIZE = new Dimension(200, 150);
     private static final Toolkit TOOLKIT = Toolkit.getDefaultToolkit();
-    @CompilationFinal(dimensions = 1) private static final byte[] BLACK_AND_WHITE = new byte[]{(byte) 255, (byte) 0};
-    @CompilationFinal(dimensions = 1) private static final byte[] ALPHA_COMPONENT = new byte[]{(byte) 0, (byte) 255};
-    private static final ColorModel CURSOR_MODEL = new IndexColorModel(1, 2, BLACK_AND_WHITE, BLACK_AND_WHITE, BLACK_AND_WHITE, ALPHA_COMPONENT);
+    @CompilationFinal(dimensions = 1) private static final int[] CURSOR_COLORS = new int[]{0x00000000, 0xFF0000FF, 0xFFFFFFFF, 0xFF000000};
 
     public final SqueakImageContext image;
     private final JFrame frame = new JFrame(DEFAULT_WINDOW_TITLE);
@@ -283,11 +274,25 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
         if (bestCursorSize.width == 0 || bestCursorSize.height == 0) {
             cursor = Cursor.getDefaultCursor();
         } else {
-            final DataBuffer buf = new DataBufferInt(cursorWords, (SqueakIOConstants.CURSOR_WIDTH * SqueakIOConstants.CURSOR_HEIGHT / 8) * depth);
-            final SampleModel sm = new MultiPixelPackedSampleModel(DataBuffer.TYPE_INT, SqueakIOConstants.CURSOR_WIDTH, SqueakIOConstants.CURSOR_HEIGHT, depth);
-            final WritableRaster raster = Raster.createWritableRaster(sm, buf, null);
-            final Image cursorImage = new BufferedImage(CURSOR_MODEL, raster, false, null);
-            cursor = TOOLKIT.createCustomCursor(cursorImage, new Point(0, 0), "GraalSqueak Cursor");
+            // TODO: Ensure the below works correctly for all cursor and maybe refactor senders.
+            /**
+             * <pre>
+                  mask    cursor  effect
+                  0        0     transparent (underlying pixel shows through)
+                  1        1     opaque black
+                  1        0     opaque white
+                  0        1     invert the underlying pixel
+             * </pre>
+             */
+            final BufferedImage bufferedImage = new BufferedImage(SqueakIOConstants.CURSOR_WIDTH, SqueakIOConstants.CURSOR_HEIGHT, BufferedImage.TYPE_INT_ARGB);
+            for (int y = 0; y < SqueakIOConstants.CURSOR_HEIGHT; y++) {
+                final int word = cursorWords[y];
+                for (int x = 0; x < SqueakIOConstants.CURSOR_WIDTH; x++) {
+                    final int colorIndex = (word >> ((SqueakIOConstants.CURSOR_WIDTH - 1 - x) * 2)) & 3;
+                    bufferedImage.setRGB(x, y, CURSOR_COLORS[colorIndex]);
+                }
+            }
+            cursor = TOOLKIT.createCustomCursor(bufferedImage, new Point(0, 0), "GraalSqueak Cursor");
         }
         canvas.setCursor(cursor);
     }

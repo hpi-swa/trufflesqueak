@@ -10,6 +10,7 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
@@ -178,6 +179,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return (int) (long) receiver.at0(FORM.DEPTH);
         }
 
+        @ExplodeLoop
         private static int[] mergeCursorWithMask(final int[] cursorWords, final int[] maskWords) {
             final int[] words = new int[SqueakIOConstants.CURSOR_HEIGHT];
             int cursorWord;
@@ -185,8 +187,8 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             int bit;
             int merged;
             for (int y = 0; y < SqueakIOConstants.CURSOR_HEIGHT; y++) {
-                cursorWord = (int) (Integer.toUnsignedLong(cursorWords[y]));
-                maskWord = (int) (Integer.toUnsignedLong(maskWords[y]));
+                cursorWord = cursorWords[y];
+                maskWord = maskWords[y];
                 bit = 0x80000000;
                 merged = 0;
                 for (int x = 0; x < SqueakIOConstants.CURSOR_WIDTH; x++) {
