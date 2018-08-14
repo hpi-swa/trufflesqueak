@@ -1,11 +1,13 @@
 package de.hpi.swa.graal.squeak.nodes;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.exceptions.Returns.LocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
@@ -68,6 +70,11 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
     @Specialization(guards = {"!code.isUnwindMarked()"})
     protected final void doNothing(final VirtualFrame frame, final NonLocalReturn nlr) {
         // nothing to do
+    }
+
+    @Fallback
+    protected static final void doFail(final NonLocalReturn nlr) {
+        throw new SqueakException("Should never happend:", nlr);
     }
 
     protected final SqueakNode createTemporaryWriteNode(final int tempIndex) {

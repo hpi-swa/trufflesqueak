@@ -20,6 +20,7 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
@@ -114,6 +115,11 @@ public abstract class ObjectGraphNode extends AbstractNodeWithImage {
             }
         }
         return result;
+    }
+
+    @Fallback
+    protected static final List<AbstractSqueakObject> doFail(final ClassObject classObj, final boolean isSomeInstance) {
+        throw new SqueakException("Unexpected arguments:", classObj, isSomeInstance);
     }
 
     @TruffleBoundary

@@ -1,12 +1,14 @@
 package de.hpi.swa.graal.squeak.nodes;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 
@@ -37,6 +39,11 @@ public abstract class HandlePrimitiveFailedNode extends AbstractNodeWithCode {
     @Specialization(guards = "!followedByExtendedStore(code)")
     protected static final void doNothing(final PrimitiveFailed e) {
         // nothing to do
+    }
+
+    @Fallback
+    protected static final void doFail(final PrimitiveFailed e) {
+        throw new SqueakException("Should never happend:", e);
     }
 
     protected static final boolean followedByExtendedStore(final CompiledCodeObject codeObject) {
