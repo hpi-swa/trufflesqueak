@@ -173,7 +173,7 @@ public final class SqueakImageContext {
         customContext.atput0(CONTEXT.METHOD, lookupResult);
         customContext.atput0(CONTEXT.INSTRUCTION_POINTER, (long) lookupResult.getInitialPC());
         customContext.atput0(CONTEXT.RECEIVER, receiver);
-        customContext.atput0(CONTEXT.STACKPOINTER, 1L);
+        customContext.atput0(CONTEXT.STACKPOINTER, 0L);
         customContext.atput0(CONTEXT.CLOSURE_OR_NIL, nil);
         customContext.setSender(nil);
         // if there were arguments, they would need to be pushed before the temps
