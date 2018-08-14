@@ -1,8 +1,10 @@
 import os
 import argparse
+import shutil
 
 import mx
 import mx_gate
+import mx_sdk
 import mx_unittest
 
 
@@ -185,7 +187,7 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
     if extra_vm_args:
         vm_args += extra_vm_args
 
-    vm_args.append('%s.GraalSqueakMain' % PACKAGE_NAME)
+    vm_args.append('%s.GraalSqueakLauncher' % PACKAGE_NAME)
 
     if parsed_args.receiver and not parsed_args.method:
         parser.error('--method required when --receiver is provided')
@@ -265,7 +267,67 @@ def _get_jacoco_agent_args():
             ','.join([k + '=' + v for k, v in agentOptions.items()])]
 
 
+def _squeak_svm(args):
+    """build GraalSqueak with SubstrateVM"""
+    mx.run_mx(
+        ['--dynamicimports', '/substratevm,/vm', 'build', '--dependencies',
+         'graalsqueak.image'],
+        nonZeroIsFatal=True
+    )
+    shutil.copy(_get_svm_binary_from_graalvm(), _get_svm_binary())
+    print 'GraalSqueak binary now available at "%s".' % _get_svm_binary()
+
+
+def _get_svm_binary():
+    return os.path.join(_suite.dir, 'bin', 'graalsqueak-svm')
+
+
+def _get_svm_binary_from_graalvm():
+    vmdir = os.path.join(mx.suite('truffle').dir, '..', 'vm')
+    return os.path.join(
+        vmdir, 'mxbuild', '-'.join([mx.get_os(), mx.get_arch()]),
+        'graalsqueak.image', 'graalsqueak')
+
+
+_svmsuite = mx.suite('substratevm', fatalIfMissing=False)
+if _svmsuite:
+    _svmsuite.extensions.flag_suitename_map['squeak'] = (
+        'graalsqueak',
+        ['GRAALSQUEAK', 'GRAALSQUEAK-CONFIG', 'GRAALSQUEAK-LAUNCHER'], [])
+
+mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
+    suite=_suite,
+    name='GraalSqueak',
+    short_name='sq',
+    dir_name='squeak',
+    license_files=[],
+    third_party_license_files=[],
+    truffle_jars=[
+        'graalsqueak:GRAALSQUEAK',
+        'graalsqueak:GRAALSQUEAK-CONFIG',
+    ],
+    support_distributions=[
+        'graalsqueak:GRAALSQUEAK_GRAALVM_SUPPORT',
+    ],
+    launcher_configs=[
+        mx_sdk.LanguageLauncherConfig(
+            destination='bin/<exe:graalsqueak>',
+            jar_distributions=[
+                'graalsqueak:GRAALSQUEAK-LAUNCHER',
+                'graalsqueak:GRAALSQUEAK-CONFIG',
+            ],
+            main_class='de.hpi.swa.graal.squeak.launcher.GraalSqueakLauncher',
+            build_args=[
+                '--language:squeak',
+            ]
+        )
+    ],
+))
+
+
 mx.update_commands(_suite, {
     'squeak': [_squeak, '[options]'],
+    'squeak-svm': [_squeak_svm, ''],
 })
+
 mx_gate.add_gate_runner(_suite, _graalsqueak_gate_runner)

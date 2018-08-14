@@ -12,7 +12,7 @@ import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
-import de.hpi.swa.graal.squeak.SqueakLanguage;
+import de.hpi.swa.graal.squeak.config.SqueakConfig;
 import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.instrumentation.CompiledCodeObjectPrinter;
@@ -87,7 +87,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
              * trigger another TTI here which otherwise would cause endless recursion in Truffle
              * debug code.
              */
-            source = Source.newBuilder(CompiledCodeObjectPrinter.getString(this)).mimeType(SqueakLanguage.MIME_TYPE).name(toString()).build();
+            source = Source.newBuilder(CompiledCodeObjectPrinter.getString(this)).mimeType(SqueakConfig.MIME_TYPE).name(toString()).build();
         }
         return source;
     }

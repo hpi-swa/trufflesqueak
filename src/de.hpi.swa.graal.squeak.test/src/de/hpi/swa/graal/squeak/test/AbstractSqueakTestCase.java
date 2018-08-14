@@ -8,6 +8,7 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
+import de.hpi.swa.graal.squeak.config.SqueakConfig;
 import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonVirtualReturn;
@@ -111,9 +112,9 @@ public abstract class AbstractSqueakTestCase {
     }
 
     protected static void ensureImageContext(final String imagePath) {
-        final Context context = Context.newBuilder().allowIO(true).arguments(SqueakLanguage.ID, new String[]{imagePath, "--testing"}).build();
+        final Context context = Context.newBuilder().allowIO(true).arguments(SqueakConfig.ID, new String[]{imagePath, "--testing"}).build();
         context.enter();
-        context.initialize(SqueakLanguage.ID);
+        context.initialize(SqueakConfig.ID);
         image = SqueakLanguage.getContext();
     }
 }

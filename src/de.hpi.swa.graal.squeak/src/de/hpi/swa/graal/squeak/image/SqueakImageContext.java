@@ -1,7 +1,5 @@
 package de.hpi.swa.graal.squeak.image;
 
-import java.awt.Dimension;
-import java.awt.Point;
 import java.io.File;
 import java.io.PrintWriter;
 import java.math.BigInteger;
@@ -11,13 +9,16 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.TruffleOptions;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
+import de.hpi.swa.graal.squeak.config.SqueakConfig;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.graal.squeak.io.DisplayPoint;
 import de.hpi.swa.graal.squeak.io.SqueakDisplay;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
@@ -37,7 +38,6 @@ import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerState;
 import de.hpi.swa.graal.squeak.util.OSDetector;
-import de.hpi.swa.graal.squeak.util.SqueakConfig;
 
 public final class SqueakImageContext {
 
@@ -132,7 +132,7 @@ public final class SqueakImageContext {
     public final InterruptHandlerState interrupt;
     public final long startUpMillis = System.currentTimeMillis();
 
-    private final SqueakDisplay display;
+    public final SqueakDisplay display;
     private final ValueProfile displayProfile = ValueProfile.createClassProfile();
 
     public static final byte[] AS_SYMBOL_SELECTOR_NAME = "asSymbol".getBytes(); // for testing
@@ -260,10 +260,8 @@ public final class SqueakImageContext {
             return wrap((byte[]) obj);
         } else if (obj instanceof Object[]) {
             return wrap((Object[]) obj);
-        } else if (obj instanceof Point) {
-            return wrap((Point) obj);
-        } else if (obj instanceof Dimension) {
-            return wrap((Dimension) obj);
+        } else if (obj instanceof DisplayPoint) {
+            return wrap((DisplayPoint) obj);
         }
         throw new SqueakException("Unsupported value to wrap:", obj);
     }
@@ -308,12 +306,8 @@ public final class SqueakImageContext {
         return newList(wrappedElements);
     }
 
-    public PointersObject wrap(final Point point) {
-        return newPoint((long) point.getX(), (long) point.getY());
-    }
-
-    public PointersObject wrap(final Dimension dimension) {
-        return newPoint((long) dimension.getWidth(), (long) dimension.getHeight());
+    public PointersObject wrap(final DisplayPoint point) {
+        return newPoint((long) point.getWidth(), (long) point.getHeight());
     }
 
     public PointersObject newList(final Object[] elements) {
@@ -335,6 +329,10 @@ public final class SqueakImageContext {
     public void setSemaphore(final long index, final AbstractSqueakObject semaphore) {
         assert semaphore.isSemaphore() || semaphore == nil;
         specialObjectsArray.atput0(index, semaphore);
+    }
+
+    public static boolean isAOT() {
+        return TruffleOptions.AOT;
     }
 
     public String imageRelativeFilePathFor(final String fileName) {

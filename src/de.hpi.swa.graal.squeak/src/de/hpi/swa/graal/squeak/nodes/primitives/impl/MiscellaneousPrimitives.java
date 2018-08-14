@@ -1,13 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 
-import java.awt.GraphicsEnvironment;
-import java.awt.Toolkit;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.StringSelection;
-import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.File;
-import java.io.IOException;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -23,7 +16,7 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.graal.squeak.SqueakLanguage;
+import de.hpi.swa.graal.squeak.config.SqueakConfig;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.SimulationPrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
@@ -308,57 +301,21 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(index = 141)
     protected abstract static class PrimClipboardTextNode extends AbstractPrimitiveNode {
-        protected final boolean isHeadless = GraphicsEnvironment.isHeadless();
-        private String headlessClipboardContents = "";
 
         protected PrimClipboardTextNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "!isHeadless")
+        @Specialization
         protected final Object getClipboardText(final Object receiver, final NotProvided value) {
-            return code.image.wrap(getClipboardString());
+            return code.image.wrap(code.image.display.getClipboardData());
         }
 
-        @SuppressWarnings("unused")
-        @Specialization(guards = "isHeadless")
-        protected final Object getClipboardTextHeadless(final Object receiver, final NotProvided value) {
-            return code.image.wrap(headlessClipboardContents);
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"!isHeadless", "value.isByteType()"})
-        protected static final Object setClipboardText(final Object receiver, final NativeObject value) {
-            setClipboardString(value.asString());
+        @Specialization(guards = {"value.isByteType()"})
+        protected final Object setClipboardText(@SuppressWarnings("unused") final Object receiver, final NativeObject value) {
+            code.image.display.setClipboardData(value.asString());
             return value;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"isHeadless", "value.isByteType()"})
-        protected final Object setClipboardTextHeadless(final Object receiver, final NativeObject value) {
-            headlessClipboardContents = value.asString();
-            return value;
-        }
-
-        @TruffleBoundary
-        private static void setClipboardString(final String text) {
-            final StringSelection selection = new StringSelection(text);
-            getClipboard().setContents(selection, selection);
-        }
-
-        @TruffleBoundary
-        private static String getClipboardString() {
-            try {
-                return (String) getClipboard().getData(DataFlavor.stringFlavor);
-            } catch (UnsupportedFlavorException | IOException | IllegalStateException e) {
-                return "";
-            }
-        }
-
-        @TruffleBoundary
-        private static Clipboard getClipboard() {
-            return Toolkit.getDefaultToolkit().getSystemClipboard();
         }
     }
 
@@ -557,7 +514,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 1005:  // window system name
                     return code.image.wrap("Aqua");
                 case 1006:  // vm build id
-                    return code.image.wrap(SqueakLanguage.NAME + " on " + Truffle.getRuntime().getName());
+                    return code.image.wrap(SqueakConfig.NAME + " on " + Truffle.getRuntime().getName());
                 // case 1007: // Interpreter class (Cog VM only)
                 // case 1008: // Cogit class (Cog VM only)
                 // case 1009: // Platform source version (Cog VM only?)

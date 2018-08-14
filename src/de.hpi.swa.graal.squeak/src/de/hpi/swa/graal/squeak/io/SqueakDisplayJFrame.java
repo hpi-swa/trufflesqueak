@@ -3,8 +3,13 @@ package de.hpi.swa.graal.squeak.io;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.GraphicsEnvironment;
 import java.awt.Point;
 import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.InputEvent;
@@ -12,6 +17,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DirectColorModel;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
+import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
@@ -200,8 +206,9 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
     }
 
     @Override
-    public Dimension getSize() {
-        return canvas.getSize();
+    public DisplayPoint getSize() {
+        final Dimension size = frame.getSize();
+        return new DisplayPoint(size.getWidth(), size.getHeight());
     }
 
     @Override
@@ -242,8 +249,9 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
     }
 
     @Override
-    public Point getLastMousePosition() {
-        return mouse.getPosition();
+    public DisplayPoint getLastMousePosition() {
+        final Point position = mouse.getPosition();
+        return new DisplayPoint(position.getX(), position.getY());
     }
 
     @Override
@@ -259,6 +267,10 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
     @Override
     public int keyboardNext() {
         return keyboard.nextKey();
+    }
+
+    public static boolean environmentIsHeadless() {
+        return GraphicsEnvironment.isHeadless();
     }
 
     @Override
@@ -345,5 +357,31 @@ public final class SqueakDisplayJFrame extends SqueakDisplay {
     public void setInputSemaphoreIndex(final int interruptSemaphoreIndex) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         this.inputSemaphoreIndex = interruptSemaphoreIndex;
+    }
+
+    @Override
+    public String getClipboardData() {
+        String text;
+        try {
+            text = (String) getClipboard().getData(DataFlavor.stringFlavor);
+        } catch (UnsupportedFlavorException | IOException | IllegalStateException e) {
+            text = "";
+        }
+        return text;
+    }
+
+    private static Clipboard getClipboard() {
+        return Toolkit.getDefaultToolkit().getSystemClipboard();
+    }
+
+    @Override
+    public void setClipboardData(final String text) {
+        final StringSelection selection = new StringSelection(text);
+        getClipboard().setContents(selection, selection);
+    }
+
+    @Override
+    public void beep() {
+        Toolkit.getDefaultToolkit().beep();
     }
 }

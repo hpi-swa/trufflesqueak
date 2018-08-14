@@ -36,7 +36,7 @@ It is recommended to use [Eclipse Oxygen][eclipse_oxygen] with the
    already cloned into the parent directory of your GraalSqueak checkout during
    the build process.
 3. Import all projects from the `graalsqueak` repository.
-4. Launch [`GraalSqueakMain`][graalsqueakmain] to start GraalSqueak.
+4. Launch [`GraalSqueakLauncher`][graalsqueaklauncher] to start GraalSqueak.
 
 Run `mx --help` to list all commands that may help you develop GraalSqueak.
 
@@ -67,7 +67,7 @@ Please [report any issues here on GitHub][issues] and open
 [eclipse_oxygen]: https://www.eclipse.org/oxygen/
 [graal]: https://github.com/oracle/graal
 [graalsqueak]: bin/graalsqueak
-[graalsqueakmain]: src/de.hpi.swa.graal.squeak/src/de/hpi/swa/graal/squeak/GraalSqueakMain.java
+[graalsqueaklauncher]: src/de.hpi.swa.graal.squeak.launcher/src/de/hpi/swa/graal/squeak/launcher/GraalSqueakLauncher.java
 [graalsqueak_image]: https://github.com/hpi-swa-lab/graalsqueak/releases/latest
 [graalvm]: http://www.graalvm.org/
 [graalvm_download]: http://www.graalvm.org/downloads/

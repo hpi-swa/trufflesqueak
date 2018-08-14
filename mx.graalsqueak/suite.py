@@ -1,5 +1,5 @@
 suite = {
-    "mxversion": "5.179.5",
+    "mxversion": "5.180.2",
     "name": "graalsqueak",
     "versionConflictResolution": "latest",
 
@@ -22,16 +22,42 @@ suite = {
             "subDir": "src",
             "sourceDirs": ["src"],
             "dependencies": [
+                "graalsqueak:GRAALSQUEAK-CONFIG",
                 "truffle:TRUFFLE_API",
                 "truffle:TRUFFLE_DSL_PROCESSOR",
-                "sdk:GRAAL_SDK",
-                "sdk:LAUNCHER_COMMON",
             ],
             "checkstyle": "de.hpi.swa.graal.squeak",
             "checkstyleVersion": "8.8",
             "jacoco": "include",
             "javaCompliance": "1.8",
             "annotationProcessors": ["truffle:TRUFFLE_DSL_PROCESSOR"],
+            "workingSets": "GraalSqueak",
+        },
+        "de.hpi.swa.graal.squeak.launcher": {
+            "subDir": "src",
+            "sourceDirs": ["src"],
+            "dependencies": [
+                "graalsqueak:GRAALSQUEAK-CONFIG",
+                "sdk:GRAAL_SDK",
+                "sdk:LAUNCHER_COMMON",
+                "truffle:TRUFFLE_API",
+            ],
+            "checkstyle": "de.hpi.swa.graal.squeak",
+            "checkstyleVersion": "8.8",
+            "jacoco": "include",
+            "javaCompliance": "1.8",
+            "workingSets": "GraalSqueak",
+        },
+        "de.hpi.swa.graal.squeak.config": {
+            "subDir": "src",
+            "sourceDirs": ["src"],
+            "dependencies": [
+                "truffle:TRUFFLE_API",
+            ],
+            "checkstyle": "de.hpi.swa.graal.squeak",
+            "checkstyleVersion": "8.8",
+            "jacoco": "include",
+            "javaCompliance": "1.8",
             "workingSets": "GraalSqueak",
         },
         "de.hpi.swa.graal.squeak.test": {
@@ -60,12 +86,47 @@ suite = {
                 "de.hpi.swa.graal.squeak",
             ],
             "distDependencies": [
+                "GRAALSQUEAK-CONFIG",
                 "truffle:TRUFFLE_API",
                 "truffle:TRUFFLE_DSL_PROCESSOR",
-                "sdk:LAUNCHER_COMMON",
             ],
             "exclude": ["mx:JUNIT"],
             "sourcesPath": "graalsqueak.src.zip",
+        },
+
+        "GRAALSQUEAK-CONFIG": {
+            "dependencies": [
+                "de.hpi.swa.graal.squeak.config",
+            ],
+            "distDependencies": [
+                "truffle:TRUFFLE_API",
+            ],
+            "path": "graalsqueak-config.jar",
+            "sourcesPath": "graalsqueak-config.src.zip",
+        },
+
+        "GRAALSQUEAK-LAUNCHER": {
+            "path": "graalsqueak-launcher.jar",
+            "dependencies": [
+                "de.hpi.swa.graal.squeak.launcher",
+            ],
+            "distDependencies": [
+                "GRAALSQUEAK-CONFIG",
+                "sdk:GRAAL_SDK",
+                "sdk:LAUNCHER_COMMON",
+            ],
+            "sourcesPath": "graalsqueak-launcher.src.zip",
+        },
+
+        "GRAALSQUEAK_GRAALVM_SUPPORT": {
+            "native": True,
+            "platformDependent": True,
+            "description" : "GraalSqueak support distribution for the GraalVM",
+            "layout": {
+                "./": [
+                    "file:mx.graalsqueak/native-image.properties",
+                ],
+            }
         },
 
         "GRAALSQUEAK_TEST": {

@@ -1,4 +1,4 @@
-package de.hpi.swa.graal.squeak.util;
+package de.hpi.swa.graal.squeak.config;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -8,6 +8,11 @@ import java.util.List;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
 public final class SqueakConfig {
+    public static final String ID = "squeaksmalltalk";
+    public static final String NAME = "Squeak/Smalltalk";
+    public static final String MIME_TYPE = "application/x-squeak-smalltalk";
+    public static final String VERSION = "0.1";
+
     private final String imagePath;
     private final String imageDirectory;
     private final boolean verbose;
@@ -21,12 +26,20 @@ public final class SqueakConfig {
     private final List<String> unrecognized = new ArrayList<>();
 
     @SuppressWarnings("hiding")
-    public SqueakConfig(final String[] args) {
-        assert args.length > 0;
-        final File imageFile = new File(args[0].trim());
-        final File parentFile = imageFile.getParentFile();
-        this.imagePath = imageFile.getAbsolutePath();
-        this.imageDirectory = parentFile == null ? null : parentFile.getAbsolutePath();
+    public SqueakConfig(final String[] arguments) {
+        assert arguments.length >= 1;
+        final String firstArgument = arguments[0];
+        if (firstArgument.startsWith("--")) { // `--help` or other option requested
+            unrecognized.add(firstArgument);
+            this.imagePath = null;
+            this.imageDirectory = null;
+        } else {
+            final File imageFile = new File(firstArgument.trim());
+            final File parentFile = imageFile.getParentFile();
+            this.imagePath = imageFile.getAbsolutePath();
+            this.imageDirectory = parentFile == null ? null : parentFile.getAbsolutePath();
+        }
+
         boolean verbose = false;
         boolean tracing = false;
         boolean disableInterrupts = false;
@@ -35,8 +48,8 @@ public final class SqueakConfig {
         String selector = null;
         String[] restArgs = new String[]{};
 
-        for (int i = 1; i < args.length; i++) {
-            switch (args[i]) {
+        outerloop: for (int i = 1; i < arguments.length; i++) {
+            switch (arguments[i]) {
                 case "--verbose":
                 case "-v":
                     verbose = true;
@@ -54,19 +67,18 @@ public final class SqueakConfig {
                     break;
                 case "--receiver":
                 case "-r":
-                    receiver = args[++i];
+                    receiver = arguments[++i];
                     break;
                 case "--method":
                 case "-m":
-                    selector = args[++i];
+                    selector = arguments[++i];
                     break;
                 case "--":
                 case "--args":
-                    restArgs = Arrays.copyOfRange(args, i + 1, args.length);
-                    i = args.length;
-                    break;
+                    restArgs = Arrays.copyOfRange(arguments, i + 1, arguments.length);
+                    break outerloop;
                 default:
-                    unrecognized.add(args[i]);
+                    unrecognized.add(arguments[i]);
                     break;
             }
         }

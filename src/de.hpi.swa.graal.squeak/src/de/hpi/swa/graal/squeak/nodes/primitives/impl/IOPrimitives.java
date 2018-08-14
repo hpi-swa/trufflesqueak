@@ -1,7 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 
-import java.awt.AWTError;
-import java.awt.Toolkit;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -617,11 +615,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final AbstractSqueakObject doBeep(final AbstractSqueakObject receiver) {
-            try {
-                Toolkit.getDefaultToolkit().beep();
-            } catch (AWTError e) {
-                code.image.printToStdErr("BEEP (unable to find default AWT Toolkit).");
-            }
+            code.image.display.beep();
             return receiver;
         }
     }

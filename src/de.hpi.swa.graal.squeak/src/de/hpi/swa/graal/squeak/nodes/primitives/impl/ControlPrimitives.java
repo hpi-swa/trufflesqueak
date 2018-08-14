@@ -421,7 +421,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doBytesLeft(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return code.image.wrap(Runtime.getRuntime().freeMemory());
+            return code.image.wrap(MiscUtils.runtimeFreeMemory());
         }
     }
 

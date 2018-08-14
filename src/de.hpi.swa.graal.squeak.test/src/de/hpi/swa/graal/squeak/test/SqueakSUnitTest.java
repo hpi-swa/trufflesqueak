@@ -21,8 +21,8 @@ import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 
-import de.hpi.swa.graal.squeak.GraalSqueakMain;
 import de.hpi.swa.graal.squeak.SqueakLanguage;
+import de.hpi.swa.graal.squeak.config.SqueakConfig;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageReaderNode;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
@@ -175,7 +175,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
         final String imagePath = getPathToTestImage();
         ensureImageContext(imagePath);
         image.getOutput().println();
-        image.getOutput().println("== Running " + SqueakLanguage.NAME + " SUnit Tests on " + GraalSqueakMain.getRuntimeName() + " ==");
+        image.getOutput().println("== Running " + SqueakConfig.NAME + " SUnit Tests on " + SqueakLanguage.getRuntimeName() + " ==");
         image.getOutput().println("Loading test image at " + imagePath + "...");
         final FileInputStream inputStream;
         try {

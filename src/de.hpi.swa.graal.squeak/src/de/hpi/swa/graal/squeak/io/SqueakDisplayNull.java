@@ -1,13 +1,11 @@
 package de.hpi.swa.graal.squeak.io;
 
-import java.awt.Dimension;
-import java.awt.Point;
-
 import de.hpi.swa.graal.squeak.model.PointersObject;
 
 public final class SqueakDisplayNull extends SqueakDisplay {
-    private static final Dimension DEFAULT_DIMENSION = new Dimension(1024, 768);
-    private static final Point NULL_POINT = new Point(0, 0);
+    private static final DisplayPoint DEFAULT_DIMENSION = new DisplayPoint(1024, 768);
+    private static final DisplayPoint NULL_POINT = new DisplayPoint(0, 0);
+    private String clipboardData = "";
 
     @Override
     public void forceRect(final int left, final int right, final int top, final int bottom) {
@@ -15,7 +13,7 @@ public final class SqueakDisplayNull extends SqueakDisplay {
     }
 
     @Override
-    public Dimension getSize() {
+    public DisplayPoint getSize() {
         return DEFAULT_DIMENSION;
     }
 
@@ -45,7 +43,7 @@ public final class SqueakDisplayNull extends SqueakDisplay {
     }
 
     @Override
-    public Point getLastMousePosition() {
+    public DisplayPoint getLastMousePosition() {
         return NULL_POINT;
     }
 
@@ -101,6 +99,21 @@ public final class SqueakDisplayNull extends SqueakDisplay {
 
     @Override
     public void setInputSemaphoreIndex(final int interruptSemaphoreIndex) {
+        // ignore
+    }
+
+    @Override
+    public String getClipboardData() {
+        return clipboardData;
+    }
+
+    @Override
+    public void setClipboardData(final String text) {
+        clipboardData = text;
+    }
+
+    @Override
+    public void beep() {
         // ignore
     }
 }
