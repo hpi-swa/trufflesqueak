@@ -88,6 +88,8 @@ public abstract class FillInNode extends Node {
         obj.setStorage(stringBytes);
         if (image.getAsSymbolSelector() == null && Arrays.equals(SqueakImageContext.AS_SYMBOL_SELECTOR_NAME, stringBytes)) {
             image.setAsSymbolSelector(obj);
+        } else if (image.getDebugErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_ERROR_SELECTOR_NAME, stringBytes)) {
+            image.setDebugErrorSelector(obj);
         } else if (image.getSimulatePrimitiveArgsSelector() == null && Arrays.equals(SimulationPrimitiveNode.SIMULATE_PRIMITIVE_SELECTOR, stringBytes)) {
             image.setSimulatePrimitiveArgsSelector(obj);
         }

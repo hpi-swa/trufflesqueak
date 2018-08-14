@@ -35,19 +35,21 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
 
     @Specialization(guards = {"!image.config.isTesting()", "!isDoesNotUnderstandNode.execute(lookupResult)"})
     protected final Object doDispatch(final VirtualFrame frame, @SuppressWarnings("unused") final NativeObject selector, final CompiledMethodObject lookupResult,
-                    @SuppressWarnings("unused") final ClassObject rcvrClass, final Object[] rcvrAndArgs,
-                    final Object contextOrMarker) {
+                    @SuppressWarnings("unused") final ClassObject rcvrClass, final Object[] rcvrAndArgs, final Object contextOrMarker) {
         return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndArgs, contextOrMarker);
     }
 
-    @Specialization(guards = {"image.config.isTesting()", "!isDoesNotUnderstandNode.execute(lookupResult)"})
+    @Specialization(guards = {"image.config.isTesting()", "selector != image.getDebugErrorSelector()", "!isDoesNotUnderstandNode.execute(lookupResult)"})
     protected final Object doDispatchTesting(final VirtualFrame frame, @SuppressWarnings("unused") final NativeObject selector, final CompiledMethodObject lookupResult,
-                    @SuppressWarnings("unused") final ClassObject rcvrClass, final Object[] rcvrAndArgs,
-                    final Object contextOrMarker) {
-        if ("UnhandledError>>defaultAction".equals(lookupResult.toString())) {
-            throw new SqueakException("Debugger detected when testing. Failing...");
-        }
+                    @SuppressWarnings("unused") final ClassObject rcvrClass, final Object[] rcvrAndArgs, final Object contextOrMarker) {
         return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndArgs, contextOrMarker);
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = {"image.config.isTesting()", "selector == image.getDebugErrorSelector()"})
+    protected static final Object doDispatchTestingDebugError(final VirtualFrame frame, final NativeObject selector, final CompiledMethodObject lookupResult,
+                    final ClassObject rcvrClass, final Object[] rcvrAndArgs, final Object contextOrMarker) {
+        throw new SqueakException("Debugger detected during testing. Failing...");
     }
 
     @Specialization(guards = {"isDoesNotUnderstandNode.execute(lookupResult)"})

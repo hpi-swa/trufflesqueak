@@ -137,6 +137,8 @@ public final class SqueakImageContext {
 
     public static final byte[] AS_SYMBOL_SELECTOR_NAME = "asSymbol".getBytes(); // for testing
     @CompilationFinal private NativeObject asSymbolSelector = null; // for testing
+    public static final byte[] DEBUG_ERROR_SELECTOR_NAME = "debugError:".getBytes(); // for testing
+    @CompilationFinal private NativeObject debugErrorSelector = null; // for testing
     @CompilationFinal private NativeObject simulatePrimitiveArgsSelector = null;
     @CompilationFinal private PointersObject scheduler = null;
 
@@ -209,6 +211,15 @@ public final class SqueakImageContext {
     public void setAsSymbolSelector(final NativeObject asSymbolSelector) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         this.asSymbolSelector = asSymbolSelector;
+    }
+
+    public NativeObject getDebugErrorSelector() {
+        return debugErrorSelector;
+    }
+
+    public void setDebugErrorSelector(final NativeObject debugErrorSelector) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        this.debugErrorSelector = debugErrorSelector;
     }
 
     public NativeObject getSimulatePrimitiveArgsSelector() {
