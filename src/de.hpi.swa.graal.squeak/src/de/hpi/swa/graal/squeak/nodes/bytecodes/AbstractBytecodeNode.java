@@ -44,7 +44,7 @@ public abstract class AbstractBytecodeNode extends SqueakNodeWithCode {
         return getSuccessorIndex();
     }
 
-    public abstract void executeVoid(VirtualFrame frame);
+    protected abstract void executeVoid(VirtualFrame frame);
 
     @Fallback
     protected final void doFail() {

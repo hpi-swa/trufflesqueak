@@ -139,7 +139,7 @@ public final class MiscellaneousBytecodes {
         }
 
         @Override
-        public void executeVoid(final VirtualFrame frame) {
+        protected void executeVoid(final VirtualFrame frame) {
             pushNode.executeWrite(frame, topNode.executeRead(frame));
         }
 
@@ -217,7 +217,7 @@ public final class MiscellaneousBytecodes {
         }
 
         @Override
-        public void executeVoid(final VirtualFrame frame) {
+        protected void executeVoid(final VirtualFrame frame) {
             popNode.executeRead(frame);
         }
 
@@ -236,7 +236,7 @@ public final class MiscellaneousBytecodes {
         }
 
         @Override
-        public void executeVoid(final VirtualFrame frame) {
+        protected void executeVoid(final VirtualFrame frame) {
             throw new SqueakException("Unknown/uninterpreted bytecode:", bytecode);
         }
 

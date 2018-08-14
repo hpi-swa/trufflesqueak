@@ -4,9 +4,9 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
@@ -15,7 +15,6 @@ import de.hpi.swa.graal.squeak.nodes.EnterCodeNode;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.GetCompiledMethodNode;
-import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodesFactory.PushClosureNodeGen;
 import de.hpi.swa.graal.squeak.nodes.context.LiteralConstantNode;
 import de.hpi.swa.graal.squeak.nodes.context.MethodLiteralNode;
 import de.hpi.swa.graal.squeak.nodes.context.ObjectAtNode;
@@ -49,7 +48,7 @@ public final class PushBytecodes {
         }
 
         @Override
-        public void executeVoid(final VirtualFrame frame) {
+        protected void executeVoid(final VirtualFrame frame) {
             pushNode.executeWrite(frame, getContextNode.executeGet(frame));
         }
 
@@ -59,7 +58,7 @@ public final class PushBytecodes {
         }
     }
 
-    public abstract static class PushClosureNode extends AbstractPushNode {
+    public static final class PushClosureNode extends AbstractPushNode {
         protected final int blockSize;
         protected final int numArgs;
         protected final int numCopied;
@@ -73,7 +72,7 @@ public final class PushBytecodes {
         @CompilationFinal private RootCallTarget blockCallTarget;
 
         public static PushClosureNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int i, final int j, final int k) {
-            return PushClosureNodeGen.create(code, index, numBytecodes, i, j, k);
+            return new PushClosureNode(code, index, numBytecodes, i, j, k);
         }
 
         protected PushClosureNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int i, final int j, final int k) {
@@ -95,24 +94,19 @@ public final class PushBytecodes {
             return block;
         }
 
-        public final int getBockSize() {
+        public int getBockSize() {
             return blockSize;
         }
 
-        private int getSuccessorIndexWithBlockSize() {
-            return index + numBytecodes + blockSize;
+        @Override
+        public int executeInt(final VirtualFrame frame) {
+            pushNode.executeWrite(frame, createClosure(frame));
+            return getSuccessorIndex() + blockSize;
         }
 
-        @Specialization(guards = "isVirtualized(frame)")
-        protected final int doPushVirtualized(final VirtualFrame frame) {
-            pushNode.executeWrite(frame, createClosure(frame));
-            return getSuccessorIndexWithBlockSize();
-        }
-
-        @Specialization(guards = "!isVirtualized(frame)")
-        protected final int doPush(final VirtualFrame frame) {
-            pushNode.executeWrite(frame, createClosure(frame));
-            return getSuccessorIndexWithBlockSize();
+        @Override
+        protected void executeVoid(final VirtualFrame frame) {
+            throw new SqueakException("This should not be called.");
         }
 
         private BlockClosureObject createClosure(final VirtualFrame frame) {
@@ -123,7 +117,7 @@ public final class PushBytecodes {
         }
 
         @Override
-        public final String toString() {
+        public String toString() {
             final int start = index + numBytecodes;
             final int end = start + blockSize;
             return "closureNumCopied: " + numCopied + " numArgs: " + numArgs + " bytes " + start + " to " + end;
@@ -139,7 +133,7 @@ public final class PushBytecodes {
         }
 
         @Override
-        public void executeVoid(final VirtualFrame frame) {
+        protected void executeVoid(final VirtualFrame frame) {
             pushNode.executeWrite(frame, constant);
         }
 
@@ -160,7 +154,7 @@ public final class PushBytecodes {
         }
 
         @Override
-        public void executeVoid(final VirtualFrame frame) {
+        protected void executeVoid(final VirtualFrame frame) {
             pushNode.executeWrite(frame, literalNode.executeRead(frame));
         }
 
@@ -181,7 +175,7 @@ public final class PushBytecodes {
         }
 
         @Override
-        public void executeVoid(final VirtualFrame frame) {
+        protected void executeVoid(final VirtualFrame frame) {
             pushNode.executeWrite(frame, valueNode.executeGeneric(frame));
         }
 
@@ -202,7 +196,7 @@ public final class PushBytecodes {
         }
 
         @Override
-        public void executeVoid(final VirtualFrame frame) {
+        protected void executeVoid(final VirtualFrame frame) {
             if (popNReversedNode != null) {
                 pushNode.executeWrite(frame, code.image.newList((Object[]) popNReversedNode.executeRead(frame)));
             } else {
@@ -226,7 +220,7 @@ public final class PushBytecodes {
         }
 
         @Override
-        public void executeVoid(final VirtualFrame frame) {
+        protected void executeVoid(final VirtualFrame frame) {
             pushNode.executeWrite(frame, receiverNode.executeRead(frame));
         }
 
@@ -247,7 +241,7 @@ public final class PushBytecodes {
         }
 
         @Override
-        public void executeVoid(final VirtualFrame frame) {
+        protected void executeVoid(final VirtualFrame frame) {
             pushNode.executeWrite(frame, fetchNode.executeGeneric(frame));
         }
 
@@ -270,7 +264,7 @@ public final class PushBytecodes {
         }
 
         @Override
-        public void executeVoid(final VirtualFrame frame) {
+        protected void executeVoid(final VirtualFrame frame) {
             pushNode.executeWrite(frame, remoteTempNode.executeGeneric(frame));
         }
 
@@ -293,7 +287,7 @@ public final class PushBytecodes {
         }
 
         @Override
-        public void executeVoid(final VirtualFrame frame) {
+        protected void executeVoid(final VirtualFrame frame) {
             pushNode.executeWrite(frame, tempNode.executeRead(frame));
         }
 
