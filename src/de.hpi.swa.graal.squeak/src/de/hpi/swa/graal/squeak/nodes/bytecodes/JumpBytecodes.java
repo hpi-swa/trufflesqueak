@@ -17,10 +17,11 @@ import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 
 public final class JumpBytecodes {
 
-    public static final class ConditionalJumpNode extends UnconditionalJumpNode {
+    public static final class ConditionalJumpNode extends AbstractBytecodeNode {
         public static final int FALSE_SUCCESSOR = 0;
         public static final int TRUE_SUCCESSOR = 1;
 
+        private final int offset;
         private final boolean isIfTrue;
         private final ConditionProfile conditionProfile = ConditionProfile.createCountingProfile();
 
@@ -28,17 +29,24 @@ public final class JumpBytecodes {
         @Child private HandleConditionResultNode handleConditionResultNode;
 
         public ConditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode) {
-            super(code, index, numBytecodes, bytecode);
+            super(code, index, numBytecodes);
+            offset = (bytecode & 7) + 1;
             isIfTrue = false;
             popNode = StackPopNode.create(code);
             handleConditionResultNode = HandleConditionResultNode.create(code);
         }
 
         public ConditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode, final int parameter, final boolean condition) {
-            super(code, index, numBytecodes, bytecode, parameter);
+            super(code, index, numBytecodes);
+            offset = ((bytecode & 3) << 8) + parameter;
             isIfTrue = condition;
             popNode = StackPopNode.create(code);
             handleConditionResultNode = HandleConditionResultNode.create(code);
+        }
+
+        @Override
+        public void executeVoid(final VirtualFrame frame) {
+            // nothing to do
         }
 
         public boolean executeCondition(final VirtualFrame frame) {
@@ -46,18 +54,8 @@ public final class JumpBytecodes {
             return conditionProfile.profile(handleConditionResultNode.execute(frame, isIfTrue, result));
         }
 
-        @Override
-        public int executeInt(final VirtualFrame frame) {
-            if (executeCondition(frame)) {
-                return getJumpSuccessor();
-            } else {
-                return getSuccessorIndex();
-            }
-        }
-
-        @Override
-        protected int longJumpOffset(final int bytecode, final int parameter) {
-            return ((bytecode & 3) << 8) + parameter;
+        public int getJumpSuccessor() {
+            return getSuccessorIndex() + offset;
         }
 
         @Override
@@ -114,39 +112,26 @@ public final class JumpBytecodes {
         }
     }
 
-    public static class UnconditionalJumpNode extends AbstractBytecodeNode {
-        protected final int offset;
+    public static final class UnconditionalJumpNode extends AbstractBytecodeNode {
+        private final int offset;
 
         public UnconditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode) {
             super(code, index, numBytecodes);
-            this.offset = shortJumpOffset(bytecode);
+            offset = (bytecode & 7) + 1;
         }
 
         public UnconditionalJumpNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int bytecode, final int parameter) {
             super(code, index, numBytecodes);
-            this.offset = longJumpOffset(bytecode, parameter);
+            offset = (((bytecode & 7) - 4) << 8) + parameter;
         }
 
         @Override
-        public int executeInt(final VirtualFrame frame) {
-            return getJumpSuccessor();
+        public void executeVoid(final VirtualFrame frame) {
+            // nothing to do
         }
 
-        @Override
-        public final void executeVoid(final VirtualFrame frame) {
-            throw new SqueakException("Jumps cannot be executed like other bytecode nodes");
-        }
-
-        public final int getJumpSuccessor() {
+        public int getJumpSuccessor() {
             return getSuccessorIndex() + offset;
-        }
-
-        protected int longJumpOffset(final int bytecode, final int parameter) {
-            return (((bytecode & 7) - 4) << 8) + parameter;
-        }
-
-        private static int shortJumpOffset(final int bytecode) {
-            return (bytecode & 7) + 1;
         }
 
         @Override

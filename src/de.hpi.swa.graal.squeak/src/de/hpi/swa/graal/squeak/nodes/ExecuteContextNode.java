@@ -137,20 +137,16 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
                     final ConditionalJumpNode jumpNode = (ConditionalJumpNode) node;
                     if (jumpNode.executeCondition(frame)) {
                         final int successor = jumpNode.getJumpSuccessor();
-                        if (CompilerDirectives.inInterpreter()) {
-                            if (successor <= pc) {
-                                backJumpCounter++;
-                            }
+                        if (CompilerDirectives.inInterpreter() && successor <= pc) {
+                            backJumpCounter++;
                         }
                         pc = successor;
                         node = bytecodeNodes[pc];
                         continue;
                     } else {
                         final int successor = jumpNode.getSuccessorIndex();
-                        if (CompilerDirectives.inInterpreter()) {
-                            if (successor <= pc) {
-                                backJumpCounter++;
-                            }
+                        if (CompilerDirectives.inInterpreter() && successor <= pc) {
+                            backJumpCounter++;
                         }
                         pc = successor;
                         node = bytecodeNodes[pc];
@@ -165,18 +161,18 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
                     node = bytecodeNodes[pc];
                     continue;
                 } else {
-                    final int successor = getGetSuccessorNode().executeGeneric(node);
+                    final int successor = getGetSuccessorNode().executeGeneric(frame, node);
                     getUpdateInstructionPointerNode().executeUpdate(frame, successor);
                     try {
-                        pc = node.executeInt(frame);
+                        node.executeVoid(frame);
                     } catch (NonLocalReturn nlr) {
                         if (nlr.hasArrivedAtTargetContext()) {
                             getStackPushNode().executeWrite(frame, nlr.getReturnValue());
-                            pc = successor;
                         } else {
                             throw nlr;
                         }
                     }
+                    pc = successor;
                     node = bytecodeNodes[pc];
                     continue;
                 }
@@ -194,18 +190,18 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
         int pc = (int) initialPC;
         AbstractBytecodeNode node = bytecodeNodes[pc];
         while (pc >= 0) {
-            final int successor = getGetSuccessorNode().executeGeneric(node);
+            final int successor = getGetSuccessorNode().executeGeneric(frame, node);
             getUpdateInstructionPointerNode().executeUpdate(frame, successor);
             try {
-                pc = node.executeInt(frame);
+                node.executeVoid(frame);
             } catch (NonLocalReturn nlr) {
                 if (nlr.hasArrivedAtTargetContext()) {
                     getStackPushNode().executeWrite(frame, nlr.getReturnValue());
-                    pc = successor;
                 } else {
                     throw nlr;
                 }
             }
+            pc = successor;
             node = bytecodeNodes[pc];
         }
     }
@@ -253,11 +249,26 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
             return GetSuccessorNodeGen.create();
         }
 
-        protected abstract int executeGeneric(AbstractBytecodeNode node);
+        protected abstract int executeGeneric(VirtualFrame frame, AbstractBytecodeNode node);
 
         @Specialization
         protected static final int doClosureNode(final PushClosureNode node) {
             return node.getSuccessorIndex() + node.getBockSize();
+        }
+
+        @Specialization
+        protected static final int doConditionalJump(final VirtualFrame frame, final ConditionalJumpNode node) {
+            // `executeCondition` should only be called once because it pops value off the stack.
+            if (node.executeCondition(frame)) {
+                return node.getJumpSuccessor();
+            } else {
+                return node.getSuccessorIndex();
+            }
+        }
+
+        @Specialization
+        protected static final int doUnconditionalJump(final UnconditionalJumpNode node) {
+            return node.getJumpSuccessor();
         }
 
         @Fallback

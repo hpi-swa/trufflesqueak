@@ -1,6 +1,7 @@
 package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -55,7 +56,7 @@ public final class MiscellaneousBytecodes {
         }
 
         @Specialization(guards = {"code.hasPrimitive()", "primitiveNode != null"})
-        protected final int doPrimitive(final VirtualFrame frame) {
+        protected final void doPrimitive(final VirtualFrame frame) {
             try {
                 throw new LocalReturn(primitiveNodeProfile.profile(primitiveNode).executePrimitive(frame));
             } catch (PrimitiveFailed e) {
@@ -69,13 +70,18 @@ public final class MiscellaneousBytecodes {
                     debugUnsupportedSpecializationExceptions(e);
                 }
             }
-            return getSuccessorIndex(); // continue with fallback code
+            // continue with fallback code
         }
 
         // Cannot use `@Fallback` here, so manually negate previous guards
         @Specialization(guards = {"!code.hasPrimitive() || primitiveNode == null"})
-        protected final int doFallbackCode() {
-            return getSuccessorIndex(); // continue with fallback code immediately
+        protected final void doFallbackCode() {
+            // continue with fallback code immediately
+        }
+
+        @Fallback
+        protected static final void doFail() {
+            throw new SqueakException("Should never happen");
         }
 
         @TruffleBoundary
@@ -139,7 +145,7 @@ public final class MiscellaneousBytecodes {
         }
 
         @Override
-        protected void executeVoid(final VirtualFrame frame) {
+        public void executeVoid(final VirtualFrame frame) {
             pushNode.executeWrite(frame, topNode.executeRead(frame));
         }
 
@@ -217,7 +223,7 @@ public final class MiscellaneousBytecodes {
         }
 
         @Override
-        protected void executeVoid(final VirtualFrame frame) {
+        public void executeVoid(final VirtualFrame frame) {
             popNode.executeRead(frame);
         }
 
@@ -236,7 +242,7 @@ public final class MiscellaneousBytecodes {
         }
 
         @Override
-        protected void executeVoid(final VirtualFrame frame) {
+        public void executeVoid(final VirtualFrame frame) {
             throw new SqueakException("Unknown/uninterpreted bytecode:", bytecode);
         }
 

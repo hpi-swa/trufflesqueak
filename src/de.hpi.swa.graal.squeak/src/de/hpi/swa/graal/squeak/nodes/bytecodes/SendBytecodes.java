@@ -1,12 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
-import com.oracle.truffle.api.debug.DebuggerTags;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.instrumentation.GenerateWrapper;
-import com.oracle.truffle.api.instrumentation.InstrumentableNode;
-import com.oracle.truffle.api.instrumentation.ProbeNode;
-import com.oracle.truffle.api.instrumentation.StandardTags;
-import com.oracle.truffle.api.instrumentation.Tag;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveWithoutResultException;
 import de.hpi.swa.graal.squeak.model.ClassObject;
@@ -21,8 +15,7 @@ import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 
 public final class SendBytecodes {
 
-    @GenerateWrapper
-    public abstract static class AbstractSendNode extends AbstractBytecodeNode implements InstrumentableNode {
+    public abstract static class AbstractSendNode extends AbstractBytecodeNode {
         protected final NativeObject selector;
         private final int argumentCount;
 
@@ -74,20 +67,6 @@ public final class SendBytecodes {
         @Override
         public String toString() {
             return "send: " + selector.asString();
-        }
-
-        @Override
-        public final boolean hasTag(final Class<? extends Tag> tag) {
-            return (tag == StandardTags.CallTag.class) || (tag == DebuggerTags.AlwaysHalt.class);
-        }
-
-        @Override
-        public final boolean isInstrumentable() {
-            return true;
-        }
-
-        public final WrapperNode createWrapper(final ProbeNode probe) {
-            return new AbstractSendNodeWrapper(this, this, probe);
         }
     }
 

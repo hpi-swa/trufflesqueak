@@ -1,7 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.source.SourceSection;
 
@@ -34,22 +33,11 @@ public abstract class AbstractBytecodeNode extends SqueakNodeWithCode {
     }
 
     @Override
-    public Object executeRead(final VirtualFrame frame) {
+    public final Object executeRead(final VirtualFrame frame) {
         throw new SqueakException("Should call executeVoid instead");
     }
 
-    public int executeInt(final VirtualFrame frame) {
-        assert index >= 0; // Inner nodes are not allowed to be executed here
-        executeVoid(frame);
-        return getSuccessorIndex();
-    }
-
-    protected abstract void executeVoid(VirtualFrame frame);
-
-    @Fallback
-    protected final void doFail() {
-        throw new SqueakException("Bytecode failed unexpectedly: ", this);
-    }
+    public abstract void executeVoid(VirtualFrame frame);
 
     public final int getSuccessorIndex() {
         return index + numBytecodes;

@@ -1,6 +1,7 @@
 package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -9,7 +10,6 @@ import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
-import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodesFactory.ReturnConstantNodeGen;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodesFactory.ReturnReceiverNodeGen;
@@ -48,22 +48,32 @@ public final class ReturnBytecodes {
             super(code, index);
         }
 
-        @Specialization(guards = {"!hasClosure(frame)", "isVirtualized(frame) || !hasModifiedSender(frame)"})
-        protected final Object executeLocalReturn(final VirtualFrame frame) {
+        @Override
+        public final void executeVoid(final VirtualFrame frame) {
+            executeReturn(frame, readClosureNode.executeRead(frame));
+        }
+
+        protected abstract void executeReturn(VirtualFrame frame, Object closure);
+
+        @Specialization(guards = {"closure == null", "isVirtualized(frame) || !hasModifiedSender(frame)"})
+        protected final void doLocalReturn(final VirtualFrame frame, @SuppressWarnings("unused") final Object closure) {
             throw new LocalReturn(getReturnValue(frame));
         }
 
-        @Specialization(guards = {"hasClosure(frame) || !isVirtualized(frame)", "hasClosure(frame) || hasModifiedSender(frame)"})
-        protected final Object executeNonLocalReturn(final VirtualFrame frame,
+        @Specialization(guards = {"closure == null", "!isVirtualized(frame)", "hasModifiedSender(frame)"})
+        protected final void doNonLocalReturn(final VirtualFrame frame, @SuppressWarnings("unused") final Object closure,
                         @Cached("create(code)") final GetOrCreateContextNode getContextNode) {
-            final ContextObject outerContext;
-            final BlockClosureObject block = (BlockClosureObject) readClosureNode.executeRead(frame);
-            if (block != null) {
-                outerContext = block.getHomeContext();
-            } else {
-                outerContext = getContextNode.executeGet(frame);
-            }
-            throw new NonLocalReturn(getReturnValue(frame), outerContext);
+            throw new NonLocalReturn(getReturnValue(frame), getContextNode.executeGet(frame));
+        }
+
+        @Specialization(guards = {"closure != null"})
+        protected final void doNonLocalReturn(final VirtualFrame frame, final BlockClosureObject closure) {
+            throw new NonLocalReturn(getReturnValue(frame), closure.getHomeContext());
+        }
+
+        @Fallback
+        protected static final void doFail(final Object closure) {
+            throw new SqueakException("Unexpected closure argument:" + closure);
         }
     }
 
@@ -125,22 +135,32 @@ public final class ReturnBytecodes {
             popNode = StackPopNode.create(code);
         }
 
+        @Override
+        public final void executeVoid(final VirtualFrame frame) {
+            executeReturn(frame, readClosureNode.executeRead(frame));
+        }
+
+        protected abstract void executeReturn(VirtualFrame frame, Object closure);
+
         @Specialization(guards = {"isVirtualized(frame) || !hasModifiedSender(frame)"})
-        protected final Object executeLocalReturn(final VirtualFrame frame) {
+        protected final void doLocalReturn(final VirtualFrame frame, @SuppressWarnings("unused") final Object closureOrNull) {
             throw new LocalReturn(getReturnValue(frame));
         }
 
-        @Specialization(guards = {"!isVirtualized(frame)", "hasModifiedSender(frame)"})
-        protected final Object executeNonLocalReturn(final VirtualFrame frame,
+        @Specialization(guards = {"closureOrNull == null", "!isVirtualized(frame)", "hasModifiedSender(frame)"})
+        protected final void doNonLocalReturn(final VirtualFrame frame, @SuppressWarnings("unused") final Object closureOrNull,
                         @Cached("create(code)") final GetOrCreateContextNode getContextNode) {
-            final ContextObject outerContext;
-            final BlockClosureObject block = (BlockClosureObject) readClosureNode.executeRead(frame);
-            if (block != null) {
-                outerContext = block.getHomeContext();
-            } else {
-                outerContext = getContextNode.executeGet(frame);
-            }
-            throw new NonLocalReturn(getReturnValue(frame), outerContext);
+            throw new NonLocalReturn(getReturnValue(frame), getContextNode.executeGet(frame));
+        }
+
+        @Specialization(guards = {"closure != null", "!isVirtualized(frame)", "hasModifiedSender(frame)"})
+        protected final void doNonLocalReturn(final VirtualFrame frame, final BlockClosureObject closure) {
+            throw new NonLocalReturn(getReturnValue(frame), closure.getHomeContext());
+        }
+
+        @Fallback
+        protected static final void doFail(final Object closure) {
+            throw new SqueakException("Unexpected closure argument:" + closure);
         }
 
         @Override
