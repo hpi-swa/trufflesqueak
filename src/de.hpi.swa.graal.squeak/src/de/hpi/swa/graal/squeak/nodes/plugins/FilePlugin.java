@@ -75,6 +75,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "fullPath.isByteType()")
+        @TruffleBoundary
         protected final Object doCreate(final PointersObject receiver, final NativeObject fullPath) {
             try {
                 asTruffleFile(fullPath).createDirectory();
@@ -94,6 +95,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "fullPath.isByteType()")
+        @TruffleBoundary
         protected final Object doDelete(final PointersObject receiver, final NativeObject fullPath) {
             try {
                 asTruffleFile(fullPath).delete();
@@ -127,6 +129,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"fullPath.isByteType()", "fName.isByteType()"})
+        @TruffleBoundary
         protected final Object doEntry(@SuppressWarnings("unused") final PointersObject receiver, final NativeObject fullPath, final NativeObject fName) {
             final String pathName = asString(fullPath);
             final String fileName = asString(fName);
@@ -203,6 +206,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected static final Object doClose(final PointersObject receiver, final long fileDescriptor) {
             try {
                 getFileOrPrimFail(fileDescriptor).close();
@@ -222,6 +226,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "nativeFileName.isByteType()")
+        @TruffleBoundary
         protected static final Object doDelete(final PointersObject receiver, final NativeObject nativeFileName) {
             final File file = new File(asString(nativeFileName));
             if (!file.delete()) {
@@ -254,6 +259,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected final Object doGet(@SuppressWarnings("unused") final PointersObject receiver, final long fileDescriptor) {
             try {
                 return code.image.wrap(getFileOrPrimFail(fileDescriptor).position());
@@ -271,8 +277,8 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @TruffleBoundary
         @Specialization(guards = "nativeFileName.isByteType()")
+        @TruffleBoundary
         protected final Object doOpen(@SuppressWarnings("unused") final PointersObject receiver, final NativeObject nativeFileName, final Boolean writableFlag) {
             try {
                 final EnumSet<StandardOpenOption> options;
@@ -302,6 +308,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected final Object doRead(@SuppressWarnings("unused") final PointersObject receiver, final long fileDescriptor, final AbstractSqueakObject target, final long startIndex,
                         final long longCount) {
             final int count = (int) longCount;
@@ -327,6 +334,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"oldName.isByteType()", "newName.isByteType()"})
+        @TruffleBoundary
         protected final Object doRename(final PointersObject receiver, final NativeObject oldName, final NativeObject newName) {
             try {
                 asTruffleFile(oldName).move(asTruffleFile(newName));
@@ -346,6 +354,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected static final Object doSet(final PointersObject receiver, final long fileDescriptor, final long position) {
             try {
                 getFileOrPrimFail(fileDescriptor).position(position);
@@ -365,6 +374,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected final Object doSize(@SuppressWarnings("unused") final PointersObject receiver, final long fileDescriptor) {
             try {
                 return code.image.wrap(getFileOrPrimFail(fileDescriptor).size());
@@ -395,6 +405,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected static final Object doTruncate(final PointersObject receiver, final long fileDescriptor, final long to) {
             try {
                 getFileOrPrimFail(fileDescriptor).truncate(to);
@@ -415,6 +426,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"content.isByteType()", "fileDescriptor != IN"})
+        @TruffleBoundary
         protected final long doWrite(final PointersObject receiver, final long fileDescriptor, final NativeObject content, final long startIndex, final long count) {
             final byte[] bytes = content.getByteStorage();
             final int byteStart = (int) (startIndex - 1);

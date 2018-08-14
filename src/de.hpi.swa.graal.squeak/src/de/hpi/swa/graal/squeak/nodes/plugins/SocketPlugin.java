@@ -115,14 +115,15 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
         public void print(final Object message) {
             if (debugPrints) {
-                code.image.getOutput().println(id + ": " + message.toString());
+                code.image.printToStdOut(id, ":", message);
             }
         }
 
         public void error(final Object message) {
-            code.image.getError().println(id + ": " + message.toString());
+            code.image.printToStdErr(id, ":", message);
         }
 
+        @TruffleBoundary
         public void listenOn(final int port) throws IOException {
             if (listening) {
                 return;
@@ -158,6 +159,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             }
         }
 
+        @TruffleBoundary
         public SocketImpl accept() throws IOException {
             print(">> Accepting");
             final SocketImpl connectionImpl = new SocketImpl(code, SocketType.TCPSocketType);
@@ -171,6 +173,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             return connectionImpl;
         }
 
+        @TruffleBoundary
         public void connectTo(final String host, final long port) throws IOException {
             print(">> Connecting to " + host + ":" + port);
             if (socketType == SocketType.TCPSocketType) {
@@ -189,6 +192,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             }
         }
 
+        @TruffleBoundary
         public boolean isDataAvailable() throws IOException {
             boolean available = false;
             if (clientSocket != null) {
@@ -206,6 +210,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             return available;
         }
 
+        @TruffleBoundary
         public int receiveData(final byte[] data, final int startIndex, final int count) throws IOException {
             print(">> Receive data, buffer length: " + data.length + ", start: " + startIndex + ", count: " + count);
             final int actualCount = count;
@@ -227,6 +232,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             }
         }
 
+        @TruffleBoundary
         public void sendData(final byte[] data, final int startIndex, final int count) throws IOException {
             print(">> Send Data");
             if (clientSocket != null) {
@@ -248,6 +254,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             }
         }
 
+        @TruffleBoundary
         public void close() throws IOException {
             print(">> Closing");
             if (clientSocket != null) {
@@ -264,6 +271,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             }
         }
 
+        @TruffleBoundary
         public long getStatus() throws IOException {
             long status = SocketStatus.Unconnected;
 
@@ -350,6 +358,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             return 0L;
         }
 
+        @TruffleBoundary
         public byte[] getRemoteAddress() {
             if (clientSocket != null) {
                 final SocketAddress socketAddress = clientSocket.getRemoteSocketAddress();
@@ -374,6 +383,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             }
         }
 
+        @TruffleBoundary
         public long getRemotePort() {
             if (clientSocket != null) {
                 final InetSocketAddress address = (InetSocketAddress) clientSocket.getRemoteSocketAddress();
@@ -394,6 +404,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             }
         }
 
+        @TruffleBoundary
         public Object getLocalAddress() throws UnknownHostException {
             byte[] address;
             if (clientSocket != null) {
@@ -420,14 +431,17 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
         }
 
+        @TruffleBoundary
         public Object getOption(final String option) {
             return options.get(option);
         }
 
+        @TruffleBoundary
         public void setOption(final String option, final Object value) {
             options.put(option, value);
         }
 
+        @TruffleBoundary
         public int getLocalPort() {
             int localPort = 0;
             if (clientSocket != null) {
@@ -459,12 +473,12 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         protected final void error(final Object o) {
-            code.image.getError().println(o);
+            code.image.printToStdErr(o);
         }
 
         protected final void print(final Object o) {
             if (debugPrints) {
-                code.image.getOutput().println(o);
+                code.image.printToStdOut(o);
             }
         }
     }
@@ -516,6 +530,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // asynchronous. To get the results, wait for it to complete or time out and then use
         // primNameLookupResult.
         @Specialization(guards = "hostName.isByteType()")
+        @TruffleBoundary
         protected final Object doWork(final Object receiver, final NativeObject hostName) {
             print(">> Starting lookup for host name " + hostName);
             InetAddress address = null;
@@ -551,6 +566,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // asynchronous. To get the results, wait for it to complete or time out and then use
         // primAddressLookupResult.
         @Specialization(guards = "address.isByteType()")
+        @TruffleBoundary
         protected final Object doWork(final Object receiver, final NativeObject address) {
             print("Starting lookup for address " + address);
             try {
@@ -573,6 +589,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // Return the host address found by the last host name lookup. Returns nil if the last
         // lookup was unsuccessful.
         @Specialization
+        @TruffleBoundary
         protected final Object doWork(@SuppressWarnings("unused") final Object receiver) {
             if (lastNameLookup == null) {
                 print(">> Name Lookup Result: " + null);
@@ -618,6 +635,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected final Object doWork(@SuppressWarnings("unused") final Object receiver) {
             try {
                 final byte[] address = Resolver.getLocalAddress();
@@ -639,6 +657,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
         // Return the local port for this socket, or zero if no port has yet been assigned.
         @Specialization
+        @TruffleBoundary
         protected static final Long doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
             return (long) getSocketImplOrPrimFail(socketID).getLocalPort();
         }
@@ -663,6 +682,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // Primitive. Set up the socket to listen on the given port.
         // Will be used in conjunction with #accept only.
         @Specialization
+        @TruffleBoundary
         protected final Object doWork(final Object receiver, final long socketID,
                         final long port,
                         @SuppressWarnings("unused") final NotProvided backlogSize) {
@@ -676,6 +696,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected final Object doWork(final Object receiver, final long socketID,
                         final long port,
                         @SuppressWarnings("unused") final Object backlogSize) {
@@ -700,6 +721,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // Will be used in conjunction with #accept only.
         @SuppressWarnings("unused")
         @Specialization
+        @TruffleBoundary
         protected final Object doWork(final Object receiver,
                         final long socketID,
                         final long port,
@@ -723,6 +745,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "option.isByteType()")
+        @TruffleBoundary
         protected static final Object doWork(final Object receiver, final long socketID, final NativeObject option, final NativeObject value) {
             final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
             socketImpl.setOption(option.asString(), value);
@@ -738,6 +761,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "hostAddress.isByteType()")
+        @TruffleBoundary
         protected final long doWork(@SuppressWarnings("unused") final Object receiver, final long socketID, final NativeObject hostAddress, final long port) {
             final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
 
@@ -784,6 +808,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected final Object doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
             return code.image.wrap(getSocketImplOrPrimFail(socketID).getRemoteAddress());
         }
@@ -797,6 +822,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected static final Object doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
             final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
             return socketImpl.getRemotePort();
@@ -827,6 +853,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // 'TCP_CONN_ABORT_THRESHOLD'. 'TCP_NOTIFY_THRESHOLD'.
         // 'TCP_URGENT_PTR_TYPE'}.
         @Specialization(guards = "option.isByteType()")
+        @TruffleBoundary
         protected final Object doWork(@SuppressWarnings("unused") final Object receiver, final long socketID, final NativeObject option) {
             final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
             final Object value = socketImpl.getOption(option.asString());
@@ -844,6 +871,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected final boolean doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
             final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
             try {
@@ -863,6 +891,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected static final long doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
             final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
             return socketImpl.getError();
@@ -877,6 +906,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected final Object doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
             final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
             try {
@@ -911,6 +941,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // since the data is sent in send-buffer-sized chunks. The size of the send buffer is
         // determined when the socket is created.
         @Specialization(guards = "aStringOrByteArray.isByteType()")
+        @TruffleBoundary
         protected final long doWork(@SuppressWarnings("unused") final Object receiver,
                         final long socketID,
                         final NativeObject aStringOrByteArray,
@@ -936,6 +967,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected final Object doWork(final Object receiver, final long socketID) {
             try {
                 getSocketImplOrPrimFail(socketID).close();
@@ -955,6 +987,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected final Object doWork(final Object receiver, final long socketID) {
             try {
                 getSocketImplOrPrimFail(socketID).close();
@@ -974,6 +1007,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        @TruffleBoundary
         protected final Object doWork(@SuppressWarnings("unused") final Object receiver, final long socketID) {
             return code.image.wrap(getSocketImplOrPrimFail(socketID).isSendDone());
         }
@@ -989,6 +1023,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         // Receive data from the given socket into the given array starting at the given index.
         // Return the number of bytes read or zero if no data is available.
         @Specialization(guards = "receiveBuffer.isByteType()")
+        @TruffleBoundary
         protected final long doWork(@SuppressWarnings("unused") final Object receiver, final long socketID, final NativeObject receiveBuffer, final long startIndex, final long count) {
             final SocketImpl socketImpl = getSocketImplOrPrimFail(socketID);
             final byte[] buffer = receiveBuffer.getByteStorage();

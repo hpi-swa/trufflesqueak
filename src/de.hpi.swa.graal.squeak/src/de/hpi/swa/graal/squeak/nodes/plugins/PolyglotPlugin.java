@@ -41,6 +41,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
+        @TruffleBoundary
         @Specialization(guards = {"receiver.isByteType()", "languageNameObj.isByteType()"})
         protected final Object doParseAndCall(final NativeObject receiver, final NativeObject languageNameObj) {
             final String languageName = languageNameObj.asString();
