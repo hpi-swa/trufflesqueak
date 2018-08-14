@@ -45,10 +45,12 @@ install:
         pip install astroid==1.1.0
         pip install pylint==1.1.0
 
-        export ECLIPSE_TAR=${TRAVIS_BUILD_DIR}/../eclipse.tar.gz
-        curl -sSL -o ${ECLIPSE_TAR} https://dl.bintray.com/hpi-swa-lab/GraalSqueak/dependencies/eclipse-SDK-4.5.2-linux-gtk-x86_64.tar.gz
-        tar -C ${TRAVIS_BUILD_DIR}/.. -xzf ${ECLIPSE_TAR}
-        export ECLIPSE_EXE=${TRAVIS_BUILD_DIR}/../eclipse/eclipse
+        pushd ${TRAVIS_BUILD_DIR}/.. > /dev/null
+        local eclipse_tar="ci-dep-eclipse-SDK-4.5.2-linux-gtk-x86_64.tar.gz"
+        ${TRAVIS_BUILD_DIR}/scripts/download-file.sh "${eclipse_tar}"
+        tar -xzf ${eclipse_tar}
+        export ECLIPSE_EXE=$(pwd)/eclipse/eclipse
+        popd > /dev/null
       fi
   - |
       if [[ ${GATE} == *fullbuild* ]]
@@ -57,7 +59,8 @@ install:
         if [[ "${JDK}" == "jdk8" ]]
         then
           export JDT=${MX_PATH}/ecj.jar
-          curl -sSL -o ${JDT} https://dl.bintray.com/hpi-swa-lab/GraalSqueak/dependencies/ecj-4.5.2.jar
+          local ecj_tar="ci-dep-ecj-4.5.2.jar"
+          ${TRAVIS_BUILD_DIR}/scripts/download-file.sh "${ecj_tar}" "${JDT}"
         fi
       fi
   - |
