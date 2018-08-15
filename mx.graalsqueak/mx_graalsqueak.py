@@ -13,6 +13,8 @@ BASE_VM_ARGS = [
     '-Xms2G',  # Initial heap size
     '-XX:MetaspaceSize=64M',  # Initial size of Metaspaces
 ]
+SVM_BINARY = 'graalsqueak-svm'
+SVM_TARGET = os.path.join('bin', SVM_BINARY)
 
 _suite = mx.suite('graalsqueak')
 _compiler = mx.suite('compiler', fatalIfMissing=False)
@@ -271,7 +273,7 @@ def _squeak_svm(args):
     """build GraalSqueak with SubstrateVM"""
     mx.run_mx(
         ['--dynamicimports', '/substratevm,/vm', 'build', '--dependencies',
-         'graalsqueak.image'],
+         '%s.image' % SVM_BINARY],
         nonZeroIsFatal=True
     )
     shutil.copy(_get_svm_binary_from_graalvm(), _get_svm_binary())
@@ -279,14 +281,14 @@ def _squeak_svm(args):
 
 
 def _get_svm_binary():
-    return os.path.join(_suite.dir, 'bin', 'graalsqueak-svm')
+    return os.path.join(_suite.dir, SVM_TARGET)
 
 
 def _get_svm_binary_from_graalvm():
     vmdir = os.path.join(mx.suite('truffle').dir, '..', 'vm')
     return os.path.join(
         vmdir, 'mxbuild', '-'.join([mx.get_os(), mx.get_arch()]),
-        'graalsqueak.image', 'graalsqueak')
+        '%s.image' % SVM_BINARY, SVM_BINARY)
 
 
 _svmsuite = mx.suite('substratevm', fatalIfMissing=False)
@@ -311,7 +313,7 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     ],
     launcher_configs=[
         mx_sdk.LanguageLauncherConfig(
-            destination='bin/<exe:graalsqueak>',
+            destination=SVM_TARGET,
             jar_distributions=[
                 'graalsqueak:GRAALSQUEAK-LAUNCHER',
                 'graalsqueak:GRAALSQUEAK-CONFIG',

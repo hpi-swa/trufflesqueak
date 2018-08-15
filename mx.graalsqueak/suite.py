@@ -121,7 +121,7 @@ suite = {
         "GRAALSQUEAK_GRAALVM_SUPPORT": {
             "native": True,
             "platformDependent": True,
-            "description" : "GraalSqueak support distribution for the GraalVM",
+            "description": "GraalSqueak support distribution for the GraalVM",
             "layout": {
                 "./": [
                     "file:mx.graalsqueak/native-image.properties",
