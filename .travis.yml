@@ -1,94 +1,110 @@
 language: java
-jdk: oraclejdk11
 
 sudo: required
 dist: trusty
 
-env:
-  global:
-    - JVMCI_VERSION="jvmci-0.46"
-    - JVMCI_BASE_JDK8="openjdk1.8.0_172"
-    - JVMCI_FILE_JDK8="openjdk-8u172"
-  matrix:
-    - JDK="jdk8" GATE="style,fullbuild"
-    - JDK="jdk8" GATE="build,test" ARCH="32bit"
-    - JDK="jdk8" GATE="build,test" ARCH="64bit"
-    - JDK="jdk11" GATE="style,fullbuild"
-    - JDK="jdk11" GATE="build,test" ARCH="32bit"
-    - JDK="jdk11" GATE="build,test" ARCH="64bit"
-
-matrix:
-  allow_failures:
-    - env: ARCH="64bit"
-  fast_finish: true
-
 python:
   - "2.7"
-addons:
-  apt:
-    packages:
-      - jq
-      - python-pip
-      - python-virtualenv
-      - wget
 
-install:
-  - |
+aliases:
+  - &clone-mx
+    |
       export MX_PATH=${TRAVIS_BUILD_DIR}/../mx
-      git clone --depth 1 https://github.com/graalvm/mx.git ${MX_PATH}
+      git clone --depth 1 -b patch-5 https://github.com/fniephaus/mx.git ${MX_PATH}
       export PATH=${PATH}:${MX_PATH}
-  - |
-      if [[ ${GATE} == *style* ]]
-      then
-        virtualenv venv
-        source venv/bin/activate
-        pip install astroid==1.1.0
-        pip install pylint==1.1.0
+  - &install-jvmci
+    |
+      JVMCI_VERSION="jvmci-0.46"
+      JVMCI_BASE_JDK8="openjdk1.8.0_172"
+      JVMCI_FILE_JDK8="openjdk-8u172"
+      JDK_TAR=${TRAVIS_BUILD_DIR}/../jdk.tar.gz
+      curl -sSL --retry 3 -o ${JDK_TAR} https://github.com/graalvm/openjdk8-jvmci-builder/releases/download/${JVMCI_VERSION}/${JVMCI_FILE_JDK8}-${JVMCI_VERSION}-linux-amd64.tar.gz
+      tar -C ${TRAVIS_BUILD_DIR}/.. -xzf ${JDK_TAR}
+      export JAVA_HOME=${TRAVIS_BUILD_DIR}/../${JVMCI_BASE_JDK8}-${JVMCI_VERSION}
+  - &configure-python-for-pylint
+    addons:
+      apt:
+        packages:
+          - python-pip
+          - python-virtualenv
+  - &install-pylint
+    |
+      virtualenv venv
+      source venv/bin/activate
+      pip install astroid==1.1.0
+      pip install pylint==1.1.0
+  - &download-eclipse
+    |
+      pushd ${TRAVIS_BUILD_DIR}/.. > /dev/null
+      local eclipse_tar="ci-dep-eclipse-SDK-4.5.2-linux-gtk-x86_64.tar.gz"
+      ${TRAVIS_BUILD_DIR}/scripts/download-file.sh "${eclipse_tar}"
+      tar -xzf ${eclipse_tar}
+      export ECLIPSE_EXE=$(pwd)/eclipse/eclipse
+      popd > /dev/null
+  - &download-graal-vm
+    |
+      GRAAL_VM_VERSION=1.0.0-rc5
+      GRAAL_VM_TARBALL=graalvm-ce-${GRAAL_VM_VERSION}-linux-amd64.tar.gz
+      pushd ~/ > /dev/null
+      curl -sSL --retry 3 -o ${GRAAL_VM_TARBALL} https://github.com/oracle/graal/releases/download/vm-${GRAAL_VM_VERSION}/${GRAAL_VM_TARBALL}
+      tar -xzf ${GRAAL_VM_TARBALL}
+      export JAVA_HOME=$(pwd)/graalvm-ce-${GRAAL_VM_VERSION}
+      popd > /dev/null
+  - &download-ecj
+    |
+      export JDT=${MX_PATH}/ecj.jar
+      local ecj_tar="ci-dep-ecj-4.5.2.jar"
+      ${TRAVIS_BUILD_DIR}/scripts/download-file.sh "${ecj_tar}" "${JDT}"
+  - &jdk8-test-setup # set up jvmci, download image, enable coverage testing
+    jdk: oraclejdk8
+    addons:
+      apt:
+        packages:
+          - jq
+    install: *install-jvmci
+    before_script:
+      - scripts/download-test-image.sh
+      - curl -sSL --retry 3 -o ~/codacy-coverage-reporter.jar $(curl https://api.github.com/repos/codacy/codacy-coverage-reporter/releases/latest | jq -r .assets[0].browser_download_url)
+      - export MX_OPTS="--jacocout coverage"
+    after_success:
+      - bash <(curl -s https://codecov.io/bash)
+      - java -jar ~/codacy-coverage-reporter.jar report -l Java -r jacoco.xml
+  - &jdk11-test-setup # set up oraclejdk11 and download image
+    jdk: oraclejdk11
+    before_script: scripts/download-test-image.sh
 
-        pushd ${TRAVIS_BUILD_DIR}/.. > /dev/null
-        local eclipse_tar="ci-dep-eclipse-SDK-4.5.2-linux-gtk-x86_64.tar.gz"
-        ${TRAVIS_BUILD_DIR}/scripts/download-file.sh "${eclipse_tar}"
-        tar -xzf ${eclipse_tar}
-        export ECLIPSE_EXE=$(pwd)/eclipse/eclipse
-        popd > /dev/null
-      fi
-  - |
-      if [[ ${GATE} == *fullbuild* ]]
-      then
-        # Only test JDT on JDK8
-        if [[ "${JDK}" == "jdk8" ]]
-        then
-          export JDT=${MX_PATH}/ecj.jar
-          local ecj_tar="ci-dep-ecj-4.5.2.jar"
-          ${TRAVIS_BUILD_DIR}/scripts/download-file.sh "${ecj_tar}" "${JDT}"
-        fi
-      fi
-  - |
-      if [[ ${GATE} == *test* ]]
-      then
-        scripts/download-test-image.sh
-        if [[ "${JDK}" == "jdk8" ]]
-        then
-          curl -sSL -o ~/codacy-coverage-reporter.jar $(curl https://api.github.com/repos/codacy/codacy-coverage-reporter/releases/latest | jq -r .assets[0].browser_download_url)
-          MX_OPTS="--jacocout coverage"
-        fi
-      fi
-  - |
-      if [[ "${JDK}" == "jdk8" ]]
-      then
-        JDK_TAR=${TRAVIS_BUILD_DIR}/../jdk.tar.gz
-        curl -sSL -o ${JDK_TAR} https://github.com/graalvm/openjdk8-jvmci-builder/releases/download/${JVMCI_VERSION}/${JVMCI_FILE_JDK8}-${JVMCI_VERSION}-linux-amd64.tar.gz
-        tar -C ${TRAVIS_BUILD_DIR}/.. -xzf ${JDK_TAR}
-        export JAVA_HOME=${TRAVIS_BUILD_DIR}/../${JVMCI_BASE_JDK8}-${JVMCI_VERSION}
-      fi
+before_install: *clone-mx
 
-script:
-  - mx --java-home=${JAVA_HOME} --extra-java-homes=/usr/lib/jvm/java-8-oracle gate ${MX_OPTS} --strict-mode --tags ${GATE}
+script: mx --extra-java-homes=/usr/lib/jvm/java-8-oracle gate ${MX_OPTS} --strict-mode --tags ${GATE}
 
-after_success:
-  - |
-      if [[ ${GATE} == *test* ]] && [[ "${JDK}" == "jdk8" ]]
-      then
-        bash <(curl -s https://codecov.io/bash)
-        java -jar ~/codacy-coverage-reporter.jar report -l Java -r jacoco.xml
-      fi
+jobs:
+  include:
+    - env: JDK="jdk8" GATE="style,fullbuild"
+      jdk: oraclejdk8
+      install:
+        - *install-jvmci
+        - *install-pylint
+        - *download-eclipse
+        - *download-ecj
+      <<: *configure-python-for-pylint
+    - env: JDK="jdk8" GATE="build,test" ARCH="32bit"
+      <<: *jdk8-test-setup
+    - env: JDK="jdk8" GATE="build,test" ARCH="64bit"
+      <<: *jdk8-test-setup
+    - env: JDK="jdk11" GATE="style,fullbuild"
+      jdk: oraclejdk11
+      install:
+        - *install-pylint
+        - *download-eclipse
+      <<: *configure-python-for-pylint
+    - env: JDK="jdk11" GATE="build,test" ARCH="32bit"
+      <<: *jdk11-test-setup
+    - env: JDK="jdk11" GATE="build,test" ARCH="64bit"
+      <<: *jdk11-test-setup
+    - env: SUBSTRATE_VM=true
+      script:
+        - mx squeak-svm
+        - bin/graalsqueak-svm --version:graalvm
+      language: c
+      install: *download-graal-vm
+  fast_finish: true
