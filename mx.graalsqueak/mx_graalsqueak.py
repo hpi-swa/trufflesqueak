@@ -170,8 +170,9 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
                         nargs=argparse.REMAINDER)
     parsed_args = parser.parse_args(raw_args)
 
-    vm_args = BASE_VM_ARGS
-    vm_args += ['-cp', mx.classpath(PACKAGE_NAME)]
+    vm_args = BASE_VM_ARGS + [
+        '-cp', mx.classpath([PACKAGE_NAME, '%s.launcher' % PACKAGE_NAME]),
+    ]
 
     if _compiler:
         vm_args += _graal_vm_args(parsed_args)
@@ -189,7 +190,10 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
     if extra_vm_args:
         vm_args += extra_vm_args
 
-    vm_args.append('%s.GraalSqueakLauncher' % PACKAGE_NAME)
+    if parsed_args.receiver and parsed_args.method:
+        vm_args += ['-Djava.awt.headless=true']
+
+    vm_args.append('%s.launcher.GraalSqueakLauncher' % PACKAGE_NAME)
 
     if parsed_args.receiver and not parsed_args.method:
         parser.error('--method required when --receiver is provided')
@@ -315,10 +319,10 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
         mx_sdk.LanguageLauncherConfig(
             destination=SVM_TARGET,
             jar_distributions=[
-                'graalsqueak:GRAALSQUEAK-LAUNCHER',
                 'graalsqueak:GRAALSQUEAK-CONFIG',
+                'graalsqueak:GRAALSQUEAK-LAUNCHER',
             ],
-            main_class='de.hpi.swa.graal.squeak.launcher.GraalSqueakLauncher',
+            main_class='%s.launcher.GraalSqueakLauncher' % PACKAGE_NAME,
             build_args=[
                 '--language:squeak',
                 # '--pgo-instrument', (uncomment to enable profiling)
