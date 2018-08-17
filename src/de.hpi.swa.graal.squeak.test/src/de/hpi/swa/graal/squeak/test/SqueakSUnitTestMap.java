@@ -102,7 +102,7 @@ public final class SqueakSUnitTestMap {
                     "FalseTest", TEST_TYPE.PASSING,
                     "FileContentsBrowserTest", TEST_TYPE.NOT_TERMINATING,
                     "FileDirectoryTest", TEST_TYPE.PASSING,
-                    "FileList2ModalDialogsTest", TEST_TYPE.PASSING,
+                    "FileList2ModalDialogsTest", TEST_TYPE.FLAKY,
                     "FileListTest", TEST_TYPE.PASSING,
                     "FileStreamTest", TEST_TYPE.PASSING,
                     "FileUrlTest", TEST_TYPE.PASSING,
