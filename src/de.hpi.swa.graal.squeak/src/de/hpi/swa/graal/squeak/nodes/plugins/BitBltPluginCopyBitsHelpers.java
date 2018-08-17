@@ -125,7 +125,7 @@ public final class BitBltPluginCopyBitsHelpers {
                         final NativeObject destBits, final long destWidth, final long destHeight) {
             final long sourceX = receiver.at0(BIT_BLT.SOURCE_X) != receiver.image.nil ? (long) receiver.at0(BIT_BLT.SOURCE_X) : 0;
             final long sourceY = receiver.at0(BIT_BLT.SOURCE_Y) != receiver.image.nil ? (long) receiver.at0(BIT_BLT.SOURCE_Y) : 0;
-            doExtract(receiver, combinationRule, sourceBits.getIntStorage(), sourceX, sourceY, sourceWidth, sourceHeight, destBits, destWidth, destHeight);
+            loadBitBltFromWarping(receiver, combinationRule, sourceBits.getIntStorage(), sourceX, sourceY, sourceWidth, sourceHeight, destBits, destWidth, destHeight);
         }
 
         @SuppressWarnings("unused")
@@ -133,21 +133,20 @@ public final class BitBltPluginCopyBitsHelpers {
         protected final void doExtractDest(final PointersObject receiver, final long combinationRule,
                         final NilObject sourceBits, final NilObject sourceWidth, final NilObject sourceHeight,
                         final NativeObject destBits, final long destWidth, final long destHeight) {
-            doExtract(receiver, combinationRule, null, 0, 0, 0, 0, destBits, destWidth, destHeight);
+            loadBitBltFromWarping(receiver, combinationRule, null, 0, 0, 0, 0, destBits, destWidth, destHeight);
         }
 
-        private void doExtract(final PointersObject receiver, final long combinationRule, final int[] sourceWords, final long sourceX, final long sourceY, final long sourceWidth,
+        private void loadBitBltFromWarping(final PointersObject receiver, final long combinationRule, final int[] sourceWords, final long sourceX, final long sourceY, final long sourceWidth,
                         final long sourceHeight,
                         final NativeObject destBits, final long destWidth,
                         final long destHeight) {
-            // See BitBltSimulation>>#loadBitBltFrom:warping:
-            final long areaWidth = receiver.at0(BIT_BLT.WIDTH) != receiver.image.nil ? (long) receiver.at0(BIT_BLT.WIDTH) : destWidth;
-            final long areaHeight = receiver.at0(BIT_BLT.HEIGHT) != receiver.image.nil ? (long) receiver.at0(BIT_BLT.HEIGHT) : destHeight;
+            final long areaWidth = fetchIntOrFloatOfObjectIfNil(receiver, BIT_BLT.WIDTH, destWidth);
+            final long areaHeight = fetchIntOrFloatOfObjectIfNil(receiver, BIT_BLT.HEIGHT, destHeight);
             final int[] destWords = destBits.getIntStorage();
-            final long destX = receiver.at0(BIT_BLT.DEST_X) != receiver.image.nil ? (long) receiver.at0(BIT_BLT.DEST_X) : 0;
-            final long destY = receiver.at0(BIT_BLT.DEST_Y) != receiver.image.nil ? (long) receiver.at0(BIT_BLT.DEST_Y) : 0;
-            long clipX = receiver.at0(BIT_BLT.CLIP_X) != receiver.image.nil ? (long) receiver.at0(BIT_BLT.CLIP_X) : 0;
-            long clipY = receiver.at0(BIT_BLT.CLIP_Y) != receiver.image.nil ? (long) receiver.at0(BIT_BLT.CLIP_Y) : 0;
+            final long destX = fetchIntOrFloatOfObjectIfNil(receiver, BIT_BLT.DEST_X, 0);
+            final long destY = fetchIntOrFloatOfObjectIfNil(receiver, BIT_BLT.DEST_Y, 0);
+            long clipX = fetchIntOrFloatOfObjectIfNil(receiver, BIT_BLT.CLIP_X, 0);
+            long clipY = fetchIntOrFloatOfObjectIfNil(receiver, BIT_BLT.CLIP_Y, 0);
             long clipWidth = (long) receiver.at0(BIT_BLT.CLIP_WIDTH);
             long clipHeight = (long) receiver.at0(BIT_BLT.CLIP_HEIGHT);
             if (clipX < 0) {
@@ -166,6 +165,19 @@ public final class BitBltPluginCopyBitsHelpers {
             }
             clipNode.executeClip(receiver, combinationRule, areaWidth, areaHeight, sourceWords, sourceX, sourceY, sourceWidth, sourceHeight, destWords, destX, destY, destWidth, destHeight,
                             clipX, clipY, clipWidth, clipHeight);
+        }
+
+        private static long fetchIntOrFloatOfObjectIfNil(final PointersObject object, final int index, final long fallback) {
+            final Object value = object.at0(index);
+            if (value instanceof Long) {
+                return (long) value;
+            } else if (value instanceof Double) {
+                return (long) (double) value;
+            } else if (value == object.image.nil) {
+                return fallback;
+            } else {
+                throw new SqueakException("Unexpected value:", object);
+            }
         }
 
         @SuppressWarnings("unused")
