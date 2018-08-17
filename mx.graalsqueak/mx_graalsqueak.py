@@ -321,6 +321,8 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
             main_class='de.hpi.swa.graal.squeak.launcher.GraalSqueakLauncher',
             build_args=[
                 '--language:squeak',
+                # '--pgo-instrument', (uncomment to enable profiling)
+                # '--pgo', (uncomment to recompile with profiling information)
             ]
         )
     ],
