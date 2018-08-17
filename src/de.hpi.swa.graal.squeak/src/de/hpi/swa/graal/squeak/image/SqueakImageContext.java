@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.image;
 
+import java.awt.GraphicsEnvironment;
 import java.io.File;
 import java.io.PrintWriter;
 import java.math.BigInteger;
@@ -13,13 +14,13 @@ import com.oracle.truffle.api.TruffleOptions;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
-import com.oracle.truffle.api.profiles.ValueProfile;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.config.SqueakConfig;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.io.DisplayPoint;
 import de.hpi.swa.graal.squeak.io.SqueakDisplay;
+import de.hpi.swa.graal.squeak.io.SqueakDisplayInterface;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -132,8 +133,7 @@ public final class SqueakImageContext {
     public final InterruptHandlerState interrupt;
     public final long startUpMillis = System.currentTimeMillis();
 
-    public final SqueakDisplay display;
-    private final ValueProfile displayProfile = ValueProfile.createClassProfile();
+    private final SqueakDisplayInterface display;
 
     public static final byte[] AS_SYMBOL_SELECTOR_NAME = "asSymbol".getBytes(); // for testing
     @CompilationFinal private NativeObject asSymbolSelector = null; // for testing
@@ -150,7 +150,11 @@ public final class SqueakImageContext {
         error = err;
         final String[] applicationArguments = env.getApplicationArguments();
         config = new SqueakConfig(applicationArguments);
-        display = SqueakDisplay.create(this, config.isHeadless());
+        if ((!TruffleOptions.AOT && GraphicsEnvironment.isHeadless()) || config.isHeadless()) {
+            display = null;
+        } else {
+            display = new SqueakDisplay(this);
+        }
         interrupt = InterruptHandlerState.create(this);
     }
 
@@ -198,10 +202,6 @@ public final class SqueakImageContext {
 
     public SqueakLanguage getLanguage() {
         return language;
-    }
-
-    public SqueakDisplay getDisplay() {
-        return displayProfile.profile(display);
     }
 
     public NativeObject getAsSymbolSelector() {
@@ -399,5 +399,13 @@ public final class SqueakImageContext {
         if (lastSender[0] instanceof ContextObject) {
             ((ContextObject) lastSender[0]).printSqStackTrace();
         }
+    }
+
+    public boolean hasDisplay() {
+        return display != null;
+    }
+
+    public SqueakDisplayInterface getDisplay() {
+        return display;
     }
 }

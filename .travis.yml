@@ -106,5 +106,9 @@ jobs:
         - mx squeak-svm
         - bin/graalsqueak-svm --version:graalvm
       language: c
+      addons:
+        apt:
+          packages:
+            - libsdl2-dev
       install: *download-graal-vm
   fast_finish: true

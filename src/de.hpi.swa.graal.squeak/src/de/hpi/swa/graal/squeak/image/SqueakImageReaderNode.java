@@ -86,7 +86,7 @@ public final class SqueakImageReaderNode extends RootNode {
     }
 
     private void validateStateOrFail() {
-        if (!image.getDisplay().isHeadless() && image.getSimulatePrimitiveArgsSelector() == null) {
+        if (image.hasDisplay() && image.getSimulatePrimitiveArgsSelector() == null) {
             throw new SqueakException("Unable to find BitBlt simulation in image, cannot run with display.");
         }
         if (image.config.isTesting() && image.getAsSymbolSelector() == null) {
@@ -179,7 +179,9 @@ public final class SqueakImageReaderNode extends RootNode {
         specialObjectsPointer = nextWord();
         nextWord(); // 1 word last used hash
         final int lastWindowSize = (int) nextWord();
-        image.getDisplay().resizeTo((lastWindowSize >> 16) & 0xffff, lastWindowSize & 0xffff);
+        if (image.hasDisplay()) {
+            image.getDisplay().resizeTo((lastWindowSize >> 16) & 0xffff, lastWindowSize & 0xffff);
+        }
         final int headerFlags = (int) nextWord();
         image.flags.initialize(headerFlags, is64bit);
         nextInt(); // extraVMMemory

@@ -11,10 +11,10 @@ import de.hpi.swa.graal.squeak.io.SqueakIOConstants.KEYBOARD_EVENT;
 
 public final class SqueakKeyboard implements KeyListener {
     private static final int TYPEAHEAD_LIMIT = 8;
-    private final SqueakDisplayJFrame display;
+    private final SqueakDisplay display;
     private final Deque<Integer> keys = new ArrayDeque<>(TYPEAHEAD_LIMIT);
 
-    public SqueakKeyboard(final SqueakDisplayJFrame display) {
+    public SqueakKeyboard(final SqueakDisplay display) {
         this.display = display;
     }
 

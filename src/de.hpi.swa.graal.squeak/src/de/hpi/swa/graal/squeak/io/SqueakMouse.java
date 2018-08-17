@@ -11,10 +11,10 @@ import de.hpi.swa.graal.squeak.io.SqueakIOConstants.MOUSE;
 import de.hpi.swa.graal.squeak.io.SqueakIOConstants.MOUSE_EVENT;
 
 public final class SqueakMouse extends MouseInputAdapter {
-    private final SqueakDisplayJFrame display;
+    private final SqueakDisplay display;
     private Point position = new Point(0, 0);
 
-    public SqueakMouse(final SqueakDisplayJFrame display) {
+    public SqueakMouse(final SqueakDisplay display) {
         this.display = display;
     }
 

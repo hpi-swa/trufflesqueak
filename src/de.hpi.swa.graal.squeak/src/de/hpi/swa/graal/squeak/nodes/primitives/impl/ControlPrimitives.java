@@ -972,9 +972,14 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @Specialization
+        @Specialization(guards = "code.image.hasDisplay()")
         protected final AbstractSqueakObject doForceUpdate(final AbstractSqueakObject receiver) {
             code.image.getDisplay().forceUpdate();
+            return receiver;
+        }
+
+        @Specialization(guards = "!code.image.hasDisplay()")
+        protected static final AbstractSqueakObject doForceUpdateHeadless(final AbstractSqueakObject receiver) {
             return receiver;
         }
     }
@@ -986,9 +991,14 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @Specialization
+        @Specialization(guards = "code.image.hasDisplay()")
         protected final AbstractSqueakObject doFullScreen(final AbstractSqueakObject receiver, final boolean enable) {
             code.image.getDisplay().setFullscreen(enable);
+            return receiver;
+        }
+
+        @Specialization(guards = "!code.image.hasDisplay()")
+        protected static final AbstractSqueakObject doFullScreenHeadless(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final boolean enable) {
             return receiver;
         }
     }

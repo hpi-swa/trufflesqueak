@@ -98,6 +98,35 @@ public final class SqueakIOConstants {
         public static final int INTERRUPT_KEYCODE = 2175;
     }
 
+    public static final class KEY {
+        public static final int DOWN = 31;
+        public static final int LEFT = 28;
+        public static final int RIGHT = 29;
+        public static final int UP = 30;
+        public static final int HOME = 1;
+        public static final int END = 4;
+        public static final int INSERT = 5;
+        public static final int BACKSPACE = 8;
+        public static final int PAGEUP = 11;
+        public static final int PAGEDOWN = 12;
+        public static final int RETURN = 13;
+        public static final int SHIFT = 16;
+        public static final int CTRL = 17;
+        public static final int COMMAND = 18;
+        public static final int BREAK = 19;
+        public static final int CAPSLOCK = 20;
+        public static final int ESCAPE = 27;
+        public static final int PRINT = 44;
+        public static final int DELETE = 127;
+        public static final int NUMLOCK = 184;
+        public static final int SCROLLLOCK = 212;
+
+        public static final int SHIFT_BIT = 1;
+        public static final int CTRL_BIT = 2;
+        public static final int OPTION_BIT = 4;
+        public static final int COMMAND_BIT = 8;
+    }
+
     public static final class MOUSE {
         public static final int BLUE = 1;
         public static final int YELLOW = 2;

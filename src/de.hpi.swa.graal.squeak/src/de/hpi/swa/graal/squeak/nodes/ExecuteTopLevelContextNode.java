@@ -44,7 +44,9 @@ public final class ExecuteTopLevelContextNode extends RootNode {
             throw e;
         } finally {
             image.interrupt.shutdown();
-            image.getDisplay().close();
+            if (image.hasDisplay()) {
+                image.getDisplay().close();
+            }
         }
         throw new SqueakException("Top level context did not return");
     }

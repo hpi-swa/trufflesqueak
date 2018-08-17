@@ -1,6 +1,8 @@
 package de.hpi.swa.graal.squeak.util;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleOptions;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
@@ -11,6 +13,7 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.process.SignalSemaphoreNode;
 
+@ImportStatic(TruffleOptions.class)
 public abstract class InterruptHandlerNode extends Node {
     protected final SqueakImageContext image;
     protected final InterruptHandlerState istate;
@@ -29,8 +32,18 @@ public abstract class InterruptHandlerNode extends Node {
 
     public abstract void executeTrigger(VirtualFrame frame);
 
-    @Specialization
+    @Specialization(guards = {"AOT", "image.hasDisplay()"})
+    protected final void doFullCheckAOT(final VirtualFrame frame) {
+        image.getDisplay().forceUpdate();
+        performCheck(frame);
+    }
+
+    @Specialization(guards = {"!AOT || !image.hasDisplay()"})
     protected final void doFullCheck(final VirtualFrame frame) {
+        performCheck(frame);
+    }
+
+    private void performCheck(final VirtualFrame frame) {
         istate.shouldTrigger = false;
         if (interruptPending()) {
             istate.interruptPending = false; // reset interrupt flag

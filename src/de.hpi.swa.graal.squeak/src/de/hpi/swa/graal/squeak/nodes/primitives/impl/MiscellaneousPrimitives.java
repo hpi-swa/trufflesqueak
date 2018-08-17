@@ -301,20 +301,36 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(index = 141)
     protected abstract static class PrimClipboardTextNode extends AbstractPrimitiveNode {
+        private NativeObject headlessValue;
 
         protected PrimClipboardTextNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
         @SuppressWarnings("unused")
-        @Specialization
+        @Specialization(guards = "code.image.hasDisplay()")
         protected final Object getClipboardText(final Object receiver, final NotProvided value) {
-            return code.image.wrap(code.image.display.getClipboardData());
+            return code.image.wrap(code.image.getDisplay().getClipboardData());
         }
 
-        @Specialization(guards = {"value.isByteType()"})
+        @SuppressWarnings("unused")
+        @Specialization(guards = "!code.image.hasDisplay()")
+        protected final Object getClipboardTextHeadless(final Object receiver, final NotProvided value) {
+            if (headlessValue == null) {
+                headlessValue = code.image.wrap("");
+            }
+            return headlessValue;
+        }
+
+        @Specialization(guards = {"code.image.hasDisplay()", "value.isByteType()"})
         protected final Object setClipboardText(@SuppressWarnings("unused") final Object receiver, final NativeObject value) {
-            code.image.display.setClipboardData(value.asString());
+            code.image.getDisplay().setClipboardData(value.asString());
+            return value;
+        }
+
+        @Specialization(guards = {"!code.image.hasDisplay()", "value.isByteType()"})
+        protected final Object setClipboardTextHeadless(@SuppressWarnings("unused") final Object receiver, final NativeObject value) {
+            headlessValue = value;
             return value;
         }
     }
