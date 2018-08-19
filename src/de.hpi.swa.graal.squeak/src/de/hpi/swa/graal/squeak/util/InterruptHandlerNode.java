@@ -47,16 +47,12 @@ public abstract class InterruptHandlerNode extends Node {
         if (istate.interruptPending()) {
             istate.interruptPending = false; // reset interrupt flag
             final PointersObject interruptSemaphore = istate.getInterruptSemaphore();
-            if (interruptSemaphore != null) {
-                signalSemaporeNode.executeSignal(frame, interruptSemaphore);
-            }
+            signalSemaporeNode.executeSignal(frame, interruptSemaphore);
         }
         if (istate.nextWakeUpTickTrigger()) {
             istate.nextWakeupTick = 0; // reset timer interrupt
             final PointersObject timerSemaphore = istate.getTimerSemaphore();
-            if (timerSemaphore != null) {
-                signalSemaporeNode.executeSignal(frame, timerSemaphore);
-            }
+            signalSemaporeNode.executeSignal(frame, timerSemaphore);
         }
         if (istate.pendingFinalizationSignals()) { // signal any pending finalizations
             istate.setPendingFinalizations(false);

@@ -44,6 +44,11 @@ public abstract class SignalSemaphoreNode extends AbstractNodeWithImage {
         // nothing to do
     }
 
+    @Specialization(guards = "object == null")
+    protected static final void doNothing(@SuppressWarnings("unused") final Object object) {
+        // nothing to do
+    }
+
     @Fallback
     protected static final void doFallback(@SuppressWarnings("unused") final VirtualFrame frame, final Object semaphore) {
         throw new SqueakException("Unexpected object in SignalSemaphoreNode:", semaphore);
