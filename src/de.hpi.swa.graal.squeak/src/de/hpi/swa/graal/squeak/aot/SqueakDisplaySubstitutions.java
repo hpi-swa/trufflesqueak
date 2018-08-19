@@ -50,9 +50,11 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
     private final SqueakImageContext image;
     private final Rect flipRect = UnmanagedMemory.malloc(SizeOf.unsigned(SDL.Rect.class));
     private final Rect renderRect = UnmanagedMemory.malloc(SizeOf.unsigned(SDL.Rect.class));
+    private final Rect nullRect = WordFactory.nullPointer();
     private final WordPointer pixelVoidPP = UnmanagedMemory.malloc(SizeOf.unsigned(WordPointer.class));
     private final CIntPointer pitchIntP = UnmanagedMemory.malloc(SizeOf.unsigned(CIntPointer.class));
     private final Deque<long[]> deferredEvents = new ArrayDeque<>();
+    private final Event event = UnmanagedMemory.malloc(SizeOf.unsigned(Event.class));
 
     private Window window = WordFactory.nullPointer();
     private Renderer renderer = WordFactory.nullPointer();
@@ -100,13 +102,8 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
     @Override
     public void forceRect(final int left, final int right, final int top, final int bottom) {
         copyPixels(left + top * width, right + bottom * width);
-        recordDamage(left, right, right - left, bottom - top);
+        recordDamage(left, top, right - left, bottom - top);
         textureDirty = true;
-    }
-
-    @Override
-    public DisplayPoint getSize() {
-        return new DisplayPoint(width, height);
     }
 
     @Override
@@ -137,11 +134,32 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
         if (!bitmap.isIntType()) {
             throw new SqueakException("Display bitmap expected to be a words object");
         }
-        width = (int) (long) sqDisplay.at0(FORM.WIDTH);
-        height = (int) (long) sqDisplay.at0(FORM.HEIGHT);
+
         depth = (int) (long) sqDisplay.at0(FORM.DEPTH);
         if (depth != 32) {
             throw new SqueakException("Expected 32bit display");
+        }
+        if (window.isNull()) {
+            width = (int) (long) sqDisplay.at0(FORM.WIDTH);
+            height = (int) (long) sqDisplay.at0(FORM.HEIGHT);
+            try (CCharPointerHolder title = CTypeConversion.toCString(DEFAULT_WINDOW_TITLE)) {
+                window = SDL.createWindow(
+                                title.get(),
+                                SDL.windowposUndefined(),
+                                SDL.windowposUndefined(),
+                                width,
+                                height,
+                                SDL.WindowFlags.RESIZABLE.getCValue());
+                sdlAssert(window.isNonNull());
+            }
+            renderer = SDL.createRenderer(window, -1, SDL.rendererSoftware());
+            sdlAssert(renderer.isNonNull());
+            texture = SDL.createTexture(renderer, SDL.Pixelformat.ARGB8888.getCValue(), SDL.textureaccessStreaming(), width, height);
+            sdlAssert(texture.isNonNull());
+            fullDamage();
+            getNextEvent(); // Poll and drop fix events for faster window initialization.
+        } else {
+            resizeTo((int) (long) sqDisplay.at0(FORM.WIDTH), (int) (long) sqDisplay.at0(FORM.HEIGHT));
         }
     }
 
@@ -195,20 +213,23 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
         if (!deferredEvents.isEmpty()) {
             return deferredEvents.removeFirst();
         }
-        final Event event = UnmanagedMemory.malloc(WordFactory.unsigned(56));
-        final long time = getEventTime();
+        return SqueakIOConstants.NULL_EVENT;
+    }
+
+    public void pollEvents() {
         while (SDL.pollEvent(event) != 0) {
+            final long time = getEventTime();
             final int eventType = event.type();
             if (eventType == SDL.EventType.MOUSEBUTTONDOWN.getCValue() || eventType == SDL.EventType.MOUSEBUTTONUP.getCValue()) {
-                handleMouseButton(event);
+                handleMouseButton();
                 queueEvent(getNextMouseEvent(time));
             } else if (eventType == SDL.EventType.MOUSEMOTION.getCValue()) {
-                handleMouseMove(event);
+                handleMouseMove();
                 queueEvent(getNextMouseEvent(time));
             } else if (eventType == SDL.EventType.MOUSEWHEEL.getCValue()) {
-                queueEvent(getNextMouseWheelEvent(time, event));
+                queueEvent(getNextMouseWheelEvent(time));
             } else if (eventType == SDL.EventType.KEYDOWN.getCValue()) {
-                handleKeyboardEvent(event);
+                handleKeyboardEvent();
                 long[] later = null;
                 if (!isModifierKey(key)) {
                     // No TEXTINPUT event for this key will follow, but Squeak needs a KeyStroke
@@ -221,18 +242,17 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
                 fixKeyCodeCase();
                 queueEvent(getNextKeyEvent(KEYBOARD_EVENT.DOWN, time));
                 if (later != null) {
-                    insertPaddingEvent();
                     queueEvent(later);
                 }
             } else if (eventType == SDL.EventType.TEXTINPUT.getCValue()) {
-                handleTextInputEvent(event);
+                handleTextInputEvent();
                 queueEvent(getNextKeyEvent(KEYBOARD_EVENT.CHAR, time));
             } else if (eventType == SDL.EventType.KEYUP.getCValue()) {
-                handleKeyboardEvent(event);
+                handleKeyboardEvent();
                 fixKeyCodeCase();
                 queueEvent(getNextKeyEvent(KEYBOARD_EVENT.UP, time));
             } else if (eventType == SDL.EventType.WINDOWEVENT.getCValue()) {
-                handleWindowEvent(event);
+                handleWindowEvent();
             } else if (eventType == SDL.EventType.RENDER_TARGETS_RESET.getCValue()) {
                 /* || eventType == SDL.EventType.RENDER_DEVICE_RESET.getCValue() */
                 fullDamage();
@@ -240,9 +260,7 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
             } else if (eventType == SDL.EventType.QUIT.getCValue()) {
                 throw new SqueakQuit(0);
             }
-            insertPaddingEvent();
         }
-        return SqueakIOConstants.NULL_EVENT;
     }
 
     @Override
@@ -257,22 +275,17 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
 
     @Override
     public void resizeTo(final int newWidth, final int newHeight) {
+        if (width == newWidth && height == newHeight) {
+            return;
+        }
         width = newWidth;
         height = newHeight;
-        try (CCharPointerHolder title = CTypeConversion.toCString(DEFAULT_WINDOW_TITLE)) {
-            window = SDL.createWindow(
-                            title.get(),
-                            SDL.windowposUndefined(),
-                            SDL.windowposUndefined(),
-                            width,
-                            height,
-                            SDL.WindowFlags.RESIZABLE.getCValue());
-            sdlAssert(window.isNonNull());
+        if (texture.isNonNull()) {
+            SDL.destroyTexture(texture);
         }
-        renderer = SDL.createRenderer(window, -1, SDL.rendererSoftware());
-        sdlAssert(renderer.isNonNull());
         texture = SDL.createTexture(renderer, SDL.Pixelformat.ARGB8888.getCValue(), SDL.textureaccessStreaming(), width, height);
         sdlAssert(texture.isNonNull());
+        lock();
         fullDamage();
     }
 
@@ -333,7 +346,7 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
         final int[] pixels = bitmap.getIntStorage();
         try (PinnedObject pinnedPixels = PinnedObject.create(pixels)) {
             final VoidPointer surfaceBufferPointer = pinnedPixels.addressOfArrayElement(0);
-            SDL.updateTexture(texture, WordFactory.nullPointer(), surfaceBufferPointer, width * bpp);
+            SDL.updateTexture(texture, nullRect, surfaceBufferPointer, width * bpp);
         }
     }
 
@@ -345,16 +358,20 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
         }
         textureDirty = false;
         unlock();
-        if (!sdlError(SDL.renderCopy(renderer, texture, /* renderRect, renderRect */ WordFactory.nullPointer(), WordFactory.nullPointer()) == 0)) {
+        if (!sdlError(SDL.renderCopy(renderer, texture, renderRect, renderRect) == 0)) {
             return;
         }
         SDL.renderPresent(renderer);
         resetDamage();
-        sdlError(SDL.lockTexture(texture, WordFactory.nullPointer(), pixelVoidPP, pitchIntP) == 0);
+        lock();
     }
 
     private void unlock() {
         SDL.unlockTexture(texture);
+    }
+
+    private void lock() {
+        sdlError(SDL.lockTexture(texture, nullRect, pixelVoidPP, pitchIntP) == 0);
     }
 
     private void recordDamage(final int x, final int y, final int w, final int h) {
@@ -401,7 +418,7 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
         return key == KEY.COMMAND || key == KEY.CTRL || key == KEY.SHIFT;
     }
 
-    private void handleWindowEvent(final Event event) {
+    private void handleWindowEvent() {
         final WindowEvent windowEvent = (WindowEvent) event;
         final byte eventID = windowEvent.event();
         if (eventID == SDL.WindowEventID.RESIZED.ordinal() || eventID == SDL.WindowEventID.RESIZED.ordinal() || eventID == SDL.WindowEventID.EXPOSED.ordinal()) {
@@ -415,15 +432,10 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
         }
     }
 
-    private void handleTextInputEvent(final Event event) {
+    private void handleTextInputEvent() {
         final TextInputEvent textInputEvent = (TextInputEvent) event;
         key = CTypeConversion.toJavaString(textInputEvent.text()).charAt(0);
 
-    }
-
-    private void insertPaddingEvent() {
-        // We always return one None event between every event, so we poll only half of the time.
-        queueEvent(SqueakIOConstants.NULL_EVENT);
     }
 
     private long[] getNextKeyEvent(final long event_type, final long time) {
@@ -436,7 +448,7 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
         }
     }
 
-    private void handleKeyboardEvent(final Event event) {
+    private void handleKeyboardEvent() {
         final KeyboardEvent keyboardEvent = (KeyboardEvent) event;
         final int sym = keyboardEvent.keysym().sym();
         key = 0;
@@ -485,14 +497,14 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
         }
     }
 
-    private long[] getNextMouseWheelEvent(final long time, final Event event) {
+    private long[] getNextMouseWheelEvent(final long time) {
         final MouseWheelEvent mouseWheelEvent = (MouseWheelEvent) event;
         final long mods = getModifierMask(3);
         final long btn = getMouseEventButtons(mods);
         return new long[]{EVENT_TYPE.MOUSE_WHEEL, time, mouseWheelEvent.x() * 120, mouseWheelEvent.y() * 120, btn, mods, 0, 0};
     }
 
-    private void handleMouseMove(final Event event) {
+    private void handleMouseMove() {
         final MouseMotionEvent mouseMotionEvent = (MouseMotionEvent) event;
         lastMouseXPos = mouseMotionEvent.x();
         lastMouseYPos = mouseMotionEvent.y();
@@ -541,7 +553,7 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
         return modifier << shift;
     }
 
-    private void handleMouseButton(final Event event) {
+    private void handleMouseButton() {
         final MouseButtonEvent mouseButtonEvent = (MouseButtonEvent) event;
         int btn = mouseButtonEvent.button();
         if (btn == SDL.buttonRight()) {
@@ -562,8 +574,8 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
         return System.currentTimeMillis() - image.startUpMillis;
     }
 
-    private void queueEvent(final long[] event) {
-        deferredEvents.add(event);
+    private void queueEvent(final long[] eventData) {
+        deferredEvents.add(eventData);
         if (inputSemaphoreIndex > 0) {
             image.interrupt.signalSemaphoreWithIndex(inputSemaphoreIndex);
         }

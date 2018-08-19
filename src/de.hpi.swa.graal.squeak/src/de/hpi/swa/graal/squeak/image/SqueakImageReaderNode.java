@@ -178,12 +178,9 @@ public final class SqueakImageReaderNode extends RootNode {
         oldBaseAddress = nextWord();
         specialObjectsPointer = nextWord();
         nextWord(); // 1 word last used hash
-        final int lastWindowSize = (int) nextWord();
-        if (image.hasDisplay()) {
-            image.getDisplay().resizeTo((lastWindowSize >> 16) & 0xffff, lastWindowSize & 0xffff);
-        }
+        final int lastWindowSizeWord = (int) nextWord();
         final int headerFlags = (int) nextWord();
-        image.flags.initialize(headerFlags, is64bit);
+        image.flags.initialize(headerFlags, lastWindowSizeWord, is64bit);
         nextInt(); // extraVMMemory
     }
 

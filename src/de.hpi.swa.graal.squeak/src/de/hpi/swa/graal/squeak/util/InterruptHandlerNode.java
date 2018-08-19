@@ -33,7 +33,7 @@ public abstract class InterruptHandlerNode extends Node {
 
     @Specialization(guards = {"AOT", "image.hasDisplay()"})
     protected final void doFullCheckAOT(final VirtualFrame frame) {
-        image.getDisplay().forceUpdate();
+        image.getDisplay().pollEvents();
         performCheck(frame);
     }
 

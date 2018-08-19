@@ -225,8 +225,8 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"code.image.hasDisplay()", "receiver.size() >= 4"})
         protected final boolean doDisplay(final PointersObject receiver) {
-            code.image.getDisplay().open(receiver);
             code.image.specialObjectsArray.atput0(SPECIAL_OBJECT_INDEX.TheDisplay, receiver);
+            code.image.getDisplay().open(receiver);
             return code.image.sqTrue;
         }
 
@@ -513,20 +513,14 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 106)
     protected abstract static class PrimScreenSizeNode extends AbstractPrimitiveNode {
-        private static final DisplayPoint DEFAULT_DIMENSION = new DisplayPoint(1024, 768);
 
         protected PrimScreenSizeNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        @Specialization(guards = "code.image.hasDisplay()")
+        @Specialization
         protected final AbstractSqueakObject doSize(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return code.image.wrap(code.image.getDisplay().getSize());
-        }
-
-        @Specialization(guards = "!code.image.hasDisplay()")
-        protected final AbstractSqueakObject doSizeHeadless(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return code.image.wrap(DEFAULT_DIMENSION);
+            return code.image.wrap(code.image.flags.getLastWindowSize());
         }
     }
 

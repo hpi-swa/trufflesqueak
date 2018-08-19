@@ -197,12 +197,6 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     }
 
     @Override
-    public DisplayPoint getSize() {
-        final Dimension size = frame.getSize();
-        return new DisplayPoint(size.getWidth(), size.getHeight());
-    }
-
-    @Override
     public void adjustDisplay(final long depth, final long width, final long height, final boolean fullscreen) {
         canvas.depth = (int) depth;
         canvas.width = (int) width;
@@ -237,6 +231,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     @TruffleBoundary
     public void open(final PointersObject sqDisplay) {
         canvas.setSqDisplay(sqDisplay);
+        resizeTo(canvas.width, canvas.height);
         if (!frame.isVisible()) {
             frame.setVisible(true);
             frame.requestFocus();
@@ -392,5 +387,9 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     @Override
     public void beep() {
         Toolkit.getDefaultToolkit().beep();
+    }
+
+    public void pollEvents() {
+        throw new SqueakException("No need to poll for events manually when using AWT.");
     }
 }
