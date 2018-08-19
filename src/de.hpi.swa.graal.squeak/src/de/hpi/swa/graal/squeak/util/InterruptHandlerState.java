@@ -19,13 +19,13 @@ public final class InterruptHandlerState {
     private static final int INTERRUPT_CHECKS_EVERY_N_MILLISECONDS = 3;
 
     public final SqueakImageContext image;
-    public final boolean disabled;
+    private final boolean disabled;
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     protected final Deque<Integer> semaphoresToSignal = new ArrayDeque<>();
 
     protected long nextWakeupTick = 0;
     protected boolean interruptPending = false;
-    public boolean disabledTemporarily = false;
+    private boolean isActive = false;
     protected boolean pendingFinalizationSignals = false;
     public volatile boolean shouldTrigger = false;
 
@@ -82,28 +82,44 @@ public final class InterruptHandlerState {
     }
 
     public boolean disabled() {
-        return disabledTemporarily;
+        return disabled;
     }
 
-    public void disable() {
-        disabledTemporarily = true;
+    public boolean isActive() {
+        return isActive;
     }
 
-    public void enable() {
-        disabledTemporarily = false;
+    public void activate() {
+        isActive = false;
     }
 
-    public void setPendingFinalizations() {
-        pendingFinalizationSignals = true;
+    public void deactivate() {
+        isActive = true;
+    }
+
+    protected boolean interruptPending() {
+        return interruptPending;
+    }
+
+    protected boolean nextWakeUpTickTrigger() {
+        return (nextWakeupTick != 0) && (System.currentTimeMillis() >= nextWakeupTick);
+    }
+
+    public void setPendingFinalizations(final boolean value) {
+        pendingFinalizationSignals = value;
+    }
+
+    protected boolean pendingFinalizationSignals() {
+        return pendingFinalizationSignals;
     }
 
     @TruffleBoundary
-    private boolean hasSemaphoresToSignal() {
-        return semaphoresToSignal.isEmpty();
+    protected boolean hasSemaphoresToSignal() {
+        return !semaphoresToSignal.isEmpty();
     }
 
     @TruffleBoundary
-    private int nextSemaphoreToSignal() {
+    protected int nextSemaphoreToSignal() {
         return semaphoresToSignal.removeFirst();
     }
 
@@ -120,7 +136,7 @@ public final class InterruptHandlerState {
         if (CompilerDirectives.inCompiledCode() && !CompilerDirectives.inCompilationRoot()) {
             return false; // do not trigger in inlined code
         }
-        if (disabledTemporarily) {
+        if (isActive) {
             return false;
         }
         return shouldTrigger;
@@ -151,7 +167,7 @@ public final class InterruptHandlerState {
         CompilerAsserts.neverPartOfCompilation("Resetting interrupt handler only supported for testing purposes");
         nextWakeupTick = 0;
         interruptPending = false;
-        disabledTemporarily = false;
+        isActive = false;
         pendingFinalizationSignals = false;
     }
 }

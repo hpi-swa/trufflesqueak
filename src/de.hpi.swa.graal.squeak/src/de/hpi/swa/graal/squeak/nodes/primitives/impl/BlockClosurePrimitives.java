@@ -365,13 +365,13 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == 0"})
         protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block,
                         @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments) {
-            final boolean wasDisabled = code.image.interrupt.disabled();
-            code.image.interrupt.disable();
+            final boolean wasActive = code.image.interrupt.isActive();
+            code.image.interrupt.deactivate();
             try {
                 return dispatch.executeBlock(block, getFrameArguments.execute(block, getContextOrMarker(frame), new Object[0]));
             } finally {
-                if (!wasDisabled) {
-                    code.image.interrupt.enable();
+                if (wasActive) {
+                    code.image.interrupt.activate();
                 }
             }
         }
@@ -388,13 +388,13 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == argArray.size()"})
         protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final PointersObject argArray,
                         @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments) {
-            final boolean wasDisabled = code.image.interrupt.disabled();
-            code.image.interrupt.disable();
+            final boolean wasActive = code.image.interrupt.isActive();
+            code.image.interrupt.deactivate();
             try {
                 return dispatch.executeBlock(block, getFrameArguments.execute(block, getContextOrMarker(frame), argArray.getPointers()));
             } finally {
-                if (!wasDisabled) {
-                    code.image.interrupt.enable();
+                if (wasActive) {
+                    code.image.interrupt.activate();
                 }
             }
         }

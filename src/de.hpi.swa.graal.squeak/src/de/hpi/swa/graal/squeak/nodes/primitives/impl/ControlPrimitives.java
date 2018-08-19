@@ -706,7 +706,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected final Object doGC(final VirtualFrame frame, final AbstractSqueakObject receiver) {
             MiscUtils.systemGC();
             if (hasPendingFinalizations()) {
-                code.image.interrupt.setPendingFinalizations();
+                code.image.interrupt.setPendingFinalizations(true);
             }
             return code.image.wrap(MiscUtils.runtimeFreeMemory());
         }

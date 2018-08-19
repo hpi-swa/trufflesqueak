@@ -223,7 +223,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
         protected abstract void executeGeneric(VirtualFrame frame, boolean hasPrimitive, int bytecodeLength);
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"!code.image.interrupt.disabled", "!hasPrimitive", "bytecodeLength > BYTECODE_LENGTH_THRESHOLD"})
+        @Specialization(guards = {"!code.image.interrupt.disabled()", "!hasPrimitive", "bytecodeLength > BYTECODE_LENGTH_THRESHOLD"})
         protected final void doTrigger(final VirtualFrame frame, final boolean hasPrimitive, final int bytecodeLength,
                         @Cached("create(code)") final InterruptHandlerNode interruptNode) {
             if (countingProfile.profile(code.image.interrupt.shouldTrigger())) {
@@ -232,7 +232,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"(code.image.interrupt.disabled || hasPrimitive) || bytecodeLength <= BYTECODE_LENGTH_THRESHOLD"})
+        @Specialization(guards = {"(code.image.interrupt.disabled() || hasPrimitive) || bytecodeLength <= BYTECODE_LENGTH_THRESHOLD"})
         protected final void doNothing(final VirtualFrame frame, final boolean hasPrimitive, final int bytecodeLength) {
             // do not trigger
         }

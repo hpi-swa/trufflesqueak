@@ -110,16 +110,16 @@ public abstract class SimulationPrimitiveNode extends AbstractPrimitiveNode {
 
     private Object doSimulation(final VirtualFrame frame, final Object receiver, final PointersObject arguments) {
         final Object[] newRcvrAndArgs = new Object[]{receiver, functionName, arguments};
-        final boolean wasDisabled = code.image.interrupt.disabled();
-        code.image.interrupt.disable();
+        final boolean wasActive = code.image.interrupt.isActive();
+        code.image.interrupt.deactivate();
         try {
             return dispatchNode.executeDispatch(frame, getSimulateMethod(receiver), newRcvrAndArgs, getContextOrMarker(frame));
         } catch (SimulationPrimitiveFailed e) {
             simulationFailedProfile.enter();
             throw new PrimitiveFailed(e.getReasonCode());
         } finally {
-            if (wasDisabled) {
-                code.image.interrupt.enable();
+            if (wasActive) {
+                code.image.interrupt.activate();
             }
         }
     }
