@@ -148,7 +148,7 @@ public final class SqueakImageContext {
     public SqueakImageContext(final SqueakLanguage squeakLanguage, final SqueakLanguage.Env environment) {
         language = squeakLanguage;
         patch(environment);
-        if ((!TruffleOptions.AOT && GraphicsEnvironment.isHeadless()) || isHeadless() || isTesting()) {
+        if ((!isAOT() && GraphicsEnvironment.isHeadless()) || isHeadless() || isTesting()) {
             display = null;
         } else {
             display = new SqueakDisplay(this);
@@ -359,6 +359,14 @@ public final class SqueakImageContext {
         specialObjectsArray.atput0(index, semaphore);
     }
 
+    public boolean hasDisplay() {
+        return display != null;
+    }
+
+    public SqueakDisplayInterface getDisplay() {
+        return display;
+    }
+
     public static boolean isAOT() {
         return TruffleOptions.AOT;
     }
@@ -455,13 +463,5 @@ public final class SqueakImageContext {
         if (lastSender[0] instanceof ContextObject) {
             ((ContextObject) lastSender[0]).printSqStackTrace();
         }
-    }
-
-    public boolean hasDisplay() {
-        return display != null;
-    }
-
-    public SqueakDisplayInterface getDisplay() {
-        return display;
     }
 }
