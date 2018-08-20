@@ -6,8 +6,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,14 +15,7 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
-import com.oracle.truffle.api.RootCallTarget;
-import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.nodes.IndirectCallNode;
-
-import de.hpi.swa.graal.squeak.SqueakLanguage;
-import de.hpi.swa.graal.squeak.config.SqueakConfig;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.graal.squeak.image.SqueakImageReaderNode;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
@@ -174,17 +165,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
     public static void loadTestImage() {
         final String imagePath = getPathToTestImage();
         ensureImageContext(imagePath);
-        image.getOutput().println();
-        image.getOutput().println("== Running " + SqueakConfig.NAME + " SUnit Tests on " + SqueakLanguage.getRuntimeName() + " ==");
-        image.getOutput().println("Loading test image at " + imagePath + "...");
-        final FileInputStream inputStream;
-        try {
-            inputStream = new FileInputStream(imagePath);
-        } catch (FileNotFoundException e) {
-            throw new AssertionError("Test image not found");
-        }
-        final RootCallTarget target = Truffle.getRuntime().createCallTarget(new SqueakImageReaderNode(inputStream, image));
-        IndirectCallNode.create().call(target, new Object[0]);
+        image.getOutput().println("Test image loaded from " + imagePath + "...");
         patchImageForTesting();
     }
 

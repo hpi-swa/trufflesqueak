@@ -11,6 +11,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
+import de.hpi.swa.graal.squeak.SqueakOptions;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.PointersObject;
@@ -38,7 +39,7 @@ public final class InterruptHandlerState {
 
     protected InterruptHandlerState(final SqueakImageContext image) {
         this.image = image;
-        disabled = image.config.disableInterruptHandler();
+        disabled = SqueakOptions.getOption(image.env, SqueakOptions.DisableInterruptHandler);
         if (disabled) {
             image.printToStdOut("Interrupt handler disabled...");
         }

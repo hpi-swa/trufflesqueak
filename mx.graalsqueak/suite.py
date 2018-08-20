@@ -22,7 +22,7 @@ suite = {
             "subDir": "src",
             "sourceDirs": ["src"],
             "dependencies": [
-                "graalsqueak:GRAALSQUEAK-CONFIG",
+                "graalsqueak:GRAALSQUEAK-SHARED",
                 "truffle:TRUFFLE_API",
                 "truffle:TRUFFLE_DSL_PROCESSOR",
             ],
@@ -37,7 +37,7 @@ suite = {
             "subDir": "src",
             "sourceDirs": ["src"],
             "dependencies": [
-                "graalsqueak:GRAALSQUEAK-CONFIG",
+                "graalsqueak:GRAALSQUEAK-SHARED",
                 "sdk:GRAAL_SDK",
                 "sdk:LAUNCHER_COMMON",
                 "truffle:TRUFFLE_API",
@@ -48,7 +48,7 @@ suite = {
             "javaCompliance": "1.8",
             "workingSets": "GraalSqueak",
         },
-        "de.hpi.swa.graal.squeak.config": {
+        "de.hpi.swa.graal.squeak.shared": {
             "subDir": "src",
             "sourceDirs": ["src"],
             "dependencies": [
@@ -86,7 +86,7 @@ suite = {
                 "de.hpi.swa.graal.squeak",
             ],
             "distDependencies": [
-                "GRAALSQUEAK-CONFIG",
+                "GRAALSQUEAK-SHARED",
                 "truffle:TRUFFLE_API",
                 "truffle:TRUFFLE_DSL_PROCESSOR",
             ],
@@ -94,15 +94,15 @@ suite = {
             "sourcesPath": "graalsqueak.src.zip",
         },
 
-        "GRAALSQUEAK-CONFIG": {
+        "GRAALSQUEAK-SHARED": {
             "dependencies": [
-                "de.hpi.swa.graal.squeak.config",
+                "de.hpi.swa.graal.squeak.shared",
             ],
             "distDependencies": [
                 "truffle:TRUFFLE_API",
             ],
-            "path": "graalsqueak-config.jar",
-            "sourcesPath": "graalsqueak-config.src.zip",
+            "path": "graalsqueak-shared.jar",
+            "sourcesPath": "graalsqueak-shared.src.zip",
         },
 
         "GRAALSQUEAK-LAUNCHER": {
@@ -111,7 +111,7 @@ suite = {
                 "de.hpi.swa.graal.squeak.launcher",
             ],
             "distDependencies": [
-                "GRAALSQUEAK-CONFIG",
+                "GRAALSQUEAK-SHARED",
                 "sdk:GRAAL_SDK",
                 "sdk:LAUNCHER_COMMON",
             ],

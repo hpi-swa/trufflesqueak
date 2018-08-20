@@ -16,7 +16,6 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
-import de.hpi.swa.graal.squeak.config.SqueakConfig;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.SimulationPrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
@@ -43,6 +42,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerState;
 
@@ -138,7 +138,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         protected final AbstractSqueakObject get(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return code.image.wrap(code.image.config.getImagePath());
+            return code.image.wrap(code.image.getImagePath());
         }
     }
 
@@ -345,7 +345,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         @TruffleBoundary
-        protected final AbstractSqueakObject goVMPath(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected final AbstractSqueakObject doVMPath(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             return code.image.wrap(System.getProperty("java.home") + File.separatorChar);
         }
     }
@@ -504,10 +504,10 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 final String separator = System.getProperty("file.separator");
                 return code.image.wrap(System.getProperty("java.home") + separator + "bin" + separator + "java");
             } else if (index == 1) {
-                return code.image.wrap(code.image.config.getImagePath());
+                return code.image.wrap(code.image.getImagePath());
             }
             if (index >= 2 && index <= 1000) {
-                final String[] restArgs = code.image.config.getRestArgs();
+                final String[] restArgs = code.image.getRestArguments();
                 if (restArgs.length > index - 2) {
                     return code.image.wrap(restArgs[index - 2]);
                 } else {
@@ -530,7 +530,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 1005:  // window system name
                     return code.image.wrap("Aqua");
                 case 1006:  // vm build id
-                    return code.image.wrap(SqueakConfig.NAME + " on " + Truffle.getRuntime().getName());
+                    return code.image.wrap(SqueakLanguageConfig.NAME + " on " + Truffle.getRuntime().getName());
                 // case 1007: // Interpreter class (Cog VM only)
                 // case 1008: // Cogit class (Cog VM only)
                 // case 1009: // Platform source version (Cog VM only?)
@@ -655,7 +655,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         protected static final void printWarningIfNotTesting(final CompiledCodeObject code) {
-            if (!code.image.config.isTesting()) {
+            if (!code.image.isTesting()) {
                 printWarning(code);
             }
         }

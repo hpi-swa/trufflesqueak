@@ -67,19 +67,18 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                 }
                 // doIt: activeContext.printSqStackTrace();
                 final Object result = executeContextNode.executeContext(activeContext.getTruffleFrame(code.getNumArgsAndCopied()), activeContext);
-                image.traceVerbose("Local Return on top-level: sender: ", sender);
                 activeContext = unwindContextChainNode.executeUnwind(sender, sender, result);
-                image.traceVerbose("Local Return on top-level, new context is ", activeContext);
+                image.traceProcessSwitches("Local Return on top-level (sender:", sender, ", new context: ", activeContext, ")");
             } catch (ProcessSwitch ps) {
-                image.trace("Switching from", activeContext, "to", ps.getNewContext());
+                image.traceProcessSwitches("Switching from", activeContext, "to", ps.getNewContext());
                 activeContext = ps.getNewContext();
             } catch (NonLocalReturn nlr) {
                 final AbstractSqueakObject target = nlr.hasArrivedAtTargetContext() ? sender : nlr.getTargetContext().getSender();
                 activeContext = unwindContextChainNode.executeUnwind(sender, target, nlr.getReturnValue());
-                image.traceVerbose("Non Local Return on top-level, new context is ", activeContext);
+                image.traceProcessSwitches("Non Local Return on top-level, new context is ", activeContext);
             } catch (NonVirtualReturn nvr) {
                 activeContext = unwindContextChainNode.executeUnwind(nvr.getCurrentContext(), nvr.getTargetContext(), nvr.getReturnValue());
-                image.traceVerbose("Non Virtual Return on top-level, new context is ", activeContext);
+                image.traceProcessSwitches("Non Virtual Return on top-level, new context is ", activeContext);
             }
         }
     }

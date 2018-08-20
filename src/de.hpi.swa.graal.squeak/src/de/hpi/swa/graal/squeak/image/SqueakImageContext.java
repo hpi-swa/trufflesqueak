@@ -4,6 +4,7 @@ import java.awt.GraphicsEnvironment;
 import java.io.File;
 import java.io.PrintWriter;
 import java.math.BigInteger;
+import java.nio.file.Paths;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -16,7 +17,7 @@ import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
-import de.hpi.swa.graal.squeak.config.SqueakConfig;
+import de.hpi.swa.graal.squeak.SqueakOptions;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.io.DisplayPoint;
 import de.hpi.swa.graal.squeak.io.SqueakDisplay;
@@ -79,9 +80,9 @@ public final class SqueakImageContext {
     public final ClassObject nilClass = new ClassObject(this);
 
     private final SqueakLanguage language;
-    private final PrintWriter output;
-    private final PrintWriter error;
-    public final SqueakLanguage.Env env;
+    @CompilationFinal private PrintWriter output;
+    @CompilationFinal private PrintWriter error;
+    @CompilationFinal public SqueakLanguage.Env env;
 
     // Special selectors
     public final NativeObject plus = new NativeObject(this);
@@ -127,7 +128,6 @@ public final class SqueakImageContext {
                     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0
     };
 
-    public final SqueakConfig config;
     public final SqueakImageFlags flags = new SqueakImageFlags();
     public final OSDetector os = new OSDetector();
     public final InterruptHandlerState interrupt;
@@ -142,20 +142,25 @@ public final class SqueakImageContext {
     @CompilationFinal private NativeObject simulatePrimitiveArgsSelector = null;
     @CompilationFinal private PointersObject scheduler = null;
 
-    public SqueakImageContext(final SqueakLanguage squeakLanguage, final SqueakLanguage.Env environ,
-                    final PrintWriter out, final PrintWriter err) {
+    public SqueakImageContext(final SqueakLanguage squeakLanguage, final SqueakLanguage.Env environment) {
         language = squeakLanguage;
-        env = environ;
-        output = out;
-        error = err;
-        final String[] applicationArguments = env.getApplicationArguments();
-        config = new SqueakConfig(applicationArguments);
-        if ((!TruffleOptions.AOT && GraphicsEnvironment.isHeadless()) || config.isHeadless()) {
+        patch(environment);
+        if ((!TruffleOptions.AOT && GraphicsEnvironment.isHeadless()) || isHeadless() || isTesting()) {
             display = null;
         } else {
             display = new SqueakDisplay(this);
         }
         interrupt = InterruptHandlerState.create(this);
+    }
+
+    public boolean patch(final SqueakLanguage.Env newEnv) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        env = newEnv;
+        output = new PrintWriter(env.out(), true);
+        error = new PrintWriter(env.err(), true);
+        asSymbolSelector = null;
+        simulatePrimitiveArgsSelector = null;
+        return true;
     }
 
     public ExecuteTopLevelContextNode getActiveContext() {
@@ -167,9 +172,18 @@ public final class SqueakImageContext {
         return ExecuteTopLevelContextNode.create(language, activeContext);
     }
 
-    public ExecuteTopLevelContextNode getCustomContext() {
-        final Object receiver = config.getReceiver();
-        final String selector = config.getSelector();
+    public ExecuteTopLevelContextNode getCustomContext(final CharSequence charSequence) {
+        final String[] sourceParts = charSequence.toString().split(">>#");
+        if (sourceParts.length != 2) {
+            throw new SqueakException("Unexpected source:", charSequence);
+        }
+        Object receiver;
+        try {
+            receiver = Long.parseLong(sourceParts[0]);
+        } catch (NumberFormatException e) {
+            receiver = sourceParts[0];
+        }
+        final String selector = sourceParts[1];
         final ClassObject receiverClass = receiver instanceof Long ? smallIntegerClass : nilClass;
         final CompiledMethodObject lookupResult = (CompiledMethodObject) receiverClass.lookup(selector);
         if (lookupResult.getCompiledInSelector() == doesNotUnderstand) {
@@ -187,7 +201,6 @@ public final class SqueakImageContext {
         for (int i = 0; i < numTemps; i++) {
             customContext.push(nil);
         }
-
         output.println("Starting to evaluate " + receiver + " >> " + selector + "...");
         return ExecuteTopLevelContextNode.create(getLanguage(), customContext);
     }
@@ -336,17 +349,39 @@ public final class SqueakImageContext {
     }
 
     public String imageRelativeFilePathFor(final String fileName) {
-        return config.getImageDirectory() + File.separator + fileName;
+        return getImageDirectory() + File.separator + fileName;
     }
 
-    public void trace(final Object... arguments) {
-        if (config.isTracing()) {
-            printToStdOut(arguments);
-        }
+    public String getImagePath() {
+        return SqueakOptions.getOption(env, SqueakOptions.ImagePath);
     }
 
-    public void traceVerbose(final Object... arguments) {
-        if (config.isTracing() && config.isVerbose()) {
+    public String getImageDirectory() {
+        return Paths.get(getImagePath()).getParent().getFileName().toString();
+    }
+
+    public String[] getRestArguments() {
+        return env.getApplicationArguments();
+    }
+
+    public boolean interruptHandlerDisabled() {
+        return SqueakOptions.getOption(env, SqueakOptions.DisableInterruptHandler);
+    }
+
+    public boolean isHeadless() {
+        return SqueakOptions.getOption(env, SqueakOptions.Headless);
+    }
+
+    public boolean isTesting() {
+        return SqueakOptions.getOption(env, SqueakOptions.Testing);
+    }
+
+    public boolean isVerbose() {
+        return SqueakOptions.getOption(env, SqueakOptions.Verbose);
+    }
+
+    public void printVerbose(final Object... arguments) {
+        if (isVerbose()) {
             printToStdOut(arguments);
         }
     }
@@ -359,6 +394,12 @@ public final class SqueakImageContext {
     @TruffleBoundary
     public void printToStdErr(final Object... arguments) {
         getError().println(ArrayUtils.toJoinedString(" ", arguments));
+    }
+
+    public void traceProcessSwitches(final Object... arguments) {
+        if (SqueakOptions.getOption(env, SqueakOptions.TraceProcessSwitches)) {
+            printToStdOut(arguments);
+        }
     }
 
     /*

@@ -85,7 +85,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object fail(@SuppressWarnings("unused") final VirtualFrame frame) {
-            code.image.traceVerbose("Primitive not yet written: ", code);
+            code.image.printVerbose("Primitive not yet written: ", code);
             throw new PrimitiveFailed();
         }
     }
@@ -720,7 +720,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 count++;
                 element = queue.poll();
             }
-            code.image.traceVerbose(count, " WeakPointersObjects have been garbage collected.");
+            code.image.printVerbose(count, " WeakPointersObjects have been garbage collected.");
             return count > 0;
         }
     }
@@ -939,7 +939,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @Specialization(guards = {"!code.image.config.disableInterruptHandler()"})
+        @Specialization(guards = {"!code.image.interruptHandlerDisabled()"})
         protected static final AbstractSqueakObject doRelinquish(final VirtualFrame frame, final AbstractSqueakObject receiver, final long timeMicroseconds,
                         @Cached("create(code)") final InterruptHandlerNode interruptNode) {
             /*
@@ -959,7 +959,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        @Specialization(guards = {"code.image.config.disableInterruptHandler()"})
+        @Specialization(guards = {"code.image.interruptHandlerDisabled()"})
         protected static final AbstractSqueakObject doNothing(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final long timeMicroseconds) {
             return receiver;
         }

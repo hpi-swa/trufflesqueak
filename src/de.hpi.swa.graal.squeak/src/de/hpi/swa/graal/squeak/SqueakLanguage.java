@@ -1,6 +1,6 @@
 package de.hpi.swa.graal.squeak;
 
-import java.io.PrintWriter;
+import org.graalvm.options.OptionDescriptors;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.Truffle;
@@ -9,23 +9,27 @@ import com.oracle.truffle.api.debug.DebuggerTags;
 import com.oracle.truffle.api.instrumentation.ProvidedTags;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 
-import de.hpi.swa.graal.squeak.config.SqueakConfig;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.image.SqueakImageReaderNode;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
-import de.hpi.swa.graal.squeak.nodes.SqueakRootNode;
 import de.hpi.swa.graal.squeak.nodes.context.SqueakLookupClassNode;
+import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 
-@TruffleLanguage.Registration(id = SqueakConfig.ID, name = SqueakConfig.NAME, version = SqueakConfig.VERSION, mimeType = SqueakConfig.MIME_TYPE, interactive = true, internal = false)
+@TruffleLanguage.Registration(id = SqueakLanguageConfig.ID, name = SqueakLanguageConfig.NAME, version = SqueakLanguageConfig.VERSION, mimeType = SqueakLanguageConfig.MIME_TYPE, interactive = true, internal = false)
 @ProvidedTags({StandardTags.CallTag.class, StandardTags.RootTag.class, StandardTags.StatementTag.class, DebuggerTags.AlwaysHalt.class})
 public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
 
     @Override
     protected SqueakImageContext createContext(final Env env) {
-        final PrintWriter out = new PrintWriter(env.out(), true);
-        final PrintWriter err = new PrintWriter(env.err(), true);
-        out.println("== Running " + SqueakConfig.NAME + " on " + getRuntimeName() + " ==");
-        return new SqueakImageContext(this, env, out, err);
+        final SqueakImageContext context = new SqueakImageContext(this, env);
+        context.getOutput().println("== Running " + SqueakLanguageConfig.NAME + " on " + getRuntimeName() + " ==");
+        return context;
+    }
+
+    @Override
+    protected void initializeContext(final SqueakImageContext context) {
+        Truffle.getRuntime().createCallTarget(new SqueakImageReaderNode(context)).call();
     }
 
     public static String getRuntimeName() {
@@ -34,7 +38,13 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
 
     @Override
     protected CallTarget parse(final ParsingRequest request) throws Exception {
-        return Truffle.getRuntime().createCallTarget(SqueakRootNode.create(this, request));
+        final SqueakImageContext image = getContext();
+        if (request.getSource().isInteractive()) {
+            image.interrupt.start();
+            return Truffle.getRuntime().createCallTarget(image.getActiveContext());
+        } else {
+            return Truffle.getRuntime().createCallTarget(image.getCustomContext(request.getSource().getCharacters()));
+        }
     }
 
     @Override
@@ -53,5 +63,15 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
 
     public static SqueakImageContext getContext() {
         return getCurrentContext(SqueakLanguage.class);
+    }
+
+    @Override
+    protected OptionDescriptors getOptionDescriptors() {
+        return SqueakOptions.createDescriptors();
+    }
+
+    @Override
+    protected boolean patchContext(final SqueakImageContext context, final Env newEnv) {
+        return context.patch(newEnv);
     }
 }

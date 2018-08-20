@@ -3,12 +3,12 @@ package de.hpi.swa.graal.squeak.test;
 import static org.junit.Assert.fail;
 
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Context.Builder;
 
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
-import de.hpi.swa.graal.squeak.config.SqueakConfig;
 import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonVirtualReturn;
@@ -19,6 +19,7 @@ import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
+import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public abstract class AbstractSqueakTestCase {
@@ -112,9 +113,13 @@ public abstract class AbstractSqueakTestCase {
     }
 
     protected static void ensureImageContext(final String imagePath) {
-        final Context context = Context.newBuilder().allowIO(true).arguments(SqueakConfig.ID, new String[]{imagePath, "--testing"}).build();
+        final Builder contextBuilder = Context.newBuilder();
+        contextBuilder.option(SqueakLanguageConfig.ID + ".ImagePath", imagePath);
+        contextBuilder.option(SqueakLanguageConfig.ID + ".Testing", "true");
+        contextBuilder.allowIO(true);
+        final Context context = contextBuilder.build();
         context.enter();
-        context.initialize(SqueakConfig.ID);
+        context.initialize(SqueakLanguageConfig.ID);
         image = SqueakLanguage.getContext();
     }
 }

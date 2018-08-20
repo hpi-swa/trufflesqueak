@@ -108,7 +108,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             if (timeoutMillis < 0) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 // Use shorter timeout to speed up testing.
-                timeoutMillis = code.image.config.isTesting() ? 2000 : 30000;
+                timeoutMillis = code.image.isTesting() ? 2000 : 30000;
             }
             return timeoutMillis;
         }

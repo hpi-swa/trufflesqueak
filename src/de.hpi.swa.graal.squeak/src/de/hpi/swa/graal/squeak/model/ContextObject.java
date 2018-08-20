@@ -116,7 +116,7 @@ public final class ContextObject extends AbstractPointersObject {
     public void atput0(final long index, final Object value) {
         assert index >= 0 && value != null;
         if (index == CONTEXT.SENDER_OR_NIL) {
-            image.traceVerbose("Sender of", this, " set to", value);
+            image.printVerbose("Sender of", this, " set to", value);
             hasModifiedSender = true;
         }
         if (!isDirty) {

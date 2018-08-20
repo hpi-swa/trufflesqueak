@@ -8,6 +8,7 @@ import mx_sdk
 import mx_unittest
 
 
+LANGUAGE_NAME = 'squeaksmalltalk'
 PACKAGE_NAME = 'de.hpi.swa.graal.squeak'
 BASE_VM_ARGS = [
     '-Xms2G',  # Initial heap size
@@ -118,6 +119,8 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
     parser.add_argument('--graal-options', help='print Graal options',
                         dest='print_graal_options', action='store_true',
                         default=False)
+    parser.add_argument('--headless', help='Run without a display',
+                        dest='headless', action='store_true', default=False)
     parser.add_argument('--igv', action='store_true', help='dump to igv')
     parser.add_argument('--inspect', help='enable Chrome inspector',
                         dest='inspect', action='store_true', default=False)
@@ -152,8 +155,9 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
         help='print information for inlining for each compilation.',
         dest='trace_inlining', action='store_true', default=False)
     parser.add_argument(
-        '-ts', '--trace-squeak', help='trace Squeak process switches, ...',
-        dest='trace_squeak', action='store_true', default=False)
+        '-tps', '--trace-process-switches',
+        help='trace Squeak process switches, ...',
+        dest='trace_process_switches', action='store_true', default=False)
     parser.add_argument('-v', '--verbose',
                         help='enable verbose output',
                         dest='verbose',
@@ -202,14 +206,19 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
 
     squeak_arguments = []
     if parsed_args.disable_interrupts:
-        squeak_arguments.append('--disable-interrupts')
+        squeak_arguments.append(
+            '--%s.DisableInterruptHandler' % LANGUAGE_NAME)
+    if parsed_args.headless:
+        squeak_arguments.append('--%s.Headless' % LANGUAGE_NAME)
     if parsed_args.receiver and parsed_args.method:
         squeak_arguments.extend(['--receiver', parsed_args.receiver,
                                  '--method', parsed_args.method])
-    if parsed_args.trace_squeak:
-        squeak_arguments.append('--trace')
+    if parsed_args.trace_process_switches:
+        squeak_arguments.append(
+            '--%s.TraceProcessSwitches' % LANGUAGE_NAME)
     if parsed_args.verbose:
-        squeak_arguments.append('--verbose')
+        squeak_arguments.append(
+            '--%s.Verbose' % LANGUAGE_NAME)
     if parsed_args.image_arguments:
         squeak_arguments.extend(['--args'] + parsed_args.image_arguments)
     if parsed_args.cpusampler:
@@ -220,7 +229,7 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
         squeak_arguments.append('--inspect')
 
     if parsed_args.image:
-        squeak_arguments = [parsed_args.image] + squeak_arguments
+        squeak_arguments.append(parsed_args.image)
     else:
         if len(squeak_arguments) > 0:
             parser.error('an image needs to be explicitly provided')
@@ -299,7 +308,7 @@ _svmsuite = mx.suite('substratevm', fatalIfMissing=False)
 if _svmsuite:
     _svmsuite.extensions.flag_suitename_map['squeak'] = (
         'graalsqueak',
-        ['GRAALSQUEAK', 'GRAALSQUEAK-CONFIG', 'GRAALSQUEAK-LAUNCHER'], [])
+        ['GRAALSQUEAK', 'GRAALSQUEAK-LAUNCHER', 'GRAALSQUEAK-SHARED'], [])
 
 mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     suite=_suite,
@@ -310,7 +319,7 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     third_party_license_files=[],
     truffle_jars=[
         'graalsqueak:GRAALSQUEAK',
-        'graalsqueak:GRAALSQUEAK-CONFIG',
+        'graalsqueak:GRAALSQUEAK-SHARED',
     ],
     support_distributions=[
         'graalsqueak:GRAALSQUEAK_GRAALVM_SUPPORT',
@@ -319,8 +328,8 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
         mx_sdk.LanguageLauncherConfig(
             destination=SVM_TARGET,
             jar_distributions=[
-                'graalsqueak:GRAALSQUEAK-CONFIG',
                 'graalsqueak:GRAALSQUEAK-LAUNCHER',
+                'graalsqueak:GRAALSQUEAK-SHARED',
             ],
             main_class='%s.launcher.GraalSqueakLauncher' % PACKAGE_NAME,
             build_args=[

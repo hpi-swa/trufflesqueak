@@ -67,13 +67,13 @@ public abstract class FillInNode extends Node {
         obj.setStorage(chunk.getLongs());
     }
 
-    @Specialization(guards = {"obj.isByteType()", "!chunk.image.config.isTesting()", "chunk.image.getSimulatePrimitiveArgsSelector() != null"})
+    @Specialization(guards = {"obj.isByteType()", "!chunk.image.isTesting()", "chunk.image.getSimulatePrimitiveArgsSelector() != null"})
     protected static final void doNativeByte(final NativeObject obj, final SqueakImageChunk chunk) {
         final byte[] stringBytes = chunk.getBytes();
         obj.setStorage(stringBytes);
     }
 
-    @Specialization(guards = {"obj.isByteType()", "!chunk.image.config.isTesting()", "chunk.image.getSimulatePrimitiveArgsSelector() == null"})
+    @Specialization(guards = {"obj.isByteType()", "!chunk.image.isTesting()", "chunk.image.getSimulatePrimitiveArgsSelector() == null"})
     protected final void doNativeByteAndFindSimulateSelector(final NativeObject obj, final SqueakImageChunk chunk) {
         final byte[] stringBytes = chunk.getBytes();
         obj.setStorage(stringBytes);
@@ -82,7 +82,7 @@ public abstract class FillInNode extends Node {
         }
     }
 
-    @Specialization(guards = {"obj.isByteType()", "chunk.image.config.isTesting()"})
+    @Specialization(guards = {"obj.isByteType()", "chunk.image.isTesting()"})
     protected final void doNativeByteTesting(final NativeObject obj, final SqueakImageChunk chunk) {
         final byte[] stringBytes = chunk.getBytes();
         obj.setStorage(stringBytes);

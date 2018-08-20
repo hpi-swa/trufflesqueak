@@ -436,7 +436,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             } else if (fileDescriptor == STDIO_HANDLES.ERROR) {
                 printToStdErr(content, byteStart, byteEnd);
             } else {
-                if (code.image.config.isVerbose()) { // also print to stderr
+                if (code.image.isVerbose()) { // Also print to stderr.
                     doWrite(receiver, STDIO_HANDLES.ERROR, content, startIndex, count);
                 }
                 try {

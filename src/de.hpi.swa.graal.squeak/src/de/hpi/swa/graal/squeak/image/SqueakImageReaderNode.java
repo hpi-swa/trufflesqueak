@@ -2,13 +2,13 @@ package de.hpi.swa.graal.squeak.image;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.HashMap;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.LoopNode;
@@ -55,9 +55,18 @@ public final class SqueakImageReaderNode extends RootNode {
     @Child private FillInClassNode fillInClassNode = FillInClassNode.create();
     @Child private FillInNode fillInNode;
 
-    public SqueakImageReaderNode(final InputStream inputStream, final SqueakImageContext image) {
+    public SqueakImageReaderNode(final SqueakImageContext image) {
         super(image.getLanguage());
-        stream = new BufferedInputStream(inputStream);
+        final TruffleFile truffleFile = image.env.getTruffleFile(image.getImagePath());
+        BufferedInputStream inputStream = null;
+        try {
+            inputStream = new BufferedInputStream(truffleFile.newInputStream());
+        } catch (IOException e) {
+            if (!image.isTesting()) {
+                throw new SqueakException(e);
+            }
+        }
+        stream = inputStream;
         this.image = image;
         readObjectLoopNode = Truffle.getRuntime().createLoopNode(new ReadObjectLoopNode(this));
         fillInNode = FillInNode.create(image);
@@ -65,6 +74,9 @@ public final class SqueakImageReaderNode extends RootNode {
 
     @Override
     public Object execute(final VirtualFrame frame) {
+        if (stream == null && image.isTesting()) {
+            return null;
+        }
         final long start = currentTimeMillis();
         readHeader();
         readBody(frame);
@@ -89,7 +101,7 @@ public final class SqueakImageReaderNode extends RootNode {
         if (image.hasDisplay() && image.getSimulatePrimitiveArgsSelector() == null) {
             throw new SqueakException("Unable to find BitBlt simulation in image, cannot run with display.");
         }
-        if (image.config.isTesting() && image.getAsSymbolSelector() == null) {
+        if (image.isTesting() && image.getAsSymbolSelector() == null) {
             throw new SqueakException("Unable to find asSymbol selector");
         }
     }

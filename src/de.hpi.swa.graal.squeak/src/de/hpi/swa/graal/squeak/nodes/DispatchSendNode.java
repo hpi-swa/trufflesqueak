@@ -33,20 +33,20 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
         isDoesNotUnderstandNode = IsDoesNotUnderstandNode.create(image);
     }
 
-    @Specialization(guards = {"!image.config.isTesting()", "!isDoesNotUnderstandNode.execute(lookupResult)"})
+    @Specialization(guards = {"!image.isTesting()", "!isDoesNotUnderstandNode.execute(lookupResult)"})
     protected final Object doDispatch(final VirtualFrame frame, @SuppressWarnings("unused") final NativeObject selector, final CompiledMethodObject lookupResult,
                     @SuppressWarnings("unused") final ClassObject rcvrClass, final Object[] rcvrAndArgs, final Object contextOrMarker) {
         return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndArgs, contextOrMarker);
     }
 
-    @Specialization(guards = {"image.config.isTesting()", "selector != image.getDebugErrorSelector()", "!isDoesNotUnderstandNode.execute(lookupResult)"})
+    @Specialization(guards = {"image.isTesting()", "selector != image.getDebugErrorSelector()", "!isDoesNotUnderstandNode.execute(lookupResult)"})
     protected final Object doDispatchTesting(final VirtualFrame frame, @SuppressWarnings("unused") final NativeObject selector, final CompiledMethodObject lookupResult,
                     @SuppressWarnings("unused") final ClassObject rcvrClass, final Object[] rcvrAndArgs, final Object contextOrMarker) {
         return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndArgs, contextOrMarker);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"image.config.isTesting()", "selector == image.getDebugErrorSelector()"})
+    @Specialization(guards = {"image.isTesting()", "selector == image.getDebugErrorSelector()"})
     protected static final Object doDispatchTestingDebugError(final VirtualFrame frame, final NativeObject selector, final CompiledMethodObject lookupResult,
                     final ClassObject rcvrClass, final Object[] rcvrAndArgs, final Object contextOrMarker) {
         throw new SqueakException("Debugger detected during testing. Failing...");

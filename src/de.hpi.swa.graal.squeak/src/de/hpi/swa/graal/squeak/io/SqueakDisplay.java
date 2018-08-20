@@ -65,7 +65,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
         canvas.addMouseMotionListener(mouse);
         frame.addKeyListener(keyboard);
 
-        frame.setTitle(SqueakDisplay.DEFAULT_WINDOW_TITLE + " (" + image.config.getImagePath() + ")");
+        frame.setTitle(SqueakDisplay.DEFAULT_WINDOW_TITLE + " (" + image.getImagePath() + ")");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setMinimumSize(MINIMUM_WINDOW_SIZE);
         frame.getContentPane().add(canvas);
