@@ -44,7 +44,7 @@ import de.hpi.swa.graal.squeak.nodes.context.ObjectAtNode;
 import de.hpi.swa.graal.squeak.nodes.context.ReceiverNode;
 import de.hpi.swa.graal.squeak.nodes.context.SqueakLookupClassNode;
 import de.hpi.swa.graal.squeak.nodes.context.SqueakLookupClassNodeGen;
-import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
+import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushForPrimitivesNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
@@ -116,11 +116,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     private abstract static class AbstractPrimitiveWithPushNode extends AbstractPrimitiveNode {
-        @Child protected StackPushNode pushNode;
+        @Child protected StackPushForPrimitivesNode pushNode;
 
         protected AbstractPrimitiveWithPushNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
-            pushNode = StackPushNode.create(code);
+            pushNode = StackPushForPrimitivesNode.create();
         }
     }
 

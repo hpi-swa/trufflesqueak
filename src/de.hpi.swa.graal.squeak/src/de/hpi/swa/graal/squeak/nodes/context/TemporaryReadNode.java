@@ -37,7 +37,7 @@ public abstract class TemporaryReadNode extends SqueakNodeWithCode {
         if (readNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             assert tempIndex >= 0;
-            readNode = insert(FrameSlotReadNode.create(code, code.getStackSlot(tempIndex)));
+            readNode = insert(FrameSlotReadNode.create(code.getStackSlot(tempIndex)));
         }
         return readNode;
     }

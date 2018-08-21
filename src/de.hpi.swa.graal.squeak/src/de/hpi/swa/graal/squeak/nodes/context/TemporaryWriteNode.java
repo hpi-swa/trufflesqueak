@@ -3,7 +3,6 @@ package de.hpi.swa.graal.squeak.nodes.context;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
@@ -42,8 +41,7 @@ public abstract class TemporaryWriteNode extends AbstractNodeWithCode {
         if (frameSlotWriteNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             assert 0 <= tempIndex && tempIndex <= CONTEXT.MAX_STACK_SIZE;
-            final FrameSlot stackSlot = code.getStackSlot(tempIndex);
-            frameSlotWriteNode = insert(FrameSlotWriteNode.create(code, stackSlot));
+            frameSlotWriteNode = insert(FrameSlotWriteNode.create(code.getStackSlot(tempIndex)));
         }
         return frameSlotWriteNode;
     }

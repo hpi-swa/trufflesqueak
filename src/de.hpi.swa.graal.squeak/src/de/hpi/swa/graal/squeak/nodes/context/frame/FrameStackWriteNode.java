@@ -30,7 +30,7 @@ public abstract class FrameStackWriteNode extends AbstractNodeWithCode {
     protected static final void doWrite(final VirtualFrame frame, final int index, final Object value,
                     @Cached("index") final int cachedIndex,
                     @Cached("code.getStackSlot(index)") final FrameSlot slot,
-                    @Cached("create(code, slot)") final FrameSlotWriteNode writeNode) {
+                    @Cached("create(slot)") final FrameSlotWriteNode writeNode) {
         writeNode.executeWrite(frame, value);
     }
 
