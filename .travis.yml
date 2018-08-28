@@ -10,7 +10,7 @@ aliases:
   - &clone-mx
     |
       export MX_PATH=${TRAVIS_BUILD_DIR}/../mx
-      git clone --depth 1 -b patch-5 https://github.com/fniephaus/mx.git ${MX_PATH}
+      git clone --depth 1 https://github.com/graalvm/mx.git ${MX_PATH}
       export PATH=${PATH}:${MX_PATH}
   - &install-jvmci
     |
