@@ -12,7 +12,7 @@ aliases:
       export MX_PATH=${TRAVIS_BUILD_DIR}/../mx
       git clone --depth 1 https://github.com/graalvm/mx.git ${MX_PATH}
       export PATH=${PATH}:${MX_PATH}
-  - &install-jvmci
+  - &use-jvmci
     |
       JVMCI_VERSION="jvmci-0.46"
       JVMCI_BASE_JDK8="openjdk1.8.0_172"
@@ -21,6 +21,15 @@ aliases:
       curl -sSL --retry 3 -o ${JDK_TAR} https://github.com/graalvm/openjdk8-jvmci-builder/releases/download/${JVMCI_VERSION}/${JVMCI_FILE_JDK8}-${JVMCI_VERSION}-linux-amd64.tar.gz
       tar -C ${TRAVIS_BUILD_DIR}/.. -xzf ${JDK_TAR}
       export JAVA_HOME=${TRAVIS_BUILD_DIR}/../${JVMCI_BASE_JDK8}-${JVMCI_VERSION}
+  - &use-graal-vm
+    |
+      GRAAL_VM_VERSION=1.0.0-rc5
+      GRAAL_VM_TARBALL=graalvm-ce-${GRAAL_VM_VERSION}-linux-amd64.tar.gz
+      pushd ~/ > /dev/null
+      curl -sSL --retry 3 -o ${GRAAL_VM_TARBALL} https://github.com/oracle/graal/releases/download/vm-${GRAAL_VM_VERSION}/${GRAAL_VM_TARBALL}
+      tar -xzf ${GRAAL_VM_TARBALL}
+      export JAVA_HOME=$(pwd)/graalvm-ce-${GRAAL_VM_VERSION}
+      popd > /dev/null
   - &configure-python-for-pylint
     addons:
       apt:
@@ -41,15 +50,6 @@ aliases:
       tar -xzf ${eclipse_tar}
       export ECLIPSE_EXE=$(pwd)/eclipse/eclipse
       popd > /dev/null
-  - &download-graal-vm
-    |
-      GRAAL_VM_VERSION=1.0.0-rc5
-      GRAAL_VM_TARBALL=graalvm-ce-${GRAAL_VM_VERSION}-linux-amd64.tar.gz
-      pushd ~/ > /dev/null
-      curl -sSL --retry 3 -o ${GRAAL_VM_TARBALL} https://github.com/oracle/graal/releases/download/vm-${GRAAL_VM_VERSION}/${GRAAL_VM_TARBALL}
-      tar -xzf ${GRAAL_VM_TARBALL}
-      export JAVA_HOME=$(pwd)/graalvm-ce-${GRAAL_VM_VERSION}
-      popd > /dev/null
   - &download-ecj
     |
       export JDT=${MX_PATH}/ecj.jar
@@ -61,7 +61,7 @@ aliases:
       apt:
         packages:
           - jq
-    install: *install-jvmci
+    install: *use-jvmci
     before_script:
       - scripts/download-test-image.sh
       - curl -sSL --retry 3 -o ~/codacy-coverage-reporter.jar $(curl https://api.github.com/repos/codacy/codacy-coverage-reporter/releases/latest | jq -r .assets[0].browser_download_url)
@@ -82,7 +82,7 @@ jobs:
     - env: JDK="jdk8" GATE="style,fullbuild"
       jdk: oraclejdk8
       install:
-        - *install-jvmci
+        - *use-jvmci
         - *install-pylint
         - *download-eclipse
         - *download-ecj
@@ -110,5 +110,5 @@ jobs:
         apt:
           packages:
             - libsdl2-dev
-      install: *download-graal-vm
+      install: *use-jvmci
   fast_finish: true
