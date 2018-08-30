@@ -143,7 +143,6 @@ public final class SqueakImageContext {
     @CompilationFinal private NativeObject debugErrorSelector = null; // for testing
     @CompilationFinal private NativeObject simulatePrimitiveArgsSelector = null;
     @CompilationFinal private PointersObject scheduler = null;
-    @CompilationFinal private boolean supportsTruffleObject = false;
 
     public SqueakImageContext(final SqueakLanguage squeakLanguage, final SqueakLanguage.Env environment) {
         language = squeakLanguage;

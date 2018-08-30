@@ -13,10 +13,6 @@ import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 @Option.Group(SqueakLanguageConfig.ID)
 public final class SqueakOptions {
 
-    private SqueakOptions() {
-        // no instances
-    }
-
     //@formatter:off
     @Option(category = OptionCategory.USER, help = "Path to image")
     public static final OptionKey<String> ImagePath = new OptionKey<>("Squeak.image");
@@ -47,5 +43,8 @@ public final class SqueakOptions {
             return key.getDefaultValue();
         }
         return env.getOptions().get(key);
+    }
+
+    private SqueakOptions() { // no instances
     }
 }

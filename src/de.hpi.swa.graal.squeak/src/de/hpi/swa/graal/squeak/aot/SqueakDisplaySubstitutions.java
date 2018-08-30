@@ -66,7 +66,6 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
     private boolean textureDirty = false;
     private int width;
     private int height;
-    private int depth;
     private int bpp = 4; // TODO: for 32bit only!
 
     private int lastMouseXPos;
@@ -135,7 +134,7 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
             throw new SqueakException("Display bitmap expected to be a words object");
         }
 
-        depth = (int) (long) sqDisplay.at0(FORM.DEPTH);
+        final int depth = (int) (long) sqDisplay.at0(FORM.DEPTH);
         if (depth != 32) {
             throw new SqueakException("Expected 32bit display");
         }
@@ -231,13 +230,10 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
             } else if (eventType == SDL.EventType.KEYDOWN.getCValue()) {
                 handleKeyboardEvent();
                 long[] later = null;
-                if (!isModifierKey(key)) {
-                    // No TEXTINPUT event for this key will follow, but Squeak needs a KeyStroke
-                    // anyway.
-                    if ((image.os.isLinux() && isControlKey(key)) ||
-                                    (!image.os.isLinux() && (isControlKey(key) || (SDL.getModState() & ~SDL.kmodShift()) != 0))) {
-                        later = getNextKeyEvent(KEYBOARD_EVENT.CHAR, time);
-                    }
+                // No TEXTINPUT event for this key will follow, but Squeak needs a KeyStroke anyway.
+                if (!isModifierKey(key) && ((image.os.isLinux() && isControlKey(key)) ||
+                                (!image.os.isLinux() && (isControlKey(key) || (SDL.getModState() & ~SDL.kmodShift()) != 0)))) {
+                    later = getNextKeyEvent(KEYBOARD_EVENT.CHAR, time);
                 }
                 fixKeyCodeCase();
                 queueEvent(getNextKeyEvent(KEYBOARD_EVENT.DOWN, time));
@@ -351,10 +347,8 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
     }
 
     private void render(final boolean forced) {
-        if (!forced) {
-            if (deferUpdates || !textureDirty) {
-                return;
-            }
+        if (!forced && (deferUpdates || !textureDirty)) {
+            return;
         }
         textureDirty = false;
         unlock();
@@ -425,7 +419,7 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
             final int newWidth = windowEvent.data1();
             final int newHeight = windowEvent.data2();
             if (newWidth != width || newHeight != height) {
-                // resizeTo(newWidth, newHeight);
+                // TODO: resizeTo(newWidth, newHeight);
             }
             fullDamage();
             render(true);

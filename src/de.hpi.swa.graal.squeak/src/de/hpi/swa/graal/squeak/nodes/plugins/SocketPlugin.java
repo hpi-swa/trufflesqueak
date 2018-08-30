@@ -38,6 +38,12 @@ import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 
 public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
+    private static final EconomicMap<Long, SocketImpl> sockets = EconomicMap.create();
+    private static final boolean debugPrints = false;
+
+    private static byte[] lastNameLookup;
+    private static String lastAddressLookup;
+
     @SuppressWarnings("unused")
     private static final class ResolverStatus {
         private static final long Uninitialized = 0;
@@ -45,9 +51,6 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         private static final long Busy = 2;
         private static final long Error = 3;
     }
-
-    private static byte[] lastNameLookup;
-    private static String lastAddressLookup;
 
     private static final class SocketStatus {
         private static final long InvalidSocket = -1;
@@ -62,9 +65,6 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         private static final long TCPSocketType = 0;
         private static final long UDPSocketType = 1;
     }
-
-    private static final EconomicMap<Long, SocketImpl> sockets = EconomicMap.create();
-    private static final boolean debugPrints = false;
 
     private static final class Resolver {
         @SuppressWarnings("unused")
@@ -90,8 +90,8 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         private Socket acceptedConnection;
 
         private Map<String, Object> options = new TreeMap<>();
-        boolean listening = false;
-        long noDataSince = -1;
+        private boolean listening = false;
+        private long noDataSince = -1;
 
         SocketImpl(final CompiledCodeObject code, final long netType) {
             this.code = code;
@@ -537,7 +537,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             final String hostNameString = hostName.asString();
 
             try {
-                if (hostNameString.equals("localhost")) {
+                if ("localhost".equals(hostNameString)) {
                     lastNameLookup = Resolver.getLocalAddress();
                     return receiver;
                 }

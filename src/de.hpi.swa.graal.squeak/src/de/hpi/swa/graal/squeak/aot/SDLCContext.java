@@ -19,7 +19,7 @@ public class SDLCContext implements CContext.Directives {
             // `sdl2-config --libs`
             return Collections.singletonList("-L/usr/local/lib -lSDL2");
         } else {
-            throw new RuntimeException("Unsupported OS");
+            throw new UnsupportedOperationException("Unsupported OS");
         }
     }
 }

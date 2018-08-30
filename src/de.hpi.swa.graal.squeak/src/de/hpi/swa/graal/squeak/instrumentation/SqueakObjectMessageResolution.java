@@ -18,7 +18,7 @@ public class SqueakObjectMessageResolution {
     public abstract static class BaseSqueakObjectWriteNode extends Node {
         @SuppressWarnings("unused")
         public Object access(final AbstractSqueakObject receiver, final Object name, final Object value) {
-            throw new RuntimeException("Not yet implemented");
+            throw new UnsupportedOperationException("Not yet implemented");
         }
     }
 

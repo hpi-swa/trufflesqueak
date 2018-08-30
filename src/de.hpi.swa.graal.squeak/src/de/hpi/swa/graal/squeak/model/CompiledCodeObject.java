@@ -38,12 +38,9 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
     @CompilationFinal(dimensions = 1) protected byte[] bytes;
     @CompilationFinal private int numArgs;
     @CompilationFinal protected int numLiterals;
-    @CompilationFinal private boolean isOptimized;
     @CompilationFinal private boolean hasPrimitive;
     @CompilationFinal protected boolean needsLargeFrame = false;
     @CompilationFinal private int numTemps;
-    @CompilationFinal private long accessModifier;
-    @CompilationFinal private boolean altInstructionSet;
 
     private final int numCopiedValues; // for block closures
 
@@ -188,13 +185,13 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         final int hdr = getHeader();
         final int[] splitHeader = BitSplitter.splitter(hdr, new int[]{15, 1, 1, 1, 6, 4, 2, 1});
         numLiterals = splitHeader[0];
-        isOptimized = splitHeader[1] == 1;
+        // TODO: isOptimized = splitHeader[1] == 1;
         hasPrimitive = splitHeader[2] == 1;
         needsLargeFrame = splitHeader[3] == 1;
         numTemps = splitHeader[4];
         numArgs = splitHeader[5];
-        accessModifier = splitHeader[6];
-        altInstructionSet = splitHeader[7] == 1;
+        // TODO: accessModifier = splitHeader[6];
+        // TODO: altInstructionSet = splitHeader[7] == 1;
         prepareFrameDescriptor();
     }
 
