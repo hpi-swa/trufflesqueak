@@ -84,7 +84,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
              * trigger another TTI here which otherwise would cause endless recursion in Truffle
              * debug code.
              */
-            source = Source.newBuilder(CompiledCodeObjectPrinter.getString(this)).mimeType(SqueakLanguageConfig.MIME_TYPE).name(toString()).build();
+            source = Source.newBuilder(SqueakLanguageConfig.ID, CompiledCodeObjectPrinter.getString(this), toString()).build();
         }
         return source;
     }

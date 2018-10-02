@@ -14,7 +14,7 @@ aliases:
       export PATH=${PATH}:${MX_PATH}
   - &use-jvmci
     |
-      JVMCI_VERSION="jvmci-0.46"
+      JVMCI_VERSION="jvmci-0.48"
       JVMCI_BASE_JDK8="openjdk1.8.0_172"
       JVMCI_FILE_JDK8="openjdk-8u172"
       JDK_TAR=${TRAVIS_BUILD_DIR}/../jdk.tar.gz
@@ -23,7 +23,7 @@ aliases:
       export JAVA_HOME=${TRAVIS_BUILD_DIR}/../${JVMCI_BASE_JDK8}-${JVMCI_VERSION}
   - &use-graal-vm
     |
-      GRAAL_VM_VERSION=1.0.0-rc5
+      GRAAL_VM_VERSION=1.0.0-rc6
       GRAAL_VM_TARBALL=graalvm-ce-${GRAAL_VM_VERSION}-linux-amd64.tar.gz
       pushd ~/ > /dev/null
       curl -sSL --retry 3 -o ${GRAAL_VM_TARBALL} https://github.com/oracle/graal/releases/download/vm-${GRAAL_VM_VERSION}/${GRAAL_VM_TARBALL}

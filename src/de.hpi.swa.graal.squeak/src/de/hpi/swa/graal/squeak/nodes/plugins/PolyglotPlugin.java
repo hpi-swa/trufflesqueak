@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes.plugins;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -62,7 +61,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             }
             final String foreignCode = receiver.asString();
             try {
-                final Source source = Source.newBuilder(foreignCode).language(languageName).name("eval").build();
+                final Source source = Source.newBuilder(languageName, foreignCode, "eval").build();
                 final CallTarget foreignCallTarget = code.image.env.parse(source);
                 try {
                     return code.image.wrap(foreignCallTarget.call());
@@ -83,7 +82,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         private static final String C_FILENAME = "temp.c";
         private static final String LLVM_FILENAME = "temp.bc";
         @Child private Node readNode = Message.READ.createNode();
-        @Child private Node executeNode = Message.createExecute(0).createNode();
+        @Child private Node executeNode = Message.EXECUTE.createNode();
 
         protected PrimEvalCNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -99,7 +98,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 Files.write(Paths.get(cFile), foreignCode.getBytes());
                 final Process p = Runtime.getRuntime().exec("clang -O1 -c -emit-llvm -o " + llvmFile + " " + cFile);
                 p.waitFor();
-                final Source source = Source.newBuilder(new File(llvmFile)).language("llvm").name("eval").build();
+                final Source source = Source.newBuilder("llvm", code.image.env.getTruffleFile(llvmFile)).build();
                 final CallTarget foreignCallTarget = code.image.env.parse(source);
                 final TruffleObject library = (TruffleObject) foreignCallTarget.call();
                 final TruffleObject cFunction;
@@ -251,7 +250,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 identifier = selectorString;
             }
             final Object[] arguments = ((PointersObject) message.at0(MESSAGE.ARGUMENTS)).getPointers();
-            final Node invokeNode = Message.createInvoke(arguments.length).createNode();
+            final Node invokeNode = Message.INVOKE.createNode();
             try {
                 return code.image.wrap(ForeignAccess.sendInvoke(invokeNode, receiver, identifier, arguments));
             } catch (UnsupportedTypeException | ArityException | UnknownIdentifierException | UnsupportedMessageException e) {
