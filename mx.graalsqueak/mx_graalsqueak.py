@@ -219,8 +219,6 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
     if parsed_args.verbose:
         squeak_arguments.append(
             '--%s.Verbose' % LANGUAGE_NAME)
-    if parsed_args.image_arguments:
-        squeak_arguments.extend(['--args'] + parsed_args.image_arguments)
     if parsed_args.cpusampler:
         squeak_arguments.append('--cpusampler')
     if parsed_args.cputracer:
@@ -228,11 +226,16 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
     if parsed_args.inspect:
         squeak_arguments.append('--inspect')
 
+    squeak_arguments.append('--polyglot')  # enable polyglot mode by default
+
     if parsed_args.image:
         squeak_arguments.append(parsed_args.image)
     else:
         if len(squeak_arguments) > 0:
             parser.error('an image needs to be explicitly provided')
+
+    if parsed_args.image_arguments:
+        squeak_arguments.extend(parsed_args.image_arguments)
 
     if not jdk:
         jdk = mx.get_jdk(tag='jvmci' if _compiler else None)

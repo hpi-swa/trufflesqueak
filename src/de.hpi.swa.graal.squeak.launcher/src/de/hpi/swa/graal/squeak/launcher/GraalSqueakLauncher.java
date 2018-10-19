@@ -110,7 +110,7 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
     @Override
     protected void collectArguments(final Set<String> options) {
         options.addAll(Arrays.asList(
-                        "-r",
-                        "-m"));
+                        "-r", "--receiver",
+                        "-m", "--method"));
     }
 }
