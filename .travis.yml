@@ -57,14 +57,10 @@ aliases:
       ${TRAVIS_BUILD_DIR}/scripts/download-file.sh "${ecj_tar}" "${JDT}"
   - &jdk8-test-setup # set up jvmci, download image, enable coverage testing
     jdk: oraclejdk8
-    addons:
-      apt:
-        packages:
-          - jq
     install: *use-jvmci
     before_script:
       - scripts/download-test-image.sh
-      - curl -sSL --retry 3 -o ~/codacy-coverage-reporter.jar $(curl https://api.github.com/repos/codacy/codacy-coverage-reporter/releases/latest | jq -r .assets[0].browser_download_url)
+      - curl -sSL --retry 3 -o ~/codacy-coverage-reporter.jar "https://github.com/codacy/codacy-coverage-reporter/releases/download/4.0.3/codacy-coverage-reporter-4.0.3-assembly.jar"
       - export MX_OPTS="--jacocout coverage"
     after_success:
       - bash <(curl -s https://codecov.io/bash)
