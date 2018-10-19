@@ -463,4 +463,8 @@ public final class SqueakImageContext {
             ((ContextObject) lastSender[0]).printSqStackTrace();
         }
     }
+
+    public Object getSmalltalkDictionary() {
+        return smalltalk; // TODO: turn into TruffleObject with support for keys etc
+    }
 }

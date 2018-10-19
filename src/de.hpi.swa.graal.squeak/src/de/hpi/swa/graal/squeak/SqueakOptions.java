@@ -17,6 +17,10 @@ public final class SqueakOptions {
     @Option(category = OptionCategory.USER, help = "Path to image")
     public static final OptionKey<String> ImagePath = new OptionKey<>("Squeak.image");
 
+    // TODO: use ImageArguments
+    @Option(category = OptionCategory.USER, help = "Image arguments")
+    public static final OptionKey<String> ImageArguments = new OptionKey<>("");
+
     @Option(category = OptionCategory.USER, help = "Run without a display")
     public static final OptionKey<Boolean> Headless = new OptionKey<>(false);
 

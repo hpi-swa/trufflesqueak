@@ -1,13 +1,20 @@
 package de.hpi.swa.graal.squeak;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 import org.graalvm.options.OptionDescriptors;
 
 import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.Scope;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.debug.DebuggerTags;
+import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.instrumentation.ProvidedTags;
 import com.oracle.truffle.api.instrumentation.StandardTags;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.source.SourceSection;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.SqueakImageReaderNode;
@@ -59,6 +66,30 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
             return image.nilClass;
         }
         return SqueakLookupClassNode.create(image).executeLookup(value);
+    }
+
+    @Override
+    protected Iterable<Scope> findTopScopes(final SqueakImageContext context) {
+        return Arrays.asList(Scope.newBuilder("Smalltalk", context.getSmalltalkDictionary()).build());
+    }
+
+    @Override
+    protected Iterable<Scope> findLocalScopes(final SqueakImageContext context, final Node node, final Frame frame) {
+        // TODO Implement for LSP
+        final ArrayList<Scope> scopes = new ArrayList<>();
+        for (Scope s : super.findLocalScopes(context, node, frame)) {
+            scopes.add(s);
+        }
+        if (frame != null) {
+            // do stuff with frame (read stack slots)
+        }
+        return scopes;
+    }
+
+    @Override
+    protected SourceSection findSourceLocation(final SqueakImageContext context, final Object value) {
+        // TODO Implement for LSP -> "go-to-definition within same workspace window"
+        return super.findSourceLocation(context, value);
     }
 
     public static SqueakImageContext getContext() {
