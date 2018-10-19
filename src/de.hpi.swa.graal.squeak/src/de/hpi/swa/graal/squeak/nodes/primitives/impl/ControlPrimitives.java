@@ -940,23 +940,14 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"!code.image.interruptHandlerDisabled()"})
-        protected static final AbstractSqueakObject doRelinquish(final VirtualFrame frame, final AbstractSqueakObject receiver, final long timeMicroseconds,
+        protected static final AbstractSqueakObject doRelinquish(final VirtualFrame frame, final AbstractSqueakObject receiver, @SuppressWarnings("unused") final long timeMicroseconds,
                         @Cached("create(code)") final InterruptHandlerNode interruptNode) {
             /*
              * Perform forced interrupt check, otherwise control flow cannot continue when
              * idleProcess is running.
              */
             interruptNode.executeTrigger(frame);
-            sleepFor(timeMicroseconds / 1000);
             return receiver;
-        }
-
-        @TruffleBoundary
-        private static void sleepFor(final long millis) {
-            try {
-                Thread.sleep(millis);
-            } catch (InterruptedException e) {
-            }
         }
 
         @Specialization(guards = {"code.image.interruptHandlerDisabled()"})
