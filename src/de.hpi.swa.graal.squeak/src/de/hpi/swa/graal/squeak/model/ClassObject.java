@@ -34,14 +34,14 @@ public final class ClassObject extends AbstractPointersObject {
     }
 
     private ClassObject(final ClassObject original) {
-        this(original.image, original.getSqClass(), original.pointers);
+        this(original.image, original.getSqClass(), original.getPointers());
         instSpec = original.instSpec;
         instanceSize = original.instanceSize;
     }
 
-    private ClassObject(final SqueakImageContext img, final ClassObject sqClass, final Object[] ptrs) {
+    private ClassObject(final SqueakImageContext img, final ClassObject sqClass, final Object[] pointers) {
         super(img, sqClass);
-        pointers = ptrs;
+        setPointers(pointers);
     }
 
     public ClassObject(final SqueakImageContext image, final ClassObject classObject, final int size) {
@@ -80,7 +80,7 @@ public final class ClassObject extends AbstractPointersObject {
     }
 
     public void fillin(final SqueakImageChunk chunk) {
-        pointers = chunk.getPointers();
+        setPointers(chunk.getPointers());
         // initialize the subclasses set
         setFormat((long) at0(CLASS.FORMAT));
         final Object superclass = getSuperclass();
@@ -89,7 +89,7 @@ public final class ClassObject extends AbstractPointersObject {
 
     public void setFormat(final long format) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        pointers[CLASS.FORMAT] = format;
+        setPointer(CLASS.FORMAT, format);
         if (instSpec >= 0) { // only invalidate if not initialized
             classFormatStable.invalidate();
         }
@@ -100,7 +100,7 @@ public final class ClassObject extends AbstractPointersObject {
     @TruffleBoundary
     public void setSuperclass(final Object superclass) {
         final Object oldSuperclass = getSuperclass();
-        pointers[CLASS.SUPERCLASS] = superclass;
+        setPointer(CLASS.SUPERCLASS, superclass);
         if (oldSuperclass instanceof ClassObject) {
             ((ClassObject) oldSuperclass).detachSubclass(this);
         }
@@ -143,7 +143,7 @@ public final class ClassObject extends AbstractPointersObject {
     }
 
     public Object at0(final long index) {
-        return pointers[(int) index];
+        return getPointer((int) index);
     }
 
     public void atput0(final long index, final Object obj) {
@@ -152,7 +152,7 @@ public final class ClassObject extends AbstractPointersObject {
         } else if (index == CLASS.SUPERCLASS) {
             setSuperclass(obj);
         } else {
-            pointers[(int) index] = obj;
+            setPointer((int) index, obj);
         }
     }
 
@@ -231,8 +231,8 @@ public final class ClassObject extends AbstractPointersObject {
 
     public void become(final ClassObject other) {
         becomeOtherClass(other);
-        final Object[] otherPointers = other.pointers;
-        other.pointers = this.pointers;
-        pointers = otherPointers;
+        final Object[] otherPointers = other.getPointers();
+        other.setPointers(this.getPointers());
+        setPointers(otherPointers);
     }
 }

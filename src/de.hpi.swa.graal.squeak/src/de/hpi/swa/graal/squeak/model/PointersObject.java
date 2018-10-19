@@ -13,9 +13,9 @@ public final class PointersObject extends AbstractPointersObject {
         super(img, hash, klass);
     }
 
-    public PointersObject(final SqueakImageContext img, final ClassObject sqClass, final Object[] ptrs) {
+    public PointersObject(final SqueakImageContext img, final ClassObject sqClass, final Object[] pointers) {
         super(img, sqClass);
-        pointers = ptrs;
+        setPointers(pointers);
     }
 
     public PointersObject(final SqueakImageContext img, final ClassObject classObject, final int size) {
@@ -23,19 +23,19 @@ public final class PointersObject extends AbstractPointersObject {
     }
 
     public Object at0(final long i) {
-        return pointers[(int) i];
+        return getPointer((int) i);
     }
 
     public void atput0(final long i, final Object obj) {
         assert obj != null; // null indicates a problem
-        pointers[(int) i] = obj;
+        setPointer((int) i, obj);
     }
 
     public void become(final PointersObject other) {
         becomeOtherClass(other);
-        final Object[] otherPointers = other.pointers;
-        other.pointers = this.pointers;
-        pointers = otherPointers;
+        final Object[] otherPointers = other.getPointers();
+        other.setPointers(this.getPointers());
+        setPointers(otherPointers);
     }
 
     public int instsize() {
@@ -43,7 +43,7 @@ public final class PointersObject extends AbstractPointersObject {
     }
 
     public AbstractSqueakObject shallowCopy() {
-        return new PointersObject(image, getSqClass(), pointers.clone());
+        return new PointersObject(image, getSqClass(), getPointers().clone());
     }
 
     public Object[] unwrappedWithFirst(final Object firstValue) {

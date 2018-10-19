@@ -1,9 +1,12 @@
 package de.hpi.swa.graal.squeak.model;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
 public abstract class AbstractPointersObject extends AbstractSqueakObject {
-    protected Object[] pointers;
+    @CompilationFinal(dimensions = 0) private Object[] pointers;
 
     protected AbstractPointersObject(final SqueakImageContext image) {
         super(image);
@@ -17,11 +20,22 @@ public abstract class AbstractPointersObject extends AbstractSqueakObject {
         super(image, hash, sqClass);
     }
 
+    public final Object getPointer(final int index) {
+        return pointers[index];
+    }
+
     public final Object[] getPointers() {
         return pointers;
     }
 
+    public final void setPointer(final int index, final Object value) {
+        this.pointers[index] = value;
+    }
+
     public final void setPointers(final Object[] pointers) {
+        assert this.pointers == null || this.pointers.length == pointers.length : "Pointers lengths do not match (wrong assumption?)";
+        // TODO: find out if invalidation should be avoided by copying values if pointers != null
+        CompilerDirectives.transferToInterpreterAndInvalidate();
         this.pointers = pointers;
     }
 

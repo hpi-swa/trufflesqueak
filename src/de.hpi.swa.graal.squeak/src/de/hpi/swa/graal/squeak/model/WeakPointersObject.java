@@ -17,12 +17,12 @@ public final class WeakPointersObject extends AbstractPointersObject {
 
     public WeakPointersObject(final SqueakImageContext img, final ClassObject classObject, final int size) {
         super(img, classObject);
-        pointers = ArrayUtils.withAll(size, img.nil);
+        setPointers(ArrayUtils.withAll(size, img.nil));
     }
 
     private WeakPointersObject(final WeakPointersObject original) {
         super(original.image, original.getSqClass());
-        this.pointers = original.pointers.clone();
+        setPointers(original.getPointers().clone());
     }
 
     @Override
@@ -31,7 +31,7 @@ public final class WeakPointersObject extends AbstractPointersObject {
     }
 
     public Object at0(final long index) {
-        final Object value = pointers[(int) index];
+        final Object value = getPointer((int) index);
         if (value instanceof WeakReference) {
             final Object wrappedValue = ((WeakReference<?>) value).get();
             if (wrappedValue == null) {
@@ -48,9 +48,9 @@ public final class WeakPointersObject extends AbstractPointersObject {
         assert obj != null; // null indicates a problem
         if (obj instanceof AbstractSqueakObject && index >= instsize()) {
             // store into variable part
-            pointers[(int) index] = newWeakReferenceFor(obj);
+            setPointer((int) index, newWeakReferenceFor(obj));
         } else {
-            pointers[(int) index] = obj;
+            setPointer((int) index, obj);
         }
     }
 
@@ -64,7 +64,7 @@ public final class WeakPointersObject extends AbstractPointersObject {
     }
 
     public void setWeakPointers(final Object[] pointers) {
-        this.pointers = convertToWeakReferences(pointers);
+        setPointers(convertToWeakReferences(pointers));
     }
 
     public AbstractSqueakObject shallowCopy() {
