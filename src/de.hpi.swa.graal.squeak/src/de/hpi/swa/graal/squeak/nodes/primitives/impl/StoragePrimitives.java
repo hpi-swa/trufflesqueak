@@ -28,6 +28,7 @@ import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.ERROR_TABLE;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.GetAllInstancesNode;
+import de.hpi.swa.graal.squeak.nodes.NewObjectNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectBecomeNode;
@@ -215,9 +216,11 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 70)
     protected abstract static class PrimNewNode extends AbstractNewPrimitiveNode {
         protected static final int NEW_CACHE_SIZE = 3;
+        @Child private NewObjectNode newNode;
 
         protected PrimNewNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
+            newNode = NewObjectNode.create(method.image);
         }
 
         @SuppressWarnings("unused")
@@ -225,17 +228,17 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         protected Object newDirect(final ClassObject receiver,
                         @Cached("receiver") final ClassObject cachedReceiver,
                         @Cached("cachedReceiver.getClassFormatStable()") final Assumption classFormatStable) {
-            return cachedReceiver.newInstance();
+            return newNode.executeNew(cachedReceiver);
         }
 
         @Specialization(replaces = "newDirect")
-        protected static final Object newIndirect(final ClassObject receiver) {
-            return receiver.newInstance();
+        protected final Object newIndirect(final ClassObject receiver) {
+            return newNode.executeNew(receiver);
         }
 
         @Specialization
-        protected static final Object doPointers(final PointersObject receiver) {
-            return receiver.getSqClass().newInstance(); // FIXME: BehaviorTest>>#testChange
+        protected final Object doPointers(final PointersObject receiver) {
+            return newNode.executeNew(receiver.getSqClass()); // FIXME: BehaviorTest>>#testChange
         }
     }
 
@@ -243,22 +246,24 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 71)
     protected abstract static class PrimNewWithArgNode extends AbstractNewPrimitiveNode {
         protected static final int NEW_CACHE_SIZE = 3;
+        @Child private NewObjectNode newNode;
 
         protected PrimNewWithArgNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
+            newNode = NewObjectNode.create(method.image);
         }
 
         @SuppressWarnings("unused")
         @Specialization(limit = "NEW_CACHE_SIZE", assumptions = {"classFormatStable"}, guards = {"receiver == cachedReceiver", "isInstantiable(receiver, size)"})
-        protected static final Object newWithArgDirect(final ClassObject receiver, final long size,
+        protected final Object newWithArgDirect(final ClassObject receiver, final long size,
                         @Cached("receiver") final ClassObject cachedReceiver,
                         @Cached("cachedReceiver.getClassFormatStable()") final Assumption classFormatStable) {
-            return cachedReceiver.newInstance(size);
+            return newNode.executeNew(cachedReceiver, (int) size);
         }
 
         @Specialization(replaces = "newWithArgDirect", guards = "isInstantiable(receiver, size)")
-        protected static final Object newWithArg(final ClassObject receiver, final long size) {
-            return receiver.newInstance(size);
+        protected final Object newWithArg(final ClassObject receiver, final long size) {
+            return newNode.executeNew(receiver, (int) size);
         }
 
         protected static final boolean isInstantiable(final ClassObject receiver, final long size) {
@@ -460,8 +465,8 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "receiver.isCompiledMethodClass()")
-        protected static final AbstractSqueakObject newMethod(final ClassObject receiver, final long bytecodeCount, final long header) {
-            final CompiledMethodObject newMethod = (CompiledMethodObject) receiver.newInstance(bytecodeCount);
+        protected final AbstractSqueakObject newMethod(final ClassObject receiver, final long bytecodeCount, final long header) {
+            final CompiledMethodObject newMethod = new CompiledMethodObject(code.image, receiver, receiver.getBasicInstanceSize() + (int) bytecodeCount);
             newMethod.setHeader(header);
             return newMethod;
         }

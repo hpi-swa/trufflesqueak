@@ -11,7 +11,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CLASS;
@@ -45,7 +44,7 @@ public final class ClassObject extends AbstractPointersObject {
         pointers = ptrs;
     }
 
-    private ClassObject(final SqueakImageContext image, final ClassObject classObject, final int size) {
+    public ClassObject(final SqueakImageContext image, final ClassObject classObject, final int size) {
         this(image, classObject, ArrayUtils.withAll(size, image.nil));
     }
 
@@ -76,7 +75,7 @@ public final class ClassObject extends AbstractPointersObject {
         return this.getSqClass() == image.metaclass;
     }
 
-    private boolean instancesAreClasses() {
+    public boolean instancesAreClasses() {
         return isMetaclass() || isAMetaclass();
     }
 
@@ -197,66 +196,12 @@ public final class ClassObject extends AbstractPointersObject {
         return instSpec >= 2 && (instSpec <= 4 || instSpec >= 9);
     }
 
-    public Object newInstance() {
-        return newInstance(0);
-    }
-
-    public Object newInstance(final long extraSize) {
-        final int size = instanceSize + ((int) extraSize);
-        //@formatter:off
-        switch (instSpec) {
-            case 0: // empty objects
-                return new EmptyObject(image, this);
-            case 1:
-                assert size == instanceSize;
-                if (instancesAreClasses()) {
-                    return new ClassObject(image, this, size);
-                } else {
-                    return new PointersObject(image, this, size);
-                }
-            case 2: // indexed pointers
-                return new PointersObject(image, this, size);
-            case 3: // mixed indexable and named pointers
-                if (this == image.methodContextClass) {
-                    return ContextObject.create(image, size);
-                } else if (this == image.blockClosureClass) {
-                    return new BlockClosureObject(image); // TODO: verify this is actually used
-                } else {
-                    return new PointersObject(image, this, size);
-                }
-            case 4:
-                return new WeakPointersObject(image, this, size);
-            case 5: // TODO: ephemerons
-                return new WeakPointersObject(image, this, size);
-            case 7: case 8:
-                throw new SqueakException("Tried to instantiate an immediate");
-            case 9:
-                return NativeObject.newNativeLongs(image, this, size);
-            case 10: case 11:
-                if (this == image.floatClass) {
-                    assert size == 2;
-                    return new FloatObject(image);
-                } else {
-                    return NativeObject.newNativeInts(image, this, size);
-                }
-            case 12: case 13: case 14: case 15:
-                return NativeObject.newNativeShorts(image, this, size);
-            case 16: case 17: case 18: case 19: case 20: case 21: case 22: case 23:
-                if (this == image.largePositiveIntegerClass || this == image.largeNegativeIntegerClass) {
-                    return new LargeIntegerObject(image, this, size);
-                } else {
-                    return NativeObject.newNativeBytes(image, this, size);
-                }
-            case 24: case 25: case 26: case 27: case 28: case 29: case 30: case 31:
-                return new CompiledMethodObject(image, this, (int) extraSize);
-            default:
-                throw new SqueakException("Tried to instantiate with bogus instSpec: " + instSpec);
-        }
-        //@formatter:on
-    }
-
     public int getBasicInstanceSize() {
         return instanceSize;
+    }
+
+    public int getInstanceSpecification() {
+        return instSpec;
     }
 
     public AbstractSqueakObject shallowCopy() {
