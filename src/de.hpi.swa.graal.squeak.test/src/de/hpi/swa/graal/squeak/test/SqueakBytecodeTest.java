@@ -21,6 +21,7 @@ import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -29,6 +30,8 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.ASSOCIATION;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 
 public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
     @Rule public ExpectedException exceptions = ExpectedException.none();
@@ -454,12 +457,14 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
     @Test
     public void testPushNewArray() {
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
+        final SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
+        final SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
         // pushNewArray (size 127), returnTop
         CompiledMethodObject method = makeMethod(new Object[]{makeHeader(0, 0, 0, false, true)}, 138, 127, 124);
         Object result = runMethod(method, rcvr);
-        assertTrue(result instanceof PointersObject);
-        PointersObject resultList = ((PointersObject) result);
-        assertEquals(127, resultList.size());
+        assertTrue(result instanceof ArrayObject);
+        ArrayObject resultList = ((ArrayObject) result);
+        assertEquals(127, sizeNode.execute(resultList));
 
         // pushNewArray and pop
         final int arraySize = CONTEXT.MAX_STACK_SIZE;
@@ -472,11 +477,11 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
         intbytes[arraySize + 2] = 124; // returnTop
         method = makeMethod(new Object[]{makeHeader(0, 0, 0, false, true)}, intbytes);
         result = runMethod(method, rcvr);
-        assertTrue(result instanceof PointersObject);
-        resultList = ((PointersObject) result);
-        assertEquals(arraySize, resultList.size());
+        assertTrue(result instanceof ArrayObject);
+        resultList = ((ArrayObject) result);
+        assertEquals(arraySize, sizeNode.execute(resultList));
         for (int i = 0; i < arraySize; i++) {
-            assertEquals(i % 2 == 0 ? image.sqTrue : image.sqFalse, resultList.at0(i));
+            assertEquals(i % 2 == 0 ? image.sqTrue : image.sqFalse, at0Node.execute(resultList, i));
         }
     }
 
@@ -513,6 +518,9 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
 
     @Test
     public void testStoreRemoteTemp() {
+        final SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
+        final SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
+
         final Object[] literals = new Object[]{2097154L, image.nil, image.nil}; // header with
                                                                                 // numTemp=8
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
@@ -523,11 +531,11 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
         final VirtualFrame frame = createTestFrame(method);
         try {
             final Object result = createContext(method, rcvr).execute(frame);
-            assertTrue(result instanceof PointersObject);
-            final PointersObject resultList = ((PointersObject) result);
-            assertEquals(2, resultList.size());
-            assertEquals(image.sqFalse, resultList.at0(0));
-            assertEquals(image.sqFalse, resultList.at0(1));
+            assertTrue(result instanceof ArrayObject);
+            final ArrayObject resultList = ((ArrayObject) result);
+            assertEquals(2, sizeNode.execute(resultList));
+            assertEquals(image.sqFalse, at0Node.execute(resultList, 0));
+            assertEquals(image.sqFalse, at0Node.execute(resultList, 1));
         } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
             fail("broken test");
         }
@@ -535,6 +543,9 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
 
     @Test
     public void testStoreAndPopRemoteTemp() {
+        final SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
+        final SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
+
         final Object[] literals = new Object[]{2097154L, image.nil, image.nil}; // header with
                                                                                 // numTemp=8
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
@@ -545,11 +556,11 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
         final VirtualFrame frame = createTestFrame(method);
         try {
             final Object result = createContext(method, rcvr).execute(frame);
-            assertTrue(result instanceof PointersObject);
-            final PointersObject resultList = ((PointersObject) result);
-            assertEquals(2, resultList.size());
-            assertEquals(image.sqFalse, resultList.at0(0));
-            assertEquals(image.sqTrue, resultList.at0(1));
+            assertTrue(result instanceof ArrayObject);
+            final ArrayObject resultList = ((ArrayObject) result);
+            assertEquals(2, sizeNode.execute(resultList));
+            assertEquals(image.sqFalse, at0Node.execute(resultList, 0));
+            assertEquals(image.sqTrue, at0Node.execute(resultList, 1));
         } catch (NonLocalReturn | NonVirtualReturn | ProcessSwitch e) {
             fail("broken test");
         }

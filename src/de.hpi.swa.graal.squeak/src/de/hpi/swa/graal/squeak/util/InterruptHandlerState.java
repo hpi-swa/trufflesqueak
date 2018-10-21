@@ -50,11 +50,11 @@ public final class InterruptHandlerState {
         if (disabled) {
             return;
         }
-        final Object interruptSema = image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.TheInterruptSemaphore);
+        final Object interruptSema = image.specialObjectsArray.at0Object(SPECIAL_OBJECT_INDEX.TheInterruptSemaphore);
         if (interruptSema instanceof PointersObject) {
             setInterruptSemaphore((PointersObject) interruptSema);
         }
-        final Object timerSema = image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.TheTimerSemaphore);
+        final Object timerSema = image.specialObjectsArray.at0Object(SPECIAL_OBJECT_INDEX.TheTimerSemaphore);
         if (timerSema instanceof PointersObject) {
             setTimerSemaphore((PointersObject) timerSema);
         }

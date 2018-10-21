@@ -2,10 +2,12 @@ package de.hpi.swa.graal.squeak.nodes.accessing;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -13,6 +15,7 @@ import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.GetObjectArrayNode;
 
 public abstract class SqueakObjectPointersBecomeOneWayNode extends Node {
     @Child private UpdateSqueakObjectHashNode updateHashNode = UpdateSqueakObjectHashNode.create();
@@ -104,6 +107,12 @@ public abstract class SqueakObjectPointersBecomeOneWayNode extends Node {
                 }
             }
         }
+    }
+
+    @Specialization
+    protected final void doArray(final ArrayObject obj, final Object[] from, final Object[] to, final boolean copyHash,
+                    @Cached("create()") final GetObjectArrayNode getObjectArrayNode) {
+        pointersBecomeOneWay(getObjectArrayNode.execute(obj), from, to, copyHash);
     }
 
     @Specialization

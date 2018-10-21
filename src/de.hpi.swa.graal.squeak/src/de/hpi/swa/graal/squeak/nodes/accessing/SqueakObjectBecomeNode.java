@@ -6,6 +6,7 @@ import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
@@ -61,6 +62,12 @@ public abstract class SqueakObjectBecomeNode extends Node {
 
     @Specialization(guards = {"left != right", "left.getSqClass() == right.getSqClass()"})
     protected static final boolean doNative(final NativeObject left, final NativeObject right) {
+        left.become(right);
+        return true;
+    }
+
+    @Specialization(guards = {"left != right", "left.getSqClass() == right.getSqClass()"})
+    protected static final boolean doArray(final ArrayObject left, final ArrayObject right) {
         left.become(right);
         return true;
     }

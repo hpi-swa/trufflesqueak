@@ -19,6 +19,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.SimulationPrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
@@ -108,7 +109,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @SuppressWarnings("unused")
         @Specialization(guards = "classObject == code.image.smallIntegerClass")
-        protected static final PointersObject doSmallIntegerClass(final ClassObject classObject) {
+        protected static final Object doSmallIntegerClass(final ClassObject classObject) {
             throw new PrimitiveFailed();
         }
 
@@ -123,7 +124,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @SuppressWarnings("unused")
         @Fallback
-        protected static final PointersObject allInstances(final Object object) {
+        protected static final Object allInstances(final Object object) {
             throw new PrimitiveFailed();
         }
     }
@@ -207,6 +208,31 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         @Specialization
         protected final boolean doContext(final ContextObject receiver, final Object thang) {
             return ArrayUtils.contains(receiver.getPointers(), thang) ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @Specialization(guards = {"receiver.isEmptyType()", "receiver.getEmptyStorage() > 0"})
+        protected final boolean doEmptyArray(@SuppressWarnings("unused") final ArrayObject receiver, final Object thang) {
+            return thang == code.image.nil ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @Specialization(guards = "receiver.isAbstractSqueakObjectType()")
+        protected final boolean doArrayOfSqueakObjects(final ArrayObject receiver, final Object thang) {
+            return ArrayUtils.contains(receiver.getAbstractSqueakObjectStorage(), thang) ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @Specialization(guards = "receiver.isLongType()")
+        protected final boolean doArrayOfLongs(final ArrayObject receiver, final long thang) {
+            return ArrayUtils.contains(receiver.getLongStorage(), thang) ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @Specialization(guards = "receiver.isDoubleType()")
+        protected final boolean doArrayOfDoubles(final ArrayObject receiver, final double thang) {
+            return ArrayUtils.contains(receiver.getDoubleStorage(), thang) ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @Specialization(guards = "receiver.isObjectType()")
+        protected final boolean doArrayOfObjects(final ArrayObject receiver, final Object thang) {
+            return ArrayUtils.contains(receiver.getObjectStorage(), thang) ? code.image.sqTrue : code.image.sqFalse;
         }
 
         @Specialization
@@ -478,6 +504,31 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             return receiver.shallowCopy();
         }
 
+        @Specialization(guards = "receiver.isEmptyType()")
+        protected final Object doEmptyArray(final ArrayObject receiver) {
+            return new ArrayObject(code.image, receiver.getSqClass(), receiver.getEmptyStorage());
+        }
+
+        @Specialization(guards = "receiver.isAbstractSqueakObjectType()")
+        protected final Object doArrayOfSqueakObjects(final ArrayObject receiver) {
+            return new ArrayObject(code.image, receiver.getSqClass(), receiver.getAbstractSqueakObjectStorage().clone());
+        }
+
+        @Specialization(guards = "receiver.isLongType()")
+        protected final Object doArrayOfLongs(final ArrayObject receiver) {
+            return new ArrayObject(code.image, receiver.getSqClass(), receiver.getLongStorage().clone());
+        }
+
+        @Specialization(guards = "receiver.isDoubleType()")
+        protected final Object doArrayOfDoubles(final ArrayObject receiver) {
+            return new ArrayObject(code.image, receiver.getSqClass(), receiver.getDoubleStorage().clone());
+        }
+
+        @Specialization(guards = "receiver.isObjectType()")
+        protected final Object doArrayOfObjects(final ArrayObject receiver) {
+            return new ArrayObject(code.image, receiver.getSqClass(), receiver.getObjectStorage().clone());
+        }
+
         @Specialization
         protected static final Object doPointers(final PointersObject receiver) {
             return receiver.shallowCopy();
@@ -600,18 +651,18 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @SuppressWarnings("unused")
         @Specialization(guards = "hasNoInstances(classObject)")
-        protected final PointersObject noInstances(final ClassObject classObject) {
+        protected final ArrayObject noInstances(final ClassObject classObject) {
             return code.image.newList(new Object[0]);
         }
 
         @Specialization
-        protected final PointersObject allInstances(final ClassObject classObject) {
+        protected final ArrayObject allInstances(final ClassObject classObject) {
             return code.image.newList(ArrayUtils.toArray(objectGraphNode.allInstancesOf(classObject)));
         }
 
         @SuppressWarnings("unused")
         @Fallback
-        protected static final PointersObject allInstances(final Object object) {
+        protected static final ArrayObject allInstances(final Object object) {
             throw new PrimitiveFailed();
         }
     }

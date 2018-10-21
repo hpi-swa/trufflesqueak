@@ -24,6 +24,7 @@ import de.hpi.swa.graal.squeak.io.DisplayPoint;
 import de.hpi.swa.graal.squeak.io.SqueakDisplay;
 import de.hpi.swa.graal.squeak.io.SqueakDisplayInterface;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
@@ -69,15 +70,15 @@ public final class SqueakImageContext {
     public final ClassObject byteArrayClass = new ClassObject(this);
     public final ClassObject processClass = new ClassObject(this);
     public final ClassObject blockClosureClass = new ClassObject(this);
-    public final PointersObject externalObjectsArray = new PointersObject(this);
+    public final ArrayObject externalObjectsArray = new ArrayObject(this);
     public final ClassObject largeNegativeIntegerClass = new ClassObject(this);
     public final NativeObject aboutToReturnSelector = new NativeObject(this);
     public final NativeObject runWithInSelector = new NativeObject(this);
-    public final PointersObject primitiveErrorTable = new PointersObject(this);
-    public final PointersObject specialSelectors = new PointersObject(this);
+    public final ArrayObject primitiveErrorTable = new ArrayObject(this);
+    public final ArrayObject specialSelectors = new ArrayObject(this);
     @CompilationFinal public ClassObject truffleObjectClass = null;
 
-    public final PointersObject specialObjectsArray = new PointersObject(this);
+    public final ArrayObject specialObjectsArray = new ArrayObject(this);
     public final ClassObject metaclass = new ClassObject(this);
     public final ClassObject nilClass = new ClassObject(this);
 
@@ -324,7 +325,7 @@ public final class SqueakImageContext {
     }
 
     @TruffleBoundary
-    public PointersObject wrap(final Object... elements) {
+    public ArrayObject wrap(final Object... elements) {
         CompilerAsserts.neverPartOfCompilation("SqueakImageContext#wrap");
         final Object[] wrappedElements = new Object[elements.length];
         for (int i = 0; i < elements.length; i++) {
@@ -337,11 +338,11 @@ public final class SqueakImageContext {
         return newPoint((long) point.getWidth(), (long) point.getHeight());
     }
 
-    public PointersObject newList(final Object[] elements) {
-        return new PointersObject(this, arrayClass, elements);
+    public ArrayObject newList(final Object[] elements) {
+        return new ArrayObject(this, arrayClass, elements);
     }
 
-    public PointersObject newListWith(final Object... elements) {
+    public ArrayObject newListWith(final Object... elements) {
         return newList(elements);
     }
 
@@ -355,7 +356,7 @@ public final class SqueakImageContext {
 
     public void setSemaphore(final long index, final AbstractSqueakObject semaphore) {
         assert semaphore.isSemaphore() || semaphore == nil;
-        specialObjectsArray.atput0(index, semaphore);
+        specialObjectsArray.atput0Object(index, semaphore);
     }
 
     public boolean hasDisplay() {

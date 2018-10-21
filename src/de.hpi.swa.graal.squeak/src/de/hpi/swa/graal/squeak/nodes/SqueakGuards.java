@@ -2,10 +2,12 @@ package de.hpi.swa.graal.squeak.nodes;
 
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
+import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.EmptyObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 
@@ -14,8 +16,16 @@ public final class SqueakGuards {
         return object instanceof AbstractSqueakObject;
     }
 
+    public static boolean isArrayObject(final AbstractSqueakObject object) {
+        return object instanceof ArrayObject;
+    }
+
     public static boolean isContextObject(final AbstractSqueakObject object) {
         return object instanceof ContextObject;
+    }
+
+    public static boolean isDouble(final Object value) {
+        return value instanceof Double;
     }
 
     public static boolean isEmptyObject(final AbstractSqueakObject object) {
@@ -30,8 +40,16 @@ public final class SqueakGuards {
         return object instanceof LargeIntegerObject;
     }
 
+    public static boolean isLong(final Object value) {
+        return value instanceof Long;
+    }
+
     public static boolean isNativeObject(final AbstractSqueakObject object) {
         return object instanceof NativeObject;
+    }
+
+    public static boolean isNilObject(final Object object) {
+        return object instanceof NilObject;
     }
 
     public static boolean isNotProvided(final Object obj) {

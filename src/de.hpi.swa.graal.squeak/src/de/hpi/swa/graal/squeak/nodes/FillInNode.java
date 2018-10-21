@@ -8,6 +8,7 @@ import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
@@ -93,6 +94,11 @@ public abstract class FillInNode extends Node {
         } else if (image.getSimulatePrimitiveArgsSelector() == null && Arrays.equals(SimulationPrimitiveNode.SIMULATE_PRIMITIVE_SELECTOR, stringBytes)) {
             image.setSimulatePrimitiveArgsSelector(obj);
         }
+    }
+
+    @Specialization
+    protected static final void doArrays(final ArrayObject obj, final SqueakImageChunk chunk) {
+        obj.setStorageAndSpecializeIfPossible(chunk.getPointers());
     }
 
     @Specialization

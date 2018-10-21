@@ -6,6 +6,7 @@ import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractPointersObject;
+import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -22,6 +23,31 @@ public abstract class SqueakObjectSizeNode extends Node {
     }
 
     public abstract int execute(Object obj);
+
+    @Specialization(guards = "obj.isEmptyType()")
+    protected static final int doEmptyArrayObject(final ArrayObject obj) {
+        return obj.getEmptyStorage();
+    }
+
+    @Specialization(guards = "obj.isAbstractSqueakObjectType()")
+    protected static final int doArrayObjectOfSqueakObjects(final ArrayObject obj) {
+        return obj.getAbstractSqueakObjectStorage().length;
+    }
+
+    @Specialization(guards = "obj.isLongType()")
+    protected static final int doArrayObjectOfLongs(final ArrayObject obj) {
+        return obj.getLongStorage().length;
+    }
+
+    @Specialization(guards = "obj.isDoubleType()")
+    protected static final int doArrayObjectOfDoubles(final ArrayObject obj) {
+        return obj.getDoubleStorage().length;
+    }
+
+    @Specialization(guards = "obj.isObjectType()")
+    protected static final int doArrayObjectOfObjects(final ArrayObject obj) {
+        return obj.getObjectStorage().length;
+    }
 
     @Specialization
     protected static final int doAbstractPointers(final AbstractPointersObject obj) {

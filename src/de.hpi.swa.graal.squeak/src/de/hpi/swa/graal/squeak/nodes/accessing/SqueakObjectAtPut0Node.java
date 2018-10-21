@@ -6,6 +6,8 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
@@ -17,8 +19,9 @@ import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
+import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
 
-@ImportStatic(NativeObject.class)
+@ImportStatic({NativeObject.class, SqueakGuards.class})
 public abstract class SqueakObjectAtPut0Node extends Node {
 
     public static SqueakObjectAtPut0Node create() {
@@ -26,6 +29,94 @@ public abstract class SqueakObjectAtPut0Node extends Node {
     }
 
     public abstract void execute(Object obj, long index, Object value);
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = {"obj.isEmptyType()", "index < obj.getEmptyStorage()"})
+    protected static final void doEmptyArray(final ArrayObject obj, final long index, final NilObject value) {
+        // Nothing to do
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = {"obj.isEmptyType()", "index < obj.getEmptyStorage()"})
+    protected static final void doEmptyArray(final ArrayObject obj, final long index, final AbstractSqueakObject value) {
+        obj.transitionFromEmptyToAbstractSqueakObjects();
+        doArrayOfSqueakObjects(obj, index, value);
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = {"obj.isEmptyType()", "index < obj.getEmptyStorage()"})
+    protected static final void doEmptyArrayToLong(final ArrayObject obj, final long index, final long value) {
+        obj.transitionFromEmptyToLongs();
+        doArrayOfLongs(obj, index, value);
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = {"obj.isEmptyType()", "index < obj.getEmptyStorage()"})
+    protected static final void doEmptyArrayToDouble(final ArrayObject obj, final long index, final double value) {
+        obj.transitionFromEmptyToDoubles();
+        doArrayOfDoubles(obj, index, value);
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = {"obj.isEmptyType()", "index < obj.getEmptyStorage()", "!isAbstractSqueakObject(value)", "!isLong(value)", "!isDouble(value)"})
+    protected static final void doEmptyArrayToObject(final ArrayObject obj, final long index, final Object value) {
+        obj.transitionFromEmptyToObjects();
+        doArrayOfObjects(obj, index, value);
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = {"obj.isEmptyType()", "index >= obj.getEmptyStorage()"})
+    protected static final void doEmptyArrayOutOfBounds(final ArrayObject obj, final long index, final Object value) {
+        throw new IndexOutOfBoundsException();
+    }
+
+    @Specialization(guards = "obj.isAbstractSqueakObjectType()")
+    protected static final void doArrayOfSqueakObjects(final ArrayObject obj, final long index, final AbstractSqueakObject value) {
+        obj.atput0SqueakObject(index, value);
+    }
+
+    @Specialization(guards = {"obj.isAbstractSqueakObjectType()", "!isAbstractSqueakObject(value)"})
+    protected static final void doArrayOfSqueakObjects(final ArrayObject obj, final long index, final Object value) {
+        obj.transitionFromAbstractSqueakObjectsToObjects();
+        doArrayOfObjects(obj, index, value);
+    }
+
+    @Specialization(guards = "obj.isLongType()")
+    protected static final void doArrayOfLongs(final ArrayObject obj, final long index, final long value) {
+        obj.atput0Long(index, value);
+    }
+
+    @Specialization(guards = "obj.isLongType()")
+    protected static final void doArrayOfLongs(final ArrayObject obj, final long index, @SuppressWarnings("unused") final NilObject value) {
+        obj.atputNil0Long(index);
+    }
+
+    @Specialization(guards = {"obj.isLongType()", "!isLong(value)", "!isNilObject(value)"})
+    protected static final void doArrayOfLongs(final ArrayObject obj, final long index, final Object value) {
+        obj.transitionFromLongsToObjects();
+        doArrayOfObjects(obj, index, value);
+    }
+
+    @Specialization(guards = "obj.isDoubleType()")
+    protected static final void doArrayOfDoubles(final ArrayObject obj, final long index, final double value) {
+        obj.atput0Double(index, value);
+    }
+
+    @Specialization(guards = "obj.isDoubleType()")
+    protected static final void doArrayOfDoubles(final ArrayObject obj, final long index, @SuppressWarnings("unused") final NilObject value) {
+        obj.atputNil0Double(index);
+    }
+
+    @Specialization(guards = {"obj.isDoubleType()", "!isDouble(value)", "!isNilObject(value)"})
+    protected static final void doArrayOfDoubles(final ArrayObject obj, final long index, final Object value) {
+        obj.transitionFromDoublesToObjects();
+        doArrayOfObjects(obj, index, value);
+    }
+
+    @Specialization(guards = "obj.isObjectType()")
+    protected static final void doArrayOfObjects(final ArrayObject obj, final long index, final Object value) {
+        obj.atput0Object(index, value);
+    }
 
     @Specialization
     protected static final void doPointers(final PointersObject obj, final long index, final Object value) {

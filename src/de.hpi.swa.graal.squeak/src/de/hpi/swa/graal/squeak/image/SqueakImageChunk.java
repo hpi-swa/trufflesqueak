@@ -8,6 +8,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -79,7 +80,7 @@ public final class SqueakImageChunk {
                 assert getSqClass() != image.metaclass && (getSqClass() == null || getSqClass().getSqClass() != image.metaclass);
                 object = new PointersObject(image, hash, getSqClass());
             } else if (format == 2) { // indexable fields
-                object = new PointersObject(image, hash, getSqClass());
+                object = new ArrayObject(image, hash, getSqClass());
             } else if (format == 3) { // fixed and indexable fields
                 if (getSqClass() == image.methodContextClass) {
                     object = ContextObject.createWithHash(hash, image);

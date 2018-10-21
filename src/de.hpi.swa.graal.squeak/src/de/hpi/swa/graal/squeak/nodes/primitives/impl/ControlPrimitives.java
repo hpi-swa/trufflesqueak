@@ -19,6 +19,7 @@ import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveWithoutRe
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakQuit;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -37,6 +38,7 @@ import de.hpi.swa.graal.squeak.nodes.DispatchNode;
 import de.hpi.swa.graal.squeak.nodes.DispatchSendNode;
 import de.hpi.swa.graal.squeak.nodes.LookupNode;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.GetObjectArrayNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeGetBytesNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
@@ -185,13 +187,15 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 84)
     protected abstract static class PrimPerformWithArgumentsNode extends AbstractPerformPrimitiveNode {
+        @Child private GetObjectArrayNode getObjectArrayNode = GetObjectArrayNode.create();
+
         protected PrimPerformWithArgumentsNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
         @Specialization
-        protected Object perform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final PointersObject arguments) {
-            return dispatch(frame, selector, arguments.unwrappedWithFirst(receiver), lookup(receiver));
+        protected Object perform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final ArrayObject arguments) {
+            return dispatch(frame, selector, ArrayUtils.copyWithFirst(getObjectArrayNode.execute(arguments), receiver), lookup(receiver));
         }
     }
 
@@ -319,23 +323,24 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 100)
     protected abstract static class PrimPerformWithArgumentsInSuperclassNode extends AbstractPerformPrimitiveNode {
+        @Child private GetObjectArrayNode getObjectArrayNode = GetObjectArrayNode.create();
 
         protected PrimPerformWithArgumentsInSuperclassNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
         @Specialization
-        protected final Object doPerform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final PointersObject arguments, final ClassObject superClass,
+        protected final Object doPerform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final ArrayObject arguments, final ClassObject superClass,
                         @SuppressWarnings("unused") final NotProvided np) {
             // Object>>#perform:withArguments:inSuperclass:
-            return dispatch(frame, selector, arguments.unwrappedWithFirst(receiver), superClass);
+            return dispatch(frame, selector, ArrayUtils.copyWithFirst(getObjectArrayNode.execute(arguments), receiver), superClass);
         }
 
         @Specialization
-        protected final Object doPerform(final VirtualFrame frame, @SuppressWarnings("unused") final Object receiver, final Object object, final NativeObject selector, final PointersObject arguments,
+        protected final Object doPerform(final VirtualFrame frame, @SuppressWarnings("unused") final Object receiver, final Object object, final NativeObject selector, final ArrayObject arguments,
                         final ClassObject superClass) {
             // Context>>#object:perform:withArguments:inClass:
-            return dispatch(frame, selector, arguments.unwrappedWithFirst(object), superClass);
+            return dispatch(frame, selector, ArrayUtils.copyWithFirst(getObjectArrayNode.execute(arguments), object), superClass);
         }
     }
 
@@ -642,19 +647,20 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 118)
     protected abstract static class PrimDoPrimitiveWithArgsNode extends AbstractPrimitiveNode {
+        @Child protected GetObjectArrayNode getObjectArrayNode = GetObjectArrayNode.create();
 
         public PrimDoPrimitiveWithArgsNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
         @Specialization
-        protected final Object doPrimitive(final VirtualFrame frame, final Object receiver, final long primitiveIndex, final PointersObject argumentArray,
+        protected final Object doPrimitive(final VirtualFrame frame, final Object receiver, final long primitiveIndex, final ArrayObject argumentArray,
                         @SuppressWarnings("unused") final NotProvided notProvided) {
             final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.forIndex((CompiledMethodObject) code, (int) primitiveIndex);
             if (primitiveNode == null) { // TODO: make better
                 throw new PrimitiveFailed();
             }
-            final Object[] receiverAndArguments = ArrayUtils.copyWithFirst(argumentArray.getPointers(), receiver);
+            final Object[] receiverAndArguments = ArrayUtils.copyWithFirst(getObjectArrayNode.execute(argumentArray), receiver);
             try {
                 return replace(primitiveNode).executeWithArguments(frame, receiverAndArguments);
             } catch (UnsupportedSpecializationException e) {
@@ -664,12 +670,12 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doPrimitive(final VirtualFrame frame, @SuppressWarnings("unused") final Object context, final Object receiver, final long primitiveIndex,
-                        final PointersObject argumentArray) {
+                        final ArrayObject argumentArray) {
             final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.forIndex((CompiledMethodObject) code, (int) primitiveIndex);
             if (primitiveNode == null) { // TODO: make better
                 throw new PrimitiveFailed();
             }
-            final Object[] receiverAndArguments = ArrayUtils.copyWithFirst(argumentArray.getPointers(), receiver);
+            final Object[] receiverAndArguments = ArrayUtils.copyWithFirst(getObjectArrayNode.execute(argumentArray), receiver);
             try {
                 return replace(primitiveNode).executeWithArguments(frame, receiverAndArguments);
             } catch (UnsupportedSpecializationException e) {
@@ -913,18 +919,20 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 188)
     protected abstract static class PrimExecuteMethodArgsArrayNode extends AbstractPerformPrimitiveNode {
         @Child private DispatchNode dispatchNode = DispatchNode.create();
+        @Child private SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
+        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
 
         protected PrimExecuteMethodArgsArrayNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
         @Specialization
-        protected final Object doExecute(final VirtualFrame frame, final Object receiver, final PointersObject argArray, final CompiledCodeObject codeObject) {
-            final int numArgs = argArray.size();
+        protected final Object doExecute(final VirtualFrame frame, final Object receiver, final ArrayObject argArray, final CompiledCodeObject codeObject) {
+            final int numArgs = sizeNode.execute(argArray);
             final Object[] dispatchRcvrAndArgs = new Object[1 + numArgs];
             dispatchRcvrAndArgs[0] = receiver;
             for (int i = 0; i < numArgs; i++) {
-                dispatchRcvrAndArgs[1 + i] = argArray.at0(i);
+                dispatchRcvrAndArgs[1 + i] = at0Node.execute(argArray, i);
             }
             final Object thisContext = getContextOrMarker(frame);
             return dispatchNode.executeDispatch(frame, codeObject, dispatchRcvrAndArgs, thisContext);

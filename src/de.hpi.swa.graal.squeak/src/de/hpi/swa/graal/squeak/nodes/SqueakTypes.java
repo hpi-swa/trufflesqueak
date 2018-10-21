@@ -3,6 +3,7 @@ package de.hpi.swa.graal.squeak.nodes;
 import com.oracle.truffle.api.dsl.TypeSystem;
 
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
@@ -18,6 +19,7 @@ import de.hpi.swa.graal.squeak.model.WeakPointersObject;
                 char.class,
                 long.class,
                 double.class,
+                ArrayObject.class,
                 BlockClosureObject.class,
                 ClassObject.class,
                 CompiledBlockObject.class,

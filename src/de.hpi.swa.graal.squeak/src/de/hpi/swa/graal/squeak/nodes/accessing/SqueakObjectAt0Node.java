@@ -5,6 +5,8 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
@@ -25,6 +27,37 @@ public abstract class SqueakObjectAt0Node extends Node {
     }
 
     public abstract Object execute(Object obj, long index);
+
+    @Specialization(guards = {"obj.isEmptyType()", "index >= 0", "index < obj.getEmptyStorage()"})
+    protected static final NilObject doEmptyArray(final ArrayObject obj, @SuppressWarnings("unused") final long index) {
+        return obj.getNil();
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = {"obj.isEmptyType()", "index < 0 || index >= obj.getEmptyStorage()"})
+    protected static final long doEmptyArrayOutOfBounds(final ArrayObject obj, final long index) {
+        throw new IndexOutOfBoundsException();
+    }
+
+    @Specialization(guards = "obj.isAbstractSqueakObjectType()")
+    protected static final AbstractSqueakObject doArrayOfSqueakObjects(final ArrayObject obj, final long index) {
+        return obj.at0SqueakObject(index);
+    }
+
+    @Specialization(guards = "obj.isLongType()")
+    protected static final Object doArrayOfLongs(final ArrayObject obj, final long index) {
+        return obj.at0Long(index);
+    }
+
+    @Specialization(guards = "obj.isDoubleType()")
+    protected static final Object doArrayOfDoubles(final ArrayObject obj, final long index) {
+        return obj.at0Double(index);
+    }
+
+    @Specialization(guards = "obj.isObjectType()")
+    protected static final Object doArrayOfObjects(final ArrayObject obj, final long index) {
+        return obj.at0Object(index);
+    }
 
     @Specialization
     protected static final Object doPointers(final PointersObject obj, final long index) {

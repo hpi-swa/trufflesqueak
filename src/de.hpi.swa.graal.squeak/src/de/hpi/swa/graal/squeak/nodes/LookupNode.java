@@ -10,6 +10,7 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.METHOD_DICT;
@@ -54,13 +55,11 @@ public abstract class LookupNode extends Node {
             while (lookupClass instanceof ClassObject) {
                 final Object methodDict = ((ClassObject) lookupClass).getMethodDict();
                 if (methodDict instanceof PointersObject) {
-                    final Object values = at0Node.execute(methodDict, METHOD_DICT.VALUES);
-                    if (values instanceof PointersObject) {
-                        for (int i = METHOD_DICT.NAMES; i < sizeNode.execute(methodDict); i++) {
-                            final Object methodSelector = at0Node.execute(methodDict, i);
-                            if (selector == methodSelector) {
-                                return at0Node.execute(values, i - METHOD_DICT.NAMES);
-                            }
+                    final ArrayObject values = (ArrayObject) at0Node.execute(methodDict, METHOD_DICT.VALUES);
+                    for (int i = METHOD_DICT.NAMES; i < sizeNode.execute(methodDict); i++) {
+                        final Object methodSelector = at0Node.execute(methodDict, i);
+                        if (selector == methodSelector) {
+                            return at0Node.execute(values, i - METHOD_DICT.NAMES);
                         }
                     }
                 }

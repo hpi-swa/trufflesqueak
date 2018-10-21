@@ -32,7 +32,7 @@ public abstract class HandlePrimitiveFailedNode extends AbstractNodeWithCode {
     @Specialization(guards = "followedByExtendedStore(code)")
     protected final void doHandle(final VirtualFrame frame, final PrimitiveFailed e,
                     @Cached("create(code)") final StackPushNode pushNode) {
-        pushNode.executeWrite(frame, code.image.primitiveErrorTable.at0(e.getReasonCode()));
+        pushNode.executeWrite(frame, code.image.primitiveErrorTable.at0Object(e.getReasonCode()));
     }
 
     @SuppressWarnings("unused")

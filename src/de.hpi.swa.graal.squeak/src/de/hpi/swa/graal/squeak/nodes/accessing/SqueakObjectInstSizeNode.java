@@ -6,6 +6,7 @@ import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
@@ -25,6 +26,11 @@ public abstract class SqueakObjectInstSizeNode extends Node {
     }
 
     public abstract int execute(AbstractSqueakObject obj);
+
+    @Specialization
+    protected static final int doArray(final ArrayObject obj) {
+        return obj.instsize();
+    }
 
     @Specialization
     protected static final int doPointers(final PointersObject obj) {

@@ -17,12 +17,15 @@ import org.junit.runners.MethodSorters;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.TEST_RESULT;
 import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.process.GetActiveProcessNode;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -223,7 +226,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
 
     private static Object getSmalltalkDictionary() {
         if (smalltalkDictionary == null) {
-            smalltalkDictionary = image.specialObjectsArray.at0(SPECIAL_OBJECT_INDEX.SmalltalkDictionary);
+            smalltalkDictionary = image.specialObjectsArray.at0Object(SPECIAL_OBJECT_INDEX.SmalltalkDictionary);
         }
         return smalltalkDictionary;
     }
@@ -342,21 +345,24 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
     }
 
     private static String extractFailuresAndErrorsFromTestResult(final Object result) {
+        final SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
+        final SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
+
         if (!(result instanceof AbstractSqueakObject) || !result.toString().equals("a TestResult")) {
             return "did not return a TestResult, got " + result.toString();
         }
         final PointersObject testResult = (PointersObject) result;
         final List<String> output = new ArrayList<>();
-        final PointersObject failureArray = (PointersObject) ((PointersObject) testResult.at0(TEST_RESULT.FAILURES)).at0(1);
-        for (int i = 0; i < failureArray.size(); i++) {
-            final AbstractSqueakObject value = (AbstractSqueakObject) failureArray.at0(i);
+        final ArrayObject failureArray = (ArrayObject) ((PointersObject) testResult.at0(TEST_RESULT.FAILURES)).at0(1);
+        for (int i = 0; i < sizeNode.execute(failureArray); i++) {
+            final AbstractSqueakObject value = (AbstractSqueakObject) at0Node.execute(failureArray, i);
             if (value != image.nil) {
                 output.add(((PointersObject) value).at0(0) + " (E)");
             }
         }
-        final PointersObject errorArray = (PointersObject) ((PointersObject) testResult.at0(TEST_RESULT.ERRORS)).at0(0);
-        for (int i = 0; i < errorArray.size(); i++) {
-            final AbstractSqueakObject value = (AbstractSqueakObject) errorArray.at0(i);
+        final ArrayObject errorArray = (ArrayObject) ((PointersObject) testResult.at0(TEST_RESULT.ERRORS)).at0(0);
+        for (int i = 0; i < sizeNode.execute(errorArray); i++) {
+            final AbstractSqueakObject value = (AbstractSqueakObject) at0Node.execute(errorArray, i);
             if (value != image.nil) {
                 output.add(((PointersObject) value).at0(0) + " (F)");
             }

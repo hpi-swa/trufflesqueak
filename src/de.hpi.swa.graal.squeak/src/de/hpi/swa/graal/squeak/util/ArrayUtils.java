@@ -18,6 +18,24 @@ public final class ArrayUtils {
         return Arrays.copyOfRange(values, 1, values.length);
     }
 
+    public static boolean contains(final long[] objects, final long element) {
+        for (int i = 0; i < objects.length; i++) {
+            if (objects[i] == element) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean contains(final double[] objects, final double element) {
+        for (int i = 0; i < objects.length; i++) {
+            if (objects[i] == element) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static boolean contains(final Object[] objects, final Object element) {
         for (int i = 0; i < objects.length; i++) {
             if (objects[i] == element) {

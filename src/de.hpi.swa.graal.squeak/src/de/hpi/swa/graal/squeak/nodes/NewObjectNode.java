@@ -5,6 +5,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -51,7 +52,7 @@ public abstract class NewObjectNode extends AbstractNodeWithImage {
 
     @Specialization(guards = "classObject.getInstanceSpecification() == 2")
     protected final Object doIndexedPointers(final ClassObject classObject, final int extraSize) {
-        return new PointersObject(image, classObject, classObject.getBasicInstanceSize() + extraSize);
+        return new ArrayObject(image, classObject, classObject.getBasicInstanceSize() + extraSize);
     }
 
     @Specialization(guards = {"classObject.getInstanceSpecification() == 3", "classObject == image.methodContextClass"})

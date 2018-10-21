@@ -16,16 +16,18 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
-import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.BlockActivationNode;
 import de.hpi.swa.graal.squeak.nodes.GetBlockFrameArgumentsNode;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.GetObjectArrayNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
@@ -248,7 +250,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
         @SuppressWarnings("unused")
         @Specialization
-        protected static final Object doCopy(final VirtualFrame frame, final ContextObject outerContext, final long numArgs, final PointersObject copiedValues) {
+        protected static final Object doCopy(final VirtualFrame frame, final ContextObject outerContext, final long numArgs, final ArrayObject copiedValues) {
             throw new SqueakException("Not implemented and not used in Squeak anymore");
         }
     }
@@ -347,10 +349,12 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
             super(method, numArguments);
         }
 
-        @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == argArray.size()"})
-        protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final PointersObject argArray,
-                        @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments) {
-            return dispatch.executeBlock(block, getFrameArguments.execute(block, getContextOrMarker(frame), argArray.getPointers()));
+        @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == sizeNode.execute(argArray)"})
+        protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final ArrayObject argArray,
+                        @SuppressWarnings("unused") @Cached("create()") final SqueakObjectSizeNode sizeNode,
+                        @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments,
+                        @Cached("create()") final GetObjectArrayNode getObjectArrayNode) {
+            return dispatch.executeBlock(block, getFrameArguments.execute(block, getContextOrMarker(frame), getObjectArrayNode.execute(argArray)));
         }
     }
 
@@ -385,13 +389,15 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
             super(method, numArguments);
         }
 
-        @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == argArray.size()"})
-        protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final PointersObject argArray,
-                        @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments) {
+        @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == sizeNode.execute(argArray)"})
+        protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final ArrayObject argArray,
+                        @SuppressWarnings("unused") @Cached("create()") final SqueakObjectSizeNode sizeNode,
+                        @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments,
+                        @Cached("create()") final GetObjectArrayNode getObjectArrayNode) {
             final boolean wasActive = code.image.interrupt.isActive();
             code.image.interrupt.deactivate();
             try {
-                return dispatch.executeBlock(block, getFrameArguments.execute(block, getContextOrMarker(frame), argArray.getPointers()));
+                return dispatch.executeBlock(block, getFrameArguments.execute(block, getContextOrMarker(frame), getObjectArrayNode.execute(argArray)));
             } finally {
                 if (wasActive) {
                     code.image.interrupt.activate();

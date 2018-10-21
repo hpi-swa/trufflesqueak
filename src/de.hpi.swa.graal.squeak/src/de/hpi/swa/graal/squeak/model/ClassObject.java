@@ -177,13 +177,12 @@ public final class ClassObject extends AbstractPointersObject {
         while (lookupClass instanceof ClassObject) {
             final Object methodDict = ((ClassObject) lookupClass).getMethodDict();
             if (methodDict instanceof PointersObject) {
-                final Object values = ((PointersObject) methodDict).at0(METHOD_DICT.VALUES);
-                if (values instanceof PointersObject) {
-                    for (int i = METHOD_DICT.NAMES; i < ((PointersObject) methodDict).size(); i++) {
-                        final Object methodSelector = ((PointersObject) methodDict).at0(i);
-                        if (predicate.test(methodSelector)) {
-                            return ((PointersObject) values).at0(i - METHOD_DICT.NAMES);
-                        }
+                final PointersObject methodDictObject = (PointersObject) methodDict;
+                final ArrayObject values = (ArrayObject) methodDictObject.at0(METHOD_DICT.VALUES);
+                for (int i = METHOD_DICT.NAMES; i < methodDictObject.size(); i++) {
+                    final Object methodSelector = methodDictObject.at0(i);
+                    if (predicate.test(methodSelector)) {
+                        return values.at0Object(i - METHOD_DICT.NAMES);
                     }
                 }
             }

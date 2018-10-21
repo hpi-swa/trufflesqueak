@@ -11,11 +11,11 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.SimulationPrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
-import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.DispatchNode;
 import de.hpi.swa.graal.squeak.nodes.LookupNode;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
@@ -33,7 +33,7 @@ public abstract class SimulationPrimitiveNode extends AbstractPrimitiveNode {
 
     private final NativeObject functionName;
     private final boolean bitBltSimulationNotFound = code.image.getSimulatePrimitiveArgsSelector() == null;
-    private final PointersObject emptyList;
+    private final ArrayObject emptyList;
     private final BranchProfile simulationFailedProfile = BranchProfile.create();
 
     @Child private LookupNode lookupNode;
@@ -108,7 +108,7 @@ public abstract class SimulationPrimitiveNode extends AbstractPrimitiveNode {
         return doSimulation(frame, receiver, code.image.newList(new Object[]{arg1, arg2, arg3, arg4, arg5, arg6}));
     }
 
-    private Object doSimulation(final VirtualFrame frame, final Object receiver, final PointersObject arguments) {
+    private Object doSimulation(final VirtualFrame frame, final Object receiver, final ArrayObject arguments) {
         final Object[] newRcvrAndArgs = new Object[]{receiver, functionName, arguments};
         final boolean wasActive = code.image.interrupt.isActive();
         code.image.interrupt.deactivate();

@@ -58,7 +58,7 @@ public abstract class InterruptHandlerNode extends Node {
             signalSemaporeIfNotNil(frame, SPECIAL_OBJECT_INDEX.TheFinalizationSemaphore);
         }
         if (istate.hasSemaphoresToSignal()) {
-            final Object[] semaphores = image.externalObjectsArray.getPointers();
+            final Object[] semaphores = image.externalObjectsArray.getObjectStorage();
             while (istate.hasSemaphoresToSignal()) {
                 final int semaIndex = istate.nextSemaphoreToSignal();
                 final Object semaphore = semaphores[semaIndex - 1];
@@ -68,7 +68,7 @@ public abstract class InterruptHandlerNode extends Node {
     }
 
     private void signalSemaporeIfNotNil(final VirtualFrame frame, final int semaphoreIndex) {
-        signalSemaporeIfNotNil(frame, image.specialObjectsArray.at0(semaphoreIndex));
+        signalSemaporeIfNotNil(frame, image.specialObjectsArray.at0Object(semaphoreIndex));
     }
 
     private void signalSemaporeIfNotNil(final VirtualFrame frame, final Object semaphore) {
