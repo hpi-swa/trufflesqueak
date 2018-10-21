@@ -561,7 +561,8 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             super(method, numArguments);
         }
 
-        @Specialization(guards = {"!isNativeObject(receiver)", "receiver.getSqClass() == anotherObject.getSqClass()", "sizeNode.execute(receiver) != sizeNode.execute(anotherObject)"})
+        @Specialization(guards = {"!isNativeObject(receiver)", "!isContextObject(receiver)", "receiver.getSqClass() == anotherObject.getSqClass()",
+                        "sizeNode.execute(receiver) == sizeNode.execute(anotherObject)"})
         protected final Object doCopy(final AbstractSqueakObject receiver, final AbstractSqueakObject anotherObject) {
             for (int i = 0; i < sizeNode.execute(receiver); i++) {
                 atput0Node.execute(receiver, i, at0Node.execute(anotherObject, i));

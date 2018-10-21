@@ -1,6 +1,7 @@
 package de.hpi.swa.graal.squeak.nodes;
 
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.EmptyObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
@@ -11,6 +12,10 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 public final class SqueakGuards {
     public static boolean isAbstractSqueakObject(final Object object) {
         return object instanceof AbstractSqueakObject;
+    }
+
+    public static boolean isContextObject(final AbstractSqueakObject object) {
+        return object instanceof ContextObject;
     }
 
     public static boolean isEmptyObject(final AbstractSqueakObject object) {
