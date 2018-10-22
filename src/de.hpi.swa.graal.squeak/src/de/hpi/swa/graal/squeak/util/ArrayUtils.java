@@ -18,6 +18,15 @@ public final class ArrayUtils {
         return Arrays.copyOfRange(values, 1, values.length);
     }
 
+    public static boolean contains(final byte[] objects, final byte element) {
+        for (int i = 0; i < objects.length; i++) {
+            if (objects[i] == element) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static boolean contains(final long[] objects, final long element) {
         for (int i = 0; i < objects.length; i++) {
             if (objects[i] == element) {

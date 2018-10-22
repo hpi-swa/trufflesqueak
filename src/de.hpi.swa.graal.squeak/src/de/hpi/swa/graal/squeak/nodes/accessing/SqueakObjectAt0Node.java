@@ -44,6 +44,11 @@ public abstract class SqueakObjectAt0Node extends Node {
         return obj.at0SqueakObject(index);
     }
 
+    @Specialization(guards = "obj.isBooleanType()")
+    protected static final Object doArrayOfBooleans(final ArrayObject obj, final long index) {
+        return obj.at0Boolean(index);
+    }
+
     @Specialization(guards = "obj.isLongType()")
     protected static final Object doArrayOfLongs(final ArrayObject obj, final long index) {
         return obj.at0Long(index);

@@ -220,14 +220,52 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             return ArrayUtils.contains(receiver.getAbstractSqueakObjectStorage(), thang) ? code.image.sqTrue : code.image.sqFalse;
         }
 
+        @Specialization(guards = "receiver.isBooleanType()")
+        protected final boolean doArrayOfBooleans(final ArrayObject receiver, final boolean thang) {
+            return ArrayUtils.contains(receiver.getBooleanStorage(), thang ? ArrayObject.BOOLEAN_TRUE_TAG : ArrayObject.BOOLEAN_FALSE_TAG) ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @Specialization(guards = "receiver.isBooleanType()")
+        protected final boolean doArrayOfBooleans(final ArrayObject receiver, @SuppressWarnings("unused") final NilObject thang) {
+            return ArrayUtils.contains(receiver.getBooleanStorage(), ArrayObject.BOOLEAN_NIL_TAG) ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"receiver.isBooleanType()", "!isBoolean(thang)", "!isNilObject(thang)"})
+        protected final boolean doArrayOfBooleans(final ArrayObject receiver, final Object thang) {
+            return code.image.sqFalse;
+        }
+
         @Specialization(guards = "receiver.isLongType()")
         protected final boolean doArrayOfLongs(final ArrayObject receiver, final long thang) {
             return ArrayUtils.contains(receiver.getLongStorage(), thang) ? code.image.sqTrue : code.image.sqFalse;
         }
 
+        @Specialization(guards = "receiver.isLongType()")
+        protected final boolean doArrayOfLongs(final ArrayObject receiver, @SuppressWarnings("unused") final NilObject thang) {
+            return ArrayUtils.contains(receiver.getLongStorage(), ArrayObject.LONG_NIL_TAG) ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"receiver.isLongType()", "!isLong(thang)", "!isNilObject(thang)"})
+        protected final boolean doArrayOfLongss(final ArrayObject receiver, final Object thang) {
+            return code.image.sqFalse;
+        }
+
         @Specialization(guards = "receiver.isDoubleType()")
         protected final boolean doArrayOfDoubles(final ArrayObject receiver, final double thang) {
             return ArrayUtils.contains(receiver.getDoubleStorage(), thang) ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @Specialization(guards = "receiver.isDoubleType()")
+        protected final boolean doArrayOfDoubles(final ArrayObject receiver, @SuppressWarnings("unused") final NilObject thang) {
+            return ArrayUtils.contains(receiver.getDoubleStorage(), ArrayObject.DOUBLE_NIL_TAG) ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"receiver.isDoubleType()", "!isDouble(thang)", "!isNilObject(thang)"})
+        protected final boolean doArrayOfDoubles(final ArrayObject receiver, final Object thang) {
+            return code.image.sqFalse;
         }
 
         @Specialization(guards = "receiver.isObjectType()")
@@ -512,6 +550,11 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         @Specialization(guards = "receiver.isAbstractSqueakObjectType()")
         protected final Object doArrayOfSqueakObjects(final ArrayObject receiver) {
             return new ArrayObject(code.image, receiver.getSqClass(), receiver.getAbstractSqueakObjectStorage().clone());
+        }
+
+        @Specialization(guards = "receiver.isBooleanType()")
+        protected final Object doArrayOfBooleans(final ArrayObject receiver) {
+            return new ArrayObject(code.image, receiver.getSqClass(), receiver.getBooleanStorage().clone());
         }
 
         @Specialization(guards = "receiver.isLongType()")

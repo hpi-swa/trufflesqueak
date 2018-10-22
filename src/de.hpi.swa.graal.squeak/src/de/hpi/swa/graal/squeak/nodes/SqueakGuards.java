@@ -20,6 +20,10 @@ public final class SqueakGuards {
         return object instanceof ArrayObject;
     }
 
+    public static boolean isBoolean(final Object value) {
+        return value instanceof Boolean;
+    }
+
     public static boolean isContextObject(final AbstractSqueakObject object) {
         return object instanceof ContextObject;
     }

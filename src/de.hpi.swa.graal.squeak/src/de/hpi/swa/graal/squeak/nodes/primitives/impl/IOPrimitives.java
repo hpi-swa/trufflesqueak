@@ -449,6 +449,12 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return doArraysOfSqueakObjects(rcvr, start, stop, repl, replStart);
         }
 
+        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isEmptyType()", "repl.isBooleanType()"})
+        protected static final Object doEmptyArrayToBooleans(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
+            rcvr.transitionFromEmptyToBooleans();
+            return doArraysOfBooleans(rcvr, start, stop, repl, replStart);
+        }
+
         @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isEmptyType()", "repl.isLongType()"})
         protected static final Object doEmptyArrayToLongs(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
             rcvr.transitionFromEmptyToLongs();
@@ -483,6 +489,17 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached("create()") final GetObjectArrayNode getObjectArrayNode) {
             rcvr.transitionFromAbstractSqueakObjectsToObjects();
             replaceGeneric(rcvr.getObjectStorage(), start, stop, getObjectArrayNode.execute(repl), replStart);
+            return rcvr;
+        }
+
+        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isBooleanType()", "repl.isBooleanType()"})
+        protected static final Object doArraysOfBooleans(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
+            final int repOff = (int) (replStart - start);
+            final byte[] dstLongs = rcvr.getBooleanStorage();
+            final byte[] srcLongs = repl.getBooleanStorage();
+            for (int i = (int) (start - 1); i < stop; i++) {
+                dstLongs[i] = srcLongs[repOff + i];
+            }
             return rcvr;
         }
 
@@ -559,9 +576,15 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return doArrayOfObjectsPointers(rcvr, start, stop, repl, replStart);
         }
 
+        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isBooleanType()"})
+        protected static final Object doArrayOfBooleansPointers(final ArrayObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart) {
+            rcvr.transitionFromBooleansToObjects();
+            return doArrayOfObjectsPointers(rcvr, start, stop, repl, replStart);
+        }
+
         @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isLongType()"})
         protected static final Object doArrayOfLongsPointers(final ArrayObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart) {
-            rcvr.transitionFromEmptyToLongs();
+            rcvr.transitionFromLongsToObjects();
             return doArrayOfObjectsPointers(rcvr, start, stop, repl, replStart);
         }
 
@@ -593,9 +616,15 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return doArrayOfObjectsWeakPointers(rcvr, start, stop, repl, replStart);
         }
 
+        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isBooleanType()"})
+        protected static final Object doArrayOfBooleansWeakPointers(final ArrayObject rcvr, final long start, final long stop, final WeakPointersObject repl, final long replStart) {
+            rcvr.transitionFromBooleansToObjects();
+            return doArrayOfObjectsWeakPointers(rcvr, start, stop, repl, replStart);
+        }
+
         @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isLongType()"})
         protected static final Object doArrayOfLongsWeakPointers(final ArrayObject rcvr, final long start, final long stop, final WeakPointersObject repl, final long replStart) {
-            rcvr.transitionFromEmptyToLongs();
+            rcvr.transitionFromLongsToObjects();
             return doArrayOfObjectsWeakPointers(rcvr, start, stop, repl, replStart);
         }
 

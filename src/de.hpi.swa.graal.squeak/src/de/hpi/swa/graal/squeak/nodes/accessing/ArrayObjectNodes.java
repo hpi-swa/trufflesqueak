@@ -28,26 +28,55 @@ public final class ArrayObjectNodes {
             return obj.getAbstractSqueakObjectStorage();
         }
 
+        @Specialization(guards = "obj.isBooleanType()")
+        protected static final Object[] doArrayOfBooleans(final ArrayObject obj) {
+            final byte[] booleans = obj.getBooleanStorage();
+            final int length = booleans.length;
+            final Object[] objects = new Object[length];
+            for (int i = 0; i < length; i++) {
+                final byte value = booleans[i];
+                if (value == ArrayObject.BOOLEAN_FALSE_TAG) {
+                    objects[i] = obj.image.sqFalse;
+                } else if (value == ArrayObject.BOOLEAN_TRUE_TAG) {
+                    objects[i] = obj.image.sqTrue;
+                } else {
+                    assert value == ArrayObject.BOOLEAN_NIL_TAG;
+                    objects[i] = obj.image.nil;
+                }
+            }
+            return objects;
+        }
+
         @Specialization(guards = "obj.isLongType()")
         protected static final Object[] doArrayOfLongs(final ArrayObject obj) {
             final long[] longs = obj.getLongStorage();
             final int length = longs.length;
-            final Long[] boxedLongs = new Long[length];
+            final Object[] objects = new Object[length];
             for (int i = 0; i < length; i++) {
-                boxedLongs[i] = longs[i];
+                final long value = longs[i];
+                if (value == ArrayObject.LONG_NIL_TAG) {
+                    objects[i] = obj.image.nil;
+                } else {
+                    objects[i] = value;
+                }
             }
-            return boxedLongs;
+            return objects;
         }
 
         @Specialization(guards = "obj.isDoubleType()")
         protected static final Object[] doArrayOfDoubles(final ArrayObject obj) {
             final double[] doubles = obj.getDoubleStorage();
             final int length = doubles.length;
-            final Double[] boxedDoubles = new Double[length];
+            final Object[] objects = new Object[length];
             for (int i = 0; i < length; i++) {
-                boxedDoubles[i] = doubles[i];
+                final double value = doubles[i];
+                if (value == ArrayObject.DOUBLE_NIL_TAG) {
+                    objects[i] = obj.image.nil;
+                } else {
+                    objects[i] = value;
+                }
             }
-            return boxedDoubles;
+            return objects;
         }
 
         @Specialization(guards = "obj.isObjectType()")
