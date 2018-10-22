@@ -322,11 +322,11 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             usesEventQueue = true;
         }
-        return SqueakIOConstants.NULL_EVENT;
+        return SqueakIOConstants.NULL_EVENT.clone();
     }
 
     public void addEvent(final long eventType, final long value3, final long value4, final long value5, final long value6) {
-        deferredEvents.add(new long[]{eventType, getEventTime(), value3, value4, value5, value6});
+        deferredEvents.add(new long[]{eventType, getEventTime(), value3, value4, value5, value6, 0L, 0L});
         if (inputSemaphoreIndex > 0) {
             image.interrupt.signalSemaphoreWithIndex(inputSemaphoreIndex);
         }

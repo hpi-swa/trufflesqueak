@@ -212,7 +212,7 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
         if (!deferredEvents.isEmpty()) {
             return deferredEvents.removeFirst();
         }
-        return SqueakIOConstants.NULL_EVENT;
+        return SqueakIOConstants.NULL_EVENT.clone();
     }
 
     public void pollEvents() {
@@ -495,7 +495,7 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
         final MouseWheelEvent mouseWheelEvent = (MouseWheelEvent) event;
         final long mods = getModifierMask(3);
         final long btn = getMouseEventButtons(mods);
-        return new long[]{EVENT_TYPE.MOUSE_WHEEL, time, mouseWheelEvent.x() * 120, mouseWheelEvent.y() * 120, btn, mods, 0, 0};
+        return new long[]{EVENT_TYPE.MOUSE_WHEEL, time, mouseWheelEvent.x() * 120, mouseWheelEvent.y() * 120, btn, mods, 0L, 0L};
     }
 
     private void handleMouseMove() {
@@ -507,7 +507,7 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
     private long[] getNextMouseEvent(final long time) {
         final long mods = getModifierMask(3);
         final long btn = getMouseEventButtons(mods);
-        return new long[]{EVENT_TYPE.MOUSE, time, lastMouseXPos, lastMouseYPos, btn, mods, 0, 0};
+        return new long[]{EVENT_TYPE.MOUSE, time, lastMouseXPos, lastMouseYPos, btn, mods, 0L, 0L};
     }
 
     private long getMouseEventButtons(final long mods) {
