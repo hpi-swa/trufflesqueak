@@ -35,6 +35,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         public static final long IN = 0;
         public static final long OUT = 1;
         public static final long ERROR = 2;
+        public static final long[] ALL = new long[]{STDIO_HANDLES.IN, STDIO_HANDLES.OUT, STDIO_HANDLES.ERROR};
     }
 
     @Override
@@ -393,7 +394,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object getHandles(@SuppressWarnings("unused") final ClassObject receiver) {
-            return code.image.newListWith(STDIO_HANDLES.IN, STDIO_HANDLES.OUT, STDIO_HANDLES.ERROR);
+            return code.image.newList(STDIO_HANDLES.ALL);
         }
     }
 

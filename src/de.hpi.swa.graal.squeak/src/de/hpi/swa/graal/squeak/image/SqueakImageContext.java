@@ -338,8 +338,8 @@ public final class SqueakImageContext {
         return newPoint((long) point.getWidth(), (long) point.getHeight());
     }
 
-    public ArrayObject newList(final Object[] elements) {
-        return new ArrayObject(this, arrayClass, elements);
+    public ArrayObject newList(final Object elements) {
+        return ArrayObject.createWithStorage(this, arrayClass, elements);
     }
 
     public ArrayObject newListWith(final Object... elements) {

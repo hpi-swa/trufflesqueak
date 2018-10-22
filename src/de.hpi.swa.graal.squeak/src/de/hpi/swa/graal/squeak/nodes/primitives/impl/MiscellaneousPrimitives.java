@@ -544,32 +544,32 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization(guards = "receiver.isEmptyType()")
         protected final Object doEmptyArray(final ArrayObject receiver) {
-            return new ArrayObject(code.image, receiver.getSqClass(), receiver.getEmptyStorage());
+            return ArrayObject.createWithStorage(code.image, receiver.getSqClass(), receiver.getEmptyStorage());
         }
 
         @Specialization(guards = "receiver.isAbstractSqueakObjectType()")
         protected final Object doArrayOfSqueakObjects(final ArrayObject receiver) {
-            return new ArrayObject(code.image, receiver.getSqClass(), receiver.getAbstractSqueakObjectStorage().clone());
+            return ArrayObject.createWithStorage(code.image, receiver.getSqClass(), receiver.getAbstractSqueakObjectStorage().clone());
         }
 
         @Specialization(guards = "receiver.isBooleanType()")
         protected final Object doArrayOfBooleans(final ArrayObject receiver) {
-            return new ArrayObject(code.image, receiver.getSqClass(), receiver.getBooleanStorage().clone());
+            return ArrayObject.createWithStorage(code.image, receiver.getSqClass(), receiver.getBooleanStorage().clone());
         }
 
         @Specialization(guards = "receiver.isLongType()")
         protected final Object doArrayOfLongs(final ArrayObject receiver) {
-            return new ArrayObject(code.image, receiver.getSqClass(), receiver.getLongStorage().clone());
+            return ArrayObject.createWithStorage(code.image, receiver.getSqClass(), receiver.getLongStorage().clone());
         }
 
         @Specialization(guards = "receiver.isDoubleType()")
         protected final Object doArrayOfDoubles(final ArrayObject receiver) {
-            return new ArrayObject(code.image, receiver.getSqClass(), receiver.getDoubleStorage().clone());
+            return ArrayObject.createWithStorage(code.image, receiver.getSqClass(), receiver.getDoubleStorage().clone());
         }
 
         @Specialization(guards = "receiver.isObjectType()")
         protected final Object doArrayOfObjects(final ArrayObject receiver) {
-            return new ArrayObject(code.image, receiver.getSqClass(), receiver.getObjectStorage().clone());
+            return ArrayObject.createWithStorage(code.image, receiver.getSqClass(), receiver.getObjectStorage().clone());
         }
 
         @Specialization

@@ -6,6 +6,7 @@ import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
+import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
@@ -21,7 +22,6 @@ import de.hpi.swa.graal.squeak.nodes.context.ReceiverNode;
 import de.hpi.swa.graal.squeak.nodes.context.TemporaryReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPopNReversedNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
-import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 public final class PushBytecodes {
 
@@ -191,10 +191,9 @@ public final class PushBytecodes {
         @Override
         public void executeVoid(final VirtualFrame frame) {
             if (popNReversedNode != null) {
-                pushNode.executeWrite(frame, code.image.newList((Object[]) popNReversedNode.executeRead(frame)));
+                pushNode.executeWrite(frame, code.image.newList(popNReversedNode.executeRead(frame)));
             } else {
-                final Object[] nilArray = ArrayUtils.withAll(arraySize, code.image.nil);
-                pushNode.executeWrite(frame, code.image.newList(nilArray));
+                pushNode.executeWrite(frame, ArrayObject.createEmptyStrategy(code.image, code.image.arrayClass, arraySize));
             }
         }
 

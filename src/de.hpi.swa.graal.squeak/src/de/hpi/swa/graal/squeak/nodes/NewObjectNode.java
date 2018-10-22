@@ -52,7 +52,11 @@ public abstract class NewObjectNode extends AbstractNodeWithImage {
 
     @Specialization(guards = "classObject.getInstanceSpecification() == 2")
     protected final Object doIndexedPointers(final ClassObject classObject, final int extraSize) {
-        return new ArrayObject(image, classObject, classObject.getBasicInstanceSize() + extraSize);
+        if (ArrayObject.ENABLE_STORAGE_STRATEGIES) {
+            return ArrayObject.createEmptyStrategy(image, classObject, classObject.getBasicInstanceSize() + extraSize);
+        } else {
+            return ArrayObject.createObjectStrategy(image, classObject, classObject.getBasicInstanceSize() + extraSize);
+        }
     }
 
     @Specialization(guards = {"classObject.getInstanceSpecification() == 3", "classObject == image.methodContextClass"})

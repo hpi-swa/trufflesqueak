@@ -452,8 +452,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             if ((negative && divide >= 0) || (!negative && divide < 0)) {
                 divide = Math.negateExact(divide);
             }
-            final long remainder = rcvr % arg;
-            return code.image.newListWith(divide, remainder);
+            return code.image.newList(new long[]{divide, rcvr % arg});
         }
 
         @Specialization

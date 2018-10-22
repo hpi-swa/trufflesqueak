@@ -13,23 +13,36 @@ public final class ArrayObject extends AbstractSqueakObject {
     public static final long LONG_NIL_TAG = Long.MIN_VALUE;
     public static final double DOUBLE_NIL_TAG = Double.longBitsToDouble(0x7ff8000000000001L);
     public static final long DOUBLE_NIL_TAG_LONG = Double.doubleToRawLongBits(DOUBLE_NIL_TAG);
+    public static final boolean ENABLE_STORAGE_STRATEGIES = true;
 
     private final BranchProfile longNilTagStore = BranchProfile.create();
     private final BranchProfile doubleNilTagStore = BranchProfile.create();
 
     private Object storage;
 
+    public static ArrayObject createEmptyStrategy(final SqueakImageContext image, final ClassObject classObject, final int size) {
+        return new ArrayObject(image, classObject, size);
+    }
+
+    public static ArrayObject createWithStorage(final SqueakImageContext image, final ClassObject classObject, final Object storage) {
+        return new ArrayObject(image, classObject, storage);
+    }
+
+    public static ArrayObject createObjectStrategy(final SqueakImageContext image, final ClassObject classObject, final int size) {
+        return new ArrayObject(image, classObject, new Object[size]);
+    }
+
     public ArrayObject(final SqueakImageContext img) {
         super(img, -1, null); // for special ArrayObjects only
     }
 
-    public ArrayObject(final SqueakImageContext image, final ClassObject classObject, final Object storage) {
-        super(image, classObject);
-        this.storage = storage;
-    }
-
     public ArrayObject(final SqueakImageContext img, final long hash, final ClassObject klass) {
         super(img, hash, klass);
+    }
+
+    private ArrayObject(final SqueakImageContext image, final ClassObject classObject, final Object storage) {
+        super(image, classObject);
+        this.storage = storage;
     }
 
     public Object at0Boolean(final long index) {
@@ -210,11 +223,15 @@ public final class ArrayObject extends AbstractSqueakObject {
     }
 
     public void setStorageAndSpecializeIfPossible(final Object[] values) {
+        if (!ENABLE_STORAGE_STRATEGIES) {
+            storage = values;
+            return;
+        }
         final int valuesLength = values.length;
         if (valuesLength > 0) {
             final Object firstElement = values[0];
             Class<? extends Object> specializedClass = firstElement.getClass();
-            if (firstElement instanceof AbstractSqueakObject || firstElement instanceof Boolean || firstElement instanceof Long || firstElement instanceof Double) {
+            if (firstElement == image.nil || firstElement instanceof AbstractSqueakObject || firstElement instanceof Boolean || firstElement instanceof Long || firstElement instanceof Double) {
                 for (int i = 1; i < valuesLength; i++) {
                     final Object value = values[i];
                     if (value != null && value != image.nil && specializedClass != value.getClass()) {
@@ -222,7 +239,9 @@ public final class ArrayObject extends AbstractSqueakObject {
                         break;
                     }
                 }
-                if (specializedClass == AbstractSqueakObject.class) {
+                if (specializedClass == NilObject.class) {
+                    storage = valuesLength;
+                } else if (specializedClass == AbstractSqueakObject.class) {
                     final AbstractSqueakObject[] squeakObjects = new AbstractSqueakObject[valuesLength];
                     for (int i = 0; i < valuesLength; i++) {
                         squeakObjects[i] = (AbstractSqueakObject) values[i];
@@ -313,9 +332,8 @@ public final class ArrayObject extends AbstractSqueakObject {
     }
 
     public void transitionFromEmptyToBooleans() {
-        final byte[] booleans = new byte[getEmptyStorage()];
-        Arrays.fill(booleans, BOOLEAN_NIL_TAG);
-        storage = booleans;
+        // Zero-initialized, no need to fill with BOOLEAN_NIL_TAG.
+        storage = new byte[getEmptyStorage()];
     }
 
     public void transitionFromEmptyToDoubles() {

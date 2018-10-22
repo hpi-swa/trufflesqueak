@@ -30,18 +30,31 @@ public abstract class InterruptHandlerNode extends Node {
 
     public abstract void executeTrigger(VirtualFrame frame);
 
-    @Specialization(guards = {"isAOT()", "image.hasDisplay()"})
+    @Specialization(guards = {"isAOT()", "image.hasDisplay()", "!image.externalObjectsArray.isEmptyType()"})
     protected final void doFullCheckAOT(final VirtualFrame frame) {
         image.getDisplay().pollEvents();
-        performCheck(frame);
+        performChecks(frame);
+        checkSemaphoresToSignal(frame);
     }
 
-    @Specialization(guards = {"!isAOT() || !image.hasDisplay()"})
+    @Specialization(guards = {"isAOT()", "image.hasDisplay()", "image.externalObjectsArray.isEmptyType()"})
+    protected final void doCheckAOT(final VirtualFrame frame) {
+        image.getDisplay().pollEvents();
+        performChecks(frame);
+    }
+
+    @Specialization(guards = {"!isAOT() || !image.hasDisplay()", "!image.externalObjectsArray.isEmptyType()"})
     protected final void doFullCheck(final VirtualFrame frame) {
-        performCheck(frame);
+        performChecks(frame);
+        checkSemaphoresToSignal(frame);
     }
 
-    private void performCheck(final VirtualFrame frame) {
+    @Specialization(guards = {"!isAOT() || !image.hasDisplay()", "image.externalObjectsArray.isEmptyType()"})
+    protected final void doCheck(final VirtualFrame frame) {
+        performChecks(frame);
+    }
+
+    private void performChecks(final VirtualFrame frame) {
         istate.shouldTrigger = false;
         if (istate.interruptPending()) {
             istate.interruptPending = false; // reset interrupt flag
@@ -57,7 +70,11 @@ public abstract class InterruptHandlerNode extends Node {
             istate.setPendingFinalizations(false);
             signalSemaporeIfNotNil(frame, SPECIAL_OBJECT_INDEX.TheFinalizationSemaphore);
         }
+    }
+
+    private void checkSemaphoresToSignal(final VirtualFrame frame) {
         if (istate.hasSemaphoresToSignal()) {
+            assert !image.externalObjectsArray.isEmptyType();
             final Object[] semaphores = image.externalObjectsArray.getObjectStorage();
             while (istate.hasSemaphoresToSignal()) {
                 final int semaIndex = istate.nextSemaphoreToSignal();
