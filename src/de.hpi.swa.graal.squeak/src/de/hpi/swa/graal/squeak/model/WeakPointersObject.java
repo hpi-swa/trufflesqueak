@@ -22,7 +22,7 @@ public final class WeakPointersObject extends AbstractPointersObject {
 
     private WeakPointersObject(final WeakPointersObject original) {
         super(original.image, original.getSqClass());
-        setPointers(original.getPointers().clone());
+        setPointersUnsafe(original.getPointers().clone());
     }
 
     @Override

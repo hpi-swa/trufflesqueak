@@ -32,6 +32,10 @@ public abstract class AbstractPointersObject extends AbstractSqueakObject {
         this.pointers[index] = value;
     }
 
+    public final void setPointersUnsafe(final Object[] pointers) {
+        this.pointers = pointers;
+    }
+
     public final void setPointers(final Object[] pointers) {
         assert this.pointers == null || this.pointers.length == pointers.length : "Pointers lengths do not match (wrong assumption?)";
         // TODO: find out if invalidation should be avoided by copying values if pointers != null

@@ -15,7 +15,7 @@ public final class PointersObject extends AbstractPointersObject {
 
     public PointersObject(final SqueakImageContext img, final ClassObject sqClass, final Object[] pointers) {
         super(img, sqClass);
-        setPointers(pointers);
+        setPointersUnsafe(pointers);
     }
 
     public PointersObject(final SqueakImageContext img, final ClassObject classObject, final int size) {

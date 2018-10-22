@@ -35,7 +35,7 @@ public final class ContextObject extends AbstractPointersObject {
     private ContextObject(final SqueakImageContext image, final int size) {
         super(image, image.methodContextClass);
         isDirty = true;
-        setPointers(new Object[CONTEXT.TEMP_FRAME_START + size]);
+        setPointersUnsafe(new Object[CONTEXT.TEMP_FRAME_START + size]);
     }
 
     public static ContextObject create(final SqueakImageContext image, final int size, final MaterializedFrame frame, final FrameMarker frameMarker) {
