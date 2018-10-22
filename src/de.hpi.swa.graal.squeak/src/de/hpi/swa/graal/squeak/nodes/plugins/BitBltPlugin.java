@@ -9,6 +9,7 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
+import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.BIT_BLT;
@@ -61,8 +62,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"startIndex >= 1", "stopIndex >= 0", "aString.isByteType()", "aString.getByteStorage().length > 0",
                         "stopIndex <= aString.getByteStorage().length"})
         protected static final Object doOptimized(final VirtualFrame frame, final PointersObject receiver, final NativeObject aString, final long startIndex, final long stopIndex,
-                        final PointersObject glyphMap,
-                        final PointersObject xTable, final long kernDelta,
+                        final ArrayObject glyphMap, final ArrayObject xTable, final long kernDelta,
                         @Cached("create(code)") final ExtractFormsAndContinueNode executeNode) {
             return executeNode.execute(frame, new BitBltWrapper(receiver), aString, startIndex, stopIndex, glyphMap, xTable, kernDelta,
                             receiver.at0(BIT_BLT.COMBINATION_RULE), receiver.at0(BIT_BLT.SOURCE_FORM), receiver.at0(BIT_BLT.DEST_FORM));
@@ -70,8 +70,8 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"aString.isByteType()", "aString.getByteStorage().length == 0"})
-        protected static final Object doNothing(final PointersObject receiver, final NativeObject aString, final long startIndex, final long stopIndex, final PointersObject glyphMap,
-                        final PointersObject xTable, final long kernDelta) {
+        protected static final Object doNothing(final PointersObject receiver, final NativeObject aString, final long startIndex, final long stopIndex, final ArrayObject glyphMap,
+                        final ArrayObject xTable, final long kernDelta) {
             return receiver;
         }
     }

@@ -9,6 +9,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
@@ -32,12 +33,11 @@ public final class BitBltPluginDisplayStringHelpers {
         }
 
         protected abstract Object execute(VirtualFrame frame, BitBltWrapper receiver, NativeObject aString, long startIndex, long stopIndex,
-                        PointersObject glyphMap, PointersObject xTable, long kernDelta, Object combinationRule, Object sourceForm, Object destForm);
+                        ArrayObject glyphMap, ArrayObject xTable, long kernDelta, Object combinationRule, Object sourceForm, Object destForm);
 
         @Specialization(guards = {"isSupported(combinationRule)"})
-        protected static final Object doOptimized(final BitBltWrapper receiver, final NativeObject aString, final long startIndex, final long stopIndex, final PointersObject glyphMap,
-                        final PointersObject xTable, final long kernDelta, final long combinationRule, final PointersObject sourceForm,
-                        final PointersObject destForm,
+        protected static final Object doOptimized(final BitBltWrapper receiver, final NativeObject aString, final long startIndex, final long stopIndex, final ArrayObject glyphMap,
+                        final ArrayObject xTable, final long kernDelta, final long combinationRule, final PointersObject sourceForm, final PointersObject destForm,
                         @Cached("create(code)") final DisplayStringHelperNode node) {
             node.execute(receiver, aString, startIndex, stopIndex, glyphMap, xTable, kernDelta, combinationRule, sourceForm, destForm);
             return receiver;
@@ -46,7 +46,7 @@ public final class BitBltPluginDisplayStringHelpers {
         @SuppressWarnings("unused")
         @Fallback
         protected final Object doSimulation(final VirtualFrame frame, final BitBltWrapper receiver, final NativeObject aString, final long startIndex, final long stopIndex,
-                        final PointersObject glyphMap, final PointersObject xTable, final long kernDelta, final Object combinationRule, final Object sourceForm, final Object destForm) {
+                        final ArrayObject glyphMap, final ArrayObject xTable, final long kernDelta, final Object combinationRule, final Object sourceForm, final Object destForm) {
             return getSimulationPrimitiveNode().executeWithArguments(frame, receiver.getBitBlt(), aString, startIndex, stopIndex, glyphMap, xTable, kernDelta);
         }
 
@@ -75,30 +75,30 @@ public final class BitBltPluginDisplayStringHelpers {
         }
 
         protected abstract void execute(BitBltWrapper receiver, NativeObject aString, long startIndex, long stopIndex,
-                        PointersObject glyphMap, PointersObject xTable, long kernDelta, Object combinationRule, Object sourceForm, Object destForm);
+                        ArrayObject glyphMap, ArrayObject xTable, long kernDelta, Object combinationRule, Object sourceForm, Object destForm);
 
         @Specialization(guards = {"combinationRule == 20"})
-        protected final void doOptimized(final BitBltWrapper receiver, final NativeObject aString, final long startIndex, final long stopIndex, final PointersObject glyphMap,
-                        final PointersObject xTable, final long kernDelta, @SuppressWarnings("unused") final long combinationRule, final PointersObject sourceForm, final PointersObject destForm) {
+        protected final void doOptimized(final BitBltWrapper receiver, final NativeObject aString, final long startIndex, final long stopIndex, final ArrayObject glyphMap,
+                        final ArrayObject xTable, final long kernDelta, @SuppressWarnings("unused") final long combinationRule, final PointersObject sourceForm, final PointersObject destForm) {
             doLoop(BitBltPluginHelpers::rgbAdd20, receiver, aString, startIndex, stopIndex, glyphMap, xTable, kernDelta, sourceForm, destForm);
         }
 
         @Specialization(guards = {"combinationRule == 37"})
-        protected final void doCombiRule37(final BitBltWrapper receiver, final NativeObject aString, final long startIndex, final long stopIndex, final PointersObject glyphMap,
-                        final PointersObject xTable, final long kernDelta, @SuppressWarnings("unused") final long combinationRule, final PointersObject sourceForm, final PointersObject destForm) {
+        protected final void doCombiRule37(final BitBltWrapper receiver, final NativeObject aString, final long startIndex, final long stopIndex, final ArrayObject glyphMap,
+                        final ArrayObject xTable, final long kernDelta, @SuppressWarnings("unused") final long combinationRule, final PointersObject sourceForm, final PointersObject destForm) {
             doLoop(BitBltPluginHelpers::rgbMul37, receiver, aString, startIndex, stopIndex, glyphMap, xTable, kernDelta, sourceForm, destForm);
         }
 
         @SuppressWarnings("unused")
-        protected final void doLoop(final LongBinaryOperator op, final BitBltWrapper receiver, final NativeObject aString, final long startIndex, final long stopIndex, final PointersObject glyphMap,
-                        final PointersObject xTable, final long kernDelta, final PointersObject sourceForm, final PointersObject destForm) {
+        protected final void doLoop(final LongBinaryOperator op, final BitBltWrapper receiver, final NativeObject aString, final long startIndex, final long stopIndex, final ArrayObject glyphMap,
+                        final ArrayObject xTable, final long kernDelta, final PointersObject sourceForm, final PointersObject destForm) {
             // TODO: do something here
         }
     }
 
     @Fallback
     protected static void doFail(final PointersObject receiver, final NativeObject aString, final long startIndex, final long stopIndex,
-                    final PointersObject glyphMap, final PointersObject xTable, final Object combinationRule, final Object sourceForm, final Object destForm) {
+                    final ArrayObject glyphMap, final ArrayObject xTable, final Object combinationRule, final Object sourceForm, final Object destForm) {
         throw new SqueakException("Unsupported operation reached:", receiver, aString, startIndex, stopIndex, glyphMap, xTable, combinationRule, sourceForm, destForm);
     }
 }
