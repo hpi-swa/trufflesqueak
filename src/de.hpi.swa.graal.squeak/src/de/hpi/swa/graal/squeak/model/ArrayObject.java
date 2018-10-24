@@ -2,8 +2,6 @@ package de.hpi.swa.graal.squeak.model;
 
 import java.util.Arrays;
 
-import com.oracle.truffle.api.profiles.BranchProfile;
-
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
 public final class ArrayObject extends AbstractSqueakObject {
@@ -15,34 +13,39 @@ public final class ArrayObject extends AbstractSqueakObject {
     public static final long DOUBLE_NIL_TAG_LONG = Double.doubleToRawLongBits(DOUBLE_NIL_TAG);
     public static final boolean ENABLE_STORAGE_STRATEGIES = true;
 
-    private final BranchProfile longNilTagStore = BranchProfile.create();
-    private final BranchProfile doubleNilTagStore = BranchProfile.create();
-
-    private Object storage;
-
     public static ArrayObject createEmptyStrategy(final SqueakImageContext image, final ClassObject classObject, final int size) {
         return new ArrayObject(image, classObject, size);
-    }
-
-    public static ArrayObject createWithStorage(final SqueakImageContext image, final ClassObject classObject, final Object storage) {
-        return new ArrayObject(image, classObject, storage);
     }
 
     public static ArrayObject createObjectStrategy(final SqueakImageContext image, final ClassObject classObject, final int size) {
         return new ArrayObject(image, classObject, new Object[size]);
     }
 
-    public ArrayObject(final SqueakImageContext img) {
-        super(img, -1, null); // for special ArrayObjects only
+    public static ArrayObject createWithStorage(final SqueakImageContext image, final ClassObject classObject, final Object storage) {
+        return new ArrayObject(image, classObject, storage);
     }
 
-    public ArrayObject(final SqueakImageContext img, final long hash, final ClassObject klass) {
-        super(img, hash, klass);
+    public static boolean isDoubleNilTag(final double value) {
+        return Double.doubleToRawLongBits(value) == DOUBLE_NIL_TAG_LONG;
+    }
+
+    public static boolean isLongNilTag(final long value) {
+        return value == LONG_NIL_TAG;
+    }
+
+    private Object storage;
+
+    public ArrayObject(final SqueakImageContext img) {
+        super(img, -1, null); // for special ArrayObjects only
     }
 
     private ArrayObject(final SqueakImageContext image, final ClassObject classObject, final Object storage) {
         super(image, classObject);
         this.storage = storage;
+    }
+
+    public ArrayObject(final SqueakImageContext img, final long hash, final ClassObject klass) {
+        super(img, hash, klass);
     }
 
     public Object at0Boolean(final long index) {
@@ -102,23 +105,11 @@ public final class ArrayObject extends AbstractSqueakObject {
     }
 
     public void atput0Double(final long index, final double value) {
-        if (Double.doubleToRawLongBits(value) == DOUBLE_NIL_TAG_LONG) {
-            doubleNilTagStore.enter();
-            transitionFromDoublesToObjects();
-            atput0Object(index, value);
-        } else {
-            getDoubleStorage()[(int) index] = value;
-        }
+        getDoubleStorage()[(int) index] = value;
     }
 
     public void atput0Long(final long index, final long value) {
-        if (value == LONG_NIL_TAG) {
-            longNilTagStore.enter();
-            transitionFromLongsToObjects();
-            atput0Object(index, value);
-        } else {
-            getLongStorage()[(int) index] = value;
-        }
+        getLongStorage()[(int) index] = value;
     }
 
     public Object atput0Object(final int index, final Object value) {

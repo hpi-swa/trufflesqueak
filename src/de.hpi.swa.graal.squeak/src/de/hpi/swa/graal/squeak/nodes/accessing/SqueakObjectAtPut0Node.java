@@ -21,7 +21,7 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
 
-@ImportStatic({NativeObject.class, SqueakGuards.class})
+@ImportStatic({ArrayObject.class, NativeObject.class, SqueakGuards.class})
 public abstract class SqueakObjectAtPut0Node extends Node {
 
     public static SqueakObjectAtPut0Node create() {
@@ -104,9 +104,16 @@ public abstract class SqueakObjectAtPut0Node extends Node {
         doArrayOfObjects(obj, index, value);
     }
 
-    @Specialization(guards = "obj.isLongType()")
+    @Specialization(guards = {"obj.isLongType()", "!isLongNilTag(value)"})
     protected static final void doArrayOfLongs(final ArrayObject obj, final long index, final long value) {
         obj.atput0Long(index, value);
+    }
+
+    @Specialization(guards = {"obj.isLongType()", "isLongNilTag(value)"})
+    protected static final void doArrayOfLongsNilTagClash(final ArrayObject obj, final long index, final long value) {
+        // `value` happens to be long nil tag, need to despecialize to be able store it.
+        obj.transitionFromLongsToObjects();
+        obj.atput0Object(index, value);
     }
 
     @Specialization(guards = "obj.isLongType()")
@@ -120,9 +127,16 @@ public abstract class SqueakObjectAtPut0Node extends Node {
         doArrayOfObjects(obj, index, value);
     }
 
-    @Specialization(guards = "obj.isDoubleType()")
+    @Specialization(guards = {"obj.isDoubleType()", "!isDoubleNilTag(value)"})
     protected static final void doArrayOfDoubles(final ArrayObject obj, final long index, final double value) {
         obj.atput0Double(index, value);
+    }
+
+    @Specialization(guards = {"obj.isDoubleType()", "isDoubleNilTag(value)"})
+    protected static final void doArrayOfDoublesNilTagClash(final ArrayObject obj, final long index, final double value) {
+        // `value` happens to be double nil tag, need to despecialize to be able store it.
+        obj.transitionFromLongsToObjects();
+        obj.atput0Object(index, value);
     }
 
     @Specialization(guards = "obj.isDoubleType()")
