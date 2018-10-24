@@ -17,11 +17,11 @@ import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.nodes.DispatchNode;
-import de.hpi.swa.graal.squeak.nodes.LookupNode;
+import de.hpi.swa.graal.squeak.nodes.LookupMethodNode;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.IsDoesNotUnderstandNode;
 import de.hpi.swa.graal.squeak.nodes.context.ArgumentNode;
-import de.hpi.swa.graal.squeak.nodes.context.SqueakLookupClassNode;
+import de.hpi.swa.graal.squeak.nodes.context.LookupClassNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 
 @GenerateNodeFactory
@@ -36,9 +36,9 @@ public abstract class SimulationPrimitiveNode extends AbstractPrimitiveNode {
     private final ArrayObject emptyList;
     private final BranchProfile simulationFailedProfile = BranchProfile.create();
 
-    @Child private LookupNode lookupNode;
+    @Child private LookupMethodNode lookupMethodNode;
     @Child private DispatchNode dispatchNode = DispatchNode.create();
-    @Child private SqueakLookupClassNode lookupClassNode;
+    @Child private LookupClassNode lookupClassNode;
     @Child private IsDoesNotUnderstandNode isDoesNotUnderstandNode;
 
     public static SimulationPrimitiveNode create(final CompiledMethodObject method, final String moduleName, final String functionName) {
@@ -54,8 +54,8 @@ public abstract class SimulationPrimitiveNode extends AbstractPrimitiveNode {
     protected SimulationPrimitiveNode(final CompiledMethodObject method, final int numArguments, @SuppressWarnings("unused") final String moduleName, final String functionName) {
         super(method, numArguments);
         this.functionName = code.image.wrap(functionName);
-        lookupNode = LookupNode.create(method.image);
-        lookupClassNode = SqueakLookupClassNode.create(method.image);
+        lookupMethodNode = LookupMethodNode.create(method.image);
+        lookupClassNode = LookupClassNode.create(method.image);
         isDoesNotUnderstandNode = IsDoesNotUnderstandNode.create(method.image);
         emptyList = code.image.newList(new Object[]{});
     }
@@ -131,10 +131,10 @@ public abstract class SimulationPrimitiveNode extends AbstractPrimitiveNode {
             }
             final Object lookupResult; // TODO: Nodes!
             if (receiver instanceof ClassObject) {
-                lookupResult = lookupNode.executeLookup(receiver, code.image.getSimulatePrimitiveArgsSelector());
+                lookupResult = lookupMethodNode.executeLookup(receiver, code.image.getSimulatePrimitiveArgsSelector());
             } else {
                 final ClassObject rcvrClass = lookupClassNode.executeLookup(receiver);
-                lookupResult = lookupNode.executeLookup(rcvrClass, code.image.getSimulatePrimitiveArgsSelector());
+                lookupResult = lookupMethodNode.executeLookup(rcvrClass, code.image.getSimulatePrimitiveArgsSelector());
             }
             if (lookupResult instanceof CompiledMethodObject) {
                 final CompiledMethodObject result = (CompiledMethodObject) lookupResult;

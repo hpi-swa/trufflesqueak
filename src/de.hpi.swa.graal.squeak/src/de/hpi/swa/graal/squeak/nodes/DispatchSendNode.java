@@ -13,14 +13,14 @@ import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.MESSAGE;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.IsDoesNotUnderstandNode;
-import de.hpi.swa.graal.squeak.nodes.context.SqueakLookupClassNode;
+import de.hpi.swa.graal.squeak.nodes.context.LookupClassNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 public abstract class DispatchSendNode extends AbstractNodeWithImage {
     @Child protected IsDoesNotUnderstandNode isDoesNotUnderstandNode;
     @Child private DispatchNode dispatchNode = DispatchNode.create();
-    @Child private SqueakLookupClassNode lookupClassNode;
-    @Child private LookupNode lookupNode;
+    @Child private LookupClassNode lookupClassNode;
+    @Child private LookupMethodNode lookupNode;
 
     public static DispatchSendNode create(final SqueakImageContext image) {
         return DispatchSendNodeGen.create(image);
@@ -72,18 +72,18 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
         }
     }
 
-    private SqueakLookupClassNode getLookupClassNode() {
+    private LookupClassNode getLookupClassNode() {
         if (lookupClassNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            lookupClassNode = insert(SqueakLookupClassNode.create(image));
+            lookupClassNode = insert(LookupClassNode.create(image));
         }
         return lookupClassNode;
     }
 
-    private LookupNode getLookupNode() {
+    private LookupMethodNode getLookupNode() {
         if (lookupNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            lookupNode = insert(LookupNode.create(image));
+            lookupNode = insert(LookupMethodNode.create(image));
         }
         return lookupNode;
     }

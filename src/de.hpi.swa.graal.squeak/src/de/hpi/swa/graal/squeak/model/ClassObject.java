@@ -25,22 +25,22 @@ public final class ClassObject extends AbstractPointersObject {
     @CompilationFinal private int instSpec = -1;
     @CompilationFinal private int instanceSize = -1;
 
-    public ClassObject(final SqueakImageContext img) {
-        super(img, -1L, null);
+    public ClassObject(final SqueakImageContext image) {
+        super(image);
     }
 
-    public ClassObject(final SqueakImageContext img, final long hash) {
-        super(img, hash, null);
+    public ClassObject(final SqueakImageContext image, final int hash) {
+        super(image, hash);
     }
 
     private ClassObject(final ClassObject original) {
-        this(original.image, original.getSqClass(), original.getPointers());
+        this(original.image, original.getSqueakClass(), original.getPointers());
         instSpec = original.instSpec;
         instanceSize = original.instanceSize;
     }
 
-    private ClassObject(final SqueakImageContext img, final ClassObject sqClass, final Object[] pointers) {
-        super(img, sqClass);
+    private ClassObject(final SqueakImageContext image, final ClassObject sqClass, final Object[] pointers) {
+        super(image, sqClass);
         setPointersUnsafe(pointers);
     }
 
@@ -72,7 +72,7 @@ public final class ClassObject extends AbstractPointersObject {
     }
 
     private boolean isAMetaclass() {
-        return this.getSqClass() == image.metaclass;
+        return this.getSqueakClass() == image.metaclass;
     }
 
     public boolean instancesAreClasses() {
@@ -113,7 +113,7 @@ public final class ClassObject extends AbstractPointersObject {
     }
 
     public int instsize() {
-        return getSqClass().getBasicInstanceSize();
+        return getSqueakClass().getBasicInstanceSize();
     }
 
     private void invalidateMethodLookup() {

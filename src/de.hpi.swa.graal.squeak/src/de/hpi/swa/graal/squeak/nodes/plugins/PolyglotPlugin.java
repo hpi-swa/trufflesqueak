@@ -239,7 +239,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @Specialization(guards = {"!isAbstractSqueakObject(receiver)", "message.getSqClass() == code.image.messageClass"})
+        @Specialization(guards = {"!isAbstractSqueakObject(receiver)", "message.isMessage()"})
         protected final Object doSend(final TruffleObject receiver, final PointersObject message) {
             final String selectorString = ((NativeObject) message.at0(MESSAGE.SELECTOR)).asString();
             final String identifier;

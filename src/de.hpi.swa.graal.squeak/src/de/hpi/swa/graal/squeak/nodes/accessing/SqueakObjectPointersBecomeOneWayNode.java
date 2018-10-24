@@ -73,11 +73,11 @@ public abstract class SqueakObjectPointersBecomeOneWayNode extends Node {
 
     @Specialization
     protected final void doMethod(final CompiledMethodObject obj, final Object[] from, final Object[] to, final boolean copyHash) {
-        final ClassObject oldClass = obj.getSqClass();
+        final ClassObject oldClass = obj.getSqueakClass();
         for (int i = 0; i < from.length; i++) {
             if (from[i] == oldClass) {
                 final ClassObject newClass = (ClassObject) to[i]; // must be a ClassObject
-                obj.setSqClass(newClass);
+                obj.setSqueakClass(newClass);
                 updateHashNode.executeUpdate(oldClass, newClass, copyHash);
             }
         }

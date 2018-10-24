@@ -108,7 +108,7 @@ public abstract class ObjectGraphNode extends AbstractNodeWithImage {
         while (!pending.isEmpty()) {
             final AbstractSqueakObject currentObject = pending.pop();
             if (seen.add(currentObject)) {
-                if (classObj == currentObject.getSqClass()) {
+                if (classObj == currentObject.getSqueakClass()) {
                     result.add(currentObject);
                     if (isSomeInstance) {
                         break;
@@ -161,7 +161,7 @@ public abstract class ObjectGraphNode extends AbstractNodeWithImage {
 
     private List<AbstractSqueakObject> tracePointers(final AbstractSqueakObject currentObject) {
         final List<AbstractSqueakObject> result = new ArrayList<>(32);
-        final ClassObject sqClass = currentObject.getSqClass();
+        final ClassObject sqClass = currentObject.getSqueakClass();
         if (sqClass != null) {
             result.add(sqClass);
         }

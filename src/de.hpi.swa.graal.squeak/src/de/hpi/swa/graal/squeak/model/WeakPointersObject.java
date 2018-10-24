@@ -21,13 +21,13 @@ public final class WeakPointersObject extends AbstractPointersObject {
     }
 
     private WeakPointersObject(final WeakPointersObject original) {
-        super(original.image, original.getSqClass());
+        super(original.image, original.getSqueakClass());
         setPointersUnsafe(original.getPointers().clone());
     }
 
     @Override
     public String toString() {
-        return "WeakPointersObject: " + getSqClass();
+        return "WeakPointersObject: " + getSqueakClass();
     }
 
     public Object at0(final long index) {
@@ -60,7 +60,7 @@ public final class WeakPointersObject extends AbstractPointersObject {
     }
 
     public int instsize() {
-        return getSqClass().getBasicInstanceSize();
+        return getSqueakClass().getBasicInstanceSize();
     }
 
     public void setWeakPointers(final Object[] pointers) {

@@ -67,7 +67,7 @@ public abstract class AbstractSqueakTestCase {
 
     protected static ExecuteTopLevelContextNode createContext(final CompiledMethodObject code, final Object receiver, final Object[] arguments) {
         // always use large instance size and large frame size for testing
-        final ContextObject testContext = ContextObject.create(code.image, 50 + CONTEXT.LARGE_FRAMESIZE);
+        final ContextObject testContext = ContextObject.create(code.image, arguments.length + CONTEXT.LARGE_FRAMESIZE);
         testContext.atput0(CONTEXT.METHOD, code);
         testContext.atput0(CONTEXT.RECEIVER, receiver);
         testContext.setInstructionPointer(code.getInitialPC());

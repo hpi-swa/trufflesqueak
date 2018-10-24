@@ -114,7 +114,7 @@ public final class NativeObject extends AbstractSqueakObject {
     }
 
     public LargeIntegerObject normalize() {
-        return new LargeIntegerObject(image, getSqClass(), getByteStorage());
+        return new LargeIntegerObject(image, getSqueakClass(), getByteStorage());
     }
 
     public byte[] getByteStorage() {

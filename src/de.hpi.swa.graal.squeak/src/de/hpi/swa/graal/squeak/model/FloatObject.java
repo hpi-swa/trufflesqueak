@@ -26,7 +26,7 @@ public final class FloatObject extends AbstractSqueakObject {
     }
 
     public FloatObject(final FloatObject original) {
-        super(original.image, original.getSqClass());
+        super(original.image, original.getSqueakClass());
         doubleValue = original.doubleValue;
     }
 

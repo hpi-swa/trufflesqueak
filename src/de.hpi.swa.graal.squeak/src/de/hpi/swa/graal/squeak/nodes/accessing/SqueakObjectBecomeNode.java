@@ -25,61 +25,61 @@ public abstract class SqueakObjectBecomeNode extends Node {
     public abstract boolean execute(Object left, Object right);
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"left == right || left.getSqClass() != right.getSqClass()"})
+    @Specialization(guards = {"left == right || left.getSqueakClass() != right.getSqueakClass()"})
     protected static final boolean doSameObjectOrWrongClass(final AbstractSqueakObject left, final AbstractSqueakObject right) {
         return false;
     }
 
-    @Specialization(guards = {"left != right", "left.getSqClass() == right.getSqClass()"})
+    @Specialization(guards = {"left != right", "left.getSqueakClass() == right.getSqueakClass()"})
     protected static final boolean doClosure(final BlockClosureObject left, final BlockClosureObject right) {
         left.become(right);
         return true;
     }
 
-    @Specialization(guards = {"left != right", "left.getSqClass() == right.getSqClass()"})
+    @Specialization(guards = {"left != right", "left.getSqueakClass() == right.getSqueakClass()"})
     protected static final boolean doClass(final ClassObject left, final ClassObject right) {
         left.become(right);
         return true;
     }
 
-    @Specialization(guards = {"left != right", "left.getSqClass() == right.getSqClass()"})
+    @Specialization(guards = {"left != right", "left.getSqueakClass() == right.getSqueakClass()"})
     protected static final boolean doCode(final CompiledCodeObject left, final CompiledCodeObject right) {
         left.become(right);
         return true;
     }
 
-    @Specialization(guards = {"left != right", "left.getSqClass() == right.getSqClass()"})
+    @Specialization(guards = {"left != right", "left.getSqueakClass() == right.getSqueakClass()"})
     protected static final boolean doContext(final ContextObject left, final ContextObject right) {
         left.become(right);
         return true;
     }
 
-    @Specialization(guards = {"left != right", "left.getSqClass() == right.getSqClass()"})
+    @Specialization(guards = {"left != right", "left.getSqueakClass() == right.getSqueakClass()"})
     protected static final boolean doEmpty(final EmptyObject left, final EmptyObject right) {
         left.become(right);
         return true;
     }
 
-    @Specialization(guards = {"left != right", "left.getSqClass() == right.getSqClass()"})
+    @Specialization(guards = {"left != right", "left.getSqueakClass() == right.getSqueakClass()"})
     protected static final boolean doNative(final NativeObject left, final NativeObject right) {
         left.become(right);
         return true;
     }
 
-    @Specialization(guards = {"left != right", "left.getSqClass() == right.getSqClass()"})
+    @Specialization(guards = {"left != right", "left.getSqueakClass() == right.getSqueakClass()"})
     protected static final boolean doArray(final ArrayObject left, final ArrayObject right) {
         left.become(right);
         return true;
     }
 
-    @Specialization(guards = {"left != right", "left.getSqClass() == right.getSqClass()"})
+    @Specialization(guards = {"left != right", "left.getSqueakClass() == right.getSqueakClass()"})
     protected static final boolean doPointers(final PointersObject left, final PointersObject right) {
         left.become(right);
         return true;
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"left != right", "left.getSqClass() == right.getSqClass()"})
+    @Specialization(guards = {"left != right", "left.getSqueakClass() == right.getSqueakClass()"})
     protected static final boolean doWeakPointers(final WeakPointersObject left, final WeakPointersObject right) {
         // TODO: implement or remove?
         throw new SqueakException("become not implemented for WeakPointersObjects");

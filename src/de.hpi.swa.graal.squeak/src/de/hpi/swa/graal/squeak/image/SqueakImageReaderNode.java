@@ -19,7 +19,7 @@ import com.oracle.truffle.api.nodes.RootNode;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
-import de.hpi.swa.graal.squeak.nodes.FillInClassNode;
+import de.hpi.swa.graal.squeak.nodes.FillInClassAndHashNode;
 import de.hpi.swa.graal.squeak.nodes.FillInNode;
 import de.hpi.swa.graal.squeak.util.BitSplitter;
 
@@ -52,7 +52,7 @@ public final class SqueakImageReaderNode extends RootNode {
     private long currentAddressSwizzle;
 
     @Child private LoopNode readObjectLoopNode;
-    @Child private FillInClassNode fillInClassNode = FillInClassNode.create();
+    @Child private FillInClassAndHashNode fillInClassNode = FillInClassAndHashNode.create();
     @Child private FillInNode fillInNode;
 
     public SqueakImageReaderNode(final SqueakImageContext image) {
@@ -359,7 +359,7 @@ public final class SqueakImageReaderNode extends RootNode {
 
         // also cache nil, true, and false classes
         specialObjectChunk(SPECIAL_OBJECT_INDEX.NilObject).getClassChunk().object = image.nilClass;
-        image.nil.setSqClass(image.nilClass);
+        image.nil.setSqueakClass(image.nilClass);
         specialObjectChunk(SPECIAL_OBJECT_INDEX.FalseObject).getClassChunk().object = image.falseClass;
         specialObjectChunk(SPECIAL_OBJECT_INDEX.TrueObject).getClassChunk().object = image.trueClass;
 

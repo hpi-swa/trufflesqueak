@@ -52,20 +52,26 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
     @CompilationFinal private RootCallTarget callTarget;
     private final CyclicAssumption callTargetStable = new CyclicAssumption("CompiledCodeObject assumption");
 
-    protected CompiledCodeObject(final SqueakImageContext img, final ClassObject klass, final int numCopiedValues) {
-        super(img, klass);
+    protected CompiledCodeObject(final SqueakImageContext image, final int numCopiedValues) {
+        // Always use CompiledMethod, CompiledBlock not needed.
+        super(image, image.compiledMethodClass);
         if (ALWAYS_NON_VIRTUALIZED) {
             invalidateCanBeVirtualizedAssumption();
         }
         this.numCopiedValues = numCopiedValues;
     }
 
-    protected CompiledCodeObject(final SqueakImageContext img, final int numCopiedValues) {
-        this(img, img.compiledMethodClass, numCopiedValues);
+    protected CompiledCodeObject(final SqueakImageContext image, final int hash, final int numCopiedValues) {
+        // Always use CompiledMethod, CompiledBlock not needed.
+        super(image, hash, image.compiledMethodClass);
+        if (ALWAYS_NON_VIRTUALIZED) {
+            invalidateCanBeVirtualizedAssumption();
+        }
+        this.numCopiedValues = numCopiedValues;
     }
 
     protected CompiledCodeObject(final CompiledCodeObject original) {
-        this(original.image, original.getSqClass(), original.numCopiedValues);
+        this(original.image, original.numCopiedValues);
         setLiteralsAndBytes(original.literals.clone(), original.bytes.clone());
     }
 

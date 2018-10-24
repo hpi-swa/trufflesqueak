@@ -77,13 +77,13 @@ public final class SqueakImageChunk {
             } else if (format == 1) { // fixed pointers
                 // classes should already be instantiated at this point, check a
                 // bit
-                assert getSqClass() != image.metaclass && (getSqClass() == null || getSqClass().getSqClass() != image.metaclass);
+                assert getSqClass() != image.metaclass && (getSqClass() == null || getSqClass().getSqueakClass() != image.metaclass);
                 object = new PointersObject(image, hash, getSqClass());
             } else if (format == 2) { // indexable fields
                 object = new ArrayObject(image, hash, getSqClass());
             } else if (format == 3) { // fixed and indexable fields
                 if (getSqClass() == image.methodContextClass) {
-                    object = ContextObject.createWithHash(hash, image);
+                    object = ContextObject.createWithHash(image, hash);
                 } else if (getSqClass() == image.blockClosureClass) {
                     object = new BlockClosureObject(image, hash);
                 } else {
@@ -94,7 +94,7 @@ public final class SqueakImageChunk {
             } else if (format == 5) { // fixed weak fields
                 object = new PointersObject(image, hash, getSqClass());
             } else if (format <= 8) {
-                assert false; // unused
+                assert false : "Should never happen (unused format)";
             } else if (format == 9) { // 64-bit integers
                 object = NativeObject.newNativeLongs(this);
             } else if (format <= 11) { // 32-bit integers
@@ -112,7 +112,7 @@ public final class SqueakImageChunk {
                     object = NativeObject.newNativeBytes(this);
                 }
             } else if (format <= 31) { // compiled methods
-                object = new CompiledMethodObject(image);
+                object = new CompiledMethodObject(image, hash);
             }
         }
         if (object == SqueakImageReaderNode.NIL_OBJECT_PLACEHOLDER) {

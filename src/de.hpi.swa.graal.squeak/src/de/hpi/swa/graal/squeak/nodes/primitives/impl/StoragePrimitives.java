@@ -81,7 +81,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         private void migrateInstances(final Object[] fromPointers, final Object[] toPointers, final boolean copyHash, final List<AbstractSqueakObject> instances) {
             for (Iterator<AbstractSqueakObject> iterator = instances.iterator(); iterator.hasNext();) {
                 final AbstractSqueakObject instance = iterator.next();
-                if (instance != null && instance.getSqClass() != null) {
+                if (instance != null && instance.getSqueakClass() != null) {
                     pointersBecomeNode.execute(instance, fromPointers, toPointers, copyHash);
                 }
             }
@@ -242,7 +242,8 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doPointers(final PointersObject receiver) {
-            return newNode.executeNew(receiver.getSqClass()); // FIXME: BehaviorTest>>#testChange
+            return newNode.executeNew(receiver.getSqueakClass()); // FIXME:
+                                                                  // BehaviorTest>>#testChange
         }
     }
 
@@ -407,7 +408,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final long doBaseSqueakObject(final AbstractSqueakObject obj) {
-            return obj.squeakHash();
+            return obj.getSqueakHash();
         }
     }
 
@@ -436,7 +437,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         protected final boolean hasNoInstances(final AbstractSqueakObject sqObject) {
-            return objectGraphNode.getClassesWithNoInstances().contains(sqObject.getSqClass());
+            return objectGraphNode.getClassesWithNoInstances().contains(sqObject.getSqueakClass());
         }
 
         @SuppressWarnings("unused")
@@ -447,7 +448,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "!hasNoInstances(sqObject)")
         protected final AbstractSqueakObject someInstance(final AbstractSqueakObject sqObject) {
-            final List<AbstractSqueakObject> instances = objectGraphNode.allInstancesOf(sqObject.getSqClass());
+            final List<AbstractSqueakObject> instances = objectGraphNode.allInstancesOf(sqObject.getSqueakClass());
             int index;
             try {
                 index = instances.indexOf(sqObject);
@@ -472,7 +473,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = "receiver.isCompiledMethodClass()")
         protected final AbstractSqueakObject newMethod(final ClassObject receiver, final long bytecodeCount, final long header) {
-            final CompiledMethodObject newMethod = new CompiledMethodObject(code.image, receiver, receiver.getBasicInstanceSize() + (int) bytecodeCount);
+            final CompiledMethodObject newMethod = CompiledMethodObject.newOfSize(code.image, receiver.getBasicInstanceSize() + (int) bytecodeCount);
             newMethod.setHeader(header);
             return newMethod;
         }

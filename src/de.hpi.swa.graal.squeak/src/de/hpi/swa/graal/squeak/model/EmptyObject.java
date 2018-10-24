@@ -13,7 +13,7 @@ public final class EmptyObject extends AbstractSqueakObject {
     }
 
     public EmptyObject(final EmptyObject original) {
-        super(original.image, original.getSqClass());
+        super(original.image, original.getSqueakClass());
     }
 
     public void become(final EmptyObject other) {

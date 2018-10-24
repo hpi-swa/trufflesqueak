@@ -1,8 +1,6 @@
 package de.hpi.swa.graal.squeak.model;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
 
@@ -13,68 +11,76 @@ public abstract class AbstractSqueakObject implements TruffleObject {
     private static final int IDENTITY_HASH_MASK = 0x400000 - 1;
     private static final byte PINNED_BIT_SHIFT = 30;
 
+    public static final boolean isInstance(final TruffleObject obj) {
+        return obj instanceof AbstractSqueakObject;
+    }
+
     public final SqueakImageContext image;
+    private long squeakHash;
+    private ClassObject squeakClass;
 
-    @CompilationFinal private long hash;
-    @CompilationFinal private ClassObject sqClass;
-
+    // For special/well-known objects only.
     protected AbstractSqueakObject(final SqueakImageContext image) {
-        this(image, null);
+        this.image = image;
+        this.squeakHash = -1;
+        this.squeakClass = null;
     }
 
     protected AbstractSqueakObject(final SqueakImageContext image, final ClassObject klass) {
         this.image = image;
-        this.hash = hashCode() & IDENTITY_HASH_MASK;
-        this.sqClass = klass;
+        this.squeakHash = hashCode() & IDENTITY_HASH_MASK;
+        this.squeakClass = klass;
+    }
+
+    protected AbstractSqueakObject(final SqueakImageContext image, final int hash) {
+        this.image = image;
+        this.squeakHash = hash;
+        this.squeakClass = null;
     }
 
     protected AbstractSqueakObject(final SqueakImageContext image, final long hash, final ClassObject klass) {
         this.image = image;
-        this.hash = hash;
-        this.sqClass = klass;
+        this.squeakHash = hash;
+        this.squeakClass = klass;
+    }
+
+    public final void becomeOtherClass(final AbstractSqueakObject other) {
+        final ClassObject otherSqClass = other.squeakClass;
+        other.setSqueakClass(this.squeakClass);
+        this.setSqueakClass(otherSqClass);
     }
 
     @Override
-    public String toString() {
-        return "a " + getSqClassName();
+    public final ForeignAccess getForeignAccess() {
+        return SqueakObjectMessageResolutionForeign.ACCESS;
     }
 
-    public final long squeakHash() {
-        return hash;
+    public final ClassObject getSqueakClass() {
+        return squeakClass;
     }
 
-    public final void setSqueakHash(final long hash) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        this.hash = hash;
-    }
-
-    public final ClassObject getSqClass() {
-        return sqClass;
-    }
-
-    public final void setSqClass(final ClassObject newCls) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        this.sqClass = newCls;
-    }
-
-    public String nameAsClass() {
-        return "???NotAClass";
-    }
-
-    public final String getSqClassName() {
+    public final String getSqueakClassName() {
         if (isClass()) {
             return nameAsClass() + " class";
         } else {
-            return getSqClass().nameAsClass();
+            return getSqueakClass().nameAsClass();
         }
     }
 
-    public final boolean isNil() {
-        return this == image.nil;
+    public final long getSqueakHash() {
+        return squeakHash;
+    }
+
+    public final boolean hasSqueakClass() {
+        return squeakClass != null;
+    }
+
+    public final boolean hasSqueakHash() {
+        return squeakHash >= 0;
     }
 
     public final boolean isClass() {
-        assert !(this instanceof ClassObject) || (image.metaclass == getSqClass() || image.metaclass == getSqClass().getSqClass());
+        assert !(this instanceof ClassObject) || (image.metaclass == getSqueakClass() || image.metaclass == getSqueakClass().getSqueakClass());
         CompilerAsserts.neverPartOfCompilation();
         return this instanceof ClassObject;
     }
@@ -83,38 +89,44 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         return this == image.compiledMethodClass;
     }
 
-    public final boolean isSemaphore() {
-        return getSqClass() == image.semaphoreClass;
+    public final boolean isMessage() {
+        return getSqueakClass() == image.messageClass;
     }
 
-    public final void becomeOtherClass(final AbstractSqueakObject other) {
-        final ClassObject otherSqClass = other.sqClass;
-        other.setSqClass(this.sqClass);
-        this.setSqClass(otherSqClass);
+    public final boolean isNil() {
+        return this == image.nil;
     }
 
     public final boolean isPinned() {
-        return ((hash >> PINNED_BIT_SHIFT) & 1) == 1;
+        return ((squeakHash >> PINNED_BIT_SHIFT) & 1) == 1;
+    }
+
+    public final boolean isSemaphore() {
+        return getSqueakClass() == image.semaphoreClass;
+    }
+
+    public String nameAsClass() {
+        return "???NotAClass";
     }
 
     public final void setPinned() {
-        setSqueakHash(hash | (1 << PINNED_BIT_SHIFT));
+        setSqueakHash(squeakHash | (1 << PINNED_BIT_SHIFT));
+    }
+
+    public final void setSqueakClass(final ClassObject newClass) {
+        squeakClass = newClass;
+    }
+
+    public final void setSqueakHash(final long newHash) {
+        squeakHash = newHash;
+    }
+
+    @Override
+    public String toString() {
+        return "a " + getSqueakClassName();
     }
 
     public final void unsetPinned() {
-        setSqueakHash(hash & ~(1 << PINNED_BIT_SHIFT));
-    }
-
-    /*
-     * Methods for Truffle.
-     */
-
-    @Override
-    public final ForeignAccess getForeignAccess() {
-        return SqueakObjectMessageResolutionForeign.ACCESS;
-    }
-
-    public static final boolean isInstance(final TruffleObject obj) {
-        return obj instanceof AbstractSqueakObject;
+        setSqueakHash(squeakHash & ~(1 << PINNED_BIT_SHIFT));
     }
 }

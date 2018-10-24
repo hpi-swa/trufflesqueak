@@ -11,12 +11,12 @@ import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 
-public abstract class SqueakLookupClassNode extends AbstractNodeWithImage {
-    public static SqueakLookupClassNode create(final SqueakImageContext image) {
-        return SqueakLookupClassNodeGen.create(image);
+public abstract class LookupClassNode extends AbstractNodeWithImage {
+    public static LookupClassNode create(final SqueakImageContext image) {
+        return LookupClassNodeGen.create(image);
     }
 
-    protected SqueakLookupClassNode(final SqueakImageContext image) {
+    protected LookupClassNode(final SqueakImageContext image) {
         super(image);
     }
 
@@ -59,7 +59,7 @@ public abstract class SqueakLookupClassNode extends AbstractNodeWithImage {
 
     @Specialization
     protected static final ClassObject squeakClass(final AbstractSqueakObject value) {
-        return value.getSqClass();
+        return value.getSqueakClass();
     }
 
     @Specialization(guards = "!isAbstractSqueakObject(value)")

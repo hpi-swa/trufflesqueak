@@ -6,19 +6,27 @@ import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
 public final class CompiledMethodObject extends CompiledCodeObject {
 
-    public CompiledMethodObject(final SqueakImageContext img) {
-        super(img, 0);
+    public static CompiledMethodObject newOfSize(final SqueakImageContext image, final int size) {
+        return new CompiledMethodObject(size, image);
     }
 
-    public CompiledMethodObject(final SqueakImageContext img, final byte[] bc, final Object[] lits) {
-        this(img);
+    public static CompiledMethodObject newWithHash(final SqueakImageContext image, final int hash) {
+        return new CompiledMethodObject(image, hash);
+    }
+
+    public CompiledMethodObject(final SqueakImageContext image, final int hash) {
+        super(image, hash, 0);
+    }
+
+    public CompiledMethodObject(final SqueakImageContext image, final byte[] bc, final Object[] lits) {
+        super(image, 0);
         literals = lits;
         decodeHeader();
         bytes = bc;
     }
 
-    public CompiledMethodObject(final SqueakImageContext img, final ClassObject klass, final int size) {
-        super(img, klass, 0);
+    public CompiledMethodObject(final int size, final SqueakImageContext image) {
+        super(image, 0);
         bytes = new byte[size];
     }
 

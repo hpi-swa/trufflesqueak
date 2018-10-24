@@ -45,7 +45,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     }
 
     public LargeIntegerObject(final LargeIntegerObject original) {
-        super(original.image, original.getSqClass());
+        super(original.image, original.getSqueakClass());
         bytes = original.bytes.clone();
         integer = original.integer;
     }
@@ -120,7 +120,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     }
 
     public boolean isNegative() {
-        return getSqClass() == image.largeNegativeIntegerClass;
+        return getSqueakClass() == image.largeNegativeIntegerClass;
     }
 
     @Override

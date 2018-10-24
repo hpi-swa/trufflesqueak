@@ -5,21 +5,21 @@ import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 public final class PointersObject extends AbstractPointersObject {
 
-    public PointersObject(final SqueakImageContext img) {
-        super(img, -1, null); // for special PointersObjects only
+    public PointersObject(final SqueakImageContext image) {
+        super(image); // for special PointersObjects only
     }
 
-    public PointersObject(final SqueakImageContext img, final long hash, final ClassObject klass) {
-        super(img, hash, klass);
+    public PointersObject(final SqueakImageContext image, final long hash, final ClassObject klass) {
+        super(image, hash, klass);
     }
 
-    public PointersObject(final SqueakImageContext img, final ClassObject sqClass, final Object[] pointers) {
-        super(img, sqClass);
+    public PointersObject(final SqueakImageContext image, final ClassObject sqClass, final Object[] pointers) {
+        super(image, sqClass);
         setPointersUnsafe(pointers);
     }
 
-    public PointersObject(final SqueakImageContext img, final ClassObject classObject, final int size) {
-        this(img, classObject, ArrayUtils.withAll(size, img.nil));
+    public PointersObject(final SqueakImageContext image, final ClassObject classObject, final int size) {
+        this(image, classObject, ArrayUtils.withAll(size, image.nil));
     }
 
     public Object at0(final long i) {
@@ -39,11 +39,11 @@ public final class PointersObject extends AbstractPointersObject {
     }
 
     public int instsize() {
-        return getSqClass().getBasicInstanceSize();
+        return getSqueakClass().getBasicInstanceSize();
     }
 
     public AbstractSqueakObject shallowCopy() {
-        return new PointersObject(image, getSqClass(), getPointers().clone());
+        return new PointersObject(image, getSqueakClass(), getPointers().clone());
     }
 
     public Object[] unwrappedWithFirst(final Object firstValue) {

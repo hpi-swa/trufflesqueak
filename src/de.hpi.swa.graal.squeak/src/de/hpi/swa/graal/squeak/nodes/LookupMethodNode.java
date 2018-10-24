@@ -15,33 +15,29 @@ import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.METHOD_DICT;
 import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.nodes.LookupNodeGen.ExecuteLookupNodeGen;
+import de.hpi.swa.graal.squeak.nodes.LookupMethodNodeGen.ExecuteLookupNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 
 @NodeInfo(cost = NodeCost.NONE)
-public abstract class LookupNode extends Node {
+public abstract class LookupMethodNode extends Node {
     protected static final int LOOKUP_CACHE_SIZE = 3;
 
     @Child protected ExecuteLookupNode executeLookupNode;
 
-    public static LookupNode create(final SqueakImageContext image) {
-        return LookupNodeGen.create(image);
+    public static LookupMethodNode create(final SqueakImageContext image) {
+        return LookupMethodNodeGen.create(image);
     }
 
     public abstract Object executeLookup(Object sqClass, Object selector);
 
-    protected LookupNode(final SqueakImageContext image) {
-        executeLookupNode = ExecuteLookupNode.create(image);
+    protected LookupMethodNode(final SqueakImageContext image) {
+        executeLookupNode = ExecuteLookupNodeGen.create(image);
     }
 
     protected abstract static class ExecuteLookupNode extends AbstractNodeWithImage {
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
         @Child private SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
-
-        protected static ExecuteLookupNode create(final SqueakImageContext image) {
-            return ExecuteLookupNodeGen.create(image);
-        }
 
         protected ExecuteLookupNode(final SqueakImageContext image) {
             super(image);

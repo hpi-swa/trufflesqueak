@@ -12,11 +12,15 @@ public abstract class AbstractPointersObject extends AbstractSqueakObject {
         super(image);
     }
 
-    public AbstractPointersObject(final SqueakImageContext image, final ClassObject sqClass) {
+    protected AbstractPointersObject(final SqueakImageContext image, final int hash) {
+        super(image, hash);
+    }
+
+    protected AbstractPointersObject(final SqueakImageContext image, final ClassObject sqClass) {
         super(image, sqClass);
     }
 
-    public AbstractPointersObject(final SqueakImageContext image, final long hash, final ClassObject sqClass) {
+    protected AbstractPointersObject(final SqueakImageContext image, final long hash, final ClassObject sqClass) {
         super(image, hash, sqClass);
     }
 

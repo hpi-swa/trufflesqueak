@@ -118,7 +118,7 @@ public abstract class NewObjectNode extends AbstractNodeWithImage {
 
     @Specialization(guards = {"between(classObject.getInstanceSpecification(), 24, 31)"})
     protected final Object doCompiledMethod(final ClassObject classObject, final int extraSize) {
-        return new CompiledMethodObject(image, classObject, classObject.getBasicInstanceSize() + extraSize);
+        return CompiledMethodObject.newOfSize(image, classObject.getBasicInstanceSize() + extraSize);
     }
 
     @Fallback

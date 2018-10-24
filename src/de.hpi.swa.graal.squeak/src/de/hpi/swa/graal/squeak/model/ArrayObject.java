@@ -36,8 +36,8 @@ public final class ArrayObject extends AbstractSqueakObject {
 
     private Object storage;
 
-    public ArrayObject(final SqueakImageContext img) {
-        super(img, -1, null); // for special ArrayObjects only
+    public ArrayObject(final SqueakImageContext image) {
+        super(image); // for special ArrayObjects only
     }
 
     private ArrayObject(final SqueakImageContext image, final ClassObject classObject, final Object storage) {
@@ -205,7 +205,7 @@ public final class ArrayObject extends AbstractSqueakObject {
     }
 
     public int instsize() {
-        return getSqClass().getBasicInstanceSize();
+        return getSqueakClass().getBasicInstanceSize();
     }
 
     public boolean isAbstractSqueakObjectType() {

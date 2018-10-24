@@ -20,7 +20,7 @@ import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.SqueakImageReaderNode;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
-import de.hpi.swa.graal.squeak.nodes.context.SqueakLookupClassNode;
+import de.hpi.swa.graal.squeak.nodes.context.LookupClassNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 
 @TruffleLanguage.Registration(id = SqueakLanguageConfig.ID, name = SqueakLanguageConfig.NAME, version = SqueakLanguageConfig.VERSION, mimeType = SqueakLanguageConfig.MIME_TYPE, interactive = true, internal = false)
@@ -65,7 +65,7 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
         if (value instanceof FrameMarker) {
             return image.nilClass;
         }
-        return SqueakLookupClassNode.create(image).executeLookup(value);
+        return LookupClassNode.create(image).executeLookup(value);
     }
 
     @Override

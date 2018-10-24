@@ -19,11 +19,11 @@ public final class ContextObject extends AbstractPointersObject {
     private boolean isDirty = false;
     private boolean escaped = false;
 
-    public static ContextObject createWithHash(final long hash, final SqueakImageContext image) {
-        return new ContextObject(hash, image);
+    public static ContextObject createWithHash(final SqueakImageContext image, final long hash) {
+        return new ContextObject(image, hash);
     }
 
-    private ContextObject(final long hash, final SqueakImageContext image) {
+    private ContextObject(final SqueakImageContext image, final long hash) {
         super(image, hash, image.methodContextClass);
         isDirty = true;
     }
@@ -266,7 +266,7 @@ public final class ContextObject extends AbstractPointersObject {
     }
 
     public int instsize() {
-        return getSqClass().getBasicInstanceSize();
+        return getSqueakClass().getBasicInstanceSize();
     }
 
     public Object top() {

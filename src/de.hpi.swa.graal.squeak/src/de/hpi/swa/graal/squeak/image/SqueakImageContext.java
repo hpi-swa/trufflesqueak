@@ -351,7 +351,7 @@ public final class SqueakImageContext {
     }
 
     public NativeObject newSymbol(final String value) {
-        return NativeObject.newNativeBytes(this, doesNotUnderstand.getSqClass(), value.getBytes());
+        return NativeObject.newNativeBytes(this, doesNotUnderstand.getSqueakClass(), value.getBytes());
     }
 
     public void setSemaphore(final long index, final AbstractSqueakObject semaphore) {

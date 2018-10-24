@@ -233,7 +233,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
 
     private static Object getSmalltalkAssociation() {
         if (smalltalkAssociation == null) {
-            smalltalkAssociation = new PointersObject(image, image.schedulerAssociation.getSqClass(), new Object[]{image.newSymbol("Smalltalk"), getSmalltalkDictionary()});
+            smalltalkAssociation = new PointersObject(image, image.schedulerAssociation.getSqueakClass(), new Object[]{image.newSymbol("Smalltalk"), getSmalltalkDictionary()});
         }
         return smalltalkAssociation;
     }
