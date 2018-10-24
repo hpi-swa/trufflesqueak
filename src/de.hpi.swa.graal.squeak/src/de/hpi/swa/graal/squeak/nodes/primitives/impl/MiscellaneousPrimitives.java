@@ -236,6 +236,22 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             return code.image.sqFalse;
         }
 
+        @Specialization(guards = "receiver.isCharType()")
+        protected final boolean doArrayOfChars(final ArrayObject receiver, final char thang) {
+            return ArrayUtils.contains(receiver.getCharStorage(), thang) ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @Specialization(guards = "receiver.isCharType()")
+        protected final boolean doArrayOfChars(final ArrayObject receiver, @SuppressWarnings("unused") final NilObject thang) {
+            return ArrayUtils.contains(receiver.getCharStorage(), ArrayObject.CHAR_NIL_TAG) ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"receiver.isCharType()", "!isCharacter(thang)", "!isNilObject(thang)"})
+        protected final boolean doArrayOfChars(final ArrayObject receiver, final Object thang) {
+            return code.image.sqFalse;
+        }
+
         @Specialization(guards = "receiver.isLongType()")
         protected final boolean doArrayOfLongs(final ArrayObject receiver, final long thang) {
             return ArrayUtils.contains(receiver.getLongStorage(), thang) ? code.image.sqTrue : code.image.sqFalse;
@@ -555,6 +571,11 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         @Specialization(guards = "receiver.isBooleanType()")
         protected final Object doArrayOfBooleans(final ArrayObject receiver) {
             return ArrayObject.createWithStorage(code.image, receiver.getSqClass(), receiver.getBooleanStorage().clone());
+        }
+
+        @Specialization(guards = "receiver.isCharType()")
+        protected final Object doArrayOfChars(final ArrayObject receiver) {
+            return ArrayObject.createWithStorage(code.image, receiver.getSqClass(), receiver.getCharStorage().clone());
         }
 
         @Specialization(guards = "receiver.isLongType()")

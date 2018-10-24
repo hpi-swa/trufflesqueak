@@ -47,6 +47,22 @@ public final class ArrayObjectNodes {
             return objects;
         }
 
+        @Specialization(guards = "obj.isCharType()")
+        protected static final Object[] doArrayOfChars(final ArrayObject obj) {
+            final char[] chars = obj.getCharStorage();
+            final int length = chars.length;
+            final Object[] objects = new Object[length];
+            for (int i = 0; i < length; i++) {
+                final long value = chars[i];
+                if (value == ArrayObject.CHAR_NIL_TAG) {
+                    objects[i] = obj.image.nil;
+                } else {
+                    objects[i] = value;
+                }
+            }
+            return objects;
+        }
+
         @Specialization(guards = "obj.isLongType()")
         protected static final Object[] doArrayOfLongs(final ArrayObject obj) {
             final long[] longs = obj.getLongStorage();

@@ -8,6 +8,7 @@ public final class ArrayObject extends AbstractSqueakObject {
     public static final byte BOOLEAN_NIL_TAG = 0;
     public static final byte BOOLEAN_TRUE_TAG = 1;
     public static final byte BOOLEAN_FALSE_TAG = -1;
+    public static final char CHAR_NIL_TAG = Character.MAX_VALUE;
     public static final long LONG_NIL_TAG = Long.MIN_VALUE;
     public static final double DOUBLE_NIL_TAG = Double.longBitsToDouble(0x7ff8000000000001L);
     public static final long DOUBLE_NIL_TAG_LONG = Double.doubleToRawLongBits(DOUBLE_NIL_TAG);
@@ -60,6 +61,15 @@ public final class ArrayObject extends AbstractSqueakObject {
         }
     }
 
+    public Object at0Char(final long index) {
+        final char value = getCharStorage()[(int) index];
+        if (value == CHAR_NIL_TAG) {
+            return image.nil;
+        } else {
+            return value;
+        }
+    }
+
     public Object at0Double(final long index) {
         final double value = getDoubleStorage()[(int) index];
         if (Double.doubleToRawLongBits(value) == DOUBLE_NIL_TAG_LONG) {
@@ -104,6 +114,10 @@ public final class ArrayObject extends AbstractSqueakObject {
         getBooleanStorage()[(int) index] = value ? BOOLEAN_TRUE_TAG : BOOLEAN_FALSE_TAG;
     }
 
+    public void atput0Char(final long index, final char value) {
+        getCharStorage()[(int) index] = value;
+    }
+
     public void atput0Double(final long index, final double value) {
         getDoubleStorage()[(int) index] = value;
     }
@@ -126,6 +140,10 @@ public final class ArrayObject extends AbstractSqueakObject {
 
     public void atputNil0Boolean(final long index) {
         getBooleanStorage()[(int) index] = BOOLEAN_NIL_TAG;
+    }
+
+    public void atputNil0Char(final long index) {
+        getCharStorage()[(int) index] = CHAR_NIL_TAG;
     }
 
     public void atputNil0Double(final long index) {
@@ -151,6 +169,11 @@ public final class ArrayObject extends AbstractSqueakObject {
     public byte[] getBooleanStorage() {
         assert isBooleanType();
         return (byte[]) storage;
+    }
+
+    public char[] getCharStorage() {
+        assert isCharType();
+        return (char[]) storage;
     }
 
     public double[] getDoubleStorage() {
@@ -193,6 +216,10 @@ public final class ArrayObject extends AbstractSqueakObject {
         return storage.getClass() == byte[].class;
     }
 
+    public boolean isCharType() {
+        return storage.getClass() == char[].class;
+    }
+
     public boolean isDoubleType() {
         return storage.getClass() == double[].class;
     }
@@ -222,7 +249,8 @@ public final class ArrayObject extends AbstractSqueakObject {
         if (valuesLength > 0) {
             final Object firstElement = values[0];
             Class<? extends Object> specializedClass = firstElement.getClass();
-            if (firstElement == image.nil || firstElement instanceof AbstractSqueakObject || firstElement instanceof Boolean || firstElement instanceof Long || firstElement instanceof Double) {
+            if (firstElement == image.nil || firstElement instanceof AbstractSqueakObject || firstElement instanceof Boolean || firstElement instanceof Character || firstElement instanceof Long ||
+                            firstElement instanceof Double) {
                 for (int i = 1; i < valuesLength; i++) {
                     final Object value = values[i];
                     if (value != null && value != image.nil && specializedClass != value.getClass()) {
@@ -249,6 +277,17 @@ public final class ArrayObject extends AbstractSqueakObject {
                         }
                     }
                     storage = booleans;
+                } else if (specializedClass == Character.class) {
+                    final char[] chars = new char[valuesLength];
+                    for (int i = 0; i < valuesLength; i++) {
+                        final Object value = values[i];
+                        if (value == null || value == image.nil) {
+                            chars[i] = CHAR_NIL_TAG;
+                        } else {
+                            chars[i] = (char) value;
+                        }
+                    }
+                    storage = chars;
                 } else if (specializedClass == Long.class) {
                     final long[] longs = new long[valuesLength];
                     for (int i = 0; i < valuesLength; i++) {
@@ -308,6 +347,15 @@ public final class ArrayObject extends AbstractSqueakObject {
         storage = objects;
     }
 
+    public void transitionFromCharsToObjects() {
+        final char[] chars = getCharStorage();
+        final Object[] objects = new Object[chars.length];
+        for (int i = 0; i < chars.length; i++) {
+            objects[i] = chars[i] == CHAR_NIL_TAG ? null : chars[i];
+        }
+        storage = objects;
+    }
+
     public void transitionFromDoublesToObjects() {
         final double[] doubles = getDoubleStorage();
         final Object[] objects = new Object[doubles.length];
@@ -325,6 +373,12 @@ public final class ArrayObject extends AbstractSqueakObject {
     public void transitionFromEmptyToBooleans() {
         // Zero-initialized, no need to fill with BOOLEAN_NIL_TAG.
         storage = new byte[getEmptyStorage()];
+    }
+
+    public void transitionFromEmptyToChars() {
+        final char[] chars = new char[getEmptyStorage()];
+        Arrays.fill(chars, CHAR_NIL_TAG);
+        storage = chars;
     }
 
     public void transitionFromEmptyToDoubles() {

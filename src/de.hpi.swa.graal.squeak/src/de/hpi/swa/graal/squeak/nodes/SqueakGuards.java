@@ -24,6 +24,10 @@ public final class SqueakGuards {
         return value instanceof Boolean;
     }
 
+    public static boolean isCharacter(final Object object) {
+        return object instanceof Character;
+    }
+
     public static boolean isContextObject(final AbstractSqueakObject object) {
         return object instanceof ContextObject;
     }

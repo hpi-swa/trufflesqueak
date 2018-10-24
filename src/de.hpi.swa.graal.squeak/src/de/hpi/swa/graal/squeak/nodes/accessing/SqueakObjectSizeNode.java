@@ -39,6 +39,11 @@ public abstract class SqueakObjectSizeNode extends Node {
         return obj.getBooleanStorage().length;
     }
 
+    @Specialization(guards = "obj.isCharType()")
+    protected static final int doArrayObjectOfChars(final ArrayObject obj) {
+        return obj.getCharStorage().length;
+    }
+
     @Specialization(guards = "obj.isLongType()")
     protected static final int doArrayObjectOfLongs(final ArrayObject obj) {
         return obj.getLongStorage().length;

@@ -27,6 +27,15 @@ public final class ArrayUtils {
         return false;
     }
 
+    public static boolean contains(final char[] objects, final char element) {
+        for (int i = 0; i < objects.length; i++) {
+            if (objects[i] == element) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static boolean contains(final long[] objects, final long element) {
         for (int i = 0; i < objects.length; i++) {
             if (objects[i] == element) {

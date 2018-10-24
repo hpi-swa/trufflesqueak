@@ -193,7 +193,7 @@ public final class PushBytecodes {
             if (popNReversedNode != null) {
                 pushNode.executeWrite(frame, code.image.newList(popNReversedNode.executeRead(frame)));
             } else {
-                pushNode.executeWrite(frame, ArrayObject.createEmptyStrategy(code.image, code.image.arrayClass, arraySize));
+                pushNode.executeWrite(frame, ArrayObject.createObjectStrategy(code.image, code.image.arrayClass, arraySize));
             }
         }
 

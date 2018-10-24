@@ -45,9 +45,16 @@ public abstract class SqueakObjectAtPut0Node extends Node {
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"obj.isEmptyType()", "index < obj.getEmptyStorage()"})
-    protected static final void doEmptyArrayToLong(final ArrayObject obj, final long index, final boolean value) {
+    protected static final void doEmptyArrayToBoolean(final ArrayObject obj, final long index, final boolean value) {
         obj.transitionFromEmptyToBooleans();
         doArrayOfBooleans(obj, index, value);
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = {"obj.isEmptyType()", "index < obj.getEmptyStorage()"})
+    protected static final void doEmptyArrayToChar(final ArrayObject obj, final long index, final char value) {
+        obj.transitionFromEmptyToChars();
+        doArrayOfChars(obj, index, value);
     }
 
     @SuppressWarnings("unused")
@@ -101,6 +108,22 @@ public abstract class SqueakObjectAtPut0Node extends Node {
     @Specialization(guards = {"obj.isBooleanType()", "!isBoolean(value)", "!isNilObject(value)"})
     protected static final void doArrayOfBooleans(final ArrayObject obj, final long index, final Object value) {
         obj.transitionFromBooleansToObjects();
+        doArrayOfObjects(obj, index, value);
+    }
+
+    @Specialization(guards = "obj.isCharType()")
+    protected static final void doArrayOfChars(final ArrayObject obj, final long index, final char value) {
+        obj.atput0Char(index, value);
+    }
+
+    @Specialization(guards = "obj.isCharType()")
+    protected static final void doArrayOfChars(final ArrayObject obj, final long index, @SuppressWarnings("unused") final NilObject value) {
+        obj.atputNil0Char(index);
+    }
+
+    @Specialization(guards = {"obj.isCharType()", "!isCharacter(value)", "!isNilObject(value)"})
+    protected static final void doArrayOfChars(final ArrayObject obj, final long index, final Object value) {
+        obj.transitionFromCharsToObjects();
         doArrayOfObjects(obj, index, value);
     }
 

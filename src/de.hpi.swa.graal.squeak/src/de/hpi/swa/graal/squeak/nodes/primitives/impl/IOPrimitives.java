@@ -455,6 +455,12 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return doArraysOfBooleans(rcvr, start, stop, repl, replStart);
         }
 
+        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isEmptyType()", "repl.isCharType()"})
+        protected static final Object doEmptyArrayToChars(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
+            rcvr.transitionFromEmptyToChars();
+            return doArraysOfChars(rcvr, start, stop, repl, replStart);
+        }
+
         @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isEmptyType()", "repl.isLongType()"})
         protected static final Object doEmptyArrayToLongs(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
             rcvr.transitionFromEmptyToLongs();
@@ -497,6 +503,17 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             final int repOff = (int) (replStart - start);
             final byte[] dstLongs = rcvr.getBooleanStorage();
             final byte[] srcLongs = repl.getBooleanStorage();
+            for (int i = (int) (start - 1); i < stop; i++) {
+                dstLongs[i] = srcLongs[repOff + i];
+            }
+            return rcvr;
+        }
+
+        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isCharType()", "repl.isCharType()"})
+        protected static final Object doArraysOfChars(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
+            final int repOff = (int) (replStart - start);
+            final char[] dstLongs = rcvr.getCharStorage();
+            final char[] srcLongs = repl.getCharStorage();
             for (int i = (int) (start - 1); i < stop; i++) {
                 dstLongs[i] = srcLongs[repOff + i];
             }
@@ -582,6 +599,12 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return doArrayOfObjectsPointers(rcvr, start, stop, repl, replStart);
         }
 
+        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isCharType()"})
+        protected static final Object doArrayOfCharsPointers(final ArrayObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart) {
+            rcvr.transitionFromCharsToObjects();
+            return doArrayOfObjectsPointers(rcvr, start, stop, repl, replStart);
+        }
+
         @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isLongType()"})
         protected static final Object doArrayOfLongsPointers(final ArrayObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart) {
             rcvr.transitionFromLongsToObjects();
@@ -619,6 +642,12 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isBooleanType()"})
         protected static final Object doArrayOfBooleansWeakPointers(final ArrayObject rcvr, final long start, final long stop, final WeakPointersObject repl, final long replStart) {
             rcvr.transitionFromBooleansToObjects();
+            return doArrayOfObjectsWeakPointers(rcvr, start, stop, repl, replStart);
+        }
+
+        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isCharType()"})
+        protected static final Object doArrayOfCharsWeakPointers(final ArrayObject rcvr, final long start, final long stop, final WeakPointersObject repl, final long replStart) {
+            rcvr.transitionFromCharsToObjects();
             return doArrayOfObjectsWeakPointers(rcvr, start, stop, repl, replStart);
         }
 
