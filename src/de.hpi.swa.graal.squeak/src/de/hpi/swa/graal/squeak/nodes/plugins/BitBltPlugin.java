@@ -59,8 +59,8 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @Specialization(guards = {"startIndex >= 1", "stopIndex >= 0", "aString.isByteType()", "aString.getByteStorage().length > 0",
-                        "stopIndex <= aString.getByteStorage().length"})
+        @Specialization(guards = {"startIndex >= 1", "stopIndex >= 0", "aString.isByteType()", "aString.getByteLength() > 0",
+                        "stopIndex <= aString.getByteLength()"})
         protected static final Object doOptimized(final VirtualFrame frame, final PointersObject receiver, final NativeObject aString, final long startIndex, final long stopIndex,
                         final ArrayObject glyphMap, final ArrayObject xTable, final long kernDelta,
                         @Cached("create(code)") final ExtractFormsAndContinueNode executeNode) {
@@ -69,7 +69,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"aString.isByteType()", "aString.getByteStorage().length == 0"})
+        @Specialization(guards = {"aString.isByteType()", "aString.getByteLength() == 0"})
         protected static final Object doNothing(final PointersObject receiver, final NativeObject aString, final long startIndex, final long stopIndex, final ArrayObject glyphMap,
                         final ArrayObject xTable, final long kernDelta) {
             return receiver;

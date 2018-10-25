@@ -81,7 +81,7 @@ public abstract class SqueakObjectAtPut0Node extends Node {
     @SuppressWarnings("unused")
     @Specialization(guards = {"obj.isEmptyType()", "index >= obj.getEmptyStorage()"})
     protected static final void doEmptyArrayOutOfBounds(final ArrayObject obj, final long index, final Object value) {
-        throw new IndexOutOfBoundsException();
+        throw new SqueakException("IndexOutOfBounds:", index, "(validate index before using this node)");
     }
 
     @Specialization(guards = "obj.isAbstractSqueakObjectType()")
@@ -203,21 +203,9 @@ public abstract class SqueakObjectAtPut0Node extends Node {
         obj.getByteStorage()[(int) index] = (byte) value;
     }
 
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"obj.isByteType()", "value < 0 || value > BYTE_MAX"})
-    protected static final void doNativeBytesIllegal(final NativeObject obj, final long index, final long value) {
-        throw new IllegalArgumentException("Illegal value for byte array: " + value);
-    }
-
     @Specialization(guards = {"obj.isShortType()", "value >= 0", "value <= SHORT_MAX"})
     protected static final void doNativeShorts(final NativeObject obj, final long index, final long value) {
         obj.getShortStorage()[(int) index] = (short) value;
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"obj.isShortType()", "value < 0 || value > SHORT_MAX"})
-    protected static final void doNativeShortsIllegal(final NativeObject obj, final long index, final long value) {
-        throw new IllegalArgumentException("Illegal value for short array: " + value);
     }
 
     @Specialization(guards = {"obj.isIntType()", "value >= 0", "value <= INTEGER_MAX"})
@@ -225,21 +213,9 @@ public abstract class SqueakObjectAtPut0Node extends Node {
         obj.getIntStorage()[(int) index] = (int) value;
     }
 
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"obj.isIntType()", "value < 0 || value > INTEGER_MAX"})
-    protected static final void doNativeIntsIllegal(final NativeObject obj, final long index, final long value) {
-        throw new IllegalArgumentException("Illegal value for int array: " + value);
-    }
-
     @Specialization(guards = {"obj.isLongType()", "value >= 0"})
     protected static final void doNativeLongs(final NativeObject obj, final long index, final long value) {
         obj.getLongStorage()[(int) index] = value;
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"obj.isLongType()", "value < 0"})
-    protected static final void doNativeLongsIllegal(final NativeObject obj, final long index, final long value) {
-        throw new IllegalArgumentException("Illegal value for long array: " + value);
     }
 
     protected static final boolean inByteRange(final char value) {
@@ -249,12 +225,6 @@ public abstract class SqueakObjectAtPut0Node extends Node {
     @Specialization(guards = {"obj.isByteType()", "inByteRange(value)"})
     protected static final void doNativeBytesChar(final NativeObject obj, final long index, final char value) {
         doNativeBytes(obj, index, value);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"obj.isByteType()", "!inByteRange(value)"})
-    protected static final void doNativeBytesCharIllegal(final NativeObject obj, final long index, final char value) {
-        throw new IllegalArgumentException("Illegal value for byte array: " + value);
     }
 
     @Specialization(guards = "obj.isShortType()") // char values fit into short
@@ -277,21 +247,9 @@ public abstract class SqueakObjectAtPut0Node extends Node {
         doNativeBytes(obj, index, value.longValueExact());
     }
 
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"obj.isByteType()", "!value.inRange(0, BYTE_MAX)"})
-    protected static final void doNativeBytesLargeIntegerIllegal(final NativeObject obj, final long index, final LargeIntegerObject value) {
-        throw new IllegalArgumentException("Illegal value for byte array: " + value);
-    }
-
     @Specialization(guards = {"obj.isShortType()", "value.inRange(0, SHORT_MAX)"})
     protected static final void doNativeShortsLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
         doNativeShorts(obj, index, value.longValueExact());
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"obj.isShortType()", "!value.inRange(0, SHORT_MAX)"})
-    protected static final void doNativeShortsLargeIntegerIllegal(final NativeObject obj, final long index, final LargeIntegerObject value) {
-        throw new IllegalArgumentException("Illegal value for short array: " + value);
     }
 
     @Specialization(guards = {"obj.isIntType()", "value.inRange(0, INTEGER_MAX)"})
@@ -302,18 +260,12 @@ public abstract class SqueakObjectAtPut0Node extends Node {
     @SuppressWarnings("unused")
     @Specialization(guards = {"obj.isIntType()", "!value.inRange(0, INTEGER_MAX)"})
     protected static final void doNativeIntsLargeIntegerIllegal(final NativeObject obj, final long index, final LargeIntegerObject value) {
-        throw new IllegalArgumentException("Illegal value for int array: " + value);
+        throw new SqueakException("Illegal value for int array: " + value);
     }
 
     @Specialization(guards = {"obj.isLongType()", "value.isZeroOrPositive()"})
     protected static final void doNativeLongsLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
         doNativeLongs(obj, index, value.longValueExact());
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"obj.isLongType()", "!value.isZeroOrPositive()"})
-    protected static final void doNativeLongsLargeIntegerIllegal(final NativeObject obj, final long index, final LargeIntegerObject value) {
-        throw new IllegalArgumentException("Illegal value for long array: " + value);
     }
 
     @Specialization
@@ -326,14 +278,24 @@ public abstract class SqueakObjectAtPut0Node extends Node {
         obj.setNativeAt0(index, value.longValueExact());
     }
 
-    @Specialization(guards = {"index == 0 || index == 1", "value >= 0", "value <= INTEGER_MAX"})
-    protected static final void doFloat(final FloatObject obj, final long index, final long value) {
-        obj.setNativeAt0(index, value);
+    @Specialization(guards = {"index == 0", "value >= 0", "value <= INTEGER_MAX"})
+    protected static final void doFloatHigh(final FloatObject obj, @SuppressWarnings("unused") final long index, final long value) {
+        obj.setHigh(value);
     }
 
-    @Specialization(guards = {"index == 0 || index == 1", "!value.inRange(0, INTEGER_MAX)"})
-    protected static final void doFloat(final FloatObject obj, final long index, final LargeIntegerObject value) {
-        obj.setNativeAt0(index, value.longValueExact());
+    @Specialization(guards = {"index == 1", "value >= 0", "value <= INTEGER_MAX"})
+    protected static final void doFloatLow(final FloatObject obj, @SuppressWarnings("unused") final long index, final long value) {
+        obj.setLow(value);
+    }
+
+    @Specialization(guards = {"index == 0", "!value.inRange(0, INTEGER_MAX)"})
+    protected static final void doFloatHigh(final FloatObject obj, @SuppressWarnings("unused") final long index, final LargeIntegerObject value) {
+        obj.setHigh(value.longValueExact());
+    }
+
+    @Specialization(guards = {"index == 1", "!value.inRange(0, INTEGER_MAX)"})
+    protected static final void doFloatLow(final FloatObject obj, @SuppressWarnings("unused") final long index, final LargeIntegerObject value) {
+        obj.setLow(value.longValueExact());
     }
 
     @Specialization
@@ -349,13 +311,13 @@ public abstract class SqueakObjectAtPut0Node extends Node {
     @SuppressWarnings("unused")
     @Specialization
     protected static final void doEmpty(final EmptyObject obj, final long index, final Object value) {
-        throw new IndexOutOfBoundsException();
+        throw new SqueakException("IndexOutOfBounds:", index, "(validate index before using this node)");
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected static final void doNil(final NilObject obj, final long index, final Object value) {
-        throw new IndexOutOfBoundsException();
+        throw new SqueakException("IndexOutOfBounds:", index, "(validate index before using this node)");
     }
 
     @SuppressWarnings("unused")

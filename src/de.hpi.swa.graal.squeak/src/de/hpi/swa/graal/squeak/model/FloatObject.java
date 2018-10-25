@@ -1,8 +1,5 @@
 package de.hpi.swa.graal.squeak.model;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
 public final class FloatObject extends AbstractSqueakObject {
@@ -11,7 +8,7 @@ public final class FloatObject extends AbstractSqueakObject {
     public static final int EMAX = 1023;
     private static final int WORD_LENGTH = 2;
 
-    @CompilationFinal private double doubleValue;
+    private double doubleValue;
 
     public static FloatObject newFromChunkWords(final SqueakImageContext image, final long hash, final int[] ints) {
         return new FloatObject(image, hash, ints[1], ints[0]);
@@ -45,32 +42,25 @@ public final class FloatObject extends AbstractSqueakObject {
         setWords(high, low);
     }
 
-    public long getNativeAt0(final long index) { // TODO: use guards in senders
-        final long bits = Double.doubleToRawLongBits(doubleValue);
-        if (index == 0) {
-            return Integer.toUnsignedLong((int) (bits >> 32));
-        } else if (index == 1) {
-            return Integer.toUnsignedLong((int) bits);
-        } else {
-            throw new ArrayIndexOutOfBoundsException();
-        }
+    public long getHigh() {
+        return Integer.toUnsignedLong((int) (Double.doubleToRawLongBits(doubleValue) >> 32));
     }
 
-    public void setNativeAt0(final long index, final long value) { // TODO: use guards in senders
-        if (value < 0 || value > NativeObject.INTEGER_MAX) { // check for overflow
-            throw new IllegalArgumentException("Illegal value for FloatObject: " + value);
-        }
-        if (index == 0) {
-            setWords(value, getNativeAt0(1));
-        } else if (index == 1) {
-            setWords(getNativeAt0(0), value);
-        } else {
-            throw new ArrayIndexOutOfBoundsException();
-        }
+    public long getLow() {
+        return Integer.toUnsignedLong((int) Double.doubleToRawLongBits(doubleValue));
+    }
+
+    public void setHigh(final long value) {
+        assert 0 <= value && value <= NativeObject.INTEGER_MAX;
+        setWords(value, getLow());
+    }
+
+    public void setLow(final long value) {
+        assert 0 <= value && value <= NativeObject.INTEGER_MAX;
+        setWords(getHigh(), value);
     }
 
     private void setWords(final long high, final long low) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
         final long highMasked = high & LargeIntegerObject.MASK_32BIT;
         final long lowMasked = low & LargeIntegerObject.MASK_32BIT;
         this.doubleValue = Double.longBitsToDouble(((highMasked) << 32) | lowMasked);

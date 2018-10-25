@@ -40,6 +40,7 @@ import de.hpi.swa.graal.squeak.nodes.accessing.UpdateSqueakObjectHashNode;
 import de.hpi.swa.graal.squeak.nodes.context.ObjectGraphNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveWithSizeNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
@@ -242,8 +243,8 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final Object doPointers(final PointersObject receiver) {
-            return newNode.executeNew(receiver.getSqueakClass()); // FIXME:
-                                                                  // BehaviorTest>>#testChange
+            // FIXME: BehaviorTest>>#testChange
+            return newNode.executeNew(receiver.getSqueakClass());
         }
     }
 
@@ -318,58 +319,42 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 73)
-    protected abstract static class PrimInstVarAtNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimInstVarAtNode extends AbstractPrimitiveWithSizeNode {
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
 
         protected PrimInstVarAtNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        @Specialization
+        @Specialization(guards = "inBounds(index, receiver)")
         protected final Object doAt(final AbstractSqueakObject receiver, final long index, @SuppressWarnings("unused") final NotProvided notProvided) {
-            try {
-                return at0Node.execute(receiver, index - 1);
-            } catch (IndexOutOfBoundsException e) {
-                throw new PrimitiveFailed();
-            }
+            return at0Node.execute(receiver, index - 1);
         }
 
-        @Specialization // Context>>#object:instVarAt:
+        @Specialization(guards = "inBounds(index, target)") // Context>>#object:instVarAt:
         protected final Object doAt(@SuppressWarnings("unused") final Object receiver, final AbstractSqueakObject target, final long index) {
-            try {
-                return at0Node.execute(target, index - 1);
-            } catch (IndexOutOfBoundsException e) {
-                throw new PrimitiveFailed();
-            }
+            return at0Node.execute(target, index - 1);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 74)
-    protected abstract static class PrimInstVarAtPutNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimInstVarAtPutNode extends AbstractPrimitiveWithSizeNode {
         @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
 
         protected PrimInstVarAtPutNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        @Specialization
+        @Specialization(guards = "inBounds(index, receiver)")
         protected final Object doAtPut(final AbstractSqueakObject receiver, final long index, final Object value, @SuppressWarnings("unused") final NotProvided notProvided) {
-            try {
-                atPut0Node.execute(receiver, index - 1, value);
-            } catch (IndexOutOfBoundsException e) {
-                throw new PrimitiveFailed();
-            }
+            atPut0Node.execute(receiver, index - 1, value);
             return value;
         }
 
-        @Specialization // Context>>#object:instVarAt:put:
+        @Specialization(guards = "inBounds(index, target)") // Context>>#object:instVarAt:put:
         protected final Object doAtPut(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final AbstractSqueakObject target, final long index, final Object value) {
-            try {
-                atPut0Node.execute(target, index - 1, value);
-            } catch (IndexOutOfBoundsException e) {
-                throw new PrimitiveFailed();
-            }
+            atPut0Node.execute(target, index - 1, value);
             return value;
         }
     }
@@ -382,13 +367,14 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @Specialization
-        protected final long doBoolean(final boolean obj) {
-            if (obj == code.image.sqFalse) {
-                return 2L;
-            } else {
-                return 3L;
-            }
+        @Specialization(guards = "obj == code.image.sqFalse")
+        protected static final long doBooleanFalse(@SuppressWarnings("unused") final boolean obj) {
+            return 2L;
+        }
+
+        @Specialization(guards = "obj != code.image.sqFalse")
+        protected static final long doBooleanTrue(@SuppressWarnings("unused") final boolean obj) {
+            return 3L;
         }
 
         @Specialization
@@ -449,15 +435,10 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "!hasNoInstances(sqObject)")
         protected final AbstractSqueakObject someInstance(final AbstractSqueakObject sqObject) {
             final List<AbstractSqueakObject> instances = objectGraphNode.allInstancesOf(sqObject.getSqueakClass());
-            int index;
-            try {
-                index = instances.indexOf(sqObject);
-            } catch (NullPointerException e) {
-                index = -1;
-            }
-            try {
-                return instances.get(index + 1);
-            } catch (IndexOutOfBoundsException e) {
+            final int nextIndex = instances.indexOf(sqObject) + 1;
+            if (nextIndex < instances.size()) {
+                return instances.get(nextIndex);
+            } else {
                 return code.image.nil;
             }
         }
@@ -613,39 +594,33 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 173)
     protected abstract static class PrimSlotAtNode extends AbstractPrimitiveNode {
+        @Child protected SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
 
         protected PrimSlotAtNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        @Specialization
+        @Specialization(guards = "inBounds1(index, sizeNode.execute(receiver))")
         protected final Object doSlotAt(final AbstractSqueakObject receiver, final long index) {
-            try {
-                return at0Node.execute(receiver, index - 1);
-            } catch (IndexOutOfBoundsException e) {
-                throw new PrimitiveFailed();
-            }
+            return at0Node.execute(receiver, index - 1);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 174)
     protected abstract static class PrimSlotAtPutNode extends AbstractPrimitiveNode {
+        @Child protected SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
         @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
 
         protected PrimSlotAtPutNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        @Specialization
+        @Specialization(guards = "inBounds1(index, sizeNode.execute(receiver))")
         protected final Object doSlotAtPut(final AbstractSqueakObject receiver, final long index, final Object value) {
-            try {
-                atPut0Node.execute(receiver, index - 1, value);
-                return value;
-            } catch (IndexOutOfBoundsException e) {
-                throw new PrimitiveFailed();
-            }
+            atPut0Node.execute(receiver, index - 1, value);
+            return value;
         }
     }
 

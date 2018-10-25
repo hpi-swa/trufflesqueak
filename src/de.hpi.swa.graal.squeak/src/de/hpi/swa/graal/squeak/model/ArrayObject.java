@@ -161,9 +161,17 @@ public final class ArrayObject extends AbstractSqueakObject {
         setStorage(otherStorage);
     }
 
+    public int getAbstractSqueakObjectLength() {
+        return getAbstractSqueakObjectStorage().length;
+    }
+
     public AbstractSqueakObject[] getAbstractSqueakObjectStorage() {
         assert isAbstractSqueakObjectType();
         return (AbstractSqueakObject[]) storage;
+    }
+
+    public int getBooleanLength() {
+        return getBooleanStorage().length;
     }
 
     public byte[] getBooleanStorage() {
@@ -171,9 +179,17 @@ public final class ArrayObject extends AbstractSqueakObject {
         return (byte[]) storage;
     }
 
+    public int getCharLength() {
+        return getCharStorage().length;
+    }
+
     public char[] getCharStorage() {
         assert isCharType();
         return (char[]) storage;
+    }
+
+    public int getDoubleLength() {
+        return getDoubleStorage().length;
     }
 
     public double[] getDoubleStorage() {
@@ -181,9 +197,17 @@ public final class ArrayObject extends AbstractSqueakObject {
         return (double[]) storage;
     }
 
+    public int getEmptyLength() {
+        return getEmptyStorage();
+    }
+
     public int getEmptyStorage() {
         assert isEmptyType();
         return (int) storage;
+    }
+
+    public int getLongLength() {
+        return getLongStorage().length;
     }
 
     public long[] getLongStorage() {
@@ -193,6 +217,10 @@ public final class ArrayObject extends AbstractSqueakObject {
 
     public NilObject getNil() {
         return image.nil;
+    }
+
+    public int getObjectLength() {
+        return getObjectStorage().length;
     }
 
     public Object[] getObjectStorage() {

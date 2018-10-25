@@ -287,12 +287,10 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                         storeStateInReceiver(receiver, scanDestX, scanLastIndex);
                         return stopReason;
                     }
-                    final long glyphIndex;
-                    try {
-                        glyphIndex = (long) at0Node.execute(scanMap, ascii);
-                    } catch (ArrayIndexOutOfBoundsException e) {
+                    if (ascii < 0 || sizeNode.execute(scanMap) <= ascii) {
                         throw new PrimitiveFailed();
                     }
+                    final long glyphIndex = (long) at0Node.execute(scanMap, ascii);
                     if (glyphIndex < 0 || glyphIndex > maxGlyph) {
                         throw new PrimitiveFailed();
                     }
@@ -335,24 +333,6 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @Override
-        public final Object executeWithArguments(final VirtualFrame frame, final Object... arguments) {
-            try {
-                return executeWithArgumentsSpecialized(frame, arguments);
-            } catch (IndexOutOfBoundsException | IllegalArgumentException e) {
-                throw new PrimitiveFailed();
-            }
-        }
-
-        @Override
-        public final Object executePrimitive(final VirtualFrame frame) {
-            try {
-                return executeReplace(frame);
-            } catch (IndexOutOfBoundsException | IllegalArgumentException e) {
-                throw new PrimitiveFailed();
-            }
-        }
-
         public abstract Object executeReplace(VirtualFrame frame);
 
         @Specialization(guards = "!isSmallInteger(repl)")
@@ -360,7 +340,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return doLargeInteger(rcvr, start, stop, asLargeInteger(repl), replStart);
         }
 
-        @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
+        @Specialization(guards = "inBounds(rcvr, start, stop, repl, replStart)")
         protected static final Object doLargeInteger(final LargeIntegerObject rcvr, final long start, final long stop, final LargeIntegerObject repl, final long replStart) {
             final byte[] rcvrBytes = rcvr.getBytes();
             final byte[] replBytes = repl.getBytes();
@@ -372,7 +352,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
+        @Specialization(guards = "inBounds(rcvr, start, stop, repl, replStart)")
         protected static final Object doLargeIntegerFloat(final LargeIntegerObject rcvr, final long start, final long stop, final FloatObject repl, final long replStart) {
             final byte[] rcvrBytes = rcvr.getBytes();
             final byte[] replBytes = repl.getBytes();
@@ -384,7 +364,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "repl.isByteType()"})
+        @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "repl.isByteType()"})
         protected static final Object doLargeIntegerNative(final LargeIntegerObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
             final byte[] rcvrBytes = rcvr.getBytes();
             final byte[] replBytes = repl.getByteStorage();
@@ -396,7 +376,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
+        @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "rcvr.haveSameStorageType(repl)"})
         protected final Object doNative(final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
             final int repOff = (int) (replStart - start);
             for (int i = (int) (start - 1); i < stop; i++) {
@@ -410,16 +390,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return doNativeLargeInteger(rcvr, start, stop, asLargeInteger(repl), replStart);
         }
 
-        @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
-        protected final Object doNativeArray(final NativeObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
-            final int repOff = (int) (replStart - start);
-            for (int i = (int) (start - 1); i < stop; i++) {
-                getAtPut0Node().execute(rcvr, i, getAt0Node().execute(repl, repOff + i));
-            }
-            return rcvr;
-        }
-
-        @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
+        @Specialization(guards = "inBounds(rcvr, start, stop, repl, replStart)")
         protected final Object doNativeLargeInteger(final NativeObject rcvr, final long start, final long stop, final LargeIntegerObject repl, final long replStart) {
             final int repOff = (int) (replStart - start);
             for (int i = (int) (start - 1); i < stop; i++) {
@@ -428,58 +399,55 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
-        protected final Object doNativeFloat(final NativeObject rcvr, final long start, final long stop, final FloatObject repl, final long replStart) {
-            final int repOff = (int) (replStart - start);
-            for (int i = (int) (start - 1); i < stop; i++) {
-                getAtPut0Node().execute(rcvr, i, repl.getNativeAt0(repOff + i));
-            }
-            return rcvr;
+        @SuppressWarnings("unused")
+        @Specialization(guards = "inBounds(rcvr, start, stop, repl, replStart)")
+        protected static final Object doNativeFloat(final NativeObject rcvr, final long start, final long stop, final FloatObject repl, final long replStart) {
+            throw new SqueakException("Not supported"); // TODO: check this is needed
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isEmptyType()", "repl.isEmptyType()"})
+        @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "rcvr.isEmptyType()", "repl.isEmptyType()"})
         protected static final Object doEmptyArrays(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
             return rcvr; // Nothing to do.
         }
 
-        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isEmptyType()", "repl.isAbstractSqueakObjectType()"})
+        @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "rcvr.isEmptyType()", "repl.isAbstractSqueakObjectType()"})
         protected static final Object doEmptyArrayToSqueakObjects(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
             rcvr.transitionFromEmptyToAbstractSqueakObjects();
             return doArraysOfSqueakObjects(rcvr, start, stop, repl, replStart);
         }
 
-        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isEmptyType()", "repl.isBooleanType()"})
+        @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "rcvr.isEmptyType()", "repl.isBooleanType()"})
         protected static final Object doEmptyArrayToBooleans(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
             rcvr.transitionFromEmptyToBooleans();
             return doArraysOfBooleans(rcvr, start, stop, repl, replStart);
         }
 
-        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isEmptyType()", "repl.isCharType()"})
+        @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "rcvr.isEmptyType()", "repl.isCharType()"})
         protected static final Object doEmptyArrayToChars(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
             rcvr.transitionFromEmptyToChars();
             return doArraysOfChars(rcvr, start, stop, repl, replStart);
         }
 
-        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isEmptyType()", "repl.isLongType()"})
+        @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "rcvr.isEmptyType()", "repl.isLongType()"})
         protected static final Object doEmptyArrayToLongs(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
             rcvr.transitionFromEmptyToLongs();
             return doArraysOfLongs(rcvr, start, stop, repl, replStart);
         }
 
-        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isEmptyType()", "repl.isDoubleType()"})
+        @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "rcvr.isEmptyType()", "repl.isDoubleType()"})
         protected static final Object doEmptyArrayToDoubles(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
             rcvr.transitionFromDoublesToObjects();
             return doArraysOfDoubles(rcvr, start, stop, repl, replStart);
         }
 
-        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isEmptyType()", "repl.isObjectType()"})
+        @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "rcvr.isEmptyType()", "repl.isObjectType()"})
         protected static final Object doEmptyArrayToObjects(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
             rcvr.transitionFromEmptyToObjects();
             return doArraysOfObjects(rcvr, start, stop, repl, replStart);
         }
 
-        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isAbstractSqueakObjectType()", "repl.isAbstractSqueakObjectType()"})
+        @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "rcvr.isAbstractSqueakObjectType()", "repl.isAbstractSqueakObjectType()"})
         protected static final Object doArraysOfSqueakObjects(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
             final int repOff = (int) (replStart - start);
             final AbstractSqueakObject[] dstArray = rcvr.getAbstractSqueakObjectStorage();
@@ -490,7 +458,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isAbstractSqueakObjectType()", "!repl.isAbstractSqueakObjectType()"})
+        @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "rcvr.isAbstractSqueakObjectType()", "!repl.isAbstractSqueakObjectType()"})
         protected static final Object doArraysOfSqueakObjectsTransition(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
                         @Cached("create()") final GetObjectArrayNode getObjectArrayNode) {
             rcvr.transitionFromAbstractSqueakObjectsToObjects();
@@ -498,7 +466,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isBooleanType()", "repl.isBooleanType()"})
+        @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "rcvr.isBooleanType()", "repl.isBooleanType()"})
         protected static final Object doArraysOfBooleans(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
             final int repOff = (int) (replStart - start);
             final byte[] dstLongs = rcvr.getBooleanStorage();
@@ -509,7 +477,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isCharType()", "repl.isCharType()"})
+        @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "rcvr.isCharType()", "repl.isCharType()"})
         protected static final Object doArraysOfChars(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
             final int repOff = (int) (replStart - start);
             final char[] dstLongs = rcvr.getCharStorage();
@@ -520,7 +488,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isLongType()", "repl.isLongType()"})
+        @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "rcvr.isLongType()", "repl.isLongType()"})
         protected static final Object doArraysOfLongs(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
             final int repOff = (int) (replStart - start);
             final long[] dstLongs = rcvr.getLongStorage();
@@ -531,7 +499,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isLongType()", "!repl.isLongType()"})
+        @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "rcvr.isLongType()", "!repl.isLongType()"})
         protected static final Object doArraysOfLongsTransition(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
                         @Cached("create()") final GetObjectArrayNode getObjectArrayNode) {
             rcvr.transitionFromLongsToObjects();
@@ -539,7 +507,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isDoubleType()", "repl.isDoubleType()"})
+        @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "rcvr.isDoubleType()", "repl.isDoubleType()"})
         protected static final Object doArraysOfDoubles(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
             final int repOff = (int) (replStart - start);
             final double[] dstDoubles = rcvr.getDoubleStorage();
@@ -550,7 +518,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isDoubleType()", "!repl.isDoubleType()"})
+        @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "rcvr.isDoubleType()", "!repl.isDoubleType()"})
         protected static final Object doArraysOfDoublesTransition(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
                         @Cached("create()") final GetObjectArrayNode getObjectArrayNode) {
             rcvr.transitionFromDoublesToObjects();
@@ -558,7 +526,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isObjectType()", "repl.isObjectType()"})
+        @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "rcvr.isObjectType()", "repl.isObjectType()"})
         protected static final Object doArraysOfObjects(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
             final int repOff = (int) (replStart - start);
             final Object[] dstArray = rcvr.getObjectStorage();
@@ -569,7 +537,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isObjectType()", "!repl.isObjectType()"})
+        @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "rcvr.isObjectType()", "!repl.isObjectType()"})
         protected static final Object doArraysOfObjects(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
                         @Cached("create()") final GetObjectArrayNode getObjectArrayNode) {
             final int repOff = (int) (replStart - start);
@@ -581,43 +549,43 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isEmptyType()"})
+        @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "rcvr.isEmptyType()"})
         protected static final Object doEmptyArrayPointers(final ArrayObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart) {
             rcvr.transitionFromEmptyToObjects(); // TODO: could be more efficient?
             return doArrayOfObjectsPointers(rcvr, start, stop, repl, replStart);
         }
 
-        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isAbstractSqueakObjectType()"})
+        @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "rcvr.isAbstractSqueakObjectType()"})
         protected static final Object doArrayOfSqueakObjectPointers(final ArrayObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart) {
             rcvr.transitionFromAbstractSqueakObjectsToObjects();
             return doArrayOfObjectsPointers(rcvr, start, stop, repl, replStart);
         }
 
-        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isBooleanType()"})
+        @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "rcvr.isBooleanType()"})
         protected static final Object doArrayOfBooleansPointers(final ArrayObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart) {
             rcvr.transitionFromBooleansToObjects();
             return doArrayOfObjectsPointers(rcvr, start, stop, repl, replStart);
         }
 
-        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isCharType()"})
+        @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "rcvr.isCharType()"})
         protected static final Object doArrayOfCharsPointers(final ArrayObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart) {
             rcvr.transitionFromCharsToObjects();
             return doArrayOfObjectsPointers(rcvr, start, stop, repl, replStart);
         }
 
-        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isLongType()"})
+        @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "rcvr.isLongType()"})
         protected static final Object doArrayOfLongsPointers(final ArrayObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart) {
             rcvr.transitionFromLongsToObjects();
             return doArrayOfObjectsPointers(rcvr, start, stop, repl, replStart);
         }
 
-        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isDoubleType()"})
+        @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "rcvr.isDoubleType()"})
         protected static final Object doArrayOfDoublesPointers(final ArrayObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart) {
             rcvr.transitionFromDoublesToObjects();
             return doArrayOfObjectsPointers(rcvr, start, stop, repl, replStart);
         }
 
-        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isObjectType()"})
+        @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "rcvr.isObjectType()"})
         protected static final Object doArrayOfObjectsPointers(final ArrayObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart) {
             final int repOff = (int) (replStart - start);
             final Object[] dstArray = rcvr.getObjectStorage();
@@ -627,43 +595,43 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isEmptyType()"})
+        @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "rcvr.isEmptyType()"})
         protected static final Object doEmptyArrayWeakPointers(final ArrayObject rcvr, final long start, final long stop, final WeakPointersObject repl, final long replStart) {
             rcvr.transitionFromEmptyToObjects(); // TODO: could be more efficient?
             return doArrayOfObjectsWeakPointers(rcvr, start, stop, repl, replStart);
         }
 
-        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isAbstractSqueakObjectType()"})
+        @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "rcvr.isAbstractSqueakObjectType()"})
         protected static final Object doArrayOfSqueakObjectWeakPointers(final ArrayObject rcvr, final long start, final long stop, final WeakPointersObject repl, final long replStart) {
             rcvr.transitionFromAbstractSqueakObjectsToObjects();
             return doArrayOfObjectsWeakPointers(rcvr, start, stop, repl, replStart);
         }
 
-        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isBooleanType()"})
+        @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "rcvr.isBooleanType()"})
         protected static final Object doArrayOfBooleansWeakPointers(final ArrayObject rcvr, final long start, final long stop, final WeakPointersObject repl, final long replStart) {
             rcvr.transitionFromBooleansToObjects();
             return doArrayOfObjectsWeakPointers(rcvr, start, stop, repl, replStart);
         }
 
-        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isCharType()"})
+        @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "rcvr.isCharType()"})
         protected static final Object doArrayOfCharsWeakPointers(final ArrayObject rcvr, final long start, final long stop, final WeakPointersObject repl, final long replStart) {
             rcvr.transitionFromCharsToObjects();
             return doArrayOfObjectsWeakPointers(rcvr, start, stop, repl, replStart);
         }
 
-        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isLongType()"})
+        @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "rcvr.isLongType()"})
         protected static final Object doArrayOfLongsWeakPointers(final ArrayObject rcvr, final long start, final long stop, final WeakPointersObject repl, final long replStart) {
             rcvr.transitionFromLongsToObjects();
             return doArrayOfObjectsWeakPointers(rcvr, start, stop, repl, replStart);
         }
 
-        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isDoubleType()"})
+        @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "rcvr.isDoubleType()"})
         protected static final Object doArrayOfDoublesWeakPointers(final ArrayObject rcvr, final long start, final long stop, final WeakPointersObject repl, final long replStart) {
             rcvr.transitionFromDoublesToObjects();
             return doArrayOfObjectsWeakPointers(rcvr, start, stop, repl, replStart);
         }
 
-        @Specialization(guards = {"hasValidBounds(rcvr, start, stop, repl, replStart)", "rcvr.isObjectType()"})
+        @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "rcvr.isObjectType()"})
         protected static final Object doArrayOfObjectsWeakPointers(final ArrayObject rcvr, final long start, final long stop, final WeakPointersObject repl, final long replStart) {
             final int repOff = (int) (replStart - start);
             final Object[] dstArray = rcvr.getObjectStorage();
@@ -673,7 +641,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
+        @Specialization(guards = "inBounds(rcvr, start, stop, repl, replStart)")
         protected static final Object doPointers(final PointersObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart) {
             final long repOff = replStart - start;
             for (int i = (int) (start - 1); i < stop; i++) {
@@ -682,7 +650,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
+        @Specialization(guards = "inBounds(rcvr, start, stop, repl, replStart)")
         protected static final Object doPointersWeakPointers(final PointersObject rcvr, final long start, final long stop, final WeakPointersObject repl, final long replStart) {
             final long repOff = replStart - start;
             for (int i = (int) (start - 1); i < stop; i++) {
@@ -691,7 +659,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
+        @Specialization(guards = "inBounds(rcvr, start, stop, repl, replStart)")
         protected static final Object doWeakPointers(final WeakPointersObject rcvr, final long start, final long stop, final WeakPointersObject repl, final long replStart) {
             final long repOff = replStart - start;
             for (int i = (int) (start - 1); i < stop; i++) {
@@ -700,7 +668,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
+        @Specialization(guards = "inBounds(rcvr, start, stop, repl, replStart)")
         protected final Object doWeakPointersArray(final WeakPointersObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
             final long repOff = replStart - start;
             for (int i = (int) (start - 1); i < stop; i++) {
@@ -709,7 +677,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
+        @Specialization(guards = "inBounds(rcvr, start, stop, repl, replStart)")
         protected static final Object doWeakPointersPointers(final WeakPointersObject rcvr, final long start, final long stop, final PointersObject repl, final long replStart) {
             final long repOff = replStart - start;
             for (int i = (int) (start - 1); i < stop; i++) {
@@ -718,7 +686,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
+        @Specialization(guards = "inBounds(rcvr, start, stop, repl, replStart)")
         protected static final Object doBlock(final CompiledBlockObject rcvr, final long start, final long stop, final CompiledBlockObject repl, final long replStart) {
             final long repOff = replStart - start;
             for (int i = (int) (start - 1); i < stop; i++) {
@@ -727,7 +695,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return rcvr;
         }
 
-        @Specialization(guards = "hasValidBounds(rcvr, start, stop, repl, replStart)")
+        @Specialization(guards = "inBounds(rcvr, start, stop, repl, replStart)")
         protected static final Object doMethod(final CompiledMethodObject rcvr, final long start, final long stop, final CompiledMethodObject repl, final long replStart) {
             final long repOff = replStart - start;
             for (int i = (int) (start - 1); i < stop; i++) {
@@ -737,12 +705,12 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "!hasValidBounds(rcvr, start, stop, repl, replStart)")
+        @Specialization(guards = "!inBounds(rcvr, start, stop, repl, replStart)")
         protected static final Object doBadIndex(final AbstractSqueakObject rcvr, final long start, final long stop, final AbstractSqueakObject repl, final long replStart) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_INDEX);
         }
 
-        protected final boolean hasValidBounds(final AbstractSqueakObject array, final long start, final long stop, final AbstractSqueakObject repl, final long replStart) {
+        protected final boolean inBounds(final AbstractSqueakObject array, final long start, final long stop, final AbstractSqueakObject repl, final long replStart) {
             return (start >= 1 && (start - 1) <= stop && (stop + instSizeNode.execute(array)) <= sizeNode.execute(array)) &&
                             (replStart >= 1 && (stop - start + replStart + instSizeNode.execute(repl) <= sizeNode.execute(repl)));
         }

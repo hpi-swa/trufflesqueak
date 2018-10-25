@@ -974,7 +974,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(index = 573)
     protected abstract static class PrimListExternalModuleNode extends AbstractPrimitiveNode {
-        @CompilationFinal(dimensions = 1) private static final String[] externalModuleNames;
+        @CompilationFinal(dimensions = 1) protected static final String[] externalModuleNames;
 
         static {
             final Set<String> pluginNames = PrimitiveNodeFactory.getPluginNames();
@@ -986,14 +986,17 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             super(method, numArguments);
         }
 
-        @Specialization
+        @Specialization(guards = "inBounds1(index, externalModuleNames.length)")
         @TruffleBoundary
         protected final Object doGet(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long index) {
-            try {
-                return code.image.wrap(externalModuleNames[(int) index - 1]);
-            } catch (ArrayIndexOutOfBoundsException e) {
-                return code.image.nil;
-            }
+            return code.image.wrap(externalModuleNames[(int) index - 1]);
+        }
+
+        @Specialization(guards = "!inBounds1(index, externalModuleNames.length)")
+        @SuppressWarnings("unused")
+        @TruffleBoundary
+        protected final NilObject doGetOutOfBounds(final AbstractSqueakObject receiver, final long index) {
+            return code.image.nil;
         }
     }
 }

@@ -297,6 +297,10 @@ public final class ContextObject extends AbstractPointersObject {
         atput0(CONTEXT.TEMP_FRAME_START - 1 + argumentIndex, value);
     }
 
+    public int getStackSize() {
+        return size() - CONTEXT.TEMP_FRAME_START;
+    }
+
     public void become(final ContextObject other) {
         becomeOtherClass(other);
         final Object[] otherPointers = other.getPointers();

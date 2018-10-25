@@ -31,32 +31,32 @@ public abstract class SqueakObjectSizeNode extends Node {
 
     @Specialization(guards = "obj.isAbstractSqueakObjectType()")
     protected static final int doArrayObjectOfSqueakObjects(final ArrayObject obj) {
-        return obj.getAbstractSqueakObjectStorage().length;
+        return obj.getAbstractSqueakObjectLength();
     }
 
     @Specialization(guards = "obj.isBooleanType()")
     protected static final int doArrayObjectOfBooleans(final ArrayObject obj) {
-        return obj.getBooleanStorage().length;
+        return obj.getBooleanLength();
     }
 
     @Specialization(guards = "obj.isCharType()")
     protected static final int doArrayObjectOfChars(final ArrayObject obj) {
-        return obj.getCharStorage().length;
+        return obj.getCharLength();
     }
 
     @Specialization(guards = "obj.isLongType()")
     protected static final int doArrayObjectOfLongs(final ArrayObject obj) {
-        return obj.getLongStorage().length;
+        return obj.getLongLength();
     }
 
     @Specialization(guards = "obj.isDoubleType()")
     protected static final int doArrayObjectOfDoubles(final ArrayObject obj) {
-        return obj.getDoubleStorage().length;
+        return obj.getDoubleLength();
     }
 
     @Specialization(guards = "obj.isObjectType()")
     protected static final int doArrayObjectOfObjects(final ArrayObject obj) {
-        return obj.getObjectStorage().length;
+        return obj.getObjectLength();
     }
 
     @Specialization
@@ -86,22 +86,22 @@ public abstract class SqueakObjectSizeNode extends Node {
 
     @Specialization(guards = "obj.isByteType()")
     protected static final int doNativeBytes(final NativeObject obj) {
-        return obj.getByteStorage().length;
+        return obj.getByteLength();
     }
 
     @Specialization(guards = "obj.isShortType()")
     protected static final int doNativeShorts(final NativeObject obj) {
-        return obj.getShortStorage().length;
+        return obj.getShortLength();
     }
 
     @Specialization(guards = "obj.isIntType()")
     protected static final int doNativeInts(final NativeObject obj) {
-        return obj.getIntStorage().length;
+        return obj.getIntLength();
     }
 
     @Specialization(guards = "obj.isLongType()")
     protected static final int doNativeLongs(final NativeObject obj) {
-        return obj.getLongStorage().length;
+        return obj.getLongLength();
     }
 
     @Specialization

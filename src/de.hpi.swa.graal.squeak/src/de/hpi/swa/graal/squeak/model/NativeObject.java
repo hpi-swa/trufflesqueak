@@ -15,30 +15,16 @@ public final class NativeObject extends AbstractSqueakObject {
     public static final int SHORT_MAX = (int) (Math.pow(2, Short.SIZE) - 1);
     public static final long INTEGER_MAX = (long) (Math.pow(2, Integer.SIZE) - 1);
 
-    @CompilationFinal private Object storage;
-
     public static NativeObject newNativeBytes(final SqueakImageChunk chunk) {
         return new NativeObject(chunk.image, chunk.getHash(), chunk.getSqClass(), chunk.getBytes());
-    }
-
-    public static NativeObject newNativeBytes(final SqueakImageContext img, final ClassObject klass, final int size) {
-        return newNativeBytes(img, klass, new byte[size]);
     }
 
     public static NativeObject newNativeBytes(final SqueakImageContext img, final ClassObject klass, final byte[] bytes) {
         return new NativeObject(img, klass, bytes);
     }
 
-    public static NativeObject newNativeShorts(final SqueakImageChunk chunk) {
-        return new NativeObject(chunk.image, chunk.getHash(), chunk.getSqClass(), chunk.getShorts());
-    }
-
-    public static NativeObject newNativeShorts(final SqueakImageContext img, final ClassObject klass, final int size) {
-        return newNativeShorts(img, klass, new short[size]);
-    }
-
-    public static NativeObject newNativeShorts(final SqueakImageContext img, final ClassObject klass, final short[] shorts) {
-        return new NativeObject(img, klass, shorts);
+    public static NativeObject newNativeBytes(final SqueakImageContext img, final ClassObject klass, final int size) {
+        return newNativeBytes(img, klass, new byte[size]);
     }
 
     public static NativeObject newNativeInts(final SqueakImageChunk chunk) {
@@ -65,6 +51,25 @@ public final class NativeObject extends AbstractSqueakObject {
         return new NativeObject(img, klass, longs);
     }
 
+    public static NativeObject newNativeShorts(final SqueakImageChunk chunk) {
+        return new NativeObject(chunk.image, chunk.getHash(), chunk.getSqClass(), chunk.getShorts());
+    }
+
+    public static NativeObject newNativeShorts(final SqueakImageContext img, final ClassObject klass, final int size) {
+        return newNativeShorts(img, klass, new short[size]);
+    }
+
+    public static NativeObject newNativeShorts(final SqueakImageContext img, final ClassObject klass, final short[] shorts) {
+        return new NativeObject(img, klass, shorts);
+    }
+
+    @CompilationFinal private Object storage;
+
+    public NativeObject(final SqueakImageContext image) { // constructor for special selectors
+        super(image, -1, null);
+        storage = new byte[0];
+    }
+
     protected NativeObject(final SqueakImageContext image, final ClassObject classObject, final Object storage) {
         super(image, classObject);
         assert storage != null;
@@ -77,9 +82,103 @@ public final class NativeObject extends AbstractSqueakObject {
         this.storage = storage;
     }
 
-    public NativeObject(final SqueakImageContext image) { // constructor for special selectors
-        super(image, -1, null);
-        storage = new byte[0];
+    @TruffleBoundary
+    public String asString() {
+        assert isByteType();
+        return new String((byte[]) storage);
+    }
+
+    public void become(final NativeObject other) {
+        super.becomeOtherClass(other);
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        final Object otherStorage = other.storage;
+        other.setStorage(this.storage);
+        this.setStorage(otherStorage);
+    }
+
+    public void convertToBytesStorage(final byte[] bytes) {
+        assert storage.getClass() != bytes.getClass() : "Converting storage of same type unnecessary";
+        setStorage(bytes);
+    }
+
+    public void convertToIntsStorage(final byte[] bytes) {
+        assert storage.getClass() != bytes.getClass() : "Converting storage of same type unnecessary";
+        setStorage(ArrayConversionUtils.intsFromBytes(bytes));
+    }
+
+    public void convertToLongsStorage(final byte[] bytes) {
+        assert storage.getClass() != bytes.getClass() : "Converting storage of same type unnecessary";
+        setStorage(ArrayConversionUtils.longsFromBytes(bytes));
+    }
+
+    public void convertToShortsStorage(final byte[] bytes) {
+        assert storage.getClass() != bytes.getClass() : "Converting storage of same type unnecessary";
+        setStorage(ArrayConversionUtils.shortsFromBytes(bytes));
+    }
+
+    public int getByteLength() {
+        return getByteStorage().length;
+    }
+
+    public byte[] getByteStorage() {
+        assert isByteType();
+        return (byte[]) storage;
+    }
+
+    public int getIntLength() {
+        return getIntStorage().length;
+    }
+
+    public int[] getIntStorage() {
+        assert isIntType();
+        return (int[]) storage;
+    }
+
+    public int getLongLength() {
+        return getLongStorage().length;
+    }
+
+    public long[] getLongStorage() {
+        assert isLongType();
+        return (long[]) storage;
+    }
+
+    public int getShortLength() {
+        return getShortStorage().length;
+    }
+
+    public short[] getShortStorage() {
+        assert isShortType();
+        return (short[]) storage;
+    }
+
+    public boolean haveSameStorageType(final NativeObject other) {
+        return storage.getClass() == other.storage.getClass();
+    }
+
+    public boolean isByteType() {
+        return storage.getClass() == byte[].class;
+    }
+
+    public boolean isIntType() {
+        return storage.getClass() == int[].class;
+    }
+
+    public boolean isLongType() {
+        return storage.getClass() == long[].class;
+    }
+
+    public boolean isShortType() {
+        return storage.getClass() == short[].class;
+    }
+
+    public LargeIntegerObject normalize() {
+        return new LargeIntegerObject(image, getSqueakClass(), getByteStorage());
+    }
+
+    public void setStorage(final Object storage) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        this.storage = storage;
     }
 
     @TruffleBoundary
@@ -97,88 +196,5 @@ public final class NativeObject extends AbstractSqueakObject {
         } else {
             throw new SqueakException("Unexpected native object type");
         }
-    }
-
-    @TruffleBoundary
-    public String asString() {
-        assert isByteType();
-        return new String((byte[]) storage);
-    }
-
-    public void become(final NativeObject other) {
-        super.becomeOtherClass(other);
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        final Object otherStorage = other.storage;
-        other.setStorage(this.storage);
-        this.setStorage(otherStorage);
-    }
-
-    public LargeIntegerObject normalize() {
-        return new LargeIntegerObject(image, getSqueakClass(), getByteStorage());
-    }
-
-    public byte[] getByteStorage() {
-        assert isByteType();
-        return (byte[]) storage;
-    }
-
-    public short[] getShortStorage() {
-        assert isShortType();
-        return (short[]) storage;
-    }
-
-    public int[] getIntStorage() {
-        assert isIntType();
-        return (int[]) storage;
-    }
-
-    public long[] getLongStorage() {
-        assert isLongType();
-        return (long[]) storage;
-    }
-
-    public boolean isByteType() {
-        return storage.getClass() == byte[].class;
-    }
-
-    public boolean isShortType() {
-        return storage.getClass() == short[].class;
-    }
-
-    public boolean isIntType() {
-        return storage.getClass() == int[].class;
-    }
-
-    public boolean isLongType() {
-        return storage.getClass() == long[].class;
-    }
-
-    public boolean haveSameStorageType(final NativeObject other) {
-        return storage.getClass() == other.storage.getClass();
-    }
-
-    public void convertToBytesStorage(final byte[] bytes) {
-        assert storage.getClass() != bytes.getClass() : "Converting storage of same type unnecessary";
-        setStorage(bytes);
-    }
-
-    public void convertToShortsStorage(final byte[] bytes) {
-        assert storage.getClass() != bytes.getClass() : "Converting storage of same type unnecessary";
-        setStorage(ArrayConversionUtils.shortsFromBytes(bytes));
-    }
-
-    public void convertToIntsStorage(final byte[] bytes) {
-        assert storage.getClass() != bytes.getClass() : "Converting storage of same type unnecessary";
-        setStorage(ArrayConversionUtils.intsFromBytes(bytes));
-    }
-
-    public void convertToLongsStorage(final byte[] bytes) {
-        assert storage.getClass() != bytes.getClass() : "Converting storage of same type unnecessary";
-        setStorage(ArrayConversionUtils.longsFromBytes(bytes));
-    }
-
-    public void setStorage(final Object storage) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        this.storage = storage;
     }
 }

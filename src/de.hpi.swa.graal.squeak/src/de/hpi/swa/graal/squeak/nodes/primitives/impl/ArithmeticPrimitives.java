@@ -9,6 +9,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
@@ -592,14 +593,26 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @Specialization
-        protected final Object doDouble(final double receiver, final long index) {
-            return doFloatObject(new FloatObject(code.image, receiver), index);
+        @Specialization(guards = "index == 1")
+        protected static final Object doDoubleHigh(final double receiver, @SuppressWarnings("unused") final long index) {
+            final long bits = Double.doubleToRawLongBits(receiver);
+            return Integer.toUnsignedLong((int) (bits >> 32));
         }
 
-        @Specialization
-        protected static final Object doFloatObject(final FloatObject receiver, final long index) {
-            return receiver.getNativeAt0(index - 1);
+        @Specialization(guards = "index == 2")
+        protected static final Object doDoubleLow(final double receiver, @SuppressWarnings("unused") final long index) {
+            final long bits = Double.doubleToRawLongBits(receiver);
+            return Integer.toUnsignedLong((int) bits);
+        }
+
+        @Specialization(guards = "index == 1")
+        protected static final Object doFloatObjectHigh(final FloatObject receiver, @SuppressWarnings("unused") final long index) {
+            return receiver.getHigh();
+        }
+
+        @Specialization(guards = "index == 2")
+        protected static final Object doFloatObjectLow(final FloatObject receiver, @SuppressWarnings("unused") final long index) {
+            return receiver.getLow();
         }
     }
 
@@ -610,15 +623,22 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @Specialization
-        protected final double doDouble(final double receiver, final long index, final long value) {
-            return doFloatObject(new FloatObject(code.image, receiver), index, value);
+        @Specialization(guards = "index == 1")
+        protected static final long doFloatHigh(final FloatObject receiver, @SuppressWarnings("unused") final long index, final long value) {
+            receiver.setHigh(value);
+            return value;
         }
 
-        @Specialization
-        protected static final long doFloatObject(final FloatObject receiver, final long index, final long value) {
-            receiver.setNativeAt0(index - 1, value);
+        @Specialization(guards = "index == 2")
+        protected static final long doFloatLow(final FloatObject receiver, @SuppressWarnings("unused") final long index, final long value) {
+            receiver.setLow(value);
             return value;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected static final double doDouble(final double receiver, final long index, final long value) {
+            throw new SqueakException("Cannot modify immediate double value");
         }
     }
 

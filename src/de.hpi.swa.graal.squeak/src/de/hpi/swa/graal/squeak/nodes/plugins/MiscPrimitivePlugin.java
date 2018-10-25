@@ -302,7 +302,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @Specialization(guards = {"start >= 1", "string.isByteType()", "inclusionMap.isByteType()", "inclusionMap.getByteStorage().length == 256"})
+        @Specialization(guards = {"start >= 1", "string.isByteType()", "inclusionMap.isByteType()", "inclusionMap.getByteLength() == 256"})
         protected static final long doFind(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject string, final NativeObject inclusionMap, final long start) {
             final byte[] stringBytes = string.getByteStorage();
             final byte[] inclusionMapBytes = inclusionMap.getByteStorage();
@@ -319,7 +319,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"start >= 1", "string.isByteType()", "inclusionMap.isByteType()", "inclusionMap.getByteStorage().length != 256"})
+        @Specialization(guards = {"start >= 1", "string.isByteType()", "inclusionMap.isByteType()", "inclusionMap.getByteLength() != 256"})
         protected static final long doFindNot256(final AbstractSqueakObject receiver, final NativeObject string, final NativeObject inclusionMap, final long start) {
             return 0L;
         }
@@ -345,62 +345,27 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @Override
-        public final Object executeWithArguments(final VirtualFrame frame, final Object... arguments) {
-            try {
-                return executeWithArgumentsSpecialized(frame, arguments);
-            } catch (ArrayIndexOutOfBoundsException e) {
-                throw new PrimitiveFailed();
-            }
-        }
-
-        @Override
-        public final Object executePrimitive(final VirtualFrame frame) {
-            try {
-                return executeFindSubstring(frame);
-            } catch (ArrayIndexOutOfBoundsException e) {
-                throw new PrimitiveFailed();
-            }
-        }
-
         public abstract Object executeFindSubstring(VirtualFrame frame);
 
-        @Specialization(guards = {"key.isByteType()", "body.isByteType()", "matchTable.isByteType()"})
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"key.isByteType()", "key.getByteLength() == 0"})
+        protected static final long doFindQuick(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject key, final NativeObject body, final long start,
+                        final NativeObject matchTable) {
+            return 0L;
+        }
+
+        @Specialization(guards = {"key.isByteType()", "key.getByteLength() > 0", "body.isByteType()", "matchTable.isByteType()", "hasAtLeast256Items(matchTable)"})
         protected static final long doFind(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject key, final NativeObject body, final long start,
                         final NativeObject matchTable) {
             final byte[] keyBytes = key.getByteStorage();
             final int keyBytesLength = keyBytes.length;
-            if (keyBytesLength == 0) {
-                return 0L;
-            }
+            assert keyBytesLength != 0;
             final byte[] bodyBytes = body.getByteStorage();
+            final int bodyBytesLength = bodyBytes.length;
             final byte[] matchTableBytes = matchTable.getByteStorage();
-            for (int startIndex = Math.max((int) start - 1, 0); startIndex <= bodyBytes.length - keyBytes.length; startIndex++) {
+            for (int startIndex = Math.max((int) start - 1, 0); startIndex <= bodyBytesLength - keyBytesLength; startIndex++) {
                 int index = 0;
-                while (matchTableBytes[bodyBytes[startIndex + index]] == matchTableBytes[keyBytes[index]]) {
-                    if (index == keyBytesLength - 1) {
-                        return startIndex + 1;
-                    } else {
-                        index++;
-                    }
-                }
-            }
-            return 0L;
-        }
-
-        @Specialization(guards = {"key.isByteType()", "body.isIntType()", "matchTable.isByteType()"})
-        protected static final long doFindWideBody(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject key, final NativeObject body, final long start,
-                        final NativeObject matchTable) {
-            final byte[] keyBytes = key.getByteStorage();
-            final int keyBytesLength = keyBytes.length;
-            if (keyBytesLength == 0) {
-                return 0L;
-            }
-            final int[] bodyBytes = body.getIntStorage();
-            final byte[] matchTableBytes = matchTable.getByteStorage();
-            for (int startIndex = Math.max((int) start - 1, 0); startIndex <= bodyBytes.length - keyBytes.length; startIndex++) {
-                int index = 0;
-                while (matchTableBytes[bodyBytes[startIndex + index]] == matchTableBytes[keyBytes[index]]) {
+                while (matchTableBytes[Byte.toUnsignedInt(bodyBytes[startIndex + index])] == matchTableBytes[keyBytes[index]]) {
                     if (index == keyBytesLength - 1) {
                         return startIndex + 1;
                     } else {
@@ -412,9 +377,13 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "!key.isByteType() || !matchTable.isByteType()")
+        @Specialization(guards = "!key.isByteType() || (!body.isByteType() || !matchTable.isByteType())")
         protected static final long doInvalidKey(final AbstractSqueakObject receiver, final NativeObject key, final NativeObject body, final long start, final NativeObject matchTable) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
+        }
+
+        protected static final boolean hasAtLeast256Items(final NativeObject matchTable) {
+            return matchTable.getByteLength() >= 256;
         }
     }
 
@@ -481,7 +450,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @Specialization(guards = {"start >= 1", "string.isByteType()", "stop < string.getByteStorage().length", "table.isByteType()", "table.getByteStorage().length >= 256"})
+        @Specialization(guards = {"start >= 1", "string.isByteType()", "stop < string.getByteLength()", "table.isByteType()", "table.getByteLength() >= 256"})
         protected static final AbstractSqueakObject doNativeObject(final AbstractSqueakObject receiver, final NativeObject string, final long start, final long stop, final NativeObject table) {
             final byte[] stringBytes = string.getByteStorage();
             final byte[] tableBytes = table.getByteStorage();
@@ -504,7 +473,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         protected static final boolean hasBadIndex(final NativeObject string, final long start, final long stop, final NativeObject table) {
-            return start < 1 || (string.isByteType() && stop >= string.getByteStorage().length) || (table.isByteType() && table.getByteStorage().length >= 256);
+            return start < 1 || (string.isByteType() && stop >= string.getByteLength()) || (table.isByteType() && table.getByteLength() >= 256);
         }
     }
 }

@@ -13,6 +13,19 @@ import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 
 public final class SqueakGuards {
+
+    public static boolean between(final long value, final int minIncluded, final int maxIncluded) {
+        return minIncluded <= value && value <= maxIncluded;
+    }
+
+    public static boolean inBounds0(final long index, final int size) {
+        return 0 <= index && index < size;
+    }
+
+    public static boolean inBounds1(final long index, final int size) {
+        return 0 < index && index <= size;
+    }
+
     public static boolean isAbstractSqueakObject(final Object object) {
         return object instanceof AbstractSqueakObject;
     }

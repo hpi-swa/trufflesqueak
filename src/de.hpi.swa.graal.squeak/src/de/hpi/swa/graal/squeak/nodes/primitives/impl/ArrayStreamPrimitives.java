@@ -9,7 +9,6 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.profiles.BranchProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
@@ -22,12 +21,15 @@ import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
+import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
+import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeAcceptsValueNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectInstSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveWithSizeNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.ArithmeticPrimitives.AbstractArithmeticPrimitiveNode;
 
@@ -38,43 +40,41 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         return ArrayStreamPrimitivesFactory.getFactories();
     }
 
+    protected abstract static class AbstractBasicAtOrAtPutNode extends AbstractPrimitiveWithSizeNode {
+        @Child protected SqueakObjectInstSizeNode instSizeNode;
+
+        public AbstractBasicAtOrAtPutNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        protected final boolean inBoundsOfSqueakObject(final long index, final AbstractSqueakObject target) {
+            return SqueakGuards.inBounds1(index + getInstSizeNode().execute(target), sizeNode.execute(target));
+        }
+
+        protected final SqueakObjectInstSizeNode getInstSizeNode() {
+            if (instSizeNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                instSizeNode = insert(SqueakObjectInstSizeNode.create());
+            }
+            return instSizeNode;
+        }
+    }
+
     @GenerateNodeFactory
     @SqueakPrimitive(index = 60)
-    protected abstract static class PrimBasicAtNode extends AbstractPrimitiveNode {
-        @Child private SqueakObjectInstSizeNode instSizeNode = SqueakObjectInstSizeNode.create();
+    protected abstract static class PrimBasicAtNode extends AbstractBasicAtOrAtPutNode {
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
 
         protected PrimBasicAtNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        @Override
-        public final Object executeWithArguments(final VirtualFrame frame, final Object... arguments) {
-            try {
-                return executeWithArgumentsSpecialized(frame, arguments);
-            } catch (IndexOutOfBoundsException e) {
-                throw new PrimitiveFailed();
-            }
-        }
-
-        @Override
-        public final Object executePrimitive(final VirtualFrame frame) {
-            try {
-                return executeAt(frame);
-            } catch (IndexOutOfBoundsException e) {
-                throw new PrimitiveFailed();
-            }
-        }
-
         public abstract Object executeAt(VirtualFrame frame);
 
-        @Specialization
-        protected static final long doCharacter(final char receiver, final long index, @SuppressWarnings("unused") final NotProvided notProvided) {
-            if (index == 1) {
-                return receiver;
-            } else {
-                throw new PrimitiveFailed();
-            }
+        @SuppressWarnings("unused")
+        @Specialization(guards = "index == 1")
+        protected static final long doCharacter(final char receiver, final long index, final NotProvided notProvided) {
+            return receiver;
         }
 
         @Specialization(guards = "!isSmallInteger(receiver)")
@@ -86,27 +86,35 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             }
         }
 
-        @Specialization
+        @Specialization(guards = "inBounds(index, receiver)")
         protected final Object doNative(final NativeObject receiver, final long index, @SuppressWarnings("unused") final NotProvided notProvided) {
             return at0Node.execute(receiver, index - 1);
         }
 
-        @Specialization
+        @Specialization(guards = "inBounds(index, receiver)")
         protected static final long doLargeInteger(final LargeIntegerObject receiver, final long index, @SuppressWarnings("unused") final NotProvided notProvided) {
             return receiver.getNativeAt0(index - 1);
         }
 
-        @Specialization
-        protected static final long doFloat(final FloatObject receiver, final long index, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return receiver.getNativeAt0(index - 1);
+        @SuppressWarnings("unused")
+        @Specialization(guards = "index == 1")
+        protected static final long doFloatHigh(final FloatObject receiver, final long index, final NotProvided notProvided) {
+            return receiver.getHigh();
         }
 
-        @Specialization
+        @SuppressWarnings("unused")
+        @Specialization(guards = "index == 2")
+        protected static final long doFloatLow(final FloatObject receiver, final long index, final NotProvided notProvided) {
+            return receiver.getLow();
+        }
+
+        @Specialization(guards = "inBounds(index, receiver)")
         protected final Object doArray(final ArrayObject receiver, final long index, @SuppressWarnings("unused") final NotProvided notProvided) {
             return getAt0Node().execute(receiver, index - 1);
         }
 
-        @Specialization(guards = {"!isNativeObject(receiver)", "!isLargeIntegerObject(receiver)", "!isFloatObject(receiver)", "!isArrayObject(receiver)"})
+        @Specialization(guards = {"inBoundsOfSqueakObject(index, receiver)",
+                        "!isNativeObject(receiver)", "!isLargeIntegerObject(receiver)", "!isFloatObject(receiver)", "!isArrayObject(receiver)"})
         protected final Object doSqueakObject(final AbstractSqueakObject receiver, final long index, @SuppressWarnings("unused") final NotProvided notProvided) {
             return getAt0Node().execute(receiver, index - 1 + instSizeNode.execute(receiver));
         }
@@ -115,13 +123,10 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
          * Context>>#object:basicAt:
          */
 
-        @Specialization
-        protected static final long doCharacter(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final char target, final long index) {
-            if (index == 1) {
-                return target;
-            } else {
-                throw new PrimitiveFailed();
-            }
+        @SuppressWarnings("unused")
+        @Specialization(guards = "index == 1")
+        protected static final long doCharacter(final AbstractSqueakObject receiver, final char target, final long index) {
+            return target;
         }
 
         @Specialization(guards = "!isSmallInteger(target)")
@@ -129,27 +134,35 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             return asLargeInteger(target).getNativeAt0(index - 1);
         }
 
-        @Specialization
+        @Specialization(guards = "inBounds(index, target)")
         protected final Object doNative(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject target, final long index) {
             return getAt0Node().execute(target, index - 1);
         }
 
-        @Specialization
+        @Specialization(guards = "inBounds(index, target)")
         protected static final long doLargeInteger(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final LargeIntegerObject target, final long index) {
             return target.getNativeAt0(index - 1);
         }
 
-        @Specialization
-        protected static final long doFloat(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final FloatObject target, final long index) {
-            return target.getNativeAt0(index - 1);
+        @SuppressWarnings("unused")
+        @Specialization(guards = "index == 1")
+        protected static final long doFloatHigh(final AbstractSqueakObject receiver, final FloatObject target, final long index) {
+            return target.getHigh();
         }
 
-        @Specialization
+        @SuppressWarnings("unused")
+        @Specialization(guards = "index == 2")
+        protected static final long doFloatLow(final AbstractSqueakObject receiver, final FloatObject target, final long index) {
+            return target.getLow();
+        }
+
+        @Specialization(guards = "inBounds(index, target)")
         protected final Object doArray(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final ArrayObject target, final long index) {
             return getAt0Node().execute(target, index - 1);
         }
 
-        @Specialization(guards = {"!isNativeObject(target)", "!isLargeIntegerObject(target)", "!isFloatObject(target)", "!isArrayObject(target)"})
+        @Specialization(guards = {"inBoundsOfSqueakObject(index, target)",
+                        "!isNativeObject(target)", "!isLargeIntegerObject(target)", "!isFloatObject(target)", "!isArrayObject(target)"})
         protected final Object doSqueakObject(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final AbstractSqueakObject target, final long index) {
             return getAt0Node().execute(target, index - 1 + getInstSizeNode().execute(target));
         }
@@ -161,133 +174,95 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             }
             return at0Node;
         }
-
-        private SqueakObjectInstSizeNode getInstSizeNode() {
-            if (instSizeNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                instSizeNode = insert(SqueakObjectInstSizeNode.create());
-            }
-            return instSizeNode;
-        }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 61)
-    protected abstract static class PrimBasicAtPutNode extends AbstractPrimitiveNode {
-        @Child private SqueakObjectInstSizeNode instSizeNode;
+    protected abstract static class PrimBasicAtPutNode extends AbstractBasicAtOrAtPutNode {
         @Child private SqueakObjectAtPut0Node atPut0Node;
+        @Child private NativeAcceptsValueNode acceptsValueNode;
 
         protected PrimBasicAtPutNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        @Override
-        public final Object executeWithArguments(final VirtualFrame frame, final Object... arguments) {
-            try {
-                return executeWithArgumentsSpecialized(frame, arguments);
-            } catch (IndexOutOfBoundsException | IllegalArgumentException e) {
-                throw new PrimitiveFailed();
-            }
-        }
-
-        @Override
-        public final Object executePrimitive(final VirtualFrame frame) {
-            try {
-                return executeAtPut(frame);
-            } catch (IndexOutOfBoundsException | IllegalArgumentException e) {
-                throw new PrimitiveFailed();
-            }
-        }
-
         public abstract Object executeAtPut(VirtualFrame frame);
 
-        @Specialization
+        @Specialization(guards = {"inBounds(index, receiver)", "getAcceptsValueNode().execute(receiver, value)"})
         protected char doNativeChar(final NativeObject receiver, final long index, final char value, @SuppressWarnings("unused") final NotProvided notProvided) {
-            try {
-                getAtPut0Node().execute(receiver, index - 1, value);
-            } catch (IllegalArgumentException e) { // TODO: are these try-catch blocks necessary?
-                throw new PrimitiveFailed();
-            }
+            getAtPut0Node().execute(receiver, index - 1, value);
             return value;
         }
 
-        @Specialization
+        @Specialization(guards = {"inBounds(index, receiver)", "getAcceptsValueNode().execute(receiver, value)"})
         protected long doNativeLong(final NativeObject receiver, final long index, final long value, @SuppressWarnings("unused") final NotProvided notProvided) {
-            try {
-                getAtPut0Node().execute(receiver, index - 1, value);
-            } catch (IllegalArgumentException e) {
-                throw new PrimitiveFailed();
-            }
+            getAtPut0Node().execute(receiver, index - 1, value);
             return value;
         }
 
-        @Specialization
+        @Specialization(guards = {"inBounds(index, receiver)", "value.fitsIntoLong()", "getAcceptsValueNode().execute(receiver, value.longValueExact())"})
         protected Object doNativeLargeInteger(final NativeObject receiver, final long index, final LargeIntegerObject value, @SuppressWarnings("unused") final NotProvided notProvided) {
-            try {
-                getAtPut0Node().execute(receiver, index - 1, value.longValueExact());
-            } catch (IllegalArgumentException | ArithmeticException e) {
-                throw new PrimitiveFailed();
-            }
+            getAtPut0Node().execute(receiver, index - 1, value.longValueExact());
             return value;
         }
 
-        @Specialization
+        @Specialization(guards = "inBounds(index, receiver)")
         protected char doLargeIntegerChar(final LargeIntegerObject receiver, final long index, final char value, @SuppressWarnings("unused") final NotProvided notProvided) {
-            try {
-                receiver.setNativeAt0(index - 1, value);
-            } catch (IllegalArgumentException e) {
-                throw new PrimitiveFailed();
-            }
+            receiver.setNativeAt0(index - 1, value);
             return value;
         }
 
-        @Specialization
+        @Specialization(guards = "inBounds(index, receiver)")
         protected long doLargeIntegerLong(final LargeIntegerObject receiver, final long index, final long value, @SuppressWarnings("unused") final NotProvided notProvided) {
-            try {
-                receiver.setNativeAt0(index - 1, value);
-            } catch (IllegalArgumentException e) {
-                throw new PrimitiveFailed();
-            }
+            receiver.setNativeAt0(index - 1, value);
             return value;
         }
 
-        @Specialization
+        @Specialization(guards = "inBounds(index, receiver)")
         protected Object doLargeInteger(final LargeIntegerObject receiver, final long index, final LargeIntegerObject value, @SuppressWarnings("unused") final NotProvided notProvided) {
-            try {
-                receiver.setNativeAt0(index - 1, value.longValueExact());
-            } catch (IllegalArgumentException | ArithmeticException e) {
-                throw new PrimitiveFailed();
-            }
+            receiver.setNativeAt0(index - 1, value.longValueExact());
             return value;
         }
 
-        @Specialization
-        protected char doFloatChar(final FloatObject receiver, final long index, final char value, @SuppressWarnings("unused") final NotProvided notProvided) {
-            try {
-                receiver.setNativeAt0(index - 1, value);
-            } catch (IllegalArgumentException e) {
-                throw new PrimitiveFailed();
-            }
+        @SuppressWarnings("unused")
+        @Specialization(guards = "index == 1")
+        protected char doFloatHighChar(final FloatObject receiver, final long index, final char value, final NotProvided notProvided) {
+            receiver.setHigh(value);
             return value;
         }
 
-        @Specialization
-        protected long doFloatLong(final FloatObject receiver, final long index, final long value, @SuppressWarnings("unused") final NotProvided notProvided) {
-            try {
-                receiver.setNativeAt0(index - 1, value);
-            } catch (IllegalArgumentException e) {
-                throw new PrimitiveFailed();
-            }
+        @SuppressWarnings("unused")
+        @Specialization(guards = "index == 2")
+        protected char doFloatLowChar(final FloatObject receiver, final long index, final char value, final NotProvided notProvided) {
+            receiver.setLow(value);
             return value;
         }
 
-        @Specialization
-        protected Object doFloatLargeInteger(final FloatObject receiver, final long index, final LargeIntegerObject value, @SuppressWarnings("unused") final NotProvided notProvided) {
-            try {
-                receiver.setNativeAt0(index - 1, value.longValueExact());
-            } catch (IllegalArgumentException | ArithmeticException e) {
-                throw new PrimitiveFailed();
-            }
+        @SuppressWarnings("unused")
+        @Specialization(guards = "index == 1")
+        protected long doFloatHighLong(final FloatObject receiver, final long index, final long value, final NotProvided notProvided) {
+            receiver.setHigh(value);
+            return value;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "index == 2")
+        protected long doFloatLowLong(final FloatObject receiver, final long index, final long value, final NotProvided notProvided) {
+            receiver.setLow(value);
+            return value;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "index == 1")
+        protected Object doFloatHighLargeInteger(final FloatObject receiver, final long index, final LargeIntegerObject value, final NotProvided notProvided) {
+            receiver.setHigh(value.longValueExact());
+            return value;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "index == 2")
+        protected Object doFloatLowLargeInteger(final FloatObject receiver, final long index, final LargeIntegerObject value, final NotProvided notProvided) {
+            receiver.setLow(value.longValueExact());
             return value;
         }
 
@@ -307,13 +282,14 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             return value;
         }
 
-        @Specialization
+        @Specialization(guards = "inBounds(index, receiver)")
         protected final Object doArray(final ArrayObject receiver, final long index, final Object value, @SuppressWarnings("unused") final NotProvided notProvided) {
             getAtPut0Node().execute(receiver, index - 1, value);
             return value;
         }
 
-        @Specialization(guards = {"!isNativeObject(receiver)", "!isEmptyObject(receiver)", "!isArrayObject(receiver)"})
+        @Specialization(guards = {"inBoundsOfSqueakObject(index, receiver)",
+                        "!isNativeObject(receiver)", "!isEmptyObject(receiver)", "!isArrayObject(receiver)"})
         protected final Object doSqueakObject(final AbstractSqueakObject receiver, final long index, final Object value, @SuppressWarnings("unused") final NotProvided notProvided) {
             getAtPut0Node().execute(receiver, index - 1 + getInstSizeNode().execute(receiver), value);
             return value;
@@ -323,33 +299,21 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
          * Context>>#object:basicAt:put:
          */
 
-        @Specialization
+        @Specialization(guards = {"inBounds(index, target)", "getAcceptsValueNode().execute(target, value)"})
         protected char doNativeChar(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject target, final long index, final char value) {
-            try {
-                getAtPut0Node().execute(target, index - 1, value);
-            } catch (IllegalArgumentException e) {
-                throw new PrimitiveFailed();
-            }
+            getAtPut0Node().execute(target, index - 1, value);
             return value;
         }
 
-        @Specialization
+        @Specialization(guards = {"inBounds(index, target)", "getAcceptsValueNode().execute(target, value)"})
         protected long doNativeLong(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject target, final long index, final long value) {
-            try {
-                getAtPut0Node().execute(target, index - 1, value);
-            } catch (IllegalArgumentException e) {
-                throw new PrimitiveFailed();
-            }
+            getAtPut0Node().execute(target, index - 1, value);
             return value;
         }
 
-        @Specialization
+        @Specialization(guards = {"inBounds(index, target)", "value.fitsIntoLong()", "getAcceptsValueNode().execute(target, value.longValueExact())"})
         protected Object doNativeLargeInteger(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject target, final long index, final LargeIntegerObject value) {
-            try {
-                getAtPut0Node().execute(target, index - 1, value.longValueExact());
-            } catch (IllegalArgumentException | ArithmeticException e) {
-                throw new PrimitiveFailed();
-            }
+            getAtPut0Node().execute(target, index - 1, value.longValueExact());
             return value;
         }
 
@@ -383,33 +347,45 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             return value;
         }
 
-        @Specialization
-        protected char doFloatChar(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final FloatObject target, final long index, final char value) {
-            try {
-                target.setNativeAt0(index - 1, value);
-            } catch (IllegalArgumentException e) {
-                throw new PrimitiveFailed();
-            }
+        @SuppressWarnings("unused")
+        @Specialization(guards = "index == 1")
+        protected char doFloatHighChar(final AbstractSqueakObject receiver, final FloatObject target, final long index, final char value) {
+            target.setHigh(value);
             return value;
         }
 
-        @Specialization
-        protected long doFloatLong(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final FloatObject target, final long index, final long value) {
-            try {
-                target.setNativeAt0(index - 1, value);
-            } catch (IllegalArgumentException e) {
-                throw new PrimitiveFailed();
-            }
+        @SuppressWarnings("unused")
+        @Specialization(guards = "index == 2")
+        protected char doFloatLowChar(final AbstractSqueakObject receiver, final FloatObject target, final long index, final char value) {
+            target.setLow(value);
             return value;
         }
 
-        @Specialization
-        protected Object doFloatLargeInteger(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final FloatObject target, final long index, final LargeIntegerObject value) {
-            try {
-                target.setNativeAt0(index - 1, value.longValueExact());
-            } catch (IllegalArgumentException | ArithmeticException e) {
-                throw new PrimitiveFailed();
-            }
+        @SuppressWarnings("unused")
+        @Specialization(guards = "index == 1")
+        protected long doFloatHighLong(final AbstractSqueakObject receiver, final FloatObject target, final long index, final long value) {
+            target.setHigh(value);
+            return value;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "index == 2")
+        protected long doFloatLowLong(final AbstractSqueakObject receiver, final FloatObject target, final long index, final long value) {
+            target.setLow(value);
+            return value;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "index == 1")
+        protected Object doFloatHighLargeInteger(final AbstractSqueakObject receiver, final FloatObject target, final long index, final LargeIntegerObject value) {
+            target.setHigh(value.longValueExact());
+            return value;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "index == 2")
+        protected Object doFloatLowLargeInteger(final AbstractSqueakObject receiver, final FloatObject target, final long index, final LargeIntegerObject value) {
+            target.setLow(value.longValueExact());
             return value;
         }
 
@@ -429,13 +405,14 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             return value;
         }
 
-        @Specialization
+        @Specialization(guards = "inBounds(index, receiver)")
         protected final Object doArray(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final ArrayObject target, final long index, final Object value) {
             getAtPut0Node().execute(target, index - 1, value);
             return value;
         }
 
-        @Specialization(guards = {"!isNativeObject(target)", "!isEmptyObject(target)", "!isArrayObject(target)"})
+        @Specialization(guards = {"inBoundsOfSqueakObject(index, target)",
+                        "!isNativeObject(target)", "!isEmptyObject(target)", "!isArrayObject(target)"})
         protected Object doSqueakObject(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final AbstractSqueakObject target, final long index, final Object value) {
             getAtPut0Node().execute(target, index - 1 + getInstSizeNode().execute(target), value);
             return value;
@@ -449,20 +426,20 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             return atPut0Node;
         }
 
-        private SqueakObjectInstSizeNode getInstSizeNode() {
-            if (instSizeNode == null) {
+        protected final NativeAcceptsValueNode getAcceptsValueNode() {
+            if (acceptsValueNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                instSizeNode = insert(SqueakObjectInstSizeNode.create());
+                acceptsValueNode = insert(NativeAcceptsValueNode.create());
             }
-            return instSizeNode;
+            return acceptsValueNode;
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 62)
     protected abstract static class PrimSizeNode extends AbstractArithmeticPrimitiveNode {
-        @Child private SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
-        @Child private SqueakObjectInstSizeNode instSizeNode = SqueakObjectInstSizeNode.create();
+        @Child private SqueakObjectSizeNode sizeNode;
+        @Child private SqueakObjectInstSizeNode instSizeNode;
 
         protected PrimSizeNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -490,7 +467,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
         @Specialization
         protected final long doNative(final NativeObject obj, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return sizeNode.execute(obj);
+            return getSizeNode().execute(obj);
         }
 
         @Specialization
@@ -510,7 +487,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
         @Specialization(guards = {"!obj.isNil()", "obj.getSqueakClass().isVariable()"})
         protected final long size(final AbstractSqueakObject obj, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return sizeNode.execute(obj) - instSizeNode.execute(obj);
+            return getSizeNode().execute(obj) - getInstSizeNode().execute(obj);
         }
 
         /*
@@ -541,7 +518,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
         @Specialization
         protected final long doNative(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject obj) {
-            return sizeNode.execute(obj);
+            return getSizeNode().execute(obj);
         }
 
         @Specialization
@@ -561,7 +538,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
         @Specialization(guards = {"!obj.isNil()", "obj.getSqueakClass().isVariable()"})
         protected final long doSqueakObject(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final AbstractSqueakObject obj) {
-            return sizeNode.execute(obj) - instSizeNode.execute(obj);
+            return getSizeNode().execute(obj) - getInstSizeNode().execute(obj);
         }
 
         /*
@@ -573,38 +550,36 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         protected static final long doObject(final Object receiver, final Object anything) {
             return 0;
         }
+
+        private SqueakObjectSizeNode getSizeNode() {
+            if (sizeNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                sizeNode = insert(SqueakObjectSizeNode.create());
+            }
+            return sizeNode;
+        }
+
+        private SqueakObjectInstSizeNode getInstSizeNode() {
+            if (instSizeNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                instSizeNode = insert(SqueakObjectInstSizeNode.create());
+            }
+            return instSizeNode;
+        }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 63)
-    protected abstract static class PrimStringAtNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimStringAtNode extends AbstractPrimitiveWithSizeNode {
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
 
         protected PrimStringAtNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        @Override
-        public final Object executeWithArguments(final VirtualFrame frame, final Object... arguments) {
-            try {
-                return executeWithArgumentsSpecialized(frame, arguments);
-            } catch (IndexOutOfBoundsException e) {
-                throw new PrimitiveFailed();
-            }
-        }
-
-        @Override
-        public final Object executePrimitive(final VirtualFrame frame) {
-            try {
-                return executeStringAt(frame);
-            } catch (IndexOutOfBoundsException e) {
-                throw new PrimitiveFailed();
-            }
-        }
-
         public abstract Object executeStringAt(VirtualFrame frame);
 
-        @Specialization
+        @Specialization(guards = {"inBounds(index, obj)"})
         protected final char doNativeObject(final NativeObject obj, final long index) {
             return (char) ((long) at0Node.execute(obj, index - 1));
         }
@@ -612,42 +587,24 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 64)
-    protected abstract static class PrimStringAtPutNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimStringAtPutNode extends AbstractPrimitiveWithSizeNode {
+        @Child protected NativeAcceptsValueNode acceptsValueNode = NativeAcceptsValueNode.create();
         @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
 
         protected PrimStringAtPutNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        @Override
-        public final Object executeWithArguments(final VirtualFrame frame, final Object... arguments) {
-            try {
-                return executeWithArgumentsSpecialized(frame, arguments);
-            } catch (IndexOutOfBoundsException | IllegalArgumentException e) {
-                throw new PrimitiveFailed();
-            }
-        }
-
-        @Override
-        public final Object executePrimitive(final VirtualFrame frame) {
-            try {
-                return executeStringAtPut(frame);
-            } catch (IndexOutOfBoundsException | IllegalArgumentException e) {
-                throw new PrimitiveFailed();
-            }
-        }
-
         public abstract Object executeStringAtPut(VirtualFrame frame);
 
-        @Specialization
+        @Specialization(guards = {"inBounds(index, obj)", "acceptsValueNode.execute(obj, value)"})
         protected final char doNativeObject(final NativeObject obj, final long index, final char value) {
             atPut0Node.execute(obj, index - 1, value);
             return value;
         }
 
-        @Specialization
+        @Specialization(guards = {"inBounds(index, obj)", "acceptsValueNode.execute(obj, value)"})
         protected final char doNativeObject(final NativeObject obj, final long index, final long value) {
-            assert value >= 0;
             atPut0Node.execute(obj, index - 1, value);
             return (char) value;
         }
@@ -661,48 +618,48 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             super(method, numArguments);
         }
 
-        @Specialization(guards = "receiver.isByteType()")
+        @Specialization(guards = {"receiver.isByteType()", "inBounds0(largerOffset(index), receiver.getByteLength())"})
         protected static final long doNativeBytes(final NativeObject receiver, final long index) {
-            final int offset = (int) ((index - 1) * 2);
+            final int offset = minusOneAndDouble(index);
             final byte[] bytes = receiver.getByteStorage();
-            try {
-                final int byte0 = (byte) Byte.toUnsignedLong(bytes[offset]);
-                int byte1 = (int) Byte.toUnsignedLong(bytes[offset + 1]) << 8;
-                if ((byte1 & 0x8000) != 0) {
-                    byte1 = 0xffff0000 | byte1;
-                }
-                return byte1 | byte0;
-            } catch (IndexOutOfBoundsException e) {
-                throw new PrimitiveFailed();
+            final int byte0 = (byte) Byte.toUnsignedLong(bytes[offset]);
+            int byte1 = (int) Byte.toUnsignedLong(bytes[offset + 1]) << 8;
+            if ((byte1 & 0x8000) != 0) {
+                byte1 = 0xffff0000 | byte1;
             }
+            return byte1 | byte0;
         }
 
-        @Specialization(guards = "receiver.isShortType()")
+        @Specialization(guards = {"receiver.isShortType()", "inBounds1(index, receiver.getShortLength())"})
         protected static final long doNativeShorts(final NativeObject receiver, final long index) {
-            try {
-                return Short.toUnsignedLong(receiver.getShortStorage()[(int) index]);
-            } catch (IndexOutOfBoundsException e) {
-                throw new PrimitiveFailed();
-            }
+            return Short.toUnsignedLong(receiver.getShortStorage()[(int) index]);
         }
 
-        @Specialization(guards = "receiver.isIntType()")
+        @Specialization(guards = {"receiver.isIntType()", "inBounds0(minusOneAndCutInHalf(index), receiver.getIntLength())"})
         protected static final long doNativeInts(final NativeObject receiver, final long index) {
-            try {
-                final int word = receiver.getIntStorage()[((int) index - 1) / 2];
-                int shortValue;
-                if ((index - 1) % 2 == 0) {
-                    shortValue = word & 0xffff;
-                } else {
-                    shortValue = (word >> 16) & 0xffff;
-                }
-                if ((shortValue & 0x8000) != 0) {
-                    shortValue = 0xffff0000 | shortValue;
-                }
-                return shortValue;
-            } catch (IndexOutOfBoundsException e) {
-                throw new PrimitiveFailed();
+            final int word = receiver.getIntStorage()[minusOneAndCutInHalf(index)];
+            int shortValue;
+            if ((index - 1) % 2 == 0) {
+                shortValue = word & 0xffff;
+            } else {
+                shortValue = (word >> 16) & 0xffff;
             }
+            if ((shortValue & 0x8000) != 0) {
+                shortValue = 0xffff0000 | shortValue;
+            }
+            return shortValue;
+        }
+
+        protected static final int minusOneAndDouble(final long index) {
+            return (int) ((index - 1) * 2);
+        }
+
+        protected static final int largerOffset(final long index) {
+            return minusOneAndDouble(index) + 1;
+        }
+
+        protected static final int minusOneAndCutInHalf(final long index) {
+            return ((int) index - 1) / 2;
         }
 
         @SuppressWarnings("unused")
@@ -771,20 +728,14 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 165)
     protected abstract static class PrimIntegerAtNode extends AbstractPrimitiveNode {
-        private final BranchProfile errorProfile = BranchProfile.create();
 
         protected PrimIntegerAtNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        @Specialization(guards = {"receiver.isIntType()"})
-        protected final long doNativeInt(final NativeObject receiver, final long index) {
-            try {
-                return receiver.getIntStorage()[(int) index - 1];
-            } catch (ArrayIndexOutOfBoundsException e) {
-                errorProfile.enter();
-                throw new PrimitiveFailed();
-            }
+        @Specialization(guards = {"receiver.isIntType()", "inBounds1(index, receiver.getIntLength())"})
+        protected static final long doNativeInt(final NativeObject receiver, final long index) {
+            return receiver.getIntStorage()[(int) index - 1];
         }
     }
 
@@ -797,13 +748,9 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             super(method, numArguments);
         }
 
-        @Specialization(guards = {"receiver.isIntType()", "value >= MIN_VALUE", "value <= MAX_VALUE"})
+        @Specialization(guards = {"receiver.isIntType()", "inBounds1(index, receiver.getIntLength())", "value >= MIN_VALUE", "value <= MAX_VALUE"})
         protected static final long doNativeInt(final NativeObject receiver, final long index, final long value) {
-            try {
-                receiver.getIntStorage()[(int) index - 1] = (int) value;
-            } catch (ArrayIndexOutOfBoundsException e) {
-                throw new PrimitiveFailed();
-            }
+            receiver.getIntStorage()[(int) index - 1] = (int) value;
             return value;
         }
     }
@@ -815,30 +762,23 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             super(method, numArguments);
         }
 
-        @Specialization
+        @Specialization(guards = "index < receiver.getStackSize()")
         protected static final Object doContextObject(final ContextObject receiver, final long index) {
-            try {
-                return receiver.atTemp(index - 1);
-            } catch (IndexOutOfBoundsException e) {
-                throw new PrimitiveFailed();
-            }
+            return receiver.atTemp(index - 1);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 211)
     protected abstract static class PrimContextAtPutNode extends AbstractPrimitiveNode {
+
         protected PrimContextAtPutNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        @Specialization
+        @Specialization(guards = "index < receiver.getStackSize()")
         protected static final Object doContextObject(final ContextObject receiver, final long index, final Object value) {
-            try {
-                receiver.atTempPut(index - 1, value);
-            } catch (IndexOutOfBoundsException e) {
-                throw new PrimitiveFailed();
-            }
+            receiver.atTempPut(index - 1, value);
             return value;
         }
     }

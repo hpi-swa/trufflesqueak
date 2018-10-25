@@ -36,7 +36,7 @@ public abstract class SqueakObjectAt0Node extends Node {
     @SuppressWarnings("unused")
     @Specialization(guards = {"obj.isEmptyType()", "index < 0 || index >= obj.getEmptyStorage()"})
     protected static final long doEmptyArrayOutOfBounds(final ArrayObject obj, final long index) {
-        throw new IndexOutOfBoundsException();
+        throw new SqueakException("IndexOutOfBounds:", index, "(validate index before using this node)");
     }
 
     @Specialization(guards = "obj.isAbstractSqueakObjectType()")
@@ -109,9 +109,14 @@ public abstract class SqueakObjectAt0Node extends Node {
         return obj.getLongStorage()[(int) index];
     }
 
-    @Specialization
-    protected static final Object doFloat(final FloatObject obj, final long index) {
-        return obj.getNativeAt0(index);
+    @Specialization(guards = "index == 1")
+    protected static final Object doFloatHigh(final FloatObject obj, @SuppressWarnings("unused") final long index) {
+        return obj.getHigh();
+    }
+
+    @Specialization(guards = "index == 2")
+    protected static final Object doFloatLow(final FloatObject obj, @SuppressWarnings("unused") final long index) {
+        return obj.getLow();
     }
 
     @Specialization
@@ -137,13 +142,13 @@ public abstract class SqueakObjectAt0Node extends Node {
     @SuppressWarnings("unused")
     @Specialization
     protected static final Object doEmpty(final EmptyObject obj, final long index) {
-        throw new IndexOutOfBoundsException();
+        throw new SqueakException("IndexOutOfBounds:", index, "(validate index before using this node)");
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected static final Object doNil(final NilObject obj, final long index) {
-        throw new IndexOutOfBoundsException();
+        throw new SqueakException("IndexOutOfBounds:", index, "(validate index before using this node)");
     }
 
     @SuppressWarnings("unused")
