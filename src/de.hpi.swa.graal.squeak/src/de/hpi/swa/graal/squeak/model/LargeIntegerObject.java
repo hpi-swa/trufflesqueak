@@ -288,7 +288,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
 
     @TruffleBoundary
     public boolean isIntegralWhenDividedBy(final LargeIntegerObject other) {
-        return getBigInteger().mod(other.getBigInteger()).compareTo(BigInteger.ZERO) == 0;
+        return getBigInteger().mod(other.getBigInteger().abs()).compareTo(BigInteger.ZERO) == 0;
     }
 
     /*

@@ -151,33 +151,6 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    public abstract static class AbstractNewPrimitiveNode extends AbstractPrimitiveNode {
-
-        public AbstractNewPrimitiveNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
-        }
-
-        @Override
-        public final Object executeWithArguments(final VirtualFrame frame, final Object... arguments) {
-            try {
-                return executeWithArgumentsSpecialized(frame, arguments);
-            } catch (OutOfMemoryError e) {
-                throw new PrimitiveFailed(ERROR_TABLE.INSUFFICIENT_OBJECT_MEMORY);
-            }
-        }
-
-        @Override
-        public final Object executePrimitive(final VirtualFrame frame) {
-            try {
-                return executeNewPrimitive(frame);
-            } catch (OutOfMemoryError e) {
-                throw new PrimitiveFailed(ERROR_TABLE.INSUFFICIENT_OBJECT_MEMORY);
-            }
-        }
-
-        protected abstract Object executeNewPrimitive(VirtualFrame frame);
-    }
-
     @GenerateNodeFactory
     @SqueakPrimitive(index = 18)
     protected abstract static class PrimMakePointNode extends AbstractPrimitiveNode {
@@ -221,7 +194,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 70)
-    protected abstract static class PrimNewNode extends AbstractNewPrimitiveNode {
+    protected abstract static class PrimNewNode extends AbstractPrimitiveNode {
         protected static final int NEW_CACHE_SIZE = 3;
         @Child private NewObjectNode newNode;
 
@@ -234,25 +207,43 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(limit = "NEW_CACHE_SIZE", guards = {"receiver == cachedReceiver"}, assumptions = {"classFormatStable"})
         protected Object newDirect(final ClassObject receiver,
                         @Cached("receiver") final ClassObject cachedReceiver,
-                        @Cached("cachedReceiver.getClassFormatStable()") final Assumption classFormatStable) {
-            return newNode.executeNew(cachedReceiver);
+                        @Cached("cachedReceiver.getClassFormatStable()") final Assumption classFormatStable,
+                        @Cached("create()") final BranchProfile outOfMemProfile) {
+            try {
+                return newNode.executeNew(cachedReceiver);
+            } catch (OutOfMemoryError e) {
+                outOfMemProfile.enter();
+                throw new PrimitiveFailed(ERROR_TABLE.INSUFFICIENT_OBJECT_MEMORY);
+            }
         }
 
         @Specialization(replaces = "newDirect")
-        protected final Object newIndirect(final ClassObject receiver) {
-            return newNode.executeNew(receiver);
+        protected final Object newIndirect(final ClassObject receiver,
+                        @Cached("create()") final BranchProfile outOfMemProfile) {
+            try {
+                return newNode.executeNew(receiver);
+            } catch (OutOfMemoryError e) {
+                outOfMemProfile.enter();
+                throw new PrimitiveFailed(ERROR_TABLE.INSUFFICIENT_OBJECT_MEMORY);
+            }
         }
 
         @Specialization
-        protected final Object doPointers(final PointersObject receiver) {
-            // FIXME: BehaviorTest>>#testChange
-            return newNode.executeNew(receiver.getSqueakClass());
+        protected final Object doPointers(final PointersObject receiver,
+                        @Cached("create()") final BranchProfile outOfMemProfile) {
+            try {
+                // FIXME: BehaviorTest>>#testChange
+                return newNode.executeNew(receiver.getSqueakClass());
+            } catch (OutOfMemoryError e) {
+                outOfMemProfile.enter();
+                throw new PrimitiveFailed(ERROR_TABLE.INSUFFICIENT_OBJECT_MEMORY);
+            }
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 71)
-    protected abstract static class PrimNewWithArgNode extends AbstractNewPrimitiveNode {
+    protected abstract static class PrimNewWithArgNode extends AbstractPrimitiveNode {
         protected static final int NEW_CACHE_SIZE = 3;
         @Child private NewObjectNode newNode;
 
@@ -262,16 +253,28 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(limit = "NEW_CACHE_SIZE", assumptions = {"classFormatStable"}, guards = {"receiver == cachedReceiver", "isInstantiable(receiver, size)"})
+        @Specialization(limit = "NEW_CACHE_SIZE", guards = {"receiver == cachedReceiver", "isInstantiable(receiver, size)"}, assumptions = {"classFormatStable"})
         protected final Object newWithArgDirect(final ClassObject receiver, final long size,
                         @Cached("receiver") final ClassObject cachedReceiver,
-                        @Cached("cachedReceiver.getClassFormatStable()") final Assumption classFormatStable) {
-            return newNode.executeNew(cachedReceiver, (int) size);
+                        @Cached("cachedReceiver.getClassFormatStable()") final Assumption classFormatStable,
+                        @Cached("create()") final BranchProfile outOfMemProfile) {
+            try {
+                return newNode.executeNew(cachedReceiver, (int) size);
+            } catch (OutOfMemoryError e) {
+                outOfMemProfile.enter();
+                throw new PrimitiveFailed(ERROR_TABLE.INSUFFICIENT_OBJECT_MEMORY);
+            }
         }
 
         @Specialization(replaces = "newWithArgDirect", guards = "isInstantiable(receiver, size)")
-        protected final Object newWithArg(final ClassObject receiver, final long size) {
-            return newNode.executeNew(receiver, (int) size);
+        protected final Object newWithArg(final ClassObject receiver, final long size,
+                        @Cached("create()") final BranchProfile outOfMemProfile) {
+            try {
+                return newNode.executeNew(receiver, (int) size);
+            } catch (OutOfMemoryError e) {
+                outOfMemProfile.enter();
+                throw new PrimitiveFailed(ERROR_TABLE.INSUFFICIENT_OBJECT_MEMORY);
+            }
         }
 
         protected static final boolean isInstantiable(final ClassObject receiver, final long size) {

@@ -30,13 +30,9 @@ public abstract class AbstractPrimitiveNode extends AbstractNodeWithCode impleme
         this.numArguments = original.numArguments;
     }
 
-    public Object executeWithArguments(final VirtualFrame frame, final Object... arguments) {
-        return executeWithArgumentsSpecialized(frame, arguments);
-    }
+    public abstract Object executeWithArguments(VirtualFrame frame, Object... arguments);
 
     public abstract Object executePrimitive(VirtualFrame frame);
-
-    protected abstract Object executeWithArgumentsSpecialized(VirtualFrame frame, Object... arguments);
 
     protected final boolean isSmallInteger(final long value) {
         if (code.image.flags.is64bit()) {

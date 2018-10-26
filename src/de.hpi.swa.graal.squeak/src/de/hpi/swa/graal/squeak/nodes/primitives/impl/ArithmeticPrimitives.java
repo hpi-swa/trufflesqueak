@@ -6,7 +6,6 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
@@ -30,26 +29,6 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         public AbstractArithmeticPrimitiveNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
-
-        @Override
-        public final Object executeWithArguments(final VirtualFrame frame, final Object... arguments) {
-            try {
-                return executeWithArgumentsSpecialized(frame, arguments);
-            } catch (ArithmeticException e) {
-                throw new PrimitiveFailed();
-            }
-        }
-
-        @Override
-        public final Object executePrimitive(final VirtualFrame frame) {
-            try {
-                return executeArithmeticPrimitive(frame);
-            } catch (ArithmeticException e) {
-                throw new PrimitiveFailed();
-            }
-        }
-
-        protected abstract Object executeArithmeticPrimitive(VirtualFrame frame);
 
         protected static final boolean isZero(final double value) {
             return value == 0;
