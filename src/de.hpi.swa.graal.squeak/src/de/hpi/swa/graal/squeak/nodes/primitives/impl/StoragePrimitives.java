@@ -30,7 +30,9 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.ERROR_TABLE;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.GetAllInstancesNode;
 import de.hpi.swa.graal.squeak.nodes.NewObjectNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.GetObjectArrayNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ReadArrayObjectNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectBecomeNode;
@@ -463,9 +465,9 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 128)
     protected abstract static class PrimBecomeNode extends AbstractPrimitiveNode {
-        @Child protected SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
+        @Child protected ArrayObjectSizeNode sizeNode = ArrayObjectSizeNode.create();
         @Child private SqueakObjectBecomeNode becomeNode = SqueakObjectBecomeNode.create();
-        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
+        @Child private ReadArrayObjectNode readNode = ReadArrayObjectNode.create();
         private final BranchProfile failProfile = BranchProfile.create();
 
         protected PrimBecomeNode(final CompiledMethodObject method, final int numArguments) {
@@ -479,8 +481,8 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             final Object[] lefts = new Object[receiverSize];
             final Object[] rights = new Object[receiverSize];
             for (int i = 0; i < receiverSize; i++) {
-                final Object left = at0Node.execute(receiver, i);
-                final Object right = at0Node.execute(other, i);
+                final Object left = readNode.execute(receiver, i);
+                final Object right = readNode.execute(other, i);
                 if (becomeNode.execute(left, right)) {
                     lefts[numBecomes] = left;
                     rights[numBecomes] = right;

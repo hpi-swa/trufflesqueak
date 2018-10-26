@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
@@ -15,6 +16,8 @@ import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectSizeNode;
 
 public abstract class SqueakObjectSizeNode extends Node {
 
@@ -24,39 +27,9 @@ public abstract class SqueakObjectSizeNode extends Node {
 
     public abstract int execute(Object obj);
 
-    @Specialization(guards = "obj.isEmptyType()")
-    protected static final int doEmptyArrayObject(final ArrayObject obj) {
-        return obj.getEmptyStorage();
-    }
-
-    @Specialization(guards = "obj.isAbstractSqueakObjectType()")
-    protected static final int doArrayObjectOfSqueakObjects(final ArrayObject obj) {
-        return obj.getAbstractSqueakObjectLength();
-    }
-
-    @Specialization(guards = "obj.isBooleanType()")
-    protected static final int doArrayObjectOfBooleans(final ArrayObject obj) {
-        return obj.getBooleanLength();
-    }
-
-    @Specialization(guards = "obj.isCharType()")
-    protected static final int doArrayObjectOfChars(final ArrayObject obj) {
-        return obj.getCharLength();
-    }
-
-    @Specialization(guards = "obj.isLongType()")
-    protected static final int doArrayObjectOfLongs(final ArrayObject obj) {
-        return obj.getLongLength();
-    }
-
-    @Specialization(guards = "obj.isDoubleType()")
-    protected static final int doArrayObjectOfDoubles(final ArrayObject obj) {
-        return obj.getDoubleLength();
-    }
-
-    @Specialization(guards = "obj.isObjectType()")
-    protected static final int doArrayObjectOfObjects(final ArrayObject obj) {
-        return obj.getObjectLength();
+    @Specialization
+    protected static final int doArray(final ArrayObject obj, @Cached("create()") final ArrayObjectSizeNode sizeNode) {
+        return sizeNode.execute(obj);
     }
 
     @Specialization
@@ -84,24 +57,9 @@ public abstract class SqueakObjectSizeNode extends Node {
         return 0;
     }
 
-    @Specialization(guards = "obj.isByteType()")
-    protected static final int doNativeBytes(final NativeObject obj) {
-        return obj.getByteLength();
-    }
-
-    @Specialization(guards = "obj.isShortType()")
-    protected static final int doNativeShorts(final NativeObject obj) {
-        return obj.getShortLength();
-    }
-
-    @Specialization(guards = "obj.isIntType()")
-    protected static final int doNativeInts(final NativeObject obj) {
-        return obj.getIntLength();
-    }
-
-    @Specialization(guards = "obj.isLongType()")
-    protected static final int doNativeLongs(final NativeObject obj) {
-        return obj.getLongLength();
+    @Specialization
+    protected static final int doNative(final NativeObject obj, @Cached("create()") final NativeObjectSizeNode sizeNode) {
+        return sizeNode.execute(obj);
     }
 
     @Specialization

@@ -684,6 +684,8 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             }
             return receiver;
         }
+
+        // TODO: could have more specializations for NativeObject, ArrayObject, ...
     }
 
     @GenerateNodeFactory

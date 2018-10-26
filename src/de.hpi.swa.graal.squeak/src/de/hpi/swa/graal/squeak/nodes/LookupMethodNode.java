@@ -18,6 +18,7 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.LookupMethodNodeGen.ExecuteLookupNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ReadArrayObjectNode;
 
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class LookupMethodNode extends Node {
@@ -36,9 +37,6 @@ public abstract class LookupMethodNode extends Node {
     }
 
     protected abstract static class ExecuteLookupNode extends AbstractNodeWithImage {
-        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
-        @Child private SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
-
         protected ExecuteLookupNode(final SqueakImageContext image) {
             super(image);
         }
@@ -46,7 +44,10 @@ public abstract class LookupMethodNode extends Node {
         protected abstract Object executeLookup(ClassObject classObject, NativeObject selector);
 
         @Specialization
-        protected final Object doLookup(final ClassObject classObject, final NativeObject selector) {
+        protected final Object doLookup(final ClassObject classObject, final NativeObject selector,
+                        @Cached("create()") final SqueakObjectAt0Node at0Node,
+                        @Cached("create()") final SqueakObjectSizeNode sizeNode,
+                        @Cached("create()") final ReadArrayObjectNode readNode) {
             Object lookupClass = classObject;
             while (lookupClass instanceof ClassObject) {
                 final Object methodDict = ((ClassObject) lookupClass).getMethodDict();
@@ -55,7 +56,7 @@ public abstract class LookupMethodNode extends Node {
                     for (int i = METHOD_DICT.NAMES; i < sizeNode.execute(methodDict); i++) {
                         final Object methodSelector = at0Node.execute(methodDict, i);
                         if (selector == methodSelector) {
-                            return at0Node.execute(values, i - METHOD_DICT.NAMES);
+                            return readNode.execute(values, i - METHOD_DICT.NAMES);
                         }
                     }
                 }
@@ -64,7 +65,7 @@ public abstract class LookupMethodNode extends Node {
             if (selector == image.doesNotUnderstand) {
                 throw new SqueakException("Could not find does not understand method for:", classObject);
             }
-            return doLookup(classObject, image.doesNotUnderstand);
+            return doLookup(classObject, image.doesNotUnderstand, at0Node, sizeNode, readNode);
         }
     }
 

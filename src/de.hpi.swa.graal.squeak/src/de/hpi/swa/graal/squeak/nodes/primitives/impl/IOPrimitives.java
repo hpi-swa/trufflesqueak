@@ -28,7 +28,12 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.GetObjectArrayNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ReadArrayObjectNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.WriteArrayObjectNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.ReadNativeObjectNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.WriteNativeObjectNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectInstSizeNode;
@@ -259,9 +264,9 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             private static final long END_OF_RUN = 257 - 1;
             private static final long CROSSED_X = 258 - 1;
 
-            @Child protected SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
-            @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
+            @Child protected ArrayObjectSizeNode sizeNode = ArrayObjectSizeNode.create();
             @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
+            @Child private ReadArrayObjectNode readNode = ReadArrayObjectNode.create();
 
             protected static ScanCharactersHelperNode create(final SqueakImageContext image) {
                 return ScanCharactersHelperNodeGen.create(image);
@@ -282,7 +287,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 long scanLastIndex = startIndex;
                 while (scanLastIndex <= stopIndex) {
                     final long ascii = (sourceBytes[(int) (scanLastIndex - 1)] & 0xFF);
-                    final Object stopReason = at0Node.execute(stops, ascii);
+                    final Object stopReason = readNode.execute(stops, ascii);
                     if (stopReason != image.nil) {
                         storeStateInReceiver(receiver, scanDestX, scanLastIndex);
                         return stopReason;
@@ -290,28 +295,28 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                     if (ascii < 0 || sizeNode.execute(scanMap) <= ascii) {
                         throw new PrimitiveFailed();
                     }
-                    final long glyphIndex = (long) at0Node.execute(scanMap, ascii);
+                    final long glyphIndex = (long) readNode.execute(scanMap, ascii);
                     if (glyphIndex < 0 || glyphIndex > maxGlyph) {
                         throw new PrimitiveFailed();
                     }
                     final long sourceX1;
                     final long sourceX2;
                     try {
-                        sourceX1 = (long) at0Node.execute(scanXTable, glyphIndex);
-                        sourceX2 = (long) at0Node.execute(scanXTable, glyphIndex + 1);
+                        sourceX1 = (long) readNode.execute(scanXTable, glyphIndex);
+                        sourceX2 = (long) readNode.execute(scanXTable, glyphIndex + 1);
                     } catch (ClassCastException e) {
                         throw new PrimitiveFailed();
                     }
                     final long nextDestX = scanDestX + sourceX2 - sourceX1;
                     if (nextDestX > rightX) {
                         storeStateInReceiver(receiver, scanDestX, scanLastIndex);
-                        return at0Node.execute(stops, CROSSED_X);
+                        return readNode.execute(stops, CROSSED_X);
                     }
                     scanDestX = nextDestX + kernData;
                     scanLastIndex++;
                 }
                 storeStateInReceiver(receiver, scanDestX, stopIndex);
-                return at0Node.execute(stops, END_OF_RUN);
+                return readNode.execute(stops, END_OF_RUN);
             }
 
             private void storeStateInReceiver(final PointersObject receiver, final long scanDestX, final long scanLastIndex) {
@@ -326,8 +331,11 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimStringReplaceNode extends AbstractPrimitiveNode {
         @Child private SqueakObjectInstSizeNode instSizeNode = SqueakObjectInstSizeNode.create();
         @Child private SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
-        @Child private SqueakObjectAt0Node at0Node;
-        @Child private SqueakObjectAtPut0Node atPut0Node;
+        @Child private ReadArrayObjectNode readArrayObjectNode;
+        @Child private ReadNativeObjectNode readNativeObjectNode;
+        @Child private WriteArrayObjectNode writeArrayObjectNode;
+        @Child private WriteNativeObjectNode writeNativeObjectNode;
+        @Child private GetObjectArrayNode getObjectArrayNode;
 
         protected PrimStringReplaceNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -380,7 +388,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         protected final Object doNative(final NativeObject rcvr, final long start, final long stop, final NativeObject repl, final long replStart) {
             final int repOff = (int) (replStart - start);
             for (int i = (int) (start - 1); i < stop; i++) {
-                getAtPut0Node().execute(rcvr, i, getAt0Node().execute(repl, repOff + i));
+                getWriteNativeObjectNode().execute(rcvr, i, getReadNativeObjectNode().execute(repl, repOff + i));
             }
             return rcvr;
         }
@@ -394,7 +402,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         protected final Object doNativeLargeInteger(final NativeObject rcvr, final long start, final long stop, final LargeIntegerObject repl, final long replStart) {
             final int repOff = (int) (replStart - start);
             for (int i = (int) (start - 1); i < stop; i++) {
-                getAtPut0Node().execute(rcvr, i, repl.getNativeAt0(repOff + i));
+                getWriteNativeObjectNode().execute(rcvr, i, repl.getNativeAt0(repOff + i));
             }
             return rcvr;
         }
@@ -459,10 +467,9 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "rcvr.isAbstractSqueakObjectType()", "!repl.isAbstractSqueakObjectType()"})
-        protected static final Object doArraysOfSqueakObjectsTransition(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
-                        @Cached("create()") final GetObjectArrayNode getObjectArrayNode) {
+        protected final Object doArraysOfSqueakObjectsTransition(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
             rcvr.transitionFromAbstractSqueakObjectsToObjects();
-            replaceGeneric(rcvr.getObjectStorage(), start, stop, getObjectArrayNode.execute(repl), replStart);
+            replaceGeneric(rcvr.getObjectStorage(), start, stop, getGetObjectArrayNode().execute(repl), replStart);
             return rcvr;
         }
 
@@ -500,10 +507,9 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "rcvr.isLongType()", "!repl.isLongType()"})
-        protected static final Object doArraysOfLongsTransition(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
-                        @Cached("create()") final GetObjectArrayNode getObjectArrayNode) {
+        protected final Object doArraysOfLongsTransition(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
             rcvr.transitionFromLongsToObjects();
-            replaceGeneric(rcvr.getObjectStorage(), start, stop, getObjectArrayNode.execute(repl), replStart);
+            replaceGeneric(rcvr.getObjectStorage(), start, stop, getGetObjectArrayNode().execute(repl), replStart);
             return rcvr;
         }
 
@@ -519,10 +525,9 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "rcvr.isDoubleType()", "!repl.isDoubleType()"})
-        protected static final Object doArraysOfDoublesTransition(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
-                        @Cached("create()") final GetObjectArrayNode getObjectArrayNode) {
+        protected final Object doArraysOfDoublesTransition(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
             rcvr.transitionFromDoublesToObjects();
-            replaceGeneric(rcvr.getObjectStorage(), start, stop, getObjectArrayNode.execute(repl), replStart);
+            replaceGeneric(rcvr.getObjectStorage(), start, stop, getGetObjectArrayNode().execute(repl), replStart);
             return rcvr;
         }
 
@@ -538,11 +543,10 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "rcvr.isObjectType()", "!repl.isObjectType()"})
-        protected static final Object doArraysOfObjects(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart,
-                        @Cached("create()") final GetObjectArrayNode getObjectArrayNode) {
+        protected final Object doArraysOfObjectsNonObject(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
             final int repOff = (int) (replStart - start);
             final Object[] dstArray = rcvr.getObjectStorage();
-            final Object[] srcArray = getObjectArrayNode.execute(repl);
+            final Object[] srcArray = getGetObjectArrayNode().execute(repl);
             for (int i = (int) (start - 1); i < stop; i++) {
                 dstArray[i] = srcArray[repOff + i];
             }
@@ -672,7 +676,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         protected final Object doWeakPointersArray(final WeakPointersObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
             final long repOff = replStart - start;
             for (int i = (int) (start - 1); i < stop; i++) {
-                rcvr.atput0(i, getAt0Node().execute(repl, repOff + i));
+                rcvr.atput0(i, getReadArrayObjectNode().execute(repl, repOff + i));
             }
             return rcvr;
         }
@@ -722,20 +726,36 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        private SqueakObjectAt0Node getAt0Node() {
-            if (at0Node == null) {
+        private ReadArrayObjectNode getReadArrayObjectNode() {
+            if (readArrayObjectNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                at0Node = insert(SqueakObjectAt0Node.create());
+                readArrayObjectNode = insert(ReadArrayObjectNode.create());
             }
-            return at0Node;
+            return readArrayObjectNode;
         }
 
-        private SqueakObjectAtPut0Node getAtPut0Node() {
-            if (atPut0Node == null) {
+        private ReadNativeObjectNode getReadNativeObjectNode() {
+            if (readNativeObjectNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                atPut0Node = insert(SqueakObjectAtPut0Node.create());
+                readNativeObjectNode = insert(ReadNativeObjectNode.create());
             }
-            return atPut0Node;
+            return readNativeObjectNode;
+        }
+
+        private WriteNativeObjectNode getWriteNativeObjectNode() {
+            if (writeNativeObjectNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                writeNativeObjectNode = insert(WriteNativeObjectNode.create());
+            }
+            return writeNativeObjectNode;
+        }
+
+        private GetObjectArrayNode getGetObjectArrayNode() {
+            if (getObjectArrayNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                getObjectArrayNode = insert(GetObjectArrayNode.create());
+            }
+            return getObjectArrayNode;
         }
     }
 

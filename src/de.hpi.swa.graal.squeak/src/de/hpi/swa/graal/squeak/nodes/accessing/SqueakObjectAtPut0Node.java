@@ -1,12 +1,12 @@
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
@@ -20,8 +20,10 @@ import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.WriteArrayObjectNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.WriteNativeObjectNode;
 
-@ImportStatic({ArrayObject.class, NativeObject.class, SqueakGuards.class})
+@ImportStatic({NativeObject.class, SqueakGuards.class})
 public abstract class SqueakObjectAtPut0Node extends Node {
 
     public static SqueakObjectAtPut0Node create() {
@@ -30,152 +32,10 @@ public abstract class SqueakObjectAtPut0Node extends Node {
 
     public abstract void execute(Object obj, long index, Object value);
 
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"obj.isEmptyType()", "index < obj.getEmptyStorage()"})
-    protected static final void doEmptyArray(final ArrayObject obj, final long index, final NilObject value) {
-        // Nothing to do
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"obj.isEmptyType()", "index < obj.getEmptyStorage()"})
-    protected static final void doEmptyArray(final ArrayObject obj, final long index, final AbstractSqueakObject value) {
-        obj.transitionFromEmptyToAbstractSqueakObjects();
-        doArrayOfSqueakObjects(obj, index, value);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"obj.isEmptyType()", "index < obj.getEmptyStorage()"})
-    protected static final void doEmptyArrayToBoolean(final ArrayObject obj, final long index, final boolean value) {
-        obj.transitionFromEmptyToBooleans();
-        doArrayOfBooleans(obj, index, value);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"obj.isEmptyType()", "index < obj.getEmptyStorage()"})
-    protected static final void doEmptyArrayToChar(final ArrayObject obj, final long index, final char value) {
-        obj.transitionFromEmptyToChars();
-        doArrayOfChars(obj, index, value);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"obj.isEmptyType()", "index < obj.getEmptyStorage()"})
-    protected static final void doEmptyArrayToLong(final ArrayObject obj, final long index, final long value) {
-        obj.transitionFromEmptyToLongs();
-        doArrayOfLongs(obj, index, value);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"obj.isEmptyType()", "index < obj.getEmptyStorage()"})
-    protected static final void doEmptyArrayToDouble(final ArrayObject obj, final long index, final double value) {
-        obj.transitionFromEmptyToDoubles();
-        doArrayOfDoubles(obj, index, value);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"obj.isEmptyType()", "index < obj.getEmptyStorage()", "!isAbstractSqueakObject(value)", "!isLong(value)", "!isDouble(value)"})
-    protected static final void doEmptyArrayToObject(final ArrayObject obj, final long index, final Object value) {
-        obj.transitionFromEmptyToObjects();
-        doArrayOfObjects(obj, index, value);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"obj.isEmptyType()", "index >= obj.getEmptyStorage()"})
-    protected static final void doEmptyArrayOutOfBounds(final ArrayObject obj, final long index, final Object value) {
-        throw new SqueakException("IndexOutOfBounds:", index, "(validate index before using this node)");
-    }
-
-    @Specialization(guards = "obj.isAbstractSqueakObjectType()")
-    protected static final void doArrayOfSqueakObjects(final ArrayObject obj, final long index, final AbstractSqueakObject value) {
-        obj.atput0SqueakObject(index, value);
-    }
-
-    @Specialization(guards = {"obj.isAbstractSqueakObjectType()", "!isAbstractSqueakObject(value)"})
-    protected static final void doArrayOfSqueakObjects(final ArrayObject obj, final long index, final Object value) {
-        obj.transitionFromAbstractSqueakObjectsToObjects();
-        doArrayOfObjects(obj, index, value);
-    }
-
-    @Specialization(guards = "obj.isBooleanType()")
-    protected static final void doArrayOfBooleans(final ArrayObject obj, final long index, final boolean value) {
-        obj.atput0Boolean(index, value);
-    }
-
-    @Specialization(guards = "obj.isBooleanType()")
-    protected static final void doArrayOfBooleans(final ArrayObject obj, final long index, @SuppressWarnings("unused") final NilObject value) {
-        obj.atputNil0Boolean(index);
-    }
-
-    @Specialization(guards = {"obj.isBooleanType()", "!isBoolean(value)", "!isNilObject(value)"})
-    protected static final void doArrayOfBooleans(final ArrayObject obj, final long index, final Object value) {
-        obj.transitionFromBooleansToObjects();
-        doArrayOfObjects(obj, index, value);
-    }
-
-    @Specialization(guards = "obj.isCharType()")
-    protected static final void doArrayOfChars(final ArrayObject obj, final long index, final char value) {
-        obj.atput0Char(index, value);
-    }
-
-    @Specialization(guards = "obj.isCharType()")
-    protected static final void doArrayOfChars(final ArrayObject obj, final long index, @SuppressWarnings("unused") final NilObject value) {
-        obj.atputNil0Char(index);
-    }
-
-    @Specialization(guards = {"obj.isCharType()", "!isCharacter(value)", "!isNilObject(value)"})
-    protected static final void doArrayOfChars(final ArrayObject obj, final long index, final Object value) {
-        obj.transitionFromCharsToObjects();
-        doArrayOfObjects(obj, index, value);
-    }
-
-    @Specialization(guards = {"obj.isLongType()", "!isLongNilTag(value)"})
-    protected static final void doArrayOfLongs(final ArrayObject obj, final long index, final long value) {
-        obj.atput0Long(index, value);
-    }
-
-    @Specialization(guards = {"obj.isLongType()", "isLongNilTag(value)"})
-    protected static final void doArrayOfLongsNilTagClash(final ArrayObject obj, final long index, final long value) {
-        // `value` happens to be long nil tag, need to despecialize to be able store it.
-        obj.transitionFromLongsToObjects();
-        obj.atput0Object(index, value);
-    }
-
-    @Specialization(guards = "obj.isLongType()")
-    protected static final void doArrayOfLongs(final ArrayObject obj, final long index, @SuppressWarnings("unused") final NilObject value) {
-        obj.atputNil0Long(index);
-    }
-
-    @Specialization(guards = {"obj.isLongType()", "!isLong(value)", "!isNilObject(value)"})
-    protected static final void doArrayOfLongs(final ArrayObject obj, final long index, final Object value) {
-        obj.transitionFromLongsToObjects();
-        doArrayOfObjects(obj, index, value);
-    }
-
-    @Specialization(guards = {"obj.isDoubleType()", "!isDoubleNilTag(value)"})
-    protected static final void doArrayOfDoubles(final ArrayObject obj, final long index, final double value) {
-        obj.atput0Double(index, value);
-    }
-
-    @Specialization(guards = {"obj.isDoubleType()", "isDoubleNilTag(value)"})
-    protected static final void doArrayOfDoublesNilTagClash(final ArrayObject obj, final long index, final double value) {
-        // `value` happens to be double nil tag, need to despecialize to be able store it.
-        obj.transitionFromLongsToObjects();
-        obj.atput0Object(index, value);
-    }
-
-    @Specialization(guards = "obj.isDoubleType()")
-    protected static final void doArrayOfDoubles(final ArrayObject obj, final long index, @SuppressWarnings("unused") final NilObject value) {
-        obj.atputNil0Double(index);
-    }
-
-    @Specialization(guards = {"obj.isDoubleType()", "!isDouble(value)", "!isNilObject(value)"})
-    protected static final void doArrayOfDoubles(final ArrayObject obj, final long index, final Object value) {
-        obj.transitionFromDoublesToObjects();
-        doArrayOfObjects(obj, index, value);
-    }
-
-    @Specialization(guards = "obj.isObjectType()")
-    protected static final void doArrayOfObjects(final ArrayObject obj, final long index, final Object value) {
-        obj.atput0Object(index, value);
+    @Specialization
+    protected static final void doArray(final ArrayObject obj, final long index, final Object value,
+                    @Cached("create()") final WriteArrayObjectNode writeNode) {
+        writeNode.execute(obj, index, value);
     }
 
     @Specialization
@@ -198,74 +58,10 @@ public abstract class SqueakObjectAtPut0Node extends Node {
         obj.atput0(index, value);
     }
 
-    @Specialization(guards = {"obj.isByteType()", "value >= 0", "value <= BYTE_MAX"})
-    protected static final void doNativeBytes(final NativeObject obj, final long index, final long value) {
-        obj.getByteStorage()[(int) index] = (byte) value;
-    }
-
-    @Specialization(guards = {"obj.isShortType()", "value >= 0", "value <= SHORT_MAX"})
-    protected static final void doNativeShorts(final NativeObject obj, final long index, final long value) {
-        obj.getShortStorage()[(int) index] = (short) value;
-    }
-
-    @Specialization(guards = {"obj.isIntType()", "value >= 0", "value <= INTEGER_MAX"})
-    protected static final void doNativeInts(final NativeObject obj, final long index, final long value) {
-        obj.getIntStorage()[(int) index] = (int) value;
-    }
-
-    @Specialization(guards = {"obj.isLongType()", "value >= 0"})
-    protected static final void doNativeLongs(final NativeObject obj, final long index, final long value) {
-        obj.getLongStorage()[(int) index] = value;
-    }
-
-    protected static final boolean inByteRange(final char value) {
-        return value <= NativeObject.BYTE_MAX;
-    }
-
-    @Specialization(guards = {"obj.isByteType()", "inByteRange(value)"})
-    protected static final void doNativeBytesChar(final NativeObject obj, final long index, final char value) {
-        doNativeBytes(obj, index, value);
-    }
-
-    @Specialization(guards = "obj.isShortType()") // char values fit into short
-    protected static final void doNativeShortsChar(final NativeObject obj, final long index, final char value) {
-        doNativeShorts(obj, index, value);
-    }
-
-    @Specialization(guards = "obj.isIntType()")
-    protected static final void doNativeIntsChar(final NativeObject obj, final long index, final char value) {
-        doNativeInts(obj, index, value);
-    }
-
-    @Specialization(guards = "obj.isLongType()")
-    protected static final void doNativeLongsChar(final NativeObject obj, final long index, final char value) {
-        doNativeLongs(obj, index, value);
-    }
-
-    @Specialization(guards = {"obj.isByteType()", "value.inRange(0, BYTE_MAX)"})
-    protected static final void doNativeBytesLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
-        doNativeBytes(obj, index, value.longValueExact());
-    }
-
-    @Specialization(guards = {"obj.isShortType()", "value.inRange(0, SHORT_MAX)"})
-    protected static final void doNativeShortsLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
-        doNativeShorts(obj, index, value.longValueExact());
-    }
-
-    @Specialization(guards = {"obj.isIntType()", "value.inRange(0, INTEGER_MAX)"})
-    protected static final void doNativeIntsLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
-        doNativeInts(obj, index, value.longValueExact());
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"obj.isIntType()", "!value.inRange(0, INTEGER_MAX)"})
-    protected static final void doNativeIntsLargeIntegerIllegal(final NativeObject obj, final long index, final LargeIntegerObject value) {
-        throw new SqueakException("Illegal value for int array: " + value);
-    }
-
-    @Specialization(guards = {"obj.isLongType()", "value.isZeroOrPositive()"})
-    protected static final void doNativeLongsLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
-        doNativeLongs(obj, index, value.longValueExact());
+    @Specialization
+    protected static final void doNative(final NativeObject obj, final long index, final Object value,
+                    @Cached("create()") final WriteNativeObjectNode writeNode) {
+        writeNode.execute(obj, index, value);
     }
 
     @Specialization

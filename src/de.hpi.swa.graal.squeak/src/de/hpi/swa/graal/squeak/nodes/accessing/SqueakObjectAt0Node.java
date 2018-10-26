@@ -1,11 +1,11 @@
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
@@ -19,6 +19,8 @@ import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ReadArrayObjectNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.ReadNativeObjectNode;
 
 public abstract class SqueakObjectAt0Node extends Node {
 
@@ -28,45 +30,10 @@ public abstract class SqueakObjectAt0Node extends Node {
 
     public abstract Object execute(Object obj, long index);
 
-    @Specialization(guards = {"obj.isEmptyType()", "index >= 0", "index < obj.getEmptyStorage()"})
-    protected static final NilObject doEmptyArray(final ArrayObject obj, @SuppressWarnings("unused") final long index) {
-        return obj.getNil();
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(guards = {"obj.isEmptyType()", "index < 0 || index >= obj.getEmptyStorage()"})
-    protected static final long doEmptyArrayOutOfBounds(final ArrayObject obj, final long index) {
-        throw new SqueakException("IndexOutOfBounds:", index, "(validate index before using this node)");
-    }
-
-    @Specialization(guards = "obj.isAbstractSqueakObjectType()")
-    protected static final AbstractSqueakObject doArrayOfSqueakObjects(final ArrayObject obj, final long index) {
-        return obj.at0SqueakObject(index);
-    }
-
-    @Specialization(guards = "obj.isBooleanType()")
-    protected static final Object doArrayOfBooleans(final ArrayObject obj, final long index) {
-        return obj.at0Boolean(index);
-    }
-
-    @Specialization(guards = "obj.isCharType()")
-    protected static final Object doArrayOfChars(final ArrayObject obj, final long index) {
-        return obj.at0Char(index);
-    }
-
-    @Specialization(guards = "obj.isLongType()")
-    protected static final Object doArrayOfLongs(final ArrayObject obj, final long index) {
-        return obj.at0Long(index);
-    }
-
-    @Specialization(guards = "obj.isDoubleType()")
-    protected static final Object doArrayOfDoubles(final ArrayObject obj, final long index) {
-        return obj.at0Double(index);
-    }
-
-    @Specialization(guards = "obj.isObjectType()")
-    protected static final Object doArrayOfObjects(final ArrayObject obj, final long index) {
-        return obj.at0Object(index);
+    @Specialization
+    protected static final Object doArray(final ArrayObject obj, final long index,
+                    @Cached("create()") final ReadArrayObjectNode readNode) {
+        return readNode.execute(obj, index);
     }
 
     @Specialization
@@ -89,24 +56,10 @@ public abstract class SqueakObjectAt0Node extends Node {
         return obj.at0(index);
     }
 
-    @Specialization(guards = "obj.isByteType()")
-    protected static final long doNativeBytes(final NativeObject obj, final long index) {
-        return Byte.toUnsignedLong(obj.getByteStorage()[(int) index]);
-    }
-
-    @Specialization(guards = "obj.isShortType()")
-    protected static final long doNativeShorts(final NativeObject obj, final long index) {
-        return Short.toUnsignedLong(obj.getShortStorage()[(int) index]);
-    }
-
-    @Specialization(guards = "obj.isIntType()")
-    protected static final long doNativeInts(final NativeObject obj, final long index) {
-        return Integer.toUnsignedLong(obj.getIntStorage()[(int) index]);
-    }
-
-    @Specialization(guards = "obj.isLongType()")
-    protected static final long doNativeLongs(final NativeObject obj, final long index) {
-        return obj.getLongStorage()[(int) index];
+    @Specialization
+    protected static final long doNative(final NativeObject obj, final long index,
+                    @Cached("create()") final ReadNativeObjectNode readNode) {
+        return readNode.execute(obj, index);
     }
 
     @Specialization(guards = "index == 1")
