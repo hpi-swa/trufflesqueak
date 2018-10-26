@@ -121,7 +121,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
     @Test
     public void testInspectSqueakTest() {
         assumeNotOnMXGate();
-        runTestCase("ArrayTest");
+        runTestCase("BitBltClipBugs");
     }
 
     @Test

@@ -16,9 +16,8 @@ import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.METHOD_DICT;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.LookupMethodNodeGen.ExecuteLookupNodeGen;
-import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
-import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ReadArrayObjectNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class LookupMethodNode extends Node {
@@ -45,37 +44,34 @@ public abstract class LookupMethodNode extends Node {
 
         @Specialization
         protected final Object doLookup(final ClassObject classObject, final NativeObject selector,
-                        @Cached("create()") final SqueakObjectAt0Node at0Node,
                         @Cached("create()") final SqueakObjectSizeNode sizeNode,
                         @Cached("create()") final ReadArrayObjectNode readNode) {
-            Object lookupClass = classObject;
-            while (lookupClass instanceof ClassObject) {
-                final Object methodDict = ((ClassObject) lookupClass).getMethodDict();
-                if (methodDict instanceof PointersObject) {
-                    final ArrayObject values = (ArrayObject) at0Node.execute(methodDict, METHOD_DICT.VALUES);
-                    for (int i = METHOD_DICT.NAMES; i < sizeNode.execute(methodDict); i++) {
-                        final Object methodSelector = at0Node.execute(methodDict, i);
-                        if (selector == methodSelector) {
-                            return readNode.execute(values, i - METHOD_DICT.NAMES);
-                        }
+            ClassObject lookupClass = classObject;
+            while (lookupClass != null) {
+                final PointersObject methodDict = lookupClass.getMethodDict();
+                for (int i = METHOD_DICT.NAMES; i < sizeNode.execute(methodDict); i++) {
+                    final Object methodSelector = methodDict.at0(i);
+                    if (selector == methodSelector) {
+                        final ArrayObject values = (ArrayObject) methodDict.at0(METHOD_DICT.VALUES);
+                        return readNode.execute(values, i - METHOD_DICT.NAMES);
                     }
                 }
-                lookupClass = ((ClassObject) lookupClass).getSuperclass();
+                lookupClass = lookupClass.getSuperclassOrNull();
             }
             if (selector == image.doesNotUnderstand) {
                 throw new SqueakException("Could not find does not understand method for:", classObject);
             }
-            return doLookup(classObject, image.doesNotUnderstand, at0Node, sizeNode, readNode);
+            return doLookup(classObject, image.doesNotUnderstand, sizeNode, readNode);
         }
     }
 
     @SuppressWarnings("unused")
-    @Specialization(limit = "LOOKUP_CACHE_SIZE", guards = {"sqClass == cachedSqClass",
+    @Specialization(limit = "LOOKUP_CACHE_SIZE", guards = {"squeakClass == cachedSqClass",
                     "selector == cachedSelector"}, assumptions = {"methodLookupStable"})
-    protected static final Object doDirect(final ClassObject sqClass, final NativeObject selector,
-                    @Cached("sqClass") final ClassObject cachedSqClass,
+    protected static final Object doDirect(final ClassObject squeakClass, final NativeObject selector,
+                    @Cached("squeakClass") final ClassObject cachedSqClass,
                     @Cached("selector") final NativeObject cachedSelector,
-                    @Cached("cachedSqClass.getMethodLookupStable()") final Assumption methodLookupStable,
+                    @Cached("cachedSqClass.getMethodDictStable()") final Assumption methodLookupStable,
                     @Cached("executeLookupNode.executeLookup(cachedSqClass, cachedSelector)") final Object cachedMethod) {
         return cachedMethod;
     }

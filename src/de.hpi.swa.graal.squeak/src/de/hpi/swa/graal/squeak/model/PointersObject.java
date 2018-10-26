@@ -42,7 +42,7 @@ public final class PointersObject extends AbstractPointersObject {
         return getSqueakClass().getBasicInstanceSize();
     }
 
-    public AbstractSqueakObject shallowCopy() {
+    public PointersObject shallowCopy() {
         return new PointersObject(image, getSqueakClass(), getPointers().clone());
     }
 

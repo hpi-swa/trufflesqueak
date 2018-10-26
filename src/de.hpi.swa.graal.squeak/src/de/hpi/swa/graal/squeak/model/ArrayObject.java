@@ -3,6 +3,7 @@ package de.hpi.swa.graal.squeak.model;
 import java.util.Arrays;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.nodes.primitives.impl.MiscellaneousPrimitives.PrimShallowCopyNode;
 
 public final class ArrayObject extends AbstractSqueakObject {
     public static final byte BOOLEAN_NIL_TAG = 0;
@@ -346,6 +347,26 @@ public final class ArrayObject extends AbstractSqueakObject {
             }
         } else {
             storage = 0;
+        }
+    }
+
+    /** Slow, {@link PrimShallowCopyNode} is more efficient. */
+    public ArrayObject shallowCopy() {
+        if (isAbstractSqueakObjectType()) {
+            return new ArrayObject(image, getSqueakClass(), getAbstractSqueakObjectStorage().clone());
+        } else if (isBooleanType()) {
+            return new ArrayObject(image, getSqueakClass(), getBooleanStorage().clone());
+        } else if (isCharType()) {
+            return new ArrayObject(image, getSqueakClass(), getCharStorage().clone());
+        } else if (isDoubleType()) {
+            return new ArrayObject(image, getSqueakClass(), getDoubleStorage().clone());
+        } else if (isEmptyType()) {
+            return new ArrayObject(image, getSqueakClass(), getEmptyStorage());
+        } else if (isLongType()) {
+            return new ArrayObject(image, getSqueakClass(), getLongStorage().clone());
+        } else {
+            assert isObjectType();
+            return new ArrayObject(image, getSqueakClass(), getObjectStorage().clone());
         }
     }
 

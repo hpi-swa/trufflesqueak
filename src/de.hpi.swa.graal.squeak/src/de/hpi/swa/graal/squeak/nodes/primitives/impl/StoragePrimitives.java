@@ -651,15 +651,40 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @Specialization
-        protected static final long doSize(final ClassObject receiver, @SuppressWarnings("unused") final NotProvided value) {
-            return receiver.classByteSizeOfInstance(0);
+        protected static final long doBasicSize(final ClassObject receiver, @SuppressWarnings("unused") final NotProvided value) {
+            return postProcessSize(receiver.getBasicInstanceSize());
         }
 
-        @Specialization
-        protected static final long doSize(final ClassObject receiver, final long size) {
-            return receiver.classByteSizeOfInstance(size);
+        @Specialization(guards = "receiver.getInstanceSpecification() == 9")
+        protected static final long doSize64bit(final ClassObject receiver, final long numElements) {
+            return postProcessSize(receiver.getBasicInstanceSize() + numElements * 2);
         }
+
+        @Specialization(guards = {"receiver.getInstanceSpecification() != 9", "receiver.getInstanceSpecification() < 12"})
+        protected static final long doSize32bit(final ClassObject receiver, final long numElements) {
+            return postProcessSize(receiver.getBasicInstanceSize() + numElements);
+        }
+
+        @Specialization(guards = "between(receiver.getInstanceSpecification(), 12, 15)")
+        protected static final long doSize16bit(final ClassObject receiver, final long numElements) {
+            return postProcessSize(receiver.getBasicInstanceSize() + ((numElements + 1) / 2 | 0));
+        }
+
+        @Specialization(guards = "receiver.getInstanceSpecification() >= 16")
+        protected static final long doSize8bit(final ClassObject receiver, final long numElements) {
+            return postProcessSize(receiver.getBasicInstanceSize() + ((numElements + 3) / 4 | 0));
+        }
+
+        private static long postProcessSize(final long originalSize) {
+            long size = originalSize;
+            size += size & 1;             // align to 64 bits
+            size += size >= 255 ? 4 : 2;  // header words
+            if (size < 4) {
+                size = 4;                 // minimum object size
+            }
+            return size;
+        }
+
     }
 
     @GenerateNodeFactory

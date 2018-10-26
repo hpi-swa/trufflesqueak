@@ -68,7 +68,43 @@ public abstract class SqueakObjectPointersBecomeOneWayNode extends Node {
 
     @Specialization
     protected final void doClass(final ClassObject obj, final Object[] from, final Object[] to, final boolean copyHash) {
-        pointersBecomeOneWay(obj.getPointers(), from, to, copyHash);
+        ClassObject newSuperclass = obj.getSuperclassOrNull();
+        PointersObject newMethodDict = obj.getMethodDict();
+        ArrayObject newInstanceVariables = obj.getInstanceVariablesOrNull();
+        PointersObject newOrganization = obj.getOrganizationOrNull();
+        for (int i = 0; i < from.length; i++) {
+            final Object fromPointer = from[i];
+            if (fromPointer == newSuperclass) {
+                newSuperclass = to[i] == obj.image.nil ? null : (ClassObject) to[i];
+                updateHashNode.executeUpdate(fromPointer, newSuperclass, copyHash);
+            }
+            if (fromPointer == newMethodDict) {
+                newMethodDict = (PointersObject) to[i];
+                updateHashNode.executeUpdate(fromPointer, newMethodDict, copyHash);
+            }
+            if (fromPointer == newInstanceVariables) {
+                newInstanceVariables = to[i] == obj.image.nil ? null : (ArrayObject) to[i];
+                updateHashNode.executeUpdate(fromPointer, newInstanceVariables, copyHash);
+            }
+            if (fromPointer == newOrganization) {
+                newOrganization = to[i] == obj.image.nil ? null : (PointersObject) to[i];
+                updateHashNode.executeUpdate(fromPointer, newOrganization, copyHash);
+            }
+        }
+        // Only update object if necessary to avoid redundant transferToInterpreters.
+        if (newSuperclass != obj.getSuperclass()) {
+            obj.setSuperclass(newSuperclass);
+        }
+        if (newMethodDict != obj.getMethodDict()) {
+            obj.setMethodDict(newMethodDict);
+        }
+        if (newInstanceVariables != obj.getInstanceVariables()) {
+            obj.setInstanceVariables(newInstanceVariables);
+        }
+        if (newOrganization != obj.getOrganization()) {
+            obj.setOrganization(newOrganization);
+        }
+        pointersBecomeOneWay(obj.getOtherPointers(), from, to, copyHash);
     }
 
     @Specialization

@@ -9,6 +9,7 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractPointersObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
+import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.EmptyObject;
@@ -30,6 +31,11 @@ public abstract class SqueakObjectSizeNode extends Node {
     @Specialization
     protected static final int doArray(final ArrayObject obj, @Cached("create()") final ArrayObjectSizeNode sizeNode) {
         return sizeNode.execute(obj);
+    }
+
+    @Specialization
+    protected static final int doClass(final ClassObject obj) {
+        return obj.size();
     }
 
     @Specialization

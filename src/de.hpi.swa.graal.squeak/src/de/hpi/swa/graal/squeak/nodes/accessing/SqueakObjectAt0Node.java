@@ -20,6 +20,7 @@ import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ReadArrayObjectNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ClassObjectNodes.ReadClassObjectNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.ReadNativeObjectNode;
 
 public abstract class SqueakObjectAt0Node extends Node {
@@ -47,8 +48,9 @@ public abstract class SqueakObjectAt0Node extends Node {
     }
 
     @Specialization
-    protected static final Object doClass(final ClassObject obj, final long index) {
-        return obj.at0(index);
+    protected static final Object doClass(final ClassObject obj, final long index,
+                    @Cached("create()") final ReadClassObjectNode readNode) {
+        return readNode.execute(obj, index);
     }
 
     @Specialization

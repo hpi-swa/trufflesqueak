@@ -46,5 +46,7 @@ public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSquea
                         null, null, 100L, null, null, null}; // sets instanceSize to 100
         final SqueakImageChunk fakeChunk = SqueakImageChunk.createDummyChunk(image, pointers);
         image.compiledMethodClass.fillin(fakeChunk);
+        image.nilClass.setFormat(0);
+        image.arrayClass.setFormat(0);
     }
 }

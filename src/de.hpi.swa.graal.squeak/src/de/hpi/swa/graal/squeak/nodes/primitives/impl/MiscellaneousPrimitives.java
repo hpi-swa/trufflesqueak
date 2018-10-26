@@ -197,7 +197,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         protected final boolean doClass(final ClassObject receiver, final Object thang) {
-            return ArrayUtils.contains(receiver.getPointers(), thang) ? code.image.sqTrue : code.image.sqFalse;
+            return receiver.pointsTo(thang) ? code.image.sqTrue : code.image.sqFalse;
         }
 
         @Specialization
@@ -482,7 +482,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 148)
-    protected abstract static class PrimShallowCopyNode extends AbstractPrimitiveNode {
+    public abstract static class PrimShallowCopyNode extends AbstractPrimitiveNode {
 
         protected PrimShallowCopyNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);

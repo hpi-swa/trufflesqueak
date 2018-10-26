@@ -44,11 +44,21 @@ public final class ObjectLayouts {
         public static final int HOME = 5;
     }
 
+    /**
+     * Relative offsets to {@link CLASS_DESCRIPTION} for {@link ClassObject}.
+     */
     public static final class CLASS {
+        public static final int SUBCLASSES = 0;
+        public static final int NAME = 1;
+    }
+
+    public static final class CLASS_DESCRIPTION {
         public static final int SUPERCLASS = 0;
         public static final int METHOD_DICT = 1;
         public static final int FORMAT = 2;
-        public static final int NAME = 6;
+        public static final int INSTANCE_VARIABLES = 3;
+        public static final int ORGANIZATION = 4;
+        public static final int SIZE = 5;
     }
 
     public static final class CONTEXT {
@@ -109,6 +119,13 @@ public final class ObjectLayouts {
         public static final int SELECTOR = 0;
         public static final int ARGUMENTS = 1;
         public static final int LOOKUP_CLASS = 2;
+    }
+
+    /**
+     * Relative offsets to {@link CLASS_DESCRIPTION} for {@link ClassObject}.
+     */
+    public static final class METACLASS {
+        public static final int THIS_CLASS = 0;
     }
 
     public static final class METHOD_DICT {

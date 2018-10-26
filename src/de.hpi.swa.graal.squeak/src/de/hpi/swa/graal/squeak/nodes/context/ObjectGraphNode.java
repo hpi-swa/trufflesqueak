@@ -184,7 +184,7 @@ public abstract class ObjectGraphNode extends AbstractNodeWithImage {
 
         @Specialization
         protected static final Object[] doClass(final ClassObject object) {
-            return object.getPointers();
+            return object.getTraceableObjects();
         }
 
         @Specialization
