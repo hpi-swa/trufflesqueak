@@ -4,10 +4,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -18,8 +20,11 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
+import com.oracle.truffle.api.nodes.LanguageInfo;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.api.source.Source.LiteralBuilder;
+import com.oracle.truffle.api.source.Source.SourceBuilder;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -33,6 +38,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 
 public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
+    private static final String EVAL_SOURCE_NAME = "<eval>";
 
     @Override
     public boolean isEnabled(final SqueakImageContext image) {
@@ -45,30 +51,66 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primParseAndCall")
-    protected abstract static class PrimEvaluateAsNode extends AbstractPrimitiveNode {
+    @SqueakPrimitive(name = "primEvalString")
+    protected abstract static class PrimEvalStringNode extends AbstractPrimitiveNode {
 
-        protected PrimEvaluateAsNode(final CompiledMethodObject method, final int numArguments) {
+        protected PrimEvalStringNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
         @TruffleBoundary
-        @Specialization(guards = {"receiver.isByteType()", "languageNameObj.isByteType()"})
-        protected final Object doParseAndCall(final NativeObject receiver, final NativeObject languageNameObj) {
-            final String languageName = languageNameObj.asString();
-            if (!code.image.env.getLanguages().containsKey(languageName)) {
-                throw new PrimitiveFailed();
-            }
-            final String foreignCode = receiver.asString();
+        @Specialization(guards = {"languageIdOrMimeTypeObj.isByteType()", "source.isByteType()"})
+        protected final Object doParseAndCall(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject source) {
+            final String languageIdOrMimeType = languageIdOrMimeTypeObj.asString();
+            final String sourceText = source.asString();
+            final Env env = code.image.env;
             try {
-                final Source source = Source.newBuilder(languageName, foreignCode, "eval").build();
-                final CallTarget foreignCallTarget = code.image.env.parse(source);
+                final boolean mimeType = isMimeType(languageIdOrMimeType);
+                final String lang = mimeType ? findLanguageByMimeType(env, languageIdOrMimeType) : languageIdOrMimeType;
+                LiteralBuilder newBuilder = Source.newBuilder(lang, sourceText, EVAL_SOURCE_NAME);
+                if (mimeType) {
+                    newBuilder = newBuilder.mimeType(languageIdOrMimeType);
+                }
                 try {
-                    return code.image.wrap(foreignCallTarget.call());
+                    return code.image.wrap(env.parse(newBuilder.build()).call());
                 } finally {
                     PrimLastErrorNode.lastErrorMessage = null;
                 }
-            } catch (Throwable e) {
+            } catch (RuntimeException e) {
+                CompilerDirectives.transferToInterpreter();
+                PrimLastErrorNode.lastErrorMessage = e.toString();
+                throw new PrimitiveFailed();
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(name = "primEvalFile")
+    protected abstract static class PrimEvalFileNode extends AbstractPrimitiveNode {
+
+        protected PrimEvalFileNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @TruffleBoundary
+        @Specialization(guards = {"languageIdOrMimeTypeObj.isByteType()", "path.isByteType()"})
+        protected final Object doParseAndCall(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject path) {
+            final String languageIdOrMimeType = languageIdOrMimeTypeObj.asString();
+            final String pathString = path.asString();
+            final Env env = code.image.env;
+            try {
+                final boolean mimeType = isMimeType(languageIdOrMimeType);
+                final String lang = mimeType ? findLanguageByMimeType(env, languageIdOrMimeType) : languageIdOrMimeType;
+                SourceBuilder newBuilder = Source.newBuilder(lang, env.getTruffleFile(pathString));
+                if (mimeType) {
+                    newBuilder = newBuilder.mimeType(languageIdOrMimeType);
+                }
+                try {
+                    return env.parse(newBuilder.name(pathString).build()).call();
+                } finally {
+                    PrimLastErrorNode.lastErrorMessage = null;
+                }
+            } catch (IOException | RuntimeException e) {
                 CompilerDirectives.transferToInterpreter();
                 PrimLastErrorNode.lastErrorMessage = e.toString();
                 throw new PrimitiveFailed();
@@ -314,5 +356,24 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 throw new PrimitiveFailed();
             }
         }
+    }
+
+    /*
+     * Helper functions.
+     */
+
+    @TruffleBoundary(transferToInterpreterOnException = false)
+    private static String findLanguageByMimeType(final Env env, final String mimeType) {
+        final Map<String, LanguageInfo> languages = env.getLanguages();
+        for (String registeredMimeType : languages.keySet()) {
+            if (mimeType.equals(registeredMimeType)) {
+                return languages.get(registeredMimeType).getId();
+            }
+        }
+        return null;
+    }
+
+    private static boolean isMimeType(final String lang) {
+        return lang.contains("/");
     }
 }
