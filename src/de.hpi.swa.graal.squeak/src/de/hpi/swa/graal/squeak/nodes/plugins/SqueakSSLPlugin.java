@@ -15,12 +15,10 @@ import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 
 public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
+    private static final EconomicMap<Long, SSLImpl> sslHandles = EconomicMap.create();
 
     private static final class SSLImpl {
-
     }
-
-    private static final EconomicMap<Long, SSLImpl> sslHandles = EconomicMap.create();
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveAccept")

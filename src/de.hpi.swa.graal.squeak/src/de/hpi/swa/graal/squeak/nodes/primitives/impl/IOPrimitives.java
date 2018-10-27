@@ -31,7 +31,6 @@ import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.GetObjectArrayNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ReadArrayObjectNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.WriteArrayObjectNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.ReadNativeObjectNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.WriteNativeObjectNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
@@ -333,7 +332,6 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         @Child private SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
         @Child private ReadArrayObjectNode readArrayObjectNode;
         @Child private ReadNativeObjectNode readNativeObjectNode;
-        @Child private WriteArrayObjectNode writeArrayObjectNode;
         @Child private WriteNativeObjectNode writeNativeObjectNode;
         @Child private GetObjectArrayNode getObjectArrayNode;
 

@@ -273,11 +273,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
 
     @TruffleBoundary
     public boolean lessThanOrEqualTo(final long value) {
-        try {
-            return getBigInteger().longValueExact() <= value;
-        } catch (ArithmeticException e) {
-            return false;
-        }
+        return fitsIntoLong() && getBigInteger().longValueExact() <= value;
     }
 
     @TruffleBoundary

@@ -15,6 +15,8 @@ public final class ArrayObject extends AbstractSqueakObject {
     public static final long DOUBLE_NIL_TAG_LONG = Double.doubleToRawLongBits(DOUBLE_NIL_TAG);
     public static final boolean ENABLE_STORAGE_STRATEGIES = true;
 
+    private Object storage;
+
     public static ArrayObject createEmptyStrategy(final SqueakImageContext image, final ClassObject classObject, final int size) {
         return new ArrayObject(image, classObject, size);
     }
@@ -34,8 +36,6 @@ public final class ArrayObject extends AbstractSqueakObject {
     public static boolean isLongNilTag(final long value) {
         return value == LONG_NIL_TAG;
     }
-
-    private Object storage;
 
     public ArrayObject(final SqueakImageContext image) {
         super(image); // for special ArrayObjects only

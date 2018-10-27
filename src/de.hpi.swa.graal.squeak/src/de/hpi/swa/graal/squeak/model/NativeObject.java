@@ -15,6 +15,8 @@ public final class NativeObject extends AbstractSqueakObject {
     public static final int SHORT_MAX = (int) (Math.pow(2, Short.SIZE) - 1);
     public static final long INTEGER_MAX = (long) (Math.pow(2, Integer.SIZE) - 1);
 
+    @CompilationFinal private Object storage;
+
     public static NativeObject newNativeBytes(final SqueakImageChunk chunk) {
         return new NativeObject(chunk.image, chunk.getHash(), chunk.getSqClass(), chunk.getBytes());
     }
@@ -63,8 +65,6 @@ public final class NativeObject extends AbstractSqueakObject {
         return new NativeObject(img, klass, shorts);
     }
 
-    @CompilationFinal private Object storage;
-
     public NativeObject(final SqueakImageContext image) { // constructor for special selectors
         super(image, -1, null);
         storage = new byte[0];
@@ -90,7 +90,6 @@ public final class NativeObject extends AbstractSqueakObject {
 
     public void become(final NativeObject other) {
         super.becomeOtherClass(other);
-        CompilerDirectives.transferToInterpreterAndInvalidate();
         final Object otherStorage = other.storage;
         other.setStorage(this.storage);
         this.setStorage(otherStorage);

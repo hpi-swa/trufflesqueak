@@ -11,13 +11,13 @@ public abstract class AbstractSqueakObject implements TruffleObject {
     private static final int IDENTITY_HASH_MASK = 0x400000 - 1;
     private static final byte PINNED_BIT_SHIFT = 30;
 
-    public static final boolean isInstance(final TruffleObject obj) {
-        return obj instanceof AbstractSqueakObject;
-    }
-
     public final SqueakImageContext image;
     private long squeakHash;
     private ClassObject squeakClass;
+
+    public static final boolean isInstance(final TruffleObject obj) {
+        return obj instanceof AbstractSqueakObject;
+    }
 
     // For special/well-known objects only.
     protected AbstractSqueakObject(final SqueakImageContext image) {
