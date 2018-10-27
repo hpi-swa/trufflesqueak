@@ -20,7 +20,7 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
-import de.hpi.swa.graal.squeak.util.BitSplitter;
+import de.hpi.swa.graal.squeak.util.MiscUtils;
 
 public final class SqueakImageReaderNode extends RootNode {
     @CompilationFinal(dimensions = 1) private static final int[] CHUNK_HEADER_BIT_PATTERN = new int[]{22, 2, 5, 3, 22, 2, 8};
@@ -287,13 +287,13 @@ public final class SqueakImageReaderNode extends RootNode {
         long headerWord = nextLong();
         // 22 2 5 3 22 2 8
         // classid _ format _ hash _ size
-        int[] splitHeader = BitSplitter.splitter(headerWord, CHUNK_HEADER_BIT_PATTERN);
+        int[] splitHeader = MiscUtils.bitSplitter(headerWord, CHUNK_HEADER_BIT_PATTERN);
         int size = splitHeader[6];
         if (size == OVERFLOW_SLOTS) {
             size = (int) (headerWord & ~SLOTS_MASK);
             pos = position;
             headerWord = nextLong();
-            splitHeader = BitSplitter.splitter(headerWord, CHUNK_HEADER_BIT_PATTERN);
+            splitHeader = MiscUtils.bitSplitter(headerWord, CHUNK_HEADER_BIT_PATTERN);
             assert splitHeader[6] == OVERFLOW_SLOTS : "Objects with long header must have 255 in slot count";
         }
         final int classid = splitHeader[0];

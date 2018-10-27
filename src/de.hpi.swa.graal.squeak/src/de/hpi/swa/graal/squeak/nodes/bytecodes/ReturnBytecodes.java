@@ -16,21 +16,18 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodesFactory.ReturnRece
 import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodesFactory.ReturnTopFromBlockNodeGen;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodesFactory.ReturnTopFromMethodNodeGen;
 import de.hpi.swa.graal.squeak.nodes.context.ReceiverNode;
-import de.hpi.swa.graal.squeak.nodes.context.frame.FrameArgumentNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPopNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public final class ReturnBytecodes {
 
     protected abstract static class AbstractReturnNode extends AbstractBytecodeNode {
-        @Child protected FrameArgumentNode readClosureNode = FrameArgumentNode.create(FrameAccess.CLOSURE_OR_NULL);
-
         protected AbstractReturnNode(final CompiledCodeObject code, final int index) {
             super(code, index);
         }
 
         protected boolean hasClosure(final VirtualFrame frame) {
-            return readClosureNode.executeRead(frame) instanceof BlockClosureObject;
+            return FrameAccess.getClosure(frame) != null;
         }
 
         protected final boolean hasModifiedSender(final VirtualFrame frame) {
@@ -50,7 +47,7 @@ public final class ReturnBytecodes {
 
         @Override
         public final void executeVoid(final VirtualFrame frame) {
-            executeReturn(frame, readClosureNode.executeRead(frame));
+            executeReturn(frame, FrameAccess.getClosure(frame));
         }
 
         protected abstract void executeReturn(VirtualFrame frame, Object closure);
@@ -137,7 +134,7 @@ public final class ReturnBytecodes {
 
         @Override
         public final void executeVoid(final VirtualFrame frame) {
-            executeReturn(frame, readClosureNode.executeRead(frame));
+            executeReturn(frame, FrameAccess.getClosure(frame));
         }
 
         protected abstract void executeReturn(VirtualFrame frame, Object closure);

@@ -25,7 +25,16 @@ public abstract class HandleNonLocalReturnNode extends AbstractNodeWithCode {
         aboutToReturnNode = AboutToReturnNode.create(code);
     }
 
-    @Specialization(guards = "isVirtualized(frame)")
+    @Specialization(guards = {"!isVirtualized(frame)", "getContext(frame).hasModifiedSender()"})
+    protected final Object handleModifiedSender(final VirtualFrame frame, final NonLocalReturn nlr) {
+        aboutToReturnNode.executeAboutToReturn(frame, nlr); // handle ensure: or ifCurtailed:
+        final ContextObject newSender = getContext(frame).getNotNilSender(); // sender has changed
+        final ContextObject target = nlr.getTargetContext().getNotNilSender();
+        terminateNode.executeTerminate(frame);
+        throw new NonVirtualReturn(nlr.getReturnValue(), target, newSender);
+    }
+
+    @Fallback
     protected final Object handleVirtualized(final VirtualFrame frame, final NonLocalReturn nlr) {
         aboutToReturnNode.executeAboutToReturn(frame, nlr); // handle ensure: or ifCurtailed:
         terminateNode.executeTerminate(frame);
@@ -33,23 +42,5 @@ public abstract class HandleNonLocalReturnNode extends AbstractNodeWithCode {
             nlr.setArrivedAtTargetContext();
         }
         throw nlr;
-    }
-
-    @Fallback
-    protected final Object handle(final VirtualFrame frame, final NonLocalReturn nlr) {
-        aboutToReturnNode.executeAboutToReturn(frame, nlr); // handle ensure: or ifCurtailed:
-        final ContextObject context = getContext(frame);
-        if (context.hasModifiedSender()) {
-            final ContextObject newSender = context.getNotNilSender(); // sender has changed
-            final ContextObject target = nlr.getTargetContext().getNotNilSender();
-            terminateNode.executeTerminate(frame);
-            throw new NonVirtualReturn(nlr.getReturnValue(), target, newSender);
-        } else {
-            terminateNode.executeTerminate(frame);
-            if (context == nlr.getTargetContext()) {
-                nlr.setArrivedAtTargetContext();
-            }
-            throw nlr;
-        }
     }
 }

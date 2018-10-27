@@ -233,7 +233,7 @@ public final class PushBytecodes {
 
         @Specialization(guards = {"isVirtualized(frame)"})
         protected final void doReceiverVirtualized(final VirtualFrame frame) {
-            pushNode.executeWrite(frame, frame.getArguments()[FrameAccess.RECEIVER]);
+            pushNode.executeWrite(frame, FrameAccess.getReceiver(frame));
         }
 
         @Fallback
@@ -263,7 +263,7 @@ public final class PushBytecodes {
 
         @Specialization(guards = {"isVirtualized(frame)"})
         protected final void doReceiverVirtualized(final VirtualFrame frame) {
-            pushNode.executeWrite(frame, at0Node.execute(frame.getArguments()[FrameAccess.RECEIVER], variableIndex));
+            pushNode.executeWrite(frame, at0Node.execute(FrameAccess.getReceiver(frame), variableIndex));
         }
 
         @Fallback

@@ -9,9 +9,8 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
-import com.oracle.truffle.api.frame.FrameSlotTypeException;
+import com.oracle.truffle.api.frame.FrameUtil;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
@@ -45,26 +44,25 @@ public class FrameAccess {
      * stack*
      * </pre>
      */
-    public static final int CONTEXT_OR_MARKER = 0;
 
     public static final CompiledCodeObject getMethod(final Frame frame) {
-        CompilerAsserts.neverPartOfCompilation();
         return (CompiledCodeObject) frame.getArguments()[METHOD];
     }
 
     public static final Object getSender(final Frame frame) {
-        CompilerAsserts.neverPartOfCompilation();
         return frame.getArguments()[SENDER_OR_SENDER_MARKER];
     }
 
     public static final BlockClosureObject getClosure(final Frame frame) {
-        CompilerAsserts.neverPartOfCompilation();
         return (BlockClosureObject) frame.getArguments()[CLOSURE_OR_NULL];
     }
 
     public static final Object getReceiver(final Frame frame) {
-        CompilerAsserts.neverPartOfCompilation();
         return frame.getArguments()[RECEIVER];
+    }
+
+    public static final Object getArgument(final Frame frame, final int index) {
+        return frame.getArguments()[RECEIVER + index];
     }
 
     public static final Object[] getReceiverAndArguments(final Frame frame) {
@@ -73,11 +71,7 @@ public class FrameAccess {
     }
 
     public static final Object getContextOrMarker(final Frame frame) {
-        try {
-            return frame.getObject(getMethod(frame).thisContextOrMarkerSlot);
-        } catch (FrameSlotTypeException e) {
-            throw new SqueakException("thisContextOrMarkerSlot should never be invalid");
-        }
+        return FrameUtil.getObjectSafe(frame, getMethod(frame).thisContextOrMarkerSlot);
     }
 
     public static final Object[] newWith(final CompiledCodeObject code, final Object sender, final BlockClosureObject closure, final Object[] frameArgs) {

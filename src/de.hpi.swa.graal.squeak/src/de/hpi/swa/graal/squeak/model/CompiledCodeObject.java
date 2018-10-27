@@ -18,7 +18,7 @@ import de.hpi.swa.graal.squeak.instrumentation.CompiledCodeObjectPrinter;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.EnterCodeNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
-import de.hpi.swa.graal.squeak.util.BitSplitter;
+import de.hpi.swa.graal.squeak.util.MiscUtils;
 
 public abstract class CompiledCodeObject extends AbstractSqueakObject {
     public enum SLOT_IDENTIFIER {
@@ -189,7 +189,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
     protected final void decodeHeader() {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         final int hdr = getHeader();
-        final int[] splitHeader = BitSplitter.splitter(hdr, new int[]{15, 1, 1, 1, 6, 4, 2, 1});
+        final int[] splitHeader = MiscUtils.bitSplitter(hdr, new int[]{15, 1, 1, 1, 6, 4, 2, 1});
         numLiterals = splitHeader[0];
         // TODO: isOptimized = splitHeader[1] == 1;
         hasPrimitive = splitHeader[2] == 1;

@@ -19,7 +19,7 @@ public abstract class HandlePrimitiveFailedNode extends AbstractNodeWithCode {
         return HandlePrimitiveFailedNodeGen.create(code);
     }
 
-    public HandlePrimitiveFailedNode(final CompiledCodeObject code) {
+    protected HandlePrimitiveFailedNode(final CompiledCodeObject code) {
         super(code);
     }
 

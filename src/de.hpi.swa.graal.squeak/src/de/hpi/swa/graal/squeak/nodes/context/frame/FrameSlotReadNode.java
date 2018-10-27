@@ -5,16 +5,10 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 
-import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
-
 public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
 
     public static FrameSlotReadNode create(final FrameSlot frameSlot) {
         return FrameSlotReadNodeGen.create(frameSlot);
-    }
-
-    public static FrameSlotReadNode createForStackPointer(final CompiledCodeObject code) {
-        return FrameSlotReadNodeGen.create(code.stackPointerSlot);
     }
 
     protected FrameSlotReadNode(final FrameSlot frameSlot) {

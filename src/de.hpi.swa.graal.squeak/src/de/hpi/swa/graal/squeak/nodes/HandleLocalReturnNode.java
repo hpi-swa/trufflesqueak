@@ -26,22 +26,16 @@ public abstract class HandleLocalReturnNode extends AbstractNodeWithCode {
         terminateNode = TerminateContextNode.create(code);
     }
 
-    @Specialization(guards = "isVirtualized(frame)")
-    protected final Object handleVirtualized(final VirtualFrame frame, final LocalReturn lr) {
+    @Specialization(guards = {"!isVirtualized(frame)", "getContext(frame).hasModifiedSender()"})
+    protected final Object handleModifiedSender(final VirtualFrame frame, final LocalReturn lr) {
+        final ContextObject newSender = getContext(frame).getNotNilSender(); // sender has changed
         terminateNode.executeTerminate(frame);
-        return lr.getReturnValue();
+        throw new NonVirtualReturn(lr.getReturnValue(), newSender, newSender);
     }
 
     @Fallback
     protected final Object handle(final VirtualFrame frame, final LocalReturn lr) {
-        final ContextObject context = getContext(frame);
-        if (context.hasModifiedSender()) {
-            final ContextObject newSender = context.getNotNilSender(); // sender has changed
-            terminateNode.executeTerminate(frame);
-            throw new NonVirtualReturn(lr.getReturnValue(), newSender, newSender);
-        } else {
-            terminateNode.executeTerminate(frame);
-            return lr.getReturnValue();
-        }
+        terminateNode.executeTerminate(frame);
+        return lr.getReturnValue();
     }
 }

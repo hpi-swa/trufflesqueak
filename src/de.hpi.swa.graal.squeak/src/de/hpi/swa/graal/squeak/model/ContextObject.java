@@ -102,12 +102,12 @@ public final class ContextObject extends AbstractPointersObject {
             case CONTEXT.STACKPOINTER:
                 return (long) FrameUtil.getIntSafe(truffleFrame, getMethod().stackPointerSlot) + 1;
             case CONTEXT.METHOD:
-                return truffleFrame.getArguments()[FrameAccess.METHOD];
+                return FrameAccess.getMethod(truffleFrame);
             case CONTEXT.CLOSURE_OR_NIL:
-                final BlockClosureObject closure = (BlockClosureObject) truffleFrame.getArguments()[FrameAccess.CLOSURE_OR_NULL];
+                final BlockClosureObject closure = FrameAccess.getClosure(truffleFrame);
                 return closure == null ? image.nil : closure;
             case CONTEXT.RECEIVER:
-                return truffleFrame.getArguments()[FrameAccess.RECEIVER];
+                return FrameAccess.getReceiver(truffleFrame);
             default:
                 return truffleFrame.getValue(getMethod().getStackSlot(index - CONTEXT.TEMP_FRAME_START));
         }

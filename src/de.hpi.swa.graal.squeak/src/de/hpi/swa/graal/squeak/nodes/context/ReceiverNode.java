@@ -19,7 +19,7 @@ public abstract class ReceiverNode extends SqueakNodeWithCode {
 
     @Specialization(guards = {"isVirtualized(frame)"})
     protected static final Object doReceiverVirtualized(final VirtualFrame frame) {
-        return frame.getArguments()[FrameAccess.RECEIVER];
+        return FrameAccess.getReceiver(frame);
     }
 
     @Fallback
