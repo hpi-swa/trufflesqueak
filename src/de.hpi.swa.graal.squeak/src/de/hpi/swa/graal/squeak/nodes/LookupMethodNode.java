@@ -7,6 +7,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.profiles.BranchProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -45,7 +46,8 @@ public abstract class LookupMethodNode extends Node {
         @Specialization
         protected final Object doLookup(final ClassObject classObject, final NativeObject selector,
                         @Cached("create()") final SqueakObjectSizeNode sizeNode,
-                        @Cached("create()") final ReadArrayObjectNode readNode) {
+                        @Cached("create()") final ReadArrayObjectNode readNode,
+                        @Cached("create()") final BranchProfile dnuProfile) {
             ClassObject lookupClass = classObject;
             while (lookupClass != null) {
                 final PointersObject methodDict = lookupClass.getMethodDict();
@@ -58,10 +60,9 @@ public abstract class LookupMethodNode extends Node {
                 }
                 lookupClass = lookupClass.getSuperclassOrNull();
             }
-            if (selector == image.doesNotUnderstand) {
-                throw new SqueakException("Could not find does not understand method for:", classObject);
-            }
-            return doLookup(classObject, image.doesNotUnderstand, sizeNode, readNode);
+            assert selector != image.doesNotUnderstand : "Could not find does not understand method for: " + classObject;
+            dnuProfile.enter();
+            return doLookup(classObject, image.doesNotUnderstand, sizeNode, readNode, dnuProfile);
         }
     }
 

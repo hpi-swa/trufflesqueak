@@ -34,13 +34,13 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerNode;
 import de.hpi.swa.graal.squeak.util.SqueakBytecodeDecoder;
 
+@NodeInfo(cost = NodeCost.NONE)
 public abstract class ExecuteContextNode extends AbstractNodeWithCode {
     @Children private AbstractBytecodeNode[] bytecodeNodes;
     @Child private HandleLocalReturnNode handleLocalReturnNode;
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
-    @Child private HandleNonVirtualReturnNode handleNonVirtualReturnNode = HandleNonVirtualReturnNode.create();
+    @Child private HandleNonVirtualReturnNode handleNonVirtualReturnNode;
     @Child private TriggerInterruptHandlerNode triggerInterruptHandlerNode;
-    @Child private MaterializeContextOnMethodExitNode materializeContextOnMethodExitNode;
 
     @Child private UpdateInstructionPointerNode updateInstructionPointerNode;
     @Child private GetSuccessorNode getSuccessorNode;
@@ -63,26 +63,24 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
         super(code);
         bytecodeNodes = new SqueakBytecodeDecoder(code).decode();
         CompilerAsserts.compilationConstant(bytecodeNodes.length);
-        handleLocalReturnNode = HandleLocalReturnNode.create(code);
-        handleNonLocalReturnNode = HandleNonLocalReturnNode.create(code);
         triggerInterruptHandlerNode = TriggerInterruptHandlerNode.create(code);
-        materializeContextOnMethodExitNode = MaterializeContextOnMethodExitNode.create(code);
     }
 
     @Specialization(guards = "context == null")
     protected final Object doVirtualized(final VirtualFrame frame, @SuppressWarnings("unused") final ContextObject context,
-                    @Cached("create(code)") final GetOrCreateContextNode getOrCreateContextNode) {
+                    @Cached("create(code)") final GetOrCreateContextNode getOrCreateContextNode,
+                    @Cached("create(code)") final MaterializeContextOnMethodExitNode materializeContextOnMethodExitNode) {
         try {
             triggerInterruptHandlerNode.executeGeneric(frame, code.hasPrimitive(), bytecodeNodes.length);
             startBytecode(frame);
             throw new SqueakException("Method did not return");
         } catch (LocalReturn lr) {
-            return handleLocalReturnNode.executeHandle(frame, lr);
+            return getHandleLocalReturnNode().executeHandle(frame, lr);
         } catch (NonLocalReturn nlr) {
-            return handleNonLocalReturnNode.executeHandle(frame, nlr);
+            return getHandleNonLocalReturnNode().executeHandle(frame, nlr);
         } catch (NonVirtualReturn nvr) {
             getOrCreateContextNode.executeGet(frame).markEscaped();
-            return handleNonVirtualReturnNode.executeHandle(frame, nvr);
+            return getHandleNonVirtualReturnNode().executeHandle(frame, nvr);
         } catch (ProcessSwitch ps) {
             getOrCreateContextNode.executeGet(frame).markEscaped();
             throw ps;
@@ -108,11 +106,11 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
             }
             throw new SqueakException("Method did not return");
         } catch (LocalReturn lr) {
-            return handleLocalReturnNode.executeHandle(frame, lr);
+            return getHandleLocalReturnNode().executeHandle(frame, lr);
         } catch (NonLocalReturn nlr) {
-            return handleNonLocalReturnNode.executeHandle(frame, nlr);
+            return getHandleNonLocalReturnNode().executeHandle(frame, nlr);
         } catch (NonVirtualReturn nvr) {
-            return handleNonVirtualReturnNode.executeHandle(frame, nvr);
+            return getHandleNonVirtualReturnNode().executeHandle(frame, nvr);
         } finally {
             MaterializeContextOnMethodExitNode.stopMaterializationHere();
         }
@@ -275,6 +273,30 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
         protected static final int doNormal(final AbstractBytecodeNode node) {
             return node.getSuccessorIndex();
         }
+    }
+
+    private HandleLocalReturnNode getHandleLocalReturnNode() {
+        if (handleLocalReturnNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            handleLocalReturnNode = insert(HandleLocalReturnNode.create(code));
+        }
+        return handleLocalReturnNode;
+    }
+
+    private HandleNonLocalReturnNode getHandleNonLocalReturnNode() {
+        if (handleNonLocalReturnNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            handleNonLocalReturnNode = insert(HandleNonLocalReturnNode.create(code));
+        }
+        return handleNonLocalReturnNode;
+    }
+
+    private HandleNonVirtualReturnNode getHandleNonVirtualReturnNode() {
+        if (handleNonVirtualReturnNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            handleNonVirtualReturnNode = insert(HandleNonVirtualReturnNode.create());
+        }
+        return handleNonVirtualReturnNode;
     }
 
     private StackPushNode getStackPushNode() {

@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
-import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -33,24 +32,28 @@ public final class ClassObjectNodes {
             return obj.getSuperclass();
         }
 
-        @Specialization(guards = {"isMethodDictIndex(index)", "obj.getMethodDictStable() == cachedMethodDictStable"}, assumptions = {"cachedMethodDictStable"}, limit = "CACHE_LIMIT")
-        protected static final PointersObject doClassMethodDictCached(final ClassObject obj, @SuppressWarnings("unused") final long index,
-                        @SuppressWarnings("unused") @Cached("obj.getMethodDictStable()") final Assumption cachedMethodDictStable) {
-            return obj.getMethodDict();
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"isMethodDictIndex(index)", "squeakClass == cachedSqueakClass"}, assumptions = {"cachedSqueakClass.getMethodDictStable()"}, limit = "CACHE_LIMIT")
+        protected static final PointersObject doClassMethodDictConstant(final ClassObject squeakClass, final long index,
+                        @Cached("squeakClass") final ClassObject cachedSqueakClass,
+                        @Cached("squeakClass.getMethodDict()") final PointersObject cachedMethodDict) {
+            return cachedMethodDict;
         }
 
-        @Specialization(guards = {"isMethodDictIndex(index)"}, replaces = "doClassMethodDictCached")
+        @Specialization(guards = {"isMethodDictIndex(index)"}, replaces = "doClassMethodDictConstant")
         protected static final PointersObject doClassMethodDict(final ClassObject obj, @SuppressWarnings("unused") final long index) {
             return obj.getMethodDict();
         }
 
-        @Specialization(guards = {"isFormatIndex(index)", "obj.getClassFormatStable() == cachedClassFormatStable"}, assumptions = {"cachedClassFormatStable"}, limit = "CACHE_LIMIT")
-        protected static final long doClassFormatCached(final ClassObject obj, @SuppressWarnings("unused") final long index,
-                        @SuppressWarnings("unused") @Cached("obj.getClassFormatStable()") final Assumption cachedClassFormatStable) {
-            return obj.getFormat();
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"isFormatIndex(index)", "squeakClass == cachedSqueakClass"}, assumptions = {"cachedSqueakClass.getClassFormatStable()"}, limit = "CACHE_LIMIT")
+        protected static final long doClassFormatConstant(final ClassObject squeakClass, final long index,
+                        @Cached("squeakClass") final ClassObject cachedSqueakClass,
+                        @Cached("squeakClass.getFormat()") final long cachedFormat) {
+            return cachedFormat;
         }
 
-        @Specialization(guards = {"isFormatIndex(index)"}, replaces = "doClassFormatCached")
+        @Specialization(guards = {"isFormatIndex(index)"}, replaces = "doClassFormatConstant")
         protected static final long doClassFormat(final ClassObject obj, @SuppressWarnings("unused") final long index) {
             return obj.getFormat();
         }

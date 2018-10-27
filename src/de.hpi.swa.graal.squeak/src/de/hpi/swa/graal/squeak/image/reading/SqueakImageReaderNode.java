@@ -1,4 +1,4 @@
-package de.hpi.swa.graal.squeak.image;
+package de.hpi.swa.graal.squeak.image.reading;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -17,10 +17,9 @@ import com.oracle.truffle.api.nodes.RepeatingNode;
 import com.oracle.truffle.api.nodes.RootNode;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
-import de.hpi.swa.graal.squeak.nodes.FillInClassAndHashNode;
-import de.hpi.swa.graal.squeak.nodes.FillInNode;
 import de.hpi.swa.graal.squeak.util.BitSplitter;
 
 public final class SqueakImageReaderNode extends RootNode {

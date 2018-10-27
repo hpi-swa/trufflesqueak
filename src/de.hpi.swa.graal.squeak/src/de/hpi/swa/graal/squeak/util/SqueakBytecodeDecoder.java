@@ -79,7 +79,7 @@ public final class SqueakBytecodeDecoder {
         switch (b) {
             case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
             case 8: case 9: case 10: case 11: case 12: case 13: case 14: case 15:
-                return new PushReceiverVariableNode(code, index, 1, b & 15);
+                return PushReceiverVariableNode.create(code, index, 1, b & 15);
             case 16: case 17: case 18: case 19: case 20: case 21: case 22: case 23:
             case 24: case 25: case 26: case 27: case 28: case 29: case 30: case 31:
                 return new PushTemporaryLocationNode(code, index, 1, b & 15);
@@ -98,7 +98,7 @@ public final class SqueakBytecodeDecoder {
             case 104: case 105: case 106: case 107: case 108: case 109: case 110: case 111:
                 return new PopIntoTemporaryLocationNode(code, index, 1, b & 7);
             case 112:
-                return new PushReceiverNode(code, index);
+                return PushReceiverNode.create(code, index);
             case 113:
                 return new PushConstantNode(code, index, true);
             case 114:
@@ -150,7 +150,7 @@ public final class SqueakBytecodeDecoder {
             case 137:
                 return new PushActiveContextNode(code, index);
             case 138:
-                return new PushNewArrayNode(code, index, 2, nextByte());
+                return PushNewArrayNode.create(code, index, 2, nextByte());
             case 139:
                 assert code instanceof CompiledMethodObject;
                 return CallPrimitiveNode.create((CompiledMethodObject) code, index, 3, nextByte(), nextByte());

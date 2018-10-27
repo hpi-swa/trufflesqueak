@@ -117,7 +117,7 @@ public final class MiscellaneousBytecodes {
                 case 1:
                     return new SingleExtendedSuperNode(code, index, numBytecodes, third, second & 31);
                 case 2:
-                    return new PushReceiverVariableNode(code, index, numBytecodes, third);
+                    return PushReceiverVariableNode.create(code, index, numBytecodes, third);
                 case 3:
                     return new PushLiteralConstantNode(code, index, numBytecodes, third);
                 case 4:
@@ -177,7 +177,7 @@ public final class MiscellaneousBytecodes {
             final int variableIndex = variableIndex(nextByte);
             switch (variableType(nextByte)) {
                 case 0:
-                    return new PushReceiverVariableNode(code, index, numBytecodes, variableIndex);
+                    return PushReceiverVariableNode.create(code, index, numBytecodes, variableIndex);
                 case 1:
                     return new PushTemporaryLocationNode(code, index, numBytecodes, variableIndex);
                 case 2:

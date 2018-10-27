@@ -48,22 +48,22 @@ public abstract class LookupClassNode extends AbstractNodeWithImage {
     }
 
     @Specialization
-    protected final ClassObject squeakClass(@SuppressWarnings("unused") final char value) {
+    protected final ClassObject doChar(@SuppressWarnings("unused") final char value) {
         return image.characterClass;
     }
 
     @Specialization
-    protected final ClassObject squeakClass(@SuppressWarnings("unused") final double value) {
+    protected final ClassObject doDouble(@SuppressWarnings("unused") final double value) {
         return image.floatClass;
     }
 
     @Specialization
-    protected static final ClassObject squeakClass(final AbstractSqueakObject value) {
+    protected static final ClassObject doSqueakObject(final AbstractSqueakObject value) {
         return value.getSqueakClass();
     }
 
     @Specialization(guards = "!isAbstractSqueakObject(value)")
-    protected final ClassObject squeakClass(@SuppressWarnings("unused") final TruffleObject value) {
+    protected final ClassObject doTruffleObject(@SuppressWarnings("unused") final TruffleObject value) {
         return image.truffleObjectClass;
     }
 

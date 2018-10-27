@@ -1,12 +1,14 @@
 package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.NodeCost;
+import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.ASSOCIATION;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
 import de.hpi.swa.graal.squeak.nodes.context.MethodLiteralNode;
-import de.hpi.swa.graal.squeak.nodes.context.ObjectAtPutNode;
+import de.hpi.swa.graal.squeak.nodes.context.SqueakObjectAtPutAndMarkContextsNode;
 import de.hpi.swa.graal.squeak.nodes.context.ReceiverNode;
 import de.hpi.swa.graal.squeak.nodes.context.TemporaryReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.TemporaryWriteNode;
@@ -21,7 +23,7 @@ public final class StoreBytecodes {
         private AbstractStoreIntoAssociationNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long variableIndex) {
             super(code, index, numBytecodes);
             this.variableIndex = variableIndex;
-            storeNode = ObjectAtPutNode.create(ASSOCIATION.VALUE, new MethodLiteralNode(code, variableIndex), getValueNode());
+            storeNode = SqueakObjectAtPutAndMarkContextsNode.create(ASSOCIATION.VALUE, new MethodLiteralNode(code, variableIndex), getValueNode());
         }
 
         @Override
@@ -30,8 +32,9 @@ public final class StoreBytecodes {
         }
     }
 
+    @NodeInfo(cost = NodeCost.NONE)
     private abstract static class AbstractStoreIntoNode extends AbstractBytecodeNode {
-        @Child protected ObjectAtPutNode storeNode;
+        @Child protected SqueakObjectAtPutAndMarkContextsNode storeNode;
 
         private AbstractStoreIntoNode(final CompiledCodeObject code, final int index, final int numBytecodes) {
             super(code, index, numBytecodes);
@@ -53,7 +56,7 @@ public final class StoreBytecodes {
         private AbstractStoreIntoReceiverVariableNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long receiverIndex) {
             super(code, index, numBytecodes);
             this.receiverIndex = receiverIndex;
-            storeNode = ObjectAtPutNode.create(receiverIndex, ReceiverNode.create(code), getValueNode());
+            storeNode = SqueakObjectAtPutAndMarkContextsNode.create(receiverIndex, ReceiverNode.create(code), getValueNode());
         }
 
         @Override
@@ -70,7 +73,7 @@ public final class StoreBytecodes {
             super(code, index, numBytecodes);
             this.indexInArray = indexInArray;
             this.indexOfArray = indexOfArray;
-            storeNode = ObjectAtPutNode.create(indexInArray, TemporaryReadNode.create(code, indexOfArray), getValueNode());
+            storeNode = SqueakObjectAtPutAndMarkContextsNode.create(indexInArray, TemporaryReadNode.create(code, indexOfArray), getValueNode());
         }
 
         @Override
@@ -98,8 +101,6 @@ public final class StoreBytecodes {
     }
 
     public static final class PopIntoAssociationNode extends AbstractStoreIntoAssociationNode {
-        @Child private StackPopNode popNode;
-
         public PopIntoAssociationNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long variableIndex) {
             super(code, index, numBytecodes, variableIndex);
         }

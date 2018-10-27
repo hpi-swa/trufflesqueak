@@ -1,6 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.context;
 
-import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -11,8 +11,7 @@ import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotWriteNode;
 
 public abstract class TemporaryWriteNode extends AbstractNodeWithCode {
-    private final int tempIndex;
-    @Child private FrameSlotWriteNode frameSlotWriteNode;
+    protected final int tempIndex;
 
     public static TemporaryWriteNode create(final CompiledCodeObject code, final int tempIndex) {
         return TemporaryWriteNodeGen.create(code, tempIndex);
@@ -26,23 +25,16 @@ public abstract class TemporaryWriteNode extends AbstractNodeWithCode {
     }
 
     @Specialization(guards = {"isVirtualized(frame)"})
-    protected final void doWriteVirtualized(final VirtualFrame frame, final Object value) {
+    protected final void doWriteVirtualized(final VirtualFrame frame, final Object value,
+                    @Cached("create(code.getStackSlot(tempIndex))") final FrameSlotWriteNode writeNode) {
         assert value != null;
-        getFrameSlotWriteNode().executeWrite(frame, value);
+        assert 0 <= tempIndex && tempIndex <= CONTEXT.MAX_STACK_SIZE;
+        writeNode.executeWrite(frame, value);
     }
 
     @Fallback
     protected final void doWrite(final VirtualFrame frame, final Object value) {
         assert value != null;
         getContext(frame).atTempPut(tempIndex, value);
-    }
-
-    private FrameSlotWriteNode getFrameSlotWriteNode() {
-        if (frameSlotWriteNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            assert 0 <= tempIndex && tempIndex <= CONTEXT.MAX_STACK_SIZE;
-            frameSlotWriteNode = insert(FrameSlotWriteNode.create(code.getStackSlot(tempIndex)));
-        }
-        return frameSlotWriteNode;
     }
 }

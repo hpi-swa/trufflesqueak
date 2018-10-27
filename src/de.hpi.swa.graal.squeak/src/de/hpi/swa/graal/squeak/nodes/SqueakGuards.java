@@ -46,7 +46,7 @@ public final class SqueakGuards {
         return object instanceof ClassObject;
     }
 
-    public static boolean isContextObject(final AbstractSqueakObject object) {
+    public static boolean isContextObject(final Object object) {
         return object instanceof ContextObject;
     }
 

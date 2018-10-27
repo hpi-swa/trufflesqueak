@@ -4,6 +4,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.util.List;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
@@ -13,6 +14,8 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.NodeCost;
+import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveWithoutResultException;
@@ -45,7 +48,6 @@ import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeGetBytesN
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.context.LookupClassNode;
-import de.hpi.swa.graal.squeak.nodes.context.ObjectAtNode;
 import de.hpi.swa.graal.squeak.nodes.context.ReceiverNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushForPrimitivesNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -846,37 +848,90 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         public PrimEnterCriticalSectionNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
-            getActiveProcessNode = GetActiveProcessNode.create(method.image);
-            linkProcessToListNode = LinkProcessToListNode.create(method);
-            wakeHighestPriorityNode = WakeHighestPriorityNode.create(method);
         }
 
-        @Override
-        public final Object executeWithArguments(final VirtualFrame frame, final Object... arguments) {
-            return doEnter(frame, arguments);
+        @Specialization(guards = "ownerIsNil(mutex)")
+        protected final Object doEnterNilOwner(final PointersObject mutex, @SuppressWarnings("unused") final NotProvided notProvided) {
+            mutex.atput0(MUTEX.OWNER, getGetActiveProcessNode().executeGet());
+            return code.image.sqFalse;
         }
 
-        @Specialization
-        protected final Object doEnter(final VirtualFrame frame, final Object[] rcvrAndArguments) {
-            final PointersObject mutex = (PointersObject) rcvrAndArguments[0];
-            final PointersObject activeProcess;
-            if (rcvrAndArguments.length == 2) {
-                activeProcess = (PointersObject) rcvrAndArguments[1];
-            } else {
-                activeProcess = getActiveProcessNode.executeGet();
-            }
-            final Object owner = mutex.at0(MUTEX.OWNER);
-            if (owner == code.image.nil) {
-                mutex.atput0(MUTEX.OWNER, activeProcess);
-                pushNode.executeWrite(frame, code.image.sqFalse);
-            } else if (owner == activeProcess) {
-                pushNode.executeWrite(frame, code.image.sqTrue);
-            } else {
-                pushNode.executeWrite(frame, code.image.sqFalse);
-                linkProcessToListNode.executeLink(activeProcess, mutex);
-                wakeHighestPriorityNode.executeWake(frame);
-            }
+        @SuppressWarnings("unused")
+        @Specialization(guards = "activeProcessMutexOwner(mutex)")
+        protected final Object doEnterActiveProcessOwner(final PointersObject mutex, final NotProvided notProvided) {
+            return code.image.sqTrue;
+        }
+
+        @Specialization(guards = {"!ownerIsNil(mutex)", "!activeProcessMutexOwner(mutex)"})
+        protected final Object doEnter(final VirtualFrame frame, final PointersObject mutex, @SuppressWarnings("unused") final NotProvided notProvided) {
+            getPushNode().executeWrite(frame, code.image.sqFalse);
+            getLinkProcessToListNode().executeLink(getGetActiveProcessNode().executeGet(), mutex);
+            getWakeHighestPriorityNode().executeWake(frame);
             throw new PrimitiveWithoutResultException();
+        }
+
+        @Specialization(guards = "ownerIsNil(mutex)")
+        protected final Object doEnterNilOwner(final PointersObject mutex, @SuppressWarnings("unused") final PointersObject effectiveProcess) {
+            mutex.atput0(MUTEX.OWNER, effectiveProcess);
+            return code.image.sqFalse;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "isMutexOwner(mutex, effectiveProcess)")
+        protected final Object doEnterActiveProcessOwner(final PointersObject mutex, final PointersObject effectiveProcess) {
+            return code.image.sqTrue;
+        }
+
+        @Specialization(guards = {"!ownerIsNil(mutex)", "!isMutexOwner(mutex, effectiveProcess)"})
+        protected final Object doEnter(final VirtualFrame frame, final PointersObject mutex, @SuppressWarnings("unused") final PointersObject effectiveProcess) {
+            getPushNode().executeWrite(frame, code.image.sqFalse);
+            getLinkProcessToListNode().executeLink(effectiveProcess, mutex);
+            getWakeHighestPriorityNode().executeWake(frame);
+            throw new PrimitiveWithoutResultException();
+        }
+
+        protected final boolean ownerIsNil(final PointersObject mutex) {
+            return mutex.at0(MUTEX.OWNER) == code.image.nil;
+        }
+
+        protected final boolean activeProcessMutexOwner(final PointersObject mutex) {
+            return mutex.at0(MUTEX.OWNER) == getGetActiveProcessNode().executeGet();
+        }
+
+        protected static final boolean isMutexOwner(final PointersObject mutex, final PointersObject effectiveProcess) {
+            return mutex.at0(MUTEX.OWNER) == effectiveProcess;
+        }
+
+        private StackPushForPrimitivesNode getPushNode() {
+            if (pushNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                pushNode = insert(StackPushForPrimitivesNode.create());
+            }
+            return pushNode;
+        }
+
+        private GetActiveProcessNode getGetActiveProcessNode() {
+            if (getActiveProcessNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                getActiveProcessNode = insert(GetActiveProcessNode.create(code.image));
+            }
+            return getActiveProcessNode;
+        }
+
+        private LinkProcessToListNode getLinkProcessToListNode() {
+            if (linkProcessToListNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                linkProcessToListNode = insert(LinkProcessToListNode.create(code));
+            }
+            return linkProcessToListNode;
+        }
+
+        private WakeHighestPriorityNode getWakeHighestPriorityNode() {
+            if (wakeHighestPriorityNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                wakeHighestPriorityNode = insert(WakeHighestPriorityNode.create(code));
+            }
+            return wakeHighestPriorityNode;
         }
     }
 
@@ -1107,9 +1162,12 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    @NodeInfo(cost = NodeCost.NONE)
     @GenerateNodeFactory
     public abstract static class PrimQuickReturnReceiverVariableNode extends AbstractPrimitiveNode {
-        @Child private ObjectAtNode receiverVariableNode;
+        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
+        @Child private ReceiverNode receiverNode;
+        private final long variableIndex;
 
         public static PrimQuickReturnReceiverVariableNode create(final CompiledMethodObject method, final long variableIndex) {
             return PrimQuickReturnReceiverVariableNodeFactory.create(method, variableIndex, new SqueakNode[0]);
@@ -1117,12 +1175,13 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected PrimQuickReturnReceiverVariableNode(final CompiledMethodObject method, final long variableIndex) {
             super(method, 1);
-            receiverVariableNode = ObjectAtNode.create(variableIndex, ReceiverNode.create(method));
+            this.variableIndex = variableIndex;
+            receiverNode = ReceiverNode.create(method);
         }
 
         @Specialization
         protected final Object receiverVariable(final VirtualFrame frame) {
-            return receiverVariableNode.executeGeneric(frame);
+            return at0Node.execute(receiverNode.executeRead(frame), variableIndex);
         }
     }
 }

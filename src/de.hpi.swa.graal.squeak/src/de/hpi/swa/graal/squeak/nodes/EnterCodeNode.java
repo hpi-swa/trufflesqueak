@@ -64,6 +64,7 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
             try {
                 return codeNode.execute(frame);
             } catch (StackOverflowError e) {
+                CompilerDirectives.transferToInterpreter();
                 codeNode.code.image.printSqStackTrace();
                 throw e;
             }

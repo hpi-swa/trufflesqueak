@@ -1,6 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.context;
 
-import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -26,8 +26,9 @@ public abstract class ArgumentNode extends SqueakNodeWithCode {
     }
 
     @Specialization(guards = {"isVirtualized(frame)", "argumentIndex <= code.getNumArgs()"})
-    protected final Object doVirtualized(final VirtualFrame frame) {
-        return getFrameArgumentNode().executeRead(frame);
+    protected static final Object doVirtualized(final VirtualFrame frame,
+                    @Cached("createFrameArgumentNode()") final FrameArgumentNode argumentNode) {
+        return argumentNode.executeRead(frame);
     }
 
     @Specialization(guards = {"!isVirtualized(frame)", "argumentIndex <= code.getNumArgs()"})
@@ -45,11 +46,7 @@ public abstract class ArgumentNode extends SqueakNodeWithCode {
         throw new SqueakException("Should never happend");
     }
 
-    private FrameArgumentNode getFrameArgumentNode() {
-        if (frameArgumentNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            frameArgumentNode = insert(FrameArgumentNode.create(FrameAccess.RECEIVER + argumentIndex));
-        }
-        return frameArgumentNode;
+    protected FrameArgumentNode createFrameArgumentNode() {
+        return FrameArgumentNode.create(FrameAccess.RECEIVER + argumentIndex);
     }
 }

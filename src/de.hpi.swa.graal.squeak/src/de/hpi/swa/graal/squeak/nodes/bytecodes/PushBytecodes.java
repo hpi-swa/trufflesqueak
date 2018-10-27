@@ -4,7 +4,11 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.NodeCost;
+import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
@@ -15,13 +19,15 @@ import de.hpi.swa.graal.squeak.nodes.EnterCodeNode;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.GetCompiledMethodNode;
-import de.hpi.swa.graal.squeak.nodes.context.LiteralConstantNode;
-import de.hpi.swa.graal.squeak.nodes.context.MethodLiteralNode;
-import de.hpi.swa.graal.squeak.nodes.context.ObjectAtNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
+import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodesFactory.PushNewArrayNodeGen;
+import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodesFactory.PushReceiverNodeGen;
+import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodesFactory.PushReceiverVariableNodeGen;
 import de.hpi.swa.graal.squeak.nodes.context.ReceiverNode;
 import de.hpi.swa.graal.squeak.nodes.context.TemporaryReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPopNReversedNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
+import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public final class PushBytecodes {
 
@@ -38,6 +44,7 @@ public final class PushBytecodes {
         }
     }
 
+    @NodeInfo(cost = NodeCost.NONE)
     public static final class PushActiveContextNode extends AbstractPushNode {
         @Child private GetOrCreateContextNode getContextNode;
 
@@ -65,7 +72,7 @@ public final class PushBytecodes {
         @Child private GetOrCreateContextNode getOrCreateContextNode;
         @Child private StackPopNReversedNode popNReversedNode;
         @Child private ReceiverNode receiverNode;
-        @Child private GetCompiledMethodNode getMethodNode = GetCompiledMethodNode.create();
+        @Child private GetCompiledMethodNode getMethodNode;
 
         @CompilationFinal private CompiledBlockObject block;
         @CompilationFinal private RootCallTarget blockCallTarget;
@@ -87,7 +94,7 @@ public final class PushBytecodes {
         private CompiledBlockObject getBlock() {
             if (block == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                block = CompiledBlockObject.create(code, getMethodNode.execute(code), numArgs, numCopied, index + numBytecodes, blockSize);
+                block = CompiledBlockObject.create(code, getMethodNode().execute(code), numArgs, numCopied, index + numBytecodes, blockSize);
                 blockCallTarget = Truffle.getRuntime().createCallTarget(EnterCodeNode.create(block.image.getLanguage(), block));
             }
             return block;
@@ -115,6 +122,14 @@ public final class PushBytecodes {
             final int end = start + blockSize;
             return "closureNumCopied: " + numCopied + " numArgs: " + numArgs + " bytes " + start + " to " + end;
         }
+
+        private GetCompiledMethodNode getMethodNode() {
+            if (getMethodNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                getMethodNode = insert(GetCompiledMethodNode.create());
+            }
+            return getMethodNode;
+        }
     }
 
     public static final class PushConstantNode extends AbstractPushNode {
@@ -137,18 +152,16 @@ public final class PushBytecodes {
     }
 
     public static final class PushLiteralConstantNode extends AbstractPushNode {
-        @Child private SqueakNode literalNode;
         private final int literalIndex;
 
         public PushLiteralConstantNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex) {
             super(code, index, numBytecodes);
             this.literalIndex = literalIndex;
-            literalNode = new MethodLiteralNode(code, literalIndex);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.executeWrite(frame, literalNode.executeRead(frame));
+            pushNode.executeWrite(frame, code.getLiteral(literalIndex));
         }
 
         @Override
@@ -158,18 +171,17 @@ public final class PushBytecodes {
     }
 
     public static final class PushLiteralVariableNode extends AbstractPushNode {
-        @Child private ObjectAtNode valueNode;
+        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
         private final int literalIndex;
 
         public PushLiteralVariableNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex) {
             super(code, index, numBytecodes);
             this.literalIndex = literalIndex;
-            valueNode = ObjectAtNode.create(1, new LiteralConstantNode(code, literalIndex));
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.executeWrite(frame, valueNode.executeGeneric(frame));
+            pushNode.executeWrite(frame, at0Node.execute(code.getLiteral(literalIndex), 1));
         }
 
         @Override
@@ -178,23 +190,28 @@ public final class PushBytecodes {
         }
     }
 
-    public static final class PushNewArrayNode extends AbstractPushNode {
-        @Child private StackPopNReversedNode popNReversedNode;
+    public abstract static class PushNewArrayNode extends AbstractPushNode {
+        @Child protected StackPopNReversedNode popNReversedNode;
         private final int arraySize;
 
-        public PushNewArrayNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int param) {
+        public static PushNewArrayNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int param) {
+            return PushNewArrayNodeGen.create(code, index, numBytecodes, param);
+        }
+
+        protected PushNewArrayNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int param) {
             super(code, index, numBytecodes);
             arraySize = param & 127;
             popNReversedNode = param > 127 ? StackPopNReversedNode.create(code, arraySize) : null;
         }
 
-        @Override
-        public void executeVoid(final VirtualFrame frame) {
-            if (popNReversedNode != null) {
-                pushNode.executeWrite(frame, code.image.newList(popNReversedNode.executeRead(frame)));
-            } else {
-                pushNode.executeWrite(frame, ArrayObject.createObjectStrategy(code.image, code.image.arrayClass, arraySize));
-            }
+        @Specialization(guards = {"popNReversedNode != null"})
+        protected final void doPushArray(final VirtualFrame frame) {
+            pushNode.executeWrite(frame, code.image.newList(popNReversedNode.executeRead(frame)));
+        }
+
+        @Specialization(guards = {"popNReversedNode == null"})
+        protected final void doPushNewArray(final VirtualFrame frame) {
+            pushNode.executeWrite(frame, ArrayObject.createObjectStrategy(code.image, code.image.arrayClass, arraySize));
         }
 
         @Override
@@ -203,17 +220,25 @@ public final class PushBytecodes {
         }
     }
 
-    public static final class PushReceiverNode extends AbstractPushNode {
-        @Child private ReceiverNode receiverNode;
+    @NodeInfo(cost = NodeCost.NONE)
+    public abstract static class PushReceiverNode extends AbstractPushNode {
 
-        public PushReceiverNode(final CompiledCodeObject code, final int index) {
-            super(code, index);
-            receiverNode = ReceiverNode.create(code);
+        public static PushReceiverNode create(final CompiledCodeObject code, final int index) {
+            return PushReceiverNodeGen.create(code, index);
         }
 
-        @Override
-        public void executeVoid(final VirtualFrame frame) {
-            pushNode.executeWrite(frame, receiverNode.executeRead(frame));
+        protected PushReceiverNode(final CompiledCodeObject code, final int index) {
+            super(code, index);
+        }
+
+        @Specialization(guards = {"isVirtualized(frame)"})
+        protected final void doReceiverVirtualized(final VirtualFrame frame) {
+            pushNode.executeWrite(frame, frame.getArguments()[FrameAccess.RECEIVER]);
+        }
+
+        @Fallback
+        protected final void doReceiver(final VirtualFrame frame) {
+            pushNode.executeWrite(frame, getContext(frame).getReceiver());
         }
 
         @Override
@@ -222,29 +247,40 @@ public final class PushBytecodes {
         }
     }
 
-    public static final class PushReceiverVariableNode extends AbstractPushNode {
-        @Child private ObjectAtNode fetchNode;
+    @NodeInfo(cost = NodeCost.NONE)
+    public abstract static class PushReceiverVariableNode extends AbstractPushNode {
+        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
         private final int variableIndex;
 
-        public PushReceiverVariableNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int varIndex) {
+        public static PushReceiverVariableNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int varIndex) {
+            return PushReceiverVariableNodeGen.create(code, index, numBytecodes, varIndex);
+        }
+
+        protected PushReceiverVariableNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int varIndex) {
             super(code, index, numBytecodes);
             variableIndex = varIndex;
-            fetchNode = ObjectAtNode.create(varIndex, ReceiverNode.create(code));
+        }
+
+        @Specialization(guards = {"isVirtualized(frame)"})
+        protected final void doReceiverVirtualized(final VirtualFrame frame) {
+            pushNode.executeWrite(frame, at0Node.execute(frame.getArguments()[FrameAccess.RECEIVER], variableIndex));
+        }
+
+        @Fallback
+        protected final void doReceiver(final VirtualFrame frame) {
+            pushNode.executeWrite(frame, at0Node.execute(getContext(frame).getReceiver(), variableIndex));
         }
 
         @Override
-        public void executeVoid(final VirtualFrame frame) {
-            pushNode.executeWrite(frame, fetchNode.executeGeneric(frame));
-        }
-
-        @Override
-        public String toString() {
+        public final String toString() {
             return "pushRcvr: " + variableIndex;
         }
     }
 
+    @NodeInfo(cost = NodeCost.NONE)
     public static final class PushRemoteTempNode extends AbstractPushNode {
-        @Child private ObjectAtNode remoteTempNode;
+        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
+        @Child private SqueakNode readTempNode;
         private final int indexInArray;
         private final int indexOfArray;
 
@@ -252,12 +288,12 @@ public final class PushBytecodes {
             super(code, index, numBytecodes);
             this.indexInArray = indexInArray;
             this.indexOfArray = indexOfArray;
-            remoteTempNode = ObjectAtNode.create(indexInArray, TemporaryReadNode.create(code, indexOfArray));
+            readTempNode = TemporaryReadNode.create(code, indexOfArray);
         }
 
         @Override
         public void executeVoid(final VirtualFrame frame) {
-            pushNode.executeWrite(frame, remoteTempNode.executeGeneric(frame));
+            pushNode.executeWrite(frame, at0Node.execute(readTempNode.executeRead(frame), indexInArray));
         }
 
         @Override
@@ -266,6 +302,7 @@ public final class PushBytecodes {
         }
     }
 
+    @NodeInfo(cost = NodeCost.NONE)
     public static final class PushTemporaryLocationNode extends AbstractBytecodeNode {
         @Child private StackPushNode pushNode;
         @Child private SqueakNode tempNode;

@@ -8,6 +8,7 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
@@ -79,6 +80,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
+        @ExplodeLoop
         @Specialization
         protected final Object doTest(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long depth) {
             for (int i = 0; i < SUPPORTED_DEPTHS.length; i++) {

@@ -2,7 +2,7 @@ package de.hpi.swa.graal.squeak.test;
 
 import org.junit.BeforeClass;
 
-import de.hpi.swa.graal.squeak.image.SqueakImageChunk;
+import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 
 public abstract class AbstractSqueakTestCaseWithDummyImage extends AbstractSqueakTestCase {
 
