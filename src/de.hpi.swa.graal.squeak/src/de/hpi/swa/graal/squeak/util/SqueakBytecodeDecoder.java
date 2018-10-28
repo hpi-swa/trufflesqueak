@@ -1,8 +1,7 @@
 package de.hpi.swa.graal.squeak.util;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.AbstractBytecodeNode;
@@ -39,42 +38,69 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.StoreBytecodes.PopIntoTemporaryLo
 import de.hpi.swa.graal.squeak.nodes.bytecodes.StoreBytecodes.StoreIntoRemoteTempNode;
 
 public final class SqueakBytecodeDecoder {
-    private final CompiledCodeObject code;
-    @CompilationFinal(dimensions = 1) private final byte[] bytecode;
-    private int currentIndex = 0;
 
-    public SqueakBytecodeDecoder(final CompiledCodeObject code) {
-        this.code = code;
-        this.bytecode = code.getBytes();
-    }
-
-    public AbstractBytecodeNode[] decode() {
-        final AbstractBytecodeNode[] nodes = new AbstractBytecodeNode[bytecode.length];
-        int i = 1;
-        while (currentIndex < bytecode.length) {
-            final int index = currentIndex;
-            nodes[index] = decodeNextByte();
-            nodes[index].setLineNumber(i);
-            i++;
+    public static AbstractBytecodeNode[] decode(final CompiledCodeObject code) {
+        final byte[] bytecode = code.getBytes();
+        final int trailerPosition = code instanceof CompiledBlockObject ? bytecode.length : trailerPosition(bytecode);
+        final AbstractBytecodeNode[] nodes = new AbstractBytecodeNode[trailerPosition];
+        int index = 0;
+        int lineNumber = 1;
+        while (index < trailerPosition) {
+            final AbstractBytecodeNode bytecodeNode = decodeBytecode(code, bytecode, index);
+            bytecodeNode.setLineNumber(lineNumber);
+            nodes[index] = bytecodeNode;
+            index = bytecodeNode.getSuccessorIndex();
+            lineNumber++;
         }
         return nodes;
     }
 
-    private int nextByte() {
-        if (currentIndex >= bytecode.length) {
-            return 0;
+    private static int trailerPosition(final byte[] bytecode) {
+        final int bytecodeLength = bytecode.length;
+        final int flagByte = Byte.toUnsignedInt(bytecode[bytecodeLength - 1]);
+        final int index = (flagByte >> 2) + 1;
+        switch (index) {
+            case 1: // #decodeNoTrailer
+                return bytecodeLength - 1;
+            case 2: // #decodeClearedTrailer
+                return decodeLengthField(bytecode, bytecodeLength, flagByte);
+            case 3: // #decodeTempsNamesQCompress
+                return decodeLengthField(bytecode, bytecodeLength, flagByte);
+            case 4: // #decodeTempsNamesZip
+                return decodeLengthField(bytecode, bytecodeLength, flagByte);
+            case 5: // #decodeSourceBySelector
+                return bytecodeLength - 1;
+            case 6: // #decodeSourceByStringIdentifier
+                return decodeLengthField(bytecode, bytecodeLength, flagByte);
+            case 7: // #decodeEmbeddedSourceQCompress
+                return decodeLengthField(bytecode, bytecodeLength, flagByte);
+            case 8: // #decodeEmbeddedSourceZip
+                return decodeLengthField(bytecode, bytecodeLength, flagByte);
+            case 9: // decodeVarLengthSourcePointer
+                int pos = bytecodeLength - 2;
+                while (bytecode[pos] < 0) {
+                    pos--;
+                }
+                return pos;
+            case 64: // decodeSourcePointer
+                return bytecodeLength - 4;
+            default:
+                throw new SqueakException("Undefined method encoding (see CompiledMethodTrailer).");
         }
-        int b = bytecode[currentIndex];
-        if (b < 0) {
-            b = 256 + b;
-        }
-        currentIndex++;
-        return b;
     }
 
-    private AbstractBytecodeNode decodeNextByte() {
-        final int index = currentIndex;
-        final int b = nextByte();
+    private static int decodeLengthField(final byte[] bytecode, final int bytecodeLength, final int flagByte) {
+        final int numBytes = (flagByte & 3) + 1;
+        int length = 0;
+        final int firstLengthValueIndex = bytecodeLength - 2;
+        for (int i = 0; i < numBytes; i++) {
+            length = (length << 8) + Byte.toUnsignedInt(bytecode[firstLengthValueIndex - i]);
+        }
+        return bytecodeLength - (1 + numBytes + length);
+    }
+
+    private static AbstractBytecodeNode decodeBytecode(final CompiledCodeObject code, final byte[] bytecode, final int index) {
+        final int b = Byte.toUnsignedInt(bytecode[index]);
         //@formatter:off
         switch (b) {
             case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
@@ -130,19 +156,19 @@ public final class SqueakBytecodeDecoder {
             case 127:
                 return new UnknownBytecodeNode(code, index, 1, b);
             case 128:
-                return ExtendedBytecodes.createPush(code, index, 2, nextByte());
+                return ExtendedBytecodes.createPush(code, index, 2, Byte.toUnsignedInt(bytecode[index + 1]));
             case 129:
-                return ExtendedBytecodes.createStoreInto(code, index, 2, nextByte());
+                return ExtendedBytecodes.createStoreInto(code, index, 2, Byte.toUnsignedInt(bytecode[index + 1]));
             case 130:
-                return ExtendedBytecodes.createPopInto(code, index, 2, nextByte());
+                return ExtendedBytecodes.createPopInto(code, index, 2, Byte.toUnsignedInt(bytecode[index + 1]));
             case 131:
-                return new SingleExtendedSendNode(code, index, 2, nextByte());
+                return new SingleExtendedSendNode(code, index, 2, Byte.toUnsignedInt(bytecode[index + 1]));
             case 132:
-                return DoubleExtendedDoAnythingNode.create(code, index, 3, nextByte(), nextByte());
+                return DoubleExtendedDoAnythingNode.create(code, index, 3, Byte.toUnsignedInt(bytecode[index + 1]), Byte.toUnsignedInt(bytecode[index + 2]));
             case 133:
-                return new SingleExtendedSuperNode(code, index, 2, nextByte());
+                return new SingleExtendedSuperNode(code, index, 2, Byte.toUnsignedInt(bytecode[index + 1]));
             case 134:
-                return new SecondExtendedSendNode(code, index, 2, nextByte());
+                return new SecondExtendedSendNode(code, index, 2, Byte.toUnsignedInt(bytecode[index + 1]));
             case 135:
                 return new PopNode(code, index, 1);
             case 136:
@@ -150,28 +176,29 @@ public final class SqueakBytecodeDecoder {
             case 137:
                 return new PushActiveContextNode(code, index);
             case 138:
-                return PushNewArrayNode.create(code, index, 2, nextByte());
+                return PushNewArrayNode.create(code, index, 2, Byte.toUnsignedInt(bytecode[index + 1]));
             case 139:
                 assert code instanceof CompiledMethodObject;
-                return CallPrimitiveNode.create((CompiledMethodObject) code, index, 3, nextByte(), nextByte());
+                return CallPrimitiveNode.create((CompiledMethodObject) code, index, 3, Byte.toUnsignedInt(bytecode[index + 1]), Byte.toUnsignedInt(bytecode[index + 2]));
             case 140:
-                return new PushRemoteTempNode(code, index, 3, nextByte(), nextByte());
+                return new PushRemoteTempNode(code, index, 3, Byte.toUnsignedInt(bytecode[index + 1]), Byte.toUnsignedInt(bytecode[index + 2]));
             case 141:
-                return new StoreIntoRemoteTempNode(code, index, 3, nextByte(), nextByte());
+                return new StoreIntoRemoteTempNode(code, index, 3, Byte.toUnsignedInt(bytecode[index + 1]), Byte.toUnsignedInt(bytecode[index + 2]));
             case 142:
-                return new PopIntoRemoteTempNode(code, index, 3, nextByte(), nextByte());
+                return new PopIntoRemoteTempNode(code, index, 3, Byte.toUnsignedInt(bytecode[index + 1]), Byte.toUnsignedInt(bytecode[index + 2]));
             case 143:
-                return PushClosureNode.create(code, index, 4, nextByte(), nextByte(), nextByte());
+                return PushClosureNode.create(code, index, 4,
+                                Byte.toUnsignedInt(bytecode[index + 1]), Byte.toUnsignedInt(bytecode[index + 2]), Byte.toUnsignedInt(bytecode[index + 3]));
             case 144: case 145: case 146: case 147: case 148: case 149: case 150: case 151:
                 return new UnconditionalJumpNode(code, index, 1, b);
             case 152: case 153: case 154: case 155: case 156: case 157: case 158: case 159:
                 return new ConditionalJumpNode(code, index, 1, b);
             case 160: case 161: case 162: case 163: case 164: case 165: case 166: case 167:
-                return new UnconditionalJumpNode(code, index, 2, b, nextByte());
+                return new UnconditionalJumpNode(code, index, 2, b, Byte.toUnsignedInt(bytecode[index + 1]));
             case 168: case 169: case 170: case 171:
-                return new ConditionalJumpNode(code, index, 2, b, nextByte(), true);
+                return new ConditionalJumpNode(code, index, 2, b, Byte.toUnsignedInt(bytecode[index + 1]), true);
             case 172: case 173: case 174: case 175:
-                return new ConditionalJumpNode(code, index, 2, b, nextByte(), false);
+                return new ConditionalJumpNode(code, index, 2, b, Byte.toUnsignedInt(bytecode[index + 1]), false);
             case 176: case 177: case 178: case 179: case 180: case 181: case 182: case 183:
             case 184: case 185: case 186: case 187: case 188: case 189: case 190: case 191:
             case 192: case 193: case 194: case 195: case 196: case 197: case 198: case 199:
@@ -190,5 +217,8 @@ public final class SqueakBytecodeDecoder {
                 throw new SqueakException("Unknown bytecode:", b);
         }
         //@formatter:on
+    }
+
+    private SqueakBytecodeDecoder() {
     }
 }

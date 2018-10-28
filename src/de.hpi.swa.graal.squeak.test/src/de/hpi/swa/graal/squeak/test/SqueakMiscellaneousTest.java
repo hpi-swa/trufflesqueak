@@ -110,7 +110,7 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
         // pushConstant: true, send: class, pop, returnSelf
         final int[] bytes = {0x76, 0x88, 0x73, 0xc6, 0x99, 0x87, 0x71, 0xc7, 0x87, 0x78};
         final CompiledCodeObject code = makeMethod(bytes);
-        final AbstractBytecodeNode[] bytecodeNodes = new SqueakBytecodeDecoder(code).decode();
+        final AbstractBytecodeNode[] bytecodeNodes = SqueakBytecodeDecoder.decode(code);
         assertEquals(bytes.length, bytecodeNodes.length);
         assertSame(PushConstantNode.class, bytecodeNodes[0].getClass());
         assertSame(DupNode.class, bytecodeNodes[1].getClass());

@@ -14,7 +14,7 @@ public class CompiledCodeObjectPrinter {
         long indent = 0;
         final byte[] bytes = code.getBytes();
         // TODO: is a new BytecodeSequenceNode needed here?
-        final AbstractBytecodeNode[] bytecodeNodes = new SqueakBytecodeDecoder(code).decode();
+        final AbstractBytecodeNode[] bytecodeNodes = SqueakBytecodeDecoder.decode(code);
         for (AbstractBytecodeNode node : bytecodeNodes) {
             if (node == null) {
                 continue;

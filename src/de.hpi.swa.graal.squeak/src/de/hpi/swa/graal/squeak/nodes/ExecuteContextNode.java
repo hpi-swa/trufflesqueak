@@ -61,7 +61,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
 
     protected ExecuteContextNode(final CompiledCodeObject code) {
         super(code);
-        bytecodeNodes = new SqueakBytecodeDecoder(code).decode();
+        bytecodeNodes = SqueakBytecodeDecoder.decode(code);
         CompilerAsserts.compilationConstant(bytecodeNodes.length);
         triggerInterruptHandlerNode = TriggerInterruptHandlerNode.create(code);
     }

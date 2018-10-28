@@ -35,10 +35,11 @@ public abstract class AbstractSqueakTestCase {
     }
 
     protected static CompiledMethodObject makeMethod(final Object[] literals, final int... intbytes) {
-        final byte[] bytes = new byte[intbytes.length];
+        final byte[] bytes = new byte[intbytes.length + 1];
         for (int i = 0; i < intbytes.length; i++) {
             bytes[i] = (byte) intbytes[i];
         }
+        bytes[intbytes.length] = 0; // Set flagByte = 0 for no method trailer.
         return makeMethod(bytes, literals);
     }
 

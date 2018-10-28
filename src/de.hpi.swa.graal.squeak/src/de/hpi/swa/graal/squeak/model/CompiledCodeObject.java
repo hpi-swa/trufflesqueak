@@ -158,9 +158,6 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
     }
 
     public final FrameSlot getStackSlot(final int i) {
-        if (i >= stackSlots.length) { // This is fine, ignore for decoder
-            return null;
-        }
         if (i < 0) {
             image.printToStdErr("Bad stack access, falling back to bottom-most stack slot...");
             return stackSlots[0];
@@ -241,13 +238,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
     }
 
     public final Object getLiteral(final long longIndex) {
-        final int index = (int) longIndex;
-        final int literalIndex = 1 + index; // skip header
-        if (literalIndex < literals.length) {
-            return literals[literalIndex];
-        } else {
-            return literals[0]; // for decoder
-        }
+        return literals[(int) (1 + longIndex)]; // +1 for skipping header.
     }
 
     public final void setLiteral(final long longIndex, final Object obj) {
