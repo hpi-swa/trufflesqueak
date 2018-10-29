@@ -34,7 +34,6 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerNode;
 import de.hpi.swa.graal.squeak.util.SqueakBytecodeDecoder;
 
-@NodeInfo(cost = NodeCost.NONE)
 public abstract class ExecuteContextNode extends AbstractNodeWithCode {
     @Children private AbstractBytecodeNode[] bytecodeNodes;
     @Child private HandleLocalReturnNode handleLocalReturnNode;
