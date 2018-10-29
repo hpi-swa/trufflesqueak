@@ -12,6 +12,7 @@ import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
@@ -40,6 +41,9 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
     @Child private HandleNonVirtualReturnNode handleNonVirtualReturnNode;
     @Child private TriggerInterruptHandlerNode triggerInterruptHandlerNode;
+
+    private final BranchProfile nonVirtualReturnProfile = BranchProfile.create();
+    private final BranchProfile processSwitchProfile = BranchProfile.create();
 
     @Child private UpdateInstructionPointerNode updateInstructionPointerNode;
     @Child private GetSuccessorNode getSuccessorNode;
@@ -74,13 +78,17 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
             startBytecode(frame);
             throw new SqueakException("Method did not return");
         } catch (LocalReturn lr) {
+            /** {@link getHandleLocalReturnNode()} acts as {@link BranchProfile} */
             return getHandleLocalReturnNode().executeHandle(frame, lr);
         } catch (NonLocalReturn nlr) {
+            /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
             return getHandleNonLocalReturnNode().executeHandle(frame, nlr);
         } catch (NonVirtualReturn nvr) {
+            nonVirtualReturnProfile.enter();
             getOrCreateContextNode.executeGet(frame).markEscaped();
             return getHandleNonVirtualReturnNode().executeHandle(frame, nvr);
         } catch (ProcessSwitch ps) {
+            processSwitchProfile.enter();
             getOrCreateContextNode.executeGet(frame).markEscaped();
             throw ps;
         } finally {
@@ -99,16 +107,20 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
             if (initialPC == 0) {
                 startBytecode(frame);
             } else {
-                // avoid optimizing the cases in which a context is resumed
+                // Avoid optimizing cases in which a context is resumed.
                 CompilerDirectives.transferToInterpreter();
                 resumeBytecode(frame, initialPC);
             }
+            CompilerAsserts.neverPartOfCompilation();
             throw new SqueakException("Method did not return");
         } catch (LocalReturn lr) {
+            /** {@link getHandleLocalReturnNode()} acts as {@link BranchProfile} */
             return getHandleLocalReturnNode().executeHandle(frame, lr);
         } catch (NonLocalReturn nlr) {
+            /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
             return getHandleNonLocalReturnNode().executeHandle(frame, nlr);
         } catch (NonVirtualReturn nvr) {
+            nonVirtualReturnProfile.enter();
             return getHandleNonVirtualReturnNode().executeHandle(frame, nvr);
         } finally {
             MaterializeContextOnMethodExitNode.stopMaterializationHere();
@@ -240,9 +252,9 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"(code.image.interrupt.disabled() || hasPrimitive) || bytecodeLength <= BYTECODE_LENGTH_THRESHOLD"})
+        @Specialization(guards = {"code.image.interrupt.disabled() || (hasPrimitive || bytecodeLength <= BYTECODE_LENGTH_THRESHOLD)"})
         protected final void doNothing(final VirtualFrame frame, final boolean hasPrimitive, final int bytecodeLength) {
-            // do not trigger
+            // Do not trigger.
         }
 
         @SuppressWarnings("unused")
