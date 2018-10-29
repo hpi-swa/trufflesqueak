@@ -23,10 +23,17 @@ public final class SqueakMouse extends MouseInputAdapter {
     }
 
     @Override
+    public void mouseDragged(final MouseEvent e) {
+        recordMouseEvent(MOUSE_EVENT.MOVE, e);
+        if (!display.usesEventQueue) {
+            position = e.getPoint();
+        }
+    }
+
+    @Override
     public void mouseMoved(final MouseEvent e) {
-        if (display.usesEventQueue) {
-            recordMouseEvent(MOUSE_EVENT.MOVE, e);
-        } else {
+        recordMouseEvent(MOUSE_EVENT.MOVE, e);
+        if (!display.usesEventQueue) {
             position = e.getPoint();
         }
     }
