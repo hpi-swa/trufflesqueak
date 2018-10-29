@@ -79,6 +79,11 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
         public String toString() {
             return codeNode.toString();
         }
+
+        @Override
+        public boolean isCloningAllowed() {
+            return true;
+        }
     }
 
     private static void initializeSlots(final CompiledCodeObject code, final VirtualFrame frame) {

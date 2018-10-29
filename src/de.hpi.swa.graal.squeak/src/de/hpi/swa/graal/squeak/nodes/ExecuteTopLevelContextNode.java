@@ -87,4 +87,9 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     public String getName() {
         return getClass().getSimpleName();
     }
+
+    @Override
+    public boolean isCloningAllowed() {
+        return true;
+    }
 }
