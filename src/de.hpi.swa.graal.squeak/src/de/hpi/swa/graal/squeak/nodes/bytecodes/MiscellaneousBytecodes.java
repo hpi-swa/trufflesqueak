@@ -5,7 +5,7 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.api.profiles.BranchProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.Returns.LocalReturn;
@@ -42,7 +42,9 @@ public final class MiscellaneousBytecodes {
         @Child private HandlePrimitiveFailedNode handlePrimFailed;
         @Child protected AbstractPrimitiveNode primitiveNode;
         private final int primitiveIndex;
-        private final ValueProfile primitiveNodeProfile = ValueProfile.createClassProfile();
+
+        private final BranchProfile primitiveFailureProfile = BranchProfile.create();
+        private final BranchProfile unsupportedSpecializationProfile = BranchProfile.create();
 
         public static CallPrimitiveNode create(final CompiledMethodObject code, final int index, final int numBytecodes, final int byte1, final int byte2) {
             return CallPrimitiveNodeGen.create(code, index, numBytecodes, byte1, byte2);
@@ -52,19 +54,21 @@ public final class MiscellaneousBytecodes {
             super(code, index, numBytecodes);
             primitiveIndex = byte1 + (byte2 << 8);
             primitiveNode = PrimitiveNodeFactory.forIndex(code, primitiveIndex);
-            handlePrimFailed = HandlePrimitiveFailedNode.create(code);
+            handlePrimFailed = primitiveNode == null ? null : HandlePrimitiveFailedNode.create(code);
         }
 
         @Specialization(guards = {"code.hasPrimitive()", "primitiveNode != null"})
         protected final void doPrimitive(final VirtualFrame frame) {
             try {
-                throw new LocalReturn(primitiveNodeProfile.profile(primitiveNode).executePrimitive(frame));
+                throw new LocalReturn(primitiveNode.executePrimitive(frame));
             } catch (PrimitiveFailed e) {
+                primitiveFailureProfile.enter();
                 handlePrimFailed.executeHandle(frame, e);
                 if (DEBUG_PRIMITIVE_FAILURES) {
                     debugPrimitiveFailures();
                 }
             } catch (UnsupportedSpecializationException e) {
+                unsupportedSpecializationProfile.enter();
                 assert e.getNode() instanceof AbstractPrimitiveNode : "Only `AbstractPrimitiveNode`s should be treated as primitive failures, got: " + e;
                 if (DEBUG_UNSUPPORTED_SPECIALIZATION_EXCEPTIONS) {
                     debugUnsupportedSpecializationExceptions(e);
