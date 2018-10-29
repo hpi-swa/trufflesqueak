@@ -61,7 +61,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
 
     protected ExecuteContextNode(final CompiledCodeObject code) {
         super(code);
-        bytecodeNodes = SqueakBytecodeDecoder.decode(code);
+        bytecodeNodes = new AbstractBytecodeNode[SqueakBytecodeDecoder.trailerPosition(code)];
         CompilerAsserts.compilationConstant(bytecodeNodes.length);
         triggerInterruptHandlerNode = TriggerInterruptHandlerNode.create(code);
     }
@@ -127,7 +127,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
     private void startBytecode(final VirtualFrame frame) {
         int pc = 0;
         int backJumpCounter = 0;
-        AbstractBytecodeNode node = bytecodeNodes[pc];
+        AbstractBytecodeNode node = fetchNextBytecodeNode(pc);
         try {
             while (pc >= 0) {
                 CompilerAsserts.partialEvaluationConstant(pc);
@@ -139,7 +139,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
                             backJumpCounter++;
                         }
                         pc = successor;
-                        node = bytecodeNodes[pc];
+                        node = fetchNextBytecodeNode(pc);
                         continue;
                     } else {
                         final int successor = jumpNode.getSuccessorIndex();
@@ -147,7 +147,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
                             backJumpCounter++;
                         }
                         pc = successor;
-                        node = bytecodeNodes[pc];
+                        node = fetchNextBytecodeNode(pc);
                         continue;
                     }
                 } else if (node instanceof UnconditionalJumpNode) {
@@ -156,7 +156,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
                         backJumpCounter++;
                     }
                     pc = successor;
-                    node = bytecodeNodes[pc];
+                    node = fetchNextBytecodeNode(pc);
                     continue;
                 } else {
                     final int successor = getGetSuccessorNode().executeGeneric(frame, node);
@@ -171,7 +171,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
                         }
                     }
                     pc = successor;
-                    node = bytecodeNodes[pc];
+                    node = fetchNextBytecodeNode(pc);
                     continue;
                 }
             }
@@ -186,7 +186,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
      */
     private void resumeBytecode(final VirtualFrame frame, final long initialPC) {
         int pc = (int) initialPC;
-        AbstractBytecodeNode node = bytecodeNodes[pc];
+        AbstractBytecodeNode node = fetchNextBytecodeNode(pc);
         while (pc >= 0) {
             final int successor = getGetSuccessorNode().executeGeneric(frame, node);
             getUpdateInstructionPointerNode().executeUpdate(frame, successor);
@@ -200,8 +200,19 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
                 }
             }
             pc = successor;
-            node = bytecodeNodes[pc];
+            node = fetchNextBytecodeNode(pc);
         }
+    }
+
+    /*
+     * Fetch next bytecode and insert AST nodes on demand.
+     */
+    private AbstractBytecodeNode fetchNextBytecodeNode(final int pc) {
+        if (bytecodeNodes[pc] == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            bytecodeNodes[pc] = insert(SqueakBytecodeDecoder.decodeBytecode(code, pc));
+        }
+        return bytecodeNodes[pc];
     }
 
     @NodeInfo(cost = NodeCost.NONE)

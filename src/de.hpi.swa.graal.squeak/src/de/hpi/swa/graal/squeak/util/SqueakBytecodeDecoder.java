@@ -40,19 +40,22 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.StoreBytecodes.StoreIntoRemoteTem
 public final class SqueakBytecodeDecoder {
 
     public static AbstractBytecodeNode[] decode(final CompiledCodeObject code) {
-        final byte[] bytecode = code.getBytes();
-        final int trailerPosition = code instanceof CompiledBlockObject ? bytecode.length : trailerPosition(bytecode);
+        final int trailerPosition = trailerPosition(code);
         final AbstractBytecodeNode[] nodes = new AbstractBytecodeNode[trailerPosition];
         int index = 0;
         int lineNumber = 1;
         while (index < trailerPosition) {
-            final AbstractBytecodeNode bytecodeNode = decodeBytecode(code, bytecode, index);
+            final AbstractBytecodeNode bytecodeNode = decodeBytecode(code, index);
             bytecodeNode.setLineNumber(lineNumber);
             nodes[index] = bytecodeNode;
             index = bytecodeNode.getSuccessorIndex();
             lineNumber++;
         }
         return nodes;
+    }
+
+    public static int trailerPosition(final CompiledCodeObject code) {
+        return code instanceof CompiledBlockObject ? code.getBytes().length : trailerPosition(code.getBytes());
     }
 
     private static int trailerPosition(final byte[] bytecode) {
@@ -99,7 +102,8 @@ public final class SqueakBytecodeDecoder {
         return bytecodeLength - (1 + numBytes + length);
     }
 
-    private static AbstractBytecodeNode decodeBytecode(final CompiledCodeObject code, final byte[] bytecode, final int index) {
+    public static AbstractBytecodeNode decodeBytecode(final CompiledCodeObject code, final int index) {
+        final byte[] bytecode = code.getBytes();
         final int b = Byte.toUnsignedInt(bytecode[index]);
         //@formatter:off
         switch (b) {
