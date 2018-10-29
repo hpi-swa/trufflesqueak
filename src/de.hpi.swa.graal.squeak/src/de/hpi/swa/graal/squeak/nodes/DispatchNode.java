@@ -2,6 +2,7 @@ package de.hpi.swa.graal.squeak.nodes;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -9,6 +10,8 @@ import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.DirectCallNode;
+import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 
@@ -26,6 +29,8 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
 @ReportPolymorphism
 @ImportStatic(PrimitiveNodeFactory.class)
 public abstract class DispatchNode extends Node {
+    public static final int INLINE_CACHE_SIZE = 2;
+
     @Child private CreateArgumentsNode createArgumentsNode;
 
     public static DispatchNode create() {
@@ -46,8 +51,9 @@ public abstract class DispatchNode extends Node {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!isQuickReturnReceiverVariable(method.primitiveIndex())", "method == cachedMethod", "method.hasPrimitive()", "primitiveNode != null"}, assumptions = {
-                    "callTargetStable"}, rewriteOn = {PrimitiveFailed.class, UnsupportedSpecializationException.class})
+    @Specialization(guards = {"!isQuickReturnReceiverVariable(method.primitiveIndex())", "method == cachedMethod", "method.hasPrimitive()", "primitiveNode != null"}, //
+                    assumptions = {"callTargetStable"}, //
+                    rewriteOn = {PrimitiveFailed.class, UnsupportedSpecializationException.class})
     protected static final Object doPrimitiveEagerly(final VirtualFrame frame, final CompiledMethodObject method, final Object[] receiverAndArguments, final Object contextOrMarker,
                     @Cached("method") final CompiledMethodObject cachedMethod,
                     @Cached("method.getCallTargetStable()") final Assumption callTargetStable,
@@ -56,18 +62,21 @@ public abstract class DispatchNode extends Node {
         return primitiveNode.executeWithArguments(frame, createEagerArgumentsNode.executeCreate(primitiveNode.numArguments, receiverAndArguments));
     }
 
-    @Specialization(guards = {"method == cachedMethod"}, assumptions = {"callTargetStable"}, replaces = "doPrimitiveEagerly")
-    protected final Object doDirect(final CompiledCodeObject method, final Object[] receiverAndArguments, final Object contextOrMarker,
-                    @Cached("method") final CompiledCodeObject cachedMethod,
-                    @Cached("create()") final InvokeNode invokeNode,
-                    @SuppressWarnings("unused") @Cached("method.getCallTargetStable()") final Assumption callTargetStable) {
-        return invokeNode.executeInvoke(cachedMethod, getCreateArgumentsNode().executeCreate(method, contextOrMarker, receiverAndArguments));
+    @Specialization(limit = "INLINE_CACHE_SIZE", //
+                    guards = "code.getCallTarget() == cachedTarget", //
+                    assumptions = "callTargetStable", replaces = "doPrimitiveEagerly")
+    @SuppressWarnings("unused")
+    protected final Object doDirect(final CompiledCodeObject code, final Object[] receiverAndArguments, final Object contextOrMarker,
+                    @Cached("code.getCallTargetStable()") final Assumption callTargetStable,
+                    @Cached("code.getCallTarget()") final RootCallTarget cachedTarget,
+                    @Cached("create(cachedTarget)") final DirectCallNode callNode) {
+        return callNode.call(getCreateArgumentsNode().executeCreate(code, contextOrMarker, receiverAndArguments));
     }
 
     @Specialization(replaces = "doDirect")
-    protected final Object doIndirect(final CompiledCodeObject method, final Object[] receiverAndArguments, final Object contextOrMarker,
-                    @Cached("create()") final InvokeNode invokeNode) {
-        return invokeNode.executeInvoke(method, getCreateArgumentsNode().executeCreate(method, contextOrMarker, receiverAndArguments));
+    protected final Object doIndirect(final CompiledCodeObject code, final Object[] receiverAndArguments, final Object contextOrMarker,
+                    @Cached("create()") final IndirectCallNode callNode) {
+        return callNode.call(code.getCallTarget(), getCreateArgumentsNode().executeCreate(code, contextOrMarker, receiverAndArguments));
     }
 
     @SuppressWarnings("unused")
