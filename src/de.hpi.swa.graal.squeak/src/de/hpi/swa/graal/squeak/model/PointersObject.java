@@ -22,6 +22,11 @@ public final class PointersObject extends AbstractPointersObject {
         this(image, classObject, ArrayUtils.withAll(size, image.nil));
     }
 
+    public PointersObject(final PointersObject original) {
+        super(original.image, original.getSqueakClass());
+        setPointersUnsafe(original.getPointers().clone());
+    }
+
     public Object at0(final long i) {
         return getPointer((int) i);
     }
@@ -43,7 +48,7 @@ public final class PointersObject extends AbstractPointersObject {
     }
 
     public PointersObject shallowCopy() {
-        return new PointersObject(image, getSqueakClass(), getPointers().clone());
+        return new PointersObject(this);
     }
 
     public Object[] unwrappedWithFirst(final Object firstValue) {
