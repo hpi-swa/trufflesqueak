@@ -36,6 +36,8 @@ import de.hpi.swa.graal.squeak.util.InterruptHandlerNode;
 import de.hpi.swa.graal.squeak.util.SqueakBytecodeDecoder;
 
 public abstract class ExecuteContextNode extends AbstractNodeWithCode {
+    private static final boolean DECODE_BYTECODE_ON_DEMAND = false;
+
     @Children private AbstractBytecodeNode[] bytecodeNodes;
     @Child private HandleLocalReturnNode handleLocalReturnNode;
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
@@ -64,8 +66,11 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
 
     protected ExecuteContextNode(final CompiledCodeObject code) {
         super(code);
-        bytecodeNodes = new AbstractBytecodeNode[SqueakBytecodeDecoder.trailerPosition(code)];
-        CompilerAsserts.compilationConstant(bytecodeNodes.length);
+        if (DECODE_BYTECODE_ON_DEMAND) {
+            bytecodeNodes = new AbstractBytecodeNode[SqueakBytecodeDecoder.trailerPosition(code)];
+        } else {
+            bytecodeNodes = SqueakBytecodeDecoder.decode(code);
+        }
         triggerInterruptHandlerNode = TriggerInterruptHandlerNode.create(code);
     }
 
@@ -138,6 +143,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
     private void startBytecode(final VirtualFrame frame) {
         int pc = 0;
         int backJumpCounter = 0;
+        CompilerAsserts.compilationConstant(bytecodeNodes.length);
         AbstractBytecodeNode node = fetchNextBytecodeNode(pc);
         try {
             while (pc >= 0) {
@@ -216,10 +222,11 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
     }
 
     /*
-     * Fetch next bytecode and insert AST nodes on demand.
+     * Fetch next bytecode and insert AST nodes on demand if enabled.
      */
+    @SuppressWarnings("unused")
     private AbstractBytecodeNode fetchNextBytecodeNode(final int pc) {
-        if (bytecodeNodes[pc] == null) {
+        if (DECODE_BYTECODE_ON_DEMAND && bytecodeNodes[pc] == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             bytecodeNodes[pc] = insert(SqueakBytecodeDecoder.decodeBytecode(code, pc));
         }
