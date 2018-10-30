@@ -260,7 +260,7 @@ public final class SqueakSUnitTestMap {
                     "ScrollPaneRetractableBarsTest", TEST_TYPE.PASSING,
                     "ScrollPaneTest", TEST_TYPE.PASSING,
                     "SecureHashAlgorithmTest", TEST_TYPE.PASSING,
-                    "SemaphoreTest", TEST_TYPE.FAILING, // testSemaInCriticalWait failing in Squeak
+                    "SemaphoreTest", TEST_TYPE.PASSING,
                     "SequenceableCollectionTest", TEST_TYPE.PASSING,
                     "SetTest", TEST_TYPE.PASSING,
                     "SetWithNilTest", TEST_TYPE.PASSING,
