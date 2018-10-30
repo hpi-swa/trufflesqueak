@@ -92,7 +92,9 @@ public final class BitBltPluginCopyBitsHelpers {
                 return false; // Overlaps are not supported.
             }
             if (combinationRule == 24) {
-                return true; // All combiRules implemented with and without sourceForms.
+                // TODO: Fix combinationRule 24 with source form.
+                // return true; // All combiRules implemented with and without sourceForms.
+                return sourceForm == code.image.nil;
             }
             if (sourceForm != code.image.nil) {
                 // All combiRules implemented with sourceForms:
