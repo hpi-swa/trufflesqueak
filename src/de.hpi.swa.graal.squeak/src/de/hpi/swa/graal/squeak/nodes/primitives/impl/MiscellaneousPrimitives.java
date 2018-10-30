@@ -469,13 +469,9 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             return receiver;
         }
 
-        @Specialization(guards = "receiver.isLongType()")
+        @Specialization(guards = {"receiver.isLongType()", "value.fitsIntoLong()"})
         protected static final NativeObject doNativeLongs(final NativeObject receiver, final LargeIntegerObject value) {
-            try {
-                Arrays.fill(receiver.getLongStorage(), value.longValueExact());
-            } catch (ArithmeticException e) {
-                throw new PrimitiveFailed();
-            }
+            Arrays.fill(receiver.getLongStorage(), value.longValueExact());
             return receiver;
         }
     }

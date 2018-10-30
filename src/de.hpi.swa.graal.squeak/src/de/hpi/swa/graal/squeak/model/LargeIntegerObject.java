@@ -171,8 +171,17 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         return getBigInteger().longValueExact();
     }
 
+    @TruffleBoundary
+    public int intValueExact() throws ArithmeticException {
+        return getBigInteger().intValueExact();
+    }
+
     public boolean fitsIntoLong() {
         return bitLength() <= 63;
+    }
+
+    public boolean fitsIntoInt() {
+        return bitLength() <= 31;
     }
 
     @TruffleBoundary

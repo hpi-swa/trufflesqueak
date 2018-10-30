@@ -404,38 +404,52 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
             return a.compareTo(b);
         }
 
-        @Specialization
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"b.fitsIntoLong()", "a == b.longValueExact()"})
         protected long doLong(final long a, final LargeIntegerObject b) {
-            final long longValueExact;
-            try {
-                longValueExact = b.longValueExact();
-            } catch (ArithmeticException e) {
-                return -1L; // If `b` does not fit into a long, it must be larger
-            }
-            if (a == longValueExact) {
-                return 0L;
-            } else if (a > longValueExact) {
-                return 1L;
-            } else {
-                return -1L;
-            }
+            return 0L;
         }
 
-        @Specialization
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"b.fitsIntoLong()", "a > b.longValueExact()"})
+        protected long doLongLarger(final long a, final LargeIntegerObject b) {
+            return 1L;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"b.fitsIntoLong()", "a < b.longValueExact()"})
+        protected long doLongSmaller(final long a, final LargeIntegerObject b) {
+            return -1L;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "!b.fitsIntoLong()")
+        protected long doLongLargeInteger(final long a, final LargeIntegerObject b) {
+            return -1L; // If `b` does not fit into a long, it must be larger.
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"a.fitsIntoLong()", "a.longValueExact() == b"})
         protected long doLargeInteger(final LargeIntegerObject a, final long b) {
-            final long longValueExact;
-            try {
-                longValueExact = a.longValueExact();
-            } catch (ArithmeticException e) {
-                return 1L; // If `a` does not fit into a long, it must be larger
-            }
-            if (longValueExact == b) {
-                return 0;
-            } else if (longValueExact > b) {
-                return 1L;
-            } else {
-                return -1L;
-            }
+            return 0;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"a.fitsIntoLong()", "a.longValueExact() > b"})
+        protected long doLargeIntegerLarger(final LargeIntegerObject a, final long b) {
+            return 1L;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"a.fitsIntoLong()", "a.longValueExact() < b"})
+        protected long doLargeIntegerSmaller(final LargeIntegerObject a, final long b) {
+            return -1L;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "!a.fitsIntoLong()")
+        protected long doLargeIntegerLong(final LargeIntegerObject a, final long b) {
+            return 1L; // If `a` does not fit into a long, it must be larger.
         }
     }
 

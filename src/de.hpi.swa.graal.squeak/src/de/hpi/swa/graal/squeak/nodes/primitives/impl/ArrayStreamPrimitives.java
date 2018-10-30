@@ -363,13 +363,9 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             return value;
         }
 
-        @Specialization
+        @Specialization(guards = "value.fitsIntoLong()")
         protected Object doLargeInteger(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final LargeIntegerObject target, final long index, final LargeIntegerObject value) {
-            try {
-                target.setNativeAt0(index - 1, value.longValueExact());
-            } catch (IllegalArgumentException | ArithmeticException e) {
-                throw new PrimitiveFailed();
-            }
+            target.setNativeAt0(index - 1, value.longValueExact());
             return value;
         }
 
