@@ -450,16 +450,15 @@ public final class BitBltPluginCopyBitsHelpers {
         private void doSimpleLoop(final LongBinaryOperator op, final int[] sourceWords, final long sourceX, final long sourceY, final long sourceWidth,
                         final int[] destWords, final long destX, final long destY, final long destWidth,
                         final long areaWidth, final long areaHeight) {
-            final int innerIterations = (int) areaWidth;
-            for (long dy = destY, sy = sourceY; dy < destY + areaHeight; dy++, sy++) {
-                final long sourceStart = sy * sourceWidth + sourceX;
-                final long destStart = dy * destWidth + destX;
+            for (int y = 0; y < areaHeight; y++) {
+                final int sourceStart = (int) ((sourceY + y) * sourceWidth + sourceX);
+                final int destStart = (int) ((destY + y) * destWidth + destX);
                 try {
-                    for (int dx = (int) destStart, sx = (int) sourceStart; dx < destStart + areaWidth; dx++, sx++) {
-                        destWords[dx] = (int) op.applyAsLong(Integer.toUnsignedLong(sourceWords[sx]), Integer.toUnsignedLong(destWords[dx]));
+                    for (int x = 0; x < areaWidth; x++) {
+                        destWords[destStart + x] = (int) op.applyAsLong(Integer.toUnsignedLong(sourceWords[sourceStart + x]), Integer.toUnsignedLong(destWords[destStart + x]));
                     }
                 } finally {
-                    LoopNode.reportLoopCount(this, innerIterations);
+                    LoopNode.reportLoopCount(this, (int) areaWidth);
                 }
             }
         }

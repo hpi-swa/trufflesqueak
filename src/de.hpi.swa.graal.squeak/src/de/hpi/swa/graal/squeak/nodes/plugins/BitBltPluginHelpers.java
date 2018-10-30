@@ -7,7 +7,14 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 
 public final class BitBltPluginHelpers {
     // private static final long ALL_ONES = 4294967295L;
-    private static final int[] MASK_TABLE = new int[]{0, 1, 3, 0, 15, 31, 0, 0, 255, 0, 0, 0, 0, 0, 0, 0, 65535, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1};
+    private static final int[] MASK_TABLE = new int[32 + 1];
+
+    static {
+        final int[] maskTableBits = new int[]{1, 2, 4, 5, 8, 16, 32};
+        for (int i = 0; i < maskTableBits.length; i++) {
+            MASK_TABLE[i + 1] = (int) ((1L << maskTableBits[i]) - 1);
+        }
+    }
 
     public static final class BitBltWrapper {
         private final PointersObject bitBlt;
@@ -466,16 +473,19 @@ public final class BitBltPluginHelpers {
     }
 
     public static long pixPaint25(final long sourceWord, final long destinationWord) {
-        return (sourceWord | ((~sourceWord & 0xffffffff) & destinationWord));
+        if (sourceWord == 0) {
+            return destinationWord;
+        }
+        return (sourceWord | ((sourceWord ^ 0xffffffffL) & destinationWord));
     }
 
     public static long pixMask26(final long sourceWord, final long destinationWord) {
-        return ((~sourceWord & 0xffffffff) & destinationWord);
+        return ((sourceWord ^ 0xffffffffL) & destinationWord);
     }
 
     public static long rgbAdd20(final long sourceWord, final long destinationWord) {
         /* Add RGBA components of the pixel separately */
-        return partitionedAdd(sourceWord, destinationWord, 8, 255, 2155905152L);
+        return partitionedAdd(sourceWord, destinationWord, 8, 0xFFL, 0x80808080L);
     }
 
     public static long rgbMul37(final long sourceWord, final long destinationWord) {
