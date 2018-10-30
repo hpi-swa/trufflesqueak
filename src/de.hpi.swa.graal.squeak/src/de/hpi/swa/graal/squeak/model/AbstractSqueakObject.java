@@ -8,7 +8,7 @@ import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.instrumentation.SqueakObjectMessageResolutionForeign;
 
 public abstract class AbstractSqueakObject implements TruffleObject {
-    private static final int IDENTITY_HASH_MASK = 0x400000 - 1;
+    public static final int IDENTITY_HASH_MASK = 0x400000 - 1;
     private static final byte PINNED_BIT_SHIFT = 30;
 
     public final SqueakImageContext image;

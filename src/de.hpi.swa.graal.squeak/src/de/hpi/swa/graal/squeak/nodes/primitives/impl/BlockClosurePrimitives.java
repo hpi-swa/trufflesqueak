@@ -13,6 +13,8 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.NodeCost;
+import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
@@ -121,9 +123,26 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
             super(method, numArguments);
         }
 
-        @Specialization
-        protected final Object doTerminate(final ContextObject receiver, final ContextObject previousContext) {
-            return terminateTo(receiver, previousContext);
+        @Specialization(guards = "hasSender(receiver, previousContext)")
+        protected static final Object doUnwindAndTerminate(final ContextObject receiver, final ContextObject previousContext) {
+            /*
+             * Terminate all the Contexts between me and previousContext, if previousContext is on
+             * my Context stack. Make previousContext my sender.
+             */
+            ContextObject currentContext = receiver.getNotNilSender();
+            while (currentContext != previousContext) {
+                final ContextObject sendingContext = currentContext.getNotNilSender();
+                currentContext.terminate();
+                currentContext = sendingContext;
+            }
+            receiver.atput0(CONTEXT.SENDER_OR_NIL, previousContext); // flagging context as dirty
+            return receiver;
+        }
+
+        @Specialization(guards = "!hasSender(receiver, previousContext)")
+        protected static final Object doTerminate(final ContextObject receiver, final ContextObject previousContext) {
+            receiver.atput0(CONTEXT.SENDER_OR_NIL, previousContext); // flagging context as dirty
+            return receiver;
         }
 
         @Specialization
@@ -133,26 +152,9 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         /*
-         * Terminate all the Contexts between me and previousContext, if previousContext is on my
-         * Context stack. Make previousContext my sender.
-         */
-        private Object terminateTo(final ContextObject receiver, final ContextObject previousContext) {
-            if (hasSender(receiver, previousContext)) {
-                ContextObject currentContext = receiver.getNotNilSender();
-                while (currentContext != previousContext) {
-                    final ContextObject sendingContext = currentContext.getNotNilSender();
-                    currentContext.terminate();
-                    currentContext = sendingContext;
-                }
-            }
-            receiver.atput0(CONTEXT.SENDER_OR_NIL, previousContext); // flagging context as dirty
-            return receiver;
-        }
-
-        /*
          * Answer whether the receiver is strictly above context on the stack (Context>>hasSender:).
          */
-        private boolean hasSender(final ContextObject context, final ContextObject previousContext) {
+        protected final boolean hasSender(final ContextObject context, final ContextObject previousContext) {
             if (context == previousContext) {
                 return false;
             }
@@ -341,6 +343,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
     }
 
+    @NodeInfo(cost = NodeCost.NONE)
     @GenerateNodeFactory
     @SqueakPrimitive(index = 206)
     protected abstract static class PrimClosureValueAryNode extends AbstractClosureValuePrimitiveNode {

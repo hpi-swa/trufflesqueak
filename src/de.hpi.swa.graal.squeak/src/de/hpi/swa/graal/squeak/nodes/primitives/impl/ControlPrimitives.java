@@ -12,8 +12,8 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
@@ -40,6 +40,7 @@ import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.DispatchNode;
 import de.hpi.swa.graal.squeak.nodes.DispatchSendNode;
 import de.hpi.swa.graal.squeak.nodes.LookupMethodNode;
+import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.GetObjectArrayNode;
@@ -49,11 +50,14 @@ import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.context.LookupClassNode;
 import de.hpi.swa.graal.squeak.nodes.context.ReceiverNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.CreateEagerArgumentsNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushForPrimitivesNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitivesFactory.PrimExternalCallNodeFactory.GetAbstractPrimitiveNodeGen;
+import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitivesFactory.PrimExternalCallNodeFactory.GetNamedPrimitiveNodeGen;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitivesFactory.PrimQuickReturnReceiverVariableNodeFactory;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitivesFactory.PrimitiveFailedNodeFactory;
 import de.hpi.swa.graal.squeak.nodes.process.GetActiveProcessNode;
@@ -276,35 +280,34 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 88)
-    protected abstract static class PrimSuspendNode extends AbstractPrimitiveWithPushNode {
-        @Child private WakeHighestPriorityNode wakeHighestPriorityNode;
-        @Child private RemoveProcessFromListNode removeProcessNode;
-        @Child private GetActiveProcessNode getActiveProcessNode;
-        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
+    protected abstract static class PrimSuspendNode extends AbstractPrimitiveNode {
+        @Child protected GetActiveProcessNode getActiveProcessNode;
 
         protected PrimSuspendNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
-            removeProcessNode = RemoveProcessFromListNode.create(method.image);
-            wakeHighestPriorityNode = WakeHighestPriorityNode.create(method);
             getActiveProcessNode = GetActiveProcessNode.create(method.image);
         }
 
-        @Specialization
-        protected final AbstractSqueakObject doSuspend(final VirtualFrame frame, final PointersObject receiver) {
-            final PointersObject activeProcess = getActiveProcessNode.executeGet();
-            if (receiver == activeProcess) {
-                pushNode.executeWrite(frame, code.image.nil);
-                wakeHighestPriorityNode.executeWake(frame);
-            } else {
-                final Object oldList = at0Node.execute(receiver, PROCESS.LIST);
-                if (oldList == code.image.nil) {
-                    throw new PrimitiveFailed(ERROR_TABLE.BAD_RECEIVER);
-                }
-                removeProcessNode.executeRemove(receiver, oldList);
-                receiver.atput0(PROCESS.LIST, code.image.nil);
-                pushNode.executeWrite(frame, oldList);
-            }
+        @Specialization(guards = "receiver == getActiveProcessNode.executeGet()")
+        protected final AbstractSqueakObject doSuspendActiveProcess(final VirtualFrame frame, @SuppressWarnings("unused") final PointersObject receiver,
+                        @Cached("create()") final StackPushForPrimitivesNode pushNode,
+                        @Cached("create(code)") final WakeHighestPriorityNode wakeHighestPriorityNode) {
+            pushNode.executeWrite(frame, code.image.nil);
+            wakeHighestPriorityNode.executeWake(frame);
             throw new PrimitiveWithoutResultException(); // result already pushed above
+        }
+
+        @Specialization(guards = "receiver != getActiveProcessNode.executeGet()")
+        protected final Object doSuspendOtherProcess(final PointersObject receiver,
+                        @Cached("create()") final SqueakObjectAt0Node at0Node,
+                        @Cached("create(code.image)") final RemoveProcessFromListNode removeProcessNode) {
+            final Object oldList = at0Node.execute(receiver, PROCESS.LIST);
+            if (oldList == code.image.nil) {
+                throw new PrimitiveFailed(ERROR_TABLE.BAD_RECEIVER);
+            }
+            removeProcessNode.executeRemove(receiver, oldList);
+            receiver.atput0(PROCESS.LIST, code.image.nil);
+            return oldList;
         }
     }
 
@@ -347,6 +350,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    @ImportStatic(Double.class)
     @GenerateNodeFactory
     @SqueakPrimitive(index = 110)
     protected abstract static class PrimIdenticalNode extends AbstractPrimitiveNode {
@@ -355,32 +359,40 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final boolean doBoolean(final boolean a, final boolean b) {
-            return a == b;
+        protected final boolean doBoolean(final boolean a, final boolean b) {
+            return a == b ? code.image.sqTrue : code.image.sqFalse;
         }
 
         @Specialization
-        protected static final boolean doChar(final char a, final char b) {
-            return a == b;
+        protected final boolean doChar(final char a, final char b) {
+            return a == b ? code.image.sqTrue : code.image.sqFalse;
         }
 
         @Specialization
-        protected static final boolean doLong(final long a, final long b) {
-            return a == b;
+        protected final boolean doLong(final long a, final long b) {
+            return a == b ? code.image.sqTrue : code.image.sqFalse;
         }
 
-        @Specialization
+        @Specialization(guards = {"!isNaN(a)", "!isNaN(b)"})
         protected final boolean doDouble(final double a, final double b) {
-            if (Double.isNaN(a) && Double.isNaN(b)) {
-                return code.image.sqTrue;
-            } else {
-                return a == b;
-            }
+            return a == b ? code.image.sqTrue : code.image.sqFalse;
         }
 
-        @Specialization
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"isNaN(a) || isNaN(b)"})
+        protected final boolean doDoubleNaN(final double a, final double b) {
+            return code.image.sqTrue;
+        }
+
+        @Specialization(guards = {"!isNaN(a.getValue())", "!isNaN(b.getValue())"})
         protected final boolean doFloat(final FloatObject a, final FloatObject b) {
             return a == b || doDouble(a.getValue(), b.getValue());
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"isNaN(a.getValue()) || isNaN(b.getValue())"})
+        protected final boolean doFloatNaN(final FloatObject a, final FloatObject b) {
+            return code.image.sqTrue;
         }
 
         @SuppressWarnings("unused")
@@ -390,14 +402,15 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Fallback
-        protected static final boolean doSqueakObject(final Object a, final Object b) {
-            return a == b;
+        protected final boolean doSqueakObject(final Object a, final Object b) {
+            return a == b ? code.image.sqTrue : code.image.sqFalse;
         }
     }
 
     /*
      * primitiveClass (see Object>>class and Context>>objectClass:).
      */
+    @NodeInfo(cost = NodeCost.NONE)
     @GenerateNodeFactory
     @SqueakPrimitive(index = 111)
     protected abstract static class PrimClassNode extends AbstractPrimitiveNode {
@@ -610,6 +623,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Child private NativeGetBytesNode getBytes = NativeGetBytesNode.create();
         @Child private SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
+        @Child private GetAbstractPrimitiveNode getPrimitiveNode = GetAbstractPrimitiveNodeGen.create();
+        @Child private CreateEagerArgumentsNode createEagerArgumentsNode;
 
         protected PrimExternalCallNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -617,33 +632,59 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Override
         public final Object executeWithArguments(final VirtualFrame frame, final Object... receiverAndArguments) {
-            final AbstractSqueakObject descriptor = code.getLiteral(0) instanceof AbstractSqueakObject ? (AbstractSqueakObject) code.getLiteral(0) : null;
-            if (descriptor != null && descriptor.getSqueakClass() != null && sizeNode.execute(descriptor) >= 2) {
-                final Object descriptorAt0 = at0Node.execute(descriptor, 0);
-                final Object descriptorAt1 = at0Node.execute(descriptor, 1);
-                if (descriptorAt0 instanceof NativeObject && descriptorAt1 instanceof NativeObject) {
-                    final String moduleName = getBytes.executeAsString((NativeObject) descriptorAt0);
-                    final String functionName = getBytes.executeAsString((NativeObject) descriptorAt1);
-                    final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.forName((CompiledMethodObject) code, moduleName, functionName);
-                    return replace(primitiveNode).executeWithArguments(frame, ArrayUtils.fillWith(receiverAndArguments, primitiveNode.numArguments, NotProvided.INSTANCE));
-                }
-            }
-            return replace(PrimitiveFailedNode.create((CompiledMethodObject) code)).executePrimitive(frame);
+            final AbstractPrimitiveNode primitiveNode = getPrimitiveNode.execute(code, code.getLiteral(0));
+            return replace(primitiveNode).executeWithArguments(frame, getCreateEagerArgumentsNode().executeCreate(primitiveNode.numArguments, receiverAndArguments));
         }
 
-        @Specialization // FIXME: split with guards
+        @Specialization
         protected final Object doExternalCall(final VirtualFrame frame) {
-            final AbstractSqueakObject descriptor = code.getLiteral(0) instanceof AbstractSqueakObject ? (AbstractSqueakObject) code.getLiteral(0) : null;
-            if (descriptor != null && descriptor.getSqueakClass() != null && sizeNode.execute(descriptor) >= 2) {
-                final Object descriptorAt0 = at0Node.execute(descriptor, 0);
-                final Object descriptorAt1 = at0Node.execute(descriptor, 1);
-                if (descriptorAt0 instanceof NativeObject && descriptorAt1 instanceof NativeObject) {
-                    final String moduleName = getBytes.executeAsString((NativeObject) descriptorAt0);
-                    final String functionName = getBytes.executeAsString((NativeObject) descriptorAt1);
-                    return replace(PrimitiveNodeFactory.forName((CompiledMethodObject) code, moduleName, functionName)).executePrimitive(frame);
-                }
+            return replace(getPrimitiveNode.execute(code, code.getLiteral(0))).executePrimitive(frame);
+        }
+
+        private CreateEagerArgumentsNode getCreateEagerArgumentsNode() {
+            if (createEagerArgumentsNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                createEagerArgumentsNode = insert(CreateEagerArgumentsNode.create());
             }
-            return replace(PrimitiveFailedNode.create((CompiledMethodObject) code)).executePrimitive(frame);
+            return createEagerArgumentsNode;
+        }
+
+        @ImportStatic(SqueakGuards.class)
+        protected abstract static class GetAbstractPrimitiveNode extends Node {
+
+            protected abstract AbstractPrimitiveNode execute(CompiledCodeObject method, Object literal);
+
+            @Specialization
+            protected static final AbstractPrimitiveNode dof(final CompiledMethodObject method, final ArrayObject array,
+                            @Cached("createGetNamedPrimitiveNode()") final GetNamedPrimitiveNode getNode) {
+                final Object[] objects = array.getObjectStorage();
+                return getNode.execute(method, objects[0], objects[1]);
+            }
+
+            @Fallback
+            protected static final AbstractPrimitiveNode doFail(final CompiledCodeObject method, final Object value) {
+                throw new SqueakException("Should not happen:", method, value);
+            }
+
+            protected static final GetNamedPrimitiveNode createGetNamedPrimitiveNode() {
+                return GetNamedPrimitiveNodeGen.create();
+            }
+        }
+
+        protected abstract static class GetNamedPrimitiveNode extends Node {
+
+            protected abstract AbstractPrimitiveNode execute(CompiledMethodObject method, Object moduleName, Object functionName);
+
+            @Specialization
+            protected static final AbstractPrimitiveNode dof(final CompiledMethodObject method, final NativeObject moduleName, final NativeObject functionName) {
+                return PrimitiveNodeFactory.forName(method, moduleName.asString(), functionName.asString());
+            }
+
+            @SuppressWarnings("unused")
+            @Fallback
+            protected static final AbstractPrimitiveNode doFail(final CompiledMethodObject method, final Object moduleName, final Object functionName) {
+                return PrimitiveFailedNode.create(method);
+            }
         }
     }
 
@@ -656,34 +697,24 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @Specialization
-        protected final Object doPrimitive(final VirtualFrame frame, final Object receiver, final long primitiveIndex, final ArrayObject argumentArray,
-                        @SuppressWarnings("unused") final NotProvided notProvided) {
-            final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.forIndex((CompiledMethodObject) code, (int) primitiveIndex);
-            if (primitiveNode == null) { // TODO: make better
-                throw new PrimitiveFailed();
-            }
+        @Specialization(guards = "primitiveNode != null")
+        protected final Object doPrimitive(final VirtualFrame frame, final Object receiver, @SuppressWarnings("unused") final long primitiveIndex, final ArrayObject argumentArray,
+                        @SuppressWarnings("unused") final NotProvided notProvided,
+                        @Cached("forIndex(primitiveIndex)") final AbstractPrimitiveNode primitiveNode) {
             final Object[] receiverAndArguments = ArrayUtils.copyWithFirst(getObjectArrayNode.execute(argumentArray), receiver);
-            try {
-                return replace(primitiveNode).executeWithArguments(frame, receiverAndArguments);
-            } catch (UnsupportedSpecializationException e) {
-                throw new PrimitiveFailed();
-            }
+            return replace(primitiveNode).executeWithArguments(frame, receiverAndArguments);
         }
 
-        @Specialization
-        protected final Object doPrimitive(final VirtualFrame frame, @SuppressWarnings("unused") final Object context, final Object receiver, final long primitiveIndex,
-                        final ArrayObject argumentArray) {
-            final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.forIndex((CompiledMethodObject) code, (int) primitiveIndex);
-            if (primitiveNode == null) { // TODO: make better
-                throw new PrimitiveFailed();
-            }
+        @Specialization(guards = "primitiveNode != null")
+        protected final Object doPrimitive(final VirtualFrame frame, @SuppressWarnings("unused") final Object context, final Object receiver,
+                        @SuppressWarnings("unused") final long primitiveIndex, final ArrayObject argumentArray,
+                        @Cached("forIndex(primitiveIndex)") final AbstractPrimitiveNode primitiveNode) {
             final Object[] receiverAndArguments = ArrayUtils.copyWithFirst(getObjectArrayNode.execute(argumentArray), receiver);
-            try {
-                return replace(primitiveNode).executeWithArguments(frame, receiverAndArguments);
-            } catch (UnsupportedSpecializationException e) {
-                throw new PrimitiveFailed();
-            }
+            return replace(primitiveNode).executeWithArguments(frame, receiverAndArguments);
+        }
+
+        protected final AbstractPrimitiveNode forIndex(final long primitiveIndex) {
+            return PrimitiveNodeFactory.forIndex((CompiledMethodObject) code, (int) primitiveIndex);
         }
     }
 
@@ -769,6 +800,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     }
 
+    @ImportStatic(Double.class)
     @GenerateNodeFactory
     @SqueakPrimitive(index = 169) // complements 110
     protected abstract static class PrimNotIdenticalNode extends AbstractPrimitiveNode {
@@ -777,64 +809,73 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final boolean doBoolean(final boolean a, final boolean b) {
-            return a != b;
+        protected final boolean doBoolean(final boolean a, final boolean b) {
+            return a != b ? code.image.sqTrue : code.image.sqFalse;
         }
 
         @Specialization
-        protected static final boolean doChar(final char a, final char b) {
-            return a != b;
+        protected final boolean doChar(final char a, final char b) {
+            return a != b ? code.image.sqTrue : code.image.sqFalse;
         }
 
         @Specialization
-        protected static final boolean doLong(final long a, final long b) {
-            return a != b;
+        protected final boolean doLong(final long a, final long b) {
+            return a != b ? code.image.sqTrue : code.image.sqFalse;
         }
 
-        @Specialization
+        @Specialization(guards = {"!isNaN(a)", "!isNaN(b)"})
         protected final boolean doDouble(final double a, final double b) {
-            if (Double.isNaN(a) && Double.isNaN(b)) {
-                return code.image.sqFalse;
-            } else {
-                return a != b;
-            }
+            return a != b ? code.image.sqTrue : code.image.sqFalse;
         }
 
-        @Specialization
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"isNaN(a) || isNaN(b)"})
+        protected final boolean doDoubleNaN(final double a, final double b) {
+            return code.image.sqFalse;
+        }
+
+        @Specialization(guards = {"!isNaN(a.getValue())", "!isNaN(b.getValue())"})
         protected final boolean doFloat(final FloatObject a, final FloatObject b) {
             return a != b && !doDouble(a.getValue(), b.getValue());
         }
 
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"isNaN(a.getValue()) || isNaN(b.getValue())"})
+        protected final boolean doFloatNaN(final FloatObject a, final FloatObject b) {
+            return code.image.sqFalse;
+        }
+
         @Specialization
-        protected static final boolean doObject(final Object a, final Object b) {
-            return !a.equals(b);
+        protected final boolean doObject(final Object a, final Object b) {
+            return !a.equals(b) ? code.image.sqTrue : code.image.sqFalse;
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 185)
-    protected abstract static class PrimExitCriticalSectionNode extends AbstractPrimitiveWithPushNode {
-        @Child private IsEmptyListNode isEmptyListNode;
-        @Child private RemoveFirstLinkOfListNode removeFirstLinkOfListNode;
-        @Child private ResumeProcessNode resumeProcessNode;
+    protected abstract static class PrimExitCriticalSectionNode extends AbstractPrimitiveNode {
+        @Child protected IsEmptyListNode isEmptyListNode;
 
         public PrimExitCriticalSectionNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
             isEmptyListNode = IsEmptyListNode.create(method.image);
-            removeFirstLinkOfListNode = RemoveFirstLinkOfListNode.create(method.image);
-            resumeProcessNode = ResumeProcessNode.create(method);
         }
 
-        @Specialization
-        protected final Object doExit(final VirtualFrame frame, final PointersObject mutex) {
+        @Specialization(guards = "isEmptyListNode.executeIsEmpty(mutex)")
+        protected final Object doExitEmpty(final PointersObject mutex) {
+            mutex.atput0(MUTEX.OWNER, code.image.nil);
+            return mutex;
+        }
+
+        @Specialization(guards = "!isEmptyListNode.executeIsEmpty(mutex)")
+        protected static final Object doExitNonEmpty(final VirtualFrame frame, final PointersObject mutex,
+                        @Cached("create()") final StackPushForPrimitivesNode pushNode,
+                        @Cached("create(code.image)") final RemoveFirstLinkOfListNode removeFirstLinkOfListNode,
+                        @Cached("create(code)") final ResumeProcessNode resumeProcessNode) {
             pushNode.executeWrite(frame, mutex); // keep receiver on stack
-            if (isEmptyListNode.executeIsEmpty(mutex)) {
-                mutex.atput0(MUTEX.OWNER, code.image.nil);
-            } else {
-                final Object owningProcess = removeFirstLinkOfListNode.executeRemove(mutex);
-                mutex.atput0(MUTEX.OWNER, owningProcess);
-                resumeProcessNode.executeResume(frame, owningProcess);
-            }
+            final Object owningProcess = removeFirstLinkOfListNode.executeRemove(mutex);
+            mutex.atput0(MUTEX.OWNER, owningProcess);
+            resumeProcessNode.executeResume(frame, owningProcess);
             throw new PrimitiveWithoutResultException();
         }
     }

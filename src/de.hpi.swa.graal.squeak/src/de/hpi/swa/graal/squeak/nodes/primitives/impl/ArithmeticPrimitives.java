@@ -120,25 +120,25 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Override
         @Specialization
         protected final Object doLong(final long a, final long b) {
-            return a < b;
+            return a < b ? code.image.sqTrue : code.image.sqFalse;
         }
 
         @Override
         @Specialization
         protected final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.compareTo(b) < 0;
+            return a.compareTo(b) < 0 ? code.image.sqTrue : code.image.sqFalse;
         }
 
         @Override
         @Specialization
         protected final Object doDouble(final double a, final double b) {
-            return a < b;
+            return a < b ? code.image.sqTrue : code.image.sqFalse;
         }
 
         @Override
         @Specialization
         protected final Object doFloat(final FloatObject a, final FloatObject b) {
-            return a.getValue() < b.getValue();
+            return a.getValue() < b.getValue() ? code.image.sqTrue : code.image.sqFalse;
         }
     }
 
@@ -152,25 +152,25 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Override
         @Specialization
         protected final Object doLong(final long a, final long b) {
-            return a > b;
+            return a > b ? code.image.sqTrue : code.image.sqFalse;
         }
 
         @Override
         @Specialization
         protected final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.compareTo(b) > 0;
+            return a.compareTo(b) > 0 ? code.image.sqTrue : code.image.sqFalse;
         }
 
         @Override
         @Specialization
         protected final Object doDouble(final double a, final double b) {
-            return a > b;
+            return a > b ? code.image.sqTrue : code.image.sqFalse;
         }
 
         @Override
         @Specialization
         protected final Object doFloat(final FloatObject a, final FloatObject b) {
-            return a.getValue() > b.getValue();
+            return a.getValue() > b.getValue() ? code.image.sqTrue : code.image.sqFalse;
         }
     }
 
@@ -216,25 +216,25 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Override
         @Specialization
         protected final Object doLong(final long a, final long b) {
-            return a >= b;
+            return a >= b ? code.image.sqTrue : code.image.sqFalse;
         }
 
         @Override
         @Specialization
         protected final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.compareTo(b) >= 0;
+            return a.compareTo(b) >= 0 ? code.image.sqTrue : code.image.sqFalse;
         }
 
         @Override
         @Specialization
         protected final Object doDouble(final double a, final double b) {
-            return a >= b;
+            return a >= b ? code.image.sqTrue : code.image.sqFalse;
         }
 
         @Override
         @Specialization
         protected final Object doFloat(final FloatObject a, final FloatObject b) {
-            return a.getValue() >= b.getValue();
+            return a.getValue() >= b.getValue() ? code.image.sqTrue : code.image.sqFalse;
         }
     }
 
@@ -248,25 +248,25 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Override
         @Specialization
         protected final Object doLong(final long a, final long b) {
-            return a == b;
+            return a == b ? code.image.sqTrue : code.image.sqFalse;
         }
 
         @Override
         @Specialization
         protected final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.compareTo(b) == 0;
+            return a.compareTo(b) == 0 ? code.image.sqTrue : code.image.sqFalse;
         }
 
         @Override
         @Specialization
         protected final Object doDouble(final double a, final double b) {
-            return a == b;
+            return a == b ? code.image.sqTrue : code.image.sqFalse;
         }
 
         @Override
         @Specialization
         protected final Object doFloat(final FloatObject a, final FloatObject b) {
-            return a.getValue() == b.getValue();
+            return a.getValue() == b.getValue() ? code.image.sqTrue : code.image.sqFalse;
         }
 
         @SuppressWarnings("unused")
@@ -286,25 +286,25 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         @Override
         @Specialization
         protected final Object doLong(final long a, final long b) {
-            return a != b;
+            return a != b ? code.image.sqTrue : code.image.sqFalse;
         }
 
         @Override
         @Specialization
         protected final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.compareTo(b) != 0;
+            return a.compareTo(b) != 0 ? code.image.sqTrue : code.image.sqFalse;
         }
 
         @Override
         @Specialization
         protected final Object doDouble(final double a, final double b) {
-            return a != b;
+            return a != b ? code.image.sqTrue : code.image.sqFalse;
         }
 
         @Override
         @Specialization
         protected final Object doFloat(final FloatObject a, final FloatObject b) {
-            return a.getValue() != b.getValue();
+            return a.getValue() != b.getValue() ? code.image.sqTrue : code.image.sqFalse;
         }
 
         @SuppressWarnings("unused")
@@ -763,11 +763,82 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected final FloatObject doLongFloat(final long receiver, final FloatObject argument) {
-            return asFloatObject(doDouble(receiver, argument.getValue()));
+            return asFloatObject(doubleSlow(receiver, argument.getValue()));
+        }
+
+        @Specialization(guards = "zeroOrInfinite(receiver)")
+        protected static final double doDoubleZeroOrInfinite(final double receiver, @SuppressWarnings("unused") final double argument) {
+            return receiver; // See Float>>timesTwoPower:.
+        }
+
+        @Specialization(guards = {"!zeroOrInfinite(receiver)", "greaterThanEMAX(argument)"})
+        protected static final double doDoubleArgumentsGreaterThanEMAX(final double receiver, @SuppressWarnings("unused") final double argument) {
+            // See Float>>timesTwoPower:.
+            return receiver * Math.pow(2.0, FloatObject.EMAX) * Math.pow(2, argument - FloatObject.EMAX);
+        }
+
+        @Specialization(guards = {"!zeroOrInfinite(receiver)", "!greaterThanEMAX(argument)", "lessThanUNDERFLOWLIMIT(argument)"})
+        protected static final double doDoubleArgumentsLessThanUNDERFLOWLIMIT(final double receiver, @SuppressWarnings("unused") final double argument) {
+            // See Float>>timesTwoPower:.
+            int deltaToUnderflow = Math.max(FloatObject.EMIN - Math.getExponent(argument), UNDERFLOW_LIMIT);
+            if (deltaToUnderflow >= 0) {
+                deltaToUnderflow = FloatObject.EMIN;
+            }
+            return receiver * Math.pow(2.0, deltaToUnderflow) * Math.pow(2, argument - deltaToUnderflow);
+        }
+
+        @Specialization(guards = {"!zeroOrInfinite(receiver)", "!greaterThanEMAX(argument)", "!lessThanUNDERFLOWLIMIT(argument)"})
+        protected static final double doDoubleOtherwise(final double receiver, @SuppressWarnings("unused") final double argument) {
+            return receiver * Math.pow(2.0, argument); // See Float>>timesTwoPower:.
+        }
+
+        @Specialization(guards = "zeroOrInfinite(receiver)")
+        protected static final double doDoubleLongZeroOrInfinite(final double receiver, @SuppressWarnings("unused") final long argument) {
+            return receiver; // See Float>>timesTwoPower:.
+        }
+
+        @Specialization(guards = {"!zeroOrInfinite(receiver)", "greaterThanEMAX(argument)"})
+        protected static final double doDoubleLongArgumentsGreaterThanEMAX(final double receiver, @SuppressWarnings("unused") final long argument) {
+            // See Float>>timesTwoPower:.
+            return receiver * Math.pow(2.0, FloatObject.EMAX) * Math.pow(2, argument - FloatObject.EMAX);
+        }
+
+        @Specialization(guards = {"!zeroOrInfinite(receiver)", "!greaterThanEMAX(argument)", "lessThanUNDERFLOWLIMIT(argument)"})
+        protected static final double doDoubleLongArgumentsLessThanUNDERFLOWLIMIT(final double receiver, @SuppressWarnings("unused") final long argument) {
+            // See Float>>timesTwoPower:.
+            int deltaToUnderflow = Math.max(FloatObject.EMIN - Math.getExponent(argument), UNDERFLOW_LIMIT);
+            if (deltaToUnderflow >= 0) {
+                deltaToUnderflow = FloatObject.EMIN;
+            }
+            return receiver * Math.pow(2.0, deltaToUnderflow) * Math.pow(2, argument - deltaToUnderflow);
+        }
+
+        @Specialization(guards = {"!zeroOrInfinite(receiver)", "!greaterThanEMAX(argument)", "!lessThanUNDERFLOWLIMIT(argument)"})
+        protected static final double doDoubleLongOtherwise(final double receiver, @SuppressWarnings("unused") final long argument) {
+            return receiver * Math.pow(2.0, argument); // See Float>>timesTwoPower:.
         }
 
         @Specialization
-        protected static final double doDouble(final double receiver, final double argument) {
+        protected final FloatObject doDoubleFloat(final double receiver, final FloatObject argument) {
+            return asFloatObject(doubleSlow(receiver, argument.getValue()));
+        }
+
+        @Specialization
+        protected final FloatObject doFloat(final FloatObject receiver, final FloatObject argument) {
+            return asFloatObject(doubleSlow(receiver.getValue(), argument.getValue()));
+        }
+
+        @Specialization
+        protected final FloatObject doFloatLong(final FloatObject receiver, final long argument) {
+            return asFloatObject(doubleSlow(receiver.getValue(), argument));
+        }
+
+        @Specialization
+        protected final FloatObject doFloatDouble(final FloatObject receiver, final double argument) {
+            return asFloatObject(doubleSlow(receiver.getValue(), argument));
+        }
+
+        private static double doubleSlow(final double receiver, final double argument) {
             // see Float>>timesTwoPower:
             if (receiver == 0.0 || Double.isInfinite(receiver)) {
                 return receiver;
@@ -784,29 +855,16 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        @Specialization
-        protected static final double doDoubleLong(final double receiver, final long argument) {
-            return doDouble(receiver, argument);
+        protected static final boolean zeroOrInfinite(final double receiver) {
+            return receiver == 0.0 || Double.isInfinite(receiver);
         }
 
-        @Specialization
-        protected final FloatObject doDoubleFloat(final double receiver, final FloatObject argument) {
-            return asFloatObject(doDouble(receiver, argument.getValue()));
+        protected static final boolean greaterThanEMAX(final double argument) {
+            return argument > FloatObject.EMAX;
         }
 
-        @Specialization
-        protected final FloatObject doFloat(final FloatObject receiver, final FloatObject argument) {
-            return asFloatObject(doDouble(receiver.getValue(), argument.getValue()));
-        }
-
-        @Specialization
-        protected final FloatObject doFloatLong(final FloatObject receiver, final long argument) {
-            return asFloatObject(doDouble(receiver.getValue(), argument));
-        }
-
-        @Specialization
-        protected final FloatObject doFloatDouble(final FloatObject receiver, final double argument) {
-            return asFloatObject(doDouble(receiver.getValue(), argument));
+        protected static final boolean lessThanUNDERFLOWLIMIT(final double argument) {
+            return argument < UNDERFLOW_LIMIT;
         }
     }
 
@@ -914,6 +972,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 159)
     protected abstract static class PrimHashMultiplyNode extends AbstractPrimitiveNode {
         private static final int HASH_MULTIPLY_CONSTANT = 1664525;
+        private static final long HASH_MULTIPLY_MASK = 0xFFFFFFF;
 
         protected PrimHashMultiplyNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -926,7 +985,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final long doLong(final long receiver) {
-            return (receiver * HASH_MULTIPLY_CONSTANT) & 0x0fffffff;
+            return (receiver * HASH_MULTIPLY_CONSTANT) & HASH_MULTIPLY_MASK;
         }
     }
 }

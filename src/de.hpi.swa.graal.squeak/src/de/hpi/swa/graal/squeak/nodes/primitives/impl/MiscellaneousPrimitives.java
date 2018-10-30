@@ -10,14 +10,17 @@ import java.util.Set;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.SimulationPrimitiveFailed;
+import de.hpi.swa.graal.squeak.model.AbstractPointersObject;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
@@ -664,36 +667,75 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(index = 168)
     protected abstract static class PrimCopyObjectNode extends AbstractPrimitiveNode {
-        @Child protected SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
-        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
-        @Child private SqueakObjectAtPut0Node atput0Node = SqueakObjectAtPut0Node.create();
 
         protected PrimCopyObjectNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        @Specialization(guards = {"!isNativeObject(receiver)", "!isContextObject(receiver)", "receiver.getSqueakClass() == anotherObject.getSqueakClass()",
+        @Specialization(guards = {"!isContextObject(receiver)", "receiver.getSqueakClass() == anotherObject.getSqueakClass()", "receiver.size() == anotherObject.size()"})
+        protected static final Object doCopyAbstractPointers(final AbstractPointersObject receiver, final AbstractPointersObject anotherObject) {
+            final Object[] destStorage = receiver.getPointers();
+            System.arraycopy(anotherObject.getPointers(), 0, destStorage, 0, destStorage.length);
+            return receiver;
+        }
+
+        @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()",
+                        "receiver.isByteType()", "anotherObject.isByteType()", "receiver.getByteLength() == anotherObject.getByteLength()"})
+        protected static final Object doCopyNativeByte(final NativeObject receiver, final NativeObject anotherObject) {
+            final byte[] destStorage = receiver.getByteStorage();
+            System.arraycopy(anotherObject.getByteStorage(), 0, destStorage, 0, destStorage.length);
+            return receiver;
+        }
+
+        @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()",
+                        "receiver.isShortType()", "anotherObject.isShortType()", "receiver.getShortLength() == anotherObject.getShortLength()"})
+        protected static final Object doCopyNativeShort(final NativeObject receiver, final NativeObject anotherObject) {
+            final short[] destStorage = receiver.getShortStorage();
+            System.arraycopy(anotherObject.getShortStorage(), 0, destStorage, 0, destStorage.length);
+            return receiver;
+        }
+
+        @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()",
+                        "receiver.isIntType()", "anotherObject.isIntType()", "receiver.getIntLength() == anotherObject.getIntLength()"})
+        protected static final Object doCopyNativeInt(final NativeObject receiver, final NativeObject anotherObject) {
+            final int[] destStorage = receiver.getIntStorage();
+            System.arraycopy(anotherObject.getIntStorage(), 0, destStorage, 0, destStorage.length);
+            return receiver;
+        }
+
+        @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()",
+                        "receiver.isLongType()", "anotherObject.isLongType()", "receiver.getLongLength() == anotherObject.getLongLength()"})
+        protected static final Object doCopyNativeLong(final NativeObject receiver, final NativeObject anotherObject) {
+            final long[] destStorage = receiver.getLongStorage();
+            System.arraycopy(anotherObject.getLongStorage(), 0, destStorage, 0, destStorage.length);
+            return receiver;
+        }
+
+        @Specialization(guards = {"receiver.getSqueakClass() == anotherObject.getSqueakClass()",
+                        "!isNativeObject(receiver)", "!isPointersObject(receiver)", "!isContextObject(receiver)",
                         "sizeNode.execute(receiver) == sizeNode.execute(anotherObject)"})
-        protected final Object doCopy(final AbstractSqueakObject receiver, final AbstractSqueakObject anotherObject) {
+        protected static final Object doCopy(final AbstractSqueakObject receiver, final AbstractSqueakObject anotherObject,
+                        @Cached("create()") final SqueakObjectSizeNode sizeNode,
+                        @Cached("create()") final SqueakObjectAtPut0Node atput0Node,
+                        @Cached("create()") final SqueakObjectAt0Node at0Node) {
             for (int i = 0; i < sizeNode.execute(receiver); i++) {
                 atput0Node.execute(receiver, i, at0Node.execute(anotherObject, i));
             }
             return receiver;
         }
-
-        // TODO: could have more specializations for NativeObject, ArrayObject, ...
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 176)
     protected abstract static class PrimMaxIdentityHashNode extends AbstractPrimitiveNode {
+
         protected PrimMaxIdentityHashNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
         @Specialization
-        protected final Object doMaxHash(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return asFloatObject(Math.pow(2, 22) - 1);
+        protected static final long doMaxHash(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+            return AbstractSqueakObject.IDENTITY_HASH_MASK;
         }
     }
 
@@ -848,6 +890,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
          * </pre>
          */
 
+        @ExplodeLoop
         @SuppressWarnings("unused")
         @Specialization
         protected final Object getVMParameters(final Object receiver, final NotProvided index, final NotProvided value) {
@@ -945,17 +988,20 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(index = 255)
     protected abstract static class PrimMetaFailNode extends AbstractPrimitiveNode {
-        private static final boolean DEBUG_META_PRIMITIVE_FAILURES = false;
+        protected static final boolean DEBUG_META_PRIMITIVE_FAILURES = false;
 
         public PrimMetaFailNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        @Specialization
-        protected final Object doFail(@SuppressWarnings("unused") final PointersObject proxy, final long reasonCode) {
-            if (DEBUG_META_PRIMITIVE_FAILURES) {
-                debugMetaPrimitiveFailures(reasonCode);
-            }
+        @Specialization(guards = "!DEBUG_META_PRIMITIVE_FAILURES")
+        protected static final Object doFail(@SuppressWarnings("unused") final PointersObject proxy, final long reasonCode) {
+            throw new SimulationPrimitiveFailed(reasonCode);
+        }
+
+        @Specialization(guards = "DEBUG_META_PRIMITIVE_FAILURES")
+        protected final Object doFailAndLog(@SuppressWarnings("unused") final PointersObject proxy, final long reasonCode) {
+            debugMetaPrimitiveFailures(reasonCode);
             throw new SimulationPrimitiveFailed(reasonCode);
         }
 

@@ -4,6 +4,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.BranchProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.Returns.LocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
@@ -34,25 +35,32 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
      * that this however does not check if the current context isDead nor does it terminate contexts
      * (this may be a problem).
      */
-    @Specialization(guards = {"code.isUnwindMarked()", "isVirtualized(frame)"})
+    @Specialization(guards = {"code.isUnwindMarked()", "isVirtualized(frame)", "isNil(frame, completeTempReadNode)"}, limit = "1")
     protected final void doAboutToReturnVirtualized(final VirtualFrame frame, @SuppressWarnings("unused") final NonLocalReturn nlr,
                     @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments,
                     @Cached("createTemporaryWriteNode(0)") final SqueakNode blockArgumentNode,
-                    @Cached("createTemporaryWriteNode(1)") final SqueakNode completeTempReadNode,
+                    @SuppressWarnings("unused") @Cached("createTemporaryWriteNode(1)") final SqueakNode completeTempReadNode,
                     @Cached("create(code, 1)") final TemporaryWriteNode completeTempWriteNode,
-                    @Cached("create()") final BlockActivationNode dispatchNode) {
-        if (completeTempReadNode.executeRead(frame) == code.image.nil) {
-            completeTempWriteNode.executeWrite(frame, code.image.sqTrue);
-            final BlockClosureObject block = (BlockClosureObject) blockArgumentNode.executeRead(frame);
-            try {
-                dispatchNode.executeBlock(block, getFrameArguments.execute(block, getContextOrMarker(frame), new Object[0]));
-            } catch (LocalReturn blockLR) { // ignore
-            } catch (NonLocalReturn blockNLR) {
-                if (!blockNLR.hasArrivedAtTargetContext()) {
-                    throw blockNLR;
-                }
+                    @Cached("create()") final BlockActivationNode dispatchNode,
+                    @Cached("create()") final BranchProfile nonLocalReturnProfile) {
+        completeTempWriteNode.executeWrite(frame, code.image.sqTrue);
+        final BlockClosureObject block = (BlockClosureObject) blockArgumentNode.executeRead(frame);
+        try {
+            dispatchNode.executeBlock(block, getFrameArguments.execute(block, getContextOrMarker(frame), new Object[0]));
+        } catch (LocalReturn blockLR) { // ignore
+        } catch (NonLocalReturn blockNLR) {
+            nonLocalReturnProfile.enter();
+            if (!blockNLR.hasArrivedAtTargetContext()) {
+                throw blockNLR;
             }
         }
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = {"code.isUnwindMarked()", "isVirtualized(frame)", "!isNil(frame, completeTempReadNode)"}, limit = "1")
+    protected final void doAboutToReturnVirtualizedNothing(final VirtualFrame frame, final NonLocalReturn nlr,
+                    @Cached("createTemporaryWriteNode(1)") final SqueakNode completeTempReadNode) {
+        // Nothing to do.
     }
 
     @Specialization(guards = {"code.isUnwindMarked()", "!isVirtualized(frame)"})
@@ -69,12 +77,16 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
     @SuppressWarnings("unused")
     @Specialization(guards = {"!code.isUnwindMarked()"})
     protected final void doNothing(final VirtualFrame frame, final NonLocalReturn nlr) {
-        // nothing to do
+        // Nothing to do.
     }
 
     @Fallback
     protected static final void doFail(final NonLocalReturn nlr) {
         throw new SqueakException("Should never happend:", nlr);
+    }
+
+    protected final boolean isNil(final VirtualFrame frame, final SqueakNode completeTempReadNode) {
+        return completeTempReadNode.executeRead(frame) == code.image.nil;
     }
 
     protected final SqueakNode createTemporaryWriteNode(final int tempIndex) {

@@ -200,6 +200,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         }
     }
 
+    @ImportStatic(NativeObject.class)
     @GenerateNodeFactory
     @SqueakPrimitive(index = 61)
     protected abstract static class PrimBasicAtPutNode extends AbstractBasicAtOrAtPutNode {
@@ -343,27 +344,19 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             return value;
         }
 
-        @Specialization
+        @Specialization(guards = "inBounds1(value, BYTE_MAX)")
         protected char doLargeIntegerChar(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final LargeIntegerObject target, final long index, final char value) {
-            try {
-                target.setNativeAt0(index - 1, value);
-            } catch (IllegalArgumentException e) {
-                throw new PrimitiveFailed();
-            }
+            target.setNativeAt0(index - 1, value);
             return value;
         }
 
-        @Specialization
+        @Specialization(guards = "inBounds1(value, BYTE_MAX)")
         protected long doLargeIntegerLong(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final LargeIntegerObject target, final long index, final long value) {
-            try {
-                target.setNativeAt0(index - 1, value);
-            } catch (IllegalArgumentException e) {
-                throw new PrimitiveFailed();
-            }
+            target.setNativeAt0(index - 1, value);
             return value;
         }
 
-        @Specialization(guards = "value.fitsIntoLong()")
+        @Specialization(guards = {"value.fitsIntoLong()", "inBounds1(value.longValueExact(), BYTE_MAX)"})
         protected Object doLargeInteger(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final LargeIntegerObject target, final long index, final LargeIntegerObject value) {
             target.setNativeAt0(index - 1, value.longValueExact());
             return value;
@@ -417,13 +410,9 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             throw new PrimitiveFailed();
         }
 
-        @Specialization(guards = "!isSmallInteger(target)")
+        @Specialization(guards = {"!isSmallInteger(target)", "inBounds1(value, BYTE_MAX)"})
         protected Object doSqueakObject(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long target, final long index, final long value) {
-            try {
-                asLargeInteger(target).setNativeAt0(index - 1, value);
-            } catch (IllegalArgumentException e) {
-                throw new PrimitiveFailed();
-            }
+            asLargeInteger(target).setNativeAt0(index - 1, value);
             return value;
         }
 

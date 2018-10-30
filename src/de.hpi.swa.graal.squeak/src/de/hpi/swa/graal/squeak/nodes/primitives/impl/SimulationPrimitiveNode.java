@@ -32,14 +32,10 @@ public abstract class SimulationPrimitiveNode extends AbstractPrimitiveNode {
     @CompilationFinal protected CompiledMethodObject simulationMethod;
 
     private final NativeObject functionName;
-    private final boolean bitBltSimulationNotFound = code.image.getSimulatePrimitiveArgsSelector() == null;
     private final ArrayObject emptyList;
     private final BranchProfile simulationFailedProfile = BranchProfile.create();
 
-    @Child private LookupMethodNode lookupMethodNode;
     @Child private DispatchNode dispatchNode = DispatchNode.create();
-    @Child private LookupClassNode lookupClassNode;
-    @Child private IsDoesNotUnderstandNode isDoesNotUnderstandNode;
 
     public static SimulationPrimitiveNode create(final CompiledMethodObject method, final String moduleName, final String functionName) {
         final NodeFactory<SimulationPrimitiveNode> nodeFactory = SimulationPrimitiveNodeFactory.getInstance();
@@ -54,9 +50,6 @@ public abstract class SimulationPrimitiveNode extends AbstractPrimitiveNode {
     protected SimulationPrimitiveNode(final CompiledMethodObject method, final int numArguments, @SuppressWarnings("unused") final String moduleName, final String functionName) {
         super(method, numArguments);
         this.functionName = code.image.wrap(functionName);
-        lookupMethodNode = LookupMethodNode.create(method.image);
-        lookupClassNode = LookupClassNode.create(method.image);
-        isDoesNotUnderstandNode = IsDoesNotUnderstandNode.create(method.image);
         emptyList = code.image.newList(new Object[]{});
     }
 
@@ -126,20 +119,19 @@ public abstract class SimulationPrimitiveNode extends AbstractPrimitiveNode {
 
     private CompiledMethodObject getSimulateMethod(final Object receiver) {
         if (simulationMethod == null) {
-            if (bitBltSimulationNotFound) {
-                throw new PrimitiveFailed();
-            }
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            assert code.image.getSimulatePrimitiveArgsSelector() != null : "BitBlt simulation not found in image.";
             final Object lookupResult; // TODO: Nodes!
+            final LookupMethodNode lookupMethodNode = LookupMethodNode.create(code.image);
             if (receiver instanceof ClassObject) {
                 lookupResult = lookupMethodNode.executeLookup(receiver, code.image.getSimulatePrimitiveArgsSelector());
             } else {
-                final ClassObject rcvrClass = lookupClassNode.executeLookup(receiver);
+                final ClassObject rcvrClass = LookupClassNode.create(code.image).executeLookup(receiver);
                 lookupResult = lookupMethodNode.executeLookup(rcvrClass, code.image.getSimulatePrimitiveArgsSelector());
             }
             if (lookupResult instanceof CompiledMethodObject) {
                 final CompiledMethodObject result = (CompiledMethodObject) lookupResult;
-                if (!isDoesNotUnderstandNode.execute(result)) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                if (!IsDoesNotUnderstandNode.create(code.image).execute(result)) {
                     simulationMethod = result;
                     return result;
                 }

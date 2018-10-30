@@ -30,7 +30,7 @@ public final class SqueakGuards {
         return object instanceof AbstractSqueakObject;
     }
 
-    public static boolean isArrayObject(final AbstractSqueakObject object) {
+    public static boolean isArrayObject(final Object object) {
         return object instanceof ArrayObject;
     }
 
@@ -42,7 +42,7 @@ public final class SqueakGuards {
         return object instanceof Character;
     }
 
-    public static boolean isClassObject(final AbstractSqueakObject object) {
+    public static boolean isClassObject(final Object object) {
         return object instanceof ClassObject;
     }
 
@@ -54,15 +54,15 @@ public final class SqueakGuards {
         return value instanceof Double;
     }
 
-    public static boolean isEmptyObject(final AbstractSqueakObject object) {
+    public static boolean isEmptyObject(final Object object) {
         return object instanceof EmptyObject;
     }
 
-    public static boolean isFloatObject(final AbstractSqueakObject object) {
+    public static boolean isFloatObject(final Object object) {
         return object instanceof FloatObject;
     }
 
-    public static boolean isLargeIntegerObject(final AbstractSqueakObject object) {
+    public static boolean isLargeIntegerObject(final Object object) {
         return object instanceof LargeIntegerObject;
     }
 
@@ -70,7 +70,7 @@ public final class SqueakGuards {
         return value instanceof Long;
     }
 
-    public static boolean isNativeObject(final AbstractSqueakObject object) {
+    public static boolean isNativeObject(final Object object) {
         return object instanceof NativeObject;
     }
 

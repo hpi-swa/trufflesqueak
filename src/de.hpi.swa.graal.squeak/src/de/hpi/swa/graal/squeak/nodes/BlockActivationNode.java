@@ -3,13 +3,18 @@ package de.hpi.swa.graal.squeak.nodes;
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.NodeCost;
+import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 
+@ReportPolymorphism
+@NodeInfo(cost = NodeCost.NONE)
 public abstract class BlockActivationNode extends Node {
 
     public static BlockActivationNode create() {
