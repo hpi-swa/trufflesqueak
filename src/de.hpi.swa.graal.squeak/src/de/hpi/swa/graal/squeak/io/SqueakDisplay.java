@@ -19,6 +19,9 @@ import java.awt.image.WritableRaster;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.JComponent;
 import javax.swing.JFrame;
@@ -37,6 +40,7 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 
 public final class SqueakDisplay implements SqueakDisplayInterface {
     private static final String DEFAULT_WINDOW_TITLE = "GraalSqueak";
+    private static final boolean REPAINT_AUTOMATICALLY = false; // For debugging purposes.
     private static final Dimension MINIMUM_WINDOW_SIZE = new Dimension(200, 150);
     private static final Toolkit TOOLKIT = Toolkit.getDefaultToolkit();
     @CompilationFinal(dimensions = 1) private static final int[] CURSOR_COLORS = new int[]{0x00000000, 0xFF0000FF, 0xFFFFFFFF, 0xFF000000};
@@ -47,6 +51,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     private SqueakMouse mouse;
     private SqueakKeyboard keyboard;
     private final Deque<long[]> deferredEvents = new ArrayDeque<>();
+    private final ScheduledExecutorService repaintExecutor;
 
     @CompilationFinal public boolean usesEventQueue = false;
     @CompilationFinal private int inputSemaphoreIndex = -1;
@@ -76,6 +81,16 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
                 canvas.resizeTo(frame.getSize());
             }
         });
+        if (REPAINT_AUTOMATICALLY) {
+            repaintExecutor = Executors.newSingleThreadScheduledExecutor();
+            repaintExecutor.scheduleWithFixedDelay(new Runnable() {
+                public void run() {
+                    canvas.repaint();
+                }
+            }, 0, 20, TimeUnit.MILLISECONDS);
+        } else {
+            repaintExecutor = null;
+        }
     }
 
     private final class Canvas extends JComponent {
