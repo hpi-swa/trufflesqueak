@@ -27,11 +27,16 @@ public abstract class NewObjectNode extends AbstractNodeWithImage {
         super(image);
     }
 
-    public final Object executeNew(final ClassObject classObject) {
-        return executeNew(classObject, 0);
+    public final Object execute(final ClassObject classObject) {
+        return execute(classObject, 0);
     }
 
-    public abstract Object executeNew(ClassObject classObject, int extraSize);
+    public final Object execute(final ClassObject classObject, final int extraSize) {
+        image.reportNewAllocationRequest();
+        return image.reportNewAllocationResult(executeAllocation(classObject, extraSize));
+    }
+
+    protected abstract Object executeAllocation(ClassObject classObject, int extraSize);
 
     @Specialization(guards = "classObject.getInstanceSpecification() == 0")
     protected final Object doEmpty(final ClassObject classObject, @SuppressWarnings("unused") final int extraSize) {

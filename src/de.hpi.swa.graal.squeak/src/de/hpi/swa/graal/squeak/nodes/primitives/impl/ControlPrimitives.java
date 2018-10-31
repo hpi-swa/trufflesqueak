@@ -655,7 +655,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             protected abstract AbstractPrimitiveNode execute(CompiledCodeObject method, Object literal);
 
             @Specialization
-            protected static final AbstractPrimitiveNode dof(final CompiledMethodObject method, final ArrayObject array,
+            protected static final AbstractPrimitiveNode doGet(final CompiledMethodObject method, final ArrayObject array,
                             @Cached("createGetNamedPrimitiveNode()") final GetNamedPrimitiveNode getNode) {
                 final Object[] objects = array.getObjectStorage();
                 return getNode.execute(method, objects[0], objects[1]);

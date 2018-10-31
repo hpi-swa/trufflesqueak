@@ -131,6 +131,8 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
                         help='print machine code',
                         dest='print_machine_code', action='store_true',
                         default=False)
+    parser.add_argument('--memtracer', help='enable Memory tracing',
+                        dest='memtracer', action='store_true', default=False)
     parser.add_argument('-m', '--method',
                         help='method selector when receiver is provided',
                         dest='method')
@@ -225,6 +227,8 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
         squeak_arguments.append('--cputracer')
     if parsed_args.inspect:
         squeak_arguments.append('--inspect')
+    if parsed_args.memtracer:
+        squeak_arguments.append('--memtracer')
 
     squeak_arguments.append('--polyglot')  # enable polyglot mode by default
 

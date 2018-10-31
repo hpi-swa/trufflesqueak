@@ -15,6 +15,7 @@ import com.oracle.truffle.api.TruffleOptions;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
+import com.oracle.truffle.api.instrumentation.AllocationReporter;
 import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
@@ -135,6 +136,7 @@ public final class SqueakImageContext {
     public final OSDetector os = new OSDetector();
     public final InterruptHandlerState interrupt;
     public final long startUpMillis = System.currentTimeMillis();
+    private final AllocationReporter allocationReporter;
 
     private final SqueakDisplayInterface display;
 
@@ -154,6 +156,7 @@ public final class SqueakImageContext {
             display = new SqueakDisplay(this);
         }
         interrupt = InterruptHandlerState.create(this);
+        allocationReporter = env.lookup(AllocationReporter.class);
     }
 
     public boolean patch(final SqueakLanguage.Env newEnv) {
@@ -467,5 +470,14 @@ public final class SqueakImageContext {
 
     public Object getSmalltalkDictionary() {
         return smalltalk; // TODO: turn into TruffleObject with support for keys etc
+    }
+
+    public void reportNewAllocationRequest() {
+        allocationReporter.onEnter(null, 0, AllocationReporter.SIZE_UNKNOWN);
+    }
+
+    public Object reportNewAllocationResult(final Object value) {
+        allocationReporter.onReturnValue(value, 0, AllocationReporter.SIZE_UNKNOWN);
+        return value;
     }
 }

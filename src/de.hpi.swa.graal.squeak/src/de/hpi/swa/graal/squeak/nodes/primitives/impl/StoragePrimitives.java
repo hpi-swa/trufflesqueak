@@ -210,7 +210,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached("cachedReceiver.getClassFormatStable()") final Assumption classFormatStable,
                         @Cached("create()") final BranchProfile outOfMemProfile) {
             try {
-                return newNode.executeNew(cachedReceiver);
+                return newNode.execute(cachedReceiver);
             } catch (OutOfMemoryError e) {
                 outOfMemProfile.enter();
                 throw new PrimitiveFailed(ERROR_TABLE.INSUFFICIENT_OBJECT_MEMORY);
@@ -221,7 +221,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         protected final Object newIndirect(final ClassObject receiver,
                         @Cached("create()") final BranchProfile outOfMemProfile) {
             try {
-                return newNode.executeNew(receiver);
+                return newNode.execute(receiver);
             } catch (OutOfMemoryError e) {
                 outOfMemProfile.enter();
                 throw new PrimitiveFailed(ERROR_TABLE.INSUFFICIENT_OBJECT_MEMORY);
@@ -233,7 +233,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached("create()") final BranchProfile outOfMemProfile) {
             try {
                 // FIXME: BehaviorTest>>#testChange
-                return newNode.executeNew(receiver.getSqueakClass());
+                return newNode.execute(receiver.getSqueakClass());
             } catch (OutOfMemoryError e) {
                 outOfMemProfile.enter();
                 throw new PrimitiveFailed(ERROR_TABLE.INSUFFICIENT_OBJECT_MEMORY);
@@ -259,7 +259,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached("cachedReceiver.getClassFormatStable()") final Assumption classFormatStable,
                         @Cached("create()") final BranchProfile outOfMemProfile) {
             try {
-                return newNode.executeNew(cachedReceiver, (int) size);
+                return newNode.execute(cachedReceiver, (int) size);
             } catch (OutOfMemoryError e) {
                 outOfMemProfile.enter();
                 throw new PrimitiveFailed(ERROR_TABLE.INSUFFICIENT_OBJECT_MEMORY);
@@ -270,7 +270,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         protected final Object newWithArg(final ClassObject receiver, final long size,
                         @Cached("create()") final BranchProfile outOfMemProfile) {
             try {
-                return newNode.executeNew(receiver, (int) size);
+                return newNode.execute(receiver, (int) size);
             } catch (OutOfMemoryError e) {
                 outOfMemProfile.enter();
                 throw new PrimitiveFailed(ERROR_TABLE.INSUFFICIENT_OBJECT_MEMORY);
