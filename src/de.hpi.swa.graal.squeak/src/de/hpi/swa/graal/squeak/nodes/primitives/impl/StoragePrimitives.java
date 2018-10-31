@@ -394,7 +394,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final long doDouble(final double receiver) {
-            return (long) receiver;
+            return Double.doubleToLongBits(receiver);
         }
 
         @Specialization
