@@ -125,8 +125,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
         @SuppressWarnings("unused")
         @Specialization
         protected final Object doForward(final Object receiver, final long signalNumber, final long semaphoreIndex) {
-            return code.image.nil; // TODO: implement
+            return code.image.sqTrue; // TODO: implement
         }
     }
-
 }
