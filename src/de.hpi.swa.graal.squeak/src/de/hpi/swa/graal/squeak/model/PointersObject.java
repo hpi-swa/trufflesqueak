@@ -1,6 +1,7 @@
 package de.hpi.swa.graal.squeak.model;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 public final class PointersObject extends AbstractPointersObject {
@@ -45,6 +46,10 @@ public final class PointersObject extends AbstractPointersObject {
 
     public int instsize() {
         return getSqueakClass().getBasicInstanceSize();
+    }
+
+    public boolean isDisplay() {
+        return this == image.specialObjectsArray.at0Object(SPECIAL_OBJECT_INDEX.TheDisplay);
     }
 
     public PointersObject shallowCopy() {

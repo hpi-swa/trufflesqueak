@@ -36,8 +36,8 @@ import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitives.Primitive
 public final class MiscellaneousBytecodes {
 
     public abstract static class CallPrimitiveNode extends AbstractBytecodeNode {
-        private static final boolean DEBUG_PRIMITIVE_FAILURES = true;
-        private static final boolean DEBUG_UNSUPPORTED_SPECIALIZATION_EXCEPTIONS = true;
+        private static final boolean DEBUG_PRIMITIVE_FAILURES = false;
+        private static final boolean DEBUG_UNSUPPORTED_SPECIALIZATION_EXCEPTIONS = false;
 
         @Child private HandlePrimitiveFailedNode handlePrimFailed;
         @Child protected AbstractPrimitiveNode primitiveNode;

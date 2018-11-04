@@ -14,7 +14,6 @@ import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.FORM;
 import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginPixelValueAtHelpers.PixelValueAtExtractHelperNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
@@ -41,7 +40,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object doCopy(final PointersObject receiver) {
-            return new BitBlt().primitiveCopyBits(receiver);
+            return BitBlt.primitiveCopyBits(receiver);
         }
     }
 
@@ -57,7 +56,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
                         "stopIndex <= aString.getByteLength()"})
         protected static final Object doDisplay(final PointersObject receiver, final NativeObject aString, final long startIndex, final long stopIndex,
                         final ArrayObject glyphMap, final ArrayObject xTable, final long kernDelta) {
-            return new BitBlt().primitiveDisplayString(receiver, aString, startIndex, stopIndex, glyphMap, xTable, (int) kernDelta);
+            return BitBlt.primitiveDisplayString(receiver, aString, startIndex, stopIndex, glyphMap, xTable, (int) kernDelta);
         }
 
         @SuppressWarnings("unused")
@@ -78,7 +77,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object doDrawLoop(final PointersObject receiver, final long xDelta, final long yDelta) {
-            return new BitBlt().primitiveDrawLoop(receiver, xDelta, yDelta);
+            return BitBlt.primitiveDrawLoop(receiver, xDelta, yDelta);
         }
     }
 
@@ -86,7 +85,6 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitivePixelValueAt")
     protected abstract static class PrimPixelValueAtNode extends AbstractPrimitiveNode {
-        @Child private PixelValueAtExtractHelperNode handleNode = PixelValueAtExtractHelperNode.create();
 
         public PrimPixelValueAtNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -99,8 +97,8 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"xValue >= 0", "yValue >= 0", "receiver.size() > OFFSET"})
-        protected final long doValueAt(final PointersObject receiver, final long xValue, final long yValue) {
-            return handleNode.executeValueAt(receiver, xValue, yValue, receiver.at0(FORM.BITS));
+        protected static final long doValueAt(final PointersObject receiver, final long xValue, final long yValue) {
+            return BitBlt.primitivePixelValueAt(receiver, xValue, yValue);
         }
     }
 
@@ -114,17 +112,17 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected static final Object doValueAt(final PointersObject receiver, final long n, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return new BitBlt().primitiveWarpBits(receiver, n, null);
+            return BitBlt.primitiveWarpBits(receiver, n, null);
         }
 
         @Specialization
         protected static final Object doValueAt(final PointersObject receiver, final long n, final NilObject nil) {
-            return new BitBlt().primitiveWarpBits(receiver, n, nil);
+            return BitBlt.primitiveWarpBits(receiver, n, nil);
         }
 
         @Specialization
         protected static final Object doValueAt(final PointersObject receiver, final long n, final NativeObject sourceMap) {
-            return new BitBlt().primitiveWarpBits(receiver, n, sourceMap);
+            return BitBlt.primitiveWarpBits(receiver, n, sourceMap);
         }
     }
 }
