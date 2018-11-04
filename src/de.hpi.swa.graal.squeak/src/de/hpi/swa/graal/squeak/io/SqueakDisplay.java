@@ -194,9 +194,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     @Override
     @TruffleBoundary
     public void forceRect(final int left, final int right, final int top, final int bottom) {
-        if (!deferUpdates) {
-            canvas.repaint(left, top, right - left, bottom - top);
-        }
+        canvas.repaint(left, top, right - left, bottom - top);
     }
 
     @Override
@@ -365,6 +363,11 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     @Override
     public void setDeferUpdates(final boolean flag) {
         deferUpdates = flag;
+    }
+
+    @Override
+    public boolean getDeferUpdates() {
+        return deferUpdates;
     }
 
     @Override

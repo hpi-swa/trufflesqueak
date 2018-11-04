@@ -3,6 +3,7 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 import java.util.function.LongBinaryOperator;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.profiles.BranchProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
@@ -39,7 +40,7 @@ public final class BitBlt {
     private static final int BBSourceYIndex = 9;
     private static final int BBWarpBase = 15;
     private static final int BBWidthIndex = 6;
-    private static final int BEBitBltIndex = 2;
+    // private static final int BEBitBltIndex = 2;
     private static final int BinaryPoint = 14;
     private static final int BlueIndex = 2;
     private static final int ColorMapFixedPart = 2;
@@ -54,7 +55,7 @@ public final class BitBlt {
     private static final int GreenIndex = 1;
     private static final int OpTableSize = 43;
     private static final int PrimErrCallbackError = 20;
-    private static final int PrimErrObjectMoved = 18;
+    // private static final int PrimErrObjectMoved = 18;
     private static final int RedIndex = 0;
 
     /* Return the default translation table from 1..8 bit indexed colors to 32bit */
@@ -205,6 +206,11 @@ public final class BitBlt {
     static int[] halftoneWords;
     static byte[] sourceBytes;
     static int[] sourceWords;
+
+    static final BranchProfile destBytesProfile = BranchProfile.create();
+    static final BranchProfile destWordsProfile = BranchProfile.create();
+    static final BranchProfile sourceBytesProfile = BranchProfile.create();
+    static final BranchProfile sourceWordsProfile = BranchProfile.create();
 
     static {
         initialiseModule();
@@ -396,8 +402,6 @@ public final class BitBlt {
         int ditherThreshold;
         long dstIndex;
         long dstMask;
-        final long dstValue;
-        final long dstValue1;
         int dstY;
         long sourceWord;
         long srcAlpha;
@@ -581,7 +585,6 @@ public final class BitBlt {
         long destWord;
         long dstIndex;
         long dstMask;
-        final long dstValue;
         int dstY;
         final long mapperFlags;
         final long[] mappingTable;
@@ -826,6 +829,7 @@ public final class BitBlt {
             return;
         }
         if (!(lockSurfaces())) {
+            CompilerDirectives.transferToInterpreter();
             throw new PrimitiveFailed();
         }
         copyBitsLockedAndClipped();
@@ -853,12 +857,14 @@ public final class BitBlt {
     static void copyBitsLockedAndClipped() {
         copyBitsRule41Test();
         if (failed()) {
+            CompilerDirectives.transferToInterpreter();
             throw new PrimitiveFailed();
         }
         if (tryCopyingBitsQuickly()) {
             return;
         }
         if (((combinationRule >= 30) && (combinationRule <= 0x1F))) {
+            CompilerDirectives.transferToInterpreter();
             throw new SqueakException("Not implemented");
             // TODO: uncomment:
             // /* Check and fetch source alpha parameter for alpha blend */
@@ -901,17 +907,16 @@ public final class BitBlt {
 
     /* BitBltSimulation>>#copyBitsRule41Test */
     static void copyBitsRule41Test() {
-        final long gammaLookupTableOop;
-        final long ungammaLookupTableOop;
-
         if (combinationRule == 41) {
+            /* fetch the forecolor into componentAlphaModeColor. */
+            componentAlphaModeAlpha = 0xFF;
+            componentAlphaModeColor = 0xFFFFFF;
+            gammaLookupTable = null;
+            ungammaLookupTable = null;
 
+            CompilerDirectives.transferToInterpreter();
+            throw new SqueakException("Not implemented");
             // TODO: uncomment:
-            // /* fetch the forecolor into componentAlphaModeColor. */
-            // componentAlphaModeAlpha = 0xFF;
-            // componentAlphaModeColor = 0xFFFFFF;
-            // gammaLookupTable = null;
-            // ungammaLookupTable = null;
             // if ((methodArgumentCount()) >= 2) {
             // componentAlphaModeAlpha = stackIntegerValue((methodArgumentCount()) - 2);
             // if (failed()) {
@@ -1569,6 +1574,7 @@ public final class BitBlt {
         } else if (fieldOop instanceof Double) {
             floatValue = (double) fieldOop;
             if (!((-2.147483648e9 <= floatValue) && (floatValue <= 2.147483647e9))) {
+                CompilerDirectives.transferToInterpreter();
                 throw new PrimitiveFailed();
             }
             return ((long) floatValue);
@@ -1597,6 +1603,7 @@ public final class BitBlt {
         } else if (fieldOop instanceof Double) {
             floatValue = (double) fieldOop;
             if (!((-2.147483648e9 <= floatValue) && (floatValue <= 2.147483647e9))) {
+                CompilerDirectives.transferToInterpreter();
                 throw new PrimitiveFailed();
             }
             return ((long) floatValue);
@@ -1764,12 +1771,15 @@ public final class BitBlt {
 
             final NativeObject destBitsNative = (NativeObject) destBitsValue;
             if (destBitsNative.isByteType()) {
+                destBytesProfile.enter();
                 destBytes = destBitsNative.getByteStorage();
                 destWords = null;
             } else if (destBitsNative.isIntType()) {
+                destWordsProfile.enter();
                 destBytes = null;
                 destWords = destBitsNative.getIntStorage();
             } else {
+                CompilerDirectives.transferToInterpreter();
                 throw new SqueakException("false");
             }
 
@@ -1804,7 +1814,6 @@ public final class BitBlt {
 
         bitBltOop = bbObj;
         isWarping = aBool;
-        numGCsOnInvocation = statNumGCs();
         combinationRule = fetchIntegerofObject(BBRuleIndex, bitBltOop);
         if ((failed()) || ((combinationRule < 0) || (combinationRule > (OpTableSize - 2)))) {
             return false;
@@ -1870,10 +1879,6 @@ public final class BitBlt {
         if ((clipY + clipHeight) > destHeight) {
             clipHeight = destHeight - clipY;
         }
-        if (numGCsOnInvocation != (statNumGCs())) {
-            /* querySurface could be a callback in loadSourceFor: and loadDestForm: */
-            throw new PrimitiveFailed(PrimErrObjectMoved);
-        }
         return true;
     }
 
@@ -1920,12 +1925,15 @@ public final class BitBlt {
             }
             final NativeObject sourceBitsNative = (NativeObject) sourceBitsValue;
             if (sourceBitsNative.isByteType()) {
+                sourceBytesProfile.enter();
                 sourceBytes = sourceBitsNative.getByteStorage();
                 sourceWords = null;
             } else if (sourceBitsNative.isIntType()) {
+                sourceWordsProfile.enter();
                 sourceBytes = null;
                 sourceWords = sourceBitsNative.getIntStorage();
             } else {
+                CompilerDirectives.transferToInterpreter();
                 throw new SqueakException("false");
             }
 
@@ -2029,6 +2037,7 @@ public final class BitBlt {
             return null;
         }
         if (!((isWords(mapOop)) && ((slotSizeOfWords(mapOop)) == 4))) {
+            CompilerDirectives.transferToInterpreter();
             throw new PrimitiveFailed();
         }
         return mapOop.getIntStorage();
@@ -2119,7 +2128,6 @@ public final class BitBlt {
         long sourceHandle;
         final int t;
 
-        assert (numGCsOnInvocation == (statNumGCs()));
         hasSurfaceLock = false;
         if (destWords == null) {
 
@@ -2154,12 +2162,9 @@ public final class BitBlt {
                     destWords = sourceWords;
                     destPitch = sourcePitch;
                     hasSurfaceLock = true;
-                    if (numGCsOnInvocation != (statNumGCs())) {
-                        unlockSurfaces();
-                        throw new PrimitiveFailed(PrimErrObjectMoved);
-                    }
                     if (destWords == null) {
                         unlockSurfaces();
+                        CompilerDirectives.transferToInterpreter();
                         throw new PrimitiveFailed(PrimErrCallbackError);
                     }
                     endOfDestination = (endOfSource = sourceBits + (sourcePitch * sourceHeight));
@@ -2168,11 +2173,8 @@ public final class BitBlt {
             }
             destWords = lockSurfaceFn(destHandle, destPitch, dx, dy, bbW, bbH);
             hasSurfaceLock = true;
-            if (numGCsOnInvocation != (statNumGCs())) {
-                unlockSurfaces();
-                throw new PrimitiveFailed(PrimErrObjectMoved);
-            }
             if (destWords == null) {
+                CompilerDirectives.transferToInterpreter();
                 throw new PrimitiveFailed(PrimErrCallbackError);
             }
         }
@@ -2194,11 +2196,8 @@ public final class BitBlt {
                 sourceWords = lockSurfaceFn(sourceHandle, sourcePitch, sx, sy, bbW, bbH);
             }
             hasSurfaceLock = true;
-            if (numGCsOnInvocation != (statNumGCs())) {
-                unlockSurfaces();
-                throw new PrimitiveFailed(PrimErrObjectMoved);
-            }
             if (sourceWords == null) {
+                CompilerDirectives.transferToInterpreter();
                 throw new PrimitiveFailed(PrimErrCallbackError);
             }
         }
@@ -2769,16 +2768,20 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#primitiveCopyBits */
-    public static Object primitiveCopyBits(final PointersObject rcvr) {
+    public static Object primitiveCopyBits(final PointersObject rcvr, @SuppressWarnings("unused") final long factor) {
+        // TODO: factor needed in copyBitsRule41Test
         if (!(loadBitBltFromwarping(rcvr, false))) {
+            CompilerDirectives.transferToInterpreter();
             throw new PrimitiveFailed();
         }
         copyBits();
         if (failed()) {
+            CompilerDirectives.transferToInterpreter();
             throw new SqueakException("Should not happen");
         }
-        // showDisplayBits();
+        showDisplayBits();
         if (failed()) {
+            CompilerDirectives.transferToInterpreter();
             throw new SqueakException("return null");
         }
         if ((combinationRule == 22) || (combinationRule == 32)) {
@@ -2798,9 +2801,9 @@ public final class BitBlt {
         final long maxGlyph;
         final boolean quickBlt;
 
-        if (!((isArray(xTable)) && ((isArray(glyphMap)) && (((slotSizeOf(glyphMap)) == 256) && ((isBytes(sourceString)) && ((startIndex > 0) &&
-                        ((stopIndex >= 0) &&
-                                        ((stopIndex <= (sourceString.getByteLength())) && ((loadBitBltFromwarping(bbObj, false)) && ((combinationRule != 30) && (combinationRule != 0x1F))))))))))) {
+        if (!((((slotSizeOf(glyphMap)) == 256) && ((isBytes(sourceString)) && ((startIndex > 0) && ((stopIndex >= 0) &&
+                        ((stopIndex <= (sourceString.getByteLength())) && ((loadBitBltFromwarping(bbObj, false)) && ((combinationRule != 30) && (combinationRule != 0x1F)))))))))) {
+            CompilerDirectives.transferToInterpreter();
             throw new PrimitiveFailed();
         }
         if (stopIndex == 0) {
@@ -2816,6 +2819,7 @@ public final class BitBlt {
             endOfDestination = destBits + (destPitch * destHeight);
         } else {
             if (!(lockSurfaces())) {
+                CompilerDirectives.transferToInterpreter();
                 throw new PrimitiveFailed();
             }
         }
@@ -2827,11 +2831,13 @@ public final class BitBlt {
             ascii = Byte.toUnsignedInt(sourceStringBytes[charIndex - 1]);
             glyphIndex = (int) glyphs[ascii];
             if ((glyphIndex < 0) || (glyphIndex > maxGlyph)) {
+                CompilerDirectives.transferToInterpreter();
                 throw new PrimitiveFailed();
             }
             sourceX = (int) xTableLongs[glyphIndex];
             width = (int) (xTableLongs[glyphIndex + 1] - sourceX);
             if (failed()) {
+                CompilerDirectives.transferToInterpreter();
                 throw new SqueakException("return null");
             }
             clipRange();
@@ -2848,6 +2854,7 @@ public final class BitBlt {
                 }
             }
             if (failed()) {
+                CompilerDirectives.transferToInterpreter();
                 throw new SqueakException("return null");
             }
             destX = (destX + width) + kernDelta;
@@ -2856,7 +2863,7 @@ public final class BitBlt {
         if (!quickBlt) {
             unlockSurfaces();
         }
-// showDisplayBits();
+        showDisplayBits();
         storeIntegerofObjectwithValue(BBDestXIndex, bbObj, destX);
         return bbObj;
     }
@@ -2866,6 +2873,7 @@ public final class BitBlt {
     /* BitBltSimulation>>#primitiveDrawLoop */
     public static Object primitiveDrawLoop(final PointersObject rcvr, final long xDelta, final long yDelta) {
         if (!(loadBitBltFromwarping(rcvr, false))) {
+            CompilerDirectives.transferToInterpreter();
             throw new PrimitiveFailed();
         }
         if (!(failed())) {
@@ -2897,10 +2905,12 @@ public final class BitBlt {
             return 0L;
         }
         if (!((isPointers(rcvr)) && ((slotSizeOf(rcvr)) >= 4))) {
+            CompilerDirectives.transferToInterpreter();
             throw new PrimitiveFailed();
         }
         bitmap = fetchNativeofObjectOrNull(FormBitsIndex, rcvr);
         if (!(isWordsOrBytes(bitmap))) {
+            CompilerDirectives.transferToInterpreter();
             throw new PrimitiveFailed();
         }
         width = fetchIntegerofObject(FormWidthIndex, rcvr);
@@ -2908,12 +2918,14 @@ public final class BitBlt {
         /* if width/height/depth are not integer, fail */
         depth = fetchIntegerofObject(FormDepthIndex, rcvr);
         if (failed()) {
+            CompilerDirectives.transferToInterpreter();
             throw new SqueakException("return null");
         }
         if ((xVal >= width) || (yVal >= height)) {
             return 0L;
         }
         if (depth < 0) {
+            CompilerDirectives.transferToInterpreter();
             throw new PrimitiveFailed();
         }
         /* pixels in each word */
@@ -2924,6 +2936,7 @@ public final class BitBlt {
         bitsSize = bitmapWords.length * 4;
         if (!(bitsSize >= ((stride * height) * 4))) {
             /* bytes per word */
+            CompilerDirectives.transferToInterpreter();
             throw new PrimitiveFailed();
         }
         /* load the word that contains our target */
@@ -2947,32 +2960,20 @@ public final class BitBlt {
     /* BitBltSimulation>>#primitiveWarpBits */
     public static PointersObject primitiveWarpBits(final PointersObject rcvr, final long n, final AbstractSqueakObject sourceMap) {
         if (!(loadBitBltFromwarping(rcvr, true))) {
+            CompilerDirectives.transferToInterpreter();
             throw new PrimitiveFailed();
         }
         warpBits(n, sourceMap);
         if (failed()) {
+            CompilerDirectives.transferToInterpreter();
             throw new SqueakException("return null");
         }
-// showDisplayBits();
+        showDisplayBits();
         if (failed()) {
+            CompilerDirectives.transferToInterpreter();
             throw new SqueakException("return null");
         }
         return rcvr;
-    }
-
-    /*
-     * A GC has occurred. The destForm must be updated. But where to derive it from? For copyBits
-     * and warpBits it is derived from the receiver. But for a BalloonEnginePlugin it should be
-     * obtained from (interpreterProxy fetchPointer: BEBitBltIndex ofObject: engine). For the moment
-     * implement something that works for these two cases.
-     */
-
-    /* BitBltSimulation>>#reloadDestAndSourceForms */
-    static void reloadDestAndSourceForms() {
-        // TODO: can be removed?
-        // receiver = stackValue(methodArgumentCount());
-        // destForm = fetchPointerofObject(BBDestFormIndex, receiver);
-        // sourceForm = fetchPointerofObject(BBSourceFormIndex, receiver);
     }
 
     /* BitBltSimulation>>#rgbAdd:with: */
@@ -3014,7 +3015,6 @@ public final class BitBlt {
         int ditherThreshold;
         long dstIndex;
         long dstMask;
-        final long dstValue;
         int dstY;
         long sourceWord;
         long srcAlpha;
@@ -3276,7 +3276,6 @@ public final class BitBlt {
         long destWord;
         long dstIndex;
         long dstMask;
-        final long dstValue;
         int dstY;
         final long mapperFlags;
         final long[] mappingTable;
@@ -3726,11 +3725,12 @@ public final class BitBlt {
 
     /* BitBltSimulation>>#showDisplayBits */
     private static void showDisplayBits() {
-        /* begin ensureDestAndSourceFormsAreValid */
-        if (numGCsOnInvocation != (statNumGCs())) {
-            reloadDestAndSourceForms();
+        if (!destForm.image.hasDisplay()) {
+            return;
         }
-        showDisplayBitsLeftTopRightBottom(destForm, affectedL, affectedT, affectedR, affectedB);
+        if (affectedL < affectedR && affectedT < affectedB && !destForm.image.getDisplay().getDeferUpdates() && destForm.isDisplay()) {
+            destForm.image.getDisplay().forceRect((int) affectedL, (int) affectedR, (int) affectedT, (int) affectedB);
+        }
     }
 
     /*
@@ -3933,10 +3933,6 @@ public final class BitBlt {
         // return 0;
         // }
         // }
-        // /* begin ensureDestAndSourceFormsAreValid */
-        // if (numGCsOnInvocation != (statNumGCs())) {
-        // reloadDestAndSourceForms();
-        // }
         // destLocked = 0;
         // destHandle = fetchPointerofObject(FormBitsIndex, destForm);
         // if (isIntegerObject(destHandle)) {
@@ -3948,10 +3944,6 @@ public final class BitBlt {
         // destLocked = 1;
         // }
         // if (!noSource) {
-        // /* begin ensureDestAndSourceFormsAreValid */
-        // if (numGCsOnInvocation != (statNumGCs())) {
-        // reloadDestAndSourceForms();
-        // }
         // sourceHandle = fetchPointerofObject(FormBitsIndex, sourceForm);
         // if (isIntegerObject(sourceHandle)) {
         //
@@ -3979,6 +3971,7 @@ public final class BitBlt {
             return;
         }
         if (!(lockSurfaces())) {
+            CompilerDirectives.transferToInterpreter();
             throw new PrimitiveFailed();
         }
         destMaskAndPointerInit();
@@ -4036,6 +4029,7 @@ public final class BitBlt {
         halftoneWord = 0;
         final LongBinaryOperator mergeFnwith = opTable[combinationRule + 1];
         if (!((slotSizeOf(bitBltOop)) >= (BBWarpBase + 12))) {
+            CompilerDirectives.transferToInterpreter();
             throw new PrimitiveFailed();
         }
         nSteps = height - 1;
@@ -4074,12 +4068,14 @@ public final class BitBlt {
             if (sourceMapOopValue.isNil()) {
                 if (sourceDepth < 16) {
                     /* color map is required to smooth non-RGB dest */
+                    CompilerDirectives.transferToInterpreter();
                     throw new PrimitiveFailed();
                 }
                 sourceMap = null;
             } else {
                 if (sourceMapOopValue instanceof ArrayObject && (((ArrayObject) sourceMapOopValue).getLongLength() < (1L << sourceDepth))) {
                     /* sourceMap must be long enough for sourceDepth */
+                    CompilerDirectives.transferToInterpreter();
                     throw new PrimitiveFailed();
                 }
                 sourceMap = ((ArrayObject) sourceMapOopValue).getLongStorage();
@@ -4482,10 +4478,6 @@ public final class BitBlt {
         return bitBltOop.image.nil;
     }
 
-    private static boolean isArray(final ArrayObject xTable) {
-        return true;
-    }
-
     private static boolean failed() {
         return false;
     }
@@ -4496,8 +4488,10 @@ public final class BitBlt {
 
     private static long dstLongAt(final long index) {
         if (destWords == null) {
+            destBytesProfile.enter();
             return Byte.toUnsignedLong(destBytes[(int) index]);
         } else {
+            destWordsProfile.enter();
             return Integer.toUnsignedLong(destWords[(int) index >>> 2]);
         }
     }
@@ -4507,18 +4501,19 @@ public final class BitBlt {
      * modified. This is an essential read-modify-write operation on the destination form.
      */
     private static void destLongAtputmask(final long dstIndex, final long dstMask, final long sourceWord) {
-        long dstValue1;
         assert (((dstIndex)) < endOfDestination);
-        dstValue1 = dstLongAt(dstIndex);
-        dstValue1 = dstValue1 & dstMask;
-        dstValue1 = dstValue1 | sourceWord;
-        dstLongAtput(dstIndex, dstValue1);
+        long dstValue = dstLongAt(dstIndex);
+        dstValue = dstValue & dstMask;
+        dstValue = dstValue | sourceWord;
+        dstLongAtput(dstIndex, dstValue);
     }
 
     private static void dstLongAtput(final long index, final long value) {
         if (destWords == null) {
+            destBytesProfile.enter();
             destBytes[(int) index] = (byte) value;
         } else {
+            destWordsProfile.enter();
             destWords[(int) index >>> 2] = (int) value;
         }
     }
@@ -4529,25 +4524,17 @@ public final class BitBlt {
 
     private static long srcLongAt(final long index) {
         if (sourceWords == null) {
+            sourceBytesProfile.enter();
             return Byte.toUnsignedLong(sourceBytes[(int) index]);
         } else {
+            sourceWordsProfile.enter();
             return Integer.toUnsignedLong(sourceWords[(int) index >>> 2]);
         }
     }
 
     @SuppressWarnings("unused")
-    private static int[] lockSurfaceFn(final long sourceHandle, final int sourcePitch, final int i, final int j, final int sourceWidth, final int sourceHeight) {
+    private static int[] lockSurfaceFn(final long sourceHandle, final int pitch, final int x, final int y, final int w, final int h) {
+        CompilerDirectives.transferToInterpreter();
         throw new SqueakException("Not yet implemented");
-    }
-
-    private static void showDisplayBitsLeftTopRightBottom(final PointersObject destForm, final long left, final long top, final long right, final long bottom) {
-        if (left < right && top < bottom && destForm.isDisplay()) {
-            destForm.image.getDisplay().forceRect((int) left, (int) right, (int) top, (int) bottom);
-        }
-    }
-
-    private static long statNumGCs() {
-        // TODO Auto-generated method stub
-        return 0;
     }
 }

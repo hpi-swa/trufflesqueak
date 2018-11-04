@@ -32,6 +32,8 @@ public interface SqueakDisplayInterface {
 
     void setDeferUpdates(boolean flag);
 
+    boolean getDeferUpdates();
+
     void setWindowTitle(String title);
 
     void setInputSemaphoreIndex(int interruptSemaphoreIndex);

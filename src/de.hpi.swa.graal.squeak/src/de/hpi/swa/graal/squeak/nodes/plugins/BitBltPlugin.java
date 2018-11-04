@@ -25,11 +25,6 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         return BitBltPluginFactory.getFactories();
     }
 
-    @Override
-    public boolean useSimulationAsFallback() {
-        return false;
-    }
-
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveCopyBits")
     protected abstract static class PrimCopyBitsNode extends AbstractPrimitiveNode {
@@ -39,8 +34,13 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final Object doCopy(final PointersObject receiver) {
-            return BitBlt.primitiveCopyBits(receiver);
+        protected static final Object doCopy(final PointersObject receiver, @SuppressWarnings("unused") final NotProvided notProvided) {
+            return BitBlt.primitiveCopyBits(receiver, -1);
+        }
+
+        @Specialization
+        protected static final Object doCopyTranslucent(final PointersObject receiver, final long factor) {
+            return BitBlt.primitiveCopyBits(receiver, factor);
         }
     }
 
