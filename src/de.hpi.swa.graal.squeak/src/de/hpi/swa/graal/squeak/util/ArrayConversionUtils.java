@@ -81,6 +81,15 @@ public final class ArrayConversionUtils {
         return bytes;
     }
 
+    public static int[] bytesToInts(final byte[] bytes) {
+        final int length = bytes.length;
+        final int[] ints = new int[length];
+        for (int i = 0; i < length; i++) {
+            ints[i] = bytes[i];
+        }
+        return ints;
+    }
+
     public static int[] intsFromBytes(final byte[] bytes) {
         final int size = bytes.length / INTEGER_BYTE_SIZE;
         final int[] ints = new int[size];

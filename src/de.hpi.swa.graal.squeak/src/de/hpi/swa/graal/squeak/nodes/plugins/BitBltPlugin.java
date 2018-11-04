@@ -2,22 +2,18 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 
 import java.util.List;
 
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.BIT_BLT;
+import de.hpi.swa.graal.squeak.model.NilObject;
+import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.FORM;
 import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginCopyBitsHelpers.CopyBitsEnsureDepthAndExecuteHelperNode;
-import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginDisplayStringHelpers.ExtractFormsAndContinueNode;
-import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginHelpers.BitBltWrapper;
 import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPluginPixelValueAtHelpers.PixelValueAtExtractHelperNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
@@ -32,22 +28,20 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
     @Override
     public boolean useSimulationAsFallback() {
-        return true;
+        return false;
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveCopyBits")
     protected abstract static class PrimCopyBitsNode extends AbstractPrimitiveNode {
-        @Child private CopyBitsEnsureDepthAndExecuteHelperNode executeNode;
 
         protected PrimCopyBitsNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
-            executeNode = CopyBitsEnsureDepthAndExecuteHelperNode.create(method);
         }
 
         @Specialization
-        protected final Object doOptimized(final VirtualFrame frame, final PointersObject receiver) {
-            return executeNode.executeExtract(frame, receiver, receiver.at0(BIT_BLT.SOURCE_FORM), receiver.at0(BIT_BLT.DEST_FORM));
+        protected static final Object doCopy(final PointersObject receiver) {
+            return new BitBlt().primitiveCopyBits(receiver);
         }
     }
 
@@ -61,11 +55,9 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"startIndex >= 1", "stopIndex >= 0", "aString.isByteType()", "aString.getByteLength() > 0",
                         "stopIndex <= aString.getByteLength()"})
-        protected static final Object doOptimized(final VirtualFrame frame, final PointersObject receiver, final NativeObject aString, final long startIndex, final long stopIndex,
-                        final ArrayObject glyphMap, final ArrayObject xTable, final long kernDelta,
-                        @Cached("create(code)") final ExtractFormsAndContinueNode executeNode) {
-            return executeNode.execute(frame, new BitBltWrapper(receiver), aString, startIndex, stopIndex, glyphMap, xTable, kernDelta,
-                            receiver.at0(BIT_BLT.COMBINATION_RULE), receiver.at0(BIT_BLT.SOURCE_FORM), receiver.at0(BIT_BLT.DEST_FORM));
+        protected static final Object doDisplay(final PointersObject receiver, final NativeObject aString, final long startIndex, final long stopIndex,
+                        final ArrayObject glyphMap, final ArrayObject xTable, final long kernDelta) {
+            return new BitBlt().primitiveDisplayString(receiver, aString, startIndex, stopIndex, glyphMap, xTable, (int) kernDelta);
         }
 
         @SuppressWarnings("unused")
@@ -73,6 +65,20 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final Object doNothing(final PointersObject receiver, final NativeObject aString, final long startIndex, final long stopIndex, final ArrayObject glyphMap,
                         final ArrayObject xTable, final long kernDelta) {
             return receiver;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(name = "primitiveDrawLoop")
+    protected abstract static class PrimDrawLoopNode extends AbstractPrimitiveNode {
+
+        protected PrimDrawLoopNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @Specialization
+        protected static final Object doDrawLoop(final PointersObject receiver, final long xDelta, final long yDelta) {
+            return new BitBlt().primitiveDrawLoop(receiver, xDelta, yDelta);
         }
     }
 
@@ -95,6 +101,30 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = {"xValue >= 0", "yValue >= 0", "receiver.size() > OFFSET"})
         protected final long doValueAt(final PointersObject receiver, final long xValue, final long yValue) {
             return handleNode.executeValueAt(receiver, xValue, yValue, receiver.at0(FORM.BITS));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(name = "primitiveWarpBits")
+    protected abstract static class PrimWarpBitsNode extends AbstractPrimitiveNode {
+
+        public PrimWarpBitsNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @Specialization
+        protected static final Object doValueAt(final PointersObject receiver, final long n, @SuppressWarnings("unused") final NotProvided notProvided) {
+            return new BitBlt().primitiveWarpBits(receiver, n, null);
+        }
+
+        @Specialization
+        protected static final Object doValueAt(final PointersObject receiver, final long n, final NilObject nil) {
+            return new BitBlt().primitiveWarpBits(receiver, n, nil);
+        }
+
+        @Specialization
+        protected static final Object doValueAt(final PointersObject receiver, final long n, final NativeObject sourceMap) {
+            return new BitBlt().primitiveWarpBits(receiver, n, sourceMap);
         }
     }
 }
