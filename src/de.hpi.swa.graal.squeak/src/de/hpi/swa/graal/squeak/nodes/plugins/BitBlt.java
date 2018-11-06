@@ -437,7 +437,6 @@ public final class BitBlt {
             }
             while (((deltaX -= 1)) != 0) {
                 ditherThreshold = ditherMatrix4x4[ditherBase + ((ditherIndex = (ditherIndex + 1) & 3))];
-                assert (((srcIndex)) < endOfSource);
                 sourceWord = srcLongAt(srcIndex);
                 srcAlpha = (sourceWord) >> 24;
                 if (srcAlpha == 0xFF) {
@@ -454,7 +453,6 @@ public final class BitBlt {
                     if (!(srcAlpha == 0)) {
                         /* 0 < srcAlpha < 255 */
                         /* If we have to mix colors then just copy a single word */
-                        assert (((dstIndex)) < endOfDestination);
                         destWord = dstLongAt(dstIndex);
                         destWord = destWord & (~dstMask);
                         /* Expand from 16 to 32 bit by adding zero bits */
@@ -530,7 +528,6 @@ public final class BitBlt {
             /* This is the inner loop */
             deltaX = bbW + 1;
             while (((deltaX -= 1)) != 0) {
-                assert (((srcIndex)) < endOfSource);
                 sourceWord = srcLongAt(srcIndex);
                 srcAlpha = (sourceWord) >> 24;
                 if (srcAlpha == 0xFF) {
@@ -558,7 +555,6 @@ public final class BitBlt {
                     } else {
                         /* 0 < srcAlpha < 255 */
                         /* If we have to mix colors then just copy a single word */
-                        assert (((dstIndex)) < endOfDestination);
                         destWord = dstLongAt(dstIndex);
                         destWord = alphaBlendScaledwith(sourceWord, destWord);
                         dstLongAtput(dstIndex, destWord);
@@ -578,7 +574,7 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#alphaSourceBlendBits8 */
-    static long alphaSourceBlendBits8() {
+    static void alphaSourceBlendBits8() {
         long adjust;
         int deltaX;
         int deltaY;
@@ -630,7 +626,6 @@ public final class BitBlt {
                     /* Everything below 31 is transparent */
                     if (srcAlpha < 224) {
                         /* Everything above 224 is opaque */
-                        assert (((dstIndex)) < endOfDestination);
                         destWord = dstLongAt(dstIndex);
                         destWord = destWord & (~dstMask);
                         destWord = (destWord) >> srcShift;
@@ -667,7 +662,6 @@ public final class BitBlt {
             srcY += 1;
             dstY += 1;
         }
-        return 0;
     }
 
     /* BitBltSimulation>>#bitAndInvert:with: */
@@ -956,7 +950,6 @@ public final class BitBlt {
         long destWord;
         long halftoneWord;
         final long hInc;
-        long i;
         long mergeWord;
         final long notSkewMask;
         long prevWord;
@@ -1000,7 +993,7 @@ public final class BitBlt {
          */
         y = dy;
         if (combinationRule == 3) {
-            for (i = 1; i <= bbH; i += 1) {
+            for (int i = 1; i <= bbH; i += 1) {
                 /*
                  * here is the vertical loop for combinationRule = 3 copy mode; no need to call
                  * merge
@@ -1012,7 +1005,6 @@ public final class BitBlt {
                 }
                 if (preload) {
                     /* load the 64-bit shifter */
-                    assert (((sourceIndex)) < endOfSource);
                     prevWord = srcLongAt(sourceIndex);
                     sourceIndex += hInc;
                 } else {
@@ -1020,14 +1012,12 @@ public final class BitBlt {
                 }
                 destMask = mask1;
                 /* pick up next word */
-                assert (((sourceIndex)) < endOfSource);
                 thisWord = srcLongAt(sourceIndex);
                 sourceIndex += hInc;
                 /* 32-bit rotate */
                 skewWord = (((unskew < 0) ? ((prevWord & notSkewMask) >> -unskew) : ((prevWord & notSkewMask) << unskew))) |
                                 (((skew < 0) ? ((thisWord & skewMask) >> -skew) : ((thisWord & skewMask) << skew)));
                 prevWord = thisWord;
-                assert (((destIndex)) < endOfDestination);
                 destWord = dstLongAt(destIndex);
                 destWord = (destMask & (skewWord & halftoneWord)) | (destWord & (~destMask));
                 dstLongAtput(destIndex, destWord);
@@ -1040,13 +1030,11 @@ public final class BitBlt {
                             /* Note loop starts with prevWord loaded (due to preload) */
                             dstLongAtput(destIndex, prevWord);
                             destIndex += hInc;
-                            assert (((sourceIndex)) < endOfSource);
                             prevWord = srcLongAt(sourceIndex);
                             sourceIndex += hInc;
                         }
                     } else {
                         for (word = 2; word < nWords; word += 1) {
-                            assert (((sourceIndex)) < endOfSource);
                             thisWord = srcLongAt(sourceIndex);
                             sourceIndex += hInc;
                             dstLongAtput(destIndex, thisWord);
@@ -1056,7 +1044,6 @@ public final class BitBlt {
                     }
                 } else {
                     for (word = 2; word < nWords; word += 1) {
-                        assert (((sourceIndex)) < endOfSource);
                         thisWord = srcLongAt(sourceIndex);
                         sourceIndex += hInc;
                         /* 32-bit rotate */
@@ -1070,13 +1057,11 @@ public final class BitBlt {
                 if (nWords > 1) {
                     destMask = mask2;
                     /* pick up next word */
-                    assert (((sourceIndex)) < endOfSource);
                     thisWord = srcLongAt(sourceIndex);
                     sourceIndex += hInc;
                     /* 32-bit rotate */
                     skewWord = (((unskew < 0) ? ((prevWord & notSkewMask) >> -unskew) : ((prevWord & notSkewMask) << unskew))) |
                                     (((skew < 0) ? ((thisWord & skewMask) >> -skew) : ((thisWord & skewMask) << skew)));
-                    assert (((destIndex)) < endOfDestination);
                     destWord = dstLongAt(destIndex);
                     destWord = (destMask & (skewWord & halftoneWord)) | (destWord & (~destMask));
                     dstLongAtput(destIndex, destWord);
@@ -1086,7 +1071,7 @@ public final class BitBlt {
                 destIndex += destDelta;
             }
         } else {
-            for (i = 1; i <= bbH; i += 1) {
+            for (int i = 1; i <= bbH; i += 1) {
                 /* here is the vertical loop for the general case (combinationRule ~= 3) */
                 if (halftoneHeight > 1) {
                     /* Otherwise, its always the same */
@@ -1095,7 +1080,6 @@ public final class BitBlt {
                 }
                 if (preload) {
                     /* load the 64-bit shifter */
-                    assert (((sourceIndex)) < endOfSource);
                     prevWord = srcLongAt(sourceIndex);
                     sourceIndex += hInc;
                 } else {
@@ -1103,14 +1087,12 @@ public final class BitBlt {
                 }
                 destMask = mask1;
                 /* pick up next word */
-                assert (((sourceIndex)) < endOfSource);
                 thisWord = srcLongAt(sourceIndex);
                 sourceIndex += hInc;
                 /* 32-bit rotate */
                 skewWord = (((unskew < 0) ? ((prevWord & notSkewMask) >> -unskew) : ((prevWord & notSkewMask) << unskew))) |
                                 (((skew < 0) ? ((thisWord & skewMask) >> -skew) : ((thisWord & skewMask) << skew)));
                 prevWord = thisWord;
-                assert (((destIndex)) < endOfDestination);
                 destWord = dstLongAt(destIndex);
                 mergeWord = mergeFnwith.applyAsLong(skewWord & halftoneWord, destWord);
                 destWord = (destMask & mergeWord) | (destWord & (~destMask));
@@ -1120,7 +1102,6 @@ public final class BitBlt {
                 for (word = 2; word < nWords; word += 1) {
                     /* Normal inner loop does merge: */
                     /* pick up next word */
-                    assert (((sourceIndex)) < endOfSource);
                     thisWord = srcLongAt(sourceIndex);
                     sourceIndex += hInc;
                     /* 32-bit rotate */
@@ -1134,13 +1115,11 @@ public final class BitBlt {
                 if (nWords > 1) {
                     destMask = mask2;
                     /* pick up next word */
-                    assert (((sourceIndex)) < endOfSource);
                     thisWord = srcLongAt(sourceIndex);
                     sourceIndex += hInc;
                     /* 32-bit rotate */
                     skewWord = (((unskew < 0) ? ((prevWord & notSkewMask) >> -unskew) : ((prevWord & notSkewMask) << unskew))) |
                                     (((skew < 0) ? ((thisWord & skewMask) >> -skew) : ((thisWord & skewMask) << skew)));
-                    assert (((destIndex)) < endOfDestination);
                     destWord = dstLongAt(destIndex);
                     mergeWord = mergeFnwith.applyAsLong(skewWord & halftoneWord, destWord);
                     destWord = (destMask & mergeWord) | (destWord & (~destMask));
@@ -1178,7 +1157,6 @@ public final class BitBlt {
                 halftoneWord = halftoneLongAt(halftoneBase + ((((dy + i) - 1) % halftoneHeight) * 4));
             }
             destMask = mask1;
-            assert (((destIndex)) < endOfDestination);
             destWord = dstLongAt(destIndex);
             mergeWord = mergeFnwith.applyAsLong(halftoneWord, destWord);
             destWord = (destMask & mergeWord) | (destWord & (~destMask));
@@ -1196,7 +1174,6 @@ public final class BitBlt {
                 /* Normal inner loop does merge */
                 for (word = 2; word < nWords; word += 1) {
                     /* Normal inner loop does merge */
-                    assert (((destIndex)) < endOfDestination);
                     destWord = dstLongAt(destIndex);
                     mergeWord = mergeFnwith.applyAsLong(halftoneWord, destWord);
                     dstLongAtput(destIndex, mergeWord);
@@ -1205,7 +1182,6 @@ public final class BitBlt {
             }
             if (nWords > 1) {
                 destMask = mask2;
-                assert (((destIndex)) < endOfDestination);
                 destWord = dstLongAt(destIndex);
                 mergeWord = mergeFnwith.applyAsLong(halftoneWord, destWord);
                 destWord = (destMask & mergeWord) | (destWord & (~destMask));
@@ -1310,7 +1286,6 @@ public final class BitBlt {
                     dstLongAtput(destIndex, destMask & mergeWord);
                 } else {
                     /* General version using dest masking */
-                    assert (((destIndex)) < endOfDestination);
                     destWord = dstLongAt(destIndex);
                     mergeWord = mergeFnwith.applyAsLong(skewWord & halftoneWord, destWord & destMask);
                     destWord = (destMask & mergeWord) | (destWord & (~destMask));
@@ -2201,8 +2176,8 @@ public final class BitBlt {
                 throw new PrimitiveFailed(PrimErrCallbackError);
             }
         }
-        endOfSource = (noSource || (sourceWords == null) ? 0 : sourceWords.length + (sourcePitch * sourceHeight));
-        endOfDestination = destWords.length + (destPitch * destHeight);
+        endOfSource = (noSource || (sourceWords == null) ? 0 : sourceBits + (sourcePitch * sourceHeight));
+        endOfDestination = destBits + (destPitch * destHeight);
         return (destWords != null || destBytes != null) && ((sourceWords != null || sourceBytes != null) || (noSource));
     }
 
@@ -2617,7 +2592,6 @@ public final class BitBlt {
             /* a little optimization for (pretty crucial) blits using indexed lookups only */
             /* grab, colormap and mix in pixel */
             do {
-                assert (((sourceIndex)) < endOfSource);
                 sourceWord = srcLongAt(sourceIndex);
                 sourcePix = ((sourceWord) >> srcShift) & srcMask;
                 destPix = cmLookupTable[(int) (sourcePix & cmMask)];
@@ -2634,7 +2608,6 @@ public final class BitBlt {
         } else {
             /* grab, colormap and mix in pixel */
             do {
-                assert (((sourceIndex)) < endOfSource);
                 sourceWord = srcLongAt(sourceIndex);
                 sourcePix = ((sourceWord) >> srcShift) & srcMask;
                 destPix = mapPixelflags(sourcePix, mapperFlags);
@@ -2675,7 +2648,6 @@ public final class BitBlt {
         }
         final long srcIndex = (sourceBits + (y * sourcePitch)) + (((x) >> warpAlignShift) * 4);
         /* Extract pixel from word */
-        assert (((srcIndex)) < endOfSource);
         sourceWord = srcLongAt(srcIndex);
         srcBitShift = warpBitShiftTable[(int) (x & warpAlignMask)];
         sourcePix = ((sourceWord) >> srcBitShift) & warpSrcMask;
@@ -3048,14 +3020,12 @@ public final class BitBlt {
             }
             while (((deltaX -= 1)) != 0) {
                 ditherThreshold = ditherMatrix4x4[ditherBase + ((ditherIndex = (ditherIndex + 1) & 3))];
-                assert (((srcIndex)) < endOfSource);
                 sourceWord = srcLongAt(srcIndex);
                 srcAlpha = sourceWord & 0xFFFFFF;
                 if (!(srcAlpha == 0)) {
                     /* 0 < srcAlpha */
                     /* If we have to mix colors then just copy a single word */
                     /* begin dstLongAt: */
-                    assert (((dstIndex)) < endOfDestination);
                     destWord = ((dstLongAt(dstIndex)));
                     destWord = destWord & (~dstMask);
                     /* Expand from 16 to 32 bit by adding zero bits */
@@ -3130,7 +3100,6 @@ public final class BitBlt {
             /* This is the inner loop */
             deltaX = bbW + 1;
             while (((deltaX -= 1)) != 0) {
-                assert (((srcIndex)) < endOfSource);
                 sourceWord = srcLongAt(srcIndex);
                 srcAlpha = sourceWord & 0xFFFFFF;
                 if (srcAlpha == 0) {
@@ -3146,8 +3115,7 @@ public final class BitBlt {
                     /* 0 < srcAlpha */
                     /* If we have to mix colors then just copy a single word */
                     /* begin dstLongAt: */
-                    assert (((dstIndex)) < endOfDestination);
-                    destWord = ((dstLongAt(dstIndex)));
+                    destWord = dstLongAt(dstIndex);
                     destWord = rgbComponentAlpha32with(sourceWord, destWord);
                     /* begin dstLongAt:put: */
                     dstLongAtput(dstIndex, destWord);
@@ -3327,8 +3295,7 @@ public final class BitBlt {
                         sourceWord = 0xFFFFFFFFL;
                     }
                     /* begin dstLongAt: */
-                    assert (((dstIndex)) < endOfDestination);
-                    destWord = ((dstLongAt(dstIndex)));
+                    destWord = dstLongAt(dstIndex);
                     destWord = destWord & (~dstMask);
                     destWord = (destWord) >> srcShift;
                     destWord = mappingTable[(int) destWord];
@@ -3754,24 +3721,16 @@ public final class BitBlt {
 
         /* how many pixels in first word */
         dxLowBits = dx & pixPerM1;
-        startBits = (hDir > 0
-                        ? sourcePPW - (sx & pixPerM1)
-                        : (((sx + bbW) - 1) & pixPerM1) + 1);
-        m1 = (destMSB
-                        ? (AllOnes) >> (32 - (startBits * destDepth))
-                        : ((AllOnes) << (32 - (startBits * destDepth))));
+        startBits = (hDir > 0 ? sourcePPW - (sx & pixPerM1) : (((sx + bbW) - 1) & pixPerM1) + 1);
+        m1 = (destMSB ? (AllOnes) >> (32 - (startBits * destDepth)) : ((AllOnes) << (32 - (startBits * destDepth))));
 
         /* i.e. there are some missing bits */
         /* calculate right-shift skew from source to dest */
         preload = (m1 & mask1) != mask1;
         /* -32..32 */
-        skew = destDepth * ((sourceMSB
-                        ? sxLowBits - dxLowBits
-                        : dxLowBits - sxLowBits));
+        skew = destDepth * ((sourceMSB ? sxLowBits - dxLowBits : dxLowBits - sxLowBits));
         if (preload) {
-            skew = (skew < 0
-                            ? skew + 32
-                            : skew - 32);
+            skew = (skew < 0 ? skew + 32 : skew - 32);
         }
         /* calculate increments from end of 1 line to start of next */
         sourceIndex = (sourceBits + (sy * sourcePitch)) + ((sx / (32 / sourceDepth)) * 4);
@@ -4170,7 +4129,6 @@ public final class BitBlt {
                 } else {
                     /* General version using dest masking */
                     /* begin dstLongAt: */
-                    assert (((destIndex)) < endOfDestination);
                     destWord = ((dstLongAt(destIndex)));
                     mergeWord = mergeFnwith.applyAsLong(skewWord & halftoneWord, destWord & destMask);
                     destWord = (destMask & mergeWord) | (destWord & (~destMask));
@@ -4489,9 +4447,11 @@ public final class BitBlt {
     private static long dstLongAt(final long index) {
         if (destWords == null) {
             destBytesProfile.enter();
+            assert index < endOfDestination;
             return Byte.toUnsignedLong(destBytes[(int) index]);
         } else {
             destWordsProfile.enter();
+            assert (index >>> 2) < endOfDestination;
             return Integer.toUnsignedLong(destWords[(int) index >>> 2]);
         }
     }
@@ -4501,7 +4461,6 @@ public final class BitBlt {
      * modified. This is an essential read-modify-write operation on the destination form.
      */
     private static void destLongAtputmask(final long dstIndex, final long dstMask, final long sourceWord) {
-        assert (((dstIndex)) < endOfDestination);
         long dstValue = dstLongAt(dstIndex);
         dstValue = dstValue & dstMask;
         dstValue = dstValue | sourceWord;
@@ -4524,10 +4483,12 @@ public final class BitBlt {
 
     private static long srcLongAt(final long index) {
         if (sourceWords == null) {
+            assert index < endOfSource;
             sourceBytesProfile.enter();
             return Byte.toUnsignedLong(sourceBytes[(int) index]);
         } else {
             sourceWordsProfile.enter();
+            assert (index >>> 2) < endOfSource;
             return Integer.toUnsignedLong(sourceWords[(int) index >>> 2]);
         }
     }
