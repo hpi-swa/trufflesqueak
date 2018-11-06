@@ -2779,7 +2779,7 @@ public final class BitBlt {
             CompilerDirectives.transferToInterpreter();
             throw new SqueakException("Should not happen");
         }
-        showDisplayBits();
+        // showDisplayBits();
         if (failed()) {
             CompilerDirectives.transferToInterpreter();
             throw new SqueakException("return null");

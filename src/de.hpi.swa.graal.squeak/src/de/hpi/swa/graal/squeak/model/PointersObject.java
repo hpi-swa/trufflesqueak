@@ -52,6 +52,10 @@ public final class PointersObject extends AbstractPointersObject {
         return this == image.specialObjectsArray.at0Object(SPECIAL_OBJECT_INDEX.TheDisplay);
     }
 
+    public boolean isPoint() {
+        return getSqueakClass() == image.pointClass;
+    }
+
     public PointersObject shallowCopy() {
         return new PointersObject(this);
     }

@@ -11,6 +11,7 @@ import com.oracle.truffle.api.dsl.NodeFactory;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
 import de.hpi.swa.graal.squeak.nodes.context.ArgumentNode;
+import de.hpi.swa.graal.squeak.nodes.plugins.B2DPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.BMPReadWriterPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.BitBltPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.FilePlugin;
@@ -48,6 +49,7 @@ public final class PrimitiveNodeFactory {
                     new MiscellaneousPrimitives(),
                     new StoragePrimitives()};
     @CompilationFinal(dimensions = 1) private static final AbstractPrimitiveFactoryHolder[] plugins = new AbstractPrimitiveFactoryHolder[]{
+                    new B2DPlugin(),
                     new BitBltPlugin(),
                     new BMPReadWriterPlugin(),
                     new FilePlugin(),
@@ -64,7 +66,7 @@ public final class PrimitiveNodeFactory {
                     new UnixOSProcessPlugin(),
                     new UUIDPlugin(),
                     new Win32OSProcessPlugin()};
-    @CompilationFinal(dimensions = 1) private static final String[] simulatedPlugins = new String[]{"B2DPlugin", "BalloonPlugin"};
+    @CompilationFinal(dimensions = 1) private static final String[] simulatedPlugins = new String[]{"BalloonPlugin"};
 
     // Using an array instead of a HashMap requires type-checking to be disabled here.
     @SuppressWarnings("unchecked") @CompilationFinal(dimensions = 1) private static final NodeFactory<? extends AbstractPrimitiveNode>[] primitiveTable = (NodeFactory<? extends AbstractPrimitiveNode>[]) new NodeFactory<?>[MAX_PRIMITIVE_INDEX];

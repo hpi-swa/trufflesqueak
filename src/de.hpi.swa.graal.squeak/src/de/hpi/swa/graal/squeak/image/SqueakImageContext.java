@@ -297,7 +297,7 @@ public final class SqueakImageContext {
         throw new SqueakException("Unsupported value to wrap:", obj);
     }
 
-    public Object wrap(final boolean value) {
+    public boolean wrap(final boolean value) {
         return value ? sqTrue : sqFalse;
     }
 

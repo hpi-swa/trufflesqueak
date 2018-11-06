@@ -79,6 +79,10 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         return squeakHash >= 0;
     }
 
+    public final boolean isBitmap() {
+        return getSqueakClass() == image.bitmapClass;
+    }
+
     public final boolean isClass() {
         assert !(this instanceof ClassObject) || (image.metaclass == getSqueakClass() || image.metaclass == getSqueakClass().getSqueakClass());
         CompilerAsserts.neverPartOfCompilation();
