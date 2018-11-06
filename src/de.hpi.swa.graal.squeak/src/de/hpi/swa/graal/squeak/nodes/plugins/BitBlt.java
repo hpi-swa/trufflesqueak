@@ -10,6 +10,7 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
+import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
@@ -1544,23 +1545,38 @@ public final class BitBlt {
 
     /* BitBltSimulation>>#fetchIntOrFloat:ofObject: */
     static long fetchIntOrFloatofObject(final int fieldIndex, final PointersObject objectPointer) {
-        final Object fieldOop;
-        final double floatValue;
-
-        fieldOop = fetchPointerofObject(fieldIndex, objectPointer);
+        final Object fieldOop = fetchPointerofObject(fieldIndex, objectPointer);
         if (fieldOop instanceof Long) {
-            return (long) fieldOop;
-        } else if (fieldOop instanceof Double) {
-            floatValue = (double) fieldOop;
-            if (!((-2.147483648e9 <= floatValue) && (floatValue <= 2.147483647e9))) {
+            if (SqueakGuards.isSmallInteger(objectPointer.image, (long) fieldOop)) {
+                return (int) (long) fieldOop;
+            } else { // Fail because value is too big.
                 CompilerDirectives.transferToInterpreter();
                 throw new PrimitiveFailed();
             }
-            return ((long) floatValue);
+        } else if (fieldOop instanceof FloatObject) {
+            return floatToLong(((FloatObject) fieldOop).getValue());
+        } else if (fieldOop instanceof Double) {
+            return floatToLong((double) fieldOop);
+        } else if (fieldOop instanceof LargeIntegerObject) {
+            final LargeIntegerObject fieldLarge = (LargeIntegerObject) fieldOop;
+            if (fieldLarge.fitsIntoLong() && SqueakGuards.isSmallInteger(objectPointer.image, fieldLarge.longValueExact())) {
+                return fieldLarge.longValueExact();
+            } else { // Fail because value is too big.
+                CompilerDirectives.transferToInterpreter();
+                throw new PrimitiveFailed();
+            }
         } else {
             CompilerDirectives.transferToInterpreter();
-            throw new SqueakException("Should not be reached");
+            throw new SqueakException("Should not be reached:", fieldOop);
         }
+    }
+
+    private static long floatToLong(final double floatValue) {
+        if (!((-2.147483648e9 <= floatValue) && (floatValue <= 2.147483647e9))) {
+            CompilerDirectives.transferToInterpreter();
+            throw new PrimitiveFailed();
+        }
+        return ((long) floatValue);
     }
 
     /*
@@ -1570,25 +1586,33 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#fetchIntOrFloat:ofObject:ifNil: */
-    static long fetchIntOrFloatofObjectifNil(final int fieldIndex, final PointersObject objectPointer, final long defaultValue) {
-        final Object fieldOop;
-        final double floatValue;
-
-        fieldOop = fetchPointerofObject(fieldIndex, objectPointer);
+    static int fetchIntOrFloatofObjectifNil(final int fieldIndex, final PointersObject objectPointer, final long defaultValue) {
+        final Object fieldOop = fetchPointerofObject(fieldIndex, objectPointer);
         if (fieldOop instanceof Long) {
-            return (long) fieldOop;
-        } else if (fieldOop == objectPointer.image.nil) {
-            return defaultValue;
-        } else if (fieldOop instanceof Double) {
-            floatValue = (double) fieldOop;
-            if (!((-2.147483648e9 <= floatValue) && (floatValue <= 2.147483647e9))) {
+            if (SqueakGuards.isSmallInteger(objectPointer.image, (long) fieldOop)) {
+                return (int) (long) fieldOop;
+            } else { // Fail because value is too big.
                 CompilerDirectives.transferToInterpreter();
                 throw new PrimitiveFailed();
             }
-            return ((long) floatValue);
+        }
+        if (fieldOop == objectPointer.image.nil) {
+            return (int) defaultValue;
+        } else if (fieldOop instanceof Double) {
+            return (int) floatToLong((double) fieldOop);
+        } else if (fieldOop instanceof FloatObject) {
+            return (int) floatToLong(((FloatObject) fieldOop).getValue());
+        } else if (fieldOop instanceof LargeIntegerObject) {
+            final LargeIntegerObject fieldLarge = (LargeIntegerObject) fieldOop;
+            if (fieldLarge.fitsIntoLong() && SqueakGuards.isSmallInteger(objectPointer.image, fieldLarge.longValueExact())) {
+                return (int) fieldLarge.longValueExact();
+            } else { // Fail because value is too big.
+                CompilerDirectives.transferToInterpreter();
+                throw new PrimitiveFailed();
+            }
         } else {
             CompilerDirectives.transferToInterpreter();
-            throw new SqueakException("Should not be reached");
+            throw new SqueakException("Should not be reached:", fieldOop);
         }
     }
 
@@ -1701,7 +1725,7 @@ public final class BitBlt {
             return true;
         }
         if (((shifts[RedIndex]) == 0) && (((shifts[GreenIndex]) == 0) && (((shifts[BlueIndex]) == 0) && (((shifts[AlphaIndex]) == 0) &&
-                        (((masks[RedIndex]) == 0xFF0000) && (((masks[GreenIndex]) == 0xFF00) && (((masks[BlueIndex]) == 0xFF) && ((masks[AlphaIndex]) == 0xFF000000L)))))))) {
+                        (((masks[RedIndex]) == 0xFF0000) && (((masks[GreenIndex]) == 0xFF00) && (((masks[BlueIndex]) == 0xFF) && ((masks[AlphaIndex]) == 0xFF000000)))))))) {
             return true;
         }
         return false;
@@ -4364,22 +4388,6 @@ public final class BitBlt {
 
     private static int fetchIntegerofObject(final int index, final PointersObject object) {
         return (int) (long) fetchPointerofObject(index, object);
-    }
-
-    private static int fetchIntOrFloatofObjectifNil(final int index, final PointersObject object, final int defaultValue) {
-        final Object value = object.at0(index);
-        if (value == object.image.nil) {
-            return defaultValue;
-        } else if (value instanceof Long) {
-            return (int) (long) value;
-        } else if (value instanceof FloatObject) {
-            return (int) ((FloatObject) value).getValue();
-        } else if (value instanceof Double) {
-            return (int) (double) value;
-        } else {
-            CompilerDirectives.transferToInterpreter();
-            throw new SqueakException("Should not be reached");
-        }
     }
 
     private static PointersObject fetchPointerofObjectOrNull(final int index, final PointersObject object) {

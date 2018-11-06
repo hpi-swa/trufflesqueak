@@ -35,11 +35,7 @@ public abstract class AbstractPrimitiveNode extends AbstractNodeWithCode impleme
     public abstract Object executePrimitive(VirtualFrame frame);
 
     protected final boolean isSmallInteger(final long value) {
-        if (code.image.flags.is64bit()) {
-            return SqueakGuards.isSmallInteger64bit(value);
-        } else {
-            return SqueakGuards.isSmallInteger32bit(value);
-        }
+        return SqueakGuards.isSmallInteger(code.image, value);
     }
 
     protected final LargeIntegerObject asLargeInteger(final long value) {

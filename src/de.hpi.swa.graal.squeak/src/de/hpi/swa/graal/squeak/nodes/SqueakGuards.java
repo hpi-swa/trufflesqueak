@@ -1,9 +1,10 @@
 package de.hpi.swa.graal.squeak.nodes;
 
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
-import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
+import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.EmptyObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
@@ -84,6 +85,14 @@ public final class SqueakGuards {
 
     public static boolean isPointersObject(final Object obj) {
         return obj instanceof PointersObject;
+    }
+
+    public static boolean isSmallInteger(final SqueakImageContext image, final long value) {
+        if (image.flags.is64bit()) {
+            return isSmallInteger64bit(value);
+        } else {
+            return isSmallInteger32bit(value);
+        }
     }
 
     public static boolean isSmallInteger32bit(final long value) {
