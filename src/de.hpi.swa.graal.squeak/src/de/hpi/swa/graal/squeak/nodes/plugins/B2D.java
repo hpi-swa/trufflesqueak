@@ -7918,12 +7918,20 @@ public final class B2D {
     }
 
     private static PointersObject fetchPointerofObject(final int index, final ArrayObject object) {
-        return (PointersObject) object.getObjectStorage()[index];
+        // TODO: Use node for ArrayObject here instead.
+        if (object.isAbstractSqueakObjectType()) {
+            return (PointersObject) object.getAbstractSqueakObjectStorage()[index];
+        } else {
+            return (PointersObject) object.getObjectStorage()[index];
+        }
     }
 
     private static int slotSizeOf(final ArrayObject object) {
+        // TODO: Use node for ArrayObject here instead.
         if (object.isEmptyType()) {
             return object.getEmptyLength();
+        } else if (object.isAbstractSqueakObjectType()) {
+            return object.getAbstractSqueakObjectLength();
         } else {
             return object.getObjectLength();
         }

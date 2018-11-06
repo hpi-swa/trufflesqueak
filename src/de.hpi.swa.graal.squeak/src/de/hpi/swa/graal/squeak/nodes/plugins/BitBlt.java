@@ -208,6 +208,8 @@ public final class BitBlt {
     static byte[] sourceBytes;
     static int[] sourceWords;
 
+    static boolean successFlag = false;
+
     static final BranchProfile destBytesProfile = BranchProfile.create();
     static final BranchProfile destWordsProfile = BranchProfile.create();
     static final BranchProfile sourceBytesProfile = BranchProfile.create();
@@ -817,6 +819,10 @@ public final class BitBlt {
 
     /* BitBltSimulation>>#copyBits */
     public static void copyBits() {
+        copyBits(-1);
+    }
+
+    public static void copyBits(final long factor) {
         clipRange();
         if ((bbW <= 0) || (bbH <= 0)) {
             /* zero width or height; noop */
@@ -827,7 +833,7 @@ public final class BitBlt {
             CompilerDirectives.transferToInterpreter();
             throw new PrimitiveFailed();
         }
-        copyBitsLockedAndClipped();
+        copyBitsLockedAndClipped(factor);
         unlockSurfaces();
     }
 
@@ -850,6 +856,10 @@ public final class BitBlt {
 
     /* BitBltSimulation>>#copyBitsLockedAndClipped */
     static void copyBitsLockedAndClipped() {
+        copyBitsLockedAndClipped(-1);
+    }
+
+    static void copyBitsLockedAndClipped(final long factorOrMinusOne) {
         copyBitsRule41Test();
         if (failed()) {
             CompilerDirectives.transferToInterpreter();
@@ -859,17 +869,14 @@ public final class BitBlt {
             return;
         }
         if (((combinationRule >= 30) && (combinationRule <= 0x1F))) {
-            CompilerDirectives.transferToInterpreter();
-            throw new SqueakException("Not implemented");
-            // TODO: uncomment:
-            // /* Check and fetch source alpha parameter for alpha blend */
-            // if (!((methodArgumentCount()) == 1)) {
-            // throw new PrimitiveFailed();
-            // }
-            // sourceAlpha = stackIntegerValue(0);
-            // if ((failed()) || ((sourceAlpha < 0) || (sourceAlpha > 0xFF))) {
-            // throw new PrimitiveFailed();
-            // }
+            /* Check and fetch source alpha parameter for alpha blend */
+            if (factorOrMinusOne == -1) {
+                throw new PrimitiveFailed();
+            }
+            sourceAlpha = factorOrMinusOne;
+            if ((failed()) || ((sourceAlpha < 0) || (sourceAlpha > 0xFF))) {
+                throw new PrimitiveFailed();
+            }
         }
         /* Choose and perform the actual copy loop. */
         bitCount = 0;
@@ -2125,10 +2132,10 @@ public final class BitBlt {
     /* BitBltSimulation>>#lockSurfaces */
     static boolean lockSurfaces() {
         final int b;
-        final long destHandle;
+        final int destHandle;
         final int l;
         final int r;
-        long sourceHandle;
+        int sourceHandle;
         final int t;
 
         hasSurfaceLock = false;
@@ -2768,13 +2775,13 @@ public final class BitBlt {
      */
 
     /* BitBltSimulation>>#primitiveCopyBits */
-    public static Object primitiveCopyBits(final PointersObject rcvr, @SuppressWarnings("unused") final long factor) {
+    public static Object primitiveCopyBits(final PointersObject rcvr, final long factor) {
         // TODO: factor needed in copyBitsRule41Test
         if (!(loadBitBltFromwarping(rcvr, false))) {
             CompilerDirectives.transferToInterpreter();
             throw new PrimitiveFailed();
         }
-        copyBits();
+        copyBits(factor);
         if (failed()) {
             CompilerDirectives.transferToInterpreter();
             throw new SqueakException("Should not happen");
@@ -2793,8 +2800,7 @@ public final class BitBlt {
 
     /* BitBltSimulation>>#primitiveDisplayString */
     public static Object primitiveDisplayString(final PointersObject bbObj, final NativeObject sourceString, final long startIndex, final long stopIndex, final ArrayObject glyphMap,
-                    final ArrayObject xTable,
-                    final int kernDelta) {
+                    final ArrayObject xTable, final int kernDelta) {
         int ascii;
         int glyphIndex;
         final long left;
@@ -4387,7 +4393,13 @@ public final class BitBlt {
      */
 
     private static int fetchIntegerofObject(final int index, final PointersObject object) {
-        return (int) (long) fetchPointerofObject(index, object);
+        final Object value = fetchPointerofObject(index, object);
+        if (value instanceof Long) {
+            return (int) (long) value;
+        } else {
+            successFlag = false;
+            return 0;
+        }
     }
 
     private static PointersObject fetchPointerofObjectOrNull(final int index, final PointersObject object) {
@@ -4449,7 +4461,11 @@ public final class BitBlt {
     }
 
     private static boolean failed() {
-        return false;
+        return !successFlag;
+    }
+
+    protected static void resetSuccessFlag() {
+        successFlag = true;
     }
 
     private static void storeIntegerofObjectwithValue(final int index, final PointersObject target, final long value) {
