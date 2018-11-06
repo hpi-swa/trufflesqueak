@@ -27,12 +27,19 @@ public abstract class HandlePrimitiveFailedNode extends AbstractNodeWithCode {
 
     /*
      * Look up error symbol in error table and push it to stack. The fallback code pops the error
-     * symbol into the corresponding temporary variable.
+     * symbol into the corresponding temporary variable. See
+     * StackInterpreter>>#getErrorObjectFromPrimFailCode for more information.
      */
-    @Specialization(guards = "followedByExtendedStore(code)")
-    protected final void doHandle(final VirtualFrame frame, final PrimitiveFailed e,
+    @Specialization(guards = {"followedByExtendedStore(code)", "e.getReasonCode() < code.image.primitiveErrorTable.getObjectLength()"})
+    protected final void doHandleWithLookup(final VirtualFrame frame, final PrimitiveFailed e,
                     @Cached("create(code)") final StackPushNode pushNode) {
         pushNode.executeWrite(frame, code.image.primitiveErrorTable.at0Object(e.getReasonCode()));
+    }
+
+    @Specialization(guards = {"followedByExtendedStore(code)", "e.getReasonCode() >= code.image.primitiveErrorTable.getObjectLength()"})
+    protected static final void doHandleRawValue(final VirtualFrame frame, final PrimitiveFailed e,
+                    @Cached("create(code)") final StackPushNode pushNode) {
+        pushNode.executeWrite(frame, e.getReasonCode()); //
     }
 
     @SuppressWarnings("unused")
