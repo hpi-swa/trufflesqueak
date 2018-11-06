@@ -63,16 +63,16 @@ public final class MiscellaneousBytecodes {
                 throw new LocalReturn(primitiveNode.executePrimitive(frame));
             } catch (PrimitiveFailed e) {
                 primitiveFailureProfile.enter();
-                handlePrimFailed.executeHandle(frame, e);
                 if (DEBUG_PRIMITIVE_FAILURES) {
                     debugPrimitiveFailures();
                 }
+                handlePrimFailed.executeHandle(frame, e);
             } catch (UnsupportedSpecializationException e) {
                 unsupportedSpecializationProfile.enter();
-                assert e.getNode() instanceof AbstractPrimitiveNode : "Only `AbstractPrimitiveNode`s should be treated as primitive failures, got: " + e;
                 if (DEBUG_UNSUPPORTED_SPECIALIZATION_EXCEPTIONS) {
                     debugUnsupportedSpecializationExceptions(e);
                 }
+                assert e.getNode() instanceof AbstractPrimitiveNode : "Only `AbstractPrimitiveNode`s should be treated as primitive failures, got: " + e;
             }
             // continue with fallback code
         }
