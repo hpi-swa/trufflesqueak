@@ -23,6 +23,7 @@ import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
+import de.hpi.swa.graal.squeak.model.ObjectLayouts.CHARACTER_SCANNER;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.ERROR_TABLE;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.FORM;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
@@ -251,9 +252,9 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         protected final Object doScan(final PointersObject receiver, final long startIndex, final long stopIndex, final NativeObject sourceString, final long rightX,
                         final ArrayObject stops, final long kernData,
                         @Cached("createScanCharactersHelperNode()") final ScanCharactersHelperNode scanNode) {
-            final Object scanDestX = at0Node.execute(receiver, 0);
-            final Object scanXTable = at0Node.execute(receiver, 2);
-            final Object scanMap = at0Node.execute(receiver, 3);
+            final Object scanDestX = at0Node.execute(receiver, CHARACTER_SCANNER.DEST_X);
+            final Object scanXTable = at0Node.execute(receiver, CHARACTER_SCANNER.XTABLE);
+            final Object scanMap = at0Node.execute(receiver, CHARACTER_SCANNER.MAP);
             return scanNode.executeScan(receiver, startIndex, stopIndex, sourceString.getByteStorage(), rightX, stops, kernData, scanDestX, scanXTable, scanMap);
         }
 

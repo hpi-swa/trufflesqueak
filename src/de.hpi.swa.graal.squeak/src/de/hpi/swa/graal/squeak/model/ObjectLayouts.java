@@ -44,6 +44,13 @@ public final class ObjectLayouts {
         public static final int HOME = 5;
     }
 
+    public static final class CHARACTER_SCANNER {
+        public static final int DEST_X = 0;
+        public static final int LAST_INDEX = 1;
+        public static final int XTABLE = 2;
+        public static final int MAP = 3;
+    }
+
     /**
      * Relative offsets to {@link CLASS_DESCRIPTION} for {@link ClassObject}.
      */
