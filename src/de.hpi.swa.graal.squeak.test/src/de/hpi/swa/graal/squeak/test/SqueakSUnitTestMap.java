@@ -22,7 +22,7 @@ public final class SqueakSUnitTestMap {
                     "BindingPolicyTest", TEST_TYPE.PASSING,
                     "BitBltClipBugs", TEST_TYPE.PASSING,
                     "BitBltSimulationTest", TEST_TYPE.PASSING,
-                    "BitBltTest", TEST_TYPE.SLOW_PASSING,
+                    "BitBltTest", TEST_TYPE.PASSING,
                     "BitmapBugz", TEST_TYPE.PASSING,
                     "BitmapStreamTests", TEST_TYPE.IGNORE, // OOM error
                     "BitSetTest", TEST_TYPE.PASSING,

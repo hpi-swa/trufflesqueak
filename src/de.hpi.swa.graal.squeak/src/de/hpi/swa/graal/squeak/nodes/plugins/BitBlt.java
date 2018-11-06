@@ -1012,7 +1012,11 @@ public final class BitBlt {
                 }
                 destMask = mask1;
                 /* pick up next word */
-                thisWord = srcLongAt(sourceIndex);
+                /*
+                 * Use `0` for `thisWord` if `endOfSource` is reached. This appears to be necessary
+                 * for #testPivelValueAt. Confirmed by SqueakJS's BitBltPlugin.
+                 */
+                thisWord = sourceIndex < endOfSource ? srcLongAt(sourceIndex) : 0;
                 sourceIndex += hInc;
                 /* 32-bit rotate */
                 skewWord = (((unskew < 0) ? ((prevWord & notSkewMask) >> -unskew) : ((prevWord & notSkewMask) << unskew))) |
