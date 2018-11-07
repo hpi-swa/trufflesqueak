@@ -97,9 +97,6 @@ public final class SqueakImageReaderNode extends RootNode {
     }
 
     private void validateStateOrFail() {
-        if (image.hasDisplay() && image.getSimulatePrimitiveArgsSelector() == null) {
-            throw new SqueakException("Unable to find BitBlt simulation in image, cannot run with display.");
-        }
         if (image.isTesting() && image.getAsSymbolSelector() == null) {
             throw new SqueakException("Unable to find asSymbol selector");
         }
