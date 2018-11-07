@@ -849,9 +849,14 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @Specialization
-        protected static final AbstractSqueakObject doDefer(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final boolean flag) {
-            // TODO: uncomment: code.image.display.setDeferUpdates(flag);
+        @Specialization(guards = "code.image.hasDisplay()")
+        protected final AbstractSqueakObject doDefer(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final boolean flag) {
+            code.image.getDisplay().setDeferUpdates(flag);
+            return receiver;
+        }
+
+        @Specialization(guards = "!code.image.hasDisplay()")
+        protected static final AbstractSqueakObject doNothing(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final boolean flag) {
             return receiver;
         }
     }
