@@ -232,7 +232,7 @@ public final class SqueakSUnitTestMap {
                     "PolygonMorphTest", TEST_TYPE.PASSING,
                     "PreferencesTest", TEST_TYPE.PASSING,
                     "ProcessSpecificTest", TEST_TYPE.PASSING,
-                    "ProcessTerminateBug", TEST_TYPE.FLAKY,
+                    "ProcessTerminateBug", TEST_TYPE.PASSING,
                     "ProcessTest", TEST_TYPE.PASSING,
                     "PromiseTest", TEST_TYPE.PASSING,
                     "ProtoObjectTest", TEST_TYPE.PASSING,
