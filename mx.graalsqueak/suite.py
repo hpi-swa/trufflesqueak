@@ -15,13 +15,23 @@ suite = {
         }],
     },
 
-    "libraries": {},
+    "libraries": {
+        "SSL":  {
+            "sha1": "bd47ad3bd14b8e82595c7adaa143501e60842a84",
+            "maven": {
+                "groupId": "org.bouncycastle",
+                "artifactId": "bcprov-jdk15on",
+                "version": "1.60"
+            }
+        },
+    },
 
     "projects": {
         "de.hpi.swa.graal.squeak": {
             "subDir": "src",
             "sourceDirs": ["src"],
             "dependencies": [
+                "SSL",
                 "graalsqueak:GRAALSQUEAK-SHARED",
                 "truffle:TRUFFLE_API",
                 "truffle:TRUFFLE_DSL_PROCESSOR",
