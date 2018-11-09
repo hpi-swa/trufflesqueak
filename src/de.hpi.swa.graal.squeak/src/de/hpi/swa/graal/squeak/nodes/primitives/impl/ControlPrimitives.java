@@ -1068,15 +1068,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @Specialization(guards = "code.image.hasDisplay()")
-        protected final AbstractSqueakObject doForceUpdate(final AbstractSqueakObject receiver) {
-            code.image.getDisplay().forceUpdate();
-            return receiver;
-        }
-
-        @Specialization(guards = "!code.image.hasDisplay()")
-        protected static final AbstractSqueakObject doForceUpdateHeadless(final AbstractSqueakObject receiver) {
-            return receiver;
+        @Specialization
+        protected static final AbstractSqueakObject doForceUpdate(final AbstractSqueakObject receiver) {
+            return receiver; // Do nothing.
         }
     }
 

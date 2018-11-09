@@ -147,6 +147,14 @@ public final class SqueakIOConstants {
         public static final long MOUSE_WHEEL = 7;
     }
 
+    public static final class WINDOW {
+        public static final long METRIC_CHANGE = 1;
+        public static final long CLOSE = 2;
+        public static final long ICONISE = 3;
+        public static final long ACTIVATED = 4;
+        public static final long PAINT = 5;
+    }
+
     private SqueakIOConstants() {
     }
 }

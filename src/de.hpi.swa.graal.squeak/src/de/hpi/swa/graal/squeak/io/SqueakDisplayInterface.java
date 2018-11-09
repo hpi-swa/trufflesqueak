@@ -4,9 +4,9 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 
 public interface SqueakDisplayInterface {
 
-    void forceRect(int left, int right, int top, int bottom);
+    void showDisplayBitsLeftTopRightBottom(PointersObject destForm, int left, int top, int right, int bottom);
 
-    void forceUpdate();
+    void showDisplayRect(int left, int right, int top, int bottom);
 
     void close();
 

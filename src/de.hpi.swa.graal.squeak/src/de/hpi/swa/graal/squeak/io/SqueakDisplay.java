@@ -12,6 +12,8 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.InputEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.awt.image.DirectColorModel;
 import java.awt.image.Raster;
@@ -33,7 +35,9 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.io.SqueakIOConstants.EVENT_TYPE;
 import de.hpi.swa.graal.squeak.io.SqueakIOConstants.KEYBOARD;
+import de.hpi.swa.graal.squeak.io.SqueakIOConstants.WINDOW;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.FORM;
 import de.hpi.swa.graal.squeak.model.PointersObject;
@@ -71,7 +75,28 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
         frame.addKeyListener(keyboard);
 
         frame.setTitle(SqueakDisplay.DEFAULT_WINDOW_TITLE + " (" + image.getImagePath() + ")");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowActivated(final WindowEvent e) {
+                addEvent(EVENT_TYPE.WINDOW, WINDOW.ACTIVATED, 0, 0, 0);
+            }
+
+            @Override
+            public void windowClosing(final WindowEvent e) {
+                addEvent(EVENT_TYPE.WINDOW, WINDOW.CLOSE, 0, 0, 0);
+            }
+
+            @Override
+            public void windowIconified(final WindowEvent e) {
+                addEvent(EVENT_TYPE.WINDOW, WINDOW.ICONISE, 0, 0, 0);
+            }
+
+            @Override
+            public void windowStateChanged(final WindowEvent e) {
+                addEvent(EVENT_TYPE.WINDOW, WINDOW.METRIC_CHANGE, 0, 0, 0);
+            }
+        });
         frame.setMinimumSize(MINIMUM_WINDOW_SIZE);
         frame.getContentPane().add(canvas);
         frame.setResizable(true);
@@ -191,17 +216,18 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
         }
     }
 
-    @Override
     @TruffleBoundary
-    public void forceRect(final int left, final int right, final int top, final int bottom) {
-        canvas.repaint(left, top, right - left, bottom - top);
+    public void showDisplayBitsLeftTopRightBottom(final PointersObject destForm, final int left, final int top, final int right, final int bottom) {
+        if (left < right && top < bottom && !deferUpdates && destForm.isDisplay()) {
+            canvas.paintImmediately(left, top, right - left, bottom - top);
+        }
     }
 
     @Override
     @TruffleBoundary
-    public void forceUpdate() {
-        if (!deferUpdates) {
-            canvas.repaint();
+    public void showDisplayRect(final int left, final int right, final int top, final int bottom) {
+        if ((left < right) && (top < bottom)) {
+            canvas.paintImmediately(left, top, right - left, bottom - top);
         }
     }
 

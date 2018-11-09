@@ -850,7 +850,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "code.image.hasDisplay()")
-        protected final AbstractSqueakObject doDefer(final AbstractSqueakObject receiver, @SuppressWarnings("unused") final boolean flag) {
+        protected final AbstractSqueakObject doDefer(final AbstractSqueakObject receiver, final boolean flag) {
             code.image.getDisplay().setDeferUpdates(flag);
             return receiver;
         }
@@ -863,26 +863,22 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 127)
-    protected abstract static class PrimDrawRectNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimShowDisplayRectNode extends AbstractPrimitiveNode {
 
-        protected PrimDrawRectNode(final CompiledMethodObject method, final int numArguments) {
+        protected PrimShowDisplayRectNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
-        @Specialization(guards = {"code.image.hasDisplay()", "inBounds(left, right, top, bottom)"})
-        protected final AbstractSqueakObject doDraw(final PointersObject receiver, final long left, final long right, final long top, final long bottom) {
-            code.image.getDisplay().forceRect((int) left, (int) right, (int) top, (int) bottom);
+        @Specialization(guards = {"code.image.hasDisplay()"})
+        protected final AbstractSqueakObject doShow(final PointersObject receiver, final long left, final long right, final long top, final long bottom) {
+            code.image.getDisplay().showDisplayRect((int) left, (int) right, (int) top, (int) bottom);
             return receiver;
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"!code.image.hasDisplay()", "inBounds(left, right, top, bottom)"})
+        @Specialization(guards = {"!code.image.hasDisplay()"})
         protected static final AbstractSqueakObject doDrawHeadless(final PointersObject receiver, final long left, final long right, final long top, final long bottom) {
             return receiver;
-        }
-
-        protected static final boolean inBounds(final long left, final long right, final long top, final long bottom) {
-            return (left <= right) && (top <= bottom);
         }
     }
 

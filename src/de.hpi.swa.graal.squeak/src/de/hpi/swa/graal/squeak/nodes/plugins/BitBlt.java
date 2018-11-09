@@ -103,10 +103,10 @@ public final class BitBlt {
                     0xFFFFCCCCL, 0xFFFFFFCCL, 0xFFFF00FFL, 0xFFFF33FFL, 0xFFFF66FFL, 0xFFFF99FFL, 0xFFFFCCFFL, 0xFFFFFFFFL};
 
     /* Variables */
-    private static long affectedB;
-    private static long affectedL;
-    private static long affectedR;
-    private static long affectedT;
+    private static int affectedB;
+    private static int affectedL;
+    private static int affectedR;
+    private static int affectedT;
     private static int bbH;
     private static int bbW;
     private static PointersObject bitBltOop;
@@ -1354,10 +1354,10 @@ public final class BitBlt {
 
     /* BitBltSimulation>>#drawLoopX:Y: */
     private static void drawLoopXY(final long xDelta, final long yDelta) {
-        long affB;
-        long affL;
-        long affR;
-        long affT;
+        int affB;
+        int affL;
+        int affR;
+        int affT;
         final long dx1;
         final long dy1;
         long p;
@@ -2549,7 +2549,7 @@ public final class BitBlt {
                     final ArrayObject xTable, final int kernDelta) {
         int ascii;
         int glyphIndex;
-        final long left;
+        final int left;
         final long maxGlyph;
         final boolean quickBlt;
 
@@ -3419,11 +3419,8 @@ public final class BitBlt {
 
     /* BitBltSimulation>>#showDisplayBits */
     private static void showDisplayBits() {
-        if (!destForm.image.hasDisplay()) {
-            return;
-        }
-        if (affectedL < affectedR && affectedT < affectedB && !destForm.image.getDisplay().getDeferUpdates() && destForm.isDisplay()) {
-            destForm.image.getDisplay().forceRect((int) affectedL, (int) affectedR, (int) affectedT, (int) affectedB);
+        if (destForm.image.hasDisplay()) {
+            destForm.image.getDisplay().showDisplayBitsLeftTopRightBottom(destForm, affectedL, affectedT, affectedR, affectedB);
         }
     }
 

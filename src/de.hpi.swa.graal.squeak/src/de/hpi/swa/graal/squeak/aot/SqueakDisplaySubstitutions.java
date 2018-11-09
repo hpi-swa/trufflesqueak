@@ -98,11 +98,18 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
         }
     }
 
+    public void showDisplayBitsLeftTopRightBottom(final PointersObject destForm, final int left, final int top, final int right, final int bottom) {
+        if (left < right && top < bottom && !deferUpdates && destForm.isDisplay()) {
+            showDisplayRect(left, right, top, bottom);
+        }
+    }
+
     @Override
-    public void forceRect(final int left, final int right, final int top, final int bottom) {
+    public void showDisplayRect(final int left, final int right, final int top, final int bottom) {
         copyPixels(left + top * width, right + bottom * width);
         recordDamage(left, top, right - left, bottom - top);
         textureDirty = true;
+        render(true);
     }
 
     @Override
@@ -112,11 +119,6 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
         } else {
             SDL.setWindowFullscreen(window, 0);
         }
-    }
-
-    @Override
-    public void forceUpdate() {
-        render(true);
     }
 
     @Override
