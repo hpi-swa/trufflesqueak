@@ -292,6 +292,11 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
         fullDamage();
     }
 
+    public DisplayPoint getWindowSize() {
+        // TODO Auto-generated method stub
+        return image.flags.getLastWindowSize();
+    }
+
     @Override
     @TruffleBoundary
     public void setWindowTitle(final String title) {

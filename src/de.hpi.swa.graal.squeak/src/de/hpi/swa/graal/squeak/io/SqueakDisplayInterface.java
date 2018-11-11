@@ -14,6 +14,8 @@ public interface SqueakDisplayInterface {
 
     void resizeTo(int width, int height);
 
+    DisplayPoint getWindowSize();
+
     void setFullscreen(boolean enable);
 
     void open(PointersObject sqDisplay);

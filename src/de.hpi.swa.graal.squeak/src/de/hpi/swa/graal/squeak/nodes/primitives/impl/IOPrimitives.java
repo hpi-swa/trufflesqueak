@@ -768,8 +768,13 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @Specialization
+        @Specialization(guards = "code.image.hasDisplay()")
         protected final AbstractSqueakObject doSize(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+            return code.image.wrap(code.image.getDisplay().getWindowSize());
+        }
+
+        @Specialization(guards = "!code.image.hasDisplay()")
+        protected final AbstractSqueakObject doSizeHeadless(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             return code.image.wrap(code.image.flags.getLastWindowSize());
         }
     }

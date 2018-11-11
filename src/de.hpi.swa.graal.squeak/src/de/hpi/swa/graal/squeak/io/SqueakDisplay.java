@@ -9,8 +9,6 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.UnsupportedFlavorException;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -52,8 +50,8 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     public final SqueakImageContext image;
     private final JFrame frame = new JFrame(DEFAULT_WINDOW_TITLE);
     private final Canvas canvas = new Canvas();
-    private SqueakMouse mouse;
-    private SqueakKeyboard keyboard;
+    private final SqueakMouse mouse;
+    private final SqueakKeyboard keyboard;
     private final Deque<long[]> deferredEvents = new ArrayDeque<>();
     private final ScheduledExecutorService repaintExecutor;
 
@@ -61,7 +59,8 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     @CompilationFinal private int inputSemaphoreIndex = -1;
 
     public int buttons = 0;
-    private Dimension windowSize = null;
+    private Dimension rememberedWindowSize = null;
+    private Point rememberedWindowLocation;
     private boolean deferUpdates = false;
 
     public SqueakDisplay(final SqueakImageContext image) {
@@ -69,13 +68,29 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
         mouse = new SqueakMouse(this);
         keyboard = new SqueakKeyboard(this);
 
-        // install event listeners
+        frame.setTitle(SqueakDisplay.DEFAULT_WINDOW_TITLE + " (" + image.getImagePath() + ")");
+        frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        frame.setMinimumSize(MINIMUM_WINDOW_SIZE);
+        frame.getContentPane().add(canvas);
+        frame.setResizable(true);
+
+        installEventListeners();
+        if (REPAINT_AUTOMATICALLY) {
+            repaintExecutor = Executors.newSingleThreadScheduledExecutor();
+            repaintExecutor.scheduleWithFixedDelay(new Runnable() {
+                public void run() {
+                    canvas.repaint();
+                }
+            }, 0, 20, TimeUnit.MILLISECONDS);
+        } else {
+            repaintExecutor = null;
+        }
+    }
+
+    private void installEventListeners() {
         canvas.addMouseListener(mouse);
         canvas.addMouseMotionListener(mouse);
         frame.addKeyListener(keyboard);
-
-        frame.setTitle(SqueakDisplay.DEFAULT_WINDOW_TITLE + " (" + image.getImagePath() + ")");
-        frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowActivated(final WindowEvent e) {
@@ -97,25 +112,6 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
                 addEvent(EVENT_TYPE.WINDOW, WINDOW.METRIC_CHANGE, 0, 0, 0);
             }
         });
-        frame.setMinimumSize(MINIMUM_WINDOW_SIZE);
-        frame.getContentPane().add(canvas);
-        frame.setResizable(true);
-        frame.addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(final ComponentEvent evt) {
-                canvas.resizeTo(frame.getSize());
-            }
-        });
-        if (REPAINT_AUTOMATICALLY) {
-            repaintExecutor = Executors.newSingleThreadScheduledExecutor();
-            repaintExecutor.scheduleWithFixedDelay(new Runnable() {
-                public void run() {
-                    canvas.repaint();
-                }
-            }, 0, 20, TimeUnit.MILLISECONDS);
-        } else {
-            repaintExecutor = null;
-        }
     }
 
     private final class Canvas extends JComponent {
@@ -128,7 +124,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
 
         @Override
         public void paintComponent(final Graphics g) {
-            if (bitmap == null) {
+            if (bitmap == null || bufferedImage == null) {
                 return;
             }
             //@formatter:off
@@ -197,13 +193,6 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
             return raster;
         }
 
-        private void resizeTo(final Dimension newSize) {
-            setSize(newSize);
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            bufferedImage = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
-            repaint();
-        }
-
         private void setSqDisplay(final PointersObject sqDisplay) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             this.bitmap = (NativeObject) sqDisplay.at0(FORM.BITS);
@@ -213,6 +202,10 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
             this.width = (int) (long) sqDisplay.at0(FORM.WIDTH);
             this.height = (int) (long) sqDisplay.at0(FORM.HEIGHT);
             this.depth = (int) (long) sqDisplay.at0(FORM.DEPTH);
+            if (width > 0 && height > 0) {
+                bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+                repaint();
+            }
         }
     }
 
@@ -252,19 +245,29 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
         frame.pack();
     }
 
+    public DisplayPoint getWindowSize() {
+        return new DisplayPoint(frame.getContentPane().getWidth(), frame.getContentPane().getHeight());
+    }
+
     @Override
     @TruffleBoundary
     public void setFullscreen(final boolean enable) {
+        if (enable) {
+            rememberedWindowLocation = frame.getLocationOnScreen();
+            rememberedWindowSize = frame.getContentPane().getSize();
+        }
         frame.dispose();
         frame.setUndecorated(enable);
-        frame.setExtendedState(enable ? JFrame.MAXIMIZED_BOTH : JFrame.NORMAL);
         if (enable) {
-            windowSize = frame.getSize();
+            frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+            frame.setResizable(false);
         } else {
-            frame.setPreferredSize(windowSize);
-            frame.pack();
-            frame.setLocationRelativeTo(null);
+            frame.setExtendedState(JFrame.NORMAL);
+            frame.getContentPane().setPreferredSize(rememberedWindowSize);
+            frame.setResizable(true);
         }
+        frame.pack();
+        frame.setLocation(rememberedWindowLocation);
         frame.setVisible(true);
     }
 
@@ -272,8 +275,10 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     @TruffleBoundary
     public void open(final PointersObject sqDisplay) {
         canvas.setSqDisplay(sqDisplay);
-        resizeTo(canvas.width, canvas.height);
         if (!frame.isVisible()) {
+            final DisplayPoint lastWindowSize = image.flags.getLastWindowSize();
+            frame.getContentPane().setPreferredSize(new Dimension(lastWindowSize.getWidth(), lastWindowSize.getHeight()));
+            frame.pack();
             frame.setVisible(true);
             frame.requestFocus();
         }
