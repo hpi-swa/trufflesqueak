@@ -55,7 +55,7 @@ public final class SqueakMouse extends MouseInputAdapter {
                 buttons = mapButton(e);
                 break;
             case MOVE:
-                break; // nothing more to do
+                break; // Nothing more to do.
             case UP:
                 buttons = 0;
                 break;
@@ -72,11 +72,11 @@ public final class SqueakMouse extends MouseInputAdapter {
     private static int mapButton(final MouseEvent e) {
         switch (e.getButton()) {
             case MouseEvent.BUTTON1:
-                return MOUSE.RED;
+                return e.isAltDown() ? MOUSE.YELLOW : MOUSE.RED; // left
             case MouseEvent.BUTTON2:
-                return MOUSE.BLUE;    // middle (frame menu)
+                return MOUSE.YELLOW; // middle
             case MouseEvent.BUTTON3:
-                return MOUSE.YELLOW;  // right (pane menu)
+                return MOUSE.BLUE; // right
             case MouseEvent.NOBUTTON:
                 return 0;
             default:
