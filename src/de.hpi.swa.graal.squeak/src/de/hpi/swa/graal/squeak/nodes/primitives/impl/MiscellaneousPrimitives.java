@@ -33,7 +33,7 @@ import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
+import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
@@ -87,13 +87,13 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         }
 
         protected final void signalAtMilliseconds(final PointersObject semaphore, final long msTime) {
-            code.image.setSemaphore(SPECIAL_OBJECT_INDEX.TheTimerSemaphore, semaphore);
+            code.image.setSemaphore(SPECIAL_OBJECT.THE_TIMER_SEMAPHORE, semaphore);
             code.image.interrupt.setTimerSemaphore(semaphore);
             code.image.interrupt.setNextWakeupTick(msTime);
         }
 
         protected final void signalAtMilliseconds(final NilObject semaphore, @SuppressWarnings("unused") final long msTime) {
-            code.image.setSemaphore(SPECIAL_OBJECT_INDEX.TheTimerSemaphore, semaphore);
+            code.image.setSemaphore(SPECIAL_OBJECT.THE_TIMER_SEMAPHORE, semaphore);
             code.image.interrupt.setTimerSemaphore(null);
             code.image.interrupt.setNextWakeupTick(0);
         }
@@ -169,7 +169,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         protected final AbstractSqueakObject get(final AbstractSqueakObject receiver, final AbstractSqueakObject semaphore) {
-            code.image.setSemaphore(SPECIAL_OBJECT_INDEX.TheLowSpaceSemaphore, semaphore);
+            code.image.setSemaphore(SPECIAL_OBJECT.THE_LOW_SPACE_SEMAPHORE, semaphore);
             return receiver;
         }
     }
@@ -318,14 +318,14 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         protected final AbstractSqueakObject get(final AbstractSqueakObject receiver, final PointersObject semaphore) {
-            code.image.setSemaphore(SPECIAL_OBJECT_INDEX.TheInterruptSemaphore, semaphore);
+            code.image.setSemaphore(SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE, semaphore);
             code.image.interrupt.setInterruptSemaphore(semaphore);
             return receiver;
         }
 
         @Specialization
         protected final AbstractSqueakObject get(final AbstractSqueakObject receiver, final NilObject semaphore) {
-            code.image.setSemaphore(SPECIAL_OBJECT_INDEX.TheInterruptSemaphore, semaphore);
+            code.image.setSemaphore(SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE, semaphore);
             code.image.interrupt.setInterruptSemaphore(null);
             return receiver;
         }

@@ -26,7 +26,7 @@ import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CHARACTER_SCANNER;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.ERROR_TABLE;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.FORM;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
+import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
@@ -227,7 +227,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"code.image.hasDisplay()", "receiver.size() >= 4"})
         protected final boolean doDisplay(final PointersObject receiver) {
-            code.image.specialObjectsArray.atput0Object(SPECIAL_OBJECT_INDEX.TheDisplay, receiver);
+            code.image.specialObjectsArray.atput0Object(SPECIAL_OBJECT.THE_DISPLAY, receiver);
             code.image.getDisplay().open(receiver);
             return code.image.sqTrue;
         }

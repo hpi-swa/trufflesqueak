@@ -19,7 +19,7 @@ import com.oracle.truffle.api.nodes.RootNode;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
+import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 
 public final class SqueakImageReaderNode extends RootNode {
@@ -354,48 +354,48 @@ public final class SqueakImageReaderNode extends RootNode {
         sqMetaclass.object = image.metaclass;
 
         // also cache nil, true, and false classes
-        specialObjectChunk(SPECIAL_OBJECT_INDEX.NilObject).getClassChunk().object = image.nilClass;
+        specialObjectChunk(SPECIAL_OBJECT.NIL_OBJECT).getClassChunk().object = image.nilClass;
         image.nil.setSqueakClass(image.nilClass);
-        specialObjectChunk(SPECIAL_OBJECT_INDEX.FalseObject).getClassChunk().object = image.falseClass;
-        specialObjectChunk(SPECIAL_OBJECT_INDEX.TrueObject).getClassChunk().object = image.trueClass;
+        specialObjectChunk(SPECIAL_OBJECT.FALSE_OBJECT).getClassChunk().object = image.falseClass;
+        specialObjectChunk(SPECIAL_OBJECT.TRUE_OBJECT).getClassChunk().object = image.trueClass;
 
-        setPrebuiltObject(SPECIAL_OBJECT_INDEX.NilObject, NIL_OBJECT_PLACEHOLDER);
-        setPrebuiltObject(SPECIAL_OBJECT_INDEX.FalseObject, image.sqFalse);
-        setPrebuiltObject(SPECIAL_OBJECT_INDEX.TrueObject, image.sqTrue);
-        setPrebuiltObject(SPECIAL_OBJECT_INDEX.SchedulerAssociation, image.schedulerAssociation);
-        setPrebuiltObject(SPECIAL_OBJECT_INDEX.ClassBitmap, image.bitmapClass);
-        setPrebuiltObject(SPECIAL_OBJECT_INDEX.ClassSmallInteger, image.smallIntegerClass);
-        setPrebuiltObject(SPECIAL_OBJECT_INDEX.ClassString, image.stringClass);
-        setPrebuiltObject(SPECIAL_OBJECT_INDEX.ClassArray, image.arrayClass);
-        setPrebuiltObject(SPECIAL_OBJECT_INDEX.SmalltalkDictionary, image.smalltalk);
-        setPrebuiltObject(SPECIAL_OBJECT_INDEX.ClassFloat, image.floatClass);
-        if (specialObjectChunk(SPECIAL_OBJECT_INDEX.ClassTruffleObject).object != NIL_OBJECT_PLACEHOLDER) {
-            setPrebuiltObject(SPECIAL_OBJECT_INDEX.ClassTruffleObject, image.initializeTruffleObject());
+        setPrebuiltObject(SPECIAL_OBJECT.NIL_OBJECT, NIL_OBJECT_PLACEHOLDER);
+        setPrebuiltObject(SPECIAL_OBJECT.FALSE_OBJECT, image.sqFalse);
+        setPrebuiltObject(SPECIAL_OBJECT.TRUE_OBJECT, image.sqTrue);
+        setPrebuiltObject(SPECIAL_OBJECT.SCHEDULER_ASSOCIATION, image.schedulerAssociation);
+        setPrebuiltObject(SPECIAL_OBJECT.CLASS_BITMAP, image.bitmapClass);
+        setPrebuiltObject(SPECIAL_OBJECT.CLASS_SMALLINTEGER, image.smallIntegerClass);
+        setPrebuiltObject(SPECIAL_OBJECT.CLASS_STRING, image.stringClass);
+        setPrebuiltObject(SPECIAL_OBJECT.CLASS_ARRAY, image.arrayClass);
+        setPrebuiltObject(SPECIAL_OBJECT.SMALLTALK_DICTIONARY, image.smalltalk);
+        setPrebuiltObject(SPECIAL_OBJECT.CLASS_FLOAT, image.floatClass);
+        if (specialObjectChunk(SPECIAL_OBJECT.CLASS_TRUFFLE_OBJECT).object != NIL_OBJECT_PLACEHOLDER) {
+            setPrebuiltObject(SPECIAL_OBJECT.CLASS_TRUFFLE_OBJECT, image.initializeTruffleObject());
         }
-        setPrebuiltObject(SPECIAL_OBJECT_INDEX.ClassMethodContext, image.methodContextClass);
-        setPrebuiltObject(SPECIAL_OBJECT_INDEX.ClassPoint, image.pointClass);
-        setPrebuiltObject(SPECIAL_OBJECT_INDEX.ClassLargePositiveInteger, image.largePositiveIntegerClass);
-        setPrebuiltObject(SPECIAL_OBJECT_INDEX.ClassMessage, image.messageClass);
-        setPrebuiltObject(SPECIAL_OBJECT_INDEX.ClassCompiledMethod, image.compiledMethodClass);
-        setPrebuiltObject(SPECIAL_OBJECT_INDEX.ClassSemaphore, image.semaphoreClass);
-        setPrebuiltObject(SPECIAL_OBJECT_INDEX.ClassCharacter, image.characterClass);
-        setPrebuiltObject(SPECIAL_OBJECT_INDEX.SelectorDoesNotUnderstand, image.doesNotUnderstand);
-        setPrebuiltObject(SPECIAL_OBJECT_INDEX.SelectorMustBeBoolean, image.mustBeBooleanSelector);
-        setPrebuiltObject(SPECIAL_OBJECT_INDEX.ClassByteArray, image.byteArrayClass);
-        setPrebuiltObject(SPECIAL_OBJECT_INDEX.ClassProcess, image.processClass);
-        setPrebuiltObject(SPECIAL_OBJECT_INDEX.ClassBlockClosure, image.blockClosureClass);
-        setPrebuiltObject(SPECIAL_OBJECT_INDEX.ExternalObjectsArray, image.externalObjectsArray);
-        setPrebuiltObject(SPECIAL_OBJECT_INDEX.ClassLargeNegativeInteger, image.largeNegativeIntegerClass);
-        setPrebuiltObject(SPECIAL_OBJECT_INDEX.SelectorAboutToReturn, image.aboutToReturnSelector);
-        setPrebuiltObject(SPECIAL_OBJECT_INDEX.SelectorRunWithIn, image.runWithInSelector);
-        setPrebuiltObject(SPECIAL_OBJECT_INDEX.PrimErrTableIndex, image.primitiveErrorTable);
-        setPrebuiltObject(SPECIAL_OBJECT_INDEX.SpecialSelectors, image.specialSelectors);
+        setPrebuiltObject(SPECIAL_OBJECT.CLASS_METHOD_CONTEXT, image.methodContextClass);
+        setPrebuiltObject(SPECIAL_OBJECT.CLASS_POINT, image.pointClass);
+        setPrebuiltObject(SPECIAL_OBJECT.CLASS_LARGE_POSITIVE_INTEGER, image.largePositiveIntegerClass);
+        setPrebuiltObject(SPECIAL_OBJECT.CLASS_MESSAGE, image.messageClass);
+        setPrebuiltObject(SPECIAL_OBJECT.CLASS_COMPILED_METHOD, image.compiledMethodClass);
+        setPrebuiltObject(SPECIAL_OBJECT.CLASS_SEMAPHORE, image.semaphoreClass);
+        setPrebuiltObject(SPECIAL_OBJECT.CLASS_CHARACTER, image.characterClass);
+        setPrebuiltObject(SPECIAL_OBJECT.SELECTOR_DOES_NOT_UNDERSTAND, image.doesNotUnderstand);
+        setPrebuiltObject(SPECIAL_OBJECT.SELECTOR_MUST_BE_BOOLEAN, image.mustBeBooleanSelector);
+        setPrebuiltObject(SPECIAL_OBJECT.CLASS_BYTE_ARRAY, image.byteArrayClass);
+        setPrebuiltObject(SPECIAL_OBJECT.CLASS_PROCESS, image.processClass);
+        setPrebuiltObject(SPECIAL_OBJECT.CLASS_BLOCK_CLOSURE, image.blockClosureClass);
+        setPrebuiltObject(SPECIAL_OBJECT.EXTERNAL_OBJECTS_ARRAY, image.externalObjectsArray);
+        setPrebuiltObject(SPECIAL_OBJECT.CLASS_LARGE_NEGATIVE_INTEGER, image.largeNegativeIntegerClass);
+        setPrebuiltObject(SPECIAL_OBJECT.SELECTOR_ABOUT_TO_RETURN, image.aboutToReturnSelector);
+        setPrebuiltObject(SPECIAL_OBJECT.SELECTOR_RUN_WITHIN, image.runWithInSelector);
+        setPrebuiltObject(SPECIAL_OBJECT.PRIM_ERR_TABLE_INDEX, image.primitiveErrorTable);
+        setPrebuiltObject(SPECIAL_OBJECT.SPECIAL_SELECTORS, image.specialSelectors);
     }
 
     @ExplodeLoop
     private void initPrebuiltSelectors() {
         final SqueakImageChunk specialObjectsChunk = getChunk(specialObjectsPointer);
-        final SqueakImageChunk specialSelectorChunk = getChunk(specialObjectsChunk.getWords()[SPECIAL_OBJECT_INDEX.SpecialSelectors]);
+        final SqueakImageChunk specialSelectorChunk = getChunk(specialObjectsChunk.getWords()[SPECIAL_OBJECT.SPECIAL_SELECTORS]);
 
         final NativeObject[] specialSelectors = image.specialSelectorsArray;
         for (int i = 0; i < specialSelectors.length; i++) {

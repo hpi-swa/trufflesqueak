@@ -21,7 +21,7 @@ import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT_INDEX;
+import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.TEST_RESULT;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
@@ -226,7 +226,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
 
     private static Object getSmalltalkDictionary() {
         if (smalltalkDictionary == null) {
-            smalltalkDictionary = image.specialObjectsArray.at0Object(SPECIAL_OBJECT_INDEX.SmalltalkDictionary);
+            smalltalkDictionary = image.specialObjectsArray.at0Object(SPECIAL_OBJECT.SMALLTALK_DICTIONARY);
         }
         return smalltalkDictionary;
     }
