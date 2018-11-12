@@ -1,5 +1,8 @@
 package de.hpi.swa.graal.squeak.model;
 
+import java.util.Arrays;
+
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
@@ -35,7 +38,11 @@ public final class ContextObject extends AbstractPointersObject {
     private ContextObject(final SqueakImageContext image, final int size) {
         super(image, image.methodContextClass);
         isDirty = true;
-        setPointersUnsafe(new Object[CONTEXT.TEMP_FRAME_START + size]);
+        /*
+         * Size of pointers array is too small, because method is unknown, so we cannot call
+         * CompiledCodeObject.getNumArgsAndCopied() here. Add 8 additional slots for now.
+         */
+        setPointersUnsafe(new Object[CONTEXT.TEMP_FRAME_START + size + 8]);
     }
 
     public static ContextObject create(final SqueakImageContext image, final int size, final MaterializedFrame frame, final FrameMarker frameMarker) {
@@ -122,7 +129,17 @@ public final class ContextObject extends AbstractPointersObject {
         if (!isDirty) {
             isDirty = true;
         }
-        assert value != null; // null indicates a problem
+        assert value != null : "null indicates a problem";
+        if (index >= size()) { // Ensure context's pointers array is big enough.
+            /*
+             * When a new context is created, its method might be unknown. And since arguments are
+             * stored in the pointers array as well, it is unknown how big the pointers array needs
+             * to be in those cases. See comment in `ContextObject(image, size)`.
+             */
+            image.printToStdErr("Growing context pointers from", size(), "to", index + 8, "-", this);
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            setPointersUnsafe(Arrays.copyOf(getPointers(), (int) index + 8));
+        }
         setPointer((int) index, value);
     }
 
