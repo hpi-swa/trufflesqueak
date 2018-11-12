@@ -129,7 +129,27 @@ public abstract class SqueakObjectPointersBecomeOneWayNode extends Node {
         }
     }
 
-    @Specialization
+    @Specialization(guards = "obj.hasTruffleFrame()")
+    protected final void doContextWithTruffleFrame(final ContextObject obj, final Object[] from, final Object[] to, final boolean copyHash) {
+        /**
+         * This specialization is needed because a {@link ContextObject} can have a larger pointers
+         * array than its method has stack slots.
+         */
+        for (int i = 0; i < from.length; i++) {
+            final Object fromPointer = from[i];
+            // skip sender (for performance), pc, and sp
+            for (int j = CONTEXT.METHOD; j < CONTEXT.TEMP_FRAME_START + obj.getMethod().getNumStackSlots(); j++) {
+                final Object newPointer = obj.at0(j);
+                if (newPointer == fromPointer) {
+                    final Object toPointer = to[i];
+                    obj.atput0(j, toPointer);
+                    updateHashNode.executeUpdate(fromPointer, toPointer, copyHash);
+                }
+            }
+        }
+    }
+
+    @Specialization(guards = "!obj.hasTruffleFrame()")
     protected final void doContext(final ContextObject obj, final Object[] from, final Object[] to, final boolean copyHash) {
         for (int i = 0; i < from.length; i++) {
             final Object fromPointer = from[i];
