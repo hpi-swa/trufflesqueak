@@ -2676,9 +2676,9 @@ public final class BitBlt {
             PrimitiveFailed.andTransferToInterpreter();
         }
         /* load the word that contains our target */
-        word = bitmapWords[(int) ((yVal * stride) + div(xVal, ppW))];
+        word = Integer.toUnsignedLong(bitmapWords[(int) ((yVal * stride) + div(xVal, ppW))]);
         /* make a mask to isolate the pixel within that word */
-        mask = shr(0xFFFFFFFF, (32 - depth));
+        mask = shr(0xFFFFFFFFL, (32 - depth));
         /*
          * this is the tricky MSB part - we mask the xVal to find how far into the word we need,
          * then add 1 for the pixel we're looking for, then * depth to get the bit shift
