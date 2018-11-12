@@ -366,7 +366,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         protected static final boolean hasMinimalSize(final NativeObject buffer) {
-            return buffer.getIntLength() >= B2D.GWMinimalSize;
+            return buffer.getIntLength() >= B2D.GW_MINIMAL_SIZE;
         }
     }
 
