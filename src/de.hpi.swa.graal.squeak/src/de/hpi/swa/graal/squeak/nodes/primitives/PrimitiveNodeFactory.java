@@ -66,7 +66,6 @@ public final class PrimitiveNodeFactory {
                     new UnixOSProcessPlugin(),
                     new UUIDPlugin(),
                     new Win32OSProcessPlugin()};
-    @CompilationFinal(dimensions = 1) private static final String[] simulatedPlugins = new String[]{"BalloonPlugin"};
 
     // Using an array instead of a HashMap requires type-checking to be disabled here.
     @SuppressWarnings("unchecked") @CompilationFinal(dimensions = 1) private static final NodeFactory<? extends AbstractPrimitiveNode>[] primitiveTable = (NodeFactory<? extends AbstractPrimitiveNode>[]) new NodeFactory<?>[MAX_PRIMITIVE_INDEX];
@@ -93,11 +92,6 @@ public final class PrimitiveNodeFactory {
 
     @TruffleBoundary
     public static AbstractPrimitiveNode forName(final CompiledMethodObject method, final String moduleName, final String functionName) {
-        for (int i = 0; i < simulatedPlugins.length; i++) {
-            if (moduleName.equals(simulatedPlugins[i])) {
-                return SimulationPrimitiveNode.create(method, moduleName, functionName);
-            }
-        }
         for (AbstractPrimitiveFactoryHolder plugin : plugins) {
             if (!plugin.isEnabled(method.image)) {
                 continue;
@@ -129,9 +123,6 @@ public final class PrimitiveNodeFactory {
         final HashSet<String> names = new HashSet<>(plugins.length);
         for (AbstractPrimitiveFactoryHolder plugin : plugins) {
             names.add(plugin.getClass().getSimpleName());
-        }
-        for (int i = 0; i < simulatedPlugins.length; i++) {
-            names.add(simulatedPlugins[i] + " (simulated)");
         }
         return names;
     }
