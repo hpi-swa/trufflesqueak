@@ -3487,7 +3487,7 @@ public final class BitBlt {
         long pixVal;
         long value;
 
-        if (!((cmFlags & (COLOR_MAP_PRESENT | COLOR_MAP_INDEXED_PART)) == (COLOR_MAP_PRESENT | COLOR_MAP_INDEXED_PART))) {
+        if ((cmFlags & (COLOR_MAP_PRESENT | COLOR_MAP_INDEXED_PART)) != (COLOR_MAP_PRESENT | COLOR_MAP_INDEXED_PART)) {
             return destinationWord;
         }
         pixMask = MASK_TABLE[destDepth];

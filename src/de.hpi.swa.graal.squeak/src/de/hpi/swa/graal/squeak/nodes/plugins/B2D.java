@@ -1859,7 +1859,7 @@ public final class B2D {
      */
 
     /* BalloonEngineBase>>#fillColorSpanAA:x0:x1: */
-    private static void fillColorSpanAAx0x1(final long pixelValue32, final long leftX, final long rightX) {
+    private static void fillColorSpanAAx0x1(final int pixelValue32, final int leftX, final int rightX) {
         final long aaLevel;
         final long baseShift;
         final long colorMask;
@@ -1876,7 +1876,7 @@ public final class B2D {
         aaLevel = aaLevelGet();
         baseShift = aaShiftGet();
         /* Part a: Deal with the first n sub-pixels */
-        x = (int) leftX;
+        x = leftX;
         if (x < firstPixel) {
             pv32 = shr(pixelValue32 & aaColorMaskGet(), aaColorShiftGet());
             while (x < firstPixel) {
@@ -1909,7 +1909,7 @@ public final class B2D {
      */
 
     /* BalloonEngineBase>>#fillColorSpan:from:to: */
-    private static void fillColorSpanfromto(final int pixelValue32, final long leftX, final long rightX) {
+    private static void fillColorSpanfromto(final int pixelValue32, final int leftX, final int rightX) {
         int x0;
         final int x1;
 
@@ -1918,9 +1918,9 @@ public final class B2D {
             fillColorSpanAAx0x1(pixelValue32, leftX, rightX);
             return;
         }
-        x0 = (int) leftX;
+        x0 = leftX;
         /* Unroll the inner loop four times, since we're only storing data. */
-        x1 = (int) rightX;
+        x1 = rightX;
         while ((x0 + 4) < x1) {
             spanBuffer[x0] = pixelValue32;
             spanBuffer[x0 + 1] = pixelValue32;
@@ -2041,17 +2041,17 @@ public final class B2D {
         int rampIndex;
         final int rampSize;
         int x;
-        final long x0;
-        final long x1;
+        final int x0;
+        final int x1;
 
         rampPtr = gradientRampIndexOf(fill);
         rampSize = (int) gradientRampLengthOf(fill);
         dsX = fillDirectionXOf(fill);
         ds = ((leftX - (fillOriginXOf(fill))) * dsX) + ((yValue - (fillOriginYOf(fill))) * (fillDirectionYOf(fill)));
-        x = (int) (x0 = leftX);
+        x = x0 = (int) leftX;
         /* Note: The inner loop has been divided into three parts for speed */
         /* Part one: Fill everything outside the left boundary */
-        x1 = rightX;
+        x1 = (int) rightX;
         while (((((rampIndex = (int) (ds / 65536))) < 0) || (rampIndex >= rampSize)) && (x < x1)) {
             x++;
             ds += dsX;
@@ -2193,7 +2193,7 @@ public final class B2D {
     /* Part 2a) Compute the decreasing part of the ramp */
 
     /* BalloonEnginePlugin>>#fillRadialDecreasingAA:ramp:deltaST:dsX:dtX:from:to: */
-    private static long fillRadialDecreasingAArampdeltaSTdsXdtXfromto(final long fill, final int rampPtr, final long dsX, final long dtX, final long leftX, final long rightX) {
+    private static int fillRadialDecreasingAArampdeltaSTdsXdtXfromto(final long fill, final int rampPtr, final long dsX, final long dtX, final long leftX, final long rightX) {
         final long aaLevel;
         final long baseShift;
         long colorMask;
@@ -2302,7 +2302,7 @@ public final class B2D {
     /* Part 2a) Compute the decreasing part of the ramp */
 
     /* BalloonEnginePlugin>>#fillRadialDecreasing:ramp:deltaST:dsX:dtX:from:to: */
-    private static long fillRadialDecreasingrampdeltaSTdsXdtXfromto(final long fill, final int rampPtr, final long dsX, final long dtX, final long leftX, final long rightX) {
+    private static int fillRadialDecreasingrampdeltaSTdsXdtXfromto(final long fill, final int rampPtr, final long dsX, final long dtX, final long leftX, final long rightX) {
         int ds;
         int dt;
         long length2;
@@ -2350,7 +2350,7 @@ public final class B2D {
     /* Draw a radial gradient fill. */
 
     /* BalloonEnginePlugin>>#fillRadialGradient:from:to:at: */
-    private static void fillRadialGradientfromtoat(final long fill, final long leftX, final long rightX, final long yValue) {
+    private static void fillRadialGradientfromtoat(final long fill, final int leftX, final int rightX, final long yValue) {
         final long deltaX;
         final long deltaY;
         long ds;
@@ -2360,7 +2360,7 @@ public final class B2D {
         final long length2;
         final int rampPtr;
         final int rampSize;
-        long x;
+        int x;
         final long x1;
 
         rampPtr = gradientRampIndexOf(fill);
@@ -2412,7 +2412,7 @@ public final class B2D {
     /* Part 2b) Compute the increasing part of the ramp */
 
     /* BalloonEnginePlugin>>#fillRadialIncreasingAA:ramp:deltaST:dsX:dtX:from:to: */
-    private static long fillRadialIncreasingAArampdeltaSTdsXdtXfromto(final long fill, final int rampPtr, final long dsX, final long dtX, final long leftX, final long rightX) {
+    private static int fillRadialIncreasingAArampdeltaSTdsXdtXfromto(final long fill, final int rampPtr, final long dsX, final long dtX, final long leftX, final long rightX) {
         final long aaLevel;
         final long baseShift;
         long colorMask;
@@ -2521,7 +2521,7 @@ public final class B2D {
     /* Part 2b) Compute the increasing part of the ramp */
 
     /* BalloonEnginePlugin>>#fillRadialIncreasing:ramp:deltaST:dsX:dtX:from:to: */
-    private static long fillRadialIncreasingrampdeltaSTdsXdtXfromto(final long fill, final int rampPtr, final long dsX, final long dtX, final long leftX, final long rightX) {
+    private static int fillRadialIncreasingrampdeltaSTdsXdtXfromto(final long fill, final int rampPtr, final long dsX, final long dtX, final long leftX, final long rightX) {
         int ds;
         int dt;
         long lastLength;
@@ -2585,8 +2585,8 @@ public final class B2D {
     /* BalloonEngineBase>>#fillSpan:from:to: */
     private static boolean fillSpanfromto(final long fill, final long leftX, final long rightX) {
         final int type;
-        long x0;
-        long x1;
+        int x0;
+        int x1;
 
         if (fill == 0) {
             return false;
@@ -2594,12 +2594,12 @@ public final class B2D {
         if (leftX < (spanEndAAGet())) {
             x0 = spanEndAAGet();
         } else {
-            x0 = leftX;
+            x0 = (int) leftX;
         }
         if (rightX > shl(spanSizeGet(), aaShiftGet())) {
             x1 = shl(spanSizeGet(), aaShiftGet());
         } else {
-            x1 = rightX;
+            x1 = (int) rightX;
         }
         if (x0 < (fillMinXGet())) {
             x0 = fillMinXGet();
@@ -5220,7 +5220,7 @@ public final class B2D {
         if (((failureCode = quickLoadEngineFromrequiredState(receiver, GE_STATE_UNLOCKED))) != 0) {
             PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
-        if (!(((failureCode = loadSpanBufferFrom(fetchNativeofObject(BE_SPAN_INDEX, engine)))) == 0)) {
+        if (((failureCode = loadSpanBufferFrom(fetchNativeofObject(BE_SPAN_INDEX, engine)))) != 0) {
             PrimitiveFailed.andTransferToInterpreter(failureCode);
         }
         initializeGETProcessing();
