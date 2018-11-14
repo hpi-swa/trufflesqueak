@@ -8,7 +8,14 @@ import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetAdapter;
+import java.awt.dnd.DropTargetDragEvent;
+import java.awt.dnd.DropTargetDropEvent;
+import java.awt.dnd.DropTargetEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -16,9 +23,12 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DirectColorModel;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -33,12 +43,14 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.io.SqueakIOConstants.DRAG;
 import de.hpi.swa.graal.squeak.io.SqueakIOConstants.EVENT_TYPE;
 import de.hpi.swa.graal.squeak.io.SqueakIOConstants.KEYBOARD;
 import de.hpi.swa.graal.squeak.io.SqueakIOConstants.WINDOW;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.FORM;
 import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.nodes.plugins.DropPlugin;
 
 public final class SqueakDisplay implements SqueakDisplayInterface {
     private static final String DEFAULT_WINDOW_TITLE = "GraalSqueak";
@@ -67,7 +79,6 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
         this.image = image;
         mouse = new SqueakMouse(this);
         keyboard = new SqueakKeyboard(this);
-
         frame.setTitle(SqueakDisplay.DEFAULT_WINDOW_TITLE + " (" + image.getImagePath() + ")");
         frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         frame.setMinimumSize(MINIMUM_WINDOW_SIZE);
@@ -78,6 +89,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
         if (REPAINT_AUTOMATICALLY) {
             repaintExecutor = Executors.newSingleThreadScheduledExecutor();
             repaintExecutor.scheduleWithFixedDelay(new Runnable() {
+                @Override
                 public void run() {
                     canvas.repaint();
                 }
@@ -87,29 +99,31 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
         }
     }
 
+    @SuppressWarnings("unused")
     private void installEventListeners() {
         canvas.addMouseListener(mouse);
         canvas.addMouseMotionListener(mouse);
+        new DropTarget(canvas, new SqueakDropTargetAdapter());
         frame.addKeyListener(keyboard);
         frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowActivated(final WindowEvent e) {
-                addEvent(EVENT_TYPE.WINDOW, WINDOW.ACTIVATED, 0, 0, 0);
+                addWindowEvent(WINDOW.ACTIVATED);
             }
 
             @Override
             public void windowClosing(final WindowEvent e) {
-                addEvent(EVENT_TYPE.WINDOW, WINDOW.CLOSE, 0, 0, 0);
+                addWindowEvent(WINDOW.CLOSE);
             }
 
             @Override
             public void windowIconified(final WindowEvent e) {
-                addEvent(EVENT_TYPE.WINDOW, WINDOW.ICONISE, 0, 0, 0);
+                addWindowEvent(WINDOW.ICONISE);
             }
 
             @Override
             public void windowStateChanged(final WindowEvent e) {
-                addEvent(EVENT_TYPE.WINDOW, WINDOW.METRIC_CHANGE, 0, 0, 0);
+                addWindowEvent(WINDOW.METRIC_CHANGE);
             }
         });
     }
@@ -209,6 +223,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
         }
     }
 
+    @Override
     @TruffleBoundary
     public void showDisplayBitsLeftTopRightBottom(final PointersObject destForm, final int left, final int top, final int right, final int bottom) {
         if (left < right && top < bottom && !deferUpdates && destForm.isDisplay()) {
@@ -245,6 +260,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
         frame.pack();
     }
 
+    @Override
     public DisplayPoint getWindowSize() {
         return new DisplayPoint(frame.getContentPane().getWidth(), frame.getContentPane().getHeight());
     }
@@ -372,7 +388,19 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     }
 
     public void addEvent(final long eventType, final long value3, final long value4, final long value5, final long value6) {
-        deferredEvents.add(new long[]{eventType, getEventTime(), value3, value4, value5, value6, 0L, 0L});
+        addEvent(eventType, value3, value4, value5, value6, 0L, 0L);
+    }
+
+    private void addDragEvent(final long type, final Point location) {
+        addEvent(EVENT_TYPE.DRAG_DROP_FILES, type, (long) location.getX(), (long) location.getY(), buttons >> 3, DropPlugin.getFileListSize(), 0L);
+    }
+
+    private void addWindowEvent(final long type) {
+        addEvent(EVENT_TYPE.WINDOW, type, 0L, 0L, 0L);
+    }
+
+    public void addEvent(final long eventType, final long value3, final long value4, final long value5, final long value6, final long value7, final long value8) {
+        deferredEvents.add(new long[]{eventType, getEventTime(), value3, value4, value5, value6, value7, value8});
         if (inputSemaphoreIndex > 0) {
             image.interrupt.signalSemaphoreWithIndex(inputSemaphoreIndex);
         }
@@ -440,7 +468,57 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
         Toolkit.getDefaultToolkit().beep();
     }
 
+    @Override
     public void pollEvents() {
         throw new SqueakException("No need to poll for events manually when using AWT.");
+    }
+
+    private final class SqueakDropTargetAdapter extends DropTargetAdapter {
+
+        @Override
+        public void drop(final DropTargetDropEvent dtde) {
+            final Transferable transferable = dtde.getTransferable();
+            for (DataFlavor flavor : transferable.getTransferDataFlavors()) {
+                if (DataFlavor.javaFileListFlavor.equals(flavor)) {
+                    dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
+                    try {
+                        @SuppressWarnings("unchecked")
+                        final List<File> l = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
+                        final Iterator<File> iter = l.iterator();
+                        final String[] fileList = new String[l.size()];
+                        int i = 0;
+                        while (iter.hasNext()) {
+                            fileList[i++] = iter.next().getCanonicalPath();
+                        }
+                        DropPlugin.updateFileList(fileList);
+                        addDragEvent(DRAG.DROP, dtde.getLocation());
+                        dtde.getDropTargetContext().dropComplete(true);
+                        return;
+                    } catch (UnsupportedFlavorException e) {
+                        CompilerDirectives.transferToInterpreter();
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        CompilerDirectives.transferToInterpreter();
+                        e.printStackTrace();
+                    }
+                }
+            }
+            dtde.rejectDrop();
+        }
+
+        @Override
+        public void dragEnter(final DropTargetDragEvent e) {
+            addDragEvent(DRAG.ENTER, e.getLocation());
+        }
+
+        @Override
+        public void dragExit(final DropTargetEvent e) {
+            addDragEvent(DRAG.LEAVE, new Point(0, 0));
+        }
+
+        @Override
+        public void dragOver(final DropTargetDragEvent e) {
+            addDragEvent(DRAG.MOVE, e.getLocation());
+        }
     }
 }

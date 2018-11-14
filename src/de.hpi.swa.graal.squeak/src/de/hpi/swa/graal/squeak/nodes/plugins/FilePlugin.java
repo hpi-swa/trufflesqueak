@@ -67,6 +67,24 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
     }
 
+    @TruffleBoundary
+    protected static Object createFileHandleOrPrimFail(final TruffleFile truffleFile, final Boolean writableFlag) {
+        try {
+            final EnumSet<StandardOpenOption> options;
+            if (writableFlag) {
+                options = EnumSet.<StandardOpenOption> of(StandardOpenOption.WRITE, StandardOpenOption.READ, StandardOpenOption.CREATE);
+            } else {
+                options = EnumSet.<StandardOpenOption> of(StandardOpenOption.READ);
+            }
+            final SeekableByteChannel file = truffleFile.newByteChannel(options);
+            final long fileId = file.hashCode();
+            files.put(fileId, file);
+            return fileId;
+        } catch (IOException | UnsupportedOperationException | SecurityException e) {
+            throw new PrimitiveFailed();
+        }
+    }
+
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveDirectoryCreate")
     protected abstract static class PrimDirectoryCreateNode extends AbstractFilePluginPrimitiveNode {
@@ -279,23 +297,8 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "nativeFileName.isByteType()")
-        @TruffleBoundary
         protected final Object doOpen(@SuppressWarnings("unused") final PointersObject receiver, final NativeObject nativeFileName, final Boolean writableFlag) {
-            try {
-                final EnumSet<StandardOpenOption> options;
-                final TruffleFile truffleFile = asTruffleFile(nativeFileName);
-                if (writableFlag) {
-                    options = EnumSet.<StandardOpenOption> of(StandardOpenOption.WRITE, StandardOpenOption.READ, StandardOpenOption.CREATE);
-                } else {
-                    options = EnumSet.<StandardOpenOption> of(StandardOpenOption.READ);
-                }
-                final SeekableByteChannel file = truffleFile.newByteChannel(options);
-                final long fileId = file.hashCode();
-                files.put(fileId, file);
-                return fileId;
-            } catch (IOException | UnsupportedOperationException | SecurityException e) {
-                throw new PrimitiveFailed();
-            }
+            return createFileHandleOrPrimFail(asTruffleFile(nativeFileName), writableFlag);
         }
     }
 

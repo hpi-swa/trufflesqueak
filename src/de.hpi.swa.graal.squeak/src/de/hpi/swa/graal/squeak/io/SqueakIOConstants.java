@@ -85,6 +85,13 @@ public final class SqueakIOConstants {
         UP
     }
 
+    public static final class DRAG {
+        public static final long ENTER = 1;
+        public static final long MOVE = 2;
+        public static final long LEAVE = 3;
+        public static final long DROP = 4;
+    }
+
     public static final class KEYBOARD_EVENT {
         public static final long CHAR = 0;
         public static final long DOWN = 1;
