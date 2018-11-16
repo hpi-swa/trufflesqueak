@@ -131,10 +131,10 @@ public abstract class ObjectGraphNode extends AbstractNodeWithImage {
             @Override
             public Frame visitFrame(final FrameInstance frameInstance) {
                 final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
-                final Object[] arguments = current.getArguments();
-                if (arguments.length <= FrameAccess.RECEIVER) {
-                    return null; // skip, this is not a normal GraalSqueak frame
+                if (!FrameAccess.isGraalSqueakFrame(current)) {
+                    return null;
                 }
+                final Object[] arguments = current.getArguments();
                 for (int i = FrameAccess.RECEIVER; i < arguments.length; i++) {
                     final Object argument = arguments[i];
                     if (argument instanceof AbstractSqueakObject) {

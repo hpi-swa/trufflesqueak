@@ -7,6 +7,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakAbortException;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ClassObject;
@@ -36,23 +37,17 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
         isDoesNotUnderstandNode = IsDoesNotUnderstandNode.create(image);
     }
 
-    @Specialization(guards = {"!image.isTesting()", "!isDoesNotUnderstandNode.execute(lookupResult)"})
+    @Specialization(guards = {"!image.isHeadless() || isAllowedInHeadlessMode(selector)", "!isDoesNotUnderstandNode.execute(lookupResult)"})
     protected final Object doDispatch(final VirtualFrame frame, @SuppressWarnings("unused") final NativeObject selector, final CompiledMethodObject lookupResult,
                     @SuppressWarnings("unused") final ClassObject rcvrClass, final Object[] rcvrAndArgs, final Object contextOrMarker) {
         return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndArgs, contextOrMarker);
     }
 
-    @Specialization(guards = {"image.isTesting()", "selector != image.getDebugErrorSelector()", "!isDoesNotUnderstandNode.execute(lookupResult)"})
-    protected final Object doDispatchTesting(final VirtualFrame frame, @SuppressWarnings("unused") final NativeObject selector, final CompiledMethodObject lookupResult,
-                    @SuppressWarnings("unused") final ClassObject rcvrClass, final Object[] rcvrAndArgs, final Object contextOrMarker) {
-        return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndArgs, contextOrMarker);
-    }
-
     @SuppressWarnings("unused")
-    @Specialization(guards = {"image.isTesting()", "selector == image.getDebugErrorSelector()"})
-    protected static final Object doDispatchTestingDebugError(final VirtualFrame frame, final NativeObject selector, final CompiledMethodObject lookupResult,
+    @Specialization(guards = {"image.isHeadless()", "!isAllowedInHeadlessMode(selector)", "!isDoesNotUnderstandNode.execute(lookupResult)"})
+    protected static final Object doDispatchHeadlessError(final VirtualFrame frame, final NativeObject selector, final CompiledMethodObject lookupResult,
                     final ClassObject rcvrClass, final Object[] rcvrAndArgs, final Object contextOrMarker) {
-        throw new SqueakException("Debugger detected during testing. Failing...");
+        throw new SqueakAbortException(String.format("%s>>#%s detected in headless mode. Aborting...", rcvrClass.getSqueakClassName(), selector.asString()));
     }
 
     @Specialization(guards = {"isDoesNotUnderstandNode.execute(lookupResult)"})
@@ -62,7 +57,7 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
         return dispatchNode.executeDispatch(frame, lookupResult, new Object[]{rcvrAndArgs[0], message}, contextOrMarker);
     }
 
-    @Fallback
+    @Specialization(guards = "!isCompiledMethodObject(targetObject)")
     protected final Object doObjectAsMethod(final VirtualFrame frame, final NativeObject selector, final Object targetObject, @SuppressWarnings("unused") final ClassObject rcvrClass,
                     final Object[] rcvrAndArgs, final Object contextOrMarker) {
         final Object[] arguments = ArrayUtils.allButFirst(rcvrAndArgs);
@@ -73,6 +68,17 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
         } else {
             return dispatchNode.executeDispatch(frame, newLookupResult, new Object[]{targetObject, selector, image.newList(arguments), rcvrAndArgs[0]}, contextOrMarker);
         }
+    }
+
+    @SuppressWarnings("unused")
+    @Fallback
+    protected static final Object doFail(final VirtualFrame frame, final NativeObject selector, final Object targetObject, final ClassObject rcvrClass, final Object[] rcvrAndArgs,
+                    final Object contextOrMarker) {
+        throw new SqueakException("Should never happen");
+    }
+
+    protected final boolean isAllowedInHeadlessMode(final NativeObject selector) {
+        return selector != image.getDebugErrorSelector() && selector != image.getDebugSyntaxErrorSelector();
     }
 
     private LookupClassNode getLookupClassNode() {
@@ -95,8 +101,7 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
         final PointersObject message = new PointersObject(image, image.messageClass, image.messageClass.getBasicInstanceSize());
         message.atput0(MESSAGE.SELECTOR, selector);
         message.atput0(MESSAGE.ARGUMENTS, image.newList(arguments));
-        if (message.instsize() > MESSAGE.LOOKUP_CLASS) {
-            // early versions do not have lookupClass
+        if (message.instsize() > MESSAGE.LOOKUP_CLASS) { // Early versions do not have lookupClass.
             message.atput0(MESSAGE.LOOKUP_CLASS, rcvrClass);
         }
         return message;

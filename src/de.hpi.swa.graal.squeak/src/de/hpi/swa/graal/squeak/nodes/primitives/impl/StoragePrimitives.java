@@ -103,10 +103,10 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                         return null;
                     }
                     final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_WRITE);
-                    final Object[] arguments = current.getArguments();
-                    if (arguments.length <= FrameAccess.RECEIVER) {
+                    if (!FrameAccess.isGraalSqueakFrame(current)) {
                         return null;
                     }
+                    final Object[] arguments = current.getArguments();
                     for (int i = FrameAccess.RECEIVER; i < arguments.length; i++) {
                         final Object argument = arguments[i];
                         for (int j = 0; j < fromPointers.length; j++) {

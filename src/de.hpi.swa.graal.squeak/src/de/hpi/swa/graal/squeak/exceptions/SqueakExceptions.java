@@ -34,6 +34,18 @@ public final class SqueakExceptions {
         }
     }
 
+    public static final class SqueakAbortException extends RuntimeException implements TruffleException {
+        private static final long serialVersionUID = 1L;
+
+        public SqueakAbortException(final Object... messageParts) {
+            super(ArrayUtils.toJoinedString(" ", messageParts));
+        }
+
+        public Node getLocation() {
+            return null;
+        }
+    }
+
     public static final class SqueakQuit extends ControlFlowException implements TruffleException {
         private static final long serialVersionUID = 1L;
         private final int exitStatus;

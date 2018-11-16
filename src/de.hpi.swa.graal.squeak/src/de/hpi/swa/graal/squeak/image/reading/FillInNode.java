@@ -36,8 +36,16 @@ public abstract class FillInNode extends Node {
         obj.fillin(chunk);
     }
 
-    @Specialization
+    @Specialization(guards = "obj.image.getCompilerClass() == null")
     protected static final void doClassObj(final ClassObject obj, final SqueakImageChunk chunk) {
+        obj.fillin(chunk);
+        if (!obj.isMetaclass() && obj.size() > 6 && "Compiler".equals(((NativeObject) obj.getClassName()).asString())) {
+            obj.image.setCompilerClass(obj);
+        }
+    }
+
+    @Specialization(guards = "obj.image.getCompilerClass() != null")
+    protected static final void doClassObjNoCheck(final ClassObject obj, final SqueakImageChunk chunk) {
         obj.fillin(chunk);
     }
 
@@ -67,22 +75,7 @@ public abstract class FillInNode extends Node {
         obj.setStorage(chunk.getLongs());
     }
 
-    @Specialization(guards = {"obj.isByteType()", "!chunk.image.isTesting()", "chunk.image.getSimulatePrimitiveArgsSelector() != null"})
-    protected static final void doNativeByte(final NativeObject obj, final SqueakImageChunk chunk) {
-        final byte[] stringBytes = chunk.getBytes();
-        obj.setStorage(stringBytes);
-    }
-
-    @Specialization(guards = {"obj.isByteType()", "!chunk.image.isTesting()", "chunk.image.getSimulatePrimitiveArgsSelector() == null"})
-    protected final void doNativeByteAndFindSimulateSelector(final NativeObject obj, final SqueakImageChunk chunk) {
-        final byte[] stringBytes = chunk.getBytes();
-        obj.setStorage(stringBytes);
-        if (Arrays.equals(SimulationPrimitiveNode.SIMULATE_PRIMITIVE_SELECTOR, stringBytes)) {
-            image.setSimulatePrimitiveArgsSelector(obj);
-        }
-    }
-
-    @Specialization(guards = {"obj.isByteType()", "chunk.image.isTesting()"})
+    @Specialization(guards = {"obj.isByteType()"})
     protected final void doNativeByteTesting(final NativeObject obj, final SqueakImageChunk chunk) {
         final byte[] stringBytes = chunk.getBytes();
         obj.setStorage(stringBytes);
@@ -90,6 +83,8 @@ public abstract class FillInNode extends Node {
             image.setAsSymbolSelector(obj);
         } else if (image.getDebugErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_ERROR_SELECTOR_NAME, stringBytes)) {
             image.setDebugErrorSelector(obj);
+        } else if (image.getDebugSyntaxErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_SYNTAX_ERROR_SELECTOR_NAME, stringBytes)) {
+            image.setDebugSyntaxErrorSelector(obj);
         } else if (image.getSimulatePrimitiveArgsSelector() == null && Arrays.equals(SimulationPrimitiveNode.SIMULATE_PRIMITIVE_SELECTOR, stringBytes)) {
             image.setSimulatePrimitiveArgsSelector(obj);
         }

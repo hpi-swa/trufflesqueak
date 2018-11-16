@@ -102,6 +102,9 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
                         help='disable background compilation',
                         dest='background_compilation',
                         action='store_false', default=True)
+    parser.add_argument('-c', '--code',
+                        help='Smalltalk code to be executed in headless mode',
+                        dest='code')
     parser.add_argument('--cpusampler', help='enable CPU sampling',
                         dest='cpusampler', action='store_true', default=False)
     parser.add_argument('--cputracer', help='enable CPU tracing',
@@ -133,15 +136,9 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
                         default=False)
     parser.add_argument('--memtracer', help='enable Memory tracing',
                         dest='memtracer', action='store_true', default=False)
-    parser.add_argument('-m', '--method',
-                        help='method selector when receiver is provided',
-                        dest='method')
     parser.add_argument('--print-defaults', help='print VM defaults',
                         dest='print_defaults', action='store_true',
                         default=False)
-    parser.add_argument('-r', '--receiver',
-                        help='SmallInteger to be used as receiver',
-                        dest='receiver')
     parser.add_argument(
         '-tc', '--trace-compilation', help='trace Truffle compilation',
         dest='trace_compilation', action='store_true', default=False)
@@ -196,15 +193,10 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
     if extra_vm_args:
         vm_args += extra_vm_args
 
-    if parsed_args.receiver and parsed_args.method:
+    if parsed_args.code:
         vm_args += ['-Djava.awt.headless=true']
 
     vm_args.append('%s.launcher.GraalSqueakLauncher' % PACKAGE_NAME)
-
-    if parsed_args.receiver and not parsed_args.method:
-        parser.error('--method required when --receiver is provided')
-    if not parsed_args.receiver and parsed_args.method:
-        parser.error('--receiver required when --method is provided')
 
     squeak_arguments = []
     if parsed_args.disable_interrupts:
@@ -212,9 +204,8 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
             '--%s.DisableInterruptHandler' % LANGUAGE_NAME)
     if parsed_args.headless:
         squeak_arguments.append('--%s.Headless' % LANGUAGE_NAME)
-    if parsed_args.receiver and parsed_args.method:
-        squeak_arguments.extend(['--receiver', parsed_args.receiver,
-                                 '--method', parsed_args.method])
+    if parsed_args.code:
+        squeak_arguments.extend(['--code', parsed_args.code])
     if parsed_args.trace_process_switches:
         squeak_arguments.append(
             '--%s.TraceProcessSwitches' % LANGUAGE_NAME)

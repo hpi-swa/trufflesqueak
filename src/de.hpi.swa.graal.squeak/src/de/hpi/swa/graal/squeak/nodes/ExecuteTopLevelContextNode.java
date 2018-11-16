@@ -10,7 +10,6 @@ import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.TopLevelReturn;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakQuit;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
@@ -19,17 +18,20 @@ import de.hpi.swa.graal.squeak.model.ContextObject;
 public final class ExecuteTopLevelContextNode extends RootNode {
     private final SqueakImageContext image;
     private final ContextObject initialContext;
+    private final boolean needsShutdown;
+
     @Child private ExecuteContextNode executeContextNode;
     @Child private UnwindContextChainNode unwindContextChainNode;
 
-    public static ExecuteTopLevelContextNode create(final SqueakLanguage language, final ContextObject context) {
-        return new ExecuteTopLevelContextNode(language, context, context.getClosureOrMethod());
+    public static ExecuteTopLevelContextNode create(final SqueakLanguage language, final ContextObject context, final boolean needsShutdown) {
+        return new ExecuteTopLevelContextNode(language, context, context.getClosureOrMethod(), needsShutdown);
     }
 
-    private ExecuteTopLevelContextNode(final SqueakLanguage language, final ContextObject context, final CompiledCodeObject code) {
+    private ExecuteTopLevelContextNode(final SqueakLanguage language, final ContextObject context, final CompiledCodeObject code, final boolean needsShutdown) {
         super(language, code.getFrameDescriptor());
         image = code.image;
         initialContext = context;
+        this.needsShutdown = needsShutdown;
         unwindContextChainNode = UnwindContextChainNode.create(image);
     }
 
@@ -39,13 +41,13 @@ public final class ExecuteTopLevelContextNode extends RootNode {
             executeLoop();
         } catch (TopLevelReturn e) {
             return e.getReturnValue();
-        } catch (SqueakQuit e) {
-            image.printToStdOut(e);
-            throw e;
         } finally {
-            image.interrupt.shutdown();
-            if (image.hasDisplay()) {
-                image.getDisplay().close();
+            if (needsShutdown) {
+                CompilerDirectives.transferToInterpreter();
+                image.interrupt.shutdown();
+                if (image.hasDisplay()) {
+                    image.getDisplay().close();
+                }
             }
         }
         throw new SqueakException("Top level context did not return");
@@ -53,6 +55,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
 
     private void executeLoop() {
         ContextObject activeContext = initialContext;
+        activeContext.restartIfTerminated();
         while (true) {
             CompilerDirectives.transferToInterpreter();
             final AbstractSqueakObject sender = activeContext.getSender();

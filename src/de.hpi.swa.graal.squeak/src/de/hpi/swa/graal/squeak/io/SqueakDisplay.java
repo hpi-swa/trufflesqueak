@@ -79,7 +79,6 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
         this.image = image;
         mouse = new SqueakMouse(this);
         keyboard = new SqueakKeyboard(this);
-        frame.setTitle(SqueakDisplay.DEFAULT_WINDOW_TITLE + " (" + image.getImagePath() + ")");
         frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         frame.setMinimumSize(MINIMUM_WINDOW_SIZE);
         frame.getContentPane().add(canvas);
@@ -291,6 +290,8 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     @TruffleBoundary
     public void open(final PointersObject sqDisplay) {
         canvas.setSqDisplay(sqDisplay);
+        // Set or update frame title.
+        frame.setTitle(SqueakDisplay.DEFAULT_WINDOW_TITLE + " (" + image.getImagePath() + ")");
         if (!frame.isVisible()) {
             final DisplayPoint lastWindowSize = image.flags.getLastWindowSize();
             frame.getContentPane().setPreferredSize(new Dimension(lastWindowSize.getWidth(), lastWindowSize.getHeight()));

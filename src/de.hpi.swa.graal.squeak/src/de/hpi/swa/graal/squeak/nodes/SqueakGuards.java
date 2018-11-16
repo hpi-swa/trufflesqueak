@@ -4,6 +4,7 @@ import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
+import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.EmptyObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
@@ -45,6 +46,10 @@ public final class SqueakGuards {
 
     public static boolean isClassObject(final Object object) {
         return object instanceof ClassObject;
+    }
+
+    public static boolean isCompiledMethodObject(final Object object) {
+        return object instanceof CompiledMethodObject;
     }
 
     public static boolean isContextObject(final Object object) {

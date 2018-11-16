@@ -41,18 +41,6 @@ It is recommended to use [Eclipse Oxygen][eclipse_oxygen] with the
 Run `mx --help` to list all commands that may help you develop GraalSqueak.
 
 
-### Running Specific Squeak/Smalltalk Code
-
-It is often useful to execute specific Squeak/Smalltalk code for debugging
-purposes or when working on a new feature.
-For this reason, GraalSqueak can be invoked with additional arguments
-`-r|--receiver` and `-m|--method`.
-Any `SmallInteger` can be a receiver while the method should be a selector
-defined on `SmallInteger`.
-Running `bin/graalsqueak -r 42 -m tinyBenchmarks my.image`, for example, loads
-`my.image` and performs `42 tinyBenchmarks`.
-
-
 ## Contributing
 
 Please [report any issues here on GitHub][issues] and open

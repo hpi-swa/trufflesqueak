@@ -513,7 +513,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 return code.image.wrap(code.image.getImagePath());
             }
             if (index >= 2 && index <= 1000) {
-                final String[] restArgs = code.image.getRestArguments();
+                final String[] restArgs = code.image.getImageArguments();
                 if (restArgs.length > index - 2) {
                     return code.image.wrap(restArgs[index - 2]);
                 } else {

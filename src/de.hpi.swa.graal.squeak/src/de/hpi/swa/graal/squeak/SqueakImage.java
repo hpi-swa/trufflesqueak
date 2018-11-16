@@ -1,0 +1,74 @@
+package de.hpi.swa.graal.squeak;
+
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.interop.CanResolve;
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.MessageResolution;
+import com.oracle.truffle.api.interop.Resolve;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.nodes.Node;
+
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.util.ArrayUtils;
+
+public final class SqueakImage implements TruffleObject {
+    private final SqueakImageContext image;
+
+    public SqueakImage(final SqueakImageContext image) {
+        this.image = image;
+    }
+
+    public String getName() {
+        return image.getImagePath();
+    }
+
+    @Override
+    public ForeignAccess getForeignAccess() {
+        return SqueakImageMessageResolutionForeign.ACCESS;
+    }
+
+    protected static boolean isInstance(final TruffleObject object) {
+        return object instanceof SqueakImage;
+    }
+
+    @MessageResolution(receiverType = SqueakImage.class)
+    abstract static class SqueakImageMessageResolution {
+
+        @Resolve(message = "READ")
+        abstract static class ReadNode extends Node {
+            Object access(final SqueakImage squeakImage, final String name) {
+                if ("Compiler".equals(name)) {
+                    return squeakImage.image.getCompilerClass();
+                } else {
+                    // TODO:
+                    return squeakImage.image.getSmalltalkDictionary();
+                }
+            }
+        }
+
+        @Resolve(message = "IS_EXECUTABLE")
+        abstract static class IsExecutableNode extends Node {
+            boolean access(@SuppressWarnings("unused") final SqueakImage squeakImage) {
+                return true;
+            }
+        }
+
+        @Resolve(message = "EXECUTE")
+        abstract static class ExecuteNode extends Node {
+            Object access(final SqueakImage squeakImage, final Object[] args) {
+                assert args.length == 0;
+                squeakImage.image.interrupt.start();
+                squeakImage.image.disableHeadless();
+                squeakImage.image.setImageArguments(ArrayUtils.toStrings(args));
+                return Truffle.getRuntime().createCallTarget(squeakImage.image.getActiveContext()).call();
+            }
+        }
+
+        @CanResolve
+        abstract static class CanResolveSqueakImage extends Node {
+            boolean test(final TruffleObject object) {
+                return object instanceof SqueakImage;
+            }
+        }
+    }
+}

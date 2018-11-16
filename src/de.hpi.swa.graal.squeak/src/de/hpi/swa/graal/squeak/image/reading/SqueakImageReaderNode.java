@@ -16,10 +16,12 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RepeatingNode;
 import com.oracle.truffle.api.nodes.RootNode;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.graal.squeak.SqueakImage;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakAbortException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT;
+import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 
 public final class SqueakImageReaderNode extends RootNode {
@@ -57,12 +59,19 @@ public final class SqueakImageReaderNode extends RootNode {
     public SqueakImageReaderNode(final SqueakImageContext image) {
         super(image.getLanguage());
         final TruffleFile truffleFile = image.env.getTruffleFile(image.getImagePath());
+        if (!truffleFile.isRegularFile()) {
+            if (image.getImagePath().isEmpty()) {
+                throw new SqueakAbortException(String.format("An image must be provided via `%s.ImagePath`.", SqueakLanguageConfig.ID));
+            } else {
+                throw new SqueakAbortException(String.format("Image at '%s' does not exist.", image.getImagePath()));
+            }
+        }
         BufferedInputStream inputStream = null;
         try {
             inputStream = new BufferedInputStream(truffleFile.newInputStream());
         } catch (IOException e) {
             if (!image.isTesting()) {
-                throw new SqueakException(e);
+                throw new SqueakAbortException(e);
             }
         }
         stream = inputStream;
@@ -83,7 +92,7 @@ public final class SqueakImageReaderNode extends RootNode {
         validateStateOrFail();
         clearChunktable();
         image.printToStdOut("Image loaded in", (currentTimeMillis() - start) + "ms.");
-        return null;
+        return new SqueakImage(image);
     }
 
     @TruffleBoundary
@@ -98,7 +107,7 @@ public final class SqueakImageReaderNode extends RootNode {
 
     private void validateStateOrFail() {
         if (image.isTesting() && image.getAsSymbolSelector() == null) {
-            throw new SqueakException("Unable to find asSymbol selector");
+            throw new SqueakAbortException("Unable to find asSymbol selector");
         }
     }
 
@@ -107,7 +116,7 @@ public final class SqueakImageReaderNode extends RootNode {
         try {
             stream.read(bytes, 0, length);
         } catch (IOException e) {
-            throw new SqueakException("Unable to read next bytes");
+            throw new SqueakAbortException("Unable to read next bytes:", e.getMessage());
         }
     }
 
@@ -163,7 +172,7 @@ public final class SqueakImageReaderNode extends RootNode {
         try {
             this.position += this.stream.skip(count);
         } catch (IOException e) {
-            throw new SqueakException("Unable to skip next bytes");
+            throw new SqueakAbortException("Unable to skip next bytes:", e);
         }
     }
 
@@ -265,7 +274,7 @@ public final class SqueakImageReaderNode extends RootNode {
         try {
             this.stream.close();
         } catch (IOException e) {
-            throw new SqueakException("Unable to close stream");
+            throw new SqueakAbortException("Unable to close stream:", e);
         }
     }
 
@@ -406,10 +415,7 @@ public final class SqueakImageReaderNode extends RootNode {
     private void initObjects() {
         initPrebuiltConstant();
         initPrebuiltSelectors();
-        // connect all instances to their classes
-        image.printToStdOut("Instantiating classes...");
         instantiateClasses();
-        image.printToStdOut("Filling in objects...");
         /*
          * TODO: use LoopNode for filling in objects. The following is another candidate for an
          * OSR-able loop. The first attempt resulted in a memory leak though.

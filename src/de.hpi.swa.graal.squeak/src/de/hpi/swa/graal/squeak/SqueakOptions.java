@@ -15,7 +15,7 @@ public final class SqueakOptions {
 
     //@formatter:off
     @Option(category = OptionCategory.USER, help = "Path to image")
-    public static final OptionKey<String> ImagePath = new OptionKey<>("Squeak.image");
+    public static final OptionKey<String> ImagePath = new OptionKey<>("");
 
     // TODO: use ImageArguments
     @Option(category = OptionCategory.USER, help = "Image arguments")

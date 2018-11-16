@@ -14,6 +14,7 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.instrumentation.ProvidedTags;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -23,34 +24,39 @@ import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
 import de.hpi.swa.graal.squeak.nodes.context.LookupClassNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 
-@TruffleLanguage.Registration(id = SqueakLanguageConfig.ID, name = SqueakLanguageConfig.NAME, version = SqueakLanguageConfig.VERSION, mimeType = SqueakLanguageConfig.MIME_TYPE, interactive = true, internal = false)
+@TruffleLanguage.Registration(id = SqueakLanguageConfig.ID, //
+                name = SqueakLanguageConfig.NAME, //
+                version = SqueakLanguageConfig.VERSION, //
+                byteMimeTypes = SqueakLanguageConfig.MIME_TYPE, //
+                characterMimeTypes = SqueakLanguageConfig.ST_MIME_TYPE, //
+                defaultMimeType = SqueakLanguageConfig.ST_MIME_TYPE, //
+                interactive = true, internal = false)
 @ProvidedTags({StandardTags.CallTag.class, StandardTags.RootTag.class, StandardTags.StatementTag.class, DebuggerTags.AlwaysHalt.class})
 public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
 
     @Override
     protected SqueakImageContext createContext(final Env env) {
-        final SqueakImageContext context = new SqueakImageContext(this, env);
-        context.getOutput().println("== Running " + SqueakLanguageConfig.NAME + " on " + getRuntimeName() + " ==");
-        return context;
-    }
-
-    @Override
-    protected void initializeContext(final SqueakImageContext context) {
-        Truffle.getRuntime().createCallTarget(new SqueakImageReaderNode(context)).call();
-    }
-
-    public static String getRuntimeName() {
-        return Truffle.getRuntime().getName() + " (Java " + System.getProperty("java.version") + ")";
+        return new SqueakImageContext(this, env);
     }
 
     @Override
     protected CallTarget parse(final ParsingRequest request) throws Exception {
         final SqueakImageContext image = getContext();
-        if (request.getSource().isInteractive()) {
-            image.interrupt.start();
-            return Truffle.getRuntime().createCallTarget(image.getActiveContext());
+        final Source source = request.getSource();
+        if (source.hasBytes()) {
+            image.setImagePath(source.getPath());
+            return Truffle.getRuntime().createCallTarget(new SqueakImageReaderNode(image));
         } else {
-            return Truffle.getRuntime().createCallTarget(image.getCustomContext(request.getSource().getCharacters()));
+            if (image.getImagePath() == null) {
+                final String imagePath = SqueakOptions.getOption(image.env, SqueakOptions.ImagePath);
+                image.setImagePath(imagePath);
+                Truffle.getRuntime().createCallTarget(new SqueakImageReaderNode(image)).call();
+            }
+            final String sourceCode = source.getCharacters().toString();
+            if (source.isInternal()) {
+                image.printToStdOut(String.format("Evaluating '%s'...", sourceCode));
+            }
+            return Truffle.getRuntime().createCallTarget(image.getCompilerEvaluateContext(sourceCode));
         }
     }
 

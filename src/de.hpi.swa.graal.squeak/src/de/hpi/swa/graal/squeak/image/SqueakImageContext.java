@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.image;
 
-import java.awt.GraphicsEnvironment;
 import java.io.File;
 import java.io.PrintWriter;
 import java.math.BigInteger;
@@ -20,6 +19,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.SqueakOptions;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakAbortException;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.io.DisplayPoint;
 import de.hpi.swa.graal.squeak.io.SqueakDisplay;
@@ -45,7 +45,6 @@ import de.hpi.swa.graal.squeak.util.InterruptHandlerState;
 import de.hpi.swa.graal.squeak.util.OSDetector;
 
 public final class SqueakImageContext {
-
     public final boolean sqFalse = false;
     public final boolean sqTrue = true;
     // Special objects
@@ -132,29 +131,33 @@ public final class SqueakImageContext {
                     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0
     };
 
+    @CompilationFinal private String imagePath;
+    @CompilationFinal(dimensions = 1) private String[] imageArguments;
+    @CompilationFinal private boolean isHeadless = true;
     public final SqueakImageFlags flags = new SqueakImageFlags();
     public final OSDetector os = new OSDetector();
     public final InterruptHandlerState interrupt;
     public final long startUpMillis = System.currentTimeMillis();
     private final AllocationReporter allocationReporter;
 
-    private final SqueakDisplayInterface display;
+    @CompilationFinal private SqueakDisplayInterface display;
+
+    @CompilationFinal private ClassObject compilerClass = null;
+    @CompilationFinal private CompiledMethodObject evaluateMethod;
+    @CompilationFinal private NativeObject simulatePrimitiveArgsSelector = null;
+    @CompilationFinal private PointersObject scheduler = null;
 
     public static final byte[] AS_SYMBOL_SELECTOR_NAME = "asSymbol".getBytes(); // for testing
     @CompilationFinal private NativeObject asSymbolSelector = null; // for testing
     public static final byte[] DEBUG_ERROR_SELECTOR_NAME = "debugError:".getBytes(); // for testing
     @CompilationFinal private NativeObject debugErrorSelector = null; // for testing
-    @CompilationFinal private NativeObject simulatePrimitiveArgsSelector = null;
-    @CompilationFinal private PointersObject scheduler = null;
+    public static final byte[] DEBUG_SYNTAX_ERROR_SELECTOR_NAME = "debugSyntaxError:".getBytes(); // for
+                                                                                                  // testing
+    @CompilationFinal private NativeObject debugSyntaxErrorSelector = null; // for testing
 
     public SqueakImageContext(final SqueakLanguage squeakLanguage, final SqueakLanguage.Env environment) {
         language = squeakLanguage;
         patch(environment);
-        if ((!isAOT() && GraphicsEnvironment.isHeadless()) || isHeadless() || isTesting()) {
-            display = null;
-        } else {
-            display = new SqueakDisplay(this);
-        }
         interrupt = InterruptHandlerState.create(this);
         allocationReporter = env.lookup(AllocationReporter.class);
     }
@@ -170,45 +173,30 @@ public final class SqueakImageContext {
     }
 
     public ExecuteTopLevelContextNode getActiveContext() {
-        // TODO: maybe there is a better way to do the below
         final PointersObject activeProcess = GetActiveProcessNode.create(this).executeGet();
         final ContextObject activeContext = (ContextObject) activeProcess.at0(PROCESS.SUSPENDED_CONTEXT);
         activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, nil);
-        output.println("Resuming active context for " + activeContext.getMethod() + "...");
-        return ExecuteTopLevelContextNode.create(language, activeContext);
+        return ExecuteTopLevelContextNode.create(getLanguage(), activeContext, true);
     }
 
-    public ExecuteTopLevelContextNode getCustomContext(final CharSequence charSequence) {
-        final String[] sourceParts = charSequence.toString().split(">>#");
-        if (sourceParts.length != 2) {
-            throw new SqueakException("Unexpected source:", charSequence);
+    public ExecuteTopLevelContextNode getCompilerEvaluateContext(final String code) {
+        assert compilerClass != null;
+        if (evaluateMethod == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            evaluateMethod = (CompiledMethodObject) compilerClass.lookup("evaluate:");
+            if (evaluateMethod.getCompiledInSelector() == doesNotUnderstand) {
+                throw new SqueakAbortException("Compiler>>#evaluate: could not be found!");
+            }
         }
-        Object receiver;
-        try {
-            receiver = Long.parseLong(sourceParts[0]);
-        } catch (NumberFormatException e) {
-            receiver = sourceParts[0];
-        }
-        final String selector = sourceParts[1];
-        final ClassObject receiverClass = receiver instanceof Long ? smallIntegerClass : nilClass;
-        final CompiledMethodObject lookupResult = (CompiledMethodObject) receiverClass.lookup(selector);
-        if (lookupResult.getCompiledInSelector() == doesNotUnderstand) {
-            throw new SqueakException(receiver, ">>", selector, "could not be found!");
-        }
-        final ContextObject customContext = ContextObject.create(this, lookupResult.sqContextSize());
-        customContext.atput0(CONTEXT.METHOD, lookupResult);
-        customContext.atput0(CONTEXT.INSTRUCTION_POINTER, (long) lookupResult.getInitialPC());
-        customContext.atput0(CONTEXT.RECEIVER, receiver);
+        final ContextObject customContext = ContextObject.create(this, evaluateMethod.sqContextSize());
+        customContext.atput0(CONTEXT.METHOD, evaluateMethod);
+        customContext.atput0(CONTEXT.INSTRUCTION_POINTER, (long) evaluateMethod.getInitialPC());
+        customContext.atput0(CONTEXT.RECEIVER, compilerClass);
         customContext.atput0(CONTEXT.STACKPOINTER, 0L);
         customContext.atput0(CONTEXT.CLOSURE_OR_NIL, nil);
         customContext.setSender(nil);
-        // if there were arguments, they would need to be pushed before the temps
-        final long numTemps = lookupResult.getNumTemps() - lookupResult.getNumArgs();
-        for (int i = 0; i < numTemps; i++) {
-            customContext.push(nil);
-        }
-        output.println("Starting to evaluate " + receiver + " >> " + selector + "...");
-        return ExecuteTopLevelContextNode.create(getLanguage(), customContext);
+        customContext.push(wrap(code));
+        return ExecuteTopLevelContextNode.create(getLanguage(), customContext, false);
     }
 
     public PrintWriter getOutput() {
@@ -239,6 +227,24 @@ public final class SqueakImageContext {
     public void setDebugErrorSelector(final NativeObject debugErrorSelector) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         this.debugErrorSelector = debugErrorSelector;
+    }
+
+    public NativeObject getDebugSyntaxErrorSelector() {
+        return debugSyntaxErrorSelector;
+    }
+
+    public void setDebugSyntaxErrorSelector(final NativeObject debugSyntaxErrorSelector) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        this.debugSyntaxErrorSelector = debugSyntaxErrorSelector;
+    }
+
+    public ClassObject getCompilerClass() {
+        return compilerClass;
+    }
+
+    public void setCompilerClass(final ClassObject compilerClass) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        this.compilerClass = compilerClass;
     }
 
     public NativeObject getSimulatePrimitiveArgsSelector() {
@@ -379,15 +385,25 @@ public final class SqueakImageContext {
     }
 
     public String getImagePath() {
-        return SqueakOptions.getOption(env, SqueakOptions.ImagePath);
+        return imagePath;
+    }
+
+    public void setImagePath(final String path) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        imagePath = path;
     }
 
     public String getImageDirectory() {
         return Paths.get(getImagePath()).getParent().getFileName().toString();
     }
 
-    public String[] getRestArguments() {
-        return env.getApplicationArguments();
+    public String[] getImageArguments() {
+        return imageArguments;
+    }
+
+    public void setImageArguments(final String[] args) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        this.imageArguments = args;
     }
 
     public boolean interruptHandlerDisabled() {
@@ -395,7 +411,15 @@ public final class SqueakImageContext {
     }
 
     public boolean isHeadless() {
-        return SqueakOptions.getOption(env, SqueakOptions.Headless);
+        return isHeadless || SqueakOptions.getOption(env, SqueakOptions.Headless);
+    }
+
+    public void disableHeadless() {
+        if (isHeadless) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            display = new SqueakDisplay(this);
+            isHeadless = false;
+        }
     }
 
     public boolean isTesting() {
@@ -414,12 +438,12 @@ public final class SqueakImageContext {
 
     @TruffleBoundary
     public void printToStdOut(final Object... arguments) {
-        getOutput().println(ArrayUtils.toJoinedString(" ", arguments));
+        getOutput().println(String.format("[graalsqueak] %s", ArrayUtils.toJoinedString(" ", arguments)));
     }
 
     @TruffleBoundary
     public void printToStdErr(final Object... arguments) {
-        getError().println(ArrayUtils.toJoinedString(" ", arguments));
+        getError().println(String.format("[graalsqueak] %s", ArrayUtils.toJoinedString(" ", arguments)));
     }
 
     public void traceProcessSwitches(final Object... arguments) {
@@ -446,7 +470,7 @@ public final class SqueakImageContext {
                     return null;
                 }
                 final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
-                if (current.getArguments().length < FrameAccess.RECEIVER) {
+                if (!FrameAccess.isGraalSqueakFrame(current)) {
                     return null;
                 }
                 final Object method = FrameAccess.getMethod(current);

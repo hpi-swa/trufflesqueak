@@ -1,6 +1,8 @@
 package de.hpi.swa.graal.squeak.model;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.function.Predicate;
 
 import com.oracle.truffle.api.Assumption;
@@ -80,7 +82,7 @@ public final class ClassObject extends AbstractSqueakObject {
         return pointers[METACLASS.THIS_CLASS];
     }
 
-    private boolean isMetaclass() {
+    public boolean isMetaclass() {
         return this == image.metaclass;
     }
 
@@ -226,6 +228,22 @@ public final class ClassObject extends AbstractSqueakObject {
             lookupClass = lookupClass.getSuperclassOrNull();
         }
         return lookup(methodSelector -> methodSelector == image.doesNotUnderstand);
+    }
+
+    public Object[] listMethods() {
+        final List<String> methodNames = new ArrayList<>();
+        ClassObject lookupClass = this;
+        while (lookupClass != null) {
+            final PointersObject methodDictObject = lookupClass.getMethodDict();
+            for (int i = METHOD_DICT.NAMES; i < methodDictObject.size(); i++) {
+                final Object methodSelector = methodDictObject.at0(i);
+                if (methodSelector != image.nil) {
+                    methodNames.add(methodSelector.toString());
+                }
+            }
+            lookupClass = lookupClass.getSuperclassOrNull();
+        }
+        return methodNames.toArray(new String[methodNames.size()]);
     }
 
     public boolean isVariable() {

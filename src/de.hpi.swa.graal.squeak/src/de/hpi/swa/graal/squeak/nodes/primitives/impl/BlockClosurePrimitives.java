@@ -61,11 +61,10 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                 @Override
                 public ContextObject visitFrame(final FrameInstance frameInstance) {
                     final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
-                    final Object[] arguments = current.getArguments();
-                    if (arguments.length < FrameAccess.RECEIVER) {
+                    if (!FrameAccess.isGraalSqueakFrame(current)) {
                         return null;
                     }
-                    final CompiledCodeObject codeObject = (CompiledCodeObject) arguments[FrameAccess.METHOD];
+                    final CompiledCodeObject codeObject = FrameAccess.getMethod(current);
                     final Object contextOrMarker = current.getValue(codeObject.thisContextOrMarkerSlot);
                     if (!foundMyself) {
                         if (receiver == contextOrMarker) {
@@ -188,12 +187,11 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
                 @Override
                 public ContextObject visitFrame(final FrameInstance frameInstance) {
                     final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
-                    final Object[] arguments = current.getArguments();
-                    if (arguments.length < FrameAccess.RECEIVER) {
+                    if (!FrameAccess.isGraalSqueakFrame(current)) {
                         return null;
                     }
                     if (!foundMyself) {
-                        final CompiledCodeObject codeObject = (CompiledCodeObject) arguments[FrameAccess.METHOD];
+                        final CompiledCodeObject codeObject = FrameAccess.getMethod(current);
                         final Object contextOrMarker = current.getValue(codeObject.thisContextOrMarkerSlot);
                         if (receiver == contextOrMarker) {
                             foundMyself = true;

@@ -1,8 +1,10 @@
 package de.hpi.swa.graal.squeak.launcher;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -11,17 +13,18 @@ import java.util.Set;
 import org.graalvm.launcher.AbstractLanguageLauncher;
 import org.graalvm.options.OptionCategory;
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
 
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleOptions;
 
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 
 public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
-    private String imagePath;
-    private List<String> remainingArgs;
-    private String receiver = "1";
-    private String selector = null;
+    private final List<String> remainingArguments = new ArrayList<>();
+    private String imagePath = "Squeak.image";
+    private String sourceCode = null;
 
     public static void main(final String[] arguments) throws RuntimeException {
         final String[] argumentsForLauncher;
@@ -50,18 +53,12 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
             if (Files.exists(Paths.get(arg))) {
                 unrecognized = arguments.subList(0, i);
                 imagePath = Paths.get(arg).toAbsolutePath().toString();
-                remainingArgs = arguments.subList(i + 1, arguments.size());
+                remainingArguments.addAll(arguments.subList(i + 1, arguments.size()));
                 break;
             }
-            if ("-r".equals(arg) || "--receiver".equals(arg)) {
+            if ("-c".equals(arg) || "--code".equals(arg)) {
                 arguments.remove(i);
-                receiver = arguments.get(i);
-                arguments.remove(i);
-                i--;
-            }
-            if ("-m".equals(arg) || "--method".equals(arg)) {
-                arguments.remove(i);
-                selector = arguments.get(i);
+                sourceCode = arguments.get(i);
                 arguments.remove(i);
                 i--;
             }
@@ -71,16 +68,35 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
 
     @Override
     protected void launch(final Context.Builder contextBuilder) {
+        System.exit(execute(contextBuilder));
+    }
+
+    protected int execute(final Context.Builder contextBuilder) {
         contextBuilder.option(SqueakLanguageConfig.ID + ".ImagePath", imagePath);
-        contextBuilder.arguments(getLanguageId(), remainingArgs.toArray(new String[remainingArgs.size()]));
-        try (Context ctx = contextBuilder.allowAllAccess(true).build()) {
-            if (selector != null) {
-                ctx.eval(Source.create(getLanguageId(), receiver + ">>#" + selector));
+        if (sourceCode != null) {
+            contextBuilder.option(SqueakLanguageConfig.ID + ".Headless", "true");
+        }
+        try (Context context = contextBuilder.allowAllAccess(true).build()) {
+            println("[graalsqueak] Running " + SqueakLanguageConfig.NAME + " on " + getRuntimeName() + "...");
+            if (sourceCode != null) {
+                final Object result = context.eval(Source.newBuilder(getLanguageId(), sourceCode, "Compiler>>#evaluate:").internal(true).mimeType(SqueakLanguageConfig.ST_MIME_TYPE).build());
+                println("[graalsqueak] Result: " + result);
+                return 0;
             } else {
-                ctx.eval(Source.newBuilder(getLanguageId(), "", "<interactive eval>").interactive(true).build());
+                context.eval(Source.newBuilder(getLanguageId(), new File(imagePath)).internal(true).mimeType(SqueakLanguageConfig.MIME_TYPE).build()).execute(remainingArguments.toArray());
+                throw abort("A Squeak/Smalltalk image cannot return a result as it can only exit.");
+            }
+        } catch (PolyglotException e) {
+            if (e.isExit()) {
+                return e.getExitStatus();
+            } else if (!e.isInternalError()) {
+                e.printStackTrace();
+                return -1;
+            } else {
+                throw e;
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            throw abort(String.format("Error loading file '%s' (%s)", imagePath, e.getMessage()));
         }
     }
 
@@ -96,21 +112,24 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
 
     @Override
     protected void printHelp(final OptionCategory maxCategory) {
-        // Checkstyle: stop
-        System.out.println("usage: graalsqueak <image> [optional arguments]");
-        System.out.println();
-        System.out.println("optional arguments:");
-        System.out.println("  -m METHOD, --method METHOD");
-        System.out.println("                        method selector when receiver is provided");
-        System.out.println("  -r RECEIVER, --receiver RECEIVER");
-        System.out.println("                        SmallInteger to be used as receiver");
-        // Checkstyle: resume
+        println("usage: graalsqueak <image> [optional arguments]\n");
+        println("optional arguments:");
+        println("  -c CODE, --code CODE");
+        println("                        Smalltalk code to be executed in headless mode");
     }
 
     @Override
     protected void collectArguments(final Set<String> options) {
-        options.addAll(Arrays.asList(
-                        "-r", "--receiver",
-                        "-m", "--method"));
+        options.addAll(Arrays.asList("-c", "--code"));
+    }
+
+    private static void println(final String string) {
+        // Checkstyle: stop
+        System.out.println(string);
+        // Checkstyle: resume
+    }
+
+    private static String getRuntimeName() {
+        return Truffle.getRuntime().getName() + " (Java " + System.getProperty("java.version") + ")";
     }
 }
