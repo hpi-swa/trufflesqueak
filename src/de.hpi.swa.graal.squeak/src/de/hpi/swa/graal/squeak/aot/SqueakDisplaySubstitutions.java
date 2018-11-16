@@ -100,12 +100,18 @@ final class Target_de_hpi_swa_graal_squeak_io_SqueakDisplay implements SqueakDis
 
     public void showDisplayBitsLeftTopRightBottom(final PointersObject destForm, final int left, final int top, final int right, final int bottom) {
         if (left < right && top < bottom && !deferUpdates && destForm.isDisplay()) {
-            showDisplayRect(left, right, top, bottom);
+            paintImmediately(left, right, top, bottom);
         }
     }
 
     @Override
     public void showDisplayRect(final int left, final int right, final int top, final int bottom) {
+        if (left < right && top < bottom) {
+            paintImmediately(left, right, top, bottom);
+        }
+    }
+
+    private void paintImmediately(final int left, final int right, final int top, final int bottom) {
         copyPixels(left + top * width, right + bottom * width);
         recordDamage(left, top, right - left, bottom - top);
         textureDirty = true;
