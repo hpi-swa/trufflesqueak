@@ -14,6 +14,7 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
+import de.hpi.swa.graal.squeak.util.MiscUtils;
 
 public final class ContextObject extends AbstractPointersObject {
     @CompilationFinal private MaterializedFrame truffleFrame;
@@ -374,7 +375,7 @@ public final class ContextObject extends AbstractPointersObject {
             for (int i = 0; i < rcvrAndArgs.length; i++) {
                 argumentStrings[i] = rcvrAndArgs[i].toString();
             }
-            image.getOutput().println(String.format("%s #(%s)", current, String.join(", ", argumentStrings)));
+            image.getOutput().println(MiscUtils.format("%s #(%s)", current, String.join(", ", argumentStrings)));
             final AbstractSqueakObject sender = current.getSender();
             if (sender == image.nil) {
                 break;

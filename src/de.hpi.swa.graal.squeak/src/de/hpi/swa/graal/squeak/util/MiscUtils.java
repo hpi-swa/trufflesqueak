@@ -19,6 +19,11 @@ public final class MiscUtils {
     }
 
     @TruffleBoundary
+    public static String format(final String format, final Object... args) {
+        return String.format(format, args);
+    }
+
+    @TruffleBoundary
     public static void systemGC() {
         System.gc();
     }

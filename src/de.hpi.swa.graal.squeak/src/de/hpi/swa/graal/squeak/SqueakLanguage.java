@@ -23,6 +23,7 @@ import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
 import de.hpi.swa.graal.squeak.nodes.context.LookupClassNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
+import de.hpi.swa.graal.squeak.util.MiscUtils;
 
 @TruffleLanguage.Registration(id = SqueakLanguageConfig.ID, //
                 name = SqueakLanguageConfig.NAME, //
@@ -54,7 +55,7 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
             }
             final String sourceCode = source.getCharacters().toString();
             if (source.isInternal()) {
-                image.printToStdOut(String.format("Evaluating '%s'...", sourceCode));
+                image.printToStdOut(MiscUtils.format("Evaluating '%s'...", sourceCode));
             }
             return Truffle.getRuntime().createCallTarget(image.getCompilerEvaluateContext(sourceCode));
         }

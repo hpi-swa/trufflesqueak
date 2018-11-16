@@ -43,6 +43,7 @@ import de.hpi.swa.graal.squeak.nodes.process.GetActiveProcessNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerState;
+import de.hpi.swa.graal.squeak.util.MiscUtils;
 import de.hpi.swa.graal.squeak.util.OSDetector;
 
 public final class SqueakImageContext {
@@ -443,12 +444,12 @@ public final class SqueakImageContext {
 
     @TruffleBoundary
     public void printToStdOut(final Object... arguments) {
-        getOutput().println(String.format("[graalsqueak] %s", ArrayUtils.toJoinedString(" ", arguments)));
+        getOutput().println(MiscUtils.format("[graalsqueak] %s", ArrayUtils.toJoinedString(" ", arguments)));
     }
 
     @TruffleBoundary
     public void printToStdErr(final Object... arguments) {
-        getError().println(String.format("[graalsqueak] %s", ArrayUtils.toJoinedString(" ", arguments)));
+        getError().println(MiscUtils.format("[graalsqueak] %s", ArrayUtils.toJoinedString(" ", arguments)));
     }
 
     public void traceProcessSwitches(final Object... arguments) {
@@ -487,7 +488,7 @@ public final class SqueakImageContext {
                     argumentStrings[i] = arguments[i].toString();
                 }
                 final String prefix = FrameAccess.getClosure(current) == null ? "" : "[] in ";
-                getError().println(String.format("%s%s #(%s) [this: %s, sender: %s]", prefix, method, String.join(", ", argumentStrings), contextOrMarker, lastSender[0]));
+                getError().println(MiscUtils.format("%s%s #(%s) [this: %s, sender: %s]", prefix, method, String.join(", ", argumentStrings), contextOrMarker, lastSender[0]));
                 return null;
             }
         });

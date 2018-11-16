@@ -4,6 +4,7 @@ import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushClosureNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodes.ReturnTopFromBlockNode;
+import de.hpi.swa.graal.squeak.util.MiscUtils;
 import de.hpi.swa.graal.squeak.util.SqueakBytecodeDecoder;
 
 public class CompiledCodeObjectPrinter {
@@ -30,7 +31,7 @@ public class CompiledCodeObjectPrinter {
                     sb.append(" ");
                 }
                 if (j < bytes.length) {
-                    sb.append(String.format("%02X", bytes[j]));
+                    sb.append(MiscUtils.format("%02X", bytes[j]));
                 }
             }
             sb.append("> ");

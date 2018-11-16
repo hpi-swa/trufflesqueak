@@ -18,6 +18,7 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.IsDoesNotUnderstandNode;
 import de.hpi.swa.graal.squeak.nodes.context.LookupClassNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
+import de.hpi.swa.graal.squeak.util.MiscUtils;
 
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class DispatchSendNode extends AbstractNodeWithImage {
@@ -47,7 +48,7 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
     @Specialization(guards = {"image.isHeadless()", "!isAllowedInHeadlessMode(selector)", "!isDoesNotUnderstandNode.execute(lookupResult)"})
     protected static final Object doDispatchHeadlessError(final VirtualFrame frame, final NativeObject selector, final CompiledMethodObject lookupResult,
                     final ClassObject rcvrClass, final Object[] rcvrAndArgs, final Object contextOrMarker) {
-        throw new SqueakAbortException(String.format("%s>>#%s detected in headless mode. Aborting...", rcvrClass.getSqueakClassName(), selector.asString()));
+        throw new SqueakAbortException(MiscUtils.format("%s>>#%s detected in headless mode. Aborting...", rcvrClass.getSqueakClassName(), selector.asString()));
     }
 
     @Specialization(guards = {"isDoesNotUnderstandNode.execute(lookupResult)"})

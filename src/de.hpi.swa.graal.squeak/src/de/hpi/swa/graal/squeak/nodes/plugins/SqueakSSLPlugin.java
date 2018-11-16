@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.graalvm.collections.EconomicMap;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -190,6 +191,7 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
         // Creates and returns a new SSL handle
         @SuppressWarnings("unused")
         @Specialization
+        @TruffleBoundary
         protected Long doWork(final Object receiver) {
             final SSLImpl ssl = new SSLImpl();
             final long handle = ssl.hashCode();

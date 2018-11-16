@@ -61,9 +61,9 @@ public final class SqueakImageReaderNode extends RootNode {
         final TruffleFile truffleFile = image.env.getTruffleFile(image.getImagePath());
         if (!truffleFile.isRegularFile()) {
             if (image.getImagePath().isEmpty()) {
-                throw new SqueakAbortException(String.format("An image must be provided via `%s.ImagePath`.", SqueakLanguageConfig.ID));
+                throw new SqueakAbortException(MiscUtils.format("An image must be provided via `%s.ImagePath`.", SqueakLanguageConfig.ID));
             } else {
-                throw new SqueakAbortException(String.format("Image at '%s' does not exist.", image.getImagePath()));
+                throw new SqueakAbortException(MiscUtils.format("Image at '%s' does not exist.", image.getImagePath()));
             }
         }
         BufferedInputStream inputStream = null;
