@@ -21,6 +21,7 @@ import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.SqueakOptions;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakAbortException;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.graal.squeak.image.reading.SqueakImageReaderNode;
 import de.hpi.swa.graal.squeak.io.DisplayPoint;
 import de.hpi.swa.graal.squeak.io.SqueakDisplay;
 import de.hpi.swa.graal.squeak.io.SqueakDisplayInterface;
@@ -132,7 +133,7 @@ public final class SqueakImageContext {
     };
 
     @CompilationFinal private String imagePath;
-    @CompilationFinal(dimensions = 1) private String[] imageArguments;
+    @CompilationFinal(dimensions = 1) private String[] imageArguments = new String[0];
     @CompilationFinal private boolean isHeadless = true;
     public final SqueakImageFlags flags = new SqueakImageFlags();
     public final OSDetector os = new OSDetector();
@@ -160,6 +161,10 @@ public final class SqueakImageContext {
         patch(environment);
         interrupt = InterruptHandlerState.create(this);
         allocationReporter = env.lookup(AllocationReporter.class);
+    }
+
+    public void load() {
+        Truffle.getRuntime().createCallTarget(new SqueakImageReaderNode(this)).call();
     }
 
     public boolean patch(final SqueakLanguage.Env newEnv) {

@@ -2,6 +2,9 @@ package de.hpi.swa.graal.squeak.test;
 
 import static org.junit.Assert.fail;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Context.Builder;
 
@@ -83,7 +86,7 @@ public abstract class AbstractSqueakTestCase {
         for (int i = 0; i < numTemps - arguments.length; i++) {
             testContext.push(code.image.nil);
         }
-        return ExecuteTopLevelContextNode.create(null, testContext);
+        return ExecuteTopLevelContextNode.create(null, testContext, false);
     }
 
     protected Object runMethod(final Object receiver, final int... intbytes) {
@@ -116,11 +119,16 @@ public abstract class AbstractSqueakTestCase {
     protected static void ensureImageContext(final String imagePath) {
         final Builder contextBuilder = Context.newBuilder();
         contextBuilder.option(SqueakLanguageConfig.ID + ".ImagePath", imagePath);
+        contextBuilder.option(SqueakLanguageConfig.ID + ".Headless", "true");
         contextBuilder.option(SqueakLanguageConfig.ID + ".Testing", "true");
         contextBuilder.allowIO(true);
         final Context context = contextBuilder.build();
         context.enter();
         context.initialize(SqueakLanguageConfig.ID);
         image = SqueakLanguage.getContext();
+        image.setImagePath(imagePath);
+        if (Files.exists(Paths.get(imagePath))) {
+            image.load();
+        }
     }
 }

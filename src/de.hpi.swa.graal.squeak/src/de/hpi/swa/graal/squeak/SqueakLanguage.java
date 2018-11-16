@@ -50,7 +50,7 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
             if (image.getImagePath() == null) {
                 final String imagePath = SqueakOptions.getOption(image.env, SqueakOptions.ImagePath);
                 image.setImagePath(imagePath);
-                Truffle.getRuntime().createCallTarget(new SqueakImageReaderNode(image)).call();
+                image.load();
             }
             final String sourceCode = source.getCharacters().toString();
             if (source.isInternal()) {
