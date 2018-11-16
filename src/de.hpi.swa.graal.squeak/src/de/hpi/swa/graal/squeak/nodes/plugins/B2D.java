@@ -6811,6 +6811,7 @@ public final class B2D {
     /* Recursively subdivide the curve on the bezier stack. */
 
     /* BalloonEnginePlugin>>#subdivideBezierFrom: */
+    @TruffleBoundary // Highly recursive.
     private static int subdivideBezierFrom(final int index) {
         final int otherIndex = subdivideBezier(index);
         if (!(otherIndex == index)) {
