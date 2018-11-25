@@ -1,0 +1,13 @@
+{
+	"class" : {
+		"open" : "fn 5/18/2018 08:33",
+		"windowTitlePrefix" : "fn 5/18/2018 08:33" },
+	"instance" : {
+		"addModelItemsToWindowMenu:" : "fn 11/25/2018 16:26",
+		"evaluateExpression:" : "fn 11/9/2018 01:00",
+		"isForeign" : "fn 11/12/2018 11:12",
+		"labelString" : "fn 5/18/2018 08:42",
+		"languageID" : "GraalSqueak 8/12/2018 22:01",
+		"languageID:" : "GraalSqueak 8/12/2018 22:01",
+		"languageName" : "GraalSqueak 8/12/2018 22:01",
+		"selectLanguage:" : "GraalSqueak 8/12/2018 22:01" } }

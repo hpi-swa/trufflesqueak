@@ -1,3 +1,4 @@
 OrderedDictionary {
-	'src\/GraalSqueak-Core.package' : #SquotCypressCodeSerializer
+	'src\/GraalSqueak-Core.package' : #SquotCypressCodeSerializer,
+	'src\/GraalSqueak-Tools.package' : #SquotCypressCodeSerializer
 }

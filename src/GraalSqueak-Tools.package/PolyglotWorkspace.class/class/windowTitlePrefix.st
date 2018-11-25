@@ -1,0 +1,3 @@
+constants
+windowTitlePrefix
+	^ 'Workspace'
