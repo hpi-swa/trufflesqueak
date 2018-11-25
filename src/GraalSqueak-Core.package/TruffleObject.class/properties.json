@@ -1,0 +1,14 @@
+{
+	"category" : "GraalSqueak-Core",
+	"classinstvars" : [
+		 ],
+	"classvars" : [
+		 ],
+	"commentStamp" : "",
+	"instvars" : [
+		 ],
+	"name" : "TruffleObject",
+	"pools" : [
+		 ],
+	"super" : "Object",
+	"type" : "normal" }

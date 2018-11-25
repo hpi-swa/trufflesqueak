@@ -1,0 +1,3 @@
+polyglot
+inspectorClass
+	^ PolyglotInspector

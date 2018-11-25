@@ -1,0 +1,3 @@
+*GraalSqueak-Core
+isTruffleObject
+	^ false

@@ -1,0 +1,27 @@
+{
+	"class" : {
+		"availableLanguages" : "fn 11/25/2018 16:26",
+		"defaultLanguage" : "fn 5/18/2018 08:44",
+		"eval:file:" : "GraalSqueak 11/11/2018 21:28",
+		"eval:string:" : "GraalSqueak 11/11/2018 21:29",
+		"export:value:" : "GraalSqueak 11/11/2018 21:34",
+		"import:" : "GraalSqueak 11/11/2018 21:34",
+		"languageDefaultMimeTypeOf:" : "fn 11/25/2018 16:20",
+		"languageMimeTypesOf:" : "fn 11/25/2018 16:20",
+		"languageNameOf:" : "fn 11/25/2018 16:20",
+		"languageVersionOf:" : "fn 11/25/2018 16:20",
+		"primitiveEval:file:" : "fn 11/12/2018 11:04",
+		"primitiveEval:string:" : "fn 11/12/2018 11:09",
+		"primitiveExport:value:" : "GraalSqueak 11/11/2018 21:33",
+		"primitiveGetLanguageInfo:" : "fn 11/25/2018 16:18",
+		"primitiveImport:" : "GraalSqueak 11/11/2018 21:33",
+		"primitiveKeys:" : "GraalSqueak 11/11/2018 21:40",
+		"primitiveLastError" : "GraalSqueak 11/11/2018 21:32",
+		"primitiveListAvailableLanguageIDs" : "fn 11/25/2018 16:27",
+		"primitiveRead:" : "GraalSqueak 11/11/2018 21:41",
+		"primitiveSize:" : "GraalSqueak 11/11/2018 21:40",
+		"primitiveWrite:value:" : "GraalSqueak 11/11/2018 21:42",
+		"signalPolyglotError" : "fn 11/12/2018 11:04",
+		"supportsMultipleLanguages" : "fn 11/25/2018 16:18" },
+	"instance" : {
+		 } }

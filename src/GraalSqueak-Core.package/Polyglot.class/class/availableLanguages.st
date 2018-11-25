@@ -1,0 +1,3 @@
+polyglot-api
+availableLanguages
+	^ self primitiveListAvailableLanguageIDs

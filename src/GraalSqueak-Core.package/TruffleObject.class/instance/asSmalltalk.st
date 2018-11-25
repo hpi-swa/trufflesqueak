@@ -1,0 +1,3 @@
+polyglot
+asSmalltalk
+	^ self primitiveUnbox
