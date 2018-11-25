@@ -3,6 +3,7 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -28,12 +29,14 @@ import com.oracle.truffle.api.source.Source.SourceBuilder;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.MESSAGE;
 import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.GetObjectArrayNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
@@ -195,7 +198,8 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 final int size = (int) ForeignAccess.sendGetSize(getSizeNode, sendKeysResult);
                 final Object[] keys = new Object[size];
                 for (int index = 0; index < size; index++) {
-                    keys[index] = ForeignAccess.sendRead(readNode, receiver, index);
+                    final Object value = ForeignAccess.sendRead(readNode, sendKeysResult, index);
+                    keys[index] = value == null ? "null" : value.toString();
                 }
                 return code.image.wrap(keys);
             } catch (UnsupportedMessageException | UnknownIdentifierException e) {
@@ -206,8 +210,37 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(name = "primitiveGetInstSize")
+    protected abstract static class PrimGetInstSizeNode extends AbstractPrimitiveNode {
+        @Child private Node hasKeysNode = Message.HAS_KEYS.createNode();
+        @Child private Node getKeysNode = Message.KEYS.createNode();
+        @Child private Node getSizeNode = Message.GET_SIZE.createNode();
+
+        protected PrimGetInstSizeNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @Specialization(guards = "!isAbstractSqueakObject(receiver)")
+        protected final long doInstSize(final TruffleObject receiver) {
+            PrimGetLastErrorNode.unsetLastError();
+            try {
+                if (ForeignAccess.sendHasKeys(hasKeysNode, receiver)) {
+                    final TruffleObject keys = ForeignAccess.sendKeys(getKeysNode, receiver);
+                    return (int) ForeignAccess.sendGetSize(getSizeNode, keys);
+                } else {
+                    return 0L;
+                }
+            } catch (UnsupportedMessageException e) {
+                PrimGetLastErrorNode.setLastError(code, e);
+                throw new PrimitiveFailed();
+            }
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveGetSize")
     protected abstract static class PrimGetSizeNode extends AbstractPrimitiveNode {
+        @Child private Node hasSizeNode = Message.HAS_SIZE.createNode();
         @Child private Node getSizeNode = Message.GET_SIZE.createNode();
 
         protected PrimGetSizeNode(final CompiledMethodObject method, final int numArguments) {
@@ -215,15 +248,36 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "!isAbstractSqueakObject(receiver)")
-        protected final Object doSize(final TruffleObject receiver) {
+        protected final long doSize(final TruffleObject receiver) {
             PrimGetLastErrorNode.unsetLastError();
             try {
-                final Object sendGetSize = ForeignAccess.sendGetSize(getSizeNode, receiver);
-                return code.image.wrap(sendGetSize);
+                if (ForeignAccess.sendHasSize(hasSizeNode, receiver)) {
+                    return (int) ForeignAccess.sendGetSize(getSizeNode, receiver);
+                } else {
+                    return 0L;
+                }
             } catch (UnsupportedMessageException e) {
                 PrimGetLastErrorNode.setLastError(code, e);
-                return 0L;
+                throw new PrimitiveFailed();
             }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(name = "primitiveGetLanguageInfo")
+    protected abstract static class PrimGetLanguageInfoNode extends AbstractPrimitiveNode {
+        protected PrimGetLanguageInfoNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @Specialization(guards = "languageID.isByteType()")
+        @TruffleBoundary
+        protected final Object doGet(@SuppressWarnings("unused") final ClassObject receiver, final NativeObject languageID) {
+            final Collection<LanguageInfo> languages = code.image.env.getLanguages().values();
+            return code.image.wrap(languages.stream().//
+                            filter(l -> !l.isInternal() && l.getId().equals(languageID.asString())).//
+                            map(l -> new Object[]{l.getId(), l.getName(), l.getVersion(), l.getDefaultMimeType(), l.getMimeTypes().toArray()}).//
+                            findFirst().orElseThrow(PrimitiveFailed::new));
         }
     }
 
@@ -276,16 +330,18 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveListAvailableLanguages")
-    protected abstract static class PrimListAvailableLanguagesNode extends AbstractPrimitiveNode {
-        protected PrimListAvailableLanguagesNode(final CompiledMethodObject method, final int numArguments) {
+    @SqueakPrimitive(name = "primitiveListAvailableLanguageIDs")
+    protected abstract static class PrimListAvailableLanguageIDsNode extends AbstractPrimitiveNode {
+        protected PrimListAvailableLanguageIDsNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
         }
 
         @Specialization
         @TruffleBoundary
         protected final Object doList(@SuppressWarnings("unused") final ClassObject receiver) {
-            return code.image.wrap(code.image.env.getLanguages().keySet().toArray());
+            final Collection<LanguageInfo> languages = code.image.env.getLanguages().values();
+            final Object[] result = languages.stream().filter(l -> !l.isInternal()).map(l -> l.getId()).toArray();
+            return code.image.wrap(result);
         }
     }
 
@@ -313,6 +369,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveSend")
     protected abstract static class PrimSendNode extends AbstractPrimitiveNode {
+        @Child private GetObjectArrayNode getObjectArrayNode = GetObjectArrayNode.create();
 
         protected PrimSendNode(final CompiledMethodObject method, final int numArguments) {
             super(method, numArguments);
@@ -329,7 +386,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
             } else {
                 identifier = selectorString;
             }
-            final Object[] arguments = ((PointersObject) message.at0(MESSAGE.ARGUMENTS)).getPointers();
+            final Object[] arguments = getObjectArrayNode.execute((ArrayObject) message.at0(MESSAGE.ARGUMENTS));
             final Node invokeNode = Message.INVOKE.createNode();
             try {
                 return code.image.wrap(ForeignAccess.sendInvoke(invokeNode, receiver, identifier, arguments));

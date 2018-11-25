@@ -5,7 +5,6 @@ import java.io.PrintWriter;
 import java.math.BigInteger;
 import java.nio.file.Paths;
 
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -341,7 +340,6 @@ public final class SqueakImageContext {
 
     @TruffleBoundary
     public ArrayObject wrap(final Object... elements) {
-        CompilerAsserts.neverPartOfCompilation("SqueakImageContext#wrap");
         final Object[] wrappedElements = new Object[elements.length];
         for (int i = 0; i < elements.length; i++) {
             wrappedElements[i] = wrap(elements[i]);
