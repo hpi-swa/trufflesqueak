@@ -24,6 +24,7 @@ import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
+import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.ERROR_TABLE;
@@ -393,12 +394,17 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        protected static final long doFloatObject(final FloatObject receiver) {
+            return Double.doubleToLongBits(receiver.getValue());
+        }
+
+        @Specialization
         protected static final long doDouble(final double receiver) {
             return Double.doubleToLongBits(receiver);
         }
 
         @Specialization
-        protected static final long doBaseSqueakObject(final AbstractSqueakObject obj) {
+        protected static final long doSqueakObject(final AbstractSqueakObject obj) {
             return obj.getSqueakHash();
         }
     }

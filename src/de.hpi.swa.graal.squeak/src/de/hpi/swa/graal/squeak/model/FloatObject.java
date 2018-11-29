@@ -74,7 +74,11 @@ public final class FloatObject extends AbstractSqueakObject {
     }
 
     public byte[] getBytes() {
-        final long bits = Double.doubleToRawLongBits(doubleValue);
+        return getBytes(doubleValue);
+    }
+
+    public static byte[] getBytes(final double value) {
+        final long bits = Double.doubleToRawLongBits(value);
         return new byte[]{(byte) (bits >> 56), (byte) (bits >> 48), (byte) (bits >> 40), (byte) (bits >> 32),
                         (byte) (bits >> 24), (byte) (bits >> 16), (byte) (bits >> 8), (byte) bits};
     }
