@@ -8,6 +8,7 @@ import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakAbortException;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakSyntaxError;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ClassObject;
@@ -45,10 +46,17 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"image.isHeadless()", "!isAllowedInHeadlessMode(selector)", "!isDoesNotUnderstandNode.execute(lookupResult)"})
+    @Specialization(guards = {"image.isHeadless()", "selector.isDebugErrorSelector()", "!isDoesNotUnderstandNode.execute(lookupResult)"})
     protected static final Object doDispatchHeadlessError(final VirtualFrame frame, final NativeObject selector, final CompiledMethodObject lookupResult,
                     final ClassObject rcvrClass, final Object[] rcvrAndArgs, final Object contextOrMarker) {
         throw new SqueakAbortException(MiscUtils.format("%s>>#%s detected in headless mode. Aborting...", rcvrClass.getSqueakClassName(), selector.asString()));
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = {"image.isHeadless()", "selector.isDebugSyntaxErrorSelector()", "!isDoesNotUnderstandNode.execute(lookupResult)"})
+    protected static final Object doDispatchHeadlessSyntaxError(final VirtualFrame frame, final NativeObject selector, final CompiledMethodObject lookupResult,
+                    final ClassObject rcvrClass, final Object[] rcvrAndArgs, final Object contextOrMarker) {
+        throw new SqueakSyntaxError((PointersObject) rcvrAndArgs[1]);
     }
 
     @Specialization(guards = {"isDoesNotUnderstandNode.execute(lookupResult)"})
@@ -78,8 +86,8 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
         throw new SqueakException("Should never happen");
     }
 
-    protected final boolean isAllowedInHeadlessMode(final NativeObject selector) {
-        return selector != image.getDebugErrorSelector() && selector != image.getDebugSyntaxErrorSelector();
+    protected static final boolean isAllowedInHeadlessMode(final NativeObject selector) {
+        return !selector.isDebugErrorSelector() && !selector.isDebugSyntaxErrorSelector();
     }
 
     private LookupClassNode getLookupClassNode() {

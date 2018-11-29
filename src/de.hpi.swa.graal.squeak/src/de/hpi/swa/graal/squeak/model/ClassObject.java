@@ -331,4 +331,8 @@ public final class ClassObject extends AbstractSqueakObject {
     public int size() {
         return CLASS_DESCRIPTION.SIZE + pointers.length;
     }
+
+    public String getClassComment() {
+        return CLASS_DESCRIPTION.getClassComment(this);
+    }
 }

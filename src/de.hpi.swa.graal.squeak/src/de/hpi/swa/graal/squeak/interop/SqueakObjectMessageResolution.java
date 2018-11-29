@@ -1,13 +1,10 @@
-package de.hpi.swa.graal.squeak.instrumentation;
+package de.hpi.swa.graal.squeak.interop;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.KeyInfo;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
@@ -121,55 +118,8 @@ public final class SqueakObjectMessageResolution {
 
     @Resolve(message = "KEYS")
     public abstract static class SqueakObjectPropertiesNode extends Node {
-        protected static final Object access(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
-            return new KeysArray(receiver.getSqueakClass().listMethods());
-        }
-    }
-
-    @MessageResolution(receiverType = KeysArray.class)
-    static final class KeysArray implements TruffleObject {
-
-        private final Object[] keys;
-
-        KeysArray(final Object[] keys) {
-            this.keys = keys;
-        }
-
-        @Resolve(message = "HAS_SIZE")
-        abstract static class HasSize extends Node {
-            public Object access(@SuppressWarnings("unused") final KeysArray receiver) {
-                return true;
-            }
-        }
-
-        @Resolve(message = "GET_SIZE")
-        abstract static class GetSize extends Node {
-            public Object access(final KeysArray receiver) {
-                return receiver.keys.length;
-            }
-        }
-
-        @Resolve(message = "READ")
-        abstract static class Read extends Node {
-            public Object access(final KeysArray receiver, final int index) {
-                try {
-                    final Object key = receiver.keys[index];
-                    assert key instanceof String;
-                    return key;
-                } catch (IndexOutOfBoundsException e) {
-                    CompilerDirectives.transferToInterpreter();
-                    throw UnknownIdentifierException.raise(String.valueOf(index));
-                }
-            }
-        }
-
-        @Override
-        public ForeignAccess getForeignAccess() {
-            return KeysArrayForeign.ACCESS;
-        }
-
-        static boolean isInstance(final TruffleObject array) {
-            return array instanceof KeysArray;
+        protected static final TruffleObject access(final AbstractSqueakObject receiver) {
+            return new InteropArray(receiver.getSqueakClass().listMethods());
         }
     }
 }

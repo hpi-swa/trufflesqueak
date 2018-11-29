@@ -1,11 +1,15 @@
 package de.hpi.swa.graal.squeak.model;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.instrumentation.SqueakObjectMessageResolutionForeign;
+import de.hpi.swa.graal.squeak.interop.SqueakObjectMessageResolutionForeign;
+import de.hpi.swa.graal.squeak.nodes.DispatchSendNode;
+import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 public abstract class AbstractSqueakObject implements TruffleObject {
     public static final int IDENTITY_HASH_MASK = 0x400000 - 1;
@@ -132,5 +136,12 @@ public abstract class AbstractSqueakObject implements TruffleObject {
 
     public final void unsetPinned() {
         setSqueakHash(squeakHash & ~(1 << PINNED_BIT_SHIFT));
+    }
+
+    public final Object send(final String selector, final Object... arguments) {
+        CompilerAsserts.neverPartOfCompilation("For testing or instrumentation only.");
+        final CompiledMethodObject method = (CompiledMethodObject) this.getSqueakClass().lookup(selector);
+        final MaterializedFrame frame = Truffle.getRuntime().createMaterializedFrame(new Object[0], method.getFrameDescriptor());
+        return DispatchSendNode.create(image).executeSend(frame, method.getCompiledInSelector(), method, getSqueakClass(), ArrayUtils.copyWithFirst(arguments, this), null);
     }
 }

@@ -1,5 +1,12 @@
 package de.hpi.swa.graal.squeak.model;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import com.oracle.truffle.api.CompilerAsserts;
+
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.GetObjectArrayNode;
+
 public final class ObjectLayouts {
 
     public static final class ADDITIONAL_METHOD_STATE {
@@ -59,6 +66,11 @@ public final class ObjectLayouts {
         public static final int NAME = 1;
     }
 
+    public static final class CLASS_BINDING {
+        public static final int KEY = 0;
+        public static final int VALUE = 1;
+    }
+
     public static final class CLASS_DESCRIPTION {
         public static final int SUPERCLASS = 0;
         public static final int METHOD_DICT = 1;
@@ -66,6 +78,26 @@ public final class ObjectLayouts {
         public static final int INSTANCE_VARIABLES = 3;
         public static final int ORGANIZATION = 4;
         public static final int SIZE = 5;
+
+        public static String getClassComment(final ClassObject squeakClass) {
+            CompilerAsserts.neverPartOfCompilation("For instrumentation access only.");
+            final AbstractSqueakObject organization = squeakClass.getOrganization();
+            if (organization.isNil()) {
+                return null;
+            }
+            final AbstractSqueakObject classComment = (AbstractSqueakObject) ((PointersObject) organization).at0(CLASS_ORGANIZER.CLASS_COMMENT);
+            final NativeObject string = (NativeObject) classComment.send("string");
+            return string.asString();
+        }
+    }
+
+    public static final class CLASS_ORGANIZER {
+        public static final int CATEGORY_ARRAY = 0;
+        public static final int CATEGORY_STOPS = 1;
+        public static final int ELEMENT_ARRAY = 2;
+        public static final int SUBJECT = 3;
+        public static final int CLASS_COMMENT = 4;
+        public static final int COMMENT_STAMP = 5;
     }
 
     public static final class CONTEXT {
@@ -79,6 +111,30 @@ public final class ObjectLayouts {
         public static final int SMALL_FRAMESIZE = 16;
         public static final int LARGE_FRAMESIZE = 56;
         public static final int MAX_STACK_SIZE = LARGE_FRAMESIZE - TEMP_FRAME_START;
+    }
+
+    public static final class DICTIONARY {
+        public static Map<Object, Object> toJavaMap(final PointersObject dictionary) {
+            final ArrayObject classBindings = (ArrayObject) dictionary.at0(HASHED_COLLECTION.ARRAY);
+            final Map<Object, Object> keyValues = new HashMap<>();
+            // TODO: Avoid node allocation in next line.
+            for (Object classBinding : GetObjectArrayNode.create().execute(classBindings)) {
+                if (classBinding != dictionary.image.nil) {
+                    final PointersObject classBindingPointer = (PointersObject) classBinding;
+                    keyValues.put(classBindingPointer.at0(CLASS_BINDING.KEY), classBindingPointer.at0(CLASS_BINDING.VALUE));
+                }
+            }
+            return keyValues;
+        }
+    }
+
+    public static final class ENVIRONMENT {
+        public static final int INFO = 0;
+        public static final int DECLARATIONS = 1;
+        public static final int BINDINGS = 2;
+        public static final int UNDECLARED = 3;
+        public static final int POLICIES = 4;
+        public static final int OBSERVERS = 5;
     }
 
     public static final class ERROR_TABLE {
@@ -105,12 +161,25 @@ public final class ObjectLayouts {
         public static final int OPERATING_SYSTEM_ERROR = 20;
     }
 
+    public static final class EXCEPTION {
+        public static final int MESSAGE_TEXT = 0;
+        public static final int TAG = 1;
+        public static final int SIGNAL_CONTEXT = 2;
+        public static final int HANDLER_CONTEXT = 3;
+        public static final int OUTER_CONTEXT = 4;
+    }
+
     public static final class FORM {
         public static final int BITS = 0;
         public static final int WIDTH = 1;
         public static final int HEIGHT = 2;
         public static final int DEPTH = 3;
         public static final int OFFSET = 4;
+    }
+
+    public static final class HASHED_COLLECTION {
+        public static final int TALLY = 0;
+        public static final int ARRAY = 1;
     }
 
     public static final class LINK {
@@ -163,6 +232,10 @@ public final class ObjectLayouts {
 
     public static final class SEMAPHORE {
         public static final int EXCESS_SIGNALS = 2;
+    }
+
+    public static final class SMALLTALK_IMAGE {
+        public static final int GLOBALS = 0;
     }
 
     public static final class SPECIAL_OBJECT {
@@ -223,10 +296,24 @@ public final class ObjectLayouts {
         public static final int CLASS_WEAK_FINALIZER = 55;
     }
 
+    public static final class SYNTAX_ERROR_NOTIFICATION {
+        public static final int IN_CLASS = 5;
+        public static final int CODE = 6;
+        public static final int DOIT_FLAG = 7;
+        public static final int ERROR_MESSAGE = 8;
+        public static final int LOCATION = 9;
+        public static final int NEW_SOURCE = 10;
+    }
+
     public static final class TEST_RESULT {
         public static final int FAILURES = 1;
         public static final int ERRORS = 2;
         public static final int PASSES = 3;
+    }
+
+    public static final class TEXT {
+        public static final int STRING = 0;
+        public static final int RUNS = 1;
     }
 
     public static final class WEAK_FINALIZATION_LIST {

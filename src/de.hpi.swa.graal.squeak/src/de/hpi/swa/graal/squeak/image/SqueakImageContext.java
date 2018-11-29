@@ -5,6 +5,8 @@ import java.io.PrintWriter;
 import java.math.BigInteger;
 import java.nio.file.Paths;
 
+import org.graalvm.options.OptionKey;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -15,17 +17,20 @@ import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.instrumentation.AllocationReporter;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.source.Source;
 
+import de.hpi.swa.graal.squeak.SqueakImage;
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.SqueakOptions;
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakAbortException;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageReaderNode;
+import de.hpi.swa.graal.squeak.interop.InteropMap;
 import de.hpi.swa.graal.squeak.io.DisplayPoint;
 import de.hpi.swa.graal.squeak.io.SqueakDisplay;
 import de.hpi.swa.graal.squeak.io.SqueakDisplayInterface;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
+import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
@@ -35,7 +40,9 @@ import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.ASSOCIATION;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
+import de.hpi.swa.graal.squeak.model.ObjectLayouts.ENVIRONMENT;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
+import de.hpi.swa.graal.squeak.model.ObjectLayouts.SMALLTALK_IMAGE;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.graal.squeak.nodes.process.GetActiveProcessNode;
@@ -143,6 +150,7 @@ public final class SqueakImageContext {
     @CompilationFinal private SqueakDisplayInterface display;
 
     @CompilationFinal private ClassObject compilerClass = null;
+    @CompilationFinal private ClassObject parserClass = null;
     @CompilationFinal private CompiledMethodObject evaluateMethod;
     @CompilationFinal private NativeObject simulatePrimitiveArgsSelector = null;
     @CompilationFinal private PointersObject scheduler = null;
@@ -155,6 +163,9 @@ public final class SqueakImageContext {
                                                                                                   // testing
     @CompilationFinal private NativeObject debugSyntaxErrorSelector = null; // for testing
 
+    private Source lastParseRequestSource;
+    @CompilationFinal private SqueakImage squeakImage;
+
     public SqueakImageContext(final SqueakLanguage squeakLanguage, final SqueakLanguage.Env environment) {
         language = squeakLanguage;
         patch(environment);
@@ -162,8 +173,35 @@ public final class SqueakImageContext {
         allocationReporter = env.lookup(AllocationReporter.class);
     }
 
-    public void load() {
-        Truffle.getRuntime().createCallTarget(new SqueakImageReaderNode(this)).call();
+    public void ensureLoaded() {
+        if (!loaded()) {
+            // Load image.
+            squeakImage = (SqueakImage) Truffle.getRuntime().createCallTarget(new SqueakImageReaderNode(this)).call();
+            // Remove active context.
+            final PointersObject activeProcess = GetActiveProcessNode.create(this).executeGet();
+            activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, nil);
+            // Modify StartUpList for headless execution.
+            // TODO: Also start ProcessorScheduler and WeakArray (see SqueakSUnitTest).
+            evaluate("{EventSensor. ProcessorScheduler. Project. WeakArray} do: [:ea | Smalltalk removeFromStartUpList: ea]");
+            try {
+                evaluate("[Smalltalk processStartUpList: true] value");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            // Set author information.
+            evaluate("Utilities authorName: 'GraalSqueak'");
+            evaluate("Utilities setAuthorInitials: 'GraalSqueak'");
+            // Initialize fresh MorphicUIManager.
+            evaluate("Project current instVarNamed: #uiManager put: MorphicUIManager new");
+        }
+    }
+
+    public boolean loaded() {
+        return squeakImage != null;
+    }
+
+    private Object evaluate(final String sourceCode) {
+        return compilerClass.send("evaluate:", wrap(sourceCode));
     }
 
     public boolean patch(final SqueakLanguage.Env newEnv) {
@@ -177,29 +215,34 @@ public final class SqueakImageContext {
     }
 
     public ExecuteTopLevelContextNode getActiveContext() {
+        assert lastParseRequestSource == null : "Image should not have been executed manually before.";
         final PointersObject activeProcess = GetActiveProcessNode.create(this).executeGet();
         final ContextObject activeContext = (ContextObject) activeProcess.at0(PROCESS.SUSPENDED_CONTEXT);
         activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, nil);
         return ExecuteTopLevelContextNode.create(getLanguage(), activeContext, true);
     }
 
-    public ExecuteTopLevelContextNode getCompilerEvaluateContext(final String code) {
+    public ExecuteTopLevelContextNode getDoItContext(final Source source) {
+        /*
+         * (Parser new parse: '1 + 2 * 3' class: UndefinedObject noPattern: true notifying: nil
+         * ifFail: [^nil]) generate
+         */
+        lastParseRequestSource = source;
+        assert parserClass != null;
         assert compilerClass != null;
-        if (evaluateMethod == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            evaluateMethod = (CompiledMethodObject) compilerClass.lookup("evaluate:");
-            if (evaluateMethod.getCompiledInSelector() == doesNotUnderstand) {
-                throw new SqueakAbortException("Compiler>>#evaluate: could not be found!");
-            }
-        }
-        final ContextObject customContext = ContextObject.create(this, evaluateMethod.sqContextSize());
-        customContext.atput0(CONTEXT.METHOD, evaluateMethod);
-        customContext.atput0(CONTEXT.INSTRUCTION_POINTER, (long) evaluateMethod.getInitialPC());
-        customContext.atput0(CONTEXT.RECEIVER, compilerClass);
+
+        final AbstractSqueakObject parser = (AbstractSqueakObject) parserClass.send("new");
+        final AbstractSqueakObject methodNode = (AbstractSqueakObject) parser.send(
+                        "parse:class:noPattern:notifying:ifFail:", wrap(source.getCharacters().toString()), nilClass, sqTrue, nil, new BlockClosureObject(this));
+        final CompiledMethodObject doItMethod = (CompiledMethodObject) methodNode.send("generate");
+
+        final ContextObject customContext = ContextObject.create(this, doItMethod.sqContextSize());
+        customContext.atput0(CONTEXT.METHOD, doItMethod);
+        customContext.atput0(CONTEXT.INSTRUCTION_POINTER, (long) doItMethod.getInitialPC());
+        customContext.atput0(CONTEXT.RECEIVER, nilClass);
         customContext.atput0(CONTEXT.STACKPOINTER, 0L);
         customContext.atput0(CONTEXT.CLOSURE_OR_NIL, nil);
         customContext.setSender(nil);
-        customContext.push(wrap(code));
         return ExecuteTopLevelContextNode.create(getLanguage(), customContext, false);
     }
 
@@ -249,6 +292,15 @@ public final class SqueakImageContext {
     public void setCompilerClass(final ClassObject compilerClass) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         this.compilerClass = compilerClass;
+    }
+
+    public ClassObject getParserClass() {
+        return parserClass;
+    }
+
+    public void setParserClass(final ClassObject parserClass) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        this.parserClass = parserClass;
     }
 
     public NativeObject getSimulatePrimitiveArgsSelector() {
@@ -388,7 +440,14 @@ public final class SqueakImageContext {
     }
 
     public String getImagePath() {
+        if (imagePath == null) {
+            setImagePath(getOption(SqueakOptions.ImagePath));
+        }
         return imagePath;
+    }
+
+    private String getOption(final OptionKey<String> key) {
+        return SqueakOptions.getOption(env, key);
     }
 
     public void setImagePath(final String path) {
@@ -402,6 +461,10 @@ public final class SqueakImageContext {
 
     public String[] getImageArguments() {
         return env.getApplicationArguments();
+    }
+
+    public Source getLastParseRequestSource() {
+        return lastParseRequestSource;
     }
 
     public boolean interruptHandlerDisabled() {
@@ -490,8 +553,10 @@ public final class SqueakImageContext {
         }
     }
 
-    public Object getSmalltalkDictionary() {
-        return smalltalk; // TODO: turn into TruffleObject with support for keys etc
+    public TruffleObject getGlobals() {
+        final PointersObject environment = (PointersObject) smalltalk.at0(SMALLTALK_IMAGE.GLOBALS);
+        final PointersObject bindings = (PointersObject) environment.at0(ENVIRONMENT.BINDINGS);
+        return new InteropMap(bindings);
     }
 
     public void reportNewAllocationRequest() {

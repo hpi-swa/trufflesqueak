@@ -196,4 +196,12 @@ public final class NativeObject extends AbstractSqueakObject {
             throw new SqueakException("Unexpected native object type");
         }
     }
+
+    public boolean isDebugErrorSelector() {
+        return this == image.getDebugErrorSelector();
+    }
+
+    public boolean isDebugSyntaxErrorSelector() {
+        return this == image.getDebugSyntaxErrorSelector();
+    }
 }

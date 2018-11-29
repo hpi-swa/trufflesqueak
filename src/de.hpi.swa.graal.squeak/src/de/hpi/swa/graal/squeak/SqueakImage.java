@@ -40,7 +40,7 @@ public final class SqueakImage implements TruffleObject {
                     return squeakImage.image.getCompilerClass();
                 } else {
                     // TODO:
-                    return squeakImage.image.getSmalltalkDictionary();
+                    return squeakImage.image.getGlobals();
                 }
             }
         }

@@ -1,11 +1,9 @@
-package de.hpi.swa.graal.squeak.instrumentation;
+package de.hpi.swa.graal.squeak.util;
 
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushClosureNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.ReturnBytecodes.ReturnTopFromBlockNode;
-import de.hpi.swa.graal.squeak.util.MiscUtils;
-import de.hpi.swa.graal.squeak.util.SqueakBytecodeDecoder;
 
 public class CompiledCodeObjectPrinter {
 

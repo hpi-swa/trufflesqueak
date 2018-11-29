@@ -267,7 +267,6 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
      *
      */
     private static Object evaluate(final String expression) {
-        //
         final String fakeMethodName = "fakeEvaluate" + expression.hashCode();
         final CompiledMethodObject method = makeMethod(
                         new Object[]{6L, getEvaluateSymbol(), getSmalltalkAssociation(), getCompilerSymbol(), image.wrap(expression), asSymbol(fakeMethodName), getSmalltalkAssociation()},

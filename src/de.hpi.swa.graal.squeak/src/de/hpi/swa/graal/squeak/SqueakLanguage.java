@@ -48,16 +48,11 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
             image.setImagePath(source.getPath());
             return Truffle.getRuntime().createCallTarget(new SqueakImageReaderNode(image));
         } else {
-            if (image.getImagePath() == null) {
-                final String imagePath = SqueakOptions.getOption(image.env, SqueakOptions.ImagePath);
-                image.setImagePath(imagePath);
-                image.load();
-            }
-            final String sourceCode = source.getCharacters().toString();
+            image.ensureLoaded();
             if (source.isInternal()) {
-                image.printToStdOut(MiscUtils.format("Evaluating '%s'...", sourceCode));
+                image.printToStdOut(MiscUtils.format("Evaluating '%s'...", source.getCharacters().toString()));
             }
-            return Truffle.getRuntime().createCallTarget(image.getCompilerEvaluateContext(sourceCode));
+            return Truffle.getRuntime().createCallTarget(image.getDoItContext(source));
         }
     }
 
@@ -77,7 +72,8 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
 
     @Override
     protected Iterable<Scope> findTopScopes(final SqueakImageContext context) {
-        return Arrays.asList(Scope.newBuilder("Smalltalk", context.getSmalltalkDictionary()).build());
+        context.ensureLoaded();
+        return Arrays.asList(Scope.newBuilder("Smalltalk", context.getGlobals()).build());
     }
 
     @Override

@@ -128,7 +128,7 @@ public abstract class AbstractSqueakTestCase {
         image = SqueakLanguage.getContext();
         image.setImagePath(imagePath);
         if (Files.exists(Paths.get(imagePath))) {
-            image.load();
+            image.ensureLoaded();
         }
     }
 }
