@@ -2,6 +2,7 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.StandardOpenOption;
@@ -21,12 +22,15 @@ import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
+import de.hpi.swa.graal.squeak.model.FloatObject;
+import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
+import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
 
 public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     private static final Map<Long, SeekableByteChannel> files = new HashMap<>();
@@ -193,6 +197,45 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
                 return code.image.wrap(result);
             }
             return code.image.nil;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(name = "primitiveDirectoryGetMacTypeAndCreator")
+    protected abstract static class PrimDirectoryGetMacTypeAndCreatorNode extends AbstractPrimitiveNode {
+        protected PrimDirectoryGetMacTypeAndCreatorNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected static final Object doNothing(final PointersObject receiver, final NativeObject fileName, final NativeObject typeString, final NativeObject creatorString) {
+            /*
+             * Get the Macintosh file type and creator info for the file with the given name. Fails
+             * if the file does not exist or if the type and creator type arguments are not strings
+             * of length 4. This primitive is Mac specific; it is a noop on other platforms.
+             */
+            return receiver;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(name = "primitiveDirectorySetMacTypeAndCreator")
+    protected abstract static class PrimDirectorySetMacTypeAndCreatorNode extends AbstractPrimitiveNode {
+        protected PrimDirectorySetMacTypeAndCreatorNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected static final Object doNothing(final PointersObject receiver, final NativeObject fileName, final NativeObject typeString, final NativeObject creatorString) {
+            /*
+             * Set the Macintosh file type and creator info for the file with the given name. Fails
+             * if the file does not exist or if the type and creator type arguments are not strings
+             * of length 4. Does nothing on other platforms (where the underlying primitive is a
+             * noop).
+             */
+            return receiver;
         }
     }
 
@@ -429,39 +472,80 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             super(method, numArguments);
         }
 
-        @Specialization(guards = {"content.isByteType()", "fileDescriptor != IN"})
+        @Specialization(guards = {"content.isByteType()", "!isStdioFileDescriptor(fileDescriptor)"})
         @TruffleBoundary
-        protected final long doWrite(final PointersObject receiver, final long fileDescriptor, final NativeObject content, final long startIndex, final long count) {
+        protected static final long doWriteByte(@SuppressWarnings("unused") final PointersObject receiver, final long fileDescriptor, final NativeObject content, final long startIndex,
+                        final long count) {
+            return fileWriteFromAt(fileDescriptor, count, content.getByteStorage(), startIndex, 1);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"content.isByteType()", "fileDescriptor == OUT"})
+        @TruffleBoundary
+        protected final long doWriteByteToStdout(final PointersObject receiver, final long fileDescriptor, final NativeObject content, final long startIndex, final long count) {
+            return fileWriteToPrintWriter(code.image.getOutput(), content, startIndex, count);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"content.isByteType()", "fileDescriptor == ERROR"})
+        @TruffleBoundary
+        protected final long doWriteByteToStderr(final PointersObject receiver, final long fileDescriptor, final NativeObject content, final long startIndex, final long count) {
+            return fileWriteToPrintWriter(code.image.getError(), content, startIndex, count);
+        }
+
+        @Specialization(guards = {"content.isIntType()", "!isStdioFileDescriptor(fileDescriptor)"})
+        @TruffleBoundary
+        protected static final long doWriteInt(@SuppressWarnings("unused") final PointersObject receiver, final long fileDescriptor, final NativeObject content, final long startIndex,
+                        final long count) {
+            return fileWriteFromAt(fileDescriptor, count, ArrayConversionUtils.bytesFromInts(content.getIntStorage()), startIndex, 4);
+        }
+
+        @Specialization(guards = {"!isStdioFileDescriptor(fileDescriptor)"})
+        @TruffleBoundary
+        protected static final long doWriteLargeInteger(@SuppressWarnings("unused") final PointersObject receiver, final long fileDescriptor, final LargeIntegerObject content, final long startIndex,
+                        final long count) {
+            return fileWriteFromAt(fileDescriptor, count, content.getBytes(), startIndex, 1);
+        }
+
+        @Specialization(guards = {"!isStdioFileDescriptor(fileDescriptor)"})
+        @TruffleBoundary
+        protected static final long doWriteDouble(@SuppressWarnings("unused") final PointersObject receiver, final long fileDescriptor, final double content, final long startIndex, final long count) {
+            return fileWriteFromAt(fileDescriptor, count, FloatObject.getBytes(content), startIndex, 8);
+        }
+
+        @Specialization(guards = {"!isStdioFileDescriptor(fileDescriptor)"})
+        @TruffleBoundary
+        protected static final long doWriteFloatObject(@SuppressWarnings("unused") final PointersObject receiver, final long fileDescriptor, final FloatObject content, final long startIndex,
+                        final long count) {
+            return fileWriteFromAt(fileDescriptor, count, content.getBytes(), startIndex, 8);
+        }
+
+        protected static final boolean isStdioFileDescriptor(final long fileDescriptor) {
+            return fileDescriptor == STDIO_HANDLES.IN || fileDescriptor == STDIO_HANDLES.OUT || fileDescriptor == STDIO_HANDLES.ERROR;
+        }
+
+        private static long fileWriteFromAt(final long fileDescriptor, final long count, final byte[] bytes, final long startIndex, final int elementSize) {
+            final int byteStart = (int) (startIndex - 1) * elementSize;
+            final int byteEnd = Math.min(byteStart + (int) count, bytes.length) * elementSize;
+            final ByteBuffer buffer = ByteBuffer.wrap(bytes);
+            buffer.position(byteStart);
+            buffer.limit(byteEnd);
+            final int written;
+            try {
+                written = getFileOrPrimFail(fileDescriptor).write(buffer);
+            } catch (IOException e) {
+                throw new PrimitiveFailed();
+            }
+            return written / elementSize;
+        }
+
+        private static long fileWriteToPrintWriter(final PrintWriter printWriter, final NativeObject content, final long startIndex, final long count) {
             final byte[] bytes = content.getByteStorage();
             final int byteStart = (int) (startIndex - 1);
             final int byteEnd = Math.min(byteStart + (int) count, bytes.length);
-            if (fileDescriptor == STDIO_HANDLES.OUT) {
-                printToStdOut(content, byteStart, byteEnd);
-            } else if (fileDescriptor == STDIO_HANDLES.ERROR) {
-                printToStdErr(content, byteStart, byteEnd);
-            } else {
-                if (code.image.isVerbose()) { // Also print to stderr.
-                    doWrite(receiver, STDIO_HANDLES.ERROR, content, startIndex, count);
-                }
-                try {
-                    getFileOrPrimFail(fileDescriptor).write(ByteBuffer.wrap(bytes));
-                } catch (IOException e) {
-                    throw new PrimitiveFailed();
-                }
-            }
+            printWriter.append(asString(content), byteStart, byteEnd);
+            printWriter.flush();
             return byteEnd - byteStart;
-        }
-
-        @TruffleBoundary
-        private void printToStdOut(final NativeObject content, final int byteStart, final int byteEnd) {
-            code.image.getOutput().append(asString(content), byteStart, byteEnd);
-            code.image.getOutput().flush();
-        }
-
-        @TruffleBoundary
-        private void printToStdErr(final NativeObject content, final int byteStart, final int byteEnd) {
-            code.image.getError().append(asString(content), byteStart, byteEnd);
-            code.image.getError().flush();
         }
     }
 }
