@@ -15,13 +15,18 @@ import de.hpi.swa.graal.squeak.nodes.process.GetActiveProcessNode;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 import org.junit.AfterClass;
 import org.junit.Assume;
 import org.junit.BeforeClass;
 
 public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
 
-    private static final int TIMEOUT_IN_SECONDS = 5 * 60;
+    private static final int TIMEOUT_MINUTES = 5;
     private static Object smalltalkDictionary;
     private static Object smalltalkAssociation;
     private static Object evaluateSymbol;
@@ -158,39 +163,26 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     protected static String runTestCase(final String testClassName, final String testMethodName) {
-        final String timeoutErrorMessage = "did not terminate in " + TIMEOUT_IN_SECONDS + "s";
-        final String[] result = new String[]{timeoutErrorMessage};
-
-        final Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                final String testCommand;
-                if (testMethodName == null) {
-                    testCommand = testClassName + " buildSuite run";
-                } else {
-                    testCommand = String.format("%s run: #%s", testClassName, testMethodName);
-                }
-                result[0] = invokeTestCase(testCommand);
-            }
-        });
-        thread.start();
-        try {
-            thread.join(TIMEOUT_IN_SECONDS * 1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        if (thread.isAlive()) {
-            thread.interrupt();
-        }
-        return testClassName + ": " + result[0];
+        final String preamble = testName(testClassName, testMethodName) + ": ";
+        return preamble + invokeTestCase(testClassName, testMethodName);
     }
 
-    private static String invokeTestCase(final String testCommand) {
-        try {
+    private static String testName(final String testClassName, final String testMethodName) {
+        return testClassName + (testMethodName == null ? "" : "#" + testMethodName);
+    }
+
+    private static String invokeTestCase(final String testClassName, final String testMethodName) {
+        return runWithTimeout(() -> {
+            final String testCommand = testCommand(testClassName, testMethodName);
             return extractFailuresAndErrorsFromTestResult(evaluate(testCommand));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "failed with an error: " + e.toString();
+        });
+    }
+
+    private static String testCommand(final String testClassName, final String testMethodName) {
+        if (testMethodName == null) {
+            return String.format("%s buildSuite run", testClassName);
+        } else {
+            return String.format("%s run: #%s", testClassName, testMethodName);
         }
     }
 
@@ -219,6 +211,20 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
             final AbstractSqueakObject value = (AbstractSqueakObject) at0Node.execute(array, i);
             assert value != image.nil;
             output.add(((PointersObject) value).at0(0) + suffix);
+        }
+    }
+
+    private static String runWithTimeout(final Supplier<String> action) {
+        try {
+            return CompletableFuture.supplyAsync(action).get(TIMEOUT_MINUTES, TimeUnit.MINUTES);
+        } catch (final TimeoutException e) {
+            return "did not terminate in " + TIMEOUT_MINUTES + "m";
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return "interrupted";
+        } catch (final ExecutionException e) {
+            e.getCause().printStackTrace();
+            return "failed with an error: " + e.getCause();
         }
     }
 }
