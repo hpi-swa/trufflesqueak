@@ -28,16 +28,16 @@ public final class SqueakKeyboard implements KeyListener {
 
     public void keyTyped(final KeyEvent e) {
         display.recordModifiers(e);
-        if (mapSqueakCode(e) < 0) {
+        if (mapSpecialKeyCode(e) < 0) {
             recordKeyboardEvent(e.getKeyChar());
         }
     }
 
     public void keyPressed(final KeyEvent e) {
         display.recordModifiers(e);
-        final int squeakCode = mapSqueakCode(e);
-        if (squeakCode >= 0) {
-            recordKeyboardEvent(squeakCode);
+        final int specialKeyCode = mapSpecialKeyCode(e);
+        if (specialKeyCode >= 0) {
+            recordKeyboardEvent(specialKeyCode);
         } else if ((e.isMetaDown() || (e.isAltDown() && !e.isControlDown())) && e.getKeyChar() != KeyEvent.CHAR_UNDEFINED) {
             recordKeyboardEvent(e.getKeyChar());
         }
@@ -59,25 +59,25 @@ public final class SqueakKeyboard implements KeyListener {
         }
     }
 
-    private static int mapSqueakCode(final KeyEvent e) {
+    private static int mapSpecialKeyCode(final KeyEvent e) {
         //@formatter:off
         switch(e.getExtendedKeyCode()) {
-            case 8: return 8;    // Backspace
-            case 9:  return 9;   // Tab
-            case 13: return 13;  // Return
-            case 27: return 27;  // Escape
-            case 32: return 32;  // Space
-            case 33: return 11;  // PageUp
-            case 34: return 12;  // PageDown
-            case 35: return 4;   // End
-            case 36: return 1;   // Home
-            case 37: return 28;  // Left
-            case 38: return 30;  // Up
-            case 39: return 29;  // Right
-            case 40: return 31;  // Down
-            // case ?: return 5;   // Insert
-            // case ?: return 127; // Delete
-            default: return -1;
+            case KeyEvent.VK_BACK_SPACE: return 8;
+            case KeyEvent.VK_TAB: return 9;
+            case KeyEvent.VK_ENTER: return 13;
+            case KeyEvent.VK_ESCAPE: return 27;
+            case KeyEvent.VK_SPACE: return 32;
+            case KeyEvent.VK_PAGE_UP: return 11;
+            case KeyEvent.VK_PAGE_DOWN: return 12;
+            case KeyEvent.VK_END: return 4;
+            case KeyEvent.VK_HOME: return 1;
+            case KeyEvent.VK_LEFT: return 28;
+            case KeyEvent.VK_UP: return 30;
+            case KeyEvent.VK_RIGHT: return 29;
+            case KeyEvent.VK_DOWN: return 31;
+            case KeyEvent.VK_INSERT: return 5;
+            case KeyEvent.VK_DELETE: return 127;
+            default: return -1; // Not a special key.
         }
         //@formatter:on
     }
