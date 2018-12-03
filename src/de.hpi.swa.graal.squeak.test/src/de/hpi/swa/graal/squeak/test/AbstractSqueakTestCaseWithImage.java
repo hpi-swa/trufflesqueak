@@ -157,16 +157,12 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         final String timeoutErrorMessage = "did not terminate in " + TIMEOUT_IN_SECONDS + "s";
         final String[] result = new String[]{timeoutErrorMessage};
 
-        image.getOutput().print(testClassName + ": ");
-        image.getOutput().flush();
-
         final Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
                 result[0] = invokeTestCase(testClassName);
             }
         });
-        final long startTime = System.currentTimeMillis();
         thread.start();
         try {
             thread.join(TIMEOUT_IN_SECONDS * 1000);
@@ -176,8 +172,6 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         if (thread.isAlive()) {
             thread.interrupt();
         }
-        final double timeToRun = (System.currentTimeMillis() - startTime) / 1000.0;
-        image.getOutput().println(result[0] + " [" + timeToRun + "s]");
         return testClassName + ": " + result[0];
     }
 
