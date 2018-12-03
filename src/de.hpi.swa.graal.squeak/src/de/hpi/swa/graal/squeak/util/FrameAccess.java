@@ -97,7 +97,7 @@ public class FrameAccess {
             @Override
             public Frame visitFrame(final FrameInstance frameInstance) {
                 final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
-                if (current.getFrameDescriptor().getSize() <= 0) {
+                if (!isGraalSqueakFrame(current)) {
                     return null;
                 }
                 final Object contextOrMarker = getContextOrMarker(current);
