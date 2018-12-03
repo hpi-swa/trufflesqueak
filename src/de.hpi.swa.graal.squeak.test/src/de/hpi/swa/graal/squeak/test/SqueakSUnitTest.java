@@ -3,9 +3,10 @@ package de.hpi.swa.graal.squeak.test;
 import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
-import de.hpi.swa.graal.squeak.test.SqueakSUnitTestMap.TEST_TYPE;
-import java.util.ArrayList;
+import de.hpi.swa.graal.squeak.test.SqueakTests.SqueakTest;
+import de.hpi.swa.graal.squeak.test.SqueakTests.TestType;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
@@ -15,42 +16,81 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
+/**
+ * Run tests from the Squeak image.
+ *
+ * <p>
+ * This test exercises all tests from the Squeak image. Optionally a single test class may be
+ * selected via the system property "squeakTestClass" (example VM parameter:
+ * {@code -DsqueakTestClass=ObjectTest})
+ * </p>
+ */
 @RunWith(Parameterized.class)
 public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
 
-    @Parameters(name = "{0}: {1} (#{index})")
-    public static Collection<Object[]> getParameters() {
-        return Stream.of(TEST_TYPE.PASSING, TEST_TYPE.FAILING, TEST_TYPE.FLAKY, TEST_TYPE.NOT_TERMINATING).flatMap(SqueakSUnitTest::getSqueakTests).collect(toList());
+    private static final String TEST_CLASS_PROPERTY = "squeakTestClass";
+
+    static final List<SqueakTest> TESTS = selectTestsToRun().collect(toList());
+
+    @Parameters(name = "{0} (#{index})")
+    public static Collection<SqueakTest> getParameters() {
+        return TESTS;
     }
 
-    @Parameter public String testType;
+    private static Stream<SqueakTest> selectTestsToRun() {
+        final String toRun = System.getProperty(TEST_CLASS_PROPERTY);
+        if (toRun != null && !toRun.trim().isEmpty()) {
+            return SqueakTests.getTestsToRun(toRun);
+        }
+        return SqueakTests.getTestsToRun();
+    }
 
-    @Parameter(1) public String testClass;
+    @Parameter public SqueakTest test;
 
     @Test
     public void runSqueakTest() {
-        if (testType.equals(TEST_TYPE.NOT_TERMINATING)) {
+        checkTermination();
+
+        final String result = runTestCase(test.className, test.selector);
+
+        checkResult(result);
+    }
+
+    private void checkTermination() {
+        if (test.type == TestType.NOT_TERMINATING) {
             assumeNotOnMXGate();
-        }
-
-        final String result = runTestCase(testClass);
-
-        final boolean passed = result.contains("passed");
-        if (testType.equals(TEST_TYPE.PASSING)) {
-            assertTrue(passed);
-        } else if (testType.equals(TEST_TYPE.FAILING)) {
-            assertFalse(passed);
         }
     }
 
-    private static Stream<Object[]> getSqueakTests(final String type) {
-        final List<Object[]> tests = new ArrayList<>();
-        final Object[] testMap = SqueakSUnitTestMap.SQUEAK_TEST_CASES;
-        for (int index = 0; index < testMap.length; index += 2) {
-            if (testMap[index + 1].equals(type)) {
-                tests.add(new Object[]{testMap[index + 1], testMap[index]});
-            }
+    private void checkResult(final String result) {
+        final boolean passed = result.contains("passed");
+
+        switch (test.type) {
+            case PASSING: // falls through
+            case SLOW_PASSING:
+                assertTrue(result, passed);
+                break;
+
+            case FAILING: // falls through
+            case SLOW_FAILING: // falls through
+            case BROKEN_IN_SQUEAK:
+                assertFalse(result, passed);
+                break;
+
+            case FLAKY:
+                // no verdict possible
+                break;
+
+            case NOT_TERMINATING:
+                fail("This test unexpectedly terminated");
+                break;
+
+            case IGNORED:
+                fail("This test should never have been run");
+                break;
+
+            default:
+                throw new IllegalArgumentException(test.type.toString());
         }
-        return tests.stream();
     }
 }

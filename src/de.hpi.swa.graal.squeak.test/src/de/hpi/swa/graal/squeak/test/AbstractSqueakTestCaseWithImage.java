@@ -145,7 +145,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         return runMethod(method, getSmalltalkDictionary());
     }
 
-    private static void patchMethod(final String className, final String selector, final String body) {
+    protected static void patchMethod(final String className, final String selector, final String body) {
         image.getOutput().println("Patching " + className + ">>#" + selector + "...");
         final Object patchResult = evaluate(String.join(" ",
                         className, "addSelectorSilently:", "#" + selector, "withMethod: (", className, "compile: '" + body + "'",
@@ -154,13 +154,23 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     protected static String runTestCase(final String testClassName) {
+        return runTestCase(testClassName, null);
+    }
+
+    protected static String runTestCase(final String testClassName, final String testMethodName) {
         final String timeoutErrorMessage = "did not terminate in " + TIMEOUT_IN_SECONDS + "s";
         final String[] result = new String[]{timeoutErrorMessage};
 
         final Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
-                result[0] = invokeTestCase(testClassName);
+                final String testCommand;
+                if (testMethodName == null) {
+                    testCommand = testClassName + " buildSuite run";
+                } else {
+                    testCommand = String.format("%s run: #%s", testClassName, testMethodName);
+                }
+                result[0] = invokeTestCase(testCommand);
             }
         });
         thread.start();
@@ -175,9 +185,9 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         return testClassName + ": " + result[0];
     }
 
-    private static String invokeTestCase(final String testClassName) {
+    private static String invokeTestCase(final String testCommand) {
         try {
-            return extractFailuresAndErrorsFromTestResult(evaluate(testClassName + " buildSuite run"));
+            return extractFailuresAndErrorsFromTestResult(evaluate(testCommand));
         } catch (Exception e) {
             e.printStackTrace();
             return "failed with an error: " + e.toString();
