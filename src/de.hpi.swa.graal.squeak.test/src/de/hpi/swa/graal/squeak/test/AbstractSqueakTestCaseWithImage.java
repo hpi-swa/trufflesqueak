@@ -15,6 +15,7 @@ import de.hpi.swa.graal.squeak.nodes.process.GetActiveProcessNode;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.AfterClass;
 import org.junit.Assume;
 import org.junit.BeforeClass;
 
@@ -32,6 +33,14 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         ensureImageContext(imagePath);
         image.getOutput().println("Test image loaded from " + imagePath + "...");
         patchImageForTesting();
+    }
+
+    @AfterClass
+    public static void cleanUp() {
+        smalltalkDictionary = null;
+        smalltalkAssociation = null;
+        evaluateSymbol = null;
+        compilerSymbol = null;
     }
 
     private static void patchImageForTesting() {

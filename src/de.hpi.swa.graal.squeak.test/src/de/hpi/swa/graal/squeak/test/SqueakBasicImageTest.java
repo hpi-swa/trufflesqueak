@@ -2,10 +2,6 @@ package de.hpi.swa.graal.squeak.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -108,73 +104,5 @@ public class SqueakBasicImageTest extends AbstractSqueakTestCaseWithImage {
     public void testInspectSqueakTestSelector() {
         assumeNotOnMXGate();
         image.getOutput().println(evaluate("(WordArrayTest run: #testCannotPutNegativeValue) asString"));
-    }
-
-    @Test
-    public void testWPassingSqueakTests() {
-        final List<String> failing = new ArrayList<>();
-        final String[] testClasses = getSqueakTests(SqueakSUnitTestMap.TEST_TYPE.PASSING);
-        printHeader(SqueakSUnitTestMap.TEST_TYPE.PASSING, testClasses);
-        for (int i = 0; i < testClasses.length; i++) {
-            final String result = runTestCase(testClasses[i]);
-            if (!result.contains("passed")) {
-                failing.add(result);
-            }
-        }
-        failIfNotEmpty(failing);
-    }
-
-    @Test
-    public void testXFlakySqueakTests() {
-        final String[] testClasses = getSqueakTests(SqueakSUnitTestMap.TEST_TYPE.FLAKY);
-        printHeader(SqueakSUnitTestMap.TEST_TYPE.FLAKY, testClasses);
-        for (int i = 0; i < testClasses.length; i++) {
-            runTestCase(testClasses[i]);
-        }
-    }
-
-    @Test
-    public void testYFailingSqueakTests() {
-        testAndFailOnPassing(SqueakSUnitTestMap.TEST_TYPE.FAILING);
-    }
-
-    @Test
-    public void testZNotTerminatingSqueakTests() {
-        assumeNotOnMXGate();
-        testAndFailOnPassing(SqueakSUnitTestMap.TEST_TYPE.NOT_TERMINATING);
-    }
-
-    private static String[] getSqueakTests(final String type) {
-        final List<String> result = new ArrayList<>();
-        for (int i = 0; i < SqueakSUnitTestMap.SQUEAK_TEST_CASES.length; i += 2) {
-            if (SqueakSUnitTestMap.SQUEAK_TEST_CASES[i + 1].equals(type)) {
-                result.add((String) SqueakSUnitTestMap.SQUEAK_TEST_CASES[i]);
-            }
-        }
-        return result.toArray(new String[0]);
-    }
-
-    private static void testAndFailOnPassing(final String type) {
-        final List<String> passing = new ArrayList<>();
-        final String[] testClasses = getSqueakTests(type);
-        printHeader(type, testClasses);
-        for (int i = 0; i < testClasses.length; i++) {
-            final String result = runTestCase(testClasses[i]);
-            if (result.contains("passed")) {
-                passing.add(result);
-            }
-        }
-        failIfNotEmpty(passing);
-    }
-
-    private static void failIfNotEmpty(final List<String> list) {
-        if (!list.isEmpty()) {
-            fail(String.join("\n", list));
-        }
-    }
-
-    private static void printHeader(final String type, final String[] testClasses) {
-        image.getOutput().println();
-        image.getOutput().println(String.format("== %s %s Squeak Tests ====================", testClasses.length, type));
     }
 }
