@@ -159,6 +159,7 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
 
     public final FrameSlot getStackSlot(final int i) {
         if (i < 0) {
+            // FIXME: Bad stack access.
             image.printToStdErr("Bad stack access, falling back to bottom-most stack slot...");
             return stackSlots[0];
         }

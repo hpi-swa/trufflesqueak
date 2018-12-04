@@ -55,7 +55,7 @@ public final class SqueakSUnitTestMap {
                     "ClassFactoryForTestCaseTest", TEST_TYPE.PASSING,
                     "ClassRemovalTest", TEST_TYPE.FLAKY,
                     "ClassRenameFixTest", TEST_TYPE.FLAKY,
-                    "ClassTest", TEST_TYPE.SLOW_FALING,
+                    "ClassTest", TEST_TYPE.PASSING,
                     "ClassTraitTest", TEST_TYPE.PASSING,
                     "ClassVarScopeTest", TEST_TYPE.PASSING,
                     "ClipboardTest", TEST_TYPE.PASSING,

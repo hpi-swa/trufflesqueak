@@ -137,8 +137,9 @@ public abstract class SqueakObjectPointersBecomeOneWayNode extends Node {
          */
         for (int i = 0; i < from.length; i++) {
             final Object fromPointer = from[i];
-            // skip sender (for performance), pc, and sp
-            for (int j = CONTEXT.METHOD; j < CONTEXT.TEMP_FRAME_START + obj.getMethod().getNumStackSlots(); j++) {
+            // Skip sender (for performance), pc, and sp.
+            // TODO: Check that all pointers are actually traced (obj.size()?).
+            for (int j = CONTEXT.METHOD; j < obj.size(); j++) {
                 final Object newPointer = obj.at0(j);
                 if (newPointer == fromPointer) {
                     final Object toPointer = to[i];

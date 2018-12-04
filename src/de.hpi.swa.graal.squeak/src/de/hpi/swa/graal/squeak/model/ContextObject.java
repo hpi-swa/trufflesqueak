@@ -117,7 +117,13 @@ public final class ContextObject extends AbstractPointersObject {
             case CONTEXT.RECEIVER:
                 return FrameAccess.getReceiver(truffleFrame);
             default:
-                return truffleFrame.getValue(getMethod().getStackSlot(index - CONTEXT.TEMP_FRAME_START));
+                final int stackIndex = index - CONTEXT.TEMP_FRAME_START;
+                final CompiledCodeObject code = getMethod();
+                if (stackIndex >= code.getNumStackSlots()) {
+                    return image.nil; // TODO: make this better.
+                } else {
+                    return truffleFrame.getValue(code.getStackSlot(stackIndex));
+                }
         }
     }
 
