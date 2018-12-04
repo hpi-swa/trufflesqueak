@@ -7,6 +7,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.graal.squeak.model.CharacterObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodesFactory.NativeAcceptsValueNodeGen;
@@ -39,6 +40,23 @@ public final class NativeObjectNodes {
         @SuppressWarnings("unused")
         @Specialization(guards = "obj.isIntType() || obj.isLongType()")
         protected static final boolean doNativeInts(final NativeObject obj, final char value) {
+            return true;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "obj.isByteType()")
+        protected static final boolean doNativeBytes(final NativeObject obj, final CharacterObject value) {
+            return false; // CharacterObject never fits into byte.
+        }
+
+        @Specialization(guards = "obj.isShortType()")
+        protected static final boolean doNativeShorts(@SuppressWarnings("unused") final NativeObject obj, final CharacterObject value) {
+            return value.getValue() <= NativeObject.SHORT_MAX;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "obj.isIntType() || obj.isLongType()")
+        protected static final boolean doNativeInts(final NativeObject obj, final CharacterObject value) {
             return true;
         }
 
@@ -170,9 +188,19 @@ public final class NativeObjectNodes {
             doNativeInts(obj, index, value);
         }
 
+        @Specialization(guards = "obj.isIntType()")
+        protected static final void doNativeIntsChar(final NativeObject obj, final long index, final CharacterObject value) {
+            doNativeInts(obj, index, value.getValue());
+        }
+
         @Specialization(guards = "obj.isLongType()")
         protected static final void doNativeLongsChar(final NativeObject obj, final long index, final char value) {
             doNativeLongs(obj, index, value);
+        }
+
+        @Specialization(guards = "obj.isLongType()")
+        protected static final void doNativeLongsChar(final NativeObject obj, final long index, final CharacterObject value) {
+            doNativeLongs(obj, index, value.getValue());
         }
 
         @Specialization(guards = {"obj.isByteType()", "value.inRange(0, BYTE_MAX)"})

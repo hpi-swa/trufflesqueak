@@ -23,6 +23,7 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakQuit;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
+import de.hpi.swa.graal.squeak.model.CharacterObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -366,6 +367,23 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final boolean doChar(final char a, final char b) {
             return a == b ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected final boolean doChar(final CharacterObject a, final char b) {
+            return code.image.sqFalse;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected final boolean doChar(final char a, final CharacterObject b) {
+            return code.image.sqFalse;
+        }
+
+        @Specialization
+        protected final boolean doChar(final CharacterObject a, final CharacterObject b) {
+            return a.getValue() == b.getValue() ? code.image.sqTrue : code.image.sqFalse;
         }
 
         @Specialization

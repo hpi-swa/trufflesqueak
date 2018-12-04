@@ -11,6 +11,7 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
+import de.hpi.swa.graal.squeak.model.CharacterObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
@@ -197,7 +198,7 @@ public final class SqueakImageChunk {
                 case 1: // SmallInteger
                     return ptr >> 3;
                 case 2: // Character
-                    return (char) (ptr >> 3);
+                    return CharacterObject.valueOf(image, (int) (ptr >> 3));
                 case 4: // SmallFloat (see Spur64BitMemoryManager>>#smallFloatBitsOf:)
                     long valueWithoutTag = (ptr >>> 3);
                     if (valueWithoutTag > 1) {
@@ -220,7 +221,7 @@ public final class SqueakImageChunk {
                 return ptr >> 1;
             } else {
                 assert ((ptr & 3) == 2);
-                return (char) (ptr >> 2);
+                return CharacterObject.valueOf(image, (int) (ptr >> 2));
             }
         }
     }

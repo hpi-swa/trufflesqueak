@@ -7,6 +7,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.CharacterObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
@@ -49,6 +50,11 @@ public abstract class LookupClassNode extends AbstractNodeWithImage {
 
     @Specialization
     protected final ClassObject doChar(@SuppressWarnings("unused") final char value) {
+        return image.characterClass;
+    }
+
+    @Specialization
+    protected final ClassObject doChar(@SuppressWarnings("unused") final CharacterObject value) {
         return image.characterClass;
     }
 

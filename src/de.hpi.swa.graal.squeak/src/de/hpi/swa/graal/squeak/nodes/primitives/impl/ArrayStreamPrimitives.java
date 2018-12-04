@@ -14,6 +14,7 @@ import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
+import de.hpi.swa.graal.squeak.model.CharacterObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.EmptyObject;
@@ -85,6 +86,12 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             return receiver;
         }
 
+        @SuppressWarnings("unused")
+        @Specialization(guards = "index == 1")
+        protected static final long doCharacter(final CharacterObject receiver, final long index, final NotProvided notProvided) {
+            return receiver.getValue();
+        }
+
         @Specialization(guards = "!isSmallInteger(receiver)")
         protected final long doLong(final long receiver, final long index, @SuppressWarnings("unused") final NotProvided notProvided) {
             try {
@@ -135,6 +142,12 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         @Specialization(guards = "index == 1")
         protected static final long doCharacter(final AbstractSqueakObject receiver, final char target, final long index) {
             return target;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = "index == 1")
+        protected static final long doCharacter(final AbstractSqueakObject receiver, final CharacterObject target, final long index) {
+            return target.getValue();
         }
 
         @Specialization(guards = "!isSmallInteger(target)")
@@ -217,6 +230,12 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
         @Specialization(guards = {"inBounds(index, receiver)", "getAcceptsValueNode().execute(receiver, value)"})
         protected char doNativeChar(final NativeObject receiver, final long index, final char value, @SuppressWarnings("unused") final NotProvided notProvided) {
+            getWriteNativeObjectNode().execute(receiver, index - 1, value);
+            return value;
+        }
+
+        @Specialization(guards = {"inBounds(index, receiver)", "getAcceptsValueNode().execute(receiver, value)"})
+        protected Object doNativeChar(final NativeObject receiver, final long index, final CharacterObject value, @SuppressWarnings("unused") final NotProvided notProvided) {
             getWriteNativeObjectNode().execute(receiver, index - 1, value);
             return value;
         }
@@ -480,6 +499,11 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         }
 
         @Specialization
+        protected static final long size(@SuppressWarnings("unused") final CharacterObject obj, @SuppressWarnings("unused") final NotProvided notProvided) {
+            return 0;
+        }
+
+        @Specialization
         protected static final long size(@SuppressWarnings("unused") final boolean o, @SuppressWarnings("unused") final NotProvided notProvided) {
             return 0;
         }
@@ -510,7 +534,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         }
 
         @Specialization
-        protected static final long size(@SuppressWarnings("unused") final double o, @SuppressWarnings("unused") final NotProvided notProvided) {
+        protected static final long doDouble(@SuppressWarnings("unused") final double o, @SuppressWarnings("unused") final NotProvided notProvided) {
             return 2; // Float in words
         }
 
@@ -526,6 +550,12 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         @SuppressWarnings("unused")
         @Specialization
         protected static final long doChar(final AbstractSqueakObject receiver, final char obj) {
+            return 0;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected static final long doChar(final AbstractSqueakObject receiver, final CharacterObject obj) {
             return 0;
         }
 
@@ -625,8 +655,8 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         public abstract Object executeStringAt(VirtualFrame frame);
 
         @Specialization(guards = {"inBounds(index, obj)"})
-        protected final char doNativeObject(final NativeObject obj, final long index) {
-            return (char) (readNode.execute(obj, index - 1));
+        protected final Object doNativeObject(final NativeObject obj, final long index) {
+            return CharacterObject.valueOf(code.image, (int) readNode.execute(obj, index - 1));
         }
     }
 
@@ -649,9 +679,15 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         }
 
         @Specialization(guards = {"inBounds(index, obj)", "acceptsValueNode.execute(obj, value)"})
-        protected final char doNativeObject(final NativeObject obj, final long index, final long value) {
+        protected final Object doNativeObject(final NativeObject obj, final long index, final CharacterObject value) {
+            writeNode.execute(obj, index - 1, value.getValue());
+            return value;
+        }
+
+        @Specialization(guards = {"inBounds(index, obj)", "acceptsValueNode.execute(obj, value)"})
+        protected final Object doNativeObject(final NativeObject obj, final long index, final long value) {
             writeNode.execute(obj, index - 1, value);
-            return (char) value;
+            return CharacterObject.valueOf(code.image, (int) value);
         }
     }
 

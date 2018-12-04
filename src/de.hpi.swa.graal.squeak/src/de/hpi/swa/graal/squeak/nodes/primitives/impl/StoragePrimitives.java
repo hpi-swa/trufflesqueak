@@ -20,6 +20,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
+import de.hpi.swa.graal.squeak.model.CharacterObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -389,6 +390,11 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
+        protected static final long doChar(final CharacterObject obj) {
+            return obj.getValue();
+        }
+
+        @Specialization
         protected static final long doLong(final long obj) {
             return obj;
         }
@@ -574,23 +580,23 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final char doLong(final long receiver, @SuppressWarnings("unused") final NotProvided target) {
-            return (char) Math.toIntExact(receiver);
+        protected final Object doLong(final long receiver, @SuppressWarnings("unused") final NotProvided target) {
+            return CharacterObject.valueOf(code.image, Math.toIntExact(receiver));
         }
 
         @Specialization(guards = "receiver.fitsIntoInt()")
-        protected static final char doLargeInteger(final LargeIntegerObject receiver, @SuppressWarnings("unused") final NotProvided target) {
-            return (char) receiver.intValueExact();
+        protected final Object doLargeInteger(final LargeIntegerObject receiver, @SuppressWarnings("unused") final NotProvided target) {
+            return CharacterObject.valueOf(code.image, receiver.intValueExact());
         }
 
         @Specialization
-        protected static final char doLong(@SuppressWarnings("unused") final Object receiver, final long target) {
-            return (char) Math.toIntExact(target);
+        protected final Object doLong(@SuppressWarnings("unused") final Object receiver, final long target) {
+            return CharacterObject.valueOf(code.image, Math.toIntExact(target));
         }
 
         @Specialization(guards = "target.fitsIntoInt()")
-        protected static final char doLargeInteger(@SuppressWarnings("unused") final Object receiver, final LargeIntegerObject target) {
-            return (char) target.intValueExact();
+        protected final Object doLargeInteger(@SuppressWarnings("unused") final Object receiver, final LargeIntegerObject target) {
+            return CharacterObject.valueOf(code.image, target.intValueExact());
         }
     }
 
