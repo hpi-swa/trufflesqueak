@@ -1,3 +1,3 @@
 toolbuilder
 labelString
-	^self languageName, ' Workspace'
+	^(Polyglot languageNameOf: self languageID), ' Workspace'

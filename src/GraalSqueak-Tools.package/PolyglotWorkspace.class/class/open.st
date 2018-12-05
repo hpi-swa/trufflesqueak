@@ -1,3 +1,3 @@
 overrides
 open
-	^ self new openLabel: 'Smalltalk ', self windowTitlePrefix
+	^ self new openLabel: (Polyglot languageNameOf: Polyglot defaultLanguage), ' Workspace'

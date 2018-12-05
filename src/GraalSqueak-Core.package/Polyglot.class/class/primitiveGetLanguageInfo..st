@@ -1,4 +1,6 @@
 primitives
 primitiveGetLanguageInfo: aLanguageID
 	<primitive: 'primitiveGetLanguageInfo' module: 'PolyglotPlugin'>
-	^ nil
+	^ aLanguageID = self defaultLanguage
+		ifTrue: [ self defaultLanguageInfo ]
+		ifFalse: [ nil ]

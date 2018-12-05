@@ -1,0 +1,3 @@
+experimental
+bindings
+	^ self primitiveGetPolyglotBindings
