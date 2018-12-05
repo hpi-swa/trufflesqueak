@@ -18,11 +18,11 @@ public abstract class AbstractStackPopNode extends AbstractStackNode {
     }
 
     protected final Object atStackAndClear(final VirtualFrame frame, final int index) {
-        final Object value = getReadNode().execute(frame, index);
+        final Object value = getReadNode().execute(frame, index - 1);
         final CompiledMethodObject method = compiledMethodNode.execute(code);
         if (index >= 1 + method.getNumArgs() + method.getNumTemps()) {
             // Only clear stack values, not receiver, arguments, or temporary variables.
-            getClearNode().execute(frame, index);
+            getClearNode().execute(frame, index - 1);
         }
         return value;
     }

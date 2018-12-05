@@ -24,7 +24,7 @@ public abstract class StackPopNReversedNode extends AbstractStackPopNode {
     @Specialization(guards = {"isVirtualized(frame)"})
     protected final Object[] doPopNVirtualized(final VirtualFrame frame) {
         final int sp = frameStackPointer(frame);
-        assert sp - numPop >= -1;
+        assert sp - numPop >= 0;
         final Object[] result = new Object[numPop];
         for (int i = 0; i < numPop; i++) {
             result[numPop - 1 - i] = atStackAndClear(frame, sp - i);

@@ -108,7 +108,7 @@ public final class ContextObject extends AbstractPointersObject {
                     return (long) (initalPC + pc);
                 }
             case CONTEXT.STACKPOINTER:
-                return (long) FrameUtil.getIntSafe(truffleFrame, getMethod().stackPointerSlot) + 1;
+                return (long) FrameUtil.getIntSafe(truffleFrame, getMethod().stackPointerSlot);
             case CONTEXT.METHOD:
                 return FrameAccess.getMethod(truffleFrame);
             case CONTEXT.CLOSURE_OR_NIL:

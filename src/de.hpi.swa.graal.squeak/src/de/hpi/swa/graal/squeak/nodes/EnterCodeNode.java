@@ -88,7 +88,7 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
 
     private static void initializeSlots(final CompiledCodeObject code, final VirtualFrame frame) {
         frame.setInt(code.instructionPointerSlot, 0);
-        frame.setInt(code.stackPointerSlot, -1);
+        frame.setInt(code.stackPointerSlot, 0);
     }
 
     @ExplodeLoop
@@ -109,7 +109,7 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
         for (int i = 0; i < remainingTemps; i++) {
             pushStackNode.executeWrite(frame, code.image.nil);
         }
-        assert (FrameUtil.getIntSafe(frame, code.stackPointerSlot)) + 1 >= remainingTemps;
+        assert (FrameUtil.getIntSafe(frame, code.stackPointerSlot)) >= remainingTemps;
         return executeContextNode.executeContext(frame, null);
     }
 

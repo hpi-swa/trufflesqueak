@@ -26,9 +26,9 @@ public abstract class StackPushNode extends AbstractNodeWithCode {
     protected final void doWriteVirtualized(final VirtualFrame frame, final Object value,
                     @Cached("create(code)") final FrameStackWriteNode writeNode) {
         assert value != null;
-        final int newSP = FrameUtil.getIntSafe(frame, code.stackPointerSlot) + 1;
-        writeNode.execute(frame, newSP, value);
-        frame.setInt(code.stackPointerSlot, newSP);
+        final int currentStackPointer = FrameUtil.getIntSafe(frame, code.stackPointerSlot);
+        frame.setInt(code.stackPointerSlot, currentStackPointer + 1);
+        writeNode.execute(frame, currentStackPointer, value);
     }
 
     @Fallback

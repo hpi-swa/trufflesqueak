@@ -19,11 +19,7 @@ public abstract class StackPopNode extends AbstractStackPopNode {
     @Specialization(guards = {"isVirtualized(frame)"})
     public final Object doPopVirtualized(final VirtualFrame frame) {
         final int sp = frameStackPointer(frame);
-        if (sp < 0) {
-            // FIXME: Bad stack pointer.
-            code.image.printToStdErr("Bad stack pointer:", sp, ", returning value at sp=0...");
-            return atStackAndClear(frame, 0);
-        }
+        assert sp >= 0 : "Bad stack pointer";
         if (sp > 0) {
             setFrameStackPointer(frame, sp - 1);
         }

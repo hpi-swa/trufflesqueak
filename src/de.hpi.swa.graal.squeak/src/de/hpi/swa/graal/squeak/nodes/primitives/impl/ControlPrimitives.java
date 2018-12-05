@@ -514,109 +514,109 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "receiver.haveSameStorageType(argument)")
         protected static final Object doNative(final NativeObject receiver, final NativeObject argument) {
             receiver.setSqueakClass(argument.getSqueakClass());
-            throw new PrimitiveWithoutResultException();
+            return receiver;
         }
 
         @Specialization(guards = {"!receiver.haveSameStorageType(argument)", "argument.isByteType()"})
         protected final Object doNativeConvertToBytes(final NativeObject receiver, final NativeObject argument) {
             receiver.setSqueakClass(argument.getSqueakClass());
             receiver.convertToBytesStorage(getBytesNode.execute(receiver));
-            throw new PrimitiveWithoutResultException();
+            return receiver;
         }
 
         @Specialization(guards = {"!receiver.haveSameStorageType(argument)", "argument.isShortType()"})
         protected final Object doNativeConvertToShorts(final NativeObject receiver, final NativeObject argument) {
             receiver.setSqueakClass(argument.getSqueakClass());
             receiver.convertToBytesStorage(getBytesNode.execute(receiver));
-            throw new PrimitiveWithoutResultException();
+            return receiver;
         }
 
         @Specialization(guards = {"!receiver.haveSameStorageType(argument)", "argument.isIntType()"})
         protected final Object doNativeConvertToInts(final NativeObject receiver, final NativeObject argument) {
             receiver.setSqueakClass(argument.getSqueakClass());
             receiver.convertToBytesStorage(getBytesNode.execute(receiver));
-            throw new PrimitiveWithoutResultException();
+            return receiver;
         }
 
         @Specialization(guards = {"!receiver.haveSameStorageType(argument)", "argument.isLongType()"})
         protected final Object doNativeConvertToLongs(final NativeObject receiver, final NativeObject argument) {
             receiver.setSqueakClass(argument.getSqueakClass());
             receiver.convertToBytesStorage(getBytesNode.execute(receiver));
-            throw new PrimitiveWithoutResultException();
+            return receiver;
         }
 
         @Specialization(guards = "receiver.isByteType()")
         protected static final Object doNativeLargeInteger(final NativeObject receiver, final LargeIntegerObject argument) {
             receiver.setSqueakClass(argument.getSqueakClass());
-            throw new PrimitiveWithoutResultException();
+            return receiver;
         }
 
         @Specialization(guards = "!receiver.isByteType()")
         protected final Object doNativeLargeIntegerConvert(final NativeObject receiver, final LargeIntegerObject argument) {
             receiver.setSqueakClass(argument.getSqueakClass());
             receiver.convertToBytesStorage(getBytesNode.execute(receiver));
-            throw new PrimitiveWithoutResultException();
+            return receiver;
         }
 
         @Specialization(guards = "receiver.isByteType()")
         protected static final Object doNativeFloat(final NativeObject receiver, final FloatObject argument) {
             receiver.setSqueakClass(argument.getSqueakClass());
-            throw new PrimitiveWithoutResultException();
+            return receiver;
         }
 
         @Specialization(guards = "!receiver.isByteType()")
         protected final Object doNativeFloatConvert(final NativeObject receiver, final FloatObject argument) {
             receiver.setSqueakClass(argument.getSqueakClass());
             receiver.convertToBytesStorage(getBytesNode.execute(receiver));
-            throw new PrimitiveWithoutResultException();
+            return receiver;
         }
 
         @Specialization
         protected static final Object doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject argument) {
             receiver.setSqueakClass(argument.getSqueakClass());
             receiver.setBytes(argument.getBytes());
-            throw new PrimitiveWithoutResultException();
+            return receiver;
         }
 
         @Specialization
         protected final Object doLargeIntegerNative(final LargeIntegerObject receiver, final NativeObject argument) {
             receiver.setSqueakClass(argument.getSqueakClass());
             receiver.setBytes(getBytesNode.execute(argument));
-            throw new PrimitiveWithoutResultException();
+            return receiver;
         }
 
         @Specialization
         protected static final Object doLargeIntegerFloat(final LargeIntegerObject receiver, final FloatObject argument) {
             receiver.setSqueakClass(argument.getSqueakClass());
             receiver.setBytes(argument.getBytes());
-            throw new PrimitiveWithoutResultException();
+            return receiver;
         }
 
         @Specialization
         protected static final Object doFloat(final FloatObject receiver, final FloatObject argument) {
             receiver.setSqueakClass(argument.getSqueakClass());
             receiver.setBytes(argument.getBytes());
-            throw new PrimitiveWithoutResultException();
+            return receiver;
         }
 
         @Specialization
         protected static final Object doFloatLargeInteger(final FloatObject receiver, final LargeIntegerObject argument) {
             receiver.setSqueakClass(argument.getSqueakClass());
             receiver.setBytes(argument.getBytes());
-            throw new PrimitiveWithoutResultException();
+            return receiver;
         }
 
         @Specialization
         protected final Object doFloatNative(final FloatObject receiver, final NativeObject argument) {
             receiver.setSqueakClass(argument.getSqueakClass());
             receiver.setBytes(getBytesNode.execute(argument));
-            throw new PrimitiveWithoutResultException();
+            return receiver;
         }
 
         @Specialization(guards = {"!isNativeObject(receiver)", "!isLargeIntegerObject(receiver)", "!isFloatObject(receiver)"})
         protected static final Object doSqueakObject(final AbstractSqueakObject receiver, final AbstractSqueakObject argument) {
             receiver.setSqueakClass(argument.getSqueakClass());
-            throw new PrimitiveWithoutResultException();
+            return receiver;
         }
     }
 
