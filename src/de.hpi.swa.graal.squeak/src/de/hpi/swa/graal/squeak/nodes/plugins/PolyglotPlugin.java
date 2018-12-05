@@ -312,6 +312,20 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(name = "primitiveGetPolyglotBindings")
+    protected abstract static class PrimGetPolyglotBindingsNode extends AbstractPrimitiveNode {
+        protected PrimGetPolyglotBindingsNode(final CompiledMethodObject method, final int numArguments) {
+            super(method, numArguments);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected final TruffleObject doGet(@SuppressWarnings("unused") final Object receiver) {
+            return (TruffleObject) code.image.env.getPolyglotBindings();
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveImport")
     protected abstract static class PrimImportNode extends AbstractPrimitiveNode {
         protected PrimImportNode(final CompiledMethodObject method, final int numArguments) {
