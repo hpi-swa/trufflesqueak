@@ -9,10 +9,12 @@ import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 public class SqueakFileDetector extends FileTypeDetector {
     @Override
     public String probeContentType(final Path path) throws IOException {
-        if (path.toString().endsWith(".image")) {
+        String pathString = path.toString();
+        if (pathString.endsWith(".image")) {
             return SqueakLanguageConfig.MIME_TYPE;
-        } else {
+        } else if (pathString.endsWith(".st")) {
             return SqueakLanguageConfig.ST_MIME_TYPE;
         }
+        return null;
     }
 }
