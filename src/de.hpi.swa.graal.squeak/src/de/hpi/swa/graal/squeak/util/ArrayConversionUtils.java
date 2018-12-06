@@ -90,6 +90,15 @@ public final class ArrayConversionUtils {
         return ints;
     }
 
+    public static long[] bytesToUnsignedLongs(final byte[] bytes) {
+        final int length = bytes.length;
+        final long[] longs = new long[length];
+        for (int i = 0; i < length; i++) {
+            longs[i] = Byte.toUnsignedLong(bytes[i]);
+        }
+        return longs;
+    }
+
     public static int[] intsFromBytes(final byte[] bytes) {
         final int size = bytes.length / INTEGER_BYTE_SIZE;
         final int[] ints = new int[size];
@@ -152,6 +161,15 @@ public final class ArrayConversionUtils {
             }
         }
         return ints;
+    }
+
+    public static long[] intsToUnsignedLongs(final int[] ints) {
+        final int length = ints.length;
+        final long[] longs = new long[length];
+        for (int i = 0; i < length; i++) {
+            longs[i] = Integer.toUnsignedLong(ints[i]);
+        }
+        return longs;
     }
 
     public static long[] longsFromBytes(final byte[] bytes) {

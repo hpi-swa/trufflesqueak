@@ -3717,11 +3717,19 @@ public final class BitBlt {
                 }
                 sourceMap = null;
             } else {
-                if (sourceMapOopValue instanceof ArrayObject && (((ArrayObject) sourceMapOopValue).getLongLength() < shl(1, sourceDepth))) {
+                final NativeObject sourceMapNative = (NativeObject) sourceMapOopValue;
+                final int sourceMapSize;
+                if (sourceMapNative.isIntType()) {
+                    sourceMap = ArrayConversionUtils.intsToUnsignedLongs(((NativeObject) sourceMapOopValue).getIntStorage());
+                    sourceMapSize = sourceMap.length * 4;
+                } else {
+                    sourceMap = ArrayConversionUtils.bytesToUnsignedLongs(((NativeObject) sourceMapOopValue).getByteStorage());
+                    sourceMapSize = sourceMap.length;
+                }
+                if (sourceMapSize < shl(1, sourceDepth)) {
                     /* sourceMap must be long enough for sourceDepth */
                     PrimitiveFailed.andTransferToInterpreter();
                 }
-                sourceMap = ((ArrayObject) sourceMapOopValue).getLongStorage();
             }
         } else {
             smoothingCount = 1;
