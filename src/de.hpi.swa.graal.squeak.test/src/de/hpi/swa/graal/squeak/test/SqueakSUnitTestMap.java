@@ -30,7 +30,7 @@ public final class SqueakSUnitTestMap {
                                                           // headless, testSourceString requires
                                                           // sources
                     "BlockLocalTemporariesRemovalTest", TEST_TYPE.PASSING,
-                    "BMPReadWriterTest", TEST_TYPE.FAILING,
+                    "BMPReadWriterTest", TEST_TYPE.PASSING,
                     "BooleanTest", TEST_TYPE.PASSING,
                     "BrowserHierarchicalListTest", TEST_TYPE.PASSING,
                     "BrowserTest", TEST_TYPE.FAILING,
@@ -68,8 +68,8 @@ public final class SqueakSUnitTestMap {
                     "CompiledMethodTest", TEST_TYPE.PASSING,
                     "CompiledMethodTrailerTest", TEST_TYPE.PASSING,
                     "CompilerExceptionsTest", TEST_TYPE.PASSING,
-                    "CompilerNotifyingTest", TEST_TYPE.FAILING,
-                    "CompilerSyntaxErrorNotifyingTest", TEST_TYPE.FAILING,
+                    "CompilerNotifyingTest", TEST_TYPE.FAILING,  // Passes headful.
+                    "CompilerSyntaxErrorNotifyingTest", TEST_TYPE.FAILING, // Passes headful.
                     "CompilerTest", TEST_TYPE.PASSING,
                     "ComplexTest", TEST_TYPE.PASSING,
                     "ContextCompilationTest", TEST_TYPE.PASSING,
