@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 
+import java.util.Arrays;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -202,12 +203,14 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return receiver;
         }
 
-        private static int[] validateAndExtractWords(final PointersObject receiver) {
+        private int[] validateAndExtractWords(final PointersObject receiver) {
             final int[] words = ((NativeObject) receiver.at0(FORM.BITS)).getIntStorage();
             final long width = (long) receiver.at0(FORM.WIDTH);
             final long height = (long) receiver.at0(FORM.HEIGHT);
             if (width != SqueakIOConstants.CURSOR_WIDTH || height != SqueakIOConstants.CURSOR_HEIGHT) {
-                throw new SqueakException("Unexpected cursor width:", width, "or height:", height);
+                CompilerDirectives.transferToInterpreter();
+                code.image.printToStdErr("Unexpected cursor width:", width, "or height:", height, ". Proceeding with cropped cursor...");
+                return Arrays.copyOf(words, SqueakIOConstants.CURSOR_WIDTH * SqueakIOConstants.CURSOR_HEIGHT);
             }
             return words;
         }
