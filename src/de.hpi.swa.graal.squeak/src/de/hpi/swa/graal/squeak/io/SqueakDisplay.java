@@ -340,7 +340,12 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
                   0        1     invert the underlying pixel
              * </pre>
              */
-            final int[] ints = mergeCursorWithMask(cursorWords, mask);
+            final int[] ints;
+            if (mask != null) {
+                ints = mergeCursorWithMask(cursorWords, mask);
+            } else {
+                ints = cursorWords;
+            }
             final BufferedImage bufferedImage = new BufferedImage(SqueakIOConstants.CURSOR_WIDTH, SqueakIOConstants.CURSOR_HEIGHT, BufferedImage.TYPE_INT_ARGB);
             for (int y = 0; y < SqueakIOConstants.CURSOR_HEIGHT; y++) {
                 final int word = ints[y];
