@@ -10,6 +10,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
@@ -212,6 +213,11 @@ public final class PushBytecodes {
         @Specialization(guards = {"popNReversedNode == null"})
         protected final void doPushNewArray(final VirtualFrame frame) {
             pushNode.executeWrite(frame, ArrayObject.createObjectStrategy(code.image, code.image.arrayClass, arraySize));
+        }
+
+        @Fallback
+        protected static final void doFail(@SuppressWarnings("unused") final VirtualFrame frame) {
+            throw new SqueakException("Should never happen");
         }
 
         @Override

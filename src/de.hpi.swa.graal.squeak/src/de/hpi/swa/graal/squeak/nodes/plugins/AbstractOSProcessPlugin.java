@@ -7,10 +7,12 @@ import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
@@ -18,15 +20,15 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveGetPid")
-    protected abstract static class PrimGetPidNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimGetPidNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
-        protected PrimGetPidNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimGetPidNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization
         @TruffleBoundary
-        protected static final long doGet(@SuppressWarnings("unused") final Object receiver) {
+        protected static final long doGet(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             try {
                 final String runtimeName = java.lang.management.ManagementFactory.getRuntimeMXBean().getName();
                 try {
@@ -45,15 +47,15 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveGetSession")
-    protected abstract static class PrimGetSessionNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimGetSessionNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         @CompilationFinal private NativeObject sessionByteArray;
 
-        protected PrimGetSessionNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimGetSessionNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization
-        protected final NativeObject doSession(@SuppressWarnings("unused") final Object receiver) {
+        protected final NativeObject doSession(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             return getSessionByteArray();
         }
 

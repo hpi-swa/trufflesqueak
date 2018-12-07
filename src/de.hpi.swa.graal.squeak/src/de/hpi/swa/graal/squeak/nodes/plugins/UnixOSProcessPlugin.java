@@ -10,9 +10,13 @@ import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 
 public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
@@ -37,11 +41,11 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveEnvironmentAt")
-    protected abstract static class PrimEnvironmentAtNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimEnvironmentAtNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         private static Object[] environmentKeys;
 
-        protected PrimEnvironmentAtNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimEnvironmentAtNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = "inBounds1(index, getEnvironmentKeys().length)")
@@ -68,10 +72,10 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveEnvironmentAtSymbol")
-    protected abstract static class PrimEnvironmentAtSymbolNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimEnvironmentAtSymbolNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        protected PrimEnvironmentAtSymbolNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimEnvironmentAtSymbolNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = "aSymbol.isByteType()")
@@ -88,38 +92,38 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveGetPPid")
-    protected abstract static class PrimGetPPidNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimGetPPidNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
-        protected PrimGetPPidNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimGetPPidNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization
-        protected final Object doAt(@SuppressWarnings("unused") final Object receiver) {
+        protected final Object doAt(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             return code.image.nil; // TODO: implement parent pid
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveSigChldNumber")
-    protected abstract static class PrimSigChldNumberNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimSigChldNumberNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
-        protected PrimSigChldNumberNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimSigChldNumberNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization
-        protected final long doNumber(@SuppressWarnings("unused") final Object receiver) {
+        protected final long doNumber(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             return code.image.wrap(20);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveForwardSignalToSemaphore")
-    protected abstract static class PrimForwardSignalToSemaphoreNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimForwardSignalToSemaphoreNode extends AbstractPrimitiveNode implements TernaryPrimitive {
 
-        protected PrimForwardSignalToSemaphoreNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimForwardSignalToSemaphoreNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @SuppressWarnings("unused")

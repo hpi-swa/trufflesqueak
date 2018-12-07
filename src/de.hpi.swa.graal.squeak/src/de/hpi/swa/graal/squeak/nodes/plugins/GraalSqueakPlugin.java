@@ -9,6 +9,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitiveWithoutFallback;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 
 public final class GraalSqueakPlugin extends AbstractPrimitiveFactoryHolder {
@@ -20,9 +21,9 @@ public final class GraalSqueakPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "debugPrint")
-    protected abstract static class PrimPrintArgsNode extends AbstractPrimitiveNode {
-        protected PrimPrintArgsNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+    protected abstract static class PrimPrintArgsNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+        protected PrimPrintArgsNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization

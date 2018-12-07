@@ -9,10 +9,13 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.BranchProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 
 public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
@@ -27,8 +30,8 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
         protected static final int FLOAT_ONE = Float.floatToIntBits(1.0F);
         private final BranchProfile invalidSizeProfile = BranchProfile.create();
 
-        public AbstractMatrix2x3PrimitiveNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        public AbstractMatrix2x3PrimitiveNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         protected final int[] loadMatrix(final NativeObject object) {
@@ -53,9 +56,9 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveComposeMatrix")
-    protected abstract static class PrimComposeMatrixNode extends AbstractMatrix2x3PrimitiveNode {
-        protected PrimComposeMatrixNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+    protected abstract static class PrimComposeMatrixNode extends AbstractMatrix2x3PrimitiveNode implements TernaryPrimitive {
+        protected PrimComposeMatrixNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = {"receiver.isIntType()", "aTransformation.isIntType()", "result.isIntType()"})
@@ -75,35 +78,35 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveInvertPoint")
-    protected abstract static class PrimInvertPointNode extends AbstractMatrix2x3PrimitiveNode {
-        protected PrimInvertPointNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+    protected abstract static class PrimInvertPointNode extends AbstractMatrix2x3PrimitiveNode implements UnaryPrimitive {
+        protected PrimInvertPointNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization
-        protected static final Object fail(@SuppressWarnings("unused") final Object receiver) {
+        protected static final Object fail(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             throw new PrimitiveFailed(); // TODO: implement primitive
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveInvertRectInto")
-    protected abstract static class PrimInvertRectIntoNode extends AbstractMatrix2x3PrimitiveNode {
-        protected PrimInvertRectIntoNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+    protected abstract static class PrimInvertRectIntoNode extends AbstractMatrix2x3PrimitiveNode implements UnaryPrimitive {
+        protected PrimInvertRectIntoNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization
-        protected static final Object fail(@SuppressWarnings("unused") final Object receiver) {
+        protected static final Object fail(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             throw new PrimitiveFailed(); // TODO: implement primitive
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveIsIdentity")
-    protected abstract static class PrimIsIdentityNode extends AbstractMatrix2x3PrimitiveNode {
-        protected PrimIsIdentityNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+    protected abstract static class PrimIsIdentityNode extends AbstractMatrix2x3PrimitiveNode implements UnaryPrimitive {
+        protected PrimIsIdentityNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = "receiver.isIntType()")
@@ -119,9 +122,9 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveIsPureTranslation")
-    protected abstract static class PrimIsPureTranslationNode extends AbstractMatrix2x3PrimitiveNode {
-        protected PrimIsPureTranslationNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+    protected abstract static class PrimIsPureTranslationNode extends AbstractMatrix2x3PrimitiveNode implements UnaryPrimitive {
+        protected PrimIsPureTranslationNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = "receiver.isIntType()")
@@ -137,26 +140,26 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveTransformPoint")
-    protected abstract static class PrimTransformPointNode extends AbstractMatrix2x3PrimitiveNode {
-        protected PrimTransformPointNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+    protected abstract static class PrimTransformPointNode extends AbstractMatrix2x3PrimitiveNode implements UnaryPrimitive {
+        protected PrimTransformPointNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization
-        protected static final Object fail(@SuppressWarnings("unused") final Object receiver) {
+        protected static final Object fail(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             throw new PrimitiveFailed(); // TODO: implement primitive
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveTransformRectInto")
-    protected abstract static class PrimTransformRectIntoNode extends AbstractMatrix2x3PrimitiveNode {
-        protected PrimTransformRectIntoNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+    protected abstract static class PrimTransformRectIntoNode extends AbstractMatrix2x3PrimitiveNode implements UnaryPrimitive {
+        protected PrimTransformRectIntoNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization
-        protected static final Object fail(@SuppressWarnings("unused") final Object receiver) {
+        protected static final Object fail(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             throw new PrimitiveFailed(); // TODO: implement primitive
         }
     }

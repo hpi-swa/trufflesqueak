@@ -43,6 +43,10 @@ import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectInstSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuinaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.SeptenaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.IOPrimitivesFactory.PrimScanCharactersNodeFactory.ScanCharactersHelperNodeGen;
 
@@ -55,32 +59,32 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 90)
-    protected abstract static class PrimMousePointNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimMousePointNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         private static final DisplayPoint NULL_POINT = new DisplayPoint(0, 0);
 
-        protected PrimMousePointNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimMousePointNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = "code.image.hasDisplay()")
-        protected final Object doMousePoint() {
+        protected final Object doMousePoint(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             return code.image.wrap(code.image.getDisplay().getLastMousePosition());
         }
 
         @Specialization(guards = "!code.image.hasDisplay()")
-        protected final Object doMousePointHeadless() {
+        protected final Object doMousePointHeadless(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             return code.image.wrap(NULL_POINT);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 91)
-    protected abstract static class PrimTestDisplayDepthNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimTestDisplayDepthNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         private static final int[] SUPPORTED_DEPTHS = new int[]{32}; // TODO: support all depths?
                                                                      // {1, 2, 4, 8, 16, 32}
 
-        protected PrimTestDisplayDepthNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimTestDisplayDepthNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @ExplodeLoop
@@ -97,10 +101,10 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 92)
-    protected abstract static class PrimSetDisplayModeNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimSetDisplayModeNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
 
-        protected PrimSetDisplayModeNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimSetDisplayModeNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = "code.image.hasDisplay()")
@@ -118,10 +122,10 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 93)
-    protected abstract static class PrimInputSemaphoreNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimInputSemaphoreNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        protected PrimInputSemaphoreNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimInputSemaphoreNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = "code.image.hasDisplay()")
@@ -138,10 +142,10 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 94)
-    protected abstract static class PrimGetNextEventNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimGetNextEventNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        protected PrimGetNextEventNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimGetNextEventNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = "code.image.hasDisplay()")
@@ -161,18 +165,18 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(index = 96)
     protected abstract static class PrimCopyBitsNode extends SimulationPrimitiveNode {
 
-        protected PrimCopyBitsNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments, "BitBltPlugin", "primitiveCopyBits");
+        protected PrimCopyBitsNode(final CompiledMethodObject method) {
+            super(method, "BitBltPlugin", "primitiveCopyBits");
         }
 
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 101)
-    protected abstract static class PrimBeCursorNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimBeCursorNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        protected PrimBeCursorNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimBeCursorNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = "code.image.hasDisplay()")
@@ -223,10 +227,10 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 102)
-    protected abstract static class PrimBeDisplayNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimBeDisplayNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
-        protected PrimBeDisplayNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimBeDisplayNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = {"code.image.hasDisplay()", "receiver.size() >= 4"})
@@ -244,12 +248,12 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 103)
-    protected abstract static class PrimScanCharactersNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimScanCharactersNode extends AbstractPrimitiveNode implements SeptenaryPrimitive {
         @Child protected SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
 
-        protected PrimScanCharactersNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimScanCharactersNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = {"startIndex > 0", "stopIndex > 0", "sourceString.isByteType()", "receiver.size() >= 4", "sizeNode.execute(stops) >= 258"})
@@ -341,7 +345,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 105)
-    protected abstract static class PrimStringReplaceNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimStringReplaceNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
         @Child private SqueakObjectInstSizeNode instSizeNode = SqueakObjectInstSizeNode.create();
         @Child private SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
         @Child private ReadArrayObjectNode readArrayObjectNode;
@@ -349,8 +353,8 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         @Child private WriteNativeObjectNode writeNativeObjectNode;
         @Child private GetObjectArrayNode getObjectArrayNode;
 
-        protected PrimStringReplaceNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimStringReplaceNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         public abstract Object executeReplace(VirtualFrame frame);
@@ -726,12 +730,6 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_INDEX);
         }
 
-        @Fallback
-        @SuppressWarnings("unused")
-        protected static final Object doFail(final Object rcvr, final Object start, final Object stop, final Object repl, final Object replStart) {
-            throw new PrimitiveFailed();
-        }
-
         protected final boolean inBounds(final AbstractSqueakObject array, final long start, final long stop, final AbstractSqueakObject repl, final long replStart) {
             return (start >= 1 && (start - 1) <= stop && (stop + instSizeNode.execute(array)) <= sizeNode.execute(array)) &&
                             (replStart >= 1 && (stop - start + replStart + instSizeNode.execute(repl) <= sizeNode.execute(repl)));
@@ -779,10 +777,10 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 106)
-    protected abstract static class PrimScreenSizeNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimScreenSizeNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
-        protected PrimScreenSizeNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimScreenSizeNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = "code.image.hasDisplay()")
@@ -798,10 +796,10 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 107)
-    protected abstract static class PrimMouseButtonsNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimMouseButtonsNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
-        protected PrimMouseButtonsNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimMouseButtonsNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = "code.image.hasDisplay()")
@@ -817,10 +815,10 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 108)
-    protected abstract static class PrimKeyboardNextNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimKeyboardNextNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
-        protected PrimKeyboardNextNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimKeyboardNextNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = "code.image.hasDisplay()")
@@ -841,10 +839,10 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 109)
-    protected abstract static class PrimKeyboardPeekNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimKeyboardPeekNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
-        protected PrimKeyboardPeekNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimKeyboardPeekNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = "code.image.hasDisplay()")
@@ -865,10 +863,10 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 126)
-    protected abstract static class PrimDeferDisplayUpdatesNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimDeferDisplayUpdatesNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        public PrimDeferDisplayUpdatesNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        public PrimDeferDisplayUpdatesNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = "code.image.hasDisplay()")
@@ -885,10 +883,10 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 127)
-    protected abstract static class PrimShowDisplayRectNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimShowDisplayRectNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
 
-        protected PrimShowDisplayRectNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimShowDisplayRectNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = {"code.image.hasDisplay()"})
@@ -906,10 +904,10 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 133)
-    protected abstract static class PrimSetInterruptKeyNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimSetInterruptKeyNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
-        protected PrimSetInterruptKeyNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimSetInterruptKeyNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization
@@ -921,10 +919,10 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 140)
-    protected abstract static class PrimBeepNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimBeepNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
-        protected PrimBeepNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimBeepNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = "code.image.hasDisplay()")

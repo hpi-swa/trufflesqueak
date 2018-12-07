@@ -32,6 +32,11 @@ import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.GetObjectArrayNo
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuaternaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuinaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
@@ -44,11 +49,11 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 195)
-    protected abstract static class PrimFindNextUnwindContextUpToNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimFindNextUnwindContextUpToNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         @Child private GetOrCreateContextNode contextNode;
 
-        public PrimFindNextUnwindContextUpToNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        public PrimFindNextUnwindContextUpToNode(final CompiledMethodObject method) {
+            super(method);
             contextNode = GetOrCreateContextNode.create(method);
         }
 
@@ -116,10 +121,10 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 196)
-    protected abstract static class PrimTerminateToNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimTerminateToNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        public PrimTerminateToNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        public PrimTerminateToNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = "hasSender(receiver, previousContext)")
@@ -170,11 +175,11 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 197)
-    protected abstract static class PrimNextHandlerContextNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimNextHandlerContextNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         @Child private GetOrCreateContextNode contextNode;
 
-        protected PrimNextHandlerContextNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimNextHandlerContextNode(final CompiledMethodObject method) {
+            super(method);
             contextNode = GetOrCreateContextNode.create(code);
         }
 
@@ -235,17 +240,17 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     private abstract static class AbstractClosureValuePrimitiveNode extends AbstractPrimitiveNode {
         @Child protected BlockActivationNode dispatch = BlockActivationNode.create();
 
-        protected AbstractClosureValuePrimitiveNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected AbstractClosureValuePrimitiveNode(final CompiledMethodObject method) {
+            super(method);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 200)
-    public abstract static class PrimClosureCopyWithCopiedValuesNode extends AbstractPrimitiveNode {
+    public abstract static class PrimClosureCopyWithCopiedValuesNode extends AbstractPrimitiveNode implements TernaryPrimitive {
 
-        protected PrimClosureCopyWithCopiedValuesNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimClosureCopyWithCopiedValuesNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @SuppressWarnings("unused")
@@ -257,10 +262,10 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 201)
-    public abstract static class PrimClosureValue0Node extends AbstractClosureValuePrimitiveNode {
+    public abstract static class PrimClosureValue0Node extends AbstractClosureValuePrimitiveNode implements UnaryPrimitive {
 
-        protected PrimClosureValue0Node(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimClosureValue0Node(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == 0"})
@@ -283,10 +288,10 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 202)
-    protected abstract static class PrimClosureValue1Node extends AbstractClosureValuePrimitiveNode {
+    protected abstract static class PrimClosureValue1Node extends AbstractClosureValuePrimitiveNode implements BinaryPrimitive {
 
-        protected PrimClosureValue1Node(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimClosureValue1Node(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == 1"})
@@ -298,10 +303,10 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 203)
-    protected abstract static class PrimClosureValue2Node extends AbstractClosureValuePrimitiveNode {
+    protected abstract static class PrimClosureValue2Node extends AbstractClosureValuePrimitiveNode implements TernaryPrimitive {
 
-        protected PrimClosureValue2Node(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimClosureValue2Node(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == 2"})
@@ -313,10 +318,10 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 204)
-    protected abstract static class PrimClosureValue3Node extends AbstractClosureValuePrimitiveNode {
+    protected abstract static class PrimClosureValue3Node extends AbstractClosureValuePrimitiveNode implements QuaternaryPrimitive {
 
-        protected PrimClosureValue3Node(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimClosureValue3Node(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == 3"})
@@ -328,10 +333,10 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 205)
-    protected abstract static class PrimClosureValue4Node extends AbstractClosureValuePrimitiveNode {
+    protected abstract static class PrimClosureValue4Node extends AbstractClosureValuePrimitiveNode implements QuinaryPrimitive {
 
-        protected PrimClosureValue4Node(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimClosureValue4Node(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == 4"})
@@ -344,13 +349,13 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @NodeInfo(cost = NodeCost.NONE)
     @GenerateNodeFactory
     @SqueakPrimitive(index = 206)
-    protected abstract static class PrimClosureValueAryNode extends AbstractClosureValuePrimitiveNode {
+    protected abstract static class PrimClosureValueAryNode extends AbstractClosureValuePrimitiveNode implements BinaryPrimitive {
 
-        protected PrimClosureValueAryNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimClosureValueAryNode(final CompiledMethodObject method) {
+            super(method);
         }
 
-        @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == sizeNode.execute(argArray)"})
+        @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == sizeNode.execute(argArray)"}, limit = "1")
         protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final ArrayObject argArray,
                         @SuppressWarnings("unused") @Cached("create()") final SqueakObjectSizeNode sizeNode,
                         @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments,
@@ -361,10 +366,10 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 221)
-    public abstract static class PrimClosureValueNoContextSwitchNode extends AbstractClosureValuePrimitiveNode {
+    public abstract static class PrimClosureValueNoContextSwitchNode extends AbstractClosureValuePrimitiveNode implements UnaryPrimitive {
 
-        protected PrimClosureValueNoContextSwitchNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimClosureValueNoContextSwitchNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == 0"})
@@ -384,13 +389,13 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 222)
-    protected abstract static class PrimClosureValueAryNoContextSwitchNode extends AbstractClosureValuePrimitiveNode {
+    protected abstract static class PrimClosureValueAryNoContextSwitchNode extends AbstractClosureValuePrimitiveNode implements BinaryPrimitive {
 
-        protected PrimClosureValueAryNoContextSwitchNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimClosureValueAryNoContextSwitchNode(final CompiledMethodObject method) {
+            super(method);
         }
 
-        @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == sizeNode.execute(argArray)"})
+        @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == sizeNode.execute(argArray)"}, limit = "1")
         protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final ArrayObject argArray,
                         @SuppressWarnings("unused") @Cached("create()") final SqueakObjectSizeNode sizeNode,
                         @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments,

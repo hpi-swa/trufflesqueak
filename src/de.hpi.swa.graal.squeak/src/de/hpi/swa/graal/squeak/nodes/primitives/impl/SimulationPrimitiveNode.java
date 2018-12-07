@@ -23,9 +23,10 @@ import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.IsDoesNotUnders
 import de.hpi.swa.graal.squeak.nodes.context.ArgumentNode;
 import de.hpi.swa.graal.squeak.nodes.context.LookupClassNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.SeptenaryPrimitive;
 
 @GenerateNodeFactory
-public abstract class SimulationPrimitiveNode extends AbstractPrimitiveNode {
+public abstract class SimulationPrimitiveNode extends AbstractPrimitiveNode implements SeptenaryPrimitive {
     public static final byte[] SIMULATE_PRIMITIVE_SELECTOR = "simulatePrimitive:args:".getBytes();
 
     // different CompiledMethodObject per simulation
@@ -47,8 +48,8 @@ public abstract class SimulationPrimitiveNode extends AbstractPrimitiveNode {
         return nodeFactory.createNode(method, primitiveArity, moduleName, functionName, argumentNodes);
     }
 
-    protected SimulationPrimitiveNode(final CompiledMethodObject method, final int numArguments, @SuppressWarnings("unused") final String moduleName, final String functionName) {
-        super(method, numArguments);
+    protected SimulationPrimitiveNode(final CompiledMethodObject method, @SuppressWarnings("unused") final String moduleName, final String functionName) {
+        super(method);
         this.functionName = code.image.wrap(functionName);
         emptyList = code.image.newList(new Object[]{});
     }

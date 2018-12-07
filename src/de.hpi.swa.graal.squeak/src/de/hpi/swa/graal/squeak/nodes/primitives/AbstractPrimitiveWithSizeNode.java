@@ -16,8 +16,8 @@ public abstract class AbstractPrimitiveWithSizeNode extends AbstractPrimitiveNod
     @Child private ArrayObjectSizeNode arrayObjectSizeNode = ArrayObjectSizeNode.create();
     @Child private NativeObjectSizeNode nativeObjectSizeNode = NativeObjectSizeNode.create();
 
-    protected AbstractPrimitiveWithSizeNode(final CompiledMethodObject method, final int numArguments) {
-        super(method, numArguments);
+    protected AbstractPrimitiveWithSizeNode(final CompiledMethodObject method) {
+        super(method);
     }
 
     protected final boolean inBounds(final long index, final ArrayObject object) {

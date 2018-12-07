@@ -27,6 +27,7 @@ import de.hpi.swa.graal.squeak.model.CharacterObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
+import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
@@ -55,6 +56,14 @@ import de.hpi.swa.graal.squeak.nodes.context.frame.CreateEagerArgumentsNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushForPrimitivesNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitiveWithoutFallback;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuaternaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuinaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.SeptenaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitivesFactory.PrimExternalCallNodeFactory.GetAbstractPrimitiveNodeGen;
@@ -84,19 +93,22 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(index = 19)
     public abstract static class PrimitiveFailedNode extends AbstractPrimitiveNode {
-
-        protected PrimitiveFailedNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        public static PrimitiveFailedNode create(final CompiledMethodObject method) {
+            return PrimitiveFailedNodeFactory.create(method, null);
         }
 
-        public static PrimitiveFailedNode create(final CompiledMethodObject method) {
-            return PrimitiveFailedNodeFactory.create(method, 1, null);
+        protected PrimitiveFailedNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization
-        protected final Object fail(@SuppressWarnings("unused") final VirtualFrame frame) {
+        protected final Object fail() {
             code.image.printVerbose("Primitive not yet written: ", code);
             throw new PrimitiveFailed();
+        }
+
+        public int getNumArguments() {
+            return 0;
         }
     }
 
@@ -107,8 +119,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Child protected LookupClassNode lookupClassNode;
         @Child private DispatchSendNode dispatchSendNode;
 
-        protected AbstractPerformPrimitiveNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected AbstractPerformPrimitiveNode(final CompiledMethodObject method) {
+            super(method);
             lookupMethodNode = LookupMethodNode.create(code.image);
             lookupClassNode = LookupClassNode.create(code.image);
             dispatchSendNode = DispatchSendNode.create(code.image);
@@ -128,18 +140,18 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     private abstract static class AbstractPrimitiveWithPushNode extends AbstractPrimitiveNode {
         @Child protected StackPushForPrimitivesNode pushNode;
 
-        protected AbstractPrimitiveWithPushNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected AbstractPrimitiveWithPushNode(final CompiledMethodObject method) {
+            super(method);
             pushNode = StackPushForPrimitivesNode.create();
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 83)
-    protected abstract static class PrimPerformNode extends AbstractPerformPrimitiveNode {
+    protected abstract static class PrimPerformNode extends AbstractPerformPrimitiveNode implements SeptenaryPrimitive {
 
-        protected PrimPerformNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimPerformNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @SuppressWarnings("unused")
@@ -194,11 +206,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 84)
-    protected abstract static class PrimPerformWithArgumentsNode extends AbstractPerformPrimitiveNode {
+    protected abstract static class PrimPerformWithArgumentsNode extends AbstractPerformPrimitiveNode implements TernaryPrimitive {
         @Child private GetObjectArrayNode getObjectArrayNode = GetObjectArrayNode.create();
 
-        protected PrimPerformWithArgumentsNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimPerformWithArgumentsNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization
@@ -209,11 +221,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 85)
-    protected abstract static class PrimSignalNode extends AbstractPrimitiveWithPushNode {
+    protected abstract static class PrimSignalNode extends AbstractPrimitiveWithPushNode implements UnaryPrimitive {
         @Child private SignalSemaphoreNode signalSemaphoreNode;
 
-        protected PrimSignalNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimSignalNode(final CompiledMethodObject method) {
+            super(method);
             signalSemaphoreNode = SignalSemaphoreNode.create(method);
         }
 
@@ -227,13 +239,13 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 86)
-    protected abstract static class PrimWaitNode extends AbstractPrimitiveWithPushNode {
+    protected abstract static class PrimWaitNode extends AbstractPrimitiveWithPushNode implements UnaryPrimitive {
         @Child private WakeHighestPriorityNode wakeHighestPriorityNode;
         @Child private LinkProcessToListNode linkProcessToListNode;
         @Child private GetActiveProcessNode getActiveProcessNode;
 
-        protected PrimWaitNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimWaitNode(final CompiledMethodObject method) {
+            super(method);
             linkProcessToListNode = LinkProcessToListNode.create(method);
             wakeHighestPriorityNode = WakeHighestPriorityNode.create(method);
             getActiveProcessNode = GetActiveProcessNode.create(method.image);
@@ -262,11 +274,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 87)
-    protected abstract static class PrimResumeNode extends AbstractPrimitiveWithPushNode {
+    protected abstract static class PrimResumeNode extends AbstractPrimitiveWithPushNode implements UnaryPrimitive {
         @Child private ResumeProcessNode resumeProcessNode;
 
-        protected PrimResumeNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimResumeNode(final CompiledMethodObject method) {
+            super(method);
             resumeProcessNode = ResumeProcessNode.create(method);
         }
 
@@ -281,11 +293,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 88)
-    protected abstract static class PrimSuspendNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimSuspendNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         @Child protected GetActiveProcessNode getActiveProcessNode;
 
-        protected PrimSuspendNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimSuspendNode(final CompiledMethodObject method) {
+            super(method);
             getActiveProcessNode = GetActiveProcessNode.create(method.image);
         }
 
@@ -314,10 +326,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 89)
-    protected abstract static class PrimFlushCacheNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimFlushCacheNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
-        public PrimFlushCacheNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        public PrimFlushCacheNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization
@@ -329,11 +341,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 100)
-    protected abstract static class PrimPerformWithArgumentsInSuperclassNode extends AbstractPerformPrimitiveNode {
+    protected abstract static class PrimPerformWithArgumentsInSuperclassNode extends AbstractPerformPrimitiveNode implements QuinaryPrimitive {
         @Child private GetObjectArrayNode getObjectArrayNode = GetObjectArrayNode.create();
 
-        protected PrimPerformWithArgumentsInSuperclassNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimPerformWithArgumentsInSuperclassNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization
@@ -354,9 +366,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @ImportStatic(Double.class)
     @GenerateNodeFactory
     @SqueakPrimitive(index = 110)
-    protected abstract static class PrimIdenticalNode extends AbstractPrimitiveNode {
-        protected PrimIdenticalNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+    protected abstract static class PrimIdenticalNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+        protected PrimIdenticalNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization
@@ -431,11 +443,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @NodeInfo(cost = NodeCost.NONE)
     @GenerateNodeFactory
     @SqueakPrimitive(index = 111)
-    protected abstract static class PrimClassNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimClassNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         private @Child LookupClassNode node;
 
-        protected PrimClassNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimClassNode(final CompiledMethodObject method) {
+            super(method);
             node = LookupClassNode.create(code.image);
         }
 
@@ -452,10 +464,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 112)
-    protected abstract static class PrimBytesLeftNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimBytesLeftNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
-        protected PrimBytesLeftNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimBytesLeftNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization
@@ -466,9 +478,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 113)
-    protected abstract static class PrimQuitNode extends AbstractPrimitiveNode {
-        protected PrimQuitNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+    protected abstract static class PrimQuitNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimQuitNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @SuppressWarnings("unused")
@@ -485,24 +497,24 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 114)
-    protected abstract static class PrimExitToDebuggerNode extends AbstractPrimitiveNode {
-        protected PrimExitToDebuggerNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+    protected abstract static class PrimExitToDebuggerNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+        protected PrimExitToDebuggerNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization
-        protected static final Object debugger(@SuppressWarnings("unused") final VirtualFrame frame) {
+        protected static final Object debugger(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             throw new SqueakException("EXIT TO DEBUGGER");
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 115)
-    protected abstract static class PrimChangeClassNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimChangeClassNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         @Child private NativeGetBytesNode getBytesNode = NativeGetBytesNode.create();
 
-        protected PrimChangeClassNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimChangeClassNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @SuppressWarnings("unused")
@@ -622,10 +634,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 116)
-    protected abstract static class PrimFlushCacheByMethodNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimFlushCacheByMethodNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
-        public PrimFlushCacheByMethodNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        public PrimFlushCacheByMethodNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization
@@ -644,19 +656,23 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Child private GetAbstractPrimitiveNode getPrimitiveNode = GetAbstractPrimitiveNodeGen.create();
         @Child private CreateEagerArgumentsNode createEagerArgumentsNode;
 
-        protected PrimExternalCallNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimExternalCallNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Override
         public final Object executeWithArguments(final VirtualFrame frame, final Object... receiverAndArguments) {
             final AbstractPrimitiveNode primitiveNode = getPrimitiveNode.execute(code, code.getLiteral(0));
-            return replace(primitiveNode).executeWithArguments(frame, getCreateEagerArgumentsNode().executeCreate(primitiveNode.numArguments, receiverAndArguments));
+            return replace(primitiveNode).executeWithArguments(frame, getCreateEagerArgumentsNode().executeCreate(primitiveNode.getNumArguments(), receiverAndArguments));
         }
 
         @Specialization
         protected final Object doExternalCall(final VirtualFrame frame) {
             return replace(getPrimitiveNode.execute(code, code.getLiteral(0))).executePrimitive(frame);
+        }
+
+        public int getNumArguments() {
+            return 0;
         }
 
         private CreateEagerArgumentsNode getCreateEagerArgumentsNode() {
@@ -708,40 +724,42 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 118)
-    protected abstract static class PrimDoPrimitiveWithArgsNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimDoPrimitiveWithArgsNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
         @Child protected GetObjectArrayNode getObjectArrayNode = GetObjectArrayNode.create();
 
-        public PrimDoPrimitiveWithArgsNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        public PrimDoPrimitiveWithArgsNode(final CompiledMethodObject method) {
+            super(method);
         }
 
-        @Specialization(guards = "primitiveNode != null")
-        protected final Object doPrimitive(final VirtualFrame frame, final Object receiver, @SuppressWarnings("unused") final long primitiveIndex, final ArrayObject argumentArray,
-                        @SuppressWarnings("unused") final NotProvided notProvided,
-                        @Cached("forIndex(primitiveIndex)") final AbstractPrimitiveNode primitiveNode) {
+        @Specialization
+        protected final Object doPrimitiveWithArgs(final VirtualFrame frame, final Object receiver, final long primitiveIndex, final ArrayObject argumentArray,
+                        @SuppressWarnings("unused") final NotProvided notProvided) {
+            return doPrimitiveWithArgs(frame, receiver, primitiveIndex, argumentArray);
+        }
+
+        @Specialization
+        protected final Object doPrimitiveWithArgs(final VirtualFrame frame, @SuppressWarnings("unused") final ContextObject context, final Object receiver,
+                        final long primitiveIndex, final ArrayObject argumentArray) {
+            return doPrimitiveWithArgs(frame, receiver, primitiveIndex, argumentArray);
+        }
+
+        private Object doPrimitiveWithArgs(final VirtualFrame frame, final Object receiver, final long primitiveIndex, final ArrayObject argumentArray) {
+            // TODO: make this better (cache primitiveNode?).
             final Object[] receiverAndArguments = ArrayUtils.copyWithFirst(getObjectArrayNode.execute(argumentArray), receiver);
+            final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.forIndex((CompiledMethodObject) code, (int) primitiveIndex);
+            if (primitiveNode == null) {
+                throw new PrimitiveFailed();
+            }
             return replace(primitiveNode).executeWithArguments(frame, receiverAndArguments);
-        }
-
-        @Specialization(guards = "primitiveNode != null")
-        protected final Object doPrimitive(final VirtualFrame frame, @SuppressWarnings("unused") final Object context, final Object receiver,
-                        @SuppressWarnings("unused") final long primitiveIndex, final ArrayObject argumentArray,
-                        @Cached("forIndex(primitiveIndex)") final AbstractPrimitiveNode primitiveNode) {
-            final Object[] receiverAndArguments = ArrayUtils.copyWithFirst(getObjectArrayNode.execute(argumentArray), receiver);
-            return replace(primitiveNode).executeWithArguments(frame, receiverAndArguments);
-        }
-
-        protected final AbstractPrimitiveNode forIndex(final long primitiveIndex) {
-            return PrimitiveNodeFactory.forIndex((CompiledMethodObject) code, (int) primitiveIndex);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 119)
-    protected abstract static class PrimFlushCacheSelectiveNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimFlushCacheSelectiveNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
-        public PrimFlushCacheSelectiveNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        public PrimFlushCacheSelectiveNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization
@@ -753,15 +771,14 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 130)
-    protected abstract static class PrimFullGCNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimFullGCNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
-        protected PrimFullGCNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimFullGCNode(final CompiledMethodObject method) {
+            super(method);
         }
 
-        @SuppressWarnings("unused")
         @Specialization
-        protected final Object doGC(final VirtualFrame frame, final AbstractSqueakObject receiver) {
+        protected final Object doGC(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             MiscUtils.systemGC();
             if (hasPendingFinalizations()) {
                 code.image.interrupt.setPendingFinalizations(true);
@@ -785,15 +802,14 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 131)
-    protected abstract static class PrimIncrementalGCNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimIncrementalGCNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
-        protected PrimIncrementalGCNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimIncrementalGCNode(final CompiledMethodObject method) {
+            super(method);
         }
 
-        @SuppressWarnings("unused")
         @Specialization
-        protected final Object doIncrementalGC(final VirtualFrame frame, final AbstractSqueakObject receiver) {
+        protected final Object doIncrementalGC(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             // It is not possible to suggest incremental GCs, so do not do anything here
             return code.image.wrap(MiscUtils.runtimeFreeMemory());
         }
@@ -801,11 +817,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 167)
-    protected abstract static class PrimYieldNode extends AbstractPrimitiveWithPushNode {
+    protected abstract static class PrimYieldNode extends AbstractPrimitiveWithPushNode implements UnaryPrimitive {
         @Child private YieldProcessNode yieldProcessNode;
 
-        public PrimYieldNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        public PrimYieldNode(final CompiledMethodObject method) {
+            super(method);
             yieldProcessNode = YieldProcessNode.create(method);
         }
 
@@ -821,9 +837,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @ImportStatic(Double.class)
     @GenerateNodeFactory
     @SqueakPrimitive(index = 169) // complements 110
-    protected abstract static class PrimNotIdenticalNode extends AbstractPrimitiveNode {
-        protected PrimNotIdenticalNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+    protected abstract static class PrimNotIdenticalNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
+        protected PrimNotIdenticalNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization
@@ -863,7 +879,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             return code.image.sqFalse;
         }
 
-        @Specialization
+        @Fallback
         protected final boolean doObject(final Object a, final Object b) {
             return !a.equals(b) ? code.image.sqTrue : code.image.sqFalse;
         }
@@ -871,11 +887,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 185)
-    protected abstract static class PrimExitCriticalSectionNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimExitCriticalSectionNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         @Child protected IsEmptyListNode isEmptyListNode;
 
-        public PrimExitCriticalSectionNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        public PrimExitCriticalSectionNode(final CompiledMethodObject method) {
+            super(method);
             isEmptyListNode = IsEmptyListNode.create(method.image);
         }
 
@@ -900,13 +916,13 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 186)
-    protected abstract static class PrimEnterCriticalSectionNode extends AbstractPrimitiveWithPushNode {
+    protected abstract static class PrimEnterCriticalSectionNode extends AbstractPrimitiveWithPushNode implements BinaryPrimitive {
         @Child private GetActiveProcessNode getActiveProcessNode;
         @Child private LinkProcessToListNode linkProcessToListNode;
         @Child private WakeHighestPriorityNode wakeHighestPriorityNode;
 
-        public PrimEnterCriticalSectionNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        public PrimEnterCriticalSectionNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = "ownerIsNil(mutex)")
@@ -997,11 +1013,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @ImportStatic(MUTEX.class)
     @GenerateNodeFactory
     @SqueakPrimitive(index = 187)
-    protected abstract static class PrimTestAndSetOwnershipOfCriticalSectionNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimTestAndSetOwnershipOfCriticalSectionNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         @Child private GetActiveProcessNode getActiveProcessNode;
 
-        public PrimTestAndSetOwnershipOfCriticalSectionNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        public PrimTestAndSetOwnershipOfCriticalSectionNode(final CompiledMethodObject method) {
+            super(method);
             getActiveProcessNode = GetActiveProcessNode.create(method.image);
         }
 
@@ -1032,13 +1048,13 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 188)
-    protected abstract static class PrimExecuteMethodArgsArrayNode extends AbstractPerformPrimitiveNode {
+    protected abstract static class PrimExecuteMethodArgsArrayNode extends AbstractPerformPrimitiveNode implements TernaryPrimitive {
         @Child private DispatchNode dispatchNode = DispatchNode.create();
         @Child private ArrayObjectSizeNode sizeNode = ArrayObjectSizeNode.create();
         @Child private ReadArrayObjectNode readNode = ReadArrayObjectNode.create();
 
-        protected PrimExecuteMethodArgsArrayNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimExecuteMethodArgsArrayNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization
@@ -1056,10 +1072,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 230)
-    protected abstract static class PrimRelinquishProcessorNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimRelinquishProcessorNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        public PrimRelinquishProcessorNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        public PrimRelinquishProcessorNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = {"!code.image.interruptHandlerDisabled()"})
@@ -1084,9 +1100,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 231)
-    protected abstract static class PrimForceDisplayUpdateNode extends AbstractPrimitiveNode {
-        protected PrimForceDisplayUpdateNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+    protected abstract static class PrimForceDisplayUpdateNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+        protected PrimForceDisplayUpdateNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization
@@ -1097,9 +1113,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 233)
-    protected abstract static class PrimSetFullScreenNode extends AbstractPrimitiveNode {
-        protected PrimSetFullScreenNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+    protected abstract static class PrimSetFullScreenNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimSetFullScreenNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = "code.image.hasDisplay()")
@@ -1116,9 +1132,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 256)
-    protected abstract static class PrimQuickReturnSelfNode extends AbstractPrimitiveNode {
-        protected PrimQuickReturnSelfNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+    protected abstract static class PrimQuickReturnSelfNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+        protected PrimQuickReturnSelfNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization
@@ -1129,9 +1145,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 257)
-    protected abstract static class PrimQuickReturnTrueNode extends AbstractPrimitiveNode {
-        protected PrimQuickReturnTrueNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+    protected abstract static class PrimQuickReturnTrueNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+        protected PrimQuickReturnTrueNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization
@@ -1142,9 +1158,9 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 258)
-    protected abstract static class PrimQuickReturnFalseNode extends AbstractPrimitiveNode {
-        protected PrimQuickReturnFalseNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+    protected abstract static class PrimQuickReturnFalseNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+        protected PrimQuickReturnFalseNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization
@@ -1155,72 +1171,72 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 259)
-    protected abstract static class PrimQuickReturnNilNode extends AbstractPrimitiveNode {
-        protected PrimQuickReturnNilNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+    protected abstract static class PrimQuickReturnNilNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+        protected PrimQuickReturnNilNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization
-        protected final Object returnValue(@SuppressWarnings("unused") final Object receiver) {
+        protected final NilObject returnValue(@SuppressWarnings("unused") final Object receiver) {
             return code.image.nil;
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 260)
-    protected abstract static class PrimQuickReturnMinusOneNode extends AbstractPrimitiveNode {
-        protected PrimQuickReturnMinusOneNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+    protected abstract static class PrimQuickReturnMinusOneNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+        protected PrimQuickReturnMinusOneNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization
-        protected static final Object returnValue(@SuppressWarnings("unused") final Object receiver) {
+        protected static final long returnValue(@SuppressWarnings("unused") final Object receiver) {
             return -1L;
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 261)
-    protected abstract static class PrimQuickReturnZeroNode extends AbstractPrimitiveNode {
-        protected PrimQuickReturnZeroNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+    protected abstract static class PrimQuickReturnZeroNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+        protected PrimQuickReturnZeroNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization
-        protected static final Object returnValue(@SuppressWarnings("unused") final Object receiver) {
+        protected static final long returnValue(@SuppressWarnings("unused") final Object receiver) {
             return 0L;
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 262)
-    protected abstract static class PrimQuickReturnOneNode extends AbstractPrimitiveNode {
-        protected PrimQuickReturnOneNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+    protected abstract static class PrimQuickReturnOneNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+        protected PrimQuickReturnOneNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization
-        protected static final Object returnValue(@SuppressWarnings("unused") final Object receiver) {
+        protected static final long returnValue(@SuppressWarnings("unused") final Object receiver) {
             return 1L;
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 263)
-    protected abstract static class PrimQuickReturnTwoNode extends AbstractPrimitiveNode {
-        protected PrimQuickReturnTwoNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+    protected abstract static class PrimQuickReturnTwoNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
+        protected PrimQuickReturnTwoNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization
-        protected static final Object returnValue(@SuppressWarnings("unused") final Object receiver) {
+        protected static final long returnValue(@SuppressWarnings("unused") final Object receiver) {
             return 2L;
         }
     }
 
     @NodeInfo(cost = NodeCost.NONE)
     @GenerateNodeFactory
-    public abstract static class PrimQuickReturnReceiverVariableNode extends AbstractPrimitiveNode {
+    public abstract static class PrimQuickReturnReceiverVariableNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
         @Child private ReceiverNode receiverNode;
         private final long variableIndex;
@@ -1230,7 +1246,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         protected PrimQuickReturnReceiverVariableNode(final CompiledMethodObject method, final long variableIndex) {
-            super(method, 1);
+            super(method);
             this.variableIndex = variableIndex;
             receiverNode = ReceiverNode.create(method);
         }

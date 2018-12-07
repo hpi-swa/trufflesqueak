@@ -59,7 +59,7 @@ public abstract class DispatchNode extends Node {
                     @Cached("method.getCallTargetStable()") final Assumption callTargetStable,
                     @Cached("forIndex(method, method.primitiveIndex())") final AbstractPrimitiveNode primitiveNode,
                     @Cached("create()") final CreateEagerArgumentsNode createEagerArgumentsNode) {
-        return primitiveNode.executeWithArguments(frame, createEagerArgumentsNode.executeCreate(primitiveNode.numArguments, receiverAndArguments));
+        return primitiveNode.executeWithArguments(frame, createEagerArgumentsNode.executeCreate(primitiveNode.getNumArguments(), receiverAndArguments));
     }
 
     @Specialization(limit = "INLINE_CACHE_SIZE", //

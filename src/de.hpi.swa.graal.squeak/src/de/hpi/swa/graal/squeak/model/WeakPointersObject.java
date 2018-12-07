@@ -45,13 +45,16 @@ public final class WeakPointersObject extends AbstractPointersObject {
     }
 
     public void atput0(final long index, final Object obj) {
-        assert obj != null; // null indicates a problem
-        if (obj instanceof AbstractSqueakObject && index >= instsize()) {
-            // store into variable part
+        assert obj != null : "`null` indicates a problem";
+        if (isStoreIntoVariablePart(index, obj)) {
             setPointer((int) index, newWeakReferenceFor(obj));
         } else {
             setPointer((int) index, obj);
         }
+    }
+
+    private boolean isStoreIntoVariablePart(final long index, final Object obj) {
+        return obj instanceof AbstractSqueakObject && index >= instsize();
     }
 
     @TruffleBoundary
@@ -64,23 +67,14 @@ public final class WeakPointersObject extends AbstractPointersObject {
     }
 
     public void setWeakPointers(final Object[] pointers) {
-        setPointers(convertToWeakReferences(pointers));
+        final int length = pointers.length;
+        setPointers(new Object[length]);
+        for (int i = 0; i < length; i++) {
+            atput0(i, pointers[i]);
+        }
     }
 
     public AbstractSqueakObject shallowCopy() {
         return new WeakPointersObject(this);
-    }
-
-    private static Object[] convertToWeakReferences(final Object[] pointers) {
-        final Object[] weakPointers = new Object[pointers.length];
-        for (int i = 0; i < pointers.length; i++) {
-            final Object pointer = pointers[i];
-            if (pointer instanceof AbstractSqueakObject) {
-                weakPointers[i] = newWeakReferenceFor(pointer);
-            } else {
-                weakPointers[i] = pointer;
-            }
-        }
-        return weakPointers;
     }
 }

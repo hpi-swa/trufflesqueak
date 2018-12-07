@@ -12,15 +12,18 @@ import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuaternaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 
 public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveWindowClose")
-    protected abstract static class PrimHostWindowCloseNode extends AbstractPrimitiveNode {
-        protected PrimHostWindowCloseNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+    protected abstract static class PrimHostWindowCloseNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimHostWindowCloseNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = {"code.image.hasDisplay()", "id == 1"})
@@ -37,9 +40,9 @@ public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveHostWindowPosition")
-    protected abstract static class PrimHostWindowPositionNode extends AbstractPrimitiveNode {
-        protected PrimHostWindowPositionNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+    protected abstract static class PrimHostWindowPositionNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimHostWindowPositionNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @SuppressWarnings("unused")
@@ -51,9 +54,9 @@ public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveHostWindowSizeSet")
-    protected abstract static class PrimHostWindowSizeSetNode extends AbstractPrimitiveNode {
-        protected PrimHostWindowSizeSetNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+    protected abstract static class PrimHostWindowSizeSetNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
+        protected PrimHostWindowSizeSetNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = {"code.image.hasDisplay()", "id == 1"})
@@ -71,10 +74,10 @@ public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveHostWindowTitle")
-    protected abstract static class PrimHostWindowTitleNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimHostWindowTitleNode extends AbstractPrimitiveNode implements TernaryPrimitive {
 
-        protected PrimHostWindowTitleNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimHostWindowTitleNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = {"code.image.hasDisplay()", "id == 1", "title.isByteType()"})

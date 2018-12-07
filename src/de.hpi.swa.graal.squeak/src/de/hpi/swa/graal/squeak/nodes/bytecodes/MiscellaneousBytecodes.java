@@ -37,7 +37,6 @@ public final class MiscellaneousBytecodes {
 
     public abstract static class CallPrimitiveNode extends AbstractBytecodeNode {
         private static final boolean DEBUG_PRIMITIVE_FAILURES = false;
-        private static final boolean DEBUG_UNSUPPORTED_SPECIALIZATION_EXCEPTIONS = false;
 
         @Child private HandlePrimitiveFailedNode handlePrimFailed;
         @Child protected AbstractPrimitiveNode primitiveNode;
@@ -69,10 +68,7 @@ public final class MiscellaneousBytecodes {
                 handlePrimFailed.executeHandle(frame, e);
             } catch (UnsupportedSpecializationException e) {
                 unsupportedSpecializationProfile.enter();
-                if (DEBUG_UNSUPPORTED_SPECIALIZATION_EXCEPTIONS) {
-                    debugUnsupportedSpecializationExceptions(e);
-                }
-                assert e.getNode() instanceof AbstractPrimitiveNode : "Only `AbstractPrimitiveNode`s should be treated as primitive failures, got: " + e;
+                code.image.printToStdErr("[UnsupportedSpecializationException]", e);
             }
             // continue with fallback code
         }
@@ -93,16 +89,6 @@ public final class MiscellaneousBytecodes {
             if (!(primitiveNode instanceof PrimitiveFailedNode)) {
                 code.image.printToStdErr("[PrimFail]", primitiveNode);
             }
-        }
-
-        @TruffleBoundary
-        private void debugUnsupportedSpecializationExceptions(final UnsupportedSpecializationException e) {
-            final String message = e.getMessage();
-            if (message.contains("[Long,PointersObject]") ||
-                            message.contains("[FloatObject,PointersObject]")) {
-                return; // filter out frequent results which are fine
-            }
-            code.image.printToStdErr("[UnsupportedSpecializationException]", e);
         }
 
         @Override

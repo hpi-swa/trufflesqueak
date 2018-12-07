@@ -18,6 +18,9 @@ import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.ERROR_TABLE;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuaternaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuinaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 
 public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
@@ -29,11 +32,11 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveCompareString")
-    public abstract static class PrimCompareStringNode extends AbstractPrimitiveNode {
+    public abstract static class PrimCompareStringNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
         @CompilationFinal private static NativeObject asciiOrder;
 
-        public PrimCompareStringNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        public PrimCompareStringNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = {"string1.isByteType()", "string2.isByteType()", "order.isByteType()", "isASCIIOrder(order)"})
@@ -110,10 +113,10 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveCompressToByteArray")
-    public abstract static class PrimCompressToByteArrayNode extends AbstractPrimitiveNode {
+    public abstract static class PrimCompressToByteArrayNode extends AbstractPrimitiveNode implements TernaryPrimitive {
 
-        public PrimCompressToByteArrayNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        public PrimCompressToByteArrayNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         private static int encodeBytesOf(final int anInt, final byte[] ba, final int i) {
@@ -215,10 +218,10 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveDecompressFromByteArray")
-    public abstract static class PrimDecompressFromByteArrayNode extends AbstractPrimitiveNode {
+    public abstract static class PrimDecompressFromByteArrayNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
 
-        public PrimDecompressFromByteArrayNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        public PrimDecompressFromByteArrayNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = {"bm.isIntType()", "ba.isByteType()"})
@@ -296,10 +299,10 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveFindFirstInString")
-    public abstract static class PrimFindFirstInStringNode extends AbstractPrimitiveNode {
+    public abstract static class PrimFindFirstInStringNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
 
-        public PrimFindFirstInStringNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        public PrimFindFirstInStringNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = {"start >= 1", "string.isByteType()", "inclusionMap.isByteType()", "inclusionMap.getByteLength() == 256"})
@@ -339,10 +342,10 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveFindSubstring")
-    public abstract static class PrimFindSubstringNode extends AbstractPrimitiveNode {
+    public abstract static class PrimFindSubstringNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
 
-        public PrimFindSubstringNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        public PrimFindSubstringNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         public abstract Object executeFindSubstring(VirtualFrame frame);
@@ -389,10 +392,10 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveIndexOfAsciiInString")
-    public abstract static class PrimIndexOfAsciiInStringNode extends AbstractPrimitiveNode {
+    public abstract static class PrimIndexOfAsciiInStringNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
 
-        public PrimIndexOfAsciiInStringNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        public PrimIndexOfAsciiInStringNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = {"start >= 0", "string.isByteType()"})
@@ -409,10 +412,10 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveStringHash")
-    public abstract static class PrimStringHashNode extends AbstractPrimitiveNode {
+    public abstract static class PrimStringHashNode extends AbstractPrimitiveNode implements TernaryPrimitive {
 
-        public PrimStringHashNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        public PrimStringHashNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = {"string.isByteType()"})
@@ -444,10 +447,10 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveTranslateStringWithTable")
-    public abstract static class PrimTranslateStringWithTableNode extends AbstractPrimitiveNode {
+    public abstract static class PrimTranslateStringWithTableNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
 
-        public PrimTranslateStringWithTableNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        public PrimTranslateStringWithTableNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = {"start >= 1", "string.isByteType()", "stop <= string.getByteLength()", "table.isByteType()", "table.getByteLength() >= 256"})

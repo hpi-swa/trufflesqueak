@@ -16,6 +16,9 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.FORM;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.SeptenaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 
 public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
@@ -27,10 +30,10 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveCopyBits")
-    protected abstract static class PrimCopyBitsNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimCopyBitsNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
-        protected PrimCopyBitsNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimCopyBitsNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization
@@ -48,10 +51,10 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveDisplayString")
-    protected abstract static class PrimDisplayStringNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimDisplayStringNode extends AbstractPrimitiveNode implements SeptenaryPrimitive {
 
-        protected PrimDisplayStringNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimDisplayStringNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = {"startIndex >= 1", "stopIndex >= 0", "aString.isByteType()", "aString.getByteLength() > 0",
@@ -72,10 +75,10 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveDrawLoop")
-    protected abstract static class PrimDrawLoopNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimDrawLoopNode extends AbstractPrimitiveNode implements TernaryPrimitive {
 
-        protected PrimDrawLoopNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimDrawLoopNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization
@@ -88,10 +91,10 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
     @ImportStatic(FORM.class)
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitivePixelValueAt")
-    protected abstract static class PrimPixelValueAtNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimPixelValueAtNode extends AbstractPrimitiveNode implements TernaryPrimitive {
 
-        public PrimPixelValueAtNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        public PrimPixelValueAtNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @SuppressWarnings("unused")
@@ -109,10 +112,10 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveWarpBits")
-    protected abstract static class PrimWarpBitsNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimWarpBitsNode extends AbstractPrimitiveNode implements TernaryPrimitive {
 
-        public PrimWarpBitsNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        public PrimWarpBitsNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization

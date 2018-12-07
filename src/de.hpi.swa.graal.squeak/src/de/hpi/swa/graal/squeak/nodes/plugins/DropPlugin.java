@@ -10,6 +10,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 
 public final class DropPlugin extends AbstractPrimitiveFactoryHolder {
@@ -31,9 +32,9 @@ public final class DropPlugin extends AbstractPrimitiveFactoryHolder {
     @ImportStatic(DropPlugin.class)
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveDropRequestFileHandle")
-    protected abstract static class PrimDropRequestFileHandleNode extends AbstractPrimitiveNode {
-        protected PrimDropRequestFileHandleNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+    protected abstract static class PrimDropRequestFileHandleNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimDropRequestFileHandleNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = "dropIndex <= getFileListSize()")
@@ -45,9 +46,9 @@ public final class DropPlugin extends AbstractPrimitiveFactoryHolder {
     @ImportStatic(DropPlugin.class)
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveDropRequestFileName")
-    protected abstract static class PrimDropRequestFileNameNode extends AbstractPrimitiveNode {
-        protected PrimDropRequestFileNameNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+    protected abstract static class PrimDropRequestFileNameNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimDropRequestFileNameNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = "dropIndex <= getFileListSize()")

@@ -1,10 +1,12 @@
 package de.hpi.swa.graal.squeak.util;
 
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT;
@@ -52,6 +54,11 @@ public abstract class InterruptHandlerNode extends Node {
     @Specialization(guards = {"!isAOT() || !image.hasDisplay()", "image.externalObjectsArray.isEmptyType()"})
     protected final void doCheck(final VirtualFrame frame) {
         performChecks(frame);
+    }
+
+    @Fallback
+    protected static final void doFail() {
+        throw new SqueakException("Should never happen");
     }
 
     private void performChecks(final VirtualFrame frame) {

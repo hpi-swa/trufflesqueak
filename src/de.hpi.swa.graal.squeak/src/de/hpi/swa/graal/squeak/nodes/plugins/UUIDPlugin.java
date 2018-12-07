@@ -11,6 +11,7 @@ import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
@@ -23,10 +24,10 @@ public final class UUIDPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveMakeUUID")
-    protected abstract static class PrimMakeUUIDNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimMakeUUIDNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
-        protected PrimMakeUUIDNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimMakeUUIDNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = "receiver.isByteType()")

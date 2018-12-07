@@ -137,7 +137,9 @@ public final class PrimitiveNodeFactory {
         for (int i = 0; i < primitiveArity; i++) {
             argumentNodes[i] = ArgumentNode.create(method, i);
         }
-        return nodeFactory.createNode(method, primitiveArity, argumentNodes);
+        final AbstractPrimitiveNode primitiveNode = nodeFactory.createNode(method, argumentNodes);
+        assert primitiveArity == primitiveNode.getNumArguments() : "Arities do not match.";
+        return primitiveNode;
     }
 
     private static void fillPrimitiveTable(final AbstractPrimitiveFactoryHolder[] primitiveFactories) {

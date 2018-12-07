@@ -29,6 +29,7 @@ import com.oracle.truffle.api.source.Source.SourceBuilder;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
@@ -39,6 +40,9 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.GetObjectArrayNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 
 public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
@@ -56,10 +60,10 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveEvalString")
-    protected abstract static class PrimEvalStringNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimEvalStringNode extends AbstractPrimitiveNode implements TernaryPrimitive {
 
-        protected PrimEvalStringNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimEvalStringNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @TruffleBoundary
@@ -87,10 +91,10 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveEvalFile")
-    protected abstract static class PrimEvalFileNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimEvalFileNode extends AbstractPrimitiveNode implements TernaryPrimitive {
 
-        protected PrimEvalFileNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimEvalFileNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @TruffleBoundary
@@ -118,14 +122,14 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveEvalC")
-    protected abstract static class PrimEvalCNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimEvalCNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         private static final String C_FILENAME = "temp.c";
         private static final String LLVM_FILENAME = "temp.bc";
         @Child private Node readNode = Message.READ.createNode();
         @Child private Node executeNode = Message.EXECUTE.createNode();
 
-        protected PrimEvalCNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimEvalCNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = {"receiver.isByteType()", "memberToCall.isByteType()"})
@@ -166,9 +170,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveExport")
-    protected abstract static class PrimExportNode extends AbstractPrimitiveNode {
-        protected PrimExportNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+    protected abstract static class PrimExportNode extends AbstractPrimitiveNode implements TernaryPrimitive {
+        protected PrimExportNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = "name.isByteType()")
@@ -181,13 +185,13 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveGetKeys")
-    protected abstract static class PrimGetKeysNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimGetKeysNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         @Child private Node keysNode = Message.KEYS.createNode();
         @Child private Node getSizeNode = Message.GET_SIZE.createNode();
         @Child private Node readNode = Message.READ.createNode();
 
-        protected PrimGetKeysNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimGetKeysNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = "!isAbstractSqueakObject(receiver)")
@@ -211,13 +215,13 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveGetInstSize")
-    protected abstract static class PrimGetInstSizeNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimGetInstSizeNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         @Child private Node hasKeysNode = Message.HAS_KEYS.createNode();
         @Child private Node getKeysNode = Message.KEYS.createNode();
         @Child private Node getSizeNode = Message.GET_SIZE.createNode();
 
-        protected PrimGetInstSizeNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimGetInstSizeNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = "!isAbstractSqueakObject(receiver)")
@@ -239,12 +243,12 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveGetSize")
-    protected abstract static class PrimGetSizeNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimGetSizeNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         @Child private Node hasSizeNode = Message.HAS_SIZE.createNode();
         @Child private Node getSizeNode = Message.GET_SIZE.createNode();
 
-        protected PrimGetSizeNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimGetSizeNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = "!isAbstractSqueakObject(receiver)")
@@ -265,9 +269,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveGetLanguageInfo")
-    protected abstract static class PrimGetLanguageInfoNode extends AbstractPrimitiveNode {
-        protected PrimGetLanguageInfoNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+    protected abstract static class PrimGetLanguageInfoNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimGetLanguageInfoNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = "languageID.isByteType()")
@@ -283,11 +287,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveGetLastError")
-    protected abstract static class PrimGetLastErrorNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimGetLastErrorNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         protected static Exception lastError = null;
 
-        protected PrimGetLastErrorNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimGetLastErrorNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = "lastError != null")
@@ -313,23 +317,23 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveGetPolyglotBindings")
-    protected abstract static class PrimGetPolyglotBindingsNode extends AbstractPrimitiveNode {
-        protected PrimGetPolyglotBindingsNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+    protected abstract static class PrimGetPolyglotBindingsNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+        protected PrimGetPolyglotBindingsNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization
         @TruffleBoundary
-        protected final TruffleObject doGet(@SuppressWarnings("unused") final Object receiver) {
+        protected final TruffleObject doGet(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             return (TruffleObject) code.image.env.getPolyglotBindings();
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveImport")
-    protected abstract static class PrimImportNode extends AbstractPrimitiveNode {
-        protected PrimImportNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+    protected abstract static class PrimImportNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimImportNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = "name.isByteType()")
@@ -345,9 +349,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveListAvailableLanguageIDs")
-    protected abstract static class PrimListAvailableLanguageIDsNode extends AbstractPrimitiveNode {
-        protected PrimListAvailableLanguageIDsNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+    protected abstract static class PrimListAvailableLanguageIDsNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+        protected PrimListAvailableLanguageIDsNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization
@@ -361,11 +365,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveRead")
-    protected abstract static class PrimReadNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimReadNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         @Child private Node readNode = Message.READ.createNode();
 
-        protected PrimReadNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimReadNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = {"!isAbstractSqueakObject(receiver)", "selector.isByteType()"})
@@ -382,11 +386,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveSend")
-    protected abstract static class PrimSendNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimSendNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         @Child private GetObjectArrayNode getObjectArrayNode = GetObjectArrayNode.create();
 
-        protected PrimSendNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimSendNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = {"!isAbstractSqueakObject(receiver)", "message.isMessage()"})
@@ -413,11 +417,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveStringRepresentation")
-    protected abstract static class PrimStringRepresentationNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimStringRepresentationNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         @Child private Node readNode = Message.READ.createNode();
 
-        protected PrimStringRepresentationNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimStringRepresentationNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = {"!isAbstractSqueakObject(receiver)"})
@@ -429,11 +433,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveUnbox")
-    protected abstract static class PrimUnboxNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimUnboxNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         @Child private Node unboxNode = Message.UNBOX.createNode();
 
-        protected PrimUnboxNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimUnboxNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = {"!isAbstractSqueakObject(receiver)"})
@@ -451,11 +455,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveWrite")
-    protected abstract static class PrimWriteNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimWriteNode extends AbstractPrimitiveNode implements TernaryPrimitive {
         @Child private Node writeNode = Message.WRITE.createNode();
 
-        protected PrimWriteNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimWriteNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = {"!isAbstractSqueakObject(receiver)", "selector.isByteType()"})

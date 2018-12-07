@@ -12,16 +12,17 @@ import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuinaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 
 public final class BMPReadWriterPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveRead24BmpLine")
-    protected abstract static class PrimRead24BmpLineNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimRead24BmpLineNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
 
-        protected PrimRead24BmpLineNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimRead24BmpLineNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = {"pixelLine.isByteType()", "formBits.isIntType()"})
@@ -45,10 +46,10 @@ public final class BMPReadWriterPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(name = "primitiveWrite24BmpLine")
-    protected abstract static class PrimWrite24BmpLineNode extends AbstractPrimitiveNode {
+    protected abstract static class PrimWrite24BmpLineNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
 
-        protected PrimWrite24BmpLineNode(final CompiledMethodObject method, final int numArguments) {
-            super(method, numArguments);
+        protected PrimWrite24BmpLineNode(final CompiledMethodObject method) {
+            super(method);
         }
 
         @Specialization(guards = {"pixelLine.isByteType()", "formBits.isIntType()"})
