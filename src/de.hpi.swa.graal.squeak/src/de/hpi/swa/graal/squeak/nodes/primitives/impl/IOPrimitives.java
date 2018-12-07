@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -322,6 +323,13 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
                 }
                 storeStateInReceiver(receiver, scanDestX, stopIndex);
                 return readNode.execute(stops, END_OF_RUN);
+            }
+
+            @Fallback
+            @SuppressWarnings("unused")
+            protected static final Object doFail(final PointersObject receiver, final long startIndex, final long stopIndex, final byte[] sourceBytes, final long rightX, final ArrayObject stops,
+                            final long kernData, final Object scanDestX, final Object scanXTable, final Object scanMap) {
+                throw new PrimitiveFailed();
             }
 
             private void storeStateInReceiver(final PointersObject receiver, final long scanDestX, final long scanLastIndex) {
@@ -716,6 +724,12 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "!inBounds(rcvr, start, stop, repl, replStart)")
         protected static final Object doBadIndex(final AbstractSqueakObject rcvr, final long start, final long stop, final AbstractSqueakObject repl, final long replStart) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_INDEX);
+        }
+
+        @Fallback
+        @SuppressWarnings("unused")
+        protected static final Object doFail(final Object rcvr, final Object start, final Object stop, final Object repl, final Object replStart) {
+            throw new PrimitiveFailed();
         }
 
         protected final boolean inBounds(final AbstractSqueakObject array, final long start, final long stop, final AbstractSqueakObject repl, final long replStart) {
