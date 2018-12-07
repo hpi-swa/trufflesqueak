@@ -365,7 +365,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
                 for (int index = 0; index < read; index++) {
                     atPut0Node.execute(target, startIndex - 1 + index, dst.get(index) & 0xFFL);
                 }
-                return read;
+                return Math.max(read, 0); // `read` can be `-1`, Squeak expects zero.
             } catch (IOException e) {
                 throw new PrimitiveFailed();
             }
