@@ -19,6 +19,7 @@ import de.hpi.swa.graal.squeak.nodes.plugins.FilePlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.FloatArrayPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.GraalSqueakPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.HostWindowPlugin;
+import de.hpi.swa.graal.squeak.nodes.plugins.JPEGReaderPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.LargeIntegers;
 import de.hpi.swa.graal.squeak.nodes.plugins.LocalePlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.Matrix2x3Plugin;
@@ -58,6 +59,7 @@ public final class PrimitiveNodeFactory {
                     new FloatArrayPlugin(),
                     new GraalSqueakPlugin(),
                     new HostWindowPlugin(),
+                    new JPEGReaderPlugin(),
                     new LargeIntegers(),
                     new LocalePlugin(),
                     new Matrix2x3Plugin(),
