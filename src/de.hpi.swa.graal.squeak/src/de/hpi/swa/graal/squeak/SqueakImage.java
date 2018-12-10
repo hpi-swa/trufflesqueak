@@ -9,7 +9,6 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 public final class SqueakImage implements TruffleObject {
     private final SqueakImageContext image;
@@ -59,7 +58,6 @@ public final class SqueakImage implements TruffleObject {
                 assert args.length == 0;
                 squeakImage.image.interrupt.start();
                 squeakImage.image.disableHeadless();
-                squeakImage.image.setImageArguments(ArrayUtils.toStrings(args));
                 return Truffle.getRuntime().createCallTarget(squeakImage.image.getActiveContext()).call();
             }
         }

@@ -133,7 +133,6 @@ public final class SqueakImageContext {
     };
 
     @CompilationFinal private String imagePath;
-    @CompilationFinal(dimensions = 1) private String[] imageArguments = new String[0];
     @CompilationFinal private boolean isHeadless = true;
     public final SqueakImageFlags flags = new SqueakImageFlags();
     public final OSDetector os = new OSDetector();
@@ -402,12 +401,7 @@ public final class SqueakImageContext {
     }
 
     public String[] getImageArguments() {
-        return imageArguments;
-    }
-
-    public void setImageArguments(final String[] args) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        this.imageArguments = args;
+        return env.getApplicationArguments();
     }
 
     public boolean interruptHandlerDisabled() {

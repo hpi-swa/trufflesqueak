@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +21,7 @@ import com.oracle.truffle.api.TruffleOptions;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 
 public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
-    private final List<String> remainingArguments = new ArrayList<>();
+    private String[] remainingArguments;
     private String imagePath = "Squeak.image";
     private String sourceCode = null;
 
@@ -53,7 +52,8 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
             if (Files.exists(Paths.get(arg))) {
                 unrecognized = arguments.subList(0, i);
                 imagePath = Paths.get(arg).toAbsolutePath().toString();
-                remainingArguments.addAll(arguments.subList(i + 1, arguments.size()));
+                final List<String> remainingArgumentsList = arguments.subList(i + 1, arguments.size());
+                remainingArguments = remainingArgumentsList.toArray(new String[remainingArgumentsList.size()]);
                 break;
             }
             if ("-c".equals(arg) || "--code".equals(arg)) {
@@ -76,6 +76,7 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
         if (sourceCode != null) {
             contextBuilder.option(SqueakLanguageConfig.ID + ".Headless", "true");
         }
+        contextBuilder.arguments(getLanguageId(), remainingArguments);
         try (Context context = contextBuilder.allowAllAccess(true).build()) {
             println("[graalsqueak] Running " + SqueakLanguageConfig.NAME + " on " + getRuntimeName() + "...");
             if (sourceCode != null) {
@@ -83,7 +84,7 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
                 println("[graalsqueak] Result: " + result);
                 return 0;
             } else {
-                context.eval(Source.newBuilder(getLanguageId(), new File(imagePath)).internal(true).mimeType(SqueakLanguageConfig.MIME_TYPE).build()).execute(remainingArguments.toArray());
+                context.eval(Source.newBuilder(getLanguageId(), new File(imagePath)).internal(true).mimeType(SqueakLanguageConfig.MIME_TYPE).build()).execute();
                 throw abort("A Squeak/Smalltalk image cannot return a result as it can only exit.");
             }
         } catch (PolyglotException e) {
