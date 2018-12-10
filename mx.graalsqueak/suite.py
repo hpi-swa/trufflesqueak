@@ -1,5 +1,5 @@
 suite = {
-    "mxversion": "5.192.10",
+    "mxversion": "5.195.0",
     "name": "graalsqueak",
     "versionConflictResolution": "latest",
 
@@ -7,7 +7,7 @@ suite = {
         "suites": [{
             "name": "truffle",
             "subdir": True,
-            "version": "145a4d3154866f985d929001a63cfd53de7d0c6f",
+            "version": "7a44af07d4dc34684c72648859196ea6c5e8f027",
             "urls": [{
                 "url": "https://github.com/oracle/graal",
                 "kind": "git"
