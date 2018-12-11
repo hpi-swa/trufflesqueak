@@ -28,7 +28,13 @@ public abstract class UnwindContextChainNode extends AbstractNodeWithImage {
         throw new TopLevelReturn(returnValue);
     }
 
-    @Specialization(guards = {"startContext == targetContext"})
+    @Specialization(guards = {"startContext == targetContext", "startContext.isPrimitiveContext()"})
+    protected static final ContextObject doUnwindPrimitiveContext(@SuppressWarnings("unused") final ContextObject startContext, final ContextObject targetContext, final Object returnValue) {
+        final ContextObject sender = (ContextObject) targetContext.getSender();
+        return doUnwindQuick(sender, sender, returnValue); // Skip primitive contexts.
+    }
+
+    @Specialization(guards = {"startContext == targetContext", "!startContext.isPrimitiveContext()"})
     protected static final ContextObject doUnwindQuick(@SuppressWarnings("unused") final ContextObject startContext, final ContextObject targetContext, final Object returnValue) {
         targetContext.push(returnValue);
         return targetContext;

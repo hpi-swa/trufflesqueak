@@ -13,6 +13,7 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
+import de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodes.CallPrimitiveNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 
@@ -415,5 +416,12 @@ public final class ContextObject extends AbstractPointersObject {
         if (isTerminated()) {
             atput0(CONTEXT.INSTRUCTION_POINTER, (long) ((CompiledMethodObject) getMethod()).getInitialPC());
         }
+    }
+
+    // The context represents primitive call which needs to be skipped when unwinding call stack.
+    public boolean isPrimitiveContext() {
+        final CompiledCodeObject codeObject = getClosureOrMethod();
+        return codeObject.hasPrimitive() && codeObject instanceof CompiledMethodObject &&
+                        (getInstructionPointer() - ((CompiledMethodObject) codeObject).getInitialPC() == CallPrimitiveNode.NUM_BYTECODES);
     }
 }

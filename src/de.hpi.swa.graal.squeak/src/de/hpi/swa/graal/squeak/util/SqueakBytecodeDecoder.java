@@ -183,7 +183,7 @@ public final class SqueakBytecodeDecoder {
                 return PushNewArrayNode.create(code, index, 2, Byte.toUnsignedInt(bytecode[index + 1]));
             case 139:
                 assert code instanceof CompiledMethodObject;
-                return CallPrimitiveNode.create((CompiledMethodObject) code, index, 3, Byte.toUnsignedInt(bytecode[index + 1]), Byte.toUnsignedInt(bytecode[index + 2]));
+                return CallPrimitiveNode.create((CompiledMethodObject) code, index, Byte.toUnsignedInt(bytecode[index + 1]), Byte.toUnsignedInt(bytecode[index + 2]));
             case 140:
                 return new PushRemoteTempNode(code, index, 3, Byte.toUnsignedInt(bytecode[index + 1]), Byte.toUnsignedInt(bytecode[index + 2]));
             case 141:

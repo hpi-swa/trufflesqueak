@@ -90,8 +90,13 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         return ControlPrimitivesFactory.getFactories();
     }
 
+    /*
+     * This node is not in primitive table, so that lookups fail just like when a primitive is not
+     * implemented. This way, the node does not fill any caches during dispatch.
+     *
+     * @SqueakPrimitive(index = 19)
+     */
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 19)
     public abstract static class PrimitiveFailedNode extends AbstractPrimitiveNode {
         public static PrimitiveFailedNode create(final CompiledMethodObject method) {
             return PrimitiveFailedNodeFactory.create(method, null);

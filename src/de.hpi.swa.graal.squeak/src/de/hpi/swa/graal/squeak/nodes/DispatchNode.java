@@ -28,6 +28,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
 @ReportPolymorphism
 @ImportStatic(PrimitiveNodeFactory.class)
 public abstract class DispatchNode extends Node {
+    protected static final int PRIMITIVE_CACHE_SIZE = 2;
     protected static final int INLINE_CACHE_SIZE = 3;
 
     @Child private CreateArgumentsNode createArgumentsNode;
@@ -51,7 +52,7 @@ public abstract class DispatchNode extends Node {
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"!isQuickReturnReceiverVariable(method.primitiveIndex())", "method == cachedMethod", "method.hasPrimitive()", "primitiveNode != null"}, //
-                    assumptions = {"callTargetStable"}, rewriteOn = {PrimitiveFailed.class}, limit = "1")
+                    limit = "PRIMITIVE_CACHE_SIZE", assumptions = {"callTargetStable"}, rewriteOn = {PrimitiveFailed.class})
     protected static final Object doPrimitiveEagerly(final VirtualFrame frame, final CompiledMethodObject method, final Object[] receiverAndArguments, final Object contextOrMarker,
                     @Cached("method") final CompiledMethodObject cachedMethod,
                     @Cached("method.getCallTargetStable()") final Assumption callTargetStable,
@@ -62,7 +63,7 @@ public abstract class DispatchNode extends Node {
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"!isQuickReturnReceiverVariable(method.primitiveIndex())", "method == cachedMethod", "method.hasPrimitive()", "primitiveNode != null"}, //
-                    assumptions = {"callTargetStable"}, replaces = "doPrimitiveEagerly", limit = "1")
+                    limit = "PRIMITIVE_CACHE_SIZE", replaces = "doPrimitiveEagerly", assumptions = {"callTargetStable"})
     protected final Object doPrimitiveEagerlyCatch(final VirtualFrame frame, final CompiledMethodObject method, final Object[] receiverAndArguments, final Object contextOrMarker,
                     @Cached("method") final CompiledMethodObject cachedMethod,
                     @Cached("method.getCallTargetStable()") final Assumption callTargetStable,
@@ -78,9 +79,8 @@ public abstract class DispatchNode extends Node {
         }
     }
 
-    @Specialization(limit = "INLINE_CACHE_SIZE", //
-                    guards = {"code.getCallTarget() == cachedTarget", "!isQuickReturnReceiverVariable(code.primitiveIndex())", "!code.hasPrimitive()"}, //
-                    assumptions = "callTargetStable")
+    @Specialization(guards = {"code.getCallTarget() == cachedTarget", "!isQuickReturnReceiverVariable(code.primitiveIndex())", "!code.hasPrimitive()"}, //
+                    limit = "INLINE_CACHE_SIZE", assumptions = "callTargetStable")
     protected final Object doDirectWithoutPrimitive(final CompiledCodeObject code, final Object[] receiverAndArguments, final Object contextOrMarker,
                     @SuppressWarnings("unused") @Cached("code.getCallTargetStable()") final Assumption callTargetStable,
                     @SuppressWarnings("unused") @Cached("code.getCallTarget()") final RootCallTarget cachedTarget,
@@ -88,9 +88,8 @@ public abstract class DispatchNode extends Node {
         return callNode.call(getCreateArgumentsNode().executeCreate(code, contextOrMarker, receiverAndArguments));
     }
 
-    @Specialization(limit = "INLINE_CACHE_SIZE", //
-                    guards = {"code.getCallTarget() == cachedTarget"}, //
-                    assumptions = "callTargetStable")
+    @Specialization(guards = {"code.getCallTarget() == cachedTarget"}, //
+                    limit = "INLINE_CACHE_SIZE", assumptions = "callTargetStable")
     protected final Object doDirect(final CompiledCodeObject code, final Object[] receiverAndArguments, final Object contextOrMarker,
                     @SuppressWarnings("unused") @Cached("code.getCallTargetStable()") final Assumption callTargetStable,
                     @SuppressWarnings("unused") @Cached("code.getCallTarget()") final RootCallTarget cachedTarget,

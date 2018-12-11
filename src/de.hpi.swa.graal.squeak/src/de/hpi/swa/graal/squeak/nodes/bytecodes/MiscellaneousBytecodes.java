@@ -36,6 +36,7 @@ public final class MiscellaneousBytecodes {
 
     public abstract static class CallPrimitiveNode extends AbstractBytecodeNode {
         private static final boolean DEBUG_PRIMITIVE_FAILURES = false;
+        public static final int NUM_BYTECODES = 3;
 
         @Child private HandlePrimitiveFailedNode handlePrimFailed;
         @Child protected AbstractPrimitiveNode primitiveNode;
@@ -43,12 +44,12 @@ public final class MiscellaneousBytecodes {
 
         private final BranchProfile primitiveFailureProfile = BranchProfile.create();
 
-        public static CallPrimitiveNode create(final CompiledMethodObject code, final int index, final int numBytecodes, final int byte1, final int byte2) {
-            return CallPrimitiveNodeGen.create(code, index, numBytecodes, byte1, byte2);
+        public static CallPrimitiveNode create(final CompiledMethodObject code, final int index, final int byte1, final int byte2) {
+            return CallPrimitiveNodeGen.create(code, index, byte1, byte2);
         }
 
-        public CallPrimitiveNode(final CompiledMethodObject code, final int index, final int numBytecodes, final int byte1, final int byte2) {
-            super(code, index, numBytecodes);
+        public CallPrimitiveNode(final CompiledMethodObject code, final int index, final int byte1, final int byte2) {
+            super(code, index, NUM_BYTECODES);
             primitiveIndex = byte1 + (byte2 << 8);
             primitiveNode = PrimitiveNodeFactory.forIndex(code, primitiveIndex);
             handlePrimFailed = primitiveNode == null ? null : HandlePrimitiveFailedNode.create(code);

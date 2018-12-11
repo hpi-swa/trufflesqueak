@@ -239,6 +239,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
     private abstract static class AbstractClosureValuePrimitiveNode extends AbstractPrimitiveNode {
         @Child protected BlockActivationNode dispatch = BlockActivationNode.create();
+        @Child protected GetBlockFrameArgumentsNode getFrameArguments = GetBlockFrameArgumentsNode.create();
 
         protected AbstractClosureValuePrimitiveNode(final CompiledMethodObject method) {
             super(method);
@@ -269,20 +270,8 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == 0"})
-        protected final Object doClosure(final VirtualFrame frame, final BlockClosureObject block,
-                        @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments) {
+        protected final Object doClosure(final VirtualFrame frame, final BlockClosureObject block) {
             return dispatch.executeBlock(block, getFrameArguments.execute(block, getContextOrMarker(frame), new Object[0]));
-        }
-
-        // Additional specializations to speed up eager sends
-        @Specialization
-        protected static final Object doBoolean(final boolean receiver) {
-            return receiver;
-        }
-
-        @Specialization
-        protected static final Object doNilObject(final NilObject receiver) {
-            return receiver;
         }
     }
 
@@ -295,8 +284,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == 1"})
-        protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final Object arg,
-                        @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments) {
+        protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final Object arg) {
             return dispatch.executeBlock(block, getFrameArguments.execute(block, getContextOrMarker(frame), new Object[]{arg}));
         }
     }
@@ -310,8 +298,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == 2"})
-        protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final Object arg1, final Object arg2,
-                        @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments) {
+        protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final Object arg1, final Object arg2) {
             return dispatch.executeBlock(block, getFrameArguments.execute(block, getContextOrMarker(frame), new Object[]{arg1, arg2}));
         }
     }
@@ -325,8 +312,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == 3"})
-        protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final Object arg1, final Object arg2, final Object arg3,
-                        @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments) {
+        protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final Object arg1, final Object arg2, final Object arg3) {
             return dispatch.executeBlock(block, getFrameArguments.execute(block, getContextOrMarker(frame), new Object[]{arg1, arg2, arg3}));
         }
     }
@@ -340,8 +326,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == 4"})
-        protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final Object arg1, final Object arg2, final Object arg3, final Object arg4,
-                        @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments) {
+        protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final Object arg1, final Object arg2, final Object arg3, final Object arg4) {
             return dispatch.executeBlock(block, getFrameArguments.execute(block, getContextOrMarker(frame), new Object[]{arg1, arg2, arg3, arg4}));
         }
     }
@@ -358,7 +343,6 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == sizeNode.execute(argArray)"}, limit = "1")
         protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final ArrayObject argArray,
                         @SuppressWarnings("unused") @Cached("create()") final SqueakObjectSizeNode sizeNode,
-                        @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments,
                         @Cached("create()") final GetObjectArrayNode getObjectArrayNode) {
             return dispatch.executeBlock(block, getFrameArguments.execute(block, getContextOrMarker(frame), getObjectArrayNode.execute(argArray)));
         }
@@ -373,8 +357,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         }
 
         @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == 0"})
-        protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block,
-                        @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments) {
+        protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block) {
             final boolean wasActive = code.image.interrupt.isActive();
             code.image.interrupt.deactivate();
             try {
@@ -398,7 +381,6 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == sizeNode.execute(argArray)"}, limit = "1")
         protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final ArrayObject argArray,
                         @SuppressWarnings("unused") @Cached("create()") final SqueakObjectSizeNode sizeNode,
-                        @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments,
                         @Cached("create()") final GetObjectArrayNode getObjectArrayNode) {
             final boolean wasActive = code.image.interrupt.isActive();
             code.image.interrupt.deactivate();
