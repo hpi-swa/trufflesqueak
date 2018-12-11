@@ -744,7 +744,10 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         private Object doPrimitiveWithArgs(final VirtualFrame frame, final Object receiver, final long primitiveIndex, final ArrayObject argumentArray) {
-            // TODO: make this better (cache primitiveNode?).
+            /*
+             * It is non-trivial to avoid the creation of a primitive node here. Deopt might be
+             * acceptable because primitive is mostly used for debugging anyway.
+             */
             final Object[] receiverAndArguments = ArrayUtils.copyWithFirst(getObjectArrayNode.execute(argumentArray), receiver);
             final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.forIndex((CompiledMethodObject) code, (int) primitiveIndex);
             if (primitiveNode == null) {

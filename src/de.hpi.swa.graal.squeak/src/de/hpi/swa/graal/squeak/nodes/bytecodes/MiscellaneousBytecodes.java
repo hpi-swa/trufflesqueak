@@ -3,7 +3,6 @@ package de.hpi.swa.graal.squeak.nodes.bytecodes;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 
@@ -43,7 +42,6 @@ public final class MiscellaneousBytecodes {
         private final int primitiveIndex;
 
         private final BranchProfile primitiveFailureProfile = BranchProfile.create();
-        private final BranchProfile unsupportedSpecializationProfile = BranchProfile.create();
 
         public static CallPrimitiveNode create(final CompiledMethodObject code, final int index, final int numBytecodes, final int byte1, final int byte2) {
             return CallPrimitiveNodeGen.create(code, index, numBytecodes, byte1, byte2);
@@ -66,9 +64,6 @@ public final class MiscellaneousBytecodes {
                     debugPrimitiveFailures();
                 }
                 handlePrimFailed.executeHandle(frame, e);
-            } catch (UnsupportedSpecializationException e) {
-                unsupportedSpecializationProfile.enter();
-                code.image.printToStdErr("[UnsupportedSpecializationException]", e);
             }
             // continue with fallback code
         }
