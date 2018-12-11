@@ -798,13 +798,17 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             super(method);
         }
 
+        @Specialization(guards = {"receiver.isByteType()", "inBounds1(index, receiver.getByteLength())"})
+        protected static final long doNativeByte(final NativeObject receiver, final long index) {
+            return receiver.getByteStorage()[(int) index - 1];
+        }
+
         @Specialization(guards = {"receiver.isIntType()", "inBounds1(index, receiver.getIntLength())"})
         protected static final long doNativeInt(final NativeObject receiver, final long index) {
             return receiver.getIntStorage()[(int) index - 1];
         }
     }
 
-    @ImportStatic(Integer.class)
     @GenerateNodeFactory
     @SqueakPrimitive(index = 166)
     protected abstract static class PrimIntegerAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitive {
@@ -813,7 +817,13 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             super(method);
         }
 
-        @Specialization(guards = {"receiver.isIntType()", "inBounds1(index, receiver.getIntLength())", "value >= MIN_VALUE", "value <= MAX_VALUE"})
+        @Specialization(guards = {"receiver.isByteType()", "inBounds1(index, receiver.getByteLength())", "fitsIntoByte(value)"})
+        protected static final long doNativeByte(final NativeObject receiver, final long index, final long value) {
+            receiver.getByteStorage()[(int) index - 1] = (byte) value;
+            return value;
+        }
+
+        @Specialization(guards = {"receiver.isIntType()", "inBounds1(index, receiver.getIntLength())", "fitsIntoInt(value)"})
         protected static final long doNativeInt(final NativeObject receiver, final long index, final long value) {
             receiver.getIntStorage()[(int) index - 1] = (int) value;
             return value;

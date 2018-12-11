@@ -20,6 +20,14 @@ public final class SqueakGuards {
         return minIncluded <= value && value <= maxIncluded;
     }
 
+    public static boolean fitsIntoByte(final long value) {
+        return Byte.MIN_VALUE <= value && value <= Byte.MAX_VALUE;
+    }
+
+    public static boolean fitsIntoInt(final long value) {
+        return Integer.MIN_VALUE <= value && value <= Integer.MAX_VALUE;
+    }
+
     public static boolean inBounds0(final long index, final int size) {
         return 0 <= index && index < size;
     }
