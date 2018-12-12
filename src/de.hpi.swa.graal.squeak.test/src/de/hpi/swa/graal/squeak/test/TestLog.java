@@ -15,7 +15,7 @@ import org.junit.runners.model.Statement;
 public class TestLog {
 
     /**
-     * Rule that creates new Travis folds for each test class
+     * Rule that creates new Travis folds for each test class.
      */
     public static class Rule implements TestRule {
 
@@ -73,6 +73,9 @@ public class TestLog {
         @Override
         public void testStarted(final Description description) {
             if (enabled(description)) {
+                if (firstSqueakTest(description)) {
+                    Statistics.print(SqueakSUnitTest.TESTS);
+                }
                 end();
                 begin(squeakTestOf(description));
             }
@@ -87,6 +90,10 @@ public class TestLog {
 
         private static boolean enabled(final Description description) {
             return description.getTestClass() == SqueakSUnitTest.class;
+        }
+
+        private static boolean firstSqueakTest(final Description description) {
+            return SqueakSUnitTest.TESTS.get(0).nameEquals(squeakTestOf(description));
         }
 
         private static boolean lastSqueakTest(final Description description) {
