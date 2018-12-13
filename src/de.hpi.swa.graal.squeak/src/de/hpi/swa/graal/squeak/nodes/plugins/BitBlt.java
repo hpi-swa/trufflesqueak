@@ -932,7 +932,6 @@ public final class BitBlt {
         final LongBinaryOperator mergeFnwith = OP_TABLE[combinationRule + 1];
         assert mergeFnwith != null;
         assert (!((preload && (skew == 0))));
-        assert (((skew >= -31) && (skew <= 0x1F)));
         /* Byte delta */
         hInc = hDir * 4;
         if (skew < 0) {
@@ -980,11 +979,7 @@ public final class BitBlt {
                 }
                 destMask = mask1;
                 /* pick up next word */
-                /*
-                 * Use `0` for `thisWord` if `endOfSource` is reached. This appears to be necessary
-                 * for #testPivelValueAt. Confirmed by SqueakJS's BitBltPlugin.
-                 */
-                thisWord = sourceIndex < endOfSource ? srcLongAt(sourceIndex) : 0;
+                thisWord = srcLongAt(sourceIndex);
                 sourceIndex += hInc;
                 /* 32-bit rotate */
                 skewWord = (shift((prevWord & notSkewMask), unskew)) | (shift((thisWord & skewMask), skew));
@@ -3436,42 +3431,50 @@ public final class BitBlt {
      * used.
      */
 
-    /* BitBltSimulation>>#sourceSkewAndPointerInit */
+    /* BitBltSimulation>>#sourceSkewAndPointerInit (modified, copied from SqueakJS) */
     private static void sourceSkewAndPointerInit() {
         final long dxLowBits;
-        final long m1;
+        final long dWid;
         final long pixPerM1;
-        final long startBits;
         final long sxLowBits;
 
         assert ((destPPW == sourcePPW) && ((destMSB == sourceMSB) && (destDepth == sourceDepth)));
 
-        /* A mask, assuming power of two */
         pixPerM1 = destPPW - 1;
         sxLowBits = sx & pixPerM1;
-
-        /* how many pixels in first word */
+        /*
+         * check if need to preload buffer (i.e., two words of source needed for first word of
+         * destination)
+         */
         dxLowBits = dx & pixPerM1;
-        startBits = (hDir > 0 ? sourcePPW - (sx & pixPerM1) : (((sx + bbW) - 1) & pixPerM1) + 1);
-        m1 = (destMSB ? ALL_ONES >>> (32 - (startBits * destDepth)) : (ALL_ONES << (32 - (startBits * destDepth))));
-
-        /* i.e. there are some missing bits */
-        /* calculate right-shift skew from source to dest */
-        preload = (m1 & mask1) != mask1;
-        /* -32..32 */
-        skew = destDepth * ((sourceMSB ? sxLowBits - dxLowBits : dxLowBits - sxLowBits));
+        if (hDir > 0) {
+            /* n Bits stored in 1st word of dest */
+            dWid = Math.min(bbW, (destPPW - dxLowBits));
+            preload = (sxLowBits + dWid) > pixPerM1;
+        } else {
+            dWid = Math.min(bbW, (dxLowBits + 1));
+            preload = ((sxLowBits - dWid) + 1) < 0;
+        }
+        if (sourceMSB) {
+            skew = (sxLowBits - dxLowBits) * destDepth;
+        } else {
+            skew = (dxLowBits - sxLowBits) * destDepth;
+        }
         if (preload) {
-            skew = (skew < 0 ? skew + 32 : skew - 32);
+            if (skew < 0) {
+                skew += 32;
+            } else {
+                skew -= 32;
+            }
         }
         /* calculate increments from end of 1 line to start of next */
-        sourceIndex = (sy * sourcePitch) + (div(sx, div(32, sourceDepth)) * 4);
+        sourceIndex = ((sy * sourcePitch)) + ((div(sx, (div(32, sourceDepth)))) * 4);
         sourceDelta = (sourcePitch * vDir) - (4 * (nWords * hDir));
         if (preload) {
             /* Compensate for extra source word fetched */
             sourceDelta -= 4 * hDir;
         }
         assert (!((preload && (skew == 0))));
-        assert (((skew >= -31) && (skew <= 0x1F)));
     }
 
     /* BitBltSimulation>>#sourceWord:with: */
@@ -4170,7 +4173,11 @@ public final class BitBlt {
     }
 
     private static long srcLongAt(final long index) {
-        assert (index >>> 2) < endOfSource;
-        return Integer.toUnsignedLong(sourceBits[(int) index >>> 2]);
+        /**
+         * Unfortunately, BitBlt tries to read past the end of {@link sourceBits} sometimes, so
+         * return `0` in these cases. An example is #testPivelValueAt (confirmed by SqueakJS's
+         * BitBltPlugin) or `PolygonMorph arrowPrototype`.
+         */
+        return index < endOfSource ? Integer.toUnsignedLong(sourceBits[(int) index >>> 2]) : 0;
     }
 }
