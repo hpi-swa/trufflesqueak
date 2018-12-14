@@ -22,7 +22,6 @@ import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.TEST_RESULT;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
@@ -176,7 +175,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
         final PointersObject activeProcess = GetActiveProcessNode.create(image).executeGet();
         activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, image.nil);
         image.getOutput().println("Modifying StartUpList for testing...");
-        evaluate("{EventSensor. Project} do: [:ea | Smalltalk removeFromStartUpList: ea]");
+        evaluate("{Delay. EventSensor. Project} do: [:ea | Smalltalk removeFromStartUpList: ea]");
         image.getOutput().println("Processing StartUpList...");
         evaluate("Smalltalk processStartUpList: true");
         image.getOutput().println("Setting author information...");
@@ -344,32 +343,31 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
     }
 
     private static String extractFailuresAndErrorsFromTestResult(final Object result) {
-        final SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
-        final SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
-
         if (!(result instanceof AbstractSqueakObject) || !result.toString().equals("a TestResult")) {
             return "did not return a TestResult, got " + result.toString();
         }
         final PointersObject testResult = (PointersObject) result;
-        final List<String> output = new ArrayList<>();
-        final ArrayObject failureArray = (ArrayObject) ((PointersObject) testResult.at0(TEST_RESULT.FAILURES)).at0(1);
-        for (int i = 0; i < sizeNode.execute(failureArray); i++) {
-            final AbstractSqueakObject value = (AbstractSqueakObject) at0Node.execute(failureArray, i);
-            if (value != image.nil) {
-                output.add(((PointersObject) value).at0(0) + " (E)");
-            }
-        }
-        final ArrayObject errorArray = (ArrayObject) ((PointersObject) testResult.at0(TEST_RESULT.ERRORS)).at0(0);
-        for (int i = 0; i < sizeNode.execute(errorArray); i++) {
-            final AbstractSqueakObject value = (AbstractSqueakObject) at0Node.execute(errorArray, i);
-            if (value != image.nil) {
-                output.add(((PointersObject) value).at0(0) + " (F)");
-            }
-        }
-        if (output.size() == 0) {
+        final boolean hasPassed = (boolean) testResult.send("hasPassed");
+        if (hasPassed) {
             return "passed";
         }
+        final AbstractSqueakObject failures = (AbstractSqueakObject) testResult.send("failures");
+        final AbstractSqueakObject errors = (AbstractSqueakObject) testResult.send("errors");
+        final List<String> output = new ArrayList<>();
+        appendTestResult(output, (ArrayObject) failures.send("asArray"), " (F)");
+        appendTestResult(output, (ArrayObject) errors.send("asArray"), " (E)");
+        assert output.size() > 0 : "Should not be empty";
         return String.join(", ", output);
+    }
+
+    private static void appendTestResult(final List<String> output, final ArrayObject array, final String suffix) {
+        final SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
+        final SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
+        for (int i = 0; i < sizeNode.execute(array); i++) {
+            final AbstractSqueakObject value = (AbstractSqueakObject) at0Node.execute(array, i);
+            assert value != image.nil;
+            output.add(((PointersObject) value).at0(0) + suffix);
+        }
     }
 
     private static void failIfNotEmpty(final List<String> list) {
