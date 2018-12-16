@@ -122,7 +122,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {1, 21, 41}, name = "primDigitAdd")
+    @SqueakPrimitive(indices = {1, 21, 41, 541}, name = "primDigitAdd")
     public abstract static class PrimAddNode extends AbstractArithmeticBinaryPrimitiveNode {
 
         public PrimAddNode(final CompiledMethodObject method) {
@@ -160,7 +160,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {2, 22, 42}, name = "primDigitSubtract")
+    @SqueakPrimitive(indices = {2, 22, 42, 542}, name = "primDigitSubtract")
     public abstract static class PrimSubstractNode extends AbstractArithmeticBinaryPrimitiveNode {
         public PrimSubstractNode(final CompiledMethodObject method) {
             super(method);
@@ -197,7 +197,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {9, 29, 49}, name = "primDigitMultiplyNegative")
+    @SqueakPrimitive(indices = {9, 29, 49, 549}, name = "primDigitMultiplyNegative")
     public abstract static class PrimMultiplyNode extends AbstractArithmeticBinaryPrimitiveNode {
         public PrimMultiplyNode(final CompiledMethodObject method) {
             super(method);
