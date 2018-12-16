@@ -370,7 +370,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @ImportStatic(Double.class)
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 110)
+    @SqueakPrimitive(index = 110) // Complements #169.
     protected abstract static class PrimIdenticalNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
         protected PrimIdenticalNode(final CompiledMethodObject method) {
             super(method);
@@ -408,26 +408,14 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             return a == b ? code.image.sqTrue : code.image.sqFalse;
         }
 
-        @Specialization(guards = {"!isNaN(a)", "!isNaN(b)"})
+        @Specialization
         protected final boolean doDouble(final double a, final double b) {
             return a == b ? code.image.sqTrue : code.image.sqFalse;
         }
 
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"isNaN(a) || isNaN(b)"})
-        protected final boolean doDoubleNaN(final double a, final double b) {
-            return code.image.sqTrue;
-        }
-
-        @Specialization(guards = {"!isNaN(a.getValue())", "!isNaN(b.getValue())"})
+        @Specialization
         protected final boolean doFloat(final FloatObject a, final FloatObject b) {
-            return a == b || doDouble(a.getValue(), b.getValue());
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"isNaN(a.getValue()) || isNaN(b.getValue())"})
-        protected final boolean doFloatNaN(final FloatObject a, final FloatObject b) {
-            return code.image.sqTrue;
+            return a == b ? code.image.sqTrue : code.image.sqFalse;
         }
 
         @SuppressWarnings("unused")
@@ -844,7 +832,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @ImportStatic(Double.class)
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 169) // complements 110
+    @SqueakPrimitive(index = 169) // Complements #110.
     protected abstract static class PrimNotIdenticalNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
         protected PrimNotIdenticalNode(final CompiledMethodObject method) {
             super(method);
@@ -865,26 +853,14 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             return a != b ? code.image.sqTrue : code.image.sqFalse;
         }
 
-        @Specialization(guards = {"!isNaN(a)", "!isNaN(b)"})
+        @Specialization
         protected final boolean doDouble(final double a, final double b) {
             return a != b ? code.image.sqTrue : code.image.sqFalse;
         }
 
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"isNaN(a) || isNaN(b)"})
-        protected final boolean doDoubleNaN(final double a, final double b) {
-            return code.image.sqFalse;
-        }
-
-        @Specialization(guards = {"!isNaN(a.getValue())", "!isNaN(b.getValue())"})
+        @Specialization
         protected final boolean doFloat(final FloatObject a, final FloatObject b) {
             return a != b && !doDouble(a.getValue(), b.getValue());
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"isNaN(a.getValue()) || isNaN(b.getValue())"})
-        protected final boolean doFloatNaN(final FloatObject a, final FloatObject b) {
-            return code.image.sqFalse;
         }
 
         @Fallback

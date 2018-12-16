@@ -109,7 +109,7 @@ public final class SqueakSUnitTestMap {
                     "FlapTabTests", TEST_TYPE.PASSING,
                     "FloatArrayTest", TEST_TYPE.PASSING,
                     "FloatCollectionTest", TEST_TYPE.PASSING,
-                    "FloatTest", TEST_TYPE.FAILING,
+                    "FloatTest", TEST_TYPE.PASSING,
                     "FontTest", TEST_TYPE.PASSING,
                     "FormCanvasTest", TEST_TYPE.PASSING,
                     "FormTest", TEST_TYPE.PASSING,

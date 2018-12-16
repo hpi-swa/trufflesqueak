@@ -40,7 +40,6 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.QuaternaryPr
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
-import de.hpi.swa.graal.squeak.nodes.primitives.impl.ArithmeticPrimitives.AbstractArithmeticPrimitiveNode;
 
 public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder {
 
@@ -481,7 +480,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 62)
-    protected abstract static class PrimSizeNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimSizeNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         @Child private SqueakObjectSizeNode sizeNode;
         @Child private ArrayObjectSizeNode arrayObjectSizeNode;
         @Child private NativeObjectSizeNode nativeObjectSizeNode;

@@ -76,12 +76,20 @@ public final class SqueakGuards {
         return object instanceof FloatObject;
     }
 
+    public static boolean isIntegralWhenDividedBy(final long a, final long b) {
+        return a % b == 0;
+    }
+
     public static boolean isLargeIntegerObject(final Object object) {
         return object instanceof LargeIntegerObject;
     }
 
     public static boolean isLong(final Object value) {
         return value instanceof Long;
+    }
+
+    public static boolean isMinValueDividedByMinusOne(final long a, final long b) {
+        return a == Long.MIN_VALUE && b == -1;
     }
 
     public static boolean isNativeObject(final Object object) {
@@ -114,6 +122,10 @@ public final class SqueakGuards {
 
     public static boolean isSmallInteger64bit(final long value) {
         return LargeIntegerObject.SMALLINTEGER64_MIN <= value && value <= LargeIntegerObject.SMALLINTEGER64_MAX;
+    }
+
+    public static boolean isZero(final double value) {
+        return value == 0;
     }
 
     private SqueakGuards() {

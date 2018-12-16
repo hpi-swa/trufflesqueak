@@ -11,7 +11,6 @@ import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
-import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
@@ -21,303 +20,153 @@ import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 
 public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
-    @Override
-    public List<? extends NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
-        return ArithmeticPrimitivesFactory.getFactories();
-    }
-
-    public abstract static class AbstractArithmeticPrimitiveNode extends AbstractPrimitiveNode {
-
-        public AbstractArithmeticPrimitiveNode(final CompiledMethodObject method) {
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 1)
+    public abstract static class PrimAddNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        public PrimAddNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        protected static final boolean isZero(final double value) {
-            return value == 0;
-        }
-
-        protected static final boolean isIntegralWhenDividedBy(final long a, final long b) {
-            return a % b == 0;
-        }
-
-        protected static final boolean isMinValueDividedByMinusOne(final long a, final long b) {
-            return a == Long.MIN_VALUE && b == -1;
-        }
-    }
-
-    public abstract static class AbstractArithmeticBinaryPrimitiveNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-        public AbstractArithmeticBinaryPrimitiveNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @SuppressWarnings("unused")
-        protected Object doLong(final long a, final long b) {
-            throw new PrimitiveFailed(); // SmallInteger + LargeInteger
-        }
-
-        @SuppressWarnings("unused")
-        protected Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            throw new PrimitiveFailed(); // LargeInteger
-        }
-
-        @SuppressWarnings("unused")
-        protected Object doDouble(final double a, final double b) {
-            throw new PrimitiveFailed(); // SmallFloat64
-        }
-
-        @SuppressWarnings("unused")
-        protected Object doFloat(final FloatObject a, final FloatObject b) {
-            throw new PrimitiveFailed(); // BoxedFloat64
+        @Specialization(rewriteOn = ArithmeticException.class)
+        protected static final Object doLong(final long a, final long b) {
+            return Math.addExact(a, b);
         }
 
         @Specialization
-        protected final Object doLongLargeInteger(final long a, final LargeIntegerObject b) {
-            return doLargeInteger(asLargeInteger(a), b);
-        }
-
-        @Specialization
-        protected final Object doLongDouble(final long a, final double b) {
-            return doDouble(a, b);
-        }
-
-        @Specialization
-        protected final Object doLongFloat(final long a, final FloatObject b) {
-            return doFloat(asFloatObject(a), b);
-        }
-
-        @Specialization
-        protected final Object doLargeIntegerLong(final LargeIntegerObject a, final long b) {
-            return doLargeInteger(a, asLargeInteger(b));
-        }
-
-        @Specialization
-        protected final Object doDoubleLong(final double a, final long b) {
-            return doDouble(a, b);
-        }
-
-        @Specialization
-        protected final Object doDoubleFloat(final double a, final FloatObject b) {
-            return doFloat(asFloatObject(a), b);
-        }
-
-        @Specialization
-        protected final Object doFloatLong(final FloatObject a, final long b) {
-            return doFloat(a, asFloatObject(b));
-        }
-
-        @Specialization
-        protected final Object doFloatDouble(final FloatObject a, final double b) {
-            return doFloat(a, asFloatObject(b));
+        protected static final Object doLongWithOverflow(final long a, final long b) {
+            try {
+                return Math.addExact(a, b);
+            } catch (ArithmeticException e) {
+                throw new PrimitiveFailed();
+            }
         }
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {3, 23, 43, 543})
-    protected abstract static class PrimLessThanNode extends AbstractArithmeticBinaryPrimitiveNode {
+    @SqueakPrimitive(index = 2)
+    public abstract static class PrimSubstractNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        public PrimSubstractNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(rewriteOn = ArithmeticException.class)
+        protected static final Object doLong(final long a, final long b) {
+            return Math.subtractExact(a, b);
+        }
+
+        @Specialization
+        protected static final Object doLongWithOverflow(final long a, final long b) {
+            try {
+                return Math.subtractExact(a, b);
+            } catch (ArithmeticException e) {
+                throw new PrimitiveFailed();
+            }
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 3)
+    protected abstract static class PrimLessThanNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         protected PrimLessThanNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Override
         @Specialization
         protected final Object doLong(final long a, final long b) {
             return a < b ? code.image.sqTrue : code.image.sqFalse;
         }
-
-        @Override
-        @Specialization
-        protected final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.compareTo(b) < 0 ? code.image.sqTrue : code.image.sqFalse;
-        }
-
-        @Override
-        @Specialization
-        protected final Object doDouble(final double a, final double b) {
-            return a < b ? code.image.sqTrue : code.image.sqFalse;
-        }
-
-        @Override
-        @Specialization
-        protected final Object doFloat(final FloatObject a, final FloatObject b) {
-            return a.getValue() < b.getValue() ? code.image.sqTrue : code.image.sqFalse;
-        }
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {4, 24, 44, 544})
-    protected abstract static class PrimGreaterThanNode extends AbstractArithmeticBinaryPrimitiveNode {
+    @SqueakPrimitive(index = 4)
+    protected abstract static class PrimGreaterThanNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         protected PrimGreaterThanNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Override
         @Specialization
         protected final Object doLong(final long a, final long b) {
             return a > b ? code.image.sqTrue : code.image.sqFalse;
         }
-
-        @Override
-        @Specialization
-        protected final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.compareTo(b) > 0 ? code.image.sqTrue : code.image.sqFalse;
-        }
-
-        @Override
-        @Specialization
-        protected final Object doDouble(final double a, final double b) {
-            return a > b ? code.image.sqTrue : code.image.sqFalse;
-        }
-
-        @Override
-        @Specialization
-        protected final Object doFloat(final FloatObject a, final FloatObject b) {
-            return a.getValue() > b.getValue() ? code.image.sqTrue : code.image.sqFalse;
-        }
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {5, 25, 45, 545})
-    protected abstract static class PrimLessOrEqualNode extends AbstractArithmeticBinaryPrimitiveNode {
+    @SqueakPrimitive(indices = 5)
+    protected abstract static class PrimLessOrEqualNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         protected PrimLessOrEqualNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Override
         @Specialization
         protected final Object doLong(final long a, final long b) {
             return a <= b ? code.image.sqTrue : code.image.sqFalse;
         }
-
-        @Override
-        @Specialization
-        protected final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.compareTo(b) <= 0 ? code.image.sqTrue : code.image.sqFalse;
-        }
-
-        @Override
-        @Specialization
-        protected final Object doDouble(final double a, final double b) {
-            return a <= b ? code.image.sqTrue : code.image.sqFalse;
-        }
-
-        @Override
-        @Specialization
-        protected final Object doFloat(final FloatObject a, final FloatObject b) {
-            return a.getValue() <= b.getValue() ? code.image.sqTrue : code.image.sqFalse;
-        }
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {6, 26, 46, 546})
-    protected abstract static class PrimGreaterOrEqualNode extends AbstractArithmeticBinaryPrimitiveNode {
+    @SqueakPrimitive(index = 6)
+    protected abstract static class PrimGreaterOrEqualNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         protected PrimGreaterOrEqualNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Override
         @Specialization
         protected final Object doLong(final long a, final long b) {
             return a >= b ? code.image.sqTrue : code.image.sqFalse;
         }
-
-        @Override
-        @Specialization
-        protected final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.compareTo(b) >= 0 ? code.image.sqTrue : code.image.sqFalse;
-        }
-
-        @Override
-        @Specialization
-        protected final Object doDouble(final double a, final double b) {
-            return a >= b ? code.image.sqTrue : code.image.sqFalse;
-        }
-
-        @Override
-        @Specialization
-        protected final Object doFloat(final FloatObject a, final FloatObject b) {
-            return a.getValue() >= b.getValue() ? code.image.sqTrue : code.image.sqFalse;
-        }
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {7, 27, 47, 547})
-    protected abstract static class PrimEqualNode extends AbstractArithmeticBinaryPrimitiveNode {
+    @SqueakPrimitive(indices = 7)
+    protected abstract static class PrimEqualNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         protected PrimEqualNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Override
         @Specialization
         protected final Object doLong(final long a, final long b) {
             return a == b ? code.image.sqTrue : code.image.sqFalse;
-        }
-
-        @Override
-        @Specialization
-        protected final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.compareTo(b) == 0 ? code.image.sqTrue : code.image.sqFalse;
-        }
-
-        @Override
-        @Specialization
-        protected final Object doDouble(final double a, final double b) {
-            return a == b ? code.image.sqTrue : code.image.sqFalse;
-        }
-
-        @Override
-        @Specialization
-        protected final Object doFloat(final FloatObject a, final FloatObject b) {
-            return a.getValue() == b.getValue() ? code.image.sqTrue : code.image.sqFalse;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization // Specialization for quick nil checks.
-        protected final boolean doNil(final Object a, final NilObject b) {
-            return code.image.sqFalse;
         }
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {8, 28, 48, 548})
-    protected abstract static class PrimNotEqualNode extends AbstractArithmeticBinaryPrimitiveNode {
+    @SqueakPrimitive(index = 8)
+    protected abstract static class PrimNotEqualNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         protected PrimNotEqualNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Override
         @Specialization
         protected final Object doLong(final long a, final long b) {
             return a != b ? code.image.sqTrue : code.image.sqFalse;
         }
+    }
 
-        @Override
-        @Specialization
-        protected final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.compareTo(b) != 0 ? code.image.sqTrue : code.image.sqFalse;
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 9)
+    public abstract static class PrimMultiplyNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        public PrimMultiplyNode(final CompiledMethodObject method) {
+            super(method);
         }
 
-        @Override
-        @Specialization
-        protected final Object doDouble(final double a, final double b) {
-            return a != b ? code.image.sqTrue : code.image.sqFalse;
+        @Specialization(rewriteOn = ArithmeticException.class)
+        protected static final Object doLong(final long a, final long b) {
+            return Math.multiplyExact(a, b);
         }
 
-        @Override
         @Specialization
-        protected final Object doFloat(final FloatObject a, final FloatObject b) {
-            return a.getValue() != b.getValue() ? code.image.sqTrue : code.image.sqFalse;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization // Specialization for quick nil checks.
-        protected final boolean doNil(final Object a, final NilObject b) {
-            return code.image.sqTrue;
+        protected static final Object doLongWithOverflow(final long a, final long b) {
+            try {
+                return Math.multiplyExact(a, b);
+            } catch (ArithmeticException e) {
+                throw new PrimitiveFailed();
+            }
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 10)
-    protected abstract static class PrimDivideSmallIntegerNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimDivideSmallIntegerNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         protected PrimDivideSmallIntegerNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -334,12 +183,12 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 11)
-    protected abstract static class PrimFloorModSmallIntegerNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
-        protected PrimFloorModSmallIntegerNode(final CompiledMethodObject method) {
+    protected abstract static class PrimFloorModNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimFloorModNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization(guards = {"isSmallInteger(a)", "isSmallInteger(b)"})
+        @Specialization(guards = "b != 0")
         protected long doLong(final long a, final long b) {
             return Math.floorMod(a, b);
         }
@@ -347,8 +196,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 12)
-    protected abstract static class PrimFloorDivideSmallIntegerNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
-        protected PrimFloorDivideSmallIntegerNode(final CompiledMethodObject method) {
+    protected abstract static class PrimFloorDivideNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimFloorDivideNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -371,8 +220,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 13)
-    protected abstract static class PrimQuoSmallIntegerNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
-        protected PrimQuoSmallIntegerNode(final CompiledMethodObject method) {
+    protected abstract static class PrimQuoNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimQuoNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -383,8 +232,34 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(index = 14)
+    public abstract static class PrimBitAndNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        public PrimBitAndNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final long doLong(final long receiver, final long arg) {
+            return receiver & arg;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 15)
+    public abstract static class PrimBitOrNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        public PrimBitOrNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final long bitOr(final long receiver, final long arg) {
+            return receiver | arg;
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(index = 20)
-    protected abstract static class PrimRemLargeIntegersNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimRemLargeIntegersNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         protected PrimRemLargeIntegersNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -411,8 +286,190 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(index = 21)
+    public abstract static class PrimAddLargeIntegersNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        public PrimAddLargeIntegersNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(rewriteOn = ArithmeticException.class)
+        protected static final Object doLong(final long a, final long b) {
+            return Math.addExact(a, b);
+        }
+
+        @Specialization
+        protected final Object doLongWithOverflow(final long a, final long b) {
+            return doLargeInteger(asLargeInteger(a), asLargeInteger(b));
+        }
+
+        @Specialization
+        protected static final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
+            return a.add(b);
+        }
+
+        @Specialization
+        protected final Object doLargeIntegerLong(final LargeIntegerObject a, final long b) {
+            return a.add(asLargeInteger(b));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 22)
+    public abstract static class PrimSubtractLargeIntegersNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        public PrimSubtractLargeIntegersNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(rewriteOn = ArithmeticException.class)
+        protected static final Object doLong(final long a, final long b) {
+            return Math.subtractExact(a, b);
+        }
+
+        @Specialization
+        protected final Object doLongWithOverflow(final long a, final long b) {
+            return doLargeInteger(asLargeInteger(a), asLargeInteger(b));
+        }
+
+        @Specialization
+        protected static final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
+            return a.subtract(b);
+        }
+
+        @Specialization
+        protected final Object doLargeIntegerLong(final LargeIntegerObject a, final long b) {
+            return a.subtract(asLargeInteger(b));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 23)
+    protected abstract static class PrimLessThanLargeIntegersNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimLessThanLargeIntegersNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
+            return a.compareTo(b) < 0 ? code.image.sqTrue : code.image.sqFalse;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 24)
+    protected abstract static class PrimGreaterThanLargeIntegersNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimGreaterThanLargeIntegersNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected final Object doLong(final long a, final long b) {
+            return a > b ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @Specialization
+        protected final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
+            return a.compareTo(b) > 0 ? code.image.sqTrue : code.image.sqFalse;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 25)
+    protected abstract static class PrimLessOrEqualLargeIntegersNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimLessOrEqualLargeIntegersNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected final Object doLong(final long a, final long b) {
+            return a <= b ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @Specialization
+        protected final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
+            return a.compareTo(b) <= 0 ? code.image.sqTrue : code.image.sqFalse;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 26)
+    protected abstract static class PrimGreaterOrEqualLargeIntegersNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimGreaterOrEqualLargeIntegersNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected final Object doLong(final long a, final long b) {
+            return a >= b ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @Specialization
+        protected final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
+            return a.compareTo(b) >= 0 ? code.image.sqTrue : code.image.sqFalse;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 27)
+    protected abstract static class PrimEqualLargeIntegersNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimEqualLargeIntegersNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected final Object doLong(final long a, final long b) {
+            return a == b ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @Specialization
+        protected final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
+            return a.compareTo(b) == 0 ? code.image.sqTrue : code.image.sqFalse;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 28)
+    protected abstract static class PrimNotEqualLargeIntegersNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimNotEqualLargeIntegersNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected final Object doLong(final long a, final long b) {
+            return a != b ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @Specialization
+        protected final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
+            return a.compareTo(b) != 0 ? code.image.sqTrue : code.image.sqFalse;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 29)
+    public abstract static class PrimMultiplyLargeIntegersNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        public PrimMultiplyLargeIntegersNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(rewriteOn = ArithmeticException.class)
+        protected static final Object doLong(final long a, final long b) {
+            return Math.multiplyExact(a, b);
+        }
+
+        @Specialization
+        protected final Object doLongWithOverflow(final long a, final long b) {
+            return doLargeInteger(asLargeInteger(a), asLargeInteger(b));
+        }
+
+        @Specialization
+        protected static final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
+            return a.multiply(b);
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(index = 30)
-    protected abstract static class PrimDivideLargeIntegerNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimDivideLargeIntegerNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         protected PrimDivideLargeIntegerNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -451,7 +508,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 31)
-    protected abstract static class PrimFloorModLargeIntegerNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimFloorModLargeIntegerNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         protected PrimFloorModLargeIntegerNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -479,7 +536,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 32)
-    protected abstract static class PrimFloorDivideLargeIntegerNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimFloorDivideLargeIntegerNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         protected PrimFloorDivideLargeIntegerNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -507,8 +564,8 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 33)
-    protected abstract static class PrimQuoLargeIntegerNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
-        protected PrimQuoLargeIntegerNode(final CompiledMethodObject method) {
+    protected abstract static class PrimQuoLargeIntegersNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimQuoLargeIntegersNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -537,8 +594,64 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(index = 34)
+    public abstract static class PrimBitAndLargeIntegersNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        public PrimBitAndLargeIntegersNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final long doLong(final long receiver, final long arg) {
+            return receiver & arg;
+        }
+
+        @Specialization
+        protected static final Object doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject arg) {
+            return receiver.and(arg);
+        }
+
+        @Specialization
+        protected final Object doLong(final long receiver, final LargeIntegerObject arg) {
+            return doLargeInteger(asLargeInteger(receiver), arg);
+        }
+
+        @Specialization
+        protected final Object doLargeInteger(final LargeIntegerObject receiver, final long arg) {
+            return doLargeInteger(receiver, asLargeInteger(arg));
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 35)
+    public abstract static class PrimBitOrLargeIntegersNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        public PrimBitOrLargeIntegersNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final long bitOr(final long receiver, final long arg) {
+            return receiver | arg;
+        }
+
+        @Specialization
+        protected static final Object doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject arg) {
+            return receiver.or(arg);
+        }
+
+        @Specialization
+        protected final Object doLong(final long receiver, final LargeIntegerObject arg) {
+            return doLargeInteger(asLargeInteger(receiver), arg);
+        }
+
+        @Specialization
+        protected final Object doLargeInteger(final LargeIntegerObject receiver, final long arg) {
+            return doLargeInteger(receiver, asLargeInteger(arg));
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(index = 38)
-    protected abstract static class PrimFloatAtNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimFloatAtNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         protected PrimFloatAtNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -568,7 +681,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 39)
-    protected abstract static class PrimFloatAtPutNode extends AbstractArithmeticPrimitiveNode implements TernaryPrimitive {
+    protected abstract static class PrimFloatAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitive {
         protected PrimFloatAtPutNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -594,7 +707,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(index = 40)
-    protected abstract static class PrimAsFloatNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimAsFloatNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         protected PrimAsFloatNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -606,8 +719,188 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(index = 41)
+    public abstract static class PrimFloatAddNode extends AbstractFloatPrimitiveNode {
+        public PrimFloatAddNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Override
+        @Specialization
+        protected final FloatObject doFloat(final FloatObject a, final FloatObject b) {
+            return asFloatObject(a.getValue() + b.getValue());
+        }
+
+        @Override
+        @Specialization
+        protected final Object doDouble(final double a, final double b) {
+            return a + b;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 42)
+    public abstract static class PrimFloatSubtractNode extends AbstractFloatPrimitiveNode {
+        public PrimFloatSubtractNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Override
+        @Specialization
+        protected final FloatObject doFloat(final FloatObject a, final FloatObject b) {
+            return asFloatObject(a.getValue() - b.getValue());
+        }
+
+        @Override
+        @Specialization
+        protected final Object doDouble(final double a, final double b) {
+            return a - b;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 43)
+    protected abstract static class PrimFloatLessThanNode extends AbstractFloatPrimitiveNode {
+        protected PrimFloatLessThanNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Override
+        @Specialization
+        protected final Object doDouble(final double a, final double b) {
+            return a < b ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @Override
+        @Specialization
+        protected final Object doFloat(final FloatObject a, final FloatObject b) {
+            return a.getValue() < b.getValue() ? code.image.sqTrue : code.image.sqFalse;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 44)
+    protected abstract static class PrimFloatGreaterThanNode extends AbstractFloatPrimitiveNode {
+        protected PrimFloatGreaterThanNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Override
+        @Specialization
+        protected final Object doDouble(final double a, final double b) {
+            return a > b ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @Override
+        @Specialization
+        protected final Object doFloat(final FloatObject a, final FloatObject b) {
+            return a.getValue() > b.getValue() ? code.image.sqTrue : code.image.sqFalse;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 45)
+    protected abstract static class PrimFloatLessOrEqualNode extends AbstractFloatPrimitiveNode {
+        protected PrimFloatLessOrEqualNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Override
+        @Specialization
+        protected final Object doDouble(final double a, final double b) {
+            return a <= b ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @Override
+        @Specialization
+        protected final Object doFloat(final FloatObject a, final FloatObject b) {
+            return a.getValue() <= b.getValue() ? code.image.sqTrue : code.image.sqFalse;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 46)
+    protected abstract static class PrimFloatGreaterOrEqualNode extends AbstractFloatPrimitiveNode {
+        protected PrimFloatGreaterOrEqualNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Override
+        @Specialization
+        protected final Object doDouble(final double a, final double b) {
+            return a >= b ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @Override
+        @Specialization
+        protected final Object doFloat(final FloatObject a, final FloatObject b) {
+            return a.getValue() >= b.getValue() ? code.image.sqTrue : code.image.sqFalse;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 47)
+    protected abstract static class PrimFloatEqualNode extends AbstractFloatPrimitiveNode {
+        protected PrimFloatEqualNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Override
+        @Specialization
+        protected final Object doDouble(final double a, final double b) {
+            return a == b ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @Override
+        @Specialization
+        protected final Object doFloat(final FloatObject a, final FloatObject b) {
+            return a.getValue() == b.getValue() ? code.image.sqTrue : code.image.sqFalse;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 48)
+    protected abstract static class PrimFloatNotEqualNode extends AbstractFloatPrimitiveNode {
+        protected PrimFloatNotEqualNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Override
+        @Specialization
+        protected final Object doDouble(final double a, final double b) {
+            return a != b ? code.image.sqTrue : code.image.sqFalse;
+        }
+
+        @Override
+        @Specialization
+        protected final Object doFloat(final FloatObject a, final FloatObject b) {
+            return a.getValue() != b.getValue() ? code.image.sqTrue : code.image.sqFalse;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 49)
+    public abstract static class PrimFloatMultiplyNode extends AbstractFloatPrimitiveNode {
+        public PrimFloatMultiplyNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Override
+        @Specialization
+        protected final Object doDouble(final double a, final double b) {
+            return a * b;
+        }
+
+        @Override
+        @Specialization
+        protected final Object doFloat(final FloatObject a, final FloatObject b) {
+            return asFloatObject(a.getValue() * b.getValue());
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(indices = {50, 550})
-    protected abstract static class PrimFloatDivideNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimFloatDivideNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         protected PrimFloatDivideNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -645,7 +938,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {51, 551})
-    protected abstract static class PrimFloatTruncatedNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimFloatTruncatedNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         protected PrimFloatTruncatedNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -668,7 +961,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {52, 552})
-    protected abstract static class PrimFloatFractionPartNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimFloatFractionPartNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         protected PrimFloatFractionPartNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -686,156 +979,84 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {53, 553})
-    protected abstract static class PrimFloatExponentNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimFloatExponentNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+        private static final long BIAS = 1023;
+
         protected PrimFloatExponentNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization
+        @Specialization(guards = "receiver == 0")
+        protected static final long doLongZero(@SuppressWarnings("unused") final long receiver) {
+            return 0;
+        }
+
+        @Specialization(guards = "isZero(receiver)")
+        protected static final long doDoubleZero(@SuppressWarnings("unused") final double receiver) {
+            return 0;
+        }
+
+        @Specialization(guards = "isZero(receiver.getValue())")
+        protected static final long doFloatZero(@SuppressWarnings("unused") final FloatObject receiver) {
+            return 0;
+        }
+
+        @Specialization(guards = "receiver != 0")
         protected static final long doLong(final long receiver) {
-            return Math.getExponent(receiver);
+            return doDouble(receiver);
         }
 
-        @Specialization
+        @Specialization(guards = "!isZero(receiver)")
         protected static final long doDouble(final double receiver) {
-            return Math.getExponent(receiver);
+            final long bits = (Double.doubleToRawLongBits(receiver) >>> 52) & 0x7FF;
+            if (bits == 0) { // we have a subnormal float (actual zero was handled above)
+                // make it normal by multiplying a large number
+                final double data = receiver * Math.pow(2, 64);
+                // access its exponent bits, and subtract the large number's exponent and bias
+                return ((Double.doubleToRawLongBits(data) >>> 52) & 0x7FF) - 64 - BIAS;
+            } else {
+                return bits - BIAS; // apply bias
+            }
         }
 
-        @Specialization
+        @Specialization(guards = "!isZero(receiver.getValue())")
         protected static final long doFloat(final FloatObject receiver) {
-            return Math.getExponent(receiver.getValue());
+            return doDouble(receiver.getValue());
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {54, 554})
-    protected abstract static class PrimFloatTimesTwoPowerNode extends AbstractArithmeticPrimitiveNode implements BinaryPrimitive {
-        private static final int UNDERFLOW_LIMIT = FloatObject.EMIN - FloatObject.PRECISION + 1;
-
+    protected abstract static class PrimFloatTimesTwoPowerNode extends AbstractFloatPrimitiveNode {
         protected PrimFloatTimesTwoPowerNode(final CompiledMethodObject method) {
             super(method);
         }
 
+        @Override
         @Specialization
-        protected static final double doLong(final long receiver, final long argument) {
-            return receiver * Math.pow(2, argument);
+        protected final Object doDouble(final double receiver, final double argument) {
+            return ldexp(receiver, argument);
         }
 
-        @Specialization
-        protected static final double doLongDouble(final long receiver, final double argument) {
-            return receiver * Math.pow(2, argument);
-        }
-
-        @Specialization
-        protected final FloatObject doLongFloat(final long receiver, final FloatObject argument) {
-            return asFloatObject(doubleSlow(receiver, argument.getValue()));
-        }
-
-        @Specialization(guards = "zeroOrInfinite(receiver)")
-        protected static final double doDoubleZeroOrInfinite(final double receiver, @SuppressWarnings("unused") final double argument) {
-            return receiver; // See Float>>timesTwoPower:.
-        }
-
-        @Specialization(guards = {"!zeroOrInfinite(receiver)", "greaterThanEMAX(argument)"})
-        protected static final double doDoubleArgumentsGreaterThanEMAX(final double receiver, @SuppressWarnings("unused") final double argument) {
-            // See Float>>timesTwoPower:.
-            return receiver * Math.pow(2.0, FloatObject.EMAX) * Math.pow(2, argument - FloatObject.EMAX);
-        }
-
-        @Specialization(guards = {"!zeroOrInfinite(receiver)", "!greaterThanEMAX(argument)", "lessThanUNDERFLOWLIMIT(argument)"})
-        protected static final double doDoubleArgumentsLessThanUNDERFLOWLIMIT(final double receiver, @SuppressWarnings("unused") final double argument) {
-            // See Float>>timesTwoPower:.
-            int deltaToUnderflow = Math.max(FloatObject.EMIN - Math.getExponent(argument), UNDERFLOW_LIMIT);
-            if (deltaToUnderflow >= 0) {
-                deltaToUnderflow = FloatObject.EMIN;
-            }
-            return receiver * Math.pow(2.0, deltaToUnderflow) * Math.pow(2, argument - deltaToUnderflow);
-        }
-
-        @Specialization(guards = {"!zeroOrInfinite(receiver)", "!greaterThanEMAX(argument)", "!lessThanUNDERFLOWLIMIT(argument)"})
-        protected static final double doDoubleOtherwise(final double receiver, @SuppressWarnings("unused") final double argument) {
-            return receiver * Math.pow(2.0, argument); // See Float>>timesTwoPower:.
-        }
-
-        @Specialization(guards = "zeroOrInfinite(receiver)")
-        protected static final double doDoubleLongZeroOrInfinite(final double receiver, @SuppressWarnings("unused") final long argument) {
-            return receiver; // See Float>>timesTwoPower:.
-        }
-
-        @Specialization(guards = {"!zeroOrInfinite(receiver)", "greaterThanEMAX(argument)"})
-        protected static final double doDoubleLongArgumentsGreaterThanEMAX(final double receiver, @SuppressWarnings("unused") final long argument) {
-            // See Float>>timesTwoPower:.
-            return receiver * Math.pow(2.0, FloatObject.EMAX) * Math.pow(2, argument - FloatObject.EMAX);
-        }
-
-        @Specialization(guards = {"!zeroOrInfinite(receiver)", "!greaterThanEMAX(argument)", "lessThanUNDERFLOWLIMIT(argument)"})
-        protected static final double doDoubleLongArgumentsLessThanUNDERFLOWLIMIT(final double receiver, @SuppressWarnings("unused") final long argument) {
-            // See Float>>timesTwoPower:.
-            int deltaToUnderflow = Math.max(FloatObject.EMIN - Math.getExponent(argument), UNDERFLOW_LIMIT);
-            if (deltaToUnderflow >= 0) {
-                deltaToUnderflow = FloatObject.EMIN;
-            }
-            return receiver * Math.pow(2.0, deltaToUnderflow) * Math.pow(2, argument - deltaToUnderflow);
-        }
-
-        @Specialization(guards = {"!zeroOrInfinite(receiver)", "!greaterThanEMAX(argument)", "!lessThanUNDERFLOWLIMIT(argument)"})
-        protected static final double doDoubleLongOtherwise(final double receiver, @SuppressWarnings("unused") final long argument) {
-            return receiver * Math.pow(2.0, argument); // See Float>>timesTwoPower:.
-        }
-
-        @Specialization
-        protected final FloatObject doDoubleFloat(final double receiver, final FloatObject argument) {
-            return asFloatObject(doubleSlow(receiver, argument.getValue()));
-        }
-
+        @Override
         @Specialization
         protected final FloatObject doFloat(final FloatObject receiver, final FloatObject argument) {
-            return asFloatObject(doubleSlow(receiver.getValue(), argument.getValue()));
+            return asFloatObject(ldexp(receiver.getValue(), argument.getValue()));
         }
 
-        @Specialization
-        protected final FloatObject doFloatLong(final FloatObject receiver, final long argument) {
-            return asFloatObject(doubleSlow(receiver.getValue(), argument));
-        }
-
-        @Specialization
-        protected final FloatObject doFloatDouble(final FloatObject receiver, final double argument) {
-            return asFloatObject(doubleSlow(receiver.getValue(), argument));
-        }
-
-        private static double doubleSlow(final double receiver, final double argument) {
-            // see Float>>timesTwoPower:
-            if (receiver == 0.0 || Double.isInfinite(receiver)) {
-                return receiver;
-            } else if (argument > FloatObject.EMAX) {
-                return receiver * Math.pow(2.0, FloatObject.EMAX) * Math.pow(2, argument - FloatObject.EMAX);
-            } else if (argument < UNDERFLOW_LIMIT) {
-                int deltaToUnderflow = Math.max(FloatObject.EMIN - Math.getExponent(argument), UNDERFLOW_LIMIT);
-                if (deltaToUnderflow >= 0) {
-                    deltaToUnderflow = FloatObject.EMIN;
-                }
-                return receiver * Math.pow(2.0, deltaToUnderflow) * Math.pow(2, argument - deltaToUnderflow);
-            } else {
-                return receiver * Math.pow(2.0, argument);
+        private static double ldexp(final double matissa, final double exponent) {
+            final double steps = Math.min(3, Math.ceil(Math.abs(exponent) / 1023));
+            double result = matissa;
+            for (int i = 0; i < steps; i++) {
+                result *= Math.pow(2, Math.floor((exponent + i) / steps));
             }
-        }
-
-        protected static final boolean zeroOrInfinite(final double receiver) {
-            return receiver == 0.0 || Double.isInfinite(receiver);
-        }
-
-        protected static final boolean greaterThanEMAX(final double argument) {
-            return argument > FloatObject.EMAX;
-        }
-
-        protected static final boolean lessThanUNDERFLOWLIMIT(final double argument) {
-            return argument < UNDERFLOW_LIMIT;
+            return result;
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {55, 555})
-    protected abstract static class PrimSquareRootNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimSquareRootNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         protected PrimSquareRootNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -863,7 +1084,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {56, 556})
-    protected abstract static class PrimSinNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimSinNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         protected PrimSinNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -881,7 +1102,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {57, 557})
-    protected abstract static class PrimArcTanNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimArcTanNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         protected PrimArcTanNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -899,7 +1120,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {58, 558})
-    protected abstract static class PrimLogNNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimLogNNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         protected PrimLogNNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -917,7 +1138,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = {59, 559})
-    protected abstract static class PrimExpNode extends AbstractArithmeticPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimExpNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         protected PrimExpNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -952,5 +1173,167 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final long doLong(final long receiver) {
             return (receiver * HASH_MULTIPLY_CONSTANT) & HASH_MULTIPLY_MASK;
         }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 541)
+    public abstract static class PrimSmallFloatAddNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        public PrimSmallFloatAddNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final Object doDouble(final double a, final double b) {
+            return a + b;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 542)
+    public abstract static class PrimSmallFloatSubtractNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        public PrimSmallFloatSubtractNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final Object doDouble(final double a, final double b) {
+            return a - b;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 543)
+    protected abstract static class PrimSmallFloatLessThanNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimSmallFloatLessThanNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected final Object doDouble(final double a, final double b) {
+            return a < b ? code.image.sqTrue : code.image.sqFalse;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 544)
+    protected abstract static class PrimSmallFloatGreaterThanNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimSmallFloatGreaterThanNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected final Object doDouble(final double a, final double b) {
+            return a > b ? code.image.sqTrue : code.image.sqFalse;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 545)
+    protected abstract static class PrimSmallFloatLessOrEqualNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimSmallFloatLessOrEqualNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected final Object doDouble(final double a, final double b) {
+            return a <= b ? code.image.sqTrue : code.image.sqFalse;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 546)
+    protected abstract static class PrimSmallFloatGreaterOrEqualNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimSmallFloatGreaterOrEqualNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected final Object doDouble(final double a, final double b) {
+            return a >= b ? code.image.sqTrue : code.image.sqFalse;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 547)
+    protected abstract static class PrimSmallFloatEqualNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimSmallFloatEqualNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected final Object doDouble(final double a, final double b) {
+            return a == b ? code.image.sqTrue : code.image.sqFalse;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 548)
+    protected abstract static class PrimSmallFloatNotEqualNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimSmallFloatNotEqualNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected final Object doDouble(final double a, final double b) {
+            return a != b ? code.image.sqTrue : code.image.sqFalse;
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(index = 549)
+    public abstract static class PrimSmallFloatMultiplyNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        public PrimSmallFloatMultiplyNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final Object doDouble(final double a, final double b) {
+            return a * b;
+        }
+    }
+
+    protected abstract static class AbstractFloatPrimitiveNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected AbstractFloatPrimitiveNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected Object doDouble(final double a, final double b) {
+            throw new SqueakException("Should have been overriden: ", a, "-", b);
+        }
+
+        @Specialization
+        protected Object doFloat(final FloatObject a, final FloatObject b) {
+            throw new SqueakException("Should have been overriden: ", a, "-", b);
+        }
+
+        @Specialization
+        protected final Object doFloatDouble(final FloatObject a, final double b) {
+            return doDouble(a.getValue(), b);
+        }
+
+        @Specialization
+        protected final Object doDoubleFloat(final double a, final FloatObject b) {
+            return doDouble(a, b.getValue());
+        }
+
+        /*
+         * `Float` primitives accept `SmallInteger`s (see #loadFloatOrIntFrom:).
+         */
+
+        @Specialization
+        protected final Object doDoubleLong(final double a, final long b) {
+            return doDouble(a, b);
+        }
+
+        @Specialization
+        protected final Object doFloatLong(final FloatObject a, final long b) {
+            return doFloatDouble(a, b);
+        }
+    }
+
+    @Override
+    public List<? extends NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
+        return ArithmeticPrimitivesFactory.getFactories();
     }
 }
