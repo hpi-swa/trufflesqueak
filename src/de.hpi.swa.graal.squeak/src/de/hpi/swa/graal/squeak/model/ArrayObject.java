@@ -9,9 +9,9 @@ public final class ArrayObject extends AbstractSqueakObject {
     public static final byte BOOLEAN_NIL_TAG = 0;
     public static final byte BOOLEAN_TRUE_TAG = 1;
     public static final byte BOOLEAN_FALSE_TAG = -1;
-    public static final char CHAR_NIL_TAG = Character.MAX_VALUE;
-    public static final long LONG_NIL_TAG = Long.MIN_VALUE;
-    public static final double DOUBLE_NIL_TAG = Double.longBitsToDouble(0x7ff8000000000001L);
+    public static final char CHAR_NIL_TAG = Character.MAX_VALUE - 1; // Rather unlikely char.
+    public static final long LONG_NIL_TAG = Long.MIN_VALUE + 42; // Rather unlikely long.
+    public static final double DOUBLE_NIL_TAG = Double.longBitsToDouble(0x7ff8000000000001L); // Nan.
     public static final long DOUBLE_NIL_TAG_LONG = Double.doubleToRawLongBits(DOUBLE_NIL_TAG);
     public static final boolean ENABLE_STORAGE_STRATEGIES = true;
 
@@ -116,19 +116,34 @@ public final class ArrayObject extends AbstractSqueakObject {
     }
 
     public void atput0Char(final long index, final char value) {
-        getCharStorage()[(int) index] = value;
+        if (value == CHAR_NIL_TAG) {
+            transitionFromCharsToObjects();
+            atput0Object(index, value);
+        } else {
+            getCharStorage()[(int) index] = value;
+        }
     }
 
     public void atput0Double(final long index, final double value) {
-        getDoubleStorage()[(int) index] = value;
+        if (value == DOUBLE_NIL_TAG) {
+            transitionFromDoublesToObjects();
+            atput0Object(index, value);
+        } else {
+            getDoubleStorage()[(int) index] = value;
+        }
     }
 
     public void atput0Long(final long index, final long value) {
-        getLongStorage()[(int) index] = value;
+        if (value == LONG_NIL_TAG) {
+            transitionFromLongsToObjects();
+            atput0Object(index, value);
+        } else {
+            getLongStorage()[(int) index] = value;
+        }
     }
 
-    public Object atput0Object(final int index, final Object value) {
-        return getObjectStorage()[index] = value;
+    public void atput0Object(final int index, final Object value) {
+        getObjectStorage()[index] = value;
     }
 
     public void atput0Object(final long index, final Object value) {
