@@ -55,7 +55,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveComposeMatrix")
+    @SqueakPrimitive(names = "primitiveComposeMatrix")
     protected abstract static class PrimComposeMatrixNode extends AbstractMatrix2x3PrimitiveNode implements TernaryPrimitive {
         protected PrimComposeMatrixNode(final CompiledMethodObject method) {
             super(method);
@@ -77,7 +77,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveInvertPoint")
+    @SqueakPrimitive(names = "primitiveInvertPoint")
     protected abstract static class PrimInvertPointNode extends AbstractMatrix2x3PrimitiveNode implements UnaryPrimitive {
         protected PrimInvertPointNode(final CompiledMethodObject method) {
             super(method);
@@ -90,7 +90,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveInvertRectInto")
+    @SqueakPrimitive(names = "primitiveInvertRectInto")
     protected abstract static class PrimInvertRectIntoNode extends AbstractMatrix2x3PrimitiveNode implements UnaryPrimitive {
         protected PrimInvertRectIntoNode(final CompiledMethodObject method) {
             super(method);
@@ -103,7 +103,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveIsIdentity")
+    @SqueakPrimitive(names = "primitiveIsIdentity")
     protected abstract static class PrimIsIdentityNode extends AbstractMatrix2x3PrimitiveNode implements UnaryPrimitive {
         protected PrimIsIdentityNode(final CompiledMethodObject method) {
             super(method);
@@ -121,7 +121,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveIsPureTranslation")
+    @SqueakPrimitive(names = "primitiveIsPureTranslation")
     protected abstract static class PrimIsPureTranslationNode extends AbstractMatrix2x3PrimitiveNode implements UnaryPrimitive {
         protected PrimIsPureTranslationNode(final CompiledMethodObject method) {
             super(method);
@@ -139,7 +139,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveTransformPoint")
+    @SqueakPrimitive(names = "primitiveTransformPoint")
     protected abstract static class PrimTransformPointNode extends AbstractMatrix2x3PrimitiveNode implements UnaryPrimitive {
         protected PrimTransformPointNode(final CompiledMethodObject method) {
             super(method);
@@ -152,7 +152,7 @@ public class Matrix2x3Plugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveTransformRectInto")
+    @SqueakPrimitive(names = "primitiveTransformRectInto")
     protected abstract static class PrimTransformRectIntoNode extends AbstractMatrix2x3PrimitiveNode implements UnaryPrimitive {
         protected PrimTransformRectIntoNode(final CompiledMethodObject method) {
             super(method);

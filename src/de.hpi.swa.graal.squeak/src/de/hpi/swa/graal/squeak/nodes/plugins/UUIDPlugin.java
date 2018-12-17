@@ -23,7 +23,7 @@ public final class UUIDPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveMakeUUID")
+    @SqueakPrimitive(names = "primitiveMakeUUID")
     protected abstract static class PrimMakeUUIDNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
         protected PrimMakeUUIDNode(final CompiledMethodObject method) {

@@ -114,7 +114,7 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
     private static boolean failed = false;
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveColorConvertGrayscaleMCU")
+    @SqueakPrimitive(names = "primitiveColorConvertGrayscaleMCU")
     protected abstract static class PrimColorConvertGrayscaleMCUNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
 
         protected PrimColorConvertGrayscaleMCUNode(final CompiledMethodObject method) {
@@ -128,7 +128,7 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveColorConvertMCU")
+    @SqueakPrimitive(names = "primitiveColorConvertMCU")
     protected abstract static class PrimColorConvertMCUNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
 
         protected PrimColorConvertMCUNode(final CompiledMethodObject method) {
@@ -143,7 +143,7 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
 
     @ImportStatic(JPEGReaderPlugin.class)
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveDecodeMCU")
+    @SqueakPrimitive(names = "primitiveDecodeMCU")
     protected abstract static class PrimDecodeMCUNode extends AbstractPrimitiveNode implements SenaryPrimitive {
 
         protected PrimDecodeMCUNode(final CompiledMethodObject method) {
@@ -160,7 +160,7 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
 
     @ImportStatic(JPEGReaderPlugin.class)
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveIdctInt")
+    @SqueakPrimitive(names = "primitiveIdctInt")
     protected abstract static class PrimIdctIntNode extends AbstractPrimitiveNode implements TernaryPrimitive {
 
         protected PrimIdctIntNode(final CompiledMethodObject method) {
@@ -174,7 +174,7 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primGetModuleName")
+    @SqueakPrimitive(names = "primGetModuleName")
     public abstract static class PrimGetModuleNameNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
         public PrimGetModuleNameNode(final CompiledMethodObject method) {

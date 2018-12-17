@@ -20,7 +20,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveWindowClose")
+    @SqueakPrimitive(names = "primitiveWindowClose")
     protected abstract static class PrimHostWindowCloseNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         protected PrimHostWindowCloseNode(final CompiledMethodObject method) {
             super(method);
@@ -39,7 +39,7 @@ public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveHostWindowPosition")
+    @SqueakPrimitive(names = "primitiveHostWindowPosition")
     protected abstract static class PrimHostWindowPositionNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         protected PrimHostWindowPositionNode(final CompiledMethodObject method) {
             super(method);
@@ -53,7 +53,7 @@ public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveHostWindowSizeSet")
+    @SqueakPrimitive(names = "primitiveHostWindowSizeSet")
     protected abstract static class PrimHostWindowSizeSetNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
         protected PrimHostWindowSizeSetNode(final CompiledMethodObject method) {
             super(method);
@@ -73,7 +73,7 @@ public class HostWindowPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveHostWindowTitle")
+    @SqueakPrimitive(names = "primitiveHostWindowTitle")
     protected abstract static class PrimHostWindowTitleNode extends AbstractPrimitiveNode implements TernaryPrimitive {
 
         protected PrimHostWindowTitleNode(final CompiledMethodObject method) {

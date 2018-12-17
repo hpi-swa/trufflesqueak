@@ -23,7 +23,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveCountry")
+    @SqueakPrimitive(names = "primitiveCountry")
     protected abstract static class PrimCountryNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         protected PrimCountryNode(final CompiledMethodObject method) {
             super(method);
@@ -40,7 +40,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveCurrencyNotation")
+    @SqueakPrimitive(names = "primitiveCurrencyNotation")
     protected abstract static class PrimCurrencyNotationNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         protected PrimCurrencyNotationNode(final CompiledMethodObject method) {
             super(method);
@@ -53,7 +53,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveCurrencySymbol")
+    @SqueakPrimitive(names = "primitiveCurrencySymbol")
     protected abstract static class PrimCurrencySymbolNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         protected PrimCurrencySymbolNode(final CompiledMethodObject method) {
             super(method);
@@ -66,7 +66,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveDaylightSavings")
+    @SqueakPrimitive(names = "primitiveDaylightSavings")
     protected abstract static class PrimDaylightSavingsNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         protected PrimDaylightSavingsNode(final CompiledMethodObject method) {
             super(method);
@@ -79,7 +79,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveDecimalSymbol")
+    @SqueakPrimitive(names = "primitiveDecimalSymbol")
     protected abstract static class PrimDecimalSymbolNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         protected PrimDecimalSymbolNode(final CompiledMethodObject method) {
             super(method);
@@ -92,7 +92,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveDigitGroupingSymbol")
+    @SqueakPrimitive(names = "primitiveDigitGroupingSymbol")
     protected abstract static class PrimDigitGroupingSymbolNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         protected PrimDigitGroupingSymbolNode(final CompiledMethodObject method) {
             super(method);
@@ -105,7 +105,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveLanguage")
+    @SqueakPrimitive(names = "primitiveLanguage")
     protected abstract static class PrimLanguageNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         protected PrimLanguageNode(final CompiledMethodObject method) {
             super(method);
@@ -122,7 +122,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveLongDateFormat")
+    @SqueakPrimitive(names = "primitiveLongDateFormat")
     protected abstract static class PrimLongDateFormatNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         protected PrimLongDateFormatNode(final CompiledMethodObject method) {
             super(method);
@@ -135,7 +135,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveMeasurementMetric")
+    @SqueakPrimitive(names = "primitiveMeasurementMetric")
     protected abstract static class PrimMeasurementMetricNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         protected PrimMeasurementMetricNode(final CompiledMethodObject method) {
             super(method);
@@ -148,7 +148,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveShortDateFormat")
+    @SqueakPrimitive(names = "primitiveShortDateFormat")
     protected abstract static class PrimShortDateFormatNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         protected PrimShortDateFormatNode(final CompiledMethodObject method) {
             super(method);
@@ -161,7 +161,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveTimeFormat")
+    @SqueakPrimitive(names = "primitiveTimeFormat")
     protected abstract static class PrimTimeFormatNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         protected PrimTimeFormatNode(final CompiledMethodObject method) {
             super(method);
@@ -174,7 +174,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveTimezoneOffset")
+    @SqueakPrimitive(names = "primitiveTimezoneOffset")
     protected abstract static class PrimTimezoneOffsetNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         protected PrimTimezoneOffsetNode(final CompiledMethodObject method) {
             super(method);
@@ -187,7 +187,7 @@ public class LocalePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveVMOffsetToUTC")
+    @SqueakPrimitive(names = "primitiveVMOffsetToUTC")
     protected abstract static class PrimVMOffsetToUTCNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         protected PrimVMOffsetToUTCNode(final CompiledMethodObject method) {
             super(method);

@@ -28,7 +28,7 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveAccept")
+    @SqueakPrimitive(names = "primitiveAccept")
     protected abstract static class PrimAcceptNode extends AbstractPrimitiveNode implements SenaryPrimitive {
         protected PrimAcceptNode(final CompiledMethodObject method) {
             super(method);
@@ -54,7 +54,7 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveConnect")
+    @SqueakPrimitive(names = "primitiveConnect")
     protected abstract static class PrimConnectNode extends AbstractPrimitiveNode implements SenaryPrimitive {
         protected PrimConnectNode(final CompiledMethodObject method) {
             super(method);
@@ -80,7 +80,7 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveDecrypt")
+    @SqueakPrimitive(names = "primitiveDecrypt")
     protected abstract static class PrimDecryptNode extends AbstractPrimitiveNode implements SenaryPrimitive {
         protected PrimDecryptNode(final CompiledMethodObject method) {
             super(method);
@@ -101,7 +101,7 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveEncrypt")
+    @SqueakPrimitive(names = "primitiveEncrypt")
     protected abstract static class PrimEncryptNode extends AbstractPrimitiveNode implements SenaryPrimitive {
         protected PrimEncryptNode(final CompiledMethodObject method) {
             super(method);
@@ -122,7 +122,7 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveGetIntProperty")
+    @SqueakPrimitive(names = "primitiveGetIntProperty")
     protected abstract static class PrimGetIntPropertyNode extends AbstractPrimitiveNode implements TernaryPrimitive {
         protected PrimGetIntPropertyNode(final CompiledMethodObject method) {
             super(method);
@@ -137,7 +137,7 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveGetStringProperty")
+    @SqueakPrimitive(names = "primitiveGetStringProperty")
     protected abstract static class PrimGetStringPropertyNode extends AbstractPrimitiveNode implements TernaryPrimitive {
         protected PrimGetStringPropertyNode(final CompiledMethodObject method) {
             super(method);
@@ -152,7 +152,7 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveSetIntProperty")
+    @SqueakPrimitive(names = "primitiveSetIntProperty")
     protected abstract static class PrimSetIntPropertyNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
         protected PrimSetIntPropertyNode(final CompiledMethodObject method) {
             super(method);
@@ -170,7 +170,7 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveSetStringProperty")
+    @SqueakPrimitive(names = "primitiveSetStringProperty")
     protected abstract static class PrimSetStringPropertyNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
         protected PrimSetStringPropertyNode(final CompiledMethodObject method) {
             super(method);
@@ -188,7 +188,7 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveCreate")
+    @SqueakPrimitive(names = "primitiveCreate")
     protected abstract static class PrimCreateNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         protected PrimCreateNode(final CompiledMethodObject method) {
             super(method);
@@ -207,7 +207,7 @@ public final class SqueakSSLPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveDestroy")
+    @SqueakPrimitive(names = "primitiveDestroy")
     protected abstract static class PrimDestroyNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         protected PrimDestroyNode(final CompiledMethodObject method) {
             super(method);

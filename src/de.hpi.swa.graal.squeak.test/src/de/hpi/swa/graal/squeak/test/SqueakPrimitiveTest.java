@@ -49,7 +49,7 @@ public class SqueakPrimitiveTest extends AbstractSqueakTestCaseWithDummyImage {
                         {Long.MAX_VALUE, Long.MIN_VALUE, BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.valueOf(Long.MIN_VALUE)).longValue()}};
         for (int i = 0; i < testValues.length; i++) {
             final Object[] values = testValues[i];
-            assertEquals(image.wrap(values[2]), runBinaryPrimitive(1, image.wrap(values[0]), image.wrap(values[1])));
+            assertEquals(image.wrap(values[2]), runBinaryPrimitive(21, image.wrap(values[0]), image.wrap(values[1])));
         }
     }
 
@@ -65,7 +65,7 @@ public class SqueakPrimitiveTest extends AbstractSqueakTestCaseWithDummyImage {
                         {BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE), 1L, Long.MAX_VALUE}};
         for (int i = 0; i < testValues.length; i++) {
             final Object[] values = testValues[i];
-            assertEquals(image.wrap(values[2]), runBinaryPrimitive(2, image.wrap(values[0]), image.wrap(values[1])));
+            assertEquals(image.wrap(values[2]), runBinaryPrimitive(22, image.wrap(values[0]), image.wrap(values[1])));
         }
     }
 }

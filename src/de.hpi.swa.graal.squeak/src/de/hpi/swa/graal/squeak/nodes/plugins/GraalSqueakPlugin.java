@@ -20,7 +20,7 @@ public final class GraalSqueakPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "debugPrint")
+    @SqueakPrimitive(names = "debugPrint")
     protected abstract static class PrimPrintArgsNode extends AbstractPrimitiveNode implements BinaryPrimitiveWithoutFallback {
         protected PrimPrintArgsNode(final CompiledMethodObject method) {
             super(method);

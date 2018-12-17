@@ -71,12 +71,7 @@ public abstract class DispatchNode extends Node {
                     @Cached("create()") final CreateEagerArgumentsNode createEagerArgumentsNode,
                     @Cached("method.getCallTarget()") final RootCallTarget cachedTarget,
                     @Cached("create(cachedTarget)") final DirectCallNode callNode) {
-        try {
-            return primitiveNode.executeWithArguments(frame, createEagerArgumentsNode.executeCreate(primitiveNode.getNumArguments(), receiverAndArguments));
-        } catch (PrimitiveFailed e) {
-            // TODO (low priority): Skip CallPrimitiveNode somehow, not necessary to fail twice.
-            return callNode.call(getCreateArgumentsNode().executeCreate(method, contextOrMarker, receiverAndArguments));
-        }
+        return callNode.call(getCreateArgumentsNode().executeCreate(method, contextOrMarker, receiverAndArguments));
     }
 
     @Specialization(guards = {"code.getCallTarget() == cachedTarget", "!isQuickReturnReceiverVariable(code.primitiveIndex())", "!code.hasPrimitive()"}, //

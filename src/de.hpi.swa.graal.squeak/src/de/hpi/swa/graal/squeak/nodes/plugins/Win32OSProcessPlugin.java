@@ -32,7 +32,7 @@ public final class Win32OSProcessPlugin extends AbstractOSProcessPlugin {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveGetEnvironmentStrings")
+    @SqueakPrimitive(names = "primitiveGetEnvironmentStrings")
     protected abstract static class PrimGetEnvironmentStringNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         protected PrimGetEnvironmentStringNode(final CompiledMethodObject method) {
             super(method);

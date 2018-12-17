@@ -29,7 +29,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveCopyBits")
+    @SqueakPrimitive(names = "primitiveCopyBits")
     protected abstract static class PrimCopyBitsNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimCopyBitsNode(final CompiledMethodObject method) {
@@ -50,7 +50,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveDisplayString")
+    @SqueakPrimitive(names = "primitiveDisplayString")
     protected abstract static class PrimDisplayStringNode extends AbstractPrimitiveNode implements SeptenaryPrimitive {
 
         protected PrimDisplayStringNode(final CompiledMethodObject method) {
@@ -74,7 +74,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveDrawLoop")
+    @SqueakPrimitive(names = "primitiveDrawLoop")
     protected abstract static class PrimDrawLoopNode extends AbstractPrimitiveNode implements TernaryPrimitive {
 
         protected PrimDrawLoopNode(final CompiledMethodObject method) {
@@ -90,7 +90,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
 
     @ImportStatic(FORM.class)
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitivePixelValueAt")
+    @SqueakPrimitive(names = "primitivePixelValueAt")
     protected abstract static class PrimPixelValueAtNode extends AbstractPrimitiveNode implements TernaryPrimitive {
 
         public PrimPixelValueAtNode(final CompiledMethodObject method) {
@@ -111,7 +111,7 @@ public final class BitBltPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveWarpBits")
+    @SqueakPrimitive(names = "primitiveWarpBits")
     protected abstract static class PrimWarpBitsNode extends AbstractPrimitiveNode implements TernaryPrimitive {
 
         public PrimWarpBitsNode(final CompiledMethodObject method) {

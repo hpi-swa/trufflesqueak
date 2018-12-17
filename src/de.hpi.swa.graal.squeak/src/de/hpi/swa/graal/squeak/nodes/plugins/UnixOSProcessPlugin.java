@@ -40,7 +40,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveEnvironmentAt")
+    @SqueakPrimitive(names = "primitiveEnvironmentAt")
     protected abstract static class PrimEnvironmentAtNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         private static Object[] environmentKeys;
 
@@ -71,7 +71,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveEnvironmentAtSymbol")
+    @SqueakPrimitive(names = "primitiveEnvironmentAtSymbol")
     protected abstract static class PrimEnvironmentAtSymbolNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimEnvironmentAtSymbolNode(final CompiledMethodObject method) {
@@ -91,7 +91,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveGetPPid")
+    @SqueakPrimitive(names = "primitiveGetPPid")
     protected abstract static class PrimGetPPidNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
         protected PrimGetPPidNode(final CompiledMethodObject method) {
@@ -105,7 +105,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveSigChldNumber")
+    @SqueakPrimitive(names = "primitiveSigChldNumber")
     protected abstract static class PrimSigChldNumberNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
         protected PrimSigChldNumberNode(final CompiledMethodObject method) {
@@ -119,7 +119,7 @@ public final class UnixOSProcessPlugin extends AbstractOSProcessPlugin {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveForwardSignalToSemaphore")
+    @SqueakPrimitive(names = "primitiveForwardSignalToSemaphore")
     protected abstract static class PrimForwardSignalToSemaphoreNode extends AbstractPrimitiveNode implements TernaryPrimitive {
 
         protected PrimForwardSignalToSemaphoreNode(final CompiledMethodObject method) {

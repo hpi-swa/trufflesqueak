@@ -296,6 +296,11 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         return getBigInteger().mod(other.getBigInteger().abs()).compareTo(BigInteger.ZERO) == 0;
     }
 
+    @TruffleBoundary
+    public int signum() {
+        return getBigInteger().signum();
+    }
+
     /*
      * Bit Operations
      */

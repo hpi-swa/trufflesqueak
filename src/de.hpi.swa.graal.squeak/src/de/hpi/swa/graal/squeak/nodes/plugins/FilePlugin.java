@@ -95,7 +95,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveDirectoryCreate")
+    @SqueakPrimitive(names = "primitiveDirectoryCreate")
     protected abstract static class PrimDirectoryCreateNode extends AbstractFilePluginPrimitiveNode implements BinaryPrimitive {
 
         protected PrimDirectoryCreateNode(final CompiledMethodObject method) {
@@ -115,7 +115,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveDirectoryDelete")
+    @SqueakPrimitive(names = "primitiveDirectoryDelete")
     protected abstract static class PrimDirectoryDeleteNode extends AbstractFilePluginPrimitiveNode implements BinaryPrimitive {
 
         protected PrimDirectoryDeleteNode(final CompiledMethodObject method) {
@@ -135,7 +135,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveDirectoryDelimitor")
+    @SqueakPrimitive(names = "primitiveDirectoryDelimitor")
     protected abstract static class PrimDirectoryDelimitorNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
         protected PrimDirectoryDelimitorNode(final CompiledMethodObject method) {
@@ -149,7 +149,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveDirectoryEntry")
+    @SqueakPrimitive(names = "primitiveDirectoryEntry")
     protected abstract static class PrimDirectoryEntryNode extends AbstractFilePluginPrimitiveNode implements TernaryPrimitive {
 
         protected PrimDirectoryEntryNode(final CompiledMethodObject method) {
@@ -176,7 +176,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveDirectoryLookup")
+    @SqueakPrimitive(names = "primitiveDirectoryLookup")
     protected abstract static class PrimDirectoryLookupNode extends AbstractFilePluginPrimitiveNode implements TernaryPrimitive {
 
         protected PrimDirectoryLookupNode(final CompiledMethodObject method) {
@@ -206,7 +206,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveDirectoryGetMacTypeAndCreator")
+    @SqueakPrimitive(names = "primitiveDirectoryGetMacTypeAndCreator")
     protected abstract static class PrimDirectoryGetMacTypeAndCreatorNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
         protected PrimDirectoryGetMacTypeAndCreatorNode(final CompiledMethodObject method) {
             super(method);
@@ -225,7 +225,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveDirectorySetMacTypeAndCreator")
+    @SqueakPrimitive(names = "primitiveDirectorySetMacTypeAndCreator")
     protected abstract static class PrimDirectorySetMacTypeAndCreatorNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
         protected PrimDirectorySetMacTypeAndCreatorNode(final CompiledMethodObject method) {
             super(method);
@@ -245,7 +245,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveFileAtEnd")
+    @SqueakPrimitive(names = "primitiveFileAtEnd")
     protected abstract static class PrimFileAtEndNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimFileAtEndNode(final CompiledMethodObject method) {
@@ -265,7 +265,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveFileClose")
+    @SqueakPrimitive(names = "primitiveFileClose")
     protected abstract static class PrimFileCloseNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimFileCloseNode(final CompiledMethodObject method) {
@@ -285,7 +285,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveFileDelete")
+    @SqueakPrimitive(names = "primitiveFileDelete")
     protected abstract static class PrimFileDeleteNode extends AbstractFilePluginPrimitiveNode implements BinaryPrimitive {
 
         protected PrimFileDeleteNode(final CompiledMethodObject method) {
@@ -304,7 +304,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveFileFlush")
+    @SqueakPrimitive(names = "primitiveFileFlush")
     protected abstract static class PrimFileFlushNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimFileFlushNode(final CompiledMethodObject method) {
@@ -318,7 +318,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveFileGetPosition")
+    @SqueakPrimitive(names = "primitiveFileGetPosition")
     protected abstract static class PrimFileGetPositionNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimFileGetPositionNode(final CompiledMethodObject method) {
@@ -337,7 +337,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveFileOpen")
+    @SqueakPrimitive(names = "primitiveFileOpen")
     protected abstract static class PrimFileOpenNode extends AbstractFilePluginPrimitiveNode implements TernaryPrimitive {
 
         protected PrimFileOpenNode(final CompiledMethodObject method) {
@@ -351,7 +351,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveFileRead")
+    @SqueakPrimitive(names = "primitiveFileRead")
     protected abstract static class PrimFileReadNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
         @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
 
@@ -378,7 +378,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveFileRename")
+    @SqueakPrimitive(names = "primitiveFileRename")
     protected abstract static class PrimFileRenameNode extends AbstractFilePluginPrimitiveNode implements TernaryPrimitive {
 
         protected PrimFileRenameNode(final CompiledMethodObject method) {
@@ -398,7 +398,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveFileSetPosition")
+    @SqueakPrimitive(names = "primitiveFileSetPosition")
     protected abstract static class PrimFileSetPositionNode extends AbstractPrimitiveNode implements TernaryPrimitive {
 
         protected PrimFileSetPositionNode(final CompiledMethodObject method) {
@@ -418,7 +418,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveFileSize")
+    @SqueakPrimitive(names = "primitiveFileSize")
     protected abstract static class PrimFileSizeNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimFileSizeNode(final CompiledMethodObject method) {
@@ -437,7 +437,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveFileStdioHandles")
+    @SqueakPrimitive(names = "primitiveFileStdioHandles")
     protected abstract static class PrimFileStdioHandlesNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         protected PrimFileStdioHandlesNode(final CompiledMethodObject method) {
             super(method);
@@ -450,7 +450,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveFileTruncate")
+    @SqueakPrimitive(names = "primitiveFileTruncate")
     protected abstract static class PrimFileTruncateNode extends AbstractPrimitiveNode implements TernaryPrimitive {
         protected PrimFileTruncateNode(final CompiledMethodObject method) {
             super(method);
@@ -470,7 +470,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @ImportStatic(STDIO_HANDLES.class)
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveFileWrite")
+    @SqueakPrimitive(names = "primitiveFileWrite")
     protected abstract static class PrimFileWriteNode extends AbstractFilePluginPrimitiveNode implements QuinaryPrimitive {
 
         protected PrimFileWriteNode(final CompiledMethodObject method) {

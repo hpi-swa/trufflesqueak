@@ -33,7 +33,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primAnyBitFromTo")
+    @SqueakPrimitive(names = "primAnyBitFromTo")
     public abstract static class PrimAnyBitFromToNode extends AbstractPrimitiveNode implements TernaryPrimitive {
 
         public PrimAnyBitFromToNode(final CompiledMethodObject method) {
@@ -115,109 +115,124 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primDigitAdd")
-    public abstract static class PrimDigitAddNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    @SqueakPrimitive(names = "primDigitAdd")
+    public abstract static class PrimDigitAddNode extends AbstractDigitPrimitiveNode {
         public PrimDigitAddNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization(guards = "a > 0", rewriteOn = ArithmeticException.class)
-        protected static final long doLongPositive(final long a, final long b) {
+        @Specialization(guards = "sameSign(a, b)", rewriteOn = ArithmeticException.class)
+        protected static final Object doLongPositive(final long a, final long b) {
             return Math.addExact(a, b);
         }
 
-        @Specialization(guards = "a > 0")
+        @Specialization(guards = "sameSign(a, b)")
         protected final Object doLongPositiveWithOverflow(final long a, final long b) {
-            return asLargeInteger(a).add(asLargeInteger(b));
+            return doLargeIntegerPositive(asLargeInteger(a), asLargeInteger(b));
         }
 
-        @Specialization(guards = "a == 0")
-        protected static final long doLongZero(@SuppressWarnings("unused") final long a, final long b) {
-            return b;
-        }
-
-        @Specialization(guards = "a < 0", rewriteOn = ArithmeticException.class)
-        protected static final long doLongNegative(final long a, final long b) {
+        @Specialization(guards = "!sameSign(a, b)", rewriteOn = ArithmeticException.class)
+        protected static final Object doLongNegative(final long a, final long b) {
             return Math.subtractExact(a, b);
         }
 
-        @Specialization(guards = "a < 0")
+        @Specialization(guards = "!sameSign(a, b)")
         protected final Object doLongNegativeWithOverflow(final long a, final long b) {
-            return asLargeInteger(a).subtract(asLargeInteger(b));
+            return doLargeIntegerNegative(asLargeInteger(a), asLargeInteger(b));
         }
 
-        @Specialization(guards = "a > 0")
-        protected final Object doLongLargeIntegerPositive(final long a, final LargeIntegerObject b) {
-            return asLargeInteger(a).add(b);
-        }
-
-        @Specialization(guards = "a == 0")
-        protected static final Object doLongLargeIntegerZero(@SuppressWarnings("unused") final long a, final LargeIntegerObject b) {
-            return b;
-        }
-
-        @Specialization(guards = "a < 0")
-        protected final Object doLongLargeIntegerNegative(final long a, final LargeIntegerObject b) {
-            return asLargeInteger(a).subtract(b);
-        }
-
-        @Specialization
-        protected final Object doLargeIntegerLong(final LargeIntegerObject a, final long b) {
-            return a.add(asLargeInteger(b));
-        }
-
-        @Specialization(guards = "!a.isNegative()")
+        @Specialization(guards = "sameSign(a, b)")
         protected static final Object doLargeIntegerPositive(final LargeIntegerObject a, final LargeIntegerObject b) {
             return a.add(b);
         }
 
-        @Specialization(guards = "a.isZero()")
-        protected static final Object doLargeIntegerZero(@SuppressWarnings("unused") final LargeIntegerObject a, final LargeIntegerObject b) {
-            return b;
-        }
-
-        @Specialization(guards = "a.isNegative()")
+        @Specialization(guards = "!sameSign(a, b)")
         protected static final Object doLargeIntegerNegative(final LargeIntegerObject a, final LargeIntegerObject b) {
             return a.subtract(b);
+        }
+
+        @Specialization(guards = "sameSign(b, a)")
+        protected final Object doLongLargeIntegerPositive(final long a, final LargeIntegerObject b) {
+            return doLargeIntegerPositive(asLargeInteger(a), b);
+        }
+
+        @Specialization(guards = "!sameSign(b, a)")
+        protected final Object doLongLargeIntegerNegative(final long a, final LargeIntegerObject b) {
+            return doLargeIntegerNegative(asLargeInteger(a), b);
+        }
+
+        @Specialization(guards = "sameSign(a, b)")
+        protected final Object doLargeIntegerLongPositive(final LargeIntegerObject a, final long b) {
+            return doLargeIntegerPositive(a, asLargeInteger(b));
+        }
+
+        @Specialization(guards = "!sameSign(a, b)")
+        protected final Object doLargeIntegerLongNegative(final LargeIntegerObject a, final long b) {
+            return doLargeIntegerNegative(a, asLargeInteger(b));
         }
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primDigitSubtract")
-    public abstract static class PrimDigitSubtractNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    @SqueakPrimitive(names = "primDigitSubtract")
+    public abstract static class PrimDigitSubtractNode extends AbstractDigitPrimitiveNode {
         public PrimDigitSubtractNode(final CompiledMethodObject method) {
             super(method);
         }
 
-        @Specialization(rewriteOn = ArithmeticException.class)
-        protected static final Object doLong(final long a, final long b) {
+        @Specialization(guards = "sameSign(a, b)", rewriteOn = ArithmeticException.class)
+        protected static final Object doLongPositive(final long a, final long b) {
             return Math.subtractExact(a, b);
         }
 
-        @Specialization
-        protected final Object doLongWithOverflow(final long a, final long b) {
-            return doLargeInteger(asLargeInteger(a), asLargeInteger(b));
+        @Specialization(guards = "sameSign(a, b)")
+        protected final Object doLongPositiveWithOverflow(final long a, final long b) {
+            return doLargeIntegerPositive(asLargeInteger(a), asLargeInteger(b));
         }
 
-        @Specialization
-        protected final Object doLongLargeInteger(final long a, final LargeIntegerObject b) {
-            return asLargeInteger(a).subtract(b);
+        @Specialization(guards = "!sameSign(a, b)", rewriteOn = ArithmeticException.class)
+        protected static final Object doLongNegative(final long a, final long b) {
+            return Math.addExact(a, b);
         }
 
-        @Specialization
-        protected final Object doLargeIntegerLong(final LargeIntegerObject a, final long b) {
-            return a.subtract(asLargeInteger(b));
+        @Specialization(guards = "!sameSign(a, b)")
+        protected final Object doLongNegativeWithOverflow(final long a, final long b) {
+            return doLargeIntegerNegative(asLargeInteger(a), asLargeInteger(b));
         }
 
-        @Specialization
-        protected static final Object doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
+        @Specialization(guards = "sameSign(a, b)")
+        protected static final Object doLargeIntegerPositive(final LargeIntegerObject a, final LargeIntegerObject b) {
             return a.subtract(b);
+        }
+
+        @Specialization(guards = "!sameSign(a, b)")
+        protected static final Object doLargeIntegerNegative(final LargeIntegerObject a, final LargeIntegerObject b) {
+            return a.add(b);
+        }
+
+        @Specialization(guards = "sameSign(b, a)")
+        protected final Object doLongLargeIntegerPositive(final long a, final LargeIntegerObject b) {
+            return doLargeIntegerPositive(asLargeInteger(a), b);
+        }
+
+        @Specialization(guards = "!sameSign(b, a)")
+        protected final Object doLongLargeIntegerNegative(final long a, final LargeIntegerObject b) {
+            return doLargeIntegerNegative(asLargeInteger(a), b);
+        }
+
+        @Specialization(guards = "sameSign(a, b)")
+        protected final Object doLargeIntegerLongPositive(final LargeIntegerObject a, final long b) {
+            return doLargeIntegerPositive(a, asLargeInteger(b));
+        }
+
+        @Specialization(guards = "!sameSign(a, b)")
+        protected final Object doLargeIntegerLongNegative(final LargeIntegerObject a, final long b) {
+            return doLargeIntegerNegative(a, asLargeInteger(b));
         }
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primDigitMultiplyNegative")
-    public abstract static class PrimDigitMultiplyNegativeNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    @SqueakPrimitive(names = "primDigitMultiplyNegative")
+    public abstract static class PrimDigitMultiplyNegativeNode extends AbstractDigitPrimitiveNode {
         public PrimDigitMultiplyNegativeNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -259,7 +274,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primDigitBitAnd")
+    @SqueakPrimitive(names = "primDigitBitAnd")
     public abstract static class PrimDigitBitAndNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         public PrimDigitBitAndNode(final CompiledMethodObject method) {
             super(method);
@@ -287,7 +302,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primDigitBitOr")
+    @SqueakPrimitive(names = "primDigitBitOr")
     public abstract static class PrimDigitBitOrNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         public PrimDigitBitOrNode(final CompiledMethodObject method) {
             super(method);
@@ -315,7 +330,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {17, 37}, name = "primDigitBitShiftMagnitude")
+    @SqueakPrimitive(indices = {17, 37}, names = "primDigitBitShiftMagnitude")
     public abstract static class PrimBitShiftNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         public PrimBitShiftNode(final CompiledMethodObject method) {
@@ -377,7 +392,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {16, 36}, name = "primDigitBitXor")
+    @SqueakPrimitive(indices = {16, 36}, names = "primDigitBitXor")
     protected abstract static class PrimBitXorNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         protected PrimBitXorNode(final CompiledMethodObject method) {
             super(method);
@@ -405,7 +420,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primDigitCompare")
+    @SqueakPrimitive(names = "primDigitCompare")
     public abstract static class PrimDigitCompareNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         public PrimDigitCompareNode(final CompiledMethodObject method) {
@@ -419,73 +434,67 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = "a > b")
-        protected long doLongLarger(final long a, final long b) {
-            return 1L;
+        @Specialization(guards = "a != b")
+        protected long doLongNotEqual(final long a, final long b) {
+            return digitCompareLargewith(asLargeInteger(a), asLargeInteger(b));
         }
 
-        @SuppressWarnings("unused")
-        @Specialization(guards = "a < b")
-        protected long doLongSmaller(final long a, final long b) {
-            return -1L;
+        @Specialization
+        protected long doLongLargeInteger(final long a, final LargeIntegerObject b) {
+            return digitCompareLargewith(asLargeInteger(a), b);
         }
 
         @Specialization
         protected long doLargeInteger(final LargeIntegerObject a, final LargeIntegerObject b) {
-            return a.compareTo(b);
+            return digitCompareLargewith(a, b);
         }
 
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"b.fitsIntoLong()", "a == b.longValueExact()"})
-        protected long doLong(final long a, final LargeIntegerObject b) {
-            return 0L;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"b.fitsIntoLong()", "a > b.longValueExact()"})
-        protected long doLongLarger(final long a, final LargeIntegerObject b) {
-            return 1L;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"b.fitsIntoLong()", "a < b.longValueExact()"})
-        protected long doLongSmaller(final long a, final LargeIntegerObject b) {
-            return -1L;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = "!b.fitsIntoLong()")
-        protected long doLongLargeInteger(final long a, final LargeIntegerObject b) {
-            return -1L; // If `b` does not fit into a long, it must be larger.
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"a.fitsIntoLong()", "a.longValueExact() == b"})
-        protected long doLargeInteger(final LargeIntegerObject a, final long b) {
-            return 0;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"a.fitsIntoLong()", "a.longValueExact() > b"})
-        protected long doLargeIntegerLarger(final LargeIntegerObject a, final long b) {
-            return 1L;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"a.fitsIntoLong()", "a.longValueExact() < b"})
-        protected long doLargeIntegerSmaller(final LargeIntegerObject a, final long b) {
-            return -1L;
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(guards = "!a.fitsIntoLong()")
+        @Specialization
         protected long doLargeIntegerLong(final LargeIntegerObject a, final long b) {
-            return 1L; // If `a` does not fit into a long, it must be larger.
+            return digitCompareLargewith(a, asLargeInteger(b));
+        }
+
+        /*
+         * Compare the magnitude of firstInteger with that of secondInteger. Return a code of 1, 0,
+         * -1 for firstInteger >, = , < secondInteger
+         */
+        private static long digitCompareLargewith(final LargeIntegerObject firstInteger, final LargeIntegerObject secondInteger) {
+            final byte[] firstBytes = firstInteger.getBytes();
+            final byte[] secondBytes = secondInteger.getBytes();
+
+            final int firstLen = firstBytes.length;
+            final int secondLen = secondBytes.length;
+            if (secondLen != firstLen) {
+                if (secondLen > firstLen) {
+                    return -1;
+                } else {
+                    return 1;
+                }
+            }
+            return cDigitComparewithlen(firstBytes, secondBytes, firstLen);
+        }
+
+        /* Precondition: pFirst len = pSecond len. */
+        private static long cDigitComparewithlen(final byte[] pFirst, final byte[] pSecond, final int len) {
+            int firstDigit;
+            int secondDigit;
+            int ix = len - 1;
+            while (ix >= 0) {
+                if (((secondDigit = Byte.toUnsignedInt(pSecond[ix]))) != ((firstDigit = Byte.toUnsignedInt(pFirst[ix])))) {
+                    if (secondDigit < firstDigit) {
+                        return 1;
+                    } else {
+                        return -1;
+                    }
+                }
+                --ix;
+            }
+            return 0;
         }
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primDigitDivNegative")
+    @SqueakPrimitive(names = "primDigitDivNegative")
     public abstract static class PrimDigitDivNegativeNode extends AbstractPrimitiveNode implements TernaryPrimitive {
         public PrimDigitDivNegativeNode(final CompiledMethodObject method) {
             super(method);
@@ -527,7 +536,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primGetModuleName")
+    @SqueakPrimitive(names = "primGetModuleName")
     public abstract static class PrimGetModuleNameNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
         public PrimGetModuleNameNode(final CompiledMethodObject method) {
@@ -541,7 +550,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primMontgomeryDigitLength")
+    @SqueakPrimitive(names = "primMontgomeryDigitLength")
     public abstract static class PrimMontgomeryDigitLengthNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
 
         public PrimMontgomeryDigitLengthNode(final CompiledMethodObject method) {
@@ -555,7 +564,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primMontgomeryTimesModulo")
+    @SqueakPrimitive(names = "primMontgomeryTimesModulo")
     public abstract static class PrimMontgomeryTimesModuloNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
 
         public PrimMontgomeryTimesModuloNode(final CompiledMethodObject method) {
@@ -740,6 +749,24 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
         @Specialization(guards = "receiver.isByteType()")
         protected static final Object doNativeObject(final NativeObject receiver) {
             return receiver.normalize();
+        }
+    }
+
+    protected abstract static class AbstractDigitPrimitiveNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        public AbstractDigitPrimitiveNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        protected static final boolean sameSign(final long a, final long b) {
+            return (a >= 0 && b >= 0) || (a < 0 && b < 0);
+        }
+
+        protected static final boolean sameSign(final LargeIntegerObject a, final long b) {
+            return (a.signum() >= 0 && b >= 0) || (a.signum() < 0 && b < 0);
+        }
+
+        protected static final boolean sameSign(final LargeIntegerObject a, final LargeIntegerObject b) {
+            return a.signum() == b.signum();
         }
     }
 }

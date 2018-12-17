@@ -18,7 +18,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 public final class BMPReadWriterPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveRead24BmpLine")
+    @SqueakPrimitive(names = "primitiveRead24BmpLine")
     protected abstract static class PrimRead24BmpLineNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
 
         protected PrimRead24BmpLineNode(final CompiledMethodObject method) {
@@ -45,7 +45,7 @@ public final class BMPReadWriterPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveWrite24BmpLine")
+    @SqueakPrimitive(names = "primitiveWrite24BmpLine")
     protected abstract static class PrimWrite24BmpLineNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
 
         protected PrimWrite24BmpLineNode(final CompiledMethodObject method) {

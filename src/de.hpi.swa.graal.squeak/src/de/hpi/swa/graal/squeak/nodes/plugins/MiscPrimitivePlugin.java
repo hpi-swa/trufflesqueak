@@ -31,7 +31,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveCompareString")
+    @SqueakPrimitive(names = "primitiveCompareString")
     public abstract static class PrimCompareStringNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
         @CompilationFinal private static NativeObject asciiOrder;
 
@@ -112,7 +112,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveCompressToByteArray")
+    @SqueakPrimitive(names = "primitiveCompressToByteArray")
     public abstract static class PrimCompressToByteArrayNode extends AbstractPrimitiveNode implements TernaryPrimitive {
 
         public PrimCompressToByteArrayNode(final CompiledMethodObject method) {
@@ -217,7 +217,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveDecompressFromByteArray")
+    @SqueakPrimitive(names = "primitiveDecompressFromByteArray")
     public abstract static class PrimDecompressFromByteArrayNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
 
         public PrimDecompressFromByteArrayNode(final CompiledMethodObject method) {
@@ -298,7 +298,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveFindFirstInString")
+    @SqueakPrimitive(names = "primitiveFindFirstInString")
     public abstract static class PrimFindFirstInStringNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
 
         public PrimFindFirstInStringNode(final CompiledMethodObject method) {
@@ -341,7 +341,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveFindSubstring")
+    @SqueakPrimitive(names = "primitiveFindSubstring")
     public abstract static class PrimFindSubstringNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
 
         public PrimFindSubstringNode(final CompiledMethodObject method) {
@@ -391,7 +391,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveIndexOfAsciiInString")
+    @SqueakPrimitive(names = "primitiveIndexOfAsciiInString")
     public abstract static class PrimIndexOfAsciiInStringNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
 
         public PrimIndexOfAsciiInStringNode(final CompiledMethodObject method) {
@@ -411,7 +411,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveStringHash")
+    @SqueakPrimitive(names = "primitiveStringHash")
     public abstract static class PrimStringHashNode extends AbstractPrimitiveNode implements TernaryPrimitive {
 
         public PrimStringHashNode(final CompiledMethodObject method) {
@@ -446,7 +446,7 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveTranslateStringWithTable")
+    @SqueakPrimitive(names = "primitiveTranslateStringWithTable")
     public abstract static class PrimTranslateStringWithTableNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
 
         public PrimTranslateStringWithTableNode(final CompiledMethodObject method) {

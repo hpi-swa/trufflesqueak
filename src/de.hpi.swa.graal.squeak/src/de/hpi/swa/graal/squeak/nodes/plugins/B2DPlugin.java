@@ -32,7 +32,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     // primitiveAbortProcessing omitted because it does not seem to be used.
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveAddActiveEdgeEntry")
+    @SqueakPrimitive(names = "primitiveAddActiveEdgeEntry")
     protected abstract static class PrimAddActiveEdgeEntryNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimAddActiveEdgeEntryNode(final CompiledMethodObject method) {
@@ -46,7 +46,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveAddBezier")
+    @SqueakPrimitive(names = "primitiveAddBezier")
     protected abstract static class PrimAddBezierNode extends AbstractPrimitiveNode implements SenaryPrimitive {
 
         protected PrimAddBezierNode(final CompiledMethodObject method) {
@@ -61,7 +61,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveAddBezierShape")
+    @SqueakPrimitive(names = "primitiveAddBezierShape")
     protected abstract static class PrimAddBezierShapeNode extends AbstractPrimitiveNode implements SenaryPrimitive {
 
         protected PrimAddBezierShapeNode(final CompiledMethodObject method) {
@@ -75,7 +75,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveAddBitmapFill")
+    @SqueakPrimitive(names = "primitiveAddBitmapFill")
     protected abstract static class PrimAddBitmapFillNode extends AbstractPrimitiveNode implements OctonaryPrimitive {
 
         protected PrimAddBitmapFillNode(final CompiledMethodObject method) {
@@ -90,7 +90,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveAddCompressedShape")
+    @SqueakPrimitive(names = "primitiveAddCompressedShape")
     protected abstract static class PrimAddCompressedShapeNode extends AbstractPrimitiveNode implements OctonaryPrimitive {
 
         protected PrimAddCompressedShapeNode(final CompiledMethodObject method) {
@@ -105,7 +105,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveAddGradientFill")
+    @SqueakPrimitive(names = "primitiveAddGradientFill")
     protected abstract static class PrimAddGradientFillNode extends AbstractPrimitiveNode implements SenaryPrimitive {
 
         protected PrimAddGradientFillNode(final CompiledMethodObject method) {
@@ -120,7 +120,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveAddLine")
+    @SqueakPrimitive(names = "primitiveAddLine")
     protected abstract static class PrimAddLineNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
 
         protected PrimAddLineNode(final CompiledMethodObject method) {
@@ -134,7 +134,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveAddOval")
+    @SqueakPrimitive(names = "primitiveAddOval")
     protected abstract static class PrimAddOvalNode extends AbstractPrimitiveNode implements SenaryPrimitive {
 
         protected PrimAddOvalNode(final CompiledMethodObject method) {
@@ -148,7 +148,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveAddPolygon")
+    @SqueakPrimitive(names = "primitiveAddPolygon")
     protected abstract static class PrimAddPolygonNode extends AbstractPrimitiveNode implements SenaryPrimitive {
 
         protected PrimAddPolygonNode(final CompiledMethodObject method) {
@@ -162,7 +162,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveAddRect")
+    @SqueakPrimitive(names = "primitiveAddRect")
     protected abstract static class PrimAddRectNode extends AbstractPrimitiveNode implements SenaryPrimitive {
 
         protected PrimAddRectNode(final CompiledMethodObject method) {
@@ -176,7 +176,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveChangedActiveEdgeEntry")
+    @SqueakPrimitive(names = "primitiveChangedActiveEdgeEntry")
     protected abstract static class PrimChangedActiveEdgeEntryNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimChangedActiveEdgeEntryNode(final CompiledMethodObject method) {
@@ -190,7 +190,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveCopyBuffer")
+    @SqueakPrimitive(names = "primitiveCopyBuffer")
     protected abstract static class PrimCopyBufferNode extends AbstractPrimitiveNode implements TernaryPrimitive {
 
         protected PrimCopyBufferNode(final CompiledMethodObject method) {
@@ -204,7 +204,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveDisplaySpanBuffer")
+    @SqueakPrimitive(names = "primitiveDisplaySpanBuffer")
     protected abstract static class PrimDisplaySpanBufferNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
         protected PrimDisplaySpanBufferNode(final CompiledMethodObject method) {
@@ -218,7 +218,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveDoProfileStats")
+    @SqueakPrimitive(names = "primitiveDoProfileStats")
     protected abstract static class PrimDoProfileStatsNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimDoProfileStatsNode(final CompiledMethodObject method) {
@@ -232,7 +232,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveFinishedProcessing")
+    @SqueakPrimitive(names = "primitiveFinishedProcessing")
     protected abstract static class PrimFinishedProcessingNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
         protected PrimFinishedProcessingNode(final CompiledMethodObject method) {
@@ -246,7 +246,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveGetAALevel")
+    @SqueakPrimitive(names = "primitiveGetAALevel")
     protected abstract static class PrimGetAALevelNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
         protected PrimGetAALevelNode(final CompiledMethodObject method) {
@@ -260,7 +260,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveGetBezierStats")
+    @SqueakPrimitive(names = "primitiveGetBezierStats")
     protected abstract static class PrimGetBezierStatsNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimGetBezierStatsNode(final CompiledMethodObject method) {
@@ -274,7 +274,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveGetClipRect")
+    @SqueakPrimitive(names = "primitiveGetClipRect")
     protected abstract static class PrimGetClipRectNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimGetClipRectNode(final CompiledMethodObject method) {
@@ -288,7 +288,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveGetCounts")
+    @SqueakPrimitive(names = "primitiveGetCounts")
     protected abstract static class PrimGetCountsNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimGetCountsNode(final CompiledMethodObject method) {
@@ -302,7 +302,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveGetDepth")
+    @SqueakPrimitive(names = "primitiveGetDepth")
     protected abstract static class PrimGetDepthNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
         protected PrimGetDepthNode(final CompiledMethodObject method) {
@@ -316,7 +316,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveGetFailureReason")
+    @SqueakPrimitive(names = "primitiveGetFailureReason")
     protected abstract static class PrimGetFailureReasonNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
         protected PrimGetFailureReasonNode(final CompiledMethodObject method) {
@@ -330,7 +330,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveGetOffset")
+    @SqueakPrimitive(names = "primitiveGetOffset")
     protected abstract static class PrimGetOffsetNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
         protected PrimGetOffsetNode(final CompiledMethodObject method) {
@@ -344,7 +344,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveGetTimes")
+    @SqueakPrimitive(names = "primitiveGetTimes")
     protected abstract static class PrimGetTimesNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimGetTimesNode(final CompiledMethodObject method) {
@@ -358,7 +358,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveInitializeBuffer")
+    @SqueakPrimitive(names = "primitiveInitializeBuffer")
     protected abstract static class PrimInitializeBufferNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimInitializeBufferNode(final CompiledMethodObject method) {
@@ -376,7 +376,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveInitializeProcessing")
+    @SqueakPrimitive(names = "primitiveInitializeProcessing")
     protected abstract static class PrimInitializeProcessingNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
         protected PrimInitializeProcessingNode(final CompiledMethodObject method) {
@@ -390,7 +390,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveMergeFillFrom")
+    @SqueakPrimitive(names = "primitiveMergeFillFrom")
     protected abstract static class PrimMergeFillFromNode extends AbstractPrimitiveNode implements TernaryPrimitive {
 
         protected PrimMergeFillFromNode(final CompiledMethodObject method) {
@@ -404,7 +404,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveNeedsFlush")
+    @SqueakPrimitive(names = "primitiveNeedsFlush")
     protected abstract static class PrimNeedsFlushNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
         protected PrimNeedsFlushNode(final CompiledMethodObject method) {
@@ -418,7 +418,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveNeedsFlushPut")
+    @SqueakPrimitive(names = "primitiveNeedsFlushPut")
     protected abstract static class PrimNeedsFlushPutNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimNeedsFlushPutNode(final CompiledMethodObject method) {
@@ -432,7 +432,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveNextActiveEdgeEntry")
+    @SqueakPrimitive(names = "primitiveNextActiveEdgeEntry")
     protected abstract static class PrimNextActiveEdgeEntryNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimNextActiveEdgeEntryNode(final CompiledMethodObject method) {
@@ -446,7 +446,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveNextFillEntry")
+    @SqueakPrimitive(names = "primitiveNextFillEntry")
     protected abstract static class PrimNextFillEntryNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimNextFillEntryNode(final CompiledMethodObject method) {
@@ -460,7 +460,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveNextGlobalEdgeEntry")
+    @SqueakPrimitive(names = "primitiveNextGlobalEdgeEntry")
     protected abstract static class PrimNextGlobalEdgeEntryNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimNextGlobalEdgeEntryNode(final CompiledMethodObject method) {
@@ -474,7 +474,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveRegisterExternalEdge")
+    @SqueakPrimitive(names = "primitiveRegisterExternalEdge")
     protected abstract static class PrimRegisterExternalEdgeNode extends AbstractPrimitiveNode implements SeptenaryPrimitive {
 
         protected PrimRegisterExternalEdgeNode(final CompiledMethodObject method) {
@@ -489,7 +489,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveRegisterExternalFill")
+    @SqueakPrimitive(names = "primitiveRegisterExternalFill")
     protected abstract static class PrimRegisterExternalFillNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimRegisterExternalFillNode(final CompiledMethodObject method) {
@@ -503,7 +503,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveRenderImage")
+    @SqueakPrimitive(names = "primitiveRenderImage")
     protected abstract static class PrimRenderImageNode extends AbstractPrimitiveNode implements TernaryPrimitive {
 
         protected PrimRenderImageNode(final CompiledMethodObject method) {
@@ -517,7 +517,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveRenderScanline")
+    @SqueakPrimitive(names = "primitiveRenderScanline")
     protected abstract static class PrimRenderScanlineNode extends AbstractPrimitiveNode implements TernaryPrimitive {
 
         protected PrimRenderScanlineNode(final CompiledMethodObject method) {
@@ -531,7 +531,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveSetAALevel")
+    @SqueakPrimitive(names = "primitiveSetAALevel")
     protected abstract static class PrimSetAALevelNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimSetAALevelNode(final CompiledMethodObject method) {
@@ -545,7 +545,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveSetBitBltPlugin")
+    @SqueakPrimitive(names = "primitiveSetBitBltPlugin")
     protected abstract static class PrimSetBitBltPluginNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimSetBitBltPluginNode(final CompiledMethodObject method) {
@@ -559,7 +559,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveSetClipRect")
+    @SqueakPrimitive(names = "primitiveSetClipRect")
     protected abstract static class PrimSetClipRectNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimSetClipRectNode(final CompiledMethodObject method) {
@@ -573,7 +573,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveSetColorTransform")
+    @SqueakPrimitive(names = "primitiveSetColorTransform")
     protected abstract static class PrimSetColorTransformNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimSetColorTransformNode(final CompiledMethodObject method) {
@@ -587,7 +587,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveSetDepth")
+    @SqueakPrimitive(names = "primitiveSetDepth")
     protected abstract static class PrimSetDepthNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimSetDepthNode(final CompiledMethodObject method) {
@@ -601,7 +601,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveSetEdgeTransform")
+    @SqueakPrimitive(names = "primitiveSetEdgeTransform")
     protected abstract static class PrimSetEdgeTransformNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimSetEdgeTransformNode(final CompiledMethodObject method) {
@@ -615,7 +615,7 @@ public final class B2DPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveSetOffset")
+    @SqueakPrimitive(names = "primitiveSetOffset")
     protected abstract static class PrimSetOffsetNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimSetOffsetNode(final CompiledMethodObject method) {

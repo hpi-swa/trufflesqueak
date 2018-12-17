@@ -492,7 +492,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveResolverStatus")
+    @SqueakPrimitive(names = "primitiveResolverStatus")
     protected abstract static class PrimResolverStatusNode extends AbstractSocketPluginPrimitiveNode implements UnaryPrimitive {
         protected PrimResolverStatusNode(final CompiledMethodObject method) {
             super(method);
@@ -505,7 +505,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveInitializeNetwork")
+    @SqueakPrimitive(names = "primitiveInitializeNetwork")
     protected abstract static class PrimInitializeNetworkNode extends AbstractSocketPluginPrimitiveNode implements UnaryPrimitive {
         protected PrimInitializeNetworkNode(final CompiledMethodObject method) {
             super(method);
@@ -527,7 +527,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveResolverStartNameLookup")
+    @SqueakPrimitive(names = "primitiveResolverStartNameLookup")
     protected abstract static class PrimResolverStartNameLookupNode extends AbstractSocketPluginPrimitiveNode implements BinaryPrimitive {
         protected PrimResolverStartNameLookupNode(final CompiledMethodObject method) {
             super(method);
@@ -562,7 +562,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveResolverStartAddressLookup")
+    @SqueakPrimitive(names = "primitiveResolverStartAddressLookup")
     protected abstract static class PrimResolverStartAddressLookupNode extends AbstractSocketPluginPrimitiveNode implements BinaryPrimitive {
 
         protected PrimResolverStartAddressLookupNode(final CompiledMethodObject method) {
@@ -588,7 +588,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveResolverNameLookupResult")
+    @SqueakPrimitive(names = "primitiveResolverNameLookupResult")
     protected abstract static class PrimResolverNameLookupResultNode extends AbstractSocketPluginPrimitiveNode implements UnaryPrimitive {
         protected PrimResolverNameLookupResultNode(final CompiledMethodObject method) {
             super(method);
@@ -616,7 +616,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveResolverAddressLookupResult")
+    @SqueakPrimitive(names = "primitiveResolverAddressLookupResult")
     protected abstract static class PrimResolverAddressLookupResultNode extends AbstractSocketPluginPrimitiveNode implements UnaryPrimitive {
         protected PrimResolverAddressLookupResultNode(final CompiledMethodObject method) {
             super(method);
@@ -636,7 +636,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveResolverLocalAddress")
+    @SqueakPrimitive(names = "primitiveResolverLocalAddress")
     protected abstract static class PrimResolverLocalAddressNode extends AbstractSocketPluginPrimitiveNode implements UnaryPrimitive {
         protected PrimResolverLocalAddressNode(final CompiledMethodObject method) {
             super(method);
@@ -657,7 +657,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveSocketLocalPort")
+    @SqueakPrimitive(names = "primitiveSocketLocalPort")
     protected abstract static class PrimSocketLocalPortNode extends AbstractSocketPluginPrimitiveNode implements BinaryPrimitive {
         protected PrimSocketLocalPortNode(final CompiledMethodObject method) {
             super(method);
@@ -672,7 +672,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveSocketListenWithOrWithoutBacklog")
+    @SqueakPrimitive(names = "primitiveSocketListenWithOrWithoutBacklog")
     protected abstract static class PrimSocketListenWithOrWithoutBacklogNode extends AbstractSocketPluginPrimitiveNode implements QuaternaryPrimitive {
         protected PrimSocketListenWithOrWithoutBacklogNode(final CompiledMethodObject method) {
             super(method);
@@ -719,7 +719,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveSocketListenOnPortBacklogInterface")
+    @SqueakPrimitive(names = "primitiveSocketListenOnPortBacklogInterface")
     protected abstract static class PrimSocketListenOnPortBacklogInterfaceNode extends AbstractSocketPluginPrimitiveNode implements QuinaryPrimitive {
         protected PrimSocketListenOnPortBacklogInterfaceNode(final CompiledMethodObject method) {
             super(method);
@@ -746,7 +746,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveSocketSetOptions")
+    @SqueakPrimitive(names = "primitiveSocketSetOptions")
     protected abstract static class PrimSocketSetOptionsNode extends AbstractSocketPluginPrimitiveNode implements QuaternaryPrimitive {
         protected PrimSocketSetOptionsNode(final CompiledMethodObject method) {
             super(method);
@@ -762,7 +762,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveSocketConnectToPort")
+    @SqueakPrimitive(names = "primitiveSocketConnectToPort")
     protected abstract static class PrimSocketConnectToPortNode extends AbstractSocketPluginPrimitiveNode implements QuaternaryPrimitive {
         protected PrimSocketConnectToPortNode(final CompiledMethodObject method) {
             super(method);
@@ -786,7 +786,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveSocketConnectionStatus")
+    @SqueakPrimitive(names = "primitiveSocketConnectionStatus")
     protected abstract static class PrimSocketConnectionStatusNode extends AbstractSocketPluginPrimitiveNode implements BinaryPrimitive {
         protected PrimSocketConnectionStatusNode(final CompiledMethodObject method) {
             super(method);
@@ -809,7 +809,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveSocketRemoteAddress")
+    @SqueakPrimitive(names = "primitiveSocketRemoteAddress")
     protected abstract static class PrimSocketRemoteAddressNode extends AbstractSocketPluginPrimitiveNode implements BinaryPrimitive {
         protected PrimSocketRemoteAddressNode(final CompiledMethodObject method) {
             super(method);
@@ -823,7 +823,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveSocketRemotePort")
+    @SqueakPrimitive(names = "primitiveSocketRemotePort")
     protected abstract static class PrimSocketRemotePortNode extends AbstractSocketPluginPrimitiveNode implements BinaryPrimitive {
         protected PrimSocketRemotePortNode(final CompiledMethodObject method) {
             super(method);
@@ -838,7 +838,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveSocketGetOptions")
+    @SqueakPrimitive(names = "primitiveSocketGetOptions")
     protected abstract static class PrimSocketGetOptionsNode extends AbstractSocketPluginPrimitiveNode implements TernaryPrimitive {
         protected PrimSocketGetOptionsNode(final CompiledMethodObject method) {
             super(method);
@@ -872,7 +872,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveSocketReceiveDataAvailable")
+    @SqueakPrimitive(names = "primitiveSocketReceiveDataAvailable")
     protected abstract static class PrimSocketReceiveDataAvailableNode extends AbstractSocketPluginPrimitiveNode implements BinaryPrimitive {
         protected PrimSocketReceiveDataAvailableNode(final CompiledMethodObject method) {
             super(method);
@@ -892,7 +892,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveSocketError")
+    @SqueakPrimitive(names = "primitiveSocketError")
     protected abstract static class PrimSocketErrorNode extends AbstractSocketPluginPrimitiveNode implements BinaryPrimitive {
         protected PrimSocketErrorNode(final CompiledMethodObject method) {
             super(method);
@@ -907,7 +907,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveSocketLocalAddress")
+    @SqueakPrimitive(names = "primitiveSocketLocalAddress")
     protected abstract static class PrimSocketLocalAddressNode extends AbstractSocketPluginPrimitiveNode implements BinaryPrimitive {
         protected PrimSocketLocalAddressNode(final CompiledMethodObject method) {
             super(method);
@@ -933,7 +933,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveSocketSendDataBufCount")
+    @SqueakPrimitive(names = "primitiveSocketSendDataBufCount")
     protected abstract static class PrimSocketSendDataBufCountNode extends AbstractSocketPluginPrimitiveNode implements QuinaryPrimitive {
         protected PrimSocketSendDataBufCountNode(final CompiledMethodObject method) {
             super(method);
@@ -968,7 +968,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveSocketCloseConnection")
+    @SqueakPrimitive(names = "primitiveSocketCloseConnection")
     protected abstract static class PrimSocketCloseConnectionNode extends AbstractSocketPluginPrimitiveNode implements BinaryPrimitive {
         protected PrimSocketCloseConnectionNode(final CompiledMethodObject method) {
             super(method);
@@ -988,7 +988,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveSocketAbortConnection")
+    @SqueakPrimitive(names = "primitiveSocketAbortConnection")
     protected abstract static class PrimSocketAbortConnectionNode extends AbstractSocketPluginPrimitiveNode implements BinaryPrimitive {
         protected PrimSocketAbortConnectionNode(final CompiledMethodObject method) {
             super(method);
@@ -1008,7 +1008,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveSocketSendDone")
+    @SqueakPrimitive(names = "primitiveSocketSendDone")
     protected abstract static class PrimSocketSendDoneNode extends AbstractSocketPluginPrimitiveNode implements BinaryPrimitive {
         protected PrimSocketSendDoneNode(final CompiledMethodObject method) {
             super(method);
@@ -1022,7 +1022,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveSocketReceiveDataBufCount")
+    @SqueakPrimitive(names = "primitiveSocketReceiveDataBufCount")
     protected abstract static class PrimSocketReceiveDataBufCountNode extends AbstractSocketPluginPrimitiveNode implements QuinaryPrimitive {
         protected PrimSocketReceiveDataBufCountNode(final CompiledMethodObject method) {
             super(method);
@@ -1047,7 +1047,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveSocketDestroy")
+    @SqueakPrimitive(names = "primitiveSocketDestroy")
     protected abstract static class PrimSocketDestroyNode extends AbstractSocketPluginPrimitiveNode implements BinaryPrimitive {
         protected PrimSocketDestroyNode(final CompiledMethodObject method) {
             super(method);
@@ -1072,7 +1072,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveSocketCreate3Semaphores")
+    @SqueakPrimitive(names = "primitiveSocketCreate3Semaphores")
     protected abstract static class PrimSocketCreate3SemaphoresNode extends AbstractSocketPluginPrimitiveNode implements SeptenaryPrimitive {
         protected PrimSocketCreate3SemaphoresNode(final CompiledMethodObject method) {
             super(method);
@@ -1095,7 +1095,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveSocketAccept3Semaphores")
+    @SqueakPrimitive(names = "primitiveSocketAccept3Semaphores")
     protected abstract static class PrimSocketAccept3SemaphoresNode extends AbstractSocketPluginPrimitiveNode implements SeptenaryPrimitive {
         protected PrimSocketAccept3SemaphoresNode(final CompiledMethodObject method) {
             super(method);
@@ -1124,7 +1124,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveSocketCreate")
+    @SqueakPrimitive(names = "primitiveSocketCreate")
     protected abstract static class PrimSocketCreateNode extends AbstractSocketPluginPrimitiveNode implements SenaryPrimitive {
         protected PrimSocketCreateNode(final CompiledMethodObject method) {
             super(method);

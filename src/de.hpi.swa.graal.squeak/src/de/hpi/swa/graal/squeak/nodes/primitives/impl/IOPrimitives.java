@@ -58,7 +58,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 90)
+    @SqueakPrimitive(indices = 90)
     protected abstract static class PrimMousePointNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         private static final DisplayPoint NULL_POINT = new DisplayPoint(0, 0);
 
@@ -78,7 +78,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 91)
+    @SqueakPrimitive(indices = 91)
     protected abstract static class PrimTestDisplayDepthNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         private static final int[] SUPPORTED_DEPTHS = new int[]{32}; // TODO: support all depths?
                                                                      // {1, 2, 4, 8, 16, 32}
@@ -100,7 +100,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 92)
+    @SqueakPrimitive(indices = 92)
     protected abstract static class PrimSetDisplayModeNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
 
         protected PrimSetDisplayModeNode(final CompiledMethodObject method) {
@@ -121,7 +121,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 93)
+    @SqueakPrimitive(indices = 93)
     protected abstract static class PrimInputSemaphoreNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimInputSemaphoreNode(final CompiledMethodObject method) {
@@ -141,7 +141,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 94)
+    @SqueakPrimitive(indices = 94)
     protected abstract static class PrimGetNextEventNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimGetNextEventNode(final CompiledMethodObject method) {
@@ -162,7 +162,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 96)
+    @SqueakPrimitive(indices = 96)
     protected abstract static class PrimCopyBitsNode extends SimulationPrimitiveNode {
 
         protected PrimCopyBitsNode(final CompiledMethodObject method) {
@@ -172,7 +172,24 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 101)
+    @SqueakPrimitive(indices = 97)
+    protected abstract static class PrimSnapshotNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+
+        public PrimSnapshotNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        public static final Object doSnapshot(final VirtualFrame frame, final PointersObject receiver) {
+            // TODO: implement primitiveSnapshot
+            throw new PrimitiveFailed();
+        }
+
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 101)
     protected abstract static class PrimBeCursorNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimBeCursorNode(final CompiledMethodObject method) {
@@ -226,7 +243,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 102)
+    @SqueakPrimitive(indices = 102)
     protected abstract static class PrimBeDisplayNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
         protected PrimBeDisplayNode(final CompiledMethodObject method) {
@@ -247,7 +264,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 103)
+    @SqueakPrimitive(indices = 103)
     protected abstract static class PrimScanCharactersNode extends AbstractPrimitiveNode implements SeptenaryPrimitive {
         @Child protected SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
@@ -344,7 +361,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 105)
+    @SqueakPrimitive(indices = 105)
     protected abstract static class PrimStringReplaceNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
         @Child private SqueakObjectInstSizeNode instSizeNode = SqueakObjectInstSizeNode.create();
         @Child private SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
@@ -461,7 +478,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"inBounds(rcvr, start, stop, repl, replStart)", "rcvr.isEmptyType()", "repl.isDoubleType()"})
         protected static final Object doEmptyArrayToDoubles(final ArrayObject rcvr, final long start, final long stop, final ArrayObject repl, final long replStart) {
-            rcvr.transitionFromDoublesToObjects();
+            rcvr.transitionFromEmptyToDoubles();
             return doArraysOfDoubles(rcvr, start, stop, repl, replStart);
         }
 
@@ -776,7 +793,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 106)
+    @SqueakPrimitive(indices = 106)
     protected abstract static class PrimScreenSizeNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
         protected PrimScreenSizeNode(final CompiledMethodObject method) {
@@ -795,7 +812,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 107)
+    @SqueakPrimitive(indices = 107)
     protected abstract static class PrimMouseButtonsNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
         protected PrimMouseButtonsNode(final CompiledMethodObject method) {
@@ -814,7 +831,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 108)
+    @SqueakPrimitive(indices = 108)
     protected abstract static class PrimKeyboardNextNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
         protected PrimKeyboardNextNode(final CompiledMethodObject method) {
@@ -838,7 +855,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 109)
+    @SqueakPrimitive(indices = 109)
     protected abstract static class PrimKeyboardPeekNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
         protected PrimKeyboardPeekNode(final CompiledMethodObject method) {
@@ -862,7 +879,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 126)
+    @SqueakPrimitive(indices = 126)
     protected abstract static class PrimDeferDisplayUpdatesNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         public PrimDeferDisplayUpdatesNode(final CompiledMethodObject method) {
@@ -882,7 +899,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 127)
+    @SqueakPrimitive(indices = 127)
     protected abstract static class PrimShowDisplayRectNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
 
         protected PrimShowDisplayRectNode(final CompiledMethodObject method) {
@@ -903,7 +920,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 133)
+    @SqueakPrimitive(indices = 133)
     protected abstract static class PrimSetInterruptKeyNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
         protected PrimSetInterruptKeyNode(final CompiledMethodObject method) {
@@ -918,7 +935,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 140)
+    @SqueakPrimitive(indices = 140)
     protected abstract static class PrimBeepNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
         protected PrimBeepNode(final CompiledMethodObject method) {

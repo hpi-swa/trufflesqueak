@@ -19,7 +19,7 @@ import de.hpi.swa.graal.squeak.util.ArrayUtils;
 public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveGetPid")
+    @SqueakPrimitive(names = "primitiveGetPid")
     protected abstract static class PrimGetPidNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
         protected PrimGetPidNode(final CompiledMethodObject method) {
@@ -46,7 +46,7 @@ public abstract class AbstractOSProcessPlugin extends AbstractPrimitiveFactoryHo
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveGetSession")
+    @SqueakPrimitive(names = "primitiveGetSession")
     protected abstract static class PrimGetSessionNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         @CompilationFinal private NativeObject sessionByteArray;
 

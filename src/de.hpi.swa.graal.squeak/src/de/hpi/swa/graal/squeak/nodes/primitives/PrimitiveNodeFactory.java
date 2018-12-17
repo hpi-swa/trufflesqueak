@@ -109,8 +109,10 @@ public final class PrimitiveNodeFactory {
                 for (NodeFactory<? extends AbstractPrimitiveNode> nodeFactory : nodeFactories) {
                     final Class<? extends AbstractPrimitiveNode> primitiveClass = nodeFactory.getNodeClass();
                     final SqueakPrimitive primitive = primitiveClass.getAnnotation(SqueakPrimitive.class);
-                    if (functionName.equals(primitive.name())) {
-                        return createInstance(method, nodeFactory);
+                    for (final String name : primitive.names()) {
+                        if (functionName.equals(name)) {
+                            return createInstance(method, nodeFactory);
+                        }
                     }
                 }
                 if (plugin.useSimulationAsFallback()) {
@@ -151,10 +153,7 @@ public final class PrimitiveNodeFactory {
                 if (primitive == null) {
                     continue;
                 }
-                if (primitive.index() > 0) {
-                    addEntryToPrimitiveTable(primitive.index(), nodeFactory);
-                }
-                for (int index : primitive.indices()) {
+                for (final int index : primitive.indices()) {
                     addEntryToPrimitiveTable(index, nodeFactory);
                 }
             }

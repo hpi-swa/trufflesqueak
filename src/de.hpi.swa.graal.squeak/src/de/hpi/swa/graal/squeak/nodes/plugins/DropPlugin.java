@@ -31,7 +31,7 @@ public final class DropPlugin extends AbstractPrimitiveFactoryHolder {
 
     @ImportStatic(DropPlugin.class)
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveDropRequestFileHandle")
+    @SqueakPrimitive(names = "primitiveDropRequestFileHandle")
     protected abstract static class PrimDropRequestFileHandleNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         protected PrimDropRequestFileHandleNode(final CompiledMethodObject method) {
             super(method);
@@ -45,7 +45,7 @@ public final class DropPlugin extends AbstractPrimitiveFactoryHolder {
 
     @ImportStatic(DropPlugin.class)
     @GenerateNodeFactory
-    @SqueakPrimitive(name = "primitiveDropRequestFileName")
+    @SqueakPrimitive(names = "primitiveDropRequestFileName")
     protected abstract static class PrimDropRequestFileNameNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         protected PrimDropRequestFileNameNode(final CompiledMethodObject method) {
             super(method);

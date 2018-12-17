@@ -69,7 +69,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 60)
+    @SqueakPrimitive(indices = 60)
     protected abstract static class PrimBasicAtNode extends AbstractBasicAtOrAtPutNode implements TernaryPrimitive {
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
         @Child private ReadArrayObjectNode readArrayObjectNode;
@@ -214,7 +214,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
     @ImportStatic(NativeObject.class)
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 61)
+    @SqueakPrimitive(indices = 61)
     protected abstract static class PrimBasicAtPutNode extends AbstractBasicAtOrAtPutNode implements QuaternaryPrimitive {
         @Child private SqueakObjectAtPut0Node atPut0Node;
         @Child private NativeAcceptsValueNode acceptsValueNode;
@@ -325,7 +325,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             return value;
         }
 
-        @Specialization(guards = "inBounds(index, receiver)")
+        @Specialization// (guards = "inBounds(index, receiver)")
         protected final Object doArray(final ArrayObject receiver, final long index, final Object value, @SuppressWarnings("unused") final NotProvided notProvided) {
             getWriteArrayObjectNode().execute(receiver, index - 1, value);
             return value;
@@ -479,7 +479,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 62)
+    @SqueakPrimitive(indices = 62)
     protected abstract static class PrimSizeNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         @Child private SqueakObjectSizeNode sizeNode;
         @Child private ArrayObjectSizeNode arrayObjectSizeNode;
@@ -631,7 +631,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 63)
+    @SqueakPrimitive(indices = 63)
     protected abstract static class PrimStringAtNode extends AbstractPrimitiveWithSizeNode implements BinaryPrimitive {
         @Child private ReadNativeObjectNode readNode = ReadNativeObjectNode.create();
 
@@ -646,7 +646,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 64)
+    @SqueakPrimitive(indices = 64)
     protected abstract static class PrimStringAtPutNode extends AbstractPrimitiveWithSizeNode implements TernaryPrimitive {
         @Child protected NativeAcceptsValueNode acceptsValueNode = NativeAcceptsValueNode.create();
         @Child private WriteNativeObjectNode writeNode = WriteNativeObjectNode.create();
@@ -790,7 +790,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 165)
+    @SqueakPrimitive(indices = 165)
     protected abstract static class PrimIntegerAtNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimIntegerAtNode(final CompiledMethodObject method) {
@@ -809,7 +809,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 166)
+    @SqueakPrimitive(indices = 166)
     protected abstract static class PrimIntegerAtPutNode extends AbstractPrimitiveNode implements TernaryPrimitive {
 
         protected PrimIntegerAtPutNode(final CompiledMethodObject method) {
@@ -858,7 +858,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(index = 212)
+    @SqueakPrimitive(indices = 212)
     protected abstract static class PrimContextSizeNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
         protected PrimContextSizeNode(final CompiledMethodObject method) {
