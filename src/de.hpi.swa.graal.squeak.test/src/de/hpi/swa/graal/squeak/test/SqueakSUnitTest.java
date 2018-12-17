@@ -183,9 +183,8 @@ public class SqueakSUnitTest extends AbstractSqueakTestCase {
         evaluate("Utilities setAuthorInitials: 'GraalSqueak'");
         image.getOutput().println("Initializing fresh MorphicUIManager...");
         evaluate("Project current instVarNamed: #uiManager put: MorphicUIManager new");
-
-        patchMethod("TestCase", "timeout:after:", "timeout: aBlock after: seconds ^ aBlock value");
-        patchMethod("BlockClosure", "valueWithin:onTimeout:", "valueWithin: aDuration onTimeout: timeoutBlock ^ self value");
+        image.getOutput().println("Increasing default timeout...");
+        patchMethod("TestCase", "defaultTimeout", "defaultTimeout ^ 25");
         if (!runsOnMXGate()) {
             patchMethod("TestCase", "runCase", "runCase [self setUp. [self performTest] ensure: [self tearDown]] on: Error do: [:e | e printVerboseOn: FileStream stderr. e signal]");
         }
