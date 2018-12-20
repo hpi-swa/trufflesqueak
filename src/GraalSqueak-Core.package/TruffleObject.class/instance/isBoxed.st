@@ -1,0 +1,3 @@
+polyglot
+isBoxed
+	^ self primitiveIsBoxed

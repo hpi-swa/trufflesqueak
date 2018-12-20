@@ -1,4 +1,4 @@
 error handling
 doesNotUnderstand: aMessage
-	<primitive: 'primitiveSend' module: 'PolyglotPlugin'>
-	^ super doesNotUnderstand: aMessage
+	^ [ self send: aMessage ] on: Error do: [
+		super doesNotUnderstand: aMessage ]

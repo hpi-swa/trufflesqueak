@@ -1,0 +1,3 @@
+polyglot
+isPointer
+	^ self primitiveIsPointer

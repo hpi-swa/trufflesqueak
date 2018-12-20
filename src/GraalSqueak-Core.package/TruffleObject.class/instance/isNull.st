@@ -1,0 +1,3 @@
+polyglot
+isNull
+	^ self primitiveIsNull

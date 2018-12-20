@@ -1,0 +1,3 @@
+polyglot
+isExecutable
+	^ self primitiveIsExecutable

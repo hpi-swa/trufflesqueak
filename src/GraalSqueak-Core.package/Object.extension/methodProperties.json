@@ -2,4 +2,9 @@
 	"class" : {
 		 },
 	"instance" : {
+		"isBoxed" : "fn 12/13/2018 17:59",
+		"isExecutable" : "fn 12/13/2018 17:59",
+		"isInstantiable" : "fn 12/13/2018 18:00",
+		"isNull" : "fn 12/13/2018 17:59",
+		"isPointer" : "fn 12/13/2018 18:00",
 		"isTruffleObject" : "GraalSqueak 8/12/2018 21:32" } }
