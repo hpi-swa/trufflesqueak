@@ -16,7 +16,6 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RepeatingNode;
 import com.oracle.truffle.api.nodes.RootNode;
 
-import de.hpi.swa.graal.squeak.SqueakImage;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakAbortException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.NativeObject;
@@ -92,7 +91,7 @@ public final class SqueakImageReaderNode extends RootNode {
         validateStateOrFail();
         clearChunktable();
         image.printToStdOut("Image loaded in", (currentTimeMillis() - start) + "ms.");
-        return new SqueakImage(image);
+        return image.getSqueakImage();
     }
 
     @TruffleBoundary

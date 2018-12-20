@@ -176,7 +176,7 @@ public final class SqueakImageContext {
     public void ensureLoaded() {
         if (!loaded()) {
             // Load image.
-            squeakImage = (SqueakImage) Truffle.getRuntime().createCallTarget(new SqueakImageReaderNode(this)).call();
+            Truffle.getRuntime().createCallTarget(new SqueakImageReaderNode(this)).call();
             // Remove active context.
             final PointersObject activeProcess = GetActiveProcessNode.create(this).executeGet();
             activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, nil);
@@ -196,8 +196,20 @@ public final class SqueakImageContext {
         }
     }
 
+    /**
+     * Returns `true` if image has been loaded. {@link SqueakImageReaderNode} calls
+     * {@link #getSqueakImage()} and initializes `squeakImage`.
+     */
     public boolean loaded() {
         return squeakImage != null;
+    }
+
+    public SqueakImage getSqueakImage() {
+        if (squeakImage == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            squeakImage = new SqueakImage(this);
+        }
+        return squeakImage;
     }
 
     private Object evaluate(final String sourceCode) {
@@ -513,6 +525,21 @@ public final class SqueakImageContext {
         }
     }
 
+    public TruffleObject getGlobals() {
+        final PointersObject environment = (PointersObject) smalltalk.at0(SMALLTALK_IMAGE.GLOBALS);
+        final PointersObject bindings = (PointersObject) environment.at0(ENVIRONMENT.BINDINGS);
+        return new InteropMap(bindings);
+    }
+
+    public void reportNewAllocationRequest() {
+        allocationReporter.onEnter(null, 0, AllocationReporter.SIZE_UNKNOWN);
+    }
+
+    public Object reportNewAllocationResult(final Object value) {
+        allocationReporter.onReturnValue(value, 0, AllocationReporter.SIZE_UNKNOWN);
+        return value;
+    }
+
     /*
      * Helper function for debugging purposes.
      */
@@ -551,20 +578,5 @@ public final class SqueakImageContext {
         if (lastSender[0] instanceof ContextObject) {
             ((ContextObject) lastSender[0]).printSqStackTrace();
         }
-    }
-
-    public TruffleObject getGlobals() {
-        final PointersObject environment = (PointersObject) smalltalk.at0(SMALLTALK_IMAGE.GLOBALS);
-        final PointersObject bindings = (PointersObject) environment.at0(ENVIRONMENT.BINDINGS);
-        return new InteropMap(bindings);
-    }
-
-    public void reportNewAllocationRequest() {
-        allocationReporter.onEnter(null, 0, AllocationReporter.SIZE_UNKNOWN);
-    }
-
-    public Object reportNewAllocationResult(final Object value) {
-        allocationReporter.onReturnValue(value, 0, AllocationReporter.SIZE_UNKNOWN);
-        return value;
     }
 }
