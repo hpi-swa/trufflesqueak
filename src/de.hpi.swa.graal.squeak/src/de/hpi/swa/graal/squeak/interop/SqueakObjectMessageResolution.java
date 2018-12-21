@@ -8,9 +8,11 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.nodes.DispatchNode;
+import de.hpi.swa.graal.squeak.nodes.NewObjectNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
@@ -101,6 +103,20 @@ public final class SqueakObjectMessageResolution {
 
         protected final Object access(final VirtualFrame frame, final CompiledMethodObject receiver, final Object[] arguments) {
             return dispatchNode.executeDispatch(frame, receiver, arguments, null);
+        }
+    }
+
+    @Resolve(message = "NEW")
+    public abstract static class SqueakObjectNewNode extends Node {
+
+        protected static final Object access(final ClassObject receiver, final Object[] arguments) {
+            final NewObjectNode newObjectNode = NewObjectNode.create(receiver.image);
+            final int numArguments = arguments.length;
+            if (numArguments == 0) {
+                return newObjectNode.execute(receiver);
+            } else {
+                return newObjectNode.execute(receiver, (int) arguments[0]);
+            }
         }
     }
 
