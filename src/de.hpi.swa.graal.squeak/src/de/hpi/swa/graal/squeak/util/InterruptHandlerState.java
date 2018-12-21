@@ -91,11 +91,11 @@ public final class InterruptHandlerState {
     }
 
     public void activate() {
-        isActive = false;
+        isActive = true;
     }
 
     public void deactivate() {
-        isActive = true;
+        isActive = false;
     }
 
     protected boolean interruptPending() {
@@ -137,7 +137,7 @@ public final class InterruptHandlerState {
         if (CompilerDirectives.inCompiledCode() && !CompilerDirectives.inCompilationRoot()) {
             return false; // do not trigger in inlined code
         }
-        if (isActive) {
+        if (!isActive) {
             return false;
         }
         return shouldTrigger;

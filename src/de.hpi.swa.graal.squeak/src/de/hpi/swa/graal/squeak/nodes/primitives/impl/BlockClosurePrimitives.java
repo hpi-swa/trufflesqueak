@@ -351,6 +351,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 221)
     public abstract static class PrimClosureValueNoContextSwitchNode extends AbstractClosureValuePrimitiveNode implements UnaryPrimitive {
+        private static final Object[] noArgument = new Object[0];
 
         protected PrimClosureValueNoContextSwitchNode(final CompiledMethodObject method) {
             super(method);
@@ -358,15 +359,8 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
 
         @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == 0"})
         protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block) {
-            final boolean wasActive = code.image.interrupt.isActive();
-            code.image.interrupt.deactivate();
-            try {
-                return dispatch.executeBlock(block, getFrameArguments.execute(block, getContextOrMarker(frame), new Object[0]));
-            } finally {
-                if (wasActive) {
-                    code.image.interrupt.activate();
-                }
-            }
+            return code.image.runWithoutInterrupts(() -> dispatch.executeBlock(block,
+                            getFrameArguments.execute(block, getContextOrMarker(frame), noArgument)));
         }
     }
 
@@ -382,15 +376,9 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final ArrayObject argArray,
                         @SuppressWarnings("unused") @Cached("create()") final SqueakObjectSizeNode sizeNode,
                         @Cached("create()") final GetObjectArrayNode getObjectArrayNode) {
-            final boolean wasActive = code.image.interrupt.isActive();
-            code.image.interrupt.deactivate();
-            try {
-                return dispatch.executeBlock(block, getFrameArguments.execute(block, getContextOrMarker(frame), getObjectArrayNode.execute(argArray)));
-            } finally {
-                if (wasActive) {
-                    code.image.interrupt.activate();
-                }
-            }
+            final Object[] arguments = getObjectArrayNode.execute(argArray);
+            return code.image.runWithoutInterrupts(() -> dispatch.executeBlock(block,
+                            getFrameArguments.execute(block, getContextOrMarker(frame), arguments)));
         }
     }
 }

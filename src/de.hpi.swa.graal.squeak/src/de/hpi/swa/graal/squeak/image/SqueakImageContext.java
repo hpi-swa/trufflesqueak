@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.math.BigInteger;
 import java.nio.file.Paths;
+import java.util.function.Supplier;
 
 import org.graalvm.options.OptionKey;
 
@@ -529,6 +530,18 @@ public final class SqueakImageContext {
         final PointersObject environment = (PointersObject) smalltalk.at0(SMALLTALK_IMAGE.GLOBALS);
         final PointersObject bindings = (PointersObject) environment.at0(ENVIRONMENT.BINDINGS);
         return new InteropMap(bindings);
+    }
+
+    public Object runWithoutInterrupts(final Supplier<Object> op) {
+        final boolean wasActive = interrupt.isActive();
+        interrupt.deactivate();
+        try {
+            return op.get();
+        } finally {
+            if (wasActive) {
+                interrupt.activate();
+            }
+        }
     }
 
     public void reportNewAllocationRequest() {
