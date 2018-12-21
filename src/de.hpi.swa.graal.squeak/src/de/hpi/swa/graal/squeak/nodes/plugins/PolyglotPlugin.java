@@ -66,11 +66,11 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @TruffleBoundary
-        @Specialization(guards = {"languageIdOrMimeTypeObj.isByteType()", "source.isByteType()"})
-        protected final Object doParseAndCall(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject source) {
+        @Specialization(guards = {"languageIdOrMimeTypeObj.isByteType()", "sourceObject.isByteType()"})
+        protected final Object doParseAndCall(@SuppressWarnings("unused") final Object receiver, final NativeObject languageIdOrMimeTypeObj, final NativeObject sourceObject) {
             PrimGetLastErrorNode.unsetLastError();
             final String languageIdOrMimeType = languageIdOrMimeTypeObj.asString();
-            final String sourceText = source.asString();
+            final String sourceText = sourceObject.asString();
             final Env env = code.image.env;
             try {
                 final boolean mimeType = isMimeType(languageIdOrMimeType);
@@ -79,7 +79,9 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
                 if (mimeType) {
                     newBuilder = newBuilder.mimeType(languageIdOrMimeType);
                 }
-                return code.image.wrap(env.parse(newBuilder.build()).call());
+                final Source source = newBuilder.build();
+                final Object result = code.image.runWithoutInterrupts(() -> env.parse(source).call());
+                return code.image.wrap(result);
             } catch (RuntimeException e) {
                 CompilerDirectives.transferToInterpreter();
                 PrimGetLastErrorNode.setLastError(code, e);

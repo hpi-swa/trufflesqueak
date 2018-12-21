@@ -85,7 +85,7 @@ public final class GraalSqueakLauncher extends AbstractLanguageLauncher {
                 return 0;
             } else {
                 context.eval(Source.newBuilder(getLanguageId(), new File(imagePath)).internal(true).mimeType(SqueakLanguageConfig.MIME_TYPE).build()).execute();
-                throw abort("A Squeak/Smalltalk image cannot return a result as it can only exit.");
+                throw abort("A Squeak/Smalltalk image cannot return a result, it can only exit.");
             }
         } catch (PolyglotException e) {
             if (e.isExit()) {
