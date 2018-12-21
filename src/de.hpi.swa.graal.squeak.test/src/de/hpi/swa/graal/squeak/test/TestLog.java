@@ -5,10 +5,15 @@ import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.groupingBy;
 
 import de.hpi.swa.graal.squeak.test.SqueakTests.SqueakTest;
+import de.hpi.swa.graal.squeak.test.Travis.AnsiCodes;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
+import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunListener;
 import org.junit.runners.model.Statement;
 
@@ -64,10 +69,12 @@ public class TestLog {
     public static class Listener extends RunListener {
 
         private static final Map<String, Long> testToSelectorCount;
+        private static final List<Failure> failures;
         private static volatile long expectedSelectors;
 
         static {
             testToSelectorCount = SqueakSUnitTest.TESTS.stream().collect(groupingBy(t -> t.className, counting()));
+            failures = Collections.synchronizedList(new ArrayList<>());
         }
 
         @Override
@@ -79,6 +86,11 @@ public class TestLog {
                 end();
                 begin(squeakTestOf(description));
             }
+        }
+
+        @Override
+        public void testFailure(final Failure failure) {
+            failures.add(failure);
         }
 
         @Override
@@ -120,8 +132,25 @@ public class TestLog {
                 --expectedSelectors;
                 if (expectedSelectors == 0) {
                     Travis.get().end();
+                    printAndClearFailures();
                 }
             }
+        }
+
+        private static void printAndClearFailures() {
+            if (failures.isEmpty()) {
+                return;
+            }
+
+            // Checkstyle: stop
+            System.out.println(AnsiCodes.BOLD + AnsiCodes.RED + "Failed selectors:");
+            for (final Failure failure : failures) {
+                System.out.println(failure.getDescription());
+            }
+            System.out.println(AnsiCodes.RESET);
+            // Checkstyle: resume
+
+            failures.clear();
         }
     }
 }
