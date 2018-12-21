@@ -19,7 +19,7 @@ public abstract class GetBlockFrameArgumentsNode extends Node {
 
     public abstract Object[] execute(BlockClosureObject block, Object senderOrMarker, Object[] objects);
 
-    @Specialization(guards = {"objects.length == numObjects", "block.getCallTarget() == cachedCallTarget"}, limit = "3", assumptions = "callTargetStable")
+    @Specialization(guards = {"objects.length == numObjects", "block.getStack().length == numCopied", "block.getCallTarget() == cachedCallTarget"}, limit = "3", assumptions = "callTargetStable")
     @ExplodeLoop
     protected static final Object[] doCached(final BlockClosureObject block, final Object senderOrMarker, final Object[] objects,
                     @SuppressWarnings("unused") @Cached("block.getCallTarget()") final RootCallTarget cachedCallTarget,
