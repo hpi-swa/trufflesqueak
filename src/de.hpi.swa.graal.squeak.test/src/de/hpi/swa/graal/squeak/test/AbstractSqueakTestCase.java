@@ -24,8 +24,12 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
+import org.junit.ClassRule;
 
 public abstract class AbstractSqueakTestCase {
+
+    @ClassRule public static final TestLog.Rule TEST_LOG = new TestLog.Rule();
+
     protected static SqueakImageContext image;
 
     protected CompiledCodeObject makeMethod(final byte[] bytes) {
