@@ -17,7 +17,7 @@ import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunListener;
 import org.junit.runners.model.Statement;
 
-public class TestLog {
+public final class TestLog {
 
     /**
      * Rule that creates new Travis folds for each test class.

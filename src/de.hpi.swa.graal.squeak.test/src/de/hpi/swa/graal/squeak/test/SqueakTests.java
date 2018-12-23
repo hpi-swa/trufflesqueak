@@ -17,9 +17,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-final class SqueakTests {
+public final class SqueakTests {
 
-    static final Pattern TEST_CASE = Pattern.compile("(\\w+)>>(\\w+)");
+    protected static final Pattern TEST_CASE = Pattern.compile("(\\w+)>>(\\w+)");
     private static final Pattern TEST_CASE_LINE = Pattern.compile("^" + TEST_CASE.pattern());
     private static final String FILENAME = "tests.properties";
 
@@ -44,19 +44,19 @@ final class SqueakTests {
         }
     }
 
-    static final class SqueakTest {
+    protected static final class SqueakTest {
 
-        final TestType type;
-        final String className;
-        final String selector;
+        protected final TestType type;
+        protected final String className;
+        protected final String selector;
 
-        SqueakTest(final TestType type, final String className, final String selector) {
+        protected SqueakTest(final TestType type, final String className, final String selector) {
             this.type = type;
             this.className = className;
             this.selector = selector;
         }
 
-        String qualifiedName() {
+        protected String qualifiedName() {
             return className + ">>#" + selector;
         }
 
@@ -65,15 +65,12 @@ final class SqueakTests {
             return type.getMessage() + ": " + className + ">>" + selector;
         }
 
-        boolean nameEquals(final SqueakTest test) {
+        protected boolean nameEquals(final SqueakTest test) {
             return className.equals(test.className) && selector.equals(test.selector);
         }
     }
 
-    private SqueakTests() {
-    }
-
-    static Stream<SqueakTest> getTestsToRun() {
+    protected static Stream<SqueakTest> getTestsToRun() {
         final Set<TestType> types = runnableTestTypes();
         return tests().filter(t -> types.contains(t.type));
     }
@@ -82,7 +79,7 @@ final class SqueakTests {
         return new HashSet<>(asList(TestType.PASSING, TestType.FAILING, TestType.FLAKY, TestType.NOT_TERMINATING));
     }
 
-    static Stream<SqueakTest> getTestsToRun(final String testClass) {
+    protected static Stream<SqueakTest> getTestsToRun(final String testClass) {
         return tests().filter(t -> t.className.equals(testClass));
     }
 
@@ -90,7 +87,7 @@ final class SqueakTests {
      * Test names in the order they appear in the file - useful for testing properties such as
      * sorting, duplication.
      */
-    static List<String> rawTestNames() {
+    protected static List<String> rawTestNames() {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(SqueakTests.class.getResourceAsStream(FILENAME)))) {
             return reader.lines().map(TEST_CASE_LINE::matcher).filter(Matcher::find).map(Matcher::group).collect(toList());
         } catch (final IOException e) {
@@ -98,7 +95,7 @@ final class SqueakTests {
         }
     }
 
-    static Stream<SqueakTest> tests() {
+    protected static Stream<SqueakTest> tests() {
         final Properties properties = loadProperties();
         return properties.stringPropertyNames().stream().map(test -> parseTest(test, properties.getProperty(test))).sorted(
                         Comparator.comparing(t -> t.qualifiedName().toLowerCase()));
@@ -125,5 +122,8 @@ final class SqueakTests {
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    private SqueakTests() {
     }
 }

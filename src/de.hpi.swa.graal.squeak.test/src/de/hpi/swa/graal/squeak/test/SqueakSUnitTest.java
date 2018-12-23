@@ -30,7 +30,9 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
 
     private static final String TEST_CLASS_PROPERTY = "squeakTestClass";
 
-    static final List<SqueakTest> TESTS = selectTestsToRun().collect(toList());
+    protected static final List<SqueakTest> TESTS = selectTestsToRun().collect(toList());
+
+    @Parameter public SqueakTest test;
 
     @Parameters(name = "{0} (#{index})")
     public static Collection<SqueakTest> getParameters() {
@@ -44,8 +46,6 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
         }
         return SqueakTests.getTestsToRun();
     }
-
-    @Parameter public SqueakTest test;
 
     @Test
     public void runSqueakTest() {

@@ -9,12 +9,9 @@ import java.util.Collection;
 import java.util.Map;
 import de.hpi.swa.graal.squeak.test.Travis.AnsiCodes;
 
-final class Statistics {
+public final class Statistics {
 
-    private Statistics() {
-    }
-
-    static void print(final Collection<SqueakTest> tests) {
+    protected static void print(final Collection<SqueakTest> tests) {
         final Map<TestType, Long> counts = countByType(tests);
 
         print(TestType.PASSING, counts, AnsiCodes.GREEN);
@@ -39,5 +36,8 @@ final class Statistics {
                         type.getMessage(),
                         AnsiCodes.RESET);
         // Checkstyle: resume
+    }
+
+    private Statistics() {
     }
 }

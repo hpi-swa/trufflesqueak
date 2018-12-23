@@ -8,11 +8,13 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.function.LongSupplier;
 
-final class Travis {
+public final class Travis {
 
     private static final Travis INSTANCE = new Travis();
 
     private final PrintStream out;
+
+    private final Deque<Fold> folds = new ConcurrentLinkedDeque<>();
 
     private Travis() {
         this.out = enabled() ? System.out : nullPrintStream();
@@ -32,13 +34,11 @@ final class Travis {
         }
     }
 
-    static Travis get() {
+    protected static Travis get() {
         return INSTANCE;
     }
 
-    private final Deque<Fold> folds = new ConcurrentLinkedDeque<>();
-
-    void begin(final String stage, final String title) {
+    protected void begin(final String stage, final String title) {
         final Fold fold = Fold.of(stage);
         printBegin(title, fold);
         folds.push(fold);
@@ -50,7 +50,7 @@ final class Travis {
         out.println(AnsiCodes.BOLD + AnsiCodes.BLUE + title + AnsiCodes.RESET);
     }
 
-    void end() {
+    protected void end() {
         printEnd(folds.pop().completed());
     }
 
@@ -64,18 +64,16 @@ final class Travis {
         return UUID.randomUUID().toString().split("-")[0];
     }
 
-    static final class Fold {
+    protected static final class Fold {
 
         private static final LongSupplier CLOCK = System::nanoTime;
 
-        final String stage;
-        final String timerId;
-        final long created;
-        final long finished;
+        private final String stage;
+        private final String timerId;
+        private final long created;
+        private final long finished;
 
-        private Fold(final String stage, final String timerId, final long created,
-                        final long finished) {
-
+        private Fold(final String stage, final String timerId, final long created, final long finished) {
             this.stage = stage;
             this.timerId = timerId;
             this.created = created;
@@ -90,19 +88,19 @@ final class Travis {
             return new Fold(stage, timerId, created, CLOCK.getAsLong());
         }
 
-        long duration() {
+        private long duration() {
             return finished - created;
         }
     }
 
-    static class AnsiCodes {
-        static final String BOLD = "\033[1m";
-        static final String RED = "\033[31;1m";
-        static final String GREEN = "\033[32;1m";
-        static final String BLUE = "\033[34m";
-        static final String YELLOW = "\033[33;1m";
-        static final String RESET = "\033[0m";
-        static final String CLEAR = "\033[0K";
-        static final String CR = "\r";
+    protected static class AnsiCodes {
+        protected static final String BOLD = "\033[1m";
+        protected static final String RED = "\033[31;1m";
+        protected static final String GREEN = "\033[32;1m";
+        protected static final String BLUE = "\033[34m";
+        protected static final String YELLOW = "\033[33;1m";
+        protected static final String RESET = "\033[0m";
+        protected static final String CLEAR = "\033[0K";
+        protected static final String CR = "\r";
     }
 }
