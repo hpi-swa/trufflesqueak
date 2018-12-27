@@ -36,22 +36,18 @@ public abstract class FillInNode extends Node {
         obj.fillin(chunk);
     }
 
-    @Specialization(guards = "obj.image.getCompilerClass() == null")
+    @Specialization
     protected static final void doClassObj(final ClassObject obj, final SqueakImageChunk chunk) {
         obj.fillin(chunk);
-        if (!obj.isMetaclass() && obj.size() > 6) {
+        if (obj.size() > 6) {
             final String className = ((NativeObject) obj.getClassName()).asString();
+            obj.setInstancesAreClasses(className);
             if ("Compiler".equals(className)) {
                 obj.image.setCompilerClass(obj);
             } else if ("Parser".equals(className)) {
                 obj.image.setParserClass(obj);
             }
         }
-    }
-
-    @Specialization(guards = "obj.image.getCompilerClass() != null")
-    protected static final void doClassObjNoCheck(final ClassObject obj, final SqueakImageChunk chunk) {
-        obj.fillin(chunk);
     }
 
     @Specialization

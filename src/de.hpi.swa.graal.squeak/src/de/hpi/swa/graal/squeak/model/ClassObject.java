@@ -7,6 +7,7 @@ import java.util.function.Predicate;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
@@ -25,6 +26,8 @@ import de.hpi.swa.graal.squeak.util.ArrayUtils;
 public final class ClassObject extends AbstractSqueakObject {
     private final CyclicAssumption methodDictStable = new CyclicAssumption("Method dictionary stability");
     private final CyclicAssumption classFormatStable = new CyclicAssumption("Class format stability");
+
+    @CompilationFinal private boolean instancesAreClasses = false;
 
     private ClassObject superclass;
     @CompilationFinal private PointersObject methodDict;
@@ -57,7 +60,8 @@ public final class ClassObject extends AbstractSqueakObject {
     }
 
     public ClassObject(final SqueakImageContext image, final ClassObject classObject, final int size) {
-        this(image, classObject, ArrayUtils.withAll(size - CLASS_DESCRIPTION.SIZE, image.nil));
+        this(image, classObject, ArrayUtils.withAll(Math.max(size - CLASS_DESCRIPTION.SIZE, 0), image.nil));
+        // `size - CLASS_DESCRIPTION.SIZE` is negative when instantiating "Behavior".
     }
 
     @Override
@@ -90,8 +94,14 @@ public final class ClassObject extends AbstractSqueakObject {
         return this.getSqueakClass() == image.metaclass;
     }
 
+    public void setInstancesAreClasses(final String className) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        // TODO: think about better check for the below.
+        instancesAreClasses = isMetaclass() || isAMetaclass() || "Behavior".equals(className) || "ClassDescription".equals(className) || "Class".equals(className);
+    }
+
     public boolean instancesAreClasses() {
-        return isMetaclass() || isAMetaclass();
+        return instancesAreClasses;
     }
 
     public void fillin(final SqueakImageChunk chunk) {
