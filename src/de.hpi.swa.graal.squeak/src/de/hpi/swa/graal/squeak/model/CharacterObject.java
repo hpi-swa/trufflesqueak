@@ -15,6 +15,7 @@ public final class CharacterObject extends AbstractSqueakObject {
 
     protected CharacterObject(final SqueakImageContext image, final int value) {
         super(image, image.characterClass);
+        assert value > Character.MAX_VALUE : "CharacterObject should only be used for non-primitive chars.";
         this.value = value;
     }
 

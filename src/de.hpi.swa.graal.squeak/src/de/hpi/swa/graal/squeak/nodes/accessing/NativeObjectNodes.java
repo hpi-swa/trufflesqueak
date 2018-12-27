@@ -46,7 +46,7 @@ public final class NativeObjectNodes {
         @SuppressWarnings("unused")
         @Specialization(guards = "obj.isByteType()")
         protected static final boolean doNativeBytes(final NativeObject obj, final CharacterObject value) {
-            return false; // CharacterObject never fits into byte.
+            return false; // Value of CharacterObjects is always larger than `Character.MAX_VALUE`.
         }
 
         @Specialization(guards = "obj.isShortType()")
