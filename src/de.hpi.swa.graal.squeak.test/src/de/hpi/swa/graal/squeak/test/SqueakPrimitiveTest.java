@@ -24,7 +24,7 @@ public class SqueakPrimitiveTest extends AbstractSqueakTestCaseWithDummyImage {
     @Test
     public void testPrimReplaceFromTo() {
         final PointersObject rcvr = new PointersObject(image, image.arrayClass,
-                        new Object[]{image.nil, image.sqFalse, image.sqTrue, image.characterClass, image.metaclass,
+                        new Object[]{image.nil, image.sqFalse, image.sqTrue, image.characterClass, image.metaClass,
                                         image.schedulerAssociation, image.smallIntegerClass, image.smalltalk,
                                         image.specialObjectsArray});
         assertSame(image.nil, rcvr.at0(0));

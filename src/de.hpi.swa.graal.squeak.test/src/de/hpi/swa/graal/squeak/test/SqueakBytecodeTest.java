@@ -657,7 +657,7 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
 
     private static PointersObject getTestObject() {
         return new PointersObject(image, image.arrayClass,
-                        new Object[]{image.nil, image.sqFalse, image.sqTrue, image.characterClass, image.metaclass,
+                        new Object[]{image.nil, image.sqFalse, image.sqTrue, image.characterClass, image.metaClass,
                                         image.schedulerAssociation, image.smallIntegerClass, image.smalltalk,
                                         image.specialObjectsArray});
     }

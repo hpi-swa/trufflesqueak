@@ -46,6 +46,7 @@ public final class ClassObject extends AbstractSqueakObject {
 
     private ClassObject(final ClassObject original) {
         this(original.image, original.getSqueakClass(), original.pointers.clone());
+        instancesAreClasses = original.instancesAreClasses;
         superclass = original.superclass;
         methodDict = original.methodDict.shallowCopy();
         format = original.format;
@@ -57,6 +58,7 @@ public final class ClassObject extends AbstractSqueakObject {
     private ClassObject(final SqueakImageContext image, final ClassObject sqClass, final Object[] pointers) {
         super(image, sqClass);
         this.pointers = pointers;
+        instancesAreClasses = sqClass.isMetaClass();
     }
 
     public ClassObject(final SqueakImageContext image, final ClassObject classObject, final int size) {
@@ -67,7 +69,7 @@ public final class ClassObject extends AbstractSqueakObject {
     @Override
     public String nameAsClass() {
         assert isClass();
-        if (isAMetaclass()) {
+        if (isAMetaClass()) {
             final Object classInstance = getThisClass();
             if (classInstance instanceof ClassObject) {
                 final NativeObject name = (NativeObject) ((ClassObject) classInstance).getClassName();
@@ -86,12 +88,8 @@ public final class ClassObject extends AbstractSqueakObject {
         return pointers[METACLASS.THIS_CLASS];
     }
 
-    public boolean isMetaclass() {
-        return this == image.metaclass;
-    }
-
-    private boolean isAMetaclass() {
-        return this.getSqueakClass() == image.metaclass;
+    private boolean isAMetaClass() {
+        return this.getSqueakClass().isMetaClass();
     }
 
     public boolean isBits() {
@@ -162,7 +160,7 @@ public final class ClassObject extends AbstractSqueakObject {
     public void setInstancesAreClasses(final String className) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         // TODO: think about better check for the below.
-        instancesAreClasses = isMetaclass() || isAMetaclass() || "Behavior".equals(className) || "ClassDescription".equals(className) || "Class".equals(className);
+        instancesAreClasses = isMetaClass() || isAMetaClass() || "Behavior".equals(className) || "ClassDescription".equals(className) || "Class".equals(className);
     }
 
     public boolean instancesAreClasses() {
@@ -354,6 +352,11 @@ public final class ClassObject extends AbstractSqueakObject {
 
     public void become(final ClassObject other) {
         becomeOtherClass(other);
+
+        if (instancesAreClasses != other.getSqueakClass().isMetaClass()) {
+            CompilerDirectives.transferToInterpreter();
+            instancesAreClasses = other.getSqueakClass().isMetaClass();
+        }
 
         final ClassObject otherSuperclass = other.superclass;
         final PointersObject otherMethodDict = other.methodDict;

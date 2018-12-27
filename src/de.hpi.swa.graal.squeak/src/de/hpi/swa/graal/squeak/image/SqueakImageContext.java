@@ -88,7 +88,7 @@ public final class SqueakImageContext {
     @CompilationFinal public ClassObject truffleObjectClass = null;
 
     public final ArrayObject specialObjectsArray = new ArrayObject(this);
-    public final ClassObject metaclass = new ClassObject(this);
+    public final ClassObject metaClass = new ClassObject(this);
     public final ClassObject nilClass = new ClassObject(this);
 
     private final SqueakLanguage language;

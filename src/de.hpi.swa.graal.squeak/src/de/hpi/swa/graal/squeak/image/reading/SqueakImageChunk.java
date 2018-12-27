@@ -77,9 +77,8 @@ public final class SqueakImageChunk {
             if (format == 0) { // no fields
                 object = new EmptyObject(image, hash, getSqClass());
             } else if (format == 1) { // fixed pointers
-                // classes should already be instantiated at this point, check a
-                // bit
-                assert getSqClass() != image.metaclass && (getSqClass() == null || getSqClass().getSqueakClass() != image.metaclass);
+                // classes should already be instantiated at this point, check a bit
+                assert getSqClass() != image.metaClass && (getSqClass() == null || getSqClass().getSqueakClass() != image.metaClass);
                 object = new PointersObject(image, hash, getSqClass());
             } else if (format == 2) { // indexable fields
                 object = new ArrayObject(image, hash, getSqClass());

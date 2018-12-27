@@ -89,13 +89,17 @@ public abstract class AbstractSqueakObject implements TruffleObject {
     }
 
     public final boolean isClass() {
-        assert !(this instanceof ClassObject) || (image.metaclass == getSqueakClass() || image.metaclass == getSqueakClass().getSqueakClass());
+        assert !(this instanceof ClassObject) || (getSqueakClass().isMetaClass() || getSqueakClass().getSqueakClass().isMetaClass());
         CompilerAsserts.neverPartOfCompilation();
         return this instanceof ClassObject;
     }
 
     public final boolean isMessage() {
         return getSqueakClass() == image.messageClass;
+    }
+
+    public final boolean isMetaClass() {
+        return this == image.metaClass;
     }
 
     public final boolean isNil() {

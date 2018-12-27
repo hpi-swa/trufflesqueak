@@ -359,7 +359,7 @@ public final class SqueakImageReaderNode extends RootNode {
         final SqueakImageChunk sqArray = specialObjectsChunk.getClassChunk();
         final SqueakImageChunk sqArrayClass = sqArray.getClassChunk();
         final SqueakImageChunk sqMetaclass = sqArrayClass.getClassChunk();
-        sqMetaclass.object = image.metaclass;
+        sqMetaclass.object = image.metaClass;
 
         // also cache nil, true, and false classes
         specialObjectChunk(SPECIAL_OBJECT.NIL_OBJECT).getClassChunk().object = image.nilClass;
@@ -435,7 +435,7 @@ public final class SqueakImageReaderNode extends RootNode {
                         continue;
                     }
                     final SqueakImageChunk metaClass = getChunk(potentialClassPtr);
-                    if (metaClass != null && metaClass.getSqClass() == image.metaclass) {
+                    if (metaClass != null && metaClass.getSqClass() == image.metaClass) {
                         final long[] data = metaClass.getWords();
                         final SqueakImageChunk classInstance = getChunk(data[data.length - 1]);
                         assert data.length == 6;
