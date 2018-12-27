@@ -81,8 +81,10 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         protected final AbstractSqueakObject performPointersBecomeOneWay(final VirtualFrame frame, final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash) {
             final Object[] fromPointers = getObjectArrayNode.execute(fromArray);
             final Object[] toPointers = getObjectArrayNode.execute(toArray);
-            migrateInstances(fromPointers, toPointers, copyHash, getAllInstancesNode.executeGet(frame));
-            patchTruffleFrames(fromPointers, toPointers, copyHash);
+            // Need to operate on copy of `fromPointers` because itself will also be changed.
+            final Object[] fromPointersClone = fromPointers.clone();
+            migrateInstances(fromPointersClone, toPointers, copyHash, getAllInstancesNode.executeGet(frame));
+            patchTruffleFrames(fromPointersClone, toPointers, copyHash);
             return fromArray;
         }
 
@@ -304,13 +306,13 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"!isPointersObject(receiver)"})
+        @Specialization(guards = {"!isArrayObject(receiver)"})
         protected static final AbstractSqueakObject doFail(final Object receiver, final ArrayObject argument) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_RECEIVER);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"!isPointersObject(argument)"})
+        @Specialization(guards = {"!isArrayObject(argument)"})
         protected static final AbstractSqueakObject doFail(final ArrayObject receiver, final Object argument) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
         }
