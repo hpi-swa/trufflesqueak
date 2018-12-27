@@ -18,7 +18,6 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameUtil;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
@@ -27,13 +26,12 @@ import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
-import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
+import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.GetObjectArrayNode;
 import de.hpi.swa.graal.squeak.nodes.context.ObjectGraphNodeGen.GetTraceablePointersNodeGen;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
@@ -137,22 +135,18 @@ public abstract class ObjectGraphNode extends AbstractNodeWithImage {
                 final Object[] arguments = current.getArguments();
                 for (int i = FrameAccess.RECEIVER; i < arguments.length; i++) {
                     final Object argument = arguments[i];
-                    if (argument instanceof AbstractSqueakObject) {
+                    if (SqueakGuards.isAbstractSqueakObject(argument)) {
                         pending.add((AbstractSqueakObject) argument);
                     }
                 }
-                final CompiledCodeObject code = (CompiledCodeObject) arguments[FrameAccess.METHOD];
-                final int stackPointer = FrameUtil.getIntSafe(current, code.stackPointerSlot);
-                int i = 0;
                 for (final FrameSlot slot : current.getFrameDescriptor().getSlots()) {
                     final Object stackObject = current.getValue(slot);
-                    if (stackObject == null || i >= stackPointer) {
-                        return null; // this slot and all following have not been used
+                    if (stackObject == null) {
+                        return null; // Stop here, because this slot and all following are not used.
                     }
-                    if (stackObject instanceof AbstractSqueakObject) {
+                    if (SqueakGuards.isAbstractSqueakObject(stackObject)) {
                         pending.add((AbstractSqueakObject) stackObject);
                     }
-                    i++;
                 }
                 return null;
             }
@@ -166,7 +160,7 @@ public abstract class ObjectGraphNode extends AbstractNodeWithImage {
             result.add(sqClass);
         }
         for (Object object : getPointersNode.executeGet(currentObject)) {
-            if (object instanceof AbstractSqueakObject && !(object instanceof NativeObject)) {
+            if (SqueakGuards.isAbstractSqueakObject(object)) {
                 result.add((AbstractSqueakObject) object);
             }
         }
