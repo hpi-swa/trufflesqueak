@@ -94,10 +94,6 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         return this instanceof ClassObject;
     }
 
-    public final boolean isCompiledMethodClass() {
-        return this == image.compiledMethodClass;
-    }
-
     public final boolean isMessage() {
         return getSqueakClass() == image.messageClass;
     }

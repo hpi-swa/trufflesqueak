@@ -29,7 +29,6 @@ import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.ERROR_TABLE;
-import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.GetAllInstancesNode;
 import de.hpi.swa.graal.squeak.nodes.NewObjectNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
@@ -229,18 +228,6 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                         @Cached("create()") final BranchProfile outOfMemProfile) {
             try {
                 return newNode.execute(receiver);
-            } catch (OutOfMemoryError e) {
-                outOfMemProfile.enter();
-                throw new PrimitiveFailed(ERROR_TABLE.INSUFFICIENT_OBJECT_MEMORY);
-            }
-        }
-
-        @Specialization
-        protected final Object doPointers(final PointersObject receiver,
-                        @Cached("create()") final BranchProfile outOfMemProfile) {
-            try {
-                // FIXME: BehaviorTest>>#testChange
-                return newNode.execute(receiver.getSqueakClass());
             } catch (OutOfMemoryError e) {
                 outOfMemProfile.enter();
                 throw new PrimitiveFailed(ERROR_TABLE.INSUFFICIENT_OBJECT_MEMORY);
@@ -474,7 +461,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = "receiver.isCompiledMethodClass()")
+        @Specialization(guards = "receiver == code.image.compiledMethodClass")
         protected final AbstractSqueakObject newMethod(final ClassObject receiver, final long bytecodeCount, final long header) {
             final CompiledMethodObject newMethod = CompiledMethodObject.newOfSize(code.image, receiver.getBasicInstanceSize() + (int) bytecodeCount);
             newMethod.setHeader(header);
