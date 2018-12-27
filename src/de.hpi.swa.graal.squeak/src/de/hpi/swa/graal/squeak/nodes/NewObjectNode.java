@@ -38,24 +38,24 @@ public abstract class NewObjectNode extends AbstractNodeWithImage {
 
     protected abstract Object executeAllocation(ClassObject classObject, int extraSize);
 
-    @Specialization(guards = "classObject.getInstanceSpecification() == 0")
+    @Specialization(guards = "classObject.isZeroSized()")
     protected final Object doEmpty(final ClassObject classObject, @SuppressWarnings("unused") final int extraSize) {
         return new EmptyObject(image, classObject);
     }
 
-    @Specialization(guards = {"classObject.getInstanceSpecification() == 1", "classObject.instancesAreClasses()"})
+    @Specialization(guards = {"classObject.isNonIndexableWithInstVars()", "classObject.instancesAreClasses()"})
     protected final Object doClass(final ClassObject classObject, final int extraSize) {
         assert extraSize == 0;
         return new ClassObject(image, classObject, classObject.getBasicInstanceSize());
     }
 
-    @Specialization(guards = {"classObject.getInstanceSpecification() == 1", "!classObject.instancesAreClasses()"})
+    @Specialization(guards = {"classObject.isNonIndexableWithInstVars()", "!classObject.instancesAreClasses()"})
     protected final Object doClassPointers(final ClassObject classObject, final int extraSize) {
         assert extraSize == 0;
         return new PointersObject(image, classObject, classObject.getBasicInstanceSize());
     }
 
-    @Specialization(guards = "classObject.getInstanceSpecification() == 2")
+    @Specialization(guards = "classObject.isIndexableWithNoInstVars()")
     protected final Object doIndexedPointers(final ClassObject classObject, final int extraSize) {
         if (ArrayObject.ENABLE_STORAGE_STRATEGIES) {
             return ArrayObject.createEmptyStrategy(image, classObject, classObject.getBasicInstanceSize() + extraSize);
@@ -64,64 +64,64 @@ public abstract class NewObjectNode extends AbstractNodeWithImage {
         }
     }
 
-    @Specialization(guards = {"classObject.getInstanceSpecification() == 3", "classObject == image.methodContextClass"})
+    @Specialization(guards = {"classObject.isIndexableWithInstVars()", "classObject == image.methodContextClass"})
     protected final Object doContext(final ClassObject classObject, final int extraSize) {
         return ContextObject.create(image, classObject.getBasicInstanceSize() + extraSize);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"classObject.getInstanceSpecification() == 3", "classObject == image.blockClosureClass"})
+    @Specialization(guards = {"classObject.isIndexableWithInstVars()", "classObject == image.blockClosureClass"})
     protected final Object doBlockClosure(final ClassObject classObject, final int extraSize) {
         return new BlockClosureObject(image); // TODO: verify this is actually used
     }
 
-    @Specialization(guards = {"classObject.getInstanceSpecification() == 3", "classObject != image.methodContextClass", "classObject != image.blockClosureClass"})
+    @Specialization(guards = {"classObject.isIndexableWithInstVars()", "classObject != image.methodContextClass", "classObject != image.blockClosureClass"})
     protected final Object doPointers(final ClassObject classObject, final int extraSize) {
         return new PointersObject(image, classObject, classObject.getBasicInstanceSize() + extraSize);
     }
 
-    @Specialization(guards = "classObject.getInstanceSpecification() == 4")
+    @Specialization(guards = "classObject.isWeak()")
     protected final Object doWeakPointers(final ClassObject classObject, final int extraSize) {
         return new WeakPointersObject(image, classObject, classObject.getBasicInstanceSize() + extraSize);
     }
 
-    @Specialization(guards = "classObject.getInstanceSpecification() == 5")
+    @Specialization(guards = "classObject.isEphemeronClass()")
     protected final Object doEphemerons(final ClassObject classObject, final int extraSize) {
         return doWeakPointers(classObject, extraSize); // TODO: ephemerons
     }
 
-    @Specialization(guards = "classObject.getInstanceSpecification() == 9")
+    @Specialization(guards = "classObject.isLongs()")
     protected final Object doNativeLongs(final ClassObject classObject, final int extraSize) {
         return NativeObject.newNativeLongs(image, classObject, classObject.getBasicInstanceSize() + extraSize);
     }
 
-    @Specialization(guards = {"between(classObject.getInstanceSpecification(), 10, 11)", "classObject == image.floatClass"})
+    @Specialization(guards = {"classObject.isWords()", "classObject == image.floatClass"})
     protected final Object doFloat(final ClassObject classObject, final int extraSize) {
         assert classObject.getBasicInstanceSize() + extraSize == 2;
         return new FloatObject(image);
     }
 
-    @Specialization(guards = {"between(classObject.getInstanceSpecification(), 10, 11)", "classObject != image.floatClass"})
+    @Specialization(guards = {"classObject.isWords()", "classObject != image.floatClass"})
     protected final Object doNativeInts(final ClassObject classObject, final int extraSize) {
         return NativeObject.newNativeInts(image, classObject, classObject.getBasicInstanceSize() + extraSize);
     }
 
-    @Specialization(guards = "between(classObject.getInstanceSpecification(), 12, 15)")
+    @Specialization(guards = "classObject.isShorts()")
     protected final Object doNativeShorts(final ClassObject classObject, final int extraSize) {
         return NativeObject.newNativeShorts(image, classObject, classObject.getBasicInstanceSize() + extraSize);
     }
 
-    @Specialization(guards = {"between(classObject.getInstanceSpecification(), 16, 23)", "classObject == image.largePositiveIntegerClass || classObject == image.largeNegativeIntegerClass"})
+    @Specialization(guards = {"classObject.isBytes()", "classObject == image.largePositiveIntegerClass || classObject == image.largeNegativeIntegerClass"})
     protected final Object doLargeIntegers(final ClassObject classObject, final int extraSize) {
         return new LargeIntegerObject(image, classObject, classObject.getBasicInstanceSize() + extraSize);
     }
 
-    @Specialization(guards = {"between(classObject.getInstanceSpecification(), 16, 23)", "classObject != image.largePositiveIntegerClass", "classObject != image.largeNegativeIntegerClass"})
+    @Specialization(guards = {"classObject.isBytes()", "classObject != image.largePositiveIntegerClass", "classObject != image.largeNegativeIntegerClass"})
     protected final Object doNativeBytes(final ClassObject classObject, final int extraSize) {
         return NativeObject.newNativeBytes(image, classObject, classObject.getBasicInstanceSize() + extraSize);
     }
 
-    @Specialization(guards = {"between(classObject.getInstanceSpecification(), 24, 31)"})
+    @Specialization(guards = {"classObject.isCompiledMethodClass()"})
     protected final Object doCompiledMethod(final ClassObject classObject, final int extraSize) {
         return CompiledMethodObject.newOfSize(image, classObject.getBasicInstanceSize() + extraSize);
     }
@@ -129,9 +129,5 @@ public abstract class NewObjectNode extends AbstractNodeWithImage {
     @Fallback
     protected static final Object doFail(final ClassObject classObject, @SuppressWarnings("unused") final int extraSize) {
         throw new SqueakException("Cannot instantiate class:", classObject, "(Spec: " + classObject.getInstanceSpecification() + ")");
-    }
-
-    protected static final boolean between(final int value, final int start, final int stop) {
-        return start <= value && value <= stop;
     }
 }

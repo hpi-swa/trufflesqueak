@@ -94,6 +94,71 @@ public final class ClassObject extends AbstractSqueakObject {
         return this.getSqueakClass() == image.metaclass;
     }
 
+    public boolean isBits() {
+        return getInstanceSpecification() >= 7;
+    }
+
+    public boolean isBytes() {
+        return getInstanceSpecification() >= 16;
+    }
+
+    public boolean isCompiledMethodClass() {
+        return getInstanceSpecification() >= 24;
+    }
+
+    public boolean isEphemeronClass() {
+        return getInstanceSpecification() == 5;
+    }
+
+    public boolean isFixed() {
+        return !isVariable();
+    }
+
+    public boolean isImmediateClass() {
+        return getInstanceSpecification() == 7;
+    }
+
+    public boolean isIndexableWithInstVars() {
+        return getInstanceSpecification() == 3;
+    }
+
+    public boolean isIndexableWithNoInstVars() {
+        return getInstanceSpecification() == 2;
+    }
+
+    public boolean isNonIndexableWithInstVars() {
+        return getInstanceSpecification() == 1;
+    }
+
+    public boolean isLongs() {
+        return getInstanceSpecification() == 9;
+    }
+
+    public boolean isPointers() {
+        return !isBits();
+    }
+
+    public boolean isShorts() {
+        return getInstanceSpecification() == 12;
+    }
+
+    public boolean isVariable() {
+        final int instSpec = getInstanceSpecification();
+        return instSpec >= 2 && (instSpec <= 4 || instSpec >= 9);
+    }
+
+    public boolean isWeak() {
+        return getInstanceSpecification() == 4;
+    }
+
+    public boolean isWords() {
+        return getInstanceSpecification() == 10;
+    }
+
+    public boolean isZeroSized() {
+        return getInstanceSpecification() == 0;
+    }
+
     public void setInstancesAreClasses(final String className) {
         CompilerDirectives.transferToInterpreterAndInvalidate();
         // TODO: think about better check for the below.
@@ -254,11 +319,6 @@ public final class ClassObject extends AbstractSqueakObject {
             lookupClass = lookupClass.getSuperclassOrNull();
         }
         return methodNames.toArray(new String[methodNames.size()]);
-    }
-
-    public boolean isVariable() {
-        final int instSpec = getInstanceSpecification();
-        return instSpec >= 2 && (instSpec <= 4 || instSpec >= 9);
     }
 
     public int getBasicInstanceSize() {
