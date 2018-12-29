@@ -40,8 +40,8 @@ public final class SqueakObjectMessageResolution {
             return at0Node.execute(receiver, index);
         }
 
-        protected static final Object access(final AbstractSqueakObject receiver, final String name) {
-            return receiver.getSqueakClass().lookup(name);
+        protected static final Object access(final AbstractSqueakObject receiver, final String identifier) {
+            return receiver.getSqueakClass().lookup(toSelector(identifier));
         }
     }
 
@@ -76,8 +76,8 @@ public final class SqueakObjectMessageResolution {
     public abstract static class SqueakObjectInvokeNode extends Node {
         @Child private DispatchNode dispatchNode = DispatchNode.create();
 
-        protected final Object access(final VirtualFrame frame, final AbstractSqueakObject receiver, final String name, final Object[] arguments) {
-            final CompiledMethodObject method = (CompiledMethodObject) receiver.getSqueakClass().lookup(name);
+        protected final Object access(final VirtualFrame frame, final AbstractSqueakObject receiver, final String identifier, final Object[] arguments) {
+            final CompiledMethodObject method = (CompiledMethodObject) receiver.getSqueakClass().lookup(toSelector(identifier));
             return dispatchNode.executeDispatch(frame, method, ArrayUtils.copyWithFirst(arguments, receiver), null);
         }
     }
@@ -122,8 +122,8 @@ public final class SqueakObjectMessageResolution {
 
     @Resolve(message = "KEY_INFO")
     public abstract static class SqueakObjectPropertyInfoNode extends Node {
-        protected static final int access(final AbstractSqueakObject receiver, final String name) {
-            final CompiledMethodObject method = (CompiledMethodObject) receiver.getSqueakClass().lookup(name);
+        protected static final int access(final AbstractSqueakObject receiver, final String identifier) {
+            final CompiledMethodObject method = (CompiledMethodObject) receiver.getSqueakClass().lookup(toSelector(identifier));
             if (method.getCompiledInSelector() == receiver.image.doesNotUnderstand) {
                 return KeyInfo.NONE;
             } else {
@@ -137,5 +137,16 @@ public final class SqueakObjectMessageResolution {
         protected static final TruffleObject access(final AbstractSqueakObject receiver) {
             return new InteropArray(receiver.getSqueakClass().listMethods());
         }
+    }
+
+    /**
+     * Converts an interop identifier to a Smalltalk selector. Most languages do not allow colons in
+     * identifiers, so treat underscores as colons as well.
+     *
+     * @param identifier for interop
+     * @return Smalltalk selector
+     */
+    private static String toSelector(final String identifier) {
+        return identifier.replace('_', ':');
     }
 }
