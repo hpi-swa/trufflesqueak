@@ -59,7 +59,7 @@ public abstract class SqueakObjectAt0Node extends Node {
     }
 
     @Specialization
-    protected static final long doNative(final NativeObject obj, final long index,
+    protected static final Object doNative(final NativeObject obj, final long index,
                     @Cached("create()") final ReadNativeObjectNode readNode) {
         return readNode.execute(obj, index);
     }

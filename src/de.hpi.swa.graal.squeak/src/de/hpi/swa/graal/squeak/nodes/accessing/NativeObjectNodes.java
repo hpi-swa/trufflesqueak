@@ -97,7 +97,7 @@ public final class NativeObjectNodes {
 
         @Specialization(guards = {"obj.isLongType()"})
         protected static final boolean doNativeLongsLargeInteger(@SuppressWarnings("unused") final NativeObject obj, final LargeIntegerObject value) {
-            return value.isZeroOrPositive();
+            return value.isZeroOrPositive() && value.lessThanOneShiftedBy64();
         }
 
         @Fallback
@@ -112,7 +112,7 @@ public final class NativeObjectNodes {
             return ReadNativeObjectNodeGen.create();
         }
 
-        public abstract long execute(NativeObject obj, long index);
+        public abstract Object execute(NativeObject obj, long index);
 
         @Specialization(guards = "obj.isByteType()")
         protected static final long doNativeBytes(final NativeObject obj, final long index) {
@@ -130,8 +130,13 @@ public final class NativeObjectNodes {
         }
 
         @Specialization(guards = "obj.isLongType()")
-        protected static final long doNativeLongs(final NativeObject obj, final long index) {
-            return obj.getLongStorage()[(int) index];
+        protected static final Object doNativeLongs(final NativeObject obj, final long index) {
+            final long value = obj.getLongStorage()[(int) index];
+            if (value >= 0) {
+                return value;
+            } else {
+                return LargeIntegerObject.valueOf(obj.image, value).toUnsigned();
+            }
         }
 
         @Fallback
@@ -224,9 +229,14 @@ public final class NativeObjectNodes {
             throw new SqueakException("Illegal value for int array: " + value);
         }
 
-        @Specialization(guards = {"obj.isLongType()", "value.isZeroOrPositive()"})
+        @Specialization(guards = {"obj.isLongType()", "value.isZeroOrPositive()", "value.fitsIntoLong()"})
         protected static final void doNativeLongsLargeInteger(final NativeObject obj, final long index, final LargeIntegerObject value) {
             doNativeLongs(obj, index, value.longValueExact());
+        }
+
+        @Specialization(guards = {"obj.isLongType()", "value.isZeroOrPositive()", "!value.fitsIntoLong()", "value.lessThanOneShiftedBy64()"})
+        protected static final void doNativeLongsLargeIntegerSigned(final NativeObject obj, final long index, final LargeIntegerObject value) {
+            doNativeLongs(obj, index, value.toSigned().longValueExact());
         }
 
         @Fallback

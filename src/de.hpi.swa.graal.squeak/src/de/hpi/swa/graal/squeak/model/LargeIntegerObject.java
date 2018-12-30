@@ -15,6 +15,8 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     public static final long SMALLINTEGER64_MAX = 0xfffffffffffffffL;
     public static final long MASK_32BIT = 0xffffffffL;
     public static final long MASK_64BIT = 0xffffffffffffffffL;
+    private static final BigInteger ONE_SHIFTED_BY_64 = BigInteger.ONE.shiftLeft(64);
+    private static final BigInteger ONE_HUNDRED_TWENTY_EIGHT = BigInteger.valueOf(128);
 
     private byte[] bytes;
     private BigInteger integer;
@@ -286,6 +288,11 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     }
 
     @TruffleBoundary
+    public boolean lessThanOneShiftedBy64() {
+        return getBigInteger().compareTo(ONE_SHIFTED_BY_64) < 0;
+    }
+
+    @TruffleBoundary
     public boolean inRange(final long minValue, final long maxValue) {
         final long longValueExact = getBigInteger().longValueExact();
         return minValue <= longValueExact && longValueExact <= maxValue;
@@ -299,6 +306,24 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     @TruffleBoundary
     public int signum() {
         return getBigInteger().signum();
+    }
+
+    @TruffleBoundary
+    public LargeIntegerObject toSigned() {
+        if (getBigInteger().shiftRight(56).compareTo(ONE_HUNDRED_TWENTY_EIGHT) >= 0) {
+            return newFromBigInteger(getBigInteger().subtract(ONE_SHIFTED_BY_64));
+        } else {
+            return this;
+        }
+    }
+
+    @TruffleBoundary
+    public LargeIntegerObject toUnsigned() {
+        if (getBigInteger().compareTo(BigInteger.ZERO) < 0) {
+            return newFromBigInteger(getBigInteger().add(ONE_SHIFTED_BY_64));
+        } else {
+            return this;
+        }
     }
 
     /*

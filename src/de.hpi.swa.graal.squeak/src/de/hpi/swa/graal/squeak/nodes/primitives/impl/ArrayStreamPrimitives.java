@@ -243,9 +243,9 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             return value;
         }
 
-        @Specialization(guards = {"inBounds(index, receiver)", "value.fitsIntoLong()", "getAcceptsValueNode().execute(receiver, value.longValueExact())"})
+        @Specialization(guards = {"inBounds(index, receiver)", "getAcceptsValueNode().execute(receiver, value)"})
         protected Object doNativeLargeInteger(final NativeObject receiver, final long index, final LargeIntegerObject value, @SuppressWarnings("unused") final NotProvided notProvided) {
-            getWriteNativeObjectNode().execute(receiver, index - 1, value.longValueExact());
+            getWriteNativeObjectNode().execute(receiver, index - 1, value);
             return value;
         }
 
@@ -354,9 +354,9 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             return value;
         }
 
-        @Specialization(guards = {"inBounds(index, target)", "value.fitsIntoLong()", "getAcceptsValueNode().execute(target, value.longValueExact())"})
+        @Specialization(guards = {"inBounds(index, target)", "getAcceptsValueNode().execute(target, value)"})
         protected Object doNativeLargeInteger(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final NativeObject target, final long index, final LargeIntegerObject value) {
-            getWriteNativeObjectNode().execute(target, index - 1, value.longValueExact());
+            getWriteNativeObjectNode().execute(target, index - 1, value);
             return value;
         }
 
@@ -641,7 +641,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
 
         @Specialization(guards = {"inBounds(index, obj)"})
         protected final Object doNativeObject(final NativeObject obj, final long index) {
-            return CharacterObject.valueOf(code.image, (int) readNode.execute(obj, index - 1));
+            return CharacterObject.valueOf(code.image, (int) (long) readNode.execute(obj, index - 1));
         }
     }
 
