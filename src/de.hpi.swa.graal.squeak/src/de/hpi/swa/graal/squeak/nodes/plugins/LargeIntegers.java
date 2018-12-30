@@ -330,7 +330,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {17, 37}, names = "primDigitBitShiftMagnitude")
+    @SqueakPrimitive(names = "primDigitBitShiftMagnitude")
     public abstract static class PrimBitShiftNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         public PrimBitShiftNode(final CompiledMethodObject method) {
@@ -392,7 +392,7 @@ public final class LargeIntegers extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = {16, 36}, names = "primDigitBitXor")
+    @SqueakPrimitive(names = "primDigitBitXor")
     protected abstract static class PrimBitXorNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         protected PrimBitXorNode(final CompiledMethodObject method) {
             super(method);

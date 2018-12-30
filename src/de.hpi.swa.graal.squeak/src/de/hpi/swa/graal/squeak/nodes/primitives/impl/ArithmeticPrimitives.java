@@ -242,6 +242,11 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         protected static final long doLong(final long receiver, final long arg) {
             return receiver & arg;
         }
+
+        @Specialization(guards = "arg.lessThanOneShiftedBy64()")
+        protected final Object doLongLarge(final long receiver, final LargeIntegerObject arg) {
+            return asLargeInteger(receiver).and(arg);
+        }
     }
 
     @GenerateNodeFactory
@@ -252,8 +257,74 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected static final long bitOr(final long receiver, final long arg) {
+        protected static final long doLong(final long receiver, final long arg) {
             return receiver | arg;
+        }
+
+        @Specialization(guards = "arg.lessThanOneShiftedBy64()")
+        protected final Object doLongLarge(final long receiver, final LargeIntegerObject arg) {
+            return asLargeInteger(receiver).or(arg);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 16)
+    protected abstract static class PrimBitXorNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+        protected PrimBitXorNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization
+        protected static final long doLong(final long receiver, final long b) {
+            return receiver ^ b;
+        }
+
+        @Specialization(guards = "arg.lessThanOneShiftedBy64()")
+        protected final Object doLongLarge(final long receiver, final LargeIntegerObject arg) {
+            return asLargeInteger(receiver).xor(arg);
+        }
+    }
+
+    @GenerateNodeFactory
+    @SqueakPrimitive(indices = 17)
+    public abstract static class PrimBitShiftNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+
+        public PrimBitShiftNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = {"arg >= 0", "!isLShiftLongOverflow(receiver, arg)"})
+        protected static final long doLong(final long receiver, final long arg) {
+            return receiver << arg;
+        }
+
+        @Specialization(guards = {"arg < 0", "isArgInLongSizeRange(arg)"})
+        protected static final long doLongNegativeLong(final long receiver, final long arg) {
+            // The result of a right shift can only become smaller than the receiver and 0 or -1 at
+            // minimum, so no BigInteger needed here
+            return receiver >> -arg;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"arg < 0", "!isArgInLongSizeRange(arg)", "receiver >= 0"})
+        protected static final long doLongTooBigPositive(final long receiver, final long arg) {
+            return 0L;
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"arg < 0", "!isArgInLongSizeRange(arg)", "receiver < 0"})
+        protected static final long doLongTooBigNegative(final long receiver, final long arg) {
+            return -1L;
+        }
+
+        protected static final boolean isLShiftLongOverflow(final long receiver, final long arg) {
+            // -1 needed, because we do not want to shift a positive long into negative long (most
+            // significant bit indicates positive/negative)
+            return Long.numberOfLeadingZeros(receiver) - 1 < arg;
+        }
+
+        protected static final boolean isArgInLongSizeRange(final long negativeValue) {
+            return -negativeValue < Long.SIZE;
         }
     }
 
@@ -605,45 +676,7 @@ public final class ArithmeticPrimitives extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 34)
-    public abstract static class PrimBitAndLargeIntegersNode extends AbstractLargeIntegerPrimitiveNode {
-        public PrimBitAndLargeIntegersNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Override
-        @Specialization
-        protected final Object doLong(final long receiver, final long arg) {
-            return receiver & arg;
-        }
-
-        @Override
-        @Specialization
-        protected final Object doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject arg) {
-            return receiver.and(arg);
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 35)
-    public abstract static class PrimBitOrLargeIntegersNode extends AbstractLargeIntegerPrimitiveNode {
-        public PrimBitOrLargeIntegersNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Override
-        @Specialization
-        protected final Object doLong(final long receiver, final long arg) {
-            return receiver | arg;
-        }
-
-        @Override
-        @Specialization
-        protected final Object doLargeInteger(final LargeIntegerObject receiver, final LargeIntegerObject arg) {
-            return receiver.or(arg);
-        }
-    }
+    // Squeak/Smalltalk uses LargeIntegers plugin for bit operations instead of primitives 34 to 37.
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 38)
