@@ -122,7 +122,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                             if (argument == fromPointer) {
                                 final Object toPointer = toPointers[j];
                                 current.getArguments()[i] = toPointer;
-                                updateHashNode.executeUpdate(fromPointer, toPointer, true);
+                                updateHashNode.executeUpdate(fromPointer, toPointer, copyHash);
                             } else {
                                 pointersBecomeNode.execute(argument, fromPointers, toPointers, copyHash);
                             }
@@ -147,7 +147,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                             if (stackObject == fromPointer) {
                                 final Object toPointer = toPointers[j];
                                 current.setObject(method.getStackSlot(i), toPointer);
-                                updateHashNode.executeUpdate(fromPointer, toPointer, true);
+                                updateHashNode.executeUpdate(fromPointer, toPointer, copyHash);
                             } else {
                                 pointersBecomeNode.execute(stackObject, fromPointers, toPointers, copyHash);
                             }
@@ -707,13 +707,13 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"!isPointersObject(receiver)"})
+        @Specialization(guards = {"!isArrayObject(receiver)"})
         protected static final AbstractSqueakObject doFail(final Object receiver, final ArrayObject argument, final boolean copyHash) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_RECEIVER);
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"!isPointersObject(argument)"})
+        @Specialization(guards = {"!isArrayObject(argument)"})
         protected static final AbstractSqueakObject doFail(final ArrayObject receiver, final Object argument, final boolean copyHash) {
             throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
         }
