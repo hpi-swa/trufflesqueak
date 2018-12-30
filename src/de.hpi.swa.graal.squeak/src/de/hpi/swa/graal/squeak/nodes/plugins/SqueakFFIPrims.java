@@ -124,6 +124,27 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         }
 
         @SuppressWarnings("unused")
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 4", "isSigned", "value.fitsIntoLong()", "inSignedBounds(value.longValueExact(), MAX_VALUE_SIGNED_4)"})
+        protected static final Object doAtPut4SignedLarge(final NativeObject byteArray, final long byteOffsetLong, final LargeIntegerObject value, final long byteSize, final boolean isSigned) {
+            return doAtPut4UnsignedLarge(byteArray, byteOffsetLong, value, byteSize, isSigned);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 4", "!isSigned", "value.fitsIntoLong()",
+                        "inUnsignedBounds(value.longValueExact(), MAX_VALUE_UNSIGNED_4)"})
+        @ExplodeLoop
+        protected static final Object doAtPut4UnsignedLarge(final NativeObject byteArray, final long byteOffsetLong, final LargeIntegerObject value, final long byteSize, final boolean isSigned) {
+            final int byteOffset = (int) byteOffsetLong - 1;
+            final byte[] targetBytes = byteArray.getByteStorage();
+            final byte[] sourceBytes = value.getBytes();
+            final int numSourceBytes = sourceBytes.length;
+            for (int i = 0; i < 4; i++) {
+                targetBytes[byteOffset + i] = i < numSourceBytes ? sourceBytes[i] : 0;
+            }
+            return value;
+        }
+
+        @SuppressWarnings("unused")
         @Specialization(guards = {"byteArray.isByteType()", "byteOffsetLong > 0", "byteSize == 8", "isSigned"})
         protected static final Object doAtPut8Signed(final NativeObject byteArray, final long byteOffsetLong, final long value, final long byteSize, final boolean isSigned) {
             return doAtPut8Unsigned(byteArray, byteOffsetLong, value, byteSize, isSigned);
@@ -156,9 +177,11 @@ public final class SqueakFFIPrims extends AbstractPrimitiveFactoryHolder {
         @ExplodeLoop
         protected static final Object doAtPut8UnsignedLarge(final NativeObject byteArray, final long byteOffsetLong, final LargeIntegerObject value, final long byteSize, final boolean isSigned) {
             final int byteOffset = (int) byteOffsetLong - 1;
-            final byte[] bytes = byteArray.getByteStorage();
+            final byte[] targetBytes = byteArray.getByteStorage();
+            final byte[] sourceBytes = value.getBytes();
+            final int numSourceBytes = sourceBytes.length;
             for (int i = 0; i < 8; i++) {
-                bytes[byteOffset + i] = value.getBytes()[i];
+                targetBytes[byteOffset + i] = i < numSourceBytes ? sourceBytes[i] : 0;
             }
             return value;
         }
