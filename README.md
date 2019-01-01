@@ -1,4 +1,4 @@
-# GraalSqueak [![Build Status][travis_badge]][travis] [![Codacy][codacy_badge]][codacy]
+# GraalSqueak [![Build Status][travis_badge]][travis] [![Codacy][codacy_grade]][codacy] [![Coverage][codacy_coverage]][codacy]
 
 A [Squeak/Smalltalk][squeak] implementation for the [GraalVM][graalvm].
 
@@ -86,7 +86,8 @@ Netherlands, July 17, 2018, ACM DL.
 </details>
 
 [codacy]: https://app.codacy.com/app/fniephaus/graalsqueak/dashboard
-[codacy_badge]: https://api.codacy.com/project/badge/Coverage/9748bfe3726b48c8973e3808549f6d05
+[codacy_coverage]: https://img.shields.io/codacy/coverage/9748bfe3726b48c8973e3808549f6d05.svg
+[codacy_grade]: https://img.shields.io/codacy/grade/9748bfe3726b48c8973e3808549f6d05.svg
 [dev]: ../../tree/dev
 [eclipse_cs]: http://checkstyle.org/eclipse-cs/
 [eclipse_oxygen]: https://www.eclipse.org/oxygen/
@@ -97,11 +98,11 @@ Netherlands, July 17, 2018, ACM DL.
 [graalsqueak_launcher]: src/de.hpi.swa.graal.squeak.launcher/src/de/hpi/swa/graal/squeak/launcher/GraalSqueakLauncher.java
 [graalvm]: http://www.graalvm.org/
 [graalvm_download]: http://www.graalvm.org/downloads/
+[icooolps18]: https://2018.ecoop.org/event/icooolps-2018-papers-graalsqueak-a-fast-smalltalk-bytecode-interpreter-written-in-an-ast-interpreter-framework
 [icooolps18_doi]: https://img.shields.io/badge/doi-10.1145/3242947.3242948-blue.svg
 [icooolps18_paper]: https://doi.org/10.1145/3242947.3242948
 [icooolps18_pdf]: https://fniephaus.com/2018/icooolps18-graalsqueak.pdf
 [icooolps18_preprint]: https://img.shields.io/badge/preprint-download-blue.svg
-[icooolps18]: https://2018.ecoop.org/event/icooolps-2018-papers-graalsqueak-a-fast-smalltalk-bytecode-interpreter-written-in-an-ast-interpreter-framework
 [issues]: ../../issues/new
 [labsjdk]: http://www.oracle.com/technetwork/oracle-labs/program-languages/downloads/index.html
 [master]: ../../tree/master
