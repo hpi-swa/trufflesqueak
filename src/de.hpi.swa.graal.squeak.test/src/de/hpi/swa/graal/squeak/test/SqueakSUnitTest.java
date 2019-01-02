@@ -10,6 +10,8 @@ import de.hpi.swa.graal.squeak.test.SqueakTests.TestType;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
+
+import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -44,7 +46,7 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
         if (toRun != null && !toRun.trim().isEmpty()) {
             return SqueakTests.getTestsToRun(toRun);
         }
-        return SqueakTests.getTestsToRun();
+        return SqueakTests.allTests();
     }
 
     @Test
@@ -57,7 +59,8 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
     }
 
     private void checkTermination() {
-        if (test.type == TestType.NOT_TERMINATING) {
+        Assume.assumeFalse("skipped", test.type == TestType.IGNORED);
+        if (test.type == TestType.NOT_TERMINATING || test.type == TestType.SLOWLY_FAILING || test.type == TestType.SLOWLY_PASSING) {
             assumeNotOnMXGate();
         }
     }
@@ -67,12 +70,12 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
 
         switch (test.type) {
             case PASSING: // falls through
-            case SLOW_PASSING:
+            case SLOWLY_PASSING:
                 assertTrue(result, passed);
                 break;
 
             case FAILING: // falls through
-            case SLOW_FAILING: // falls through
+            case SLOWLY_FAILING: // falls through
             case BROKEN_IN_SQUEAK:
                 assertFalse(result, passed);
                 break;

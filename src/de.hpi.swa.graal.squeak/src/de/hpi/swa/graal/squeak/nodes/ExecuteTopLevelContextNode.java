@@ -58,6 +58,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         activeContext.restartIfTerminated();
         while (true) {
             CompilerDirectives.transferToInterpreter();
+            assert activeContext.hasMaterializedSender() : "Context must have materialized sender";
             final AbstractSqueakObject sender = activeContext.getSender();
             try {
                 MaterializeContextOnMethodExitNode.reset();

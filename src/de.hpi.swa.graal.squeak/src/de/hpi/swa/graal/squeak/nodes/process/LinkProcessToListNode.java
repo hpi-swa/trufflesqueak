@@ -6,7 +6,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.LINK;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.LINKED_LIST;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.PointersObject;
@@ -39,7 +38,7 @@ public abstract class LinkProcessToListNode extends AbstractNodeWithCode {
 
     @Specialization(guards = "!isEmptyListNode.executeIsEmpty(list)")
     protected void doLinkNotEmptyList(final AbstractSqueakObject process, final PointersObject list) {
-        atPut0Node.execute(list.at0(LINKED_LIST.LAST_LINK), LINK.NEXT_LINK, process);
+        atPut0Node.execute(list.at0(LINKED_LIST.LAST_LINK), PROCESS.NEXT_LINK, process);
         list.atput0(LINKED_LIST.LAST_LINK, process);
         atPut0Node.execute(process, PROCESS.LIST, list);
     }

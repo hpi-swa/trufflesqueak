@@ -182,10 +182,6 @@ public final class ObjectLayouts {
         public static final int ARRAY = 1;
     }
 
-    public static final class LINK {
-        public static final int NEXT_LINK = 0;
-    }
-
     public static final class LINKED_LIST {
         public static final int FIRST_LINK = 0;
         public static final int LAST_LINK = 1;
@@ -220,6 +216,7 @@ public final class ObjectLayouts {
     }
 
     public static final class PROCESS {
+        public static final int NEXT_LINK = 0;
         public static final int SUSPENDED_CONTEXT = 1;
         public static final int PRIORITY = 2;
         public static final int LIST = 3;

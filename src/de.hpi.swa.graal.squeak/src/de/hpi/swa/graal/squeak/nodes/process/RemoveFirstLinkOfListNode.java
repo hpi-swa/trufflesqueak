@@ -6,8 +6,8 @@ import com.oracle.truffle.api.dsl.Specialization;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.LINK;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.LINKED_LIST;
+import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
@@ -35,9 +35,9 @@ public abstract class RemoveFirstLinkOfListNode extends AbstractNodeWithImage {
             atPut0Node.execute(list, LINKED_LIST.FIRST_LINK, image.nil);
             atPut0Node.execute(list, LINKED_LIST.LAST_LINK, image.nil);
         } else {
-            atPut0Node.execute(list, LINKED_LIST.FIRST_LINK, at0Node.execute(first, LINK.NEXT_LINK));
+            atPut0Node.execute(list, LINKED_LIST.FIRST_LINK, at0Node.execute(first, PROCESS.NEXT_LINK));
         }
-        atPut0Node.execute(first, LINK.NEXT_LINK, image.nil);
+        atPut0Node.execute(first, PROCESS.NEXT_LINK, image.nil);
         return first;
     }
 

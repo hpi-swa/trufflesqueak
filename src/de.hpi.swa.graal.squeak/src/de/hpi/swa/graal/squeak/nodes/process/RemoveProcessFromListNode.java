@@ -7,8 +7,8 @@ import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.LINK;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.LINKED_LIST;
+import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
@@ -43,7 +43,7 @@ public abstract class RemoveProcessFromListNode extends AbstractNodeWithImage {
         @Specialization(guards = "process == first")
         protected final void doRemoveEqual(final AbstractSqueakObject process, final AbstractSqueakObject list, @SuppressWarnings("unused") final AbstractSqueakObject first,
                         final AbstractSqueakObject last) {
-            final Object next = at0Node.execute(process, LINK.NEXT_LINK);
+            final Object next = at0Node.execute(process, PROCESS.NEXT_LINK);
             atPut0Node.execute(list, LINKED_LIST.FIRST_LINK, next);
             if (process == last) {
                 atPut0Node.execute(list, LINKED_LIST.LAST_LINK, image.nil);
@@ -58,14 +58,14 @@ public abstract class RemoveProcessFromListNode extends AbstractNodeWithImage {
                 if (temp == image.nil) {
                     throw new PrimitiveFailed();
                 }
-                next = at0Node.execute(temp, LINK.NEXT_LINK);
+                next = at0Node.execute(temp, PROCESS.NEXT_LINK);
                 if (next == process) {
                     break;
                 }
                 temp = next;
             }
-            next = at0Node.execute(process, LINK.NEXT_LINK);
-            atPut0Node.execute(temp, LINK.NEXT_LINK, next);
+            next = at0Node.execute(process, PROCESS.NEXT_LINK);
+            atPut0Node.execute(temp, PROCESS.NEXT_LINK, next);
             if (process == last) {
                 atPut0Node.execute(list, LINKED_LIST.LAST_LINK, temp);
             }
@@ -77,7 +77,7 @@ public abstract class RemoveProcessFromListNode extends AbstractNodeWithImage {
         final Object first = at0Node.execute(list, LINKED_LIST.FIRST_LINK);
         final Object last = at0Node.execute(list, LINKED_LIST.LAST_LINK);
         removeNode.execute(process, list, first, last);
-        atPut0Node.execute(process, LINK.NEXT_LINK, image.nil);
+        atPut0Node.execute(process, PROCESS.NEXT_LINK, image.nil);
     }
 
     @Fallback

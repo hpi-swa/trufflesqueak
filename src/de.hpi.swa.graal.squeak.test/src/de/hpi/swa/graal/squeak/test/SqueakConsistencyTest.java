@@ -75,7 +75,7 @@ public class SqueakConsistencyTest extends AbstractSqueakTestCaseWithImage {
     }
 
     private static Set<String> collectTests() {
-        return SqueakTests.tests().map(SqueakTest::qualifiedName).collect(toSet());
+        return SqueakTests.allTests().map(SqueakTest::qualifiedName).collect(toSet());
     }
 
     private static void printOrderedSelectors(final Collection<String> selectors) {

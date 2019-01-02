@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.test;
 
-import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 
 import java.io.BufferedReader;
@@ -9,10 +8,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -30,8 +27,8 @@ public final class SqueakTests {
         NOT_TERMINATING("Not Terminating"),
         BROKEN_IN_SQUEAK("Broken in Squeak"),
         IGNORED("Ignored"), // unable to run (e.g., OOM, ...)
-        SLOW_PASSING("Passing, but slow"),
-        SLOW_FAILING("Failing and slow");
+        SLOWLY_PASSING("Passing, but slow"),
+        SLOWLY_FAILING("Failing and slow");
 
         private final String message;
 
@@ -70,17 +67,8 @@ public final class SqueakTests {
         }
     }
 
-    protected static Stream<SqueakTest> getTestsToRun() {
-        final Set<TestType> types = runnableTestTypes();
-        return tests().filter(t -> types.contains(t.type));
-    }
-
-    private static Set<TestType> runnableTestTypes() {
-        return new HashSet<>(asList(TestType.PASSING, TestType.FAILING, TestType.FLAKY, TestType.NOT_TERMINATING));
-    }
-
     protected static Stream<SqueakTest> getTestsToRun(final String testClass) {
-        return tests().filter(t -> t.className.equals(testClass));
+        return allTests().filter(t -> t.className.equals(testClass));
     }
 
     /**
@@ -95,7 +83,7 @@ public final class SqueakTests {
         }
     }
 
-    protected static Stream<SqueakTest> tests() {
+    protected static Stream<SqueakTest> allTests() {
         final Properties properties = loadProperties();
         return properties.stringPropertyNames().stream().map(test -> parseTest(test, properties.getProperty(test))).sorted(
                         Comparator.comparing(t -> t.qualifiedName().toLowerCase()));
