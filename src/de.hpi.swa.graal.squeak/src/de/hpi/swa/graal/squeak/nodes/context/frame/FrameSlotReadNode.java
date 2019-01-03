@@ -23,11 +23,6 @@ public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
     }
 
     @Specialization(rewriteOn = FrameSlotTypeException.class)
-    protected final int readInt(final Frame frame) throws FrameSlotTypeException {
-        return frame.getInt(frameSlot);
-    }
-
-    @Specialization(rewriteOn = FrameSlotTypeException.class)
     protected final long readLong(final Frame frame) throws FrameSlotTypeException {
         return frame.getLong(frameSlot);
     }
@@ -42,8 +37,9 @@ public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
         return frame.getObject(frameSlot);
     }
 
-    @Specialization(replaces = {"readBoolean", "readInt", "readLong", "readDouble", "readObject"})
+    @Specialization(replaces = {"readBoolean", "readLong", "readDouble", "readObject"})
     protected final Object readAny(final Frame frame) {
+        assert frame.getValue(frameSlot) != null;
         return frame.getValue(frameSlot);
     }
 }

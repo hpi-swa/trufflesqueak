@@ -12,9 +12,9 @@ import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodesFactory.NativeAcceptsValueNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodesFactory.NativeGetBytesNodeGen;
+import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodesFactory.NativeObjectReadNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodesFactory.NativeObjectSizeNodeGen;
-import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodesFactory.ReadNativeObjectNodeGen;
-import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodesFactory.WriteNativeObjectNodeGen;
+import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodesFactory.NativeObjectWriteNodeGen;
 import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
 
 public final class NativeObjectNodes {
@@ -106,10 +106,10 @@ public final class NativeObjectNodes {
         }
     }
 
-    public abstract static class ReadNativeObjectNode extends Node {
+    public abstract static class NativeObjectReadNode extends Node {
 
-        public static ReadNativeObjectNode create() {
-            return ReadNativeObjectNodeGen.create();
+        public static NativeObjectReadNode create() {
+            return NativeObjectReadNodeGen.create();
         }
 
         public abstract Object execute(NativeObject obj, long index);
@@ -146,10 +146,10 @@ public final class NativeObjectNodes {
     }
 
     @ImportStatic(NativeObject.class)
-    public abstract static class WriteNativeObjectNode extends Node {
+    public abstract static class NativeObjectWriteNode extends Node {
 
-        public static WriteNativeObjectNode create() {
-            return WriteNativeObjectNodeGen.create();
+        public static NativeObjectWriteNode create() {
+            return NativeObjectWriteNodeGen.create();
         }
 
         public abstract void execute(NativeObject obj, long index, Object value);

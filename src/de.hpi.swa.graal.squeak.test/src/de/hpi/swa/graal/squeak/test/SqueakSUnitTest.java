@@ -59,8 +59,8 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
     }
 
     private void checkTermination() {
-        Assume.assumeFalse("skipped", test.type == TestType.IGNORED);
-        if (test.type == TestType.NOT_TERMINATING || test.type == TestType.SLOWLY_FAILING || test.type == TestType.SLOWLY_PASSING) {
+        Assume.assumeFalse("skipped", test.type == TestType.IGNORED || test.type == TestType.NOT_TERMINATING || test.type == TestType.BROKEN_IN_SQUEAK);
+        if (test.type == TestType.SLOWLY_FAILING || test.type == TestType.SLOWLY_PASSING) {
             assumeNotOnMXGate();
         }
     }

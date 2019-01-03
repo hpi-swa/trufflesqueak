@@ -53,6 +53,7 @@ public final class SqueakImageReaderNode extends RootNode {
 
     @Child private LoopNode readObjectLoopNode;
     @Child private FillInClassAndHashNode fillInClassNode = FillInClassAndHashNode.create();
+    @Child private FillInContextNode fillInContextNode = FillInContextNode.create();
     @Child private FillInNode fillInNode;
 
     public SqueakImageReaderNode(final SqueakImageContext image) {
@@ -88,7 +89,6 @@ public final class SqueakImageReaderNode extends RootNode {
         readHeader();
         readBody(frame);
         initObjects();
-        validateStateOrFail();
         clearChunktable();
         image.printToStdOut("Image loaded in", (currentTimeMillis() - start) + "ms.");
         return image.getSqueakImage();
@@ -102,12 +102,6 @@ public final class SqueakImageReaderNode extends RootNode {
     @TruffleBoundary
     private void clearChunktable() {
         chunktable.clear();
-    }
-
-    private void validateStateOrFail() {
-        if (image.isTesting() && image.getAsSymbolSelector() == null) {
-            throw new SqueakAbortException("Unable to find asSymbol selector");
-        }
     }
 
     @TruffleBoundary
@@ -423,6 +417,9 @@ public final class SqueakImageReaderNode extends RootNode {
             final Object chunkObject = chunk.asObject();
             fillInClassNode.execute(chunkObject, chunk);
             fillInNode.execute(chunkObject, chunk);
+        }
+        for (final SqueakImageChunk chunk : chunktable.values()) {
+            fillInContextNode.execute(chunk.asObject(), chunk);
         }
     }
 

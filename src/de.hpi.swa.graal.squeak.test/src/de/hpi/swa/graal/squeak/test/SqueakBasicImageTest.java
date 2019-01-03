@@ -1,6 +1,7 @@
 package de.hpi.swa.graal.squeak.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.FixMethodOrder;
@@ -14,7 +15,7 @@ public class SqueakBasicImageTest extends AbstractSqueakTestCaseWithImage {
 
     @Test
     public void test01AsSymbol() {
-        assertEquals(image.getAsSymbolSelector(), asSymbol("asSymbol"));
+        assertSame(evaluate("'asSymbol' asSymbol"), evaluate("'asSymbol' asSymbol"));
     }
 
     @Test
@@ -37,24 +38,24 @@ public class SqueakBasicImageTest extends AbstractSqueakTestCaseWithImage {
 
     @Test
     public void test03ThisContext() {
-        assertEquals(42L, evaluate("thisContext return: 42"));
+        assertEquals(42L, compilerEvaluate("thisContext return: 42"));
     }
 
     @Test
     public void test04Ensure() {
-        assertEquals(21L, evaluate("[21] ensure: [42]"));
-        assertEquals(42L, evaluate("[21] ensure: [^42]"));
-        assertEquals(21L, evaluate("[^21] ensure: [42]"));
-        assertEquals(42L, evaluate("[^21] ensure: [^42]"));
+        assertEquals(21L, compilerEvaluate("[21] ensure: [42]"));
+        assertEquals(42L, compilerEvaluate("[21] ensure: [^42]"));
+        assertEquals(21L, compilerEvaluate("[^21] ensure: [42]"));
+        assertEquals(42L, compilerEvaluate("[^21] ensure: [^42]"));
     }
 
     @Test
     public void test05OnError() {
-        final Object result = evaluate("[self error: 'foobar'] on: Error do: [:err| ^ err messageText]");
+        final Object result = compilerEvaluate("[[self error: 'foobar'] on: Error do: [:err| ^ err messageText]]value");
         assertEquals("foobar", result.toString());
-        assertEquals("foobar", evaluate("[[self error: 'foobar'] value] on: Error do: [:err| ^ err messageText]").toString());
-        assertEquals(image.sqTrue, evaluate("[[self error: 'foobar'] on: ZeroDivide do: [:e|]] on: Error do: [:err| ^ true]"));
-        assertEquals(image.sqTrue, evaluate("[self error: 'foobar'. false] on: Error do: [:err| ^ err return: true]"));
+        assertEquals("foobar", compilerEvaluate("[[self error: 'foobar'] value] on: Error do: [:err| ^ err messageText]").toString());
+        assertEquals(image.sqTrue, compilerEvaluate("[[self error: 'foobar'] on: ZeroDivide do: [:e|]] on: Error do: [:err| ^ true]"));
+        assertEquals(image.sqTrue, compilerEvaluate("[self error: 'foobar'. false] on: Error do: [:err| ^ err return: true]"));
     }
 
     @Test

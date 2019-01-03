@@ -13,7 +13,6 @@ import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.SimulationPrimitiveNode;
@@ -55,10 +54,10 @@ public abstract class FillInNode extends Node {
         obj.fillin(chunk);
     }
 
+    @SuppressWarnings("unused")
     @Specialization
     protected static final void doContext(final ContextObject obj, final SqueakImageChunk chunk) {
-        obj.setPointers(chunk.getPointers());
-        assert obj.getMethod().sqContextSize() + CONTEXT.TEMP_FRAME_START == obj.getPointers().length : "ContextObject has wrong size";
+        /** {@link ContextObject}s are filled in at a later stage by a {@link FillInContextNode}. */
     }
 
     @Specialization(guards = "obj.isShortType()")
@@ -80,9 +79,7 @@ public abstract class FillInNode extends Node {
     protected final void doNativeByteTesting(final NativeObject obj, final SqueakImageChunk chunk) {
         final byte[] stringBytes = chunk.getBytes();
         obj.setStorage(stringBytes);
-        if (image.getAsSymbolSelector() == null && Arrays.equals(SqueakImageContext.AS_SYMBOL_SELECTOR_NAME, stringBytes)) {
-            image.setAsSymbolSelector(obj);
-        } else if (image.getDebugErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_ERROR_SELECTOR_NAME, stringBytes)) {
+        if (image.getDebugErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_ERROR_SELECTOR_NAME, stringBytes)) {
             image.setDebugErrorSelector(obj);
         } else if (image.getDebugSyntaxErrorSelector() == null && Arrays.equals(SqueakImageContext.DEBUG_SYNTAX_ERROR_SELECTOR_NAME, stringBytes)) {
             image.setDebugSyntaxErrorSelector(obj);

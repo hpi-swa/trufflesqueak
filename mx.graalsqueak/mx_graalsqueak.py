@@ -50,7 +50,8 @@ def _graal_vm_args(args):
     if args.igv:
         print 'Sending Graal dumps to igv...'
         graal_args += [
-            '-Dgraal.Dump=Metaclass,Truffle,hpi',
+            '-Dgraal.TruffleBackgroundCompilation=false',
+            '-Dgraal.Dump=Truffle',
             '-Dgraal.DumpOnError=true',
         ]
 

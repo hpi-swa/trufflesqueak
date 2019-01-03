@@ -16,6 +16,8 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.GetObjectArrayNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ContextObjectNodes.ContextObjectReadNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ContextObjectNodes.ContextObjectWriteNode;
 
 public abstract class SqueakObjectPointersBecomeOneWayNode extends Node {
     @Child private UpdateSqueakObjectHashNode updateHashNode = UpdateSqueakObjectHashNode.create();
@@ -129,37 +131,19 @@ public abstract class SqueakObjectPointersBecomeOneWayNode extends Node {
         }
     }
 
-    @Specialization(guards = "obj.hasTruffleFrame()")
-    protected final void doContextWithTruffleFrame(final ContextObject obj, final Object[] from, final Object[] to, final boolean copyHash) {
-        /**
-         * This specialization is needed because a {@link ContextObject} can have a larger pointers
-         * array than its method has stack slots.
-         */
+    @Specialization
+    protected final void doContext(final ContextObject obj, final Object[] from, final Object[] to, final boolean copyHash,
+                    @Cached("create()") final ContextObjectReadNode readNode,
+                    @Cached("create()") final ContextObjectWriteNode writeNode) {
         for (int i = 0; i < from.length; i++) {
             final Object fromPointer = from[i];
             // Skip sender (for performance), pc, and sp.
             // TODO: Check that all pointers are actually traced (obj.size()?).
             for (int j = CONTEXT.METHOD; j < obj.size(); j++) {
-                final Object newPointer = obj.at0(j);
+                final Object newPointer = readNode.execute(obj, j);
                 if (newPointer == fromPointer) {
                     final Object toPointer = to[i];
-                    obj.atput0(j, toPointer);
-                    updateHashNode.executeUpdate(fromPointer, toPointer, copyHash);
-                }
-            }
-        }
-    }
-
-    @Specialization(guards = "!obj.hasTruffleFrame()")
-    protected final void doContext(final ContextObject obj, final Object[] from, final Object[] to, final boolean copyHash) {
-        for (int i = 0; i < from.length; i++) {
-            final Object fromPointer = from[i];
-            // skip sender (for performance), pc, and sp
-            for (int j = CONTEXT.METHOD; j < obj.size(); j++) {
-                final Object newPointer = obj.at0(j);
-                if (newPointer == fromPointer) {
-                    final Object toPointer = to[i];
-                    obj.atput0(j, toPointer);
+                    writeNode.execute(obj, j, toPointer);
                     updateHashNode.executeUpdate(fromPointer, toPointer, copyHash);
                 }
             }

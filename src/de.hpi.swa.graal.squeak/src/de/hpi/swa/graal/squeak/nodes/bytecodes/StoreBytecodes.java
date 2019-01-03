@@ -10,11 +10,11 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.ASSOCIATION;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
 import de.hpi.swa.graal.squeak.nodes.context.MethodLiteralNode;
 import de.hpi.swa.graal.squeak.nodes.context.SqueakObjectAtPutAndMarkContextsNode;
-import de.hpi.swa.graal.squeak.nodes.context.ReceiverNode;
 import de.hpi.swa.graal.squeak.nodes.context.TemporaryReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.TemporaryWriteNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPopNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackTopNode;
+import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public final class StoreBytecodes {
 
@@ -58,7 +58,7 @@ public final class StoreBytecodes {
         private AbstractStoreIntoReceiverVariableNode(final CompiledCodeObject code, final int index, final int numBytecodes, final long receiverIndex) {
             super(code, index, numBytecodes);
             this.receiverIndex = receiverIndex;
-            storeNode = SqueakObjectAtPutAndMarkContextsNode.create(receiverIndex, ReceiverNode.create(code), getValueNode());
+            storeNode = SqueakObjectAtPutAndMarkContextsNode.create(receiverIndex, new ReceiverNode(), getValueNode());
         }
 
         @Override
@@ -66,6 +66,14 @@ public final class StoreBytecodes {
             CompilerAsserts.neverPartOfCompilation();
             return getTypeName() + "IntoRcvr: " + receiverIndex;
         }
+
+        private static final class ReceiverNode extends SqueakNode {
+            @Override
+            public Object executeRead(final VirtualFrame frame) {
+                return FrameAccess.getReceiver(frame);
+            }
+        }
+
     }
 
     private abstract static class AbstractStoreIntoRemoteTempNode extends AbstractStoreIntoNode {

@@ -58,11 +58,8 @@ public final class InterruptHandlerState {
         if (timerSema instanceof PointersObject) {
             setTimerSemaphore((PointersObject) timerSema);
         }
-        executor.scheduleWithFixedDelay(new Runnable() {
-            public void run() {
-                shouldTrigger = true;
-            }
-        }, INTERRUPT_CHECKS_EVERY_N_MILLISECONDS, INTERRUPT_CHECKS_EVERY_N_MILLISECONDS, TimeUnit.MILLISECONDS);
+        executor.scheduleWithFixedDelay(() -> shouldTrigger = true,
+                        INTERRUPT_CHECKS_EVERY_N_MILLISECONDS, INTERRUPT_CHECKS_EVERY_N_MILLISECONDS, TimeUnit.MILLISECONDS);
     }
 
     @TruffleBoundary

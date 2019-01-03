@@ -21,8 +21,9 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.WriteArrayObjectNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.ClassObjectNodes.WriteClassObjectNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.WriteNativeObjectNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ClassObjectNodes.ClassObjectWriteNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ContextObjectNodes.ContextObjectWriteNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectWriteNode;
 
 @ImportStatic({NativeObject.class, SqueakGuards.class})
 public abstract class SqueakObjectAtPut0Node extends Node {
@@ -45,8 +46,9 @@ public abstract class SqueakObjectAtPut0Node extends Node {
     }
 
     @Specialization
-    protected static final void doContext(final ContextObject obj, final long index, final Object value) {
-        obj.atput0(index, value);
+    protected static final void doContext(final ContextObject obj, final long index, final Object value,
+                    @Cached("create()") final ContextObjectWriteNode writeNode) {
+        writeNode.execute(obj, index, value);
     }
 
     @Specialization
@@ -56,13 +58,13 @@ public abstract class SqueakObjectAtPut0Node extends Node {
 
     @Specialization
     protected static final void doClass(final ClassObject obj, final long index, final Object value,
-                    @Cached("create()") final WriteClassObjectNode writeNode) {
+                    @Cached("create()") final ClassObjectWriteNode writeNode) {
         writeNode.execute(obj, index, value);
     }
 
     @Specialization
     protected static final void doNative(final NativeObject obj, final long index, final Object value,
-                    @Cached("create()") final WriteNativeObjectNode writeNode) {
+                    @Cached("create()") final NativeObjectWriteNode writeNode) {
         writeNode.execute(obj, index, value);
     }
 

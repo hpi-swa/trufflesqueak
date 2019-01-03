@@ -58,7 +58,7 @@ public final class SqueakImage implements TruffleObject {
                 assert args.length == 0;
                 squeakImage.image.interrupt.start();
                 squeakImage.image.disableHeadless();
-                return Truffle.getRuntime().createCallTarget(squeakImage.image.getActiveContext()).call();
+                return Truffle.getRuntime().createCallTarget(squeakImage.image.getActiveContextNode()).call();
             }
         }
 

@@ -9,6 +9,8 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 
 public final class ArrayUtils {
+    public static final Object[] EMPTY_ARRAY = new Object[0];
+
     private static final Random RANDOM = new Random();
 
     private ArrayUtils() {

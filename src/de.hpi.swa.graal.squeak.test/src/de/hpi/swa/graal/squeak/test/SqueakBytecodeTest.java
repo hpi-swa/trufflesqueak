@@ -322,8 +322,8 @@ public class SqueakBytecodeTest extends AbstractSqueakTestCaseWithDummyImage {
         }
         final AbstractSqueakObject rcvr = image.specialObjectsArray;
         for (int i = 0; i < maxNumLiterals; i++) {
-            // push true, popIntoLiteral i, returnTop
-            final CompiledMethodObject method = makeMethod(literalsList.toArray(), 113, 130, 192 + i, 124);
+            // push rcvr, push true, popIntoLiteral i, returnTop
+            final CompiledMethodObject method = makeMethod(literalsList.toArray(), 112, 113, 130, 192 + i, 124);
             final VirtualFrame frame = createTestFrame(method);
             try {
                 final Object result = createContext(method, rcvr).execute(frame);

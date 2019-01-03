@@ -15,9 +15,10 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameInstance;
-import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
@@ -26,6 +27,7 @@ import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
+import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
@@ -34,6 +36,7 @@ import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.GetObjectArrayNode;
 import de.hpi.swa.graal.squeak.nodes.context.ObjectGraphNodeGen.GetTraceablePointersNodeGen;
+import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public abstract class ObjectGraphNode extends AbstractNodeWithImage {
@@ -125,31 +128,31 @@ public abstract class ObjectGraphNode extends AbstractNodeWithImage {
 
     @TruffleBoundary
     private static void addObjectsFromTruffleFrames(final Deque<AbstractSqueakObject> pending) {
-        Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Frame>() {
-            @Override
-            public Frame visitFrame(final FrameInstance frameInstance) {
-                final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
-                if (!FrameAccess.isGraalSqueakFrame(current)) {
-                    return null;
-                }
-                final Object[] arguments = current.getArguments();
-                for (int i = FrameAccess.RECEIVER; i < arguments.length; i++) {
-                    final Object argument = arguments[i];
-                    if (SqueakGuards.isAbstractSqueakObject(argument)) {
-                        pending.add((AbstractSqueakObject) argument);
-                    }
-                }
-                for (final FrameSlot slot : current.getFrameDescriptor().getSlots()) {
-                    final Object stackObject = current.getValue(slot);
-                    if (stackObject == null) {
-                        return null; // Stop here, because this slot and all following are not used.
-                    }
-                    if (SqueakGuards.isAbstractSqueakObject(stackObject)) {
-                        pending.add((AbstractSqueakObject) stackObject);
-                    }
-                }
+        Truffle.getRuntime().iterateFrames(frameInstance -> {
+            final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
+            if (!FrameAccess.isGraalSqueakFrame(current)) {
                 return null;
             }
+            final Object[] arguments = current.getArguments();
+            for (int i = FrameAccess.RECEIVER; i < arguments.length; i++) {
+                final Object argument = arguments[i];
+                if (SqueakGuards.isAbstractSqueakObject(argument)) {
+                    pending.add((AbstractSqueakObject) argument);
+                }
+            }
+            final CompiledCodeObject blockOrMethod = FrameAccess.getBlockOrMethod(current);
+            final FrameDescriptor frameDescriptor = blockOrMethod.getFrameDescriptor();
+            final FrameSlot[] stackSlots = blockOrMethod.getStackSlots();
+            for (final FrameSlot slot : stackSlots) {
+                if (frameDescriptor.getFrameSlotKind(slot) == FrameSlotKind.Illegal) {
+                    return null; // Stop here, because this slot and all following are not used.
+                }
+                final Object stackObject = current.getValue(slot);
+                if (SqueakGuards.isAbstractSqueakObject(stackObject)) {
+                    pending.add((AbstractSqueakObject) stackObject);
+                }
+            }
+            return null;
         });
     }
 
@@ -168,7 +171,6 @@ public abstract class ObjectGraphNode extends AbstractNodeWithImage {
     }
 
     protected abstract static class GetTraceablePointersNode extends Node {
-        private static final Object[] emptyResult = new Object[0];
 
         private static GetTraceablePointersNode create() {
             return GetTraceablePointersNodeGen.create();
@@ -186,9 +188,14 @@ public abstract class ObjectGraphNode extends AbstractNodeWithImage {
             return object.getTraceableObjects();
         }
 
-        @Specialization
+        @Specialization(guards = "object.hasTruffleFrame()")
         protected static final Object[] doContext(final ContextObject object) {
-            return object.getPointers();
+            return object.asPointers();
+        }
+
+        @Specialization(guards = "!object.hasTruffleFrame()")
+        protected static final Object[] doContextNoFrame(@SuppressWarnings("unused") final ContextObject object) {
+            return ArrayUtils.EMPTY_ARRAY;
         }
 
         @Specialization
@@ -214,7 +221,7 @@ public abstract class ObjectGraphNode extends AbstractNodeWithImage {
 
         @Fallback
         protected static final Object[] doFallback(@SuppressWarnings("unused") final AbstractSqueakObject object) {
-            return emptyResult;
+            return ArrayUtils.EMPTY_ARRAY;
         }
     }
 }

@@ -24,7 +24,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     @Child private UnwindContextChainNode unwindContextChainNode;
 
     public static ExecuteTopLevelContextNode create(final SqueakLanguage language, final ContextObject context, final boolean needsShutdown) {
-        return new ExecuteTopLevelContextNode(language, context, context.getClosureOrMethod(), needsShutdown);
+        return new ExecuteTopLevelContextNode(language, context, context.getBlockOrMethod(), needsShutdown);
     }
 
     private ExecuteTopLevelContextNode(final SqueakLanguage language, final ContextObject context, final CompiledCodeObject code, final boolean needsShutdown) {
@@ -58,11 +58,12 @@ public final class ExecuteTopLevelContextNode extends RootNode {
         activeContext.restartIfTerminated();
         while (true) {
             CompilerDirectives.transferToInterpreter();
-            assert activeContext.hasMaterializedSender() : "Context must have materialized sender";
+            assert activeContext.hasMaterializedSender() : "Context must have materialized sender: " + activeContext;
             final AbstractSqueakObject sender = activeContext.getSender();
+            assert sender == image.nil || ((ContextObject) sender).hasTruffleFrame();
             try {
                 MaterializeContextOnMethodExitNode.reset();
-                final CompiledCodeObject code = activeContext.getClosureOrMethod();
+                final CompiledCodeObject code = activeContext.getBlockOrMethod();
                 // FIXME: do not create node here?
                 if (executeContextNode == null) {
                     executeContextNode = insert(ExecuteContextNode.create(code));
@@ -70,14 +71,14 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                     executeContextNode.replace(ExecuteContextNode.create(code));
                 }
                 // doIt: activeContext.printSqStackTrace();
-                final Object result = executeContextNode.executeContext(activeContext.getTruffleFrame(code.getNumArgsAndCopied()), activeContext);
+                final Object result = executeContextNode.executeContext(activeContext.getTruffleFrame(), activeContext);
                 activeContext = unwindContextChainNode.executeUnwind(sender, sender, result);
                 image.traceProcessSwitches("Local Return on top-level (sender:", sender, ", new context: ", activeContext, ")");
             } catch (ProcessSwitch ps) {
                 image.traceProcessSwitches("Switching from", activeContext, "to", ps.getNewContext());
                 activeContext = ps.getNewContext();
             } catch (NonLocalReturn nlr) {
-                final AbstractSqueakObject target = nlr.hasArrivedAtTargetContext() ? sender : nlr.getTargetContext().getSender();
+                final AbstractSqueakObject target = (AbstractSqueakObject) nlr.getTargetContextOrMarker();
                 activeContext = unwindContextChainNode.executeUnwind(sender, target, nlr.getReturnValue());
                 image.traceProcessSwitches("Non Local Return on top-level, new context is", activeContext);
             } catch (NonVirtualReturn nvr) {

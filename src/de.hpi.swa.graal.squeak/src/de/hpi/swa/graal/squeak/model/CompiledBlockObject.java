@@ -14,7 +14,7 @@ public final class CompiledBlockObject extends CompiledCodeObject {
     }
 
     private CompiledBlockObject(final CompiledCodeObject code, final CompiledMethodObject outerMethod, final int numArgs, final int numCopied, final int bytecodeOffset, final int blockSize) {
-        super(code.image, numCopied);
+        super(code.image, 0, numCopied);
         this.outerMethod = outerMethod;
         final int additionalOffset = code instanceof CompiledBlockObject ? ((CompiledBlockObject) code).getOffset() : 0;
         this.offset = additionalOffset + bytecodeOffset;

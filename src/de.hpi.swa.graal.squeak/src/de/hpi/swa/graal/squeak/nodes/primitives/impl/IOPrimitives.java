@@ -35,8 +35,8 @@ import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.GetObjectArrayNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ReadArrayObjectNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.ReadNativeObjectNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.WriteNativeObjectNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectReadNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectInstSizeNode;
@@ -307,7 +307,8 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             }
 
             @Specialization(guards = {"sizeNode.execute(scanMap) == 256", "stopIndex <= sourceBytes.length"})
-            protected final Object doScan(final PointersObject receiver, final long startIndex, final long stopIndex, final byte[] sourceBytes, final long rightX, final ArrayObject stops,
+            protected final Object doScan(final PointersObject receiver, final long startIndex, final long stopIndex, final byte[] sourceBytes, final long rightX,
+                            final ArrayObject stops,
                             final long kernData, final long startScanDestX, final ArrayObject scanXTable, final ArrayObject scanMap) {
                 final int maxGlyph = sizeNode.execute(scanXTable) - 2;
                 long scanDestX = startScanDestX;
@@ -366,8 +367,8 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
         @Child private SqueakObjectInstSizeNode instSizeNode = SqueakObjectInstSizeNode.create();
         @Child private SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
         @Child private ReadArrayObjectNode readArrayObjectNode;
-        @Child private ReadNativeObjectNode readNativeObjectNode;
-        @Child private WriteNativeObjectNode writeNativeObjectNode;
+        @Child private NativeObjectReadNode readNativeObjectNode;
+        @Child private NativeObjectWriteNode writeNativeObjectNode;
         @Child private GetObjectArrayNode getObjectArrayNode;
 
         protected PrimStringReplaceNode(final CompiledMethodObject method) {
@@ -767,18 +768,18 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return readArrayObjectNode;
         }
 
-        private ReadNativeObjectNode getReadNativeObjectNode() {
+        private NativeObjectReadNode getReadNativeObjectNode() {
             if (readNativeObjectNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                readNativeObjectNode = insert(ReadNativeObjectNode.create());
+                readNativeObjectNode = insert(NativeObjectReadNode.create());
             }
             return readNativeObjectNode;
         }
 
-        private WriteNativeObjectNode getWriteNativeObjectNode() {
+        private NativeObjectWriteNode getWriteNativeObjectNode() {
             if (writeNativeObjectNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                writeNativeObjectNode = insert(WriteNativeObjectNode.create());
+                writeNativeObjectNode = insert(NativeObjectWriteNode.create());
             }
             return writeNativeObjectNode;
         }

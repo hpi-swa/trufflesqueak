@@ -33,14 +33,20 @@ public abstract class MaterializeContextOnMethodExitNode extends AbstractNodeWit
         }
     }
 
-    @Specialization(guards = {"lastSeenContext != null || !isFullyVirtualized(frame)"})
+    @Specialization(guards = {"!hasLastSeenContext(frame)", "!isVirtualized(frame)", "getContext(frame).hasEscaped()"})
+    protected final void doStartMaterialization(final VirtualFrame frame) {
+        lastSeenContext = getContext(frame);
+    }
+
+    @Specialization(guards = {"hasLastSeenContext(frame)"})
     protected static final void doMaterialize(final VirtualFrame frame,
                     @Cached("create(code)") final GetOrCreateContextNode getOrCreateContextNode,
                     @Cached("create()") final SetSenderNode setSenderNode) {
         final ContextObject context = getOrCreateContextNode.executeGet(frame);
         if (context != lastSeenContext) {
+            assert context.hasTruffleFrame();
             setSenderNode.execute(lastSeenContext, context);
-            if (context.hasEscaped()) {
+            if (!context.isTerminated() && context.hasEscaped()) {
                 // Materialization needs to continue in parent frame.
                 lastSeenContext = context;
             } else {
@@ -56,6 +62,10 @@ public abstract class MaterializeContextOnMethodExitNode extends AbstractNodeWit
          * Nothing to do because neither was a child context materialized nor has this context been
          * requested and allocated.
          */
+    }
+
+    protected static final boolean hasLastSeenContext(@SuppressWarnings("unused") final VirtualFrame frame) {
+        return lastSeenContext != null;
     }
 
     protected abstract static class SetSenderNode extends Node {

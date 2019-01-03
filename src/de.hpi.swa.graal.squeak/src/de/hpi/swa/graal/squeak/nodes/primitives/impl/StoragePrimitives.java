@@ -14,6 +14,8 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 
@@ -24,7 +26,6 @@ import de.hpi.swa.graal.squeak.model.CharacterObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
-import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
@@ -132,21 +133,20 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                      * use method.frameSize() here instead of stackPointer because in rare cases,
                      * the stack is accessed behind the stackPointer.
                      */
-                    final CompiledCodeObject method = FrameAccess.getMethod(current);
-                    for (int i = 0; i < method.getNumStackSlots(); i++) {
-                        final Object stackObject = current.getValue(method.getStackSlot(i));
-                        if (stackObject == null) {
-                            /*
-                             * this slot and all following are `null` and have therefore not been
-                             * used; optimization to make up for not using the stackPointer.
-                             */
+                    final CompiledCodeObject blockOrMethod = FrameAccess.getBlockOrMethod(current);
+                    for (int i = 0; i < blockOrMethod.getNumStackSlots(); i++) {
+                        final FrameSlot frameSlot = blockOrMethod.getStackSlot(i);
+                        if (blockOrMethod.getFrameDescriptor().getFrameSlotKind(frameSlot) == FrameSlotKind.Illegal) {
+                            /** this slot and all following ones are not initialized, done. */
                             return null;
                         }
+                        final Object stackObject = current.getValue(frameSlot);
                         for (int j = 0; j < fromPointers.length; j++) {
                             final Object fromPointer = fromPointers[j];
                             if (stackObject == fromPointer) {
                                 final Object toPointer = toPointers[j];
-                                current.setObject(method.getStackSlot(i), toPointer);
+                                assert toPointer != null;
+                                FrameAccess.setStackSlot(current, frameSlot, toPointer);
                                 updateHashNode.executeUpdate(fromPointer, toPointer, copyHash);
                             } else {
                                 pointersBecomeNode.execute(stackObject, fromPointers, toPointers, copyHash);
@@ -406,20 +406,6 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected static final long doSqueakObject(final AbstractSqueakObject obj) {
             return obj.getSqueakHash();
-        }
-    }
-
-    @GenerateNodeFactory
-    @SqueakPrimitive(indices = 76)
-    protected abstract static class PrimStoreStackPointerNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-        protected PrimStoreStackPointerNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        @Specialization
-        protected static final AbstractSqueakObject store(final ContextObject receiver, final long value) {
-            receiver.setStackPointer(value);
-            return receiver;
         }
     }
 
