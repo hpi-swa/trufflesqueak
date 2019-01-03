@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes.context.stack;
 
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
@@ -18,13 +17,8 @@ public abstract class StackPeekNode extends AbstractStackNode {
         this.offset = offset;
     }
 
-    @Specialization(guards = {"isVirtualized(frame)"})
-    protected final Object doPeekVirtualized(final VirtualFrame frame) {
-        return getReadNode().execute(frame, frameStackPointer(frame) - offset);
-    }
-
-    @Fallback
+    @Specialization
     protected final Object doPeek(final VirtualFrame frame) {
-        return getContext(frame).peek(offset);
+        return readNode.execute(frame, frameStackPointer(frame) - offset);
     }
 }

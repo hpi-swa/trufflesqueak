@@ -3,11 +3,13 @@ package de.hpi.swa.graal.squeak.nodes;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
+import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.EmptyObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
+import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
@@ -44,6 +46,10 @@ public final class SqueakGuards {
         return object instanceof ArrayObject;
     }
 
+    public static boolean isBlockClosureObject(final Object object) {
+        return object instanceof BlockClosureObject;
+    }
+
     public static boolean isBoolean(final Object value) {
         return value instanceof Boolean;
     }
@@ -74,6 +80,10 @@ public final class SqueakGuards {
 
     public static boolean isFloatObject(final Object object) {
         return object instanceof FloatObject;
+    }
+
+    public static boolean isFrameMarker(final Object object) {
+        return object instanceof FrameMarker;
     }
 
     public static boolean isIntegralWhenDividedBy(final long a, final long b) {

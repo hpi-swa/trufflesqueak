@@ -23,7 +23,7 @@ public final class YieldProcessNode extends AbstractNodeWithImage {
         super(code.image);
         getActiveProcessNode = GetActiveProcessNode.create(image);
         isEmptyListNode = IsEmptyListNode.create(image);
-        linkProcessToListNode = LinkProcessToListNode.create(code);
+        linkProcessToListNode = LinkProcessToListNode.create(image);
         wakeHighestPriorityNode = WakeHighestPriorityNode.create(code);
     }
 

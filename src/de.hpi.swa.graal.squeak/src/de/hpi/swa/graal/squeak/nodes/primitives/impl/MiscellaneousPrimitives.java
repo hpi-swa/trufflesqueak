@@ -209,7 +209,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
 
         @Specialization
         protected final boolean doContext(final ContextObject receiver, final Object thang) {
-            return ArrayUtils.contains(receiver.getPointers(), thang) ? code.image.sqTrue : code.image.sqFalse;
+            return receiver.pointsTo(thang) ? code.image.sqTrue : code.image.sqFalse;
         }
 
         @Specialization(guards = {"receiver.isEmptyType()", "receiver.getEmptyStorage() > 0"})
@@ -645,7 +645,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         @SuppressWarnings("unused")
         @Specialization(guards = "hasNoInstances(classObject)")
         protected final ArrayObject noInstances(final ClassObject classObject) {
-            return code.image.newList(new Object[0]);
+            return code.image.newList(ArrayUtils.EMPTY_ARRAY);
         }
 
         @Specialization

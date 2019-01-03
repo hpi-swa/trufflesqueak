@@ -23,8 +23,8 @@ public final class Returns {
     public static final class LocalReturn extends AbstractReturn {
         private static final long serialVersionUID = 1L;
 
-        public LocalReturn(final Object result) {
-            super(result);
+        public LocalReturn(final Object returnValue) {
+            super(returnValue);
         }
 
         @Override
@@ -36,30 +36,21 @@ public final class Returns {
 
     public static final class NonLocalReturn extends AbstractReturn {
         private static final long serialVersionUID = 1L;
-        private final ContextObject targetContext;
-        private boolean arrivedAtTargetContext = false;
+        private final Object targetContextOrMarker;
 
-        public NonLocalReturn(final Object returnValue, final ContextObject targetContext) {
+        public NonLocalReturn(final Object returnValue, final Object targetContext) {
             super(returnValue);
-            this.targetContext = targetContext;
+            this.targetContextOrMarker = targetContext;
         }
 
-        public ContextObject getTargetContext() {
-            return targetContext;
-        }
-
-        public boolean hasArrivedAtTargetContext() {
-            return arrivedAtTargetContext;
-        }
-
-        public void setArrivedAtTargetContext() {
-            arrivedAtTargetContext = true;
+        public Object getTargetContextOrMarker() {
+            return targetContextOrMarker;
         }
 
         @Override
         public String toString() {
             CompilerAsserts.neverPartOfCompilation();
-            return "NLR (value: " + returnValue + ", arrived: " + arrivedAtTargetContext + ", target: " + targetContext + ")";
+            return "NLR (value: " + returnValue + ", target: " + targetContextOrMarker + ")";
         }
     }
 
@@ -74,8 +65,6 @@ public final class Returns {
 
         public NonVirtualReturn(final Object returnValue, final ContextObject targetContext, final ContextObject currentContext) {
             super(returnValue);
-            assert !targetContext.hasVirtualSender();
-            assert !currentContext.hasVirtualSender();
             this.targetContext = targetContext;
             this.currentContext = currentContext;
         }

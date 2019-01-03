@@ -143,7 +143,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
     public final Object send(final String selector, final Object... arguments) {
         CompilerAsserts.neverPartOfCompilation("For testing or instrumentation only.");
         final CompiledMethodObject method = (CompiledMethodObject) this.getSqueakClass().lookup(selector);
-        final MaterializedFrame frame = Truffle.getRuntime().createMaterializedFrame(new Object[0], method.getFrameDescriptor());
+        final MaterializedFrame frame = Truffle.getRuntime().createMaterializedFrame(ArrayUtils.EMPTY_ARRAY, method.getFrameDescriptor());
         return DispatchSendNode.create(image).executeSend(frame, method.getCompiledInSelector(), method, getSqueakClass(), ArrayUtils.copyWithFirst(arguments, this), image.nil);
     }
 }

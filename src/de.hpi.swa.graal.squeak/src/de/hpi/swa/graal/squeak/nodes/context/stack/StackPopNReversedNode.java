@@ -1,12 +1,10 @@
 package de.hpi.swa.graal.squeak.nodes.context.stack;
 
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
-import de.hpi.swa.graal.squeak.model.ContextObject;
 
 public abstract class StackPopNReversedNode extends AbstractStackPopNode {
     private final int numPop;
@@ -21,31 +19,16 @@ public abstract class StackPopNReversedNode extends AbstractStackPopNode {
     }
 
     @ExplodeLoop
-    @Specialization(guards = {"isVirtualized(frame)"})
-    protected final Object[] doPopNVirtualized(final VirtualFrame frame) {
-        final int sp = frameStackPointer(frame);
-        assert sp - numPop >= 0;
-        final Object[] result = new Object[numPop];
-        for (int i = 0; i < numPop; i++) {
-            result[numPop - 1 - i] = atStackAndClear(frame, sp - i);
-            assert result[numPop - 1 - i] != null;
-        }
-        setFrameStackPointer(frame, sp - numPop);
-        return result;
-    }
-
-    @ExplodeLoop
-    @Fallback
+    @Specialization
     protected final Object[] doPopN(final VirtualFrame frame) {
-        final ContextObject context = getContext(frame);
-        final long sp = context.getStackPointer();
-        assert sp - numPop >= 0;
+        final int currentSP = frameStackPointer(frame);
+        assert currentSP - numPop >= 0;
         final Object[] result = new Object[numPop];
-        for (int i = 0; i < numPop; i++) {
-            result[numPop - 1 - i] = atStackAndClear(context, sp - i);
-            assert result[numPop - 1 - i] != null;
+        for (int i = 1; i <= numPop; i++) {
+            result[numPop - i] = atStackAndClear(frame, currentSP - i);
+            assert result[numPop - i] != null;
         }
-        context.setStackPointer(sp - numPop);
+        setFrameStackPointer(frame, currentSP - numPop);
         return result;
     }
 }

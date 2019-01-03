@@ -1,9 +1,10 @@
 package de.hpi.swa.graal.squeak.model;
 
+import java.util.Arrays;
+
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
@@ -21,18 +22,22 @@ import de.hpi.swa.graal.squeak.util.CompiledCodeObjectPrinter;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 
 public abstract class CompiledCodeObject extends AbstractSqueakObject {
+    private static final int[] HEADER_SPLIT_PATTERN = new int[]{15, 1, 1, 1, 6, 4, 2, 1};
+
     public enum SLOT_IDENTIFIER {
-        THIS_CONTEXT_OR_MARKER,
+        THIS_MARKER,
+        THIS_CONTEXT,
         INSTRUCTION_POINTER,
         STACK_POINTER,
     }
 
     // frame info
-    @CompilationFinal private FrameDescriptor frameDescriptor;
-    @CompilationFinal public FrameSlot thisContextOrMarkerSlot;
-    @CompilationFinal public FrameSlot instructionPointerSlot;
-    @CompilationFinal public FrameSlot stackPointerSlot;
-    @CompilationFinal(dimensions = 1) private FrameSlot[] stackSlots;
+    private final FrameDescriptor frameDescriptor;
+    private final FrameSlot thisMarkerSlot;
+    private final FrameSlot thisContextSlot;
+    private final FrameSlot instructionPointerSlot;
+    private final FrameSlot stackPointerSlot;
+    @CompilationFinal(dimensions = 1) protected FrameSlot[] stackSlots;
     // header info and data
     @CompilationFinal(dimensions = 1) protected Object[] literals;
     @CompilationFinal(dimensions = 1) protected byte[] bytes;
@@ -52,26 +57,29 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
     @CompilationFinal private RootCallTarget callTarget;
     private final CyclicAssumption callTargetStable = new CyclicAssumption("CompiledCodeObject assumption");
 
-    protected CompiledCodeObject(final SqueakImageContext image, final int numCopiedValues) {
-        // Always use CompiledMethod, CompiledBlock not needed.
-        super(image, image.compiledMethodClass);
-        if (ALWAYS_NON_VIRTUALIZED) {
-            invalidateCanBeVirtualizedAssumption();
-        }
-        this.numCopiedValues = numCopiedValues;
-    }
-
     protected CompiledCodeObject(final SqueakImageContext image, final int hash, final int numCopiedValues) {
-        // Always use CompiledMethod, CompiledBlock not needed.
         super(image, hash, image.compiledMethodClass);
         if (ALWAYS_NON_VIRTUALIZED) {
             invalidateCanBeVirtualizedAssumption();
         }
         this.numCopiedValues = numCopiedValues;
+
+        frameDescriptor = new FrameDescriptor();
+        thisMarkerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.THIS_MARKER, FrameSlotKind.Object);
+        thisContextSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.THIS_CONTEXT, FrameSlotKind.Illegal);
+        instructionPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.INSTRUCTION_POINTER, FrameSlotKind.Int);
+        stackPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.STACK_POINTER, FrameSlotKind.Int);
     }
 
     protected CompiledCodeObject(final CompiledCodeObject original) {
-        this(original.image, original.numCopiedValues);
+        super(original.image, original.image.compiledMethodClass);
+        this.numCopiedValues = original.numCopiedValues;
+        frameDescriptor = original.frameDescriptor;
+        thisMarkerSlot = original.thisMarkerSlot;
+        thisContextSlot = original.thisContextSlot;
+        instructionPointerSlot = original.instructionPointerSlot;
+        stackPointerSlot = original.stackPointerSlot;
+        stackSlots = original.stackSlots;
         setLiteralsAndBytes(original.literals.clone(), original.bytes.clone());
     }
 
@@ -95,26 +103,8 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         return source;
     }
 
-    public final int sqContextSize() {
+    public final int getSqueakContextSize() {
         return needsLargeFrame ? CONTEXT.LARGE_FRAMESIZE : CONTEXT.SMALL_FRAMESIZE;
-    }
-
-    @TruffleBoundary
-    private void prepareFrameDescriptor() {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        frameDescriptor = new FrameDescriptor();
-        thisContextOrMarkerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.THIS_CONTEXT_OR_MARKER, FrameSlotKind.Object);
-        instructionPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.INSTRUCTION_POINTER, FrameSlotKind.Int);
-        stackPointerSlot = frameDescriptor.addFrameSlot(SLOT_IDENTIFIER.STACK_POINTER, FrameSlotKind.Int);
-        /**
-         * Arguments and copied values are also pushed onto the stack in {@link EnterCodeNode},
-         * therefore there must be enough slots for all these values as well as the Squeak stack.
-         */
-        final int numFrameSlots = getNumArgsAndCopied() + sqContextSize();
-        stackSlots = new FrameSlot[numFrameSlots];
-        for (int i = 0; i < numFrameSlots; i++) {
-            stackSlots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Illegal);
-        }
     }
 
     public RootCallTarget getSplitCallTarget() {
@@ -141,6 +131,22 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         return frameDescriptor;
     }
 
+    public final FrameSlot getThisMarkerSlot() {
+        return thisMarkerSlot;
+    }
+
+    public final FrameSlot getThisContextSlot() {
+        return thisContextSlot;
+    }
+
+    public final FrameSlot getInstructionPointerSlot() {
+        return instructionPointerSlot;
+    }
+
+    public final FrameSlot getStackPointerSlot() {
+        return stackPointerSlot;
+    }
+
     public final int getNumArgs() {
         return numArgs;
     }
@@ -158,12 +164,20 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
     }
 
     public final FrameSlot getStackSlot(final int i) {
-        assert i >= 0 : "Bad stack access";
+        assert 0 <= i && i < stackSlots.length : "Bad stack access";
         return stackSlots[i];
     }
 
-    public final long getNumStackSlots() {
-        return stackSlots.length;
+    public final FrameSlot[] getStackSlots() {
+        return stackSlots;
+    }
+
+    public final int getNumStackSlots() {
+        /**
+         * Arguments and copied values are also pushed onto the stack in {@link EnterCodeNode},
+         * therefore there must be enough slots for all these values as well as the Squeak stack.
+         */
+        return getNumArgsAndCopied() + getSqueakContextSize();
     }
 
     public final void fillin(final SqueakImageChunk chunk) {
@@ -180,10 +194,14 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         bytes = chunk.getBytes(ptrs.length * image.flags.wordSize());
     }
 
+    private int getHeader() {
+        return (int) (long) literals[0];
+    }
+
     protected final void decodeHeader() {
         CompilerDirectives.transferToInterpreterAndInvalidate();
-        final int hdr = getHeader();
-        final int[] splitHeader = MiscUtils.bitSplitter(hdr, new int[]{15, 1, 1, 1, 6, 4, 2, 1});
+        final int header = getHeader();
+        final int[] splitHeader = MiscUtils.bitSplitter(header, HEADER_SPLIT_PATTERN);
         numLiterals = splitHeader[0];
         // TODO: isOptimized = splitHeader[1] == 1;
         hasPrimitive = splitHeader[2] == 1;
@@ -192,11 +210,35 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         numArgs = splitHeader[5];
         // TODO: accessModifier = splitHeader[6];
         // TODO: altInstructionSet = splitHeader[7] == 1;
-        prepareFrameDescriptor();
+        ensureCorrectNumberOfStackSlots();
     }
 
-    public final int getHeader() {
-        return (int) (long) literals[0];
+    public final void ensureCorrectNumberOfStackSlots() {
+        final int requiredNumberOfStackSlots = getNumStackSlots();
+        if (stackSlots == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            stackSlots = new FrameSlot[requiredNumberOfStackSlots];
+            for (int i = 0; i < requiredNumberOfStackSlots; i++) {
+                stackSlots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Illegal);
+            }
+            return;
+        }
+        final int currentNumberOfStackSlots = stackSlots.length;
+        if (currentNumberOfStackSlots < requiredNumberOfStackSlots) {
+            // Grow number of stack slots.
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            stackSlots = Arrays.copyOf(stackSlots, requiredNumberOfStackSlots);
+            for (int i = currentNumberOfStackSlots; i < requiredNumberOfStackSlots; i++) {
+                stackSlots[i] = frameDescriptor.addFrameSlot(i, FrameSlotKind.Illegal);
+            }
+        } else if (currentNumberOfStackSlots > requiredNumberOfStackSlots) {
+            // Shrink number of stack slots.
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            for (int i = requiredNumberOfStackSlots; i < currentNumberOfStackSlots; i++) {
+                frameDescriptor.removeFrameSlot(i);
+            }
+            stackSlots = Arrays.copyOf(stackSlots, requiredNumberOfStackSlots);
+        }
     }
 
     public final void become(final CompiledCodeObject other) {
@@ -286,10 +328,6 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
 
     public final boolean isUnwindMarked() {
         return hasPrimitive() && primitiveIndex() == 198;
-    }
-
-    public final boolean isExceptionHandlerMarked() {
-        return hasPrimitive() && primitiveIndex() == 199;
     }
 
     public static final long makeHeader(final int numArgs, final int numTemps, final int numLiterals, final boolean hasPrimitive, final boolean needsLargeFrame) {

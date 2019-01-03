@@ -4,7 +4,6 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameUtil;
@@ -24,7 +23,6 @@ import com.oracle.truffle.api.source.SourceSection;
 import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
-import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
@@ -34,7 +32,7 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
     @CompilationFinal private SourceSection sourceSection;
 
     @Child private ExecuteContextNode executeContextNode;
-    @Child private GetOrCreateContextNode createContextNode;
+    @Child private StackPushNode pushStackNode;
 
     public static SqueakCodeRootNode create(final SqueakLanguage language, final CompiledCodeObject code) {
         return new SqueakCodeRootNode(language, code);
@@ -45,6 +43,7 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
     protected EnterCodeNode(final CompiledCodeObject code) {
         this.code = code;
         executeContextNode = ExecuteContextNode.create(code);
+        pushStackNode = StackPushNode.create(code);
     }
 
     protected EnterCodeNode(final EnterCodeNode codeNode) {
@@ -88,18 +87,31 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
         }
     }
 
+    @Specialization(assumptions = {"code.getCanBeVirtualizedAssumption()"})
+    protected final Object enterVirtualized(final VirtualFrame frame) {
+        CompilerDirectives.ensureVirtualized(frame);
+        initializeSlots(code, frame);
+        initializeArgumentsAndTemps(frame);
+        return executeContextNode.executeContext(frame, null);
+    }
+
+    @Fallback
+    protected final Object enter(final VirtualFrame frame) {
+        initializeSlots(code, frame);
+        final ContextObject newContext = ContextObject.create(frame);
+        assert newContext == FrameAccess.getContext(frame, code);
+        initializeArgumentsAndTemps(frame);
+        return executeContextNode.executeContext(frame, newContext);
+    }
+
     private static void initializeSlots(final CompiledCodeObject code, final VirtualFrame frame) {
-        frame.setInt(code.instructionPointerSlot, 0);
-        frame.setInt(code.stackPointerSlot, 0);
+        FrameAccess.initializeMarker(frame, code);
+        FrameAccess.setInstructionPointer(frame, code, 0);
+        FrameAccess.setStackPointer(frame, code, 0);
     }
 
     @ExplodeLoop
-    @Specialization(assumptions = {"code.getCanBeVirtualizedAssumption()"})
-    protected final Object enterVirtualized(final VirtualFrame frame,
-                    @Cached("create(code)") final StackPushNode pushStackNode) {
-        CompilerDirectives.ensureVirtualized(frame);
-        initializeSlots(code, frame);
-        frame.setObject(code.thisContextOrMarkerSlot, new FrameMarker());
+    private void initializeArgumentsAndTemps(final VirtualFrame frame) {
         // Push arguments and copied values onto the newContext.
         final Object[] arguments = frame.getArguments();
         assert code.getNumArgsAndCopied() == (arguments.length - FrameAccess.ARGUMENTS_START);
@@ -111,37 +123,7 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
         for (int i = 0; i < remainingTemps; i++) {
             pushStackNode.executeWrite(frame, code.image.nil);
         }
-        assert (FrameUtil.getIntSafe(frame, code.stackPointerSlot)) >= remainingTemps;
-        return executeContextNode.executeContext(frame, null);
-    }
-
-    @ExplodeLoop
-    @Fallback
-    protected final Object enter(final VirtualFrame frame) {
-        initializeSlots(code, frame);
-        final ContextObject newContext = getCreateContextNode().executeGet(frame);
-        frame.setObject(code.thisContextOrMarkerSlot, newContext);
-        // Push arguments and copied values onto the newContext.
-        final Object[] arguments = frame.getArguments();
-        assert code.getNumArgsAndCopied() == (arguments.length - FrameAccess.ARGUMENTS_START);
-        for (int i = 0; i < code.getNumArgsAndCopied(); i++) {
-            newContext.push(arguments[FrameAccess.ARGUMENTS_START + i]);
-        }
-        // Initialize remaining temporary variables with nil in newContext.
-        final int remainingTemps = code.getNumTemps() - code.getNumArgs();
-        for (int i = 0; i < remainingTemps; i++) {
-            newContext.push(code.image.nil);
-        }
-        assert newContext.getStackPointer() >= remainingTemps;
-        return executeContextNode.executeContext(frame, newContext);
-    }
-
-    private GetOrCreateContextNode getCreateContextNode() {
-        if (createContextNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            createContextNode = insert(GetOrCreateContextNode.create(code));
-        }
-        return createContextNode;
+        assert (FrameUtil.getIntSafe(frame, code.getStackPointerSlot())) >= remainingTemps;
     }
 
     @Override

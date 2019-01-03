@@ -4,25 +4,25 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
-import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.LINKED_LIST;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
+import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
 
-public abstract class LinkProcessToListNode extends AbstractNodeWithCode {
+public abstract class LinkProcessToListNode extends AbstractNodeWithImage {
     @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
     @Child protected IsEmptyListNode isEmptyListNode;
 
-    public static LinkProcessToListNode create(final CompiledCodeObject code) {
-        return LinkProcessToListNodeGen.create(code);
+    public static LinkProcessToListNode create(final SqueakImageContext image) {
+        return LinkProcessToListNodeGen.create(image);
     }
 
-    protected LinkProcessToListNode(final CompiledCodeObject code) {
-        super(code);
-        isEmptyListNode = IsEmptyListNode.create(code.image);
+    protected LinkProcessToListNode(final SqueakImageContext image) {
+        super(image);
+        isEmptyListNode = IsEmptyListNode.create(image);
     }
 
     public abstract void executeLink(Object process, Object list);

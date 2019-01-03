@@ -20,12 +20,10 @@ import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.nodes.EnterCodeNode;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.GetCompiledMethodNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodesFactory.PushNewArrayNodeGen;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodesFactory.PushReceiverNodeGen;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodesFactory.PushReceiverVariableNodeGen;
-import de.hpi.swa.graal.squeak.nodes.context.ReceiverNode;
 import de.hpi.swa.graal.squeak.nodes.context.TemporaryReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPopNReversedNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
@@ -72,10 +70,8 @@ public final class PushBytecodes {
         protected final int numArgs;
         protected final int numCopied;
 
-        @Child private GetOrCreateContextNode getOrCreateContextNode;
         @Child private StackPopNReversedNode popNReversedNode;
-        @Child private ReceiverNode receiverNode;
-        @Child private GetCompiledMethodNode getMethodNode;
+        @Child private GetOrCreateContextNode getOrCreateContextNode;
 
         @CompilationFinal private CompiledBlockObject block;
         @CompilationFinal private RootCallTarget blockCallTarget;
@@ -89,15 +85,14 @@ public final class PushBytecodes {
             numArgs = i & 0xF;
             numCopied = (i >> 4) & 0xF;
             blockSize = (j << 8) | k;
-            getOrCreateContextNode = GetOrCreateContextNode.create(code);
             popNReversedNode = StackPopNReversedNode.create(code, numCopied);
-            receiverNode = ReceiverNode.create(code);
+            getOrCreateContextNode = GetOrCreateContextNode.create(code);
         }
 
-        private CompiledBlockObject getBlock() {
+        private CompiledBlockObject getBlock(final VirtualFrame frame) {
             if (block == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                block = CompiledBlockObject.create(code, getMethodNode().execute(code), numArgs, numCopied, index + numBytecodes, blockSize);
+                block = CompiledBlockObject.create(code, FrameAccess.getMethod(frame), numArgs, numCopied, index + numBytecodes, blockSize);
                 blockCallTarget = Truffle.getRuntime().createCallTarget(EnterCodeNode.create(block.image.getLanguage(), block));
             }
             return block;
@@ -113,10 +108,10 @@ public final class PushBytecodes {
         }
 
         private BlockClosureObject createClosure(final VirtualFrame frame) {
-            final Object receiver = receiverNode.executeRead(frame);
+            final Object receiver = FrameAccess.getReceiver(frame);
             final Object[] copiedValues = (Object[]) popNReversedNode.executeRead(frame);
-            final ContextObject thisContext = getOrCreateContextNode.executeGet(frame);
-            return new BlockClosureObject(getBlock(), blockCallTarget, receiver, copiedValues, thisContext);
+            final ContextObject outerContext = getOrCreateContextNode.executeGet(frame);
+            return new BlockClosureObject(getBlock(frame), blockCallTarget, receiver, copiedValues, outerContext);
         }
 
         @Override
@@ -125,14 +120,6 @@ public final class PushBytecodes {
             final int start = index + numBytecodes;
             final int end = start + blockSize;
             return "closureNumCopied: " + numCopied + " numArgs: " + numArgs + " bytes " + start + " to " + end;
-        }
-
-        private GetCompiledMethodNode getMethodNode() {
-            if (getMethodNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                getMethodNode = insert(GetCompiledMethodNode.create());
-            }
-            return getMethodNode;
         }
     }
 
@@ -244,14 +231,9 @@ public final class PushBytecodes {
             super(code, index);
         }
 
-        @Specialization(guards = {"isVirtualized(frame)"})
+        @Specialization
         protected final void doReceiverVirtualized(final VirtualFrame frame) {
             pushNode.executeWrite(frame, FrameAccess.getReceiver(frame));
-        }
-
-        @Fallback
-        protected final void doReceiver(final VirtualFrame frame) {
-            pushNode.executeWrite(frame, getContext(frame).getReceiver());
         }
 
         @Override
@@ -276,14 +258,9 @@ public final class PushBytecodes {
             variableIndex = varIndex;
         }
 
-        @Specialization(guards = {"isVirtualized(frame)"})
+        @Specialization
         protected final void doReceiverVirtualized(final VirtualFrame frame) {
             pushNode.executeWrite(frame, at0Node.execute(FrameAccess.getReceiver(frame), variableIndex));
-        }
-
-        @Fallback
-        protected final void doReceiver(final VirtualFrame frame) {
-            pushNode.executeWrite(frame, at0Node.execute(getContext(frame).getReceiver(), variableIndex));
         }
 
         @Override

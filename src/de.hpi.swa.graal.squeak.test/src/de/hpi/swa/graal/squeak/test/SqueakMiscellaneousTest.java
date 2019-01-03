@@ -9,6 +9,7 @@ import org.junit.Test;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.FloatObject;
+import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.AbstractBytecodeNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodes.DupNode;
@@ -57,9 +58,9 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
                     "35 <89> pushThisContext:",
                     "36 <8A 1F> push: (Array new: 31)",
                     "37 <8B 1F 00> callPrimitive: 31",
-                    "38 <8C 1F 3F> pushTemp: 31 inVectorAt: 63",
-                    "39 <8D 1F 3F> storeIntoTemp: 31 inVectorAt: 63",
-                    "40 <8E 1F 3F> popIntoTemp: 31 inVectorAt: 63",
+                    "38 <8C 1F 38> pushTemp: 31 inVectorAt: 56",
+                    "39 <8D 1F 38> storeIntoTemp: 31 inVectorAt: 56",
+                    "40 <8E 1F 38> popIntoTemp: 31 inVectorAt: 56",
                     "41 <8F 1F 3F 7F> closureNumCopied: 1 numArgs: 15 bytes 61 to 16316",
                     "42  <97> jumpTo: 8",
                     "43  <9F> jumpFalse: 8",
@@ -147,7 +148,7 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
 
     @Test
     public void testSourceAllBytecodes() {
-        final Object[] literals = new Object[]{17104899L, image.wrap("someSelector"), image.wrap("someOtherSelector"), 63};
+        final Object[] literals = new Object[]{17235971L, image.wrap("someSelector"), image.wrap("someOtherSelector"), 63};
         final CompiledCodeObject code = makeMethod(literals,
                         15, 31, 32, 95, 96, 97, 98, 99, 103, 111, 112, 113, 114, 115, 116,
                         117, 118, 119, 120, 121, 122, 123, 124, 126, 127,
@@ -163,9 +164,9 @@ public class SqueakMiscellaneousTest extends AbstractSqueakTestCaseWithDummyImag
                         137,
                         138, 31,
                         139, 31, 0,
-                        140, 31, 63,
-                        141, 31, 63,
-                        142, 31, 63,
+                        140, 31, CONTEXT.LARGE_FRAMESIZE,
+                        141, 31, CONTEXT.LARGE_FRAMESIZE,
+                        142, 31, CONTEXT.LARGE_FRAMESIZE,
                         143, 31, 63, 127,
                         151,
                         159,

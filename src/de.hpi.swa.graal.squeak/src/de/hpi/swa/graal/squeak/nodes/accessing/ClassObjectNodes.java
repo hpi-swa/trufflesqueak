@@ -12,17 +12,17 @@ import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.nodes.accessing.ClassObjectNodesFactory.ReadClassObjectNodeGen;
-import de.hpi.swa.graal.squeak.nodes.accessing.ClassObjectNodesFactory.WriteClassObjectNodeGen;
+import de.hpi.swa.graal.squeak.nodes.accessing.ClassObjectNodesFactory.ClassObjectReadNodeGen;
+import de.hpi.swa.graal.squeak.nodes.accessing.ClassObjectNodesFactory.ClassObjectWriteNodeGen;
 
 public final class ClassObjectNodes {
 
     @ImportStatic(ClassObject.class)
-    public abstract static class ReadClassObjectNode extends Node {
+    public abstract static class ClassObjectReadNode extends Node {
         protected static final int CACHE_LIMIT = 3;
 
-        public static ReadClassObjectNode create() {
-            return ReadClassObjectNodeGen.create();
+        public static ClassObjectReadNode create() {
+            return ClassObjectReadNodeGen.create();
         }
 
         public abstract Object execute(ClassObject obj, long index);
@@ -88,10 +88,10 @@ public final class ClassObjectNodes {
     }
 
     @ImportStatic(ClassObject.class)
-    public abstract static class WriteClassObjectNode extends Node {
+    public abstract static class ClassObjectWriteNode extends Node {
 
-        public static WriteClassObjectNode create() {
-            return WriteClassObjectNodeGen.create();
+        public static ClassObjectWriteNode create() {
+            return ClassObjectWriteNodeGen.create();
         }
 
         public abstract void execute(ClassObject obj, long index, Object value);

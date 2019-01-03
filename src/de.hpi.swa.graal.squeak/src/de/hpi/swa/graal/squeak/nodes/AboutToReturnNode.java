@@ -4,7 +4,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.profiles.BranchProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.Returns.LocalReturn;
 import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
@@ -16,6 +15,7 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.SendSelectorNode;
 import de.hpi.swa.graal.squeak.nodes.context.TemporaryReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.TemporaryWriteNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
+import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public abstract class AboutToReturnNode extends AbstractNodeWithCode {
@@ -36,39 +36,33 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
      * that this however does not check if the current context isDead nor does it terminate contexts
      * (this may be a problem).
      */
-    @Specialization(guards = {"code.isUnwindMarked()", "isVirtualized(frame)", "isNil(frame, completeTempReadNode)"}, limit = "1")
+    @Specialization(guards = {"code.isUnwindMarked()", "!hasModifiedSender(frame)", "isNil(frame, completeTempReadNode)"}, limit = "1")
     protected final void doAboutToReturnVirtualized(final VirtualFrame frame, @SuppressWarnings("unused") final NonLocalReturn nlr,
                     @Cached("createTemporaryWriteNode(0)") final SqueakNode blockArgumentNode,
                     @SuppressWarnings("unused") @Cached("createTemporaryWriteNode(1)") final SqueakNode completeTempReadNode,
                     @Cached("create(code, 1)") final TemporaryWriteNode completeTempWriteNode,
-                    @Cached("create()") final BlockActivationNode dispatchNode,
-                    @Cached("create()") final BranchProfile nonLocalReturnProfile) {
+                    @Cached("create()") final BlockActivationNode dispatchNode) {
         completeTempWriteNode.executeWrite(frame, code.image.sqTrue);
         final BlockClosureObject block = (BlockClosureObject) blockArgumentNode.executeRead(frame);
         try {
-            dispatchNode.executeBlock(block, FrameAccess.newBlockArguments(block, getContextOrMarker(frame), new Object[0]));
+            dispatchNode.executeBlock(block, FrameAccess.newBlockArguments(block, getContextOrMarker(frame), ArrayUtils.EMPTY_ARRAY));
         } catch (LocalReturn blockLR) { // ignore
-        } catch (NonLocalReturn blockNLR) {
-            nonLocalReturnProfile.enter();
-            if (!blockNLR.hasArrivedAtTargetContext()) {
-                throw blockNLR;
-            }
         }
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"code.isUnwindMarked()", "isVirtualized(frame)", "!isNil(frame, completeTempReadNode)"}, limit = "1")
+    @Specialization(guards = {"code.isUnwindMarked()", "!hasModifiedSender(frame)", "!isNil(frame, completeTempReadNode)"}, limit = "1")
     protected final void doAboutToReturnVirtualizedNothing(final VirtualFrame frame, final NonLocalReturn nlr,
                     @Cached("createTemporaryWriteNode(1)") final SqueakNode completeTempReadNode) {
         // Nothing to do.
     }
 
-    @Specialization(guards = {"code.isUnwindMarked()", "!isVirtualized(frame)"})
+    @Specialization(guards = {"code.isUnwindMarked()", "hasModifiedSender(frame)"})
     protected final void doAboutToReturn(final VirtualFrame frame, final NonLocalReturn nlr,
                     @Cached("create(code)") final StackPushNode pushNode,
                     @Cached("createAboutToReturnSend()") final SendSelectorNode sendAboutToReturnNode) {
         final ContextObject context = getContext(frame);
-        pushNode.executeWrite(frame, nlr.getTargetContext());
+        pushNode.executeWrite(frame, nlr.getTargetContextOrMarker());
         pushNode.executeWrite(frame, nlr.getReturnValue());
         pushNode.executeWrite(frame, context);
         sendAboutToReturnNode.executeSend(frame);

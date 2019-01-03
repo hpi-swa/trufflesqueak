@@ -14,7 +14,6 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleOptions;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance;
-import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.instrumentation.AllocationReporter;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.source.Source;
@@ -141,6 +140,7 @@ public final class SqueakImageContext {
 
     @CompilationFinal private String imagePath;
     @CompilationFinal private boolean isHeadless = true;
+    @CompilationFinal private boolean isHeadlessDynamicCheck = false;
     public final SqueakImageFlags flags = new SqueakImageFlags();
     public final OSDetector os = new OSDetector();
     public final InterruptHandlerState interrupt;
@@ -155,8 +155,6 @@ public final class SqueakImageContext {
     @CompilationFinal private NativeObject simulatePrimitiveArgsSelector = null;
     @CompilationFinal private PointersObject scheduler = null;
 
-    public static final byte[] AS_SYMBOL_SELECTOR_NAME = "asSymbol".getBytes(); // for testing
-    @CompilationFinal private NativeObject asSymbolSelector = null; // for testing
     public static final byte[] DEBUG_ERROR_SELECTOR_NAME = "debugError:".getBytes(); // for testing
     @CompilationFinal private NativeObject debugErrorSelector = null; // for testing
     public static final byte[] DEBUG_SYNTAX_ERROR_SELECTOR_NAME = "debugSyntaxError:".getBytes(); // for
@@ -186,6 +184,7 @@ public final class SqueakImageContext {
             try {
                 evaluate("[Smalltalk processStartUpList: true] value");
             } catch (Exception e) {
+                printToStdErr("startUpList failed:");
                 e.printStackTrace();
             }
             // Set author information.
@@ -221,12 +220,11 @@ public final class SqueakImageContext {
         env = newEnv;
         output = new PrintWriter(env.out(), true);
         error = new PrintWriter(env.err(), true);
-        asSymbolSelector = null;
         simulatePrimitiveArgsSelector = null;
         return true;
     }
 
-    public ExecuteTopLevelContextNode getActiveContext() {
+    public ExecuteTopLevelContextNode getActiveContextNode() {
         assert lastParseRequestSource == null : "Image should not have been executed manually before.";
         final PointersObject activeProcess = GetActiveProcessNode.create(this).executeGet();
         final ContextObject activeContext = (ContextObject) activeProcess.at0(PROCESS.SUSPENDED_CONTEXT);
@@ -234,28 +232,32 @@ public final class SqueakImageContext {
         return ExecuteTopLevelContextNode.create(getLanguage(), activeContext, true);
     }
 
-    public ExecuteTopLevelContextNode getDoItContext(final Source source) {
+    public ExecuteTopLevelContextNode getDoItContextNode(final Source source) {
+        lastParseRequestSource = source;
+        return getDoItContextNode(source.getCharacters().toString());
+    }
+
+    public ExecuteTopLevelContextNode getDoItContextNode(final String source) {
         /*
          * (Parser new parse: '1 + 2 * 3' class: UndefinedObject noPattern: true notifying: nil
          * ifFail: [^nil]) generate
          */
-        lastParseRequestSource = source;
         assert parserClass != null;
         assert compilerClass != null;
 
         final AbstractSqueakObject parser = (AbstractSqueakObject) parserClass.send("new");
         final AbstractSqueakObject methodNode = (AbstractSqueakObject) parser.send(
-                        "parse:class:noPattern:notifying:ifFail:", wrap(source.getCharacters().toString()), nilClass, sqTrue, nil, new BlockClosureObject(this));
+                        "parse:class:noPattern:notifying:ifFail:", wrap(source), nilClass, sqTrue, nil, new BlockClosureObject(this));
         final CompiledMethodObject doItMethod = (CompiledMethodObject) methodNode.send("generate");
 
-        final ContextObject customContext = ContextObject.create(this, doItMethod.sqContextSize());
-        customContext.atput0(CONTEXT.METHOD, doItMethod);
-        customContext.atput0(CONTEXT.INSTRUCTION_POINTER, (long) doItMethod.getInitialPC());
-        customContext.atput0(CONTEXT.RECEIVER, nilClass);
-        customContext.atput0(CONTEXT.STACKPOINTER, 0L);
-        customContext.atput0(CONTEXT.CLOSURE_OR_NIL, nil);
-        customContext.setSender(nil);
-        return ExecuteTopLevelContextNode.create(getLanguage(), customContext, false);
+        final ContextObject doItContext = ContextObject.create(this, doItMethod.getSqueakContextSize());
+        doItContext.atput0(CONTEXT.METHOD, doItMethod);
+        doItContext.atput0(CONTEXT.INSTRUCTION_POINTER, (long) doItMethod.getInitialPC());
+        doItContext.atput0(CONTEXT.RECEIVER, nilClass);
+        doItContext.atput0(CONTEXT.STACKPOINTER, 0L);
+        doItContext.atput0(CONTEXT.CLOSURE_OR_NIL, nil);
+        doItContext.atput0(CONTEXT.SENDER_OR_NIL, nil);
+        return ExecuteTopLevelContextNode.create(getLanguage(), doItContext, false);
     }
 
     public PrintWriter getOutput() {
@@ -268,15 +270,6 @@ public final class SqueakImageContext {
 
     public SqueakLanguage getLanguage() {
         return language;
-    }
-
-    public NativeObject getAsSymbolSelector() {
-        return asSymbolSelector;
-    }
-
-    public void setAsSymbolSelector(final NativeObject asSymbolSelector) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        this.asSymbolSelector = asSymbolSelector;
     }
 
     public NativeObject getDebugErrorSelector() {
@@ -484,7 +477,12 @@ public final class SqueakImageContext {
     }
 
     public boolean isHeadless() {
-        return isHeadless || SqueakOptions.getOption(env, SqueakOptions.Headless);
+        if (!isHeadlessDynamicCheck) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            isHeadlessDynamicCheck = true;
+            isHeadless = isHeadless || SqueakOptions.getOption(env, SqueakOptions.Headless);
+        }
+        return isHeadless;
     }
 
     public void disableHeadless() {
@@ -549,32 +547,25 @@ public final class SqueakImageContext {
         final boolean isTravisBuild = System.getenv().containsKey("TRAVIS");
         final int[] depth = new int[1];
         final Object[] lastSender = new Object[]{null};
-        getError().println("== Squeak stack trace ===========================================================");
-        Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Object>() {
-
-            @Override
-            public Object visitFrame(final FrameInstance frameInstance) {
-                if (depth[0]++ > 50 && isTravisBuild) {
-                    return null;
-                }
-                final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
-                if (!FrameAccess.isGraalSqueakFrame(current)) {
-                    return null;
-                }
-                final Object method = FrameAccess.getMethod(current);
-                lastSender[0] = FrameAccess.getSender(current);
-                final Object contextOrMarker = FrameAccess.getContextOrMarker(current);
-                final Object[] arguments = FrameAccess.getReceiverAndArguments(current);
-                final String[] argumentStrings = new String[arguments.length];
-                for (int i = 0; i < arguments.length; i++) {
-                    argumentStrings[i] = arguments[i].toString();
-                }
-                final String prefix = FrameAccess.getClosure(current) == null ? "" : "[] in ";
-                getError().println(MiscUtils.format("%s%s #(%s) [this: %s, sender: %s]", prefix, method, String.join(", ", argumentStrings), contextOrMarker, lastSender[0]));
+        getError().println("== Truffle stack trace ===========================================================");
+        Truffle.getRuntime().iterateFrames(frameInstance -> {
+            if (depth[0]++ > 50 && isTravisBuild) {
                 return null;
             }
+            final Frame current = frameInstance.getFrame(FrameInstance.FrameAccess.READ_ONLY);
+            if (!FrameAccess.isGraalSqueakFrame(current)) {
+                return null;
+            }
+            final CompiledMethodObject method = FrameAccess.getMethod(current);
+            lastSender[0] = FrameAccess.getSender(current);
+            final Object marker = FrameAccess.getMarker(current, method);
+            final Object context = FrameAccess.getContext(current, method);
+            final String prefix = FrameAccess.getClosure(current) == null ? "" : "[] in ";
+            final String argumentsString = ArrayUtils.toJoinedString(", ", FrameAccess.getReceiverAndArguments(current));
+            getError().println(MiscUtils.format("%s%s #(%s) [marker: %s, context: %s, sender: %s]", prefix, method, argumentsString, marker, context, lastSender[0]));
+            return null;
         });
-        getError().println("== " + depth[0] + " Truffle frames ================================================================");
+        getError().println("== Squeak frames ================================================================");
         if (lastSender[0] instanceof ContextObject) {
             ((ContextObject) lastSender[0]).printSqStackTrace();
         }

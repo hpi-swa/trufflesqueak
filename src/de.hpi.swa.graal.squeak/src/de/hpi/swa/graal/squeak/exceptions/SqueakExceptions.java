@@ -60,6 +60,11 @@ public final class SqueakExceptions {
         public Node getLocation() {
             return null;
         }
+
+        @Override
+        public synchronized Throwable fillInStackTrace() {
+            return null;
+        }
     }
 
     public static final class SqueakSyntaxError extends RuntimeException implements TruffleException {
@@ -97,6 +102,11 @@ public final class SqueakExceptions {
                 }
                 return sourceSection;
             }
+        }
+
+        @Override
+        public synchronized Throwable fillInStackTrace() {
+            return null;
         }
     }
 

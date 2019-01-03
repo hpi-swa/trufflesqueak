@@ -15,27 +15,24 @@ import org.junit.AfterClass;
 import org.junit.Assume;
 import org.junit.BeforeClass;
 
+import com.oracle.truffle.api.Truffle;
+
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
-import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.LINKED_LIST;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS_SCHEDULER;
-import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.process.GetActiveProcessNode;
 
 public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
-
     private static final int TIMEOUT_SECONDS = 50;
     private static final int PRIORITY_10_LIST_INDEX = 9;
-    private static Object smalltalkDictionary;
-    private static Object smalltalkAssociation;
-    private static Object evaluateSymbol;
-    private static Object compilerSymbol;
+
     private static PointersObject idleProcess;
 
     @BeforeClass
@@ -48,10 +45,6 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
 
     @AfterClass
     public static void cleanUp() {
-        smalltalkDictionary = null;
-        smalltalkAssociation = null;
-        evaluateSymbol = null;
-        compilerSymbol = null;
         idleProcess = null;
     }
 
@@ -74,6 +67,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         image.getOutput().println("Initializing fresh MorphicUIManager...");
         evaluate("Project current instVarNamed: #uiManager put: MorphicUIManager new");
         if (!runsOnMXGate()) {
+            // Patch TestCase>>#performTest, so errors are printed to stderr for debugging purposes.
             patchMethod("TestCase", "performTest", "performTest [self perform: testSelector asSymbol] on: Error do: [:e | e printVerboseOn: FileStream stderr. e signal]");
         }
     }
@@ -110,55 +104,18 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         return null;
     }
 
-    private static Object getSmalltalkDictionary() {
-        if (smalltalkDictionary == null) {
-            smalltalkDictionary = image.specialObjectsArray.at0Object(SPECIAL_OBJECT.SMALLTALK_DICTIONARY);
-        }
-        return smalltalkDictionary;
-    }
-
-    private static Object getSmalltalkAssociation() {
-        if (smalltalkAssociation == null) {
-            smalltalkAssociation = new PointersObject(image, image.schedulerAssociation.getSqueakClass(), new Object[]{image.newSymbol("Smalltalk"), getSmalltalkDictionary()});
-        }
-        return smalltalkAssociation;
-    }
-
-    private static Object getEvaluateSymbol() {
-        if (evaluateSymbol == null) {
-            evaluateSymbol = asSymbol("evaluate:");
-        }
-        return evaluateSymbol;
-    }
-
-    private static Object getCompilerSymbol() {
-        if (compilerSymbol == null) {
-            compilerSymbol = asSymbol("Compiler");
-        }
-        return compilerSymbol;
-    }
-
-    protected static Object asSymbol(final String value) {
-        final String fakeMethodName = "fakeAsSymbol" + value.hashCode();
-        final CompiledMethodObject method = makeMethod(
-                        new Object[]{4L, image.getAsSymbolSelector(), image.wrap(value), image.newSymbol(fakeMethodName), getSmalltalkAssociation()},
-                        0x21, 0xD0, 0x7C);
-        return runMethod(method, getSmalltalkDictionary());
-    }
-
-    /*
-     * Executes a fake Smalltalk method equivalent to:
-     *
-     * `^ (Smalltalk at: #Compiler) evaluate: expression`
-     *
+    /**
+     * Some expressions need to be evaluate through the normal Compiler>>#evaluate: infrastructure,
+     * for example because they require a parent context when they include non-local returns.
      */
+    protected static Object compilerEvaluate(final String expression) {
+        return evaluate("Compiler evaluate: '" + expression.replaceAll("'", "''") + "'");
+    }
+
     protected static Object evaluate(final String expression) {
-        final String fakeMethodName = "fakeEvaluate" + expression.hashCode();
-        final CompiledMethodObject method = makeMethod(
-                        new Object[]{6L, getEvaluateSymbol(), getSmalltalkAssociation(), getCompilerSymbol(), image.wrap(expression), asSymbol(fakeMethodName), getSmalltalkAssociation()},
-                        0x41, 0x22, 0xC0, 0x23, 0xE0, 0x7C);
         ensureCleanImageState();
-        return runMethod(method, getSmalltalkDictionary());
+        final ExecuteTopLevelContextNode doItContextNode = image.getDoItContextNode(expression);
+        return Truffle.getRuntime().createCallTarget(doItContextNode).call();
     }
 
     private static void ensureCleanImageState() {

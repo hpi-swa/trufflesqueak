@@ -11,7 +11,6 @@ import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
@@ -29,26 +28,21 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.ConditionalJumpNode
 import de.hpi.swa.graal.squeak.nodes.bytecodes.JumpBytecodes.UnconditionalJumpNode;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodes.PushClosureNode;
 import de.hpi.swa.graal.squeak.nodes.context.UpdateInstructionPointerNode;
-import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerNode;
 import de.hpi.swa.graal.squeak.util.SqueakBytecodeDecoder;
 
 public abstract class ExecuteContextNode extends AbstractNodeWithCode {
-    private static final boolean DECODE_BYTECODE_ON_DEMAND = false;
+    private static final boolean DECODE_BYTECODE_ON_DEMAND = true;
 
     @Children private AbstractBytecodeNode[] bytecodeNodes;
     @Child private HandleLocalReturnNode handleLocalReturnNode;
     @Child private HandleNonLocalReturnNode handleNonLocalReturnNode;
-    @Child private HandleNonVirtualReturnNode handleNonVirtualReturnNode;
     @Child private TriggerInterruptHandlerNode triggerInterruptHandlerNode;
 
-    private final BranchProfile nonVirtualReturnProfile = BranchProfile.create();
-    private final BranchProfile processSwitchProfile = BranchProfile.create();
-
     @Child private UpdateInstructionPointerNode updateInstructionPointerNode;
+    @Child private GetOrCreateContextNode getOrCreateContextNode;
     @Child private GetSuccessorNode getSuccessorNode;
-    @Child private StackPushNode pushStackNode;
     @Child private CalculcatePCOffsetNode calculcatePCOffsetNode;
 
     public static ExecuteContextNode create(final CompiledCodeObject code) {
@@ -75,7 +69,6 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
 
     @Specialization(guards = "context == null")
     protected final Object doVirtualized(final VirtualFrame frame, @SuppressWarnings("unused") final ContextObject context,
-                    @Cached("create(code)") final GetOrCreateContextNode getOrCreateContextNode,
                     @Cached("create(code)") final MaterializeContextOnMethodExitNode materializeContextOnMethodExitNode) {
         try {
             triggerInterruptHandlerNode.executeGeneric(frame, code.hasPrimitive(), bytecodeNodes.length);
@@ -88,12 +81,12 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
             /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
             return getHandleNonLocalReturnNode().executeHandle(frame, nlr);
         } catch (NonVirtualReturn nvr) {
-            nonVirtualReturnProfile.enter();
-            getOrCreateContextNode.executeGet(frame).markEscaped();
-            return getHandleNonVirtualReturnNode().executeHandle(frame, nvr);
+            /** {@link getGetOrCreateContextNode()} acts as {@link BranchProfile} */
+            getGetOrCreateContextNode().executeGet(frame).markEscaped();
+            throw nvr;
         } catch (ProcessSwitch ps) {
-            processSwitchProfile.enter();
-            getOrCreateContextNode.executeGet(frame).markEscaped();
+            /** {@link getGetOrCreateContextNode()} acts as {@link BranchProfile} */
+            getGetOrCreateContextNode().executeGet(frame).markEscaped();
             throw ps;
         } finally {
             materializeContextOnMethodExitNode.execute(frame);
@@ -103,7 +96,9 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
     @Fallback
     protected final Object doNonVirtualized(final VirtualFrame frame, final ContextObject context) {
         // maybe persist newContext, so there's no need to lookup the context to update its pc.
-        assert context.getClosureOrMethod() == frame.getArguments()[FrameAccess.METHOD];
+        assert code == context.getBlockOrMethod();
+        assert context.getMethod() == FrameAccess.getMethod(frame);
+        assert frame.getFrameDescriptor() == code.getFrameDescriptor();
 
         try {
             triggerInterruptHandlerNode.executeGeneric(frame, code.hasPrimitive(), bytecodeNodes.length);
@@ -123,16 +118,21 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
         } catch (NonLocalReturn nlr) {
             /** {@link getHandleNonLocalReturnNode()} acts as {@link BranchProfile} */
             return getHandleNonLocalReturnNode().executeHandle(frame, nlr);
-        } catch (NonVirtualReturn nvr) {
-            nonVirtualReturnProfile.enter();
-            return getHandleNonVirtualReturnNode().executeHandle(frame, nvr);
         } finally {
             MaterializeContextOnMethodExitNode.stopMaterializationHere();
         }
     }
 
+    private GetOrCreateContextNode getGetOrCreateContextNode() {
+        if (getOrCreateContextNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            getOrCreateContextNode = insert(GetOrCreateContextNode.create(code));
+        }
+        return getOrCreateContextNode;
+    }
+
     private long getAndDecodeSqueakPC(final ContextObject newContext) {
-        return newContext.getInstructionPointer() - getCalculcatePCOffsetNode().execute(newContext.getClosureOrMethod());
+        return newContext.getInstructionPointer() - getCalculcatePCOffsetNode().execute(newContext.getBlockOrMethod());
     }
 
     /*
@@ -177,15 +177,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
                 } else {
                     final int successor = getGetSuccessorNode().executeGeneric(frame, node);
                     getUpdateInstructionPointerNode().executeUpdate(frame, successor);
-                    try {
-                        node.executeVoid(frame);
-                    } catch (NonLocalReturn nlr) {
-                        if (nlr.hasArrivedAtTargetContext()) {
-                            getStackPushNode().executeWrite(frame, nlr.getReturnValue());
-                        } else {
-                            throw nlr;
-                        }
-                    }
+                    node.executeVoid(frame);
                     pc = successor;
                     node = fetchNextBytecodeNode(pc);
                     continue;
@@ -206,15 +198,7 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
         while (pc >= 0) {
             final int successor = getGetSuccessorNode().executeGeneric(frame, node);
             getUpdateInstructionPointerNode().executeUpdate(frame, successor);
-            try {
-                node.executeVoid(frame);
-            } catch (NonLocalReturn nlr) {
-                if (nlr.hasArrivedAtTargetContext()) {
-                    getStackPushNode().executeWrite(frame, nlr.getReturnValue());
-                } else {
-                    throw nlr;
-                }
-            }
+            node.executeVoid(frame);
             pc = successor;
             node = fetchNextBytecodeNode(pc);
         }
@@ -317,22 +301,6 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
             handleNonLocalReturnNode = insert(HandleNonLocalReturnNode.create(code));
         }
         return handleNonLocalReturnNode;
-    }
-
-    private HandleNonVirtualReturnNode getHandleNonVirtualReturnNode() {
-        if (handleNonVirtualReturnNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            handleNonVirtualReturnNode = insert(HandleNonVirtualReturnNode.create());
-        }
-        return handleNonVirtualReturnNode;
-    }
-
-    private StackPushNode getStackPushNode() {
-        if (pushStackNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            pushStackNode = insert(StackPushNode.create(code));
-        }
-        return pushStackNode;
     }
 
     private CalculcatePCOffsetNode getCalculcatePCOffsetNode() {

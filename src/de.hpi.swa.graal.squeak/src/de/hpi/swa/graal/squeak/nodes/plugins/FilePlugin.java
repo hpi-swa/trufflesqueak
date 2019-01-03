@@ -389,20 +389,34 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        @TruffleBoundary
-        protected final Object doRead(@SuppressWarnings("unused") final PointersObject receiver, final long fileDescriptor, final AbstractSqueakObject target, final long startIndex,
-                        final long longCount) {
+        protected final Object doRead(@SuppressWarnings("unused") final PointersObject receiver, final long fileDescriptor, final AbstractSqueakObject target,
+                        final long startIndex, final long longCount) {
             final int count = (int) longCount;
-            final ByteBuffer dst = ByteBuffer.allocate(count);
+            final ByteBuffer dst = allocate(count);
             try {
-                final long read = getFileOrPrimFail(fileDescriptor).read(dst);
+                final long read = readFrom(fileDescriptor, dst);
                 for (int index = 0; index < read; index++) {
-                    atPut0Node.execute(target, startIndex - 1 + index, dst.get(index) & 0xFFL);
+                    atPut0Node.execute(target, startIndex - 1 + index, getFrom(dst, index) & 0xFFL);
                 }
                 return Math.max(read, 0); // `read` can be `-1`, Squeak expects zero.
             } catch (IOException e) {
                 throw new PrimitiveFailed();
             }
+        }
+
+        @TruffleBoundary
+        private static ByteBuffer allocate(final int count) {
+            return ByteBuffer.allocate(count);
+        }
+
+        @TruffleBoundary
+        private static int readFrom(final long fileDescriptor, final ByteBuffer dst) throws IOException {
+            return getFileOrPrimFail(fileDescriptor).read(dst);
+        }
+
+        @TruffleBoundary
+        private static byte getFrom(final ByteBuffer dst, final int index) {
+            return dst.get(index);
         }
     }
 

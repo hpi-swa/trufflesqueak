@@ -68,7 +68,7 @@ public abstract class LookupClassNode extends AbstractNodeWithImage {
         return value.getSqueakClass();
     }
 
-    @Specialization(guards = "!isAbstractSqueakObject(value)")
+    @Specialization(guards = {"!isAbstractSqueakObject(value)"})
     protected final ClassObject doTruffleObject(@SuppressWarnings("unused") final TruffleObject value) {
         return image.truffleObjectClass;
     }

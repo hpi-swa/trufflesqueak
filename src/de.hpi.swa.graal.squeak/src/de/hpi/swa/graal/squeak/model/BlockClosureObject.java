@@ -1,5 +1,7 @@
 package de.hpi.swa.graal.squeak.model;
 
+import java.util.Arrays;
+
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -8,11 +10,11 @@ import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageChunk;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.BLOCK_CLOSURE;
 import de.hpi.swa.graal.squeak.nodes.EnterCodeNode;
+import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 public final class BlockClosureObject extends AbstractSqueakObject {
     @CompilationFinal private Object receiver;
@@ -27,12 +29,12 @@ public final class BlockClosureObject extends AbstractSqueakObject {
 
     public BlockClosureObject(final SqueakImageContext image, final long hash) {
         super(image, hash, image.blockClosureClass);
-        this.copied = new Object[0]; // ensure copied is set
+        this.copied = ArrayUtils.EMPTY_ARRAY; // ensure copied is set
     }
 
     public BlockClosureObject(final SqueakImageContext image) {
         super(image, image.blockClosureClass);
-        this.copied = new Object[0]; // ensure copied is set
+        this.copied = ArrayUtils.EMPTY_ARRAY; // ensure copied is set
     }
 
     public BlockClosureObject(final CompiledBlockObject compiledBlock, final RootCallTarget callTarget, final Object receiver, final Object[] copied, final ContextObject outerContext) {
@@ -64,10 +66,7 @@ public final class BlockClosureObject extends AbstractSqueakObject {
         outerContext = (ContextObject) pointers[BLOCK_CLOSURE.OUTER_CONTEXT];
         pc = (long) pointers[BLOCK_CLOSURE.START_PC];
         numArgs = (long) pointers[BLOCK_CLOSURE.ARGUMENT_COUNT];
-        copied = new Object[pointers.length - BLOCK_CLOSURE.FIRST_COPIED_VALUE];
-        for (int i = 0; i < copied.length; i++) {
-            copied[i] = pointers[BLOCK_CLOSURE.FIRST_COPIED_VALUE + i];
-        }
+        copied = Arrays.copyOfRange(pointers, BLOCK_CLOSURE.FIRST_COPIED_VALUE, pointers.length);
     }
 
     public long getStartPC() {
@@ -171,38 +170,52 @@ public final class BlockClosureObject extends AbstractSqueakObject {
         return callTargetStable.getAssumption();
     }
 
+    private void initializeCompiledBlock(final CompiledMethodObject method) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        assert pc >= 0;
+        final int offset = (int) pc - method.getInitialPC();
+        final int j = method.getBytes()[offset - 2];
+        final int k = method.getBytes()[offset - 1];
+        final int blockSize = (j << 8) | (k & 0xff);
+        block = CompiledBlockObject.create(method, method, (int) numArgs, copied.length, offset, blockSize);
+        callTarget = Truffle.getRuntime().createCallTarget(EnterCodeNode.create(block.image.getLanguage(), block));
+    }
+
     public CompiledBlockObject getCompiledBlock() {
         if (block == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            assert pc >= 0;
-            final CompiledCodeObject code = outerContext.getMethod();
-            final CompiledMethodObject method;
-            if (code instanceof CompiledMethodObject) {
-                method = (CompiledMethodObject) code;
-            } else {
-                method = ((CompiledBlockObject) code).getMethod();
-            }
-            final int offset = (int) pc - method.getInitialPC();
-            final int j = code.getBytes()[offset - 2];
-            final int k = code.getBytes()[offset - 1];
-            final int blockSize = (j << 8) | (k & 0xff);
-            block = CompiledBlockObject.create(code, method, ((Long) numArgs).intValue(), copied.length, offset, blockSize);
-            callTarget = Truffle.getRuntime().createCallTarget(EnterCodeNode.create(block.image.getLanguage(), block));
+            initializeCompiledBlock(outerContext.getMethod());
         }
         return block;
     }
 
-    @TruffleBoundary
+    /** Special version of getCompiledBlock for image loader. */
+    public CompiledBlockObject getCompiledBlock(final CompiledMethodObject method) {
+        initializeCompiledBlock(method);
+        return block;
+    }
+
+    public boolean hasHomeContext() {
+        return outerContext != null;
+    }
+
     public ContextObject getHomeContext() {
-        if (outerContext.isTerminated()) {
-            throw new SqueakException("BlockCannotReturnError");
-        }
-        // recursively unpack closures until home context is reached
+        // Recursively unpack closures until home context is reached.
         final BlockClosureObject closure = outerContext.getClosure();
         if (closure != null) {
-            return closure.getHomeContext();
+            return closure.getHomeContextWithBoundary();
+        } else {
+            return outerContext;
         }
-        return outerContext;
+    }
+
+    @TruffleBoundary
+    private ContextObject getHomeContextWithBoundary() {
+        final BlockClosureObject closure = outerContext.getClosure();
+        if (closure != null) {
+            return closure.getHomeContextWithBoundary();
+        } else {
+            return outerContext;
+        }
     }
 
     public ContextObject getOuterContext() {

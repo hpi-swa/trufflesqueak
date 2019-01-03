@@ -6,6 +6,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
+import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 /**
  * This is the base class for Squeak bytecode evaluation.
@@ -18,20 +19,11 @@ public abstract class SqueakNodeWithCode extends SqueakNode {
         this.code = code;
     }
 
-    protected final boolean isVirtualized(final VirtualFrame frame) {
-        final Object contextOrMarker = frame.getValue(code.thisContextOrMarkerSlot);
-        return contextOrMarker instanceof FrameMarker || !((ContextObject) contextOrMarker).isDirty();
-    }
-
-    protected final Object getContextOrMarker(final VirtualFrame frame) {
-        return frame.getValue(code.thisContextOrMarkerSlot);
-    }
-
     protected final ContextObject getContext(final VirtualFrame frame) {
-        return (ContextObject) getContextOrMarker(frame);
+        return FrameAccess.getContext(frame, code);
     }
 
-    protected final FrameMarker getFrameMarker(final VirtualFrame frame) {
-        return (FrameMarker) getContextOrMarker(frame);
+    protected final FrameMarker getMarker(final VirtualFrame frame) {
+        return FrameAccess.getMarker(frame, code);
     }
 }

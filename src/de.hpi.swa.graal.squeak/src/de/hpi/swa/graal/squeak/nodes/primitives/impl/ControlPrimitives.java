@@ -51,7 +51,6 @@ import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeGetBytesN
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.context.LookupClassNode;
-import de.hpi.swa.graal.squeak.nodes.context.ReceiverNode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.CreateEagerArgumentsNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushForPrimitivesNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
@@ -81,6 +80,7 @@ import de.hpi.swa.graal.squeak.nodes.process.SignalSemaphoreNode;
 import de.hpi.swa.graal.squeak.nodes.process.WakeHighestPriorityNode;
 import de.hpi.swa.graal.squeak.nodes.process.YieldProcessNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
+import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerNode;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 
@@ -252,7 +252,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         protected PrimWaitNode(final CompiledMethodObject method) {
             super(method);
-            linkProcessToListNode = LinkProcessToListNode.create(method);
+            linkProcessToListNode = LinkProcessToListNode.create(method.image);
             wakeHighestPriorityNode = WakeHighestPriorityNode.create(method);
             getActiveProcessNode = GetActiveProcessNode.create(method.image);
         }
@@ -881,7 +881,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = "isEmptyListNode.executeIsEmpty(mutex)")
-        protected final Object doExitEmpty(final PointersObject mutex) {
+        protected final Object doExitEmpty(@SuppressWarnings("unused") final VirtualFrame frame, final PointersObject mutex) {
             mutex.atput0(MUTEX.OWNER, code.image.nil);
             return mutex;
         }
@@ -981,7 +981,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         private LinkProcessToListNode getLinkProcessToListNode() {
             if (linkProcessToListNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                linkProcessToListNode = insert(LinkProcessToListNode.create(code));
+                linkProcessToListNode = insert(LinkProcessToListNode.create(code.image));
             }
             return linkProcessToListNode;
         }
@@ -1043,7 +1043,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final Object doExecute(final VirtualFrame frame, final Object receiver, final ArrayObject argArray, final CompiledCodeObject codeObject) {
+        protected final Object doExecute(final VirtualFrame frame, final Object receiver, final ArrayObject argArray, final CompiledMethodObject method) {
             final int numArgs = sizeNode.execute(argArray);
             final Object[] dispatchRcvrAndArgs = new Object[1 + numArgs];
             dispatchRcvrAndArgs[0] = receiver;
@@ -1051,7 +1051,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 dispatchRcvrAndArgs[1 + i] = readNode.execute(argArray, i);
             }
             final Object thisContext = getContextOrMarker(frame);
-            return dispatchNode.executeDispatch(frame, codeObject, dispatchRcvrAndArgs, thisContext);
+            return dispatchNode.executeDispatch(frame, method, dispatchRcvrAndArgs, thisContext);
         }
     }
 
@@ -1249,7 +1249,6 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     public abstract static class PrimQuickReturnReceiverVariableNode extends AbstractPrimitiveNode implements UnaryPrimitiveWithoutFallback {
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
-        @Child private ReceiverNode receiverNode;
         private final long variableIndex;
 
         public static PrimQuickReturnReceiverVariableNode create(final CompiledMethodObject method, final long variableIndex) {
@@ -1259,12 +1258,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected PrimQuickReturnReceiverVariableNode(final CompiledMethodObject method, final long variableIndex) {
             super(method);
             this.variableIndex = variableIndex;
-            receiverNode = ReceiverNode.create(method);
         }
 
         @Specialization
         protected final Object receiverVariable(final VirtualFrame frame) {
-            return at0Node.execute(receiverNode.executeRead(frame), variableIndex);
+            return at0Node.execute(FrameAccess.getReceiver(frame), variableIndex);
         }
     }
 }

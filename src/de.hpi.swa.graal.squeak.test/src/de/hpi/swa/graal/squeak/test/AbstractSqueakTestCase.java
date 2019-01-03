@@ -23,6 +23,7 @@ import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
+import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import org.junit.ClassRule;
 
@@ -70,18 +71,17 @@ public abstract class AbstractSqueakTestCase {
     }
 
     protected ExecuteTopLevelContextNode createContext(final CompiledMethodObject code, final Object receiver) {
-        return createContext(code, receiver, new Object[0]);
+        return createContext(code, receiver, ArrayUtils.EMPTY_ARRAY);
     }
 
     protected static ExecuteTopLevelContextNode createContext(final CompiledMethodObject code, final Object receiver, final Object[] arguments) {
-        // always use large instance size and large frame size for testing
-        final ContextObject testContext = ContextObject.create(code.image, arguments.length + CONTEXT.LARGE_FRAMESIZE);
+        final ContextObject testContext = ContextObject.create(code.image, arguments.length + code.getSqueakContextSize());
         testContext.atput0(CONTEXT.METHOD, code);
         testContext.atput0(CONTEXT.RECEIVER, receiver);
-        testContext.setInstructionPointer(code.getInitialPC());
-        testContext.setStackPointer(0);
+        testContext.atput0(CONTEXT.INSTRUCTION_POINTER, (long) code.getInitialPC());
+        testContext.atput0(CONTEXT.STACKPOINTER, 0L);
         testContext.atput0(CONTEXT.CLOSURE_OR_NIL, code.image.nil);
-        testContext.setSender(code.image.nil);
+        testContext.atput0(CONTEXT.SENDER_OR_NIL, code.image.nil);
         for (int i = 0; i < arguments.length; i++) {
             testContext.push(arguments[i]);
         }
@@ -115,8 +115,8 @@ public abstract class AbstractSqueakTestCase {
         return runMethod(method, rcvr, arguments);
     }
 
-    protected static VirtualFrame createTestFrame(final CompiledCodeObject code) {
-        final Object[] arguments = FrameAccess.newWith(code, code.image.nil, null, new Object[0]);
+    protected static VirtualFrame createTestFrame(final CompiledMethodObject code) {
+        final Object[] arguments = FrameAccess.newWith(code, code.image.nil, null, new Object[]{code.image.nil});
         return Truffle.getRuntime().createVirtualFrame(arguments, code.getFrameDescriptor());
     }
 

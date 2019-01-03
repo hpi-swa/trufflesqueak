@@ -1,11 +1,16 @@
 package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.BranchProfile;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveWithoutResultException;
+import de.hpi.swa.graal.squeak.exceptions.Returns.NonLocalReturn;
+import de.hpi.swa.graal.squeak.exceptions.Returns.NonVirtualReturn;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
+import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.DispatchSendNode;
 import de.hpi.swa.graal.squeak.nodes.LookupMethodNode;
@@ -26,6 +31,9 @@ public final class SendBytecodes {
         @Child private StackPopNReversedNode popNReversedNode;
         @Child private StackPushNode pushNode;
 
+        private final BranchProfile nlrProfile = BranchProfile.create();
+        private final BranchProfile nvrProfile = BranchProfile.create();
+
         private AbstractSendNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object sel, final int argcount) {
             super(code, index, numBytecodes);
             selector = sel instanceof NativeObject ? (NativeObject) sel : code.image.doesNotUnderstand;
@@ -34,7 +42,6 @@ public final class SendBytecodes {
             lookupClassNode = LookupClassNode.create(code.image);
             dispatchSendNode = DispatchSendNode.create(code.image);
             popNReversedNode = StackPopNReversedNode.create(code, 1 + argumentCount);
-            pushNode = StackPushNode.create(code);
         }
 
         protected AbstractSendNode(final AbstractSendNode original) {
@@ -47,18 +54,44 @@ public final class SendBytecodes {
             try {
                 result = executeSend(frame);
                 assert result != null : "Result of a message send should not be null";
+                getPushNode().executeWrite(frame, result);
             } catch (PrimitiveWithoutResultException e) {
                 return; // ignoring result
+            } catch (NonLocalReturn nlr) {
+                nlrProfile.enter();
+                if (nlr.getTargetContextOrMarker() == getMarker(frame) || nlr.getTargetContextOrMarker() == getContext(frame)) {
+                    getPushNode().executeWrite(frame, nlr.getReturnValue());
+                } else {
+                    throw nlr;
+                }
+            } catch (NonVirtualReturn nvr) {
+                nvrProfile.enter();
+                if (nvr.getTargetContext() == getContext(frame)) {
+                    getPushNode().executeWrite(frame, nvr.getReturnValue());
+                } else {
+                    throw nvr;
+                }
             }
-            pushNode.executeWrite(frame, result);
         }
 
         public final Object executeSend(final VirtualFrame frame) {
             final Object[] rcvrAndArgs = (Object[]) popNReversedNode.executeRead(frame);
             final ClassObject rcvrClass = lookupClassNode.executeLookup(rcvrAndArgs[0]);
             final Object lookupResult = lookupMethodNode.executeLookup(rcvrClass, selector);
-            final Object contextOrMarker = getContextOrMarker(frame);
-            return dispatchSendNode.executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs, contextOrMarker);
+            return dispatchSendNode.executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs, getContextOrMarker(frame));
+        }
+
+        private Object getContextOrMarker(final VirtualFrame frame) {
+            final ContextObject context = getContext(frame);
+            return context != null ? context : getMarker(frame);
+        }
+
+        private StackPushNode getPushNode() {
+            if (pushNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                pushNode = insert(StackPushNode.create(code));
+            }
+            return pushNode;
         }
 
         public final Object getSelector() {

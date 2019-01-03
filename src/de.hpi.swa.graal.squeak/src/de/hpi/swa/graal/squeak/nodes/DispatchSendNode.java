@@ -7,9 +7,8 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakAbortException;
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakSyntaxError;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakSyntaxError;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
@@ -49,7 +48,7 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
     @Specialization(guards = {"image.isHeadless()", "selector.isDebugErrorSelector()", "!isDoesNotUnderstandNode.execute(lookupResult)"})
     protected static final Object doDispatchHeadlessError(final VirtualFrame frame, final NativeObject selector, final CompiledMethodObject lookupResult,
                     final ClassObject rcvrClass, final Object[] rcvrAndArgs, final Object contextOrMarker) {
-        throw new SqueakAbortException(MiscUtils.format("%s>>#%s detected in headless mode. Aborting...", rcvrClass.getSqueakClassName(), selector.asString()));
+        throw new SqueakException(MiscUtils.format("%s>>#%s detected in headless mode. Aborting...", rcvrClass.getSqueakClassName(), selector.asString()));
     }
 
     @SuppressWarnings("unused")
@@ -71,7 +70,7 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
                     final Object[] rcvrAndArgs, final Object contextOrMarker) {
         final Object[] arguments = ArrayUtils.allButFirst(rcvrAndArgs);
         final ClassObject targetClass = getLookupClassNode().executeLookup(targetObject);
-        final Object newLookupResult = getLookupNode().executeLookup(targetClass, image.runWithInSelector);
+        final CompiledMethodObject newLookupResult = (CompiledMethodObject) getLookupNode().executeLookup(targetClass, image.runWithInSelector);
         if (isDoesNotUnderstandNode.execute(newLookupResult)) {
             return dispatchNode.executeDispatch(frame, newLookupResult, new Object[]{targetObject, createMessage(selector, targetClass, arguments)}, contextOrMarker);
         } else {

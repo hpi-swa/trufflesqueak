@@ -25,14 +25,6 @@ public abstract class FrameSlotWriteNode extends AbstractFrameSlotNode {
         frame.setBoolean(frameSlot, value);
     }
 
-    @Specialization(guards = "isIntOrIllegal(frame)")
-    protected final void writeInt(final Frame frame, final int value) {
-        /* Initialize type on first write. No-op if kind is already Int. */
-        frame.getFrameDescriptor().setFrameSlotKind(frameSlot, FrameSlotKind.Int);
-
-        frame.setInt(frameSlot, value);
-    }
-
     @Specialization(guards = "isLongOrIllegal(frame)")
     protected final void writeLong(final Frame frame, final long value) {
         /* Initialize type on first write. No-op if kind is already Long. */
@@ -49,8 +41,10 @@ public abstract class FrameSlotWriteNode extends AbstractFrameSlotNode {
         frame.setDouble(frameSlot, value);
     }
 
-    @Specialization(replaces = {"writeBool", "writeInt", "writeLong", "writeDouble"})
+    @Specialization(replaces = {"writeBool", "writeLong", "writeDouble"})
     protected final void writeObject(final Frame frame, final Object value) {
+        assert !(value instanceof Byte || value instanceof Integer || value instanceof Float) : "Illegal write operation";
+
         /* Initialize type on first write. No-op if kind is already Object. */
         frame.getFrameDescriptor().setFrameSlotKind(frameSlot, FrameSlotKind.Object);
 
@@ -61,11 +55,6 @@ public abstract class FrameSlotWriteNode extends AbstractFrameSlotNode {
     protected final boolean isBooleanOrIllegal(final Frame frame) {
         final FrameSlotKind kind = frame.getFrameDescriptor().getFrameSlotKind(frameSlot);
         return kind == FrameSlotKind.Boolean || kind == FrameSlotKind.Illegal;
-    }
-
-    protected final boolean isIntOrIllegal(final Frame frame) {
-        final FrameSlotKind kind = frame.getFrameDescriptor().getFrameSlotKind(frameSlot);
-        return kind == FrameSlotKind.Int || kind == FrameSlotKind.Illegal;
     }
 
     protected final boolean isLongOrIllegal(final Frame frame) {
