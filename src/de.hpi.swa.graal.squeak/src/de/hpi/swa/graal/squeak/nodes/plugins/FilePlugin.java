@@ -9,6 +9,8 @@ import java.nio.file.StandardOpenOption;
 import java.util.EnumSet;
 import java.util.List;
 
+import org.graalvm.collections.EconomicMap;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
@@ -34,8 +36,6 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimi
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
-
-import org.graalvm.collections.EconomicMap;
 
 public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     private static final EconomicMap<Long, SeekableByteChannel> FILES = EconomicMap.create();
@@ -545,10 +545,10 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         private static long fileWriteToPrintWriter(final PrintWriter printWriter, final NativeObject content, final long startIndex, final long count) {
-            final byte[] bytes = content.getByteStorage();
+            final String string = asString(content);
             final int byteStart = (int) (startIndex - 1);
-            final int byteEnd = Math.min(byteStart + (int) count, bytes.length);
-            printWriter.append(asString(content), byteStart, byteEnd);
+            final int byteEnd = Math.min(byteStart + (int) count, string.length());
+            printWriter.write(string, byteStart, Math.max(byteEnd - byteStart, 0));
             printWriter.flush();
             return byteEnd - byteStart;
         }
