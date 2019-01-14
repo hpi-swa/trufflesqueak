@@ -16,7 +16,7 @@ suite = {
     },
 
     "libraries": {
-        "SSL":  {
+        "BOUNCY_CASTLE_CRYPTO_LIB":  {
             "sha1": "bd47ad3bd14b8e82595c7adaa143501e60842a84",
             "maven": {
                 "groupId": "org.bouncycastle",
@@ -31,7 +31,7 @@ suite = {
             "subDir": "src",
             "sourceDirs": ["src"],
             "dependencies": [
-                "SSL",
+                "BOUNCY_CASTLE_CRYPTO_LIB",
                 "graalsqueak:GRAALSQUEAK-SHARED",
                 "truffle:TRUFFLE_API",
                 "truffle:TRUFFLE_DSL_PROCESSOR",
