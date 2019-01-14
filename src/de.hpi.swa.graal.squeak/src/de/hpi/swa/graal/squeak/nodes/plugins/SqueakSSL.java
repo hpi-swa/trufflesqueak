@@ -5,7 +5,6 @@ import static java.util.Arrays.asList;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -607,9 +606,9 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
         try {
             ssl.context = SSLContextInitializer.createSSLContext(certificatePath);
         } catch (final IOException e) {
-            throw new UncheckedIOException("Failed to load certificate " + certificate + ". Does the file exist?", e);
+            throw new SqueakException("Failed to load certificate " + certificate + ". Does the file exist?", e);
         } catch (final GeneralSecurityException e) {
-            throw new RuntimeException("Security error when loading certificate " + certificate, e);
+            throw new SqueakException("Security error when loading certificate " + certificate, e);
         }
     }
 
@@ -618,7 +617,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
             ssl.context = SSLContext.getInstance("TLS");
             ssl.context.init(null, null, null);
         } catch (final GeneralSecurityException e) {
-            throw new RuntimeException("Failed to initialize default certificate store", e);
+            throw new SqueakException("Failed to initialize default certificate store", e);
         }
     }
 
