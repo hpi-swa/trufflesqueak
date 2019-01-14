@@ -2,6 +2,7 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 
 import static java.util.Arrays.asList;
 
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -110,6 +111,13 @@ import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
  */
 public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
 
+    private static final EconomicMap<Long, SqSSL> SSL_HANDLES = EconomicMap.create();
+
+    private static final ByteBuffer EMPTY_BUFFER = createEmptyImmutableBuffer();
+
+    // FIXME global state
+    private static String certificateName;
+
     private enum ReturnCode implements HasId {
         OK(0),
         NEED_MORE_DATA(-1),
@@ -210,10 +218,6 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
         }
     }
 
-    private static final EconomicMap<Long, SqSSL> SSL_HANDLES = EconomicMap.create();
-
-    private static final ByteBuffer EMPTY_BUFFER = createEmptyImmutableBuffer();
-
     private static ByteBuffer createEmptyImmutableBuffer() {
         return ByteBuffer.allocate(0).asReadOnlyBuffer();
     }
@@ -283,6 +287,9 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
                     intermediateTarget.flip();
                     targetBuffer.put(intermediateTarget);
                     return result;
+
+                default:
+                    throw new SqueakException("Unknown SSL engine status");
             }
         }
     }
@@ -586,9 +593,6 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
             task.run();
         }
     }
-
-    // FIXME global state
-    private static String certificateName;
 
     @TruffleBoundary
     private static void setUp(final SqSSL ssl) {
