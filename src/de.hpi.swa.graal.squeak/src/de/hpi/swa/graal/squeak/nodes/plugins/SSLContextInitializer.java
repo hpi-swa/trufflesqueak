@@ -40,7 +40,7 @@ import org.bouncycastle.util.io.pem.PemReader;
  * implementation is minimal, and limited to reading certificates in PEM format.
  * </p>
  */
-class SSLContextInitializer {
+final class SSLContextInitializer {
 
     private static final String CERTIFICATE = "CERTIFICATE";
     private static final String CERTIFICATE_ALIAS = "testcert";
@@ -50,6 +50,9 @@ class SSLContextInitializer {
 
     static {
         Security.addProvider(new BouncyCastleProvider());
+    }
+
+    private SSLContextInitializer() {
     }
 
     static SSLContext createSSLContext(final Path path) throws GeneralSecurityException, IOException {
