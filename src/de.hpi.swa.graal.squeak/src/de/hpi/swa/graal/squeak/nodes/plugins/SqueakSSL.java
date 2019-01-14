@@ -387,8 +387,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @return see numeric return type convention from plugin Javadoc
          */
         @Specialization(guards = {"sourceBuffer.isByteType()", "targetBuffer.isByteType()"})
-        @SuppressWarnings("unused")
-        protected final long doAccept(final AbstractSqueakObject receiver,
+        protected final long doAccept(@SuppressWarnings("unused") final AbstractSqueakObject receiver,
                         final long sslHandle,
                         final NativeObject sourceBuffer,
                         final long start,
@@ -494,8 +493,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @return see numeric return type convention from plugin Javadoc
          */
         @Specialization(guards = {"sourceBuffer.isByteType()", "targetBuffer.isByteType()"})
-        @SuppressWarnings("unused")
-        protected final long doConnect(final AbstractSqueakObject receiver,
+        protected final long doConnect(@SuppressWarnings("unused") final AbstractSqueakObject receiver,
                         final long sslHandle,
                         final NativeObject sourceBuffer,
                         final long start,
@@ -671,8 +669,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @return the number of bytes produced in the output buffer
          */
         @Specialization(guards = {"sourceBuffer.isByteType()", "targetBuffer.isByteType()"})
-        @SuppressWarnings("unused")
-        protected final long doDecrypt(final AbstractSqueakObject receiver,
+        protected final long doDecrypt(@SuppressWarnings("unused") final AbstractSqueakObject receiver,
                         final long sslHandle,
                         final NativeObject sourceBuffer,
                         final long start,
@@ -738,8 +735,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @return the number of bytes prodcued as a result
          */
         @Specialization(guards = {"sourceBuffer.isByteType()", "targetBuffer.isByteType()"})
-        @SuppressWarnings("unused")
-        protected final long doEncrypt(final AbstractSqueakObject receiver,
+        protected final long doEncrypt(@SuppressWarnings("unused") final AbstractSqueakObject receiver,
                         final long sslHandle,
                         final NativeObject sourceBuffer,
                         final long start,
@@ -785,8 +781,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @return despite return code convention, non-zero if successful
          */
         @Specialization
-        @SuppressWarnings("unused")
-        protected static long doGet(final AbstractSqueakObject receiver, final long sslHandle, final long propertyId) {
+        protected static long doGet(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long sslHandle, final long propertyId) {
             final SqSSL ssl = getSSL(sslHandle);
             final IntProperty property = propertyWithId(IntProperty.class, propertyId);
 
@@ -825,8 +820,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @return despite the return code convention, non-zero if successful
          */
         @Specialization
-        @SuppressWarnings("unused")
-        protected static long doSet(final AbstractSqueakObject receiver,
+        protected static long doSet(@SuppressWarnings("unused") final AbstractSqueakObject receiver,
                         final long sslHandle,
                         final long propertyId,
                         final long anInteger) {
@@ -861,8 +855,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @return the property value or {@code nil}
          */
         @Specialization
-        @SuppressWarnings("unused")
-        protected final AbstractSqueakObject doGet(final AbstractSqueakObject receiver, final long sslHandle, final long propertyId) {
+        protected final AbstractSqueakObject doGet(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long sslHandle, final long propertyId) {
             final SqSSL impl = getSSL(sslHandle);
             final StringProperty property = propertyWithId(StringProperty.class, propertyId);
             if (impl == null || property == null) {
@@ -904,8 +897,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @return despite return code convention, non-zero if successful
          */
         @Specialization(guards = "aString.isByteType()")
-        @SuppressWarnings("unused")
-        protected static long doSet(final AbstractSqueakObject receiver,
+        protected static long doSet(@SuppressWarnings("unused") final AbstractSqueakObject receiver,
                         final long sslHandle,
                         final long propertyId,
                         final NativeObject aString) {
@@ -950,8 +942,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          */
         @Specialization
         @TruffleBoundary
-        @SuppressWarnings("unused")
-        protected static long doCreate(final AbstractSqueakObject receiver) {
+        protected static long doCreate(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             final SqSSL ssl = new SqSSL();
             final long handle = ssl.hashCode();
             SSL_HANDLES.put(handle, ssl);
@@ -975,8 +966,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          */
         @Specialization
         @TruffleBoundary
-        @SuppressWarnings("unused")
-        protected static long doDestroy(final AbstractSqueakObject receiver, final long sslHandle) {
+        protected static long doDestroy(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long sslHandle) {
             final SqSSL ssl = SSL_HANDLES.removeKey(sslHandle);
             if (ssl == null) {
                 return 0L;
