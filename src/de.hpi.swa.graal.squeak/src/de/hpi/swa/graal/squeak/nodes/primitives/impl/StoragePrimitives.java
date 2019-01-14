@@ -274,7 +274,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         protected static final boolean isInstantiable(final ClassObject receiver, final long size) {
-            return size == 0 || (receiver.isVariable() && size >= 0);
+            return size == 0 || (receiver.isVariable() && 0 <= size && size <= Integer.MAX_VALUE);
         }
 
         @SuppressWarnings("unused")
