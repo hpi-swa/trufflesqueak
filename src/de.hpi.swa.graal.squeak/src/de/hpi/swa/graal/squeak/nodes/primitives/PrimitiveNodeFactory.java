@@ -27,7 +27,7 @@ import de.hpi.swa.graal.squeak.nodes.plugins.MiscPrimitivePlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.PolyglotPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.SocketPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.SqueakFFIPrims;
-import de.hpi.swa.graal.squeak.nodes.plugins.SqueakSSLPlugin;
+import de.hpi.swa.graal.squeak.nodes.plugins.SqueakSSL;
 import de.hpi.swa.graal.squeak.nodes.plugins.UUIDPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.UnixOSProcessPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.Win32OSProcessPlugin;
@@ -68,7 +68,7 @@ public final class PrimitiveNodeFactory {
                     new PolyglotPlugin(),
                     new SocketPlugin(),
                     new SqueakFFIPrims(),
-                    new SqueakSSLPlugin(),
+                    new SqueakSSL(),
                     new UnixOSProcessPlugin(),
                     new UUIDPlugin(),
                     new Win32OSProcessPlugin()};

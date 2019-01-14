@@ -15,13 +15,23 @@ suite = {
         }],
     },
 
-    "libraries": {},
+    "libraries": {
+        "BOUNCY_CASTLE_CRYPTO_LIB":  {
+            "sha1": "bd47ad3bd14b8e82595c7adaa143501e60842a84",
+            "maven": {
+                "groupId": "org.bouncycastle",
+                "artifactId": "bcprov-jdk15on",
+                "version": "1.60"
+            }
+        },
+    },
 
     "projects": {
         "de.hpi.swa.graal.squeak": {
             "subDir": "src",
             "sourceDirs": ["src"],
             "dependencies": [
+                "BOUNCY_CASTLE_CRYPTO_LIB",
                 "graalsqueak:GRAALSQUEAK-SHARED",
                 "truffle:TRUFFLE_API",
                 "truffle:TRUFFLE_DSL_PROCESSOR",
@@ -29,7 +39,7 @@ suite = {
             "checkstyle": "de.hpi.swa.graal.squeak",
             "checkstyleVersion": "8.8",
             "jacoco": "include",
-            "javaCompliance": "1.8",
+            "javaCompliance": "8+",
             "annotationProcessors": ["truffle:TRUFFLE_DSL_PROCESSOR"],
             "workingSets": "GraalSqueak",
         },
@@ -45,7 +55,7 @@ suite = {
             "checkstyle": "de.hpi.swa.graal.squeak",
             "checkstyleVersion": "8.8",
             "jacoco": "include",
-            "javaCompliance": "1.8",
+            "javaCompliance": "8+",
             "workingSets": "GraalSqueak",
         },
         "de.hpi.swa.graal.squeak.shared": {
@@ -57,7 +67,7 @@ suite = {
             "checkstyle": "de.hpi.swa.graal.squeak",
             "checkstyleVersion": "8.8",
             "jacoco": "include",
-            "javaCompliance": "1.8",
+            "javaCompliance": "8+",
             "workingSets": "GraalSqueak",
         },
         "de.hpi.swa.graal.squeak.test": {
@@ -66,7 +76,7 @@ suite = {
             "dependencies": ["de.hpi.swa.graal.squeak", "mx:JUNIT"],
             "checkstyle": "de.hpi.swa.graal.squeak",
             "jacoco": "include",
-            "javaCompliance": "1.8",
+            "javaCompliance": "8+",
             "workingSets": "GraalSqueak",
         },
     },
@@ -131,7 +141,7 @@ suite = {
 
         "GRAALSQUEAK_TEST": {
             "path": "graalsqueak_test.jar",
-            "javaCompliance": "1.8",
+            "javaCompliance": "8+",
             "dependencies": [
                 "de.hpi.swa.graal.squeak.test",
             ],

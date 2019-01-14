@@ -20,15 +20,25 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public final class SqueakExceptions {
 
-    /*
+    /**
      * Exception to signal an illegal state in GraalSqueak.
      */
     public static final class SqueakException extends IllegalStateException {
         private static final long serialVersionUID = 1L;
 
+        public SqueakException(final String message, final Throwable cause) {
+            super(message, cause);
+            CompilerDirectives.transferToInterpreter();
+            printSqueakStackTrace();
+        }
+
         public SqueakException(final Object... messageParts) {
             super(ArrayUtils.toJoinedString(" ", messageParts));
             CompilerDirectives.transferToInterpreter();
+            printSqueakStackTrace();
+        }
+
+        private static void printSqueakStackTrace() {
             final FrameInstance currentFrame = Truffle.getRuntime().getCurrentFrame();
             if (currentFrame != null) {
                 final Frame frame = currentFrame.getFrame(FrameInstance.FrameAccess.READ_ONLY);

@@ -7,9 +7,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.StandardOpenOption;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
@@ -37,8 +35,10 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimiti
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
 
+import org.graalvm.collections.EconomicMap;
+
 public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
-    private static final Map<Long, SeekableByteChannel> files = new HashMap<>();
+    private static final EconomicMap<Long, SeekableByteChannel> FILES = EconomicMap.create();
 
     public static final class STDIO_HANDLES {
         public static final long IN = 0;
@@ -54,7 +54,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
 
     @TruffleBoundary
     private static SeekableByteChannel getFileOrPrimFail(final long fileDescriptor) {
-        final SeekableByteChannel handle = files.get(fileDescriptor);
+        final SeekableByteChannel handle = FILES.get(fileDescriptor);
         if (handle == null) {
             throw new PrimitiveFailed();
         }
@@ -87,7 +87,7 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             }
             final SeekableByteChannel file = truffleFile.newByteChannel(options);
             final long fileId = file.hashCode();
-            files.put(fileId, file);
+            FILES.put(fileId, file);
             return fileId;
         } catch (IOException | UnsupportedOperationException | SecurityException e) {
             throw new PrimitiveFailed();
