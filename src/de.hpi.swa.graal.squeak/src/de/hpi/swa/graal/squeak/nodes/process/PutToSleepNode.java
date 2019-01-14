@@ -11,13 +11,13 @@ public final class PutToSleepNode extends AbstractNodeWithCode {
     @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
     @Child private LinkProcessToListNode linkProcessToList;
 
-    public static PutToSleepNode create(final CompiledCodeObject code) {
-        return new PutToSleepNode(code);
-    }
-
     protected PutToSleepNode(final CompiledCodeObject code) {
         super(code);
         linkProcessToList = LinkProcessToListNode.create(code);
+    }
+
+    public static PutToSleepNode create(final CompiledCodeObject code) {
+        return new PutToSleepNode(code);
     }
 
     public void executePutToSleep(final AbstractSqueakObject process) {

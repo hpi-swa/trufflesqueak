@@ -23,16 +23,16 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     @Child private ExecuteContextNode executeContextNode;
     @Child private UnwindContextChainNode unwindContextChainNode;
 
-    public static ExecuteTopLevelContextNode create(final SqueakLanguage language, final ContextObject context, final boolean needsShutdown) {
-        return new ExecuteTopLevelContextNode(language, context, context.getClosureOrMethod(), needsShutdown);
-    }
-
     private ExecuteTopLevelContextNode(final SqueakLanguage language, final ContextObject context, final CompiledCodeObject code, final boolean needsShutdown) {
         super(language, code.getFrameDescriptor());
         image = code.image;
         initialContext = context;
         this.needsShutdown = needsShutdown;
         unwindContextChainNode = UnwindContextChainNode.create(image);
+    }
+
+    public static ExecuteTopLevelContextNode create(final SqueakLanguage language, final ContextObject context, final boolean needsShutdown) {
+        return new ExecuteTopLevelContextNode(language, context, context.getClosureOrMethod(), needsShutdown);
     }
 
     @Override

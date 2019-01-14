@@ -99,12 +99,12 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
      */
     @GenerateNodeFactory
     public abstract static class PrimitiveFailedNode extends AbstractPrimitiveNode {
-        public static PrimitiveFailedNode create(final CompiledMethodObject method) {
-            return PrimitiveFailedNodeFactory.create(method, null);
-        }
-
         protected PrimitiveFailedNode(final CompiledMethodObject method) {
             super(method);
+        }
+
+        public static PrimitiveFailedNode create(final CompiledMethodObject method) {
+            return PrimitiveFailedNodeFactory.create(method, null);
         }
 
         @Specialization
@@ -1252,14 +1252,14 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         @Child private ReceiverNode receiverNode;
         private final long variableIndex;
 
-        public static PrimQuickReturnReceiverVariableNode create(final CompiledMethodObject method, final long variableIndex) {
-            return PrimQuickReturnReceiverVariableNodeFactory.create(method, variableIndex, new SqueakNode[0]);
-        }
-
         protected PrimQuickReturnReceiverVariableNode(final CompiledMethodObject method, final long variableIndex) {
             super(method);
             this.variableIndex = variableIndex;
             receiverNode = ReceiverNode.create(method);
+        }
+
+        public static PrimQuickReturnReceiverVariableNode create(final CompiledMethodObject method, final long variableIndex) {
+            return PrimQuickReturnReceiverVariableNodeFactory.create(method, variableIndex, new SqueakNode[0]);
         }
 
         @Specialization

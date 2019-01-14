@@ -37,6 +37,9 @@ public final class SqueakOptions {
     public static final OptionKey<Boolean> Testing = new OptionKey<>(false);
     //@formatter:on
 
+    private SqueakOptions() { // no instances
+    }
+
     public static OptionDescriptors createDescriptors() {
         return new SqueakOptionsOptionDescriptors();
     }
@@ -47,8 +50,5 @@ public final class SqueakOptions {
             return key.getDefaultValue();
         }
         return env.getOptions().get(key);
-    }
-
-    private SqueakOptions() { // no instances
     }
 }

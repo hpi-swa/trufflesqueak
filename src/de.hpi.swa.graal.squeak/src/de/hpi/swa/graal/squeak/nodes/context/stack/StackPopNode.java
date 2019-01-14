@@ -8,12 +8,12 @@ import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 
 public abstract class StackPopNode extends AbstractStackPopNode {
-    public static StackPopNode create(final CompiledCodeObject code) {
-        return StackPopNodeGen.create(code);
-    }
-
     protected StackPopNode(final CompiledCodeObject code) {
         super(code);
+    }
+
+    public static StackPopNode create(final CompiledCodeObject code) {
+        return StackPopNodeGen.create(code);
     }
 
     @Specialization(guards = {"isVirtualized(frame)"})

@@ -8,12 +8,12 @@ import com.oracle.truffle.api.frame.FrameSlotKind;
 
 public abstract class FrameSlotClearNode extends AbstractFrameSlotNode {
 
-    public static FrameSlotClearNode create(final FrameSlot slot) {
-        return FrameSlotClearNodeGen.create(slot);
-    }
-
     protected FrameSlotClearNode(final FrameSlot slot) {
         super(slot);
+    }
+
+    public static FrameSlotClearNode create(final FrameSlot slot) {
+        return FrameSlotClearNodeGen.create(slot);
     }
 
     public abstract void executeClear(Frame frame);

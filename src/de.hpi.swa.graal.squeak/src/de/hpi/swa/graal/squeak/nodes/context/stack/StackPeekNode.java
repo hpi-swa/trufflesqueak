@@ -9,13 +9,13 @@ import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 public abstract class StackPeekNode extends AbstractStackNode {
     private final int offset;
 
-    public static StackPeekNode create(final CompiledCodeObject code, final int offset) {
-        return StackPeekNodeGen.create(code, offset);
-    }
-
     protected StackPeekNode(final CompiledCodeObject code, final int offset) {
         super(code);
         this.offset = offset;
+    }
+
+    public static StackPeekNode create(final CompiledCodeObject code, final int offset) {
+        return StackPeekNodeGen.create(code, offset);
     }
 
     @Specialization(guards = {"isVirtualized(frame)"})

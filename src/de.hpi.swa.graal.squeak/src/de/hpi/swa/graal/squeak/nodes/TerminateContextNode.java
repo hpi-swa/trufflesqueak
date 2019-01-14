@@ -11,12 +11,12 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
 @ImportStatic(FrameAccess.class)
 public abstract class TerminateContextNode extends AbstractNodeWithCode {
 
-    public static TerminateContextNode create(final CompiledCodeObject code) {
-        return TerminateContextNodeGen.create(code);
-    }
-
     protected TerminateContextNode(final CompiledCodeObject code) {
         super(code);
+    }
+
+    public static TerminateContextNode create(final CompiledCodeObject code) {
+        return TerminateContextNodeGen.create(code);
     }
 
     protected abstract void executeTerminate(VirtualFrame frame);

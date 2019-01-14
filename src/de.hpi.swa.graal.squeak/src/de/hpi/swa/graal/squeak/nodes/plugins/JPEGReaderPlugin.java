@@ -30,11 +30,6 @@ import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 
 public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
 
-    @Override
-    public List<? extends NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
-        return JPEGReaderPluginFactory.getFactories();
-    }
-
     /* Constants */
     private static final int BlockWidthIndex = 5;
     private static final int BlueIndex = 2;
@@ -1152,5 +1147,10 @@ public final class JPEGReaderPlugin extends AbstractPrimitiveFactoryHolder {
 
     private static int slotSizeOf(final PointersObject pointerOop) {
         return pointerOop.size();
+    }
+
+    @Override
+    public List<? extends NodeFactory<? extends AbstractPrimitiveNode>> getFactories() {
+        return JPEGReaderPluginFactory.getFactories();
     }
 }

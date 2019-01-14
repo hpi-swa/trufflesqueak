@@ -25,17 +25,9 @@ public final class ContextObject extends AbstractPointersObject {
     private boolean isDirty = false;
     private boolean escaped = false;
 
-    public static ContextObject createWithHash(final SqueakImageContext image, final long hash) {
-        return new ContextObject(image, hash);
-    }
-
     private ContextObject(final SqueakImageContext image, final long hash) {
         super(image, hash, image.methodContextClass);
         isDirty = true;
-    }
-
-    public static ContextObject create(final SqueakImageContext image, final int size) {
-        return new ContextObject(image, size);
     }
 
     private ContextObject(final SqueakImageContext image, final int size) {
@@ -46,10 +38,6 @@ public final class ContextObject extends AbstractPointersObject {
          * CompiledCodeObject.getNumArgsAndCopied() here. Add 8 additional slots for now.
          */
         setPointersUnsafe(new Object[CONTEXT.TEMP_FRAME_START + size + 8]);
-    }
-
-    public static ContextObject create(final SqueakImageContext image, final int size, final MaterializedFrame frame, final FrameMarker frameMarker) {
-        return new ContextObject(image, size, frame, frameMarker);
     }
 
     private ContextObject(final SqueakImageContext image, final int size, final MaterializedFrame frame, final FrameMarker frameMarker) {
@@ -64,6 +52,18 @@ public final class ContextObject extends AbstractPointersObject {
         setPointers(original.getPointers().clone());
         truffleFrame = original.truffleFrame;
         hasModifiedSender = original.hasModifiedSender;
+    }
+
+    public static ContextObject createWithHash(final SqueakImageContext image, final long hash) {
+        return new ContextObject(image, hash);
+    }
+
+    public static ContextObject create(final SqueakImageContext image, final int size) {
+        return new ContextObject(image, size);
+    }
+
+    public static ContextObject create(final SqueakImageContext image, final int size, final MaterializedFrame frame, final FrameMarker frameMarker) {
+        return new ContextObject(image, size, frame, frameMarker);
     }
 
     public void terminate() {

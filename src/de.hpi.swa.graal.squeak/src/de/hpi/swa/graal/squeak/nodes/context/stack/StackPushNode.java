@@ -12,12 +12,12 @@ import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackWriteNode;
 
 public abstract class StackPushNode extends AbstractNodeWithCode {
 
-    public static StackPushNode create(final CompiledCodeObject code) {
-        return StackPushNodeGen.create(code);
-    }
-
     protected StackPushNode(final CompiledCodeObject code) {
         super(code);
+    }
+
+    public static StackPushNode create(final CompiledCodeObject code) {
+        return StackPushNodeGen.create(code);
     }
 
     public abstract void executeWrite(VirtualFrame frame, Object value);

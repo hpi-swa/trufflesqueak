@@ -6,11 +6,6 @@ public final class CompiledBlockObject extends CompiledCodeObject {
     private final CompiledMethodObject outerMethod;
     private final int offset;
 
-    public static CompiledBlockObject create(final CompiledCodeObject code, final CompiledMethodObject outerMethod, final int numArgs, final int numCopied, final int bytecodeOffset,
-                    final int blockSize) {
-        return new CompiledBlockObject(code, outerMethod, numArgs, numCopied, bytecodeOffset, blockSize);
-    }
-
     private CompiledBlockObject(final CompiledCodeObject code, final CompiledMethodObject outerMethod, final int numArgs, final int numCopied, final int bytecodeOffset, final int blockSize) {
         super(code.image, numCopied);
         this.outerMethod = outerMethod;
@@ -30,6 +25,11 @@ public final class CompiledBlockObject extends CompiledCodeObject {
         super(original);
         outerMethod = original.outerMethod;
         offset = original.offset;
+    }
+
+    public static CompiledBlockObject create(final CompiledCodeObject code, final CompiledMethodObject outerMethod, final int numArgs, final int numCopied, final int bytecodeOffset,
+                    final int blockSize) {
+        return new CompiledBlockObject(code, outerMethod, numArgs, numCopied, bytecodeOffset, blockSize);
     }
 
     public Object at0(final long longIndex) {

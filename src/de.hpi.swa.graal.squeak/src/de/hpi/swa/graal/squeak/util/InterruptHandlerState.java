@@ -33,16 +33,16 @@ public final class InterruptHandlerState {
     @CompilationFinal private PointersObject interruptSemaphore;
     private PointersObject timerSemaphore;
 
-    public static InterruptHandlerState create(final SqueakImageContext image) {
-        return new InterruptHandlerState(image);
-    }
-
     protected InterruptHandlerState(final SqueakImageContext image) {
         this.image = image;
         disabled = SqueakOptions.getOption(image.env, SqueakOptions.DisableInterruptHandler);
         if (disabled) {
             image.printToStdOut("Interrupt handler disabled...");
         }
+    }
+
+    public static InterruptHandlerState create(final SqueakImageContext image) {
+        return new InterruptHandlerState(image);
     }
 
     @TruffleBoundary

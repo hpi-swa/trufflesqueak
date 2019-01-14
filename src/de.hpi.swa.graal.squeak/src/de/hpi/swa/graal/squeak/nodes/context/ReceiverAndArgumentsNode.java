@@ -11,12 +11,12 @@ import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public abstract class ReceiverAndArgumentsNode extends AbstractNodeWithCode {
-    public static ReceiverAndArgumentsNode create(final CompiledCodeObject code) {
-        return ReceiverAndArgumentsNodeGen.create(code);
-    }
-
     protected ReceiverAndArgumentsNode(final CompiledCodeObject code) {
         super(code);
+    }
+
+    public static ReceiverAndArgumentsNode create(final CompiledCodeObject code) {
+        return ReceiverAndArgumentsNodeGen.create(code);
     }
 
     public abstract Object executeGet(VirtualFrame frame);

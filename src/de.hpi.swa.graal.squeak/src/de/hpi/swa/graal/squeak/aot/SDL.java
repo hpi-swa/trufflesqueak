@@ -197,10 +197,12 @@ public final class SDL {
      * SDL_hints.h
      */
 
+    // Checkstyle: stop
     public static final String HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK = "SDL_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK";
     public static final String HINT_RENDER_SCALE_QUALITY = "SDL_RENDER_SCALE_QUALITY";
     public static final String HINT_RENDER_VSYNC = "SDL_RENDER_VSYNC";
     public static final String HINT_VIDEO_X11_NET_WM_PING = "SDL_VIDEO_X11_NET_WM_PING";
+    // Checkstyle: resume
 
     @CFunction("SDL_SetHint")
     public static native int setHint(CCharPointer key, CCharPointer value);

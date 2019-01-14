@@ -44,12 +44,12 @@ public abstract class ObjectGraphNode extends AbstractNodeWithImage {
 
     @Child private GetTraceablePointersNode getPointersNode = GetTraceablePointersNode.create();
 
-    public static ObjectGraphNode create(final SqueakImageContext image) {
-        return ObjectGraphNodeGen.create(image);
-    }
-
     protected ObjectGraphNode(final SqueakImageContext image) {
         super(image);
+    }
+
+    public static ObjectGraphNode create(final SqueakImageContext image) {
+        return ObjectGraphNodeGen.create(image);
     }
 
     public HashSet<AbstractSqueakObject> getClassesWithNoInstances() {

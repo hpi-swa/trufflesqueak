@@ -12,12 +12,12 @@ import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.CalculcatePCOff
 public abstract class UpdateInstructionPointerNode extends AbstractNodeWithCode {
     @Child private CalculcatePCOffsetNode calculcatePCOffsetNode = CalculcatePCOffsetNode.create();
 
-    public static UpdateInstructionPointerNode create(final CompiledCodeObject code) {
-        return UpdateInstructionPointerNodeGen.create(code);
-    }
-
     protected UpdateInstructionPointerNode(final CompiledCodeObject code) {
         super(code);
+    }
+
+    public static UpdateInstructionPointerNode create(final CompiledCodeObject code) {
+        return UpdateInstructionPointerNodeGen.create(code);
     }
 
     public abstract void executeUpdate(VirtualFrame frame, int value);

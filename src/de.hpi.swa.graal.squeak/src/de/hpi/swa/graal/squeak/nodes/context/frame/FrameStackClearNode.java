@@ -17,12 +17,12 @@ import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
 @ImportStatic(CONTEXT.class)
 public abstract class FrameStackClearNode extends AbstractNodeWithCode {
 
-    public static FrameStackClearNode create(final CompiledCodeObject code) {
-        return FrameStackClearNodeGen.create(code);
-    }
-
     protected FrameStackClearNode(final CompiledCodeObject code) {
         super(code);
+    }
+
+    public static FrameStackClearNode create(final CompiledCodeObject code) {
+        return FrameStackClearNodeGen.create(code);
     }
 
     public abstract void execute(Frame frame, int stackIndex);

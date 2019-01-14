@@ -19,13 +19,13 @@ public abstract class RemoveProcessFromListNode extends AbstractNodeWithImage {
     @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
     @Child private ExecuteRemoveProcessNode removeNode;
 
-    public static RemoveProcessFromListNode create(final SqueakImageContext image) {
-        return RemoveProcessFromListNodeGen.create(image);
-    }
-
     protected RemoveProcessFromListNode(final SqueakImageContext image) {
         super(image);
         removeNode = ExecuteRemoveProcessNodeGen.create(image);
+    }
+
+    public static RemoveProcessFromListNode create(final SqueakImageContext image) {
+        return RemoveProcessFromListNodeGen.create(image);
     }
 
     public abstract void executeRemove(Object process, Object list);

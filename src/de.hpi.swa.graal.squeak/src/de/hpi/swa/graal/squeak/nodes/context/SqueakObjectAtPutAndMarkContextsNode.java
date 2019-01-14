@@ -30,12 +30,12 @@ public abstract class SqueakObjectAtPutAndMarkContextsNode extends Node {
     @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
     private final long index;
 
-    public static SqueakObjectAtPutAndMarkContextsNode create(final long index, final SqueakNode object, final SqueakNode value) {
-        return SqueakObjectAtPutAndMarkContextsNodeGen.create(index, object, value);
-    }
-
     protected SqueakObjectAtPutAndMarkContextsNode(final long variableIndex) {
         index = variableIndex;
+    }
+
+    public static SqueakObjectAtPutAndMarkContextsNode create(final long index, final SqueakNode object, final SqueakNode value) {
+        return SqueakObjectAtPutAndMarkContextsNodeGen.create(index, object, value);
     }
 
     public abstract void executeWrite(VirtualFrame frame);

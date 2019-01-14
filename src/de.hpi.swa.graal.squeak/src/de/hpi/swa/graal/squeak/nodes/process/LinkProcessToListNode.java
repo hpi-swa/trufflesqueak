@@ -16,13 +16,13 @@ public abstract class LinkProcessToListNode extends AbstractNodeWithCode {
     @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
     @Child protected IsEmptyListNode isEmptyListNode;
 
-    public static LinkProcessToListNode create(final CompiledCodeObject code) {
-        return LinkProcessToListNodeGen.create(code);
-    }
-
     protected LinkProcessToListNode(final CompiledCodeObject code) {
         super(code);
         isEmptyListNode = IsEmptyListNode.create(code.image);
+    }
+
+    public static LinkProcessToListNode create(final CompiledCodeObject code) {
+        return LinkProcessToListNodeGen.create(code);
     }
 
     public abstract void executeLink(Object process, Object list);

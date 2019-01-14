@@ -7,12 +7,12 @@ import com.oracle.truffle.api.frame.FrameSlotKind;
 
 public abstract class FrameSlotWriteNode extends AbstractFrameSlotNode {
 
-    public static FrameSlotWriteNode create(final FrameSlot slot) {
-        return FrameSlotWriteNodeGen.create(slot);
-    }
-
     protected FrameSlotWriteNode(final FrameSlot slot) {
         super(slot);
+    }
+
+    public static FrameSlotWriteNode create(final FrameSlot slot) {
+        return FrameSlotWriteNodeGen.create(slot);
     }
 
     public abstract void executeWrite(Frame frame, Object value);

@@ -67,6 +67,9 @@ public final class SqueakTests {
         }
     }
 
+    private SqueakTests() {
+    }
+
     protected static Stream<SqueakTest> getTestsToRun(final String testClass) {
         return allTests().filter(t -> t.className.equals(testClass));
     }
@@ -110,8 +113,5 @@ public final class SqueakTests {
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
-    }
-
-    private SqueakTests() {
     }
 }

@@ -295,16 +295,16 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
             @Child private ReadArrayObjectNode readNode = ReadArrayObjectNode.create();
 
+            protected ScanCharactersHelperNode(final SqueakImageContext image) {
+                super(image);
+            }
+
             protected static ScanCharactersHelperNode create(final SqueakImageContext image) {
                 return ScanCharactersHelperNodeGen.create(image);
             }
 
             protected abstract Object executeScan(PointersObject receiver, long startIndex, long stopIndex, byte[] sourceBytes, long rightX, ArrayObject stops, long kernData,
                             Object scanDestX, Object scanXTable, Object scanMap);
-
-            protected ScanCharactersHelperNode(final SqueakImageContext image) {
-                super(image);
-            }
 
             @Specialization(guards = {"sizeNode.execute(scanMap) == 256", "stopIndex <= sourceBytes.length"})
             protected final Object doScan(final PointersObject receiver, final long startIndex, final long stopIndex, final byte[] sourceBytes, final long rightX, final ArrayObject stops,

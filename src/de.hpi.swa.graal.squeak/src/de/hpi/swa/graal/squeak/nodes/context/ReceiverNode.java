@@ -9,12 +9,12 @@ import de.hpi.swa.graal.squeak.nodes.SqueakNodeWithCode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public abstract class ReceiverNode extends SqueakNodeWithCode {
-    public static ReceiverNode create(final CompiledCodeObject code) {
-        return ReceiverNodeGen.create(code);
-    }
-
     protected ReceiverNode(final CompiledCodeObject code) {
         super(code);
+    }
+
+    public static ReceiverNode create(final CompiledCodeObject code) {
+        return ReceiverNodeGen.create(code);
     }
 
     @Specialization(guards = {"isVirtualized(frame)"})

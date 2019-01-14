@@ -13,12 +13,12 @@ import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 
 public abstract class LookupClassNode extends AbstractNodeWithImage {
-    public static LookupClassNode create(final SqueakImageContext image) {
-        return LookupClassNodeGen.create(image);
-    }
-
     protected LookupClassNode(final SqueakImageContext image) {
         super(image);
+    }
+
+    public static LookupClassNode create(final SqueakImageContext image) {
+        return LookupClassNodeGen.create(image);
     }
 
     public abstract ClassObject executeLookup(Object receiver);

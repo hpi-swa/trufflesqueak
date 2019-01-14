@@ -15,16 +15,16 @@ public final class YieldProcessNode extends AbstractNodeWithImage {
     @Child private LinkProcessToListNode linkProcessToListNode;
     @Child private WakeHighestPriorityNode wakeHighestPriorityNode;
 
-    public static YieldProcessNode create(final CompiledCodeObject image) {
-        return new YieldProcessNode(image);
-    }
-
     protected YieldProcessNode(final CompiledCodeObject code) {
         super(code.image);
         getActiveProcessNode = GetActiveProcessNode.create(image);
         isEmptyListNode = IsEmptyListNode.create(image);
         linkProcessToListNode = LinkProcessToListNode.create(code);
         wakeHighestPriorityNode = WakeHighestPriorityNode.create(code);
+    }
+
+    public static YieldProcessNode create(final CompiledCodeObject image) {
+        return new YieldProcessNode(image);
     }
 
     public void executeYield(final VirtualFrame frame, final PointersObject scheduler) {

@@ -15,12 +15,12 @@ import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class HandlePrimitiveFailedNode extends AbstractNodeWithCode {
 
-    public static HandlePrimitiveFailedNode create(final CompiledCodeObject code) {
-        return HandlePrimitiveFailedNodeGen.create(code);
-    }
-
     protected HandlePrimitiveFailedNode(final CompiledCodeObject code) {
         super(code);
+    }
+
+    public static HandlePrimitiveFailedNode create(final CompiledCodeObject code) {
+        return HandlePrimitiveFailedNodeGen.create(code);
     }
 
     public abstract void executeHandle(VirtualFrame frame, PrimitiveFailed e);

@@ -52,6 +52,16 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
     @Child private StackPushNode pushStackNode;
     @Child private CalculcatePCOffsetNode calculcatePCOffsetNode;
 
+    protected ExecuteContextNode(final CompiledCodeObject code) {
+        super(code);
+        if (DECODE_BYTECODE_ON_DEMAND) {
+            bytecodeNodes = new AbstractBytecodeNode[SqueakBytecodeDecoder.trailerPosition(code)];
+        } else {
+            bytecodeNodes = SqueakBytecodeDecoder.decode(code);
+        }
+        triggerInterruptHandlerNode = TriggerInterruptHandlerNode.create(code);
+    }
+
     public static ExecuteContextNode create(final CompiledCodeObject code) {
         return ExecuteContextNodeGen.create(code);
     }
@@ -62,16 +72,6 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
     @TruffleBoundary
     public final String toString() {
         return code.toString();
-    }
-
-    protected ExecuteContextNode(final CompiledCodeObject code) {
-        super(code);
-        if (DECODE_BYTECODE_ON_DEMAND) {
-            bytecodeNodes = new AbstractBytecodeNode[SqueakBytecodeDecoder.trailerPosition(code)];
-        } else {
-            bytecodeNodes = SqueakBytecodeDecoder.decode(code);
-        }
-        triggerInterruptHandlerNode = TriggerInterruptHandlerNode.create(code);
     }
 
     @Specialization(guards = "context == null")
@@ -239,12 +239,12 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
 
         private final ConditionProfile countingProfile = ConditionProfile.createCountingProfile();
 
-        private static TriggerInterruptHandlerNode create(final CompiledCodeObject code) {
-            return TriggerInterruptHandlerNodeGen.create(code);
-        }
-
         protected TriggerInterruptHandlerNode(final CompiledCodeObject code) {
             super(code);
+        }
+
+        private static TriggerInterruptHandlerNode create(final CompiledCodeObject code) {
+            return TriggerInterruptHandlerNodeGen.create(code);
         }
 
         protected abstract void executeGeneric(VirtualFrame frame, boolean hasPrimitive, int bytecodeLength);

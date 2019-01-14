@@ -11,12 +11,12 @@ import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
 
 public abstract class ValueToSqueakObjectNode extends AbstractNodeWithCode {
 
-    public static ValueToSqueakObjectNode create(final CompiledCodeObject code) {
-        return ValueToSqueakObjectNodeGen.create(code);
-    }
-
     protected ValueToSqueakObjectNode(final CompiledCodeObject code) {
         super(code);
+    }
+
+    public static ValueToSqueakObjectNode create(final CompiledCodeObject code) {
+        return ValueToSqueakObjectNodeGen.create(code);
     }
 
     public abstract Object executeValue(Value value);

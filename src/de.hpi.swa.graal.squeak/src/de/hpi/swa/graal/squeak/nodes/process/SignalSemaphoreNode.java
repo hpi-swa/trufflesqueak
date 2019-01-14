@@ -16,15 +16,15 @@ public abstract class SignalSemaphoreNode extends AbstractNodeWithImage {
     @Child private ResumeProcessNode resumeProcessNode;
     @Child private RemoveFirstLinkOfListNode removeFirstLinkOfListNode;
 
-    public static SignalSemaphoreNode create(final CompiledCodeObject code) {
-        return SignalSemaphoreNodeGen.create(code);
-    }
-
     protected SignalSemaphoreNode(final CompiledCodeObject code) {
         super(code.image);
         isEmptyListNode = IsEmptyListNode.create(image);
         resumeProcessNode = ResumeProcessNode.create(code);
         removeFirstLinkOfListNode = RemoveFirstLinkOfListNode.create(image);
+    }
+
+    public static SignalSemaphoreNode create(final CompiledCodeObject code) {
+        return SignalSemaphoreNodeGen.create(code);
     }
 
     public abstract void executeSignal(VirtualFrame frame, Object semaphore);

@@ -19,12 +19,12 @@ import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 
 public abstract class NewObjectNode extends AbstractNodeWithImage {
 
-    public static NewObjectNode create(final SqueakImageContext image) {
-        return NewObjectNodeGen.create(image);
-    }
-
     protected NewObjectNode(final SqueakImageContext image) {
         super(image);
+    }
+
+    public static NewObjectNode create(final SqueakImageContext image) {
+        return NewObjectNodeGen.create(image);
     }
 
     public final Object execute(final ClassObject classObject) {

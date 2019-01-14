@@ -12,12 +12,12 @@ import de.hpi.swa.graal.squeak.model.NilObject;
 
 public abstract class UnwindContextChainNode extends AbstractNodeWithImage {
 
-    public static UnwindContextChainNode create(final SqueakImageContext image) {
-        return UnwindContextChainNodeGen.create(image);
-    }
-
     protected UnwindContextChainNode(final SqueakImageContext image) {
         super(image);
+    }
+
+    public static UnwindContextChainNode create(final SqueakImageContext image) {
+        return UnwindContextChainNodeGen.create(image);
     }
 
     public abstract ContextObject executeUnwind(AbstractSqueakObject startContext, AbstractSqueakObject targetContext, Object returnValue);

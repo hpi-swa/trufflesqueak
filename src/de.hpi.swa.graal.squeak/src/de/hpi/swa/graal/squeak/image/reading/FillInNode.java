@@ -21,12 +21,12 @@ import de.hpi.swa.graal.squeak.nodes.primitives.impl.SimulationPrimitiveNode;
 public abstract class FillInNode extends Node {
     private final SqueakImageContext image;
 
-    public static FillInNode create(final SqueakImageContext image) {
-        return FillInNodeGen.create(image);
-    }
-
     protected FillInNode(final SqueakImageContext image) {
         this.image = image;
+    }
+
+    public static FillInNode create(final SqueakImageContext image) {
+        return FillInNodeGen.create(image);
     }
 
     public abstract void execute(Object obj, SqueakImageChunk chunk);

@@ -20,16 +20,16 @@ public final class WakeHighestPriorityNode extends AbstractNodeWithImage {
     @Child private IsEmptyListNode isEmptyListNode;
     @Child private TransferToNode transferToNode;
 
-    public static WakeHighestPriorityNode create(final CompiledCodeObject code) {
-        return new WakeHighestPriorityNode(code);
-    }
-
     protected WakeHighestPriorityNode(final CompiledCodeObject code) {
         super(code.image);
         removeFirstLinkOfListNode = RemoveFirstLinkOfListNode.create(image);
         getActiveProcessNode = GetActiveProcessNode.create(image);
         isEmptyListNode = IsEmptyListNode.create(image);
         transferToNode = TransferToNode.create(code);
+    }
+
+    public static WakeHighestPriorityNode create(final CompiledCodeObject code) {
+        return new WakeHighestPriorityNode(code);
     }
 
     public void executeWake(final VirtualFrame frame) {

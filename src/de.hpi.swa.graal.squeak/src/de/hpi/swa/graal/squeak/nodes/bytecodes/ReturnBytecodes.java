@@ -77,13 +77,13 @@ public final class ReturnBytecodes {
     public abstract static class ReturnConstantNode extends AbstractReturnNodeWithSpecializations {
         private final Object constant;
 
-        public static ReturnConstantNode create(final CompiledCodeObject code, final int index, final Object value) {
-            return ReturnConstantNodeGen.create(code, index, value);
-        }
-
         protected ReturnConstantNode(final CompiledCodeObject code, final int index, final Object obj) {
             super(code, index);
             constant = obj;
+        }
+
+        public static ReturnConstantNode create(final CompiledCodeObject code, final int index, final Object value) {
+            return ReturnConstantNodeGen.create(code, index, value);
         }
 
         @Override
@@ -100,13 +100,13 @@ public final class ReturnBytecodes {
     public abstract static class ReturnReceiverNode extends AbstractReturnNodeWithSpecializations {
         @Child private ReceiverNode receiverNode;
 
-        public static ReturnReceiverNode create(final CompiledCodeObject code, final int index) {
-            return ReturnReceiverNodeGen.create(code, index);
-        }
-
         protected ReturnReceiverNode(final CompiledCodeObject code, final int index) {
             super(code, index);
             receiverNode = ReceiverNode.create(code);
+        }
+
+        public static ReturnReceiverNode create(final CompiledCodeObject code, final int index) {
+            return ReturnReceiverNodeGen.create(code, index);
         }
 
         @Override
@@ -123,13 +123,13 @@ public final class ReturnBytecodes {
     public abstract static class ReturnTopFromBlockNode extends AbstractReturnNode {
         @Child private StackPopNode popNode;
 
-        public static ReturnTopFromBlockNode create(final CompiledCodeObject code, final int index) {
-            return ReturnTopFromBlockNodeGen.create(code, index);
-        }
-
         protected ReturnTopFromBlockNode(final CompiledCodeObject code, final int index) {
             super(code, index);
             popNode = StackPopNode.create(code);
+        }
+
+        public static ReturnTopFromBlockNode create(final CompiledCodeObject code, final int index) {
+            return ReturnTopFromBlockNodeGen.create(code, index);
         }
 
         @Override
@@ -174,13 +174,13 @@ public final class ReturnBytecodes {
     public abstract static class ReturnTopFromMethodNode extends AbstractReturnNodeWithSpecializations {
         @Child private StackPopNode popNode;
 
-        public static ReturnTopFromMethodNode create(final CompiledCodeObject code, final int index) {
-            return ReturnTopFromMethodNodeGen.create(code, index);
-        }
-
         protected ReturnTopFromMethodNode(final CompiledCodeObject code, final int index) {
             super(code, index);
             popNode = StackPopNode.create(code);
+        }
+
+        public static ReturnTopFromMethodNode create(final CompiledCodeObject code, final int index) {
+            return ReturnTopFromMethodNodeGen.create(code, index);
         }
 
         @Override

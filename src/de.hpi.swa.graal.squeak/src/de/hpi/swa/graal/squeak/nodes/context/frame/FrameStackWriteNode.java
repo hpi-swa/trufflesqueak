@@ -18,12 +18,12 @@ import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
 @ImportStatic(CONTEXT.class)
 public abstract class FrameStackWriteNode extends AbstractNodeWithCode {
 
-    public static FrameStackWriteNode create(final CompiledCodeObject code) {
-        return FrameStackWriteNodeGen.create(code);
-    }
-
     protected FrameStackWriteNode(final CompiledCodeObject code) {
         super(code);
+    }
+
+    public static FrameStackWriteNode create(final CompiledCodeObject code) {
+        return FrameStackWriteNodeGen.create(code);
     }
 
     public abstract void execute(Frame frame, int stackIndex, Object value);

@@ -44,12 +44,13 @@ public final class CompiledCodeNodes {
     }
 
     public abstract static class IsDoesNotUnderstandNode extends AbstractNodeWithImage {
-        public static IsDoesNotUnderstandNode create(final SqueakImageContext image) {
-            return IsDoesNotUnderstandNodeGen.create(image);
-        }
 
         public IsDoesNotUnderstandNode(final SqueakImageContext image) {
             super(image);
+        }
+
+        public static IsDoesNotUnderstandNode create(final SqueakImageContext image) {
+            return IsDoesNotUnderstandNodeGen.create(image);
         }
 
         public abstract boolean execute(Object object);

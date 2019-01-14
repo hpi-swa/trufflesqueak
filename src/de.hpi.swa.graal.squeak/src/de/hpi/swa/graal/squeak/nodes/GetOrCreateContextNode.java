@@ -13,12 +13,12 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
 @ImportStatic(FrameAccess.class)
 public abstract class GetOrCreateContextNode extends AbstractNodeWithCode {
 
-    public static GetOrCreateContextNode create(final CompiledCodeObject code) {
-        return GetOrCreateContextNodeGen.create(code);
-    }
-
     protected GetOrCreateContextNode(final CompiledCodeObject code) {
         super(code);
+    }
+
+    public static GetOrCreateContextNode create(final CompiledCodeObject code) {
+        return GetOrCreateContextNodeGen.create(code);
     }
 
     public abstract ContextObject executeGet(Frame frame);

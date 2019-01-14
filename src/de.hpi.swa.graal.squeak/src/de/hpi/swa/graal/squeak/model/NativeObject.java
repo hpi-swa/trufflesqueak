@@ -17,6 +17,23 @@ public final class NativeObject extends AbstractSqueakObject {
 
     @CompilationFinal private Object storage;
 
+    public NativeObject(final SqueakImageContext image) { // constructor for special selectors
+        super(image, -1, null);
+        storage = new byte[0];
+    }
+
+    protected NativeObject(final SqueakImageContext image, final ClassObject classObject, final Object storage) {
+        super(image, classObject);
+        assert storage != null;
+        this.storage = storage;
+    }
+
+    protected NativeObject(final SqueakImageContext image, final long hash, final ClassObject classObject, final Object storage) {
+        super(image, hash, classObject);
+        assert storage != null;
+        this.storage = storage;
+    }
+
     public static NativeObject newNativeBytes(final SqueakImageChunk chunk) {
         return new NativeObject(chunk.image, chunk.getHash(), chunk.getSqClass(), chunk.getBytes());
     }
@@ -63,23 +80,6 @@ public final class NativeObject extends AbstractSqueakObject {
 
     public static NativeObject newNativeShorts(final SqueakImageContext img, final ClassObject klass, final short[] shorts) {
         return new NativeObject(img, klass, shorts);
-    }
-
-    public NativeObject(final SqueakImageContext image) { // constructor for special selectors
-        super(image, -1, null);
-        storage = new byte[0];
-    }
-
-    protected NativeObject(final SqueakImageContext image, final ClassObject classObject, final Object storage) {
-        super(image, classObject);
-        assert storage != null;
-        this.storage = storage;
-    }
-
-    protected NativeObject(final SqueakImageContext image, final long hash, final ClassObject classObject, final Object storage) {
-        super(image, hash, classObject);
-        assert storage != null;
-        this.storage = storage;
     }
 
     @TruffleBoundary

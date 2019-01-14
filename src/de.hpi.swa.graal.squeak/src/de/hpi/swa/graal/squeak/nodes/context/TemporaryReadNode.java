@@ -14,13 +14,13 @@ public abstract class TemporaryReadNode extends SqueakNodeWithCode {
     private final int tempIndex;
     @Child private FrameSlotReadNode readNode;
 
-    public static SqueakNode create(final CompiledCodeObject code, final int tempIndex) {
-        return TemporaryReadNodeGen.create(code, tempIndex);
-    }
-
     protected TemporaryReadNode(final CompiledCodeObject code, final int tempIndex) {
         super(code);
         this.tempIndex = tempIndex;
+    }
+
+    public static SqueakNode create(final CompiledCodeObject code, final int tempIndex) {
+        return TemporaryReadNodeGen.create(code, tempIndex);
     }
 
     @Specialization(guards = {"isVirtualized(frame)"})

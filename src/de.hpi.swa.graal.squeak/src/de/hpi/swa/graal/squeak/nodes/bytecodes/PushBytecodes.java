@@ -78,10 +78,6 @@ public final class PushBytecodes {
         @CompilationFinal private CompiledBlockObject block;
         @CompilationFinal private RootCallTarget blockCallTarget;
 
-        public static PushClosureNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int i, final int j, final int k) {
-            return new PushClosureNode(code, index, numBytecodes, i, j, k);
-        }
-
         protected PushClosureNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int i, final int j, final int k) {
             super(code, index, numBytecodes);
             numArgs = i & 0xF;
@@ -90,6 +86,10 @@ public final class PushBytecodes {
             getOrCreateContextNode = GetOrCreateContextNode.create(code);
             popNReversedNode = StackPopNReversedNode.create(code, numCopied);
             receiverNode = ReceiverNode.create(code);
+        }
+
+        public static PushClosureNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int i, final int j, final int k) {
+            return new PushClosureNode(code, index, numBytecodes, i, j, k);
         }
 
         private CompiledBlockObject getBlock() {
@@ -195,14 +195,14 @@ public final class PushBytecodes {
         @Child protected StackPopNReversedNode popNReversedNode;
         private final int arraySize;
 
-        public static PushNewArrayNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int param) {
-            return PushNewArrayNodeGen.create(code, index, numBytecodes, param);
-        }
-
         protected PushNewArrayNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int param) {
             super(code, index, numBytecodes);
             arraySize = param & 127;
             popNReversedNode = param > 127 ? StackPopNReversedNode.create(code, arraySize) : null;
+        }
+
+        public static PushNewArrayNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int param) {
+            return PushNewArrayNodeGen.create(code, index, numBytecodes, param);
         }
 
         @Specialization(guards = {"popNReversedNode != null"})
@@ -229,12 +229,12 @@ public final class PushBytecodes {
     @NodeInfo(cost = NodeCost.NONE)
     public abstract static class PushReceiverNode extends AbstractPushNode {
 
-        public static PushReceiverNode create(final CompiledCodeObject code, final int index) {
-            return PushReceiverNodeGen.create(code, index);
-        }
-
         protected PushReceiverNode(final CompiledCodeObject code, final int index) {
             super(code, index);
+        }
+
+        public static PushReceiverNode create(final CompiledCodeObject code, final int index) {
+            return PushReceiverNodeGen.create(code, index);
         }
 
         @Specialization(guards = {"isVirtualized(frame)"})
@@ -258,13 +258,13 @@ public final class PushBytecodes {
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
         private final int variableIndex;
 
-        public static PushReceiverVariableNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int varIndex) {
-            return PushReceiverVariableNodeGen.create(code, index, numBytecodes, varIndex);
-        }
-
         protected PushReceiverVariableNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int varIndex) {
             super(code, index, numBytecodes);
             variableIndex = varIndex;
+        }
+
+        public static PushReceiverVariableNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int varIndex) {
+            return PushReceiverVariableNodeGen.create(code, index, numBytecodes, varIndex);
         }
 
         @Specialization(guards = {"isVirtualized(frame)"})

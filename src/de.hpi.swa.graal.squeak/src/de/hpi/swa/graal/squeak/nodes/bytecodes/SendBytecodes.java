@@ -77,25 +77,25 @@ public final class SendBytecodes {
     }
 
     public static final class SendLiteralSelectorNode extends AbstractSendNode {
+        public SendLiteralSelectorNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object selector, final int argCount) {
+            super(code, index, numBytecodes, selector, argCount);
+        }
+
         public static AbstractBytecodeNode create(final CompiledCodeObject code, final int index, final int numBytecodes, final int literalIndex, final int argCount) {
             final Object selector = code.getLiteral(literalIndex);
             return new SendLiteralSelectorNode(code, index, numBytecodes, selector, argCount);
         }
-
-        public SendLiteralSelectorNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object selector, final int argCount) {
-            super(code, index, numBytecodes, selector, argCount);
-        }
     }
 
     public static final class SendSelectorNode extends AbstractSendNode {
+        public SendSelectorNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object selector, final int argcount) {
+            super(code, index, numBytecodes, selector, argcount);
+        }
+
         public static SendSelectorNode createForSpecialSelector(final CompiledCodeObject code, final int index, final int selectorIndex) {
             final NativeObject specialSelector = code.image.specialSelectorsArray[selectorIndex];
             final int numArguments = code.image.specialSelectorsNumArgs[selectorIndex];
             return new SendSelectorNode(code, index, 1, specialSelector, numArguments);
-        }
-
-        public SendSelectorNode(final CompiledCodeObject code, final int index, final int numBytecodes, final Object selector, final int argcount) {
-            super(code, index, numBytecodes, selector, argcount);
         }
     }
 

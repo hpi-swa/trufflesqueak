@@ -26,15 +26,15 @@ public abstract class LookupMethodNode extends Node {
 
     @Child protected ExecuteLookupNode executeLookupNode;
 
+    protected LookupMethodNode(final SqueakImageContext image) {
+        executeLookupNode = ExecuteLookupNodeGen.create(image);
+    }
+
     public static LookupMethodNode create(final SqueakImageContext image) {
         return LookupMethodNodeGen.create(image);
     }
 
     public abstract Object executeLookup(Object sqClass, Object selector);
-
-    protected LookupMethodNode(final SqueakImageContext image) {
-        executeLookupNode = ExecuteLookupNodeGen.create(image);
-    }
 
     protected abstract static class ExecuteLookupNode extends AbstractNodeWithImage {
         protected ExecuteLookupNode(final SqueakImageContext image) {

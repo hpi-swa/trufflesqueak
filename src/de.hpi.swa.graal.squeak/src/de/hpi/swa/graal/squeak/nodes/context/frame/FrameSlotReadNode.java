@@ -7,12 +7,12 @@ import com.oracle.truffle.api.frame.FrameSlotTypeException;
 
 public abstract class FrameSlotReadNode extends AbstractFrameSlotNode {
 
-    public static FrameSlotReadNode create(final FrameSlot frameSlot) {
-        return FrameSlotReadNodeGen.create(frameSlot);
-    }
-
     protected FrameSlotReadNode(final FrameSlot frameSlot) {
         super(frameSlot);
+    }
+
+    public static FrameSlotReadNode create(final FrameSlot frameSlot) {
+        return FrameSlotReadNodeGen.create(frameSlot);
     }
 
     public abstract Object executeRead(Frame frame);

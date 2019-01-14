@@ -20,14 +20,14 @@ public abstract class InterruptHandlerNode extends Node {
 
     @Child private SignalSemaphoreNode signalSemaporeNode;
 
-    public static InterruptHandlerNode create(final CompiledCodeObject code) {
-        return InterruptHandlerNodeGen.create(code);
-    }
-
     protected InterruptHandlerNode(final CompiledCodeObject code) {
         image = code.image;
         istate = image.interrupt;
         signalSemaporeNode = SignalSemaphoreNode.create(code);
+    }
+
+    public static InterruptHandlerNode create(final CompiledCodeObject code) {
+        return InterruptHandlerNodeGen.create(code);
     }
 
     public abstract void executeTrigger(VirtualFrame frame);

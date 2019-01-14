@@ -71,12 +71,12 @@ public final class JumpBytecodes {
             @Child private StackPushNode pushNode;
             @Child private AbstractSendNode sendMustBeBooleanNode;
 
-            protected static HandleConditionResultNode create(final CompiledCodeObject code) {
-                return HandleConditionResultNodeGen.create(code);
-            }
-
             protected HandleConditionResultNode(final CompiledCodeObject code) {
                 super(code);
+            }
+
+            protected static HandleConditionResultNode create(final CompiledCodeObject code) {
+                return HandleConditionResultNodeGen.create(code);
             }
 
             protected abstract boolean execute(VirtualFrame frame, boolean expected, Object result);

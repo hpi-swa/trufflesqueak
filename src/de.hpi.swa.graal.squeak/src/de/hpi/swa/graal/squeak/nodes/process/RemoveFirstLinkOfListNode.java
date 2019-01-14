@@ -16,12 +16,12 @@ public abstract class RemoveFirstLinkOfListNode extends AbstractNodeWithImage {
     @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
     @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
 
-    public static RemoveFirstLinkOfListNode create(final SqueakImageContext image) {
-        return RemoveFirstLinkOfListNodeGen.create(image);
-    }
-
     protected RemoveFirstLinkOfListNode(final SqueakImageContext image) {
         super(image);
+    }
+
+    public static RemoveFirstLinkOfListNode create(final SqueakImageContext image) {
+        return RemoveFirstLinkOfListNodeGen.create(image);
     }
 
     public abstract Object executeRemove(Object list);
