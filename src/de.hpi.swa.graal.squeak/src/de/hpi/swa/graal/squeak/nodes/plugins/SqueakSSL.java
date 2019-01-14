@@ -791,7 +791,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
             final IntProperty property = propertyWithId(IntProperty.class, propertyId);
 
             if (ssl == null || property == null) {
-                return 0;
+                return 0L;
             }
 
             switch (property) {
@@ -801,9 +801,9 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
                     return Constants.VERSION;
                 case CERTIFICATE_STATE:
                     // FIXME
-                    return 0;
+                    return 0L;
                 default:
-                    return 0;
+                    return 0L;
             }
         }
     }
@@ -834,14 +834,14 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
             final SqSSL ssl = getSSL(sslHandle);
             final IntProperty property = propertyWithId(IntProperty.class, propertyId);
             if (ssl == null || property == null) {
-                return 0;
+                return 0L;
             }
 
             if (property == IntProperty.LOG_LEVEL) {
                 ssl.logLevel = anInteger;
             }
 
-            return 1;
+            return 1L;
         }
     }
 
@@ -913,7 +913,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
             final SqSSL ssl = getSSL(sslHandle);
             final StringProperty property = propertyWithId(StringProperty.class, propertyId);
             if (ssl == null || property == null) {
-                return 0;
+                return 0L;
             }
 
             final String value = aString.asString();
@@ -928,10 +928,10 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
                     break;
 
                 default:
-                    return 0;
+                    return 0L;
             }
 
-            return 1;
+            return 1L;
         }
     }
 
@@ -979,10 +979,10 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
         protected static long doDestroy(final AbstractSqueakObject receiver, final long sslHandle) {
             final SqSSL ssl = SSL_HANDLES.removeKey(sslHandle);
             if (ssl == null) {
-                return 0;
+                return 0L;
             }
 
-            return 1;
+            return 1L;
         }
     }
 
