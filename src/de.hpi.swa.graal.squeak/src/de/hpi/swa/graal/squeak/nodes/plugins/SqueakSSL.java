@@ -731,7 +731,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @param start the one-based start index
          * @param length the length of the data to interpret in the source buffer
          * @param targetBuffer the target buffer, will contain encrypted data
-         * @return the number of bytes prodcued as a result
+         * @return the number of bytes produced as a result
          */
         @Specialization(guards = {"sourceBuffer.isByteType()", "targetBuffer.isByteType()"})
         protected final long doEncrypt(@SuppressWarnings("unused") final AbstractSqueakObject receiver,
