@@ -4385,6 +4385,9 @@ public final class B2D {
 
     /* BalloonEngineBase>>#obj:at: */
     private static int objat(final long object, final long index) {
+        if (objBufferIndex + object + index >= workBuffer.length){
+            return 0;
+        }
         return workBuffer[(int) (objBufferIndex + object + index)];
     }
 
