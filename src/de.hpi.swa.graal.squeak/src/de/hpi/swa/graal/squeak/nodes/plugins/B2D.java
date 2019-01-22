@@ -4390,7 +4390,7 @@ public final class B2D {
          * TODO: index can be out of bounds (see #19), working around this problem by returning 0 in
          * this case. Find out why and fix the root problem.
          */
-        if (workBufferIndex < workBuffer.length) {
+        if (0 <= workBufferIndex && workBufferIndex < workBuffer.length) {
             return workBuffer[(int) workBufferIndex];
         } else {
             return 0;
