@@ -1,8 +1,8 @@
 package de.hpi.swa.graal.squeak.test;
 
-import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintStream;
-import java.io.UncheckedIOException;
 import java.util.Deque;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -17,7 +17,7 @@ public final class Travis {
     private final Deque<Fold> folds = new ConcurrentLinkedDeque<>();
 
     private Travis() {
-        this.out = enabled() ? System.out : nullPrintStream();
+        this.out = enabled() ? System.out : new NullPrintStream();
     }
 
     private static boolean enabled() {
@@ -25,13 +25,18 @@ public final class Travis {
         return env != null && !env.isEmpty();
     }
 
-    private static PrintStream nullPrintStream() {
-        try {
-            // waits for OutputStream#nullOutputStream() (introduced in Java 11)
-            return new PrintStream("/dev/null");
-        } catch (final FileNotFoundException e) {
-            throw new UncheckedIOException(e);
+    private static class NullPrintStream extends PrintStream {
+
+        NullPrintStream() {
+            super(new OutputStream() {
+
+                @Override
+                public void write(final int b) throws IOException {
+                    // Do nothing.
+                }
+            });
         }
+
     }
 
     protected static Travis get() {
