@@ -1,10 +1,14 @@
 package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 
 import java.io.File;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -527,7 +531,8 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 1005:  // window system name
                     return code.image.wrap("Aqua");
                 case 1006:  // vm build id
-                    return code.image.wrap(SqueakLanguageConfig.NAME + " on " + Truffle.getRuntime().getName());
+                    final DateFormat dateFormat = new SimpleDateFormat("MMM dd yyyy HH:mm:ss zzz", Locale.US);
+                    return code.image.wrap(String.format("%s on %s", Truffle.getRuntime().getName(), dateFormat.format(new Date())));
                 // case 1007: // Interpreter class (Cog VM only)
                 // case 1008: // Cogit class (Cog VM only)
                 // case 1009: // Platform source version (Cog VM only?)
