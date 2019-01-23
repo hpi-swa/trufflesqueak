@@ -16,6 +16,7 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.SendBytecodes.SendSelectorNode;
 import de.hpi.swa.graal.squeak.nodes.context.TemporaryReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.TemporaryWriteNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
+import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public abstract class AboutToReturnNode extends AbstractNodeWithCode {
     public static AboutToReturnNode create(final CompiledCodeObject code) {
@@ -37,7 +38,6 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
      */
     @Specialization(guards = {"code.isUnwindMarked()", "isVirtualized(frame)", "isNil(frame, completeTempReadNode)"}, limit = "1")
     protected final void doAboutToReturnVirtualized(final VirtualFrame frame, @SuppressWarnings("unused") final NonLocalReturn nlr,
-                    @Cached("create()") final GetBlockFrameArgumentsNode getFrameArguments,
                     @Cached("createTemporaryWriteNode(0)") final SqueakNode blockArgumentNode,
                     @SuppressWarnings("unused") @Cached("createTemporaryWriteNode(1)") final SqueakNode completeTempReadNode,
                     @Cached("create(code, 1)") final TemporaryWriteNode completeTempWriteNode,
@@ -46,7 +46,7 @@ public abstract class AboutToReturnNode extends AbstractNodeWithCode {
         completeTempWriteNode.executeWrite(frame, code.image.sqTrue);
         final BlockClosureObject block = (BlockClosureObject) blockArgumentNode.executeRead(frame);
         try {
-            dispatchNode.executeBlock(block, getFrameArguments.execute(block, getContextOrMarker(frame), new Object[0]));
+            dispatchNode.executeBlock(block, FrameAccess.newBlockArguments(block, getContextOrMarker(frame), new Object[0]));
         } catch (LocalReturn blockLR) { // ignore
         } catch (NonLocalReturn blockNLR) {
             nonLocalReturnProfile.enter();

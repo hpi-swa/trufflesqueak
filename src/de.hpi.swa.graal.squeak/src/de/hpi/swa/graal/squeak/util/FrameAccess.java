@@ -12,10 +12,11 @@ import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.frame.FrameUtil;
 
 import de.hpi.swa.graal.squeak.model.BlockClosureObject;
+import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
 
-public class FrameAccess {
+public final class FrameAccess {
     /**
      * GraalSqueak frame arguments.
      *
@@ -45,41 +46,41 @@ public class FrameAccess {
      * </pre>
      */
 
-    public static final CompiledCodeObject getMethod(final Frame frame) {
+    public static CompiledCodeObject getMethod(final Frame frame) {
         return (CompiledCodeObject) frame.getArguments()[METHOD];
     }
 
-    public static final Object getSender(final Frame frame) {
+    public static Object getSender(final Frame frame) {
         return frame.getArguments()[SENDER_OR_SENDER_MARKER];
     }
 
-    public static final BlockClosureObject getClosure(final Frame frame) {
+    public static BlockClosureObject getClosure(final Frame frame) {
         return (BlockClosureObject) frame.getArguments()[CLOSURE_OR_NULL];
     }
 
-    public static final Object getReceiver(final Frame frame) {
+    public static Object getReceiver(final Frame frame) {
         return frame.getArguments()[RECEIVER];
     }
 
-    public static final Object getArgument(final Frame frame, final int index) {
+    public static Object getArgument(final Frame frame, final int index) {
         return frame.getArguments()[RECEIVER + index];
     }
 
-    public static final Object[] getReceiverAndArguments(final Frame frame) {
+    public static Object[] getReceiverAndArguments(final Frame frame) {
         CompilerAsserts.neverPartOfCompilation();
         return Arrays.copyOfRange(frame.getArguments(), RECEIVER, frame.getArguments().length);
     }
 
-    public static final Object getContextOrMarker(final Frame frame) {
+    public static Object getContextOrMarker(final Frame frame) {
         return FrameUtil.getObjectSafe(frame, getMethod(frame).thisContextOrMarkerSlot);
     }
 
-    public static final boolean isGraalSqueakFrame(final Frame frame) {
+    public static boolean isGraalSqueakFrame(final Frame frame) {
         final Object[] arguments = frame.getArguments();
         return arguments.length >= RECEIVER && arguments[METHOD] instanceof CompiledCodeObject;
     }
 
-    public static final Object[] newWith(final CompiledCodeObject code, final Object sender, final BlockClosureObject closure, final Object[] frameArgs) {
+    public static Object[] newWith(final CompiledCodeObject code, final Object sender, final BlockClosureObject closure, final Object[] frameArgs) {
         final Object[] arguments = new Object[RECEIVER + frameArgs.length];
         arguments[METHOD] = code;
         arguments[SENDER_OR_SENDER_MARKER] = sender;
@@ -90,8 +91,29 @@ public class FrameAccess {
         return arguments;
     }
 
+    public static Object[] newBlockArguments(final BlockClosureObject block, final Object senderOrMarker, final Object[] objects) {
+        final int numObjects = objects.length;
+        final Object[] copied = block.getStack();
+        final int numCopied = copied.length;
+        final CompiledBlockObject blockObject = block.getCompiledBlock();
+        assert blockObject.getNumArgs() == numObjects : "number of required and provided block arguments do not match";
+        final Object[] arguments = new Object[FrameAccess.ARGUMENTS_START + numObjects + numCopied];
+        arguments[FrameAccess.METHOD] = blockObject;
+        // Sender is thisContext (or marker)
+        arguments[FrameAccess.SENDER_OR_SENDER_MARKER] = senderOrMarker;
+        arguments[FrameAccess.CLOSURE_OR_NULL] = block;
+        arguments[FrameAccess.RECEIVER] = block.getReceiver();
+        for (int i = 0; i < numObjects; i++) {
+            arguments[FrameAccess.ARGUMENTS_START + i] = objects[i];
+        }
+        for (int i = 0; i < numCopied; i++) {
+            arguments[FrameAccess.ARGUMENTS_START + numObjects + i] = copied[i];
+        }
+        return arguments;
+    }
+
     @TruffleBoundary
-    public static final Frame findFrameForMarker(final FrameMarker frameMarker) {
+    public static Frame findFrameForMarker(final FrameMarker frameMarker) {
         CompilerDirectives.bailout("Finding materializable frames should never be part of compiled code as it triggers deopts");
         return Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Frame>() {
             @Override
