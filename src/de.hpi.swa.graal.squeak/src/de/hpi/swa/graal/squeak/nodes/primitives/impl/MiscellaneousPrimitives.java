@@ -530,6 +530,8 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
                 case 1005:  // window system name
                     return code.image.wrap("Aqua");
                 case 1006:  // vm build id
+                    // Example output under Squeak: 'Win32 built on Oct 8 2018 09:19:35 GMT ...
+                    // LanguageEnvironment>>win32VMUsesUnicode expects a Date after 'on'
                     final DateFormat dateFormat = new SimpleDateFormat("MMM dd yyyy HH:mm:ss zzz", Locale.US);
                     return code.image.wrap(String.format("%s on %s", Truffle.getRuntime().getName(), dateFormat.format(new Date())));
                 // case 1007: // Interpreter class (Cog VM only)
