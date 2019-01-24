@@ -39,7 +39,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
             final int[] ints1 = receiver.getIntStorage();
             final int[] ints2 = floatArray.getIntStorage();
             for (int i = 0; i < ints1.length; i++) {
-                ints1[i] = Float.floatToRawIntBits(Float.intBitsToFloat(ints1[i]) + (Float.intBitsToFloat(ints2[i])));
+                ints1[i] = Float.floatToRawIntBits(Float.intBitsToFloat(ints1[i]) + Float.intBitsToFloat(ints2[i]));
             }
             return receiver;
         }
@@ -119,7 +119,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
             final int[] ints2 = floatArray.getIntStorage();
 
             for (int i = 0; i < ints1.length; i++) {
-                ints1[i] = Float.floatToRawIntBits(Float.intBitsToFloat(ints1[i]) / (Float.intBitsToFloat(ints2[i])));
+                ints1[i] = Float.floatToRawIntBits(Float.intBitsToFloat(ints1[i]) / Float.intBitsToFloat(ints2[i]));
             }
             return receiver;
         }
