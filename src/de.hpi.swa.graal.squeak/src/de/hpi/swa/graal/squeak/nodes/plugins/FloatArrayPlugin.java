@@ -33,7 +33,8 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"receiver.isIntType()", "floatArray.isIntType()", "receiver.getIntLength() == floatArray.getIntLength()"})
+        @Specialization(guards = {"receiver.isIntType()", "floatArray.isIntType()",
+                        "receiver.getIntLength() == floatArray.getIntLength()"})
         protected static final NativeObject doAdd(final NativeObject receiver, final NativeObject floatArray) {
             final int[] ints1 = receiver.getIntStorage();
             final int[] ints2 = floatArray.getIntStorage();
@@ -57,7 +58,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final NativeObject doAdd(final NativeObject receiver, final double scalarValue) {
             final int[] ints = receiver.getIntStorage();
             for (int i = 0; i < ints.length; i++) {
-                ints[i] = Float.floatToRawIntBits((Float.intBitsToFloat(ints[i]) + (float) scalarValue));
+                ints[i] = Float.floatToRawIntBits(Float.intBitsToFloat(ints[i]) + (float) scalarValue);
             }
             return receiver;
         }
@@ -72,7 +73,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = "receiver.isIntType()")
+        @Specialization(guards = {"receiver.isIntType()", "receiver.getIntLength() >= index"})
         protected static final double doAt(final NativeObject receiver, final long index) {
             return Float.intBitsToFloat(receiver.getIntStorage()[(int) index - 1]);
         }
@@ -111,7 +112,8 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"receiver.isIntType()", "floatArray.isIntType()", "receiver.getIntLength() == floatArray.getIntLength()"})
+        @Specialization(guards = {"receiver.isIntType()", "floatArray.isIntType()",
+                        "receiver.getIntLength() == floatArray.getIntLength()"})
         protected static final NativeObject doDiv(final NativeObject receiver, final NativeObject floatArray) {
             final int[] ints1 = receiver.getIntStorage();
             final int[] ints2 = floatArray.getIntStorage();
@@ -136,7 +138,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final NativeObject doDiv(final NativeObject receiver, final double scalarValue) {
             final int[] ints = receiver.getIntStorage();
             for (int i = 0; i < ints.length; i++) {
-                ints[i] = Float.floatToRawIntBits((Float.intBitsToFloat(ints[i]) / (float) scalarValue));
+                ints[i] = Float.floatToRawIntBits(Float.intBitsToFloat(ints[i]) / (float) scalarValue);
             }
             return receiver;
         }
@@ -150,14 +152,16 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"receiver.isIntType()", "aFloatVector.isIntType()", "receiver.getIntLength() == aFloatVector.getIntLength()"})
-        protected static final NativeObject doDot(final NativeObject receiver, final NativeObject aFloatVector) {
+        @Specialization(guards = {"receiver.isIntType()", "aFloatVector.isIntType()",
+                        "receiver.getIntLength() == aFloatVector.getIntLength()"})
+        protected static final double doDot(final NativeObject receiver, final NativeObject aFloatVector) {
             final int[] ints1 = receiver.getIntStorage();
             final int[] ints2 = aFloatVector.getIntStorage();
+            float result = 0;
             for (int i = 0; i < ints1.length; i++) {
-                ints1[i] = Float.floatToRawIntBits(Float.intBitsToFloat(ints1[i]) * Float.intBitsToFloat(ints2[i]));
+                result += Float.intBitsToFloat(ints1[i]) * Float.intBitsToFloat(ints2[i]);
             }
-            return receiver;
+            return result;
         }
 
     }
@@ -172,7 +176,8 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
 
         @Specialization(guards = {"receiver.isIntType()", "other.isIntType()"})
         protected final boolean doEqual(final NativeObject receiver, final NativeObject other) {
-            return Arrays.equals(receiver.getIntStorage(), other.getIntStorage()) ? code.image.sqTrue : code.image.sqFalse;
+            return Arrays.equals(receiver.getIntStorage(), other.getIntStorage()) ? code.image.sqTrue
+                            : code.image.sqFalse;
         }
 
         /*
@@ -214,13 +219,14 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"receiver.isIntType()", "floatArray.isIntType()", "receiver.getIntLength() == floatArray.getIntLength()"})
+        @Specialization(guards = {"receiver.isIntType()", "floatArray.isIntType()",
+                        "receiver.getIntLength() == floatArray.getIntLength()"})
         protected static final NativeObject doMul(final NativeObject receiver, final NativeObject floatArray) {
             final int[] ints1 = receiver.getIntStorage();
             final int[] ints2 = floatArray.getIntStorage();
 
             for (int i = 0; i < ints1.length; i++) {
-                ints1[i] = Float.floatToRawIntBits(Float.intBitsToFloat(ints1[i]) * (Float.intBitsToFloat(ints2[i])));
+                ints1[i] = Float.floatToRawIntBits(Float.intBitsToFloat(ints1[i]) * Float.intBitsToFloat(ints2[i]));
             }
             return receiver;
         }
@@ -239,7 +245,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final NativeObject doMul(final NativeObject receiver, final double scalarValue) {
             final int[] ints = receiver.getIntStorage();
             for (int i = 0; i < ints.length; i++) {
-                ints[i] = Float.floatToRawIntBits((Float.intBitsToFloat(ints[i]) * (float) scalarValue));
+                ints[i] = Float.floatToRawIntBits(Float.intBitsToFloat(ints[i]) * (float) scalarValue);
             }
             return receiver;
         }
@@ -264,13 +270,14 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"receiver.isIntType()", "floatArray.isIntType()", "receiver.getIntLength() == floatArray.getIntLength()"})
+        @Specialization(guards = {"receiver.isIntType()", "floatArray.isIntType()",
+                        "receiver.getIntLength() == floatArray.getIntLength()"})
         protected static final NativeObject doSub(final NativeObject receiver, final NativeObject floatArray) {
             final int[] ints1 = receiver.getIntStorage();
             final int[] ints2 = floatArray.getIntStorage();
 
             for (int i = 0; i < ints1.length; i++) {
-                ints1[i] = Float.floatToRawIntBits(Float.intBitsToFloat(ints1[i]) - (Float.intBitsToFloat(ints2[i])));
+                ints1[i] = Float.floatToRawIntBits(Float.intBitsToFloat(ints1[i]) - Float.intBitsToFloat(ints2[i]));
             }
             return receiver;
         }
@@ -289,7 +296,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
         protected static final NativeObject doSub(final NativeObject receiver, final double scalarValue) {
             final int[] ints = receiver.getIntStorage();
             for (int i = 0; i < ints.length; i++) {
-                ints[i] = Float.floatToRawIntBits((Float.intBitsToFloat(ints[i]) - (float) scalarValue));
+                ints[i] = Float.floatToRawIntBits(Float.intBitsToFloat(ints[i]) - (float) scalarValue);
             }
             return receiver;
         }
