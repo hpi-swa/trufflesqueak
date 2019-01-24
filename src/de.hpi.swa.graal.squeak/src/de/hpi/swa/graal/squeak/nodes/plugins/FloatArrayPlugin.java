@@ -73,7 +73,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"receiver.isIntType()", "receiver.getIntLength() >= index"})
+        @Specialization(guards = {"receiver.isIntType()", "index <= receiver.getIntLength()"})
         protected static final double doAt(final NativeObject receiver, final long index) {
             return Float.intBitsToFloat(receiver.getIntStorage()[(int) index - 1]);
         }
@@ -87,7 +87,7 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = "receiver.isIntType()")
+        @Specialization(guards = {"receiver.isIntType()", "index <= receiver.getIntLength()"})
         protected static final double doDouble(final NativeObject receiver, final long index, final double value) {
             receiver.getIntStorage()[(int) index - 1] = Float.floatToRawIntBits((float) value);
             return value;
