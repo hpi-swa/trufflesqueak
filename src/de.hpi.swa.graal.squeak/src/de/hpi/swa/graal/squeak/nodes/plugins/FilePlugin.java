@@ -5,9 +5,14 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+
+import org.graalvm.collections.EconomicMap;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
@@ -34,8 +39,6 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimi
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
-
-import org.graalvm.collections.EconomicMap;
 
 public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
     private static final EconomicMap<Long, SeekableByteChannel> FILES = EconomicMap.create();
@@ -183,19 +186,40 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = {"nativePathName.isByteType()", "longIndex >= 0"})
+        // Todo: Figure out if we want to emulate the behavior of Squeak with negative indices;
+        // return nil?
+
+        @Specialization(guards = {"nativePathName.isByteType()", "longIndex > 0", "asString(nativePathName).length() == 0"})
+        @TruffleBoundary
+        protected final Object doLookupEmptyString(@SuppressWarnings("unused") final PointersObject receiver, @SuppressWarnings("unused") final NativeObject nativePathName, final long longIndex) {
+            final int index = (int) longIndex - 1;
+            final File[] paths;
+            final ArrayList<File> ret = new ArrayList<>();
+            for (Path path : FileSystems.getDefault().getRootDirectories()) {
+                ret.add(path.toFile());
+            }
+            paths = ret.toArray(new File[ret.size()]);
+            if (paths != null && index < paths.length) {
+                final File path = paths[index];
+                // Use getPath here, getName returns empty string on root path
+                // Squeak strips the trailing backslash from C:\ on windows
+                final Object[] result = new Object[]{path.getPath().replace("\\", ""), 0, 0, path.isDirectory(), 0};
+                return code.image.wrap(result);
+            }
+            return code.image.nil;
+        }
+
+        @Specialization(guards = {"nativePathName.isByteType()", "longIndex > 0"})
         @TruffleBoundary
         protected final Object doLookup(@SuppressWarnings("unused") final PointersObject receiver, final NativeObject nativePathName, final long longIndex) {
-            final int index = (int) longIndex;
-            String pathName = asString(nativePathName);
-            if (pathName.length() == 0) {
-                pathName = "/";
-            }
+            final int index = (int) longIndex - 1;
+            final String pathName = asString(nativePathName);
+            final File[] paths;
             final File directory = new File(pathName);
             if (!directory.isDirectory()) {
                 throw new PrimitiveFailed();
             }
-            final File[] paths = directory.listFiles();
+            paths = directory.listFiles();
             if (paths != null && index < paths.length) {
                 final File path = paths[index];
                 final Object[] result = new Object[]{path.getName(), path.lastModified(), path.lastModified(), path.isDirectory(), path.length()};
