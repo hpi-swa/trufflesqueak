@@ -122,6 +122,11 @@ public final class SqueakObjectMessageResolution {
 
     @Resolve(message = "KEY_INFO")
     public abstract static class SqueakObjectPropertyInfoNode extends Node {
+        @SuppressWarnings("unused")
+        protected static final int access(final AbstractSqueakObject receiver, final int index) {
+            return KeyInfo.READABLE;
+        }
+
         protected static final int access(final AbstractSqueakObject receiver, final String identifier) {
             final CompiledMethodObject method = (CompiledMethodObject) receiver.getSqueakClass().lookup(toSelector(identifier));
             if (method.getCompiledInSelector() == receiver.image.doesNotUnderstand) {
