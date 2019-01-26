@@ -186,10 +186,11 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        // Todo: Figure out if we want to emulate the behavior of Squeak with negative indices;
-        // return nil?
+        // Todo: Figure out if we want to emulate the behaviour of Squeak with negative indices;
+        // return nil?;
+        // Guard OS.getCurrent() == OS.Windows;
 
-        @Specialization(guards = {"nativePathName.isByteType()", "longIndex > 0", "asString(nativePathName).length() == 0"})
+        @Specialization(guards = {"nativePathName.isByteType()", "longIndex > 0", "nativePathName.getByteLength() == 0"})
         @TruffleBoundary
         protected final Object doLookupEmptyString(@SuppressWarnings("unused") final PointersObject receiver, @SuppressWarnings("unused") final NativeObject nativePathName, final long longIndex) {
             final int index = (int) longIndex - 1;
@@ -209,12 +210,18 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             return code.image.nil;
         }
 
-        @Specialization(guards = {"nativePathName.isByteType()", "longIndex > 0"})
+        @Specialization(guards = {"nativePathName.isByteType()", "longIndex > 0", "nativePathName.getByteLength() > 0"})
         @TruffleBoundary
         protected final Object doLookup(@SuppressWarnings("unused") final PointersObject receiver, final NativeObject nativePathName, final long longIndex) {
             final int index = (int) longIndex - 1;
-            final String pathName = asString(nativePathName);
+            String pathName = asString(nativePathName);
             final File[] paths;
+            // new File("C:") will fail, we need to add the trailing backslash
+            // Ideally we could use org.graalvm.launcher.Launcher.OS here, if it was public and
+            // included Windows
+            if (System.getProperty("os.name").contains("Windows") && !pathName.contains("\\")) {
+                pathName += "\\";
+            }
             final File directory = new File(pathName);
             if (!directory.isDirectory()) {
                 throw new PrimitiveFailed();
