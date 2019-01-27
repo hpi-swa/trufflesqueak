@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
@@ -28,6 +29,7 @@ public final class StoreBytecodes {
 
         @Override
         public final String toString() {
+            CompilerAsserts.neverPartOfCompilation();
             return getTypeName() + "IntoLit: " + variableIndex;
         }
     }
@@ -61,6 +63,7 @@ public final class StoreBytecodes {
 
         @Override
         public final String toString() {
+            CompilerAsserts.neverPartOfCompilation();
             return getTypeName() + "IntoRcvr: " + receiverIndex;
         }
     }
@@ -78,6 +81,7 @@ public final class StoreBytecodes {
 
         @Override
         public final String toString() {
+            CompilerAsserts.neverPartOfCompilation();
             return getTypeName() + "IntoTemp: " + indexInArray + " inVectorAt: " + indexOfArray;
         }
     }
@@ -96,6 +100,7 @@ public final class StoreBytecodes {
 
         @Override
         public final String toString() {
+            CompilerAsserts.neverPartOfCompilation();
             return getTypeName() + "IntoTemp: " + tempIndex;
         }
     }

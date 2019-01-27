@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.exceptions;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.nodes.ControlFlowException;
 
 import de.hpi.swa.graal.squeak.model.ContextObject;
@@ -18,6 +19,7 @@ public final class ProcessSwitch extends ControlFlowException {
 
     @Override
     public String toString() {
+        CompilerAsserts.neverPartOfCompilation();
         return "Process switch to " + newContext;
     }
 }

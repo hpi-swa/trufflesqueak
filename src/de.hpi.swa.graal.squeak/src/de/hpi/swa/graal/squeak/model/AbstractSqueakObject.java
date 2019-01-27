@@ -132,6 +132,7 @@ public abstract class AbstractSqueakObject implements TruffleObject {
 
     @Override
     public String toString() {
+        CompilerAsserts.neverPartOfCompilation();
         return "a " + getSqueakClassName();
     }
 

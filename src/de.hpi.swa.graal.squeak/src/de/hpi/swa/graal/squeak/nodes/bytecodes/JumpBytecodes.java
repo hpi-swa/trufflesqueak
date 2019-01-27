@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -60,6 +61,7 @@ public final class JumpBytecodes {
 
         @Override
         public String toString() {
+            CompilerAsserts.neverPartOfCompilation();
             if (isIfTrue) {
                 return "jumpTrue: " + offset;
             } else {
@@ -136,6 +138,7 @@ public final class JumpBytecodes {
 
         @Override
         public String toString() {
+            CompilerAsserts.neverPartOfCompilation();
             return "jumpTo: " + offset;
         }
     }

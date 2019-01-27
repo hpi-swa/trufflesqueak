@@ -2,7 +2,6 @@ package de.hpi.swa.graal.squeak.nodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -59,8 +58,8 @@ public abstract class ExecuteContextNode extends AbstractNodeWithCode {
     public abstract Object executeContext(VirtualFrame frame, ContextObject context);
 
     @Override
-    @TruffleBoundary
     public final String toString() {
+        CompilerAsserts.neverPartOfCompilation();
         return code.toString();
     }
 

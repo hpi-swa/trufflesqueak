@@ -3,6 +3,7 @@ package de.hpi.swa.graal.squeak.model;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -27,6 +28,7 @@ public final class WeakPointersObject extends AbstractPointersObject {
 
     @Override
     public String toString() {
+        CompilerAsserts.neverPartOfCompilation();
         return "WeakPointersObject: " + getSqueakClass();
     }
 

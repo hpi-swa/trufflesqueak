@@ -3,6 +3,7 @@ package de.hpi.swa.graal.squeak.model;
 import java.math.BigInteger;
 import java.util.Arrays;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
@@ -128,6 +129,7 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
     @Override
     @TruffleBoundary
     public String toString() {
+        CompilerAsserts.neverPartOfCompilation();
         return getBigInteger().toString();
     }
 

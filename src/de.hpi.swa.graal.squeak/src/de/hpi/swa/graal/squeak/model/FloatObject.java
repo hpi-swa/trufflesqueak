@@ -1,5 +1,7 @@
 package de.hpi.swa.graal.squeak.model;
 
+import com.oracle.truffle.api.CompilerAsserts;
+
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 
 public final class FloatObject extends AbstractSqueakObject {
@@ -93,6 +95,7 @@ public final class FloatObject extends AbstractSqueakObject {
 
     @Override
     public String toString() {
+        CompilerAsserts.neverPartOfCompilation();
         return "" + doubleValue;
     }
 

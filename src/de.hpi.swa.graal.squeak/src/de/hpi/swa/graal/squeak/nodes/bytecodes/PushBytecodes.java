@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.RootCallTarget;
@@ -61,6 +62,7 @@ public final class PushBytecodes {
 
         @Override
         public String toString() {
+            CompilerAsserts.neverPartOfCompilation();
             return "pushThisContext:";
         }
     }
@@ -119,6 +121,7 @@ public final class PushBytecodes {
 
         @Override
         public String toString() {
+            CompilerAsserts.neverPartOfCompilation();
             final int start = index + numBytecodes;
             final int end = start + blockSize;
             return "closureNumCopied: " + numCopied + " numArgs: " + numArgs + " bytes " + start + " to " + end;
@@ -148,6 +151,7 @@ public final class PushBytecodes {
 
         @Override
         public String toString() {
+            CompilerAsserts.neverPartOfCompilation();
             return "pushConstant: " + constant.toString();
         }
     }
@@ -167,6 +171,7 @@ public final class PushBytecodes {
 
         @Override
         public String toString() {
+            CompilerAsserts.neverPartOfCompilation();
             return "pushConstant: " + code.getLiteral(literalIndex).toString();
         }
     }
@@ -187,6 +192,7 @@ public final class PushBytecodes {
 
         @Override
         public String toString() {
+            CompilerAsserts.neverPartOfCompilation();
             return "pushLit: " + literalIndex;
         }
     }
@@ -222,6 +228,7 @@ public final class PushBytecodes {
 
         @Override
         public String toString() {
+            CompilerAsserts.neverPartOfCompilation();
             return "push: (Array new: " + arraySize + ")";
         }
     }
@@ -249,6 +256,8 @@ public final class PushBytecodes {
 
         @Override
         public String toString() {
+            CompilerAsserts.neverPartOfCompilation();
+
             return "self";
         }
     }
@@ -279,6 +288,7 @@ public final class PushBytecodes {
 
         @Override
         public final String toString() {
+            CompilerAsserts.neverPartOfCompilation();
             return "pushRcvr: " + variableIndex;
         }
     }
@@ -304,6 +314,7 @@ public final class PushBytecodes {
 
         @Override
         public String toString() {
+            CompilerAsserts.neverPartOfCompilation();
             return "pushTemp: " + indexInArray + " inVectorAt: " + indexOfArray;
         }
     }
@@ -328,6 +339,7 @@ public final class PushBytecodes {
 
         @Override
         public String toString() {
+            CompilerAsserts.neverPartOfCompilation();
             return "pushTemp: " + this.tempIndex;
         }
     }

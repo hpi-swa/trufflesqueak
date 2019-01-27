@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -89,6 +90,7 @@ public final class MiscellaneousBytecodes {
 
         @Override
         public final String toString() {
+            CompilerAsserts.neverPartOfCompilation();
             return "callPrimitive: " + primitiveIndex;
         }
     }
@@ -137,6 +139,7 @@ public final class MiscellaneousBytecodes {
 
         @Override
         public String toString() {
+            CompilerAsserts.neverPartOfCompilation();
             return "dup";
         }
     }
@@ -215,6 +218,7 @@ public final class MiscellaneousBytecodes {
 
         @Override
         public String toString() {
+            CompilerAsserts.neverPartOfCompilation();
             return "pop";
         }
     }
@@ -234,6 +238,7 @@ public final class MiscellaneousBytecodes {
 
         @Override
         public String toString() {
+            CompilerAsserts.neverPartOfCompilation();
             return "unknown: " + bytecode;
         }
     }

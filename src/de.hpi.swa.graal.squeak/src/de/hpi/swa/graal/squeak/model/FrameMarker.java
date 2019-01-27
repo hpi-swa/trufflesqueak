@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.model;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
 
@@ -9,6 +10,7 @@ public final class FrameMarker implements TruffleObject {
 
     @Override
     public String toString() {
+        CompilerAsserts.neverPartOfCompilation();
         return "FrameMarker@" + Integer.toHexString(System.identityHashCode(this));
     }
 

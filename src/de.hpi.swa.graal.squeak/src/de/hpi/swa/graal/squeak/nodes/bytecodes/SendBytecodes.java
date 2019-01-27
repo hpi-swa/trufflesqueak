@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveWithoutResultException;
@@ -66,6 +67,7 @@ public final class SendBytecodes {
 
         @Override
         public String toString() {
+            CompilerAsserts.neverPartOfCompilation();
             return "send: " + selector.asString();
         }
     }
@@ -145,6 +147,7 @@ public final class SendBytecodes {
 
         @Override
         public String toString() {
+            CompilerAsserts.neverPartOfCompilation();
             return "sendSuper: " + selector.asString();
         }
     }
