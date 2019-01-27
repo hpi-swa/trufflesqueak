@@ -11,7 +11,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
-import de.hpi.swa.graal.squeak.SqueakOptions;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.model.PointersObject;
@@ -20,7 +19,6 @@ public final class InterruptHandlerState {
     private static final int INTERRUPT_CHECKS_EVERY_N_MILLISECONDS = 3;
 
     public final SqueakImageContext image;
-    private final boolean disabled;
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     protected final Deque<Integer> semaphoresToSignal = new ArrayDeque<>();
 
@@ -39,15 +37,14 @@ public final class InterruptHandlerState {
 
     protected InterruptHandlerState(final SqueakImageContext image) {
         this.image = image;
-        disabled = SqueakOptions.getOption(image.env, SqueakOptions.DisableInterruptHandler);
-        if (disabled) {
+        if (image.options.disableInterruptHandler) {
             image.printToStdOut("Interrupt handler disabled...");
         }
     }
 
     @TruffleBoundary
     public void start() {
-        if (disabled) {
+        if (image.options.disableInterruptHandler) {
             return;
         }
         final Object interruptSema = image.specialObjectsArray.at0Object(SPECIAL_OBJECT.THE_INTERRUPT_SEMAPHORE);
@@ -80,7 +77,7 @@ public final class InterruptHandlerState {
     }
 
     public boolean disabled() {
-        return disabled;
+        return image.options.disableInterruptHandler;
     }
 
     public boolean isActive() {

@@ -5,8 +5,6 @@ import java.io.PrintWriter;
 import java.math.BigInteger;
 import java.nio.file.Paths;
 
-import org.graalvm.options.OptionKey;
-
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -20,7 +18,7 @@ import com.oracle.truffle.api.source.Source;
 
 import de.hpi.swa.graal.squeak.SqueakImage;
 import de.hpi.swa.graal.squeak.SqueakLanguage;
-import de.hpi.swa.graal.squeak.SqueakOptions;
+import de.hpi.swa.graal.squeak.SqueakOptions.SqueakContextOptions;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.reading.SqueakImageReaderNode;
 import de.hpi.swa.graal.squeak.interop.InteropMap;
@@ -139,9 +137,9 @@ public final class SqueakImageContext {
     };
 
     @CompilationFinal private String imagePath;
-    @CompilationFinal private boolean isHeadless = true;
-    @CompilationFinal private boolean isHeadlessDynamicCheck = false;
+    @CompilationFinal private boolean isHeadless;
     public final SqueakImageFlags flags = new SqueakImageFlags();
+    public final SqueakContextOptions options;
     public final OSDetector os = new OSDetector();
     public final InterruptHandlerState interrupt;
     public final long startUpMillis = System.currentTimeMillis();
@@ -167,6 +165,8 @@ public final class SqueakImageContext {
     public SqueakImageContext(final SqueakLanguage squeakLanguage, final SqueakLanguage.Env environment) {
         language = squeakLanguage;
         patch(environment);
+        options = new SqueakContextOptions(env);
+        isHeadless = options.isHeadless;
         interrupt = InterruptHandlerState.create(this);
         allocationReporter = env.lookup(AllocationReporter.class);
     }
@@ -446,13 +446,9 @@ public final class SqueakImageContext {
 
     public String getImagePath() {
         if (imagePath == null) {
-            setImagePath(getOption(SqueakOptions.ImagePath));
+            setImagePath(options.imagePath);
         }
         return imagePath;
-    }
-
-    private String getOption(final OptionKey<String> key) {
-        return SqueakOptions.getOption(env, key);
     }
 
     public void setImagePath(final String path) {
@@ -473,15 +469,10 @@ public final class SqueakImageContext {
     }
 
     public boolean interruptHandlerDisabled() {
-        return SqueakOptions.getOption(env, SqueakOptions.DisableInterruptHandler);
+        return options.disableInterruptHandler;
     }
 
     public boolean isHeadless() {
-        if (!isHeadlessDynamicCheck) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            isHeadlessDynamicCheck = true;
-            isHeadless = isHeadless || SqueakOptions.getOption(env, SqueakOptions.Headless);
-        }
         return isHeadless;
     }
 
@@ -494,11 +485,11 @@ public final class SqueakImageContext {
     }
 
     public boolean isTesting() {
-        return SqueakOptions.getOption(env, SqueakOptions.Testing);
+        return options.isTesting;
     }
 
     public boolean isVerbose() {
-        return SqueakOptions.getOption(env, SqueakOptions.Verbose);
+        return options.isVerbose;
     }
 
     public void printVerbose(final Object... arguments) {
@@ -518,7 +509,7 @@ public final class SqueakImageContext {
     }
 
     public void traceProcessSwitches(final Object... arguments) {
-        if (SqueakOptions.getOption(env, SqueakOptions.TraceProcessSwitches)) {
+        if (options.traceProcessSwitches) {
             printToStdOut(arguments);
         }
     }
