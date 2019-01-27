@@ -186,52 +186,50 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        // Todo: Figure out if we want to emulate the behaviour of Squeak with negative indices;
-        // return nil?;
-        // Guard OS.getCurrent() == OS.Windows;
-
-        @Specialization(guards = {"nativePathName.isByteType()", "longIndex > 0", "nativePathName.getByteLength() == 0"})
+        @Specialization(guards = {"longIndex > 0", "nativePathName.isByteType()", "nativePathName.getByteLength() == 0"})
         @TruffleBoundary
         protected final Object doLookupEmptyString(@SuppressWarnings("unused") final PointersObject receiver, @SuppressWarnings("unused") final NativeObject nativePathName, final long longIndex) {
-            final int index = (int) longIndex - 1;
-            final File[] paths;
-            final ArrayList<File> ret = new ArrayList<>();
+            assert code.image.os.isWindows() : "Unexpected empty path on a non-Windows system.";
+            final ArrayList<File> fileList = new ArrayList<>();
             for (Path path : FileSystems.getDefault().getRootDirectories()) {
-                ret.add(path.toFile());
+                fileList.add(path.toFile());
             }
-            paths = ret.toArray(new File[ret.size()]);
-            if (paths != null && index < paths.length) {
-                final File path = paths[index];
-                // Use getPath here, getName returns empty string on root path
-                // Squeak strips the trailing backslash from C:\ on windows
-                final Object[] result = new Object[]{path.getPath().replace("\\", ""), 0, 0, path.isDirectory(), 0};
-                return code.image.wrap(result);
+            final File[] files = fileList.toArray(new File[fileList.size()]);
+            final int index = (int) longIndex - 1;
+            if (index < files.length) {
+                final File file = files[index];
+                // Use getPath here, getName returns empty string on root path.
+                // Squeak strips the trailing backslash from C:\ on Windows.
+                return code.image.wrap(file.getPath().replace("\\", ""), file.lastModified(), file.lastModified(), file.isDirectory(), file.length());
+            } else {
+                return code.image.nil;
             }
-            return code.image.nil;
         }
 
-        @Specialization(guards = {"nativePathName.isByteType()", "longIndex > 0", "nativePathName.getByteLength() > 0"})
+        @Specialization(guards = {"longIndex > 0", "nativePathName.isByteType()", "nativePathName.getByteLength() > 0"})
         @TruffleBoundary
         protected final Object doLookup(@SuppressWarnings("unused") final PointersObject receiver, final NativeObject nativePathName, final long longIndex) {
-            final int index = (int) longIndex - 1;
             String pathName = asString(nativePathName);
-            final File[] paths;
-            // new File("C:") will fail, we need to add the trailing backslash
-            // Ideally we could use org.graalvm.launcher.Launcher.OS here, if it was public and
-            // included Windows
-            if (System.getProperty("os.name").contains("Windows") && !pathName.contains("\\")) {
-                pathName += "\\";
+            if (code.image.os.isWindows() && !pathName.endsWith("\\")) {
+                pathName += "\\"; // new File("C:") will fail, we need to add a trailing backslash.
             }
             final File directory = new File(pathName);
             if (!directory.isDirectory()) {
-                throw new PrimitiveFailed();
+                PrimitiveFailed.andTransferToInterpreter();
             }
-            paths = directory.listFiles();
-            if (paths != null && index < paths.length) {
-                final File path = paths[index];
-                final Object[] result = new Object[]{path.getName(), path.lastModified(), path.lastModified(), path.isDirectory(), path.length()};
-                return code.image.wrap(result);
+            final File[] files = directory.listFiles();
+            final int index = (int) longIndex - 1;
+            if (files != null && index < files.length) {
+                final File file = files[index];
+                return code.image.wrap(file.getName(), file.lastModified(), file.lastModified(), file.isDirectory(), file.length());
+            } else {
+                return code.image.nil;
             }
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"longIndex <= 0"})
+        protected final Object doNil(final PointersObject receiver, final NativeObject nativePathName, final long longIndex) {
             return code.image.nil;
         }
     }
