@@ -1,5 +1,5 @@
 suite = {
-    "mxversion": "5.195.0",
+    "mxversion": "5.204.4",
     "name": "graalsqueak",
     "versionConflictResolution": "latest",
 
@@ -7,7 +7,7 @@ suite = {
         "suites": [{
             "name": "truffle",
             "subdir": True,
-            "version": "7a44af07d4dc34684c72648859196ea6c5e8f027",
+            "version": "f2916dbcc8a1e0412b98239bb625de0d7ee7841e",
             "urls": [{
                 "url": "https://github.com/oracle/graal",
                 "kind": "git"
@@ -36,7 +36,6 @@ suite = {
                 "truffle:TRUFFLE_API",
                 "truffle:TRUFFLE_DSL_PROCESSOR",
             ],
-            "checkstyle": "de.hpi.swa.graal.squeak",
             "checkstyleVersion": "8.8",
             "jacoco": "include",
             "javaCompliance": "8+",
@@ -53,7 +52,6 @@ suite = {
                 "truffle:TRUFFLE_API",
             ],
             "checkstyle": "de.hpi.swa.graal.squeak",
-            "checkstyleVersion": "8.8",
             "jacoco": "include",
             "javaCompliance": "8+",
             "workingSets": "GraalSqueak",
@@ -65,7 +63,6 @@ suite = {
                 "truffle:TRUFFLE_API",
             ],
             "checkstyle": "de.hpi.swa.graal.squeak",
-            "checkstyleVersion": "8.8",
             "jacoco": "include",
             "javaCompliance": "8+",
             "workingSets": "GraalSqueak",

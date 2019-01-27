@@ -217,9 +217,32 @@ public class MiscPrimitivePlugin extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
+    @SqueakPrimitive(names = "primitiveConvert8BitSigned")
+    public abstract static class PrimConvert8BitSignedNode extends AbstractPrimitiveNode implements TernaryPrimitive {
+        public PrimConvert8BitSignedNode(final CompiledMethodObject method) {
+            super(method);
+        }
+
+        @Specialization(guards = {"aByteArray.isByteType()", "aSoundBuffer.isIntType()", "aByteArray.getByteLength() > aSoundBuffer.getIntLength()"})
+        protected static final Object doConvert(final AbstractSqueakObject receiver, final NativeObject aByteArray, final NativeObject aSoundBuffer) {
+            final byte[] bytes = aByteArray.getByteStorage();
+            final int[] ints = aSoundBuffer.getIntStorage();
+            for (int i = 0; i < bytes.length; i++) {
+                final int wordIndex = i / 2;
+                final long value = (bytes[i] & 0xff) << 8;
+                if (i % 2 == 0) {
+                    ints[wordIndex] = (ints[wordIndex] & 0xffff0000) | ((int) value & 0xffff);
+                } else {
+                    ints[wordIndex] = ((int) value << 16) | (ints[wordIndex] & 0xffff);
+                }
+            }
+            return receiver;
+        }
+    }
+
+    @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveDecompressFromByteArray")
     public abstract static class PrimDecompressFromByteArrayNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
-
         public PrimDecompressFromByteArrayNode(final CompiledMethodObject method) {
             super(method);
         }

@@ -93,12 +93,12 @@ public class FloatArrayPlugin extends AbstractPrimitiveFactoryHolder {
             return value;
         }
 
-        @Specialization
+        @Specialization(guards = {"receiver.isIntType()", "index <= receiver.getIntLength()"})
         protected static final double doFloat(final NativeObject receiver, final long index, final FloatObject value) {
             return doDouble(receiver, index, value.getValue());
         }
 
-        @Specialization
+        @Specialization(guards = {"receiver.isIntType()", "index <= receiver.getIntLength()"})
         protected static final double doFloat(final NativeObject receiver, final long index, final long value) {
             return doDouble(receiver, index, value);
         }

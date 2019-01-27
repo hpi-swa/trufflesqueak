@@ -576,10 +576,10 @@ public final class FilePlugin extends AbstractPrimitiveFactoryHolder {
         }
 
         private static long fileWriteToPrintWriter(final PrintWriter printWriter, final NativeObject content, final long startIndex, final long count) {
-            final byte[] bytes = content.getByteStorage();
+            final String string = asString(content);
             final int byteStart = (int) (startIndex - 1);
-            final int byteEnd = Math.min(byteStart + (int) count, bytes.length);
-            printWriter.append(asString(content), byteStart, byteEnd);
+            final int byteEnd = Math.min(byteStart + (int) count, string.length());
+            printWriter.write(string, byteStart, Math.max(byteEnd - byteStart, 0));
             printWriter.flush();
             return byteEnd - byteStart;
         }
