@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.exceptions;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.nodes.ControlFlowException;
 
 import de.hpi.swa.graal.squeak.model.ContextObject;
@@ -28,6 +29,7 @@ public final class Returns {
 
         @Override
         public String toString() {
+            CompilerAsserts.neverPartOfCompilation();
             return "LR (value: " + returnValue + ")";
         }
     }
@@ -56,6 +58,7 @@ public final class Returns {
 
         @Override
         public String toString() {
+            CompilerAsserts.neverPartOfCompilation();
             return "NLR (value: " + returnValue + ", arrived: " + arrivedAtTargetContext + ", target: " + targetContext + ")";
         }
     }
@@ -87,6 +90,7 @@ public final class Returns {
 
         @Override
         public String toString() {
+            CompilerAsserts.neverPartOfCompilation();
             return "NVR (value: " + returnValue + ", current: " + currentContext + ", target: " + targetContext + ")";
         }
     }
@@ -100,6 +104,7 @@ public final class Returns {
 
         @Override
         public final String toString() {
+            CompilerAsserts.neverPartOfCompilation();
             return "TLR (value: " + returnValue + ")";
         }
     }

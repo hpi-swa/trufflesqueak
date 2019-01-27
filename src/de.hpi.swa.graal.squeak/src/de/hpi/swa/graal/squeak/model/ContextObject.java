@@ -2,6 +2,7 @@ package de.hpi.swa.graal.squeak.model;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -279,6 +280,7 @@ public final class ContextObject extends AbstractPointersObject {
 
     @Override
     public String toString() {
+        CompilerAsserts.neverPartOfCompilation();
         if (hasMethod()) {
             final BlockClosureObject closure = getClosure();
             if (closure != null) {

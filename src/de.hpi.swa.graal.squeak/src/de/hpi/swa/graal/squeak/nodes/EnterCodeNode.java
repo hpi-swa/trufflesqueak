@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -77,6 +78,7 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
 
         @Override
         public String toString() {
+            CompilerAsserts.neverPartOfCompilation();
             return codeNode.toString();
         }
 
@@ -144,6 +146,7 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
 
     @Override
     public final String toString() {
+        CompilerAsserts.neverPartOfCompilation();
         return code.toString();
     }
 

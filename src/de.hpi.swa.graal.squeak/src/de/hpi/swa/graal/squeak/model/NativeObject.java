@@ -183,7 +183,7 @@ public final class NativeObject extends AbstractSqueakObject {
     @TruffleBoundary
     @Override
     public String toString() {
-        CompilerAsserts.neverPartOfCompilation("toString should not be part of compilation");
+        CompilerAsserts.neverPartOfCompilation();
         if (isByteType()) {
             return new String((byte[]) storage);
         } else if (isShortType()) {

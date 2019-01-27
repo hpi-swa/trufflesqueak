@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -93,6 +94,7 @@ public final class ReturnBytecodes {
 
         @Override
         public final String toString() {
+            CompilerAsserts.neverPartOfCompilation();
             return "return: " + constant.toString();
         }
     }
@@ -116,6 +118,7 @@ public final class ReturnBytecodes {
 
         @Override
         public final String toString() {
+            CompilerAsserts.neverPartOfCompilation();
             return "returnSelf";
         }
     }
@@ -167,6 +170,7 @@ public final class ReturnBytecodes {
 
         @Override
         public final String toString() {
+            CompilerAsserts.neverPartOfCompilation();
             return "blockReturn";
         }
     }
@@ -190,6 +194,7 @@ public final class ReturnBytecodes {
 
         @Override
         public String toString() {
+            CompilerAsserts.neverPartOfCompilation();
             return "returnTop";
         }
     }

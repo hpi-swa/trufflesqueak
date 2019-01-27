@@ -2,6 +2,8 @@ package de.hpi.swa.graal.squeak.model;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.CompilerAsserts;
+
 public final class CompiledBlockObject extends CompiledCodeObject {
     private final CompiledMethodObject outerMethod;
     private final int offset;
@@ -44,6 +46,7 @@ public final class CompiledBlockObject extends CompiledCodeObject {
 
     @Override
     public String toString() {
+        CompilerAsserts.neverPartOfCompilation();
         String className = "UnknownClass";
         String selector = "unknownSelector";
         final ClassObject classObject = getCompiledInClass();
