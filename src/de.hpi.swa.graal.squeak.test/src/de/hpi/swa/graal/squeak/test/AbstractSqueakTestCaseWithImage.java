@@ -30,7 +30,7 @@ import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.process.GetActiveProcessNode;
 
 public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
-    private static final int TIMEOUT_SECONDS = 50;
+    private static final int TIMEOUT_SECONDS = 60;
     private static final int PRIORITY_10_LIST_INDEX = 9;
 
     private static PointersObject idleProcess;
@@ -66,6 +66,8 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         evaluate("Utilities setAuthorInitials: 'GraalSqueak'");
         image.getOutput().println("Initializing fresh MorphicUIManager...");
         evaluate("Project current instVarNamed: #uiManager put: MorphicUIManager new");
+        image.getOutput().println("Increasing default timeout...");
+        patchMethod("TestCase", "defaultTimeout", "defaultTimeout ^ " + TIMEOUT_SECONDS);
         if (!runsOnMXGate()) {
             // Patch TestCase>>#performTest, so errors are printed to stderr for debugging purposes.
             patchMethod("TestCase", "performTest", "performTest [self perform: testSelector asSymbol] on: Error do: [:e | e printVerboseOn: FileStream stderr. e signal]");
