@@ -14,7 +14,7 @@ import java.nio.channels.Selector;
 import java.util.Iterator;
 import java.util.Set;
 
-abstract class SqSocket {
+abstract class SqueakSocket {
 
     enum Status {
         InvalidSocket(-1),
@@ -55,14 +55,14 @@ abstract class SqSocket {
         }
     }
 
-    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, SqSocket.class);
+    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, SqueakSocket.class);
 
     protected final long handle;
     protected final Selector selector;
 
     protected boolean listening;
 
-    protected SqSocket() throws IOException {
+    protected SqueakSocket() throws IOException {
         this.handle = System.identityHashCode(this);
         this.selector = Selector.open();
         this.listening = false;
@@ -88,7 +88,7 @@ abstract class SqSocket {
 
     protected abstract void listenOn(long port, long backlogSize) throws IOException;
 
-    protected abstract SqSocket accept() throws IOException;
+    protected abstract SqueakSocket accept() throws IOException;
 
     protected abstract boolean isSendDone() throws IOException;
 
@@ -185,12 +185,12 @@ abstract class SqSocket {
         throw new SqueakException("Unknown address type");
     }
 
-    protected static SqSocket create(final SqSocket.Type socketType) throws IOException {
+    protected static SqueakSocket create(final SqueakSocket.Type socketType) throws IOException {
         switch (socketType) {
             case TCP:
-                return new TCPSocket();
+                return new SqueakTCPSocket();
             case UDP:
-                return new UDPSocket();
+                return new SqueakUDPSocket();
             default:
                 throw new SqueakException("Unknown SocketType");
         }

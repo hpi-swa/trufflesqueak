@@ -8,11 +8,11 @@ import java.nio.channels.DatagramChannel;
 import java.nio.channels.NetworkChannel;
 import java.nio.channels.SelectionKey;
 
-final class UDPSocket extends SqSocket {
+final class SqueakUDPSocket extends SqueakSocket {
 
     private final DatagramChannel channel;
 
-    UDPSocket() throws IOException {
+    SqueakUDPSocket() throws IOException {
         super();
         channel = DatagramChannel.open();
         channel.configureBlocking(false);
@@ -87,7 +87,7 @@ final class UDPSocket extends SqSocket {
     }
 
     @Override
-    protected SqSocket accept() {
+    protected SqueakSocket accept() {
         throw new UnsupportedOperationException("accept() on UDP socket");
     }
 

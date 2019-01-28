@@ -13,18 +13,18 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 
-final class TCPSocket extends SqSocket {
+final class SqueakTCPSocket extends SqueakSocket {
 
-    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, TCPSocket.class);
+    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, SqueakTCPSocket.class);
 
     private SocketChannel clientChannel;
     private ServerSocketChannel serverChannel;
 
-    protected TCPSocket() throws IOException {
+    protected SqueakTCPSocket() throws IOException {
         super();
     }
 
-    private TCPSocket(final SocketChannel clientChannel) throws IOException {
+    private SqueakTCPSocket(final SocketChannel clientChannel) throws IOException {
         super();
         this.clientChannel = clientChannel;
         this.clientChannel.configureBlocking(false);
@@ -158,10 +158,10 @@ final class TCPSocket extends SqSocket {
     }
 
     @Override
-    protected SqSocket accept() throws IOException {
+    protected SqueakSocket accept() throws IOException {
         if (listening && clientChannel != null) {
             clientChannel.keyFor(selector).cancel();
-            final SqSocket created = new TCPSocket(clientChannel);
+            final SqueakSocket created = new SqueakTCPSocket(clientChannel);
             clientChannel = null;
             return created;
         }
