@@ -156,7 +156,7 @@ abstract class SqueakSocket {
     }
 
     protected final void setOption(final String name, final String value) throws IOException {
-        final Boolean enabled = value.equals("1");
+        final Boolean enabled = "1".equals(value);
         final SocketOption<?> option = socketOptionFromString(name);
         sneakySetOption(option, enabled);
     }

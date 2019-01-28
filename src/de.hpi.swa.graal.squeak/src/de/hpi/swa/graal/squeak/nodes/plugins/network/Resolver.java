@@ -32,15 +32,15 @@ final class Resolver {
     private Resolver() {
     }
 
-    static byte[] getAnyLocalAddress() {
+    protected static byte[] getAnyLocalAddress() {
         return anyLocalAddress.getAddress();
     }
 
-    static byte[] getLoopbackAddress() {
+    protected static byte[] getLoopbackAddress() {
         return loopbackAddress.getAddress();
     }
 
-    static void startHostNameLookUp(final String hostName) throws UnknownHostException {
+    protected static void startHostNameLookUp(final String hostName) throws UnknownHostException {
         try {
             if ("localhost".equals(hostName)) {
                 lastNameLookup = Resolver.getLoopbackAddress();
@@ -55,11 +55,11 @@ final class Resolver {
         }
     }
 
-    static byte[] lastHostNameLookupResult() {
+    protected static byte[] lastHostNameLookupResult() {
         return lastNameLookup;
     }
 
-    static void startAddressLookUp(final byte[] address) throws UnknownHostException {
+    protected static void startAddressLookUp(final byte[] address) throws UnknownHostException {
         try {
             lastAddressLookup = InetAddress.getByAddress(address).getHostName();
         } catch (final UnknownHostException e) {
@@ -68,11 +68,11 @@ final class Resolver {
         }
     }
 
-    static String lastAddressLookUpResult() {
+    protected static String lastAddressLookUpResult() {
         return lastAddressLookup;
     }
 
-    static String addressBytesToString(final byte[] address) {
+    protected static String addressBytesToString(final byte[] address) {
         try {
             return InetAddress.getByAddress(address).getHostAddress();
         } catch (final UnknownHostException e) {
