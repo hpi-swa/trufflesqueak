@@ -52,8 +52,8 @@ public abstract class TransferToNode extends AbstractNodeWithImage {
 // throw ProcessSwitch.createWithBoundary(newActiveContext);
 // materializeFullSenderChain(activeContext);
 // materializeFullSenderChain(newActiveContext);
-        SqueakImageContext.nextContext = newActiveContext;
         ExecuteTopLevelContextNode.suspendedContextThreads.put(activeContext, Thread.currentThread());
+        SqueakImageContext.nextContext = newActiveContext;
         notifyAndWait(activeContext);
     }
 
@@ -67,14 +67,14 @@ public abstract class TransferToNode extends AbstractNodeWithImage {
         synchronized (activeContext) {
             // image.getError().println("Worker waiting...");
             SqueakImageContext.workerThreadSuspended = true;
-            // while (SqueakImageContext.workerThreadSuspended) {
-            try {
-                activeContext.wait();
-            } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+            while (SqueakImageContext.workerThreadSuspended) {
+                try {
+                    activeContext.wait();
+                } catch (InterruptedException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
             }
-            // }
             // image.getError().println("Worker resuming...");
         }
     }

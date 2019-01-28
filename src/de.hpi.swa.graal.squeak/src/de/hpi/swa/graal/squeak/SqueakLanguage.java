@@ -62,6 +62,11 @@ public final class SqueakLanguage extends TruffleLanguage<SqueakImageContext> {
     }
 
     @Override
+    protected boolean isThreadAccessAllowed(final Thread thread, final boolean singleThreaded) {
+        return true;
+    }
+
+    @Override
     protected Object findMetaObject(final SqueakImageContext image, final Object value) {
         // TODO: return ContextObject instead?
         if (value instanceof FrameMarker) {

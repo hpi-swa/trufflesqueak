@@ -64,7 +64,6 @@ public final class ExecuteTopLevelContextNode extends RootNode {
 
     private final class SqueakProcess implements Runnable {
         @CompilationFinal private final ContextObject context;
-        public Object result;
 
         SqueakProcess(final ContextObject context) {
             this.context = context;
@@ -95,6 +94,14 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                 } catch (NonVirtualReturn nvr) {
                     activeContext = unwindContextChainNode.executeUnwind(nvr.getCurrentContext(), nvr.getTargetContext(), nvr.getReturnValue());
                     image.traceProcessSwitches("Non Virtual Return on top-level, new context is", activeContext);
+                } catch (TopLevelReturn tlr) {
+                    if (Thread.currentThread() == image.rootJavaThread) {
+                        throw tlr;
+                    } else {
+                        SqueakImageContext.mainThreadSuspended = false;
+                        image.rootJavaThread.notify();
+                        return;
+                    }
                 }
             }
         }
@@ -106,15 +113,14 @@ public final class ExecuteTopLevelContextNode extends RootNode {
             final ContextObject nextContext = SqueakImageContext.nextContext;
             thread = suspendedContextThreads.remove(nextContext);
             if (thread == null) {
-                thread = suspendedContextThreads.computeIfAbsent(SqueakImageContext.nextContext, t -> {
-                    return new Thread(new SqueakProcess(nextContext), nextContext.toString());
-                });
-                // image.getError().println("New thread");
-                thread.start();
+                final Thread newThread = image.env.createThread(new SqueakProcess(nextContext));
+                // suspendedContextThreads.put(SqueakImageContext.nextContext, newThread);
+                image.printToStdErr("New thread");
+                newThread.start();
             } else {
                 synchronized (nextContext) {
                     SqueakImageContext.workerThreadSuspended = false;
-                    // image.getError().println("Resuming existing thread");
+// image.printToStdErr("Resuming existing thread");
                     nextContext.notify();
                 }
             }
@@ -122,14 +128,13 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                 SqueakImageContext.mainThreadSuspended = true;
                 while (SqueakImageContext.mainThreadSuspended) {
                     try {
-                        // image.getError().println("Waiting for thread to complete...");
-                        image.rootJavaThread.wait();
+                        image.printToStdErr("Waiting for thread to complete executing:", nextContext);
+                        image.rootJavaThread.wait(2000);
                     } catch (InterruptedException e) {
-                        // TODO Auto-generated catch block
                         e.printStackTrace();
                     }
                 }
-                // image.getError().println("Done waiting...");
+// image.printToStdErr("Done waiting...");
             }
         }
     }

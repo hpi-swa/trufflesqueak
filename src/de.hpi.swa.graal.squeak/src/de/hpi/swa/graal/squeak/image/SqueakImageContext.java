@@ -164,9 +164,9 @@ public final class SqueakImageContext {
     private Source lastParseRequestSource;
     @CompilationFinal private SqueakImage squeakImage;
 
-    public static ContextObject nextContext = null;
-    public static boolean mainThreadSuspended = false;
-    public static boolean workerThreadSuspended = false;
+    public static volatile ContextObject nextContext = null;
+    public static volatile boolean mainThreadSuspended = false;
+    public static volatile boolean workerThreadSuspended = false;
     @CompilationFinal public final Thread rootJavaThread;
 
     public SqueakImageContext(final SqueakLanguage squeakLanguage, final SqueakLanguage.Env environment) {
