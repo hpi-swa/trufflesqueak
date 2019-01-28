@@ -1,6 +1,5 @@
 package de.hpi.swa.graal.squeak.nodes.plugins.network;
 
-import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -13,8 +12,8 @@ final class UDPSocket extends SqSocket {
 
     private final DatagramChannel channel;
 
-    UDPSocket(final SqueakImageContext image, final boolean debug) throws IOException {
-        super(image, debug);
+    UDPSocket() throws IOException {
+        super();
         channel = DatagramChannel.open();
         channel.configureBlocking(false);
     }

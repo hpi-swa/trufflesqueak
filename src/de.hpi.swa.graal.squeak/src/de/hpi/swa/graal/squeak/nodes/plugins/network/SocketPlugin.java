@@ -642,7 +642,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
             try {
                 final SqSocket.Type type = SqSocket.Type.fromId(socketType);
-                final SqSocket socket = SqSocket.create(type, code.image, debugPrints);
+                final SqSocket socket = SqSocket.create(type);
                 SOCKETS.put(socket.handle(), socket);
                 return socket.handle();
             } catch (final IOException e) {

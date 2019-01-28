@@ -1,6 +1,7 @@
 package de.hpi.swa.graal.squeak.nodes.plugins.network;
 
-import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import com.oracle.truffle.api.TruffleLogger;
+import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -14,15 +15,17 @@ import java.util.Iterator;
 
 final class TCPSocket extends SqSocket {
 
+    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, TCPSocket.class);
+
     private SocketChannel clientChannel;
     private ServerSocketChannel serverChannel;
 
-    protected TCPSocket(final SqueakImageContext image, final boolean debug) throws IOException {
-        super(image, debug);
+    protected TCPSocket() throws IOException {
+        super();
     }
 
-    private TCPSocket(final SqueakImageContext image, final boolean debug, final SocketChannel clientChannel) throws IOException {
-        super(image, debug);
+    private TCPSocket(final SocketChannel clientChannel) throws IOException {
+        super();
         this.clientChannel = clientChannel;
         this.clientChannel.configureBlocking(false);
         this.clientChannel.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
@@ -81,7 +84,7 @@ final class TCPSocket extends SqSocket {
         }
 
         final Status status = listening ? serverStatus() : clientStatus();
-        print(status.name());
+        LOG.finer(() -> handle + " " + status);
         return status;
     }
 
@@ -158,7 +161,7 @@ final class TCPSocket extends SqSocket {
     protected SqSocket accept() throws IOException {
         if (listening && clientChannel != null) {
             clientChannel.keyFor(selector).cancel();
-            final SqSocket created = new TCPSocket(image, debug, clientChannel);
+            final SqSocket created = new TCPSocket(clientChannel);
             clientChannel = null;
             return created;
         }

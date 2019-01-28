@@ -1,7 +1,8 @@
 package de.hpi.swa.graal.squeak.nodes.plugins.network;
 
+import com.oracle.truffle.api.TruffleLogger;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -54,25 +55,17 @@ abstract class SqSocket {
         }
     }
 
+    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, SqSocket.class);
+
     protected final long handle;
-    protected final boolean debug;
-    protected final SqueakImageContext image;
     protected final Selector selector;
 
     protected boolean listening;
 
-    protected SqSocket(final SqueakImageContext image, final boolean debug) throws IOException {
+    protected SqSocket() throws IOException {
         this.handle = System.identityHashCode(this);
-        this.debug = debug;
-        this.image = image;
         this.selector = Selector.open();
         this.listening = false;
-    }
-
-    protected void print(final String value) {
-        if (debug) {
-            image.getOutput().println(handle() + " " + value);
-        }
     }
 
     protected long handle() {
@@ -106,7 +99,7 @@ abstract class SqSocket {
             final SelectionKey key = keys.next();
             if (key.isWritable()) {
                 final long written = sendDataTo(buffer, key);
-                print("written: " + written);
+                LOG.finer(() -> handle + " written: " + written);
                 keys.remove();
                 return written;
             }
@@ -122,12 +115,12 @@ abstract class SqSocket {
         final Set<SelectionKey> keys = selector.selectedKeys();
         for (final SelectionKey key : keys) {
             if (key.isReadable()) {
-                print("data available");
+                LOG.finer(() -> handle + " data available");
                 return true;
             }
         }
 
-        print("no data available");
+        LOG.finer(() -> handle + " no data available");
         return false;
     }
 
@@ -139,7 +132,7 @@ abstract class SqSocket {
 
             if (key.isReadable()) {
                 final long received = receiveDataFrom(key, buffer);
-                print("received: " + received);
+                LOG.finer(() -> handle + " received: " + received);
                 keys.remove();
                 return received;
             }
@@ -192,12 +185,12 @@ abstract class SqSocket {
         throw new SqueakException("Unknown address type");
     }
 
-    protected static SqSocket create(final SqSocket.Type socketType, final SqueakImageContext image, final boolean debug) throws IOException {
+    protected static SqSocket create(final SqSocket.Type socketType) throws IOException {
         switch (socketType) {
             case TCP:
-                return new TCPSocket(image, debug);
+                return new TCPSocket();
             case UDP:
-                return new UDPSocket(image, debug);
+                return new UDPSocket();
             default:
                 throw new SqueakException("Unknown SocketType");
         }
