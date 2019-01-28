@@ -1,11 +1,15 @@
 package de.hpi.swa.graal.squeak.nodes.plugins.network;
 
+import com.oracle.truffle.api.TruffleLogger;
+import de.hpi.swa.graal.squeak.SqueakLanguage;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
+import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.List;
 
+import java.util.logging.Level;
 import org.graalvm.collections.EconomicMap;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -32,29 +36,12 @@ import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 
 public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
+    private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, SocketPlugin.class);
     private static final EconomicMap<Long, SqSocket> SOCKETS = EconomicMap.create();
-    private static final boolean debugPrints = false;
-
-    protected abstract static class AbstractSocketPluginPrimitiveNode extends AbstractPrimitiveNode {
-
-        protected AbstractSocketPluginPrimitiveNode(final CompiledMethodObject method) {
-            super(method);
-        }
-
-        protected final void error(final Object o) {
-            code.image.printToStdErr(o);
-        }
-
-        protected final void print(final Object o) {
-            if (debugPrints) {
-                code.image.printToStdOut(o);
-            }
-        }
-    }
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveResolverStatus")
-    protected abstract static class PrimResolverStatusNode extends AbstractSocketPluginPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimResolverStatusNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         protected PrimResolverStatusNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -67,7 +54,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveInitializeNetwork")
-    protected abstract static class PrimInitializeNetworkNode extends AbstractSocketPluginPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimInitializeNetworkNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         protected PrimInitializeNetworkNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -89,7 +76,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveResolverStartNameLookup")
-    protected abstract static class PrimResolverStartNameLookupNode extends AbstractSocketPluginPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimResolverStartNameLookupNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         protected PrimResolverStartNameLookupNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -103,10 +90,10 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary
         protected final Object doWork(final Object receiver, final NativeObject hostName) {
             try {
-                print(">> Starting lookup for host name " + hostName);
+                LOG.finer(() -> "Starting lookup for host name " + hostName);
                 Resolver.startHostNameLookUp(hostName.asString());
             } catch (final UnknownHostException e) {
-                error(e);
+                LOG.log(Level.FINE, "Host name lookup failed", e);
             }
             return receiver;
         }
@@ -114,7 +101,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveResolverStartAddressLookup")
-    protected abstract static class PrimResolverStartAddressLookupNode extends AbstractSocketPluginPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimResolverStartAddressLookupNode extends AbstractPrimitiveNode implements BinaryPrimitive {
 
         protected PrimResolverStartAddressLookupNode(final CompiledMethodObject method) {
             super(method);
@@ -129,10 +116,10 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary
         protected final Object doWork(final Object receiver, final NativeObject address) {
             try {
-                print("Starting lookup for address " + address);
+                LOG.finer(() -> "Starting lookup for address " + address);
                 Resolver.startAddressLookUp(address.getByteStorage());
             } catch (final UnknownHostException e) {
-                error(e);
+                LOG.log(Level.FINE, "Address lookup failed", e);
             }
             return receiver;
         }
@@ -140,7 +127,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveResolverNameLookupResult")
-    protected abstract static class PrimResolverNameLookupResultNode extends AbstractSocketPluginPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimResolverNameLookupResultNode extends AbstractPrimitiveNode implements UnaryPrimitive {
 
         protected PrimResolverNameLookupResultNode(final CompiledMethodObject method) {
             super(method);
@@ -155,14 +142,14 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         protected final AbstractSqueakObject doWork(
                         @SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             final byte[] lastNameLookup = Resolver.lastHostNameLookupResult();
-            print(">> Name Lookup Result: " + Resolver.addressBytesToString(lastNameLookup));
+            LOG.finer(() -> "Name Lookup Result: " + Resolver.addressBytesToString(lastNameLookup));
             return lastNameLookup == null ? code.image.nil : code.image.wrap(lastNameLookup);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveResolverAddressLookupResult")
-    protected abstract static class PrimResolverAddressLookupResultNode extends AbstractSocketPluginPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimResolverAddressLookupResultNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         protected PrimResolverAddressLookupResultNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -174,14 +161,14 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         @Specialization
         protected final AbstractSqueakObject doWork(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             final String lastAddressLookup = Resolver.lastAddressLookUpResult();
-            print(">> Address Lookup Result: " + lastAddressLookup);
+            LOG.finer(() -> ">> Address Lookup Result: " + lastAddressLookup);
             return lastAddressLookup == null ? code.image.nil : code.image.wrap(lastAddressLookup);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveResolverLocalAddress")
-    protected abstract static class PrimResolverLocalAddressNode extends AbstractSocketPluginPrimitiveNode implements UnaryPrimitive {
+    protected abstract static class PrimResolverLocalAddressNode extends AbstractPrimitiveNode implements UnaryPrimitive {
         protected PrimResolverLocalAddressNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -190,14 +177,14 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
         @TruffleBoundary
         protected final AbstractSqueakObject doWork(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             final byte[] address = Resolver.getLoopbackAddress();
-            print(">> Local Address: " + Resolver.addressBytesToString(address));
+            LOG.finer(() -> "Local Address: " + Resolver.addressBytesToString(address));
             return code.image.wrap(address);
         }
     }
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketLocalPort")
-    protected abstract static class PrimSocketLocalPortNode extends AbstractSocketPluginPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimSocketLocalPortNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         protected PrimSocketLocalPortNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -209,7 +196,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return getSocketOrPrimFail(socketID).getLocalPort();
             } catch (final IOException e) {
-                error(e);
+                LOG.log(Level.FINE, "Retrieving local port failed", e);
                 throw new PrimitiveFailed();
             }
         }
@@ -217,7 +204,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketListenWithOrWithoutBacklog")
-    protected abstract static class PrimSocketListenWithOrWithoutBacklogNode extends AbstractSocketPluginPrimitiveNode implements QuaternaryPrimitive {
+    protected abstract static class PrimSocketListenWithOrWithoutBacklogNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
         protected PrimSocketListenWithOrWithoutBacklogNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -235,8 +222,8 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 getSocketOrPrimFail(socketID).listenOn(port, 0L);
                 return receiver;
-            } catch (IOException e) {
-                error(e);
+            } catch (final IOException e) {
+                LOG.log(Level.FINE, "Listen failed", e);
                 throw new PrimitiveFailed();
             }
         }
@@ -254,8 +241,8 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 getSocketOrPrimFail(socketID).listenOn(port, backlogSize);
                 return receiver;
-            } catch (IOException e) {
-                error(e);
+            } catch (final IOException e) {
+                LOG.log(Level.FINE, "Listen failed", e);
                 throw new PrimitiveFailed();
             }
         }
@@ -263,7 +250,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketListenOnPortBacklogInterface")
-    protected abstract static class PrimSocketListenOnPortBacklogInterfaceNode extends AbstractSocketPluginPrimitiveNode implements QuinaryPrimitive {
+    protected abstract static class PrimSocketListenOnPortBacklogInterfaceNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
         protected PrimSocketListenOnPortBacklogInterfaceNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -282,8 +269,8 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 getSocketOrPrimFail(socketID).listenOn(port, backlogSize);
                 return receiver;
-            } catch (IOException e) {
-                error(e);
+            } catch (final IOException e) {
+                LOG.log(Level.FINE, "Listen failed", e);
                 throw new PrimitiveFailed();
             }
         }
@@ -291,7 +278,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketSetOptions")
-    protected abstract static class PrimSocketSetOptionsNode extends AbstractSocketPluginPrimitiveNode implements QuaternaryPrimitive {
+    protected abstract static class PrimSocketSetOptionsNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
         protected PrimSocketSetOptionsNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -303,7 +290,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 final SqSocket socket = getSocketOrPrimFail(socketID);
                 return setSocketOption(socket, option.asString(), value.asString());
             } catch (final IOException e) {
-                error(e);
+                LOG.log(Level.FINE, "Set socket option failed", e);
                 throw new PrimitiveFailed();
             }
         }
@@ -320,7 +307,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketConnectToPort")
-    protected abstract static class PrimSocketConnectToPortNode extends AbstractSocketPluginPrimitiveNode implements QuaternaryPrimitive {
+    protected abstract static class PrimSocketConnectToPortNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
         protected PrimSocketConnectToPortNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -333,7 +320,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 final String host = Resolver.addressBytesToString(hostAddress.getByteStorage());
                 socket.connectTo(host, (int) port);
             } catch (final IOException e) {
-                error(e);
+                LOG.log(Level.FINE, "Socket connect failed", e);
                 throw new PrimitiveFailed();
             }
             return 0;
@@ -342,7 +329,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketConnectionStatus")
-    protected abstract static class PrimSocketConnectionStatusNode extends AbstractSocketPluginPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimSocketConnectionStatusNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         protected PrimSocketConnectionStatusNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -357,8 +344,8 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 final SqSocket socket = getSocketOrPrimFail(socketID);
                 return socket.getStatus().id();
-            } catch (IOException e) {
-                error(e);
+            } catch (final IOException e) {
+                LOG.log(Level.FINE, "Retrieving socket status failed", e);
                 throw new PrimitiveFailed();
             }
         }
@@ -366,7 +353,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketRemoteAddress")
-    protected abstract static class PrimSocketRemoteAddressNode extends AbstractSocketPluginPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimSocketRemoteAddressNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         protected PrimSocketRemoteAddressNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -377,7 +364,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return code.image.wrap(getSocketOrPrimFail(socketID).getRemoteAddress());
             } catch (final IOException e) {
-                error(e);
+                LOG.log(Level.FINE, "Retrieving remote address failed", e);
                 throw new PrimitiveFailed();
             }
         }
@@ -385,7 +372,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketRemotePort")
-    protected abstract static class PrimSocketRemotePortNode extends AbstractSocketPluginPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimSocketRemotePortNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         protected PrimSocketRemotePortNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -396,7 +383,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return getSocketOrPrimFail(socketID).getRemotePort();
             } catch (final IOException e) {
-                error(e);
+                LOG.log(Level.FINE, "Retrieving remote port failed", e);
                 throw new PrimitiveFailed();
             }
         }
@@ -404,7 +391,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketGetOptions")
-    protected abstract static class PrimSocketGetOptionsNode extends AbstractSocketPluginPrimitiveNode implements TernaryPrimitive {
+    protected abstract static class PrimSocketGetOptionsNode extends AbstractPrimitiveNode implements TernaryPrimitive {
         protected PrimSocketGetOptionsNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -423,7 +410,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 final String value = socket.getOption(option.asString());
                 return code.image.wrap(0, value);
             } catch (final IOException e) {
-                error(e);
+                LOG.log(Level.FINE, "Retrieving socket option failed", e);
                 throw new PrimitiveFailed();
             }
         }
@@ -431,7 +418,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketReceiveDataAvailable")
-    protected abstract static class PrimSocketReceiveDataAvailableNode extends AbstractSocketPluginPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimSocketReceiveDataAvailableNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         protected PrimSocketReceiveDataAvailableNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -442,7 +429,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return getSocketOrPrimFail(socketID).isDataAvailable();
             } catch (final IOException e) {
-                error(e);
+                LOG.log(Level.FINE, "Checking for available data failed", e);
                 return code.image.sqFalse;
             }
         }
@@ -450,7 +437,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketError")
-    protected abstract static class PrimSocketErrorNode extends AbstractSocketPluginPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimSocketErrorNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         protected PrimSocketErrorNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -465,7 +452,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketLocalAddress")
-    protected abstract static class PrimSocketLocalAddressNode extends AbstractSocketPluginPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimSocketLocalAddressNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         protected PrimSocketLocalAddressNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -477,7 +464,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 final SqSocket socket = getSocketOrPrimFail(socketID);
                 return code.image.wrap(socket.getLocalAddress());
             } catch (final IOException e) {
-                error(e);
+                LOG.log(Level.FINE, "Retrieving local address failed", e);
                 throw new PrimitiveFailed();
             }
         }
@@ -485,7 +472,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketSendDataBufCount")
-    protected abstract static class PrimSocketSendDataBufCountNode extends AbstractSocketPluginPrimitiveNode implements QuinaryPrimitive {
+    protected abstract static class PrimSocketSendDataBufCountNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
         protected PrimSocketSendDataBufCountNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -510,7 +497,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 final SqSocket socket = getSocketOrPrimFail(socketID);
                 return socket.sendData(ByteBuffer.wrap(buffer.getByteStorage(), (int) startIndex - 1, (int) count));
             } catch (final IOException e) {
-                error(e);
+                LOG.log(Level.FINE, "Sending data failed", e);
                 throw new PrimitiveFailed();
             }
         }
@@ -518,7 +505,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketCloseConnection")
-    protected abstract static class PrimSocketCloseConnectionNode extends AbstractSocketPluginPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimSocketCloseConnectionNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         protected PrimSocketCloseConnectionNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -529,8 +516,8 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 getSocketOrPrimFail(socketID).close();
                 return receiver;
-            } catch (IOException e) {
-                error(e);
+            } catch (final IOException e) {
+                LOG.log(Level.FINE, "Closing socket failed", e);
                 throw new PrimitiveFailed();
             }
         }
@@ -538,7 +525,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketAbortConnection")
-    protected abstract static class PrimSocketAbortConnectionNode extends AbstractSocketPluginPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimSocketAbortConnectionNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         protected PrimSocketAbortConnectionNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -549,8 +536,8 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 getSocketOrPrimFail(socketID).close();
                 return receiver;
-            } catch (IOException e) {
-                error(e);
+            } catch (final IOException e) {
+                LOG.log(Level.FINE, "Closing socket failed", e);
                 throw new PrimitiveFailed();
             }
         }
@@ -558,7 +545,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketSendDone")
-    protected abstract static class PrimSocketSendDoneNode extends AbstractSocketPluginPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimSocketSendDoneNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         protected PrimSocketSendDoneNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -569,7 +556,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 return code.image.wrap(getSocketOrPrimFail(socketID).isSendDone());
             } catch (final IOException e) {
-                error(e);
+                LOG.log(Level.FINE, "Checking completed send failed", e);
                 throw new PrimitiveFailed();
             }
         }
@@ -577,7 +564,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketReceiveDataBufCount")
-    protected abstract static class PrimSocketReceiveDataBufCountNode extends AbstractSocketPluginPrimitiveNode implements QuinaryPrimitive {
+    protected abstract static class PrimSocketReceiveDataBufCountNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
         protected PrimSocketReceiveDataBufCountNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -592,8 +579,8 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
             try {
                 final SqSocket socket = getSocketOrPrimFail(socketID);
                 return socket.receiveData(ByteBuffer.wrap(buffer.getByteStorage(), (int) startIndex - 1, (int) count));
-            } catch (IOException e) {
-                error(e);
+            } catch (final IOException e) {
+                LOG.log(Level.FINE, "Receiving data failed", e);
                 throw new PrimitiveFailed();
             }
         }
@@ -601,7 +588,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketDestroy")
-    protected abstract static class PrimSocketDestroyNode extends AbstractSocketPluginPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimSocketDestroyNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         protected PrimSocketDestroyNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -615,8 +602,8 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                     socket.close();
                 }
                 return 0;
-            } catch (IOException e) {
-                error(e);
+            } catch (final IOException e) {
+                LOG.log(Level.FINE, "Destroying socket failed", e);
                 throw new PrimitiveFailed();
             }
         }
@@ -624,7 +611,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketCreate3Semaphores")
-    protected abstract static class PrimSocketCreate3SemaphoresNode extends AbstractSocketPluginPrimitiveNode implements SeptenaryPrimitive {
+    protected abstract static class PrimSocketCreate3SemaphoresNode extends AbstractPrimitiveNode implements SeptenaryPrimitive {
         protected PrimSocketCreate3SemaphoresNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -653,7 +640,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketAccept3Semaphores")
-    protected abstract static class PrimSocketAccept3SemaphoresNode extends AbstractSocketPluginPrimitiveNode implements SeptenaryPrimitive {
+    protected abstract static class PrimSocketAccept3SemaphoresNode extends AbstractPrimitiveNode implements SeptenaryPrimitive {
         protected PrimSocketAccept3SemaphoresNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -673,8 +660,8 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 final SqSocket accepted = socket.accept();
                 SOCKETS.put(accepted.handle(), accepted);
                 return accepted.handle();
-            } catch (IOException e) {
-                error(e);
+            } catch (final IOException e) {
+                LOG.log(Level.FINE, "Accepting socket failed", e);
                 throw new PrimitiveFailed();
             }
         }
@@ -682,7 +669,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(names = "primitiveSocketCreate")
-    protected abstract static class PrimSocketCreateNode extends AbstractSocketPluginPrimitiveNode implements SenaryPrimitive {
+    protected abstract static class PrimSocketCreateNode extends AbstractPrimitiveNode implements SenaryPrimitive {
         protected PrimSocketCreateNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -695,7 +682,8 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                         final long rcvBufSize,
                         final long sendBufSize,
                         final long semaphoreIndex) {
-            error("TODO: primitiveSocketCreate");
+
+            LOG.warning("TODO: primitiveSocketCreate");
             throw new PrimitiveFailed();
         }
 
