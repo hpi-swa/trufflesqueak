@@ -6,6 +6,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
@@ -47,7 +48,7 @@ public final class ExecuteTopLevelContextNode extends RootNode {
     @Override
     public Object execute(final VirtualFrame frame) {
         try {
-            executeThreads();
+            executeContext(initialContext);
         } catch (TopLevelReturn e) {
             return e.getReturnValue();
         } finally {
@@ -59,85 +60,91 @@ public final class ExecuteTopLevelContextNode extends RootNode {
                 }
             }
         }
-        throw new SqueakException("Top level context did not return");
+// throw new SqueakException("Top level context did not return");
+        return 24L;
     }
 
-    private final class SqueakProcess implements Runnable {
+    public static final class SqueakProcess implements Runnable {
         @CompilationFinal private final ContextObject context;
 
-        SqueakProcess(final ContextObject context) {
+        public SqueakProcess(final ContextObject context) {
             this.context = context;
         }
 
         public void run() {
-            ContextObject activeContext = context;
-            while (true) {
-                CompilerDirectives.transferToInterpreter();
-                final AbstractSqueakObject sender = activeContext.getSender();
-                try {
-                    MaterializeContextOnMethodExitNode.reset();
-                    final CompiledCodeObject code = activeContext.getBlockOrMethod();
-                    // FIXME: do not create node here?
-                    if (executeContextNode == null) {
-                        executeContextNode = insert(ExecuteContextNode.create(code));
-                    } else {
-                        executeContextNode.replace(ExecuteContextNode.create(code));
-                    }
-                    // doIt: activeContext.printSqStackTrace();
-                    final Object result = executeContextNode.executeContext(activeContext.getTruffleFrame(), activeContext);
-                    activeContext = unwindContextChainNode.executeUnwind(sender, sender, result);
-                    image.traceProcessSwitches("Local Return on top-level (sender:", sender, ", new context: ", activeContext, ")");
-                } catch (NonLocalReturn nlr) {
-                    final AbstractSqueakObject target = (AbstractSqueakObject) nlr.getTargetContextOrMarker();
-                    activeContext = unwindContextChainNode.executeUnwind(sender, target, nlr.getReturnValue());
-                    image.traceProcessSwitches("Non Local Return on top-level, new context is", activeContext);
-                } catch (NonVirtualReturn nvr) {
-                    activeContext = unwindContextChainNode.executeUnwind(nvr.getCurrentContext(), nvr.getTargetContext(), nvr.getReturnValue());
-                    image.traceProcessSwitches("Non Virtual Return on top-level, new context is", activeContext);
-                } catch (TopLevelReturn tlr) {
-                    if (Thread.currentThread() == image.rootJavaThread) {
-                        throw tlr;
-                    } else {
-                        SqueakImageContext.mainThreadSuspended = false;
-                        image.rootJavaThread.notify();
-                        return;
-                    }
+            final ExecuteTopLevelContextNode topLevelNode = ExecuteTopLevelContextNode.create(context.image.getLanguage(), context, false);
+            Truffle.getRuntime().createCallTarget(topLevelNode).call();
+        }
+    }
+
+    private void executeContext(final ContextObject context) {
+        ContextObject activeContext = context;
+        while (true) {
+            CompilerDirectives.transferToInterpreter();
+            final AbstractSqueakObject sender = activeContext.getSender();
+            try {
+                MaterializeContextOnMethodExitNode.reset();
+                final CompiledCodeObject code = activeContext.getBlockOrMethod();
+                // FIXME: do not create node here?
+                if (executeContextNode == null) {
+                    executeContextNode = insert(ExecuteContextNode.create(code));
+                } else {
+                    executeContextNode.replace(ExecuteContextNode.create(code));
+                }
+                // doIt: activeContext.printSqStackTrace();
+                final Object result = executeContextNode.executeContext(activeContext.getTruffleFrame(), activeContext);
+                activeContext = unwindContextChainNode.executeUnwind(sender, sender, result);
+                image.traceProcessSwitches("Local Return on top-level (sender:", sender, ", new context: ", activeContext, ")");
+            } catch (NonLocalReturn nlr) {
+                final AbstractSqueakObject target = (AbstractSqueakObject) nlr.getTargetContextOrMarker();
+                activeContext = unwindContextChainNode.executeUnwind(sender, target, nlr.getReturnValue());
+                image.traceProcessSwitches("Non Local Return on top-level, new context is", activeContext);
+            } catch (NonVirtualReturn nvr) {
+                activeContext = unwindContextChainNode.executeUnwind(nvr.getCurrentContext(), nvr.getTargetContext(), nvr.getReturnValue());
+                image.traceProcessSwitches("Non Virtual Return on top-level, new context is", activeContext);
+            } catch (TopLevelReturn tlr) {
+                if (Thread.currentThread() == image.rootJavaThread) {
+                    throw tlr;
+                } else {
+// image.rootJavaThread.notify();
+                    image.printToStdErr(tlr, "in", activeContext);
+                    return;
                 }
             }
         }
     }
 
-    private void executeThreads() {
-        Thread thread;
-        while (true) {
-            final ContextObject nextContext = SqueakImageContext.nextContext;
-            thread = suspendedContextThreads.remove(nextContext);
-            if (thread == null) {
-                final Thread newThread = image.env.createThread(new SqueakProcess(nextContext));
-                // suspendedContextThreads.put(SqueakImageContext.nextContext, newThread);
-                image.printToStdErr("New thread");
-                newThread.start();
-            } else {
-                synchronized (nextContext) {
-                    SqueakImageContext.workerThreadSuspended = false;
-// image.printToStdErr("Resuming existing thread");
-                    nextContext.notify();
-                }
-            }
-            synchronized (image.rootJavaThread) {
-                SqueakImageContext.mainThreadSuspended = true;
-                while (SqueakImageContext.mainThreadSuspended) {
-                    try {
-                        image.printToStdErr("Waiting for thread to complete executing:", nextContext);
-                        image.rootJavaThread.wait(2000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-// image.printToStdErr("Done waiting...");
-            }
-        }
-    }
+// private void executeThreads() {
+// Thread thread;
+// while (true) {
+// final ContextObject nextContext = SqueakImageContext.nextContext;
+// thread = suspendedContextThreads.remove(nextContext);
+// if (thread == null) {
+// final Thread newThread = image.env.createThread(new SqueakProcess(nextContext));
+// // suspendedContextThreads.put(SqueakImageContext.nextContext, newThread);
+// image.printToStdErr("New thread");
+// newThread.start();
+// } else {
+// synchronized (nextContext) {
+// SqueakImageContext.workerThreadSuspended = false;
+//// image.printToStdErr("Resuming existing thread");
+// nextContext.notify();
+// }
+// }
+//// synchronized (image.rootJavaThread) {
+//// SqueakImageContext.mainThreadSuspended = true;
+//// while (SqueakImageContext.mainThreadSuspended) {
+//// try {
+//// image.printToStdErr("Waiting for thread to complete executing:", nextContext);
+//// image.rootJavaThread.wait(2000);
+//// } catch (InterruptedException e) {
+//// e.printStackTrace();
+//// }
+//// }
+////// image.printToStdErr("Done waiting...");
+//// }
+// }
+// }
 
     @Override
     public String getName() {

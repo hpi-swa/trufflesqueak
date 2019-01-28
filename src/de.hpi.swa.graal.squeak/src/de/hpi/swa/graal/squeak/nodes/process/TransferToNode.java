@@ -5,6 +5,7 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
+import de.hpi.swa.graal.squeak.exceptions.Returns;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
@@ -16,8 +17,10 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
+import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode.SqueakProcess;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
+import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public abstract class TransferToNode extends AbstractNodeWithImage {
     @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
@@ -52,30 +55,49 @@ public abstract class TransferToNode extends AbstractNodeWithImage {
 // throw ProcessSwitch.createWithBoundary(newActiveContext);
 // materializeFullSenderChain(activeContext);
 // materializeFullSenderChain(newActiveContext);
-        ExecuteTopLevelContextNode.suspendedContextThreads.put(activeContext, Thread.currentThread());
-        SqueakImageContext.nextContext = newActiveContext;
-        notifyAndWait(activeContext);
+
+        activate(newActiveContext);
+        if (activeContext.getFrameSender() == image.nil) {
+            image.printToStdErr("Done");
+            throw new Returns.TopLevelReturn(42);
+        } else {
+            ExecuteTopLevelContextNode.suspendedContextThreads.put(activeContext, Thread.currentThread());
+            notifyAndWait(activeContext);
+        }
+    }
+
+    @TruffleBoundary
+    private void activate(final ContextObject newActiveContext) {
+        final Object thread = ExecuteTopLevelContextNode.suspendedContextThreads.remove(newActiveContext);
+        if (thread == null) {
+            final Thread newThread = image.env.createThread(new ExecuteTopLevelContextNode.SqueakProcess(newActiveContext));
+            // suspendedContextThreads.put(SqueakImageContext.nextContext, newThread);
+            image.printToStdErr("New thread");
+            newThread.start();
+        } else {
+            synchronized (newActiveContext) {
+// image.printToStdErr("Resuming existing thread");
+                newActiveContext.notify();
+            }
+        }
+
     }
 
     @TruffleBoundary
     private void notifyAndWait(final ContextObject activeContext) {
-        synchronized (image.rootJavaThread) {
-            // image.getError().println("Notifying main thread");
-            SqueakImageContext.mainThreadSuspended = false;
-            image.rootJavaThread.notify();
-        }
         synchronized (activeContext) {
-            // image.getError().println("Worker waiting...");
-            SqueakImageContext.workerThreadSuspended = true;
-            while (SqueakImageContext.workerThreadSuspended) {
-                try {
-                    activeContext.wait();
-                } catch (InterruptedException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
+            // image.getError().println("Worker waiting...")
+// SqueakImageContext.workerThreadSuspended = true;
+// while (SqueakImageContext.workerThreadSuspended) {
+            try {
+                activeContext.wait();
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
             }
-            // image.getError().println("Worker resuming...");
+// }
+// image.printToStdErr("Resuming:", activeContext);
+// image.getError().println("Worker resuming...");
         }
     }
 

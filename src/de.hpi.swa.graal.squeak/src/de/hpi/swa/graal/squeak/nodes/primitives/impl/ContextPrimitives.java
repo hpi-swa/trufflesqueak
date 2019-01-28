@@ -109,7 +109,7 @@ public class ContextPrimitives extends AbstractPrimitiveFactoryHolder {
     }
 
     @GenerateNodeFactory
-    @SqueakPrimitive(indices = 196)
+    @SqueakPrimitive(indices = 396)
     protected abstract static class PrimTerminateToNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         public PrimTerminateToNode(final CompiledMethodObject method) {
             super(method);
