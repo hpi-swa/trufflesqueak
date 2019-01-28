@@ -68,7 +68,7 @@ abstract class SqueakSocket {
         this.listening = false;
     }
 
-    protected long handle() {
+    protected final long handle() {
         return handle;
     }
 
@@ -92,7 +92,7 @@ abstract class SqueakSocket {
 
     protected abstract boolean isSendDone() throws IOException;
 
-    protected long sendData(final ByteBuffer buffer) throws IOException {
+    protected final long sendData(final ByteBuffer buffer) throws IOException {
         selector.selectNow();
         final Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
         while (keys.hasNext()) {
@@ -110,7 +110,7 @@ abstract class SqueakSocket {
 
     protected abstract long sendDataTo(ByteBuffer data, SelectionKey key) throws IOException;
 
-    protected boolean isDataAvailable() throws IOException {
+    protected final boolean isDataAvailable() throws IOException {
         selector.selectNow();
         final Set<SelectionKey> keys = selector.selectedKeys();
         for (final SelectionKey key : keys) {
@@ -124,7 +124,7 @@ abstract class SqueakSocket {
         return false;
     }
 
-    protected long receiveData(final ByteBuffer buffer) throws IOException {
+    protected final long receiveData(final ByteBuffer buffer) throws IOException {
         selector.selectNow();
         final Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
         while (keys.hasNext()) {
@@ -142,11 +142,11 @@ abstract class SqueakSocket {
 
     protected abstract long receiveDataFrom(SelectionKey key, ByteBuffer data) throws IOException;
 
-    protected boolean supportsOption(final String name) {
+    protected final boolean supportsOption(final String name) {
         return asNetworkChannel().supportedOptions().stream().anyMatch(o -> o.name().equals(name));
     }
 
-    protected String getOption(final String name) throws IOException {
+    protected final String getOption(final String name) throws IOException {
         final SocketOption<?> option = socketOptionFromString(name);
         final Object value = asNetworkChannel().getOption(option);
         if (value instanceof Boolean) {
@@ -155,13 +155,13 @@ abstract class SqueakSocket {
         return String.valueOf(value);
     }
 
-    protected void setOption(final String name, final String value) throws IOException {
+    protected final void setOption(final String name, final String value) throws IOException {
         final Boolean enabled = value.equals("1");
         final SocketOption<?> option = socketOptionFromString(name);
         sneakySetOption(option, enabled);
     }
 
-    protected SocketOption<?> socketOptionFromString(final String name) {
+    protected final SocketOption<?> socketOptionFromString(final String name) {
         return asNetworkChannel().supportedOptions().stream().filter(o -> o.name().equals(name)).findFirst().orElseThrow(() -> new UnsupportedOperationException("Unknown socket option: " + name));
     }
 
