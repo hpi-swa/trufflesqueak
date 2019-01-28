@@ -23,7 +23,10 @@ public final class PrimitiveExceptions {
     /**
      * Primitive failed.
      *
-     * <p>Below factory methods return {@code PrimitiveFailed}, such that it is possible to substitue a return clause. Example:</p>
+     * <p>
+     * Below factory methods return {@code PrimitiveFailed}, such that it is possible to substitue a
+     * return clause. Example:
+     * </p>
      *
      * <pre>
      * <code>long getStatus() {
