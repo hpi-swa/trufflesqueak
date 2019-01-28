@@ -68,7 +68,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
     private static SqueakSocket getSocketOrPrimFail(final long socketHandle) {
         final SqueakSocket socket = SOCKETS.get(socketHandle);
         if (socket == null) {
-            throw new PrimitiveFailed();
+            throw PrimitiveFailed.andTransferToInterpreter();
         }
         return socket;
     }
@@ -196,7 +196,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 return getSocketOrPrimFail(socketID).getLocalPort();
             } catch (final IOException e) {
                 LOG.log(Level.FINE, "Retrieving local port failed", e);
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.andTransferToInterpreter();
             }
         }
     }
@@ -223,7 +223,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 return receiver;
             } catch (final IOException e) {
                 LOG.log(Level.FINE, "Listen failed", e);
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.andTransferToInterpreter();
             }
         }
 
@@ -242,7 +242,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 return receiver;
             } catch (final IOException e) {
                 LOG.log(Level.FINE, "Listen failed", e);
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.andTransferToInterpreter();
             }
         }
     }
@@ -270,7 +270,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 return receiver;
             } catch (final IOException e) {
                 LOG.log(Level.FINE, "Listen failed", e);
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.andTransferToInterpreter();
             }
         }
     }
@@ -290,7 +290,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 return setSocketOption(socket, option.asString(), value.asString());
             } catch (final IOException e) {
                 LOG.log(Level.FINE, "Set socket option failed", e);
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.andTransferToInterpreter();
             }
         }
 
@@ -320,7 +320,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 socket.connectTo(host, (int) port);
             } catch (final IOException e) {
                 LOG.log(Level.FINE, "Socket connect failed", e);
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.andTransferToInterpreter();
             }
             return 0L;
         }
@@ -345,7 +345,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 return socket.getStatus().id();
             } catch (final IOException e) {
                 LOG.log(Level.FINE, "Retrieving socket status failed", e);
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.andTransferToInterpreter();
             }
         }
     }
@@ -364,7 +364,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 return code.image.wrap(getSocketOrPrimFail(socketID).getRemoteAddress());
             } catch (final IOException e) {
                 LOG.log(Level.FINE, "Retrieving remote address failed", e);
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.andTransferToInterpreter();
             }
         }
     }
@@ -383,7 +383,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 return getSocketOrPrimFail(socketID).getRemotePort();
             } catch (final IOException e) {
                 LOG.log(Level.FINE, "Retrieving remote port failed", e);
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.andTransferToInterpreter();
             }
         }
     }
@@ -410,7 +410,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 return code.image.wrap(0, value);
             } catch (final IOException e) {
                 LOG.log(Level.FINE, "Retrieving socket option failed", e);
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.andTransferToInterpreter();
             }
         }
     }
@@ -464,7 +464,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 return code.image.wrap(socket.getLocalAddress());
             } catch (final IOException e) {
                 LOG.log(Level.FINE, "Retrieving local address failed", e);
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.andTransferToInterpreter();
             }
         }
     }
@@ -497,7 +497,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 return socket.sendData(ByteBuffer.wrap(buffer.getByteStorage(), (int) startIndex - 1, (int) count));
             } catch (final IOException e) {
                 LOG.log(Level.FINE, "Sending data failed", e);
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.andTransferToInterpreter();
             }
         }
     }
@@ -517,7 +517,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 return receiver;
             } catch (final IOException e) {
                 LOG.log(Level.FINE, "Closing socket failed", e);
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.andTransferToInterpreter();
             }
         }
     }
@@ -537,7 +537,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 return receiver;
             } catch (final IOException e) {
                 LOG.log(Level.FINE, "Closing socket failed", e);
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.andTransferToInterpreter();
             }
         }
     }
@@ -556,7 +556,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 return code.image.wrap(getSocketOrPrimFail(socketID).isSendDone());
             } catch (final IOException e) {
                 LOG.log(Level.FINE, "Checking completed send failed", e);
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.andTransferToInterpreter();
             }
         }
     }
@@ -580,7 +580,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 return socket.receiveData(ByteBuffer.wrap(buffer.getByteStorage(), (int) startIndex - 1, (int) count));
             } catch (final IOException e) {
                 LOG.log(Level.FINE, "Receiving data failed", e);
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.andTransferToInterpreter();
             }
         }
     }
@@ -603,7 +603,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 return 0L;
             } catch (final IOException e) {
                 LOG.log(Level.FINE, "Destroying socket failed", e);
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.andTransferToInterpreter();
             }
         }
     }
@@ -632,7 +632,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 SOCKETS.put(socket.handle(), socket);
                 return socket.handle();
             } catch (final IOException e) {
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.andTransferToInterpreter();
             }
         }
     }
@@ -661,7 +661,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                 return accepted.handle();
             } catch (final IOException e) {
                 LOG.log(Level.FINE, "Accepting socket failed", e);
-                throw new PrimitiveFailed();
+                throw PrimitiveFailed.andTransferToInterpreter();
             }
         }
     }
@@ -683,7 +683,7 @@ public final class SocketPlugin extends AbstractPrimitiveFactoryHolder {
                         final long semaphoreIndex) {
 
             LOG.warning("TODO: primitiveSocketCreate");
-            throw new PrimitiveFailed();
+            throw PrimitiveFailed.andTransferToInterpreter();
         }
 
     }
