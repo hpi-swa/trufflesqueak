@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.process;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -43,7 +44,12 @@ public abstract class TransferToNode extends AbstractNodeWithImage {
         atPut0Node.execute(activeProcess, PROCESS.SUSPENDED_CONTEXT, activeContext);
         final ContextObject newActiveContext = (ContextObject) at0Node.execute(newProcess, PROCESS.SUSPENDED_CONTEXT);
         atPut0Node.execute(newProcess, PROCESS.SUSPENDED_CONTEXT, image.nil);
-        throw new ProcessSwitch(newActiveContext);
+        if (CompilerDirectives.isPartialEvaluationConstant(newActiveContext)) {
+            throw ProcessSwitch.create(newActiveContext);
+        } else {
+            // Avoid further PE if newActiveContext is not a PE constant.
+            throw ProcessSwitch.createWithBoundary(newActiveContext);
+        }
     }
 
     @Fallback

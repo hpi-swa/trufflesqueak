@@ -10,11 +10,16 @@ public final class ProcessSwitch extends ControlFlowException {
     private static final long serialVersionUID = 1L;
     private final ContextObject newContext;
 
-    /*
-     * TruffleBoundary important to avoid deoptimization cycles.
-     */
+    public static ProcessSwitch create(final ContextObject newContext) {
+        return new ProcessSwitch(newContext);
+    }
+
     @TruffleBoundary
-    public ProcessSwitch(final ContextObject newContext) {
+    public static ProcessSwitch createWithBoundary(final ContextObject newContext) {
+        return new ProcessSwitch(newContext);
+    }
+
+    private ProcessSwitch(final ContextObject newContext) {
         this.newContext = newContext;
     }
 
