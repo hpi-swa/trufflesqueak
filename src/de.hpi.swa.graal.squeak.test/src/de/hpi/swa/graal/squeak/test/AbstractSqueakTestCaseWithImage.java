@@ -48,6 +48,11 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         idleProcess = null;
     }
 
+    private static void reloadImage() {
+        cleanUp();
+        loadTestImage();
+    }
+
     private static void patchImageForTesting() {
         final PointersObject activeProcess = GetActiveProcessNode.create(image).executeGet();
         activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, image.nil);
@@ -210,11 +215,13 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         try {
             return CompletableFuture.supplyAsync(action).get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
         } catch (final TimeoutException e) {
+            reloadImage();
             return TestResult.fromException("did not terminate in " + TIMEOUT_SECONDS + "s", e);
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
             return TestResult.fromException("interrupted", e);
         } catch (final ExecutionException e) {
+            reloadImage();
             return TestResult.fromException("failed with an error", e.getCause());
         }
     }
