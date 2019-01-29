@@ -28,16 +28,12 @@ public final class SqueakKeyboard implements KeyListener {
 
     public void keyTyped(final KeyEvent e) {
         assert e.getExtendedKeyCode() == KeyEvent.VK_UNDEFINED;
-        if (mapSpecialKeyCode(KeyEvent.getExtendedKeyCodeForChar(e.getKeyChar())) <= 0) {
-            recordKeyboardEvent(e.getKeyChar());
-        }
     }
 
     public void keyPressed(final KeyEvent e) {
         display.recordModifiers(e);
-        final int specialKeyCode = mapSpecialKeyCode(e.getExtendedKeyCode());
-        if (specialKeyCode > 0) {
-            recordKeyboardEvent(specialKeyCode);
+        if (e.getKeyChar() != KeyEvent.CHAR_UNDEFINED) { // Ignore shift, etc.
+            recordKeyboardEvent(mapSpecialKeyCode(e));
         }
     }
 
@@ -53,13 +49,14 @@ public final class SqueakKeyboard implements KeyListener {
         } else if (display.usesEventQueue) {
             display.addEvent(EVENT_TYPE.KEYBOARD, key, KEYBOARD_EVENT.CHAR, buttonsShifted, key);
         } else {
+            // No event queue, queue keys the old-fashioned way.
             keys.push(code);
         }
     }
 
-    private static int mapSpecialKeyCode(final int keyCode) {
+    private static int mapSpecialKeyCode(final KeyEvent e) {
         //@formatter:off
-        switch(keyCode) {
+        switch(e.getExtendedKeyCode()) {
             case KeyEvent.VK_BACK_SPACE: return 8;
             case KeyEvent.VK_TAB: return 9;
             case KeyEvent.VK_ENTER: return 13;
@@ -75,7 +72,7 @@ public final class SqueakKeyboard implements KeyListener {
             case KeyEvent.VK_DOWN: return 31;
             case KeyEvent.VK_INSERT: return 5;
             case KeyEvent.VK_DELETE: return 127;
-            default: return -1; // Not a special key.
+            default: return e.getKeyChar(); // Not a special key.
         }
         //@formatter:on
     }
