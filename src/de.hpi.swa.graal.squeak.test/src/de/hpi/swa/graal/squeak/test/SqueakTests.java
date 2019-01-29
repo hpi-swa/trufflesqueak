@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Properties;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -60,7 +61,7 @@ public final class SqueakTests {
 
         @Override
         public String toString() {
-            return type.getMessage() + ": " + className + ">>" + selector;
+            return (type == null ? "" : type.getMessage() + ": ") + className + ">>" + selector;
         }
 
         protected boolean nameEquals(final SqueakTest test) {
@@ -71,12 +72,28 @@ public final class SqueakTests {
     private SqueakTests() {
     }
 
-    protected static Stream<SqueakTest> getTestsToRun(final String testClass) {
-        final List<SqueakTest> tests = allTests().filter(t -> t.className.equals(testClass)).collect(toList());
+    protected static Stream<SqueakTest> getTestsToRun(final String filterExpression) {
+        final List<SqueakTest> tests = allTests().filter(getTestFilter(filterExpression)).collect(toList());
         if (tests.isEmpty()) {
-            throw new IllegalArgumentException("No test cases found for filter expression '" + testClass + "'");
+            throw new IllegalArgumentException("No test cases found for filter expression '" + filterExpression + "'");
         }
         return tests.stream();
+    }
+
+    private static Predicate<SqueakTest> getTestFilter(final String filterExpression) {
+        final List<String> classNames = new ArrayList<>();
+        final List<SqueakTest> selectors = new ArrayList<>();
+
+        for (final String token : filterExpression.split(",")) {
+            final Matcher nameAndSelector = TEST_CASE.matcher(token);
+            if (nameAndSelector.matches()) {
+                selectors.add(new SqueakTest(null, nameAndSelector.group(1), nameAndSelector.group(2)));
+            } else {
+                classNames.add(token);
+            }
+        }
+
+        return test -> classNames.contains(test.className) || selectors.stream().anyMatch(s -> s.nameEquals(test));
     }
 
     /**
