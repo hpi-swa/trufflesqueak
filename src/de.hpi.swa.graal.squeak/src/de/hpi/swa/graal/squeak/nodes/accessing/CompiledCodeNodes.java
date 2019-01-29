@@ -6,9 +6,11 @@ import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
+import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.ADDITIONAL_METHOD_STATE;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
@@ -53,25 +55,24 @@ public final class CompiledCodeNodes {
             return IsDoesNotUnderstandNodeGen.create(image);
         }
 
-        public abstract boolean execute(Object object);
-
-        @Specialization(guards = "isNativeObject(object.penultimateLiteral())")
-        protected final boolean doMethodSymbol(final CompiledMethodObject object) {
-            return object.penultimateLiteral() == image.doesNotUnderstand;
+        public final boolean execute(final CompiledMethodObject object) {
+            return execute(object.penultimateLiteral());
         }
 
-        @Specialization(guards = "isPointersObject(object.penultimateLiteral())")
-        protected final boolean doMethodWithAdditionalMethodState(final CompiledMethodObject object) {
-            return ((PointersObject) object.penultimateLiteral()).at0(ADDITIONAL_METHOD_STATE.SELECTOR) == image.doesNotUnderstand;
+        protected abstract boolean execute(AbstractSqueakObject object);
+
+        @Specialization
+        protected final boolean doMethodSymbol(final NativeObject object) {
+            return object == image.doesNotUnderstand;
         }
 
-        @Specialization(guards = "object.penultimateLiteral().isNil()")
-        protected static final boolean doMethodWithoutPenultimateLiteral(@SuppressWarnings("unused") final CompiledMethodObject object) {
-            return false;
+        @Specialization
+        protected final boolean doMethodWithAdditionalMethodState(final PointersObject object) {
+            return object.at0(ADDITIONAL_METHOD_STATE.SELECTOR) == image.doesNotUnderstand;
         }
 
         @Fallback
-        protected static final boolean doFallback(@SuppressWarnings("unused") final Object object) {
+        protected static final boolean doFallback(@SuppressWarnings("unused") final AbstractSqueakObject object) {
             return false;
         }
     }
@@ -82,7 +83,7 @@ public final class CompiledCodeNodes {
             return CalculcatePCOffsetNodeGen.create();
         }
 
-        public abstract int execute(Object object);
+        public abstract int execute(CompiledCodeObject object);
 
         @Specialization
         protected static final int doBlock(final CompiledBlockObject object) {
@@ -95,8 +96,8 @@ public final class CompiledCodeNodes {
         }
 
         @Fallback
-        protected static final int doFail(final Object object) {
-            throw new SqueakException("Unexpected value:", object);
+        protected static final int doFail(final CompiledCodeObject object) {
+            throw new SqueakException("Should never happen", object);
         }
     }
 }
