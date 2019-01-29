@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Properties;
@@ -71,7 +72,11 @@ public final class SqueakTests {
     }
 
     protected static Stream<SqueakTest> getTestsToRun(final String testClass) {
-        return allTests().filter(t -> t.className.equals(testClass));
+        final List<SqueakTest> tests = allTests().filter(t -> t.className.equals(testClass)).collect(toList());
+        if (tests.isEmpty()) {
+            throw new IllegalArgumentException("No test cases found for filter expression '" + testClass + "'");
+        }
+        return tests.stream();
     }
 
     /**
@@ -86,11 +91,14 @@ public final class SqueakTests {
         }
     }
 
+    // Checkstyle: stop
     protected static Stream<SqueakTest> allTests() {
         final Properties properties = loadProperties();
-        return properties.stringPropertyNames().stream().map(test -> parseTest(test, properties.getProperty(test))).sorted(
-                        Comparator.comparing(t -> t.qualifiedName().toLowerCase()));
+        return properties.stringPropertyNames().stream() //
+                        .map(test -> parseTest(test, properties.getProperty(test))) //
+                        .sorted(Comparator.comparing(t -> t.qualifiedName().toLowerCase()));
     }
+    // Checkstyle: resume
 
     private static SqueakTest parseTest(final String test, final String type) {
         final Matcher matcher = TEST_CASE_LINE.matcher(test);
