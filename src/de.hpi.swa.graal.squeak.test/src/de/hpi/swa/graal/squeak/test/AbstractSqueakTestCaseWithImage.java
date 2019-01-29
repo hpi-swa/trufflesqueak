@@ -155,20 +155,15 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         assertNotEquals(image.nil, patchResult);
     }
 
-    protected static String runTestCase(final String testClassName) {
+    protected static TestResult runTestCase(final String testClassName) {
         return runTestCase(testClassName, null);
     }
 
-    protected static String runTestCase(final String testClassName, final String testMethodName) {
-        final String preamble = testName(testClassName, testMethodName) + ": ";
-        return preamble + invokeTestCase(testClassName, testMethodName);
+    protected static TestResult runTestCase(final String testClassName, final String testMethodName) {
+        return invokeTestCase(testClassName, testMethodName);
     }
 
-    private static String testName(final String testClassName, final String testMethodName) {
-        return testClassName + (testMethodName == null ? "" : "#" + testMethodName);
-    }
-
-    private static String invokeTestCase(final String testClassName, final String testMethodName) {
+    private static TestResult invokeTestCase(final String testClassName, final String testMethodName) {
         return runWithTimeout(() -> {
             final String testCommand = testCommand(testClassName, testMethodName);
             return extractFailuresAndErrorsFromTestResult(evaluate(testCommand));
@@ -183,14 +178,14 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         }
     }
 
-    private static String extractFailuresAndErrorsFromTestResult(final Object result) {
+    private static TestResult extractFailuresAndErrorsFromTestResult(final Object result) {
         if (!(result instanceof AbstractSqueakObject) || !result.toString().equals("a TestResult")) {
-            return "did not return a TestResult, got " + result.toString();
+            return TestResult.failure("did not return a TestResult, got " + result);
         }
         final PointersObject testResult = (PointersObject) result;
         final boolean hasPassed = (boolean) testResult.send("hasPassed");
         if (hasPassed) {
-            return "passed";
+            return TestResult.success("passed");
         }
         final AbstractSqueakObject failures = (AbstractSqueakObject) testResult.send("failures");
         final AbstractSqueakObject errors = (AbstractSqueakObject) testResult.send("errors");
@@ -198,7 +193,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         appendTestResult(output, (ArrayObject) failures.send("asArray"), " (F)");
         appendTestResult(output, (ArrayObject) errors.send("asArray"), " (E)");
         assert output.size() > 0 : "Should not be empty";
-        return String.join(", ", output);
+        return TestResult.failure(String.join(", ", output));
     }
 
     private static void appendTestResult(final List<String> output, final ArrayObject array, final String suffix) {
@@ -211,17 +206,40 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         }
     }
 
-    private static String runWithTimeout(final Supplier<String> action) {
+    private static TestResult runWithTimeout(final Supplier<TestResult> action) {
         try {
             return CompletableFuture.supplyAsync(action).get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
         } catch (final TimeoutException e) {
-            return "did not terminate in " + TIMEOUT_SECONDS + "s";
+            return TestResult.fromException("did not terminate in " + TIMEOUT_SECONDS + "s", e);
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
-            return "interrupted";
+            return TestResult.fromException("interrupted", e);
         } catch (final ExecutionException e) {
-            e.getCause().printStackTrace();
-            return "failed with an error: " + e.getCause();
+            return TestResult.fromException("failed with an error", e.getCause());
+        }
+    }
+
+    protected static final class TestResult {
+        protected final boolean passed;
+        protected final String message;
+        protected final Throwable reason;
+
+        private TestResult(final boolean passed, final String message, final Throwable reason) {
+            this.passed = passed;
+            this.message = message;
+            this.reason = reason;
+        }
+
+        protected static TestResult fromException(final String message, final Throwable reason) {
+            return new TestResult(false, message, reason);
+        }
+
+        protected static TestResult failure(final String message) {
+            return new TestResult(false, message, null);
+        }
+
+        protected static TestResult success(final String message) {
+            return new TestResult(true, message, null);
         }
     }
 }
