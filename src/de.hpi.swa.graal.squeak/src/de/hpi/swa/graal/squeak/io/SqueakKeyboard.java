@@ -27,19 +27,17 @@ public final class SqueakKeyboard implements KeyListener {
     }
 
     public void keyTyped(final KeyEvent e) {
-        display.recordModifiers(e);
-        if (mapSpecialKeyCode(e) < 0) {
+        assert e.getExtendedKeyCode() == KeyEvent.VK_UNDEFINED;
+        if (mapSpecialKeyCode(KeyEvent.getExtendedKeyCodeForChar(e.getKeyChar())) <= 0) {
             recordKeyboardEvent(e.getKeyChar());
         }
     }
 
     public void keyPressed(final KeyEvent e) {
         display.recordModifiers(e);
-        final int specialKeyCode = mapSpecialKeyCode(e);
-        if (specialKeyCode >= 0) {
+        final int specialKeyCode = mapSpecialKeyCode(e.getExtendedKeyCode());
+        if (specialKeyCode > 0) {
             recordKeyboardEvent(specialKeyCode);
-        } else if ((e.isMetaDown() || (e.isAltDown() && !e.isControlDown())) && e.getKeyChar() != KeyEvent.CHAR_UNDEFINED) {
-            recordKeyboardEvent(e.getKeyChar());
         }
     }
 
@@ -59,9 +57,9 @@ public final class SqueakKeyboard implements KeyListener {
         }
     }
 
-    private static int mapSpecialKeyCode(final KeyEvent e) {
+    private static int mapSpecialKeyCode(final int keyCode) {
         //@formatter:off
-        switch(e.getExtendedKeyCode()) {
+        switch(keyCode) {
             case KeyEvent.VK_BACK_SPACE: return 8;
             case KeyEvent.VK_TAB: return 9;
             case KeyEvent.VK_ENTER: return 13;
