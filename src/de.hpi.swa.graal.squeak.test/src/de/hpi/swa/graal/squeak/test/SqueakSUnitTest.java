@@ -22,15 +22,28 @@ import org.junit.runners.Parameterized.Parameters;
  * Run tests from the Squeak image.
  *
  * <p>
- * This test exercises all tests from the Squeak image. Optionally a single test class may be
- * selected via the system property "squeakTestClass" (example VM parameter:
- * {@code -DsqueakTestClass=ObjectTest})
+ * This test exercises all tests from the Squeak image. Optionally a subset of test selectors may be
+ * selected using the system property "squeakTests" and the following syntax:
+ *
+ * <pre>
+ * ObjectTest
+ * ObjectTest>>testBecome
+ * ObjectTest>>testBecome,ObjectTest>>testBecomeForward,SqueakSSLTest
+ * </pre>
+ *
+ * Example VM parameter: {@code -DsqueakTests=ArrayTest}.<br/>
+ * Using MX, individual tests can also be run from command line:
+ *
+ * <pre>
+ * $ mx unittest -DsqueakTests="SqueakSSLTest>>testConnectAccept" SqueakSUnitTest --very-verbose --enable-timing
+ * </pre>
+ *
  * </p>
  */
 @RunWith(Parameterized.class)
 public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
 
-    private static final String TEST_CLASS_PROPERTY = "squeakTestClass";
+    private static final String TEST_CLASS_PROPERTY = "squeakTests";
 
     protected static final List<SqueakTest> TESTS = selectTestsToRun().collect(toList());
 
