@@ -98,7 +98,7 @@ public class SqueakBasicImageTest extends AbstractSqueakTestCaseWithImage {
     @Test
     public void testInspectSqueakTest() {
         assumeNotOnMXGate();
-        runTestCase("ArrayTest");
+        assertTrue(runTestCase("ArrayTest").passed);
     }
 
     @Test

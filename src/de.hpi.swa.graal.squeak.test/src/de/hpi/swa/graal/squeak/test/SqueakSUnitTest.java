@@ -63,10 +63,10 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
     }
 
     @Test
-    public void runSqueakTest() {
+    public void runSqueakTest() throws Throwable {
         checkTermination();
 
-        final String result = runTestCase(test.className, test.selector);
+        final TestResult result = runTestCase(test.className, test.selector);
 
         checkResult(result);
     }
@@ -78,19 +78,23 @@ public class SqueakSUnitTest extends AbstractSqueakTestCaseWithImage {
         }
     }
 
-    private void checkResult(final String result) {
-        final boolean passed = result.contains("passed");
+    private void checkResult(final TestResult result) throws Throwable {
 
         switch (test.type) {
             case PASSING: // falls through
             case SLOWLY_PASSING:
-                assertTrue(result, passed);
+
+                if (result.reason != null) {
+                    throw result.reason;
+                }
+
+                assertTrue(result.message, result.passed);
                 break;
 
             case FAILING: // falls through
             case SLOWLY_FAILING: // falls through
             case BROKEN_IN_SQUEAK:
-                assertFalse(result, passed);
+                assertFalse(result.message, result.passed);
                 break;
 
             case FLAKY:
