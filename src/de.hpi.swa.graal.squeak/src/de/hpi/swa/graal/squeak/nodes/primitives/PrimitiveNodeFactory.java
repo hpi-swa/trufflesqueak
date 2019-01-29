@@ -25,7 +25,7 @@ import de.hpi.swa.graal.squeak.nodes.plugins.LocalePlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.Matrix2x3Plugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.MiscPrimitivePlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.PolyglotPlugin;
-import de.hpi.swa.graal.squeak.nodes.plugins.SocketPlugin;
+import de.hpi.swa.graal.squeak.nodes.plugins.network.SocketPlugin;
 import de.hpi.swa.graal.squeak.nodes.plugins.SqueakFFIPrims;
 import de.hpi.swa.graal.squeak.nodes.plugins.SqueakSSL;
 import de.hpi.swa.graal.squeak.nodes.plugins.UUIDPlugin;
