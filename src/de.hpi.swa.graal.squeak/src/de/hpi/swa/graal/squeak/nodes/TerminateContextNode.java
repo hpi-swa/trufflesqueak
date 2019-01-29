@@ -6,12 +6,13 @@ import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public final class TerminateContextNode extends AbstractNodeWithCode {
-    public static TerminateContextNode create(final CompiledCodeObject code) {
-        return new TerminateContextNode(code);
-    }
 
     protected TerminateContextNode(final CompiledCodeObject code) {
         super(code);
+    }
+
+    public static TerminateContextNode create(final CompiledCodeObject code) {
+        return new TerminateContextNode(code);
     }
 
     public void executeTerminate(final VirtualFrame frame) {

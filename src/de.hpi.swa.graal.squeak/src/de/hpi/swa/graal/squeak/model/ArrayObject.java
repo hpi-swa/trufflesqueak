@@ -17,6 +17,19 @@ public final class ArrayObject extends AbstractSqueakObject {
 
     private Object storage;
 
+    public ArrayObject(final SqueakImageContext image) {
+        super(image); // for special ArrayObjects only
+    }
+
+    private ArrayObject(final SqueakImageContext image, final ClassObject classObject, final Object storage) {
+        super(image, classObject);
+        this.storage = storage;
+    }
+
+    public ArrayObject(final SqueakImageContext img, final long hash, final ClassObject klass) {
+        super(img, hash, klass);
+    }
+
     public static ArrayObject createEmptyStrategy(final SqueakImageContext image, final ClassObject classObject, final int size) {
         return new ArrayObject(image, classObject, size);
     }
@@ -35,19 +48,6 @@ public final class ArrayObject extends AbstractSqueakObject {
 
     public static boolean isLongNilTag(final long value) {
         return value == LONG_NIL_TAG;
-    }
-
-    public ArrayObject(final SqueakImageContext image) {
-        super(image); // for special ArrayObjects only
-    }
-
-    private ArrayObject(final SqueakImageContext image, final ClassObject classObject, final Object storage) {
-        super(image, classObject);
-        this.storage = storage;
-    }
-
-    public ArrayObject(final SqueakImageContext img, final long hash, final ClassObject klass) {
-        super(img, hash, klass);
     }
 
     public Object at0Boolean(final long index) {

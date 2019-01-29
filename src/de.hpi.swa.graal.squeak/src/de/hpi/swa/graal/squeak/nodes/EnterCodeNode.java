@@ -34,11 +34,9 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
     @Child private ExecuteContextNode executeContextNode;
     @Child private StackPushNode pushStackNode;
 
-    public static SqueakCodeRootNode create(final SqueakLanguage language, final CompiledCodeObject code) {
-        return new SqueakCodeRootNode(language, code);
+    protected EnterCodeNode(final EnterCodeNode codeNode) {
+        this(codeNode.code);
     }
-
-    public abstract Object execute(VirtualFrame frame);
 
     protected EnterCodeNode(final CompiledCodeObject code) {
         this.code = code;
@@ -46,9 +44,11 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
         pushStackNode = StackPushNode.create(code);
     }
 
-    protected EnterCodeNode(final EnterCodeNode codeNode) {
-        this(codeNode.code);
+    public static SqueakCodeRootNode create(final SqueakLanguage language, final CompiledCodeObject code) {
+        return new SqueakCodeRootNode(language, code);
     }
+
+    public abstract Object execute(VirtualFrame frame);
 
     @NodeInfo(cost = NodeCost.NONE)
     protected static final class SqueakCodeRootNode extends RootNode {

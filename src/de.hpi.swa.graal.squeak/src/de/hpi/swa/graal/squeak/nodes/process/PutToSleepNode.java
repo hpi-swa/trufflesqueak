@@ -11,13 +11,13 @@ public final class PutToSleepNode extends AbstractNodeWithImage {
     @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
     @Child private LinkProcessToListNode linkProcessToList;
 
-    public static PutToSleepNode create(final SqueakImageContext image) {
-        return new PutToSleepNode(image);
-    }
-
     protected PutToSleepNode(final SqueakImageContext image) {
         super(image);
         linkProcessToList = LinkProcessToListNode.create(image);
+    }
+
+    public static PutToSleepNode create(final SqueakImageContext image) {
+        return new PutToSleepNode(image);
     }
 
     public void executePutToSleep(final AbstractSqueakObject process) {

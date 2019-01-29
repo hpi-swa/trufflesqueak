@@ -23,13 +23,13 @@ public abstract class TransferToNode extends AbstractNodeWithImage {
     @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
     @Child private GetOrCreateContextNode contextNode;
 
-    public static TransferToNode create(final CompiledCodeObject code) {
-        return TransferToNodeGen.create(code);
-    }
-
     protected TransferToNode(final CompiledCodeObject code) {
         super(code.image);
         contextNode = GetOrCreateContextNode.create(code);
+    }
+
+    public static TransferToNode create(final CompiledCodeObject code) {
+        return TransferToNodeGen.create(code);
     }
 
     public abstract void executeTransferTo(VirtualFrame frame, Object activeProcess, Object newProcess);

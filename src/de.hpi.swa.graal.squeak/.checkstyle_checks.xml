@@ -15,6 +15,9 @@
     <module name="AvoidStarImport">
       <property name="allowClassImports" value="true"/>
     </module>
+    <module name="DeclarationOrder">
+      <property name="ignoreModifiers" value="true"/>
+    </module>
     <module name="JavadocStyle">
       <property name="checkHtml" value="false"/>
     </module>

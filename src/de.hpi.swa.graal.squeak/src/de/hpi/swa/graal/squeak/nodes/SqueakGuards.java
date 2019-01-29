@@ -18,6 +18,9 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 
 public final class SqueakGuards {
 
+    private SqueakGuards() {
+    }
+
     public static boolean between(final long value, final int minIncluded, final int maxIncluded) {
         return minIncluded <= value && value <= maxIncluded;
     }
@@ -136,8 +139,5 @@ public final class SqueakGuards {
 
     public static boolean isZero(final double value) {
         return value == 0;
-    }
-
-    private SqueakGuards() {
     }
 }

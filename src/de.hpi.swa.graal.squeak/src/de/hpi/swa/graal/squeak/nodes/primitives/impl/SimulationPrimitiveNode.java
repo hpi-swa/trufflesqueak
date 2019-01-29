@@ -38,6 +38,12 @@ public abstract class SimulationPrimitiveNode extends AbstractPrimitiveNode impl
 
     @Child private DispatchNode dispatchNode = DispatchNode.create();
 
+    protected SimulationPrimitiveNode(final CompiledMethodObject method, @SuppressWarnings("unused") final String moduleName, final String functionName) {
+        super(method);
+        this.functionName = code.image.wrap(functionName);
+        emptyList = code.image.newList(new Object[]{});
+    }
+
     public static SimulationPrimitiveNode create(final CompiledMethodObject method, final String moduleName, final String functionName) {
         final NodeFactory<SimulationPrimitiveNode> nodeFactory = SimulationPrimitiveNodeFactory.getInstance();
         final int primitiveArity = nodeFactory.getExecutionSignature().size();
@@ -46,12 +52,6 @@ public abstract class SimulationPrimitiveNode extends AbstractPrimitiveNode impl
             argumentNodes[j] = ArgumentNode.create(method, j);
         }
         return nodeFactory.createNode(method, primitiveArity, moduleName, functionName, argumentNodes);
-    }
-
-    protected SimulationPrimitiveNode(final CompiledMethodObject method, @SuppressWarnings("unused") final String moduleName, final String functionName) {
-        super(method);
-        this.functionName = code.image.wrap(functionName);
-        emptyList = code.image.newList(new Object[]{});
     }
 
     @SuppressWarnings("unused")

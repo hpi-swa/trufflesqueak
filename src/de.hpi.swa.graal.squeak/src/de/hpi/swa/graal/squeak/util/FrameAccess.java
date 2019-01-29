@@ -72,6 +72,9 @@ public final class FrameAccess {
      * </pre>
      */
 
+    private FrameAccess() {
+    }
+
     public static CompiledMethodObject getMethod(final Frame frame) {
         return (CompiledMethodObject) frame.getArguments()[METHOD];
     }
@@ -261,8 +264,5 @@ public final class FrameAccess {
             }
             return null;
         });
-    }
-
-    private FrameAccess() {
     }
 }

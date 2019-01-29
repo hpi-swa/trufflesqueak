@@ -13,12 +13,12 @@ import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 public abstract class IsEmptyListNode extends AbstractNodeWithImage {
     @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
 
-    public static IsEmptyListNode create(final SqueakImageContext image) {
-        return IsEmptyListNodeGen.create(image);
-    }
-
     protected IsEmptyListNode(final SqueakImageContext image) {
         super(image);
+    }
+
+    public static IsEmptyListNode create(final SqueakImageContext image) {
+        return IsEmptyListNodeGen.create(image);
     }
 
     public abstract boolean executeIsEmpty(Object list);

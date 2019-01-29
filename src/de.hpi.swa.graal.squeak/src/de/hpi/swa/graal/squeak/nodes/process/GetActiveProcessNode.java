@@ -6,12 +6,12 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 
 public final class GetActiveProcessNode extends AbstractNodeWithImage {
-    public static GetActiveProcessNode create(final SqueakImageContext image) {
-        return new GetActiveProcessNode(image);
-    }
-
     protected GetActiveProcessNode(final SqueakImageContext image) {
         super(image);
+    }
+
+    public static GetActiveProcessNode create(final SqueakImageContext image) {
+        return new GetActiveProcessNode(image);
     }
 
     public PointersObject executeGet() {

@@ -11,6 +11,9 @@ import de.hpi.swa.graal.squeak.test.Travis.AnsiCodes;
 
 public final class Statistics {
 
+    private Statistics() {
+    }
+
     protected static void print(final Collection<SqueakTest> tests) {
         final Map<TestType, Long> counts = countByType(tests);
 
@@ -36,8 +39,5 @@ public final class Statistics {
                         type.getMessage(),
                         AnsiCodes.RESET);
         // Checkstyle: resume
-    }
-
-    private Statistics() {
     }
 }

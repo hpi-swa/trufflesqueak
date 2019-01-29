@@ -22,6 +22,10 @@ import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 
 public abstract class SqueakObjectShallowCopyNode extends AbstractNodeWithImage {
 
+    protected SqueakObjectShallowCopyNode(final SqueakImageContext image) {
+        super(image);
+    }
+
     public static SqueakObjectShallowCopyNode create(final SqueakImageContext image) {
         return SqueakObjectShallowCopyNodeGen.create(image);
     }
@@ -29,10 +33,6 @@ public abstract class SqueakObjectShallowCopyNode extends AbstractNodeWithImage 
     public final Object execute(final Object object) {
         image.reportNewAllocationRequest();
         return image.reportNewAllocationResult(executeAllocation(object));
-    }
-
-    protected SqueakObjectShallowCopyNode(final SqueakImageContext image) {
-        super(image);
     }
 
     protected abstract Object executeAllocation(Object obj);

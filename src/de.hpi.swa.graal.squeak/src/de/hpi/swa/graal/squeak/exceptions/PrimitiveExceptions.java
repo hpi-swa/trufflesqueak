@@ -43,6 +43,14 @@ public final class PrimitiveExceptions {
     public static final class PrimitiveFailed extends AbstractPrimitiveFailed {
         private static final long serialVersionUID = 1L;
 
+        public PrimitiveFailed() {
+            this(ERROR_TABLE.GENERIC_ERROR);
+        }
+
+        public PrimitiveFailed(final long reasonCode) {
+            super(reasonCode);
+        }
+
         public static PrimitiveFailed andTransferToInterpreter() {
             CompilerDirectives.transferToInterpreter();
             throw new PrimitiveFailed();
@@ -51,14 +59,6 @@ public final class PrimitiveExceptions {
         public static PrimitiveFailed andTransferToInterpreter(final long reason) {
             CompilerDirectives.transferToInterpreter();
             throw new PrimitiveFailed(reason);
-        }
-
-        public PrimitiveFailed() {
-            this(ERROR_TABLE.GENERIC_ERROR);
-        }
-
-        public PrimitiveFailed(final long reasonCode) {
-            super(reasonCode);
         }
     }
 

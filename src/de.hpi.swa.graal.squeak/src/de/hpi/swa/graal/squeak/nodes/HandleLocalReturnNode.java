@@ -15,16 +15,16 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
 public abstract class HandleLocalReturnNode extends AbstractNodeWithCode {
     @Child private TerminateContextNode terminateNode;
 
+    protected HandleLocalReturnNode(final CompiledCodeObject code) {
+        super(code);
+        terminateNode = TerminateContextNode.create(code);
+    }
+
     public static HandleLocalReturnNode create(final CompiledCodeObject code) {
         return HandleLocalReturnNodeGen.create(code);
     }
 
     public abstract Object executeHandle(VirtualFrame frame, LocalReturn lr);
-
-    protected HandleLocalReturnNode(final CompiledCodeObject code) {
-        super(code);
-        terminateNode = TerminateContextNode.create(code);
-    }
 
     @Specialization(guards = {"hasModifiedSender(frame)"})
     protected final Object handleModifiedSender(final VirtualFrame frame, final LocalReturn lr) {

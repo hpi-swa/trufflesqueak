@@ -13,16 +13,16 @@ import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotWriteNode;
 public abstract class TemporaryWriteNode extends AbstractNodeWithCode {
     @Child private FrameSlotWriteNode writeNode;
 
+    protected TemporaryWriteNode(final CompiledCodeObject code, final int tempIndex) {
+        super(code);
+        writeNode = FrameSlotWriteNode.create(code.getStackSlot(tempIndex));
+    }
+
     public static TemporaryWriteNode create(final CompiledCodeObject code, final int tempIndex) {
         return TemporaryWriteNodeGen.create(code, tempIndex);
     }
 
     public abstract void executeWrite(VirtualFrame frame, Object value);
-
-    protected TemporaryWriteNode(final CompiledCodeObject code, final int tempIndex) {
-        super(code);
-        writeNode = FrameSlotWriteNode.create(code.getStackSlot(tempIndex));
-    }
 
     @Specialization
     protected final void doWriteContext(final VirtualFrame frame, final ContextObject value) {

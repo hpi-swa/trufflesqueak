@@ -14,17 +14,17 @@ public abstract class HandleNonLocalReturnNode extends AbstractNodeWithCode {
     @Child private TerminateContextNode terminateNode;
     @Child private AboutToReturnNode aboutToReturnNode;
 
-    public static HandleNonLocalReturnNode create(final CompiledCodeObject code) {
-        return HandleNonLocalReturnNodeGen.create(code);
-    }
-
-    public abstract Object executeHandle(VirtualFrame frame, NonLocalReturn nlr);
-
     protected HandleNonLocalReturnNode(final CompiledCodeObject code) {
         super(code);
         terminateNode = TerminateContextNode.create(code);
         aboutToReturnNode = AboutToReturnNode.create(code);
     }
+
+    public static HandleNonLocalReturnNode create(final CompiledCodeObject code) {
+        return HandleNonLocalReturnNodeGen.create(code);
+    }
+
+    public abstract Object executeHandle(VirtualFrame frame, NonLocalReturn nlr);
 
     @Specialization(guards = {"hasModifiedSender(frame)"})
     protected final Object handleModifiedSender(final VirtualFrame frame, final NonLocalReturn nlr) {

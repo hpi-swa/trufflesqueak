@@ -26,35 +26,15 @@ public final class ContextObject extends AbstractSqueakObject {
     private boolean hasModifiedSender = false;
     private boolean escaped = false;
 
-    public static ContextObject createWithHash(final SqueakImageContext image, final long hash) {
-        return new ContextObject(image, hash);
-    }
-
     private ContextObject(final SqueakImageContext image, final long hash) {
         super(image, hash, image.methodContextClass);
         truffleFrame = null;
-    }
-
-    public static ContextObject create(final SqueakImageContext image, final int size) {
-        return new ContextObject(image, size);
     }
 
     private ContextObject(final SqueakImageContext image, final int size) {
         super(image, image.methodContextClass);
         truffleFrame = null;
         this.size = size;
-    }
-
-    public static ContextObject create(final FrameInstance frameInstance) {
-        return ContextObject.create(frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE));
-    }
-
-    public static ContextObject create(final Frame frame) {
-        return create(frame, FrameAccess.getBlockOrMethod(frame));
-    }
-
-    public static ContextObject create(final Frame frame, final CompiledCodeObject blockOrMethod) {
-        return new ContextObject(frame, blockOrMethod);
     }
 
     private ContextObject(final Frame frame, final CompiledCodeObject blockOrMethod) {
@@ -85,6 +65,26 @@ public final class ContextObject extends AbstractSqueakObject {
             final FrameSlot slot = code.getStackSlot(i);
             truffleFrame.setObject(slot, original.truffleFrame.getValue(slot));
         }
+    }
+
+    public static ContextObject create(final SqueakImageContext image, final int size) {
+        return new ContextObject(image, size);
+    }
+
+    public static ContextObject createWithHash(final SqueakImageContext image, final long hash) {
+        return new ContextObject(image, hash);
+    }
+
+    public static ContextObject create(final FrameInstance frameInstance) {
+        return ContextObject.create(frameInstance.getFrame(FrameInstance.FrameAccess.MATERIALIZE));
+    }
+
+    public static ContextObject create(final Frame frame) {
+        return create(frame, FrameAccess.getBlockOrMethod(frame));
+    }
+
+    public static ContextObject create(final Frame frame, final CompiledCodeObject blockOrMethod) {
+        return new ContextObject(frame, blockOrMethod);
     }
 
     public void fillIn(final Object[] pointers) {

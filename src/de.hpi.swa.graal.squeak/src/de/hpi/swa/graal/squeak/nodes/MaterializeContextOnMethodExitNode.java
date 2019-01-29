@@ -13,12 +13,12 @@ import de.hpi.swa.graal.squeak.nodes.MaterializeContextOnMethodExitNodeGen.SetSe
 public abstract class MaterializeContextOnMethodExitNode extends AbstractNodeWithCode {
     protected static ContextObject lastSeenContext;
 
-    public static MaterializeContextOnMethodExitNode create(final CompiledCodeObject code) {
-        return MaterializeContextOnMethodExitNodeGen.create(code);
-    }
-
     protected MaterializeContextOnMethodExitNode(final CompiledCodeObject code) {
         super(code);
+    }
+
+    public static MaterializeContextOnMethodExitNode create(final CompiledCodeObject code) {
+        return MaterializeContextOnMethodExitNodeGen.create(code);
     }
 
     public abstract void execute(VirtualFrame frame);

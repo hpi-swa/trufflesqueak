@@ -16,13 +16,13 @@ public abstract class LinkProcessToListNode extends AbstractNodeWithImage {
     @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
     @Child protected IsEmptyListNode isEmptyListNode;
 
-    public static LinkProcessToListNode create(final SqueakImageContext image) {
-        return LinkProcessToListNodeGen.create(image);
-    }
-
     protected LinkProcessToListNode(final SqueakImageContext image) {
         super(image);
         isEmptyListNode = IsEmptyListNode.create(image);
+    }
+
+    public static LinkProcessToListNode create(final SqueakImageContext image) {
+        return LinkProcessToListNodeGen.create(image);
     }
 
     public abstract void executeLink(Object process, Object list);

@@ -19,15 +19,15 @@ import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 public abstract class AboutToReturnNode extends AbstractNodeWithCode {
+    protected AboutToReturnNode(final CompiledCodeObject code) {
+        super(code);
+    }
+
     public static AboutToReturnNode create(final CompiledCodeObject code) {
         return AboutToReturnNodeGen.create(code);
     }
 
     public abstract void executeAboutToReturn(VirtualFrame frame, NonLocalReturn nlr);
-
-    protected AboutToReturnNode(final CompiledCodeObject code) {
-        super(code);
-    }
 
     /*
      * Virtualized version of Context>>aboutToReturn:through:, more specifically

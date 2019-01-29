@@ -6,12 +6,13 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 
 public abstract class StackPopNode extends AbstractStackPopNode {
-    public static StackPopNode create(final CompiledCodeObject code) {
-        return StackPopNodeGen.create(code);
-    }
 
     protected StackPopNode(final CompiledCodeObject code) {
         super(code);
+    }
+
+    public static StackPopNode create(final CompiledCodeObject code) {
+        return StackPopNodeGen.create(code);
     }
 
     @Specialization

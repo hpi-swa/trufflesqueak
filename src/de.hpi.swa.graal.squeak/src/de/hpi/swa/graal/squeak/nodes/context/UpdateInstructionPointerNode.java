@@ -11,13 +11,13 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
 public final class UpdateInstructionPointerNode extends AbstractNodeWithCode {
     private final int initialPC;
 
-    public static UpdateInstructionPointerNode create(final CompiledCodeObject code) {
-        return new UpdateInstructionPointerNode(code);
-    }
-
     protected UpdateInstructionPointerNode(final CompiledCodeObject code) {
         super(code);
         initialPC = code instanceof CompiledBlockObject ? ((CompiledBlockObject) code).getInitialPC() : ((CompiledMethodObject) code).getInitialPC();
+    }
+
+    public static UpdateInstructionPointerNode create(final CompiledCodeObject code) {
+        return new UpdateInstructionPointerNode(code);
     }
 
     public void executeUpdate(final VirtualFrame frame, final int value) {

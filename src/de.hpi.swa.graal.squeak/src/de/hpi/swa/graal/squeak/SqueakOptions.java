@@ -37,6 +37,9 @@ public final class SqueakOptions {
     public static final OptionKey<Boolean> Testing = new OptionKey<>(false);
     //@formatter:on
 
+    private SqueakOptions() { // no instances
+    }
+
     public static OptionDescriptors createDescriptors() {
         return new SqueakOptionsOptionDescriptors();
     }
@@ -60,8 +63,5 @@ public final class SqueakOptions {
             isVerbose = options.get(SqueakOptions.Verbose);
             isTesting = options.get(SqueakOptions.Testing);
         }
-    }
-
-    private SqueakOptions() { // no instances
     }
 }

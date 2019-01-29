@@ -27,16 +27,16 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
     @Child private LookupClassNode lookupClassNode;
     @Child private LookupMethodNode lookupNode;
 
+    protected DispatchSendNode(final SqueakImageContext image) {
+        super(image);
+        isDoesNotUnderstandNode = IsDoesNotUnderstandNode.create(image);
+    }
+
     public static DispatchSendNode create(final SqueakImageContext image) {
         return DispatchSendNodeGen.create(image);
     }
 
     public abstract Object executeSend(VirtualFrame frame, NativeObject selector, Object lookupResult, ClassObject rcvrClass, Object[] receiverAndArguments, Object contextOrMarker);
-
-    protected DispatchSendNode(final SqueakImageContext image) {
-        super(image);
-        isDoesNotUnderstandNode = IsDoesNotUnderstandNode.create(image);
-    }
 
     @Specialization(guards = {"!image.isHeadless() || isAllowedInHeadlessMode(selector)", "!isDoesNotUnderstandNode.execute(lookupResult)"})
     protected final Object doDispatch(final VirtualFrame frame, @SuppressWarnings("unused") final NativeObject selector, final CompiledMethodObject lookupResult,

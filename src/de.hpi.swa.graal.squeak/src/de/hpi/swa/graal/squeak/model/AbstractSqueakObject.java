@@ -19,10 +19,6 @@ public abstract class AbstractSqueakObject implements TruffleObject {
     private long squeakHash;
     private ClassObject squeakClass;
 
-    public static final boolean isInstance(final TruffleObject obj) {
-        return obj instanceof AbstractSqueakObject;
-    }
-
     // For special/well-known objects only.
     protected AbstractSqueakObject(final SqueakImageContext image) {
         this.image = image;
@@ -47,6 +43,10 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         this.image = image;
         this.squeakHash = hash;
         this.squeakClass = klass;
+    }
+
+    public static final boolean isInstance(final TruffleObject obj) {
+        return obj instanceof AbstractSqueakObject;
     }
 
     public final void becomeOtherClass(final AbstractSqueakObject other) {

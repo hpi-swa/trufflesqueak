@@ -38,6 +38,8 @@ import de.hpi.swa.graal.squeak.nodes.bytecodes.StoreBytecodes.PopIntoTemporaryLo
 import de.hpi.swa.graal.squeak.nodes.bytecodes.StoreBytecodes.StoreIntoRemoteTempNode;
 
 public final class SqueakBytecodeDecoder {
+    private SqueakBytecodeDecoder() {
+    }
 
     public static AbstractBytecodeNode[] decode(final CompiledCodeObject code) {
         final int trailerPosition = trailerPosition(code);
@@ -221,8 +223,5 @@ public final class SqueakBytecodeDecoder {
                 throw new SqueakException("Unknown bytecode:", b);
         }
         //@formatter:on
-    }
-
-    private SqueakBytecodeDecoder() {
     }
 }

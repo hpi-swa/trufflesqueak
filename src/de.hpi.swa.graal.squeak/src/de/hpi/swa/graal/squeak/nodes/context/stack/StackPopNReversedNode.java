@@ -9,13 +9,13 @@ import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 public abstract class StackPopNReversedNode extends AbstractStackPopNode {
     private final int numPop;
 
-    public static StackPopNReversedNode create(final CompiledCodeObject code, final int numPop) {
-        return StackPopNReversedNodeGen.create(code, numPop);
-    }
-
     protected StackPopNReversedNode(final CompiledCodeObject code, final int numPop) {
         super(code);
         this.numPop = numPop;
+    }
+
+    public static StackPopNReversedNode create(final CompiledCodeObject code, final int numPop) {
+        return StackPopNReversedNodeGen.create(code, numPop);
     }
 
     @ExplodeLoop

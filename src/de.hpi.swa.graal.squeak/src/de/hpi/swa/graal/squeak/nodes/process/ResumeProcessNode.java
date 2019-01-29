@@ -17,15 +17,15 @@ public abstract class ResumeProcessNode extends AbstractNodeWithImage {
     @Child private PutToSleepNode putToSleepNode;
     @Child private TransferToNode transferToNode;
 
-    public static ResumeProcessNode create(final CompiledCodeObject code) {
-        return ResumeProcessNodeGen.create(code);
-    }
-
     protected ResumeProcessNode(final CompiledCodeObject code) {
         super(code.image);
         getActiveProcessNode = GetActiveProcessNode.create(image);
         putToSleepNode = PutToSleepNode.create(code.image);
         transferToNode = TransferToNode.create(code);
+    }
+
+    public static ResumeProcessNode create(final CompiledCodeObject code) {
+        return ResumeProcessNodeGen.create(code);
     }
 
     public abstract void executeResume(VirtualFrame frame, Object newProcess);

@@ -13,13 +13,13 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
 public abstract class ArgumentNode extends SqueakNodeWithCode {
     protected final int argumentIndex;
 
-    public static ArgumentNode create(final CompiledCodeObject code, final int argumentIndex) {
-        return ArgumentNodeGen.create(code, argumentIndex);
-    }
-
     protected ArgumentNode(final CompiledCodeObject code, final int argumentIndex) {
         super(code);
         this.argumentIndex = argumentIndex; // argumentIndex == 0 returns receiver
+    }
+
+    public static ArgumentNode create(final CompiledCodeObject code, final int argumentIndex) {
+        return ArgumentNodeGen.create(code, argumentIndex);
     }
 
     @Specialization(guards = {"argumentIndex <= code.getNumArgs()"})

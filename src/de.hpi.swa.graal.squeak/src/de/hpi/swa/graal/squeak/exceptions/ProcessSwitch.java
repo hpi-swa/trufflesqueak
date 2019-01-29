@@ -10,6 +10,10 @@ public final class ProcessSwitch extends ControlFlowException {
     private static final long serialVersionUID = 1L;
     private final ContextObject newContext;
 
+    private ProcessSwitch(final ContextObject newContext) {
+        this.newContext = newContext;
+    }
+
     public static ProcessSwitch create(final ContextObject newContext) {
         return new ProcessSwitch(newContext);
     }
@@ -17,10 +21,6 @@ public final class ProcessSwitch extends ControlFlowException {
     @TruffleBoundary
     public static ProcessSwitch createWithBoundary(final ContextObject newContext) {
         return new ProcessSwitch(newContext);
-    }
-
-    private ProcessSwitch(final ContextObject newContext) {
-        this.newContext = newContext;
     }
 
     public ContextObject getNewContext() {
