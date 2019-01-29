@@ -26,7 +26,14 @@ public final class InterruptHandlerState {
     protected boolean interruptPending = false;
     private boolean isActive = false;
     protected boolean pendingFinalizationSignals = false;
-    public volatile boolean shouldTrigger = false;
+
+    /**
+     * `shouldTrigger` is set to `true` by a dedicated thread. To guarantee atomicity, it would be
+     * necessary to mark this field as `volatile` or use an `AtomicBoolean`. However, such a field
+     * cannot be moved by the Graal compiler during compilation. Since atomicity is not needed for
+     * the interrupt handler mechanism, we can use a standard boolean here for better compilation.
+     */
+    private boolean shouldTrigger = false;
 
     @CompilationFinal private PointersObject interruptSemaphore;
     private PointersObject timerSemaphore;
@@ -134,7 +141,11 @@ public final class InterruptHandlerState {
         if (!isActive) {
             return false;
         }
-        return shouldTrigger;
+        if (shouldTrigger) {
+            shouldTrigger = false;
+            return true;
+        }
+        return false;
     }
 
     public PointersObject getInterruptSemaphore() {

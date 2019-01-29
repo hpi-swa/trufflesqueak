@@ -62,7 +62,6 @@ public abstract class InterruptHandlerNode extends Node {
     }
 
     private void performChecks(final VirtualFrame frame) {
-        istate.shouldTrigger = false;
         if (istate.interruptPending()) {
             istate.interruptPending = false; // reset interrupt flag
             final PointersObject interruptSemaphore = istate.getInterruptSemaphore();
