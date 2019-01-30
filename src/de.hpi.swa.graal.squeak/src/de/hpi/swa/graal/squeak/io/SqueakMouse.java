@@ -2,6 +2,7 @@ package de.hpi.swa.graal.squeak.io;
 
 import java.awt.Point;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 
 import javax.swing.event.MouseInputAdapter;
 
@@ -46,6 +47,13 @@ public final class SqueakMouse extends MouseInputAdapter {
     @Override
     public void mouseReleased(final MouseEvent e) {
         recordMouseEvent(MOUSE_EVENT.UP, e);
+    }
+
+    @Override
+    public void mouseWheelMoved(final MouseWheelEvent e) {
+        if (display.usesEventQueue) {
+            display.addEvent(EVENT_TYPE.MOUSE_WHEEL, 0 /* X-Axis Scrolling is not supported */, e.getWheelRotation() * -120, display.buttons >> 3, 0);
+        }
     }
 
     private void recordMouseEvent(final MOUSE_EVENT type, final MouseEvent e) {

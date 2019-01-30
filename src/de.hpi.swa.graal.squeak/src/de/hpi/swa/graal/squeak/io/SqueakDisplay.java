@@ -102,6 +102,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     private void installEventListeners() {
         canvas.addMouseListener(mouse);
         canvas.addMouseMotionListener(mouse);
+        canvas.addMouseWheelListener(mouse);
         new DropTarget(canvas, new SqueakDropTargetAdapter());
         frame.addKeyListener(keyboard);
         frame.addWindowListener(new WindowAdapter() {
