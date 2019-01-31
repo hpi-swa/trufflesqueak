@@ -141,6 +141,8 @@ public final class SqueakIOConstants {
         public static final int YELLOW = 2;
         public static final int RED = 4;
         public static final int ALL = BLUE + YELLOW + RED;
+        /* See HandMorph>>#generateMouseWheelEvent:direction: */
+        public static final long WHEEL_DELTA_FACTOR = -120;
     }
 
     public static final class EVENT_TYPE {

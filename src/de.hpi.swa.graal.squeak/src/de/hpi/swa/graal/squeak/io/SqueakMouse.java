@@ -52,7 +52,7 @@ public final class SqueakMouse extends MouseInputAdapter {
     @Override
     public void mouseWheelMoved(final MouseWheelEvent e) {
         if (display.usesEventQueue) {
-            display.addEvent(EVENT_TYPE.MOUSE_WHEEL, 0 /* X-Axis Scrolling is not supported */, e.getWheelRotation() * -120, display.buttons >> 3, 0);
+            display.addEvent(EVENT_TYPE.MOUSE_WHEEL, 0L /* X-Axis Scrolling is not supported */, e.getWheelRotation() * MOUSE.WHEEL_DELTA_FACTOR, display.buttons >> 3, 0L);
         }
     }
 
