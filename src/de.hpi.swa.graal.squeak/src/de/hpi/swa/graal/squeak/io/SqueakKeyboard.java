@@ -32,8 +32,14 @@ public final class SqueakKeyboard implements KeyListener {
 
     public void keyPressed(final KeyEvent e) {
         display.recordModifiers(e);
-        if (e.getKeyChar() != KeyEvent.CHAR_UNDEFINED) { // Ignore shift, etc.
-            recordKeyboardEvent(mapSpecialKeyCode(e));
+        final int keyCode = mapSpecialKeyCode(e);
+        final char keyChar = e.getKeyChar();
+        if (keyCode >= 0) {
+            // Special key pressed, record mapped code
+            recordKeyboardEvent(keyCode);
+        } else if (keyChar != KeyEvent.CHAR_UNDEFINED) {
+            // Regular key pressed, record char value
+            recordKeyboardEvent(keyChar);
         }
     }
 
@@ -72,7 +78,7 @@ public final class SqueakKeyboard implements KeyListener {
             case KeyEvent.VK_DOWN: return 31;
             case KeyEvent.VK_INSERT: return 5;
             case KeyEvent.VK_DELETE: return 127;
-            default: return e.getKeyChar(); // Not a special key.
+            default: return -1; // Not a special key.
         }
         //@formatter:on
     }
