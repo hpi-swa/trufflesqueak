@@ -44,13 +44,13 @@ public final class ClassObject extends AbstractSqueakObject {
         super(image, hash);
     }
 
-    private ClassObject(final ClassObject original) {
+    private ClassObject(final ClassObject original, final ArrayObject copiedInstanceVariablesOrNull) {
         this(original.image, original.getSqueakClass(), original.pointers.clone());
         instancesAreClasses = original.instancesAreClasses;
         superclass = original.superclass;
         methodDict = original.methodDict.shallowCopy();
         format = original.format;
-        instanceVariables = original.instanceVariables == null ? null : original.instanceVariables.shallowCopy();
+        instanceVariables = copiedInstanceVariablesOrNull;
         organization = original.organization == null ? null : original.organization.shallowCopy();
         pointers = original.pointers.clone();
     }
@@ -226,8 +226,12 @@ public final class ClassObject extends AbstractSqueakObject {
         return pointers[CLASS.NAME];
     }
 
+    public boolean hasInstanceVariables() {
+        return instanceVariables != null;
+    }
+
     public AbstractSqueakObject getInstanceVariables() {
-        return instanceVariables == null ? image.nil : instanceVariables;
+        return hasInstanceVariables() ? instanceVariables : image.nil;
     }
 
     public ArrayObject getInstanceVariablesOrNull() {
@@ -295,7 +299,7 @@ public final class ClassObject extends AbstractSqueakObject {
                 final Object methodSelector = methodDictObject.at0(i);
                 if (predicate.test(methodSelector)) {
                     final ArrayObject values = (ArrayObject) methodDictObject.at0(METHOD_DICT.VALUES);
-                    return values.at0Object(i - METHOD_DICT.NAMES);
+                    return values.at0(i - METHOD_DICT.NAMES);
                 }
             }
             lookupClass = lookupClass.getSuperclassOrNull();
@@ -327,8 +331,8 @@ public final class ClassObject extends AbstractSqueakObject {
         return (int) ((format >> 16) & 0x1f);
     }
 
-    public AbstractSqueakObject shallowCopy() {
-        return new ClassObject(this);
+    public AbstractSqueakObject shallowCopy(final ArrayObject copiedInstanceVariablesOrNull) {
+        return new ClassObject(this, copiedInstanceVariablesOrNull);
     }
 
     public boolean pointsTo(final Object thang) {

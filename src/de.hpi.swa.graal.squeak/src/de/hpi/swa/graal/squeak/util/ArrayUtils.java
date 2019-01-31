@@ -69,9 +69,7 @@ public final class ArrayUtils {
         final int numObjects = objects.length;
         final Object[] newObjects = new Object[numObjects + 1];
         newObjects[0] = first;
-        for (int i = 0; i < numObjects; i++) {
-            newObjects[1 + i] = objects[i];
-        }
+        System.arraycopy(objects, 0, newObjects, 1, numObjects);
         return newObjects;
     }
 

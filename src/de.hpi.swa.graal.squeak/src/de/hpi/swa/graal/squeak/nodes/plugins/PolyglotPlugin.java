@@ -35,7 +35,7 @@ import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.GetObjectArrayNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
@@ -201,7 +201,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveExecute")
     protected abstract static class PrimExecuteNode extends AbstractPrimitiveNode implements TernaryPrimitive {
         @Child private Node executeNode = Message.EXECUTE.createNode();
-        @Child private GetObjectArrayNode getObjectArrayNode = GetObjectArrayNode.create();
+        @Child private ArrayObjectToObjectArrayNode getObjectArrayNode = ArrayObjectToObjectArrayNode.create();
 
         protected PrimExecuteNode(final CompiledMethodObject method) {
             super(method);
@@ -421,7 +421,7 @@ public final class PolyglotPlugin extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(names = "primitiveInvoke")
     protected abstract static class PrimInvokeNode extends AbstractPrimitiveNode implements TernaryPrimitive {
         @Child private Node invokeNode = Message.INVOKE.createNode();
-        @Child private GetObjectArrayNode getObjectArrayNode = GetObjectArrayNode.create();
+        @Child private ArrayObjectToObjectArrayNode getObjectArrayNode = ArrayObjectToObjectArrayNode.create();
 
         protected PrimInvokeNode(final CompiledMethodObject method) {
             super(method);

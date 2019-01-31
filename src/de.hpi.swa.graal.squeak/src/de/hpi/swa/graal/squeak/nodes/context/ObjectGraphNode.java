@@ -34,7 +34,7 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
-import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.GetObjectArrayNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayNode;
 import de.hpi.swa.graal.squeak.nodes.context.ObjectGraphNodeGen.GetTraceablePointersNodeGen;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
@@ -205,7 +205,7 @@ public abstract class ObjectGraphNode extends AbstractNodeWithImage {
 
         @Specialization
         protected static final Object[] doArray(final ArrayObject object,
-                        @Cached("create()") final GetObjectArrayNode getObjectArrayNode) {
+                        @Cached("create()") final ArrayObjectToObjectArrayNode getObjectArrayNode) {
             return getObjectArrayNode.execute(object);
         }
 

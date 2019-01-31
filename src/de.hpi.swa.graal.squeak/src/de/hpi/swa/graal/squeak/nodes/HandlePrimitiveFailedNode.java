@@ -10,6 +10,8 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 
 @NodeInfo(cost = NodeCost.NONE)
@@ -30,16 +32,19 @@ public abstract class HandlePrimitiveFailedNode extends AbstractNodeWithCode {
      * symbol into the corresponding temporary variable. See
      * StackInterpreter>>#getErrorObjectFromPrimFailCode for more information.
      */
-    @Specialization(guards = {"followedByExtendedStore(code)", "e.getReasonCode() < code.image.primitiveErrorTable.getObjectLength()"})
+    @Specialization(guards = {"followedByExtendedStore(code)", "e.getReasonCode() < sizeNode.execute(code.image.primitiveErrorTable)"}, limit = "1")
     protected final void doHandleWithLookup(final VirtualFrame frame, final PrimitiveFailed e,
-                    @Cached("create(code)") final StackPushNode pushNode) {
-        pushNode.executeWrite(frame, code.image.primitiveErrorTable.at0Object(e.getReasonCode()));
+                    @SuppressWarnings("unused") @Cached("create()") final ArrayObjectSizeNode sizeNode,
+                    @Cached("create(code)") final StackPushNode pushNode,
+                    @Cached("create()") final ArrayObjectReadNode readNode) {
+        pushNode.executeWrite(frame, readNode.execute(code.image.primitiveErrorTable, e.getReasonCode()));
     }
 
-    @Specialization(guards = {"followedByExtendedStore(code)", "e.getReasonCode() >= code.image.primitiveErrorTable.getObjectLength()"})
+    @Specialization(guards = {"followedByExtendedStore(code)", "e.getReasonCode() >= sizeNode.execute(code.image.primitiveErrorTable)"}, limit = "1")
     protected static final void doHandleRawValue(final VirtualFrame frame, final PrimitiveFailed e,
+                    @SuppressWarnings("unused") @Cached("create()") final ArrayObjectSizeNode sizeNode,
                     @Cached("create(code)") final StackPushNode pushNode) {
-        pushNode.executeWrite(frame, e.getReasonCode()); //
+        pushNode.executeWrite(frame, e.getReasonCode());
     }
 
     @SuppressWarnings("unused")

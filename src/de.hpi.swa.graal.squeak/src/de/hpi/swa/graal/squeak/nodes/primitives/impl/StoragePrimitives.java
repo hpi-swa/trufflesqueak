@@ -33,8 +33,8 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.ERROR_TABLE;
 import de.hpi.swa.graal.squeak.nodes.GetAllInstancesNode;
 import de.hpi.swa.graal.squeak.nodes.NewObjectNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.GetObjectArrayNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ReadArrayObjectNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectBecomeNode;
@@ -73,12 +73,13 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class AbstractArrayBecomeOneWayPrimitiveNode extends AbstractInstancesPrimitiveNode {
         @Child private SqueakObjectPointersBecomeOneWayNode pointersBecomeNode = SqueakObjectPointersBecomeOneWayNode.create();
         @Child private UpdateSqueakObjectHashNode updateHashNode = UpdateSqueakObjectHashNode.create();
-        @Child private GetObjectArrayNode getObjectArrayNode = GetObjectArrayNode.create();
+        @Child private ArrayObjectToObjectArrayNode getObjectArrayNode = ArrayObjectToObjectArrayNode.create();
 
         protected AbstractArrayBecomeOneWayPrimitiveNode(final CompiledMethodObject method) {
             super(method);
         }
 
+        // TODO: specialize for arrays -> object/native/abstractsqu only
         protected final AbstractSqueakObject performPointersBecomeOneWay(final VirtualFrame frame, final ArrayObject fromArray, final ArrayObject toArray, final boolean copyHash) {
             final Object[] fromPointers = getObjectArrayNode.execute(fromArray);
             final Object[] toPointers = getObjectArrayNode.execute(toArray);
@@ -462,7 +463,7 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimArrayBecomeNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         @Child protected ArrayObjectSizeNode sizeNode = ArrayObjectSizeNode.create();
         @Child private SqueakObjectBecomeNode becomeNode = SqueakObjectBecomeNode.create();
-        @Child private ReadArrayObjectNode readNode = ReadArrayObjectNode.create();
+        @Child private ArrayObjectReadNode readNode = ArrayObjectReadNode.create();
         private final BranchProfile failProfile = BranchProfile.create();
 
         protected PrimArrayBecomeNode(final CompiledMethodObject method) {

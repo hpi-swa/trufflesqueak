@@ -286,6 +286,11 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
             return code.image.sqFalse;
         }
 
+        @Specialization(guards = "receiver.isNativeObjectType()")
+        protected final boolean doArrayOfNatives(final ArrayObject receiver, final Object thang) {
+            return ArrayUtils.contains(receiver.getNativeObjectStorage(), thang) ? code.image.sqTrue : code.image.sqFalse;
+        }
+
         @Specialization(guards = "receiver.isObjectType()")
         protected final boolean doArrayOfObjects(final ArrayObject receiver, final Object thang) {
             return ArrayUtils.contains(receiver.getObjectStorage(), thang) ? code.image.sqTrue : code.image.sqFalse;

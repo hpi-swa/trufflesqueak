@@ -5,7 +5,7 @@ import java.util.Map;
 
 import com.oracle.truffle.api.CompilerAsserts;
 
-import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.GetObjectArrayNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayNode;
 
 public final class ObjectLayouts {
 
@@ -118,7 +118,7 @@ public final class ObjectLayouts {
             final ArrayObject classBindings = (ArrayObject) dictionary.at0(HASHED_COLLECTION.ARRAY);
             final Map<Object, Object> keyValues = new HashMap<>();
             // TODO: Avoid node allocation in next line.
-            for (Object classBinding : GetObjectArrayNode.create().execute(classBindings)) {
+            for (Object classBinding : ArrayObjectToObjectArrayNode.create().execute(classBindings)) {
                 if (classBinding != dictionary.image.nil) {
                     final PointersObject classBindingPointer = (PointersObject) classBinding;
                     keyValues.put(classBindingPointer.at0(CLASS_BINDING.KEY), classBindingPointer.at0(CLASS_BINDING.VALUE));

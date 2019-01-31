@@ -21,8 +21,8 @@ import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ReadArrayObjectNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.WriteArrayObjectNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeAcceptsValueNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectReadNode;
@@ -70,7 +70,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     @SqueakPrimitive(indices = 60)
     protected abstract static class PrimBasicAtNode extends AbstractBasicAtOrAtPutNode implements TernaryPrimitive {
         @Child private SqueakObjectAt0Node at0Node;
-        @Child private ReadArrayObjectNode readArrayObjectNode;
+        @Child private ArrayObjectReadNode readArrayObjectNode;
         @Child private NativeObjectReadNode readNativeObjectNode;
 
         protected PrimBasicAtNode(final CompiledMethodObject method) {
@@ -193,10 +193,10 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             return at0Node;
         }
 
-        private ReadArrayObjectNode getReadArrayObjectNode() {
+        private ArrayObjectReadNode getReadArrayObjectNode() {
             if (readArrayObjectNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                readArrayObjectNode = insert(ReadArrayObjectNode.create());
+                readArrayObjectNode = insert(ArrayObjectReadNode.create());
             }
             return readArrayObjectNode;
         }
@@ -216,7 +216,7 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
     protected abstract static class PrimBasicAtPutNode extends AbstractBasicAtOrAtPutNode implements QuaternaryPrimitive {
         @Child private SqueakObjectAtPut0Node atPut0Node;
         @Child private NativeAcceptsValueNode acceptsValueNode;
-        @Child private WriteArrayObjectNode writeArrayObjectNode;
+        @Child private ArrayObjectWriteNode writeArrayObjectNode;
         @Child private NativeObjectWriteNode writeNativeObjectNode;
 
         protected PrimBasicAtPutNode(final CompiledMethodObject method) {
@@ -461,10 +461,10 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
             return acceptsValueNode;
         }
 
-        private WriteArrayObjectNode getWriteArrayObjectNode() {
+        private ArrayObjectWriteNode getWriteArrayObjectNode() {
             if (writeArrayObjectNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                writeArrayObjectNode = insert(WriteArrayObjectNode.create());
+                writeArrayObjectNode = insert(ArrayObjectWriteNode.create());
             }
             return writeArrayObjectNode;
         }

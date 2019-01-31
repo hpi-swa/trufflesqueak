@@ -15,7 +15,7 @@ import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
-import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.GetObjectArrayNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ContextObjectNodes.ContextObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ContextObjectNodes.ContextObjectWriteNode;
 
@@ -152,7 +152,7 @@ public abstract class SqueakObjectPointersBecomeOneWayNode extends Node {
 
     @Specialization
     protected final void doArray(final ArrayObject obj, final Object[] from, final Object[] to, final boolean copyHash,
-                    @Cached("create()") final GetObjectArrayNode getObjectArrayNode) {
+                    @Cached("create()") final ArrayObjectToObjectArrayNode getObjectArrayNode) {
         pointersBecomeOneWay(getObjectArrayNode.execute(obj), from, to, copyHash);
     }
 

@@ -411,6 +411,7 @@ public final class SqueakImageContext {
     }
 
     public ArrayObject newList(final Object elements) {
+        // TODO: Specialize storage?
         return ArrayObject.createWithStorage(this, arrayClass, elements);
     }
 

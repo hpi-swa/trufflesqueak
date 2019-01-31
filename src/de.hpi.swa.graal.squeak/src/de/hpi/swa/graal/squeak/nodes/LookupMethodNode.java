@@ -12,13 +12,13 @@ import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.METHOD_DICT;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ReadArrayObjectNode;
 
 public abstract class LookupMethodNode extends Node {
     protected static final int LOOKUP_CACHE_SIZE = 3;
 
-    @Child private ReadArrayObjectNode readNode = ReadArrayObjectNode.create();
+    @Child private ArrayObjectReadNode readNode = ArrayObjectReadNode.create();
 
     public static LookupMethodNode create() {
         return LookupMethodNodeGen.create();

@@ -2,6 +2,7 @@ package de.hpi.swa.graal.squeak.image.reading;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
@@ -15,6 +16,7 @@ import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.SimulationPrimitiveNode;
 
 public abstract class FillInNode extends Node {
@@ -89,8 +91,9 @@ public abstract class FillInNode extends Node {
     }
 
     @Specialization
-    protected static final void doArrays(final ArrayObject obj, final SqueakImageChunk chunk) {
-        obj.setStorageAndSpecializeIfPossible(chunk.getPointers());
+    protected static final void doArrays(final ArrayObject obj, final SqueakImageChunk chunk,
+                    @Cached("create()") final ArrayObjectWriteNode writeNode) {
+        obj.setStorageAndSpecialize(chunk.getPointers(), writeNode);
     }
 
     @Specialization

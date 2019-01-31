@@ -10,11 +10,11 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ReadArrayObjectNode;
 
 public final class WakeHighestPriorityNode extends AbstractNodeWithImage {
-    @Child private ReadArrayObjectNode arrayReadNode = ReadArrayObjectNode.create();
+    @Child private ArrayObjectReadNode arrayReadNode = ArrayObjectReadNode.create();
     @Child private ArrayObjectSizeNode arraySizeNode = ArrayObjectSizeNode.create();
     private final BranchProfile errorProfile = BranchProfile.create();
     @Child private GetOrCreateContextNode contextNode;

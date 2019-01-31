@@ -20,7 +20,7 @@ import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
-import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.WriteArrayObjectNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ClassObjectNodes.ClassObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ContextObjectNodes.ContextObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectWriteNode;
@@ -36,7 +36,7 @@ public abstract class SqueakObjectAtPut0Node extends Node {
 
     @Specialization
     protected static final void doArray(final ArrayObject obj, final long index, final Object value,
-                    @Cached("create()") final WriteArrayObjectNode writeNode) {
+                    @Cached("create()") final ArrayObjectWriteNode writeNode) {
         writeNode.execute(obj, index, value);
     }
 

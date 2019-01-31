@@ -33,8 +33,8 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.GetObjectArrayNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ReadArrayObjectNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeObjectWriteNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
@@ -293,7 +293,7 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
 
             @Child protected ArrayObjectSizeNode sizeNode = ArrayObjectSizeNode.create();
             @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
-            @Child private ReadArrayObjectNode readNode = ReadArrayObjectNode.create();
+            @Child private ArrayObjectReadNode readNode = ArrayObjectReadNode.create();
 
             protected ScanCharactersHelperNode(final SqueakImageContext image) {
                 super(image);
@@ -366,10 +366,10 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimStringReplaceNode extends AbstractPrimitiveNode implements QuinaryPrimitive {
         @Child private SqueakObjectInstSizeNode instSizeNode = SqueakObjectInstSizeNode.create();
         @Child private SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
-        @Child private ReadArrayObjectNode readArrayObjectNode;
+        @Child private ArrayObjectReadNode readArrayObjectNode;
         @Child private NativeObjectReadNode readNativeObjectNode;
         @Child private NativeObjectWriteNode writeNativeObjectNode;
-        @Child private GetObjectArrayNode getObjectArrayNode;
+        @Child private ArrayObjectToObjectArrayNode getObjectArrayNode;
 
         protected PrimStringReplaceNode(final CompiledMethodObject method) {
             super(method);
@@ -760,10 +760,10 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             }
         }
 
-        private ReadArrayObjectNode getReadArrayObjectNode() {
+        private ArrayObjectReadNode getReadArrayObjectNode() {
             if (readArrayObjectNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                readArrayObjectNode = insert(ReadArrayObjectNode.create());
+                readArrayObjectNode = insert(ArrayObjectReadNode.create());
             }
             return readArrayObjectNode;
         }
@@ -784,10 +784,10 @@ public final class IOPrimitives extends AbstractPrimitiveFactoryHolder {
             return writeNativeObjectNode;
         }
 
-        private GetObjectArrayNode getGetObjectArrayNode() {
+        private ArrayObjectToObjectArrayNode getGetObjectArrayNode() {
             if (getObjectArrayNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                getObjectArrayNode = insert(GetObjectArrayNode.create());
+                getObjectArrayNode = insert(ArrayObjectToObjectArrayNode.create());
             }
             return getObjectArrayNode;
         }

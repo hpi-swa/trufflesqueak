@@ -1,15 +1,15 @@
 package de.hpi.swa.graal.squeak.nodes.process;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS_SCHEDULER;
-import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
-import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ReadArrayObjectNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 
 public final class PutToSleepNode extends AbstractNodeWithImage {
-    @Child private ReadArrayObjectNode readNode = ReadArrayObjectNode.create();
+    @Child private ArrayObjectReadNode readNode = ArrayObjectReadNode.create();
     @Child private LinkProcessToListNode linkProcessToList;
 
     protected PutToSleepNode(final SqueakImageContext image) {

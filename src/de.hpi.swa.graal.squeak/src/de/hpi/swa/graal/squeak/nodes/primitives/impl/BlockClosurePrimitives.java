@@ -16,7 +16,7 @@ import de.hpi.swa.graal.squeak.model.BlockClosureObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.nodes.BlockActivationNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.GetObjectArrayNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayTransformNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
@@ -136,7 +136,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == sizeNode.execute(argArray)"}, limit = "1")
         protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final ArrayObject argArray,
                         @SuppressWarnings("unused") @Cached("create()") final SqueakObjectSizeNode sizeNode,
-                        @Cached("create()") final GetObjectArrayNode getObjectArrayNode) {
+                        @Cached("create()") final ArrayObjectToObjectArrayTransformNode getObjectArrayNode) {
             return dispatch.executeBlock(block, FrameAccess.newBlockArguments(block, getContextOrMarker(frame), getObjectArrayNode.execute(argArray)));
         }
     }
@@ -175,7 +175,7 @@ public final class BlockClosurePrimitives extends AbstractPrimitiveFactoryHolder
         @Specialization(guards = {"block.getCompiledBlock().getNumArgs() == sizeNode.execute(argArray)"}, limit = "1")
         protected final Object doValue(final VirtualFrame frame, final BlockClosureObject block, final ArrayObject argArray,
                         @SuppressWarnings("unused") @Cached("create()") final SqueakObjectSizeNode sizeNode,
-                        @Cached("create()") final GetObjectArrayNode getObjectArrayNode) {
+                        @Cached("create()") final ArrayObjectToObjectArrayTransformNode getObjectArrayNode) {
             final Object[] arguments = FrameAccess.newBlockArguments(block, getContextOrMarker(frame), getObjectArrayNode.execute(argArray));
             final boolean wasActive = code.image.interrupt.isActive();
             code.image.interrupt.deactivate();

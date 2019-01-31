@@ -1,5 +1,6 @@
 package de.hpi.swa.graal.squeak.nodes.accessing;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 
@@ -19,6 +20,7 @@ import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.model.WeakPointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectShallowCopyNode;
 
 public abstract class SqueakObjectShallowCopyNode extends AbstractNodeWithImage {
 
@@ -47,9 +49,15 @@ public abstract class SqueakObjectShallowCopyNode extends AbstractNodeWithImage 
         return receiver.shallowCopy();
     }
 
-    @Specialization
-    protected static final Object doClass(final ClassObject receiver) {
-        return receiver.shallowCopy();
+    @Specialization(guards = "!receiver.hasInstanceVariables()")
+    protected static final Object doClassNoInstanceVariables(final ClassObject receiver) {
+        return receiver.shallowCopy(null);
+    }
+
+    @Specialization(guards = "receiver.hasInstanceVariables()")
+    protected static final Object doClass(final ClassObject receiver,
+                    @Cached("create()") final ArrayObjectShallowCopyNode arrayCopyNode) {
+        return receiver.shallowCopy(arrayCopyNode.execute(receiver.getInstanceVariablesOrNull()));
     }
 
     @Specialization
@@ -107,39 +115,10 @@ public abstract class SqueakObjectShallowCopyNode extends AbstractNodeWithImage 
         return receiver.shallowCopy();
     }
 
-    @Specialization(guards = "receiver.isEmptyType()")
-    protected static final Object doEmptyArray(final ArrayObject receiver) {
-        return ArrayObject.createWithStorage(receiver.image, receiver.getSqueakClass(), receiver.getEmptyStorage());
-    }
-
-    @Specialization(guards = "receiver.isAbstractSqueakObjectType()")
-    protected static final Object doArrayOfSqueakObjects(final ArrayObject receiver) {
-        return ArrayObject.createWithStorage(receiver.image, receiver.getSqueakClass(), receiver.getAbstractSqueakObjectStorage().clone());
-    }
-
-    @Specialization(guards = "receiver.isBooleanType()")
-    protected static final Object doArrayOfBooleans(final ArrayObject receiver) {
-        return ArrayObject.createWithStorage(receiver.image, receiver.getSqueakClass(), receiver.getBooleanStorage().clone());
-    }
-
-    @Specialization(guards = "receiver.isCharType()")
-    protected static final Object doArrayOfChars(final ArrayObject receiver) {
-        return ArrayObject.createWithStorage(receiver.image, receiver.getSqueakClass(), receiver.getCharStorage().clone());
-    }
-
-    @Specialization(guards = "receiver.isLongType()")
-    protected static final Object doArrayOfLongs(final ArrayObject receiver) {
-        return ArrayObject.createWithStorage(receiver.image, receiver.getSqueakClass(), receiver.getLongStorage().clone());
-    }
-
-    @Specialization(guards = "receiver.isDoubleType()")
-    protected static final Object doArrayOfDoubles(final ArrayObject receiver) {
-        return ArrayObject.createWithStorage(receiver.image, receiver.getSqueakClass(), receiver.getDoubleStorage().clone());
-    }
-
-    @Specialization(guards = "receiver.isObjectType()")
-    protected static final Object doArrayOfObjects(final ArrayObject receiver) {
-        return ArrayObject.createWithStorage(receiver.image, receiver.getSqueakClass(), receiver.getObjectStorage().clone());
+    @Specialization
+    protected static final Object doArray(final ArrayObject receiver,
+                    @Cached("create()") final ArrayObjectShallowCopyNode copyNode) {
+        return copyNode.execute(receiver);
     }
 
     @Specialization

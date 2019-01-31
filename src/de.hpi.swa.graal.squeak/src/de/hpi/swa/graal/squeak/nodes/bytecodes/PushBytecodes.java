@@ -204,6 +204,7 @@ public final class PushBytecodes {
 
         @Specialization(guards = {"popNReversedNode == null"})
         protected final void doPushNewArray(final VirtualFrame frame) {
+            // TODO: createEmptyStrategy?
             pushNode.executeWrite(frame, ArrayObject.createObjectStrategy(code.image, code.image.arrayClass, arraySize));
         }
 

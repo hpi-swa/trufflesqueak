@@ -44,9 +44,9 @@ import de.hpi.swa.graal.squeak.nodes.DispatchSendNode;
 import de.hpi.swa.graal.squeak.nodes.LookupMethodNode;
 import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectReadNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectSizeNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.GetObjectArrayNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ReadArrayObjectNode;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectToObjectArrayTransformNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodes.NativeGetBytesNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
@@ -76,7 +76,6 @@ import de.hpi.swa.graal.squeak.nodes.process.ResumeProcessNode;
 import de.hpi.swa.graal.squeak.nodes.process.SignalSemaphoreNode;
 import de.hpi.swa.graal.squeak.nodes.process.WakeHighestPriorityNode;
 import de.hpi.swa.graal.squeak.nodes.process.YieldProcessNode;
-import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerNode;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
@@ -209,7 +208,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 84)
     protected abstract static class PrimPerformWithArgumentsNode extends AbstractPerformPrimitiveNode implements TernaryPrimitive {
-        @Child private GetObjectArrayNode getObjectArrayNode = GetObjectArrayNode.create();
+        @Child private ArrayObjectToObjectArrayTransformNode getObjectArrayNode = ArrayObjectToObjectArrayTransformNode.create();
 
         protected PrimPerformWithArgumentsNode(final CompiledMethodObject method) {
             super(method);
@@ -217,7 +216,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Specialization
         protected Object perform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final ArrayObject arguments) {
-            return dispatch(frame, selector, ArrayUtils.copyWithFirst(getObjectArrayNode.execute(arguments), receiver), lookup(receiver));
+            return dispatch(frame, selector, getObjectArrayNode.executeWithFirst(arguments, receiver), lookup(receiver));
         }
     }
 
@@ -344,7 +343,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 100)
     protected abstract static class PrimPerformWithArgumentsInSuperclassNode extends AbstractPerformPrimitiveNode implements QuinaryPrimitive {
-        @Child private GetObjectArrayNode getObjectArrayNode = GetObjectArrayNode.create();
+        @Child private ArrayObjectToObjectArrayTransformNode getObjectArrayNode = ArrayObjectToObjectArrayTransformNode.create();
 
         protected PrimPerformWithArgumentsInSuperclassNode(final CompiledMethodObject method) {
             super(method);
@@ -354,14 +353,14 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         protected final Object doPerform(final VirtualFrame frame, final Object receiver, final NativeObject selector, final ArrayObject arguments, final ClassObject superClass,
                         @SuppressWarnings("unused") final NotProvided np) {
             // Object>>#perform:withArguments:inSuperclass:
-            return dispatch(frame, selector, ArrayUtils.copyWithFirst(getObjectArrayNode.execute(arguments), receiver), superClass);
+            return dispatch(frame, selector, getObjectArrayNode.executeWithFirst(arguments, receiver), superClass);
         }
 
         @Specialization
         protected final Object doPerform(final VirtualFrame frame, @SuppressWarnings("unused") final Object receiver, final Object object, final NativeObject selector, final ArrayObject arguments,
                         final ClassObject superClass) {
             // Context>>#object:perform:withArguments:inClass:
-            return dispatch(frame, selector, ArrayUtils.copyWithFirst(getObjectArrayNode.execute(arguments), object), superClass);
+            return dispatch(frame, selector, getObjectArrayNode.executeWithFirst(arguments, object), superClass);
         }
     }
 
@@ -715,7 +714,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 118)
     protected abstract static class PrimDoPrimitiveWithArgsNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
-        @Child protected GetObjectArrayNode getObjectArrayNode = GetObjectArrayNode.create();
+        @Child protected ArrayObjectToObjectArrayTransformNode getObjectArrayNode = ArrayObjectToObjectArrayTransformNode.create();
 
         public PrimDoPrimitiveWithArgsNode(final CompiledMethodObject method) {
             super(method);
@@ -738,7 +737,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
              * It is non-trivial to avoid the creation of a primitive node here. Deopt might be
              * acceptable because primitive is mostly used for debugging anyway.
              */
-            final Object[] receiverAndArguments = ArrayUtils.copyWithFirst(getObjectArrayNode.execute(argumentArray), receiver);
+            final Object[] receiverAndArguments = getObjectArrayNode.executeWithFirst(argumentArray, receiver);
             final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.forIndex((CompiledMethodObject) code, (int) primitiveIndex);
             if (primitiveNode == null) {
                 throw new PrimitiveFailed();
@@ -1017,7 +1016,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     protected abstract static class PrimExecuteMethodArgsArrayNode extends AbstractPerformPrimitiveNode implements TernaryPrimitive {
         @Child private DispatchNode dispatchNode = DispatchNode.create();
         @Child private ArrayObjectSizeNode sizeNode = ArrayObjectSizeNode.create();
-        @Child private ReadArrayObjectNode readNode = ReadArrayObjectNode.create();
+        @Child private ArrayObjectReadNode readNode = ArrayObjectReadNode.create();
 
         protected PrimExecuteMethodArgsArrayNode(final CompiledMethodObject method) {
             super(method);
@@ -1040,7 +1039,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @SqueakPrimitive(indices = 218)
     protected abstract static class PrimDoNamedPrimitiveWithArgsNode extends AbstractPrimitiveNode implements QuaternaryPrimitive {
         @Child private GetAbstractPrimitiveNode getPrimitiveNode = GetAbstractPrimitiveNodeGen.create();
-        @Child protected GetObjectArrayNode getObjectArrayNode = GetObjectArrayNode.create();
+        @Child protected ArrayObjectToObjectArrayTransformNode getObjectArrayNode = ArrayObjectToObjectArrayTransformNode.create();
 
         public PrimDoNamedPrimitiveWithArgsNode(final CompiledMethodObject method) {
             super(method);
@@ -1057,7 +1056,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             if (primitiveNode == null) {
                 throw new PrimitiveFailed();
             }
-            final Object[] receiverAndArguments = ArrayUtils.copyWithFirst(getObjectArrayNode.execute(argumentArray), target);
+            final Object[] receiverAndArguments = getObjectArrayNode.executeWithFirst(argumentArray, target);
             return replace(primitiveNode).executeWithArguments(frame, receiverAndArguments);
         }
     }

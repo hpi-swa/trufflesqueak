@@ -59,8 +59,9 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
         image.getOutput().println("Processing StartUpList...");
         evaluate("Smalltalk processStartUpList: true");
         final ArrayObject lists = ((ArrayObject) image.getScheduler().at0(PROCESS_SCHEDULER.PROCESS_LISTS));
-        final Object firstLink = ((PointersObject) lists.getObjectStorage()[PRIORITY_10_LIST_INDEX]).at0(LINKED_LIST.FIRST_LINK);
-        final Object lastLink = ((PointersObject) lists.getObjectStorage()[PRIORITY_10_LIST_INDEX]).at0(LINKED_LIST.LAST_LINK);
+        final PointersObject priority10List = (PointersObject) lists.at0(PRIORITY_10_LIST_INDEX);
+        final Object firstLink = priority10List.at0(LINKED_LIST.FIRST_LINK);
+        final Object lastLink = priority10List.at0(LINKED_LIST.LAST_LINK);
         assert firstLink != image.nil && firstLink == lastLink : "Unexpected idleProcess state";
         idleProcess = (PointersObject) firstLink;
         assert idleProcess.at0(PROCESS.NEXT_LINK) == image.nil : "Idle process expected to have `nil` successor";
@@ -135,7 +136,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     private static void resetProcessLists() {
-        final Object[] lists = ((ArrayObject) image.getScheduler().at0(PROCESS_SCHEDULER.PROCESS_LISTS)).getObjectStorage();
+        final AbstractSqueakObject[] lists = ((ArrayObject) image.getScheduler().at0(PROCESS_SCHEDULER.PROCESS_LISTS)).getAbstractSqueakObjectStorage();
         for (int i = 0; i < lists.length; i++) {
             final PointersObject linkedList = (PointersObject) lists[i];
             final Object key = linkedList.at0(LINKED_LIST.FIRST_LINK);

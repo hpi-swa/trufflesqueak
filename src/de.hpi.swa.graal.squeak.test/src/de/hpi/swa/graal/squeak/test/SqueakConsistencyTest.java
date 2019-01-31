@@ -4,18 +4,19 @@ import static java.util.Collections.emptySet;
 import static java.util.stream.Collectors.toSet;
 import static org.junit.Assert.assertEquals;
 
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
-import de.hpi.swa.graal.squeak.model.ArrayObject;
-import de.hpi.swa.graal.squeak.model.NativeObject;
-import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.test.SqueakTests.SqueakTest;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
 import org.junit.Test;
+
+import de.hpi.swa.graal.squeak.model.ArrayObject;
+import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.test.SqueakTests.SqueakTest;
 
 public class SqueakConsistencyTest extends AbstractSqueakTestCaseWithImage {
 
@@ -68,8 +69,8 @@ public class SqueakConsistencyTest extends AbstractSqueakTestCaseWithImage {
     private static List<String> inspectCollection(final Object collection) {
         final ArrayObject array = (ArrayObject) ((PointersObject) collection).at0(0);
         final List<String> items = new ArrayList<>();
-        for (final AbstractSqueakObject aso : array.getAbstractSqueakObjectStorage()) {
-            items.add(((NativeObject) aso).asString());
+        for (final NativeObject aso : array.getNativeObjectStorage()) {
+            items.add(aso.asString());
         }
         return items;
     }
