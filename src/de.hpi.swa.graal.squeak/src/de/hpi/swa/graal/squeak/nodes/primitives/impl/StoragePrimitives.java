@@ -459,13 +459,13 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
 
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 128)
-    protected abstract static class PrimBecomeNode extends AbstractPrimitiveNode implements BinaryPrimitive {
+    protected abstract static class PrimArrayBecomeNode extends AbstractPrimitiveNode implements BinaryPrimitive {
         @Child protected ArrayObjectSizeNode sizeNode = ArrayObjectSizeNode.create();
         @Child private SqueakObjectBecomeNode becomeNode = SqueakObjectBecomeNode.create();
         @Child private ReadArrayObjectNode readNode = ReadArrayObjectNode.create();
         private final BranchProfile failProfile = BranchProfile.create();
 
-        protected PrimBecomeNode(final CompiledMethodObject method) {
+        protected PrimArrayBecomeNode(final CompiledMethodObject method) {
             super(method);
         }
 
@@ -491,6 +491,24 @@ public final class StoragePrimitives extends AbstractPrimitiveFactoryHolder {
                 }
             }
             return receiver;
+        }
+
+        @Specialization(guards = {"sizeNode.execute(receiver) != sizeNode.execute(other)"})
+        @SuppressWarnings("unused")
+        protected static final AbstractSqueakObject doBadSize(final ArrayObject receiver, final ArrayObject other) {
+            throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
+        }
+
+        @Specialization(guards = {"!isArrayObject(receiver)"})
+        @SuppressWarnings("unused")
+        protected static final Object doBadReceiver(final Object receiver, final ArrayObject other) {
+            throw new PrimitiveFailed(ERROR_TABLE.BAD_RECEIVER);
+        }
+
+        @Specialization(guards = {"!isArrayObject(other)"})
+        @SuppressWarnings("unused")
+        protected static final Object doBadArgument(final ArrayObject receiver, final Object other) {
+            throw new PrimitiveFailed(ERROR_TABLE.BAD_ARGUMENT);
         }
     }
 
