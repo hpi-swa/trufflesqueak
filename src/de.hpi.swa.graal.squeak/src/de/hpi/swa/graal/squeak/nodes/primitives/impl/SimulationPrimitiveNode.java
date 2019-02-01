@@ -124,7 +124,7 @@ public abstract class SimulationPrimitiveNode extends AbstractPrimitiveNode impl
             CompilerDirectives.transferToInterpreterAndInvalidate();
             assert code.image.getSimulatePrimitiveArgsSelector() != null : "BitBlt simulation not found in image.";
             final Object lookupResult; // TODO: Nodes!
-            final LookupMethodNode lookupMethodNode = LookupMethodNode.create(code.image);
+            final LookupMethodNode lookupMethodNode = LookupMethodNode.create();
             if (receiver instanceof ClassObject) {
                 lookupResult = lookupMethodNode.executeLookup(receiver, code.image.getSimulatePrimitiveArgsSelector());
             } else {

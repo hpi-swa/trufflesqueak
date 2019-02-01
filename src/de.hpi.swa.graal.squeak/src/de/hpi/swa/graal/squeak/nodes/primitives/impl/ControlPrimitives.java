@@ -121,13 +121,12 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     // primitiveBlockCopy / primitiveBlockValue: (#80, #81, #82) no longer needed.
 
     private abstract static class AbstractPerformPrimitiveNode extends AbstractPrimitiveNode {
-        @Child protected LookupMethodNode lookupMethodNode;
+        @Child protected LookupMethodNode lookupMethodNode = LookupMethodNode.create();
         @Child protected LookupClassNode lookupClassNode;
         @Child private DispatchSendNode dispatchSendNode;
 
         protected AbstractPerformPrimitiveNode(final CompiledMethodObject method) {
             super(method);
-            lookupMethodNode = LookupMethodNode.create(code.image);
             lookupClassNode = LookupClassNode.create(code.image);
             dispatchSendNode = DispatchSendNode.create(code.image);
         }

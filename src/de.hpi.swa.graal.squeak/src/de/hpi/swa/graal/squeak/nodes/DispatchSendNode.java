@@ -99,7 +99,7 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
     private LookupMethodNode getLookupNode() {
         if (lookupNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            lookupNode = insert(LookupMethodNode.create(image));
+            lookupNode = insert(LookupMethodNode.create());
         }
         return lookupNode;
     }

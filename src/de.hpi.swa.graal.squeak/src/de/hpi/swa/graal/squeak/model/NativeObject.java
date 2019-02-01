@@ -204,4 +204,8 @@ public final class NativeObject extends AbstractSqueakObject {
     public boolean isDebugSyntaxErrorSelector() {
         return this == image.getDebugSyntaxErrorSelector();
     }
+
+    public boolean isDoesNotUnderstand() {
+        return this == image.doesNotUnderstand;
+    }
 }
