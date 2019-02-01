@@ -15,21 +15,18 @@ import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.MESSAGE;
 import de.hpi.swa.graal.squeak.model.PointersObject;
-import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.IsDoesNotUnderstandNode;
 import de.hpi.swa.graal.squeak.nodes.context.LookupClassNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
 
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class DispatchSendNode extends AbstractNodeWithImage {
-    @Child protected IsDoesNotUnderstandNode isDoesNotUnderstandNode;
     @Child private DispatchNode dispatchNode = DispatchNode.create();
     @Child private LookupClassNode lookupClassNode;
     @Child private LookupMethodNode lookupNode;
 
     protected DispatchSendNode(final SqueakImageContext image) {
         super(image);
-        isDoesNotUnderstandNode = IsDoesNotUnderstandNode.create(image);
     }
 
     public static DispatchSendNode create(final SqueakImageContext image) {
@@ -38,43 +35,45 @@ public abstract class DispatchSendNode extends AbstractNodeWithImage {
 
     public abstract Object executeSend(VirtualFrame frame, NativeObject selector, Object lookupResult, ClassObject rcvrClass, Object[] receiverAndArguments, Object contextOrMarker);
 
-    @Specialization(guards = {"!image.isHeadless() || isAllowedInHeadlessMode(selector)", "!isDoesNotUnderstandNode.execute(lookupResult)"})
+    @Specialization(guards = {"!image.isHeadless() || isAllowedInHeadlessMode(selector)", "lookupResult != null"})
     protected final Object doDispatch(final VirtualFrame frame, @SuppressWarnings("unused") final NativeObject selector, final CompiledMethodObject lookupResult,
                     @SuppressWarnings("unused") final ClassObject rcvrClass, final Object[] rcvrAndArgs, final Object contextOrMarker) {
         return dispatchNode.executeDispatch(frame, lookupResult, rcvrAndArgs, contextOrMarker);
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"image.isHeadless()", "selector.isDebugErrorSelector()", "!isDoesNotUnderstandNode.execute(lookupResult)"})
+    @Specialization(guards = {"image.isHeadless()", "selector.isDebugErrorSelector()", "lookupResult != null"})
     protected static final Object doDispatchHeadlessError(final VirtualFrame frame, final NativeObject selector, final CompiledMethodObject lookupResult,
                     final ClassObject rcvrClass, final Object[] rcvrAndArgs, final Object contextOrMarker) {
         throw new SqueakException(MiscUtils.format("%s>>#%s detected in headless mode. Aborting...", rcvrClass.getSqueakClassName(), selector.asString()));
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"image.isHeadless()", "selector.isDebugSyntaxErrorSelector()", "!isDoesNotUnderstandNode.execute(lookupResult)"})
+    @Specialization(guards = {"image.isHeadless()", "selector.isDebugSyntaxErrorSelector()", "lookupResult != null"})
     protected static final Object doDispatchHeadlessSyntaxError(final VirtualFrame frame, final NativeObject selector, final CompiledMethodObject lookupResult,
                     final ClassObject rcvrClass, final Object[] rcvrAndArgs, final Object contextOrMarker) {
         throw new SqueakSyntaxError((PointersObject) rcvrAndArgs[1]);
     }
 
-    @Specialization(guards = {"isDoesNotUnderstandNode.execute(lookupResult)"})
-    protected final Object doDoesNotUnderstand(final VirtualFrame frame, final NativeObject selector, final CompiledMethodObject lookupResult, final ClassObject rcvrClass, final Object[] rcvrAndArgs,
-                    final Object contextOrMarker) {
+    @Specialization(guards = {"lookupResult == null"})
+    protected final Object doDoesNotUnderstand(final VirtualFrame frame, final NativeObject selector, @SuppressWarnings("unused") final Object lookupResult, final ClassObject rcvrClass,
+                    final Object[] rcvrAndArgs, final Object contextOrMarker) {
+        final CompiledMethodObject doesNotUnderstandMethod = (CompiledMethodObject) getLookupNode().executeLookup(rcvrClass, image.doesNotUnderstand);
         final PointersObject message = createMessage(selector, rcvrClass, ArrayUtils.allButFirst(rcvrAndArgs));
-        return dispatchNode.executeDispatch(frame, lookupResult, new Object[]{rcvrAndArgs[0], message}, contextOrMarker);
+        return dispatchNode.executeDispatch(frame, doesNotUnderstandMethod, new Object[]{rcvrAndArgs[0], message}, contextOrMarker);
     }
 
-    @Specialization(guards = "!isCompiledMethodObject(targetObject)")
+    @Specialization(guards = {"!isCompiledMethodObject(targetObject)"})
     protected final Object doObjectAsMethod(final VirtualFrame frame, final NativeObject selector, final Object targetObject, @SuppressWarnings("unused") final ClassObject rcvrClass,
                     final Object[] rcvrAndArgs, final Object contextOrMarker) {
         final Object[] arguments = ArrayUtils.allButFirst(rcvrAndArgs);
         final ClassObject targetClass = getLookupClassNode().executeLookup(targetObject);
-        final CompiledMethodObject newLookupResult = (CompiledMethodObject) getLookupNode().executeLookup(targetClass, image.runWithInSelector);
-        if (isDoesNotUnderstandNode.execute(newLookupResult)) {
-            return dispatchNode.executeDispatch(frame, newLookupResult, new Object[]{targetObject, createMessage(selector, targetClass, arguments)}, contextOrMarker);
+        final Object newLookupResult = getLookupNode().executeLookup(targetClass, image.runWithInSelector);
+        if (newLookupResult == null) {
+            final Object doesNotUnderstandMethod = getLookupNode().executeLookup(targetClass, image.doesNotUnderstand);
+            return dispatchNode.executeDispatch(frame, (CompiledMethodObject) doesNotUnderstandMethod, new Object[]{targetObject, createMessage(selector, targetClass, arguments)}, contextOrMarker);
         } else {
-            return dispatchNode.executeDispatch(frame, newLookupResult, new Object[]{targetObject, selector, image.newList(arguments), rcvrAndArgs[0]}, contextOrMarker);
+            return dispatchNode.executeDispatch(frame, (CompiledMethodObject) newLookupResult, new Object[]{targetObject, selector, image.newList(arguments), rcvrAndArgs[0]}, contextOrMarker);
         }
     }
 

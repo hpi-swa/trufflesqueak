@@ -19,7 +19,6 @@ import de.hpi.swa.graal.squeak.model.NotProvided;
 import de.hpi.swa.graal.squeak.nodes.DispatchNode;
 import de.hpi.swa.graal.squeak.nodes.LookupMethodNode;
 import de.hpi.swa.graal.squeak.nodes.SqueakNode;
-import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodes.IsDoesNotUnderstandNode;
 import de.hpi.swa.graal.squeak.nodes.context.ArgumentNode;
 import de.hpi.swa.graal.squeak.nodes.context.LookupClassNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
@@ -134,7 +133,7 @@ public abstract class SimulationPrimitiveNode extends AbstractPrimitiveNode impl
             }
             if (lookupResult instanceof CompiledMethodObject) {
                 final CompiledMethodObject result = (CompiledMethodObject) lookupResult;
-                if (!IsDoesNotUnderstandNode.create(code.image).execute(result)) {
+                if (result != null) {
                     simulationMethod = result;
                     return result;
                 }
