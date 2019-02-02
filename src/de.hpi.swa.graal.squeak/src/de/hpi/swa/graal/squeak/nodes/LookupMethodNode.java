@@ -26,7 +26,19 @@ public abstract class LookupMethodNode extends Node {
 
     public abstract Object executeLookup(Object sqClass, Object selector);
 
-    protected final Object performLookup(final ClassObject classObject, final NativeObject selector) {
+    @SuppressWarnings("unused")
+    @Specialization(limit = "LOOKUP_CACHE_SIZE", guards = {"classObject == cachedClass",
+                    "selector == cachedSelector"}, assumptions = {"methodLookupStable"})
+    protected static final Object doCached(final ClassObject classObject, final NativeObject selector,
+                    @Cached("classObject") final ClassObject cachedClass,
+                    @Cached("selector") final NativeObject cachedSelector,
+                    @Cached("cachedClass.getMethodDictStable()") final Assumption methodLookupStable,
+                    @Cached("doUncached(cachedClass, cachedSelector)") final Object cachedMethod) {
+        return cachedMethod;
+    }
+
+    @Specialization(replaces = "doCached")
+    protected final Object doUncached(final ClassObject classObject, final NativeObject selector) {
         ClassObject lookupClass = classObject;
         while (lookupClass != null) {
             final PointersObject methodDict = lookupClass.getMethodDict();
@@ -41,22 +53,6 @@ public abstract class LookupMethodNode extends Node {
         }
         assert !selector.isDoesNotUnderstand() : "Could not find does not understand method";
         return null; // Signals a doesNotUnderstand.
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization(limit = "LOOKUP_CACHE_SIZE", guards = {"squeakClass == cachedSqClass",
-                    "selector == cachedSelector"}, assumptions = {"methodLookupStable"})
-    protected static final Object doDirect(final ClassObject squeakClass, final NativeObject selector,
-                    @Cached("squeakClass") final ClassObject cachedSqClass,
-                    @Cached("selector") final NativeObject cachedSelector,
-                    @Cached("cachedSqClass.getMethodDictStable()") final Assumption methodLookupStable,
-                    @Cached("performLookup(cachedSqClass, cachedSelector)") final Object cachedMethod) {
-        return cachedMethod;
-    }
-
-    @Specialization(replaces = "doDirect")
-    protected final Object doIndirect(final ClassObject sqClass, final NativeObject selector) {
-        return performLookup(sqClass, selector);
     }
 
     @SuppressWarnings("unused")
