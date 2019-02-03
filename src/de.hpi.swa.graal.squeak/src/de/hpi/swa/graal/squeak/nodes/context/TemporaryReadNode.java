@@ -4,7 +4,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
-import de.hpi.swa.graal.squeak.nodes.SqueakNode;
 import de.hpi.swa.graal.squeak.nodes.SqueakNodeWithCode;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 
@@ -16,7 +15,7 @@ public abstract class TemporaryReadNode extends SqueakNodeWithCode {
         readNode = FrameSlotReadNode.create(code.getStackSlot(tempIndex));
     }
 
-    public static SqueakNode create(final CompiledCodeObject code, final int tempIndex) {
+    public static TemporaryReadNode create(final CompiledCodeObject code, final int tempIndex) {
         return TemporaryReadNodeGen.create(code, tempIndex);
     }
 

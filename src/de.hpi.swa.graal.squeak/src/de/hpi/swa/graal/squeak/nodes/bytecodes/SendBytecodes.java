@@ -54,7 +54,7 @@ public final class SendBytecodes {
                 /**
                  * Inline copy of {@link AbstractSendNode#executeSend} for better send performance.
                  */
-                final Object[] rcvrAndArgs = (Object[]) popNReversedNode.executeRead(frame);
+                final Object[] rcvrAndArgs = popNReversedNode.executePopN(frame);
                 final ClassObject rcvrClass = lookupClassNode.executeLookup(rcvrAndArgs[0]);
                 final Object lookupResult = lookupMethodNode.executeLookup(rcvrClass, selector);
                 result = dispatchSendNode.executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs, getContextOrMarker(frame));
@@ -80,7 +80,7 @@ public final class SendBytecodes {
         }
 
         public final Object executeSend(final VirtualFrame frame) {
-            final Object[] rcvrAndArgs = (Object[]) popNReversedNode.executeRead(frame);
+            final Object[] rcvrAndArgs = popNReversedNode.executePopN(frame);
             final ClassObject rcvrClass = lookupClassNode.executeLookup(rcvrAndArgs[0]);
             final Object lookupResult = lookupMethodNode.executeLookup(rcvrClass, selector);
             return dispatchSendNode.executeSend(frame, selector, lookupResult, rcvrClass, rcvrAndArgs, getContextOrMarker(frame));

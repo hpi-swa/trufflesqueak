@@ -1,25 +1,29 @@
 package de.hpi.swa.graal.squeak.nodes.context.stack;
 
-import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
+import de.hpi.swa.graal.squeak.nodes.SqueakNodeWithCode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadAndClearNode;
+import de.hpi.swa.graal.squeak.util.FrameAccess;
 
-public abstract class StackPopNode extends AbstractStackPopNode {
+public final class StackPopNode extends SqueakNodeWithCode {
+    @Child private FrameStackReadAndClearNode readAndClearNode;
 
     protected StackPopNode(final CompiledCodeObject code) {
         super(code);
+        readAndClearNode = FrameStackReadAndClearNode.create(code);
     }
 
     public static StackPopNode create(final CompiledCodeObject code) {
-        return StackPopNodeGen.create(code);
+        return new StackPopNode(code);
     }
 
-    @Specialization
-    public final Object doPop(final VirtualFrame frame) {
-        final int newSP = frameStackPointer(frame) - 1;
+    @Override
+    public Object executeRead(final VirtualFrame frame) {
+        final int newSP = FrameAccess.getStackPointer(frame, code) - 1;
         assert newSP >= 0 : "Bad stack pointer";
-        setFrameStackPointer(frame, newSP);
-        return atStackAndClear(frame, newSP);
+        FrameAccess.setStackPointer(frame, code, newSP);
+        return readAndClearNode.execute(frame, newSP);
     }
 }

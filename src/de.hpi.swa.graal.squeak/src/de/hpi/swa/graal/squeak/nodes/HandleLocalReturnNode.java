@@ -13,11 +13,9 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 @ImportStatic(FrameAccess.class)
 public abstract class HandleLocalReturnNode extends AbstractNodeWithCode {
-    @Child private TerminateContextNode terminateNode;
 
     protected HandleLocalReturnNode(final CompiledCodeObject code) {
         super(code);
-        terminateNode = TerminateContextNode.create(code);
     }
 
     public static HandleLocalReturnNode create(final CompiledCodeObject code) {
@@ -29,13 +27,13 @@ public abstract class HandleLocalReturnNode extends AbstractNodeWithCode {
     @Specialization(guards = {"hasModifiedSender(frame)"})
     protected final Object handleModifiedSender(final VirtualFrame frame, final LocalReturn lr) {
         final ContextObject newSender = FrameAccess.getSenderContext(frame); // sender has changed
-        terminateNode.executeTerminate(frame);
+        FrameAccess.terminate(frame, code);
         throw new NonVirtualReturn(lr.getReturnValue(), newSender, newSender);
     }
 
     @Fallback
     protected final Object handle(final VirtualFrame frame, final LocalReturn lr) {
-        terminateNode.executeTerminate(frame);
+        FrameAccess.terminate(frame, code);
         return lr.getReturnValue();
     }
 }

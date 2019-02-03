@@ -16,12 +16,12 @@ public abstract class CreateEagerArgumentsNode extends Node {
     public abstract Object[] executeCreate(int size, Object[] receiverAndArguments);
 
     @Specialization(guards = {"receiverAndArguments.length >= size"})
-    protected static final Object[] cached(@SuppressWarnings("unused") final int size, final Object[] receiverAndArguments) {
+    protected static final Object[] doReturn(@SuppressWarnings("unused") final int size, final Object[] receiverAndArguments) {
         return receiverAndArguments;
     }
 
     @Fallback
-    protected static final Object[] uncached(final int size, final Object[] receiverAndArguments) {
+    protected static final Object[] doResize(final int size, final Object[] receiverAndArguments) {
         final Object[] array = Arrays.copyOf(receiverAndArguments, size);
         Arrays.fill(array, receiverAndArguments.length, size, NotProvided.INSTANCE);
         return array;

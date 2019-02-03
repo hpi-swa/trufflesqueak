@@ -194,6 +194,11 @@ public final class FrameAccess {
         }
     }
 
+    public static void terminate(final Frame frame, final CompiledCodeObject blockOrMethod) {
+        FrameAccess.setInstructionPointer(frame, blockOrMethod, -1);
+        FrameAccess.setSender(frame, blockOrMethod.image.nil);
+    }
+
     public static boolean isGraalSqueakFrame(final Frame frame) {
         final Object[] arguments = frame.getArguments();
         return arguments.length >= RECEIVER && arguments[METHOD] instanceof CompiledMethodObject;

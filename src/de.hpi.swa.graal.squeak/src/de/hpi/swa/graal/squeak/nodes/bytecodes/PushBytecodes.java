@@ -19,12 +19,11 @@ import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.nodes.EnterCodeNode;
 import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
-import de.hpi.swa.graal.squeak.nodes.SqueakNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodesFactory.PushNewArrayNodeGen;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodesFactory.PushReceiverNodeGen;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.PushBytecodesFactory.PushReceiverVariableNodeGen;
-import de.hpi.swa.graal.squeak.nodes.context.TemporaryReadNode;
+import de.hpi.swa.graal.squeak.nodes.context.frame.FrameSlotReadNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPopNReversedNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
@@ -109,7 +108,7 @@ public final class PushBytecodes {
 
         private BlockClosureObject createClosure(final VirtualFrame frame) {
             final Object receiver = FrameAccess.getReceiver(frame);
-            final Object[] copiedValues = (Object[]) popNReversedNode.executeRead(frame);
+            final Object[] copiedValues = popNReversedNode.executePopN(frame);
             final ContextObject outerContext = getOrCreateContextNode.executeGet(frame);
             return new BlockClosureObject(getBlock(frame), blockCallTarget, receiver, copiedValues, outerContext);
         }
@@ -200,7 +199,7 @@ public final class PushBytecodes {
 
         @Specialization(guards = {"popNReversedNode != null"})
         protected final void doPushArray(final VirtualFrame frame) {
-            pushNode.executeWrite(frame, code.image.newList(popNReversedNode.executeRead(frame)));
+            pushNode.executeWrite(frame, code.image.newList(popNReversedNode.executePopN(frame)));
         }
 
         @Specialization(guards = {"popNReversedNode == null"})
@@ -273,7 +272,7 @@ public final class PushBytecodes {
     @NodeInfo(cost = NodeCost.NONE)
     public static final class PushRemoteTempNode extends AbstractPushNode {
         @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
-        @Child private SqueakNode readTempNode;
+        @Child private FrameSlotReadNode readTempNode;
         private final int indexInArray;
         private final int indexOfArray;
 
@@ -281,7 +280,7 @@ public final class PushBytecodes {
             super(code, index, numBytecodes);
             this.indexInArray = indexInArray;
             this.indexOfArray = indexOfArray;
-            readTempNode = TemporaryReadNode.create(code, indexOfArray);
+            readTempNode = FrameSlotReadNode.create(code.getStackSlot(indexOfArray));
         }
 
         @Override
@@ -299,14 +298,14 @@ public final class PushBytecodes {
     @NodeInfo(cost = NodeCost.NONE)
     public static final class PushTemporaryLocationNode extends AbstractBytecodeNode {
         @Child private StackPushNode pushNode;
-        @Child private SqueakNode tempNode;
+        @Child private FrameSlotReadNode tempNode;
         private final int tempIndex;
 
         public PushTemporaryLocationNode(final CompiledCodeObject code, final int index, final int numBytecodes, final int tempIndex) {
             super(code, index, numBytecodes);
             this.tempIndex = tempIndex;
             pushNode = StackPushNode.create(code);
-            tempNode = TemporaryReadNode.create(code, tempIndex);
+            tempNode = FrameSlotReadNode.create(code.getStackSlot(tempIndex));
         }
 
         @Override
