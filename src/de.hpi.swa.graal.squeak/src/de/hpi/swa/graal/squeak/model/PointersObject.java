@@ -48,6 +48,10 @@ public final class PointersObject extends AbstractPointersObject {
         return getSqueakClass().getBasicInstanceSize();
     }
 
+    public boolean isActiveProcess() {
+        return this == image.getActiveProcess();
+    }
+
     public boolean isDisplay() {
         return this == image.specialObjectsArray.at0Object(SPECIAL_OBJECT.THE_DISPLAY);
     }

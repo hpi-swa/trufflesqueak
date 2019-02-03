@@ -10,14 +10,12 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 
 public final class YieldProcessNode extends AbstractNodeWithImage {
-    @Child private GetActiveProcessNode getActiveProcessNode;
     @Child private IsEmptyListNode isEmptyListNode;
     @Child private LinkProcessToListNode linkProcessToListNode;
     @Child private WakeHighestPriorityNode wakeHighestPriorityNode;
 
     protected YieldProcessNode(final CompiledCodeObject code) {
         super(code.image);
-        getActiveProcessNode = GetActiveProcessNode.create(image);
         isEmptyListNode = IsEmptyListNode.create(image);
         linkProcessToListNode = LinkProcessToListNode.create(image);
         wakeHighestPriorityNode = WakeHighestPriorityNode.create(code);
@@ -28,7 +26,7 @@ public final class YieldProcessNode extends AbstractNodeWithImage {
     }
 
     public void executeYield(final VirtualFrame frame, final PointersObject scheduler) {
-        final PointersObject activeProcess = getActiveProcessNode.executeGet();
+        final PointersObject activeProcess = image.getActiveProcess();
         final long priority = (long) activeProcess.at0(PROCESS.PRIORITY);
         final ArrayObject processLists = (ArrayObject) scheduler.at0(PROCESS_SCHEDULER.PROCESS_LISTS);
         final PointersObject processList = (PointersObject) processLists.at0Object(priority - 1);

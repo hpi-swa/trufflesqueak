@@ -9,16 +9,13 @@ import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.context.ObjectGraphNode;
-import de.hpi.swa.graal.squeak.nodes.process.GetActiveProcessNode;
 
 public final class GetAllInstancesNode extends AbstractNodeWithCode {
-    @Child private GetActiveProcessNode getActiveProcessNode;
     @Child private GetOrCreateContextNode getOrCreateContextNode;
     @Child private ObjectGraphNode objectGraphNode;
 
     protected GetAllInstancesNode(final CompiledCodeObject code) {
         super(code);
-        getActiveProcessNode = GetActiveProcessNode.create(code.image);
         getOrCreateContextNode = GetOrCreateContextNode.create(code);
         objectGraphNode = ObjectGraphNode.create(code.image);
     }
@@ -28,7 +25,7 @@ public final class GetAllInstancesNode extends AbstractNodeWithCode {
     }
 
     public List<AbstractSqueakObject> executeGet(final VirtualFrame frame) {
-        final PointersObject activeProcess = getActiveProcessNode.executeGet();
+        final PointersObject activeProcess = code.image.getActiveProcess();
         activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, getOrCreateContextNode.executeGet(frame));
         try {
             return objectGraphNode.allInstances();

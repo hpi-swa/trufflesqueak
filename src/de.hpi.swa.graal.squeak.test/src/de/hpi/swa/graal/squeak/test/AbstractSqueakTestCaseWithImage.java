@@ -27,7 +27,6 @@ import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
-import de.hpi.swa.graal.squeak.nodes.process.GetActiveProcessNode;
 
 public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     private static final int TIMEOUT_SECONDS = 60;
@@ -54,8 +53,7 @@ public class AbstractSqueakTestCaseWithImage extends AbstractSqueakTestCase {
     }
 
     private static void patchImageForTesting() {
-        final PointersObject activeProcess = GetActiveProcessNode.create(image).executeGet();
-        activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, image.nil);
+        image.getActiveProcess().atput0(PROCESS.SUSPENDED_CONTEXT, image.nil);
         image.getOutput().println("Modifying StartUpList for testing...");
         evaluate("{Delay. EventSensor. Project} do: [:ea | Smalltalk removeFromStartUpList: ea]");
         image.getOutput().println("Processing StartUpList...");

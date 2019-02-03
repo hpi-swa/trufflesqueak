@@ -39,10 +39,10 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.ASSOCIATION;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.ENVIRONMENT;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
+import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SMALLTALK_IMAGE;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
-import de.hpi.swa.graal.squeak.nodes.process.GetActiveProcessNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerState;
@@ -176,8 +176,7 @@ public final class SqueakImageContext {
             // Load image.
             Truffle.getRuntime().createCallTarget(new SqueakImageReaderNode(this)).call();
             // Remove active context.
-            final PointersObject activeProcess = GetActiveProcessNode.create(this).executeGet();
-            activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, nil);
+            getActiveProcess().atput0(PROCESS.SUSPENDED_CONTEXT, nil);
             // Modify StartUpList for headless execution.
             // TODO: Also start ProcessorScheduler and WeakArray (see SqueakSUnitTest).
             evaluate("{EventSensor. ProcessorScheduler. Project. WeakArray} do: [:ea | Smalltalk removeFromStartUpList: ea]");
@@ -226,7 +225,7 @@ public final class SqueakImageContext {
 
     public ExecuteTopLevelContextNode getActiveContextNode() {
         assert lastParseRequestSource == null : "Image should not have been executed manually before.";
-        final PointersObject activeProcess = GetActiveProcessNode.create(this).executeGet();
+        final PointersObject activeProcess = getActiveProcess();
         final ContextObject activeContext = (ContextObject) activeProcess.at0(PROCESS.SUSPENDED_CONTEXT);
         activeProcess.atput0(PROCESS.SUSPENDED_CONTEXT, nil);
         return ExecuteTopLevelContextNode.create(getLanguage(), activeContext, true);
@@ -333,6 +332,10 @@ public final class SqueakImageContext {
             scheduler = (PointersObject) schedulerAssociation.at0(ASSOCIATION.VALUE);
         }
         return scheduler;
+    }
+
+    public PointersObject getActiveProcess() {
+        return (PointersObject) getScheduler().at0(PROCESS_SCHEDULER.ACTIVE_PROCESS);
     }
 
     public Object wrap(final Object obj) {

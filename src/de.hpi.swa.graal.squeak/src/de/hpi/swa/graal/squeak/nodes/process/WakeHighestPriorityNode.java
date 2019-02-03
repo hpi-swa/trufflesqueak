@@ -6,7 +6,6 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS_SCHEDULER;
-import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectSizeNode;
@@ -16,14 +15,12 @@ public final class WakeHighestPriorityNode extends AbstractNodeWithImage {
     @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
     @Child private SqueakObjectSizeNode sizeNode = SqueakObjectSizeNode.create();
     @Child private RemoveFirstLinkOfListNode removeFirstLinkOfListNode;
-    @Child private GetActiveProcessNode getActiveProcessNode;
     @Child private IsEmptyListNode isEmptyListNode;
     @Child private TransferToNode transferToNode;
 
     protected WakeHighestPriorityNode(final CompiledCodeObject code) {
         super(code.image);
         removeFirstLinkOfListNode = RemoveFirstLinkOfListNode.create(image);
-        getActiveProcessNode = GetActiveProcessNode.create(image);
         isEmptyListNode = IsEmptyListNode.create(image);
         transferToNode = TransferToNode.create(code);
     }
@@ -45,8 +42,7 @@ public final class WakeHighestPriorityNode extends AbstractNodeWithImage {
             }
             processList = at0Node.execute(schedLists, p--);
         } while (isEmptyListNode.executeIsEmpty(processList));
-        final PointersObject activeProcess = getActiveProcessNode.executeGet();
         final Object newProcess = removeFirstLinkOfListNode.executeRemove(processList);
-        transferToNode.executeTransferTo(frame, activeProcess, newProcess);
+        transferToNode.executeTransferTo(frame, image.getActiveProcess(), newProcess);
     }
 }

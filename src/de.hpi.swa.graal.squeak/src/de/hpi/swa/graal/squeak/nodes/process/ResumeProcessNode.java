@@ -13,13 +13,11 @@ import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 
 public abstract class ResumeProcessNode extends AbstractNodeWithImage {
     @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
-    @Child private GetActiveProcessNode getActiveProcessNode;
     @Child private PutToSleepNode putToSleepNode;
     @Child private TransferToNode transferToNode;
 
     protected ResumeProcessNode(final CompiledCodeObject code) {
         super(code.image);
-        getActiveProcessNode = GetActiveProcessNode.create(image);
         putToSleepNode = PutToSleepNode.create(code.image);
         transferToNode = TransferToNode.create(code);
     }
@@ -32,7 +30,7 @@ public abstract class ResumeProcessNode extends AbstractNodeWithImage {
 
     @Specialization
     protected final void executeResume(final VirtualFrame frame, final AbstractSqueakObject newProcess) {
-        final AbstractSqueakObject activeProcess = getActiveProcessNode.executeGet();
+        final AbstractSqueakObject activeProcess = image.getActiveProcess();
         final long activePriority = (long) at0Node.execute(activeProcess, PROCESS.PRIORITY);
         final long newPriority = (long) at0Node.execute(newProcess, PROCESS.PRIORITY);
         if (newPriority > activePriority) {
