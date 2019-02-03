@@ -1,6 +1,8 @@
 package de.hpi.swa.graal.squeak.model;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
+import de.hpi.swa.graal.squeak.model.ObjectLayouts.LINKED_LIST;
+import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SPECIAL_OBJECT;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
@@ -52,12 +54,30 @@ public final class PointersObject extends AbstractPointersObject {
         return this == image.getActiveProcess();
     }
 
+    public boolean isEmptyList() {
+        return at0(LINKED_LIST.FIRST_LINK) == image.nil;
+    }
+
     public boolean isDisplay() {
         return this == image.specialObjectsArray.at0Object(SPECIAL_OBJECT.THE_DISPLAY);
     }
 
     public boolean isPoint() {
         return getSqueakClass() == image.pointClass;
+    }
+
+    public PointersObject removeFirstLinkOfList() {
+        // Remove the first process from the given linked list.
+        final PointersObject first = (PointersObject) at0(LINKED_LIST.FIRST_LINK);
+        final Object last = at0(LINKED_LIST.LAST_LINK);
+        if (first == last) {
+            atput0(LINKED_LIST.FIRST_LINK, image.nil);
+            atput0(LINKED_LIST.LAST_LINK, image.nil);
+        } else {
+            atput0(LINKED_LIST.FIRST_LINK, first.at0(PROCESS.NEXT_LINK));
+        }
+        first.atput0(PROCESS.NEXT_LINK, image.nil);
+        return first;
     }
 
     public PointersObject shallowCopy() {

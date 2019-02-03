@@ -13,8 +13,11 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.source.Source;
 
+import de.hpi.swa.graal.squeak.exceptions.ProcessSwitch;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
+import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
+import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.graal.squeak.nodes.bytecodes.MiscellaneousBytecodes.CallPrimitiveNode;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
@@ -489,6 +492,23 @@ public final class ContextObject extends AbstractSqueakObject {
             arguments[1 + i] = atTemp(i);
         }
         return arguments;
+    }
+
+    public void transferTo(final PointersObject newProcess) {
+        // Record a process to be awakened on the next interpreter cycle.
+        final PointersObject scheduler = image.getScheduler();
+        assert newProcess != image.getActiveProcess() : "trying to switch to already active process";
+        final PointersObject currentProcess = image.getActiveProcess(); // overwritten in next line.
+        scheduler.atput0(PROCESS_SCHEDULER.ACTIVE_PROCESS, newProcess);
+        currentProcess.atput0(PROCESS.SUSPENDED_CONTEXT, this);
+        final ContextObject newActiveContext = (ContextObject) newProcess.at0(PROCESS.SUSPENDED_CONTEXT);
+        newProcess.atput0(PROCESS.SUSPENDED_CONTEXT, image.nil);
+        if (CompilerDirectives.isPartialEvaluationConstant(newActiveContext)) {
+            throw ProcessSwitch.create(newActiveContext);
+        } else {
+            // Avoid further PE if newActiveContext is not a PE constant.
+            throw ProcessSwitch.createWithBoundary(newActiveContext);
+        }
     }
 
     /*

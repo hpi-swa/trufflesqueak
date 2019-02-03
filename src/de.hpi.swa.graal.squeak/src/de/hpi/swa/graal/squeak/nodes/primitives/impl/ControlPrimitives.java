@@ -70,9 +70,7 @@ import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitivesFactory.Pr
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitivesFactory.PrimExternalCallNodeFactory.GetNamedPrimitiveNodeGen;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitivesFactory.PrimQuickReturnReceiverVariableNodeFactory;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitivesFactory.PrimitiveFailedNodeFactory;
-import de.hpi.swa.graal.squeak.nodes.process.IsEmptyListNode;
 import de.hpi.swa.graal.squeak.nodes.process.LinkProcessToListNode;
-import de.hpi.swa.graal.squeak.nodes.process.RemoveFirstLinkOfListNode;
 import de.hpi.swa.graal.squeak.nodes.process.RemoveProcessFromListNode;
 import de.hpi.swa.graal.squeak.nodes.process.ResumeProcessNode;
 import de.hpi.swa.graal.squeak.nodes.process.SignalSemaphoreNode;
@@ -244,13 +242,11 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 86)
     protected abstract static class PrimWaitNode extends AbstractPrimitiveWithPushNode implements UnaryPrimitive {
-        @Child private WakeHighestPriorityNode wakeHighestPriorityNode;
         @Child private LinkProcessToListNode linkProcessToListNode;
 
         protected PrimWaitNode(final CompiledMethodObject method) {
             super(method);
             linkProcessToListNode = LinkProcessToListNode.create(method.image);
-            wakeHighestPriorityNode = WakeHighestPriorityNode.create(method);
         }
 
         @Specialization(guards = {"receiver.isSemaphore()", "hasExcessSignals(receiver)"})
@@ -262,7 +258,8 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization(guards = {"receiver.isSemaphore()", "!hasExcessSignals(receiver)"})
-        protected final AbstractSqueakObject doWait(final VirtualFrame frame, final PointersObject receiver) {
+        protected final AbstractSqueakObject doWait(final VirtualFrame frame, final PointersObject receiver,
+                        @Cached("create(code)") final WakeHighestPriorityNode wakeHighestPriorityNode) {
             pushNode.executeWrite(frame, receiver); // keep receiver on stack
             linkProcessToListNode.executeLink(code.image.getActiveProcess(), receiver);
             wakeHighestPriorityNode.executeWake(frame);
@@ -310,17 +307,22 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
             throw new PrimitiveWithoutResultException(); // result already pushed above
         }
 
-        @Specialization(guards = "!receiver.isActiveProcess()")
+        @Specialization(guards = {"!receiver.isActiveProcess()", "!hasNilList(receiver)"})
         protected final Object doSuspendOtherProcess(final PointersObject receiver,
-                        @Cached("create()") final SqueakObjectAt0Node at0Node,
                         @Cached("create(code.image)") final RemoveProcessFromListNode removeProcessNode) {
-            final Object oldList = at0Node.execute(receiver, PROCESS.LIST);
-            if (oldList == code.image.nil) {
-                throw new PrimitiveFailed(ERROR_TABLE.BAD_RECEIVER);
-            }
+            final PointersObject oldList = (PointersObject) receiver.at0(PROCESS.LIST);
             removeProcessNode.executeRemove(receiver, oldList);
             receiver.atput0(PROCESS.LIST, code.image.nil);
             return oldList;
+        }
+
+        @Specialization(guards = {"!receiver.isActiveProcess()", "hasNilList(receiver)"})
+        protected static final Object doBadReceiver(@SuppressWarnings("unused") final PointersObject receiver) {
+            throw new PrimitiveFailed(ERROR_TABLE.BAD_RECEIVER);
+        }
+
+        protected final boolean hasNilList(final PointersObject process) {
+            return process.at0(PROCESS.LIST) == code.image.nil;
         }
     }
 
@@ -867,26 +869,22 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 185)
     protected abstract static class PrimExitCriticalSectionNode extends AbstractPrimitiveNode implements UnaryPrimitive {
-        @Child protected IsEmptyListNode isEmptyListNode;
-
         public PrimExitCriticalSectionNode(final CompiledMethodObject method) {
             super(method);
-            isEmptyListNode = IsEmptyListNode.create(method.image);
         }
 
-        @Specialization(guards = "isEmptyListNode.executeIsEmpty(mutex)")
+        @Specialization(guards = "mutex.isEmptyList()")
         protected final Object doExitEmpty(@SuppressWarnings("unused") final VirtualFrame frame, final PointersObject mutex) {
             mutex.atput0(MUTEX.OWNER, code.image.nil);
             return mutex;
         }
 
-        @Specialization(guards = "!isEmptyListNode.executeIsEmpty(mutex)")
+        @Specialization(guards = "!mutex.isEmptyList()")
         protected static final Object doExitNonEmpty(final VirtualFrame frame, final PointersObject mutex,
                         @Cached("create()") final StackPushForPrimitivesNode pushNode,
-                        @Cached("create(code.image)") final RemoveFirstLinkOfListNode removeFirstLinkOfListNode,
                         @Cached("create(code)") final ResumeProcessNode resumeProcessNode) {
             pushNode.executeWrite(frame, mutex); // keep receiver on stack
-            final Object owningProcess = removeFirstLinkOfListNode.executeRemove(mutex);
+            final PointersObject owningProcess = mutex.removeFirstLinkOfList();
             mutex.atput0(MUTEX.OWNER, owningProcess);
             resumeProcessNode.executeResume(frame, owningProcess);
             throw new PrimitiveWithoutResultException();

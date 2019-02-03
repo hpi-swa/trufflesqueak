@@ -7,81 +7,74 @@ import de.hpi.swa.graal.squeak.exceptions.PrimitiveExceptions.PrimitiveFailed;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
+import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.LINKED_LIST;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
+import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
-import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
-import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAtPut0Node;
-import de.hpi.swa.graal.squeak.nodes.process.RemoveProcessFromListNodeGen.ExecuteRemoveProcessNodeGen;
 
 public abstract class RemoveProcessFromListNode extends AbstractNodeWithImage {
-    @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
-    @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
-    @Child private ExecuteRemoveProcessNode removeNode;
-
     protected RemoveProcessFromListNode(final SqueakImageContext image) {
         super(image);
-        removeNode = ExecuteRemoveProcessNodeGen.create(image);
     }
 
     public static RemoveProcessFromListNode create(final SqueakImageContext image) {
         return RemoveProcessFromListNodeGen.create(image);
     }
 
-    public abstract void executeRemove(Object process, Object list);
+    public final void executeRemove(final PointersObject process, final PointersObject list) {
+        final Object first = list.at0(LINKED_LIST.FIRST_LINK);
+        final Object last = list.at0(LINKED_LIST.LAST_LINK);
+        executeRemove(process, list, first, last);
+        process.atput0(PROCESS.NEXT_LINK, image.nil);
+    }
 
-    protected abstract static class ExecuteRemoveProcessNode extends AbstractNodeWithImage {
-        @Child private SqueakObjectAtPut0Node atPut0Node = SqueakObjectAtPut0Node.create();
-        @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
+    protected abstract void executeRemove(PointersObject process, PointersObject list, Object first, Object last);
 
-        protected ExecuteRemoveProcessNode(final SqueakImageContext image) {
-            super(image);
-        }
-
-        protected abstract void execute(AbstractSqueakObject process, AbstractSqueakObject list, Object first, Object last);
-
-        @Specialization(guards = "process == first")
-        protected final void doRemoveEqual(final AbstractSqueakObject process, final AbstractSqueakObject list, @SuppressWarnings("unused") final AbstractSqueakObject first,
-                        final AbstractSqueakObject last) {
-            final Object next = at0Node.execute(process, PROCESS.NEXT_LINK);
-            atPut0Node.execute(list, LINKED_LIST.FIRST_LINK, next);
-            if (process == last) {
-                atPut0Node.execute(list, LINKED_LIST.LAST_LINK, image.nil);
-            }
-        }
-
-        @Fallback
-        protected final void doRemoveNotEqual(final AbstractSqueakObject process, final AbstractSqueakObject list, final Object first, final Object last) {
-            Object temp = first;
-            Object next;
-            while (true) {
-                if (temp == image.nil) {
-                    throw new PrimitiveFailed();
-                }
-                next = at0Node.execute(temp, PROCESS.NEXT_LINK);
-                if (next == process) {
-                    break;
-                }
-                temp = next;
-            }
-            next = at0Node.execute(process, PROCESS.NEXT_LINK);
-            atPut0Node.execute(temp, PROCESS.NEXT_LINK, next);
-            if (process == last) {
-                atPut0Node.execute(list, LINKED_LIST.LAST_LINK, temp);
-            }
+    @Specialization(guards = "identical(process, first)")
+    protected final void doRemoveEqual(final PointersObject process, final PointersObject list, @SuppressWarnings("unused") final AbstractSqueakObject first,
+                    final AbstractSqueakObject last) {
+        final Object next = process.at0(PROCESS.NEXT_LINK);
+        list.atput0(LINKED_LIST.FIRST_LINK, next);
+        if (process == last) {
+            list.atput0(LINKED_LIST.LAST_LINK, image.nil);
         }
     }
 
-    @Specialization
-    protected final void executeRemove(final AbstractSqueakObject process, final AbstractSqueakObject list) {
-        final Object first = at0Node.execute(list, LINKED_LIST.FIRST_LINK);
-        final Object last = at0Node.execute(list, LINKED_LIST.LAST_LINK);
-        removeNode.execute(process, list, first, last);
-        atPut0Node.execute(process, PROCESS.NEXT_LINK, image.nil);
+    @Specialization(guards = "!identical(process, first)")
+    protected final void doRemoveNotEqual(final PointersObject process, final PointersObject list, final PointersObject first, final AbstractSqueakObject last) {
+        PointersObject temp = first;
+        Object next;
+        while (true) {
+            next = temp.at0(PROCESS.NEXT_LINK);
+            if (next == process) {
+                break;
+            } else if (next == image.nil) {
+                throw new PrimitiveFailed(); // TODO: make this better.
+            } else {
+                temp = (PointersObject) next;
+            }
+        }
+        next = process.at0(PROCESS.NEXT_LINK);
+        temp.atput0(PROCESS.NEXT_LINK, next);
+        if (process == last) {
+            list.atput0(LINKED_LIST.LAST_LINK, temp);
+        }
     }
 
+    @SuppressWarnings("unused")
+    @Specialization(guards = "!identical(process, first)")
+    protected static final void doRemoveNotEqual(final PointersObject process, final PointersObject list, final NilObject first, final AbstractSqueakObject last) {
+        throw new PrimitiveFailed(); // TODO: make sure this is needed (and make it better).
+    }
+
+    protected static final boolean identical(final PointersObject process, final AbstractSqueakObject first) {
+        return process == first;
+    }
+
+    @SuppressWarnings("unused")
     @Fallback
-    protected static final void doFallback(final Object process, final Object list) {
-        throw new SqueakException("Unexpected process and list:", process, "and", list);
+    protected static final void doFail(final PointersObject process, final PointersObject list, final Object first, final Object last) {
+        throw new SqueakException("Should never happen");
     }
 }

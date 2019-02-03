@@ -1,48 +1,43 @@
 package de.hpi.swa.graal.squeak.nodes.process;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
-import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
-import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
+import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithCode;
+import de.hpi.swa.graal.squeak.nodes.GetOrCreateContextNode;
 
-public abstract class ResumeProcessNode extends AbstractNodeWithImage {
-    @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
+public abstract class ResumeProcessNode extends AbstractNodeWithCode {
     @Child private PutToSleepNode putToSleepNode;
-    @Child private TransferToNode transferToNode;
 
     protected ResumeProcessNode(final CompiledCodeObject code) {
-        super(code.image);
+        super(code);
         putToSleepNode = PutToSleepNode.create(code.image);
-        transferToNode = TransferToNode.create(code);
     }
 
     public static ResumeProcessNode create(final CompiledCodeObject code) {
         return ResumeProcessNodeGen.create(code);
     }
 
-    public abstract void executeResume(VirtualFrame frame, Object newProcess);
+    public abstract void executeResume(VirtualFrame frame, PointersObject newProcess);
 
-    @Specialization
-    protected final void executeResume(final VirtualFrame frame, final AbstractSqueakObject newProcess) {
-        final AbstractSqueakObject activeProcess = image.getActiveProcess();
-        final long activePriority = (long) at0Node.execute(activeProcess, PROCESS.PRIORITY);
-        final long newPriority = (long) at0Node.execute(newProcess, PROCESS.PRIORITY);
-        if (newPriority > activePriority) {
-            putToSleepNode.executePutToSleep(activeProcess);
-            transferToNode.executeTransferTo(frame, activeProcess, newProcess);
-        } else {
-            putToSleepNode.executePutToSleep(newProcess);
-        }
+    @Specialization(guards = "hasHigherPriority(newProcess)")
+    protected final void doTransferTo(final VirtualFrame frame, final PointersObject newProcess,
+                    @Cached("create(code)") final GetOrCreateContextNode contextNode) {
+        putToSleepNode.executePutToSleep(code.image.getActiveProcess());
+        contextNode.executeGet(frame).transferTo(newProcess);
     }
 
     @Fallback
-    protected static final void doFallback(final Object newProcess) {
-        throw new SqueakException("Unexpected process object:", newProcess);
+    protected final void doSleep(final PointersObject newProcess) {
+        putToSleepNode.executePutToSleep(newProcess);
+    }
+
+    protected final boolean hasHigherPriority(final PointersObject newProcess) {
+        return (long) newProcess.at0(PROCESS.PRIORITY) > (long) code.image.getActiveProcess().at0(PROCESS.PRIORITY);
     }
 }

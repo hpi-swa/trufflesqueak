@@ -1,14 +1,15 @@
 package de.hpi.swa.graal.squeak.nodes.process;
 
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
-import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS_SCHEDULER;
+import de.hpi.swa.graal.squeak.model.ArrayObject;
+import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.AbstractNodeWithImage;
-import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
+import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ReadArrayObjectNode;
 
 public final class PutToSleepNode extends AbstractNodeWithImage {
-    @Child private SqueakObjectAt0Node at0Node = SqueakObjectAt0Node.create();
+    @Child private ReadArrayObjectNode readNode = ReadArrayObjectNode.create();
     @Child private LinkProcessToListNode linkProcessToList;
 
     protected PutToSleepNode(final SqueakImageContext image) {
@@ -20,11 +21,11 @@ public final class PutToSleepNode extends AbstractNodeWithImage {
         return new PutToSleepNode(image);
     }
 
-    public void executePutToSleep(final AbstractSqueakObject process) {
+    public void executePutToSleep(final PointersObject process) {
         // Save the given process on the scheduler process list for its priority.
-        final long priority = (long) at0Node.execute(process, PROCESS.PRIORITY);
-        final Object processLists = at0Node.execute(image.getScheduler(), PROCESS_SCHEDULER.PROCESS_LISTS);
-        final Object processList = at0Node.execute(processLists, priority - 1);
+        final long priority = (long) process.at0(PROCESS.PRIORITY);
+        final ArrayObject processLists = (ArrayObject) image.getScheduler().at0(PROCESS_SCHEDULER.PROCESS_LISTS);
+        final PointersObject processList = (PointersObject) readNode.execute(processLists, priority - 1);
         linkProcessToList.executeLink(process, processList);
     }
 }
