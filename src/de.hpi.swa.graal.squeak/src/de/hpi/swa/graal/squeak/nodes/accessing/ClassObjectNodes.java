@@ -4,7 +4,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
@@ -12,13 +11,14 @@ import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.ClassObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.PointersObject;
+import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ClassObjectNodesFactory.ClassObjectReadNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.ClassObjectNodesFactory.ClassObjectWriteNodeGen;
 
 public final class ClassObjectNodes {
 
     @ImportStatic(ClassObject.class)
-    public abstract static class ClassObjectReadNode extends Node {
+    public abstract static class ClassObjectReadNode extends AbstractNode {
         protected static final int CACHE_LIMIT = 3;
 
         public static ClassObjectReadNode create() {
@@ -88,7 +88,7 @@ public final class ClassObjectNodes {
     }
 
     @ImportStatic(ClassObject.class)
-    public abstract static class ClassObjectWriteNode extends Node {
+    public abstract static class ClassObjectWriteNode extends AbstractNode {
 
         public static ClassObjectWriteNode create() {
             return ClassObjectWriteNodeGen.create();

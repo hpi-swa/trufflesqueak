@@ -22,7 +22,9 @@ _compiler = mx.suite('compiler', fatalIfMissing=False)
 
 
 def _graal_vm_args(args):
-    graal_args = []
+    graal_args = [
+        '-Dgraal.TruffleExperimentalSplitting=true',
+    ]
 
     if args.trace_compilation:
         graal_args += [

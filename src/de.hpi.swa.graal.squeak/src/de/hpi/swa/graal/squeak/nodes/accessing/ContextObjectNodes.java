@@ -4,7 +4,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions;
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
@@ -15,6 +14,7 @@ import de.hpi.swa.graal.squeak.model.ContextObject;
 import de.hpi.swa.graal.squeak.model.FrameMarker;
 import de.hpi.swa.graal.squeak.model.NilObject;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.CONTEXT;
+import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ContextObjectNodesFactory.ContextObjectReadNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.ContextObjectNodesFactory.ContextObjectWriteNodeGen;
 import de.hpi.swa.graal.squeak.nodes.context.frame.FrameStackReadNode;
@@ -24,7 +24,7 @@ import de.hpi.swa.graal.squeak.util.FrameAccess;
 public final class ContextObjectNodes {
 
     @ImportStatic(CONTEXT.class)
-    public abstract static class ContextObjectReadNode extends Node {
+    public abstract static class ContextObjectReadNode extends AbstractNode {
         public static ContextObjectReadNode create() {
             return ContextObjectReadNodeGen.create();
         }
@@ -93,7 +93,7 @@ public final class ContextObjectNodes {
     }
 
     @ImportStatic(CONTEXT.class)
-    public abstract static class ContextObjectWriteNode extends Node {
+    public abstract static class ContextObjectWriteNode extends AbstractNode {
 
         public static ContextObjectWriteNode create() {
             return ContextObjectWriteNodeGen.create();

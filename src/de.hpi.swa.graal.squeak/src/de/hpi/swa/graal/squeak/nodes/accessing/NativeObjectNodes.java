@@ -4,12 +4,12 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CharacterObject;
 import de.hpi.swa.graal.squeak.model.LargeIntegerObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
+import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodesFactory.NativeAcceptsValueNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodesFactory.NativeGetBytesNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.NativeObjectNodesFactory.NativeObjectReadNodeGen;
@@ -19,7 +19,7 @@ import de.hpi.swa.graal.squeak.util.ArrayConversionUtils;
 
 public final class NativeObjectNodes {
 
-    public abstract static class NativeAcceptsValueNode extends Node {
+    public abstract static class NativeAcceptsValueNode extends AbstractNode {
 
         public static NativeAcceptsValueNode create() {
             return NativeAcceptsValueNodeGen.create();
@@ -106,7 +106,7 @@ public final class NativeObjectNodes {
         }
     }
 
-    public abstract static class NativeObjectReadNode extends Node {
+    public abstract static class NativeObjectReadNode extends AbstractNode {
 
         public static NativeObjectReadNode create() {
             return NativeObjectReadNodeGen.create();
@@ -146,7 +146,7 @@ public final class NativeObjectNodes {
     }
 
     @ImportStatic(NativeObject.class)
-    public abstract static class NativeObjectWriteNode extends Node {
+    public abstract static class NativeObjectWriteNode extends AbstractNode {
 
         public static NativeObjectWriteNode create() {
             return NativeObjectWriteNodeGen.create();
@@ -245,7 +245,7 @@ public final class NativeObjectNodes {
         }
     }
 
-    public abstract static class NativeObjectSizeNode extends Node {
+    public abstract static class NativeObjectSizeNode extends AbstractNode {
 
         public static NativeObjectSizeNode create() {
             return NativeObjectSizeNodeGen.create();
@@ -279,7 +279,7 @@ public final class NativeObjectNodes {
         }
     }
 
-    public abstract static class NativeGetBytesNode extends Node {
+    public abstract static class NativeGetBytesNode extends AbstractNode {
 
         public static NativeGetBytesNode create() {
             return NativeGetBytesNodeGen.create();

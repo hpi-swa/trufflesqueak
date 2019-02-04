@@ -14,7 +14,6 @@ import com.oracle.truffle.api.instrumentation.ProbeNode;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.nodes.RootNode;
@@ -27,8 +26,7 @@ import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 @GenerateWrapper
-public abstract class EnterCodeNode extends Node implements InstrumentableNode {
-    protected final CompiledCodeObject code;
+public abstract class EnterCodeNode extends AbstractNodeWithCode implements InstrumentableNode {
     @CompilationFinal private SourceSection sourceSection;
 
     @Child private ExecuteContextNode executeContextNode;
@@ -39,7 +37,7 @@ public abstract class EnterCodeNode extends Node implements InstrumentableNode {
     }
 
     protected EnterCodeNode(final CompiledCodeObject code) {
-        this.code = code;
+        super(code);
         executeContextNode = ExecuteContextNode.create(code);
         pushStackNode = StackPushNode.create(code);
     }

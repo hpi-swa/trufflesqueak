@@ -2,18 +2,18 @@ package de.hpi.swa.graal.squeak.nodes.accessing;
 
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.CompiledBlockObject;
 import de.hpi.swa.graal.squeak.model.CompiledCodeObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
+import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodesFactory.CalculcatePCOffsetNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.CompiledCodeNodesFactory.GetCompiledMethodNodeGen;
 
 public final class CompiledCodeNodes {
 
-    public abstract static class GetCompiledMethodNode extends Node {
+    public abstract static class GetCompiledMethodNode extends AbstractNode {
 
         public static GetCompiledMethodNode create() {
             return GetCompiledMethodNodeGen.create();
@@ -38,7 +38,7 @@ public final class CompiledCodeNodes {
 
     }
 
-    public abstract static class CalculcatePCOffsetNode extends Node {
+    public abstract static class CalculcatePCOffsetNode extends AbstractNode {
 
         public static CalculcatePCOffsetNode create() {
             return CalculcatePCOffsetNodeGen.create();

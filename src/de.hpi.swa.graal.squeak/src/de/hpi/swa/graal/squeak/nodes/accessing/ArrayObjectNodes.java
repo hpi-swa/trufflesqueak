@@ -3,14 +3,13 @@ package de.hpi.swa.graal.squeak.nodes.accessing;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.Node;
 
 import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.ArrayObject;
 import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.model.NilObject;
-import de.hpi.swa.graal.squeak.nodes.SqueakGuards;
+import de.hpi.swa.graal.squeak.nodes.AbstractNode;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectReadNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectShallowCopyNodeGen;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodesFactory.ArrayObjectSizeNodeGen;
@@ -21,7 +20,7 @@ import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 public final class ArrayObjectNodes {
 
-    public abstract static class ArrayObjectReadNode extends Node {
+    public abstract static class ArrayObjectReadNode extends AbstractNode {
 
         public static ArrayObjectReadNode create() {
             return ArrayObjectReadNodeGen.create();
@@ -81,7 +80,7 @@ public final class ArrayObjectNodes {
         }
     }
 
-    public abstract static class ArrayObjectShallowCopyNode extends Node {
+    public abstract static class ArrayObjectShallowCopyNode extends AbstractNode {
 
         public static ArrayObjectShallowCopyNode create() {
             return ArrayObjectShallowCopyNodeGen.create();
@@ -135,7 +134,7 @@ public final class ArrayObjectNodes {
         }
     }
 
-    public abstract static class ArrayObjectSizeNode extends Node {
+    public abstract static class ArrayObjectSizeNode extends AbstractNode {
 
         public static ArrayObjectSizeNode create() {
             return ArrayObjectSizeNodeGen.create();
@@ -189,7 +188,7 @@ public final class ArrayObjectNodes {
         }
     }
 
-    public abstract static class ArrayObjectToObjectArrayNode extends Node {
+    public abstract static class ArrayObjectToObjectArrayNode extends AbstractNode {
 
         public static ArrayObjectToObjectArrayNode create() {
             return ArrayObjectToObjectArrayNodeGen.create();
@@ -297,7 +296,7 @@ public final class ArrayObjectNodes {
         }
     }
 
-    public abstract static class ArrayObjectToObjectArrayTransformNode extends Node {
+    public abstract static class ArrayObjectToObjectArrayTransformNode extends AbstractNode {
 
         public static ArrayObjectToObjectArrayTransformNode create() {
             return ArrayObjectToObjectArrayTransformNodeGen.create();
@@ -361,8 +360,8 @@ public final class ArrayObjectNodes {
         }
     }
 
-    @ImportStatic({ArrayObject.class, SqueakGuards.class})
-    public abstract static class ArrayObjectWriteNode extends Node {
+    @ImportStatic(ArrayObject.class)
+    public abstract static class ArrayObjectWriteNode extends AbstractNode {
 
         public static ArrayObjectWriteNode create() {
             return ArrayObjectWriteNodeGen.create();
