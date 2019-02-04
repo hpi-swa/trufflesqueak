@@ -46,6 +46,12 @@ public abstract class AbstractPointersObject extends AbstractSqueakObject {
         this.pointers = pointers;
     }
 
+    @Override
+    public final int instsize() {
+        return getSqueakClass().getBasicInstanceSize();
+    }
+
+    @Override
     public final int size() {
         return pointers.length;
     }

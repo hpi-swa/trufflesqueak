@@ -65,6 +65,10 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         integerDirty = true;
     }
 
+    public void markDirty() {
+        integerDirty = true;
+    }
+
     public void setBytes(final byte[] bytes) {
         this.bytes = bytes;
         integerDirty = true;
@@ -83,6 +87,12 @@ public final class LargeIntegerObject extends AbstractSqueakObject {
         return bytes;
     }
 
+    @Override
+    public int instsize() {
+        return 0;
+    }
+
+    @Override
     public int size() {
         return bytes.length;
     }

@@ -16,6 +16,16 @@ public final class EmptyObject extends AbstractSqueakObject {
         super(original.image, original.getSqueakClass());
     }
 
+    @Override
+    public int instsize() {
+        return 0;
+    }
+
+    @Override
+    public int size() {
+        return 0;
+    }
+
     public void become(final EmptyObject other) {
         becomeOtherClass(other);
     }

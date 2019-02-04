@@ -82,6 +82,16 @@ public final class NativeObject extends AbstractSqueakObject {
         return new NativeObject(img, klass, shorts);
     }
 
+    @Override
+    public int instsize() {
+        return 0;
+    }
+
+    @Override
+    public int size() {
+        throw new SqueakException("Use NativeObjectSizeNode");
+    }
+
     @TruffleBoundary
     public String asString() {
         assert isByteType();

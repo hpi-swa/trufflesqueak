@@ -72,6 +72,10 @@ public abstract class AbstractSqueakObject implements TruffleObject {
         }
     }
 
+    public abstract int instsize();
+
+    public abstract int size();
+
     public final long getSqueakHash() {
         return squeakHash;
     }

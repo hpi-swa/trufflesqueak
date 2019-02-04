@@ -64,10 +64,6 @@ public final class WeakPointersObject extends AbstractPointersObject {
         return new WeakReference<>(pointer, weakPointersQueue);
     }
 
-    public int instsize() {
-        return getSqueakClass().getBasicInstanceSize();
-    }
-
     public void setWeakPointers(final Object[] pointers) {
         final int length = pointers.length;
         setPointers(new Object[length]);

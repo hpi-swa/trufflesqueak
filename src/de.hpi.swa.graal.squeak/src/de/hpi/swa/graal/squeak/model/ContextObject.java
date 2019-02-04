@@ -193,10 +193,6 @@ public final class ContextObject extends AbstractSqueakObject {
         }
     }
 
-    public int size() {
-        return size;
-    }
-
     public MaterializedFrame getOrCreateTruffleFrame() {
         if (truffleFrame == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -459,8 +455,14 @@ public final class ContextObject extends AbstractSqueakObject {
         }
     }
 
+    @Override
     public int instsize() {
         return getSqueakClass().getBasicInstanceSize();
+    }
+
+    @Override
+    public int size() {
+        return size;
     }
 
     public int getStackSize() {

@@ -84,6 +84,7 @@ public final class CompiledBlockObject extends CompiledCodeObject {
         return new CompiledBlockObject(this);
     }
 
+    @Override
     public int size() {
         return outerMethod.size();
     }

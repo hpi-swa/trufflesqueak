@@ -144,6 +144,7 @@ public final class CompiledMethodObject extends CompiledCodeObject {
         return getBytecodeOffset() + 1;
     }
 
+    @Override
     public int size() {
         return getBytecodeOffset() + bytes.length;
     }

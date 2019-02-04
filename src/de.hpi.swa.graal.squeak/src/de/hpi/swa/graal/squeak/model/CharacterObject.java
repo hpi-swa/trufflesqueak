@@ -11,6 +11,16 @@ public final class CharacterObject extends AbstractSqueakObject {
         this.value = value;
     }
 
+    @Override
+    public int instsize() {
+        return 0;
+    }
+
+    @Override
+    public int size() {
+        return 0;
+    }
+
     public static Object valueOf(final SqueakImageContext image, final int value) {
         if (value <= Character.MAX_VALUE) {
             return (char) value;

@@ -5,6 +5,7 @@ import java.util.Arrays;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.TruffleLogger;
 
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.nodes.accessing.ArrayObjectNodes.ArrayObjectWriteNode;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
@@ -277,8 +278,14 @@ public final class ArrayObject extends AbstractSqueakObject {
         return storage.getClass();
     }
 
+    @Override
     public int instsize() {
         return getSqueakClass().getBasicInstanceSize();
+    }
+
+    @Override
+    public int size() {
+        throw new SqueakException("Use ArrayObjectSizeNode");
     }
 
     public boolean isAbstractSqueakObjectType() {

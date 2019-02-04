@@ -306,6 +306,11 @@ public abstract class CompiledCodeObject extends AbstractSqueakObject {
         }
     }
 
+    @Override
+    public final int instsize() {
+        return 0;
+    }
+
     public final Object[] getLiterals() {
         return literals;
     }

@@ -65,8 +65,8 @@ public abstract class SqueakObjectSizeNode extends Node {
     }
 
     @Specialization
-    protected static final int doEmpty(@SuppressWarnings("unused") final EmptyObject obj) {
-        return 0;
+    protected static final int doEmpty(final EmptyObject obj) {
+        return obj.size();
     }
 
     @Specialization
@@ -75,8 +75,8 @@ public abstract class SqueakObjectSizeNode extends Node {
     }
 
     @Specialization
-    protected static final int doFloat(@SuppressWarnings("unused") final FloatObject obj) {
-        return FloatObject.size();
+    protected static final int doFloat(final FloatObject obj) {
+        return obj.size();
     }
 
     @Specialization
@@ -85,8 +85,8 @@ public abstract class SqueakObjectSizeNode extends Node {
     }
 
     @Specialization
-    protected static final int doNil(@SuppressWarnings("unused") final NilObject obj) {
-        return 0;
+    protected static final int doNil(final NilObject obj) {
+        return obj.size();
     }
 
     @Fallback

@@ -541,8 +541,8 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         }
 
         @Specialization
-        protected static final long doFloat(@SuppressWarnings("unused") final FloatObject obj, @SuppressWarnings("unused") final NotProvided notProvided) {
-            return FloatObject.size();
+        protected static final long doFloat(final FloatObject obj, @SuppressWarnings("unused") final NotProvided notProvided) {
+            return obj.size();
         }
 
         @Specialization
@@ -598,8 +598,8 @@ public final class ArrayStreamPrimitives extends AbstractPrimitiveFactoryHolder 
         }
 
         @Specialization
-        protected static final long doFloat(@SuppressWarnings("unused") final AbstractSqueakObject receiver, @SuppressWarnings("unused") final FloatObject obj) {
-            return FloatObject.size();
+        protected static final long doFloat(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final FloatObject obj) {
+            return obj.size();
         }
 
         @Specialization

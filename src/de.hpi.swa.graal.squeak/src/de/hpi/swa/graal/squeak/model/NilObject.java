@@ -11,6 +11,16 @@ public final class NilObject extends AbstractSqueakObject {
     }
 
     @Override
+    public int instsize() {
+        return 0;
+    }
+
+    @Override
+    public int size() {
+        return 0;
+    }
+
+    @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
         return "nil";

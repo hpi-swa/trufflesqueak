@@ -46,10 +46,6 @@ public final class PointersObject extends AbstractPointersObject {
         setPointers(otherPointers);
     }
 
-    public int instsize() {
-        return getSqueakClass().getBasicInstanceSize();
-    }
-
     public boolean isActiveProcess() {
         return this == image.getActiveProcess();
     }

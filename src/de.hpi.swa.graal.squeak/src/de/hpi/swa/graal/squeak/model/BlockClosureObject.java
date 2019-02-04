@@ -137,12 +137,14 @@ public final class BlockClosureObject extends AbstractSqueakObject {
         this.copied = copied;
     }
 
-    public int size() {
-        return copied.length + instsize();
+    @Override
+    public int instsize() {
+        return BLOCK_CLOSURE.FIRST_COPIED_VALUE;
     }
 
-    public static int instsize() {
-        return BLOCK_CLOSURE.FIRST_COPIED_VALUE;
+    @Override
+    public int size() {
+        return copied.length + instsize();
     }
 
     public Object[] getStack() {

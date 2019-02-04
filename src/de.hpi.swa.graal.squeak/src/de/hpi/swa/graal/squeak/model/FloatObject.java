@@ -85,7 +85,13 @@ public final class FloatObject extends AbstractSqueakObject {
                         (byte) (bits >> 24), (byte) (bits >> 16), (byte) (bits >> 8), (byte) bits};
     }
 
-    public static int size() {
+    @Override
+    public int instsize() {
+        return 0;
+    }
+
+    @Override
+    public int size() {
         return WORD_LENGTH;
     }
 

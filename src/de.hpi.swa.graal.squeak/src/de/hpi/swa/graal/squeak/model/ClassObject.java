@@ -182,8 +182,14 @@ public final class ClassObject extends AbstractSqueakObject {
         this.format = format;
     }
 
+    @Override
     public int instsize() {
         return getSqueakClass().getBasicInstanceSize();
+    }
+
+    @Override
+    public int size() {
+        return CLASS_DESCRIPTION.SIZE + pointers.length;
     }
 
     public static boolean isSuperclassIndex(final long index) {
@@ -403,10 +409,6 @@ public final class ClassObject extends AbstractSqueakObject {
 
     public Assumption getClassFormatStable() {
         return classFormatStable.getAssumption();
-    }
-
-    public int size() {
-        return CLASS_DESCRIPTION.SIZE + pointers.length;
     }
 
     public String getClassComment() {
