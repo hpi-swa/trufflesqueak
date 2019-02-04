@@ -1,7 +1,9 @@
 package de.hpi.swa.graal.squeak.nodes.bytecodes;
 
+import java.util.logging.Level;
+
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -31,12 +33,12 @@ import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackTopNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
-import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitives.PrimitiveFailedNode;
+import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 
 public final class MiscellaneousBytecodes {
 
     public abstract static class CallPrimitiveNode extends AbstractBytecodeNode {
-        private static final boolean DEBUG_PRIMITIVE_FAILURES = false;
+        private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, CallPrimitiveNode.class);
         public static final int NUM_BYTECODES = 3;
 
         @Child private HandlePrimitiveFailedNode handlePrimFailed;
@@ -62,9 +64,7 @@ public final class MiscellaneousBytecodes {
                 throw new LocalReturn(primitiveNode.executePrimitive(frame));
             } catch (PrimitiveFailed e) {
                 primitiveFailureProfile.enter();
-                if (DEBUG_PRIMITIVE_FAILURES) {
-                    debugPrimitiveFailures();
-                }
+                LOG.log(Level.FINE, "Primitive failure: {0}", primitiveNode);
                 handlePrimFailed.executeHandle(frame, e);
             }
             // continue with fallback code
@@ -79,13 +79,6 @@ public final class MiscellaneousBytecodes {
         @Fallback
         protected static final void doFail() {
             throw new SqueakException("Should never happen");
-        }
-
-        @TruffleBoundary
-        private void debugPrimitiveFailures() {
-            if (!(primitiveNode instanceof PrimitiveFailedNode)) {
-                code.image.printToStdErr("[PrimFail]", primitiveNode);
-            }
         }
 
         @Override
