@@ -27,12 +27,6 @@ public final class SqueakOptions {
     @Option(category = OptionCategory.USER, help = "Disable image interrupt handler")
     public static final OptionKey<Boolean> DisableInterruptHandler = new OptionKey<>(false);
 
-    @Option(category = OptionCategory.DEBUG, help = "Trace process switches")
-    public static final OptionKey<Boolean> TraceProcessSwitches = new OptionKey<>(false);
-
-    @Option(category = OptionCategory.DEBUG, help = "Enable verbose output")
-    public static final OptionKey<Boolean> Verbose = new OptionKey<>(false);
-
     @Option(category = OptionCategory.EXPERT, help = "For internal testing purposes only")
     public static final OptionKey<Boolean> Testing = new OptionKey<>(false);
     //@formatter:on
@@ -49,8 +43,6 @@ public final class SqueakOptions {
         public final String imageArguments;
         public final boolean isHeadless;
         public final boolean disableInterruptHandler;
-        public final boolean traceProcessSwitches;
-        public final boolean isVerbose;
         public final boolean isTesting;
 
         public SqueakContextOptions(final Env env) {
@@ -59,8 +51,6 @@ public final class SqueakOptions {
             imageArguments = options.get(SqueakOptions.ImageArguments);
             isHeadless = options.get(SqueakOptions.Headless);
             disableInterruptHandler = options.get(SqueakOptions.DisableInterruptHandler);
-            traceProcessSwitches = options.get(SqueakOptions.TraceProcessSwitches);
-            isVerbose = options.get(SqueakOptions.Verbose);
             isTesting = options.get(SqueakOptions.Testing);
         }
     }

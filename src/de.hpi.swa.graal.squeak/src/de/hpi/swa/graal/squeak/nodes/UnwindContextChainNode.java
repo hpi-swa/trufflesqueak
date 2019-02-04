@@ -46,7 +46,7 @@ public abstract class UnwindContextChainNode extends AbstractNodeWithImage {
         while (context != targetContext) {
             final AbstractSqueakObject sender = context.getSender();
             if (sender.isNil()) {
-                sender.image.printVerbose("[graalsqueak] Unwind error (sender is nil)");
+                sender.image.printToStdErr("Unwind error (sender is nil)");
                 break;
             }
             context.terminate();

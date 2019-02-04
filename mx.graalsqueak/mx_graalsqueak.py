@@ -133,6 +133,10 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
     parser.add_argument('-l', '--low-level',
                         help='enable low-level optimization output',
                         dest='low_level', action='store_true', default=False)
+    parser.add_argument('--log',
+                        help='enable TruffleLogger for class, e.g.: '
+                        '"de.hpi.swa.graal.squeak.model.ArrayObject=FINER"',
+                        dest='log')
     parser.add_argument('--machine-code',
                         help='print machine code',
                         dest='print_machine_code', action='store_true',
@@ -215,18 +219,21 @@ def _squeak(args, extra_vm_args=None, env=None, jdk=None, **kwargs):
         squeak_arguments.append('--%s.Headless' % LANGUAGE_NAME)
     if parsed_args.code:
         squeak_arguments.extend(['--code', parsed_args.code])
-    if parsed_args.trace_process_switches:
-        squeak_arguments.append(
-            '--%s.TraceProcessSwitches' % LANGUAGE_NAME)
-    if parsed_args.verbose:
-        squeak_arguments.append(
-            '--%s.Verbose' % LANGUAGE_NAME)
     if parsed_args.cpusampler:
         squeak_arguments.append('--cpusampler')
     if parsed_args.cputracer:
         squeak_arguments.append('--cputracer')
     if parsed_args.inspect:
         squeak_arguments.append('--inspect')
+    if parsed_args.trace_process_switches:
+        parsed_args.log = (
+            'de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode=FINE')
+    if parsed_args.log:
+        split = parsed_args.log.split("=")
+        if len(split) != 2:
+            mx.abort('Must be in the format de.hpi.swa.graal...Class=LOGLEVEL')
+        squeak_arguments.append(
+            '--log.squeaksmalltalk.%s.level=%s' % (split[0], split[1]))
     if parsed_args.memtracer:
         squeak_arguments.append('--memtracer')
 

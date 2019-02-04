@@ -3,9 +3,11 @@ package de.hpi.swa.graal.squeak.nodes.primitives.impl;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.util.List;
+import java.util.logging.Level;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
@@ -76,6 +78,7 @@ import de.hpi.swa.graal.squeak.nodes.process.ResumeProcessNode;
 import de.hpi.swa.graal.squeak.nodes.process.SignalSemaphoreNode;
 import de.hpi.swa.graal.squeak.nodes.process.WakeHighestPriorityNode;
 import de.hpi.swa.graal.squeak.nodes.process.YieldProcessNode;
+import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerNode;
 import de.hpi.swa.graal.squeak.util.MiscUtils;
@@ -95,6 +98,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
      */
     @GenerateNodeFactory
     public abstract static class PrimitiveFailedNode extends AbstractPrimitiveNode {
+
         protected PrimitiveFailedNode(final CompiledMethodObject method) {
             super(method);
         }
@@ -104,8 +108,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @Specialization
-        protected final Object fail() {
-            code.image.printVerbose("Primitive not yet written: ", code);
+        protected static final Object doFail() {
             throw new PrimitiveFailed();
         }
 
@@ -764,6 +767,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 130)
     protected abstract static class PrimFullGCNode extends AbstractPrimitiveNode implements UnaryPrimitive {
+        private static final TruffleLogger LOG = TruffleLogger.getLogger(SqueakLanguageConfig.ID, PrimFullGCNode.class);
 
         protected PrimFullGCNode(final CompiledMethodObject method) {
             super(method);
@@ -779,7 +783,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
         }
 
         @TruffleBoundary
-        private boolean hasPendingFinalizations() {
+        private static boolean hasPendingFinalizations() {
             final ReferenceQueue<Object> queue = WeakPointersObject.weakPointersQueue;
             Reference<? extends Object> element = queue.poll();
             int count = 0;
@@ -787,7 +791,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
                 count++;
                 element = queue.poll();
             }
-            code.image.printVerbose(count, " WeakPointersObjects have been garbage collected.");
+            LOG.log(Level.FINE, "Number of garbage collected WeakPointersObjects", count);
             return count > 0;
         }
     }

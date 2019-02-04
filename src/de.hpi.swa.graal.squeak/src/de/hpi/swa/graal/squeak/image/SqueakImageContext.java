@@ -492,16 +492,6 @@ public final class SqueakImageContext {
         return options.isTesting;
     }
 
-    public boolean isVerbose() {
-        return options.isVerbose;
-    }
-
-    public void printVerbose(final Object... arguments) {
-        if (isVerbose()) {
-            printToStdOut(arguments);
-        }
-    }
-
     @TruffleBoundary
     public void printToStdOut(final Object... arguments) {
         getOutput().println(MiscUtils.format("[graalsqueak] %s", ArrayUtils.toJoinedString(" ", arguments)));
@@ -510,12 +500,6 @@ public final class SqueakImageContext {
     @TruffleBoundary
     public void printToStdErr(final Object... arguments) {
         getError().println(MiscUtils.format("[graalsqueak] %s", ArrayUtils.toJoinedString(" ", arguments)));
-    }
-
-    public void traceProcessSwitches(final Object... arguments) {
-        if (options.traceProcessSwitches) {
-            printToStdOut(arguments);
-        }
     }
 
     public TruffleObject getGlobals() {
