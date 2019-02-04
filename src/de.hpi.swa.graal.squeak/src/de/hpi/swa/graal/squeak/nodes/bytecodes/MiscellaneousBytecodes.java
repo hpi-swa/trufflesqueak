@@ -32,7 +32,6 @@ import de.hpi.swa.graal.squeak.nodes.context.stack.StackPopNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackPushNode;
 import de.hpi.swa.graal.squeak.nodes.context.stack.StackTopNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.graal.squeak.shared.SqueakLanguageConfig;
 
 public final class MiscellaneousBytecodes {
@@ -47,11 +46,11 @@ public final class MiscellaneousBytecodes {
 
         private final BranchProfile primitiveFailureProfile = BranchProfile.create();
 
-        public CallPrimitiveNode(final CompiledMethodObject code, final int index, final int byte1, final int byte2) {
-            super(code, index, NUM_BYTECODES);
+        public CallPrimitiveNode(final CompiledMethodObject method, final int index, final int byte1, final int byte2) {
+            super(method, index, NUM_BYTECODES);
             primitiveIndex = byte1 + (byte2 << 8);
-            primitiveNode = PrimitiveNodeFactory.forIndex(code, primitiveIndex);
-            handlePrimFailed = primitiveNode == null ? null : HandlePrimitiveFailedNode.create(code);
+            primitiveNode = method.image.primitiveNodeFactory.forIndex(method, primitiveIndex);
+            handlePrimFailed = primitiveNode == null ? null : HandlePrimitiveFailedNode.create(method);
         }
 
         public static CallPrimitiveNode create(final CompiledMethodObject code, final int index, final int byte1, final int byte2) {

@@ -2,8 +2,6 @@ package de.hpi.swa.graal.squeak.nodes.plugins;
 
 import static java.util.Arrays.asList;
 
-import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
-import de.hpi.swa.graal.squeak.model.NativeObject;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
@@ -19,15 +17,16 @@ import javax.net.ssl.SSLEngineResult.HandshakeStatus;
 import javax.net.ssl.SSLEngineResult.Status;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSession;
-import org.graalvm.collections.EconomicMap;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
+import de.hpi.swa.graal.squeak.exceptions.SqueakExceptions.SqueakException;
 import de.hpi.swa.graal.squeak.model.AbstractSqueakObject;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
+import de.hpi.swa.graal.squeak.model.NativeObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimitive;
@@ -109,9 +108,6 @@ import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
  * @see sun.security.ssl.Debug
  */
 public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
-
-    private static final EconomicMap<Long, SqSSL> SSL_HANDLES = EconomicMap.create();
-
     private static final ByteBuffer EMPTY_BUFFER = createEmptyImmutableBuffer();
 
     // FIXME global state
@@ -221,7 +217,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
         return ByteBuffer.allocate(0).asReadOnlyBuffer();
     }
 
-    private static final class SqSSL {
+    public static final class SqSSL {
         private State state = State.UNUSED;
         private SSLContext context;
         private SSLEngine engine;
@@ -235,8 +231,8 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
     }
 
     @TruffleBoundary
-    private static SqSSL getSSL(final long handle) {
-        return SSL_HANDLES.get(handle);
+    private static SqSSL getSSL(final CompiledMethodObject method, final long handle) {
+        return method.image.squeakSSLHandles.get(handle);
     }
 
     private static int getBufferSize(final SqSSL ssl) {
@@ -393,7 +389,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
                         final long length,
                         final NativeObject targetBuffer) {
 
-            final SqSSL ssl = getSSL(sslHandle);
+            final SqSSL ssl = getSSL(method, sslHandle);
             if (ssl == null) {
                 return ReturnCode.INVALID_STATE.id();
             }
@@ -499,7 +495,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
                         final long length,
                         final NativeObject targetBuffer) {
 
-            final SqSSL ssl = getSSL(sslHandle);
+            final SqSSL ssl = getSSL(method, sslHandle);
             if (ssl == null) {
                 return ReturnCode.INVALID_STATE.id();
             }
@@ -675,7 +671,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
                         final long length,
                         final NativeObject targetBuffer) {
 
-            final SqSSL ssl = getSSL(sslHandle);
+            final SqSSL ssl = getSSL(method, sslHandle);
             if (ssl == null) {
                 return ReturnCode.INVALID_STATE.id();
             }
@@ -741,7 +737,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
                         final long length,
                         final NativeObject targetBuffer) {
 
-            final SqSSL ssl = getSSL(sslHandle);
+            final SqSSL ssl = getSSL(method, sslHandle);
             if (ssl == null) {
                 return ReturnCode.INVALID_STATE.id();
             }
@@ -780,8 +776,8 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @return despite return code convention, non-zero if successful
          */
         @Specialization
-        protected static long doGet(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long sslHandle, final long propertyId) {
-            final SqSSL ssl = getSSL(sslHandle);
+        protected long doGet(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long sslHandle, final long propertyId) {
+            final SqSSL ssl = getSSL(method, sslHandle);
             final IntProperty property = propertyWithId(IntProperty.class, propertyId);
 
             if (ssl == null || property == null) {
@@ -819,12 +815,11 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @return despite the return code convention, non-zero if successful
          */
         @Specialization
-        protected static long doSet(@SuppressWarnings("unused") final AbstractSqueakObject receiver,
+        protected long doSet(@SuppressWarnings("unused") final AbstractSqueakObject receiver,
                         final long sslHandle,
                         final long propertyId,
                         final long anInteger) {
-
-            final SqSSL ssl = getSSL(sslHandle);
+            final SqSSL ssl = getSSL(method, sslHandle);
             final IntProperty property = propertyWithId(IntProperty.class, propertyId);
             if (ssl == null || property == null) {
                 return 0L;
@@ -855,7 +850,7 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          */
         @Specialization
         protected final AbstractSqueakObject doGet(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long sslHandle, final long propertyId) {
-            final SqSSL impl = getSSL(sslHandle);
+            final SqSSL impl = getSSL(method, sslHandle);
             final StringProperty property = propertyWithId(StringProperty.class, propertyId);
             if (impl == null || property == null) {
                 return method.image.nil;
@@ -896,12 +891,12 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          * @return despite return code convention, non-zero if successful
          */
         @Specialization(guards = "aString.isByteType()")
-        protected static long doSet(@SuppressWarnings("unused") final AbstractSqueakObject receiver,
+        protected long doSet(@SuppressWarnings("unused") final AbstractSqueakObject receiver,
                         final long sslHandle,
                         final long propertyId,
                         final NativeObject aString) {
 
-            final SqSSL ssl = getSSL(sslHandle);
+            final SqSSL ssl = getSSL(method, sslHandle);
             final StringProperty property = propertyWithId(StringProperty.class, propertyId);
             if (ssl == null || property == null) {
                 return 0L;
@@ -941,10 +936,10 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          */
         @Specialization
         @TruffleBoundary
-        protected static long doCreate(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
+        protected long doCreate(@SuppressWarnings("unused") final AbstractSqueakObject receiver) {
             final SqSSL ssl = new SqSSL();
             final long handle = ssl.hashCode();
-            SSL_HANDLES.put(handle, ssl);
+            method.image.squeakSSLHandles.put(handle, ssl);
             return handle;
         }
     }
@@ -965,13 +960,13 @@ public final class SqueakSSL extends AbstractPrimitiveFactoryHolder {
          */
         @Specialization
         @TruffleBoundary
-        protected static long doDestroy(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long sslHandle) {
-            final SqSSL ssl = SSL_HANDLES.removeKey(sslHandle);
+        protected long doDestroy(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long sslHandle) {
+            final SqSSL ssl = method.image.squeakSSLHandles.removeKey(sslHandle);
             if (ssl == null) {
                 return 0L;
+            } else {
+                return 1L;
             }
-
-            return 1L;
         }
     }
 

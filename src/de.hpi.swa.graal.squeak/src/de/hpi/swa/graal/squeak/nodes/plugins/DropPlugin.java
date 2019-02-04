@@ -7,6 +7,7 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
 
+import de.hpi.swa.graal.squeak.image.SqueakImageContext;
 import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveFactoryHolder;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
@@ -14,14 +15,18 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimit
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 
 public final class DropPlugin extends AbstractPrimitiveFactoryHolder {
-    protected static String[] fileList = new String[0];
+    public String[] fileList = new String[0];
 
-    public static void updateFileList(final String[] newList) {
-        fileList = newList;
+    public static void updateFileList(final SqueakImageContext image, final String[] newList) {
+        image.dropPluginFileList = newList;
     }
 
-    public static int getFileListSize() {
-        return fileList.length;
+    public static int getFileListSize(final SqueakImageContext image) {
+        return getFileList(image).length;
+    }
+
+    private static String[] getFileList(final SqueakImageContext image) {
+        return image.dropPluginFileList;
     }
 
     @Override
@@ -37,9 +42,10 @@ public final class DropPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = "dropIndex <= getFileListSize()")
+        @Specialization(guards = "dropIndex <= getFileListSize(method.image)")
         protected final Object doRequest(@SuppressWarnings("unused") final Object receiver, final long dropIndex) {
-            return FilePlugin.createFileHandleOrPrimFail(method.image.env.getTruffleFile(fileList[(int) dropIndex - 1]), false);
+            return FilePlugin.createFileHandleOrPrimFail(method.image,
+                            method.image.env.getTruffleFile(getFileList(method.image)[(int) dropIndex - 1]), false);
         }
     }
 
@@ -51,9 +57,9 @@ public final class DropPlugin extends AbstractPrimitiveFactoryHolder {
             super(method);
         }
 
-        @Specialization(guards = "dropIndex <= getFileListSize()")
+        @Specialization(guards = "dropIndex <= getFileListSize(method.image)")
         protected final Object doRequest(@SuppressWarnings("unused") final Object receiver, final long dropIndex) {
-            return method.image.wrap(fileList[(int) dropIndex - 1]);
+            return method.image.wrap(getFileList(method.image)[(int) dropIndex - 1]);
         }
     }
 }

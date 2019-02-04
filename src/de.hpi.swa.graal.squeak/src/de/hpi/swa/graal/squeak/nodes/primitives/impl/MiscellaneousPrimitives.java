@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
@@ -50,7 +51,6 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.BinaryPrimit
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
-import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerState;
@@ -902,13 +902,7 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
     @GenerateNodeFactory
     @SqueakPrimitive(indices = 573)
     protected abstract static class PrimListExternalModuleNode extends AbstractPrimitiveNode implements BinaryPrimitive {
-        @CompilationFinal(dimensions = 1) protected static final String[] externalModuleNames;
-
-        static {
-            final Set<String> pluginNames = PrimitiveNodeFactory.getPluginNames();
-            externalModuleNames = pluginNames.toArray(new String[pluginNames.size()]);
-            Arrays.sort(externalModuleNames);
-        }
+        @CompilationFinal(dimensions = 1) protected String[] externalModuleNames;
 
         public PrimListExternalModuleNode(final CompiledMethodObject method) {
             super(method);
@@ -917,7 +911,17 @@ public final class MiscellaneousPrimitives extends AbstractPrimitiveFactoryHolde
         @Specialization(guards = "inBounds1(index, externalModuleNames.length)")
         @TruffleBoundary
         protected final Object doGet(@SuppressWarnings("unused") final AbstractSqueakObject receiver, final long index) {
-            return method.image.wrap(externalModuleNames[(int) index - 1]);
+            return method.image.wrap(getExternalModuleNames()[(int) index - 1]);
+        }
+
+        private String[] getExternalModuleNames() {
+            if (externalModuleNames == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                final Set<String> pluginNames = method.image.primitiveNodeFactory.getPluginNames();
+                externalModuleNames = pluginNames.toArray(new String[pluginNames.size()]);
+                Arrays.sort(externalModuleNames);
+            }
+            return externalModuleNames;
         }
 
         @Specialization(guards = "!inBounds1(index, externalModuleNames.length)")

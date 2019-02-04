@@ -61,7 +61,6 @@ import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.SeptenaryPri
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.TernaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveInterfaces.UnaryPrimitiveWithoutFallback;
-import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.graal.squeak.nodes.primitives.SqueakPrimitive;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitivesFactory.PrimQuickReturnReceiverVariableNodeFactory;
 import de.hpi.swa.graal.squeak.nodes.primitives.impl.ControlPrimitivesFactory.PrimitiveFailedNodeFactory;
@@ -643,13 +642,13 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
 
         @Override
         public final Object executeWithArguments(final VirtualFrame frame, final Object... receiverAndArguments) {
-            final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.namedFor(method);
+            final AbstractPrimitiveNode primitiveNode = method.image.primitiveNodeFactory.namedFor(method);
             return replace(primitiveNode).executeWithArguments(frame, getCreateEagerArgumentsNode().executeCreate(primitiveNode.getNumArguments(), receiverAndArguments));
         }
 
         @Specialization
         protected final Object doExternalCall(final VirtualFrame frame) {
-            return replace(PrimitiveNodeFactory.namedFor(method)).executePrimitive(frame);
+            return replace(method.image.primitiveNodeFactory.namedFor(method)).executePrimitive(frame);
         }
 
         public int getNumArguments() {
@@ -692,7 +691,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
              * acceptable because primitive is mostly used for debugging anyway.
              */
             final Object[] receiverAndArguments = getObjectArrayNode.executeWithFirst(argumentArray, receiver);
-            final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.forIndex(method, (int) primitiveIndex);
+            final AbstractPrimitiveNode primitiveNode = method.image.primitiveNodeFactory.forIndex(method, (int) primitiveIndex);
             if (primitiveNode == null) {
                 throw new PrimitiveFailed();
             }
@@ -1006,7 +1005,7 @@ public final class ControlPrimitives extends AbstractPrimitiveFactoryHolder {
              * It is non-trivial to avoid the creation of a primitive node here. Deopt might be
              * acceptable because primitive is mostly used for debugging anyway.
              */
-            final AbstractPrimitiveNode primitiveNode = PrimitiveNodeFactory.namedFor(methodObject);
+            final AbstractPrimitiveNode primitiveNode = method.image.primitiveNodeFactory.namedFor(methodObject);
             final Object[] receiverAndArguments = getObjectArrayNode.executeWithFirst(argumentArray, target);
             return replace(primitiveNode).executeWithArguments(frame, receiverAndArguments);
         }

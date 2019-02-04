@@ -3,7 +3,6 @@ package de.hpi.swa.graal.squeak.nodes;
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -17,11 +16,9 @@ import de.hpi.swa.graal.squeak.model.CompiledMethodObject;
 import de.hpi.swa.graal.squeak.nodes.accessing.SqueakObjectAt0Node;
 import de.hpi.swa.graal.squeak.nodes.context.frame.CreateEagerArgumentsNode;
 import de.hpi.swa.graal.squeak.nodes.primitives.AbstractPrimitiveNode;
-import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 
 @ReportPolymorphism
-@ImportStatic(PrimitiveNodeFactory.class)
 public abstract class DispatchNode extends Node {
     protected static final int PRIMITIVE_CACHE_SIZE = 2;
     protected static final int INLINE_CACHE_SIZE = 3;
@@ -50,7 +47,7 @@ public abstract class DispatchNode extends Node {
     protected static final Object doPrimitiveEagerly(final VirtualFrame frame, final CompiledMethodObject method, final Object[] receiverAndArguments, final Object contextOrMarker,
                     @Cached("method") final CompiledMethodObject cachedMethod,
                     @Cached("method.getCallTargetStable()") final Assumption callTargetStable,
-                    @Cached("forIndex(method, method.primitiveIndex())") final AbstractPrimitiveNode primitiveNode,
+                    @Cached("cachedMethod.image.primitiveNodeFactory.forIndex(method, method.primitiveIndex())") final AbstractPrimitiveNode primitiveNode,
                     @Cached("create()") final CreateEagerArgumentsNode createEagerArgumentsNode) {
         return primitiveNode.executeWithArguments(frame, createEagerArgumentsNode.executeCreate(primitiveNode.getNumArguments(), receiverAndArguments));
     }
@@ -61,7 +58,7 @@ public abstract class DispatchNode extends Node {
     protected static final Object doPrimitiveEagerlyCatch(final VirtualFrame frame, final CompiledMethodObject method, final Object[] receiverAndArguments, final Object contextOrMarker,
                     @Cached("method") final CompiledMethodObject cachedMethod,
                     @Cached("method.getCallTargetStable()") final Assumption callTargetStable,
-                    @Cached("forIndex(method, method.primitiveIndex())") final AbstractPrimitiveNode primitiveNode,
+                    @Cached("cachedMethod.image.primitiveNodeFactory.forIndex(method, method.primitiveIndex())") final AbstractPrimitiveNode primitiveNode,
                     @Cached("create()") final CreateEagerArgumentsNode createEagerArgumentsNode,
                     @Cached("method.getCallTarget()") final RootCallTarget cachedTarget,
                     @Cached("create(cachedTarget)") final DirectCallNode callNode) {

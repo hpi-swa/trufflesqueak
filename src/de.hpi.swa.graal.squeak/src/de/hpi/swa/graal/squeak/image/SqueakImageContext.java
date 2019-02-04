@@ -3,7 +3,10 @@ package de.hpi.swa.graal.squeak.image;
 import java.io.File;
 import java.io.PrintWriter;
 import java.math.BigInteger;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Paths;
+
+import org.graalvm.collections.EconomicMap;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -43,6 +46,9 @@ import de.hpi.swa.graal.squeak.model.ObjectLayouts.PROCESS_SCHEDULER;
 import de.hpi.swa.graal.squeak.model.ObjectLayouts.SMALLTALK_IMAGE;
 import de.hpi.swa.graal.squeak.model.PointersObject;
 import de.hpi.swa.graal.squeak.nodes.ExecuteTopLevelContextNode;
+import de.hpi.swa.graal.squeak.nodes.plugins.SqueakSSL.SqSSL;
+import de.hpi.swa.graal.squeak.nodes.plugins.network.SqueakSocket;
+import de.hpi.swa.graal.squeak.nodes.primitives.PrimitiveNodeFactory;
 import de.hpi.swa.graal.squeak.util.ArrayUtils;
 import de.hpi.swa.graal.squeak.util.FrameAccess;
 import de.hpi.swa.graal.squeak.util.InterruptHandlerState;
@@ -152,6 +158,12 @@ public final class SqueakImageContext {
     @CompilationFinal private CompiledMethodObject evaluateMethod;
     @CompilationFinal private NativeObject simulatePrimitiveArgsSelector = null;
     @CompilationFinal private PointersObject scheduler = null;
+
+    public final PrimitiveNodeFactory primitiveNodeFactory = new PrimitiveNodeFactory();
+    public final EconomicMap<Long, SeekableByteChannel> filePluginHandles = EconomicMap.create();
+    public final EconomicMap<Long, SqueakSocket> socketPluginHandles = EconomicMap.create();
+    public final EconomicMap<Long, SqSSL> squeakSSLHandles = EconomicMap.create();
+    public String[] dropPluginFileList = new String[0];
 
     public static final byte[] DEBUG_ERROR_SELECTOR_NAME = "debugError:".getBytes(); // for testing
     @CompilationFinal private NativeObject debugErrorSelector = null; // for testing

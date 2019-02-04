@@ -399,7 +399,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
     }
 
     private void addDragEvent(final long type, final Point location) {
-        addEvent(EVENT_TYPE.DRAG_DROP_FILES, type, (long) location.getX(), (long) location.getY(), buttons >> 3, DropPlugin.getFileListSize(), 0L);
+        addEvent(EVENT_TYPE.DRAG_DROP_FILES, type, (long) location.getX(), (long) location.getY(), buttons >> 3, DropPlugin.getFileListSize(image), 0L);
     }
 
     private void addWindowEvent(final long type) {
@@ -497,7 +497,7 @@ public final class SqueakDisplay implements SqueakDisplayInterface {
                         while (iter.hasNext()) {
                             fileList[i++] = iter.next().getCanonicalPath();
                         }
-                        DropPlugin.updateFileList(fileList);
+                        DropPlugin.updateFileList(image, fileList);
                         addDragEvent(DRAG.DROP, dtde.getLocation());
                         dtde.getDropTargetContext().dropComplete(true);
                         return;

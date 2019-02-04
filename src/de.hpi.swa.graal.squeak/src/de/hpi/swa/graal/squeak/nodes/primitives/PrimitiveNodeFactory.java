@@ -47,7 +47,7 @@ import de.hpi.swa.graal.squeak.util.ArrayUtils;
 
 public final class PrimitiveNodeFactory {
     private static final int MAX_PRIMITIVE_INDEX = 575;
-    @CompilationFinal(dimensions = 1) private static final AbstractPrimitiveFactoryHolder[] indexPrimitives = new AbstractPrimitiveFactoryHolder[]{
+    @CompilationFinal(dimensions = 1) private final AbstractPrimitiveFactoryHolder[] indexPrimitives = new AbstractPrimitiveFactoryHolder[]{
                     new ArithmeticPrimitives(),
                     new ArrayStreamPrimitives(),
                     new BlockClosurePrimitives(),
@@ -56,7 +56,8 @@ public final class PrimitiveNodeFactory {
                     new IOPrimitives(),
                     new MiscellaneousPrimitives(),
                     new StoragePrimitives()};
-    @CompilationFinal(dimensions = 1) private static final AbstractPrimitiveFactoryHolder[] plugins = new AbstractPrimitiveFactoryHolder[]{
+
+    @CompilationFinal(dimensions = 1) private final AbstractPrimitiveFactoryHolder[] plugins = new AbstractPrimitiveFactoryHolder[]{
                     new B2DPlugin(),
                     new BitBltPlugin(),
                     new BMPReadWriterPlugin(),
@@ -79,18 +80,15 @@ public final class PrimitiveNodeFactory {
                     new Win32OSProcessPlugin()};
 
     // Using an array instead of a HashMap requires type-checking to be disabled here.
-    @SuppressWarnings("unchecked") @CompilationFinal(dimensions = 1) private static final NodeFactory<? extends AbstractPrimitiveNode>[] primitiveTable = (NodeFactory<? extends AbstractPrimitiveNode>[]) new NodeFactory<?>[MAX_PRIMITIVE_INDEX];
+    @SuppressWarnings("unchecked") @CompilationFinal(dimensions = 1) private final NodeFactory<? extends AbstractPrimitiveNode>[] primitiveTable = (NodeFactory<? extends AbstractPrimitiveNode>[]) new NodeFactory<?>[MAX_PRIMITIVE_INDEX];
 
-    static {
+    public PrimitiveNodeFactory() {
         fillPrimitiveTable(indexPrimitives);
         fillPrimitiveTable(plugins);
     }
 
-    private PrimitiveNodeFactory() {
-    }
-
     @TruffleBoundary
-    public static AbstractPrimitiveNode forIndex(final CompiledMethodObject method, final int primitiveIndex) {
+    public AbstractPrimitiveNode forIndex(final CompiledMethodObject method, final int primitiveIndex) {
         if (264 <= primitiveIndex && primitiveIndex <= 520) {
             return ControlPrimitives.PrimQuickReturnReceiverVariableNode.create(method, primitiveIndex - 264);
         }
@@ -101,19 +99,19 @@ public final class PrimitiveNodeFactory {
         return null;
     }
 
-    public static AbstractPrimitiveNode namedFor(final CompiledMethodObject method) {
+    public AbstractPrimitiveNode namedFor(final CompiledMethodObject method) {
         final Object[] values = ((ArrayObject) method.getLiteral(0)).getObjectStorage();
         if (values[0] == method.image.nil || values[1] == method.image.nil) {
             return PrimitiveFailedNode.create(method);
         } else {
             final NativeObject moduleName = (NativeObject) values[0];
             final NativeObject functionName = (NativeObject) values[1];
-            return PrimitiveNodeFactory.forName(method, moduleName.getByteStorage(), functionName.getByteStorage());
+            return forName(method, moduleName.getByteStorage(), functionName.getByteStorage());
         }
     }
 
     @TruffleBoundary
-    private static AbstractPrimitiveNode forName(final CompiledMethodObject method, final byte[] moduleName, final byte[] functionName) {
+    private AbstractPrimitiveNode forName(final CompiledMethodObject method, final byte[] moduleName, final byte[] functionName) {
         for (AbstractPrimitiveFactoryHolder plugin : plugins) {
             if (!plugin.isEnabled(method.image)) {
                 continue;
@@ -143,7 +141,7 @@ public final class PrimitiveNodeFactory {
         return PrimitiveFailedNode.create(method);
     }
 
-    public static Set<String> getPluginNames() {
+    public Set<String> getPluginNames() {
         final HashSet<String> names = new HashSet<>(plugins.length);
         for (AbstractPrimitiveFactoryHolder plugin : plugins) {
             names.add(plugin.getClass().getSimpleName());
@@ -162,7 +160,7 @@ public final class PrimitiveNodeFactory {
         return primitiveNode;
     }
 
-    private static void fillPrimitiveTable(final AbstractPrimitiveFactoryHolder[] primitiveFactories) {
+    private void fillPrimitiveTable(final AbstractPrimitiveFactoryHolder[] primitiveFactories) {
         for (AbstractPrimitiveFactoryHolder primitiveFactory : primitiveFactories) {
             final List<? extends NodeFactory<? extends AbstractPrimitiveNode>> nodeFactories = primitiveFactory.getFactories();
             for (NodeFactory<? extends AbstractPrimitiveNode> nodeFactory : nodeFactories) {
@@ -178,14 +176,14 @@ public final class PrimitiveNodeFactory {
         }
     }
 
-    private static NodeFactory<? extends AbstractPrimitiveNode> getFromPrimitiveTable(final int index) {
+    private NodeFactory<? extends AbstractPrimitiveNode> getFromPrimitiveTable(final int index) {
         if (index <= MAX_PRIMITIVE_INDEX) {
             return primitiveTable[index - 1];
         }
         return null;
     }
 
-    private static void addEntryToPrimitiveTable(final int index, final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory) {
+    private void addEntryToPrimitiveTable(final int index, final NodeFactory<? extends AbstractPrimitiveNode> nodeFactory) {
         assert index < MAX_PRIMITIVE_INDEX : "primitive table array not large enough";
         assert primitiveTable[index - 1] == null : "primitives are not allowed to override others (#" + index + ")";
         primitiveTable[index - 1] = nodeFactory;

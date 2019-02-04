@@ -14,7 +14,7 @@ import java.nio.channels.Selector;
 import java.util.Iterator;
 import java.util.Set;
 
-abstract class SqueakSocket {
+public abstract class SqueakSocket {
 
     enum Status {
         InvalidSocket(-1),
